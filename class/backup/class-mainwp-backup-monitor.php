@@ -255,6 +255,10 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         // Remember whether the child issues one-time download tokens; an
         // empty value also clears the flag after a child downgrade.
         MainWP_DB::instance()->update_website_option( $website, 'download_token_support', empty( $preflight['download_token'] ) ? '' : '1' );
+
+        // Remember whether the child can run incremental backups; an
+        // empty value also clears the flag after a child downgrade.
+        MainWP_DB::instance()->update_website_option( $website, 'incremental_support', empty( $preflight['incremental'] ) ? '' : '1' );
     }
 
     /**
@@ -283,6 +287,20 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      */
     public static function child_supports_download_token( object $website ): bool {
         return '1' === (string) MainWP_DB::instance()->get_website_option( $website, 'download_token_support' );
+    }
+
+    /**
+     * Method child_supports_incremental()
+     *
+     * Whether the child site advertised incremental backup support in its
+     * last preflight report.
+     *
+     * @param object $website Website object.
+     *
+     * @return bool True when the child can run incremental backups.
+     */
+    public static function child_supports_incremental( object $website ): bool {
+        return '1' === (string) MainWP_DB::instance()->get_website_option( $website, 'incremental_support' );
     }
 
     /**

@@ -139,6 +139,21 @@ class MainWP_Backup_Error_Codes_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * The incremental backup codes are registered: the child reports a
+	 * missing or unusable parent manifest (the dashboard reruns the site as
+	 * a full backup) and an oversized manifest push.
+	 *
+	 * @return void
+	 */
+	public function test_registers_incremental_error_codes() {
+		$registered = MainWP_Backup_Error_Codes::get_registered_codes();
+		$this->assertContains( 'mainwp_backup_incremental_base_missing', $registered );
+		$this->assertContains( 'mainwp_backup_manifest_too_large', $registered );
+		$this->assertSame( 'mainwp_backup_incremental_base_missing', MainWP_Backup_Error_Codes::ERR_INCREMENTAL_BASE_MISSING );
+		$this->assertSame( 'mainwp_backup_manifest_too_large', MainWP_Backup_Error_Codes::ERR_MANIFEST_TOO_LARGE );
+	}
+
+	/**
 	 * Warning-severity codes map to 'warning'.
 	 *
 	 * @return void
@@ -148,6 +163,7 @@ class MainWP_Backup_Error_Codes_Test extends \WP_UnitTestCase {
 			'mainwp_backup_memory_limit',
 			'mainwp_backup_file_skipped',
 			'mainwp_backup_already_running',
+			'mainwp_backup_incremental_base_missing',
 		);
 		foreach ( $warnings as $code ) {
 			$this->assertSame( 'warning', MainWP_Backup_Error_Codes::severity( $code ), "{$code} must be a warning." );

@@ -1,0 +1,181 @@
+<?php
+/**
+ * MainWP Backup Snapshots Tests
+ *
+ * Snapshot rows are the durable per-run backup records: which run is the
+ * base of an incremental chain, where the downloaded manifest lives, and
+ * how runs relate through parent ids. These tests cover recording rows,
+ * resolving the latest complete snapshot for a site and task, and walking
+ * a chain back to its base.
+ *
+ * @package MainWP\Dashboard\Tests
+ */
+
+namespace MainWP\Dashboard\Tests;
+
+use MainWP\Dashboard\MainWP_Backup_Snapshots;
+use MainWP\Dashboard\MainWP_DB;
+
+/**
+ * Class MainWP_Backup_Snapshots_Test
+ */
+class MainWP_Backup_Snapshots_Test extends \WP_UnitTestCase {
+
+	/**
+	 * Clean up snapshot rows between tests.
+	 *
+	 * @return void
+	 */
+	public function tear_down() {
+		global $wpdb;
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+		$wpdb->query( "DELETE FROM {$table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
+		parent::tear_down();
+	}
+
+	/**
+	 * Record a snapshot row, overriding defaults as needed.
+	 *
+	 * @param array $overrides Field overrides.
+	 *
+	 * @return int Snapshot id.
+	 */
+	private function record( $overrides = array() ) {
+		return MainWP_Backup_Snapshots::instance()->record_snapshot(
+			array_merge(
+				array(
+					'task_id'       => 11,
+					'site_id'       => 22,
+					'type'          => 'full',
+					'parent_id'     => null,
+					'archives'      => array(
+						array(
+							'file' => 'backup.tar',
+							'size' => 1024,
+							'role' => 'part',
+						),
+					),
+					'manifest_path' => '/tmp/snapshots/files.list',
+				),
+				$overrides
+			)
+		);
+	}
+
+	/**
+	 * Recording a snapshot returns its id and the row round-trips with the
+	 * archives list decoded.
+	 *
+	 * @return void
+	 */
+	public function test_record_snapshot_round_trips() {
+		$id = $this->record();
+
+		$this->assertGreaterThan( 0, $id );
+
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id );
+		$this->assertNotNull( $snapshot );
+		$this->assertSame( 11, (int) $snapshot->task_id );
+		$this->assertSame( 22, (int) $snapshot->site_id );
+		$this->assertSame( 'full', $snapshot->type );
+		$this->assertSame( 'complete', $snapshot->status );
+		$this->assertNull( $snapshot->parent_id );
+		$this->assertSame( '/tmp/snapshots/files.list', $snapshot->manifest_path );
+		$this->assertGreaterThan( 0, (int) $snapshot->created );
+
+		$this->assertIsArray( $snapshot->archives );
+		$this->assertCount( 1, $snapshot->archives );
+		$this->assertSame( 'backup.tar', $snapshot->archives[0]['file'] );
+		$this->assertSame( 1024, $snapshot->archives[0]['size'] );
+		$this->assertSame( 'part', $snapshot->archives[0]['role'] );
+	}
+
+	/**
+	 * Unknown ids resolve to null.
+	 *
+	 * @return void
+	 */
+	public function test_get_snapshot_by_id_returns_null_for_unknown_id() {
+		$this->assertNull( MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( 987654 ) );
+	}
+
+	/**
+	 * The latest complete snapshot for a site and task is the newest row,
+	 * scoped to that site and task only.
+	 *
+	 * @return void
+	 */
+	public function test_get_latest_complete_returns_newest_for_site_and_task() {
+		$older = $this->record();
+		$newer = $this->record( array( 'type' => 'incremental', 'parent_id' => $older ) );
+		$this->record( array( 'site_id' => 33 ) ); // Another site, must not match.
+		$this->record( array( 'task_id' => 44 ) ); // Another task, must not match.
+
+		$latest = MainWP_Backup_Snapshots::instance()->get_latest_complete( 22, 11 );
+
+		$this->assertNotNull( $latest );
+		$this->assertSame( $newer, (int) $latest->id );
+		$this->assertSame( 'incremental', $latest->type );
+		$this->assertSame( $older, (int) $latest->parent_id );
+	}
+
+	/**
+	 * A site and task with no snapshot rows yields null - the caller runs a
+	 * full base backup in that case.
+	 *
+	 * @return void
+	 */
+	public function test_get_latest_complete_returns_null_when_no_rows() {
+		$this->assertNull( MainWP_Backup_Snapshots::instance()->get_latest_complete( 22, 11 ) );
+	}
+
+	/**
+	 * Non-complete rows never become the chain base.
+	 *
+	 * @return void
+	 */
+	public function test_get_latest_complete_ignores_pruned_rows() {
+		$base = $this->record();
+		$pruned = $this->record( array( 'type' => 'incremental', 'parent_id' => $base ) );
+		MainWP_Backup_Snapshots::instance()->set_status( $pruned, 'pruned' );
+
+		$latest = MainWP_Backup_Snapshots::instance()->get_latest_complete( 22, 11 );
+
+		$this->assertNotNull( $latest );
+		$this->assertSame( $base, (int) $latest->id );
+	}
+
+	/**
+	 * Walking the chain from a leaf snapshot follows parent ids back to the
+	 * base, base first so a restore can apply rows in order.
+	 *
+	 * @return void
+	 */
+	public function test_get_chain_returns_base_first() {
+		$base   = $this->record();
+		$first  = $this->record( array( 'type' => 'incremental', 'parent_id' => $base ) );
+		$second = $this->record( array( 'type' => 'incremental', 'parent_id' => $first ) );
+
+		$chain = MainWP_Backup_Snapshots::instance()->get_chain( $second );
+
+		$this->assertCount( 3, $chain );
+		$this->assertSame( $base, (int) $chain[0]->id );
+		$this->assertSame( $first, (int) $chain[1]->id );
+		$this->assertSame( $second, (int) $chain[2]->id );
+	}
+
+	/**
+	 * A chain whose parent link points at a missing row stops at the break
+	 * rather than failing - the caller treats a broken chain as no base.
+	 *
+	 * @return void
+	 */
+	public function test_get_chain_stops_at_missing_parent() {
+		$leaf = $this->record( array( 'type' => 'incremental', 'parent_id' => 987654 ) );
+
+		$chain = MainWP_Backup_Snapshots::instance()->get_chain( $leaf );
+
+		$this->assertCount( 1, $chain );
+		$this->assertSame( $leaf, (int) $chain[0]->id );
+	}
+}

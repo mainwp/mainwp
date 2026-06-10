@@ -40,6 +40,7 @@ class MainWP_Backup_Enums_Test extends MainWP_Abilities_Test_Case {
 	public function test_backup_type_maps_wire_values() {
 		$this->assertSame( MainWP_Backup_Type::Full, MainWP_Backup_Type::from( 'full' ) );
 		$this->assertSame( MainWP_Backup_Type::Database, MainWP_Backup_Type::from( 'db' ) );
+		$this->assertSame( MainWP_Backup_Type::Incremental, MainWP_Backup_Type::from( 'incremental' ) );
 		$this->assertNull( MainWP_Backup_Type::tryFrom( 'bogus' ) );
 	}
 

@@ -31,7 +31,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * @var string DB version info.
      */
-    protected $mainwp_db_version = '9.0.2.7'; // NOSONAR - no IP. Bumped so dbDelta adds the granular wp_backup_progress columns (child_phase, bytes, files). Previous 9.0.2.6 bump renamed the flag option to mainwp_enableNativeBackups.
+    protected $mainwp_db_version = '9.0.2.8'; // NOSONAR - no IP. Bumped so dbDelta creates the wp_backup_snapshot table (durable per-run backup records for incremental chains). Previous 9.0.2.7 bump added the granular wp_backup_progress columns.
 
     /**
      * Protected variable to hold the database option name.
@@ -365,6 +365,25 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
   maximumFileDescriptorsAuto tinyint(1) NOT NULL DEFAULT 1,
   maximumFileDescriptors int(11) NOT NULL DEFAULT 150';
         if ( empty( $currentVersion ) ) {
+            $tbl .= ',
+  PRIMARY KEY  (id)  ';
+        }
+        $tbl  .= ') ' . $charset_collate;
+        $sql[] = $tbl;
+
+        $tbl = 'CREATE TABLE ' . $this->table_name( 'wp_backup_snapshot' ) . " (
+  id bigint(20) unsigned NOT NULL auto_increment,
+  task_id int(11) NOT NULL,
+  site_id int(11) NOT NULL,
+  type varchar(20) NOT NULL,
+  parent_id bigint(20) unsigned NULL DEFAULT NULL,
+  created int(11) NOT NULL DEFAULT 0,
+  archives text NOT NULL DEFAULT '',
+  manifest_path text NOT NULL DEFAULT '',
+  status varchar(20) NOT NULL DEFAULT 'complete',
+  KEY idx_site_task (site_id, task_id),
+  KEY idx_parent (parent_id)";
+        if ( empty( $currentVersion ) || version_compare( $currentVersion, '9.0.2.8', '<' ) ) { // NOSONAR - none IP.
             $tbl .= ',
   PRIMARY KEY  (id)  ';
         }

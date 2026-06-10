@@ -63,6 +63,18 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 	public function tear_down() {
 		global $wpdb;
 
+		// A failed snapshot-table test can leave the table missing for later
+		// tests; rerun the installer against an older stored version first.
+		$snapshot_table = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+		if ( ! $this->table_exists( $snapshot_table ) ) {
+			$this->with_real_tables(
+				function () {
+					update_site_option( 'mainwp_db_version', '9.0.2.7' );
+					MainWP_Install::instance()->install();
+				}
+			);
+		}
+
 		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_progress' );
 		if ( ! $this->column_exists( $table, 'busy_since' ) ) {
 			$wpdb->query( "ALTER TABLE {$table} ADD COLUMN busy_since int(11) NOT NULL DEFAULT 0" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
@@ -125,6 +137,41 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		global $wpdb;
 		$columns = $wpdb->get_col( $wpdb->prepare( "SHOW COLUMNS FROM {$table} LIKE %s", $column ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- identifiers cannot be prepared.
 		return ! empty( $columns );
+	}
+
+	/**
+	 * Whether a table exists.
+	 *
+	 * @param string $table Table name.
+	 *
+	 * @return bool
+	 */
+	private function table_exists( $table ) {
+		global $wpdb;
+		$found = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test probe.
+		return ! empty( $found );
+	}
+
+	/**
+	 * Run a callback with the test harness temporary-table query rewrite
+	 * suspended. The harness rewrites CREATE TABLE and DROP TABLE to their
+	 * TEMPORARY forms, which breaks table-level fixtures: a real table
+	 * cannot be dropped and dbDelta would create an invisible temporary
+	 * table (SHOW TABLES does not list temporary tables).
+	 *
+	 * @param callable $callback The work to run against real tables.
+	 *
+	 * @return void
+	 */
+	private function with_real_tables( $callback ) {
+		remove_filter( 'query', array( $this, '_create_temporary_tables' ) );
+		remove_filter( 'query', array( $this, '_drop_temporary_tables' ) );
+		try {
+			$callback();
+		} finally {
+			add_filter( 'query', array( $this, '_create_temporary_tables' ) );
+			add_filter( 'query', array( $this, '_drop_temporary_tables' ) );
+		}
 	}
 
 	/**
@@ -217,6 +264,43 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 			$this->assertTrue(
 				$this->column_exists( $table, $column ),
 				"Upgrade must add {$column} to existing installs; the shipped db version needs a bump or dbDelta never runs."
+			);
+		}
+	}
+
+	/**
+	 * An install whose stored db version predates the snapshot table must
+	 * receive it when install() runs. Snapshot rows are the durable per-run
+	 * records that incremental backup chains hang off.
+	 *
+	 * @return void
+	 */
+	public function test_upgrade_creates_snapshot_table_on_existing_install() {
+		global $wpdb;
+
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+		$this->assertTrue( $this->table_exists( $table ), 'Precondition: fresh install has the snapshot table.' );
+
+		$this->with_real_tables(
+			function () use ( $wpdb, $table ) {
+				$wpdb->query( "DROP TABLE {$table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery, WordPress.DB.RestrictedFunctions -- test fixture, identifiers cannot be prepared.
+				$this->assertFalse( $this->table_exists( $table ), 'Precondition: table dropped to simulate an older install.' );
+
+				update_site_option( 'mainwp_db_version', '9.0.2.7' );
+
+				MainWP_Install::instance()->install();
+			}
+		);
+
+		$this->assertTrue(
+			$this->table_exists( $table ),
+			'Upgrade must create the snapshot table on existing installs; the shipped db version needs a bump or dbDelta never runs.'
+		);
+
+		foreach ( array( 'id', 'task_id', 'site_id', 'type', 'parent_id', 'created', 'archives', 'manifest_path', 'status' ) as $column ) {
+			$this->assertTrue(
+				$this->column_exists( $table, $column ),
+				"Snapshot table must have the {$column} column."
 			);
 		}
 	}

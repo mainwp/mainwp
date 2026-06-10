@@ -16,6 +16,7 @@ namespace MainWP\Dashboard;
  */
 enum MainWP_Backup_Type: string {
 
-    case Full     = 'full';
-    case Database = 'db';
+    case Full        = 'full';
+    case Database    = 'db';
+    case Incremental = 'incremental';
 }

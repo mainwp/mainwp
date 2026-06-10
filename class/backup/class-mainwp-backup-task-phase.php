@@ -34,4 +34,21 @@ enum MainWP_Backup_Task_Phase: string {
     public function is_terminal(): bool {
         return self::Completed === $this || self::Failed === $this;
     }
+
+    /**
+     * The human label for this phase. Escape at render time.
+     *
+     * @return string Translated label.
+     */
+    public function label(): string {
+        return match ( $this ) {
+            self::Queued         => __( 'Waiting to start', 'mainwp' ),
+            self::DumpingDb      => __( 'Exporting database', 'mainwp' ),
+            self::ArchivingFiles => __( 'Archiving files', 'mainwp' ),
+            self::Uploading      => __( 'Uploading', 'mainwp' ),
+            self::Submitting     => __( 'Finalizing', 'mainwp' ),
+            self::Completed      => __( 'Completed', 'mainwp' ),
+            self::Failed         => __( 'Failed', 'mainwp' ),
+        };
+    }
 }

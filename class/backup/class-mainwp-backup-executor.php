@@ -211,6 +211,12 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         'pid'                    => $pid,
                         'busy_since'             => 0,
                         'child_backup_task_id'   => '',
+                        'child_phase'            => '',
+                        'bytes_downloaded'       => 0,
+                        'bytes_expected'         => 0,
+                        'current_file'           => '',
+                        'files_processed'        => 0,
+                        'files_total'            => 0,
                     )
                 );
 
@@ -291,6 +297,8 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             if ( ! empty( $temp ) && isset( $temp['phase'] ) ) {
                 // Unknown phase strings from newer children stay null and keep polling.
                 $phase = MainWP_Backup_Task_Phase::tryFrom( (string) $temp['phase'] );
+
+                static::record_child_progress( $taskId, (int) $website->id, $temp );
 
                 if ( MainWP_Backup_Task_Phase::Failed === $phase ) {
                     // The child recorded why the task died; surface it as-is.
@@ -1042,6 +1050,51 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         );
 
         return $task_id;
+    }
+
+    /**
+     * Method record_child_progress()
+     *
+     * Map a child task status payload onto the granular progress fields
+     * of the wp_backup_progress row. The machine phase is mirrored
+     * verbatim (the human label derives from it at render time), and the
+     * optional counters land in the bytes/files columns. Fields absent
+     * from the payload keep their stored values, so older children that
+     * never report counters degrade to phase-only progress.
+     *
+     * @param int   $task_id Scheduled backup task id (wp_backup row).
+     * @param int   $site_id Child site id.
+     * @param array $payload Child status payload.
+     *
+     * @return void
+     */
+    public static function record_child_progress( int $task_id, int $site_id, array $payload ): void {
+        $fields = array();
+
+        if ( isset( $payload['phase'] ) && is_string( $payload['phase'] ) ) {
+            $fields['child_phase'] = sanitize_key( $payload['phase'] );
+        }
+
+        $progress = isset( $payload['progress'] ) && is_array( $payload['progress'] ) ? $payload['progress'] : array();
+        if ( isset( $progress['bytes_done'] ) ) {
+            $fields['bytes_downloaded'] = max( 0, (int) $progress['bytes_done'] );
+        }
+        if ( isset( $progress['bytes_total'] ) ) {
+            $fields['bytes_expected'] = max( 0, (int) $progress['bytes_total'] );
+        }
+        if ( isset( $progress['current_file'] ) ) {
+            $fields['current_file'] = substr( sanitize_text_field( (string) $progress['current_file'] ), 0, 255 );
+        }
+        if ( isset( $progress['files_processed'] ) ) {
+            $fields['files_processed'] = max( 0, (int) $progress['files_processed'] );
+        }
+        if ( isset( $progress['files_total'] ) ) {
+            $fields['files_total'] = max( 0, (int) $progress['files_total'] );
+        }
+
+        if ( ! empty( $fields ) ) {
+            MainWP_DB_Backup::instance()->update_backup_task_progress( $task_id, $site_id, $fields );
+        }
     }
 
     /**

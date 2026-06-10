@@ -31,7 +31,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * @var string DB version info.
      */
-    protected $mainwp_db_version = '9.0.2.6'; // NOSONAR - no IP. Bumped for the mainwp_enableNativeBackups option rename migration. Previous 9.0.2.5 bump added the wp_backup_progress child_backup_task_id column.
+    protected $mainwp_db_version = '9.0.2.7'; // NOSONAR - no IP. Bumped so dbDelta adds the granular wp_backup_progress columns (child_phase, bytes, files). Previous 9.0.2.6 bump renamed the flag option to mainwp_enableNativeBackups.
 
     /**
      * Protected variable to hold the database option name.
@@ -321,6 +321,12 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
   pid int(11) NOT NULL DEFAULT 0,
   busy_since int(11) NOT NULL DEFAULT 0,
   child_backup_task_id varchar(64) NOT NULL DEFAULT '',
+  child_phase varchar(20) NOT NULL DEFAULT '',
+  bytes_downloaded bigint(20) NOT NULL DEFAULT 0,
+  bytes_expected bigint(20) NOT NULL DEFAULT 0,
+  current_file varchar(255) NOT NULL DEFAULT '',
+  files_processed int(11) NOT NULL DEFAULT 0,
+  files_total int(11) NOT NULL DEFAULT 0,
   KEY idx_task_id (task_id)";
         if ( empty( $currentVersion ) || version_compare( $currentVersion, '8.53', '<=' ) ) {
             $tbl .= ',

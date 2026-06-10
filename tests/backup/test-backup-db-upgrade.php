@@ -70,6 +70,11 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		if ( ! $this->column_exists( $table, 'child_backup_task_id' ) ) {
 			$wpdb->query( "ALTER TABLE {$table} ADD COLUMN child_backup_task_id varchar(64) NOT NULL DEFAULT ''" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
 		}
+		foreach ( $this->progress_columns() as $column => $definition ) {
+			if ( ! $this->column_exists( $table, $column ) ) {
+				$wpdb->query( "ALTER TABLE {$table} ADD COLUMN {$column} {$definition}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
+			}
+		}
 
 		if ( false === $this->saved_db_version ) {
 			delete_site_option( 'mainwp_db_version' );
@@ -90,6 +95,22 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		}
 
 		parent::tear_down();
+	}
+
+	/**
+	 * The granular progress columns and their definitions.
+	 *
+	 * @return array Column name => SQL definition.
+	 */
+	private function progress_columns() {
+		return array(
+			'child_phase'      => "varchar(20) NOT NULL DEFAULT ''",
+			'bytes_downloaded' => 'bigint(20) NOT NULL DEFAULT 0',
+			'bytes_expected'   => 'bigint(20) NOT NULL DEFAULT 0',
+			'current_file'     => "varchar(255) NOT NULL DEFAULT ''",
+			'files_processed'  => 'int(11) NOT NULL DEFAULT 0',
+			'files_total'      => 'int(11) NOT NULL DEFAULT 0',
+		);
 	}
 
 	/**
@@ -170,5 +191,33 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		);
 		$stored = $wpdb->get_var( "SELECT child_backup_task_id FROM {$table} WHERE task_id = 999999 AND wp_id = 999999" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test probe, identifiers cannot be prepared.
 		$this->assertSame( $task_id, $stored );
+	}
+
+	/**
+	 * An install whose stored db version predates the granular progress
+	 * columns must receive all of them when install() runs.
+	 *
+	 * @return void
+	 */
+	public function test_upgrade_adds_granular_progress_columns_to_existing_install() {
+		global $wpdb;
+
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_progress' );
+
+		foreach ( array_keys( $this->progress_columns() ) as $column ) {
+			$this->assertTrue( $this->column_exists( $table, $column ), "Precondition: fresh install has {$column}." );
+			$wpdb->query( "ALTER TABLE {$table} DROP COLUMN {$column}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture, identifiers cannot be prepared.
+		}
+
+		update_site_option( 'mainwp_db_version', '9.0.2.6' );
+
+		MainWP_Install::instance()->install();
+
+		foreach ( array_keys( $this->progress_columns() ) as $column ) {
+			$this->assertTrue(
+				$this->column_exists( $table, $column ),
+				"Upgrade must add {$column} to existing installs; the shipped db version needs a bump or dbDelta never runs."
+			);
+		}
 	}
 }

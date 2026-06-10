@@ -87,4 +87,18 @@ class MainWP_Backup_Enums_Test extends MainWP_Abilities_Test_Case {
 		$this->assertFalse( MainWP_Backup_Task_Phase::Uploading->is_terminal() );
 		$this->assertFalse( MainWP_Backup_Task_Phase::Submitting->is_terminal() );
 	}
+
+	/**
+	 * Every phase carries a non-empty human label distinct from its wire
+	 * value, so the UI never shows raw machine phases.
+	 *
+	 * @return void
+	 */
+	public function test_task_phase_labels() {
+		foreach ( MainWP_Backup_Task_Phase::cases() as $phase ) {
+			$this->assertNotSame( '', $phase->label(), $phase->value . ' must have a label.' );
+		}
+		$this->assertSame( 'Exporting database', MainWP_Backup_Task_Phase::DumpingDb->label() );
+		$this->assertSame( 'Archiving files', MainWP_Backup_Task_Phase::ArchivingFiles->label() );
+	}
 }

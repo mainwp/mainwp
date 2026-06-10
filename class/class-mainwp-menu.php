@@ -97,7 +97,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses \MainWP\Dashboard\MainWP_Themes::init_menu()
      * @uses \MainWP\Dashboard\MainWP_Plugins::init_menu()
      * @uses \MainWP\Dashboard\MainWP_User::init_menu()
-     * @uses \MainWP\Dashboard\MainWP_Manage_Backups::init_menu()
+     * @uses \MainWP\Dashboard\MainWP_Backup_Page::init_menu()
      * @uses \MainWP\Dashboard\MainWP_Manage_Groups::init_menu()
      * @uses \MainWP\Dashboard\MainWP_Monitoring::init_menu()
      * @uses \MainWP\Dashboard\MainWP_Settings::init_menu()
@@ -241,7 +241,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 'slug'               => 'ManageBackups',
                 'menu_level'         => 2,
                 'menu_rights'        => true,
-                'init_menu_callback' => array( MainWP_Manage_Backups::class, 'init_menu' ),
+                'init_menu_callback' => array( MainWP_Backup_Page::class, 'init_menu' ),
             );
 
             // Manage Settings.
@@ -1295,7 +1295,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         <a href="<?php echo esc_url( $link['url'] ); ?>" class="ui mini basic fluid button small text"><i class="icon wordpress"></i> <?php echo esc_html( $link['text'] ); ?></a><?php //phpcs:ignore -- to avoid auto fix icon wordpress. ?>
                     </div>
                     <div class="column">
-                        <a id="mainwp-help-menu-item-mobile" class="ui mini basic fluid button" href="#"><i class="question circle icon"></i> <?php esc_html_e( 'Help', 'mainwp' ); ?></a><?php //NOSONAR -- ignore double ID, elements not rendered at the same time. ?>
+                        <a id="mainwp-help-menu-item-mobile" class="ui mini basic fluid button" href="#"><i class="question circle icon"></i> <?php esc_html_e( 'Help', 'mainwp' ); ?></a><?php // NOSONAR -- ignore double ID, elements not rendered at the same time. ?>
                     </div>
                     <div class="column item-wp-admin">
                         <a class="ui mini basic fluid button" href="<?php echo esc_url_raw( wp_logout_url() ); ?>"><i class="sign out icon"></i> <?php esc_html_e( 'Log Out', 'mainwp' ); ?></a>

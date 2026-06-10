@@ -12,7 +12,7 @@ namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Backup_Monitor;
 use MainWP\Dashboard\MainWP_Exception;
-use MainWP\Dashboard\MainWP_Manage_Backups;
+use MainWP\Dashboard\MainWP_Backup_Page;
 use MainWP\Dashboard\MainWP_Post_Backup_Handler;
 use MainWP\Dashboard\MainWP_System_Utility;
 
@@ -90,7 +90,7 @@ class MainWP_Backup_Environment_Test extends \WP_UnitTestCase {
 	 */
 	public function test_environment_notices_silent_when_healthy() {
 		ob_start();
-		MainWP_Manage_Backups::render_backup_environment_notices();
+		MainWP_Backup_Page::render_backup_environment_notices();
 		$output = ob_get_clean();
 
 		$this->assertStringNotContainsString( 'not writable', $output );
@@ -113,7 +113,7 @@ class MainWP_Backup_Environment_Test extends \WP_UnitTestCase {
 		chmod( $backup_dir, 0555 ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
 
 		ob_start();
-		MainWP_Manage_Backups::render_backup_environment_notices();
+		MainWP_Backup_Page::render_backup_environment_notices();
 		$output = ob_get_clean();
 
 		$this->assertStringContainsString( 'not writable', $output );

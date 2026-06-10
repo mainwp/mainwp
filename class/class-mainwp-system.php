@@ -117,7 +117,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @uses \MainWP\Dashboard\MainWP_Extensions::init()
      * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::get_class_name()
      * @uses \MainWP\Dashboard\MainWP_Install_Bulk::init()
-     * @uses \MainWP\Dashboard\MainWP_Manage_Backups::init()
+     * @uses \MainWP\Dashboard\MainWP_Backup_Page::init()
      * @uses \MainWP\Dashboard\MainWP_Manage_Sites::init()
      * @uses \MainWP\Dashboard\MainWP_Overview::get()
      * @uses \MainWP\Dashboard\MainWP_Page::init()
@@ -280,7 +280,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         MainWP_Post::init();
         MainWP_Settings::init();
         if ( get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
-            MainWP_Manage_Backups::init();
+            MainWP_Backup_Page::init();
         }
         MainWP_Manage_Groups::init();
         MainWP_User::init();
@@ -2130,7 +2130,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * Method get_selected_sites_with_allowed_sites.
      *
      * @param  array $selected_ids Selected sites IDs.
-     * @param  array $current_sites Current sites IDs.
+     * @param  array $current_sites_ids Current sites IDs.
      * @return array Not selected but in not allowed sites in current sites ids, and selected sites ids.
      */
     public static function get_selected_sites_with_allowed_sites( $selected_ids, $current_sites_ids = array() ) {

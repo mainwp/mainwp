@@ -31,7 +31,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * @var string DB version info.
      */
-    protected $mainwp_db_version = '9.0.2.3'; // NOSONAR - no IP. Bumped for MWP-1566 sibling-dir chmod migration (MWP-1558 follow-up). Original 9.0.2.0 bump for MWP-1557/1558.
+    protected $mainwp_db_version = '9.0.2.4'; // NOSONAR - no IP. Bumped so dbDelta adds the wp_backup_progress busy_since column on existing installs. Previous 9.0.2.3 bump for MWP-1566 sibling-dir chmod migration (MWP-1558 follow-up).
 
     /**
      * Protected variable to hold the database option name.

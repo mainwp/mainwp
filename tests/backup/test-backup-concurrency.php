@@ -10,7 +10,7 @@
 
 namespace MainWP\Dashboard\Tests;
 
-use MainWP\Dashboard\MainWP_Backup_Handler;
+use MainWP\Dashboard\MainWP_Backup_Monitor;
 use MainWP\Dashboard\MainWP_Backup_Settings;
 
 /**
@@ -35,9 +35,9 @@ class MainWP_Backup_Concurrency_Test extends \WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_slots_granted_up_to_limit_then_refused() {
-		$first  = MainWP_Backup_Handler::acquire_backup_slot( 2 );
-		$second = MainWP_Backup_Handler::acquire_backup_slot( 2 );
-		$third  = MainWP_Backup_Handler::acquire_backup_slot( 2 );
+		$first  = MainWP_Backup_Monitor::acquire_backup_slot( 2 );
+		$second = MainWP_Backup_Monitor::acquire_backup_slot( 2 );
+		$third  = MainWP_Backup_Monitor::acquire_backup_slot( 2 );
 
 		$this->assertIsString( $first );
 		$this->assertIsString( $second );
@@ -51,13 +51,13 @@ class MainWP_Backup_Concurrency_Test extends \WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_released_slot_frees_capacity() {
-		$first  = MainWP_Backup_Handler::acquire_backup_slot( 2 );
-		$second = MainWP_Backup_Handler::acquire_backup_slot( 2 );
+		$first  = MainWP_Backup_Monitor::acquire_backup_slot( 2 );
+		$second = MainWP_Backup_Monitor::acquire_backup_slot( 2 );
 		$this->assertIsString( $second );
 
-		MainWP_Backup_Handler::release_backup_slot( $first );
+		MainWP_Backup_Monitor::release_backup_slot( $first );
 
-		$this->assertIsString( MainWP_Backup_Handler::acquire_backup_slot( 2 ), 'A released slot must be reusable.' );
+		$this->assertIsString( MainWP_Backup_Monitor::acquire_backup_slot( 2 ), 'A released slot must be reusable.' );
 	}
 
 	/**
@@ -81,7 +81,7 @@ class MainWP_Backup_Concurrency_Test extends \WP_UnitTestCase {
 			2 * HOUR_IN_SECONDS
 		);
 
-		$token = MainWP_Backup_Handler::acquire_backup_slot( 2 );
+		$token = MainWP_Backup_Monitor::acquire_backup_slot( 2 );
 
 		$this->assertIsString( $token, 'Stale slots must not block new backups.' );
 		$slots = get_transient( 'mainwp_backup_slots' );
@@ -99,7 +99,7 @@ class MainWP_Backup_Concurrency_Test extends \WP_UnitTestCase {
 		$max = MainWP_Backup_Settings::get_max_concurrent_backups();
 
 		$this->assertSame( 1, $max );
-		$this->assertIsString( MainWP_Backup_Handler::acquire_backup_slot( $max ) );
-		$this->assertFalse( MainWP_Backup_Handler::acquire_backup_slot( $max ) );
+		$this->assertIsString( MainWP_Backup_Monitor::acquire_backup_slot( $max ) );
+		$this->assertFalse( MainWP_Backup_Monitor::acquire_backup_slot( $max ) );
 	}
 }

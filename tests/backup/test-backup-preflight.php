@@ -13,6 +13,7 @@
 namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Backup_Handler;
+use MainWP\Dashboard\MainWP_Backup_Monitor;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_Exception;
 

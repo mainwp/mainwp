@@ -10,7 +10,7 @@
 
 namespace MainWP\Dashboard\Tests;
 
-use MainWP\Dashboard\MainWP_Backup_Handler;
+use MainWP\Dashboard\MainWP_Backup_Monitor;
 use MainWP\Dashboard\MainWP_Exception;
 use MainWP\Dashboard\MainWP_Manage_Backups;
 use MainWP\Dashboard\MainWP_Post_Backup_Handler;
@@ -43,7 +43,7 @@ class MainWP_Backup_Environment_Test extends \WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_healthy_environment_passes() {
-		MainWP_Backup_Handler::validate_backup_environment();
+		MainWP_Backup_Monitor::validate_backup_environment();
 		$this->assertTrue( true, 'No exception for a healthy environment.' );
 	}
 
@@ -65,7 +65,7 @@ class MainWP_Backup_Environment_Test extends \WP_UnitTestCase {
 		chmod( $backup_dir, 0555 ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
 
 		try {
-			MainWP_Backup_Handler::validate_backup_environment();
+			MainWP_Backup_Monitor::validate_backup_environment();
 			$this->fail( 'Expected exception for a non-writable backup directory.' );
 		} catch ( MainWP_Exception $e ) {
 			$this->assertSame( 'mainwp_backup_dir_not_writable', $e->get_message_error_code() );

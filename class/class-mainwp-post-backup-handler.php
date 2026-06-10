@@ -218,7 +218,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
      *
      * @throws MainWP_Exception On errors.
      *
-     * @uses \MainWP\Dashboard\MainWP_Backup_Handler::backup_check_pid()
+     * @uses \MainWP\Dashboard\MainWP_Backup_Monitor::backup_check_pid()
      * @uses \MainWP\Dashboard\MainWP_Exception
      */
     public function mainwp_backup_checkpid() {
@@ -233,7 +233,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             $type      = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
             $subfolder = isset( $_POST['subfolder'] ) ? sanitize_text_field( wp_unslash( $_POST['subfolder'] ) ) : '';
             $filename  = isset( $_POST['filename'] ) ? sanitize_text_field( wp_unslash( $_POST['filename'] ) ) : '';
-            wp_send_json( MainWP_Backup_Handler::backup_check_pid( $site_id, $pid, $type, $subfolder, $filename ) );
+            wp_send_json( MainWP_Backup_Monitor::backup_check_pid( $site_id, $pid, $type, $subfolder, $filename ) );
         } catch ( MainWP_Exception $e ) {
             $this->die_exception_error( $e );
         }

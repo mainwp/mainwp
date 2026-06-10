@@ -10,7 +10,7 @@
 
 namespace MainWP\Dashboard\Tests;
 
-use MainWP\Dashboard\MainWP_Backup_Handler;
+use MainWP\Dashboard\MainWP_Backup_Monitor;
 
 /**
  * Class MainWP_Backup_Error_Formatting_Test
@@ -28,7 +28,7 @@ class MainWP_Backup_Error_Formatting_Test extends \WP_UnitTestCase {
 			$entries[] = "Backup error number {$i} occurred.";
 		}
 
-		$output = MainWP_Backup_Handler::format_backup_errors( $entries );
+		$output = MainWP_Backup_Monitor::format_backup_errors( $entries );
 
 		$this->assertStringContainsString( 'Backup error number 1 occurred.', $output );
 		$this->assertStringContainsString( 'Backup error number 10 occurred.', $output );
@@ -45,7 +45,7 @@ class MainWP_Backup_Error_Formatting_Test extends \WP_UnitTestCase {
 	public function test_format_backup_errors_no_truncation_under_limit() {
 		$entries = array( 'First error.', 'Second error.' );
 
-		$output = MainWP_Backup_Handler::format_backup_errors( $entries );
+		$output = MainWP_Backup_Monitor::format_backup_errors( $entries );
 
 		$this->assertStringContainsString( 'First error.', $output );
 		$this->assertStringContainsString( 'Second error.', $output );
@@ -58,7 +58,7 @@ class MainWP_Backup_Error_Formatting_Test extends \WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_format_backup_errors_uses_numbered_list() {
-		$output = MainWP_Backup_Handler::format_backup_errors( array( 'Only error.' ) );
+		$output = MainWP_Backup_Monitor::format_backup_errors( array( 'Only error.' ) );
 
 		$this->assertStringContainsString( '<ol>', $output );
 		$this->assertStringContainsString( '<li>', $output );
@@ -75,7 +75,7 @@ class MainWP_Backup_Error_Formatting_Test extends \WP_UnitTestCase {
 			'Query failed: SELECT * FROM wp_woocommerce_orders WHERE id > 5',
 		);
 
-		$output = MainWP_Backup_Handler::format_backup_errors( $entries );
+		$output = MainWP_Backup_Monitor::format_backup_errors( $entries );
 
 		$this->assertStringNotContainsString( ABSPATH, $output );
 		$this->assertStringNotContainsString( 'wp_woocommerce_orders', $output );
@@ -87,7 +87,7 @@ class MainWP_Backup_Error_Formatting_Test extends \WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_format_backup_errors_empty_input() {
-		$this->assertSame( '', MainWP_Backup_Handler::format_backup_errors( array() ) );
+		$this->assertSame( '', MainWP_Backup_Monitor::format_backup_errors( array() ) );
 	}
 
 	/**

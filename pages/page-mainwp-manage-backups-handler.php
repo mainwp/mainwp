@@ -312,7 +312,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
     public static function execute_backup_task( $task, $nrOfSites = 0, $updateRun = true ) { // phpcs:ignore -- NOSONAR - not quite complex function.
 
         // Cap concurrent backup tasks; a refused task stays queued for the next cron cycle.
-        $slot_token = MainWP_Backup_Handler::acquire_backup_slot( MainWP_Backup_Settings::get_max_concurrent_backups() );
+        $slot_token = MainWP_Backup_Monitor::acquire_backup_slot( MainWP_Backup_Settings::get_max_concurrent_backups() );
         if ( false === $slot_token ) {
             return false;
         }
@@ -320,7 +320,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         try {
             return static::execute_backup_task_run( $task, $nrOfSites, $updateRun );
         } finally {
-            MainWP_Backup_Handler::release_backup_slot( $slot_token );
+            MainWP_Backup_Monitor::release_backup_slot( $slot_token );
         }
     }
 
@@ -475,7 +475,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         }
 
         if ( null !== $errorOutput ) {
-            MainWP_DB_Backup::instance()->update_backup_errors( $task->id, MainWP_Backup_Handler::format_backup_errors( $errorEntries ) );
+            MainWP_DB_Backup::instance()->update_backup_errors( $task->id, MainWP_Backup_Monitor::format_backup_errors( $errorEntries ) );
         }
 
         if ( count( $completed_sites ) === count( $sites ) ) {

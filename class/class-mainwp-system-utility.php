@@ -1259,6 +1259,8 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         $cached_icons[ $slug ] = $value;
 
         /**
+         * Filter the cached icons before they are saved.
+         *
          * @since 5.4.0.18
          */
         $cached_icons = apply_filters( 'mainwp_before_save_cached_icons', $cached_icons, $icon, $slug, $type, $custom_icon, $noexp );

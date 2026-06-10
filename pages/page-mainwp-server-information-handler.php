@@ -2929,7 +2929,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
             );
         }
 
-        if ( is_writable( $path ) ) {
+        if ( is_writable( $path ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_is_writable -- server info report probes the real filesystem state.
             return array(
                 'value'  => esc_html__( 'Writable', 'mainwp' ),
                 'status' => 'pass',

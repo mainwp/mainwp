@@ -167,7 +167,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         $excludedFolder = explode( "\n", $excludedFolder );
         $excludedFolder = array_map( array( MainWP_Utility::get_class_name(), 'trim_slashes' ), $excludedFolder );
         $excludedFolder = array_map( 'htmlentities', $excludedFolder );
-        $excludedFolder = MainWP_Backup_Handler::sanitize_exclude_list( $excludedFolder );
+        $excludedFolder = MainWP_Backup_Settings::sanitize_exclude_list( $excludedFolder );
         $sites          = '';
         $groups         = '';
 
@@ -236,7 +236,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         $excludedFolder = explode( "\n", $excludedFolder );
         $excludedFolder = array_map( array( MainWP_Utility::get_class_name(), 'trim_slashes' ), $excludedFolder );
         $excludedFolder = array_map( 'htmlentities', $excludedFolder );
-        $excludedFolder = MainWP_Backup_Handler::sanitize_exclude_list( $excludedFolder );
+        $excludedFolder = MainWP_Backup_Settings::sanitize_exclude_list( $excludedFolder );
 
         $sites  = '';
         $groups = '';
@@ -312,7 +312,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
     public static function execute_backup_task( $task, $nrOfSites = 0, $updateRun = true ) { // phpcs:ignore -- NOSONAR - not quite complex function.
 
         // Cap concurrent backup tasks; a refused task stays queued for the next cron cycle.
-        $slot_token = MainWP_Backup_Handler::acquire_backup_slot( MainWP_Backup_Handler::get_max_concurrent_backups() );
+        $slot_token = MainWP_Backup_Handler::acquire_backup_slot( MainWP_Backup_Settings::get_max_concurrent_backups() );
         if ( false === $slot_token ) {
             return false;
         }

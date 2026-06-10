@@ -11,6 +11,7 @@
 namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Backup_Handler;
+use MainWP\Dashboard\MainWP_Backup_Settings;
 
 /**
  * Class MainWP_Backup_Concurrency_Test
@@ -95,7 +96,7 @@ class MainWP_Backup_Concurrency_Test extends \WP_UnitTestCase {
 	 */
 	public function test_option_controls_limit() {
 		update_option( 'mainwp_backup_max_concurrent', 1 );
-		$max = MainWP_Backup_Handler::get_max_concurrent_backups();
+		$max = MainWP_Backup_Settings::get_max_concurrent_backups();
 
 		$this->assertSame( 1, $max );
 		$this->assertIsString( MainWP_Backup_Handler::acquire_backup_slot( $max ) );

@@ -14,6 +14,7 @@
 namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Backup_Handler;
+use MainWP\Dashboard\MainWP_Backup_Settings;
 
 /**
  * Class MainWP_Backup_Exclude_Sanitization_Test
@@ -47,8 +48,8 @@ class MainWP_Backup_Exclude_Sanitization_Test extends MainWP_Abilities_Test_Case
 	 * @return void
 	 */
 	public function test_traversal_sequences_are_removed() {
-		$this->assertSame( 'etc/passwd', MainWP_Backup_Handler::sanitize_exclude_list( '../../etc/passwd' ) );
-		$this->assertSame( 'wp-content/etc', MainWP_Backup_Handler::sanitize_exclude_list( 'wp-content/../../etc' ) );
+		$this->assertSame( 'etc/passwd', MainWP_Backup_Settings::sanitize_exclude_list( '../../etc/passwd' ) );
+		$this->assertSame( 'wp-content/etc', MainWP_Backup_Settings::sanitize_exclude_list( 'wp-content/../../etc' ) );
 	}
 
 	/**
@@ -57,7 +58,7 @@ class MainWP_Backup_Exclude_Sanitization_Test extends MainWP_Abilities_Test_Case
 	 * @return void
 	 */
 	public function test_null_bytes_and_control_characters_are_stripped() {
-		$result = MainWP_Backup_Handler::sanitize_exclude_list( "wp-content/ca\0che/../secret\x01" );
+		$result = MainWP_Backup_Settings::sanitize_exclude_list( "wp-content/ca\0che/../secret\x01" );
 
 		$this->assertStringNotContainsString( "\0", $result );
 		$this->assertStringNotContainsString( "\x01", $result );
@@ -71,8 +72,8 @@ class MainWP_Backup_Exclude_Sanitization_Test extends MainWP_Abilities_Test_Case
 	 * @return void
 	 */
 	public function test_absolute_paths_become_relative() {
-		$this->assertSame( 'etc/passwd', MainWP_Backup_Handler::sanitize_exclude_list( '/etc/passwd' ) );
-		$this->assertSame( 'windows/system32', MainWP_Backup_Handler::sanitize_exclude_list( 'C:\\windows\\system32' ) );
+		$this->assertSame( 'etc/passwd', MainWP_Backup_Settings::sanitize_exclude_list( '/etc/passwd' ) );
+		$this->assertSame( 'windows/system32', MainWP_Backup_Settings::sanitize_exclude_list( 'C:\\windows\\system32' ) );
 	}
 
 	/**
@@ -82,10 +83,10 @@ class MainWP_Backup_Exclude_Sanitization_Test extends MainWP_Abilities_Test_Case
 	 * @return void
 	 */
 	public function test_entries_reduced_to_nothing_are_dropped() {
-		$this->assertSame( '', MainWP_Backup_Handler::sanitize_exclude_list( '..' ) );
-		$this->assertSame( '', MainWP_Backup_Handler::sanitize_exclude_list( '.' ) );
-		$this->assertSame( 'wp-content/cache', MainWP_Backup_Handler::sanitize_exclude_list( "..\nwp-content/cache" ) );
-		$this->assertSame( '', MainWP_Backup_Handler::sanitize_exclude_list( '' ) );
+		$this->assertSame( '', MainWP_Backup_Settings::sanitize_exclude_list( '..' ) );
+		$this->assertSame( '', MainWP_Backup_Settings::sanitize_exclude_list( '.' ) );
+		$this->assertSame( 'wp-content/cache', MainWP_Backup_Settings::sanitize_exclude_list( "..\nwp-content/cache" ) );
+		$this->assertSame( '', MainWP_Backup_Settings::sanitize_exclude_list( '' ) );
 	}
 
 	/**
@@ -97,9 +98,9 @@ class MainWP_Backup_Exclude_Sanitization_Test extends MainWP_Abilities_Test_Case
 	public function test_valid_entries_survive_all_input_shapes() {
 		$expected = 'wp-content/cache,wp-content/uploads/large';
 
-		$this->assertSame( $expected, MainWP_Backup_Handler::sanitize_exclude_list( "wp-content/cache\nwp-content/uploads/large" ) );
-		$this->assertSame( $expected, MainWP_Backup_Handler::sanitize_exclude_list( 'wp-content/cache,wp-content/uploads/large' ) );
-		$this->assertSame( $expected, MainWP_Backup_Handler::sanitize_exclude_list( array( 'wp-content/cache', 'wp-content/uploads/large' ) ) );
+		$this->assertSame( $expected, MainWP_Backup_Settings::sanitize_exclude_list( "wp-content/cache\nwp-content/uploads/large" ) );
+		$this->assertSame( $expected, MainWP_Backup_Settings::sanitize_exclude_list( 'wp-content/cache,wp-content/uploads/large' ) );
+		$this->assertSame( $expected, MainWP_Backup_Settings::sanitize_exclude_list( array( 'wp-content/cache', 'wp-content/uploads/large' ) ) );
 	}
 
 	/**
@@ -110,7 +111,7 @@ class MainWP_Backup_Exclude_Sanitization_Test extends MainWP_Abilities_Test_Case
 	public function test_mixed_list_neutralizes_only_hostile_entries() {
 		$this->assertSame(
 			'wp-content/cache,etc',
-			MainWP_Backup_Handler::sanitize_exclude_list( 'wp-content/cache,../etc' )
+			MainWP_Backup_Settings::sanitize_exclude_list( 'wp-content/cache,../etc' )
 		);
 	}
 

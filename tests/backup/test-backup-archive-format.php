@@ -12,7 +12,7 @@
 
 namespace MainWP\Dashboard\Tests;
 
-use MainWP\Dashboard\MainWP_Backup_Handler;
+use MainWP\Dashboard\MainWP_Backup_Settings;
 use MainWP\Dashboard\MainWP_DB;
 
 /**
@@ -42,7 +42,7 @@ class MainWP_Backup_Archive_Format_Test extends MainWP_Abilities_Test_Case {
 
 		delete_option( 'mainwp_archiveFormat' );
 
-		$this->assertSame( 'tar.gz', MainWP_Backup_Handler::get_current_archive_extension( $website ) );
+		$this->assertSame( 'tar.gz', MainWP_Backup_Settings::get_current_archive_extension( $website ) );
 	}
 
 	/**
@@ -56,7 +56,7 @@ class MainWP_Backup_Archive_Format_Test extends MainWP_Abilities_Test_Case {
 
 		update_option( 'mainwp_archiveFormat', 'zip' );
 
-		$this->assertSame( 'zip', MainWP_Backup_Handler::get_current_archive_extension( $website ) );
+		$this->assertSame( 'zip', MainWP_Backup_Settings::get_current_archive_extension( $website ) );
 	}
 
 	/**
@@ -79,6 +79,6 @@ class MainWP_Backup_Archive_Format_Test extends MainWP_Abilities_Test_Case {
 		); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
 		update_option( 'mainwp_archiveFormat', 'zip' );
 
-		$this->assertSame( 'tar.bz2', MainWP_Backup_Handler::get_current_archive_extension( $website ) );
+		$this->assertSame( 'tar.bz2', MainWP_Backup_Settings::get_current_archive_extension( $website ) );
 	}
 }

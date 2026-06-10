@@ -641,7 +641,7 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      *
      * Handle saving settings page.
      *
-     * @uses \MainWP\Dashboard\MainWP_Backup_Handler::handle_settings_post()
+     * @uses \MainWP\Dashboard\MainWP_Backup_Settings::handle_settings_post()
      * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_extension()
      * @uses \MainWP\Dashboard\MainWP_DB_Common::update_user_extension()
      * @uses \MainWP\Dashboard\MainWP_Monitoring_Handler::handle_settings_post()
@@ -688,7 +688,7 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             $is_valid_nonce = wp_verify_nonce( $nonce, 'Settings' ) || wp_verify_nonce( $nonce, 'MonitoringSettings' );
             if ( $is_valid_nonce ) {
                 $updated  = MainWP_Settings::handle_settings_post();
-                $updated |= MainWP_Backup_Handler::handle_settings_post();
+                $updated |= MainWP_Backup_Settings::handle_settings_post();
                 $updated |= MainWP_Monitoring_Handler::handle_settings_post();
                 $msg      = '';
                 if ( $updated ) {
@@ -1236,10 +1236,10 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @param  mixed $package The package URL.
      * @param  mixed $upgrader  The upgrader instance.
      * @param  mixed $hook_extra Extra information about the upgrade, including the plugin being updated.
-     * @return void
+     * @return mixed The unchanged upgrader reply.
      */
     public function hook_refresh_trusted_extension_package_url( $reply, $package, $upgrader, $hook_extra ) {
-        if ( isset( $hook_extra['plugin'] ) ) { // && isset( $_POST['mainwpsignature'] ) && isset( $_POST['function'] ) && 'upgradeplugintheme' === $_POST['function'] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- NOSONAR - hook for plugin update action, it is safe to use $_POST here.
+        if ( isset( $hook_extra['plugin'] ) ) {
             $ext_api_slug = dirname( $hook_extra['plugin'] );
             if ( ! empty( $ext_api_slug ) ) {
                 $rslt_info = MainWP_API_Handler::get_upgrade_information( $ext_api_slug );

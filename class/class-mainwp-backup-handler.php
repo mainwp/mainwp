@@ -1231,7 +1231,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      */
     public static function negotiate_backup_preflight( &$website, $archive_ext = '' ) { // phpcs:ignore -- NOSONAR - complex.
         try {
-            $preflight = MainWP_Connect::fetch_url_authed( $website, 'backup_preflight', array() );
+            $preflight = MainWP_Connect::fetch_with_retry( $website, 'backup_preflight', array() );
         } catch ( \Exception $e ) {
             MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'Backup preflight unavailable: ' . $e->getMessage() );
             return; // Capability unknown - proceed for backwards compatibility.

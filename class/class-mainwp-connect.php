@@ -2075,6 +2075,60 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     }
 
     /**
+     * Method fetch_with_retry()
+     *
+     * Fetch from a child site with retries and exponential backoff
+     * (1s, 2s between attempts by default). Used for short idempotent
+     * requests like the backup preflight where a transient network blip
+     * should not fail the whole operation.
+     *
+     * @param object $website     Website object.
+     * @param string $what        Child site action.
+     * @param array  $params      Request parameters.
+     * @param int    $max_retries Maximum attempts (default 3).
+     *
+     * @return mixed Child site response.
+     * @throws MainWP_Exception When all attempts fail.
+     */
+    public static function fetch_with_retry( &$website, $what, $params = array(), $max_retries = 3 ) {
+        $last_error = null;
+
+        for ( $attempt = 1; $attempt <= $max_retries; $attempt++ ) {
+            try {
+                return static::fetch_url_authed( $website, $what, $params );
+            } catch ( \Exception $e ) {
+                $last_error = $e;
+                if ( $attempt < $max_retries ) {
+                    /**
+                     * Filter the backoff delay in seconds between retried child requests.
+                     *
+                     * @param int    $delay   Delay in seconds (1, 2, 4, ...).
+                     * @param int    $attempt Attempt number that just failed.
+                     * @param string $what    Child site action.
+                     */
+                    $delay = (int) apply_filters( 'mainwp_backup_retry_delay', 2 ** ( $attempt - 1 ), $attempt, $what );
+                    if ( $delay > 0 ) {
+                        sleep( $delay );
+                    }
+                }
+            }
+        }
+
+        // phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- internal diagnostic context.
+        throw new MainWP_Exception(
+            sprintf(
+                /* translators: 1: number of attempts, 2: last error message */
+                esc_html__( 'The request to the child site failed after %1$d attempts. Last error: %2$s', 'mainwp' ),
+                (int) $max_retries,
+                esc_html( null !== $last_error ? $last_error->getMessage() : '' )
+            ),
+            null,
+            MainWP_Backup_Error_Codes::ERR_RETRY_EXHAUSTED
+        );
+        // phpcs:enable WordPress.Security.EscapeOutput.ExceptionNotEscaped
+    }
+
+    /**
      * Method parse_content_range_header()
      *
      * Parse a Content-Range response header value.

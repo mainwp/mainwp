@@ -311,6 +311,30 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      */
     public static function execute_backup_task( $task, $nrOfSites = 0, $updateRun = true ) { // phpcs:ignore -- NOSONAR - not quite complex function.
 
+        // Cap concurrent backup tasks; a refused task stays queued for the next cron cycle.
+        $slot_token = MainWP_Backup_Handler::acquire_backup_slot( MainWP_Backup_Handler::get_max_concurrent_backups() );
+        if ( false === $slot_token ) {
+            return false;
+        }
+
+        try {
+            return static::execute_backup_task_run( $task, $nrOfSites, $updateRun );
+        } finally {
+            MainWP_Backup_Handler::release_backup_slot( $slot_token );
+        }
+    }
+
+    /**
+     * Run the backup task once a concurrency slot is held.
+     *
+     * @param mixed   $task Task to perform.
+     * @param integer $nrOfSites Number of Child Sites to perform the task on.
+     * @param bool    $updateRun ture|false.
+     *
+     * @return mixed $errorOutput.
+     */
+    private static function execute_backup_task_run( $task, $nrOfSites = 0, $updateRun = true ) { // phpcs:ignore -- NOSONAR - not quite complex function.
+
         if ( $updateRun ) {
             MainWP_DB_Backup::instance()->update_backup_run( $task->id );
         }

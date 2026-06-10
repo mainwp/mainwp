@@ -1208,6 +1208,85 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     }
 
     /**
+     * Method get_max_concurrent_backups()
+     *
+     * Get the configured maximum number of concurrent backup tasks.
+     *
+     * @return int Maximum concurrent backups (default 2, minimum 1).
+     */
+    public static function get_max_concurrent_backups() {
+        return max( 1, (int) get_option( 'mainwp_backup_max_concurrent', 2 ) );
+    }
+
+    /**
+     * Method acquire_backup_slot()
+     *
+     * Acquire a backup execution slot from the transient-based semaphore.
+     * Slots from crashed processes expire after two hours so a crash never
+     * blocks backups permanently.
+     *
+     * The transient read-modify-write is best effort: under an external
+     * object cache two requests can race within milliseconds of each other
+     * and briefly exceed the limit by one. That is acceptable here because
+     * the slot cap protects dashboard resources only; each child site
+     * enforces its own single-backup rule.
+     *
+     * @param int $max_concurrent Maximum concurrent backup tasks (default 2).
+     *
+     * @return string|false Slot token on success, false when all slots are in use.
+     */
+    public static function acquire_backup_slot( $max_concurrent = 2 ) {
+        $lock_key = 'mainwp_backup_slots';
+        $slots    = get_transient( $lock_key );
+
+        if ( ! is_array( $slots ) ) {
+            $slots = array();
+        }
+
+        $now   = time();
+        $slots = array_filter(
+            $slots,
+            function ( $slot ) use ( $now ) {
+                return is_array( $slot ) && isset( $slot['started'] ) && ( $now - (int) $slot['started'] ) < 2 * HOUR_IN_SECONDS;
+            }
+        );
+
+        if ( count( $slots ) >= $max_concurrent ) {
+            set_transient( $lock_key, $slots, 2 * HOUR_IN_SECONDS );
+            return false;
+        }
+
+        $token           = wp_generate_password( 12, false );
+        $slots[ $token ] = array(
+            'started' => $now,
+            'pid'     => getmypid(),
+        );
+
+        set_transient( $lock_key, $slots, 2 * HOUR_IN_SECONDS );
+
+        return $token;
+    }
+
+    /**
+     * Method release_backup_slot()
+     *
+     * Release a backup execution slot.
+     *
+     * @param string $token Slot token from acquire_backup_slot().
+     *
+     * @return void
+     */
+    public static function release_backup_slot( $token ) {
+        $lock_key = 'mainwp_backup_slots';
+        $slots    = get_transient( $lock_key );
+
+        if ( is_array( $slots ) && isset( $slots[ $token ] ) ) {
+            unset( $slots[ $token ] );
+            set_transient( $lock_key, $slots, 2 * HOUR_IN_SECONDS );
+        }
+    }
+
+    /**
      * Method validate_backup_environment()
      *
      * Validates the dashboard server can receive and store a backup before

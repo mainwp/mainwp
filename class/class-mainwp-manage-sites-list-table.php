@@ -90,7 +90,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
      *
      * @return mixed $backupnow_lnk.
      *
-     * @uses \MainWP\Dashboard\MainWP_Backup_Handler::is_archive()
+     * @uses \MainWP\Dashboard\MainWP_Backup_File_Manager::is_archive()
      * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_option()
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_specific_dir()
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
@@ -144,7 +144,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                 while ( false !== ( $file = readdir( $dh ) ) ) {
                     if ( '.' !== $file && '..' !== $file ) {
                         $theFile = $dir . $file;
-                        if ( MainWP_Backup_Handler::is_archive( $file ) && ! MainWP_Backup_Handler::is_sql_archive( $file ) && $wp_filesystem->mtime( $theFile ) > $lastbackup ) {
+                        if ( MainWP_Backup_File_Manager::is_archive( $file ) && ! MainWP_Backup_File_Manager::is_sql_archive( $file ) && $wp_filesystem->mtime( $theFile ) > $lastbackup ) {
                             $lastbackup = $wp_filesystem->mtime( $theFile );
                         }
                     }

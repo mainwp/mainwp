@@ -10,7 +10,7 @@
 
 namespace MainWP\Dashboard\Tests;
 
-use MainWP\Dashboard\MainWP_Backup_Handler;
+use MainWP\Dashboard\MainWP_Backup_File_Manager;
 
 // phpcs:disable WordPress.WP.AlternativeFunctions -- direct file IO in tests.
 
@@ -58,7 +58,7 @@ class MainWP_Download_Lock_Test extends \WP_UnitTestCase {
 	public function test_acquire_creates_lock_file_with_metadata() {
 		$file = $this->dir . 'backup.zip';
 
-		$this->assertTrue( MainWP_Backup_Handler::acquire_download_lock( $file, 42, 7 ) );
+		$this->assertTrue( MainWP_Backup_File_Manager::acquire_download_lock( $file, 42, 7 ) );
 
 		$lock = $file . '.downloading';
 		$this->assertFileExists( $lock );
@@ -76,8 +76,8 @@ class MainWP_Download_Lock_Test extends \WP_UnitTestCase {
 	public function test_live_lock_blocks_second_acquire() {
 		$file = $this->dir . 'backup.zip';
 
-		$this->assertTrue( MainWP_Backup_Handler::acquire_download_lock( $file, 42, 7 ) );
-		$this->assertFalse( MainWP_Backup_Handler::acquire_download_lock( $file, 42, 7 ) );
+		$this->assertTrue( MainWP_Backup_File_Manager::acquire_download_lock( $file, 42, 7 ) );
+		$this->assertFalse( MainWP_Backup_File_Manager::acquire_download_lock( $file, 42, 7 ) );
 	}
 
 	/**
@@ -90,7 +90,7 @@ class MainWP_Download_Lock_Test extends \WP_UnitTestCase {
 		$lock = $file . '.downloading';
 		file_put_contents( $lock, wp_json_encode( array( 'started' => time() - 2 * HOUR_IN_SECONDS, 'site_id' => 42, 'task_id' => 7 ) ) );
 
-		$this->assertTrue( MainWP_Backup_Handler::acquire_download_lock( $file, 42, 7 ) );
+		$this->assertTrue( MainWP_Backup_File_Manager::acquire_download_lock( $file, 42, 7 ) );
 
 		$data = json_decode( file_get_contents( $lock ), true );
 		$this->assertGreaterThan( time() - 60, $data['started'], 'The stale lock must be replaced with a fresh one.' );
@@ -105,7 +105,7 @@ class MainWP_Download_Lock_Test extends \WP_UnitTestCase {
 		$file = $this->dir . 'backup.zip';
 		file_put_contents( $file . '.downloading', 'not json at all' );
 
-		$this->assertTrue( MainWP_Backup_Handler::acquire_download_lock( $file, 42, 7 ) );
+		$this->assertTrue( MainWP_Backup_File_Manager::acquire_download_lock( $file, 42, 7 ) );
 	}
 
 	/**
@@ -115,9 +115,9 @@ class MainWP_Download_Lock_Test extends \WP_UnitTestCase {
 	 */
 	public function test_release_removes_lock_file() {
 		$file = $this->dir . 'backup.zip';
-		MainWP_Backup_Handler::acquire_download_lock( $file, 42, 7 );
+		MainWP_Backup_File_Manager::acquire_download_lock( $file, 42, 7 );
 
-		MainWP_Backup_Handler::release_download_lock( $file );
+		MainWP_Backup_File_Manager::release_download_lock( $file );
 
 		$this->assertFileDoesNotExist( $file . '.downloading' );
 	}
@@ -133,7 +133,7 @@ class MainWP_Download_Lock_Test extends \WP_UnitTestCase {
 		file_put_contents( $stale, wp_json_encode( array( 'started' => time() - 2 * HOUR_IN_SECONDS, 'site_id' => 1, 'task_id' => 1 ) ) );
 		file_put_contents( $fresh, wp_json_encode( array( 'started' => time(), 'site_id' => 2, 'task_id' => 2 ) ) );
 
-		MainWP_Backup_Handler::cleanup_stale_download_locks( $this->dir );
+		MainWP_Backup_File_Manager::cleanup_stale_download_locks( $this->dir );
 
 		$this->assertFileDoesNotExist( $stale );
 		$this->assertFileExists( $fresh );

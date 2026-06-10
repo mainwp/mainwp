@@ -1382,7 +1382,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
      *
      * @return mixed $output
      *
-     * @uses \MainWP\Dashboard\MainWP_Backup_Handler::is_archive()
+     * @uses \MainWP\Dashboard\MainWP_Backup_File_Manager::is_archive()
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_primary_backup()
@@ -1435,7 +1435,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                             while ( false !== ( $file = readdir( $dh ) ) ) {
                                 if ( '.' !== $file && '..' !== $file ) {
                                     $theFile = $dir . $file;
-                                    if ( MainWP_Backup_Handler::is_archive( $file ) && ! MainWP_Backup_Handler::is_sql_archive( $file ) && ( filemtime( $theFile ) > $lastBackup ) ) {
+                                    if ( MainWP_Backup_File_Manager::is_archive( $file ) && ! MainWP_Backup_File_Manager::is_sql_archive( $file ) && ( filemtime( $theFile ) > $lastBackup ) ) {
                                         $lastBackup = filemtime( $theFile );
                                     }
                                 }

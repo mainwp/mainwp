@@ -604,7 +604,7 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
                         while ( ( $file = readdir( $dh ) ) !== false ) {
                             if ( '.' !== $file && '..' !== $file ) {
                                 $theFile = $dir . $file;
-                                if ( MainWP_Backup_Handler::is_archive( $file ) && ! MainWP_Backup_Handler::is_sql_archive( $file ) && ( $wp_filesystem->mtime( $theFile ) > $lastBackup ) ) {
+                                if ( MainWP_Backup_File_Manager::is_archive( $file ) && ! MainWP_Backup_File_Manager::is_sql_archive( $file ) && ( $wp_filesystem->mtime( $theFile ) > $lastBackup ) ) {
                                     $lastBackup = $wp_filesystem->mtime( $theFile );
                                 }
                             }
@@ -627,7 +627,7 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
 
                     try {
                         $result = MainWP_Backup_Handler::backup( $siteId, 'full', '', '', 0, 0, 0, 0 );
-                        MainWP_Backup_Handler::backup_download_file( $siteId, 'full', $result['url'], $result['local'] );
+                        MainWP_Backup_File_Manager::backup_download_file( $siteId, 'full', $result['url'], $result['local'] );
                         $sitesCheckCompleted[ $siteId ] = true;
                         MainWP_Utility::update_option( 'mainwp_automaticUpdate_backupChecks', $sitesCheckCompleted );
                     } catch ( \Exception $e ) {

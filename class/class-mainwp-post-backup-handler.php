@@ -247,7 +247,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
      *
      * @throws MainWP_Exception On errors.
      *
-     * @uses \MainWP\Dashboard\MainWP_Backup_Handler::backup_download_file()
+     * @uses \MainWP\Dashboard\MainWP_Backup_File_Manager::backup_download_file()
      * @uses \MainWP\Dashboard\MainWP_Exception
      */
     public function ajax_mainwp_backup_download_file() {
@@ -261,7 +261,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             $type  = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
             $url   = isset( $_POST['url'] ) ? sanitize_text_field( wp_unslash( $_POST['url'] ) ) : '';
             $local = isset( $_POST['local'] ) ? sanitize_text_field( wp_unslash( $_POST['local'] ) ) : '';
-            die( wp_json_encode( array( 'result' => MainWP_Backup_Handler::backup_download_file( $site_id, $type, $url, $local ) ) ) );
+            die( wp_json_encode( array( 'result' => MainWP_Backup_File_Manager::backup_download_file( $site_id, $type, $url, $local ) ) ) );
         } catch ( MainWP_Exception $e ) {
             $this->die_exception_error( $e );
         }
@@ -369,7 +369,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
 
         try {
             $local = isset( $_POST['local'] ) ? sanitize_text_field( wp_unslash( $_POST['local'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-            die( wp_json_encode( array( 'result' => MainWP_Backup_Handler::backup_get_file_size( $local ) ) ) );
+            die( wp_json_encode( array( 'result' => MainWP_Backup_File_Manager::backup_get_file_size( $local ) ) ) );
         } catch ( MainWP_Exception $e ) {
             $this->die_exception_error( $e );
         }

@@ -11,7 +11,7 @@
 
 namespace MainWP\Dashboard\Tests;
 
-use MainWP\Dashboard\MainWP_Backup_Handler;
+use MainWP\Dashboard\MainWP_Backup_File_Manager;
 use MainWP\Dashboard\MainWP_Exception;
 
 // phpcs:disable WordPress.WP.AlternativeFunctions -- direct file IO in tests.
@@ -71,7 +71,7 @@ class MainWP_Backup_File_Validation_Test extends \WP_UnitTestCase {
 		$zip->addFromString( 'readme.txt', 'backup content' );
 		$zip->close();
 
-		MainWP_Backup_Handler::validate_backup_file( $path, filesize( $path ) );
+		MainWP_Backup_File_Manager::validate_backup_file( $path, filesize( $path ) );
 		$this->assertTrue( true, 'No exception thrown for a valid ZIP.' );
 	}
 
@@ -83,7 +83,7 @@ class MainWP_Backup_File_Validation_Test extends \WP_UnitTestCase {
 	public function test_valid_gzip_passes() {
 		$path = $this->scratch_file( '.tar.gz', gzencode( 'tar bytes here' ) );
 
-		MainWP_Backup_Handler::validate_backup_file( $path, filesize( $path ) );
+		MainWP_Backup_File_Manager::validate_backup_file( $path, filesize( $path ) );
 		$this->assertTrue( true, 'No exception thrown for valid GZIP.' );
 	}
 
@@ -95,7 +95,7 @@ class MainWP_Backup_File_Validation_Test extends \WP_UnitTestCase {
 	public function test_valid_bz2_passes() {
 		$path = $this->scratch_file( '.tar.bz2', 'BZh91AY&SY' . str_repeat( 'x', 64 ) );
 
-		MainWP_Backup_Handler::validate_backup_file( $path, filesize( $path ) );
+		MainWP_Backup_File_Manager::validate_backup_file( $path, filesize( $path ) );
 		$this->assertTrue( true, 'No exception thrown for valid BZ2 header.' );
 	}
 
@@ -108,7 +108,7 @@ class MainWP_Backup_File_Validation_Test extends \WP_UnitTestCase {
 		$path = $this->scratch_file( '.zip', '<html><body>Fatal error: out of memory</body></html>' );
 
 		try {
-			MainWP_Backup_Handler::validate_backup_file( $path, filesize( $path ) );
+			MainWP_Backup_File_Manager::validate_backup_file( $path, filesize( $path ) );
 			$this->fail( 'Expected header validation to reject HTML content.' );
 		} catch ( MainWP_Exception $e ) {
 			$this->assertSame( 'mainwp_backup_header_invalid', $e->get_message_error_code() );
@@ -124,7 +124,7 @@ class MainWP_Backup_File_Validation_Test extends \WP_UnitTestCase {
 		$header = str_pad( 'somefile.txt', 257, "\0" ) . "ustar\0" . str_repeat( "\0", 249 );
 		$path   = $this->scratch_file( '.tar', $header . str_repeat( "\0", 512 ) );
 
-		MainWP_Backup_Handler::validate_backup_file( $path, filesize( $path ) );
+		MainWP_Backup_File_Manager::validate_backup_file( $path, filesize( $path ) );
 		$this->assertTrue( true, 'No exception thrown for valid TAR header.' );
 	}
 
@@ -137,7 +137,7 @@ class MainWP_Backup_File_Validation_Test extends \WP_UnitTestCase {
 		$path = $this->scratch_file( '.tar', str_repeat( 'A', 1024 ) );
 
 		try {
-			MainWP_Backup_Handler::validate_backup_file( $path, filesize( $path ) );
+			MainWP_Backup_File_Manager::validate_backup_file( $path, filesize( $path ) );
 			$this->fail( 'Expected header validation to reject a garbage TAR.' );
 		} catch ( MainWP_Exception $e ) {
 			$this->assertSame( 'mainwp_backup_header_invalid', $e->get_message_error_code() );
@@ -152,7 +152,7 @@ class MainWP_Backup_File_Validation_Test extends \WP_UnitTestCase {
 	public function test_size_within_tolerance_passes() {
 		$path = $this->scratch_file( '.tar.gz', gzencode( str_repeat( 'data', 1000 ) ) );
 
-		MainWP_Backup_Handler::validate_backup_file( $path, (int) floor( filesize( $path ) * 1.005 ) );
+		MainWP_Backup_File_Manager::validate_backup_file( $path, (int) floor( filesize( $path ) * 1.005 ) );
 		$this->assertTrue( true, 'No exception for a size within tolerance.' );
 	}
 
@@ -165,7 +165,7 @@ class MainWP_Backup_File_Validation_Test extends \WP_UnitTestCase {
 		$path = $this->scratch_file( '.tar.gz', gzencode( 'tiny' ) );
 
 		try {
-			MainWP_Backup_Handler::validate_backup_file( $path, filesize( $path ) * 10 );
+			MainWP_Backup_File_Manager::validate_backup_file( $path, filesize( $path ) * 10 );
 			$this->fail( 'Expected size validation to reject the short file.' );
 		} catch ( MainWP_Exception $e ) {
 			$this->assertSame( 'mainwp_backup_file_too_small', $e->get_message_error_code() );
@@ -179,7 +179,7 @@ class MainWP_Backup_File_Validation_Test extends \WP_UnitTestCase {
 	 */
 	public function test_missing_or_empty_file_fails() {
 		try {
-			MainWP_Backup_Handler::validate_backup_file( get_temp_dir() . 'does-not-exist.zip', 100 );
+			MainWP_Backup_File_Manager::validate_backup_file( get_temp_dir() . 'does-not-exist.zip', 100 );
 			$this->fail( 'Expected validation to reject a missing file.' );
 		} catch ( MainWP_Exception $e ) {
 			$this->assertSame( 'mainwp_backup_file_corrupt', $e->get_message_error_code() );
@@ -187,7 +187,7 @@ class MainWP_Backup_File_Validation_Test extends \WP_UnitTestCase {
 
 		$empty = $this->scratch_file( '.zip', '' );
 		try {
-			MainWP_Backup_Handler::validate_backup_file( $empty, 100 );
+			MainWP_Backup_File_Manager::validate_backup_file( $empty, 100 );
 			$this->fail( 'Expected validation to reject an empty file.' );
 		} catch ( MainWP_Exception $e ) {
 			$this->assertSame( 'mainwp_backup_file_corrupt', $e->get_message_error_code() );
@@ -201,12 +201,12 @@ class MainWP_Backup_File_Validation_Test extends \WP_UnitTestCase {
 	 */
 	public function test_unknown_size_still_checks_header() {
 		$path = $this->scratch_file( '.tar.gz', gzencode( 'content' ) );
-		MainWP_Backup_Handler::validate_backup_file( $path, false );
+		MainWP_Backup_File_Manager::validate_backup_file( $path, false );
 		$this->assertTrue( true, 'No exception for valid header without size.' );
 
 		$bad = $this->scratch_file( '.zip', '<html>error</html>' );
 		try {
-			MainWP_Backup_Handler::validate_backup_file( $bad, false );
+			MainWP_Backup_File_Manager::validate_backup_file( $bad, false );
 			$this->fail( 'Expected header rejection even without an expected size.' );
 		} catch ( MainWP_Exception $e ) {
 			$this->assertSame( 'mainwp_backup_header_invalid', $e->get_message_error_code() );

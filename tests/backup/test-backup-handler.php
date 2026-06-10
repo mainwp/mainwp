@@ -12,6 +12,7 @@
 namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Backup_Handler;
+use MainWP\Dashboard\MainWP_Backup_File_Manager;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_DB_Backup;
 use MainWP\Dashboard\MainWP_Exception;
@@ -392,7 +393,7 @@ class MainWP_Backup_Handler_Test extends MainWP_Abilities_Test_Case {
 		$this->assertNotNull( $locked_file );
 
 		// Another process now holds the lock; a new run must refuse to download.
-		$this->assertTrue( MainWP_Backup_Handler::acquire_download_lock( $locked_file, 999, 999 ) );
+		$this->assertTrue( MainWP_Backup_File_Manager::acquire_download_lock( $locked_file, 999, 999 ) );
 		try {
 			MainWP_Backup_Handler::backup_site( $site_id, $task, 'backups' );
 			$this->fail( 'Expected already-running exception while the download lock is held.' );
@@ -400,7 +401,7 @@ class MainWP_Backup_Handler_Test extends MainWP_Abilities_Test_Case {
 			$this->assertSame( 'mainwp_backup_already_running', $e->get_message_error_code() );
 		}
 
-		MainWP_Backup_Handler::release_download_lock( $locked_file );
+		MainWP_Backup_File_Manager::release_download_lock( $locked_file );
 	}
 
 	/**

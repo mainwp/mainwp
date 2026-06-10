@@ -204,6 +204,19 @@ class MainWP_Backup_Error_Codes_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * The exception factory builds a MainWP_Exception carrying the code and message.
+	 *
+	 * @return void
+	 */
+	public function test_exception_factory_builds_coded_exception() {
+		$exception = MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_RETRY_EXHAUSTED );
+
+		$this->assertInstanceOf( \MainWP\Dashboard\MainWP_Exception::class, $exception );
+		$this->assertSame( 'mainwp_backup_retry_exhausted', $exception->get_message_error_code() );
+		$this->assertSame( MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_RETRY_EXHAUSTED ), $exception->getMessage() );
+	}
+
+	/**
 	 * Sanitization tolerates non-string and empty input.
 	 *
 	 * @return void

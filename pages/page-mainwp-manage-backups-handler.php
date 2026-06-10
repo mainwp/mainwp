@@ -207,7 +207,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         //phpcs:enable.Missing
 
         if ( MainWP_DB_Backup::instance()->update_backup_task( $task->id, $current_user->ID, htmlentities( $name ), $schedule, $type, $excludedFolder, $sites, $groups, $subfolder, $filename, $excludebackup, $excludecache, $excludenonwp, $excludezip, $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip ) === false ) {
-            die( wp_json_encode( array( 'error' => esc_html__( 'Undefined error occurred. Please try again.', 'mainwp' ) ) ) );
+            die( wp_json_encode( array( 'error' => esc_html__( 'Could not save the backup task. Please check that all required fields are filled in and try again. If the issue persists, check your server error log.', 'mainwp' ) ) ) );
         } else {
             die( wp_json_encode( array( 'result' => esc_html__( 'Task updated successfully.', 'mainwp' ) ) ) );
         }
@@ -276,7 +276,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         $task = MainWP_DB_Backup::instance()->add_backup_task( $current_user->ID, htmlentities( $name ), $schedule, $type, $excludedFolder, $sites, $groups, $subfolder, $filename, 0, $excludebackup, $excludecache, $excludenonwp, $excludezip, $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip );
 
         if ( ! $task ) {
-            die( wp_json_encode( array( 'error' => esc_html__( 'Undefined error occurred. Please try again.', 'mainwp' ) ) ) );
+            die( wp_json_encode( array( 'error' => esc_html__( 'Could not save the backup task. Please check that all required fields are filled in and try again. If the issue persists, check your server error log.', 'mainwp' ) ) ) );
         } else {
             do_action( 'mainwp_add_backuptask', $task->id );
 
@@ -345,7 +345,8 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                 }
             }
         }
-        $errorOutput = null;
+        $errorOutput  = null;
+        $errorEntries = array();
 
         $lastStartNotification = $task->lastStartNotificationSent;
         if ( $updateRun && ( 1 === get_option( 'mainwp_notificationOnBackupStart' ) ) && ( $lastStartNotification < $task->last_run ) ) {
@@ -411,16 +412,18 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                 }
 
                 if ( $error ) {
-                    $errorOutput .= 'Site: <strong>' . MainWP_Utility::get_nice_url( $website->url ) . '</strong><br />';
-                    $errorOutput .= $tmpErrorOutput . '<br />';
+                    $errorOutput   .= 'Site: <strong>' . MainWP_Utility::get_nice_url( $website->url ) . '</strong><br />';
+                    $errorOutput   .= $tmpErrorOutput . '<br />';
+                    $errorEntries[] = 'Site: <strong>' . MainWP_Utility::get_nice_url( $website->url ) . '</strong><br />' . $tmpErrorOutput;
                 }
             } catch ( \Exception $e ) {
                 if ( null === $errorOutput ) {
                     $errorOutput = '';
                 }
-                $errorOutput  .= 'Site: <strong>' . MainWP_Utility::get_nice_url( $website->url ) . '</strong><br />';
-                $errorOutput  .= MainWP_Error_Helper::get_error_message( $e ) . '<br />';
-                $_error_output = MainWP_Error_Helper::get_error_message( $e );
+                $errorOutput   .= 'Site: <strong>' . MainWP_Utility::get_nice_url( $website->url ) . '</strong><br />';
+                $errorOutput   .= MainWP_Error_Helper::get_error_message( $e ) . '<br />';
+                $_error_output  = MainWP_Error_Helper::get_error_message( $e );
+                $errorEntries[] = 'Site: <strong>' . MainWP_Utility::get_nice_url( $website->url ) . '</strong><br />' . $_error_output;
             }
 
             $_backup_result = isset( $backupResult ) ? $backupResult : ( isset( $_error_output ) ? $_error_output : '' );
@@ -448,7 +451,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         }
 
         if ( null !== $errorOutput ) {
-            MainWP_DB_Backup::instance()->update_backup_errors( $task->id, $errorOutput );
+            MainWP_DB_Backup::instance()->update_backup_errors( $task->id, MainWP_Backup_Handler::format_backup_errors( $errorEntries ) );
         }
 
         if ( count( $completed_sites ) === count( $sites ) ) {
@@ -459,7 +462,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                 if ( '' !== $email ) {
                     $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
                     if ( '' !== $task->backup_errors ) {
-                        $errorOutput      = 'Errors occurred while executing task: <strong>' . $task->name . '</strong><br /><br />' . $task->backup_errors;
+                        $errorOutput      = 'Errors occurred while executing task: <strong>' . esc_html( $task->name ) . '</strong><br /><br />' . wp_kses_post( MainWP_Backup_Error_Codes::sanitize_message( $task->backup_errors ) );
                         $mail_title       = 'A scheduled backup had an Error - MainWP';
                         $formated_content = MainWP_Format::format_email( $email, $errorOutput, $mail_title );
                         wp_mail( $email, $mail_title, $formated_content, 'content-type: text/html' );

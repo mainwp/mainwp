@@ -97,6 +97,21 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
     }
 
     /**
+     * Build a MainWP_Exception for an error code.
+     *
+     * Uses the registry message for the code and attaches the code so AJAX
+     * handlers and the UI can classify the failure.
+     *
+     * @param string      $code  Error code.
+     * @param string|null $extra Optional extra context for the exception.
+     *
+     * @return MainWP_Exception Coded exception, ready to throw.
+     */
+    public static function exception( $code, $extra = null ) {
+        return new MainWP_Exception( static::message( $code ), $extra, $code ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+    }
+
+    /**
      * Get the severity for an error code.
      *
      * @param string $code Error code.

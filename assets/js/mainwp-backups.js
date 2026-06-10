@@ -183,7 +183,7 @@ let backup_retry_fail = function (siteId, pData, remoteDestinations, pid, type, 
 
                 if (backupContinueRetries > 15) {
                     if (responseError != undefined) {
-                        appendToDiv(backsprocessContentEl, ' <span class="mainwp-red">ERROR: ' + getErrorMessage(responseError) + '</span>');
+                        appendToDiv(backsprocessContentEl, ' ' + mainwp_backup_error_html(responseError));
                     } else {
                         appendToDiv(backsprocessContentEl, ' <span class="mainwp-red">ERROR: Backup timed out! (stalled) - <a href="https://mainwp.com/help/docs/mainwp-introduction/resolving-system-requirement-issues/">Please check this help document for more information and possible fixes</a></span>'); // NOSONAR - noopener - open safe.
                     }
@@ -225,7 +225,7 @@ let backup_retry_fail = function (siteId, pData, remoteDestinations, pid, type, 
                 backupCreateRunning = false;
 
                 if (responseError != undefined) {
-                    appendToDiv(backsprocessContentEl, ' <span class="mainwp-red">ERROR: ' + getErrorMessage(responseError) + '</span>');
+                    appendToDiv(backsprocessContentEl, ' ' + mainwp_backup_error_html(responseError));
                 } else {
                     appendToDiv(backsprocessContentEl, ' <span class="mainwp-red">ERROR: Backup timed out! (invalid) - <a href="https://mainwp.com/help/docs/mainwp-introduction/resolving-system-requirement-issues/">Please check this help document for more information and possible fixes</a></span>'); // NOSONAR - noopener - open safe.
                 }
@@ -319,7 +319,7 @@ backup_download_file = function (pSiteId, type, url, file, regexfile, size, subf
                 backupDownloadRunning = false;
 
                 if (response.error) {
-                    appendToDiv(backsprocessContentEl, '<span class="mainwp-red">ERROR: ' + getErrorMessage(response.error) + '</span>');
+                    appendToDiv(backsprocessContentEl, mainwp_backup_error_html(response.error));
                     appendToDiv(backsprocessContentEl, '<span class="mainwp-red">' + MainWP.I18n.t('Backup failed!') + '</span>');
 
                     jQuery('#managesite-backup-status-close').prop('value', 'Close');
@@ -709,7 +709,7 @@ managebackups_run_next = function () {
                 progressBar.progress('set progress', parseFloat(progressBar.progress('get total')));
 
                 if (response.error) {
-                    appendToDiv(backtaskContentEl, '[' + pSiteName + '] <span class="mainwp-red">Error: ' + getErrorMessage(response.error) + '</span>');
+                    appendToDiv(backtaskContentEl, '[' + pSiteName + '] ' + mainwp_backup_error_html(response.error));
                     manageBackupsTaskError = true;
                     managebackups_run_next();
                 } else {
@@ -767,7 +767,7 @@ let managebackups_backup_download_file = function (pSiteId, pSiteName, type, url
             clearInterval(pInterVal);
 
             if (response.error) {
-                appendToDiv(backtaskContentEl, '[' + pSiteName + '] <span class="mainwp-red">ERROR: ' + getErrorMessage(response.error) + '</span>');
+                appendToDiv(backtaskContentEl, '[' + pSiteName + '] ' + mainwp_backup_error_html(response.error));
                 appendToDiv(backtaskContentEl, '[' + pSiteName + '] <span class="mainwp-red">' + MainWP.I18n.t('Backup failed!') + '</span>');
 
                 manageBackupsError = true;
@@ -1458,7 +1458,7 @@ updatesoverview_backup_run_next = function () {
     jQuery.post(ajaxurl, data, function (pSiteId, pSiteName) {
         return function (response) {
             if (response.error) {
-                appendToDiv(backupContentEl, '[' + pSiteName + '] <span class="mainwp-red">ERROR: ' + getErrorMessage(response.error) + '</span>');
+                appendToDiv(backupContentEl, '[' + pSiteName + '] ' + mainwp_backup_error_html(response.error));
                 updatesoverviewBackupError = true;
                 updatesoverview_backup_run_next();
             } else {
@@ -1508,7 +1508,7 @@ updatesoverview_backupnow_download_file = function (pSiteId, pSiteName, type, ur
             clearInterval(pInterVal);
 
             if (response.error) {
-                appendToDiv(backupContentEl, '[' + pSiteName + '] <span class="mainwp-red">ERROR: ' + getErrorMessage(response.error) + '</span>');
+                appendToDiv(backupContentEl, '[' + pSiteName + '] ' + mainwp_backup_error_html(response.error));
                 appendToDiv(backupContentEl, '[' + pSiteName + '] <span class="mainwp-red">' + MainWP.I18n.t('Backup failed!') + '</span>');
 
                 updatesoverviewBackupError = true;

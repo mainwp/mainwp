@@ -30,6 +30,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         return __CLASS__;
     }
 
+    // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber -- all throws are MainWP_Exception.
     /**
      * Method  backup_site()
      *
@@ -42,7 +43,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @gobal object $wp_filesystem WordPress filesystem instance.
      *
      * @return mixed $backup_result
-     * @throws MainWP_Exception Error message.
+     * @throws MainWP_Exception Error message, including coded backup errors from the error code registry.
      *
      * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
      * @uses \MainWP\Dashboard\MainWP_Connect::download_to_file()
@@ -65,6 +66,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @uses \MainWP\Dashboard\static::get_real_extension()
      */
     public static function backup_site( $siteid, $pTask, $subfolder ) {
+        // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber
         // phpcs: ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         if ( ! get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
             return false;
@@ -98,7 +100,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         $subfolder = static::normalize_filename( $subfolder );
 
         if ( ! MainWP_System::instance()->is_single_user() && ( $userid !== $website->userid ) ) {
-            throw new MainWP_Exception( 'Undefined error.' );
+            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_NO_PERMISSION ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         }
 
         $websiteCleanUrl = $website->url;
@@ -290,13 +292,13 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
                         $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'fetchResult' => wp_json_encode( $information ) ) );
                     } else {
-                        throw new MainWP_Exception( 'Backup failed after 5 retries.' );
+                        throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_RETRY_EXHAUSTED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
                     }
                 } elseif ( 'invalid' === $temp['status'] ) {
                     $error = json_decode( $backupTaskProgress->last_error );
 
                     if ( ! is_array( $error ) ) {
-                        throw new MainWP_Exception( 'Backup failed.' );
+                        throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_STALLED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
                     } else {
                         throw new MainWP_Exception( $error['message'], $error['extra'] ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
                     }
@@ -318,7 +320,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             } elseif ( 5 > $backupTaskProgress->attempts ) {
                     $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'attempts' => $backupTaskProgress->attempts++ ) );
             } else {
-                throw new MainWP_Exception( 'Backup failed after 5 retries.' );
+                throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_RETRY_EXHAUSTED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
             }
         }
 
@@ -327,11 +329,11 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         }
 
         if ( isset( $information['error'] ) ) {
-            throw new MainWP_Exception( esc_html( $information['error'] ) );
+            throw new MainWP_Exception( esc_html( MainWP_Backup_Error_Codes::sanitize_message( $information['error'] ) ), null, isset( $information['error_code'] ) ? $information['error_code'] : '' ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         } elseif ( 'db' === $type && ! $information['db'] ) {
-            throw new MainWP_Exception( 'Database backup failed.' );
+            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_DB_QUERY_FAILED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         } elseif ( 'full' === $type && ! $information['full'] ) {
-            throw new MainWP_Exception( 'Full backup failed.' );
+            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         } elseif ( isset( $information['db'] ) ) {
             $hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
 
@@ -529,7 +531,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 }
             }
         } else {
-            throw new MainWP_Exception( 'Database backup failed due to an undefined error.' );
+            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_DB_DUMP_EMPTY ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         }
 
         return $backup_result;
@@ -767,6 +769,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         );
     }
 
+    // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber -- all throws are MainWP_Exception.
     /**
      * Method backup()
      *
@@ -791,7 +794,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @param bool   $append                          Append to backup.
      *
      * @return mixed $backup_result
-     * @throws MainWP_Exception Error message.
+     * @throws MainWP_Exception Error message, including coded backup errors from the error code registry.
      *
      * @uses  \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
      * @uses  \MainWP\Dashboard\MainWP_Exception
@@ -808,7 +811,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @uses \MainWP\Dashboard\MainWP_Utility::value_to_string()
      * @uses \MainWP\Dashboard\static::get_real_extension()
      */
-    public static function backup(
+    public static function backup( // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber
         $pSiteId,
         $pType,
         $pSubfolder,
@@ -954,11 +957,11 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         do_action( 'mainwp_managesite_backup', $website, array( 'type' => $pType ), $information );
 
         if ( isset( $information['error'] ) ) {
-            throw new MainWP_Exception( esc_html( $information['error'] ) ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            throw new MainWP_Exception( esc_html( MainWP_Backup_Error_Codes::sanitize_message( $information['error'] ) ), null, isset( $information['error_code'] ) ? $information['error_code'] : '' ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         } elseif ( 'db' === $pType && ! $information['db'] ) {
-            throw new MainWP_Exception( 'Database backup failed.' );
+            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_DB_QUERY_FAILED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         } elseif ( 'full' === $pType && ! $information['full'] ) {
-            throw new MainWP_Exception( 'Full backup failed.' );
+            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         } elseif ( isset( $information['db'] ) || isset( $information['full'] ) ) {
             if ( ! empty( $information['db'] ) ) {
                 $backup_result['url']  = $information['db'];
@@ -1020,7 +1023,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
             return $backup_result;
         } else {
-            throw new MainWP_Exception( 'Database backup failed due to an undefined error' );
+            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_DB_DUMP_EMPTY ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         }
     }
 
@@ -1156,6 +1159,45 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         return '.' . pathinfo( $path, PATHINFO_EXTENSION );
     }
 
+    /**
+     * Method format_backup_errors()
+     *
+     * Format accumulated backup error entries for storage and email.
+     *
+     * Sanitizes each entry (absolute paths, SQL fragments, table names),
+     * keeps the first errors of the run (these typically reveal the root
+     * cause while later errors are cascading failures), and renders them
+     * as a numbered list.
+     *
+     * @param array $entries Error entries, one per failed operation.
+     * @param int   $max     Maximum entries to keep (default 10).
+     *
+     * @return string Formatted HTML, empty when there are no entries.
+     */
+    public static function format_backup_errors( $entries, $max = 10 ) {
+        if ( ! is_array( $entries ) || empty( $entries ) ) {
+            return '';
+        }
+
+        $total   = count( $entries );
+        $entries = array_slice( $entries, 0, $max );
+
+        $output = '<ol>';
+        foreach ( $entries as $entry ) {
+            $output .= '<li>' . MainWP_Backup_Error_Codes::sanitize_message( (string) $entry ) . '</li>';
+        }
+        $output .= '</ol>';
+
+        if ( $total > $max ) {
+            $output .= sprintf(
+                /* translators: %d: number of additional errors not shown */
+                esc_html__( '... and %d more errors', 'mainwp' ),
+                $total - $max
+            );
+        }
+
+        return $output;
+    }
 
     /**
      * Method handle_settings_post()

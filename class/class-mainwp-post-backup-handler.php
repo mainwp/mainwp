@@ -87,6 +87,30 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
      */
 
     /**
+     * Method die_exception_error()
+     *
+     * Send an exception as a JSON error response, including the error code
+     * so the UI can classify the failure severity.
+     *
+     * @param MainWP_Exception $e Exception to report.
+     *
+     * @return never
+     */
+    private function die_exception_error( MainWP_Exception $e ) {
+        die(
+            wp_json_encode(
+                array(
+                    'error' => array(
+                        'message' => $e->getMessage(),
+                        'extra'   => $e->get_message_extra(),
+                        'code'    => $e->get_message_error_code(),
+                    ),
+                )
+            )
+        );
+    }
+
+    /**
      * Method mainwp_backup_run_site()
      *
      * Run backup task of site
@@ -107,16 +131,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             $ret = array( 'result' => MainWP_Backup_Handler::backup( $site_id, 'full', '', '', 1, 1, 1, 1 ) );
             wp_send_json( $ret );
         } catch ( MainWP_Exception $e ) {
-            die(
-                wp_json_encode(
-                    array(
-                        'error' => array(
-                            'message' => $e->getMessage(),
-                            'extra'   => $e->get_message_extra(),
-                        ),
-                    )
-                )
-            );
+            $this->die_exception_error( $e );
         }
     }
 
@@ -164,16 +179,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             $result = MainWP_Backup_Handler::backup( $site_id, $type, $subfolder, $excludedFolder, $excludebackup, $excludecache, $excludenonwp, $excludezip, $filename, $fileNameUID, $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip, $pid, $append );
             wp_send_json( array( 'result' => $result ) );
         } catch ( MainWP_Exception $e ) {
-            die(
-                wp_json_encode(
-                    array(
-                        'error' => array(
-                            'message' => $e->getMessage(),
-                            'extra'   => $e->get_message_extra(),
-                        ),
-                    )
-                )
-            );
+            $this->die_exception_error( $e );
         }
         // phpcs:enable
     }
@@ -202,16 +208,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             $filename  = isset( $_POST['filename'] ) ? sanitize_text_field( wp_unslash( $_POST['filename'] ) ) : '';
             wp_send_json( MainWP_Backup_Handler::backup_check_pid( $site_id, $pid, $type, $subfolder, $filename ) );
         } catch ( MainWP_Exception $e ) {
-            die(
-                wp_json_encode(
-                    array(
-                        'error' => array(
-                            'message' => $e->getMessage(),
-                            'extra'   => $e->get_message_extra(),
-                        ),
-                    )
-                )
-            );
+            $this->die_exception_error( $e );
         }
         // phpcs:enable
     }
@@ -239,16 +236,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             $local = isset( $_POST['local'] ) ? sanitize_text_field( wp_unslash( $_POST['local'] ) ) : '';
             die( wp_json_encode( array( 'result' => MainWP_Backup_Handler::backup_download_file( $site_id, $type, $url, $local ) ) ) );
         } catch ( MainWP_Exception $e ) {
-            die(
-                wp_json_encode(
-                    array(
-                        'error' => array(
-                            'message' => $e->getMessage(),
-                            'extra'   => $e->get_message_extra(),
-                        ),
-                    )
-                )
-            );
+            $this->die_exception_error( $e );
         }
         // phpcs:enable
     }
@@ -277,16 +265,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
 
             die( wp_json_encode( array( 'result' => MainWP_Backup_Handler::backup_delete_file( $site_id, $file ) ) ) );
         } catch ( MainWP_Exception $e ) {
-            die(
-                wp_json_encode(
-                    array(
-                        'error' => array(
-                            'message' => $e->getMessage(),
-                            'extra'   => $e->get_message_extra(),
-                        ),
-                    )
-                )
-            );
+            $this->die_exception_error( $e );
         }
         // phpcs:enable
     }
@@ -365,16 +344,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             $local = isset( $_POST['local'] ) ? sanitize_text_field( wp_unslash( $_POST['local'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             die( wp_json_encode( array( 'result' => MainWP_Backup_Handler::backup_get_file_size( $local ) ) ) );
         } catch ( MainWP_Exception $e ) {
-            die(
-                wp_json_encode(
-                    array(
-                        'error' => array(
-                            'message' => $e->getMessage(),
-                            'extra'   => $e->get_message_extra(),
-                        ),
-                    )
-                )
-            );
+            $this->die_exception_error( $e );
         }
     }
 
@@ -435,16 +405,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                 );
             }
         } catch ( MainWP_Exception $e ) {
-            die(
-                wp_json_encode(
-                    array(
-                        'error' => array(
-                            'message' => $e->getMessage(),
-                            'extra'   => $e->get_message_extra(),
-                        ),
-                    )
-                )
-            );
+            $this->die_exception_error( $e );
         }
     }
 
@@ -472,16 +433,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                 wp_send_json( array( 'result' => ( isset( $array[ $unique ]['offset'] ) ? $array[ $unique ]['offset'] : $array[ $unique ] ) ) );
             }
         } catch ( MainWP_Exception $e ) {
-            die(
-                wp_json_encode(
-                    array(
-                        'error' => array(
-                            'message' => $e->getMessage(),
-                            'extra'   => $e->get_message_extra(),
-                        ),
-                    )
-                )
-            );
+            $this->die_exception_error( $e );
         }
     }
 
@@ -591,16 +543,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             $fileNameUID = isset( $_POST['fileNameUID'] ) ? sanitize_text_field( wp_unslash( $_POST['fileNameUID'] ) ) : false; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             wp_send_json( array( 'result' => MainWP_Manage_Backups_Handler::backup( $task_id, $site_id, $fileNameUID ) ) );
         } catch ( MainWP_Exception $e ) {
-            die(
-                wp_json_encode(
-                    array(
-                        'error' => array(
-                            'message' => $e->getMessage(),
-                            'extra'   => $e->get_message_extra(),
-                        ),
-                    )
-                )
-            );
+            $this->die_exception_error( $e );
         }
     }
 

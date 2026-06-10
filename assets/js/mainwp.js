@@ -3894,6 +3894,9 @@ let mainwp_notes_site_save = function () {
 };
 
 globalThis.getErrorMessage = function (pError, msgOnly) { // NOSONAR - complex.
+    if (pError == undefined || pError == null) {
+        return '';
+    }
     if (pError.message == 'HTTPERROR') {
         return MainWP.I18n.t('HTTP error') + '! ' + pError.extra;
     } else if (pError.message == 'NOMAINWP' || pError == 'NOMAINWP') {
@@ -3910,9 +3913,47 @@ globalThis.getErrorMessage = function (pError, msgOnly) { // NOSONAR - complex.
 
     } else if (pError.message != undefined && pError.message != '') {
         return pError.message;
+    } else if (pError.error != undefined && pError.error != '') {
+        // Structured error response, optionally carrying an error_code.
+        return String(pError.error);
+    } else if (typeof pError === 'object') {
+        // Malformed error shape - never render as [object Object].
+        try {
+            return JSON.stringify(pError);
+        } catch (err) {
+            return __('The request could not be completed. Please check the dashboard error logs.');
+        }
     } else {
         return pError;
     }
+};
+
+/**
+ * Maps a backup error response to a display severity.
+ * Recognizes the error code on structured shapes; defaults to 'error'.
+ */
+globalThis.mainwp_backup_error_severity = function (pError) {
+    let code = '';
+    if (pError && typeof pError === 'object') {
+        if (pError.code != undefined && pError.code != '') {
+            code = pError.code;
+        } else if (pError.error_code != undefined && pError.error_code != '') {
+            code = pError.error_code;
+        }
+    }
+    let warningCodes = ['mainwp_backup_memory_limit', 'mainwp_backup_file_skipped', 'mainwp_backup_already_running'];
+    return warningCodes.indexOf(code) !== -1 ? 'warning' : 'error';
+};
+
+/**
+ * Renders a backup error as a severity-colored span.
+ * Errors render red, warnings yellow, matching the error code severity.
+ */
+globalThis.mainwp_backup_error_html = function (pError) {
+    let severity = mainwp_backup_error_severity(pError);
+    let cssClass = severity == 'warning' ? 'ui yellow text' : 'ui red text mainwp-red';
+    let label = severity == 'warning' ? __('WARNING') : __('ERROR');
+    return '<span class="' + cssClass + '">' + label + ': ' + getErrorMessage(pError) + '</span>';
 };
 
 globalThis.getErrorMessageInfo = function (repError, outputType) { // NOSONAR - complex.

@@ -313,6 +313,56 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         }
 
         MainWP_UI::render_page_navigation( $renderItems );
+        static::render_backup_environment_notices();
+    }
+
+    /**
+     * Method render_backup_environment_notices()
+     *
+     * Display admin notices when the dashboard environment has issues
+     * that will affect backups: low disk space, a non-writable backup
+     * directory, or a low PHP memory limit.
+     *
+     * @return void
+     */
+    public static function render_backup_environment_notices() {
+        $warnings = array();
+
+        $backup_dir = MainWP_System_Utility::get_mainwp_dir( 'backup' );
+        if ( is_array( $backup_dir ) ) {
+            $backup_dir = $backup_dir[0];
+        }
+
+        if ( function_exists( 'disk_free_space' ) && is_dir( $backup_dir ) ) {
+            $free = @disk_free_space( $backup_dir ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- may be disabled by the host.
+            if ( false !== $free && $free < 500 * MB_IN_BYTES ) {
+                $warnings[] = sprintf(
+                    /* translators: %s: free disk space */
+                    esc_html__( 'Low disk space: %s available. Large backups may fail.', 'mainwp' ),
+                    size_format( $free )
+                );
+            }
+        }
+
+        if ( is_dir( $backup_dir ) && ! wp_is_writable( $backup_dir ) ) {
+            $warnings[] = esc_html__( 'The backup directory is not writable. Backups will fail until permissions are fixed.', 'mainwp' );
+        }
+
+        $memory = wp_convert_hr_to_bytes( ini_get( 'memory_limit' ) );
+        if ( $memory > 0 && $memory < 128 * MB_IN_BYTES ) {
+            $warnings[] = sprintf(
+                /* translators: %s: current memory limit */
+                esc_html__( 'PHP memory limit is %s. Recommended: 256M or higher for backups.', 'mainwp' ),
+                esc_html( ini_get( 'memory_limit' ) )
+            );
+        }
+
+        foreach ( $warnings as $warning ) {
+            printf(
+                '<div class="ui yellow message">%s</div>',
+                esc_html( $warning )
+            );
+        }
     }
 
     /**
@@ -1103,7 +1153,8 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             </div>
         </div>
 
-        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> <?php
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?>
+        <?php
         if ( empty( $hidden_elems ) && 'zip' !== $archiveFormat ) {
             echo 'style="display: none;"';
         }
@@ -1121,7 +1172,8 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             </div>
         </div>
 
-        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> <?php
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?>
+        <?php
         if ( empty( $hidden_elems ) && 'zip' !== $archiveFormat ) {
             echo 'style="display: none;"';
         }
@@ -1138,7 +1190,8 @@ class MainWP_Manage_Backups { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             </div>
         </div>
 
-        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-backups" default-indi-value="1" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> <?php
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-backups" default-indi-value="1" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?>
+        <?php
         if ( empty( $hidden_elems ) && 'zip' !== $archiveFormat ) {
             echo 'style="display: none;"';
         }

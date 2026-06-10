@@ -87,6 +87,28 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
      */
 
     /**
+     * Method raise_backup_resource_limits()
+     *
+     * Raise execution time and memory limits for manually triggered
+     * backups so they match the limits the cron path already uses.
+     * Without this, AJAX backups inherit default PHP limits and large
+     * sites fail mid-transfer.
+     *
+     * @return void
+     */
+    public static function raise_backup_resource_limits() {
+        ignore_user_abort( true );
+        MainWP_System_Utility::set_time_limit( 0 );
+        add_filter(
+            'admin_memory_limit',
+            function () {
+                return '512M';
+            }
+        );
+        wp_raise_memory_limit( 'admin' );
+    }
+
+    /**
      * Method die_exception_error()
      *
      * Send an exception as a JSON error response, including the error code
@@ -122,6 +144,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
      */
     public function mainwp_backup_run_site() {
         $this->secure_request( 'mainwp_backup_run_site' );
+        static::raise_backup_resource_limits();
         $site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         try {
             if ( ! $site_id ) {
@@ -147,6 +170,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
      */
     public function ajax_mainwp_backup() {
         $this->secure_request( 'mainwp_backup' );
+        static::raise_backup_resource_limits();
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : false;
         try {

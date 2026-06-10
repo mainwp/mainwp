@@ -72,6 +72,8 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_LEGACY_DISABLED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         }
 
+        static::validate_backup_environment();
+
         $userid        = $pTask->userid;
         $type          = $pTask->type;
         $exclude       = $pTask->exclude;
@@ -839,6 +841,8 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_LEGACY_DISABLED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         }
 
+        static::validate_backup_environment();
+
         if ( '' === trim( $pFilename ) ) {
             $pFilename = null;
         }
@@ -1201,6 +1205,76 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         }
 
         return $output;
+    }
+
+    /**
+     * Method validate_backup_environment()
+     *
+     * Validates the dashboard server can receive and store a backup before
+     * any child site communication: required PHP extensions and a writable
+     * backup directory are hard requirements; low disk space and a low
+     * memory limit are logged as warnings because backups may still
+     * succeed.
+     *
+     * @return void
+     * @throws MainWP_Exception When environment requirements are not met.
+     */
+    public static function validate_backup_environment() {
+        // phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- messages are pre-escaped.
+        $required_extensions = array( 'curl', 'openssl' );
+        foreach ( $required_extensions as $ext ) {
+            if ( ! extension_loaded( $ext ) ) {
+                throw new MainWP_Exception(
+                    sprintf(
+                        /* translators: %s: PHP extension name */
+                        esc_html__( 'The %s PHP extension is required for backups but is not installed. Contact your hosting provider.', 'mainwp' ),
+                        esc_html( $ext )
+                    ),
+                    null,
+                    MainWP_Backup_Error_Codes::ERR_MISSING_EXTENSION
+                );
+            }
+        }
+
+        $backup_dir = MainWP_System_Utility::get_mainwp_dir( 'backup' );
+        if ( is_array( $backup_dir ) ) {
+            $backup_dir = $backup_dir[0];
+        }
+        if ( ! is_dir( $backup_dir ) && ! wp_mkdir_p( $backup_dir ) ) {
+            throw new MainWP_Exception(
+                esc_html__( 'Cannot create the dashboard backup directory. Check file permissions on the uploads folder.', 'mainwp' ),
+                $backup_dir,
+                MainWP_Backup_Error_Codes::ERR_PERMISSIONS
+            );
+        }
+        if ( ! wp_is_writable( $backup_dir ) ) {
+            throw new MainWP_Exception(
+                esc_html__( 'The dashboard backup directory is not writable. Set permissions to 755 or contact your hosting provider.', 'mainwp' ),
+                $backup_dir,
+                MainWP_Backup_Error_Codes::ERR_DIR_NOT_WRITABLE
+            );
+        }
+        // phpcs:enable WordPress.Security.EscapeOutput.ExceptionNotEscaped
+
+        // Disk space is advisory: estimates are unreliable, so warn without blocking.
+        if ( function_exists( 'disk_free_space' ) ) {
+            $free_bytes = @disk_free_space( $backup_dir ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- may be disabled by the host.
+            if ( false !== $free_bytes && $free_bytes < 500 * MB_IN_BYTES ) {
+                do_action(
+                    'mainwp_log_warning',
+                    sprintf( 'Low disk space on dashboard server: %s available. Large backups may fail.', size_format( $free_bytes ) )
+                );
+            }
+        }
+
+        // Memory limit is advisory: some hosts cap ini_set, small sites still work.
+        $memory_limit = wp_convert_hr_to_bytes( ini_get( 'memory_limit' ) );
+        if ( $memory_limit > 0 && $memory_limit < 128 * MB_IN_BYTES ) {
+            do_action(
+                'mainwp_log_warning',
+                sprintf( 'Low memory limit for backup: %s. Recommended: 256M+.', ini_get( 'memory_limit' ) )
+            );
+        }
     }
 
     /**

@@ -80,7 +80,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     public static function backup_site( $siteid, $pTask, $subfolder ) {
         // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber
         // phpcs: ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
-        if ( ! get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
+        if ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_LEGACY_DISABLED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         }
 
@@ -728,7 +728,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         $append = false
     ) {
 
-        if ( ! get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
+        if ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_LEGACY_DISABLED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         }
 
@@ -950,7 +950,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      */
     public static function trigger_backup( int $site_id, string $type = 'full' ): ?string {
         // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber
-        if ( ! get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
+        if ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_LEGACY_DISABLED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         }
 

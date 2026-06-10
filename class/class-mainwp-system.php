@@ -279,7 +279,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         MainWP_Updates::init();
         MainWP_Post::init();
         MainWP_Settings::init();
-        if ( get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
+        if ( MainWP_Backup_Settings::is_native_backups_enabled() ) {
             MainWP_Backup_Page::init();
         }
         MainWP_Manage_Groups::init();
@@ -375,7 +375,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 'mainwp_pluginAutomaticDailyUpdate',
                 'mainwp_themeAutomaticDailyUpdate',
                 'mainwp_backup_before_upgrade',
-                'mainwp_enableLegacyBackupFeature',
+                'mainwp_enableNativeBackups',
                 'mainwp_maximumInstallUpdateRequests',
                 'mainwp_maximumSyncRequests',
                 'mainwp_primaryBackup',

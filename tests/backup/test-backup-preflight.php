@@ -29,7 +29,7 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function setUp(): void {
 		parent::setUp();
-		update_option( 'mainwp_enableLegacyBackupFeature', 1 );
+		update_option( 'mainwp_enableNativeBackups', 1 );
 	}
 
 	/**
@@ -40,7 +40,7 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 	public function tearDown(): void {
 		global $wpdb;
 		$wpdb->query( "DELETE FROM {$wpdb->prefix}mainwp_wp_backup_progress" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup.
-		delete_option( 'mainwp_enableLegacyBackupFeature' );
+		delete_option( 'mainwp_enableNativeBackups' );
 		parent::tearDown();
 	}
 

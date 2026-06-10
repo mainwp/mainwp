@@ -28,7 +28,7 @@ class MainWP_Backup_Settings_View_Test extends \WP_UnitTestCase {
 		$output = ob_get_clean();
 
 		$this->assertStringContainsString( 'Backup Settings', $output );
-		$this->assertStringContainsString( 'mainwp_options_enableLegacyBackupFeature', $output );
+		$this->assertStringContainsString( 'mainwp_options_enableNativeBackups', $output );
 	}
 
 	/**

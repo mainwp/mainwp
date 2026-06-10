@@ -183,9 +183,9 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 }
                 MainWP_Utility::update_option( 'mainwp_archiveFormat', ( isset( $_POST['mainwp_archiveFormat'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_archiveFormat'] ) ) : '' ) );
 
-                $old_primaryBackup          = get_option( 'mainwp_primaryBackup' );
-                $old_enableLegacyBackup     = get_option( 'mainwp_enableLegacyBackupFeature' );
-                $updated_enableLegacyBackup = false;
+                $old_primaryBackup           = get_option( 'mainwp_primaryBackup' );
+                $old_enableNativeBackups     = static::is_native_backups_enabled();
+                $updated_enableNativeBackups = false;
 
                 if ( isset( $_POST['mainwp_primaryBackup'] ) ) {
                     if ( ! empty( $_POST['mainwp_primaryBackup'] ) ) { // not default backup method.
@@ -193,8 +193,8 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         MainWP_Utility::update_option( 'mainwp_notificationOnBackupStart', 0 );
                         MainWP_Utility::update_option( 'mainwp_chunkedBackupTasks', 0 );
                         if ( empty( $old_primaryBackup ) ) {
-                            MainWP_Utility::update_option( 'mainwp_enableLegacyBackupFeature', 0 );
-                            $updated_enableLegacyBackup = true;
+                            MainWP_Utility::update_option( 'mainwp_enableNativeBackups', 0 );
+                            $updated_enableNativeBackups = true;
                         }
                     }
                     MainWP_Utility::update_option( 'mainwp_primaryBackup', sanitize_text_field( wp_unslash( $_POST['mainwp_primaryBackup'] ) ) );
@@ -207,13 +207,13 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     MainWP_Utility::update_option( 'mainwp_chunkedBackupTasks', ( ! isset( $_POST['mainwp_options_chunkedBackupTasks'] ) ? 0 : 1 ) );
                 }
 
-                $enableLegacyBackup = ( isset( $_POST['mainwp_options_enableLegacyBackupFeature'] ) && ! empty( $_POST['mainwp_options_enableLegacyBackupFeature'] ) ) ? 1 : 0;
-                if ( $enableLegacyBackup && empty( $old_enableLegacyBackup ) ) {
+                $enableNativeBackups = ( isset( $_POST['mainwp_options_enableNativeBackups'] ) && ! empty( $_POST['mainwp_options_enableNativeBackups'] ) ) ? 1 : 0;
+                if ( $enableNativeBackups && empty( $old_enableNativeBackups ) ) {
                     MainWP_Utility::update_option( 'mainwp_primaryBackup', '' );
                 }
 
-                if ( ! $updated_enableLegacyBackup ) {
-                    MainWP_Utility::update_option( 'mainwp_enableLegacyBackupFeature', $enableLegacyBackup );
+                if ( ! $updated_enableNativeBackups ) {
+                    MainWP_Utility::update_option( 'mainwp_enableNativeBackups', $enableNativeBackups );
                 }
                 return true;
             }

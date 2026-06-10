@@ -50,7 +50,7 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
         $notificationOnBackupFail  = get_option( 'mainwp_notificationOnBackupFail' );
         $notificationOnBackupStart = get_option( 'mainwp_notificationOnBackupStart' );
         $chunkedBackupTasks        = get_option( 'mainwp_chunkedBackupTasks' );
-        $enableLegacyBackupFeature = get_option( 'mainwp_enableLegacyBackupFeature' );
+        $enableNativeBackups       = MainWP_Backup_Settings::is_native_backups_enabled();
 
         $loadFilesBeforeZip = get_option( 'mainwp_options_loadFilesBeforeZip' );
         $loadFilesBeforeZip = ( 1 === $loadFilesBeforeZip || false === $loadFilesBeforeZip );
@@ -72,7 +72,7 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
         global $mainwpUseExternalPrimaryBackupsMethod;
 
         $hidden_elems = false;
-        if ( ! $enableLegacyBackupFeature || ( ! empty( $primaryBackup ) && $primaryBackup === $mainwpUseExternalPrimaryBackupsMethod ) ) {
+        if ( ! $enableNativeBackups || ( ! empty( $primaryBackup ) && $primaryBackup === $mainwpUseExternalPrimaryBackupsMethod ) ) {
             $hidden_elems = true;
         }
         ?>
@@ -86,7 +86,7 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
             <label class="six wide column middle aligned"><?php esc_html_e( 'Select primary backup system', 'mainwp' ); ?></label>
             <div class="ten wide column">
                 <select class="ui dropdown" name="mainwp_primaryBackup" id="mainwp_primaryBackup">
-                    <?php if ( $enableLegacyBackupFeature || empty( $primaryBackup ) ) { ?>
+                    <?php if ( $enableNativeBackups || empty( $primaryBackup ) ) { ?>
                         <option value="" ><?php esc_html_e( 'Native backups', 'mainwp' ); ?></option>
                     <?php } ?>
                     <?php
@@ -103,12 +103,12 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
         <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-backups">
             <label class="six wide column middle aligned">
             <?php
-            MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_enableLegacyBackupFeature', (int) $enableLegacyBackupFeature );
-            esc_html_e( 'Enable legacy backup feature', 'mainwp' );
+            MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_enableNativeBackups', (int) $enableNativeBackups );
+            esc_html_e( 'Enable native backups', 'mainwp' );
             ?>
             </label>
             <div class="ten wide column ui toggle checkbox">
-                <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_options_enableLegacyBackupFeature" id="mainwp_options_enableLegacyBackupFeature" <?php echo 0 === (int) $enableLegacyBackupFeature ? '' : 'checked="true"'; ?>/>
+                <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_options_enableNativeBackups" id="mainwp_options_enableNativeBackups" <?php echo 0 === (int) $enableNativeBackups ? '' : 'checked="true"'; ?>/>
             </div>
         </div>
         <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="1">

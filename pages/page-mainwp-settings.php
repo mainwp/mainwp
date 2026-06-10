@@ -805,7 +805,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             'mainwp_notificationOnBackupStart',
             'mainwp_chunkedBackupTasks',
             'mainwp_primaryBackup',
-            'mainwp_enableLegacyBackupFeature',
+            'mainwp_enableNativeBackups',
             'mainwp_global_uptime_monitoring_settings',
             'mainwp_disableSitesHealthMonitoring',
             'mainwp_sitehealthThreshold',
@@ -993,7 +993,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                         $mainwp_backup_before_upgrade_days = 7;
                     }
                     $mainwp_show_language_updates = get_option( 'mainwp_show_language_updates', 1 );
-                    $enableLegacyBackupFeature    = get_option( 'mainwp_enableLegacyBackupFeature' );
+                    $enableNativeBackups          = MainWP_Backup_Settings::is_native_backups_enabled();
                     $primaryBackup                = get_option( 'mainwp_primaryBackup' );
                     $disableUpdateConfirmations   = (int) get_option( 'mainwp_disable_update_confirmations', 0 );
                     ?>
@@ -1102,7 +1102,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             </select>
                         </div>
                     </div>
-                    <?php if ( ( $enableLegacyBackupFeature && empty( $primaryBackup ) ) || ( empty( $enableLegacyBackupFeature ) && ! empty( $primaryBackup ) ) ) { ?>
+                    <?php if ( ( $enableNativeBackups && empty( $primaryBackup ) ) || ( empty( $enableNativeBackups ) && ! empty( $primaryBackup ) ) ) { ?>
                     <div class="ui grid field mainwp-parent-toggle settings-field-indicator-wrapper settings-field-indicator-updates">
                         <label class="six wide column middle aligned">
                         <?php

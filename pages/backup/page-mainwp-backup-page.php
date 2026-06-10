@@ -102,8 +102,8 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
      * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
      */
     public static function init_menu(): void {  //phpcs:ignore -- NOSONAR - complex.
-        $enable_legacy_backup = get_option( 'mainwp_enableLegacyBackupFeature' );
-        $mainwp_primaryBackup = get_option( 'mainwp_primaryBackup' );
+        $enable_native_backups = MainWP_Backup_Settings::is_native_backups_enabled();
+        $mainwp_primaryBackup  = get_option( 'mainwp_primaryBackup' );
 
         /**
          * Backups Subpages
@@ -129,7 +129,7 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                 1
             );
 
-        } elseif ( $enable_legacy_backup ) {
+        } elseif ( $enable_native_backups ) {
                     add_submenu_page( 'mainwp_tab', esc_html__( 'Backups', 'mainwp' ), '<span id="mainwp-Backups">' . esc_html__( 'Backups', 'mainwp' ) . '</span>', 'read', 'ManageBackups', array( static::get_class_name(), 'render_manager' ) );
             if ( \mainwp_current_user_can( 'dashboard', 'add_backup_tasks' ) && ! MainWP_Menu::is_disable_menu_item( 3, 'ManageBackupsAddNew' ) ) {
                 add_submenu_page( 'mainwp_tab', esc_html__( 'Add New Schedule', 'mainwp' ), '<div class="mainwp-hidden">' . esc_html__( 'Add New', 'mainwp' ) . '</div>', 'read', 'ManageBackupsAddNew', array( MainWP_Backup_Task_Form::class, 'render_new' ) );
@@ -155,7 +155,7 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                 add_submenu_page( 'mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . $subPage['title'] . '</div>', 'read', 'ManageBackups' . $subPage['slug'], $subPage['callback'] );
             }
         }
-        static::init_left_menu( static::$subPages, $enable_legacy_backup );
+        static::init_left_menu( static::$subPages, $enable_native_backups );
     }
 
     /**
@@ -204,14 +204,14 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
      * Instantiate the Backups left menu.
      *
      * @param array $subPages Backup Subpages.
-     * @param bool  $enableLegacyBackup true|false, whether or not to enable menu.
+     * @param bool  $enableNativeBackups true|false, whether or not to enable menu.
      *
      * @uses \MainWP\Dashboard\MainWP_Menu::add_left_menu()
      * @uses \MainWP\Dashboard\MainWP_Menu::init_subpages_left_menu()
      * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
      */
-    public static function init_left_menu( $subPages = array(), $enableLegacyBackup = true ): void {
-        if ( ! static::$hideSubmenuBackups && $enableLegacyBackup ) {
+    public static function init_left_menu( $subPages = array(), $enableNativeBackups = true ): void {
+        if ( ! static::$hideSubmenuBackups && $enableNativeBackups ) {
             MainWP_Menu::add_left_menu(
                 array(
                     'title'      => esc_html__( 'Backups', 'mainwp' ),

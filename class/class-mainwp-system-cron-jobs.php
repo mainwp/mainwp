@@ -126,7 +126,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         }
 
         // Legacy Backup Cron jobs.
-        if ( get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
+        if ( MainWP_Backup_Settings::is_native_backups_enabled() ) {
             $jobs = array_merge(
                 $jobs,
                 array(
@@ -159,7 +159,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         }
 
         // Legacy Backup Cron jobs.
-        if ( ! get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
+        if ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
             // Unset Cron Schedules.
             $sched = wp_next_scheduled( 'mainwp_cronbackups_action' );
             if ( $sched ) {
@@ -1480,7 +1480,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
      */
     public function cron_backups_continue() {
 
-        if ( ! get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
+        if ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
             return;
         }
 
@@ -1534,7 +1534,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
      */
     public function cron_backups() { // phpcs:ignore -- NOSONAR - complex.
-        if ( ! get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
+        if ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
             return;
         }
 

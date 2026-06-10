@@ -26,6 +26,7 @@ use MainWP\Dashboard\MainWP_Manage_Sites_View;
 use MainWP\Dashboard\MainWP_Uptime_Monitoring_Handle;
 use MainWP\Dashboard\MainWP_Uptime_Monitoring_Edit;
 use MainWP\Dashboard\MainWP_Credential_Render;
+use MainWP\Dashboard\MainWP_Backup_Settings;
 
 // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
@@ -565,7 +566,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
 
             // Update backup settings.
             $update_if_present( 'mainwp_primary_backup', 'mainwp_primaryBackup', 'string' );
-            $update_if_present( 'mainwp_enable_legacy_backup_feature', 'mainwp_enableLegacyBackupFeature', 'int' );
+            $update_if_present( 'mainwp_enable_legacy_backup_feature', 'mainwp_enableNativeBackups', 'int' );
             $update_if_present( 'mainwp_backups_on_server', 'mainwp_backupsOnServer', 'string' );
             $update_if_present( 'mainwp_backup_on_external_sources', 'mainwp_backupOnExternalSources', 'string' );
             $update_if_present( 'mainwp_archive_format', 'mainwp_archiveFormat', 'string' );
@@ -3764,7 +3765,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             }
 
             if ( null === $backup_feature ) {
-                $backup_feature = get_option( 'mainwp_enableLegacyBackupFeature' );
+                $backup_feature = (int) MainWP_Backup_Settings::is_native_backups_enabled();
             }
 
             $primary_backup_value = $primary_backup;
@@ -4156,7 +4157,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             );
         }
 
-        $enable_legacy_backup = get_option( 'mainwp_enableLegacyBackupFeature' );
+        $enable_legacy_backup = (int) MainWP_Backup_Settings::is_native_backups_enabled();
         return array(
             // General settings.
             'time_daily_update'                   => get_option( 'mainwp_timeDailyUpdate', $default_setting['mainwp_timeDailyUpdate'] ),

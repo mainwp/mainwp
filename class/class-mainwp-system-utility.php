@@ -148,14 +148,15 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     /**
      * Method get_primary_backup()
      *
-     * Check if using Legacy Backup Solution.
+     * Get the external primary backup method, or false when native
+     * backups are enabled.
      *
-     * @return mixed False|$enable_legacy_backup.
+     * @return mixed False|string Primary backup method.
      */
     public static function get_primary_backup() {
-        $enable_legacy_backup = get_option( 'mainwp_enableLegacyBackupFeature' );
-        $global_method        = false;
-        if ( ! $enable_legacy_backup ) {
+        $enable_native_backups = MainWP_Backup_Settings::is_native_backups_enabled();
+        $global_method         = false;
+        if ( ! $enable_native_backups ) {
             $global_method = get_option( 'mainwp_primaryBackup', false );
         }
         return $global_method;

@@ -28,7 +28,7 @@ class MainWP_Backup_Page_Hooks_Test extends \WP_UnitTestCase {
 		$hide_flag = new \ReflectionProperty( MainWP_Backup_Page::class, 'hideSubmenuBackups' );
 		$hide_flag->setAccessible( true );
 		$hide_flag->setValue( null, false );
-		delete_option( 'mainwp_enableLegacyBackupFeature' );
+		delete_option( 'mainwp_enableNativeBackups' );
 		delete_option( 'mainwp_primaryBackup' );
 		parent::tear_down();
 	}
@@ -51,7 +51,7 @@ class MainWP_Backup_Page_Hooks_Test extends \WP_UnitTestCase {
 	 */
 	public function test_init_menu_applies_subpages_filter() {
 		$this->prepare_admin_menu_context();
-		update_option( 'mainwp_enableLegacyBackupFeature', 1 );
+		update_option( 'mainwp_enableNativeBackups', 1 );
 
 		$fired       = 0;
 		$add_subpage = static function ( $subPages ) use ( &$fired ) {
@@ -82,7 +82,7 @@ class MainWP_Backup_Page_Hooks_Test extends \WP_UnitTestCase {
 	 */
 	public function test_init_menu_honors_custom_page_filter() {
 		$this->prepare_admin_menu_context();
-		update_option( 'mainwp_enableLegacyBackupFeature', 1 );
+		update_option( 'mainwp_enableNativeBackups', 1 );
 		update_option( 'mainwp_primaryBackup', 'ext-backup-method' );
 
 		$custom_page = static function () {

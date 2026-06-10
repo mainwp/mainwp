@@ -369,7 +369,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
         $primaryBackupMethods = apply_filters( 'mainwp_getprimarybackup_methods', $primary_methods );
 
         if ( empty( $primaryBackup ) ) {
-            if ( ! get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
+            if ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
                 $disable_backup = true;
             }
         } elseif ( ! is_array( $primaryBackupMethods ) || empty( $primaryBackupMethods ) ) {

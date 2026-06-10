@@ -1269,7 +1269,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             $cron_jobs['Site Health monitoring'] = array( 'mainwp_cron_checksiteshealth_last_timestamp', 'mainwp_cronsitehealthcheck_action', esc_html__( 'Once hourly', 'mainwp' ), 'hourly' );
         }
 
-        if ( get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
+        if ( MainWP_Backup_Settings::is_native_backups_enabled() ) {
             $cron_jobs['Start backups (Legacy)']    = array( 'mainwp_cron_last_backups', 'mainwp_cronbackups_action', esc_html__( 'Once hourly', 'mainwp' ), 'hourly' );
             $cron_jobs['Continue backups (Legacy)'] = array( 'mainwp_cron_last_backups_continue', 'mainwp_cronbackups_continue_action', esc_html__( 'Once every five minutes', 'mainwp' ), '5minutely' );
         }

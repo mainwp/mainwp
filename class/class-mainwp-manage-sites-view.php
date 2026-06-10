@@ -252,7 +252,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
         if ( ! empty( $mainwpUseExternalPrimaryBackupsMethod ) ) {
             unset( $site_pages['ManageSitesBackups'] );
-        } elseif ( ! get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
+        } elseif ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
             if ( isset( $site_pages['ManageSitesBackups'] ) ) {
                 unset( $site_pages['ManageSitesBackups'] );
             }

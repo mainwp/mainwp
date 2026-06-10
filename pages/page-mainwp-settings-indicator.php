@@ -151,7 +151,7 @@ class MainWP_Settings_Indicator { // phpcs:ignore Generic.Classes.OpeningBraceSa
             'mainwp_numberdays_Outdate_Plugin_Theme'     => 365,
             'mainwp_disableSitesHealthMonitoring'        => 1,
             'mainwp_sitehealthThreshold'                 => 80,
-            'mainwp_enableLegacyBackupFeature'           => 0,
+            'mainwp_enableNativeBackups'                 => 0,
             'mainwp_backupsOnServer'                     => 1,
             'mainwp_backupOnExternalSources'             => 1,
             'mainwp_archiveFormat'                       => 'tar.gz',

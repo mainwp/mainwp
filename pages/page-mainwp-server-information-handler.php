@@ -863,7 +863,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
             'mainwp_maximumPosts'                         => esc_html__( 'Maximum number of posts to return', 'mainwp' ),
             'mainwp_maximumPages'                         => esc_html__( 'Maximum number of pages to return', 'mainwp' ),
             'mainwp_maximumComments'                      => esc_html__( 'Maximum number of comments', 'mainwp' ),
-            'mainwp_enableLegacyBackupFeature'            => esc_html__( 'MainWP legacy backups enabled', 'mainwp' ),
+            'mainwp_enableNativeBackups'                  => esc_html__( 'MainWP native backups enabled', 'mainwp' ),
             'mainwp_primaryBackup'                        => esc_html__( 'Primary backup system', 'mainwp' ),
             'is_enable_automatic_check_uptime_monitoring' => esc_html__( 'Enable Uptime Monitoring', 'mainwp' ),
             'mainwp_disableSitesHealthMonitoring'         => esc_html__( 'Site health monitoring enabled', 'mainwp' ),
@@ -1488,8 +1488,8 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
                     'value' => static::get_primary_backup_method_label(),
                 ),
                 array(
-                    'label' => esc_html__( 'MainWP legacy backups enabled', 'mainwp' ),
-                    'value' => static::format_boolean_label( (int) get_option( 'mainwp_enableLegacyBackupFeature', 0 ) ),
+                    'label' => esc_html__( 'MainWP native backups enabled', 'mainwp' ),
+                    'value' => static::format_boolean_label( (int) MainWP_Backup_Settings::is_native_backups_enabled() ),
                 ),
                 array(
                     'label' => esc_html__( 'Backups kept on server', 'mainwp' ),

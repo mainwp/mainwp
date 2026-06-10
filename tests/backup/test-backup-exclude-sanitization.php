@@ -28,7 +28,7 @@ class MainWP_Backup_Exclude_Sanitization_Test extends MainWP_Abilities_Test_Case
 	 */
 	public function setUp(): void {
 		parent::setUp();
-		update_option( 'mainwp_enableLegacyBackupFeature', 1 );
+		update_option( 'mainwp_enableNativeBackups', 1 );
 	}
 
 	/**
@@ -37,7 +37,7 @@ class MainWP_Backup_Exclude_Sanitization_Test extends MainWP_Abilities_Test_Case
 	 * @return void
 	 */
 	public function tearDown(): void {
-		delete_option( 'mainwp_enableLegacyBackupFeature' );
+		delete_option( 'mainwp_enableNativeBackups' );
 		parent::tearDown();
 	}
 

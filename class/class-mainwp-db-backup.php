@@ -148,7 +148,7 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      */
     public function backup_full_task_running( $wp_id ) { // phpcs:ignore -- NOSONAR - complex.
 
-        if ( ! get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
+        if ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
             return false;
         }
 

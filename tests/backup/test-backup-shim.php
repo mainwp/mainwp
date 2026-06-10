@@ -27,7 +27,7 @@ class MainWP_Backup_Shim_Test extends \WP_UnitTestCase {
 	public function tear_down() {
 		MainWP_Backup_Page::$subPages    = null;
 		MainWP_Manage_Backups::$subPages = null;
-		delete_option( 'mainwp_enableLegacyBackupFeature' );
+		delete_option( 'mainwp_enableNativeBackups' );
 		parent::tear_down();
 	}
 
@@ -86,7 +86,7 @@ class MainWP_Backup_Shim_Test extends \WP_UnitTestCase {
 
 		require_once ABSPATH . 'wp-admin/includes/plugin.php';
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
-		update_option( 'mainwp_enableLegacyBackupFeature', 1 );
+		update_option( 'mainwp_enableNativeBackups', 1 );
 
 		$add_subpage = static function ( $subPages ) {
 			$subPages[] = array(

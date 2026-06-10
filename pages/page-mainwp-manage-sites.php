@@ -1846,7 +1846,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             return;
         }
 
-        if ( get_option( 'mainwp_enableLegacyBackupFeature' ) && ! empty( $_GET['backupid'] ) ) {
+        if ( MainWP_Backup_Settings::is_native_backups_enabled() && ! empty( $_GET['backupid'] ) ) {
             $websiteid     = ! empty( $_GET['backupid'] ) ? intval( $_GET['backupid'] ) : false;
             $backupwebsite = MainWP_DB::instance()->get_website_by_id( $websiteid );
             if ( MainWP_System_Utility::can_edit_website( $backupwebsite ) ) {

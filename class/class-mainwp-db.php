@@ -3497,7 +3497,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                     array( 'wpid' => $websiteid )
                 );
 
-                if ( get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
+                if ( MainWP_Backup_Settings::is_native_backups_enabled() ) {
                     $this->wpdb->update(
                         $this->table_name( 'wp' ),
                         array(

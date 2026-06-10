@@ -31,7 +31,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * @var string DB version info.
      */
-    protected $mainwp_db_version = '9.0.2.5'; // NOSONAR - no IP. Bumped so dbDelta adds the wp_backup_progress child_backup_task_id column on existing installs. Previous 9.0.2.4 bump added busy_since.
+    protected $mainwp_db_version = '9.0.2.6'; // NOSONAR - no IP. Bumped for the mainwp_enableNativeBackups option rename migration. Previous 9.0.2.5 bump added the wp_backup_progress child_backup_task_id column.
 
     /**
      * Protected variable to hold the database option name.
@@ -82,9 +82,10 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
 
         if ( empty( $currentVersion ) ) {
             update_option( 'mainwp_run_quick_setup', 'yes' );
-            MainWP_Utility::update_option( 'mainwp_enableLegacyBackupFeature', 0 );
-        } elseif ( false === get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
-            MainWP_Utility::update_option( 'mainwp_enableLegacyBackupFeature', 1 );
+            MainWP_Utility::update_option( 'mainwp_enableNativeBackups', 0 );
+        } elseif ( false === get_option( 'mainwp_enableNativeBackups' ) && false === get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
+            // An existing install that never wrote either flag predates the option entirely; keep the feature on for it.
+            MainWP_Utility::update_option( 'mainwp_enableNativeBackups', 1 );
         }
 
         if ( empty( $currentVersion ) || version_compare( $currentVersion, '8.8', '<' ) ) {
@@ -571,6 +572,18 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         }
 
         $this->update_optimize_indexes_55( $currentVersion );
+
+        // Rename the backups feature flag to mainwp_enableNativeBackups; reads fall back to the
+        // old name until this has run (see MainWP_Backup_Settings::is_native_backups_enabled()).
+        if ( version_compare( $currentVersion, '9.0.2.6', '<' ) ) { // NOSONAR - no ip.
+            $old_flag = get_option( 'mainwp_enableLegacyBackupFeature', false );
+            if ( false !== $old_flag ) {
+                if ( false === get_option( 'mainwp_enableNativeBackups', false ) ) {
+                    MainWP_Utility::update_option( 'mainwp_enableNativeBackups', (int) $old_flag );
+                }
+                delete_option( 'mainwp_enableLegacyBackupFeature' );
+            }
+        }
 
         $this->wpdb->suppress_errors( $suppress );
         MainWP_DB_Client::instance()->check_to_updates_reports_data_861( $currentVersion );

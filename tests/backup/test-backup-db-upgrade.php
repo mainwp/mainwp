@@ -35,6 +35,13 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 	private $saved_legacy_flag;
 
 	/**
+	 * Stored mainwp_enableNativeBackups before the test.
+	 *
+	 * @var mixed
+	 */
+	private $saved_native_flag;
+
+	/**
 	 * Snapshot options that install() mutates.
 	 *
 	 * @return void
@@ -43,6 +50,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		parent::set_up();
 		$this->saved_db_version  = get_site_option( 'mainwp_db_version' );
 		$this->saved_legacy_flag = get_option( 'mainwp_enableLegacyBackupFeature' );
+		$this->saved_native_flag = get_option( 'mainwp_enableNativeBackups' );
 	}
 
 	/**
@@ -73,6 +81,12 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 			delete_option( 'mainwp_enableLegacyBackupFeature' );
 		} else {
 			update_option( 'mainwp_enableLegacyBackupFeature', $this->saved_legacy_flag );
+		}
+
+		if ( false === $this->saved_native_flag ) {
+			delete_option( 'mainwp_enableNativeBackups' );
+		} else {
+			update_option( 'mainwp_enableNativeBackups', $this->saved_native_flag );
 		}
 
 		parent::tear_down();

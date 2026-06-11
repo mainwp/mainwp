@@ -162,16 +162,32 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
      * @uses \MainWP\Dashboard\MainWP_Connect::get_get_data_authed()
      */
     public static function download_backup_artifact( object $website, string $remote_filename, string $local_file, $size, $http_user, $http_pass ): void {
+        $escalated = false;
+
         if ( ! MainWP_Backup_Monitor::child_supports_download_token( $website ) ) {
-            MainWP_Connect::download_to_file(
-                MainWP_Connect::get_get_data_authed( $website, $remote_filename, 'fdl' ),
-                $local_file,
-                $size,
-                $http_user,
-                $http_pass
-            );
-            static::fire_downloaded_action( $website, $local_file, false );
-            return;
+            try {
+                MainWP_Connect::download_to_file(
+                    MainWP_Connect::get_get_data_authed( $website, $remote_filename, 'fdl' ),
+                    $local_file,
+                    $size,
+                    $http_user,
+                    $http_pass
+                );
+                static::fire_downloaded_action( $website, $local_file, false );
+                return;
+            } catch ( MainWP_Exception $e ) {
+                $extra        = (string) $e->get_message_extra( false );
+                $auth_refused = false !== strpos( $extra, 'HTTP 401' ) || false !== strpos( $extra, 'HTTP 403' );
+                if ( ! $auth_refused ) {
+                    throw $e;
+                }
+                // The child refused a tokenless download: it has ratcheted
+                // onto tokens while this dashboard's capability flag is
+                // empty (a fresh install reconnected to a known child).
+                // Escalate to the token path; a success below stamps the
+                // capability so the next download skips this detour.
+                $escalated = true;
+            }
         }
 
         // Fail closed: a token failure on a capability-advertising child
@@ -203,6 +219,10 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
                     'expected ' . $token_info['hash'] . ', got ' . $actual_hash
                 );
             }
+        }
+
+        if ( $escalated ) {
+            MainWP_DB::instance()->update_website_option( $website, 'download_token_support', '1' );
         }
 
         static::fire_downloaded_action( $website, $local_file, true );

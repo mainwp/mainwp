@@ -409,6 +409,76 @@ class MainWP_Backup_Artifact_Download_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A 401 on the tokenless path means the child has ratcheted onto
+	 * tokens while the dashboard's capability flag is empty - a fresh
+	 * dashboard install reconnected to a ratcheted child. The download
+	 * escalates to the token path and a success stamps the capability,
+	 * healing the flag without waiting for the next preflight.
+	 *
+	 * @return void
+	 */
+	public function test_tokenless_401_escalates_to_token_path_and_stamps_capability() {
+		$website = $this->make_site( false );
+		$local   = $this->local_file();
+		$content = 'ratcheted-child-bytes';
+		$calls   = array();
+		$urls    = array();
+		$this->mock_token_callable(
+			array(
+				'token' => str_repeat( 'g', 32 ),
+				'hash'  => hash( 'sha256', $content ),
+				'size'  => strlen( $content ),
+			),
+			$calls
+		);
+		$this->mock_download(
+			array(
+				new MainWP_Exception( 'unexpected response', 'HTTP 401', MainWP_Backup_Error_Codes::ERR_HTTP_ERROR ),
+				$content,
+			),
+			$urls
+		);
+
+		MainWP_Backup_File_Manager::download_backup_artifact( $website, 'backup-ratcheted.zip', $local, false, null, null );
+
+		$this->assertCount( 1, $calls, 'The 401 must trigger exactly one token request.' );
+		$this->assertCount( 2, $urls );
+		$this->assertStringNotContainsString( 'dltoken=', $urls[0] );
+		$this->assertStringContainsString( 'dltoken=' . str_repeat( 'g', 32 ), $urls[1] );
+		$this->assertSame( $content, file_get_contents( $local ) );
+
+		$website = MainWP_DB::instance()->get_website_by_id( (int) $website->id );
+		$this->assertSame( '1', MainWP_DB::instance()->get_website_option( $website, 'download_token_support' ), 'The successful token download must stamp the capability.' );
+	}
+
+	/**
+	 * A non-auth failure on the tokenless path propagates unchanged - a
+	 * timeout or server error says nothing about token enforcement.
+	 *
+	 * @return void
+	 */
+	public function test_tokenless_non_auth_failure_propagates_without_escalation() {
+		$website = $this->make_site( false );
+		$local   = $this->local_file();
+		$calls   = array();
+		$urls    = array();
+		$this->mock_token_callable( array( 'error' => 'must never be called' ), $calls );
+		$this->mock_download(
+			array( new MainWP_Exception( 'unexpected response', 'HTTP 500', MainWP_Backup_Error_Codes::ERR_HTTP_ERROR ) ),
+			$urls
+		);
+
+		try {
+			MainWP_Backup_File_Manager::download_backup_artifact( $website, 'backup-legacy-500.zip', $local, false, null, null );
+			$this->fail( 'Expected the transfer failure to propagate.' );
+		} catch ( MainWP_Exception $e ) {
+			$this->assertSame( MainWP_Backup_Error_Codes::ERR_HTTP_ERROR, $e->get_message_error_code() );
+		}
+		$this->assertCount( 0, $calls, 'A non-auth failure must not escalate to the token path.' );
+		$this->assertCount( 1, $urls );
+	}
+
+	/**
 	 * A non-token transfer failure propagates immediately without a token
 	 * refresh.
 	 *

@@ -31,7 +31,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * @var string DB version info.
      */
-    protected $mainwp_db_version = '9.0.2.11'; // NOSONAR - no IP. Bumped so dbDelta adds the wp_backup_restore_job table. Previous 9.0.2.10 bump added the wp_backup schedule and retention columns and the wp_backup_upload_job kind column with its widened unique key.
+    protected $mainwp_db_version = '9.0.2.12'; // NOSONAR - no IP. Bumped so dbDelta adds the wp_backup max_chain_length column. Previous 9.0.2.11 bump added the wp_backup_restore_job table.
 
     /**
      * Protected variable to hold the database option name.
@@ -375,6 +375,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
   retention_days int(11) NOT NULL DEFAULT 0,
   retention_storage_mb int(11) NOT NULL DEFAULT 0,
   delete_cloud_copies tinyint(1) NOT NULL DEFAULT 1,
+  max_chain_length int(11) NOT NULL DEFAULT 0,
   KEY idx_next_run (next_run)";
         if ( empty( $currentVersion ) ) {
             $tbl .= ',

@@ -175,6 +175,8 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
         $retention_days       = isset( $task->retention_days ) ? (int) $task->retention_days : 0;
         $retention_storage_mb = isset( $task->retention_storage_mb ) ? (int) $task->retention_storage_mb : 0;
         $delete_cloud_copies  = ! isset( $task->delete_cloud_copies ) || 1 === (int) $task->delete_cloud_copies;
+        $max_chain_length     = isset( $task->max_chain_length ) ? (int) $task->max_chain_length : 0;
+        $chain_wrapper_style  = isset( $task->type ) && 'incremental' === $task->type ? '' : 'style="display:none"';
         ?>
         <h3 class="header"><?php esc_html_e( 'Backup Retention', 'mainwp' ); ?></h3>
         <div class="ui grid field">
@@ -195,6 +197,13 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
             <div class="ten wide column">
                 <input type="number" name="mainwp-backup-retention-storage-mb" id="mainwp-backup-retention-storage-mb" min="0" placeholder="<?php esc_attr_e( 'No limit', 'mainwp' ); ?>" value="<?php echo $retention_storage_mb > 0 ? esc_attr( $retention_storage_mb ) : ''; ?>"/>
                 <em><?php esc_html_e( 'When this task\'s backups for a site exceed the cap, the oldest are removed until they fit.', 'mainwp' ); ?></em>
+            </div>
+        </div>
+        <div class="ui grid field" id="mainwp-backup-max-chain-length-wrapper" <?php echo $chain_wrapper_style; //phpcs:ignore -- static attribute. ?>>
+            <label class="six wide column middle aligned"><?php esc_html_e( 'Start a new chain after (backups)', 'mainwp' ); ?></label>
+            <div class="ten wide column">
+                <input type="number" name="mainwp-backup-max-chain-length" id="mainwp-backup-max-chain-length" min="0" placeholder="<?php esc_attr_e( 'No limit', 'mainwp' ); ?>" value="<?php echo $max_chain_length > 0 ? esc_attr( $max_chain_length ) : ''; ?>"/>
+                <em><?php esc_html_e( 'Once an incremental chain reaches this many backups, counting the full backup it builds on, the next run creates a fresh full backup and starts a new chain. Retention removes whole chains, so a limit lets older chains age out and keeps restore times steady.', 'mainwp' ); ?></em>
             </div>
         </div>
         <div class="ui grid field">

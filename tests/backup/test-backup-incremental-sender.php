@@ -209,27 +209,31 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	 *
 	 * @param object $website Website row.
 	 * @param int    $task_id Task id.
+	 * @param array  $extra   Field overrides.
 	 *
 	 * @return object Task.
 	 */
-	protected function make_task( $website, $task_id = 11 ) {
-		return (object) array(
-			'id'                             => $task_id,
-			'userid'                         => $website->userid,
-			'type'                           => 'incremental',
-			'exclude'                        => '',
-			'excludebackup'                  => 0,
-			'excludecache'                   => 0,
-			'excludenonwp'                   => 0,
-			'excludezip'                     => 0,
-			'filename'                       => '',
-			'archiveFormat'                  => 'zip',
-			'loadFilesBeforeZip'             => 1,
-			'maximumFileDescriptorsOverride' => 0,
-			'maximumFileDescriptorsAuto'     => 1,
-			'maximumFileDescriptors'         => 150,
-			'last_run'                       => time() - 100,
-			'subfolder'                      => 'backups',
+	protected function make_task( $website, $task_id = 11, $extra = array() ) {
+		return (object) array_merge(
+			array(
+				'id'                             => $task_id,
+				'userid'                         => $website->userid,
+				'type'                           => 'incremental',
+				'exclude'                        => '',
+				'excludebackup'                  => 0,
+				'excludecache'                   => 0,
+				'excludenonwp'                   => 0,
+				'excludezip'                     => 0,
+				'filename'                       => '',
+				'archiveFormat'                  => 'zip',
+				'loadFilesBeforeZip'             => 1,
+				'maximumFileDescriptorsOverride' => 0,
+				'maximumFileDescriptorsAuto'     => 1,
+				'maximumFileDescriptors'         => 150,
+				'last_run'                       => time() - 100,
+				'subfolder'                      => 'backups',
+			),
+			$extra
 		);
 	}
 
@@ -268,6 +272,28 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 				'site_id'       => $site_id,
 				'type'          => 'full',
 				'parent_id'     => null,
+				'archives'      => array(),
+				'manifest_path' => $this->manifest_fixture,
+			)
+		);
+	}
+
+	/**
+	 * Record an incremental snapshot row chained onto a parent.
+	 *
+	 * @param int $site_id   Site id.
+	 * @param int $parent_id Parent snapshot id.
+	 * @param int $task_id   Task id.
+	 *
+	 * @return int Snapshot id.
+	 */
+	protected function record_increment( $site_id, $parent_id, $task_id = 11 ) {
+		return MainWP_Backup_Snapshots::instance()->record_snapshot(
+			array(
+				'task_id'       => $task_id,
+				'site_id'       => $site_id,
+				'type'          => 'incremental',
+				'parent_id'     => $parent_id,
 				'archives'      => array(),
 				'manifest_path' => $this->manifest_fixture,
 			)
@@ -362,6 +388,130 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( 'incremental', $params['type'] );
 		$this->assertSame( (string) $base_id, (string) $params['parent_snapshot_id'] );
 		$this->assertArrayNotHasKey( 'parent_manifest', $params, 'The manifest is only pushed when the child copy is gone.' );
+	}
+
+	/**
+	 * A chain at its configured length restarts: the next run is a
+	 * manifest-emitting full that becomes the base of a new chain, so the
+	 * old chain turns into a complete, prunable retention unit.
+	 *
+	 * @return void
+	 */
+	public function test_chain_restart_runs_full_at_limit() {
+		$site_id = $this->create_test_site();
+		$base_id = $this->record_base_snapshot( $site_id );
+		$mid_id  = $this->record_increment( $site_id, $base_id );
+		$this->record_increment( $site_id, $mid_id );
+
+		$this->mock_child_actions(
+			array(
+				'backup_preflight'   => $this->preflight_response(),
+				'backup_task_create' => array(
+					'task_id' => 'child-task-1',
+					'phase'   => 'queued',
+				),
+			)
+		);
+
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$cycle   = $this->run_cycle( $site_id, $this->make_task( $website, 11, array( 'max_chain_length' => 3 ) ) );
+
+		$this->assertNull( $cycle['exception'] );
+
+		$params = $this->last_call_params( 'backup_task_create' );
+		$this->assertSame( 'full', $params['type'], 'A chain at its limit restarts with a new full.' );
+		$this->assertSame( '1', (string) $params['emit_manifest'] );
+	}
+
+	/**
+	 * A chain below the limit keeps extending incrementally.
+	 *
+	 * @return void
+	 */
+	public function test_chain_below_limit_stays_incremental() {
+		$site_id = $this->create_test_site();
+		$base_id = $this->record_base_snapshot( $site_id );
+		$tip_id  = $this->record_increment( $site_id, $base_id );
+
+		$this->mock_child_actions(
+			array(
+				'backup_preflight'   => $this->preflight_response(),
+				'backup_task_create' => array(
+					'task_id' => 'child-task-1',
+					'phase'   => 'queued',
+				),
+			)
+		);
+
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$cycle   = $this->run_cycle( $site_id, $this->make_task( $website, 11, array( 'max_chain_length' => 3 ) ) );
+
+		$this->assertNull( $cycle['exception'] );
+
+		$params = $this->last_call_params( 'backup_task_create' );
+		$this->assertSame( 'incremental', $params['type'] );
+		$this->assertSame( (string) $tip_id, (string) $params['parent_snapshot_id'] );
+	}
+
+	/**
+	 * A zero limit means unlimited - the chain keeps growing, matching
+	 * the behavior before the limit existed.
+	 *
+	 * @return void
+	 */
+	public function test_chain_unlimited_when_zero() {
+		$site_id = $this->create_test_site();
+		$parent  = $this->record_base_snapshot( $site_id );
+		for ( $i = 0; $i < 4; $i++ ) {
+			$parent = $this->record_increment( $site_id, $parent );
+		}
+
+		$this->mock_child_actions(
+			array(
+				'backup_preflight'   => $this->preflight_response(),
+				'backup_task_create' => array(
+					'task_id' => 'child-task-1',
+					'phase'   => 'queued',
+				),
+			)
+		);
+
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$cycle   = $this->run_cycle( $site_id, $this->make_task( $website, 11, array( 'max_chain_length' => 0 ) ) );
+
+		$this->assertNull( $cycle['exception'] );
+		$this->assertSame( 'incremental', $this->last_call_params( 'backup_task_create' )['type'] );
+	}
+
+	/**
+	 * A chain whose walk does not reach a full base is broken - it cannot
+	 * restore completely, so the safe answer is a restart full.
+	 *
+	 * @return void
+	 */
+	public function test_broken_chain_restarts_full() {
+		$site_id = $this->create_test_site();
+		// An increment whose parent row is gone: the chain walk stops at it.
+		$this->record_increment( $site_id, 99999999 );
+
+		$this->mock_child_actions(
+			array(
+				'backup_preflight'   => $this->preflight_response(),
+				'backup_task_create' => array(
+					'task_id' => 'child-task-1',
+					'phase'   => 'queued',
+				),
+			)
+		);
+
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$cycle   = $this->run_cycle( $site_id, $this->make_task( $website, 11, array( 'max_chain_length' => 10 ) ) );
+
+		$this->assertNull( $cycle['exception'] );
+
+		$params = $this->last_call_params( 'backup_task_create' );
+		$this->assertSame( 'full', $params['type'], 'A broken chain restarts instead of extending unrestorable history.' );
+		$this->assertSame( '1', (string) $params['emit_manifest'] );
 	}
 
 	/**

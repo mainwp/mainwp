@@ -169,6 +169,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 			'retention_days'       => 'int(11) NOT NULL DEFAULT 0',
 			'retention_storage_mb' => 'int(11) NOT NULL DEFAULT 0',
 			'delete_cloud_copies'  => 'tinyint(1) NOT NULL DEFAULT 1',
+			'max_chain_length'     => 'int(11) NOT NULL DEFAULT 0',
 		);
 	}
 
@@ -518,6 +519,32 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 				"Upgrade must add {$column} to existing installs; the shipped db version needs a bump or dbDelta never runs."
 			);
 		}
+	}
+
+	/**
+	 * An install whose stored db version predates the incremental
+	 * chain-length limit must receive the max_chain_length column when
+	 * install() runs.
+	 *
+	 * @return void
+	 */
+	public function test_upgrade_adds_max_chain_length_column_to_backup_task_table() {
+		global $wpdb;
+
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		$this->assertTrue( $this->column_exists( $table, 'max_chain_length' ), 'Precondition: fresh install has max_chain_length.' );
+
+		$wpdb->query( "ALTER TABLE {$table} DROP COLUMN max_chain_length" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture, identifiers cannot be prepared.
+		$this->assertFalse( $this->column_exists( $table, 'max_chain_length' ), 'Precondition: column dropped to simulate an older install.' );
+
+		update_site_option( 'mainwp_db_version', '9.0.2.11' );
+
+		MainWP_Install::instance()->install();
+
+		$this->assertTrue(
+			$this->column_exists( $table, 'max_chain_length' ),
+			'Upgrade must add max_chain_length to existing installs; the shipped db version needs a bump or dbDelta never runs.'
+		);
 	}
 
 	/**

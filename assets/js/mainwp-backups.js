@@ -1114,6 +1114,7 @@ mainwp_managebackups_update = function () {
             retention_count: jQuery('#mainwp-backup-retention-count').val(),
             retention_days: jQuery('#mainwp-backup-retention-days').val(),
             retention_storage_mb: jQuery('#mainwp-backup-retention-storage-mb').val(),
+            max_chain_length: jQuery('#mainwp-backup-max-chain-length').val(),
             delete_cloud_copies: (jQuery('#mainwp-backup-delete-cloud-copies').is(':checked') ? 1 : 0),
             //loadFilesBeforeZip: loadFilesBeforeZip
         });
@@ -1193,6 +1194,7 @@ mainwp_managebackups_add = function () {
             retention_count: jQuery('#mainwp-backup-retention-count').val(),
             retention_days: jQuery('#mainwp-backup-retention-days').val(),
             retention_storage_mb: jQuery('#mainwp-backup-retention-storage-mb').val(),
+            max_chain_length: jQuery('#mainwp-backup-max-chain-length').val(),
             delete_cloud_copies: (jQuery('#mainwp-backup-delete-cloud-copies').is(':checked') ? 1 : 0),
             loadFilesBeforeZip: loadFilesBeforeZip
         });

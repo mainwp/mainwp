@@ -745,6 +745,23 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             );
         }
 
+        $max_chain_length = isset( $pTask->max_chain_length ) ? (int) $pTask->max_chain_length : 0;
+        if ( $max_chain_length > 0 ) {
+            $chain = MainWP_Backup_Snapshots::instance()->get_chain( (int) $base->id );
+            // A chain at its limit restarts with a new full base, turning
+            // the old chain into a complete, prunable retention unit. A
+            // chain whose walk never reaches a full base is broken and
+            // cannot restore completely - restarting is the safe answer.
+            if ( count( $chain ) >= $max_chain_length || 'full' !== $chain[0]->type ) {
+                return array(
+                    'type'   => 'full',
+                    'mode'   => 'full',
+                    'params' => array( 'emit_manifest' => '1' ),
+                    'notice' => '',
+                );
+            }
+        }
+
         $escalate_to_full = in_array( $marker, array( 'push', 'full' ), true );
         $manifest_b64     = '';
         if ( ! $escalate_to_full && 'plain' === $marker ) {

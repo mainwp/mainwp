@@ -380,6 +380,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             'retention_days'       => isset( $_POST['retention_days'] ) ? absint( $_POST['retention_days'] ) : 0,
             'retention_storage_mb' => isset( $_POST['retention_storage_mb'] ) ? absint( $_POST['retention_storage_mb'] ) : 0,
             'delete_cloud_copies'  => empty( $_POST['delete_cloud_copies'] ) ? 0 : 1,
+            'max_chain_length'     => isset( $_POST['max_chain_length'] ) ? absint( $_POST['max_chain_length'] ) : 0,
         );
         //phpcs:enable
 

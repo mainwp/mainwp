@@ -233,6 +233,53 @@ class MainWP_Backup_Task_Form_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * The chain-length limit renders for an incremental task with its
+	 * saved value, and stays hidden for other types (the JS toggle shows
+	 * it when the type changes).
+	 *
+	 * @return void
+	 */
+	public function test_render_max_chain_length_for_incremental_task() {
+		$task = $this->make_task(
+			array(
+				'type'             => 'incremental',
+				'max_chain_length' => 12,
+			)
+		);
+
+		ob_start();
+		MainWP_Backup_Task_Form::render_task_details( $task, 'Tar GZip', 'site', false, true );
+		$output = ob_get_clean();
+
+		$this->assertStringContainsString( 'mainwp-backup-max-chain-length', $output );
+		$this->assertStringContainsString( 'value="12"', $output );
+		$this->assertMatchesRegularExpression(
+			'/id="mainwp-backup-max-chain-length-wrapper"\s*>/',
+			$output,
+			'The chain-length field is visible for an incremental task.'
+		);
+	}
+
+	/**
+	 * A non-incremental task hides the chain-length field; the limit only
+	 * applies to incremental chains.
+	 *
+	 * @return void
+	 */
+	public function test_render_max_chain_length_hidden_for_full_task() {
+		ob_start();
+		MainWP_Backup_Task_Form::render_task_details( $this->make_task(), 'Tar GZip', 'site', false, true );
+		$output = ob_get_clean();
+
+		$this->assertStringContainsString( 'mainwp-backup-max-chain-length', $output );
+		$this->assertMatchesRegularExpression(
+			'/id="mainwp-backup-max-chain-length-wrapper"\s+style="display:none"/',
+			$output,
+			'The chain-length field stays hidden for non-incremental tasks.'
+		);
+	}
+
+	/**
 	 * A populated retention policy renders its values, and a disabled
 	 * cloud copies toggle stays off.
 	 *

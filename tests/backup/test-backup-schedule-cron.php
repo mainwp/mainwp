@@ -274,6 +274,7 @@ class MainWP_Backup_Schedule_Cron_Test extends \WP_UnitTestCase {
 		$_POST['retention_days']       = '90';
 		$_POST['retention_storage_mb'] = '500';
 		$_POST['delete_cloud_copies']  = '1';
+		$_POST['max_chain_length']     = '30';
 
 		MainWP_Manage_Backups_Handler::save_task_retention_fields( $id );
 
@@ -282,6 +283,7 @@ class MainWP_Backup_Schedule_Cron_Test extends \WP_UnitTestCase {
 		$this->assertSame( 90, (int) $task->retention_days );
 		$this->assertSame( 500, (int) $task->retention_storage_mb );
 		$this->assertSame( 1, (int) $task->delete_cloud_copies );
+		$this->assertSame( 30, (int) $task->max_chain_length );
 	}
 
 	/**
@@ -307,6 +309,7 @@ class MainWP_Backup_Schedule_Cron_Test extends \WP_UnitTestCase {
 		$this->assertSame( 0, (int) $task->retention_days );
 		$this->assertSame( 0, (int) $task->retention_storage_mb );
 		$this->assertSame( 0, (int) $task->delete_cloud_copies, 'An unchecked toggle saves off.' );
+		$this->assertSame( 0, (int) $task->max_chain_length, 'An absent chain limit saves as no limit.' );
 	}
 
 	/**

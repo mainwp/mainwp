@@ -1496,10 +1496,13 @@ jQuery(function ($) {
             jQuery('.mainwp-backup-full-exclude').hide();
         else
             jQuery('.mainwp-backup-full-exclude').show();
-        if (jQuery(this).val() == 'incremental')
+        if (jQuery(this).val() == 'incremental') {
             jQuery('#mainwp-backup-incremental-note').show();
-        else
+            jQuery('#mainwp-backup-max-chain-length-wrapper').show();
+        } else {
             jQuery('#mainwp-backup-incremental-note').hide();
+            jQuery('#mainwp-backup-max-chain-length-wrapper').hide();
+        }
     });
     jQuery('#mainwp-backup-task-schedule').on('change', function () {
         let schedule = jQuery(this).val();

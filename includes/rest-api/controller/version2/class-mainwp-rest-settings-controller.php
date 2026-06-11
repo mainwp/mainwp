@@ -340,6 +340,31 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             )
         );
 
+        // Backup Settings (the Backup Settings page).
+        register_rest_route(
+            $this->namespace,
+            '/' . $this->rest_base . '/backups',
+            array(
+                array(
+                    'methods'             => WP_REST_Server::READABLE,
+                    'callback'            => array( $this, 'get_backup_settings' ),
+                    'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                ),
+                'schema' => array( $this, 'get_public_item_schema' ),
+            )
+        );
+        register_rest_route(
+            $this->namespace,
+            '/' . $this->rest_base . '/backups/edit',
+            array(
+                'methods'             => 'PUT, PATCH',
+                'callback'            => array( $this, 'update_backup_settings' ),
+                'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                'args'                => $this->get_update_backup_allowed_fields(),
+                'validate_callback'   => array( $this, 'validate_update_general_params' ),
+            ),
+        );
+
         // MainWP Dashboard Tools Settings.
         register_rest_route(
             $this->namespace,
@@ -514,6 +539,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         if ( is_wp_error( $body ) ) {
             return $body;
         }
+        $body = $this->fold_native_backups_alias( $body );
 
         // Get current user id.
         $user_id = $this->get_user_id();
@@ -1560,6 +1586,83 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
     }
 
     /**
+     * Get the backup settings (the Backup Settings page surface).
+     *
+     * @param WP_REST_Request $request Full details about the request.
+     *
+     * @return WP_Error|WP_REST_Response
+     */
+    public function get_backup_settings( $request ) {
+        $settings = $this->get_backup_settings_data();
+
+        return rest_ensure_response(
+            array(
+                'success' => 1,
+                'data'    => $this->filter_response_data_by_allowed_fields( $settings, 'backups_view' ),
+            )
+        );
+    }
+
+    /**
+     * Update the backup settings.
+     *
+     * @param WP_REST_Request $request Full details about the request.
+     *
+     * @uses MainWP_Utility::update_option()
+     *
+     * @return WP_Error|WP_REST_Response
+     */
+    public function update_backup_settings( $request ) {
+        // Check content type.
+        $content_type = $this->validate_content_type( $request );
+        if ( is_wp_error( $content_type ) ) {
+            return $content_type;
+        }
+
+        // Get request body.
+        $body = $this->get_request_body( $request );
+        if ( is_wp_error( $body ) ) {
+            return $body;
+        }
+        $body = $this->fold_native_backups_alias( $body );
+
+        try {
+            $update_if_present = function ( $key, $option_name, $cast = null ) use ( $body ) {
+                return $this->update_option_if_present( $body, $key, $option_name, $cast );
+            };
+
+            $update_if_present( 'mainwp_primary_backup', 'mainwp_primaryBackup', 'string' );
+            $update_if_present( 'mainwp_enable_legacy_backup_feature', 'mainwp_enableNativeBackups', 'int' );
+            $update_if_present( 'mainwp_backups_on_server', 'mainwp_backupsOnServer', 'string' );
+            $update_if_present( 'mainwp_backup_on_external_sources', 'mainwp_backupOnExternalSources', 'string' );
+            $update_if_present( 'mainwp_archive_format', 'mainwp_archiveFormat', 'string' );
+            $update_if_present( 'mainwp_notification_on_backup_fail', 'mainwp_notificationOnBackupFail', 'int' );
+            $update_if_present( 'mainwp_notification_on_backup_start', 'mainwp_notificationOnBackupStart', 'int' );
+            $update_if_present( 'mainwp_chunked_backup_tasks', 'mainwp_chunkedBackupTasks', 'int' );
+            $update_if_present( 'mainwp_load_files_before_zip', 'mainwp_options_loadFilesBeforeZip', 'int' );
+            $update_if_present( 'mainwp_maximum_file_descriptors_auto', 'mainwp_maximumFileDescriptorsAuto', 'int' );
+            $update_if_present( 'mainwp_maximum_file_descriptors', 'mainwp_maximumFileDescriptors', 'int' );
+            $update_if_present( 'mainwp_backup_max_concurrent', 'mainwp_backup_max_concurrent', 'int' );
+
+            $settings = $this->get_backup_settings_data();
+        } catch ( \Exception $e ) {
+            do_action( 'mainwp_debug_log', 'Update backup settings error: ' . $e->getMessage() );
+            return new WP_Error(
+                'rest_invalid_param',
+                /* translators: %s: Error message */ sprintf( __( 'Update backup settings error: %s', 'mainwp' ), $e->getMessage() ),
+            );
+        }
+
+        return rest_ensure_response(
+            array(
+                'success' => 1,
+                'message' => esc_html__( 'Backup settings updated successfully.', 'mainwp' ),
+                'data'    => $this->filter_response_data_by_allowed_fields( $settings, 'backups_edit' ),
+            )
+        );
+    }
+
+    /**
      * Get all tool settings.
      *
      * @param WP_REST_Request $request Full details about the request.
@@ -2410,6 +2513,13 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 'sanitize_callback' => $this->make_enum_sanitizer( $val_bool ),
                 'validate_callback' => $this->make_enum_validator( $val_bool ),
             ),
+            'mainwp_enable_native_backups'        => array(
+                'required'          => false,
+                'description'       => __( 'Enable native backups (canonical name for mainwp_enable_legacy_backup_feature).', 'mainwp' ),
+                'type'              => 'boolean',
+                'sanitize_callback' => $this->make_enum_sanitizer( $val_bool ),
+                'validate_callback' => $this->make_enum_validator( $val_bool ),
+            ),
             'mainwp_backups_on_server'            => array(
                 'required'          => false,
                 'description'       => __( 'Backups on server.', 'mainwp' ),
@@ -2449,6 +2559,111 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 'type'              => 'boolean',
                 'sanitize_callback' => $this->make_enum_sanitizer( $val_bool ),
                 'validate_callback' => $this->make_enum_validator( $val_bool ),
+            ),
+        );
+    }
+
+    /**
+     * Get allowed fields for backup settings.
+     *
+     * @return array
+     */
+    public function get_update_backup_allowed_fields() {
+        $val_bool        = array( 0, 1 );
+        $archive_format  = array( 'zip', 'tar.gz', 'tar.bz2', 'tar' );
+        $primary_backup  = array( '', 'module-api-backups' );
+        $max_concurrent  = range( 1, 10 );
+        $max_descriptors = range( 1, 65535 );
+
+        return array(
+            'mainwp_enable_native_backups'         => array(
+                'required'          => false,
+                'description'       => __( 'Enable native backups (canonical name for mainwp_enable_legacy_backup_feature).', 'mainwp' ),
+                'type'              => 'boolean',
+                'sanitize_callback' => $this->make_enum_sanitizer( $val_bool ),
+                'validate_callback' => $this->make_enum_validator( $val_bool ),
+            ),
+            'mainwp_enable_legacy_backup_feature'  => array(
+                'required'          => false,
+                'description'       => __( 'Enable legacy backup feature.', 'mainwp' ),
+                'type'              => 'boolean',
+                'sanitize_callback' => $this->make_enum_sanitizer( $val_bool ),
+                'validate_callback' => $this->make_enum_validator( $val_bool ),
+            ),
+            'mainwp_primary_backup'                => array(
+                'required'          => false,
+                'description'       => __( 'Primary backup method.', 'mainwp' ),
+                'type'              => 'string',
+                'sanitize_callback' => $this->make_enum_sanitizer( $primary_backup, 'string' ),
+                'validate_callback' => $this->make_enum_validator( $primary_backup, 'string' ),
+            ),
+            'mainwp_backups_on_server'             => array(
+                'required'          => false,
+                'description'       => __( 'Backups on server.', 'mainwp' ),
+                'type'              => 'string',
+                'sanitize_callback' => 'sanitize_text_field',
+            ),
+            'mainwp_backup_on_external_sources'    => array(
+                'required'          => false,
+                'description'       => __( 'Backup on external sources.', 'mainwp' ),
+                'type'              => 'string',
+                'sanitize_callback' => 'sanitize_text_field',
+            ),
+            'mainwp_archive_format'                => array(
+                'required'          => false,
+                'description'       => __( 'Archive format.', 'mainwp' ),
+                'type'              => 'string',
+                'sanitize_callback' => $this->make_enum_sanitizer( $archive_format, 'string' ),
+                'validate_callback' => $this->make_enum_validator( $archive_format, 'string' ),
+            ),
+            'mainwp_notification_on_backup_fail'   => array(
+                'required'          => false,
+                'description'       => __( 'Notification on backup fail.', 'mainwp' ),
+                'type'              => 'boolean',
+                'sanitize_callback' => $this->make_enum_sanitizer( $val_bool ),
+                'validate_callback' => $this->make_enum_validator( $val_bool ),
+            ),
+            'mainwp_notification_on_backup_start'  => array(
+                'required'          => false,
+                'description'       => __( 'Notification on backup start.', 'mainwp' ),
+                'type'              => 'boolean',
+                'sanitize_callback' => $this->make_enum_sanitizer( $val_bool ),
+                'validate_callback' => $this->make_enum_validator( $val_bool ),
+            ),
+            'mainwp_chunked_backup_tasks'          => array(
+                'required'          => false,
+                'description'       => __( 'Chunked backup tasks.', 'mainwp' ),
+                'type'              => 'boolean',
+                'sanitize_callback' => $this->make_enum_sanitizer( $val_bool ),
+                'validate_callback' => $this->make_enum_validator( $val_bool ),
+            ),
+            'mainwp_load_files_before_zip'         => array(
+                'required'          => false,
+                'description'       => __( 'Load files into memory before zipping.', 'mainwp' ),
+                'type'              => 'boolean',
+                'sanitize_callback' => $this->make_enum_sanitizer( $val_bool ),
+                'validate_callback' => $this->make_enum_validator( $val_bool ),
+            ),
+            'mainwp_maximum_file_descriptors_auto' => array(
+                'required'          => false,
+                'description'       => __( 'Auto-detect the maximum file descriptors.', 'mainwp' ),
+                'type'              => 'boolean',
+                'sanitize_callback' => $this->make_enum_sanitizer( $val_bool ),
+                'validate_callback' => $this->make_enum_validator( $val_bool ),
+            ),
+            'mainwp_maximum_file_descriptors'      => array(
+                'required'          => false,
+                'description'       => __( 'Maximum file descriptors.', 'mainwp' ),
+                'type'              => 'integer',
+                'sanitize_callback' => $this->make_enum_sanitizer( $max_descriptors ),
+                'validate_callback' => $this->make_enum_validator( $max_descriptors ),
+            ),
+            'mainwp_backup_max_concurrent'         => array(
+                'required'          => false,
+                'description'       => __( 'Maximum concurrent backup tasks.', 'mainwp' ),
+                'type'              => 'integer',
+                'sanitize_callback' => $this->make_enum_sanitizer( $max_concurrent ),
+                'validate_callback' => $this->make_enum_validator( $max_concurrent ),
             ),
         );
     }
@@ -3757,6 +3972,21 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
     public function validate_update_general_params( $request ) { // phpcs:ignore -- NOSONAR - complex.
         $primary_backup = $request->get_param( 'mainwp_primary_backup' );
         $backup_feature = $request->get_param( 'mainwp_enable_legacy_backup_feature' );
+        $native_backups = $request->get_param( 'mainwp_enable_native_backups' );
+
+        // mainwp_enable_native_backups is the canonical name for the same
+        // flag; both keys in one request must agree, and either alone
+        // stands in for the other.
+        if ( null !== $native_backups && null !== $backup_feature && (int) $native_backups !== (int) $backup_feature ) {
+            return new WP_Error(
+                'invalid_backup_config',
+                __( 'mainwp_enable_native_backups and mainwp_enable_legacy_backup_feature name the same setting and were sent with different values.', 'mainwp' ),
+                array( 'status' => 400 )
+            );
+        }
+        if ( null === $backup_feature ) {
+            $backup_feature = $native_backups;
+        }
 
         // Validate mainwp_primary_backup and mainwp_enable_legacy_backup_feature relationship.
         if ( null !== $primary_backup || null !== $backup_feature ) {
@@ -3777,13 +4007,15 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 // When primary backup is module-api-backups, legacy feature must be 0.
                 return new WP_Error(
                     'invalid_backup_config',
-                    __( 'When mainwp_primary_backup is "module-api-backups", mainwp_enable_legacy_backup_feature must be disabled (0).', 'mainwp' )
+                    __( 'When mainwp_primary_backup is "module-api-backups", mainwp_enable_legacy_backup_feature must be disabled (0).', 'mainwp' ),
+                    array( 'status' => 400 )
                 );
             } elseif ( '' === $primary_backup_value && ( null !== $backup_feature && '1' !== (string) $backup_feature && 1 !== (int) $backup_feature ) ) {
                 // When primary backup is not module-api-backups, legacy feature must be 1.
                 return new WP_Error(
                     'invalid_backup_config',
-                    __( 'When mainwp_primary_backup is not "module-api-backups", mainwp_enable_legacy_backup_feature must be enabled (1).', 'mainwp' )
+                    __( 'When mainwp_primary_backup is not "module-api-backups", mainwp_enable_legacy_backup_feature must be enabled (1).', 'mainwp' ),
+                    array( 'status' => 400 )
                 );
             }
         }
@@ -3947,6 +4179,22 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 break;
         }
         return $val;
+    }
+
+    /**
+     * Fold the canonical mainwp_enable_native_backups key onto the legacy
+     * mainwp_enable_legacy_backup_feature key the update paths consume.
+     * Conflicting values are rejected earlier by the route validation.
+     *
+     * @param array $body Request body.
+     *
+     * @return array Body with the alias folded in.
+     */
+    protected function fold_native_backups_alias( $body ) {
+        if ( array_key_exists( 'mainwp_enable_native_backups', $body ) && ! array_key_exists( 'mainwp_enable_legacy_backup_feature', $body ) ) {
+            $body['mainwp_enable_legacy_backup_feature'] = $body['mainwp_enable_native_backups'];
+        }
+        return $body;
     }
 
     /**
@@ -4131,6 +4379,53 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         $tz_string  = sprintf( 'UTC%s%s', $tz_sign, $tz_value );
 
         // Primary backup.
+        $backup_method = $this->get_primary_backup_method_data();
+
+        $enable_legacy_backup = (int) MainWP_Backup_Settings::is_native_backups_enabled();
+        return array(
+            // General settings.
+            'time_daily_update'                   => get_option( 'mainwp_timeDailyUpdate', $default_setting['mainwp_timeDailyUpdate'] ),
+            'frequency_daily_update'              => (int) get_option( 'mainwp_frequencyDailyUpdate', $default_setting['mainwp_frequencyDailyUpdate'] ),
+            'date_format'                         => get_option( 'date_format', $default_setting['date_format'] ),
+            'time_format'                         => get_option( 'time_format', $default_setting['time_format'] ),
+            'timezone_string'                     => $tz_string,
+            'sidebar_position'                    => get_user_option( 'mainwp_sidebarPosition' ),
+            'hide_update_everything'              => get_option( 'mainwp_hide_update_everything', $default_setting['mainwp_hide_update_everything'] ),
+            'mainwp_widgets'                      => $show_widgets,
+            'plugin_automatic_daily_update'       => (int) get_option( 'mainwp_pluginAutomaticDailyUpdate', $default_setting['mainwp_pluginAutomaticDailyUpdate'] ),
+            'theme_automatic_daily_update'        => (int) get_option( 'mainwp_themeAutomaticDailyUpdate', $default_setting['mainwp_themeAutomaticDailyUpdate'] ),
+            'trans_automatic_daily_update'        => (int) get_option( 'mainwp_transAutomaticDailyUpdate', 0 ),
+            'automatic_daily_update'              => (int) get_option( 'mainwp_automaticDailyUpdate', $default_setting['mainwp_automaticDailyUpdate'] ),
+            'frequency_auto_update'               => get_option( 'mainwp_frequency_AutoUpdate', $default_setting['mainwp_frequency_AutoUpdate'] ),
+            'time_auto_update'                    => get_option( 'mainwp_time_AutoUpdate', $default_setting['mainwp_time_AutoUpdate'] ),
+            'show_language_updates'               => (int) get_option( 'mainwp_show_language_updates', $default_setting['mainwp_show_language_updates'] ),
+            'disable_update_confirmations'        => (int) get_option( 'mainwp_disable_update_confirmations', $default_setting['mainwp_disable_update_confirmations'] ),
+            'check_http_response'                 => (int) get_option( 'mainwp_check_http_response', $default_setting['mainwp_check_http_response'] ),
+            'check_http_response_method'          => get_option( 'mainwp_check_http_response_method', $default_setting['mainwp_check_http_response_method'] ),
+            'backup_before_upgrade'               => (int) get_option( 'mainwp_backup_before_upgrade', $default_setting['mainwp_backup_before_upgrade'] ),
+            'backup_before_upgrade_days'          => (int) get_option( 'mainwp_backup_before_upgrade_days', $default_setting['mainwp_backup_before_upgrade_days'] ),
+            'numberdays_outdate_plugin_theme'     => (int) get_option( 'mainwp_numberdays_Outdate_Plugin_Theme', $default_setting['mainwp_numberdays_Outdate_Plugin_Theme'] ),
+            'dayinweek_auto_update'               => (int) get_option( 'mainwp_dayinweek_AutoUpdate', $default_setting['mainwp_dayinweek_AutoUpdate'] ),
+            'dayinmonth_auto_update'              => (int) get_option( 'mainwp_dayinmonth_AutoUpdate', $default_setting['mainwp_dayinmonth_AutoUpdate'] ),
+            'delay_autoupdate'                    => (int) get_option( 'mainwp_delay_autoupdate', $default_setting['mainwp_delay_autoupdate'] ),
+            'mainwp_primary_backup'               => $backup_method,
+            'mainwp_enable_legacy_backup_feature' => $enable_legacy_backup,
+            'mainwp_enable_native_backups'        => $enable_legacy_backup,
+            'mainwp_backups_on_server'            => get_option( 'mainwp_backupsOnServer' ),
+            'mainwp_backup_on_external_sources'   => get_option( 'mainwp_backupOnExternalSources' ),
+            'mainwp_archive_format'               => get_option( 'mainwp_archiveFormat' ),
+            'mainwp_notification_on_backup_fail'  => get_option( 'mainwp_notificationOnBackupFail' ),
+            'mainwp_notification_on_backup_start' => get_option( 'mainwp_notificationOnBackupStart' ),
+            'mainwp_chunked_backup_tasks'         => get_option( 'mainwp_chunkedBackupTasks' ),
+        );
+    }
+
+    /**
+     * The selected primary backup method as a value/title pair.
+     *
+     * @return array { value: string, title: string }.
+     */
+    protected function get_primary_backup_method_data() {
         $primary_backup = get_option( 'mainwp_primaryBackup' );
 
         // Get primary backup methods.
@@ -4157,41 +4452,34 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             );
         }
 
-        $enable_legacy_backup = (int) MainWP_Backup_Settings::is_native_backups_enabled();
+        return $backup_method;
+    }
+
+    /**
+     * Get backup settings data, mirroring the Backup Settings page.
+     *
+     * Destination credentials are not part of this surface; they live on
+     * their own encrypted storage.
+     *
+     * @return array
+     */
+    protected function get_backup_settings_data() {
+        $enable_native_backups = (int) MainWP_Backup_Settings::is_native_backups_enabled();
+
         return array(
-            // General settings.
-            'time_daily_update'                   => get_option( 'mainwp_timeDailyUpdate', $default_setting['mainwp_timeDailyUpdate'] ),
-            'frequency_daily_update'              => (int) get_option( 'mainwp_frequencyDailyUpdate', $default_setting['mainwp_frequencyDailyUpdate'] ),
-            'date_format'                         => get_option( 'date_format', $default_setting['date_format'] ),
-            'time_format'                         => get_option( 'time_format', $default_setting['time_format'] ),
-            'timezone_string'                     => $tz_string,
-            'sidebar_position'                    => get_user_option( ' mainwp_sidebarPosition', $default_setting['sidebar_position'] ),
-            'hide_update_everything'              => get_option( 'mainwp_hide_update_everything', $default_setting['mainwp_hide_update_everything'] ),
-            'mainwp_widgets'                      => $show_widgets,
-            'plugin_automatic_daily_update'       => (int) get_option( 'mainwp_pluginAutomaticDailyUpdate', $default_setting['mainwp_pluginAutomaticDailyUpdate'] ),
-            'theme_automatic_daily_update'        => (int) get_option( 'mainwp_themeAutomaticDailyUpdate', $default_setting['mainwp_themeAutomaticDailyUpdate'] ),
-            'trans_automatic_daily_update'        => (int) get_option( 'mainwp_transAutomaticDailyUpdate', 0 ),
-            'automatic_daily_update'              => (int) get_option( 'mainwp_automaticDailyUpdate', $default_setting['mainwp_automaticDailyUpdate'] ),
-            'frequency_auto_update'               => get_option( 'mainwp_frequency_AutoUpdate', $default_setting['mainwp_frequency_AutoUpdate'] ),
-            'time_auto_update'                    => get_option( 'mainwp_time_AutoUpdate', $default_setting['mainwp_time_AutoUpdate'] ),
-            'show_language_updates'               => (int) get_option( 'mainwp_show_language_updates', $default_setting['mainwp_show_language_updates'] ),
-            'disable_update_confirmations'        => (int) get_option( 'mainwp_disable_update_confirmations', $default_setting['mainwp_disable_update_confirmations'] ),
-            'check_http_response'                 => (int) get_option( 'mainwp_check_http_response', $default_setting['mainwp_check_http_response'] ),
-            'check_http_response_method'          => get_option( 'mainwp_check_http_response_method', $default_setting['mainwp_check_http_response_method'] ),
-            'backup_before_upgrade'               => (int) get_option( 'mainwp_backup_before_upgrade', $default_setting['mainwp_backup_before_upgrade'] ),
-            'backup_before_upgrade_days'          => (int) get_option( 'mainwp_backup_before_upgrade_days', $default_setting['mainwp_backup_before_upgrade_days'] ),
-            'numberdays_outdate_plugin_theme'     => (int) get_option( 'mainwp_numberdays_Outdate_Plugin_Theme', $default_setting['mainwp_numberdays_Outdate_Plugin_Theme'] ),
-            'dayinweek_auto_update'               => (int) get_option( 'mainwp_dayinweek_AutoUpdate', $default_setting['mainwp_dayinweek_AutoUpdate'] ),
-            'dayinmonth_auto_update'              => (int) get_option( 'mainwp_dayinmonth_AutoUpdate', $default_setting['mainwp_dayinmonth_AutoUpdate'] ),
-            'delay_autoupdate'                    => (int) get_option( 'mainwp_delay_autoupdate', $default_setting['mainwp_delay_autoupdate'] ),
-            'mainwp_primary_backup'               => $backup_method,
-            'mainwp_enable_legacy_backup_feature' => $enable_legacy_backup,
-            'mainwp_backups_on_server'            => get_option( 'mainwp_backupsOnServer' ),
-            'mainwp_backup_on_external_sources'   => get_option( 'mainwp_backupOnExternalSources' ),
-            'mainwp_archive_format'               => get_option( 'mainwp_archiveFormat' ),
-            'mainwp_notification_on_backup_fail'  => get_option( 'mainwp_notificationOnBackupFail' ),
-            'mainwp_notification_on_backup_start' => get_option( 'mainwp_notificationOnBackupStart' ),
-            'mainwp_chunked_backup_tasks'         => get_option( 'mainwp_chunkedBackupTasks' ),
+            'mainwp_enable_native_backups'         => $enable_native_backups,
+            'mainwp_enable_legacy_backup_feature'  => $enable_native_backups,
+            'mainwp_primary_backup'                => $this->get_primary_backup_method_data(),
+            'mainwp_backups_on_server'             => get_option( 'mainwp_backupsOnServer' ),
+            'mainwp_backup_on_external_sources'    => get_option( 'mainwp_backupOnExternalSources' ),
+            'mainwp_archive_format'                => get_option( 'mainwp_archiveFormat' ),
+            'mainwp_notification_on_backup_fail'   => get_option( 'mainwp_notificationOnBackupFail' ),
+            'mainwp_notification_on_backup_start'  => get_option( 'mainwp_notificationOnBackupStart' ),
+            'mainwp_chunked_backup_tasks'          => get_option( 'mainwp_chunkedBackupTasks' ),
+            'mainwp_load_files_before_zip'         => (int) get_option( 'mainwp_options_loadFilesBeforeZip' ),
+            'mainwp_maximum_file_descriptors_auto' => (int) get_option( 'mainwp_maximumFileDescriptorsAuto' ),
+            'mainwp_maximum_file_descriptors'      => (int) get_option( 'mainwp_maximumFileDescriptors', 150 ),
+            'mainwp_backup_max_concurrent'         => MainWP_Backup_Settings::get_max_concurrent_backups(),
         );
     }
 
@@ -4645,42 +4933,67 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 'mainwp_primary_backup'                    => array(
                     'type'        => 'object',
                     'description' => __( 'Primary backup.', 'mainwp' ),
-                    'context'     => array( 'view', 'edit' ),
+                    'context'     => array( 'view', 'edit', 'backups_view', 'backups_edit' ),
                 ),
                 'mainwp_enable_legacy_backup_feature'      => array(
                     'type'        => 'integer',
                     'description' => __( 'Enable legacy backup feature.', 'mainwp' ),
-                    'context'     => array( 'view' ),
+                    'context'     => array( 'view', 'backups_view', 'backups_edit' ),
+                ),
+                'mainwp_enable_native_backups'             => array(
+                    'type'        => 'integer',
+                    'description' => __( 'Enable native backups (canonical name for mainwp_enable_legacy_backup_feature).', 'mainwp' ),
+                    'context'     => array( 'view', 'backups_view', 'backups_edit' ),
                 ),
                 'mainwp_backups_on_server'                 => array(
                     'type'        => 'integer',
                     'description' => __( 'Backups on server.', 'mainwp' ),
-                    'context'     => array( 'view', 'edit' ),
+                    'context'     => array( 'view', 'edit', 'backups_view', 'backups_edit' ),
                 ),
                 'mainwp_backup_on_external_sources'        => array(
                     'type'        => 'integer',
                     'description' => __( 'Backups on external sources.', 'mainwp' ),
-                    'context'     => array( 'view', 'edit' ),
+                    'context'     => array( 'view', 'edit', 'backups_view', 'backups_edit' ),
                 ),
                 'mainwp_archive_format'                    => array(
                     'type'        => 'string',
                     'description' => __( 'Archive format.', 'mainwp' ),
-                    'context'     => array( 'view', 'edit' ),
+                    'context'     => array( 'view', 'edit', 'backups_view', 'backups_edit' ),
                 ),
                 'mainwp_notification_on_backup_fail'       => array(
                     'type'        => 'integer',
                     'description' => __( 'Notification on backup fail.', 'mainwp' ),
-                    'context'     => array( 'view', 'edit' ),
+                    'context'     => array( 'view', 'edit', 'backups_view', 'backups_edit' ),
                 ),
                 'mainwp_notification_on_backup_start'      => array(
                     'type'        => 'integer',
                     'description' => __( 'Notification on backup start.', 'mainwp' ),
-                    'context'     => array( 'view', 'edit' ),
+                    'context'     => array( 'view', 'edit', 'backups_view', 'backups_edit' ),
                 ),
                 'mainwp_chunked_backup_tasks'              => array(
                     'type'        => 'integer',
                     'description' => __( 'Chunked backup tasks.', 'mainwp' ),
-                    'context'     => array( 'view', 'edit' ),
+                    'context'     => array( 'view', 'edit', 'backups_view', 'backups_edit' ),
+                ),
+                'mainwp_load_files_before_zip'             => array(
+                    'type'        => 'integer',
+                    'description' => __( 'Load files into memory before zipping.', 'mainwp' ),
+                    'context'     => array( 'backups_view', 'backups_edit' ),
+                ),
+                'mainwp_maximum_file_descriptors_auto'     => array(
+                    'type'        => 'integer',
+                    'description' => __( 'Auto-detect the maximum file descriptors.', 'mainwp' ),
+                    'context'     => array( 'backups_view', 'backups_edit' ),
+                ),
+                'mainwp_maximum_file_descriptors'          => array(
+                    'type'        => 'integer',
+                    'description' => __( 'Maximum file descriptors.', 'mainwp' ),
+                    'context'     => array( 'backups_view', 'backups_edit' ),
+                ),
+                'mainwp_backup_max_concurrent'             => array(
+                    'type'        => 'integer',
+                    'description' => __( 'Maximum concurrent backup tasks.', 'mainwp' ),
+                    'context'     => array( 'backups_view', 'backups_edit' ),
                 ),
             ),
         );

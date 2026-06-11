@@ -201,7 +201,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 $( '#mainwp-restore-spinner' ).toggle( ! terminal );
                 $( '#mainwp-restore-cancel-btn' ).toggle( ! terminal && ! cancelPending && [ 'pending', 'pre_snapshot', 'staging', 'transferring', 'failed_retryable', 'running' ].indexOf( data.status ) !== -1 );
                 $( '#mainwp-restore-cancel-warning' ).toggle( 'running' === data.status );
-                $( '#mainwp-restore-rollback-btn' ).toggle( 'failed_permanent' === data.status && !! data.has_rollback );
+                $( '#mainwp-restore-rollback-btn' ).toggle( ( 'failed_permanent' === data.status || 'cancelled' === data.status ) && !! data.has_rollback );
 
                 if ( terminal ) {
                     var $message = $( '#mainwp-restore-result-message' );

@@ -68,4 +68,21 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 
 		$this->assertStringContainsString( 'cancel_requested', $output );
 	}
+
+	/**
+	 * The cancel warning promises a rollback stays available, so a
+	 * cancelled restore that left a safety backup must offer the
+	 * rollback button - not only a failed one.
+	 *
+	 * @return void
+	 */
+	public function test_rollback_offered_after_cancel() {
+		$output = $this->render_page();
+
+		$this->assertMatchesRegularExpression(
+			"/#mainwp-restore-rollback-btn'\s*\)\.toggle\([^;]*'cancelled'/s",
+			$output,
+			'The rollback button must be offered for cancelled restores with a safety backup.'
+		);
+	}
 }

@@ -31,7 +31,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * @var string DB version info.
      */
-    protected $mainwp_db_version = '9.0.2.9'; // NOSONAR - no IP. Bumped so dbDelta creates the wp_backup_storage and wp_backup_upload_job tables and the wp_backup destinations column (cloud storage destinations and resumable upload state). Previous 9.0.2.8 bump added the wp_backup_snapshot table.
+    protected $mainwp_db_version = '9.0.2.10'; // NOSONAR - no IP. Bumped so dbDelta adds the wp_backup schedule and retention columns (interval_hours, time_of_day, day_of_week, day_of_month, next_run, retention_count, retention_days, retention_storage_mb, delete_cloud_copies) and the wp_backup_upload_job kind column with its widened unique key. Previous 9.0.2.9 bump added the storage and upload job tables.
 
     /**
      * Protected variable to hold the database option name.
@@ -365,7 +365,17 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
   maximumFileDescriptorsAuto tinyint(1) NOT NULL DEFAULT 1,
   maximumFileDescriptors int(11) NOT NULL DEFAULT 150';
         $tbl .= ",
-  destinations text NOT NULL DEFAULT ''";
+  destinations text NOT NULL DEFAULT '',
+  interval_hours smallint(5) unsigned NOT NULL DEFAULT 0,
+  time_of_day varchar(5) NOT NULL DEFAULT '',
+  day_of_week tinyint(1) unsigned NOT NULL DEFAULT 0,
+  day_of_month tinyint(2) unsigned NOT NULL DEFAULT 1,
+  next_run int(11) NOT NULL DEFAULT 0,
+  retention_count int(11) NOT NULL DEFAULT 0,
+  retention_days int(11) NOT NULL DEFAULT 0,
+  retention_storage_mb int(11) NOT NULL DEFAULT 0,
+  delete_cloud_copies tinyint(1) NOT NULL DEFAULT 1,
+  KEY idx_next_run (next_run)";
         if ( empty( $currentVersion ) ) {
             $tbl .= ',
   PRIMARY KEY  (id)  ';
@@ -412,6 +422,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
   id bigint(20) unsigned NOT NULL auto_increment,
   snapshot_id bigint(20) unsigned NOT NULL,
   destination_id int(11) NOT NULL,
+  kind varchar(10) NOT NULL DEFAULT 'upload',
   status varchar(32) NOT NULL DEFAULT 'pending',
   attempt_count int(11) NOT NULL DEFAULT 0,
   next_retry_at int(11) NOT NULL DEFAULT 0,
@@ -421,7 +432,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
   last_error text NOT NULL DEFAULT '',
   created int(11) NOT NULL DEFAULT 0,
   updated int(11) NOT NULL DEFAULT 0,
-  UNIQUE KEY uniq_snap_dest (snapshot_id, destination_id),
+  UNIQUE KEY uniq_snap_dest_kind (snapshot_id, destination_id, kind),
   KEY idx_status_retry (status, next_retry_at)";
         if ( empty( $currentVersion ) || version_compare( $currentVersion, '9.0.2.9', '<' ) ) { // NOSONAR - none IP.
             $tbl .= ',
@@ -638,6 +649,24 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
 
         $this->update_optimize_indexes_55( $currentVersion );
 
+        // dbDelta index additions on existing tables are unreliable, so the
+        // next_run index and the widened upload job unique key are added
+        // explicitly (same approach as update_optimize_indexes_55). dbDelta has
+        // already added the columns these indexes cover by the time this runs.
+        if ( version_compare( $currentVersion, '9.0.2.10', '<' ) ) { // NOSONAR - none IP.
+            $backup_table = esc_sql( $this->table_name( 'wp_backup' ) );
+            $has_index    = $this->wpdb->get_results( "SHOW INDEX FROM {$backup_table} WHERE Key_name = 'idx_next_run'" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL introspection; table name escaped via esc_sql.
+            if ( empty( $has_index ) ) {
+                $this->wpdb->query( "ALTER TABLE {$backup_table} ADD INDEX idx_next_run (next_run)" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL statement; table name escaped via esc_sql.
+            }
+
+            $upload_job_table = esc_sql( $this->table_name( 'wp_backup_upload_job' ) );
+            $has_index        = $this->wpdb->get_results( "SHOW INDEX FROM {$upload_job_table} WHERE Key_name = 'uniq_snap_dest_kind'" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL introspection; table name escaped via esc_sql.
+            if ( empty( $has_index ) ) {
+                $this->wpdb->query( "ALTER TABLE {$upload_job_table} ADD UNIQUE KEY uniq_snap_dest_kind (snapshot_id, destination_id, kind)" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL statement; table name escaped via esc_sql.
+            }
+        }
+
         // Rename the backups feature flag to mainwp_enableNativeBackups; reads fall back to the
         // old name until this has run (see MainWP_Backup_Settings::is_native_backups_enabled()).
         if ( version_compare( $currentVersion, '9.0.2.6', '<' ) ) { // NOSONAR - no ip.
@@ -724,6 +753,21 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             foreach ( array( 'backups', 'note_lastupdate', 'pages' ) as $column ) {
                 if ( in_array( $column, $existing_columns, true ) ) {
                     $this->wpdb->query( 'ALTER TABLE ' . $wp_table . ' DROP COLUMN ' . esc_sql( $column ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL statement; table and column names are hardcoded internal identifiers escaped via esc_sql(), no user input involved.
+                }
+            }
+        }
+
+        // The upload job unique key widens to (snapshot_id, destination_id, kind)
+        // so a cloud delete job can coexist with the original upload row. dbDelta
+        // cannot DROP an index, so the narrow key goes here before dbDelta adds
+        // the widened one.
+        if ( version_compare( $currentVersion, '9.0.2.10', '<' ) ) { // NOSONAR - none IP.
+            $upload_job_table = esc_sql( $this->table_name( 'wp_backup_upload_job' ) );
+            $table_found      = $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $upload_job_table ) ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- table probe.
+            if ( ! empty( $table_found ) ) {
+                $old_key = $this->wpdb->get_results( "SHOW INDEX FROM {$upload_job_table} WHERE Key_name = 'uniq_snap_dest'" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL introspection; table name escaped via esc_sql.
+                if ( ! empty( $old_key ) ) {
+                    $this->wpdb->query( "ALTER TABLE {$upload_job_table} DROP INDEX uniq_snap_dest" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL statement; table name escaped via esc_sql.
                 }
             }
         }

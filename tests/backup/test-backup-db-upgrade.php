@@ -81,6 +81,27 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		if ( ! $this->column_exists( $task_table, 'destinations' ) ) {
 			$wpdb->query( "ALTER TABLE {$task_table} ADD COLUMN destinations text NOT NULL DEFAULT ''" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
 		}
+		foreach ( $this->schedule_retention_columns() as $column => $definition ) {
+			if ( ! $this->column_exists( $task_table, $column ) ) {
+				$wpdb->query( "ALTER TABLE {$task_table} ADD COLUMN {$column} {$definition}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
+			}
+		}
+		if ( ! $this->index_exists( $task_table, 'idx_next_run' ) ) {
+			$wpdb->query( "ALTER TABLE {$task_table} ADD INDEX idx_next_run (next_run)" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
+		}
+
+		$upload_job_table = MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' );
+		if ( $this->table_exists( $upload_job_table ) ) {
+			if ( ! $this->column_exists( $upload_job_table, 'kind' ) ) {
+				$wpdb->query( "ALTER TABLE {$upload_job_table} ADD COLUMN kind varchar(10) NOT NULL DEFAULT 'upload'" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
+			}
+			if ( ! $this->index_exists( $upload_job_table, 'uniq_snap_dest_kind' ) ) {
+				$wpdb->query( "ALTER TABLE {$upload_job_table} ADD UNIQUE KEY uniq_snap_dest_kind (snapshot_id, destination_id, kind)" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
+			}
+			if ( $this->index_exists( $upload_job_table, 'uniq_snap_dest' ) ) {
+				$wpdb->query( "ALTER TABLE {$upload_job_table} DROP INDEX uniq_snap_dest" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
+			}
+		}
 
 		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_progress' );
 		if ( ! $this->column_exists( $table, 'busy_since' ) ) {
@@ -130,6 +151,54 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 			'files_processed'  => 'int(11) NOT NULL DEFAULT 0',
 			'files_total'      => 'int(11) NOT NULL DEFAULT 0',
 		);
+	}
+
+	/**
+	 * The schedule and retention columns on the task table and their definitions.
+	 *
+	 * @return array Column name => SQL definition.
+	 */
+	private function schedule_retention_columns() {
+		return array(
+			'interval_hours'       => 'smallint(5) unsigned NOT NULL DEFAULT 0',
+			'time_of_day'          => "varchar(5) NOT NULL DEFAULT ''",
+			'day_of_week'          => 'tinyint(1) unsigned NOT NULL DEFAULT 0',
+			'day_of_month'         => 'tinyint(2) unsigned NOT NULL DEFAULT 1',
+			'next_run'             => 'int(11) NOT NULL DEFAULT 0',
+			'retention_count'      => 'int(11) NOT NULL DEFAULT 0',
+			'retention_days'       => 'int(11) NOT NULL DEFAULT 0',
+			'retention_storage_mb' => 'int(11) NOT NULL DEFAULT 0',
+			'delete_cloud_copies'  => 'tinyint(1) NOT NULL DEFAULT 1',
+		);
+	}
+
+	/**
+	 * Whether an index exists on a table.
+	 *
+	 * @param string $table Table name.
+	 * @param string $key   Index name.
+	 *
+	 * @return bool
+	 */
+	private function index_exists( $table, $key ) {
+		global $wpdb;
+		$rows = $wpdb->get_results( $wpdb->prepare( "SHOW INDEX FROM {$table} WHERE Key_name = %s", $key ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- identifiers cannot be prepared.
+		return ! empty( $rows );
+	}
+
+	/**
+	 * The column names an index covers, in sequence order.
+	 *
+	 * @param string $table Table name.
+	 * @param string $key   Index name.
+	 *
+	 * @return array
+	 */
+	private function index_columns( $table, $key ) {
+		global $wpdb;
+		$rows = $wpdb->get_results( $wpdb->prepare( "SHOW INDEX FROM {$table} WHERE Key_name = %s", $key ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- identifiers cannot be prepared.
+		usort( $rows, fn( $a, $b ) => (int) $a->Seq_in_index <=> (int) $b->Seq_in_index );
+		return array_values( wp_list_pluck( $rows, 'Column_name' ) );
 	}
 
 	/**
@@ -412,6 +481,122 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		$this->assertTrue(
 			$this->column_exists( $table, 'destinations' ),
 			'Upgrade must add destinations to existing installs; the shipped db version needs a bump or dbDelta never runs.'
+		);
+	}
+
+	/**
+	 * An install whose stored db version predates the schedule and retention
+	 * columns must receive all of them when install() runs. The schedule
+	 * columns drive interval and time-of-day runs; the retention columns hold
+	 * the per-task prune policy.
+	 *
+	 * @return void
+	 */
+	public function test_upgrade_adds_schedule_and_retention_columns_to_backup_task_table() {
+		global $wpdb;
+
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+
+		foreach ( array_keys( $this->schedule_retention_columns() ) as $column ) {
+			$this->assertTrue( $this->column_exists( $table, $column ), "Precondition: fresh install has {$column}." );
+		}
+		// Drop the index before its column can be dropped.
+		if ( $this->index_exists( $table, 'idx_next_run' ) ) {
+			$wpdb->query( "ALTER TABLE {$table} DROP INDEX idx_next_run" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture, identifiers cannot be prepared.
+		}
+		foreach ( array_keys( $this->schedule_retention_columns() ) as $column ) {
+			$wpdb->query( "ALTER TABLE {$table} DROP COLUMN {$column}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture, identifiers cannot be prepared.
+		}
+
+		update_site_option( 'mainwp_db_version', '9.0.2.9' );
+
+		MainWP_Install::instance()->install();
+
+		foreach ( array_keys( $this->schedule_retention_columns() ) as $column ) {
+			$this->assertTrue(
+				$this->column_exists( $table, $column ),
+				"Upgrade must add {$column} to existing installs; the shipped db version needs a bump or dbDelta never runs."
+			);
+		}
+	}
+
+	/**
+	 * The next_run lookup the hourly cron runs must be indexed, both on fresh
+	 * installs and through the upgrade path.
+	 *
+	 * @return void
+	 */
+	public function test_upgrade_adds_next_run_index_to_backup_task_table() {
+		global $wpdb;
+
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		$this->assertTrue( $this->index_exists( $table, 'idx_next_run' ), 'Precondition: fresh install has the next_run index.' );
+
+		$wpdb->query( "ALTER TABLE {$table} DROP INDEX idx_next_run" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture, identifiers cannot be prepared.
+		$this->assertFalse( $this->index_exists( $table, 'idx_next_run' ), 'Precondition: index dropped to simulate an older install.' );
+
+		update_site_option( 'mainwp_db_version', '9.0.2.9' );
+
+		MainWP_Install::instance()->install();
+
+		$this->assertTrue(
+			$this->index_exists( $table, 'idx_next_run' ),
+			'Upgrade must add the next_run index to existing installs.'
+		);
+	}
+
+	/**
+	 * An install whose stored db version predates the upload job kind column
+	 * must receive it, and the unique key must widen to include kind so a
+	 * cloud delete job can coexist with the original upload row for the same
+	 * snapshot and destination.
+	 *
+	 * @return void
+	 */
+	public function test_upgrade_adds_kind_column_and_widens_unique_key_on_upload_job_table() {
+		global $wpdb;
+
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' );
+
+		// Recreate the table from scratch so the fresh-install assertions are
+		// not polluted by an old-shape table persisting across suite runs.
+		$this->with_real_tables(
+			function () use ( $wpdb, $table ) {
+				$wpdb->query( "DROP TABLE {$table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery, WordPress.DB.RestrictedFunctions -- test fixture, identifiers cannot be prepared.
+				update_site_option( 'mainwp_db_version', '9.0.2.8' );
+				MainWP_Install::instance()->install();
+			}
+		);
+
+		$this->assertTrue( $this->column_exists( $table, 'kind' ), 'Precondition: fresh install has kind.' );
+		$this->assertSame(
+			array( 'snapshot_id', 'destination_id', 'kind' ),
+			$this->index_columns( $table, 'uniq_snap_dest_kind' ),
+			'Precondition: fresh install unique key covers kind.'
+		);
+
+		// Simulate the pre-kind shape: narrow unique key, no kind column.
+		$wpdb->query( "ALTER TABLE {$table} DROP INDEX uniq_snap_dest_kind" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture, identifiers cannot be prepared.
+		$wpdb->query( "ALTER TABLE {$table} DROP COLUMN kind" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture, identifiers cannot be prepared.
+		$wpdb->query( "ALTER TABLE {$table} ADD UNIQUE KEY uniq_snap_dest (snapshot_id, destination_id)" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture, identifiers cannot be prepared.
+		$this->assertFalse( $this->column_exists( $table, 'kind' ), 'Precondition: column dropped to simulate an older install.' );
+
+		update_site_option( 'mainwp_db_version', '9.0.2.9' );
+
+		MainWP_Install::instance()->install();
+
+		$this->assertTrue(
+			$this->column_exists( $table, 'kind' ),
+			'Upgrade must add kind to existing installs; the shipped db version needs a bump or dbDelta never runs.'
+		);
+		$this->assertFalse(
+			$this->index_exists( $table, 'uniq_snap_dest' ),
+			'Upgrade must drop the narrow unique key; a delete job for the same snapshot and destination would otherwise be uninsertable.'
+		);
+		$this->assertSame(
+			array( 'snapshot_id', 'destination_id', 'kind' ),
+			$this->index_columns( $table, 'uniq_snap_dest_kind' ),
+			'Upgrade must add the widened unique key.'
 		);
 	}
 }

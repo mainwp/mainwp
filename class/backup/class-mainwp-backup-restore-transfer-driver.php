@@ -456,6 +456,14 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
                 );
             }
 
+            if ( $outcome['bytes_received'] <= $cursor['offset'] ) {
+                // An ok ack that confirmed no new bytes would loop forever.
+                return array(
+                    'done'      => false,
+                    'error'     => esc_html__( 'The child site acknowledged the chunk without storing any of it.', 'mainwp' ),
+                    'retryable' => false,
+                );
+            }
             $cursor['offset'] = $outcome['bytes_received'];
             if ( $last ) {
                 ++$cursor['artifact_index'];

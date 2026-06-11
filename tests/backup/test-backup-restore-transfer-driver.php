@@ -395,6 +395,43 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * An ok ack that confirms no new bytes fails the transfer terminally
+	 * instead of resending the same chunk forever.
+	 */
+	public function test_ok_ack_with_no_new_bytes_fails_terminal() {
+		$staged = $this->dir . '/payload.zip';
+		file_put_contents( $staged, str_repeat( 'D', 100 ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+
+		$plan = array(
+			array(
+				'role'        => 'db',
+				'file'        => 'payload.zip',
+				'size'        => 100,
+				'sha256'      => hash_file( 'sha256', $staged ),
+				'staged_path' => $staged,
+				'adopt_only'  => false,
+			),
+		);
+
+		$this->driver->chunk_script = array(
+			array(
+				'result'         => 'ok',
+				'bytes_received' => 0,
+				'error'          => null,
+				'retryable'      => false,
+			),
+		);
+
+		$cursor = array();
+		$result = $this->driver->transfer_artifacts( (object) array( 'id' => 1 ), 'task-1-x', $plan, $cursor, microtime( true ) + 60 );
+
+		$this->assertFalse( $result['done'] );
+		$this->assertNotNull( $result['error'] );
+		$this->assertFalse( $result['retryable'] );
+		$this->assertCount( 1, $this->driver->sent, 'The transfer gives up on the first no-progress ack instead of looping.' );
+	}
+
+	/**
 	 * Adopt-only artifacts are skipped: nothing crosses the wire.
 	 */
 	public function test_adopt_only_skipped() {

@@ -80,10 +80,136 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             $this->add_action( 'mainwp_backup_upload_getprogress', array( &$this, 'mainwp_backup_upload_getprogress' ) );
             $this->add_action( 'mainwp_backup_upload_checkstatus', array( &$this, 'mainwp_backup_upload_checkstatus' ) );
         }
+        // Page: ManageBackupsSnapshots (restore).
+        if ( \mainwp_current_user_can( 'dashboard', 'execute_backups' ) ) {
+            $this->add_action( 'mainwp_restore_snapshot_list', array( &$this, 'mainwp_restore_snapshot_list' ) );
+            $this->add_action( 'mainwp_restore_initiate', array( &$this, 'mainwp_restore_initiate' ) );
+            $this->add_action( 'mainwp_restore_progress', array( &$this, 'mainwp_restore_progress' ) );
+            $this->add_action( 'mainwp_restore_cancel', array( &$this, 'mainwp_restore_cancel' ) );
+            $this->add_action( 'mainwp_restore_rollback', array( &$this, 'mainwp_restore_rollback' ) );
+        }
         // Intentionally not capability-gated: the backup-before-update check is
         // read-only and used by the updates flow, where a user without backup
         // rights still needs it.
         $this->add_action( 'mainwp_checkbackups', array( &$this, 'mainwp_checkbackups' ) );
+    }
+
+    /**
+     * List a site's snapshots with restore availability.
+     */
+    public function mainwp_restore_snapshot_list() {
+        $this->secure_request( 'mainwp_restore_snapshot_list' );
+        $site_id = isset( $_POST['site_id'] ) ? (int) $_POST['site_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by secure_request above.
+
+        $entries = MainWP_Backup_Snapshot_Catalog::instance()->list_snapshots_for_site( $site_id );
+        $rows    = array();
+        foreach ( $entries as $entry ) {
+            $rows[] = array(
+                'id'         => (int) $entry['snapshot']->id,
+                'task_id'    => (int) $entry['snapshot']->task_id,
+                'type'       => (string) $entry['snapshot']->type,
+                'created'    => (int) $entry['snapshot']->created,
+                'status'     => (string) $entry['snapshot']->status,
+                'source'     => (string) $entry['source'],
+                'restorable' => (bool) $entry['restorable'],
+            );
+        }
+        wp_send_json( array( 'snapshots' => $rows ) );
+    }
+
+    /**
+     * Start a restore for a snapshot.
+     */
+    public function mainwp_restore_initiate() {
+        $this->secure_request( 'mainwp_restore_initiate' );
+        // phpcs:disable WordPress.Security.NonceVerification.Missing -- verified by secure_request above.
+        $site_id      = isset( $_POST['site_id'] ) ? (int) $_POST['site_id'] : 0;
+        $snapshot_id  = isset( $_POST['snapshot_id'] ) ? (int) $_POST['snapshot_id'] : 0;
+        $pre_snapshot = isset( $_POST['pre_snapshot'] ) && '1' === $_POST['pre_snapshot'];
+        // phpcs:enable WordPress.Security.NonceVerification.Missing
+
+        try {
+            $job_id = MainWP_Backup_Restore_Orchestrator::instance()->initiate_restore(
+                $site_id,
+                $snapshot_id,
+                array(
+                    'pre_snapshot'  => $pre_snapshot,
+                    'file_rollback' => $pre_snapshot,
+                )
+            );
+        } catch ( MainWP_Exception $e ) {
+            wp_send_json( array( 'error' => $e->getMessage() ) );
+            return;
+        }
+
+        wp_send_json( array( 'job_id' => $job_id ) );
+    }
+
+    /**
+     * Report a restore job's progress.
+     */
+    public function mainwp_restore_progress() {
+        $this->secure_request( 'mainwp_restore_progress' );
+        $job_id = isset( $_POST['job_id'] ) ? (int) $_POST['job_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by secure_request above.
+
+        $job = MainWP_Backup_Restore_Job_Store::instance()->get_job( $job_id );
+        if ( null === $job ) {
+            wp_send_json( array( 'error' => esc_html__( 'Restore job not found.', 'mainwp' ) ) );
+            return;
+        }
+
+        $transfer = isset( $job->checkpoint['transfer'] ) ? (array) $job->checkpoint['transfer'] : array();
+        $plan     = isset( $job->checkpoint['plan'] ) ? (array) $job->checkpoint['plan'] : array();
+
+        wp_send_json(
+            array(
+                'status'         => (string) $job->status,
+                'last_error'     => (string) $job->last_error,
+                'attempt_count'  => (int) $job->attempt_count,
+                'artifact_index' => isset( $transfer['artifact_index'] ) ? (int) $transfer['artifact_index'] : 0,
+                'artifact_total' => count( $plan ),
+                'has_rollback'   => ! empty( $job->checkpoint['pre_snapshot_artifacts'] ),
+                'verification'   => isset( $job->checkpoint['verification'] ) ? $job->checkpoint['verification'] : array(),
+            )
+        );
+    }
+
+    /**
+     * Cancel a restore job while it is still safe.
+     */
+    public function mainwp_restore_cancel() {
+        $this->secure_request( 'mainwp_restore_cancel' );
+        $job_id = isset( $_POST['job_id'] ) ? (int) $_POST['job_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by secure_request above.
+
+        try {
+            MainWP_Backup_Restore_Orchestrator::instance()->cancel_job( $job_id );
+        } catch ( MainWP_Exception $e ) {
+            wp_send_json( array( 'error' => $e->getMessage() ) );
+            return;
+        }
+        wp_send_json( array( 'result' => 'ok' ) );
+    }
+
+    /**
+     * Start a rollback restore from a failed job's safety backup.
+     */
+    public function mainwp_restore_rollback() {
+        $this->secure_request( 'mainwp_restore_rollback' );
+        $job_id = isset( $_POST['job_id'] ) ? (int) $_POST['job_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by secure_request above.
+
+        $job = MainWP_Backup_Restore_Job_Store::instance()->get_job( $job_id );
+        if ( null === $job ) {
+            wp_send_json( array( 'error' => esc_html__( 'Restore job not found.', 'mainwp' ) ) );
+            return;
+        }
+
+        try {
+            $rollback_id = MainWP_Backup_Restore_Orchestrator::instance()->initiate_rollback( $job );
+        } catch ( MainWP_Exception $e ) {
+            wp_send_json( array( 'error' => $e->getMessage() ) );
+            return;
+        }
+        wp_send_json( array( 'job_id' => $rollback_id ) );
     }
 
     /*

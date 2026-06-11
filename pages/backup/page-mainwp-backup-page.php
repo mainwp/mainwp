@@ -137,6 +137,9 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             if ( \mainwp_current_user_can( 'dashboard', 'edit_backup_tasks' ) && ! MainWP_Menu::is_disable_menu_item( 3, 'ManageBackupsStorage' ) ) {
                 add_submenu_page( 'mainwp_tab', esc_html__( 'Backup Storage', 'mainwp' ), '<div class="mainwp-hidden">' . esc_html__( 'Storage', 'mainwp' ) . '</div>', 'read', 'ManageBackupsStorage', array( MainWP_Backup_Storage_View::class, 'render' ) );
             }
+            if ( \mainwp_current_user_can( 'dashboard', 'execute_backups' ) && ! MainWP_Menu::is_disable_menu_item( 3, 'ManageBackupsSnapshots' ) ) {
+                add_submenu_page( 'mainwp_tab', esc_html__( 'Snapshots & Restore', 'mainwp' ), '<div class="mainwp-hidden">' . esc_html__( 'Snapshots', 'mainwp' ) . '</div>', 'read', 'ManageBackupsSnapshots', array( MainWP_Backup_Snapshots_View::class, 'render' ) );
+            }
         } else {
             return;
         }
@@ -187,6 +190,9 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                         <?php if ( \mainwp_current_user_can( 'dashboard', 'edit_backup_tasks' ) ) { ?>
                             <?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ManageBackupsStorage' ) ) { ?>
                             <a href="<?php echo esc_url( admin_url( 'admin.php?page=ManageBackupsStorage' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Storage', 'mainwp' ); ?></a>
+                            <?php } ?>
+                            <?php if ( \mainwp_current_user_can( 'dashboard', 'execute_backups' ) && ! MainWP_Menu::is_disable_menu_item( 3, 'ManageBackupsSnapshots' ) ) { ?>
+                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=ManageBackupsSnapshots' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Snapshots & Restore', 'mainwp' ); ?></a>
                             <?php } ?>
                         <?php } ?>
                     <?php } ?>
@@ -400,6 +406,16 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                 'access'   => \mainwp_current_user_can( 'dashboard', 'edit_backup_tasks' ),
                 'active'   => ( 'Storage' === $shownPage ) ? true : false,
                 'disabled' => MainWP_Menu::is_disable_menu_item( 3, 'ManageBackupsStorage' ) ? true : false,
+            );
+        }
+
+        if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ManageBackupsSnapshots' ) ) {
+            $renderItems[] = array(
+                'title'    => esc_html__( 'Snapshots & Restore', 'mainwp' ),
+                'href'     => 'admin.php?page=ManageBackupsSnapshots',
+                'access'   => \mainwp_current_user_can( 'dashboard', 'execute_backups' ),
+                'active'   => ( 'Snapshots' === $shownPage ) ? true : false,
+                'disabled' => MainWP_Menu::is_disable_menu_item( 3, 'ManageBackupsSnapshots' ) ? true : false,
             );
         }
 

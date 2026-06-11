@@ -116,7 +116,7 @@ class MainWP_Backup_Retention_Query extends MainWP_DB_Base { // phpcs:ignore Gen
         $units = array();
         foreach ( $groups as $root_id => $group ) {
             $root        = $by_id[ $root_id ];
-            $is_complete = ! $group['broken'] && null === $root->parent_id && in_array( $root->type, array( 'full', 'db' ), true );
+            $is_complete = ! $group['broken'] && null === $root->parent_id && in_array( $root->type, array( 'full', 'db', 'files' ), true );
 
             $size_bytes = 0;
             $newest     = 0;

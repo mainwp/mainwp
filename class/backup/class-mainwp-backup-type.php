@@ -19,4 +19,5 @@ enum MainWP_Backup_Type: string {
     case Full        = 'full';
     case Database    = 'db';
     case Incremental = 'incremental';
+    case Files       = 'files';
 }

@@ -41,6 +41,7 @@ class MainWP_Backup_Enums_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( MainWP_Backup_Type::Full, MainWP_Backup_Type::from( 'full' ) );
 		$this->assertSame( MainWP_Backup_Type::Database, MainWP_Backup_Type::from( 'db' ) );
 		$this->assertSame( MainWP_Backup_Type::Incremental, MainWP_Backup_Type::from( 'incremental' ) );
+		$this->assertSame( MainWP_Backup_Type::Files, MainWP_Backup_Type::from( 'files' ) );
 		$this->assertNull( MainWP_Backup_Type::tryFrom( 'bogus' ) );
 	}
 

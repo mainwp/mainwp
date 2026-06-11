@@ -300,12 +300,17 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
                         <option value="full" <?php echo ! isset( $task ) || 'full' === $task->type ? 'selected' : ''; ?>><?php esc_html_e( 'Full Backup', 'mainwp' ); ?></option>
                         <option value="db" <?php echo isset( $task ) && 'db' === $task->type ? 'selected' : ''; ?>><?php esc_html_e( 'Database Backup', 'mainwp' ); ?></option>
                         <option value="incremental" <?php echo isset( $task ) && 'incremental' === $task->type ? 'selected' : ''; ?>><?php esc_html_e( 'Incremental Backup', 'mainwp' ); ?></option>
+                        <option value="files" <?php echo isset( $task ) && 'files' === $task->type ? 'selected' : ''; ?>><?php esc_html_e( 'Files Only Backup', 'mainwp' ); ?></option>
                     </select>
                 </div>
             </div>
             <?php $incremental_note_style = isset( $task ) && 'incremental' === $task->type ? '' : 'style="display:none"'; ?>
             <div class="ui info message" id="mainwp-backup-incremental-note" <?php echo $incremental_note_style; //phpcs:ignore -- static attribute. ?>>
                 <?php esc_html_e( 'Incremental backups copy only the files that changed since the previous run in the chain and include a fresh database dump every time, so each run restores to its own point in time. The first run creates a full backup as the chain base. Sites running a MainWP Child version without incremental support receive a full backup on every run, with a note recorded on the task.', 'mainwp' ); ?>
+            </div>
+            <?php $files_note_style = isset( $task ) && 'files' === $task->type ? '' : 'style="display:none"'; ?>
+            <div class="ui info message" id="mainwp-backup-files-note" <?php echo $files_note_style; //phpcs:ignore -- static attribute. ?>>
+                <?php esc_html_e( 'Files only backups archive the site\'s files without a database dump. Pair this task with a Database Backup task to cover the whole site. Because the archive carries no database, the dashboard cannot restore a site from it; download the archive to recover individual files.', 'mainwp' ); ?>
             </div>
             <?php
             $schedule       = isset( $task->schedule ) ? (string) $task->schedule : 'daily';

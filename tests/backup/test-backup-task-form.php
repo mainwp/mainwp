@@ -136,6 +136,38 @@ class MainWP_Backup_Task_Form_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * The type dropdown offers the files-only type with a note that the
+	 * archive carries no database.
+	 *
+	 * @return void
+	 */
+	public function test_render_task_details_offers_files_type() {
+		ob_start();
+		MainWP_Backup_Task_Form::render_task_details( null, 'Tar GZip', 'site', false, true );
+		$output = ob_get_clean();
+
+		$this->assertStringContainsString( 'value="files"', $output );
+		$this->assertStringContainsString( 'mainwp-backup-files-note', $output );
+	}
+
+	/**
+	 * An existing files task pre-selects the type and keeps the excludes
+	 * section visible (the file walk honors them).
+	 *
+	 * @return void
+	 */
+	public function test_render_task_details_preselects_files_type() {
+		$task = $this->make_task( array( 'type' => 'files' ) );
+
+		ob_start();
+		MainWP_Backup_Task_Form::render_task_details( $task, 'Tar GZip', 'site', false, true );
+		$output = ob_get_clean();
+
+		$this->assertStringContainsString( 'value="files" selected', $output );
+		$this->assertStringNotContainsString( 'style="display: none;"', $output );
+	}
+
+	/**
 	 * The schedule form renders the details section when no task id is
 	 * requested.
 	 *

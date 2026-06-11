@@ -366,7 +366,9 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     $information['full']      = false;
                     $information['db']        = false;
                     $information['artifacts'] = isset( $temp['artifacts'] ) && is_array( $temp['artifacts'] ) ? $temp['artifacts'] : array();
-                } elseif ( 'full' === $type ) {
+                } elseif ( 'full' === $type || 'files' === $type ) {
+                    // A files-only run produces an archive like a full run,
+                    // so it lands in the same download slot.
                     $information['full'] = isset( $temp['file'] ) ? $temp['file'] : false;
                     $information['db']   = false;
                 } else {
@@ -468,7 +470,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     }
                     return false;
                 } elseif ( 'done' === $temp['status'] ) {
-                    if ( 'full' === $type ) {
+                    if ( 'full' === $type || 'files' === $type ) {
                         $information['full'] = $temp['file'];
                         $information['db']   = false;
                     } else {
@@ -501,7 +503,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         } elseif ( 'db' === $type && empty( $information['db'] ) ) {
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_DB_QUERY_FAILED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
-        } elseif ( 'full' === $type && empty( $information['full'] ) ) {
+        } elseif ( ( 'full' === $type || 'files' === $type ) && empty( $information['full'] ) ) {
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         } elseif ( isset( $information['db'] ) ) {
             $hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
@@ -938,11 +940,20 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
         $has_full = in_array( 'full', array_column( $archives, 'role' ), true );
 
+        // A files-only run downloads through the full slot (it is an
+        // archive), but its snapshot keeps the files type so retention
+        // counts it as its own unit and the restore catalog can refuse
+        // a backup that carries no database.
+        $snapshot_type = $has_full ? 'full' : 'db';
+        if ( $has_full && 'files' === $pTask->type ) {
+            $snapshot_type = 'files';
+        }
+
         $snapshots->record_snapshot(
             array(
                 'task_id'       => (int) $pTask->id,
                 'site_id'       => (int) $website->id,
-                'type'          => $has_full ? 'full' : 'db',
+                'type'          => $snapshot_type,
                 'parent_id'     => null,
                 'archives'      => $archives,
                 'manifest_path' => '',

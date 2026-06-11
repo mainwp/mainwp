@@ -144,6 +144,25 @@ class MainWP_Backup_Snapshot_Catalog_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * A files-only snapshot carries no database, so a dashboard restore
+	 * cannot rebuild the site from it: the list withholds the restore
+	 * action and a direct resolve refuses with a clear message.
+	 */
+	public function test_resolve_files_snapshot_refused() {
+		$id = $this->make_snapshot(
+			array( array( 'file' => 'files.tar.gz', 'role' => 'full' ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+			array( 'type' => 'files' )
+		);
+
+		$entries = MainWP_Backup_Snapshot_Catalog::instance()->list_snapshots_for_site( 9901 );
+		$this->assertFalse( $entries[0]['restorable'], 'A files-only snapshot must not offer a restore.' );
+
+		$resolved = MainWP_Backup_Snapshot_Catalog::instance()->resolve_restorable_chain( $id );
+		$this->assertFalse( $resolved['ok'] );
+		$this->assertStringContainsString( 'database', $resolved['error'] );
+	}
+
+	/**
 	 * A full snapshot resolves to a db-last plan with local sources.
 	 */
 	public function test_resolve_full_snapshot_plan_order() {

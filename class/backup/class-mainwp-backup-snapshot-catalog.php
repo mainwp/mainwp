@@ -57,7 +57,7 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
             $entries[] = array(
                 'snapshot'   => $snapshot,
                 'source'     => $source,
-                'restorable' => 'unavailable' !== $source,
+                'restorable' => 'unavailable' !== $source && 'files' !== $snapshot->type,
             );
         }
         return $entries;
@@ -81,6 +81,9 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
         }
         if ( 'complete' !== $leaf->status ) {
             return $this->refusal( __( 'The selected backup was removed by retention and can no longer be restored.', 'mainwp' ) );
+        }
+        if ( 'files' === $leaf->type ) {
+            return $this->refusal( __( 'This backup contains the site\'s files without a database, so the dashboard cannot rebuild the site from it. Download the archive to recover individual files.', 'mainwp' ) );
         }
 
         $chain = $snapshots->get_chain( $snapshot_id );

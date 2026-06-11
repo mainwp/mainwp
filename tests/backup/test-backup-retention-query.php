@@ -171,6 +171,21 @@ class MainWP_Backup_Retention_Query_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * A files-typed root snapshot is its own complete, prunable unit.
+	 *
+	 * @return void
+	 */
+	public function test_files_typed_root_is_complete_unit() {
+		$files_snap = $this->insert_snapshot( array( 'type' => 'files' ) );
+
+		$units = MainWP_Backup_Retention_Query::instance()->get_units_for_site_task( 990001, 990001 );
+
+		$this->assertCount( 1, $units );
+		$this->assertTrue( $units[0]['is_complete'] );
+		$this->assertSame( array( $files_snap ), array_map( 'intval', wp_list_pluck( $units[0]['snapshots'], 'id' ) ) );
+	}
+
+	/**
 	 * A chain whose parent link points at a missing row is incomplete.
 	 *
 	 * @return void

@@ -164,8 +164,8 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         $schedule = isset( $_POST['schedule'] ) ? sanitize_text_field( wp_unslash( $_POST['schedule'] ) ) : '';
         $type     = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
 
-        if ( ! in_array( $type, array( 'full', 'db', 'incremental' ), true ) ) {
-            die( wp_json_encode( array( 'error' => esc_html__( 'Invalid backup type. Select Full, Database, or Incremental and try again.', 'mainwp' ) ) ) );
+        if ( ! in_array( $type, array( 'full', 'db', 'incremental', 'files' ), true ) ) {
+            die( wp_json_encode( array( 'error' => esc_html__( 'Invalid backup type. Select Full, Database, Incremental, or Files Only and try again.', 'mainwp' ) ) ) );
         }
 
         $excludedFolder = isset( $_POST['exclude'] ) ? trim( wp_unslash( $_POST['exclude'] ), "\n" ) : ''; //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- ok.
@@ -242,8 +242,8 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         $schedule = isset( $_POST['schedule'] ) ? sanitize_text_field( wp_unslash( $_POST['schedule'] ) ) : '';
         $type     = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
 
-        if ( ! in_array( $type, array( 'full', 'db', 'incremental' ), true ) ) {
-            die( wp_json_encode( array( 'error' => esc_html__( 'Invalid backup type. Select Full, Database, or Incremental and try again.', 'mainwp' ) ) ) );
+        if ( ! in_array( $type, array( 'full', 'db', 'incremental', 'files' ), true ) ) {
+            die( wp_json_encode( array( 'error' => esc_html__( 'Invalid backup type. Select Full, Database, Incremental, or Files Only and try again.', 'mainwp' ) ) ) );
         }
 
         $excludedFolder = isset( $_POST['exclude'] ) ? trim( wp_unslash( $_POST['exclude'] ), "\n" ) : ''; //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- ok.
@@ -490,7 +490,14 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
 
                 $output .= '<br />Backup details:<br /><br />';
                 $output .= '<strong>Backup task</strong> - ' . $task->name . '<br />';
-                $output .= '<strong>Backup type</strong> - ' . ( 'db' === $task->type ? 'DATABASE BACKUP' : 'FULL BACKUP' ) . '<br />';
+                if ( 'db' === $task->type ) {
+                    $type_label = 'DATABASE BACKUP';
+                } elseif ( 'files' === $task->type ) {
+                    $type_label = 'FILES BACKUP';
+                } else {
+                    $type_label = 'FULL BACKUP';
+                }
+                $output .= '<strong>Backup type</strong> - ' . $type_label . '<br />';
                 $output .= '<strong>Backup schedule</strong> - ' . strtoupper( $task->schedule ) . '<br />';
 
                 $mail_title       = 'A Scheduled Backup has been Started - MainWP';

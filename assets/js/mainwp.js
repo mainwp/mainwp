@@ -1503,6 +1503,7 @@ jQuery(function ($) {
             jQuery('#mainwp-backup-incremental-note').hide();
             jQuery('#mainwp-backup-max-chain-length-wrapper').hide();
         }
+        jQuery('#mainwp-backup-files-note').toggle(jQuery(this).val() == 'files');
     });
     jQuery('#mainwp-backup-task-schedule').on('change', function () {
         let schedule = jQuery(this).val();

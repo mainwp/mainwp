@@ -27,8 +27,9 @@ let backup = function () {
     }) : [];
 
     let type = jQuery('#mainwp-backup-type').val();
-    let size = jQuery('#backup_site_' + type + '_size').val();
-    if (type == 'full') {
+    let sizeKey = (type == 'files') ? 'full' : type; // A files archive sizes like a full one.
+    let size = jQuery('#backup_site_' + sizeKey + '_size').val();
+    if (type == 'full' || type == 'files') {
         size = size * 1024 * 1024 / 2.4; //Guessing how large the zip will be
     }
     let fileName = jQuery('#backup_filename').val();
@@ -685,7 +686,8 @@ managebackups_run_next = function () {
 
     let siteId = manageBackupTaskSites[0]['id'];
     let siteName = manageBackupTaskSites[0]['name'];
-    let size = manageBackupTaskSites[0][manageBackupsTaskType + 'size'];
+    let manageBackupsSizeKey = (manageBackupsTaskType == 'files') ? 'full' : manageBackupsTaskType; // A files archive sizes like a full one.
+    let size = manageBackupTaskSites[0][manageBackupsSizeKey + 'size'];
     let fileNameUID = mainwp_uid();
     appendToDiv(backtaskContentEl, '[' + siteName + '] ' + MainWP.I18n.t('Creating backup file.') + ' <span class="managebackups-task-status-phase" siteId="' + siteId + '"></span><div id="managebackups-task-status-create-progress" siteId="' + siteId + '" class="ui green progress"><div class="bar"><div class="progress"></div></div></div>');
 

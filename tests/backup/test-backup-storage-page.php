@@ -237,6 +237,35 @@ class MainWP_Backup_Storage_Page_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Testing a saved destination without re-submitting settings uses the
+	 * stored settings wholesale (the list row's Test button posts none).
+	 *
+	 * @return void
+	 */
+	public function test_connection_test_of_saved_destination_uses_stored_settings() {
+		$base    = $this->make_temp_dir();
+		$created = MainWP_Backup_Storage_Handler::save_destination(
+			array(
+				'id'       => 0,
+				'provider' => 'local',
+				'name'     => 'Saved test',
+				'settings' => array( 'base_path' => $base ),
+			)
+		);
+
+		$result = MainWP_Backup_Storage_Handler::test_saved_or_submitted(
+			array(
+				'id'       => $created['id'],
+				'provider' => 'local',
+				'name'     => 'Saved test',
+				'settings' => null,
+			)
+		);
+
+		$this->assertTrue( $result['ok'], 'The stored base path must be used when no settings are submitted: ' . ( $result['error'] ?? '' ) );
+	}
+
+	/**
 	 * The unconfirmed delete reports referencing tasks; the confirmed
 	 * delete prunes them, fails pending jobs, and removes the row.
 	 *

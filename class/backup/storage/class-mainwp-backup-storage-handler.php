@@ -93,8 +93,11 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
      */
     private function read_destination_input() {
         // phpcs:disable WordPress.Security.NonceVerification.Missing -- verified by secure_request.
-        $settings = array();
+        // Null when not submitted at all (the list row's Test button), so
+        // stored settings can be used wholesale.
+        $settings = null;
         if ( isset( $_POST['settings'] ) && is_array( $_POST['settings'] ) ) {
+            $settings = array();
             foreach ( wp_unslash( $_POST['settings'] ) as $field => $value ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized per field below.
                 $settings[ sanitize_key( $field ) ] = sanitize_text_field( (string) $value );
             }
@@ -129,12 +132,23 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
     public function ajax_storage_test() {
         $this->secure_request( 'mainwp_storage_test' );
         $this->check_permission();
-        $input  = $this->read_destination_input();
+        die( wp_json_encode( static::test_saved_or_submitted( $this->read_destination_input() ) ) );
+    }
+
+    /**
+     * Connection-test a destination from submitted settings, or from the
+     * stored ones when none are submitted.
+     *
+     * @param array $input Destination fields; settings null means "use stored".
+     *
+     * @return array {ok, error} | {error}.
+     */
+    public static function test_saved_or_submitted( array $input ) {
         $merged = static::merge_candidate( $input );
         if ( isset( $merged['error'] ) ) {
-            die( wp_json_encode( $merged ) );
+            return $merged;
         }
-        die( wp_json_encode( static::run_connection_test( $merged ) ) );
+        return static::run_connection_test( $merged );
     }
 
     /**
@@ -229,8 +243,9 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
             return array( 'error' => esc_html__( 'A destination name is required.', 'mainwp' ) );
         }
 
-        $id       = isset( $input['id'] ) ? (int) $input['id'] : 0;
-        $settings = isset( $input['settings'] ) && is_array( $input['settings'] ) ? $input['settings'] : array();
+        $id        = isset( $input['id'] ) ? (int) $input['id'] : 0;
+        $submitted = isset( $input['settings'] ) && is_array( $input['settings'] );
+        $settings  = $submitted ? $input['settings'] : array();
 
         if ( $id > 0 ) {
             $existing = MainWP_Backup_Storage_Destinations::instance()->get_destination( $id );
@@ -238,9 +253,15 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
                 return array( 'error' => esc_html__( 'The storage destination no longer exists.', 'mainwp' ) );
             }
             if ( is_array( $existing->settings ) ) {
-                foreach ( static::SECRET_FIELDS as $field ) {
-                    if ( ( ! isset( $settings[ $field ] ) || '' === $settings[ $field ] ) && isset( $existing->settings[ $field ] ) ) {
-                        $settings[ $field ] = $existing->settings[ $field ];
+                if ( ! $submitted ) {
+                    // No settings posted at all (the list row's Test): use
+                    // the stored settings wholesale.
+                    $settings = $existing->settings;
+                } else {
+                    foreach ( static::SECRET_FIELDS as $field ) {
+                        if ( ( ! isset( $settings[ $field ] ) || '' === $settings[ $field ] ) && isset( $existing->settings[ $field ] ) ) {
+                            $settings[ $field ] = $existing->settings[ $field ];
+                        }
                     }
                 }
             }

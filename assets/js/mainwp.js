@@ -1492,10 +1492,14 @@ let mainwp_tool_confirm_to_process = function (pObj) {
 
 jQuery(function ($) {
     jQuery('#mainwp-backup-type').on('change', function () {
-        if (jQuery(this).val() == 'full')
-            jQuery('.mainwp-backup-full-exclude').show();
-        else
+        if (jQuery(this).val() == 'db')
             jQuery('.mainwp-backup-full-exclude').hide();
+        else
+            jQuery('.mainwp-backup-full-exclude').show();
+        if (jQuery(this).val() == 'incremental')
+            jQuery('#mainwp-backup-incremental-note').show();
+        else
+            jQuery('#mainwp-backup-incremental-note').hide();
     });
     jQuery('.mainwp-checkbox-showhide-elements').on('click', function () {
         let hiel = $(this).attr('hide-parent');

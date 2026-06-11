@@ -203,8 +203,13 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     <select name="mainwp-backup-type" id="mainwp-backup-type" class="ui dropdown">
                         <option value="full" <?php echo ! isset( $task ) || 'full' === $task->type ? 'selected' : ''; ?>><?php esc_html_e( 'Full Backup', 'mainwp' ); ?></option>
                         <option value="db" <?php echo isset( $task ) && 'db' === $task->type ? 'selected' : ''; ?>><?php esc_html_e( 'Database Backup', 'mainwp' ); ?></option>
+                        <option value="incremental" <?php echo isset( $task ) && 'incremental' === $task->type ? 'selected' : ''; ?>><?php esc_html_e( 'Incremental Backup', 'mainwp' ); ?></option>
                     </select>
                 </div>
+            </div>
+            <?php $incremental_note_style = isset( $task ) && 'incremental' === $task->type ? '' : 'style="display:none"'; ?>
+            <div class="ui info message" id="mainwp-backup-incremental-note" <?php echo $incremental_note_style; //phpcs:ignore -- static attribute. ?>>
+                <?php esc_html_e( 'Incremental backups copy only the files that changed since the previous run in the chain and include a fresh database dump every time, so each run restores to its own point in time. The first run creates a full backup as the chain base. Sites running a MainWP Child version without incremental support receive a full backup on every run, with a note recorded on the task.', 'mainwp' ); ?>
             </div>
             <div class="ui grid field">
                 <label class="six wide column middle aligned"><?php esc_html_e( 'Schedule', 'mainwp' ); ?></label>

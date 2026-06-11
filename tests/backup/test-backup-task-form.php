@@ -103,6 +103,39 @@ class MainWP_Backup_Task_Form_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * The type dropdown offers the incremental type with an explanation of
+	 * how chains behave.
+	 *
+	 * @return void
+	 */
+	public function test_render_task_details_offers_incremental_type() {
+		ob_start();
+		MainWP_Backup_Task_Form::render_task_details( null, 'Tar GZip', 'site', false, true );
+		$output = ob_get_clean();
+
+		$this->assertStringContainsString( 'value="incremental"', $output );
+		$this->assertStringContainsString( 'mainwp-backup-incremental-note', $output );
+	}
+
+	/**
+	 * An existing incremental task pre-selects the type, keeps the
+	 * excludes section visible (the file walk honors them), and shows the
+	 * chain note.
+	 *
+	 * @return void
+	 */
+	public function test_render_task_details_preselects_incremental_type() {
+		$task = $this->make_task( array( 'type' => 'incremental' ) );
+
+		ob_start();
+		MainWP_Backup_Task_Form::render_task_details( $task, 'Tar GZip', 'site', false, true );
+		$output = ob_get_clean();
+
+		$this->assertStringContainsString( 'value="incremental" selected', $output );
+		$this->assertStringNotContainsString( 'style="display: none;"', $output );
+	}
+
+	/**
 	 * The schedule form renders the details section when no task id is
 	 * requested.
 	 *

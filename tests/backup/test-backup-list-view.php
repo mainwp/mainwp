@@ -50,6 +50,17 @@ class MainWP_Backup_List_View_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * The type column labels incremental backups.
+	 *
+	 * @return void
+	 */
+	public function test_column_type_labels_incremental() {
+		$view = new MainWP_Backup_List_View();
+
+		$this->assertStringContainsString( 'INCREMENTAL', $view->column_type( $this->make_item( array( 'type' => 'incremental' ) ) ) );
+	}
+
+	/**
 	 * The schedule column upper-cases the schedule.
 	 *
 	 * @return void

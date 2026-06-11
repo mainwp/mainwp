@@ -229,7 +229,13 @@ class MainWP_Backup_List_View { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @return string Action content.
      */
     public function column_type( $item ) {
-        return 'db' === $item->type ? esc_html__( 'DATABASE BACKUP', 'mainwp' ) : esc_html__( 'FULL BACKUP', 'mainwp' );
+        if ( 'db' === $item->type ) {
+            return esc_html__( 'DATABASE BACKUP', 'mainwp' );
+        }
+        if ( 'incremental' === $item->type ) {
+            return esc_html__( 'INCREMENTAL BACKUP', 'mainwp' );
+        }
+        return esc_html__( 'FULL BACKUP', 'mainwp' );
     }
 
     /**

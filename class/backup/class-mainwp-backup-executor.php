@@ -239,6 +239,34 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
                 $use_spine = MainWP_Backup_Monitor::child_supports_task_spine( $website );
 
+                if ( 'incremental' === $type ) {
+                    $send           = static::resolve_incremental_send( $website, $pTask, $use_spine, $backupTaskProgress );
+                    $params['type'] = $send['type'];
+                    foreach ( $send['params'] as $send_key => $send_value ) {
+                        $params[ $send_key ] = $send_value;
+                    }
+                    if ( '' !== $send['notice'] ) {
+                        static::record_incremental_notice( $website, $taskId, $send['notice'] );
+                    }
+                    if ( $use_spine ) {
+                        // Remember what this run attempted, so a child-reported
+                        // missing base escalates plain -> push -> full instead
+                        // of retrying the same send forever.
+                        MainWP_DB_Backup::instance()->update_backup_task_progress(
+                            $taskId,
+                            $website->id,
+                            array(
+                                'last_error' => wp_json_encode(
+                                    array(
+                                        'incremental_sent' => $send['mode'],
+                                        'run'              => (int) $pTask->last_run,
+                                    )
+                                ),
+                            )
+                        );
+                    }
+                }
+
                 MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Requesting backup' . ( $use_spine ? ' task' : '' ) . ': ' . MainWP_Utility::value_to_string( $params, 1 ) );
 
                 $information = MainWP_Connect::fetch_url_authed( $website, $use_spine ? 'backup_task_create' : 'backup', $params, false, false, false );
@@ -290,6 +318,12 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'Backup task run failed: ' . $e->getMessage() );
             }
 
+            if ( ! empty( $temp ) && 'incremental' === $type
+                && isset( $temp['error_code'] ) && MainWP_Backup_Error_Codes::ERR_INCREMENTAL_BASE_MISSING === $temp['error_code']
+                && static::requeue_incremental_after_base_missing( $website, $pTask, $backupTaskProgress ) ) {
+                return false; // Requeued: the next cycle re-creates the task with the escalated send.
+            }
+
             if ( ! empty( $temp ) && isset( $temp['error'] ) ) {
                 throw new MainWP_Exception( esc_html( MainWP_Backup_Error_Codes::sanitize_message( $temp['error'] ) ), null, isset( $temp['error_code'] ) ? $temp['error_code'] : '' ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             }
@@ -325,7 +359,14 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 }
 
                 $information = array();
-                if ( 'full' === $type ) {
+                if ( 'incremental' === $type ) {
+                    // Incremental tasks complete with a role-tagged artifact
+                    // list; the legacy single-file keys stay false so the
+                    // legacy download section never claims the run.
+                    $information['full']      = false;
+                    $information['db']        = false;
+                    $information['artifacts'] = isset( $temp['artifacts'] ) && is_array( $temp['artifacts'] ) ? $temp['artifacts'] : array();
+                } elseif ( 'full' === $type ) {
                     $information['full'] = isset( $temp['file'] ) ? $temp['file'] : false;
                     $information['db']   = false;
                 } else {
@@ -452,6 +493,12 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
         if ( isset( $information['error'] ) ) {
             throw new MainWP_Exception( esc_html( MainWP_Backup_Error_Codes::sanitize_message( $information['error'] ) ), null, isset( $information['error_code'] ) ? $information['error_code'] : '' ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+        } elseif ( 'incremental' === $type && ! empty( $information['artifacts'] ) ) {
+            return static::finish_incremental_backup( $website, $pTask, $information['artifacts'], $backupTaskProgress );
+        } elseif ( 'incremental' === $type && empty( $information['full'] ) && empty( $information['db'] ) ) {
+            // A spine child completing an incremental run without artifacts
+            // produced nothing downloadable.
+            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         } elseif ( 'db' === $type && empty( $information['db'] ) ) {
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_DB_QUERY_FAILED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         } elseif ( 'full' === $type && empty( $information['full'] ) ) {
@@ -653,6 +700,297 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         }
 
         return $backup_result;
+    }
+
+    /**
+     * Decide what an incremental task's run actually sends to the child.
+     *
+     * The happy path references the latest complete snapshot so the child
+     * diffs against its own sidecar. A first run, a child without the
+     * capability, or an exhausted retry escalation runs a manifest-emitting
+     * full instead - a backup that costs more disk beats one that silently
+     * never runs. Retries after a child-reported missing base escalate
+     * plain -> push (the dashboard re-uploads the parent manifest) -> full.
+     *
+     * @param object $website   Website object.
+     * @param object $pTask     Scheduled task.
+     * @param bool   $use_spine Whether the child runs the task machine.
+     * @param mixed  $progress  Pre-reset progress row (carries the sent marker).
+     *
+     * @return array { type: string, mode: string, params: array, notice: string }
+     */
+    protected static function resolve_incremental_send( $website, $pTask, $use_spine, $progress ) {
+        if ( ! $use_spine || ! MainWP_Backup_Monitor::child_supports_incremental( $website ) ) {
+            return array(
+                'type'   => 'full',
+                'mode'   => 'full',
+                'params' => $use_spine ? array( 'emit_manifest' => '1' ) : array(),
+                'notice' => esc_html__( 'The child site does not support incremental backups, so a full backup was run instead. Update the MainWP Child plugin on the site to enable incremental backups.', 'mainwp' ),
+            );
+        }
+
+        $marker = static::incremental_sent_marker( $progress, (int) $pTask->last_run );
+        $base   = MainWP_Backup_Snapshots::instance()->get_latest_complete( (int) $website->id, (int) $pTask->id );
+
+        if ( null === $base ) {
+            // No chain yet - this full run emits the manifest the first
+            // incremental diffs against. Expected, not an error.
+            return array(
+                'type'   => 'full',
+                'mode'   => 'full',
+                'params' => array( 'emit_manifest' => '1' ),
+                'notice' => '',
+            );
+        }
+
+        $escalate_to_full = in_array( $marker, array( 'push', 'full' ), true );
+        $manifest_b64     = '';
+        if ( ! $escalate_to_full && 'plain' === $marker ) {
+            $manifest_b64     = static::pushable_manifest( $base );
+            $escalate_to_full = '' === $manifest_b64;
+        }
+
+        if ( $escalate_to_full ) {
+            return array(
+                'type'   => 'full',
+                'mode'   => 'full',
+                'params' => array( 'emit_manifest' => '1' ),
+                'notice' => MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_INCREMENTAL_BASE_MISSING ),
+            );
+        }
+
+        $send_params = array( 'parent_snapshot_id' => (string) $base->id );
+        if ( '' !== $manifest_b64 ) {
+            $send_params['parent_manifest'] = $manifest_b64;
+            return array(
+                'type'   => 'incremental',
+                'mode'   => 'push',
+                'params' => $send_params,
+                'notice' => '',
+            );
+        }
+
+        return array(
+            'type'   => 'incremental',
+            'mode'   => 'plain',
+            'params' => $send_params,
+            'notice' => '',
+        );
+    }
+
+    /**
+     * Requeue an incremental run after the child reported a missing or
+     * unusable parent manifest. The next create cycle escalates the send;
+     * a failure after the full fallback is real and propagates.
+     *
+     * @param object $website  Website object.
+     * @param object $pTask    Scheduled task.
+     * @param mixed  $progress Progress row (carries the sent marker).
+     *
+     * @return bool True when requeued; false when the failure is final.
+     */
+    protected static function requeue_incremental_after_base_missing( $website, $pTask, $progress ) {
+        $marker = static::incremental_sent_marker( $progress, (int) $pTask->last_run );
+        if ( 'full' === $marker ) {
+            return false; // The full fallback itself failed - a real failure.
+        }
+
+        MainWP_DB_Backup::instance()->update_backup_task_progress(
+            $pTask->id,
+            $website->id,
+            array(
+                'dtsFetched'           => 0,
+                'child_backup_task_id' => '',
+                'attempts'             => 0,
+            )
+        );
+
+        MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'The child site reported the incremental base as missing; the run is requeued with an escalated send (' . $marker . ' attempted).' );
+
+        return true;
+    }
+
+    /**
+     * What this run already attempted for an incremental task: '', 'plain',
+     * 'push', or 'full'. Markers from a previous run (different last_run)
+     * are stale and read as ''.
+     *
+     * @param mixed $progress Progress row.
+     * @param int   $run      Current run identity (the task's last_run).
+     *
+     * @return string Sent marker.
+     */
+    protected static function incremental_sent_marker( $progress, $run ) {
+        if ( empty( $progress ) || empty( $progress->last_error ) || ! is_string( $progress->last_error ) ) {
+            return '';
+        }
+        $decoded = json_decode( $progress->last_error, true );
+        if ( ! is_array( $decoded ) || ! isset( $decoded['incremental_sent'], $decoded['run'] ) || (int) $decoded['run'] !== $run ) {
+            return '';
+        }
+        return (string) $decoded['incremental_sent'];
+    }
+
+    /**
+     * The base snapshot's manifest as a pushable base64 blob, or '' when
+     * it is missing, empty, or too large for a single create request.
+     *
+     * @param object $base Base snapshot row.
+     *
+     * @return string Base64 manifest or ''.
+     */
+    protected static function pushable_manifest( $base ) {
+        $path = isset( $base->manifest_path ) ? (string) $base->manifest_path : '';
+        if ( '' === $path || ! is_readable( $path ) ) {
+            return '';
+        }
+        $size = (int) filesize( $path );
+        // The child caps the inline manifest at 6 MiB of base64 (~4.5 MiB raw).
+        if ( $size < 1 || $size > 4500000 ) {
+            return '';
+        }
+        $content = file_get_contents( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- local manifest read.
+        return false === $content ? '' : base64_encode( $content ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- wire transport encoding for the pushed manifest, not code.
+    }
+
+    /**
+     * Record a forced-full notice on the task and in the site log, so the
+     * user learns why the run cost a full backup.
+     *
+     * @param object $website Website object.
+     * @param int    $taskId  Task id.
+     * @param string $message Notice text.
+     */
+    protected static function record_incremental_notice( $website, $taskId, $message ) {
+        MainWP_Logger::instance()->warning_for_website( $website, 'backup', $message );
+        if ( MainWP_DB_Backup::instance()->get_backup_task_by_id( $taskId ) ) {
+            MainWP_DB_Backup::instance()->update_backup_errors( $taskId, $message . "\n" );
+        }
+    }
+
+    /**
+     * Download every artifact of a completed incremental-chain run and
+     * record the durable snapshot row.
+     *
+     * Artifacts land in a per-run directory keyed by the child task id, so
+     * an interrupted cycle resumes by skipping files that already arrived
+     * intact. The snapshot row is written only after every artifact landed;
+     * remote cleanup then removes the child-side copies but never the
+     * manifest sidecar the next incremental diffs against.
+     *
+     * The legacy postprocess hooks are not fired: extensions built around
+     * a single backup file cannot process a multi-part run.
+     *
+     * @param object $website   Website object.
+     * @param object $pTask     Scheduled task.
+     * @param array  $artifacts Role-tagged artifact list from the child.
+     * @param object $progress  Progress row (carries the child task id).
+     *
+     * @throws MainWP_Exception When an artifact cannot be downloaded or fails validation.
+     *
+     * @return array Backup result with the snapshot id.
+     */
+    // phpcs:ignore Squiz.Commenting.FunctionCommentThrowTag.Missing -- registry factory throws are MainWP_Exception, documented above.
+    protected static function finish_incremental_backup( $website, $pTask, $artifacts, $progress ) { // phpcs:ignore -- NOSONAR - download loop with per-role validation.
+        MainWP_System_Utility::get_wp_file_system();
+
+        /**
+         * WordPress filesystem instance.
+         *
+         * @global object
+         */
+        global $wp_filesystem;
+
+        $dir = MainWP_System_Utility::get_mainwp_specific_dir( $website->id );
+        $wp_filesystem->mkdir( $dir, 0750 );
+        if ( ! $wp_filesystem->exists( $dir . 'index.php' ) ) {
+            $wp_filesystem->touch( $dir . 'index.php' );
+        }
+
+        $run_dir = $dir . 'snapshot-' . MainWP_Utility::sanitize_file_name( (string) $progress->child_backup_task_id ) . '/';
+        $wp_filesystem->mkdir( $run_dir, 0750 );
+
+        $http_user_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_user );
+        $http_pass_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_pass );
+
+        $archives = array();
+        $is_base  = false;
+
+        foreach ( $artifacts as $artifact ) {
+            $remote = isset( $artifact['file'] ) ? basename( (string) $artifact['file'] ) : '';
+            $size   = isset( $artifact['size'] ) ? (int) $artifact['size'] : 0;
+            $role   = isset( $artifact['role'] ) ? (string) $artifact['role'] : '';
+            if ( '' === $remote || '' === $role ) {
+                throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, 'malformed artifact entry' ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+            }
+            if ( 'full' === $role ) {
+                $is_base = true;
+            }
+
+            $local = MainWP_Backup_File_Manager::normalize_filename( $run_dir . MainWP_Utility::sanitize_file_name( $remote ) );
+
+            $already_complete = file_exists( $local ) && (int) filesize( $local ) === $size && $size > 0;
+            if ( ! $already_complete ) {
+                if ( ! MainWP_Backup_File_Manager::acquire_download_lock( $local, $website->id, $pTask->id ) ) {
+                    throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING, 'download lock held for ' . basename( $local ) ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+                }
+                try {
+                    MainWP_Backup_File_Manager::download_backup_artifact( $website, $remote, $local, $size, $http_user_plain, $http_pass_plain );
+                    if ( in_array( $role, array( 'part', 'db', 'full' ), true ) ) {
+                        MainWP_Backup_File_Manager::validate_backup_file( $local, $size );
+                    } elseif ( (int) filesize( $local ) !== $size ) {
+                        throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, 'expected ' . $size . ' bytes for ' . $remote ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+                    }
+                } finally {
+                    MainWP_Backup_File_Manager::release_download_lock( $local );
+                }
+            }
+
+            $archives[] = array(
+                'file' => basename( $local ),
+                'size' => $size,
+                'role' => $role,
+                'path' => $local,
+            );
+        }
+
+        $snapshots = MainWP_Backup_Snapshots::instance();
+
+        // An interrupted earlier cycle may already have recorded this run.
+        $latest        = $snapshots->get_latest_complete( (int) $website->id, (int) $pTask->id );
+        $already_saved = null !== $latest && 0 === strpos( (string) $latest->manifest_path, $run_dir );
+
+        if ( ! $already_saved ) {
+            $parent_id   = $is_base || null === $latest ? null : (int) $latest->id;
+            $snapshot_id = $snapshots->record_snapshot(
+                array(
+                    'task_id'       => (int) $pTask->id,
+                    'site_id'       => (int) $website->id,
+                    'type'          => $is_base ? 'full' : 'incremental',
+                    'parent_id'     => $parent_id,
+                    'archives'      => $archives,
+                    'manifest_path' => $run_dir . 'files.list',
+                )
+            );
+        } else {
+            $snapshot_id = (int) $latest->id;
+        }
+
+        // Remote cleanup: every artifact except the manifest sidecar the
+        // next incremental diffs against. Best effort - a leftover file on
+        // the child never blocks a recorded backup.
+        foreach ( $artifacts as $artifact ) {
+            if ( ! isset( $artifact['role'] ) || 'manifest' === $artifact['role'] ) {
+                continue;
+            }
+            try {
+                MainWP_Connect::fetch_url_authed( $website, 'delete_backup', array( 'del' => basename( (string) $artifact['file'] ) ) );
+            } catch ( \Exception $e ) {
+                MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'Could not remove a backup artifact from the child site: ' . $e->getMessage() );
+            }
+        }
+
+        return array( 'snapshot_id' => $snapshot_id );
     }
 
     /**
@@ -960,6 +1298,12 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber
         if ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_LEGACY_DISABLED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+        }
+
+        if ( 'incremental' === $type ) {
+            // Incremental chains hang off a scheduled task's snapshot
+            // history; an ad-hoc run has no chain to extend.
+            throw new MainWP_Exception( esc_html__( 'Incremental backups run from a scheduled backup task. Create a backup task with the incremental type instead.', 'mainwp' ) );
         }
 
         MainWP_Backup_Monitor::validate_backup_environment();

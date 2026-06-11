@@ -22,17 +22,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Class MainWP_Backup_Manifest_Chunk_Transfer
  */
-class MainWP_Backup_Manifest_Chunk_Transfer { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
-
-    /**
-     * Starting chunk size, raw bytes (~4 MiB of base64 on the wire).
-     */
-    const CHUNK_BYTES = 3145728;
-
-    /**
-     * Smallest chunk size worth retrying with.
-     */
-    const CHUNK_MIN_BYTES = 262144;
+class MainWP_Backup_Manifest_Chunk_Transfer implements MainWP_Backup_Chunk_Transfer_Sizes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
     /**
      * Singleton.

@@ -25,17 +25,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Class MainWP_Backup_Restore_Transfer_Driver
  */
-class MainWP_Backup_Restore_Transfer_Driver { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
-
-    /**
-     * Default raw bytes per chunk (~4 MB base64 on the wire).
-     */
-    const CHUNK_BYTES = 3145728;
-
-    /**
-     * Smallest chunk the adaptive shrink will try.
-     */
-    const CHUNK_MIN_BYTES = 262144;
+class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Transfer_Sizes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
     /**
      * Singleton.

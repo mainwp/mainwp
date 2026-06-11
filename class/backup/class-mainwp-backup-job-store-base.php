@@ -65,6 +65,28 @@ abstract class MainWP_Backup_Job_Store_Base extends MainWP_DB_Base { // phpcs:ig
     }
 
     /**
+     * Update job columns by id, stamping updated.
+     *
+     * @param int   $job_id Job id.
+     * @param array $row    Columns to set.
+     * @param array $format Column formats.
+     *
+     * @return void
+     */
+    protected function update_job( int $job_id, array $row, array $format ): void {
+        $row['updated'] = time();
+        $format[]       = '%d';
+
+        $this->wpdb->update(
+            $this->table(),
+            $row,
+            array( 'id' => $job_id ),
+            $format,
+            array( '%d' )
+        );
+    }
+
+    /**
      * Decode the checkpoint JSON on a job row.
      *
      * @param object|null $row Raw job row.

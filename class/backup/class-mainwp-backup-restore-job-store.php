@@ -286,19 +286,6 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
     }
 
     /**
-     * Update helper stamping updated.
-     *
-     * @param int   $job_id Job id.
-     * @param array $row    Columns.
-     * @param array $format Formats.
-     */
-    private function update_job( int $job_id, array $row, array $format ): void {
-        $row['updated'] = time();
-        $format[]       = '%d';
-        $this->wpdb->update( $this->table(), $row, array( 'id' => $job_id ), $format, array( '%d' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- dedicated restore job table.
-    }
-
-    /**
      * Guarded write for terminal transitions: the row is only touched
      * while its status is still active, so the first terminal writer
      * wins and a finished, failed, or cancelled job is never relabeled

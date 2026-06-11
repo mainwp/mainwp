@@ -383,28 +383,6 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
     }
 
     /**
-     * Update job columns by id.
-     *
-     * @param int   $job_id Job id.
-     * @param array $row    Columns to set.
-     * @param array $format Column formats.
-     *
-     * @return void
-     */
-    private function update_job( int $job_id, array $row, array $format ): void {
-        $row['updated'] = time();
-        $format[]       = '%d';
-
-        $this->wpdb->update(
-            $this->table_name( 'wp_backup_upload_job' ),
-            $row,
-            array( 'id' => $job_id ),
-            $format,
-            array( '%d' )
-        );
-    }
-
-    /**
      * Guarded write for terminal transitions: the row is only touched
      * while its status is still active, so the first terminal writer
      * wins and a complete, failed, or credentials-parked job is never

@@ -188,6 +188,20 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
 
         if ( MainWP_Backup_Restore_Job_Store::STATUS_RUNNING === $job->status ) {
             $this->cancel_child_task( $job );
+
+            // The cron lane may have advanced the job while the child
+            // confirmation was in flight; a job that reached verifying or
+            // completed meanwhile finished its restore and must never be
+            // relabeled cancelled.
+            $fresh    = $store->get_job( $job_id );
+            $finished = array(
+                MainWP_Backup_Restore_Job_Store::STATUS_VERIFYING,
+                MainWP_Backup_Restore_Job_Store::STATUS_COMPLETED,
+            );
+            if ( null === $fresh || in_array( $fresh->status, $finished, true ) ) {
+                throw new MainWP_Exception( esc_html__( 'The restore already finished on the site and can no longer be cancelled.', 'mainwp' ) );
+            }
+
             MainWP_Backup_Restore_Transfer_Driver::instance()->cleanup_staging( $job_id );
             $store->cancel_job( $job_id );
             return;

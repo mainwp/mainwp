@@ -465,6 +465,44 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
+	 * The cron lane can advance the job while the child cancel is being
+	 * confirmed; a job that reached verifying meanwhile must never be
+	 * overwritten with cancelled (the restore happened).
+	 */
+	public function test_cancel_running_refuses_when_job_advanced_meanwhile() {
+		$this->responses['restore_task_cancel'] = array(
+			'result' => 'ok',
+			'phase'  => 'failed',
+		);
+
+		$job   = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, array( 'child_task_id' => 'task-9-restore' ) );
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+
+		// Simulate the concurrent cron write: the moment the child cancel
+		// call goes out, the job has already moved to verifying.
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			function ( $pre, $website, $what ) use ( $job, $store ) {
+				if ( 'restore_task_cancel' === $what ) {
+					$store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_VERIFYING );
+				}
+				return $pre;
+			},
+			5,
+			3
+		);
+
+		try {
+			$this->orchestrator->cancel_job( (int) $job->id );
+			$this->fail( 'Expected the advanced job to refuse the cancel' );
+		} catch ( MainWP_Exception $e ) {
+			$this->assertNotEmpty( $e->getMessage() );
+		}
+
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_VERIFYING, $store->get_job( (int) $job->id )->status );
+	}
+
+	/**
 	 * A child task that already failed needs no child-side work; the
 	 * job cancels directly.
 	 */

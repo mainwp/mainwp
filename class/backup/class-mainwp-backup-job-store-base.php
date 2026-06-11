@@ -87,6 +87,43 @@ abstract class MainWP_Backup_Job_Store_Base extends MainWP_DB_Base { // phpcs:ig
     }
 
     /**
+     * Guarded write for terminal transitions: the row is only touched
+     * while its status is still active, so the first terminal writer
+     * wins and a job that already reached a terminal status is never
+     * relabeled by a racing lane (mirrors release_lock's owner guard).
+     *
+     * Column names come from the stores' own terminal methods, never
+     * from input.
+     *
+     * @param int   $job_id Job id.
+     * @param array $row    Columns.
+     *
+     * @return bool True when exactly one active row was updated.
+     */
+    protected function terminal_update( int $job_id, array $row ): bool {
+        $row['updated'] = time();
+
+        $set    = array();
+        $values = array();
+        foreach ( $row as $column => $value ) {
+            $set[]    = $column . ' = ' . ( is_int( $value ) ? '%d' : '%s' );
+            $values[] = $value;
+        }
+
+        $statuses     = static::active_statuses();
+        $placeholders = implode( ',', array_fill( 0, count( $statuses ), '%s' ) );
+
+        $changed = $this->wpdb->query(
+            $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- replacements and placeholders come from the same counted arrays.
+                'UPDATE ' . $this->table() . ' SET ' . implode( ', ', $set ) . " WHERE id = %d AND status IN ( {$placeholders} )", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- SET columns are store-internal literals; placeholder list built from a counted array.
+                array_merge( $values, array( $job_id ), $statuses )
+            )
+        );
+
+        return 1 === $changed;
+    }
+
+    /**
      * Decode the checkpoint JSON on a job row.
      *
      * @param object|null $row Raw job row.

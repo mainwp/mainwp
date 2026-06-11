@@ -70,6 +70,10 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
     const ERR_INCREMENTAL_BASE_MISSING = 'mainwp_backup_incremental_base_missing';
     const ERR_MANIFEST_TOO_LARGE       = 'mainwp_backup_manifest_too_large';
 
+    const ERR_MANIFEST_CHUNK_WRONG_PHASE = 'mainwp_backup_manifest_chunk_wrong_phase';
+    const ERR_MANIFEST_CHUNK_CORRUPT     = 'mainwp_backup_manifest_chunk_corrupt';
+    const ERR_MANIFEST_CHUNK_SEND_FAILED = 'mainwp_backup_manifest_chunk_send_failed';
+
     // Permission / configuration.
     const ERR_SUSPENDED_SITE  = 'mainwp_backup_suspended_site';
     const ERR_NO_PERMISSION   = 'mainwp_backup_no_permission';
@@ -134,6 +138,7 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
             self::ERR_FILE_SKIPPED,
             self::ERR_ALREADY_RUNNING,
             self::ERR_INCREMENTAL_BASE_MISSING,
+            self::ERR_MANIFEST_CHUNK_SEND_FAILED,
         );
         return in_array( $code, $warnings, true ) ? 'warning' : 'error';
     }
@@ -220,6 +225,10 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
             self::ERR_INCREMENTAL_BASE_MISSING => esc_html__( 'The previous backup this incremental run depends on is no longer usable on the child site, so a full backup was run instead. The next incremental run will use the new full backup as its base.', 'mainwp' ),
             self::ERR_MANIFEST_TOO_LARGE       => esc_html__( 'The file list from the previous backup is too large to send to the child site, so a full backup was run instead. Sites with very large file counts may need full backups only.', 'mainwp' ),
+
+            self::ERR_MANIFEST_CHUNK_WRONG_PHASE => esc_html__( 'The file-list piece arrived outside of an active staging session on the child site. The transfer restarts from the beginning on the next attempt.', 'mainwp' ),
+            self::ERR_MANIFEST_CHUNK_CORRUPT     => esc_html__( 'The transferred file list does not match its expected checksum on the child site and was discarded. The transfer runs again or the run falls back to a full backup.', 'mainwp' ),
+            self::ERR_MANIFEST_CHUNK_SEND_FAILED => esc_html__( 'The file list from the previous backup could not be delivered to the child site in pieces, so a full backup was run instead. The site may enforce a small request size limit.', 'mainwp' ),
         );
     }
 }

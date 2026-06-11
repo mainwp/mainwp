@@ -154,6 +154,22 @@ class MainWP_Backup_Error_Codes_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * The manifest chunk transfer codes are registered: the two the child
+	 * reports during staging and the dashboard-side send failure that
+	 * falls the run back to a full backup.
+	 *
+	 * @return void
+	 */
+	public function test_registers_manifest_chunk_error_codes() {
+		$registered = MainWP_Backup_Error_Codes::get_registered_codes();
+		$this->assertContains( 'mainwp_backup_manifest_chunk_wrong_phase', $registered );
+		$this->assertContains( 'mainwp_backup_manifest_chunk_corrupt', $registered );
+		$this->assertContains( 'mainwp_backup_manifest_chunk_send_failed', $registered );
+		$this->assertSame( 'mainwp_backup_manifest_chunk_send_failed', MainWP_Backup_Error_Codes::ERR_MANIFEST_CHUNK_SEND_FAILED );
+		$this->assertSame( 'warning', MainWP_Backup_Error_Codes::severity( MainWP_Backup_Error_Codes::ERR_MANIFEST_CHUNK_SEND_FAILED ), 'The send failure falls back to a full backup; the run still succeeds.' );
+	}
+
+	/**
 	 * Warning-severity codes map to 'warning'.
 	 *
 	 * @return void

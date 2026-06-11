@@ -1519,6 +1519,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         MainWP_Backup_Upload_Driver::instance()->process_pending_jobs();
         MainWP_Backup_Cloud_Delete_Driver::instance()->process_pending_delete_jobs();
         MainWP_Backup_Retention_Scheduler::instance()->process_post_snapshot_queue();
+        MainWP_Backup_Restore_Orchestrator::instance()->process_pending_restore_jobs();
 
         if ( empty( $tasks ) ) {
             return;

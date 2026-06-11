@@ -31,7 +31,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * @var string DB version info.
      */
-    protected $mainwp_db_version = '9.0.2.10'; // NOSONAR - no IP. Bumped so dbDelta adds the wp_backup schedule and retention columns (interval_hours, time_of_day, day_of_week, day_of_month, next_run, retention_count, retention_days, retention_storage_mb, delete_cloud_copies) and the wp_backup_upload_job kind column with its widened unique key. Previous 9.0.2.9 bump added the storage and upload job tables.
+    protected $mainwp_db_version = '9.0.2.11'; // NOSONAR - no IP. Bumped so dbDelta adds the wp_backup_restore_job table. Previous 9.0.2.10 bump added the wp_backup schedule and retention columns and the wp_backup_upload_job kind column with its widened unique key.
 
     /**
      * Protected variable to hold the database option name.
@@ -435,6 +435,30 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
   UNIQUE KEY uniq_snap_dest_kind (snapshot_id, destination_id, kind),
   KEY idx_status_retry (status, next_retry_at)";
         if ( empty( $currentVersion ) || version_compare( $currentVersion, '9.0.2.9', '<' ) ) { // NOSONAR - none IP.
+            $tbl .= ',
+  PRIMARY KEY  (id)  ';
+        }
+        $tbl  .= ') ' . $charset_collate;
+        $sql[] = $tbl;
+
+        $tbl = 'CREATE TABLE ' . $this->table_name( 'wp_backup_restore_job' ) . " (
+  id bigint(20) unsigned NOT NULL auto_increment,
+  site_id int(11) NOT NULL,
+  snapshot_id bigint(20) unsigned NOT NULL,
+  status varchar(32) NOT NULL DEFAULT 'pending',
+  child_task_id varchar(64) NOT NULL DEFAULT '',
+  pre_snapshot_task_id varchar(64) NOT NULL DEFAULT '',
+  checkpoint longtext NOT NULL,
+  last_error text NOT NULL DEFAULT '',
+  attempt_count int(11) NOT NULL DEFAULT 0,
+  next_retry_at int(11) NOT NULL DEFAULT 0,
+  locked_until int(11) NOT NULL DEFAULT 0,
+  locked_by varchar(64) NOT NULL DEFAULT '',
+  created int(11) NOT NULL DEFAULT 0,
+  updated int(11) NOT NULL DEFAULT 0,
+  KEY idx_site (site_id),
+  KEY idx_status_retry (status, next_retry_at)";
+        if ( empty( $currentVersion ) || version_compare( $currentVersion, '9.0.2.11', '<' ) ) { // NOSONAR - none IP.
             $tbl .= ',
   PRIMARY KEY  (id)  ';
         }

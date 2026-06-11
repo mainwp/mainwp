@@ -1,0 +1,622 @@
+<?php
+/**
+ * MainWP Backup Restore Orchestrator - the dashboard side of a restore.
+ *
+ * A restore job moves through dashboard phases on budgeted cron slices:
+ * an optional pre-restore safety backup runs to completion as a normal
+ * child backup task (its artifacts stay on the child - they are the
+ * file rollback source and adopt with zero transfer); staging makes
+ * every plan artifact a verified local file; the child restore task is
+ * created and the artifacts stream over as hash-verified chunks; the
+ * child task is then driven one slice per tick to its terminal phase;
+ * and a final external reachability check gates completion.
+ *
+ * The child enforces one active task per site, which is why the
+ * pre-restore backup runs and finishes before the restore task is
+ * created. The dashboard mirrors that with one active restore job per
+ * site.
+ *
+ * @package MainWP\Dashboard
+ */
+
+namespace MainWP\Dashboard;
+
+defined( 'ABSPATH' ) || exit;
+
+/**
+ * Class MainWP_Backup_Restore_Orchestrator
+ */
+class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
+
+    /**
+     * Cron slice budget, seconds. Below the upload driver's 240 so both
+     * fit one continuation tick with headroom.
+     */
+    const DEFAULT_BUDGET_SECONDS = 200;
+
+    /**
+     * Attempts before a retryable failure goes permanent.
+     */
+    const MAX_ATTEMPTS = 7;
+
+    /**
+     * Backoff base, seconds (doubles per attempt).
+     */
+    const RETRY_BASE_SECONDS = 300;
+
+    /**
+     * Backoff ceiling, seconds.
+     */
+    const RETRY_MAX_SECONDS = 14400;
+
+    /**
+     * Singleton.
+     *
+     * @var MainWP_Backup_Restore_Orchestrator|null
+     */
+    private static $instance = null;
+
+    /**
+     * Get the singleton instance.
+     *
+     * @return MainWP_Backup_Restore_Orchestrator
+     */
+    public static function instance(): self {
+        if ( null === static::$instance ) {
+            static::$instance = new self();
+        }
+        return static::$instance;
+    }
+
+    /**
+     * Create a restore job for a snapshot.
+     *
+     * @param int   $site_id     Child site id.
+     * @param int   $snapshot_id Snapshot to restore.
+     * @param array $options     { pre_snapshot: bool, file_rollback: bool }.
+     *
+     * @throws MainWP_Exception When the restore cannot start.
+     *
+     * @return int Job id.
+     */
+    public function initiate_restore( int $site_id, int $snapshot_id, array $options = array() ): int {
+        $website = MainWP_DB::instance()->get_website_by_id( $site_id );
+        if ( empty( $website ) ) {
+            throw new MainWP_Exception( esc_html__( 'Site not found.', 'mainwp' ) );
+        }
+
+        if ( null !== MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $site_id ) ) {
+            throw new MainWP_Exception( esc_html__( 'A restore is already running for this site. Wait for it to finish before starting another.', 'mainwp' ) );
+        }
+
+        $resolved = MainWP_Backup_Snapshot_Catalog::instance()->resolve_restorable_chain( $snapshot_id );
+        if ( ! $resolved['ok'] ) {
+            throw new MainWP_Exception( esc_html( $resolved['error'] ) );
+        }
+
+        $checkpoint = array(
+            'restore_id' => strtolower( wp_generate_password( 12, false ) ),
+            'sub_type'   => $resolved['sub_type'],
+            'plan'       => $resolved['plan'],
+            'options'    => array(
+                'pre_snapshot'  => ! empty( $options['pre_snapshot'] ),
+                'file_rollback' => ! empty( $options['file_rollback'] ),
+            ),
+            'transfer'   => array(),
+        );
+
+        $job_id = MainWP_Backup_Restore_Job_Store::instance()->create_job( $site_id, $snapshot_id, $checkpoint );
+        if ( 0 === $job_id ) {
+            throw new MainWP_Exception( esc_html__( 'The restore job could not be recorded.', 'mainwp' ) );
+        }
+
+        return $job_id;
+    }
+
+    /**
+     * Start a rollback restore from a completed pre-restore safety
+     * backup: its artifacts are still on the child and adopt with zero
+     * transfer.
+     *
+     * @param object $failed_job Failed restore job carrying
+     *                           pre_snapshot_artifacts in its checkpoint.
+     *
+     * @throws MainWP_Exception When the job has no rollback source.
+     *
+     * @return int New job id.
+     */
+    public function initiate_rollback( object $failed_job ): int {
+        $artifacts = isset( $failed_job->checkpoint['pre_snapshot_artifacts'] ) ? (array) $failed_job->checkpoint['pre_snapshot_artifacts'] : array();
+        if ( empty( $artifacts ) ) {
+            throw new MainWP_Exception( esc_html__( 'No pre-restore safety backup is recorded for this restore, so there is nothing to roll back to.', 'mainwp' ) );
+        }
+
+        $plan = array();
+        foreach ( $artifacts as $artifact ) {
+            $plan[] = array(
+                'role'        => isset( $artifact['role'] ) ? (string) $artifact['role'] : 'full',
+                'file'        => (string) $artifact['file'],
+                'size'        => isset( $artifact['size'] ) ? (int) $artifact['size'] : 0,
+                'sha256'      => '',
+                'snapshot_id' => 0,
+                'source'      => 'adopt',
+                'local_path'  => '',
+                'remote_key'  => '',
+                'adopt_only'  => true,
+            );
+        }
+
+        $checkpoint = array(
+            'restore_id' => strtolower( wp_generate_password( 12, false ) ),
+            'sub_type'   => 'full',
+            'plan'       => $plan,
+            'options'    => array(
+                'pre_snapshot'  => false,
+                'file_rollback' => false,
+            ),
+            'transfer'   => array(),
+        );
+
+        $job_id = MainWP_Backup_Restore_Job_Store::instance()->create_job( (int) $failed_job->site_id, (int) $failed_job->snapshot_id, $checkpoint );
+        if ( 0 === $job_id ) {
+            throw new MainWP_Exception( esc_html__( 'The rollback job could not be recorded.', 'mainwp' ) );
+        }
+        return $job_id;
+    }
+
+    /**
+     * Cancel a restore job while it is still safe to do so.
+     *
+     * Once the child task is running its destructive phases the
+     * dashboard no longer cancels - the offer becomes a rollback
+     * instead.
+     *
+     * @param int $job_id Job id.
+     *
+     * @throws MainWP_Exception When the job is past the cancel window.
+     */
+    public function cancel_job( int $job_id ): void {
+        $store = MainWP_Backup_Restore_Job_Store::instance();
+        $job   = $store->get_job( $job_id );
+        if ( null === $job ) {
+            throw new MainWP_Exception( esc_html__( 'Restore job not found.', 'mainwp' ) );
+        }
+
+        $cancellable = array(
+            MainWP_Backup_Restore_Job_Store::STATUS_PENDING,
+            MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT,
+            MainWP_Backup_Restore_Job_Store::STATUS_STAGING,
+            MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING,
+            MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE,
+        );
+        if ( ! in_array( $job->status, $cancellable, true ) ) {
+            throw new MainWP_Exception( esc_html__( 'The restore has already started changing the site and can no longer be cancelled. Use the rollback once it finishes or fails.', 'mainwp' ) );
+        }
+
+        MainWP_Backup_Restore_Transfer_Driver::instance()->cleanup_staging( $job_id );
+        $store->cancel_job( $job_id );
+    }
+
+    /**
+     * Drive pending restore jobs for one budgeted cron slice.
+     *
+     * @param int $budget_seconds Slice budget.
+     */
+    public function process_pending_restore_jobs( int $budget_seconds = self::DEFAULT_BUDGET_SECONDS ): void {
+        $deadline = microtime( true ) + $budget_seconds;
+        $token    = 'restore-' . wp_generate_password( 12, false );
+        $store    = MainWP_Backup_Restore_Job_Store::instance();
+
+        $job = $store->acquire_next_job( $token, $budget_seconds + 60 );
+        if ( null === $job ) {
+            return;
+        }
+
+        try {
+            $this->run_job( $job, $deadline );
+        } catch ( \Throwable $e ) {
+            $this->record_failure( $job, $e->getMessage(), true );
+        }
+
+        $store->release_lock( (int) $job->id, $token );
+    }
+
+    /**
+     * Advance one job within the deadline.
+     *
+     * @param object $job      Locked job row.
+     * @param float  $deadline Slice deadline.
+     */
+    public function run_job( object $job, float $deadline ): void { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- phase dispatch.
+        $status = $job->status;
+        if ( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE === $status ) {
+            // Resume the phase that failed.
+            $status = isset( $job->checkpoint['resume_status'] ) ? (string) $job->checkpoint['resume_status'] : MainWP_Backup_Restore_Job_Store::STATUS_PENDING;
+        }
+
+        switch ( $status ) {
+            case MainWP_Backup_Restore_Job_Store::STATUS_PENDING:
+                $this->phase_pending( $job );
+                break;
+            case MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT:
+                $this->phase_pre_snapshot( $job, $deadline );
+                break;
+            case MainWP_Backup_Restore_Job_Store::STATUS_STAGING:
+                $this->phase_staging( $job, $deadline );
+                break;
+            case MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING:
+                $this->phase_transferring( $job, $deadline );
+                break;
+            case MainWP_Backup_Restore_Job_Store::STATUS_RUNNING:
+                $this->phase_running( $job );
+                break;
+            case MainWP_Backup_Restore_Job_Store::STATUS_VERIFYING:
+                $this->phase_verifying( $job );
+                break;
+            default:
+                break; // Terminal states have nothing to drive.
+        }
+    }
+
+    /**
+     * Pending: route to the pre-restore safety backup or straight to
+     * staging.
+     *
+     * @param object $job Job row.
+     */
+    private function phase_pending( object $job ): void {
+        $store = MainWP_Backup_Restore_Job_Store::instance();
+
+        if ( ! empty( $job->checkpoint['options']['pre_snapshot'] ) ) {
+            $task_id = MainWP_Backup_Executor::trigger_backup( (int) $job->site_id, 'full' );
+            if ( null === $task_id ) {
+                // Synchronous fallback children completed the backup inline.
+                $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_STAGING );
+                return;
+            }
+            $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT, array( 'pre_snapshot_task_id' => $task_id ) );
+            return;
+        }
+
+        $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_STAGING );
+    }
+
+    /**
+     * Pre-snapshot: drive the safety backup task; its artifacts stay on
+     * the child as the rollback source.
+     *
+     * @param object $job      Job row.
+     * @param float  $deadline Slice deadline.
+     */
+    private function phase_pre_snapshot( object $job, float $deadline ): void {
+        $store   = MainWP_Backup_Restore_Job_Store::instance();
+        $website = $this->website( $job );
+
+        while ( microtime( true ) < $deadline ) {
+            $payload = MainWP_Connect::fetch_url_authed( $website, 'backup_task_run', array( 'task_id' => $job->pre_snapshot_task_id ), false, false, false );
+            $phase   = is_array( $payload ) && isset( $payload['phase'] ) ? (string) $payload['phase'] : '';
+
+            if ( 'completed' === $phase ) {
+                $artifacts = array();
+                if ( ! empty( $payload['artifacts'] ) && is_array( $payload['artifacts'] ) ) {
+                    $artifacts = $payload['artifacts'];
+                } elseif ( ! empty( $payload['file'] ) ) {
+                    $artifacts[] = array(
+                        'role' => 'full',
+                        'file' => basename( (string) $payload['file'] ),
+                        'size' => isset( $payload['size'] ) ? (int) $payload['size'] : 0,
+                    );
+                }
+                $checkpoint                           = $job->checkpoint;
+                $checkpoint['pre_snapshot_artifacts'] = $artifacts;
+                $store->save_checkpoint( (int) $job->id, $checkpoint );
+                $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_STAGING );
+                return;
+            }
+            if ( 'failed' === $phase || '' === $phase ) {
+                $error = is_array( $payload ) && isset( $payload['error'] ) ? (string) $payload['error'] : esc_html__( 'The pre-restore safety backup failed.', 'mainwp' );
+                $store->fail_permanent( (int) $job->id, $error );
+                return;
+            }
+        }
+    }
+
+    /**
+     * Staging: make every plan artifact a verified local file, then
+     * create the child restore task.
+     *
+     * @param object $job      Job row.
+     * @param float  $deadline Slice deadline.
+     */
+    private function phase_staging( object $job, float $deadline ): void {
+        $store      = MainWP_Backup_Restore_Job_Store::instance();
+        $checkpoint = $job->checkpoint;
+        $plan       = (array) $checkpoint['plan'];
+
+        $needs_staging = false;
+        foreach ( $plan as $entry ) {
+            if ( empty( $entry['adopt_only'] ) ) {
+                $needs_staging = true;
+                break;
+            }
+        }
+
+        if ( $needs_staging ) {
+            $outcome            = MainWP_Backup_Restore_Transfer_Driver::instance()->stage_artifacts( (int) $job->id, $plan, $deadline );
+            $checkpoint['plan'] = $plan;
+            $store->save_checkpoint( (int) $job->id, $checkpoint );
+
+            if ( null !== $outcome['error'] ) {
+                $store->fail_permanent( (int) $job->id, $outcome['error'] );
+                return;
+            }
+            if ( ! $outcome['done'] ) {
+                return; // More staging next tick.
+            }
+        }
+
+        $task_id = $this->create_child_restore_task( $job, $checkpoint, $plan );
+        if ( '' === $task_id ) {
+            return; // Failure already recorded.
+        }
+
+        $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING, array( 'child_task_id' => $task_id ) );
+    }
+
+    /**
+     * Transferring: stream staged artifacts to the child.
+     *
+     * @param object $job      Job row.
+     * @param float  $deadline Slice deadline.
+     */
+    private function phase_transferring( object $job, float $deadline ): void {
+        $store      = MainWP_Backup_Restore_Job_Store::instance();
+        $checkpoint = $job->checkpoint;
+        $cursor     = isset( $checkpoint['transfer'] ) ? (array) $checkpoint['transfer'] : array();
+
+        $outcome = MainWP_Backup_Restore_Transfer_Driver::instance()->transfer_artifacts(
+            $this->website( $job ),
+            (string) $job->child_task_id,
+            (array) $checkpoint['plan'],
+            $cursor,
+            $deadline
+        );
+
+        $checkpoint['transfer'] = $cursor;
+        $store->save_checkpoint( (int) $job->id, $checkpoint );
+
+        if ( null !== $outcome['error'] ) {
+            $this->record_failure( $job, $outcome['error'], $outcome['retryable'] );
+            return;
+        }
+        if ( $outcome['done'] ) {
+            $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_RUNNING );
+        }
+    }
+
+    /**
+     * Running: drive the child restore task one slice per round trip.
+     *
+     * @param object $job Job row.
+     */
+    private function phase_running( object $job ): void {
+        $store   = MainWP_Backup_Restore_Job_Store::instance();
+        $website = $this->website( $job );
+        $payload = MainWP_Connect::fetch_url_authed( $website, 'restore_task_run', array( 'task_id' => $job->child_task_id ), false, false, false );
+
+        // A terminal failed phase carries an error key too - phase wins.
+        if ( ! is_array( $payload ) || ( ! isset( $payload['phase'] ) && isset( $payload['error'] ) ) ) {
+            $message = is_array( $payload ) && isset( $payload['error'] ) ? (string) $payload['error'] : esc_html__( 'The child site returned no restore status.', 'mainwp' );
+            $this->record_failure( $job, $message, true );
+            return;
+        }
+
+        $phase = isset( $payload['phase'] ) ? (string) $payload['phase'] : '';
+        if ( 'completed' === $phase ) {
+            $checkpoint                 = $job->checkpoint;
+            $checkpoint['verification'] = isset( $payload['sub_state']['verification'] ) ? $payload['sub_state']['verification'] : array();
+            $store->save_checkpoint( (int) $job->id, $checkpoint );
+            $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_VERIFYING );
+            return;
+        }
+        if ( 'failed' === $phase ) {
+            $error = isset( $payload['error'] ) ? (string) $payload['error'] : esc_html__( 'The restore failed on the child site.', 'mainwp' );
+            if ( isset( $payload['sub_state']['error']['message'] ) ) {
+                $error = (string) $payload['sub_state']['error']['message'];
+            }
+            $store->fail_permanent( (int) $job->id, $error );
+            return;
+        }
+        // Still working: the next tick polls again.
+    }
+
+    /**
+     * Verifying: external reachability check, completion hook, cleanup.
+     *
+     * @param object $job Job row.
+     */
+    private function phase_verifying( object $job ): void {
+        $store   = MainWP_Backup_Restore_Job_Store::instance();
+        $website = $this->website( $job );
+
+        $reachable = $this->site_responds( $website );
+
+        $checkpoint                                  = $job->checkpoint;
+        $checkpoint['verification']['site_responds'] = $reachable;
+        $store->save_checkpoint( (int) $job->id, $checkpoint );
+
+        if ( ! $reachable ) {
+            $this->record_failure( $job, esc_html__( 'The site did not respond after the restore. The restore completed on the child; check the site directly.', 'mainwp' ), true );
+            return;
+        }
+
+        MainWP_Backup_Restore_Transfer_Driver::instance()->cleanup_staging( (int) $job->id );
+        $this->prune_pre_snapshot( $job );
+        $store->complete_job( (int) $job->id );
+
+        /**
+         * Fires after a restore completes and the site responds.
+         *
+         * The logs connector records the event.
+         *
+         * @param array $event Site, snapshot, job, and verification details.
+         */
+        do_action(
+            'mainwp_backup_restored',
+            array(
+                'site_id'      => (int) $job->site_id,
+                'snapshot_id'  => (int) $job->snapshot_id,
+                'job_id'       => (int) $job->id,
+                'verification' => $checkpoint['verification'],
+            )
+        );
+    }
+
+    /**
+     * Create the child restore task from the staged plan.
+     *
+     * @param object $job        Job row.
+     * @param array  $checkpoint Checkpoint.
+     * @param array  $plan       Staged plan.
+     *
+     * @return string Child task id, or '' after recording a failure.
+     */
+    private function create_child_restore_task( object $job, array $checkpoint, array $plan ): string {
+        $artifacts = array();
+        foreach ( $plan as $entry ) {
+            $artifacts[] = array(
+                'role'       => $entry['role'],
+                'file'       => $entry['file'],
+                'size'       => ! empty( $entry['staged_path'] ) && file_exists( $entry['staged_path'] ) ? (int) filesize( $entry['staged_path'] ) : (int) $entry['size'],
+                'sha256'     => (string) $entry['sha256'],
+                'adopt_only' => ! empty( $entry['adopt_only'] ),
+            );
+        }
+
+        $website = $this->website( $job );
+        $payload = MainWP_Connect::fetch_url_authed(
+            $website,
+            'restore_task_create',
+            array(
+                'restore_id'     => (string) $checkpoint['restore_id'],
+                'source_prefix'  => '',
+                'artifacts_json' => wp_json_encode( $artifacts ),
+                'options_json'   => wp_json_encode(
+                    array(
+                        'sub_type'         => (string) $checkpoint['sub_type'],
+                        'has_foreign_keys' => null,
+                        'file_rollback'    => ! empty( $checkpoint['options']['file_rollback'] ) || ! empty( $checkpoint['pre_snapshot_artifacts'] ),
+                    )
+                ),
+            ),
+            false,
+            false,
+            false
+        );
+
+        if ( ! is_array( $payload ) || empty( $payload['task_id'] ) ) {
+            $message   = is_array( $payload ) && isset( $payload['error'] ) ? (string) $payload['error'] : esc_html__( 'The child site did not accept the restore task.', 'mainwp' );
+            $retryable = is_array( $payload ) && isset( $payload['error_code'] ) && 'mainwp_backup_already_running' === $payload['error_code'];
+            $this->record_failure( $job, $message, $retryable );
+            return '';
+        }
+
+        return sanitize_text_field( (string) $payload['task_id'] );
+    }
+
+    /**
+     * Record a failure with backoff; exhausted attempts go permanent.
+     *
+     * The current status is saved as the resume point so a retry
+     * continues the phase that failed instead of starting over.
+     *
+     * @param object $job       Job row.
+     * @param string $error     Error text.
+     * @param bool   $retryable Whether a retry can succeed.
+     */
+    private function record_failure( object $job, string $error, bool $retryable ): void {
+        $store    = MainWP_Backup_Restore_Job_Store::instance();
+        $attempts = (int) $job->attempt_count + 1;
+
+        if ( ! $retryable || $attempts >= self::MAX_ATTEMPTS ) {
+            $store->fail_permanent( (int) $job->id, $error );
+            return;
+        }
+
+        $checkpoint                  = $job->checkpoint;
+        $checkpoint['resume_status'] = MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE === $job->status && isset( $checkpoint['resume_status'] )
+            ? (string) $checkpoint['resume_status']
+            : (string) $job->status;
+        $store->save_checkpoint( (int) $job->id, $checkpoint );
+
+        $delay = min( self::RETRY_MAX_SECONDS, self::RETRY_BASE_SECONDS * (int) pow( 2, $attempts - 1 ) );
+        $store->fail_retryable( (int) $job->id, $error, $attempts, time() + $delay );
+    }
+
+    /**
+     * Best-effort retirement of the pre-restore safety backup after a
+     * verified restore.
+     *
+     * @param object $job Job row.
+     */
+    private function prune_pre_snapshot( object $job ): void {
+        if ( empty( $job->pre_snapshot_task_id ) ) {
+            return;
+        }
+        try {
+            $website = $this->website( $job );
+            MainWP_Connect::fetch_url_authed(
+                $website,
+                'backup_task_prune',
+                array(
+                    'task_ids' => wp_json_encode( array( (string) $job->pre_snapshot_task_id ) ),
+                    'sweep'    => 0,
+                ),
+                false,
+                false,
+                false
+            );
+        } catch ( \Throwable $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement -- best-effort cleanup never blocks completion.
+            return;
+        }
+    }
+
+    /**
+     * External reachability check (test seam).
+     *
+     * @param object $website Website object.
+     *
+     * @return bool True when the site answers with a non-server-error.
+     */
+    protected function site_responds( object $website ): bool {
+        $response = wp_remote_get(
+            $website->url,
+            array(
+                'timeout'   => 15,
+                'sslverify' => false,
+            )
+        );
+        if ( is_wp_error( $response ) ) {
+            return false;
+        }
+        $code = (int) wp_remote_retrieve_response_code( $response );
+        return $code >= 200 && $code < 500;
+    }
+
+    /**
+     * Resolve the job's website row.
+     *
+     * @param object $job Job row.
+     *
+     * @throws MainWP_Exception When the site no longer exists.
+     *
+     * @return object Website.
+     */
+    private function website( object $job ): object {
+        $website = MainWP_DB::instance()->get_website_by_id( (int) $job->site_id );
+        if ( empty( $website ) ) {
+            throw new MainWP_Exception( esc_html__( 'Site not found.', 'mainwp' ) );
+        }
+        return $website;
+    }
+}

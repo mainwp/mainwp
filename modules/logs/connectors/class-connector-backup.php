@@ -31,6 +31,7 @@ class Connector_Backup extends Log_Connector {
         'mainwp_backup_downloaded',
         'mainwp_backup_uploaded',
         'mainwp_backup_pruned',
+        'mainwp_backup_restored',
     );
 
     /**
@@ -52,6 +53,7 @@ class Connector_Backup extends Log_Connector {
             'downloaded' => esc_html__( 'Downloaded', 'mainwp' ),
             'uploaded'   => esc_html__( 'Uploaded', 'mainwp' ),
             'pruned'     => esc_html__( 'Pruned', 'mainwp' ),
+            'restored'   => esc_html__( 'Restored', 'mainwp' ),
         );
     }
 
@@ -161,6 +163,37 @@ class Connector_Backup extends Log_Connector {
             (int) $event['site_id'],
             'backup',
             'pruned',
+            1
+        );
+    }
+
+    /**
+     * Log a completed restore.
+     *
+     * @action mainwp_backup_restored
+     *
+     * @param array $event Restore details: site_id, snapshot_id, job_id,
+     *                     verification.
+     */
+    public function callback_mainwp_backup_restored( $event ) {
+        if ( ! is_array( $event ) || empty( $event['site_id'] ) ) {
+            return;
+        }
+
+        // translators: %s: Snapshot id.
+        $message = esc_html__( 'Site restored from backup snapshot: %s', 'mainwp' );
+
+        $args = array(
+            'snapshot_id' => isset( $event['snapshot_id'] ) ? (int) $event['snapshot_id'] : 0,
+            'job_id'      => isset( $event['job_id'] ) ? (int) $event['job_id'] : 0,
+        );
+
+        $this->log(
+            $message,
+            $args,
+            (int) $event['site_id'],
+            'backup',
+            'restored',
             1
         );
     }

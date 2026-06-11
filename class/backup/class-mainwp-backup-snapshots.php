@@ -163,6 +163,31 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
     }
 
     /**
+     * Get every snapshot recorded for a site, newest first.
+     *
+     * Pruned rows are included - the restore catalog shows them greyed
+     * out so the history stays honest about what retention removed.
+     *
+     * @param int $site_id Child site id.
+     *
+     * @return object[] Snapshot rows, newest first.
+     */
+    public function get_snapshots_for_site( int $site_id ): array {
+        $rows = $this->wpdb->get_results(
+            $this->wpdb->prepare(
+                'SELECT * FROM ' . $this->table_name( 'wp_backup_snapshot' ) . ' WHERE site_id = %d ORDER BY id DESC',
+                $site_id
+            )
+        );
+
+        $decoded = array();
+        foreach ( (array) $rows as $row ) {
+            $decoded[] = $this->decode_row( $row );
+        }
+        return $decoded;
+    }
+
+    /**
      * Walk a snapshot chain from a leaf back through its parents.
      *
      * Returns the chain base first so a restore can apply rows in order.

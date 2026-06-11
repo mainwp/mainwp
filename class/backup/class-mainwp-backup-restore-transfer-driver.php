@@ -96,11 +96,19 @@ class MainWP_Backup_Restore_Transfer_Driver { // phpcs:ignore Generic.Classes.Op
                 );
             }
 
-            $outcome = $this->stage_one( $staging, $plan[ $index ] );
-            if ( null !== $outcome ) {
+            $outcome = $this->stage_one( $staging, $plan[ $index ], $deadline );
+            if ( 'error' === $outcome['state'] ) {
                 return array(
                     'done'  => false,
-                    'error' => $outcome,
+                    'error' => $outcome['error'],
+                );
+            }
+            if ( 'pending' === $outcome['state'] ) {
+                // Partial progress (a chunked reassembly mid-flight); the
+                // caller persists the plan and the next tick continues.
+                return array(
+                    'done'  => false,
+                    'error' => null,
                 );
             }
         }
@@ -114,16 +122,17 @@ class MainWP_Backup_Restore_Transfer_Driver { // phpcs:ignore Generic.Classes.Op
     /**
      * Stage a single artifact.
      *
-     * @param string $staging Staging dir.
-     * @param array  $entry   Plan entry (by reference).
+     * @param string $staging  Staging dir.
+     * @param array  $entry    Plan entry (by reference).
+     * @param float  $deadline Slice deadline (epoch).
      *
-     * @return string|null Error text, or null when staged.
+     * @return array { state: staged|pending|error, error: string|null }
      */
-    private function stage_one( string $staging, array &$entry ): ?string {
+    private function stage_one( string $staging, array &$entry, float $deadline ): array {
         if ( 'local' === $entry['source'] && file_exists( $entry['local_path'] ) ) {
             $entry['staged_path'] = $entry['local_path'];
             $entry['sha256']      = (string) hash_file( 'sha256', $entry['local_path'] );
-            return null;
+            return $this->stage_state( 'staged' );
         }
 
         if ( 'remote' === $entry['source'] ) {
@@ -131,19 +140,16 @@ class MainWP_Backup_Restore_Transfer_Driver { // phpcs:ignore Generic.Classes.Op
         }
 
         if ( 'remote_chunked' === $entry['source'] ) {
-            // Chunked artifacts reassemble from their content-addressed
-            // pieces; that staging path lands as its own step.
-            return sprintf(
-                /* translators: %s: artifact file name. */
-                __( 'This backup is stored in cloud storage in chunked form and cannot be staged yet: %s', 'mainwp' ),
-                $entry['file']
-            );
+            return $this->stage_from_remote_chunked( $staging, $entry, $deadline );
         }
 
-        return sprintf(
-            /* translators: %s: artifact file name. */
-            __( 'A required backup file is not available from any source: %s', 'mainwp' ),
-            $entry['file']
+        return $this->stage_state(
+            'error',
+            sprintf(
+                /* translators: %s: artifact file name. */
+                __( 'A required backup file is not available from any source: %s', 'mainwp' ),
+                $entry['file']
+            )
         );
     }
 
@@ -153,37 +159,243 @@ class MainWP_Backup_Restore_Transfer_Driver { // phpcs:ignore Generic.Classes.Op
      * @param string $staging Staging dir.
      * @param array  $entry   Plan entry (by reference).
      *
-     * @return string|null Error text, or null when staged.
+     * @return array Stage state.
      */
-    private function stage_from_remote( string $staging, array &$entry ): ?string {
-        $destination = $this->find_destination_for_snapshot( (int) $entry['snapshot_id'] );
-        if ( null === $destination ) {
-            return __( 'No storage destination holds a copy of this backup.', 'mainwp' );
-        }
-
-        try {
-            $provider = MainWP_Backup_Storage_Destinations::instance()->make_provider( $destination );
-        } catch ( \Throwable $e ) {
-            return $e->getMessage();
+    protected function stage_from_remote( string $staging, array &$entry ): array {
+        $provider = $this->provider_for_snapshot( (int) $entry['snapshot_id'] );
+        if ( null === $provider ) {
+            return $this->stage_state( 'error', __( 'No storage destination holds a copy of this backup.', 'mainwp' ) );
         }
 
         $temp  = $staging . $entry['file'] . '.downloading';
         $final = $staging . $entry['file'];
 
         if ( ! $provider->get_object( $entry['remote_key'], $temp ) ) {
-            return sprintf(
-                /* translators: %s: artifact file name. */
-                __( 'Downloading the backup file from cloud storage failed: %s', 'mainwp' ),
-                $entry['file']
+            return $this->stage_state(
+                'error',
+                sprintf(
+                    /* translators: %s: artifact file name. */
+                    __( 'Downloading the backup file from cloud storage failed: %s', 'mainwp' ),
+                    $entry['file']
+                )
             );
         }
         if ( ! rename( $temp, $final ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions -- atomic promote of the staged download.
-            return __( 'The staged download could not be moved into place.', 'mainwp' );
+            return $this->stage_state( 'error', __( 'The staged download could not be moved into place.', 'mainwp' ) );
         }
 
         $entry['staged_path'] = $final;
         $entry['sha256']      = (string) hash_file( 'sha256', $final );
+        return $this->stage_state( 'staged' );
+    }
+
+    /**
+     * Reassemble a chunked remote artifact from its content-addressed
+     * pieces.
+     *
+     * The snapshot's manifest.json names each artifact's ordered chunk
+     * list; every chunk downloads, verifies against its content hash,
+     * and appends to an assembly file whose cursor lives on the plan
+     * entry - a slice that runs out of budget resumes at the next
+     * chunk. The finished file must match the manifest's recorded size
+     * before it is promoted and hashed.
+     *
+     * @param string $staging  Staging dir.
+     * @param array  $entry    Plan entry (by reference).
+     * @param float  $deadline Slice deadline (epoch).
+     *
+     * @return array Stage state.
+     */
+    protected function stage_from_remote_chunked( string $staging, array &$entry, float $deadline ): array { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- resumable verify-then-append loop.
+        $provider = $this->provider_for_snapshot( (int) $entry['snapshot_id'] );
+        if ( null === $provider ) {
+            return $this->stage_state( 'error', __( 'No storage destination holds a copy of this backup.', 'mainwp' ) );
+        }
+
+        if ( empty( $entry['chunks'] ) ) {
+            $manifest = $this->fetch_manifest( $provider, $entry, $staging );
+            if ( null === $manifest ) {
+                return $this->stage_state(
+                    'error',
+                    sprintf(
+                        /* translators: %s: artifact file name. */
+                        __( 'The cloud copy of this backup has no readable manifest: %s', 'mainwp' ),
+                        $entry['file']
+                    )
+                );
+            }
+            $entry['chunks']     = $manifest['chunks'];
+            $entry['total_size'] = $manifest['size'];
+        }
+
+        $assembly = $staging . $entry['file'] . '.assembling';
+        $cursor   = isset( $entry['reassembly'] ) ? (array) $entry['reassembly'] : array(
+            'next'  => 0,
+            'bytes' => 0,
+        );
+
+        // A stale assembly file that does not match the cursor restarts
+        // clean - appending to unknown bytes would corrupt the artifact.
+        $on_disk = file_exists( $assembly ) ? (int) filesize( $assembly ) : 0;
+        if ( $on_disk !== (int) $cursor['bytes'] ) {
+            wp_delete_file( $assembly );
+            $cursor = array(
+                'next'  => 0,
+                'bytes' => 0,
+            );
+        }
+
+        $prefix      = $entry['snapshot_id'] . '/';
+        $chunk_count = count( $entry['chunks'] );
+
+        while ( $cursor['next'] < $chunk_count ) {
+            if ( microtime( true ) >= $deadline ) {
+                $entry['reassembly'] = $cursor;
+                return $this->stage_state( 'pending' );
+            }
+
+            $chunk = $entry['chunks'][ $cursor['next'] ];
+            $key   = $entry['chunk_prefix'] . 'chunks/' . $chunk['hash'] . '.bin';
+            $piece = $staging . $entry['file'] . '.chunk';
+
+            if ( ! $provider->get_object( $key, $piece ) ) {
+                $entry['reassembly'] = $cursor;
+                return $this->stage_state(
+                    'error',
+                    sprintf(
+                        /* translators: 1: artifact file name, 2: chunk hash. */
+                        __( 'A piece of the cloud copy could not be downloaded: %1$s (chunk %2$s).', 'mainwp' ),
+                        $entry['file'],
+                        $chunk['hash']
+                    )
+                );
+            }
+
+            $actual = (string) hash_file( 'sha256', $piece );
+            if ( ! hash_equals( (string) $chunk['hash'], $actual ) ) {
+                wp_delete_file( $piece );
+                return $this->stage_state(
+                    'error',
+                    sprintf(
+                        /* translators: %s: artifact file name. */
+                        __( 'A piece of the cloud copy failed its integrity check: %s. The stored backup may be corrupted.', 'mainwp' ),
+                        $entry['file']
+                    )
+                );
+            }
+
+            $bytes = (string) file_get_contents( $piece ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- verified chunk bytes.
+            wp_delete_file( $piece );
+            $fh = fopen( $assembly, 'ab' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- streaming append to the assembly file.
+            if ( false === $fh || strlen( $bytes ) !== fwrite( $fh, $bytes ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions -- streaming append.
+                if ( false !== $fh ) {
+                    fclose( $fh ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- paired with fopen above.
+                }
+                return $this->stage_state( 'error', __( 'The reassembled backup could not be written. The dashboard may be out of disk space.', 'mainwp' ) );
+            }
+            fclose( $fh ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- paired with fopen above.
+
+            $cursor['bytes'] += strlen( $bytes );
+            ++$cursor['next'];
+            $entry['reassembly'] = $cursor;
+        }
+
+        if ( ! empty( $entry['total_size'] ) && (int) $cursor['bytes'] !== (int) $entry['total_size'] ) {
+            wp_delete_file( $assembly );
+            unset( $entry['reassembly'] );
+            return $this->stage_state(
+                'error',
+                sprintf(
+                    /* translators: %s: artifact file name. */
+                    __( 'The reassembled backup does not match its recorded size: %s. The stored backup may be incomplete.', 'mainwp' ),
+                    $entry['file']
+                )
+            );
+        }
+
+        $final = $staging . $entry['file'];
+        if ( ! rename( $assembly, $final ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions -- atomic promote of the reassembled artifact.
+            return $this->stage_state( 'error', __( 'The reassembled backup could not be moved into place.', 'mainwp' ) );
+        }
+
+        $entry['staged_path'] = $final;
+        $entry['sha256']      = (string) hash_file( 'sha256', $final );
+        unset( $entry['reassembly'], $entry['chunks'] );
+        return $this->stage_state( 'staged' );
+    }
+
+    /**
+     * Fetch and parse the snapshot manifest for a chunked artifact.
+     *
+     * @param MainWP_Backup_Storage_Provider $provider Provider.
+     * @param array                          $entry    Plan entry (by reference;
+     *                                                 chunk_prefix is recorded).
+     * @param string                         $staging  Staging dir.
+     *
+     * @return array|null { chunks: array, size: int } or null.
+     */
+    protected function fetch_manifest( MainWP_Backup_Storage_Provider $provider, array &$entry, string $staging ): ?array {
+        // The manifest lives beside the artifact's chunks under the
+        // snapshot prefix, which the remote key scheme encodes as
+        // {site}/{snapshot}/.
+        $snapshot              = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( (int) $entry['snapshot_id'] );
+        $site_id               = null !== $snapshot ? (int) $snapshot->site_id : 0;
+        $entry['chunk_prefix'] = $site_id . '/' . (int) $entry['snapshot_id'] . '/';
+
+        $temp = $staging . 'manifest-' . (int) $entry['snapshot_id'] . '.json';
+        if ( ! $provider->get_object( $entry['chunk_prefix'] . 'manifest.json', $temp ) ) {
+            return null;
+        }
+
+        $decoded = json_decode( (string) file_get_contents( $temp ), true ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- bounded local read of the fetched manifest.
+        wp_delete_file( $temp );
+        if ( ! is_array( $decoded ) || empty( $decoded['artifacts'] ) ) {
+            return null;
+        }
+
+        foreach ( (array) $decoded['artifacts'] as $artifact ) {
+            if ( isset( $artifact['file'] ) && $artifact['file'] === $entry['file'] && ! empty( $artifact['chunks'] ) ) {
+                return array(
+                    'chunks' => array_values( (array) $artifact['chunks'] ),
+                    'size'   => isset( $artifact['size'] ) ? (int) $artifact['size'] : 0,
+                );
+            }
+        }
         return null;
+    }
+
+    /**
+     * Resolve a provider for a snapshot's completed upload (test seam).
+     *
+     * @param int $snapshot_id Snapshot id.
+     *
+     * @return MainWP_Backup_Storage_Provider|null Provider or null.
+     */
+    protected function provider_for_snapshot( int $snapshot_id ): ?MainWP_Backup_Storage_Provider {
+        $destination = $this->find_destination_for_snapshot( $snapshot_id );
+        if ( null === $destination ) {
+            return null;
+        }
+        try {
+            return MainWP_Backup_Storage_Destinations::instance()->make_provider( $destination );
+        } catch ( \Throwable $e ) {
+            return null;
+        }
+    }
+
+    /**
+     * Build a stage-one state.
+     *
+     * @param string      $state staged|pending|error.
+     * @param string|null $error Error text.
+     *
+     * @return array State.
+     */
+    private function stage_state( string $state, ?string $error = null ): array {
+        return array(
+            'state' => $state,
+            'error' => $error,
+        );
     }
 
     /**

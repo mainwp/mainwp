@@ -39,44 +39,18 @@ class Testable_Restore_Transfer_Driver extends MainWP_Backup_Restore_Transfer_Dr
 	public $sent = array();
 
 	/**
-	 * Serve remote objects from the pinned base path.
+	 * Serve remote objects from the pinned base path via the real local
+	 * provider (bypasses destination row decryption).
 	 *
 	 * @param int $snapshot_id Snapshot id.
 	 *
-	 * @return object|null Destination stand-in.
+	 * @return \MainWP\Dashboard\MainWP_Backup_Storage_Provider|null Provider.
 	 */
-	protected function find_destination_for_snapshot( int $snapshot_id ): ?object {
+	protected function provider_for_snapshot( int $snapshot_id ): ?\MainWP\Dashboard\MainWP_Backup_Storage_Provider {
 		if ( '' === $this->remote_base ) {
 			return null;
 		}
-		return (object) array(
-			'id'       => 1,
-			'provider' => 'local',
-			'settings' => array( 'base_path' => $this->remote_base ),
-		);
-	}
-
-	/**
-	 * Stage via the local provider directly (bypasses destination
-	 * decryption).
-	 *
-	 * @param string $staging Staging dir.
-	 * @param array  $entry   Plan entry (by reference).
-	 *
-	 * @return string|null Error or null.
-	 */
-	protected function stage_from_remote( string $staging, array &$entry ): ?string {
-		if ( '' === $this->remote_base ) {
-			return 'No storage destination holds a copy of this backup.';
-		}
-		$provider = new MainWP_Backup_Storage_Local( array( 'base_path' => $this->remote_base ) );
-		$final    = $staging . $entry['file'];
-		if ( ! $provider->get_object( $entry['remote_key'], $final ) ) {
-			return 'Downloading the backup file from cloud storage failed: ' . $entry['file'];
-		}
-		$entry['staged_path'] = $final;
-		$entry['sha256']      = (string) hash_file( 'sha256', $final );
-		return null;
+		return new MainWP_Backup_Storage_Local( array( 'base_path' => $this->remote_base ) );
 	}
 
 	/**
@@ -228,27 +202,95 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * A chunked-remote artifact refuses staging with a clear error
-	 * (reassembly is its own step).
+	 * Build a chunked remote layout: manifest plus content-addressed
+	 * pieces under {site 0}/{snapshot 44}/.
+	 *
+	 * @param string $content Artifact content split into two chunks.
+	 * @param bool   $corrupt Whether to corrupt the second chunk's bytes.
+	 *
+	 * @return array Plan entry for the chunked artifact.
 	 */
-	public function test_stage_remote_chunked_refused() {
-		$plan = array(
-			array(
-				'role'        => 'full',
-				'file'        => 'big.zip',
-				'size'        => 1,
-				'sha256'      => '',
-				'snapshot_id' => 4,
-				'source'      => 'remote_chunked',
-				'local_path'  => '',
-				'remote_key'  => '',
-				'adopt_only'  => false,
+	private function make_chunked_remote( $content, $corrupt = false ) {
+		$remote = $this->dir . '/remote';
+		$half   = (int) ( strlen( $content ) / 2 );
+		$parts  = array( substr( $content, 0, $half ), substr( $content, $half ) );
+
+		mkdir( $remote . '/0/44/chunks', 0777, true );
+
+		$chunks = array();
+		$offset = 0;
+		foreach ( $parts as $index => $piece ) {
+			$hash     = hash( 'sha256', $piece );
+			$chunks[] = array(
+				'hash'   => $hash,
+				'algo'   => 'sha256',
+				'offset' => $offset,
+				'length' => strlen( $piece ),
+			);
+			$bytes    = ( $corrupt && 1 === $index ) ? str_repeat( 'X', strlen( $piece ) ) : $piece;
+			file_put_contents( $remote . '/0/44/chunks/' . $hash . '.bin', $bytes ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+			$offset += strlen( $piece );
+		}
+
+		$manifest = array(
+			'format'    => 1,
+			'artifacts' => array(
+				array(
+					'file'   => 'big.zip',
+					'size'   => strlen( $content ),
+					'chunks' => $chunks,
+				),
 			),
 		);
+		file_put_contents( $remote . '/0/44/manifest.json', wp_json_encode( $manifest ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+
+		$this->driver->remote_base = $remote;
+
+		return array(
+			'role'        => 'full',
+			'file'        => 'big.zip',
+			'size'        => strlen( $content ),
+			'sha256'      => '',
+			'snapshot_id' => 44,
+			'source'      => 'remote_chunked',
+			'local_path'  => '',
+			'remote_key'  => '',
+			'adopt_only'  => false,
+		);
+	}
+
+	/**
+	 * A chunked-remote artifact reassembles from its pieces, resumes
+	 * across budget yields, and hashes the verified result.
+	 */
+	public function test_stage_remote_chunked_reassembles_with_resume() {
+		$content = str_repeat( 'chunky-data-', 50 );
+		$plan    = array( $this->make_chunked_remote( $content ) );
+
+		// An expired budget yields after the manifest fetch.
+		$outcome = $this->driver->stage_artifacts( 777001, $plan, microtime( true ) - 1 );
+		$this->assertFalse( $outcome['done'] );
+		$this->assertNull( $outcome['error'] );
+		$this->assertNotEmpty( $plan[0]['chunks'] );
+
+		// The next tick finishes the reassembly.
+		$outcome = $this->driver->stage_artifacts( 777001, $plan, microtime( true ) + 60 );
+		$this->assertTrue( $outcome['done'] );
+		$this->assertSame( $content, file_get_contents( $plan[0]['staged_path'] ) );
+		$this->assertSame( hash( 'sha256', $content ), $plan[0]['sha256'] );
+	}
+
+	/**
+	 * A corrupted chunk fails the reassembly closed.
+	 */
+	public function test_stage_remote_chunked_corrupt_chunk_fails() {
+		$content = str_repeat( 'chunky-data-', 50 );
+		$plan    = array( $this->make_chunked_remote( $content, true ) );
 
 		$outcome = $this->driver->stage_artifacts( 777001, $plan, microtime( true ) + 60 );
 		$this->assertFalse( $outcome['done'] );
-		$this->assertNotNull( $outcome['error'] );
+		$this->assertStringContainsString( 'integrity', $outcome['error'] );
+		$this->assertFileDoesNotExist( $this->driver->staging_dir( 777001 ) . 'big.zip' );
 	}
 
 	/**

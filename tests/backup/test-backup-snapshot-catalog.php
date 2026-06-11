@@ -201,9 +201,9 @@ class MainWP_Backup_Snapshot_Catalog_Test extends \WP_UnitTestCase {
 			$resolved['plan']
 		);
 		$this->assertSame(
-			array( 'base-files.zip', 'plugins.part001.zip', 'tombstones.list', 'incr-db.zip' ),
+			array( 's' . $base . '-base-files.zip', 's' . $incr . '-plugins.part001.zip', 's' . $incr . '-tombstones.list', 's' . $incr . '-incr-db.zip' ),
 			$files,
-			'Base files, then increment parts and tombstones, then the newest dump.'
+			'Base files, then increment parts and tombstones, then the newest dump - each namespaced by snapshot.'
 		);
 	}
 

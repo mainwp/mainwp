@@ -310,6 +310,14 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 $checkpoint                           = $job->checkpoint;
                 $checkpoint['pre_snapshot_artifacts'] = $artifacts;
                 $store->save_checkpoint( (int) $job->id, $checkpoint );
+
+                // Release the ad-hoc handle: a completed safety backup left
+                // persisted would short-circuit the NEXT restore's
+                // trigger_backup() into reusing this stale task - and a
+                // later success would prune an artifact another job still
+                // counts on for rollback.
+                MainWP_DB::instance()->update_website_option( $website, MainWP_Backup_Executor::ADHOC_TASK_OPTION, '' );
+
                 $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_STAGING );
                 return;
             }
@@ -543,7 +551,10 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             return;
         }
 
-        $checkpoint                  = $job->checkpoint;
+        // The phase that failed may have checkpointed progress after this
+        // row was read; a stale write here would erase that cursor.
+        $fresh      = $store->get_job( (int) $job->id );
+        $checkpoint = null !== $fresh ? $fresh->checkpoint : $job->checkpoint;
         $checkpoint['resume_status'] = MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE === $job->status && isset( $checkpoint['resume_status'] )
             ? (string) $checkpoint['resume_status']
             : (string) $job->status;

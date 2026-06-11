@@ -191,7 +191,12 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
 
         return array(
             'role'        => (string) $archive['role'],
-            'file'        => $file,
+            // The wire/staging name is namespaced by snapshot: every
+            // increment in a chain carries the same sidecar basenames
+            // (tombstones.list, partNNN), and colliding names would
+            // silently lose all but the first copy.
+            'file'        => 's' . (int) $snapshot->id . '-' . $file,
+            'source_file' => $file,
             'size'        => isset( $archive['size'] ) ? (int) $archive['size'] : 0,
             'sha256'      => '',
             'snapshot_id' => (int) $snapshot->id,

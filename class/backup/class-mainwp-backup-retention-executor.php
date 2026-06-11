@@ -302,9 +302,13 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
     }
 
     /**
-     * Remove a snapshot's local directory: every artifact and manifest
-     * lives in one snapshot dir under the dashboard uploads tree. Paths
-     * outside uploads/mainwp are never touched, whatever the row says.
+     * Remove a snapshot's local files. Artifacts and manifest delete by
+     * name; the containing directory comes down only when it is a
+     * per-snapshot dir (snapshot-{child_task_id}) this snapshot owns
+     * alone. Legacy and db runs share one site directory with other
+     * snapshots' artifacts - those siblings and the directory stay.
+     * Paths outside uploads/mainwp are never touched, whatever the row
+     * says.
      *
      * @param object   $snapshot Snapshot row with decoded archives.
      * @param string[] $errors   Error accumulator, modified in place.
@@ -312,24 +316,42 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
      * @return void
      */
     private function remove_local_dir( object $snapshot, array &$errors ): void {
-        $dirs = array();
+        $upload = wp_upload_dir();
+        $root   = trailingslashit( $upload['basedir'] ) . 'mainwp/';
 
+        $paths = array();
         foreach ( (array) $snapshot->archives as $archive ) {
             if ( ! empty( $archive['path'] ) ) {
-                $dirs[ dirname( (string) $archive['path'] ) ] = true;
+                $paths[] = (string) $archive['path'];
             }
         }
         if ( ! empty( $snapshot->manifest_path ) ) {
-            $dirs[ dirname( (string) $snapshot->manifest_path ) ] = true;
+            $paths[] = (string) $snapshot->manifest_path;
         }
 
-        $upload = wp_upload_dir();
-        $root   = trailingslashit( $upload['basedir'] ) . 'mainwp/';
+        $dirs = array();
+        foreach ( $paths as $path ) {
+            $dirs[ dirname( $path ) ] = true;
+
+            $real = realpath( $path );
+            if ( false === $real || ! is_file( $real ) ) {
+                continue;
+            }
+            if ( 0 !== strpos( $real, $root ) ) {
+                $errors[] = 'Refused to remove a file outside the dashboard backup tree: ' . $path;
+                continue;
+            }
+            unlink( $real ); // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- pruning the snapshot's own artifact.
+        }
 
         foreach ( array_keys( $dirs ) as $dir ) {
             $real = realpath( $dir );
             if ( false === $real || ! is_dir( $real ) ) {
                 continue;
+            }
+
+            if ( 0 !== strpos( basename( $real ), 'snapshot-' ) ) {
+                continue; // A shared directory; other snapshots' artifacts live here.
             }
 
             if ( 0 !== strpos( trailingslashit( $real ), $root ) ) {

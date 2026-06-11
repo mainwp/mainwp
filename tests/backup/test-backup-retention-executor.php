@@ -88,7 +88,8 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * Create a local snapshot dir with artifact files and record a
+	 * Create a local per-snapshot dir (the snapshot-{child_task_id} layout
+	 * incremental and spine runs use) with artifact files and record a
 	 * snapshot row over them.
 	 *
 	 * @param array $fields Snapshot row overrides.
@@ -99,7 +100,7 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 		global $wpdb;
 
 		$upload = wp_upload_dir();
-		$dir    = trailingslashit( $upload['basedir'] ) . 'mainwp/retention-test-' . uniqid();
+		$dir    = trailingslashit( $upload['basedir'] ) . 'mainwp/snapshot-task-reten-' . uniqid();
 		wp_mkdir_p( $dir );
 		$this->fixture_dirs[] = $dir;
 
@@ -459,6 +460,58 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 		$this->assertCount( 1, $units, 'Only the newer chain survives.' );
 		$this->assertTrue( $units[0]['is_complete'], 'The surviving chain must remain restorable.' );
 		$this->assertSame( array( $new_base, $new_inc ), array_map( 'intval', wp_list_pluck( $units[0]['snapshots'], 'id' ) ) );
+	}
+
+	/**
+	 * Legacy and db runs share one site directory rather than per-snapshot
+	 * dirs. Pruning one snapshot there deletes only its own artifact files;
+	 * sibling snapshots' files and the directory itself survive.
+	 *
+	 * @return void
+	 */
+	public function test_prune_in_shared_dir_only_removes_own_files() {
+		global $wpdb;
+
+		$upload = wp_upload_dir();
+		$shared = trailingslashit( $upload['basedir'] ) . 'mainwp/0/' . $this->site_id;
+		wp_mkdir_p( $shared );
+		$this->fixture_dirs[] = $shared;
+
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+		$ids   = array();
+		foreach ( array( 'old-db.sql.tar.gz', 'new-db.sql.tar.gz' ) as $index => $file ) {
+			file_put_contents( $shared . '/' . $file, 'data' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+			$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
+				$table,
+				array(
+					'task_id'       => $this->task_id,
+					'site_id'       => $this->site_id,
+					'type'          => 'db',
+					'created'       => time() - 100 + $index,
+					'archives'      => wp_json_encode( array( array( 'file' => $file, 'size' => 4, 'role' => 'db', 'path' => $shared . '/' . $file ) ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+					'manifest_path' => '',
+					'status'        => 'complete',
+				)
+			);
+			$ids[] = (int) $wpdb->insert_id;
+		}
+
+		$candidates = array(
+			array(
+				'snapshot_ids'   => array( $ids[0] ),
+				'reason'         => 'count',
+				'size_bytes'     => 4,
+				'newest_created' => time() - 100,
+			),
+		);
+
+		$result = MainWP_Backup_Retention_Executor::instance()->run_prune( $candidates, $this->make_task( array( 'delete_cloud_copies' => 0 ) ), false );
+
+		$this->assertSame( array(), $result['errors'] );
+		$this->assertSame( 'pruned', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $ids[0] )->status );
+		$this->assertFileDoesNotExist( $shared . '/old-db.sql.tar.gz', 'The pruned snapshot loses its own artifact.' );
+		$this->assertFileExists( $shared . '/new-db.sql.tar.gz', 'A sibling snapshot keeps its artifact.' );
+		$this->assertDirectoryExists( $shared, 'A shared directory is never removed.' );
 	}
 
 	/**

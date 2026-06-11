@@ -15,10 +15,6 @@
  * leaking garbage downstream. Key files are retired when their
  * destination is deleted or its settings re-encrypt.
  *
- * Rows written before the envelope convergence carry the legacy
- * AUTH_KEY-derived format; they stay readable and a one-time upgrade
- * re-encrypts them (see migrate_legacy_settings()).
- *
  * @package MainWP/Dashboard
  */
 
@@ -252,53 +248,6 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
     }
 
     /**
-     * Re-encrypt rows still carrying the legacy AUTH_KEY-derived format
-     * into credential envelopes, once.
-     *
-     * Rows whose legacy blob no longer decrypts are left untouched -
-     * decode_row() surfaces them as credentials_invalid so the UI asks
-     * for the credentials again.
-     *
-     * @return int Migrated row count.
-     */
-    public function migrate_legacy_settings(): int {
-        $table = $this->table_name( 'wp_backup_storage' );
-        $rows  = $this->wpdb->get_results(
-            $this->wpdb->prepare(
-                "SELECT id, settings FROM {$table} WHERE settings LIKE %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from trusted helper.
-                $this->wpdb->esc_like( MainWP_Backup_Storage_Crypto::ENVELOPE_PREFIX ) . '%'
-            )
-        );
-
-        $migrated = 0;
-        foreach ( (array) $rows as $row ) {
-            $plaintext = MainWP_Backup_Storage_Crypto::decrypt( (string) $row->settings );
-            if ( false === $plaintext ) {
-                continue;
-            }
-            $envelope = MainWP_Credential_Storage::encrypt_credential( $plaintext, 'storage_destination' );
-            if ( ! is_string( $envelope ) || ! MainWP_Credential_Storage::is_credential_envelope( $envelope ) ) {
-                continue;
-            }
-            $updated = $this->wpdb->update(
-                $table,
-                array(
-                    'settings' => $envelope,
-                    'updated'  => time(),
-                ),
-                array( 'id' => (int) $row->id ),
-                array( '%s', '%d' ),
-                array( '%d' )
-            );
-            if ( false !== $updated ) {
-                ++$migrated;
-            }
-        }
-
-        return $migrated;
-    }
-
-    /**
      * Encrypt a settings array for storage.
      *
      * @param array $settings Provider settings.
@@ -325,9 +274,9 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
     /**
      * Decrypt and decode the settings on a destination row.
      *
-     * Settings are never plaintext-passthrough: a value that is neither
-     * a credential envelope nor a legacy blob is unreadable by
-     * definition, because every write path encrypts.
+     * Settings are never plaintext-passthrough: a value that is not a
+     * credential envelope is unreadable by definition, because every
+     * write path encrypts.
      *
      * @param object|null $row Raw destination row.
      *
@@ -345,10 +294,6 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
         if ( MainWP_Credential_Storage::is_credential_envelope( $stored ) ) {
             $decrypted = MainWP_Credential_Storage::decrypt_credential( $stored );
             $plaintext = '' === $decrypted ? false : $decrypted;
-        } elseif ( MainWP_Backup_Storage_Crypto::is_encrypted( $stored ) ) {
-            // A row written before the envelope convergence; readable
-            // until migrate_legacy_settings() re-encrypts it.
-            $plaintext = MainWP_Backup_Storage_Crypto::decrypt( $stored );
         }
 
         if ( false === $plaintext ) {

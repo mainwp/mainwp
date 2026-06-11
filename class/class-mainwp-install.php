@@ -31,7 +31,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * @var string DB version info.
      */
-    protected $mainwp_db_version = '9.0.2.13'; // NOSONAR - no IP. Bumped so post_update re-encrypts backup destination settings into credential envelopes. Previous 9.0.2.12 bump added the wp_backup max_chain_length column.
+    protected $mainwp_db_version = '9.0.2.12'; // NOSONAR - no IP. Bumped so dbDelta adds the wp_backup max_chain_length column. Previous 9.0.2.11 bump added the wp_backup_restore_job table.
 
     /**
      * Protected variable to hold the database option name.
@@ -703,15 +703,6 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
                 delete_option( 'mainwp_enableLegacyBackupFeature' );
             }
         }
-
-        // Re-encrypt backup destination settings into credential envelopes -
-        // the shared split-key system - replacing the AUTH_KEY-derived format
-        // those rows were written with (see MainWP_Backup_Storage_Destinations).
-        // Deliberately not version-gated: the sweep is idempotent and a no-op
-        // once nothing matches the legacy prefix, and an upgrade pass that
-        // stamped the version without completing it (stale opcache mid-deploy)
-        // must not skip the rows forever.
-        MainWP_Backup_Storage_Destinations::instance()->migrate_legacy_settings();
 
         $this->wpdb->suppress_errors( $suppress );
         MainWP_DB_Client::instance()->check_to_updates_reports_data_861( $currentVersion );

@@ -13,7 +13,6 @@
 
 namespace MainWP\Dashboard\Tests;
 
-use MainWP\Dashboard\MainWP_Backup_Storage_Crypto;
 use MainWP\Dashboard\MainWP_Backup_Storage_Destinations;
 use MainWP\Dashboard\MainWP_Credential_Storage;
 use MainWP\Dashboard\MainWP_DB;
@@ -290,89 +289,37 @@ class MainWP_Backup_Storage_Destinations_Test extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * A pre-migration legacy envelope (the Sprint 5 AUTH_KEY-derived
-	 * format) still decodes, so the cutover is order-independent.
+	 * Settings are never plaintext-passthrough: a non-envelope value -
+	 * plain JSON or the removed pre-release format - is treated as
+	 * unreadable, not as live credentials.
 	 *
 	 * @return void
 	 */
-	public function test_legacy_gcm_envelope_still_decodes() {
+	public function test_non_envelope_settings_marked_invalid() {
 		global $wpdb;
 
 		$store = MainWP_Backup_Storage_Destinations::instance();
-		$id    = $store->add_destination(
-			array(
-				'provider' => 's3',
-				'name'     => 'Legacy row',
-				'settings' => array( 'bucket' => 'placeholder' ),
-			)
-		);
-
-		$legacy = MainWP_Backup_Storage_Crypto::encrypt( (string) wp_json_encode( $this->s3_settings() ) );
-		$table  = MainWP_DB::instance()->get_table_name( 'wp_backup_storage' );
-		$wpdb->update( $table, array( 'settings' => $legacy ), array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
-
-		$row = $store->get_destination( $id );
-
-		$this->assertFalse( $row->credentials_invalid );
-		$this->assertSame( $this->s3_settings(), $row->settings );
-	}
-
-	/**
-	 * The one-time migration re-encrypts legacy rows into credential
-	 * envelopes and the settings round-trip unchanged.
-	 *
-	 * @return void
-	 */
-	public function test_migrate_legacy_settings_reencrypts() {
-		global $wpdb;
-
-		$store = MainWP_Backup_Storage_Destinations::instance();
-		$id    = $store->add_destination(
-			array(
-				'provider' => 's3',
-				'name'     => 'To migrate',
-				'settings' => array( 'bucket' => 'placeholder' ),
-			)
-		);
-
-		$legacy = MainWP_Backup_Storage_Crypto::encrypt( (string) wp_json_encode( $this->s3_settings() ) );
-		$table  = MainWP_DB::instance()->get_table_name( 'wp_backup_storage' );
-		$wpdb->update( $table, array( 'settings' => $legacy ), array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
-
-		$migrated = $store->migrate_legacy_settings();
-
-		$this->assertSame( 1, $migrated );
-		$this->assertTrue( MainWP_Credential_Storage::is_credential_envelope( $this->raw_settings( $id ) ), 'The migrated column holds a credential envelope.' );
-		$this->assertSame( $this->s3_settings(), $store->get_destination( $id )->settings, 'Settings survive the re-encryption.' );
-
-		$this->assertSame( 0, $store->migrate_legacy_settings(), 'The migration is idempotent.' );
-	}
-
-	/**
-	 * Settings are never plaintext-passthrough: a non-envelope value is
-	 * treated as unreadable, not as live credentials.
-	 *
-	 * @return void
-	 */
-	public function test_plaintext_settings_marked_invalid() {
-		global $wpdb;
-
-		$store = MainWP_Backup_Storage_Destinations::instance();
-		$id    = $store->add_destination(
-			array(
-				'provider' => 's3',
-				'name'     => 'Garbage column',
-				'settings' => $this->s3_settings(),
-			)
-		);
-
 		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_storage' );
-		$wpdb->update( $table, array( 'settings' => (string) wp_json_encode( $this->s3_settings() ) ), array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
 
-		$row = $store->get_destination( $id );
+		foreach ( array(
+			'plain json'         => (string) wp_json_encode( $this->s3_settings() ),
+			'pre-release format' => 'mwpenc-gcm1:bm90LXJlYWwtY2lwaGVydGV4dA==',
+		) as $label => $stored ) {
+			$id = $store->add_destination(
+				array(
+					'provider' => 's3',
+					'name'     => 'Garbage column',
+					'settings' => $this->s3_settings(),
+				)
+			);
 
-		$this->assertNull( $row->settings );
-		$this->assertTrue( $row->credentials_invalid );
+			$wpdb->update( $table, array( 'settings' => $stored ), array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
+
+			$row = $store->get_destination( $id );
+
+			$this->assertNull( $row->settings, "A {$label} value must not surface as settings." );
+			$this->assertTrue( $row->credentials_invalid, "A {$label} value must surface the re-enter state." );
+		}
 	}
 
 	/**

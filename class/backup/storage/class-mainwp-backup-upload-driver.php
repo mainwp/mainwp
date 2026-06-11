@@ -31,27 +31,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
     /**
-     * Retryable failures allowed before a job goes permanent.
-     *
-     * @var int
-     */
-    const MAX_ATTEMPTS = 7;
-
-    /**
-     * Base retry delay in seconds; doubles per attempt.
-     *
-     * @var int
-     */
-    const RETRY_BASE_SECONDS = 300;
-
-    /**
-     * Retry delay ceiling in seconds (4 hours).
-     *
-     * @var int
-     */
-    const RETRY_MAX_SECONDS = 14400;
-
-    /**
      * Default per-tick work budget in seconds.
      *
      * @var int
@@ -582,14 +561,14 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
             return;
         }
 
-        if ( 410 === $code || (int) $job->attempt_count + 1 >= static::MAX_ATTEMPTS ) {
+        $attempts = (int) $job->attempt_count + 1;
+        if ( 410 === $code || MainWP_Backup_Backoff::attempts_exhausted( $attempts ) ) {
             $store->fail_permanent( (int) $job->id, $error );
             $this->cleanup_staging( $job );
             return;
         }
 
-        $delay = min( static::RETRY_MAX_SECONDS, static::RETRY_BASE_SECONDS * ( 2 ** (int) $job->attempt_count ) );
-        $store->fail_retryable( (int) $job->id, $error, $now + $delay );
+        $store->fail_retryable( (int) $job->id, $error, $now + MainWP_Backup_Backoff::delay_for_attempt( $attempts ) );
     }
 
     /**

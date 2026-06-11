@@ -35,21 +35,6 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
     const DEFAULT_BUDGET_SECONDS = 200;
 
     /**
-     * Attempts before a retryable failure goes permanent.
-     */
-    const MAX_ATTEMPTS = 7;
-
-    /**
-     * Backoff base, seconds (doubles per attempt).
-     */
-    const RETRY_BASE_SECONDS = 300;
-
-    /**
-     * Backoff ceiling, seconds.
-     */
-    const RETRY_MAX_SECONDS = 14400;
-
-    /**
      * Singleton.
      *
      * @var MainWP_Backup_Restore_Orchestrator|null
@@ -705,7 +690,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         $store    = MainWP_Backup_Restore_Job_Store::instance();
         $attempts = (int) $job->attempt_count + 1;
 
-        if ( ! $retryable || $attempts >= self::MAX_ATTEMPTS ) {
+        if ( ! $retryable || MainWP_Backup_Backoff::attempts_exhausted( $attempts ) ) {
             $store->fail_permanent( (int) $job->id, $error );
             return;
         }
@@ -719,8 +704,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             : (string) $job->status;
         $store->save_checkpoint( (int) $job->id, $checkpoint );
 
-        $delay = min( self::RETRY_MAX_SECONDS, self::RETRY_BASE_SECONDS * (int) pow( 2, $attempts - 1 ) );
-        $store->fail_retryable( (int) $job->id, $error, $attempts, time() + $delay );
+        $store->fail_retryable( (int) $job->id, $error, $attempts, time() + MainWP_Backup_Backoff::delay_for_attempt( $attempts ) );
     }
 
     /**

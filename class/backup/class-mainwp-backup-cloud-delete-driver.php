@@ -220,13 +220,13 @@ class MainWP_Backup_Cloud_Delete_Driver { // phpcs:ignore Generic.Classes.Openin
             return;
         }
 
-        if ( (int) $job->attempt_count + 1 >= MainWP_Backup_Upload_Driver::MAX_ATTEMPTS ) {
+        $attempts = (int) $job->attempt_count + 1;
+        if ( MainWP_Backup_Backoff::attempts_exhausted( $attempts ) ) {
             $store->fail_permanent( (int) $job->id, $error );
             return;
         }
 
-        $delay = min( MainWP_Backup_Upload_Driver::RETRY_MAX_SECONDS, MainWP_Backup_Upload_Driver::RETRY_BASE_SECONDS * ( 2 ** (int) $job->attempt_count ) );
-        $store->fail_retryable( (int) $job->id, $error, $now + $delay );
+        $store->fail_retryable( (int) $job->id, $error, $now + MainWP_Backup_Backoff::delay_for_attempt( $attempts ) );
     }
 
     /**

@@ -1106,6 +1106,7 @@ mainwp_managebackups_update = function () {
             maximumFileDescriptorsOverride: jQuery('#mainwp_options_maximumFileDescriptorsOverride_override').is(':checked') ? 1 : 0,
             maximumFileDescriptorsAuto: (jQuery('#mainwp_maximumFileDescriptorsAuto').attr('checked') ? 1 : 0),
             maximumFileDescriptors: jQuery('#mainwp_options_maximumFileDescriptors').val(),
+            'destinations[]': (jQuery('#mainwp-backup-task-destinations').length ? (jQuery('#mainwp-backup-task-destinations').val() || []) : []),
             //loadFilesBeforeZip: loadFilesBeforeZip
         });
         jQuery.post(ajaxurl, data, function (response) {
@@ -1176,6 +1177,7 @@ mainwp_managebackups_add = function () {
             maximumFileDescriptorsOverride: jQuery('#mainwp_options_maximumFileDescriptorsOverride_override').is(':checked') ? 1 : 0,
             maximumFileDescriptorsAuto: (jQuery('#mainwp_maximumFileDescriptorsAuto').attr('checked') ? 1 : 0),
             maximumFileDescriptors: jQuery('#mainwp_options_maximumFileDescriptors').val(),
+            'destinations[]': (jQuery('#mainwp-backup-task-destinations').length ? (jQuery('#mainwp-backup-task-destinations').val() || []) : []),
             loadFilesBeforeZip: loadFilesBeforeZip
         });
         jQuery.post(ajaxurl, data, function (response) {

@@ -121,6 +121,47 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
     }
 
     /**
+     * Render the storage destinations selection. Cloud storage is opt-in
+     * per task: with nothing selected, backups stay on the dashboard.
+     *
+     * @param object|null $task The task being edited, if any.
+     *
+     * @return void
+     */
+    public static function render_destinations_field( $task ): void {
+        $destinations = MainWP_Backup_Storage_Destinations::instance()->list_destinations();
+
+        $selected = array();
+        if ( ! empty( $task ) && ! empty( $task->destinations ) ) {
+            $decoded  = json_decode( (string) $task->destinations, true );
+            $selected = is_array( $decoded ) ? array_map( 'intval', $decoded ) : array();
+        } elseif ( empty( $task ) ) {
+            $default = MainWP_Backup_Storage_Destinations::instance()->get_default();
+            if ( null !== $default ) {
+                $selected[] = (int) $default->id;
+            }
+        }
+        ?>
+        <div class="ui grid field">
+            <label class="six wide column middle aligned"><?php esc_html_e( 'Upload to storage', 'mainwp' ); ?></label>
+            <div class="ten wide column">
+                <?php if ( empty( $destinations ) ) : ?>
+                    <em><?php esc_html_e( 'No storage destinations configured. Backups stay on this dashboard.', 'mainwp' ); ?> <a href="<?php echo esc_url( admin_url( 'admin.php?page=ManageBackupsStorage' ) ); ?>"><?php esc_html_e( 'Add a destination', 'mainwp' ); ?></a></em>
+                <?php else : ?>
+                    <select name="mainwp-backup-task-destinations" id="mainwp-backup-task-destinations" multiple="" class="ui multiple selection dropdown">
+                        <option value=""><?php esc_html_e( 'Keep on dashboard only', 'mainwp' ); ?></option>
+                        <?php foreach ( $destinations as $destination ) : ?>
+                            <option value="<?php echo intval( $destination->id ); ?>" <?php echo in_array( (int) $destination->id, $selected, true ) ? 'selected' : ''; ?>><?php echo esc_html( $destination->name ); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <em><?php esc_html_e( 'Completed backups upload to the selected destinations. With nothing selected they stay on this dashboard.', 'mainwp' ); ?></em>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
      * Render Scheduled Backup.
      *
      * @return void
@@ -221,6 +262,7 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     </select>
                 </div>
             </div>
+            <?php static::render_destinations_field( $task ); ?>
             <div class="ui grid field">
                 <label class="six wide column middle aligned"><?php esc_html_e( 'Archive type', 'mainwp' ); ?></label>
                 <div class="ten wide column">

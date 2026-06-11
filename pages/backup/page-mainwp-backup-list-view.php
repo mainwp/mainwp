@@ -262,7 +262,74 @@ class MainWP_Backup_List_View { // phpcs:ignore Generic.Classes.OpeningBraceSame
             return trim( $extraOutput, '<br />' );
         }
 
+        $storage = $this->storage_destination_summary( $item );
+        if ( '' !== $storage ) {
+            return $storage;
+        }
+
         return esc_html__( 'SERVER', 'mainwp' );
+    }
+
+    /**
+     * Summarize a task's storage destinations and the latest run's upload
+     * state.
+     *
+     * @param object $item Task row.
+     *
+     * @return string Markup, empty when the task has no destinations.
+     */
+    private function storage_destination_summary( $item ) {
+        $ids = json_decode( isset( $item->destinations ) ? (string) $item->destinations : '', true );
+        if ( ! is_array( $ids ) || empty( $ids ) ) {
+            return '';
+        }
+
+        $names = array();
+        foreach ( array_map( 'intval', $ids ) as $id ) {
+            $destination = MainWP_Backup_Storage_Destinations::instance()->get_destination( $id );
+            if ( null !== $destination ) {
+                $names[] = esc_html( $destination->name );
+            }
+        }
+
+        if ( empty( $names ) ) {
+            return '';
+        }
+
+        $output = implode( ', ', $names );
+
+        $snapshot = MainWP_Backup_Snapshots::instance()->get_latest_for_task( (int) $item->id );
+        if ( null !== $snapshot ) {
+            $jobs = MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( (int) $snapshot->id );
+            if ( ! empty( $jobs ) ) {
+                $output .= ' ' . $this->upload_state_label( $jobs );
+            }
+        }
+
+        return $output;
+    }
+
+    /**
+     * The worst-state-wins label for a snapshot's upload jobs.
+     *
+     * @param object[] $jobs Upload job rows.
+     *
+     * @return string Label markup.
+     */
+    private function upload_state_label( $jobs ) {
+        $statuses = array_column( $jobs, 'status' );
+
+        if ( in_array( MainWP_Backup_Upload_Job_Store::STATUS_CREDENTIALS_INVALID, $statuses, true ) ) {
+            return '<span class="ui small red label">' . esc_html__( 'Re-enter credentials', 'mainwp' ) . '</span>';
+        }
+        if ( in_array( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_PERMANENT, $statuses, true ) ) {
+            return '<span class="ui small red label">' . esc_html__( 'Upload failed', 'mainwp' ) . '</span>';
+        }
+        if ( count( array_keys( $statuses, MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE, true ) ) === count( $statuses ) ) {
+            return '<span class="ui small green label">' . esc_html__( 'Uploaded', 'mainwp' ) . '</span>';
+        }
+
+        return '<span class="ui small blue label">' . esc_html__( 'Uploading', 'mainwp' ) . '</span>';
     }
 
     /**

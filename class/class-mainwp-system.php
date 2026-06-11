@@ -882,6 +882,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         MainWP_Post_Plugin_Theme_Handler::instance()->init();
         MainWP_Post_Extension_Handler::instance()->init();
         MainWP_Post_Backup_Handler::instance()->init();
+        MainWP_Backup_Storage_Handler::instance()->init();
         MainWP_Manage_Sites_Filter_Segment::get_instance()->admin_init();
         MainWP_Ui_Manage_Widgets_Layout::get_instance()->admin_init();
 

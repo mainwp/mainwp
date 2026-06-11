@@ -144,6 +144,24 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
     }
 
     /**
+     * Get the newest snapshot for a task across all of its sites - the
+     * run the backup list summarizes upload state from.
+     *
+     * @param int $task_id Scheduled task id.
+     *
+     * @return object|null Snapshot row or null when none exists.
+     */
+    public function get_latest_for_task( int $task_id ): ?object {
+        $row = $this->wpdb->get_row(
+            $this->wpdb->prepare(
+                'SELECT * FROM ' . $this->table_name( 'wp_backup_snapshot' ) . ' WHERE task_id = %d ORDER BY id DESC LIMIT 1',
+                $task_id
+            )
+        );
+        return $this->decode_row( $row );
+    }
+
+    /**
      * Walk a snapshot chain from a leaf back through its parents.
      *
      * Returns the chain base first so a restore can apply rows in order.

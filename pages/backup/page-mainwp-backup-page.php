@@ -134,6 +134,9 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             if ( \mainwp_current_user_can( 'dashboard', 'add_backup_tasks' ) && ! MainWP_Menu::is_disable_menu_item( 3, 'ManageBackupsAddNew' ) ) {
                 add_submenu_page( 'mainwp_tab', esc_html__( 'Add New Schedule', 'mainwp' ), '<div class="mainwp-hidden">' . esc_html__( 'Add New', 'mainwp' ) . '</div>', 'read', 'ManageBackupsAddNew', array( MainWP_Backup_Task_Form::class, 'render_new' ) );
             }
+            if ( \mainwp_current_user_can( 'dashboard', 'edit_backup_tasks' ) && ! MainWP_Menu::is_disable_menu_item( 3, 'ManageBackupsStorage' ) ) {
+                add_submenu_page( 'mainwp_tab', esc_html__( 'Backup Storage', 'mainwp' ), '<div class="mainwp-hidden">' . esc_html__( 'Storage', 'mainwp' ) . '</div>', 'read', 'ManageBackupsStorage', array( MainWP_Backup_Storage_View::class, 'render' ) );
+            }
         } else {
             return;
         }
@@ -179,6 +182,11 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                         <?php if ( \mainwp_current_user_can( 'dashboard', 'add_backup_tasks' ) ) { ?>
                             <?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ManageBackupsAddNew' ) ) { ?>
                             <a href="<?php echo esc_url( admin_url( 'admin.php?page=ManageBackupsAddNew' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Add New', 'mainwp' ); ?></a>
+                            <?php } ?>
+                        <?php } ?>
+                        <?php if ( \mainwp_current_user_can( 'dashboard', 'edit_backup_tasks' ) ) { ?>
+                            <?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ManageBackupsStorage' ) ) { ?>
+                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=ManageBackupsStorage' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Storage', 'mainwp' ); ?></a>
                             <?php } ?>
                         <?php } ?>
                     <?php } ?>
@@ -237,6 +245,13 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                     'href'       => 'admin.php?page=ManageBackupsAddNew',
                     'slug'       => 'ManageBackupsAddNew',
                     'right'      => 'add_backup_tasks',
+                ),
+                array(
+                    'title'      => esc_html__( 'Storage', 'mainwp' ),
+                    'parent_key' => 'ManageBackups',
+                    'href'       => 'admin.php?page=ManageBackupsStorage',
+                    'slug'       => 'ManageBackupsStorage',
+                    'right'      => 'edit_backup_tasks',
                 ),
             );
 
@@ -375,6 +390,16 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                 'access'   => \mainwp_current_user_can( 'dashboard', 'add_backup_tasks' ),
                 'active'   => ( 'AddNew' === $shownPage ) ? true : false,
                 'disabled' => MainWP_Menu::is_disable_menu_item( 3, 'ManageBackupsAddNew' ) ? true : false,
+            );
+        }
+
+        if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ManageBackupsStorage' ) ) {
+            $renderItems[] = array(
+                'title'    => esc_html__( 'Storage', 'mainwp' ),
+                'href'     => 'admin.php?page=ManageBackupsStorage',
+                'access'   => \mainwp_current_user_can( 'dashboard', 'edit_backup_tasks' ),
+                'active'   => ( 'Storage' === $shownPage ) ? true : false,
+                'disabled' => MainWP_Menu::is_disable_menu_item( 3, 'ManageBackupsStorage' ) ? true : false,
             );
         }
 

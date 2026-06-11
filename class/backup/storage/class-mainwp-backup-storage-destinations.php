@@ -3,11 +3,21 @@
  * MainWP Backup Storage Destinations.
  *
  * CRUD over the configured cloud storage destinations. Settings encrypt
- * through MainWP_Backup_Storage_Crypto on every write and decrypt only on
- * single-row reads; list views never carry settings at all. A settings
- * blob that no longer decrypts (AUTH_KEY rotation, tampering) loads with
- * null settings and a credentials_invalid flag so the UI can ask for the
- * credentials again instead of failing or leaking garbage downstream.
+ * on every write through MainWP_Credential_Storage - the same split-key
+ * envelope system (MWP-1548) that protects site HTTP credentials, the
+ * MainWP API key, and the api-backups module's third-party credentials:
+ * ciphertext in the database, per-secret key material in the private
+ * pk/ directory, so a database-only compromise yields nothing. Settings
+ * decrypt only on single-row reads; list views never carry settings at
+ * all. A settings blob that no longer decrypts (lost key file,
+ * tampering) loads with null settings and a credentials_invalid flag so
+ * the UI can ask for the credentials again instead of failing or
+ * leaking garbage downstream. Key files are retired when their
+ * destination is deleted or its settings re-encrypt.
+ *
+ * Rows written before the envelope convergence carry the legacy
+ * AUTH_KEY-derived format; they stay readable and a one-time upgrade
+ * re-encrypts them (see migrate_legacy_settings()).
  *
  * @package MainWP/Dashboard
  */
@@ -111,6 +121,7 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
             }
         }
 
+        $old_file_key = '';
         if ( isset( $data['settings'] ) && is_array( $data['settings'] ) ) {
             $encrypted = $this->encrypt_settings( $data['settings'] );
             if ( false === $encrypted ) {
@@ -118,6 +129,8 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
             }
             $row['settings'] = $encrypted;
             $format[]        = '%s';
+
+            $old_file_key = $this->stored_file_key( $id );
         }
 
         if ( isset( $data['is_default'] ) ) {
@@ -144,18 +157,33 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
             array( '%d' )
         );
 
+        if ( false !== $updated && '' !== $old_file_key && isset( $row['settings'] ) && $old_file_key !== $this->envelope_file_key( (string) $row['settings'] ) ) {
+            // The re-encrypted settings sealed under a fresh key file;
+            // retire the superseded one so pk/ never accumulates key
+            // material for ciphertext that no longer exists.
+            MainWP_Keys_Manager::instance()->delete_key_file( $old_file_key );
+        }
+
         return false !== $updated;
     }
 
     /**
-     * Delete a storage destination.
+     * Delete a storage destination and retire its key file.
      *
      * @param int $id Destination id.
      *
      * @return bool
      */
     public function delete_destination( int $id ): bool {
-        return (bool) $this->wpdb->delete( $this->table_name( 'wp_backup_storage' ), array( 'id' => $id ), array( '%d' ) );
+        $file_key = $this->stored_file_key( $id );
+
+        $deleted = (bool) $this->wpdb->delete( $this->table_name( 'wp_backup_storage' ), array( 'id' => $id ), array( '%d' ) );
+
+        if ( $deleted && '' !== $file_key ) {
+            MainWP_Keys_Manager::instance()->delete_key_file( $file_key );
+        }
+
+        return $deleted;
     }
 
     /**
@@ -224,6 +252,53 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
     }
 
     /**
+     * Re-encrypt rows still carrying the legacy AUTH_KEY-derived format
+     * into credential envelopes, once.
+     *
+     * Rows whose legacy blob no longer decrypts are left untouched -
+     * decode_row() surfaces them as credentials_invalid so the UI asks
+     * for the credentials again.
+     *
+     * @return int Migrated row count.
+     */
+    public function migrate_legacy_settings(): int {
+        $table = $this->table_name( 'wp_backup_storage' );
+        $rows  = $this->wpdb->get_results(
+            $this->wpdb->prepare(
+                "SELECT id, settings FROM {$table} WHERE settings LIKE %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from trusted helper.
+                $this->wpdb->esc_like( MainWP_Backup_Storage_Crypto::ENVELOPE_PREFIX ) . '%'
+            )
+        );
+
+        $migrated = 0;
+        foreach ( (array) $rows as $row ) {
+            $plaintext = MainWP_Backup_Storage_Crypto::decrypt( (string) $row->settings );
+            if ( false === $plaintext ) {
+                continue;
+            }
+            $envelope = MainWP_Credential_Storage::encrypt_credential( $plaintext, 'storage_destination' );
+            if ( ! is_string( $envelope ) || ! MainWP_Credential_Storage::is_credential_envelope( $envelope ) ) {
+                continue;
+            }
+            $updated = $this->wpdb->update(
+                $table,
+                array(
+                    'settings' => $envelope,
+                    'updated'  => time(),
+                ),
+                array( 'id' => (int) $row->id ),
+                array( '%s', '%d' ),
+                array( '%d' )
+            );
+            if ( false !== $updated ) {
+                ++$migrated;
+            }
+        }
+
+        return $migrated;
+    }
+
+    /**
      * Encrypt a settings array for storage.
      *
      * @param array $settings Provider settings.
@@ -231,7 +306,11 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
      * @return string|false Envelope, or false when encryption is unavailable.
      */
     private function encrypt_settings( array $settings ) {
-        return MainWP_Backup_Storage_Crypto::encrypt( (string) wp_json_encode( $settings ) );
+        $envelope = MainWP_Credential_Storage::encrypt_credential( (string) wp_json_encode( $settings ), 'storage_destination' );
+        if ( ! is_string( $envelope ) || ! MainWP_Credential_Storage::is_credential_envelope( $envelope ) ) {
+            return false;
+        }
+        return $envelope;
     }
 
     /**
@@ -246,6 +325,10 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
     /**
      * Decrypt and decode the settings on a destination row.
      *
+     * Settings are never plaintext-passthrough: a value that is neither
+     * a credential envelope nor a legacy blob is unreadable by
+     * definition, because every write path encrypts.
+     *
      * @param object|null $row Raw destination row.
      *
      * @return object|null Row with settings as array|null and a credentials_invalid flag.
@@ -257,7 +340,17 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
 
         $row->credentials_invalid = false;
 
-        $plaintext = MainWP_Backup_Storage_Crypto::decrypt( (string) $row->settings );
+        $stored    = (string) $row->settings;
+        $plaintext = false;
+        if ( MainWP_Credential_Storage::is_credential_envelope( $stored ) ) {
+            $decrypted = MainWP_Credential_Storage::decrypt_credential( $stored );
+            $plaintext = '' === $decrypted ? false : $decrypted;
+        } elseif ( MainWP_Backup_Storage_Crypto::is_encrypted( $stored ) ) {
+            // A row written before the envelope convergence; readable
+            // until migrate_legacy_settings() re-encrypts it.
+            $plaintext = MainWP_Backup_Storage_Crypto::decrypt( $stored );
+        }
+
         if ( false === $plaintext ) {
             $row->settings            = null;
             $row->credentials_invalid = true;
@@ -271,5 +364,37 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
         }
 
         return $row;
+    }
+
+    /**
+     * The key-file name referenced by a destination's stored envelope.
+     *
+     * @param int $id Destination id.
+     *
+     * @return string Key-file name, '' when none.
+     */
+    private function stored_file_key( int $id ): string {
+        $stored = $this->wpdb->get_var(
+            $this->wpdb->prepare(
+                'SELECT settings FROM ' . $this->table_name( 'wp_backup_storage' ) . ' WHERE id = %d',
+                $id
+            )
+        );
+        return $this->envelope_file_key( (string) $stored );
+    }
+
+    /**
+     * Extract the key-file name from a credential envelope.
+     *
+     * @param string $stored Raw settings column value.
+     *
+     * @return string Key-file name, '' when not an envelope.
+     */
+    private function envelope_file_key( string $stored ): string {
+        if ( ! MainWP_Credential_Storage::is_credential_envelope( $stored ) ) {
+            return '';
+        }
+        $envelope = json_decode( substr( $stored, strlen( MainWP_Credential_Storage::ENVELOPE_PREFIX ) ), true );
+        return is_array( $envelope ) && ! empty( $envelope['file_key'] ) ? (string) $envelope['file_key'] : '';
     }
 }

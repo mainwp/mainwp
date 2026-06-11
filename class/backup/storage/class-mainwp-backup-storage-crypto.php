@@ -1,14 +1,21 @@
 <?php
 /**
- * MainWP Backup Storage Crypto.
+ * MainWP Backup Storage Crypto - LEGACY decoder.
  *
- * Encrypts cloud storage destination settings at rest. Uses PHP's native
- * openssl AES-256-GCM (not phpseclib, which the Keys Manager layer uses)
- * with a key derived from AUTH_KEY through HKDF, so the raw AUTH_KEY never
- * acts as a cipher key directly. Every operation fails closed: any
- * tampering, truncation, or key change yields false rather than partial
- * or garbage plaintext, which callers surface as a re-enter-credentials
- * state. Rotating AUTH_KEY therefore invalidates stored settings by design.
+ * The original at-rest encryption for cloud storage destination settings:
+ * PHP's native openssl AES-256-GCM with a key derived from AUTH_KEY
+ * through HKDF. Destination settings now encrypt through
+ * MainWP_Credential_Storage instead - the split-key envelope system
+ * (MWP-1548) every other MainWP secret uses, whose key material lives in
+ * the private pk/ directory rather than wp-config.php and survives salt
+ * rotation. This class remains only to read rows written before that
+ * convergence: decode_row() falls back to it and
+ * migrate_legacy_settings() re-encrypts through it once. No new writes
+ * may use this format.
+ *
+ * Every operation fails closed: any tampering, truncation, or key change
+ * yields false rather than partial or garbage plaintext, which callers
+ * surface as a re-enter-credentials state.
  *
  * @package MainWP\Dashboard
  */

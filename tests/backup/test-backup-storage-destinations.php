@@ -25,6 +25,34 @@ use MainWP\Dashboard\MainWP_Keys_Manager;
 class MainWP_Backup_Storage_Destinations_Test extends \WP_UnitTestCase {
 
 	/**
+	 * Start from an empty destinations table: DDL in other suites (the db
+	 * upgrade tests run install()) implicitly commits its transaction, so
+	 * rows can leak across tests and even across runs.
+	 */
+	public function set_up() {
+		parent::set_up();
+		$this->truncate_destinations();
+	}
+
+	/**
+	 * Drop rows this test may have committed past its transaction.
+	 */
+	public function tear_down() {
+		$this->truncate_destinations();
+		parent::tear_down();
+	}
+
+	/**
+	 * Hard-delete all destination rows.
+	 *
+	 * @return void
+	 */
+	private function truncate_destinations() {
+		global $wpdb;
+		$wpdb->query( 'DELETE FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_storage' ) ); // phpcs:ignore WordPress.DB -- test cleanup.
+	}
+
+	/**
 	 * Representative S3 settings with a secret.
 	 *
 	 * @return array

@@ -34,13 +34,18 @@ class MainWP_Backup_Storage_Page_Test extends \WP_UnitTestCase {
 	private $temp_dirs = array();
 
 	/**
-	 * Sign in as an admin; AJAX permission checks need a user.
+	 * Sign in as an admin; AJAX permission checks need a user. The
+	 * destinations table starts empty: DDL in other suites (the db
+	 * upgrade tests run install()) implicitly commits its transaction,
+	 * so rows can leak across tests.
 	 *
 	 * @return void
 	 */
 	public function set_up() {
+		global $wpdb;
 		parent::set_up();
 		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$wpdb->query( 'DELETE FROM ' . \MainWP\Dashboard\MainWP_DB::instance()->get_table_name( 'wp_backup_storage' ) ); // phpcs:ignore WordPress.DB -- test cleanup.
 	}
 
 	/**

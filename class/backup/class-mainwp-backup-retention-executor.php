@@ -124,7 +124,8 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
         $store               = MainWP_Backup_Upload_Job_Store::instance();
         $delete_cloud_copies = ! empty( $task->delete_cloud_copies );
 
-        $site_id = 0;
+        $site_id        = 0;
+        $child_task_ids = array();
 
         // Leaf first: if the prune is interrupted, the remaining prefix of
         // the chain is still a complete restorable unit.
@@ -134,6 +135,11 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
                 continue;
             }
             $site_id = (int) $snapshot->site_id;
+
+            $child_task_id = $this->child_task_id_for( $snapshot );
+            if ( '' !== $child_task_id ) {
+                $child_task_ids[] = $child_task_id;
+            }
 
             if ( $delete_cloud_copies ) {
                 $this->enqueue_cloud_deletes( $snapshot, $store );
@@ -147,6 +153,8 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
 
             ++$result['snapshots_pruned'];
         }
+
+        $this->notify_child_prune( $site_id, $child_task_ids );
 
         /**
          * Fires after a restorable unit is pruned by retention.
@@ -219,6 +227,77 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
                     'swept'  => false,
                 )
             );
+        }
+    }
+
+    /**
+     * The child-side task id a snapshot's run used, recovered from its
+     * local directory name (snapshot-{child_task_id}). Runs downloaded
+     * through the legacy flow use other directory layouts and have no
+     * child task row to clean.
+     *
+     * @param object $snapshot Snapshot row with decoded archives.
+     *
+     * @return string Child task id, or '' when none applies.
+     */
+    private function child_task_id_for( object $snapshot ): string {
+        $path = '';
+        foreach ( (array) $snapshot->archives as $archive ) {
+            if ( ! empty( $archive['path'] ) ) {
+                $path = (string) $archive['path'];
+                break;
+            }
+        }
+        if ( '' === $path && ! empty( $snapshot->manifest_path ) ) {
+            $path = (string) $snapshot->manifest_path;
+        }
+        if ( '' === $path ) {
+            return '';
+        }
+
+        $dir_name = basename( dirname( $path ) );
+        if ( 0 !== strpos( $dir_name, 'snapshot-' ) ) {
+            return '';
+        }
+
+        return substr( $dir_name, strlen( 'snapshot-' ) );
+    }
+
+    /**
+     * Tell the child site to clean up after its pruned runs: terminal
+     * task rows, artifact files and stale legacy markers. Best effort -
+     * an unreachable child never blocks the prune, and the child's
+     * three-hour sweep eventually covers what this call would have.
+     *
+     * @param int      $site_id        Child site id.
+     * @param string[] $child_task_ids Child task ids from the pruned snapshots.
+     *
+     * @return void
+     */
+    private function notify_child_prune( int $site_id, array $child_task_ids ): void {
+        if ( empty( $site_id ) || empty( $child_task_ids ) ) {
+            return;
+        }
+
+        $website = MainWP_DB::instance()->get_website_by_id( $site_id );
+        if ( empty( $website ) ) {
+            return;
+        }
+
+        try {
+            MainWP_Connect::fetch_url_authed(
+                $website,
+                'backup_task_prune',
+                array(
+                    'task_ids' => wp_json_encode( array_values( array_unique( $child_task_ids ) ) ),
+                    'sweep'    => 1,
+                ),
+                false,
+                false,
+                false
+            );
+        } catch ( \Throwable $e ) {
+            MainWP_Logger::instance()->debug( 'retention :: child prune call skipped :: ' . $e->getMessage() );
         }
     }
 

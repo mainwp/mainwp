@@ -22,7 +22,7 @@ use MainWP\Dashboard\MainWP_Backup_Upload_Job_Store;
 /**
  * Class MainWP_Backup_Retention_Executor_Test
  */
-class MainWP_Backup_Retention_Executor_Test extends \WP_UnitTestCase {
+class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 
 	/**
 	 * Fixture site id.
@@ -459,6 +459,126 @@ class MainWP_Backup_Retention_Executor_Test extends \WP_UnitTestCase {
 		$this->assertCount( 1, $units, 'Only the newer chain survives.' );
 		$this->assertTrue( $units[0]['is_complete'], 'The surviving chain must remain restorable.' );
 		$this->assertSame( array( $new_base, $new_inc ), array_map( 'intval', wp_list_pluck( $units[0]['snapshots'], 'id' ) ) );
+	}
+
+	/**
+	 * Pruning notifies the child site so it cleans its own task rows and
+	 * artifacts, passing the chain's child task ids.
+	 *
+	 * @return void
+	 */
+	public function test_prune_notifies_child_with_task_ids() {
+		$site_id = $this->create_test_site();
+
+		global $wpdb;
+		$upload = wp_upload_dir();
+		$dir    = trailingslashit( $upload['basedir'] ) . 'mainwp/snapshot-task-prunetest1';
+		wp_mkdir_p( $dir );
+		$this->fixture_dirs[] = $dir;
+		file_put_contents( $dir . '/artifact.tar', 'x' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
+			$table,
+			array(
+				'task_id'       => $this->task_id,
+				'site_id'       => $site_id,
+				'type'          => 'full',
+				'created'       => time(),
+				'archives'      => wp_json_encode( array( array( 'file' => 'artifact.tar', 'size' => 1, 'role' => 'full', 'path' => $dir . '/artifact.tar' ) ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+				'manifest_path' => '',
+				'status'        => 'complete',
+			)
+		);
+		$snapshot_id = (int) $wpdb->insert_id;
+
+		$captured = array();
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			function ( $pre, $website, $what, $params ) use ( &$captured ) {
+				$captured[] = array(
+					'website_id' => (int) $website->id,
+					'what'       => $what,
+					'params'     => $params,
+				);
+				return array( 'result' => 'ok' );
+			},
+			10,
+			4
+		);
+
+		$candidates = array(
+			array(
+				'snapshot_ids'   => array( $snapshot_id ),
+				'reason'         => 'age',
+				'size_bytes'     => 1,
+				'newest_created' => time(),
+			),
+		);
+
+		MainWP_Backup_Retention_Executor::instance()->run_prune( $candidates, $this->make_task( array( 'delete_cloud_copies' => 0 ) ), false );
+
+		$this->assertCount( 1, $captured, 'One child call per pruned site.' );
+		$this->assertSame( 'backup_task_prune', $captured[0]['what'] );
+		$this->assertSame( $site_id, $captured[0]['website_id'] );
+		$this->assertContains( 'task-prunetest1', (array) json_decode( $captured[0]['params']['task_ids'], true ) );
+
+		// Snapshot cleanup for the real site id.
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$table} WHERE site_id = %d", $site_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
+	}
+
+	/**
+	 * A failing child call never blocks the prune.
+	 *
+	 * @return void
+	 */
+	public function test_prune_survives_child_call_failure() {
+		$site_id = $this->create_test_site();
+
+		global $wpdb;
+		$upload = wp_upload_dir();
+		$dir    = trailingslashit( $upload['basedir'] ) . 'mainwp/snapshot-task-prunetest2';
+		wp_mkdir_p( $dir );
+		$this->fixture_dirs[] = $dir;
+		file_put_contents( $dir . '/artifact.tar', 'x' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
+			$table,
+			array(
+				'task_id'       => $this->task_id,
+				'site_id'       => $site_id,
+				'type'          => 'full',
+				'created'       => time(),
+				'archives'      => wp_json_encode( array( array( 'file' => 'artifact.tar', 'size' => 1, 'role' => 'full', 'path' => $dir . '/artifact.tar' ) ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+				'manifest_path' => '',
+				'status'        => 'complete',
+			)
+		);
+		$snapshot_id = (int) $wpdb->insert_id;
+
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			function () {
+				throw new \Exception( 'child unreachable' );
+			}
+		);
+
+		$candidates = array(
+			array(
+				'snapshot_ids'   => array( $snapshot_id ),
+				'reason'         => 'age',
+				'size_bytes'     => 1,
+				'newest_created' => time(),
+			),
+		);
+
+		$result = MainWP_Backup_Retention_Executor::instance()->run_prune( $candidates, $this->make_task( array( 'delete_cloud_copies' => 0 ) ), false );
+
+		$this->assertSame( 1, $result['pruned'], 'The prune completes despite the unreachable child.' );
+		$this->assertSame( 'pruned', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id )->status );
+
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$table} WHERE site_id = %d", $site_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
 	}
 
 	/**

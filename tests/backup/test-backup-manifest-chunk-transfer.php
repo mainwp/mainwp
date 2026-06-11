@@ -216,6 +216,36 @@ class MainWP_Backup_Manifest_Chunk_Transfer_Test extends MainWP_Abilities_Test_C
 	}
 
 	/**
+	 * An ok answer that confirms no new bytes fails the transfer instead
+	 * of resending the same chunk forever.
+	 */
+	public function test_ok_ack_with_no_new_bytes_fails_send() {
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			function ( $result, $website, $what, $params ) {
+				unset( $website );
+				if ( 'backup_manifest_chunk' !== $what ) {
+					return $result;
+				}
+				$this->calls[] = $params;
+				return array(
+					'result'         => 'ok',
+					'mtoken'         => 'tok0123456789abc',
+					'bytes_received' => 0,
+				);
+			},
+			10,
+			4
+		);
+
+		$outcome = $this->push( str_repeat( 'n', 100 ), 1024 );
+
+		$this->assertFalse( $outcome['ok'] );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_MANIFEST_CHUNK_SEND_FAILED, $outcome['error_code'] );
+		$this->assertCount( 1, $this->calls, 'The transfer gives up on the first no-progress ack instead of looping.' );
+	}
+
+	/**
 	 * Write the fixture and build a website row.
 	 *
 	 * @param string $content Manifest bytes.

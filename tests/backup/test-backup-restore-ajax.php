@@ -69,6 +69,10 @@ class MainWP_Backup_Restore_Ajax_Test extends \WP_UnitTestCase {
 	 * A user denied the execute_backups capability gets none of them.
 	 */
 	public function test_restore_actions_denied_without_capability() {
+		if ( ( defined( 'DOING_CRON' ) && DOING_CRON ) || ( defined( 'WP_CLI' ) && WP_CLI ) || ( defined( 'MAINWP_REST_API_DOING' ) && MAINWP_REST_API_DOING ) ) {
+			$this->markTestSkipped( 'Capability checks are bypassed by design under cron, WP-CLI, and REST constants; another suite defined one for this process.' );
+		}
+
 		global $wp_filter;
 		foreach ( $this->actions as $action ) {
 			unset( $wp_filter[ 'wp_ajax_' . $action ] );

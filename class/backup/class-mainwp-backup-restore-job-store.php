@@ -18,7 +18,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Class MainWP_Backup_Restore_Job_Store
  */
-class MainWP_Backup_Restore_Job_Store extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
+class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
     // phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery -- dedicated restore job table; identifiers cannot be prepared.
 
@@ -57,7 +57,7 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_DB_Base { // phpcs:ignore G
      *
      * @return string Table name.
      */
-    private function table(): string {
+    protected function table(): string {
         return $this->table_name( 'wp_backup_restore_job' );
     }
 
@@ -351,21 +351,5 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_DB_Base { // phpcs:ignore G
         );
 
         return 1 === $changed;
-    }
-
-    /**
-     * Decode the checkpoint JSON.
-     *
-     * @param object|null $row Raw row.
-     *
-     * @return object|null Decoded row.
-     */
-    private function decode_row( ?object $row ): ?object {
-        if ( null === $row ) {
-            return null;
-        }
-        $decoded         = json_decode( (string) $row->checkpoint, true );
-        $row->checkpoint = is_array( $decoded ) ? $decoded : array();
-        return $row;
     }
 }

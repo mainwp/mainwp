@@ -23,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * @package MainWP\Dashboard
  */
-class MainWP_Backup_Upload_Job_Store extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
+class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
     // phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, table identifiers cannot be prepared.
 
     const KIND_UPLOAD = 'upload';
@@ -59,6 +59,15 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_DB_Base { // phpcs:ignore Ge
             static::$instance = new self();
         }
         return static::$instance;
+    }
+
+    /**
+     * Table name.
+     *
+     * @return string Table name.
+     */
+    protected function table(): string {
+        return $this->table_name( 'wp_backup_upload_job' );
     }
 
     /**
@@ -129,10 +138,10 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_DB_Base { // phpcs:ignore Ge
         // Single-table UPDATE with ORDER BY + LIMIT is atomic under InnoDB
         // row locking; only one caller wins the row.
         $claimed = $this->wpdb->query(
-            $this->wpdb->prepare(
+            $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- the merged arrays supply all eleven replacements.
                 'UPDATE ' . $this->table_name( 'wp_backup_upload_job' ) .
                 ' SET locked_until = %d, locked_by = %s, updated = %d WHERE kind = %s AND status IN (%s, %s, %s, %s, %s) AND next_retry_at <= %d AND locked_until < %d ORDER BY id ASC LIMIT 1',
-                array_merge( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- the merged arrays supply all eleven replacements.
+                array_merge(
                     array( $now + $lease_seconds, $token, $now, $kind ),
                     $runnable,
                     array( $now, $now )
@@ -451,23 +460,5 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_DB_Base { // phpcs:ignore Ge
         );
 
         return 1 === $changed;
-    }
-
-    /**
-     * Decode the checkpoint JSON on a job row.
-     *
-     * @param object|null $row Raw job row.
-     *
-     * @return object|null Row with checkpoint as array.
-     */
-    private function decode_row( ?object $row ): ?object {
-        if ( null === $row ) {
-            return null;
-        }
-
-        $decoded         = json_decode( (string) $row->checkpoint, true );
-        $row->checkpoint = is_array( $decoded ) ? $decoded : array();
-
-        return $row;
     }
 }

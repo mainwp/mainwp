@@ -223,6 +223,30 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
+	 * A files-only restore job carries sub_type files through to the
+	 * child task-create options untouched.
+	 */
+	public function test_staging_sends_files_sub_type_for_files_snapshot() {
+		$this->responses['restore_task_create'] = array(
+			'task_id' => 'task-9-restore',
+			'phase'   => 'queued',
+		);
+
+		$job = $this->make_job( array( 'sub_type' => 'files' ), MainWP_Backup_Restore_Job_Store::STATUS_STAGING );
+		$this->tick( $job );
+
+		$create = null;
+		foreach ( $this->calls as $call ) {
+			if ( 'restore_task_create' === $call['what'] ) {
+				$create = $call;
+			}
+		}
+		$this->assertNotNull( $create );
+		$options = json_decode( $create['params']['options_json'], true );
+		$this->assertSame( 'files', $options['sub_type'] );
+	}
+
+	/**
 	 * Transfer streams chunks and advances to running.
 	 */
 	public function test_transfer_advances_to_running() {

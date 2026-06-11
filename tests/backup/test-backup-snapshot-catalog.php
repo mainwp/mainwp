@@ -15,7 +15,7 @@ use MainWP\Dashboard\MainWP_DB;
 /**
  * Class MainWP_Backup_Snapshot_Catalog_Test
  */
-class MainWP_Backup_Snapshot_Catalog_Test extends \WP_UnitTestCase {
+class MainWP_Backup_Snapshot_Catalog_Test extends MainWP_Abilities_Test_Case {
 
 	/**
 	 * Fixture dir holding artifact files.
@@ -144,22 +144,53 @@ class MainWP_Backup_Snapshot_Catalog_Test extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * A files-only snapshot carries no database, so a dashboard restore
-	 * cannot rebuild the site from it: the list withholds the restore
+	 * A files snapshot on a child without the files-only restore
+	 * capability stays non-restorable: the list withholds the restore
 	 * action and a direct resolve refuses with a clear message.
 	 */
-	public function test_resolve_files_snapshot_refused() {
+	public function test_files_snapshot_not_restorable_when_child_lacks_capability() {
 		$id = $this->make_snapshot(
 			array( array( 'file' => 'files.tar.gz', 'role' => 'full' ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
 			array( 'type' => 'files' )
 		);
 
 		$entries = MainWP_Backup_Snapshot_Catalog::instance()->list_snapshots_for_site( 9901 );
-		$this->assertFalse( $entries[0]['restorable'], 'A files-only snapshot must not offer a restore.' );
+		$this->assertFalse( $entries[0]['restorable'], 'A files snapshot must not offer a restore on a child without the capability.' );
 
 		$resolved = MainWP_Backup_Snapshot_Catalog::instance()->resolve_restorable_chain( $id );
 		$this->assertFalse( $resolved['ok'] );
 		$this->assertStringContainsString( 'database', $resolved['error'] );
+	}
+
+	/**
+	 * A files snapshot on a child that advertises the files-only restore
+	 * pipeline is restorable, resolves with sub_type files, and its plan
+	 * carries the archive with no database entry.
+	 */
+	public function test_files_snapshot_restorable_when_child_has_capability() {
+		$site_id = $this->create_test_site();
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		MainWP_DB::instance()->update_website_option( $website, 'restore_files_support', '1' );
+
+		$id = $this->make_snapshot(
+			array( array( 'file' => 'files.tar.gz', 'role' => 'full' ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+			array(
+				'type'    => 'files',
+				'site_id' => $site_id,
+			)
+		);
+
+		$entries = MainWP_Backup_Snapshot_Catalog::instance()->list_snapshots_for_site( $site_id );
+		$this->assertTrue( $entries[0]['restorable'], 'A files snapshot must offer a restore once the child advertises the capability.' );
+
+		$resolved = MainWP_Backup_Snapshot_Catalog::instance()->resolve_restorable_chain( $id );
+		$this->assertTrue( $resolved['ok'] );
+		$this->assertSame( 'files', $resolved['sub_type'] );
+		$this->assertCount( 1, $resolved['plan'] );
+		$this->assertSame( 'full', $resolved['plan'][0]['role'] );
+		foreach ( $resolved['plan'] as $entry ) {
+			$this->assertNotSame( 'db', $entry['role'], 'A files snapshot plan must not carry a database entry.' );
+		}
 	}
 
 	/**

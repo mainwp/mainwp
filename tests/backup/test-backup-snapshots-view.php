@@ -85,4 +85,28 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 			'The rollback button must be offered for cancelled restores with a safety backup.'
 		);
 	}
+
+	/**
+	 * The Restore button carries the snapshot type, so the confirm pane
+	 * can speak honestly about what a files-only restore replaces.
+	 *
+	 * @return void
+	 */
+	public function test_restore_button_carries_snapshot_type() {
+		$output = $this->render_page();
+
+		$this->assertStringContainsString( 'data-snapshot-type', $output );
+	}
+
+	/**
+	 * A files snapshot's confirm pane says the database stays untouched;
+	 * the page carries the files-only warning copy for the swap.
+	 *
+	 * @return void
+	 */
+	public function test_files_only_consent_copy_present() {
+		$output = $this->render_page();
+
+		$this->assertStringContainsString( 'The database will not be changed', $output );
+	}
 }

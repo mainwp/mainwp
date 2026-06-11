@@ -51,16 +51,30 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
      *                 local|remote|remote_chunked|unavailable.
      */
     public function list_snapshots_for_site( int $site_id ): array {
+        $files_restorable = $this->site_supports_restore_files( $site_id );
+
         $entries = array();
         foreach ( MainWP_Backup_Snapshots::instance()->get_snapshots_for_site( $site_id ) as $snapshot ) {
             $source    = $this->snapshot_source( $snapshot );
             $entries[] = array(
                 'snapshot'   => $snapshot,
                 'source'     => $source,
-                'restorable' => 'unavailable' !== $source && 'files' !== $snapshot->type,
+                'restorable' => 'unavailable' !== $source && ( 'files' !== $snapshot->type || $files_restorable ),
             );
         }
         return $entries;
+    }
+
+    /**
+     * Whether a site's child advertised the files-only restore pipeline.
+     *
+     * @param int $site_id Child site id.
+     *
+     * @return bool True when files snapshots are restorable on the site.
+     */
+    private function site_supports_restore_files( int $site_id ): bool {
+        $website = MainWP_DB::instance()->get_website_by_id( $site_id );
+        return ! empty( $website ) && MainWP_Backup_Monitor::child_supports_restore_files( $website );
     }
 
     /**
@@ -82,8 +96,8 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
         if ( 'complete' !== $leaf->status ) {
             return $this->refusal( __( 'The selected backup was removed by retention and can no longer be restored.', 'mainwp' ) );
         }
-        if ( 'files' === $leaf->type ) {
-            return $this->refusal( __( 'This backup contains the site\'s files without a database, so the dashboard cannot rebuild the site from it. Download the archive to recover individual files.', 'mainwp' ) );
+        if ( 'files' === $leaf->type && ! $this->site_supports_restore_files( (int) $leaf->site_id ) ) {
+            return $this->refusal( __( 'This backup contains the site\'s files without a database, and the site\'s MainWP Child plugin predates files-only restore. Update the child plugin to restore it, or download the archive to recover individual files.', 'mainwp' ) );
         }
 
         $chain = $snapshots->get_chain( $snapshot_id );
@@ -124,11 +138,19 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
             }
         }
 
+        // A files snapshot restores through the child's db-skipping
+        // pipeline; its archive rides the full role, so the role-based
+        // calculation below would mislabel it a full restore.
+        $sub_type = $has_files ? 'full' : 'db';
+        if ( 'files' === $leaf->type ) {
+            $sub_type = 'files';
+        }
+
         return array(
             'ok'       => true,
             'error'    => null,
             'chain'    => $chain,
-            'sub_type' => $has_files ? 'full' : 'db',
+            'sub_type' => $sub_type,
             'plan'     => $plan,
         );
     }

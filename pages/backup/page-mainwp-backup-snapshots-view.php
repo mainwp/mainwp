@@ -81,7 +81,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 <div id="mainwp-restore-confirm-pane">
                     <div class="ui yellow message">
                         <i class="warning circle icon"></i>
-                        <?php esc_html_e( 'Restoring replaces the site\'s files and database with the contents of this backup. Anything changed since the backup was taken will be overwritten.', 'mainwp' ); ?>
+                        <span id="mainwp-restore-warning-text"><?php esc_html_e( 'Restoring replaces the site\'s files and database with the contents of this backup. Anything changed since the backup was taken will be overwritten.', 'mainwp' ); ?></span>
                     </div>
                     <div class="ui form">
                         <div class="field">
@@ -158,6 +158,11 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 'unavailable': '<?php echo esc_js( esc_html__( 'Removed by retention', 'mainwp' ) ); ?>'
             };
 
+            var restoreWarnings = {
+                'default': '<?php echo esc_js( esc_html__( 'Restoring replaces the site\'s files and database with the contents of this backup. Anything changed since the backup was taken will be overwritten.', 'mainwp' ) ); ?>',
+                'files': '<?php echo esc_js( esc_html__( 'Restoring this backup will replace the site\'s files with the snapshot\'s contents. The database will not be changed. Anything in the site files that changed after the snapshot was taken will be overwritten.', 'mainwp' ) ); ?>'
+            };
+
             function loadSnapshots( siteId ) {
                 currentSite = siteId;
                 var $tbody = $( '#mainwp-restore-snapshots-table tbody' );
@@ -167,7 +172,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     ( response.snapshots || [] ).forEach( function ( snap ) {
                         var when = new Date( snap.created * 1000 ).toLocaleString();
                         var action = snap.restorable
-                            ? '<a href="#" class="ui mini green button mainwp-restore-snapshot" data-snapshot="' + snap.id + '"><?php echo esc_js( esc_html__( 'Restore', 'mainwp' ) ); ?></a>'
+                            ? '<a href="#" class="ui mini green button mainwp-restore-snapshot" data-snapshot="' + snap.id + '" data-snapshot-type="' + snap.type + '"><?php echo esc_js( esc_html__( 'Restore', 'mainwp' ) ); ?></a>'
                             : '';
                         var rowClass = snap.restorable ? '' : ' class="disabled"';
                         rows += '<tr' + rowClass + '><td>#' + snap.id + '</td><td>' + snap.type + '</td><td>' + when + '</td><td>' + ( sourceLabels[ snap.source ] || snap.source ) + '</td><td>' + action + '</td></tr>';
@@ -241,6 +246,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             $( document ).on( 'click', '.mainwp-restore-snapshot', function ( event ) {
                 event.preventDefault();
                 currentSnapshot = parseInt( $( this ).data( 'snapshot' ), 10 );
+                $( '#mainwp-restore-warning-text' ).text( restoreWarnings[ $( this ).data( 'snapshot-type' ) ] || restoreWarnings['default'] );
                 $( '#mainwp-restore-consent' ).prop( 'checked', false );
                 $( '#mainwp-restore-start-btn' ).addClass( 'disabled' );
                 setPane( true );

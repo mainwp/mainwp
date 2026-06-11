@@ -93,6 +93,11 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         // phpcs:ignore -- required for dashboard's minutely scheduled jobs.
         add_filter( 'cron_schedules', array( $this, 'get_cron_schedules' ), 9 );
 
+        // Stored backup next_run values are UTC instants computed from the
+        // site timezone; a timezone change moves every wall-clock slot.
+        add_action( 'update_option_timezone_string', array( $this, 'recompute_backup_next_runs' ) );
+        add_action( 'update_option_gmt_offset', array( $this, 'recompute_backup_next_runs' ) );
+
         $this->init_cron();
     }
 
@@ -1555,10 +1560,12 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
         MainWP_Utility::update_option( 'mainwp_cron_last_backups', time() );
 
-        $allTasks   = array();
+        // Lane 1: tasks with a computed next_run (intervals and time-of-day
+        // schedules). Lane 2: legacy elapsed-mode tasks with next_run = 0.
+        $allTasks   = MainWP_DB_Backup::instance()->get_backup_tasks_due_by_next_run();
         $dailyTasks = MainWP_DB_Backup::instance()->get_backup_tasks_todo_daily();
         if ( ! empty( $dailyTasks ) ) {
-            $allTasks = $dailyTasks;
+            $allTasks = array_merge( $allTasks, $dailyTasks );
         }
         $weeklyTasks = MainWP_DB_Backup::instance()->get_backup_tasks_todo_weekly();
         if ( ! empty( $weeklyTasks ) ) {
@@ -1569,6 +1576,20 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
             $allTasks = array_merge( $allTasks, $monthlyTasks );
         }
 
+        // A daily task with a time of day satisfies both lanes; never run
+        // it twice in one tick.
+        $seen     = array();
+        $allTasks = array_filter(
+            $allTasks,
+            function ( $task ) use ( &$seen ) {
+                if ( isset( $seen[ $task->id ] ) ) {
+                    return false;
+                }
+                $seen[ $task->id ] = true;
+                return true;
+            }
+        );
+
         MainWP_Logger::instance()->debug( 'backups :: Found ' . count( $allTasks ) . ' to start.' );
 
         foreach ( $allTasks as $task ) {
@@ -1576,25 +1597,104 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         }
 
         foreach ( $allTasks as $task ) {
-            $threshold = 0;
-            if ( 'daily' === $task->schedule ) {
-                $threshold = ( 60 * 60 * 24 );
-            } elseif ( 'weekly' === $task->schedule ) {
-                $threshold = ( 60 * 60 * 24 * 7 );
-            } elseif ( 'monthly' === $task->schedule ) {
-                $threshold = ( 60 * 60 * 24 * 30 );
-            }
             $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
-            if ( ( time() - $task->last_run ) < $threshold ) {
-                continue;
+
+            if ( (int) $task->next_run > 0 ) {
+                if ( (int) $task->next_run > time() ) {
+                    continue;
+                }
+            } else {
+                $threshold = 0;
+                if ( 'daily' === $task->schedule ) {
+                    $threshold = ( 60 * 60 * 24 );
+                } elseif ( 'weekly' === $task->schedule ) {
+                    $threshold = ( 60 * 60 * 24 * 7 );
+                } elseif ( 'monthly' === $task->schedule ) {
+                    $threshold = ( 60 * 60 * 24 * 30 );
+                }
+                if ( ( time() - $task->last_run ) < $threshold ) {
+                    continue;
+                }
             }
 
             if ( ! MainWP_Manage_Backups_Handler::validate_backup_tasks( array( $task ) ) ) {
                 $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
             }
 
+            $old_last_run = (int) $task->last_run;
+
             $chunkedBackupTasks = get_option( 'mainwp_chunkedBackupTasks' );
             MainWP_Manage_Backups_Handler::execute_backup_task( $task, ( 0 !== $chunkedBackupTasks ? 5 : 0 ) );
+
+            $this->maybe_advance_backup_next_run( $task->id, $old_last_run );
+        }
+    }
+
+    /**
+     * Method maybe_advance_backup_next_run()
+     *
+     * Advance a task's next_run after a dispatched run. The run is only
+     * considered started when last_run moved past its pre-dispatch value;
+     * a run refused by the concurrency cap leaves last_run untouched and
+     * the task stays due for the next tick. Legacy elapsed-mode tasks
+     * (next_run = 0) are never touched.
+     *
+     * @param int $task_id      Task id.
+     * @param int $old_last_run The task's last_run before the dispatch.
+     *
+     * @return void
+     *
+     * @uses \MainWP\Dashboard\MainWP_Backup_Schedule_Calculator::compute_next_run()
+     * @uses \MainWP\Dashboard\MainWP_DB_Backup::update_backup_task_with_values()
+     */
+    public function maybe_advance_backup_next_run( $task_id, $old_last_run ) {
+        $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
+
+        if ( empty( $task ) || (int) $task->next_run <= 0 ) {
+            return;
+        }
+
+        if ( (int) $task->last_run <= (int) $old_last_run ) {
+            return;
+        }
+
+        $calculator = new MainWP_Backup_Schedule_Calculator( wp_timezone(), time() );
+        $next_run   = $calculator->compute_next_run( $task, (int) $task->last_run );
+
+        MainWP_DB_Backup::instance()->update_backup_task_with_values( $task->id, array( 'next_run' => $next_run ) );
+    }
+
+    /**
+     * Method recompute_backup_next_runs()
+     *
+     * Recompute every computed-schedule task's next_run. Runs when the
+     * site timezone changes: stored next_run values are UTC instants
+     * derived from the old timezone, so each wall-clock slot moves.
+     *
+     * @return void
+     *
+     * @uses \MainWP\Dashboard\MainWP_Backup_Schedule_Calculator::compute_next_run()
+     * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_tasks()
+     * @uses \MainWP\Dashboard\MainWP_DB_Backup::update_backup_task_with_values()
+     */
+    public function recompute_backup_next_runs() {
+        $tasks = MainWP_DB_Backup::instance()->get_backup_tasks();
+        if ( empty( $tasks ) ) {
+            return;
+        }
+
+        $calculator = new MainWP_Backup_Schedule_Calculator( wp_timezone(), time() );
+
+        foreach ( $tasks as $task ) {
+            if ( (int) $task->interval_hours <= 0 && '' === (string) $task->time_of_day ) {
+                continue;
+            }
+
+            $next_run = $calculator->compute_next_run( $task, empty( $task->last_run ) ? null : (int) $task->last_run );
+
+            if ( $next_run !== (int) $task->next_run ) {
+                MainWP_DB_Backup::instance()->update_backup_task_with_values( $task->id, array( 'next_run' => $next_run ) );
+            }
         }
     }
 

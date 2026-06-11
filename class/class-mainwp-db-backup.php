@@ -550,6 +550,18 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
     }
 
     /**
+     * Method get_backup_tasks_due_by_next_run()
+     *
+     * Get tasks whose computed next_run has arrived. Legacy elapsed-mode
+     * tasks carry next_run = 0 and stay on the threshold queries below.
+     *
+     * @return object[] Backup tasks.
+     */
+    public function get_backup_tasks_due_by_next_run() {
+        return $this->wpdb->get_results( 'SELECT * FROM ' . esc_sql( $this->table_name( 'wp_backup' ) ) . ' WHERE paused = 0 AND next_run > 0 AND next_run <= ' . absint( time() ), OBJECT );
+    }
+
+    /**
      * Method get backup tasks daily.
      *
      * Get daily backup tasks.

@@ -1,0 +1,362 @@
+<?php
+/**
+ * MainWP Backup Schedule Cron Integration Tests
+ *
+ * Covers the next_run lane: the due-task query the hourly cron merges
+ * with the legacy threshold queries, the post-run next_run advancement,
+ * the schedule fields save path, and the timezone-change recompute.
+ *
+ * @package MainWP\Dashboard\Tests
+ */
+
+namespace MainWP\Dashboard\Tests;
+
+use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_DB_Backup;
+use MainWP\Dashboard\MainWP_Manage_Backups_Handler;
+use MainWP\Dashboard\MainWP_System_Cron_Jobs;
+
+/**
+ * Class MainWP_Backup_Schedule_Cron_Test
+ */
+class MainWP_Backup_Schedule_Cron_Test extends \WP_UnitTestCase {
+
+	/**
+	 * Clean fixture rows and request state.
+	 *
+	 * @return void
+	 */
+	public function tear_down() {
+		global $wpdb;
+
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		$wpdb->query( "DELETE FROM {$table} WHERE name LIKE 'Schedule cron test%'" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
+
+		foreach ( array( 'schedule_interval_hours', 'schedule_time_of_day', 'schedule_day_of_week', 'schedule_day_of_month' ) as $key ) {
+			unset( $_POST[ $key ] );
+		}
+
+		delete_option( 'timezone_string' );
+
+		parent::tear_down();
+	}
+
+	/**
+	 * Insert a backup task row.
+	 *
+	 * @param array $fields Field overrides.
+	 *
+	 * @return int Task id.
+	 */
+	private function insert_task( array $fields = array() ) {
+		global $wpdb;
+
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
+			$table,
+			array_merge(
+				array(
+					'userid'            => 1,
+					'name'              => 'Schedule cron test ' . uniqid(),
+					'schedule'          => 'daily',
+					'type'              => 'full',
+					'exclude'           => '',
+					'sites'             => '',
+					'groups'            => '',
+					'last'              => 0,
+					'last_run'          => 0,
+					'last_run_manually' => 0,
+					'completed_sites'   => '',
+					'completed'         => 0,
+					'backup_errors'     => '',
+					'subfolder'         => '',
+					'filename'          => '',
+					'paused'            => 0,
+					'archiveFormat'     => 'global',
+				),
+				$fields
+			)
+		);
+
+		return (int) $wpdb->insert_id;
+	}
+
+	/**
+	 * The due query returns tasks whose next_run has arrived.
+	 *
+	 * @return void
+	 */
+	public function test_due_query_returns_due_tasks() {
+		$id = $this->insert_task( array( 'next_run' => time() - 60 ) );
+
+		$due = MainWP_DB_Backup::instance()->get_backup_tasks_due_by_next_run();
+
+		$this->assertContains( $id, array_map( 'intval', wp_list_pluck( $due, 'id' ) ) );
+	}
+
+	/**
+	 * The due query excludes tasks scheduled in the future.
+	 *
+	 * @return void
+	 */
+	public function test_due_query_excludes_future_tasks() {
+		$id = $this->insert_task( array( 'next_run' => time() + HOUR_IN_SECONDS ) );
+
+		$due = MainWP_DB_Backup::instance()->get_backup_tasks_due_by_next_run();
+
+		$this->assertNotContains( $id, array_map( 'intval', wp_list_pluck( $due, 'id' ) ) );
+	}
+
+	/**
+	 * The due query excludes legacy elapsed-mode tasks; those stay on the
+	 * threshold queries.
+	 *
+	 * @return void
+	 */
+	public function test_due_query_excludes_legacy_tasks() {
+		$id = $this->insert_task( array( 'next_run' => 0 ) );
+
+		$due = MainWP_DB_Backup::instance()->get_backup_tasks_due_by_next_run();
+
+		$this->assertNotContains( $id, array_map( 'intval', wp_list_pluck( $due, 'id' ) ) );
+	}
+
+	/**
+	 * The due query excludes paused tasks.
+	 *
+	 * @return void
+	 */
+	public function test_due_query_excludes_paused_tasks() {
+		$id = $this->insert_task(
+			array(
+				'next_run' => time() - 60,
+				'paused'   => 1,
+			)
+		);
+
+		$due = MainWP_DB_Backup::instance()->get_backup_tasks_due_by_next_run();
+
+		$this->assertNotContains( $id, array_map( 'intval', wp_list_pluck( $due, 'id' ) ) );
+	}
+
+	/**
+	 * Saving an interval task computes a next_run and clamps the hours.
+	 *
+	 * @return void
+	 */
+	public function test_save_schedule_fields_interval_clamps_and_computes_next_run() {
+		$id = $this->insert_task( array( 'schedule' => 'interval' ) );
+
+		$_POST['schedule_interval_hours'] = '99999';
+
+		$values = MainWP_Manage_Backups_Handler::save_task_schedule_fields( $id );
+
+		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $id );
+		$this->assertSame( 8760, (int) $task->interval_hours, 'Interval hours must clamp to a year.' );
+		$this->assertGreaterThan( 0, (int) $task->next_run, 'An interval task gets a computed next_run.' );
+		$this->assertLessThanOrEqual( time(), (int) $task->next_run, 'A never-ran interval task is due immediately.' );
+		$this->assertSame( (int) $task->next_run, (int) $values['next_run'] );
+	}
+
+	/**
+	 * An interval task that already ran projects next_run from last_run
+	 * instead of firing immediately after an edit.
+	 *
+	 * @return void
+	 */
+	public function test_save_schedule_fields_interval_projects_from_last_run() {
+		$last_run = time() - HOUR_IN_SECONDS;
+		$id       = $this->insert_task(
+			array(
+				'schedule' => 'interval',
+				'last_run' => $last_run,
+			)
+		);
+
+		$_POST['schedule_interval_hours'] = '4';
+
+		MainWP_Manage_Backups_Handler::save_task_schedule_fields( $id );
+
+		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $id );
+		$this->assertSame( $last_run + 4 * HOUR_IN_SECONDS, (int) $task->next_run );
+	}
+
+	/**
+	 * Saving a daily task with a valid time of day stores it and computes
+	 * the next wall-clock slot.
+	 *
+	 * @return void
+	 */
+	public function test_save_schedule_fields_daily_time_of_day() {
+		$id = $this->insert_task( array( 'schedule' => 'daily' ) );
+
+		$_POST['schedule_time_of_day'] = '3:5';
+
+		MainWP_Manage_Backups_Handler::save_task_schedule_fields( $id );
+
+		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $id );
+		$this->assertSame( '03:05', $task->time_of_day, 'Time of day normalizes to HH:MM.' );
+		$this->assertGreaterThan( time(), (int) $task->next_run, 'The next 03:05 slot is in the future.' );
+		$this->assertLessThanOrEqual( time() + DAY_IN_SECONDS, (int) $task->next_run, 'The next slot is within a day.' );
+	}
+
+	/**
+	 * Invalid times of day are rejected and the task stays in legacy mode.
+	 *
+	 * @return void
+	 */
+	public function test_save_schedule_fields_rejects_invalid_time_of_day() {
+		foreach ( array( '25:00', 'abc', '12:75', '-1:30' ) as $invalid ) {
+			$id = $this->insert_task( array( 'schedule' => 'daily' ) );
+
+			$_POST['schedule_time_of_day'] = $invalid;
+
+			MainWP_Manage_Backups_Handler::save_task_schedule_fields( $id );
+
+			$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $id );
+			$this->assertSame( '', $task->time_of_day, "'{$invalid}' must be rejected." );
+			$this->assertSame( 0, (int) $task->next_run, "'{$invalid}' must leave the task in legacy mode." );
+		}
+	}
+
+	/**
+	 * Day fields clamp to their valid ranges.
+	 *
+	 * @return void
+	 */
+	public function test_save_schedule_fields_clamps_day_fields() {
+		$id = $this->insert_task( array( 'schedule' => 'monthly' ) );
+
+		$_POST['schedule_time_of_day']  = '02:00';
+		$_POST['schedule_day_of_week']  = '9';
+		$_POST['schedule_day_of_month'] = '31';
+
+		MainWP_Manage_Backups_Handler::save_task_schedule_fields( $id );
+
+		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $id );
+		$this->assertSame( 6, (int) $task->day_of_week, 'Day of week clamps to 0-6.' );
+		$this->assertSame( 28, (int) $task->day_of_month, 'Day of month clamps to 1-28.' );
+	}
+
+	/**
+	 * Clearing the schedule fields drops the task back to legacy mode.
+	 *
+	 * @return void
+	 */
+	public function test_save_schedule_fields_cleared_returns_to_legacy_mode() {
+		$id = $this->insert_task(
+			array(
+				'schedule'    => 'daily',
+				'time_of_day' => '06:00',
+				'next_run'    => time() + HOUR_IN_SECONDS,
+			)
+		);
+
+		$_POST['schedule_time_of_day'] = '';
+
+		MainWP_Manage_Backups_Handler::save_task_schedule_fields( $id );
+
+		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $id );
+		$this->assertSame( '', $task->time_of_day );
+		$this->assertSame( 0, (int) $task->next_run, 'A cleared task returns to legacy elapsed mode.' );
+	}
+
+	/**
+	 * A run that started advances next_run past the stored slot.
+	 *
+	 * @return void
+	 */
+	public function test_advance_next_run_after_run_started() {
+		$old_last_run = time() - 5 * HOUR_IN_SECONDS;
+		$id           = $this->insert_task(
+			array(
+				'schedule'       => 'interval',
+				'interval_hours' => 4,
+				'last_run'       => time(), // The run just stamped last_run.
+				'next_run'       => time() - 60,
+			)
+		);
+
+		MainWP_System_Cron_Jobs::instance()->maybe_advance_backup_next_run( $id, $old_last_run );
+
+		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $id );
+		$this->assertSame( time() + 4 * HOUR_IN_SECONDS, (int) $task->next_run, 'next_run projects one interval past the fresh last_run.' );
+	}
+
+	/**
+	 * A refused run (concurrency slot denied, last_run untouched) must not
+	 * advance next_run; the task stays due for the next tick.
+	 *
+	 * @return void
+	 */
+	public function test_advance_next_run_skipped_when_run_never_started() {
+		$last_run = time() - 5 * HOUR_IN_SECONDS;
+		$next_run = time() - 60;
+		$id       = $this->insert_task(
+			array(
+				'schedule'       => 'interval',
+				'interval_hours' => 4,
+				'last_run'       => $last_run,
+				'next_run'       => $next_run,
+			)
+		);
+
+		MainWP_System_Cron_Jobs::instance()->maybe_advance_backup_next_run( $id, $last_run );
+
+		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $id );
+		$this->assertSame( $next_run, (int) $task->next_run, 'A task whose run never started stays due.' );
+	}
+
+	/**
+	 * Legacy tasks are never touched by the advancement.
+	 *
+	 * @return void
+	 */
+	public function test_advance_next_run_ignores_legacy_tasks() {
+		$id = $this->insert_task(
+			array(
+				'schedule' => 'daily',
+				'last_run' => time(),
+				'next_run' => 0,
+			)
+		);
+
+		MainWP_System_Cron_Jobs::instance()->maybe_advance_backup_next_run( $id, time() - DAY_IN_SECONDS );
+
+		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $id );
+		$this->assertSame( 0, (int) $task->next_run );
+	}
+
+	/**
+	 * Changing the site timezone recomputes stored next_run values so a
+	 * wall-clock slot keeps meaning the same local time.
+	 *
+	 * @return void
+	 */
+	public function test_timezone_change_recomputes_next_run() {
+		update_option( 'timezone_string', 'UTC' );
+
+		$id = $this->insert_task(
+			array(
+				'schedule'    => 'daily',
+				'time_of_day' => '06:00',
+			)
+		);
+		$_POST['schedule_time_of_day'] = '06:00';
+		MainWP_Manage_Backups_Handler::save_task_schedule_fields( $id );
+
+		$utc_next = (int) MainWP_DB_Backup::instance()->get_backup_task_by_id( $id )->next_run;
+
+		update_option( 'timezone_string', 'Asia/Karachi' );
+		MainWP_System_Cron_Jobs::instance()->recompute_backup_next_runs();
+
+		$karachi_next = (int) MainWP_DB_Backup::instance()->get_backup_task_by_id( $id )->next_run;
+
+		$this->assertNotSame( $utc_next, $karachi_next, 'A timezone change must move the UTC instant.' );
+		$this->assertSame(
+			0,
+			( $karachi_next + 5 * HOUR_IN_SECONDS ) % DAY_IN_SECONDS - 6 * HOUR_IN_SECONDS,
+			'06:00 in Karachi (UTC+5) is 01:00 UTC.'
+		);
+	}
+}

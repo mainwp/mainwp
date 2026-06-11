@@ -216,6 +216,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         } else {
             $destinations = isset( $_POST['destinations'] ) && is_array( $_POST['destinations'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['destinations'] ) ) : array(); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified.
             MainWP_Backup_Storage_Handler::save_task_destinations( $task->id, $destinations );
+            static::save_task_schedule_fields( $task->id );
             die( wp_json_encode( array( 'result' => esc_html__( 'Task updated successfully.', 'mainwp' ) ) ) );
         }
     }
@@ -292,11 +293,71 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         } else {
             $destinations = isset( $_POST['destinations'] ) && is_array( $_POST['destinations'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['destinations'] ) ) : array(); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified.
             MainWP_Backup_Storage_Handler::save_task_destinations( $task->id, $destinations );
+            static::save_task_schedule_fields( $task->id );
 
             do_action( 'mainwp_add_backuptask', $task->id );
 
             die( wp_json_encode( array( 'result' => esc_html__( 'Task created successfully.', 'mainwp' ) ) ) );
         }
+    }
+
+    /**
+     * Validate and save the schedule fields posted with a task, and store
+     * the computed next_run.
+     *
+     * Reads schedule_interval_hours, schedule_time_of_day,
+     * schedule_day_of_week and schedule_day_of_month from the request the
+     * caller already nonce-verified. Interval hours only apply to interval
+     * tasks; a time of day only applies to daily, weekly and monthly tasks
+     * and must match HH:MM. A task without either drops back to legacy
+     * elapsed mode with next_run = 0.
+     *
+     * @param int $task_id Task id, already saved with its schedule.
+     *
+     * @return array The saved column values.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Backup_Schedule_Calculator::compute_next_run()
+     * @uses \MainWP\Dashboard\MainWP_DB_Backup::update_backup_task_with_values()
+     */
+    public static function save_task_schedule_fields( $task_id ) {
+        $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
+        if ( empty( $task ) ) {
+            return array();
+        }
+
+        //phpcs:disable WordPress.Security.NonceVerification.Missing -- caller verified.
+        $interval_hours = isset( $_POST['schedule_interval_hours'] ) ? absint( $_POST['schedule_interval_hours'] ) : 0;
+        $time_raw       = isset( $_POST['schedule_time_of_day'] ) ? sanitize_text_field( wp_unslash( $_POST['schedule_time_of_day'] ) ) : '';
+        $day_of_week    = isset( $_POST['schedule_day_of_week'] ) ? min( 6, absint( $_POST['schedule_day_of_week'] ) ) : 0;
+        $day_of_month   = isset( $_POST['schedule_day_of_month'] ) ? max( 1, min( 28, absint( $_POST['schedule_day_of_month'] ) ) ) : 1;
+        //phpcs:enable
+
+        $interval_hours = 'interval' === $task->schedule ? max( 1, min( 8760, $interval_hours ) ) : 0;
+
+        $time_of_day = '';
+        if ( in_array( $task->schedule, array( 'daily', 'weekly', 'monthly' ), true ) && preg_match( '/^(\d{1,2}):(\d{1,2})$/', $time_raw, $matches ) ) {
+            $hour   = (int) $matches[1];
+            $minute = (int) $matches[2];
+            if ( $hour <= 23 && $minute <= 59 ) {
+                $time_of_day = sprintf( '%02d:%02d', $hour, $minute );
+            }
+        }
+
+        $values = array(
+            'interval_hours' => $interval_hours,
+            'time_of_day'    => $time_of_day,
+            'day_of_week'    => $day_of_week,
+            'day_of_month'   => $day_of_month,
+        );
+
+        $sched_task = (object) array_merge( array( 'schedule' => $task->schedule ), $values );
+
+        $calculator         = new MainWP_Backup_Schedule_Calculator( wp_timezone(), time() );
+        $values['next_run'] = $calculator->compute_next_run( $sched_task, empty( $task->last_run ) ? null : (int) $task->last_run );
+
+        MainWP_DB_Backup::instance()->update_backup_task_with_values( $task_id, $values );
+
+        return $values;
     }
 
     /**
@@ -639,7 +700,16 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         if ( $id ) {
             $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $id );
             if ( static::can_edit_backuptask( $task ) ) {
-                MainWP_DB_Backup::instance()->update_backup_task_with_values( $task->id, array( 'paused' => 0 ) );
+                $values = array( 'paused' => 0 );
+
+                // A next_run stored before the pause may be stale; recompute
+                // so the task neither fires immediately nor skips a window.
+                if ( (int) $task->next_run > 0 ) {
+                    $calculator         = new MainWP_Backup_Schedule_Calculator( wp_timezone(), time() );
+                    $values['next_run'] = $calculator->compute_next_run( $task, empty( $task->last_run ) ? null : (int) $task->last_run );
+                }
+
+                MainWP_DB_Backup::instance()->update_backup_task_with_values( $task->id, $values );
                 die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
             }
         }

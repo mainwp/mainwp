@@ -199,4 +199,61 @@ class MainWP_Backup_Upload_Job_Store_Test extends \WP_UnitTestCase {
 			$this->assertSame( $status, $store->get_job( (int) $job->id )->status );
 		}
 	}
+
+	/**
+	 * Terminal writes succeed from any active status and report it.
+	 *
+	 * @return void
+	 */
+	public function test_terminal_writes_succeed_from_active_statuses() {
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( 109, array( 7 ) );
+		$job = $store->acquire_next_job( 'token-a', 300, 1000000 );
+
+		$store->set_status( (int) $job->id, MainWP_Backup_Upload_Job_Store::STATUS_UPLOADING );
+
+		$this->assertTrue( $store->complete_job( (int) $job->id ) );
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE, $store->get_job( (int) $job->id )->status );
+	}
+
+	/**
+	 * A completed upload can never be relabeled failed by a racing lane.
+	 *
+	 * @return void
+	 */
+	public function test_fail_refused_after_complete() {
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( 110, array( 7 ) );
+		$job = $store->acquire_next_job( 'token-a', 300, 1000000 );
+
+		$this->assertTrue( $store->complete_job( (int) $job->id ) );
+
+		$this->assertFalse( $store->fail_permanent( (int) $job->id, 'late failure' ) );
+		$this->assertFalse( $store->invalidate_credentials( (int) $job->id, 'late invalid' ) );
+
+		$fresh = $store->get_job( (int) $job->id );
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE, $fresh->status );
+		$this->assertSame( '', (string) $fresh->last_error );
+	}
+
+	/**
+	 * A permanently failed job stays failed: completion loses the race,
+	 * and a credentials-parked job is not overwritten either.
+	 *
+	 * @return void
+	 */
+	public function test_terminal_states_keep_first_writer() {
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( 111, array( 7, 8 ) );
+
+		$failed = $store->acquire_next_job( 'token-a', 300, 1000000 );
+		$this->assertTrue( $store->fail_permanent( (int) $failed->id, 'broken' ) );
+		$this->assertFalse( $store->complete_job( (int) $failed->id ) );
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_PERMANENT, $store->get_job( (int) $failed->id )->status );
+
+		$parked = $store->acquire_next_job( 'token-b', 300, 1000000 );
+		$this->assertTrue( $store->invalidate_credentials( (int) $parked->id, 'needs re-entry' ) );
+		$this->assertFalse( $store->fail_permanent( (int) $parked->id, 'late failure' ) );
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_CREDENTIALS_INVALID, $store->get_job( (int) $parked->id )->status );
+	}
 }

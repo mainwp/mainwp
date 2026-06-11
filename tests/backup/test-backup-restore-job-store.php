@@ -146,4 +146,51 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED, $this->store->get_job( $job_id )->status );
 		$this->assertNull( $this->store->get_active_job_for_site( 8801 ) );
 	}
+
+	/**
+	 * Terminal writes succeed from any active status and report it.
+	 */
+	public function test_terminal_writes_succeed_from_active_statuses() {
+		$job_id = $this->store->create_job( 8801, 42, array() );
+		$this->store->set_status( $job_id, MainWP_Backup_Restore_Job_Store::STATUS_RUNNING );
+
+		$this->assertTrue( $this->store->cancel_job( $job_id ) );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED, $this->store->get_job( $job_id )->status );
+	}
+
+	/**
+	 * A completed job can never be relabeled cancelled at the store layer.
+	 */
+	public function test_cancel_refused_after_complete() {
+		$job_id = $this->store->create_job( 8801, 42, array() );
+		$this->assertTrue( $this->store->complete_job( $job_id ) );
+
+		$this->assertFalse( $this->store->cancel_job( $job_id ) );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_COMPLETED, $this->store->get_job( $job_id )->status );
+	}
+
+	/**
+	 * A cancelled job stays cancelled: completion loses the race.
+	 */
+	public function test_complete_refused_after_cancel() {
+		$job_id = $this->store->create_job( 8801, 42, array() );
+		$this->assertTrue( $this->store->cancel_job( $job_id ) );
+
+		$this->assertFalse( $this->store->complete_job( $job_id ) );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED, $this->store->get_job( $job_id )->status );
+	}
+
+	/**
+	 * A finished job cannot be relabeled failed.
+	 */
+	public function test_fail_permanent_refused_after_complete() {
+		$job_id = $this->store->create_job( 8801, 42, array() );
+		$this->assertTrue( $this->store->complete_job( $job_id ) );
+
+		$this->assertFalse( $this->store->fail_permanent( $job_id, 'late failure' ) );
+
+		$job = $this->store->get_job( $job_id );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_COMPLETED, $job->status );
+		$this->assertSame( '', (string) $job->last_error );
+	}
 }

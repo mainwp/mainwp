@@ -230,17 +230,19 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_DB_Base { // phpcs:ignore G
      *
      * @param int    $job_id Job id.
      * @param string $error  Error text.
+     *
+     * @return bool True when the job left an active status; false when it
+     *              was already terminal and the write was refused.
      */
-    public function fail_permanent( int $job_id, string $error ): void {
-        $this->update_job(
+    public function fail_permanent( int $job_id, string $error ): bool {
+        return $this->terminal_update(
             $job_id,
             array(
                 'status'       => self::STATUS_FAILED_PERMANENT,
                 'last_error'   => $error,
                 'locked_until' => 0,
                 'locked_by'    => '',
-            ),
-            array( '%s', '%s', '%d', '%s' )
+            )
         );
     }
 
@@ -248,17 +250,19 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_DB_Base { // phpcs:ignore G
      * Complete a job.
      *
      * @param int $job_id Job id.
+     *
+     * @return bool True when the job left an active status; false when it
+     *              was already terminal and the write was refused.
      */
-    public function complete_job( int $job_id ): void {
-        $this->update_job(
+    public function complete_job( int $job_id ): bool {
+        return $this->terminal_update(
             $job_id,
             array(
                 'status'       => self::STATUS_COMPLETED,
                 'last_error'   => '',
                 'locked_until' => 0,
                 'locked_by'    => '',
-            ),
-            array( '%s', '%s', '%d', '%s' )
+            )
         );
     }
 
@@ -266,16 +270,18 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_DB_Base { // phpcs:ignore G
      * Cancel a job.
      *
      * @param int $job_id Job id.
+     *
+     * @return bool True when the job left an active status; false when it
+     *              was already terminal and the write was refused.
      */
-    public function cancel_job( int $job_id ): void {
-        $this->update_job(
+    public function cancel_job( int $job_id ): bool {
+        return $this->terminal_update(
             $job_id,
             array(
                 'status'       => self::STATUS_CANCELLED,
                 'locked_until' => 0,
                 'locked_by'    => '',
-            ),
-            array( '%s', '%d', '%s' )
+            )
         );
     }
 
@@ -308,6 +314,43 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_DB_Base { // phpcs:ignore G
         $row['updated'] = time();
         $format[]       = '%d';
         $this->wpdb->update( $this->table(), $row, array( 'id' => $job_id ), $format, array( '%d' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- dedicated restore job table.
+    }
+
+    /**
+     * Guarded write for terminal transitions: the row is only touched
+     * while its status is still active, so the first terminal writer
+     * wins and a finished, failed, or cancelled job is never relabeled
+     * by a racing lane (mirrors release_lock's owner guard).
+     *
+     * Column names come from this class's own terminal methods, never
+     * from input.
+     *
+     * @param int   $job_id Job id.
+     * @param array $row    Columns.
+     *
+     * @return bool True when exactly one active row was updated.
+     */
+    private function terminal_update( int $job_id, array $row ): bool {
+        $row['updated'] = time();
+
+        $set    = array();
+        $values = array();
+        foreach ( $row as $column => $value ) {
+            $set[]    = $column . ' = ' . ( is_int( $value ) ? '%d' : '%s' );
+            $values[] = $value;
+        }
+
+        $statuses     = self::active_statuses();
+        $placeholders = implode( ',', array_fill( 0, count( $statuses ), '%s' ) );
+
+        $changed = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- the guarded terminal write; must hit the DB engine.
+            $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- replacements and placeholders come from the same counted arrays.
+                'UPDATE ' . $this->table() . ' SET ' . implode( ', ', $set ) . " WHERE id = %d AND status IN ( {$placeholders} )", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- SET columns are class-internal literals; placeholder list built from a counted array.
+                array_merge( $values, array( $job_id ), $statuses )
+            )
+        );
+
+        return 1 === $changed;
     }
 
     /**

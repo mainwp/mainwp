@@ -203,7 +203,9 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             }
 
             MainWP_Backup_Restore_Transfer_Driver::instance()->cleanup_staging( $job_id );
-            $store->cancel_job( $job_id );
+            if ( ! $store->cancel_job( $job_id ) ) {
+                throw new MainWP_Exception( esc_html__( 'The restore reached its final state while the cancellation was confirmed and no longer needs cancelling.', 'mainwp' ) );
+            }
             return;
         }
 
@@ -624,8 +626,8 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
 
         // The phase that failed may have checkpointed progress after this
         // row was read; a stale write here would erase that cursor.
-        $fresh      = $store->get_job( (int) $job->id );
-        $checkpoint = null !== $fresh ? $fresh->checkpoint : $job->checkpoint;
+        $fresh                       = $store->get_job( (int) $job->id );
+        $checkpoint                  = null !== $fresh ? $fresh->checkpoint : $job->checkpoint;
         $checkpoint['resume_status'] = MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE === $job->status && isset( $checkpoint['resume_status'] )
             ? (string) $checkpoint['resume_status']
             : (string) $job->status;

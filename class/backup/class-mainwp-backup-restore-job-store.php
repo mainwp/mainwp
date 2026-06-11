@@ -205,6 +205,10 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
     /**
      * Record a retryable failure with exponential backoff.
      *
+     * Deliberately not shared with the upload store's fail_retryable:
+     * the orchestrator owns the retry count and passes it in, while the
+     * upload store increments attempt_count inside SQL.
+     *
      * @param int    $job_id        Job id.
      * @param string $error         Error text.
      * @param int    $attempt_count New attempt count.

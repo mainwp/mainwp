@@ -318,6 +318,11 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
      * Record a retryable failure: count the attempt, schedule the next
      * one, release the lock.
      *
+     * Deliberately not shared with the restore store's fail_retryable:
+     * this one increments attempt_count inside SQL so racing lanes each
+     * count their own attempt, while the restore orchestrator owns its
+     * retry count and passes it in.
+     *
      * @param int    $job_id        Job id.
      * @param string $error         Error description.
      * @param int    $next_retry_at Epoch after which the job may run again.

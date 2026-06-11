@@ -3466,8 +3466,8 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 // value that fails to encrypt aborts the update so we
                 // never overwrite an existing encrypted row with
                 // plaintext when the encryption layer is unhealthy.
-                $encrypted_http_user = MainWP_Credential_Storage::encrypt_credential( $http_user, 'http_user' );
-                $encrypted_http_pass = MainWP_Credential_Storage::encrypt_credential( $http_pass, 'http_pass' );
+                $encrypted_http_user = MainWP_Credential_Storage::encrypt_credential( $http_user, 'http_user', $website->http_user );
+                $encrypted_http_pass = MainWP_Credential_Storage::encrypt_credential( $http_pass, 'http_pass', $website->http_pass );
                 if ( false === $encrypted_http_user || false === $encrypted_http_pass ) {
                     return false;
                 }

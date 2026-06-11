@@ -58,11 +58,19 @@ class MainWP_Credential_Storage {
      * Callers MUST treat a `false` return as a hard failure and refuse
      * to persist; otherwise the column silently downgrades to plaintext.
      *
-     * @param mixed  $plaintext Credential to encrypt.
-     * @param string $field     Field name (used in keyfile prefix).
+     * When the caller passes the previously stored value, the key file
+     * referenced by that superseded envelope is deleted after the new
+     * envelope is built, so re-encryptions stop accumulating orphaned
+     * key files. The idempotent early-return above keeps an unchanged
+     * envelope's key file untouched, and a legacy plaintext old value
+     * has no key file to retire.
+     *
+     * @param mixed  $plaintext    Credential to encrypt.
+     * @param string $field        Field name (used in keyfile prefix).
+     * @param mixed  $old_envelope Previously stored value being replaced.
      * @return string|false|mixed
      */
-    public static function encrypt_credential( $plaintext, $field = 'http_pass' ) {
+    public static function encrypt_credential( $plaintext, $field = 'http_pass', $old_envelope = null ) {
         if ( null === $plaintext || '' === $plaintext ) {
             return $plaintext;
         }
@@ -83,7 +91,33 @@ class MainWP_Credential_Storage {
         if ( ! is_string( $encoded ) || '' === $encoded ) {
             return false;
         }
+        static::retire_superseded_key_file( $old_envelope, (string) $envelope['file_key'] );
         return self::ENVELOPE_PREFIX . $encoded;
+    }
+
+    /**
+     * Delete the key file a superseded envelope references.
+     *
+     * Best-effort: a malformed old value or a missing file is not an
+     * error. The deletion is skipped when the new envelope reuses the
+     * same key file, which would orphan the value just produced.
+     *
+     * @param mixed  $old_envelope Previously stored value being replaced.
+     * @param string $new_file_key Key file the replacement envelope uses.
+     * @return void
+     */
+    protected static function retire_superseded_key_file( $old_envelope, $new_file_key ) {
+        if ( ! static::is_credential_envelope( $old_envelope ) ) {
+            return;
+        }
+        $old_data = json_decode( substr( $old_envelope, strlen( self::ENVELOPE_PREFIX ) ), true );
+        if ( ! is_array( $old_data ) || empty( $old_data['file_key'] ) || ! is_string( $old_data['file_key'] ) ) {
+            return;
+        }
+        if ( $old_data['file_key'] === $new_file_key ) {
+            return;
+        }
+        do_action( 'mainwp_delete_key_file', $old_data['file_key'] );
     }
 
     /**

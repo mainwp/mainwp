@@ -118,6 +118,78 @@ class Test_Site_Credential_Encryption extends \WP_UnitTestCase {
 		$this->assertFalse( $result );
 	}
 
+	public function test_encrypt_retires_old_key_file_when_old_envelope_provided(): void {
+		$deleted = array();
+		add_action(
+			'mainwp_delete_key_file',
+			function ( $file_key ) use ( &$deleted ) {
+				$deleted[] = $file_key;
+			}
+		);
+
+		$old_envelope = self::ENVELOPE_PREFIX . wp_json_encode(
+			array(
+				'encrypted_val' => 'STUB:' . base64_encode( 'old-pw' ),
+				'file_key'      => 'site_credential_http_pass_oldkey',
+			)
+		);
+
+		$result = \MainWP\Dashboard\MainWP_Credential_Storage::encrypt_credential( 'new-pw', 'http_pass', $old_envelope );
+
+		$this->assertStringStartsWith( self::ENVELOPE_PREFIX, $result );
+		$this->assertSame( array( 'site_credential_http_pass_oldkey' ), $deleted );
+	}
+
+	public function test_encrypt_keeps_old_key_file_when_new_envelope_reuses_it(): void {
+		$deleted = array();
+		add_action(
+			'mainwp_delete_key_file',
+			function ( $file_key ) use ( &$deleted ) {
+				$deleted[] = $file_key;
+			}
+		);
+
+		// The stub reuses the same file_key on every encryption; deleting
+		// it would orphan the envelope we just produced.
+		$old_envelope = \MainWP\Dashboard\MainWP_Credential_Storage::encrypt_credential( 'old-pw', 'http_pass' );
+		$result       = \MainWP\Dashboard\MainWP_Credential_Storage::encrypt_credential( 'new-pw', 'http_pass', $old_envelope );
+
+		$this->assertStringStartsWith( self::ENVELOPE_PREFIX, $result );
+		$this->assertSame( array(), $deleted );
+	}
+
+	public function test_encrypt_deletes_nothing_without_old_envelope(): void {
+		$deleted = array();
+		add_action(
+			'mainwp_delete_key_file',
+			function ( $file_key ) use ( &$deleted ) {
+				$deleted[] = $file_key;
+			}
+		);
+
+		\MainWP\Dashboard\MainWP_Credential_Storage::encrypt_credential( 'fresh-pw', 'http_pass' );
+		\MainWP\Dashboard\MainWP_Credential_Storage::encrypt_credential( 'plain-old', 'http_pass', 'legacy-plaintext-not-an-envelope' );
+
+		$this->assertSame( array(), $deleted );
+	}
+
+	public function test_encrypt_idempotent_path_never_deletes(): void {
+		$deleted = array();
+		add_action(
+			'mainwp_delete_key_file',
+			function ( $file_key ) use ( &$deleted ) {
+				$deleted[] = $file_key;
+			}
+		);
+
+		$once = \MainWP\Dashboard\MainWP_Credential_Storage::encrypt_credential( 'idem-pw', 'http_pass' );
+		// Re-saving the stored envelope unchanged must not retire the key
+		// file the stored row still references.
+		\MainWP\Dashboard\MainWP_Credential_Storage::encrypt_credential( $once, 'http_pass', $once );
+
+		$this->assertSame( array(), $deleted );
+	}
+
 	// ---------------------------------------------------------------------
 	// decrypt_credential
 	// ---------------------------------------------------------------------

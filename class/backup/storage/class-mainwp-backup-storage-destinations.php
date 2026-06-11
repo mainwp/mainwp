@@ -202,6 +202,28 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
     }
 
     /**
+     * Build the provider for a destination row.
+     *
+     * @param object $row Destination row with decrypted settings.
+     *
+     * @return MainWP_Backup_Storage_Provider
+     *
+     * @throws \RuntimeException For an unknown provider slug.
+     */
+    public function make_provider( object $row ): MainWP_Backup_Storage_Provider {
+        $settings = isset( $row->settings ) && is_array( $row->settings ) ? $row->settings : array();
+
+        switch ( (string) $row->provider ) {
+            case 'local':
+                return new MainWP_Backup_Storage_Local( $settings );
+            case 's3':
+                return new MainWP_Backup_Storage_S3( $settings );
+            default:
+                throw new \RuntimeException( esc_html( 'Unknown storage provider: ' . $row->provider ), 0 );
+        }
+    }
+
+    /**
      * Encrypt a settings array for storage.
      *
      * @param array $settings Provider settings.

@@ -1501,6 +1501,10 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
         MainWP_Logger::instance()->debug( 'backups continue :: Found ' . count( $tasks ) . ' to continue.' );
 
+        // Completed snapshots upload to their storage destinations on this
+        // same five-minute lane, one resumable job per tick.
+        MainWP_Backup_Upload_Driver::instance()->process_pending_jobs();
+
         if ( empty( $tasks ) ) {
             return;
         }

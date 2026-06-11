@@ -405,6 +405,43 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A completed full run through the download branch records a snapshot
+	 * row carrying the downloaded artifact, exactly once per run.
+	 *
+	 * @return void
+	 */
+	public function test_completed_full_run_records_snapshot() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$content                = 'PK' . "\x03\x04" . str_repeat( 'x', 4092 );
+		$this->seed_download_ready_progress( $task->id, $site_id, strlen( $content ) );
+		$this->mock_child_action( 'delete_backup', array( 'result' => 'ok' ) );
+
+		add_filter(
+			'mainwp_download_to_file_pre',
+			function ( $pre, $url, $file ) use ( $content ) {
+				unset( $pre, $url );
+				file_put_contents( $file, $content ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- test fixture.
+				return true;
+			},
+			10,
+			3
+		);
+
+		$result = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+		$this->assertNotFalse( $result );
+
+		$snapshot = \MainWP\Dashboard\MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, (int) $task->id );
+
+		$this->assertNotNull( $snapshot, 'A completed full run must record a snapshot row.' );
+		$this->assertSame( 'full', $snapshot->type );
+		$this->assertNull( $snapshot->parent_id );
+		$this->assertCount( 1, $snapshot->archives );
+		$this->assertSame( 'full', $snapshot->archives[0]['role'] );
+		$this->assertSame( strlen( $content ), (int) $snapshot->archives[0]['size'] );
+		$this->assertFileExists( $snapshot->archives[0]['path'] );
+	}
+
+	/**
 	 * A downloaded file that fails validation is reported and the download
 	 * is not marked complete.
 	 *

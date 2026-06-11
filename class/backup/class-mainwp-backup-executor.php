@@ -686,6 +686,8 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 }
             }
 
+            static::record_downloaded_run_snapshot( $website, $pTask, $backupTaskProgress );
+
             $unique = $pTask->last_run;
 
             do_action( 'mainwp_postprocess_backup_site', $localBackupFile, $what, $subfolder, $regexBackupFile, $website, $taskId, $unique );
@@ -866,6 +868,69 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         if ( MainWP_DB_Backup::instance()->get_backup_task_by_id( $taskId ) ) {
             MainWP_DB_Backup::instance()->update_backup_errors( $taskId, $message . "\n" );
         }
+    }
+
+    /**
+     * Record a completed full/db download run as a snapshot row, once per
+     * run.
+     *
+     * Both the resumable child-task path and the legacy polling path
+     * converge on the same download branch, so this single point covers
+     * them. The created-since-last-run guard keeps a postprocess re-entry
+     * from recording the same run twice. Ad-hoc runs without a stored
+     * task carry no destinations and no chain, so they stay unrecorded.
+     *
+     * @param object $website  Website object.
+     * @param object $pTask    Scheduled task.
+     * @param object $progress Progress row carrying the downloaded paths.
+     *
+     * @return void
+     */
+    protected static function record_downloaded_run_snapshot( $website, $pTask, $progress ) {
+        if ( empty( $pTask->id ) ) {
+            return;
+        }
+
+        $snapshots = MainWP_Backup_Snapshots::instance();
+
+        $existing = $snapshots->get_latest_complete( (int) $website->id, (int) $pTask->id );
+        if ( null !== $existing && (int) $existing->created >= (int) $pTask->last_run ) {
+            return;
+        }
+
+        $archives = array();
+        foreach ( array(
+            'db'   => array( $progress->downloadedDBComplete, $progress->downloadedDB ),
+            'full' => array( $progress->downloadedFULLComplete, $progress->downloadedFULL ),
+        ) as $role => $download ) {
+            list( $complete, $path ) = $download;
+            if ( empty( $complete ) || empty( $path ) || ! is_file( $path ) ) {
+                continue;
+            }
+            $archives[] = array(
+                'file' => basename( $path ),
+                'size' => (int) filesize( $path ),
+                'role' => $role,
+                'path' => $path,
+            );
+        }
+
+        if ( empty( $archives ) ) {
+            return;
+        }
+
+        $has_full = in_array( 'full', array_column( $archives, 'role' ), true );
+
+        $snapshots->record_snapshot(
+            array(
+                'task_id'       => (int) $pTask->id,
+                'site_id'       => (int) $website->id,
+                'type'          => $has_full ? 'full' : 'db',
+                'parent_id'     => null,
+                'archives'      => $archives,
+                'manifest_path' => '',
+            )
+        );
     }
 
     /**

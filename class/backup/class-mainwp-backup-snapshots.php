@@ -84,7 +84,25 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
 
         $inserted = $this->wpdb->insert( $this->table_name( 'wp_backup_snapshot' ), $row, $format );
 
-        return $inserted ? (int) $this->wpdb->insert_id : 0;
+        if ( ! $inserted ) {
+            return 0;
+        }
+
+        $snapshot_id = (int) $this->wpdb->insert_id;
+
+        /**
+         * Fires after a completed backup run is recorded as a snapshot.
+         *
+         * The cloud upload driver listens here to enqueue upload jobs for
+         * the task's configured storage destinations.
+         *
+         * @param int $snapshot_id Snapshot id.
+         * @param int $task_id     Scheduled task id.
+         * @param int $site_id     Child site id.
+         */
+        do_action( 'mainwp_backup_snapshot_recorded', $snapshot_id, $row['task_id'], $row['site_id'] );
+
+        return $snapshot_id;
     }
 
     /**

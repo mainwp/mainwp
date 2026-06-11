@@ -130,4 +130,63 @@ class MainWP_Backup_Logs_Connector_Test extends \WP_UnitTestCase {
 
 		$this->assertCount( 0, $captured );
 	}
+
+	/**
+	 * The connector observes the upload action.
+	 *
+	 * @return void
+	 */
+	public function test_connector_observes_uploaded_action() {
+		$captured  = array();
+		$connector = $this->capturing_connector( $captured );
+
+		$this->assertContains( 'mainwp_backup_uploaded', $connector->actions );
+		$this->assertArrayHasKey( 'uploaded', $connector->get_action_labels() );
+	}
+
+	/**
+	 * An upload event becomes a log entry carrying the site, destination,
+	 * and snapshot.
+	 *
+	 * @return void
+	 */
+	public function test_upload_event_is_logged() {
+		$captured  = array();
+		$connector = $this->capturing_connector( $captured );
+
+		$connector->callback_mainwp_backup_uploaded(
+			array(
+				'site_id'          => 42,
+				'snapshot_id'      => 7,
+				'destination_id'   => 3,
+				'destination_name' => 'Primary S3',
+				'provider'         => 's3',
+				'objects'          => 12,
+				'bytes'            => 4096,
+			)
+		);
+
+		$this->assertCount( 1, $captured );
+		$this->assertSame( 42, $captured[0]['site_id'] );
+		$this->assertSame( 'backup', $captured[0]['context'] );
+		$this->assertSame( 'uploaded', $captured[0]['action'] );
+		$this->assertSame( 'Primary S3', $captured[0]['args']['destination'] );
+		$this->assertSame( 7, $captured[0]['args']['snapshot_id'] );
+		$this->assertSame( 's3', $captured[0]['args']['provider'] );
+	}
+
+	/**
+	 * A malformed upload event is ignored.
+	 *
+	 * @return void
+	 */
+	public function test_malformed_upload_event_is_ignored() {
+		$captured  = array();
+		$connector = $this->capturing_connector( $captured );
+
+		$connector->callback_mainwp_backup_uploaded( 'not-an-array' );
+		$connector->callback_mainwp_backup_uploaded( array() );
+
+		$this->assertCount( 0, $captured );
+	}
 }

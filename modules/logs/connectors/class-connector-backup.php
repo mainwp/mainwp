@@ -29,6 +29,7 @@ class Connector_Backup extends Log_Connector {
      */
     public $actions = array(
         'mainwp_backup_downloaded',
+        'mainwp_backup_uploaded',
     );
 
     /**
@@ -48,6 +49,7 @@ class Connector_Backup extends Log_Connector {
     public function get_action_labels() {
         return array(
             'downloaded' => esc_html__( 'Downloaded', 'mainwp' ),
+            'uploaded'   => esc_html__( 'Uploaded', 'mainwp' ),
         );
     }
 
@@ -89,6 +91,41 @@ class Connector_Backup extends Log_Connector {
             (int) $event['site_id'],
             'backup',
             'downloaded',
+            1
+        );
+    }
+
+    /**
+     * Log snapshot uploads to storage destinations.
+     *
+     * @action mainwp_backup_uploaded
+     *
+     * @param array $event Upload details: site_id, snapshot_id, destination_id,
+     *                     destination_name, provider, objects, bytes.
+     */
+    public function callback_mainwp_backup_uploaded( $event ) {
+        if ( ! is_array( $event ) || empty( $event['site_id'] ) || empty( $event['destination_id'] ) ) {
+            return;
+        }
+
+        // translators: %s: Storage destination name.
+        $message = esc_html__( 'Backup uploaded to storage destination: %s', 'mainwp' );
+
+        $args = array(
+            'destination'    => isset( $event['destination_name'] ) ? sanitize_text_field( $event['destination_name'] ) : '',
+            'destination_id' => (int) $event['destination_id'],
+            'snapshot_id'    => isset( $event['snapshot_id'] ) ? (int) $event['snapshot_id'] : 0,
+            'provider'       => isset( $event['provider'] ) ? sanitize_text_field( $event['provider'] ) : '',
+            'objects'        => isset( $event['objects'] ) ? (int) $event['objects'] : 0,
+            'bytes'          => isset( $event['bytes'] ) ? (int) $event['bytes'] : 0,
+        );
+
+        $this->log(
+            $message,
+            $args,
+            (int) $event['site_id'],
+            'backup',
+            'uploaded',
             1
         );
     }

@@ -75,6 +75,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         add_action( 'mainwp_cronreconnect_action', array( $this, 'cron_reconnect' ) );
         add_action( 'mainwp_cronbackups_action', array( $this, 'cron_backups' ) );
         add_action( 'mainwp_cronbackups_continue_action', array( $this, 'cron_backups_continue' ) );
+        add_action( 'mainwp_cronbackups_prune_action', array( $this, 'cron_backups_prune' ) );
         add_action( 'mainwp_cronupdatescheck_action', array( $this, 'cron_updates_check' ) );
         add_action( 'mainwp_cronpingchilds_action', array( $this, 'cron_ping_childs' ) );
         add_action( 'mainwp_cronsitehealthcheck_action', array( $this, 'cron_check_websites_health' ) );
@@ -137,6 +138,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
                 array(
                     'mainwp_cronbackups_action'          => 'hourly',
                     'mainwp_cronbackups_continue_action' => '5minutely',
+                    'mainwp_cronbackups_prune_action'    => 'daily',
                 )
             );
         }
@@ -173,6 +175,10 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
             $sched = wp_next_scheduled( 'mainwp_cronbackups_continue_action' );
             if ( $sched ) {
                 wp_unschedule_event( $sched, 'mainwp_cronbackups_continue_action' );
+            }
+            $sched = wp_next_scheduled( 'mainwp_cronbackups_prune_action' );
+            if ( $sched ) {
+                wp_unschedule_event( $sched, 'mainwp_cronbackups_prune_action' );
             }
         }
 
@@ -1507,8 +1513,12 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         MainWP_Logger::instance()->debug( 'backups continue :: Found ' . count( $tasks ) . ' to continue.' );
 
         // Completed snapshots upload to their storage destinations on this
-        // same five-minute lane, one resumable job per tick.
+        // same five-minute lane, one resumable job per tick. Retention
+        // follows: one cloud delete job, then one queued task and site pair
+        // from the post-snapshot queue.
         MainWP_Backup_Upload_Driver::instance()->process_pending_jobs();
+        MainWP_Backup_Cloud_Delete_Driver::instance()->process_pending_delete_jobs();
+        MainWP_Backup_Retention_Scheduler::instance()->process_post_snapshot_queue();
 
         if ( empty( $tasks ) ) {
             return;
@@ -1628,6 +1638,17 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
             $this->maybe_advance_backup_next_run( $task->id, $old_last_run );
         }
+    }
+
+    /**
+     * Method cron_backups_prune()
+     *
+     * Daily retention sweep over every backup task carrying a policy.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Backup_Retention_Scheduler::cron_backups_prune()
+     */
+    public function cron_backups_prune() {
+        MainWP_Backup_Retention_Scheduler::instance()->cron_backups_prune();
     }
 
     /**

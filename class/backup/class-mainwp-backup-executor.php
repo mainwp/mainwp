@@ -248,6 +248,28 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     if ( '' !== $send['notice'] ) {
                         static::record_incremental_notice( $website, $taskId, $send['notice'] );
                     }
+                    if ( 'chunk-push' === $send['mode'] ) {
+                        // The manifest is too large for the create request:
+                        // chunk it over first and reference the staged
+                        // session. A transfer that cannot get through falls
+                        // back to a manifest-emitting full in this cycle;
+                        // the chunk-push marker keeps a later missing-base
+                        // report escalating to full instead of retrying.
+                        $manifest_path   = (string) $params['__manifest_path'];
+                        $manifest_sha256 = (string) $params['__manifest_sha256'];
+                        unset( $params['__manifest_path'], $params['__manifest_sha256'] );
+
+                        $push = MainWP_Backup_Manifest_Chunk_Transfer::instance()->push( $website, $manifest_path, $manifest_sha256 );
+                        if ( $push['ok'] ) {
+                            $params['parent_manifest_ref']    = $push['mtoken'];
+                            $params['parent_manifest_sha256'] = $manifest_sha256;
+                        } else {
+                            static::record_incremental_notice( $website, $taskId, MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_MANIFEST_CHUNK_SEND_FAILED ) );
+                            $params['type']          = 'full';
+                            $params['emit_manifest'] = '1';
+                            unset( $params['parent_snapshot_id'] );
+                        }
+                    }
                     if ( $use_spine ) {
                         // Remember what this run attempted, so a child-reported
                         // missing base escalates plain -> push -> full instead
@@ -764,11 +786,28 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             }
         }
 
-        $escalate_to_full = in_array( $marker, array( 'push', 'full' ), true );
+        $escalate_to_full = in_array( $marker, array( 'push', 'chunk-push', 'full' ), true );
         $manifest_b64     = '';
         if ( ! $escalate_to_full && 'plain' === $marker ) {
-            $manifest_b64     = static::pushable_manifest( $base );
-            $escalate_to_full = '' === $manifest_b64;
+            $manifest_b64 = static::pushable_manifest( $base );
+            if ( '' === $manifest_b64 ) {
+                // Too large for one request: a chunk-capable child stages
+                // the manifest in pieces instead of forcing a full backup.
+                $chunkable = static::chunkable_manifest( $base, $website );
+                if ( '' !== $chunkable['path'] ) {
+                    return array(
+                        'type'   => 'incremental',
+                        'mode'   => 'chunk-push',
+                        'params' => array(
+                            'parent_snapshot_id' => (string) $base->id,
+                            '__manifest_path'    => $chunkable['path'],
+                            '__manifest_sha256'  => $chunkable['sha256'],
+                        ),
+                        'notice' => '',
+                    );
+                }
+                $escalate_to_full = true;
+            }
         }
 
         if ( $escalate_to_full ) {
@@ -872,6 +911,43 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         }
         $content = file_get_contents( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- local manifest read.
         return false === $content ? '' : base64_encode( $content ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- wire transport encoding for the pushed manifest, not code.
+    }
+
+    /**
+     * The base snapshot's manifest as a chunk-push candidate: its local
+     * path and hash, or an empty path when the file is unusable or the
+     * child cannot stage chunks.
+     *
+     * @param object $base    Base snapshot row.
+     * @param object $website Website object.
+     *
+     * @return array { path: string, sha256: string }
+     */
+    protected static function chunkable_manifest( $base, $website ) {
+        $none = array(
+            'path'   => '',
+            'sha256' => '',
+        );
+        if ( ! MainWP_Backup_Monitor::child_supports_manifest_chunk( $website ) ) {
+            return $none;
+        }
+        $path = isset( $base->manifest_path ) ? (string) $base->manifest_path : '';
+        if ( '' === $path || ! is_readable( $path ) ) {
+            return $none;
+        }
+        $size = (int) filesize( $path );
+        // The child's staging receiver enforces the same 50 MiB ceiling.
+        if ( $size < 1 || $size > 50 * 1024 * 1024 ) {
+            return $none;
+        }
+        $sha256 = hash_file( 'sha256', $path );
+        if ( ! is_string( $sha256 ) ) {
+            return $none;
+        }
+        return array(
+            'path'   => $path,
+            'sha256' => $sha256,
+        );
     }
 
     /**

@@ -754,4 +754,182 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		$this->assertNotNull( $cycle['exception'] );
 		$this->assertSame( MainWP_Backup_Error_Codes::ERR_INCREMENTAL_BASE_MISSING, $cycle['exception']->get_message_error_code() );
 	}
+
+	/**
+	 * Make the base manifest larger than the inline push cap.
+	 *
+	 * @return string Manifest content.
+	 */
+	protected function oversize_manifest_fixture() {
+		$content = str_repeat( "some/very/long/path/file.php\t12345\t1700000000\n", 120000 );
+		file_put_contents( $this->manifest_fixture, $content ); // phpcs:ignore -- test fixture.
+		return $content;
+	}
+
+	/**
+	 * A chunk-capable receiver mock for backup_manifest_chunk.
+	 *
+	 * @param object $state Holder collecting received bytes.
+	 *
+	 * @return callable Responder.
+	 */
+	protected function manifest_chunk_responder( $state ) {
+		return function ( $params ) use ( $state ) {
+			$state->bytes .= base64_decode( $params['chunk_b64'] );
+			return array(
+				'result'         => 'ok',
+				'mtoken'         => 'tok0123456789abc',
+				'bytes_received' => strlen( $state->bytes ),
+			);
+		};
+	}
+
+	/**
+	 * When the inline push would overflow and the child can stage chunks,
+	 * the manifest travels in pieces and the create references the staged
+	 * session instead of forcing a full backup.
+	 *
+	 * @return void
+	 */
+	public function test_oversized_manifest_chunk_pushes_after_missing_base() {
+		$site_id = $this->create_test_site();
+		$base_id = $this->record_base_snapshot( $site_id );
+		$content = $this->oversize_manifest_fixture();
+
+		$state        = new \stdClass();
+		$state->bytes = '';
+
+		$this->mock_child_actions(
+			array(
+				'backup_preflight'      => $this->preflight_response( array( 'manifest_chunk' => 1 ) ),
+				'backup_manifest_chunk' => $this->manifest_chunk_responder( $state ),
+				'backup_task_create'    => array(
+					'task_id' => 'child-task-1',
+					'phase'   => 'queued',
+				),
+				'backup_task_run'       => array(
+					'phase'      => 'failed',
+					'error'      => 'The file list from the previous backup is missing.',
+					'error_code' => 'mainwp_backup_incremental_base_missing',
+				),
+			)
+		);
+
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$task    = $this->make_task( $website );
+
+		// Cycle 1-2: plain incremental, child reports the base missing - requeued.
+		$this->run_cycle( $site_id, $task );
+		$this->run_cycle( $site_id, $task );
+
+		// Cycle 3: the retry would push the manifest, but it is oversized -
+		// it chunks over instead and the create references the session.
+		$this->run_cycle( $site_id, $task );
+
+		$this->assertSame( $content, $state->bytes, 'Every manifest byte arrives through the chunk callable.' );
+
+		$creates = $this->all_call_params( 'backup_task_create' );
+		$this->assertCount( 2, $creates );
+		$this->assertSame( 'incremental', $creates[1]['type'] );
+		$this->assertSame( (string) $base_id, (string) $creates[1]['parent_snapshot_id'] );
+		$this->assertSame( 'tok0123456789abc', $creates[1]['parent_manifest_ref'] );
+		$this->assertSame( hash( 'sha256', $content ), $creates[1]['parent_manifest_sha256'] );
+		$this->assertArrayNotHasKey( 'parent_manifest', $creates[1], 'The oversized manifest never travels inline.' );
+
+		// Cycle 4-5: the chunk-pushed retry also reports the base missing -
+		// the next escalation is the full fallback.
+		$this->run_cycle( $site_id, $task );
+		$this->run_cycle( $site_id, $task );
+
+		$creates = $this->all_call_params( 'backup_task_create' );
+		$this->assertCount( 3, $creates );
+		$this->assertSame( 'full', $creates[2]['type'] );
+		$this->assertSame( '1', (string) $creates[2]['emit_manifest'] );
+	}
+
+	/**
+	 * A child without the staging capability keeps today's behavior: an
+	 * oversized manifest forces the full fallback.
+	 *
+	 * @return void
+	 */
+	public function test_oversized_manifest_without_capability_runs_full() {
+		$site_id = $this->create_test_site();
+		$this->record_base_snapshot( $site_id );
+		$this->oversize_manifest_fixture();
+
+		$this->mock_child_actions(
+			array(
+				'backup_preflight'   => $this->preflight_response(),
+				'backup_task_create' => array(
+					'task_id' => 'child-task-1',
+					'phase'   => 'queued',
+				),
+				'backup_task_run'    => array(
+					'phase'      => 'failed',
+					'error'      => 'The file list from the previous backup is missing.',
+					'error_code' => 'mainwp_backup_incremental_base_missing',
+				),
+			)
+		);
+
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$task    = $this->make_task( $website );
+
+		$this->run_cycle( $site_id, $task );
+		$this->run_cycle( $site_id, $task );
+		$this->run_cycle( $site_id, $task );
+
+		$creates = $this->all_call_params( 'backup_task_create' );
+		$this->assertCount( 2, $creates );
+		$this->assertSame( 'full', $creates[1]['type'] );
+		$this->assertSame( '1', (string) $creates[1]['emit_manifest'] );
+		$this->assertSame( array(), $this->all_call_params( 'backup_manifest_chunk' ), 'No chunk is sent to a child that cannot stage it.' );
+	}
+
+	/**
+	 * A chunk transfer that cannot get through falls the run back to a
+	 * full backup in the same cycle - a backup that costs more disk beats
+	 * one that silently never runs.
+	 *
+	 * @return void
+	 */
+	public function test_chunk_push_failure_falls_back_to_full() {
+		$site_id = $this->create_test_site();
+		$this->record_base_snapshot( $site_id );
+		$this->oversize_manifest_fixture();
+
+		$this->mock_child_actions(
+			array(
+				'backup_preflight'      => $this->preflight_response( array( 'manifest_chunk' => 1 ) ),
+				'backup_manifest_chunk' => function () {
+					throw new MainWP_Exception( 'cURL error 52: empty reply' );
+				},
+				'backup_task_create'    => array(
+					'task_id' => 'child-task-1',
+					'phase'   => 'queued',
+				),
+				'backup_task_run'       => array(
+					'phase'      => 'failed',
+					'error'      => 'The file list from the previous backup is missing.',
+					'error_code' => 'mainwp_backup_incremental_base_missing',
+				),
+			)
+		);
+
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$task    = $this->make_task( $website );
+
+		$this->run_cycle( $site_id, $task );
+		$this->run_cycle( $site_id, $task );
+		$cycle = $this->run_cycle( $site_id, $task );
+
+		$this->assertNull( $cycle['exception'], 'The failed chunk transfer falls back instead of failing the run.' );
+
+		$creates = $this->all_call_params( 'backup_task_create' );
+		$this->assertCount( 2, $creates );
+		$this->assertSame( 'full', $creates[1]['type'] );
+		$this->assertSame( '1', (string) $creates[1]['emit_manifest'] );
+		$this->assertArrayNotHasKey( 'parent_manifest_ref', $creates[1] );
+	}
 }

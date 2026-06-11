@@ -774,9 +774,12 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             $chain = MainWP_Backup_Snapshots::instance()->get_chain( (int) $base->id );
             // A chain at its limit restarts with a new full base, turning
             // the old chain into a complete, prunable retention unit. A
-            // chain whose walk never reaches a full base is broken and
-            // cannot restore completely - restarting is the safe answer.
-            if ( count( $chain ) >= $max_chain_length || 'full' !== $chain[0]->type ) {
+            // chain whose walk never reaches a full base, or that crosses
+            // a non-complete link (a pruned ancestor's artifacts are gone),
+            // is broken and cannot restore completely - restarting is the
+            // safe answer.
+            $has_broken_link = (bool) array_filter( $chain, static fn( $link ) => 'complete' !== $link->status );
+            if ( $has_broken_link || count( $chain ) >= $max_chain_length || 'full' !== $chain[0]->type ) {
                 return array(
                     'type'   => 'full',
                     'mode'   => 'full',

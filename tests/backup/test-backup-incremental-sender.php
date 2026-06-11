@@ -454,6 +454,39 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A pruned ancestor breaks the chain even below the length limit:
+	 * its artifacts are gone, so every further increment would be
+	 * unrestorable. The next run restarts with a new full base.
+	 *
+	 * @return void
+	 */
+	public function test_pruned_ancestor_restarts_chain_with_full() {
+		$site_id = $this->create_test_site();
+		$base_id = $this->record_base_snapshot( $site_id );
+		$this->record_increment( $site_id, $base_id );
+		MainWP_Backup_Snapshots::instance()->set_status( $base_id, 'pruned' );
+
+		$this->mock_child_actions(
+			array(
+				'backup_preflight'   => $this->preflight_response(),
+				'backup_task_create' => array(
+					'task_id' => 'child-task-1',
+					'phase'   => 'queued',
+				),
+			)
+		);
+
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$cycle   = $this->run_cycle( $site_id, $this->make_task( $website, 11, array( 'max_chain_length' => 5 ) ) );
+
+		$this->assertNull( $cycle['exception'] );
+
+		$params = $this->last_call_params( 'backup_task_create' );
+		$this->assertSame( 'full', $params['type'], 'A chain over a pruned base cannot restore; the run restarts full.' );
+		$this->assertSame( '1', (string) $params['emit_manifest'] );
+	}
+
+	/**
 	 * A zero limit means unlimited - the chain keeps growing, matching
 	 * the behavior before the limit existed.
 	 *

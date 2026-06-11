@@ -174,6 +174,7 @@ class MainWP_Manage_Sites_Backup_View { // phpcs:ignore Generic.Classes.OpeningB
                         <select name="mainwp-backup-type" id="mainwp-backup-type" class="ui dropdown">
                             <option value="full" selected><?php esc_html_e( 'Full Backup', 'mainwp' ); ?></option>
                             <option value="db"><?php esc_html_e( 'Database Backup', 'mainwp' ); ?></option>
+                            <option value="files"><?php esc_html_e( 'Files Backup', 'mainwp' ); ?></option>
                         </select>
                     </div>
                 </div>
@@ -196,8 +197,10 @@ class MainWP_Manage_Sites_Backup_View { // phpcs:ignore Generic.Classes.OpeningB
                 }
 
                 $backupSettings = MainWP_DB_Backup::instance()->get_website_backup_settings( $website->id );
-                $archiveFormat  = $backupSettings->archiveFormat;
-                $useGlobal      = ( 'global' === $archiveFormat );
+                // A site that never saved per-site backup settings has no
+                // row; treat it as using the global format.
+                $archiveFormat = empty( $backupSettings ) || empty( $backupSettings->archiveFormat ) ? 'global' : $backupSettings->archiveFormat;
+                $useGlobal     = ( 'global' === $archiveFormat );
                 ?>
 
                 <div class="ui grid field">

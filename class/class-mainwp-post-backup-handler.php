@@ -371,6 +371,22 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
     }
 
     /**
+     * Method sanitize_adhoc_backup_type()
+     *
+     * Allowlist the ad-hoc backup type from the wire. Incremental is
+     * deliberately absent - its chain lives on a scheduled task - and
+     * anything unrecognized folds to a full backup rather than reaching
+     * the executor as arbitrary input.
+     *
+     * @param string $type Requested backup type.
+     *
+     * @return string One of full, db, or files.
+     */
+    public static function sanitize_adhoc_backup_type( string $type ): string {
+        return in_array( $type, array( 'full', 'db', 'files' ), true ) ? $type : 'full';
+    }
+
+    /**
      * Method mainwp_backup()
      *
      * Run backup task
@@ -396,7 +412,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             $excludedFolder = array_map( 'htmlentities', $excludedFolder );
             $excludedFolder = MainWP_Backup_Settings::sanitize_exclude_list( $excludedFolder );
 
-            $type                           = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
+            $type                           = static::sanitize_adhoc_backup_type( isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '' );
             $subfolder                      = isset( $_POST['subfolder'] ) ? sanitize_text_field( wp_unslash( $_POST['subfolder'] ) ) : '';
             $excludebackup                  = isset( $_POST['excludebackup'] ) ? sanitize_text_field( wp_unslash( $_POST['excludebackup'] ) ) : '';
             $excludecache                   = isset( $_POST['excludecache'] ) ? sanitize_text_field( wp_unslash( $_POST['excludecache'] ) ) : '';

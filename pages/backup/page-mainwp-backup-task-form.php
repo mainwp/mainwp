@@ -162,6 +162,52 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
     }
 
     /**
+     * Render the retention policy fields. Zero means no limit; the
+     * defaults keep everything, matching the behavior before retention
+     * existed.
+     *
+     * @param object|null $task The task being edited, if any.
+     *
+     * @return void
+     */
+    public static function render_retention_fields( $task ): void {
+        $retention_count      = isset( $task->retention_count ) ? (int) $task->retention_count : 0;
+        $retention_days       = isset( $task->retention_days ) ? (int) $task->retention_days : 0;
+        $retention_storage_mb = isset( $task->retention_storage_mb ) ? (int) $task->retention_storage_mb : 0;
+        $delete_cloud_copies  = ! isset( $task->delete_cloud_copies ) || 1 === (int) $task->delete_cloud_copies;
+        ?>
+        <h3 class="header"><?php esc_html_e( 'Backup Retention', 'mainwp' ); ?></h3>
+        <div class="ui grid field">
+            <label class="six wide column middle aligned"><?php esc_html_e( 'Keep last', 'mainwp' ); ?></label>
+            <div class="ten wide column">
+                <input type="number" name="mainwp-backup-retention-count" id="mainwp-backup-retention-count" min="0" placeholder="<?php esc_attr_e( 'No limit', 'mainwp' ); ?>" value="<?php echo $retention_count > 0 ? esc_attr( $retention_count ) : ''; ?>"/>
+                <em><?php esc_html_e( 'Number of backups to keep per site. Older backups are removed once newer ones complete, and the most recent backup always stays.', 'mainwp' ); ?></em>
+            </div>
+        </div>
+        <div class="ui grid field">
+            <label class="six wide column middle aligned"><?php esc_html_e( 'Remove backups older than (days)', 'mainwp' ); ?></label>
+            <div class="ten wide column">
+                <input type="number" name="mainwp-backup-retention-days" id="mainwp-backup-retention-days" min="0" placeholder="<?php esc_attr_e( 'No limit', 'mainwp' ); ?>" value="<?php echo $retention_days > 0 ? esc_attr( $retention_days ) : ''; ?>"/>
+            </div>
+        </div>
+        <div class="ui grid field">
+            <label class="six wide column middle aligned"><?php esc_html_e( 'Storage cap (MB)', 'mainwp' ); ?></label>
+            <div class="ten wide column">
+                <input type="number" name="mainwp-backup-retention-storage-mb" id="mainwp-backup-retention-storage-mb" min="0" placeholder="<?php esc_attr_e( 'No limit', 'mainwp' ); ?>" value="<?php echo $retention_storage_mb > 0 ? esc_attr( $retention_storage_mb ) : ''; ?>"/>
+                <em><?php esc_html_e( 'When this task\'s backups for a site exceed the cap, the oldest are removed until they fit.', 'mainwp' ); ?></em>
+            </div>
+        </div>
+        <div class="ui grid field">
+            <label class="six wide column middle aligned"><?php esc_html_e( 'Remove cloud copies too', 'mainwp' ); ?></label>
+            <div class="ten wide column ui toggle checkbox">
+                <input type="checkbox" id="mainwp-backup-delete-cloud-copies" <?php echo $delete_cloud_copies ? 'checked' : ''; ?>>
+                <em><?php esc_html_e( 'Removed backups are also deleted from the storage destinations they uploaded to.', 'mainwp' ); ?></em>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
      * Render Scheduled Backup.
      *
      * @return void
@@ -252,17 +298,71 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
             <div class="ui info message" id="mainwp-backup-incremental-note" <?php echo $incremental_note_style; //phpcs:ignore -- static attribute. ?>>
                 <?php esc_html_e( 'Incremental backups copy only the files that changed since the previous run in the chain and include a fresh database dump every time, so each run restores to its own point in time. The first run creates a full backup as the chain base. Sites running a MainWP Child version without incremental support receive a full backup on every run, with a note recorded on the task.', 'mainwp' ); ?>
             </div>
+            <?php
+            $schedule       = isset( $task->schedule ) ? (string) $task->schedule : 'daily';
+            $interval_hours = isset( $task->interval_hours ) && (int) $task->interval_hours > 0 ? (int) $task->interval_hours : 1;
+            $time_of_day    = isset( $task->time_of_day ) ? (string) $task->time_of_day : '';
+            $day_of_week    = isset( $task->day_of_week ) ? (int) $task->day_of_week : 0;
+            $day_of_month   = isset( $task->day_of_month ) && (int) $task->day_of_month > 0 ? (int) $task->day_of_month : 1;
+
+            $interval_style = 'interval' === $schedule ? '' : 'style="display:none"';
+            $tod_style      = in_array( $schedule, array( 'daily', 'weekly', 'monthly' ), true ) ? '' : 'style="display:none"';
+            $dow_style      = 'weekly' === $schedule ? '' : 'style="display:none"';
+            $dom_style      = 'monthly' === $schedule ? '' : 'style="display:none"';
+
+            $week_days = array(
+                esc_html__( 'Sunday', 'mainwp' ),
+                esc_html__( 'Monday', 'mainwp' ),
+                esc_html__( 'Tuesday', 'mainwp' ),
+                esc_html__( 'Wednesday', 'mainwp' ),
+                esc_html__( 'Thursday', 'mainwp' ),
+                esc_html__( 'Friday', 'mainwp' ),
+                esc_html__( 'Saturday', 'mainwp' ),
+            );
+            ?>
             <div class="ui grid field">
                 <label class="six wide column middle aligned"><?php esc_html_e( 'Schedule', 'mainwp' ); ?></label>
                 <div class="ten wide column">
                     <select name="mainwp-backup-task-schedule" id="mainwp-backup-task-schedule" class="ui dropdown">
-                        <option value="daily" <?php echo( ! isset( $task ) || 'daily' === $task->schedule ? 'selected' : '' ); ?>><?php esc_html_e( 'Daily', 'mainwp' ); ?></option>
-                        <option value="weekly" <?php echo( ! isset( $task ) || 'weekly' === $task->schedule ? 'selected' : '' ); ?>><?php esc_html_e( 'Weekly', 'mainwp' ); ?></option>
-                        <option value="monthly" <?php echo( ! isset( $task ) || 'monthly' === $task->schedule ? 'selected' : '' ); ?>><?php esc_html_e( 'Monthly', 'mainwp' ); ?></option>
+                        <option value="daily" <?php echo 'daily' === $schedule ? 'selected' : ''; ?>><?php esc_html_e( 'Daily', 'mainwp' ); ?></option>
+                        <option value="weekly" <?php echo 'weekly' === $schedule ? 'selected' : ''; ?>><?php esc_html_e( 'Weekly', 'mainwp' ); ?></option>
+                        <option value="monthly" <?php echo 'monthly' === $schedule ? 'selected' : ''; ?>><?php esc_html_e( 'Monthly', 'mainwp' ); ?></option>
+                        <option value="interval" <?php echo 'interval' === $schedule ? 'selected' : ''; ?>><?php esc_html_e( 'Every N hours', 'mainwp' ); ?></option>
                     </select>
                 </div>
             </div>
+            <div class="ui grid field" id="mainwp-schedule-interval-wrapper" <?php echo $interval_style; //phpcs:ignore -- static attribute. ?>>
+                <label class="six wide column middle aligned"><?php esc_html_e( 'Run every (hours)', 'mainwp' ); ?></label>
+                <div class="ten wide column">
+                    <input type="number" name="mainwp-schedule-interval-hours" id="mainwp-schedule-interval-hours" min="1" max="8760" value="<?php echo esc_attr( $interval_hours ); ?>"/>
+                </div>
+            </div>
+            <div class="ui grid field" id="mainwp-schedule-time-of-day-wrapper" <?php echo $tod_style; //phpcs:ignore -- static attribute. ?>>
+                <label class="six wide column middle aligned"><?php esc_html_e( 'Time of day (optional)', 'mainwp' ); ?></label>
+                <div class="ten wide column">
+                    <input type="time" name="mainwp-schedule-time-of-day" id="mainwp-schedule-time-of-day" value="<?php echo esc_attr( $time_of_day ); ?>"/>
+                    <em><?php esc_html_e( 'Runs at this time in the WordPress site timezone. Leave empty to run whenever the schedule interval has elapsed.', 'mainwp' ); ?></em>
+                </div>
+            </div>
+            <div class="ui grid field" id="mainwp-schedule-day-of-week-wrapper" <?php echo $dow_style; //phpcs:ignore -- static attribute. ?>>
+                <label class="six wide column middle aligned"><?php esc_html_e( 'Day of week', 'mainwp' ); ?></label>
+                <div class="ten wide column">
+                    <select name="mainwp-schedule-day-of-week" id="mainwp-schedule-day-of-week" class="ui dropdown">
+                        <?php foreach ( $week_days as $day_index => $day_label ) : ?>
+                            <option value="<?php echo intval( $day_index ); ?>" <?php echo $day_index === $day_of_week ? 'selected' : ''; ?>><?php echo $day_label; //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped above. ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            </div>
+            <div class="ui grid field" id="mainwp-schedule-day-of-month-wrapper" <?php echo $dom_style; //phpcs:ignore -- static attribute. ?>>
+                <label class="six wide column middle aligned"><?php esc_html_e( 'Day of month', 'mainwp' ); ?></label>
+                <div class="ten wide column">
+                    <input type="number" name="mainwp-schedule-day-of-month" id="mainwp-schedule-day-of-month" min="1" max="28" value="<?php echo esc_attr( $day_of_month ); ?>"/>
+                    <em><?php esc_html_e( 'Days 1 through 28, so the schedule lands in every month.', 'mainwp' ); ?></em>
+                </div>
+            </div>
             <?php static::render_destinations_field( $task ); ?>
+            <?php static::render_retention_fields( $task ); ?>
             <div class="ui grid field">
                 <label class="six wide column middle aligned"><?php esc_html_e( 'Archive type', 'mainwp' ); ?></label>
                 <div class="ten wide column">

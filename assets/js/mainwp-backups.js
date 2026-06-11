@@ -1107,6 +1107,14 @@ mainwp_managebackups_update = function () {
             maximumFileDescriptorsAuto: (jQuery('#mainwp_maximumFileDescriptorsAuto').attr('checked') ? 1 : 0),
             maximumFileDescriptors: jQuery('#mainwp_options_maximumFileDescriptors').val(),
             'destinations[]': (jQuery('#mainwp-backup-task-destinations').length ? (jQuery('#mainwp-backup-task-destinations').val() || []) : []),
+            schedule_interval_hours: jQuery('#mainwp-schedule-interval-hours').val(),
+            schedule_time_of_day: jQuery('#mainwp-schedule-time-of-day').val(),
+            schedule_day_of_week: jQuery('#mainwp-schedule-day-of-week').val(),
+            schedule_day_of_month: jQuery('#mainwp-schedule-day-of-month').val(),
+            retention_count: jQuery('#mainwp-backup-retention-count').val(),
+            retention_days: jQuery('#mainwp-backup-retention-days').val(),
+            retention_storage_mb: jQuery('#mainwp-backup-retention-storage-mb').val(),
+            delete_cloud_copies: (jQuery('#mainwp-backup-delete-cloud-copies').is(':checked') ? 1 : 0),
             //loadFilesBeforeZip: loadFilesBeforeZip
         });
         jQuery.post(ajaxurl, data, function (response) {
@@ -1178,6 +1186,14 @@ mainwp_managebackups_add = function () {
             maximumFileDescriptorsAuto: (jQuery('#mainwp_maximumFileDescriptorsAuto').attr('checked') ? 1 : 0),
             maximumFileDescriptors: jQuery('#mainwp_options_maximumFileDescriptors').val(),
             'destinations[]': (jQuery('#mainwp-backup-task-destinations').length ? (jQuery('#mainwp-backup-task-destinations').val() || []) : []),
+            schedule_interval_hours: jQuery('#mainwp-schedule-interval-hours').val(),
+            schedule_time_of_day: jQuery('#mainwp-schedule-time-of-day').val(),
+            schedule_day_of_week: jQuery('#mainwp-schedule-day-of-week').val(),
+            schedule_day_of_month: jQuery('#mainwp-schedule-day-of-month').val(),
+            retention_count: jQuery('#mainwp-backup-retention-count').val(),
+            retention_days: jQuery('#mainwp-backup-retention-days').val(),
+            retention_storage_mb: jQuery('#mainwp-backup-retention-storage-mb').val(),
+            delete_cloud_copies: (jQuery('#mainwp-backup-delete-cloud-copies').is(':checked') ? 1 : 0),
             loadFilesBeforeZip: loadFilesBeforeZip
         });
         jQuery.post(ajaxurl, data, function (response) {

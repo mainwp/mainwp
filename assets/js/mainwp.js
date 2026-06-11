@@ -1501,6 +1501,13 @@ jQuery(function ($) {
         else
             jQuery('#mainwp-backup-incremental-note').hide();
     });
+    jQuery('#mainwp-backup-task-schedule').on('change', function () {
+        let schedule = jQuery(this).val();
+        jQuery('#mainwp-schedule-interval-wrapper').toggle(schedule == 'interval');
+        jQuery('#mainwp-schedule-time-of-day-wrapper').toggle(schedule == 'daily' || schedule == 'weekly' || schedule == 'monthly');
+        jQuery('#mainwp-schedule-day-of-week-wrapper').toggle(schedule == 'weekly');
+        jQuery('#mainwp-schedule-day-of-month-wrapper').toggle(schedule == 'monthly');
+    });
     jQuery('.mainwp-checkbox-showhide-elements').on('click', function () {
         let hiel = $(this).attr('hide-parent');
         if (hiel !== undefined && hiel !== '') {

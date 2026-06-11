@@ -150,4 +150,111 @@ class MainWP_Backup_Task_Form_Test extends \WP_UnitTestCase {
 
 		$this->assertStringContainsString( 'Backup Details', $output );
 	}
+
+	/**
+	 * The schedule dropdown offers the every-N-hours interval mode and the
+	 * wall-clock sub-fields.
+	 *
+	 * @return void
+	 */
+	public function test_render_task_details_offers_schedule_fields() {
+		ob_start();
+		MainWP_Backup_Task_Form::render_task_details( null, 'Tar GZip', 'site', false, true );
+		$output = ob_get_clean();
+
+		$this->assertStringContainsString( 'value="interval"', $output );
+		$this->assertStringContainsString( 'mainwp-schedule-interval-hours', $output );
+		$this->assertStringContainsString( 'mainwp-schedule-time-of-day', $output );
+		$this->assertStringContainsString( 'mainwp-schedule-day-of-week', $output );
+		$this->assertStringContainsString( 'mainwp-schedule-day-of-month', $output );
+	}
+
+	/**
+	 * An existing interval task pre-selects the mode and its hours.
+	 *
+	 * @return void
+	 */
+	public function test_render_task_details_preselects_interval_schedule() {
+		$task = $this->make_task(
+			array(
+				'schedule'       => 'interval',
+				'interval_hours' => 6,
+			)
+		);
+
+		ob_start();
+		MainWP_Backup_Task_Form::render_task_details( $task, 'Tar GZip', 'site', false, true );
+		$output = ob_get_clean();
+
+		$this->assertStringContainsString( 'value="interval" selected', $output );
+		$this->assertStringContainsString( 'value="6"', $output );
+	}
+
+	/**
+	 * An existing weekly task with a time of day renders its wall-clock
+	 * values.
+	 *
+	 * @return void
+	 */
+	public function test_render_task_details_preselects_weekly_time_of_day() {
+		$task = $this->make_task(
+			array(
+				'schedule'    => 'weekly',
+				'time_of_day' => '06:30',
+				'day_of_week' => 3,
+			)
+		);
+
+		ob_start();
+		MainWP_Backup_Task_Form::render_task_details( $task, 'Tar GZip', 'site', false, true );
+		$output = ob_get_clean();
+
+		$this->assertStringContainsString( 'value="weekly" selected', $output );
+		$this->assertStringContainsString( 'value="06:30"', $output );
+		$this->assertStringContainsString( 'value="3" selected', $output );
+	}
+
+	/**
+	 * The retention section renders with no-limit defaults and the cloud
+	 * copies toggle on.
+	 *
+	 * @return void
+	 */
+	public function test_render_retention_fields_defaults() {
+		ob_start();
+		MainWP_Backup_Task_Form::render_task_details( null, 'Tar GZip', 'site', false, true );
+		$output = ob_get_clean();
+
+		$this->assertStringContainsString( 'mainwp-backup-retention-count', $output );
+		$this->assertStringContainsString( 'mainwp-backup-retention-days', $output );
+		$this->assertStringContainsString( 'mainwp-backup-retention-storage-mb', $output );
+		$this->assertStringContainsString( 'id="mainwp-backup-delete-cloud-copies" checked', $output );
+		$this->assertStringContainsString( 'No limit', $output );
+	}
+
+	/**
+	 * A populated retention policy renders its values, and a disabled
+	 * cloud copies toggle stays off.
+	 *
+	 * @return void
+	 */
+	public function test_render_retention_fields_populated() {
+		$task = $this->make_task(
+			array(
+				'retention_count'      => 5,
+				'retention_days'       => 90,
+				'retention_storage_mb' => 500,
+				'delete_cloud_copies'  => 0,
+			)
+		);
+
+		ob_start();
+		MainWP_Backup_Task_Form::render_task_details( $task, 'Tar GZip', 'site', false, true );
+		$output = ob_get_clean();
+
+		$this->assertStringContainsString( 'value="5"', $output );
+		$this->assertStringContainsString( 'value="90"', $output );
+		$this->assertStringContainsString( 'value="500"', $output );
+		$this->assertStringNotContainsString( 'id="mainwp-backup-delete-cloud-copies" checked', $output );
+	}
 }

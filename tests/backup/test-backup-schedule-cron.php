@@ -32,7 +32,7 @@ class MainWP_Backup_Schedule_Cron_Test extends \WP_UnitTestCase {
 		$table = MainWP_DB::instance()->get_table_name( 'wp_backup' );
 		$wpdb->query( "DELETE FROM {$table} WHERE name LIKE 'Schedule cron test%'" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
 
-		foreach ( array( 'schedule_interval_hours', 'schedule_time_of_day', 'schedule_day_of_week', 'schedule_day_of_month' ) as $key ) {
+		foreach ( array( 'schedule_interval_hours', 'schedule_time_of_day', 'schedule_day_of_week', 'schedule_day_of_month', 'retention_count', 'retention_days', 'retention_storage_mb', 'delete_cloud_copies' ) as $key ) {
 			unset( $_POST[ $key ] );
 		}
 
@@ -259,6 +259,54 @@ class MainWP_Backup_Schedule_Cron_Test extends \WP_UnitTestCase {
 		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $id );
 		$this->assertSame( '', $task->time_of_day );
 		$this->assertSame( 0, (int) $task->next_run, 'A cleared task returns to legacy elapsed mode.' );
+	}
+
+	/**
+	 * The retention fields save as integers with zero meaning no limit,
+	 * and the cloud copies toggle persists.
+	 *
+	 * @return void
+	 */
+	public function test_save_retention_fields_persists_policy() {
+		$id = $this->insert_task();
+
+		$_POST['retention_count']      = '5';
+		$_POST['retention_days']       = '90';
+		$_POST['retention_storage_mb'] = '500';
+		$_POST['delete_cloud_copies']  = '1';
+
+		MainWP_Manage_Backups_Handler::save_task_retention_fields( $id );
+
+		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $id );
+		$this->assertSame( 5, (int) $task->retention_count );
+		$this->assertSame( 90, (int) $task->retention_days );
+		$this->assertSame( 500, (int) $task->retention_storage_mb );
+		$this->assertSame( 1, (int) $task->delete_cloud_copies );
+	}
+
+	/**
+	 * Absent or junk retention values save as no-limit, and an unchecked
+	 * cloud copies toggle saves off.
+	 *
+	 * @return void
+	 */
+	public function test_save_retention_fields_defaults_and_junk() {
+		$id = $this->insert_task(
+			array(
+				'retention_count'     => 3,
+				'delete_cloud_copies' => 1,
+			)
+		);
+
+		$_POST['retention_count'] = 'abc';
+
+		MainWP_Manage_Backups_Handler::save_task_retention_fields( $id );
+
+		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $id );
+		$this->assertSame( 0, (int) $task->retention_count, 'Junk input saves as no limit.' );
+		$this->assertSame( 0, (int) $task->retention_days );
+		$this->assertSame( 0, (int) $task->retention_storage_mb );
+		$this->assertSame( 0, (int) $task->delete_cloud_copies, 'An unchecked toggle saves off.' );
 	}
 
 	/**

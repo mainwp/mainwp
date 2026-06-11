@@ -217,6 +217,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             $destinations = isset( $_POST['destinations'] ) && is_array( $_POST['destinations'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['destinations'] ) ) : array(); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified.
             MainWP_Backup_Storage_Handler::save_task_destinations( $task->id, $destinations );
             static::save_task_schedule_fields( $task->id );
+            static::save_task_retention_fields( $task->id );
             die( wp_json_encode( array( 'result' => esc_html__( 'Task updated successfully.', 'mainwp' ) ) ) );
         }
     }
@@ -294,6 +295,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             $destinations = isset( $_POST['destinations'] ) && is_array( $_POST['destinations'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['destinations'] ) ) : array(); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified.
             MainWP_Backup_Storage_Handler::save_task_destinations( $task->id, $destinations );
             static::save_task_schedule_fields( $task->id );
+            static::save_task_retention_fields( $task->id );
 
             do_action( 'mainwp_add_backuptask', $task->id );
 
@@ -354,6 +356,32 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
 
         $calculator         = new MainWP_Backup_Schedule_Calculator( wp_timezone(), time() );
         $values['next_run'] = $calculator->compute_next_run( $sched_task, empty( $task->last_run ) ? null : (int) $task->last_run );
+
+        MainWP_DB_Backup::instance()->update_backup_task_with_values( $task_id, $values );
+
+        return $values;
+    }
+
+    /**
+     * Save the retention policy fields posted with a task. Zero means no
+     * limit; absent or junk values save as zero, and the cloud copies
+     * toggle persists explicitly so unchecking it sticks.
+     *
+     * @param int $task_id Task id.
+     *
+     * @return array The saved column values.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB_Backup::update_backup_task_with_values()
+     */
+    public static function save_task_retention_fields( $task_id ) {
+        //phpcs:disable WordPress.Security.NonceVerification.Missing -- caller verified.
+        $values = array(
+            'retention_count'      => isset( $_POST['retention_count'] ) ? absint( $_POST['retention_count'] ) : 0,
+            'retention_days'       => isset( $_POST['retention_days'] ) ? absint( $_POST['retention_days'] ) : 0,
+            'retention_storage_mb' => isset( $_POST['retention_storage_mb'] ) ? absint( $_POST['retention_storage_mb'] ) : 0,
+            'delete_cloud_copies'  => empty( $_POST['delete_cloud_copies'] ) ? 0 : 1,
+        );
+        //phpcs:enable
 
         MainWP_DB_Backup::instance()->update_backup_task_with_values( $task_id, $values );
 

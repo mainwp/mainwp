@@ -286,24 +286,6 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
     }
 
     /**
-     * Release a lock without changing status.
-     *
-     * @param int    $job_id Job id.
-     * @param string $token  Lock token the caller holds.
-     */
-    public function release_lock( int $job_id, string $token ): void {
-        $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- dedicated restore job table.
-            $this->wpdb->prepare(
-                'UPDATE ' . $this->table() . ' SET locked_until = 0, locked_by = %s, updated = %d WHERE id = %d AND locked_by = %s', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted helper.
-                '',
-                time(),
-                $job_id,
-                $token
-            )
-        );
-    }
-
-    /**
      * Update helper stamping updated.
      *
      * @param int   $job_id Job id.

@@ -45,6 +45,26 @@ abstract class MainWP_Backup_Job_Store_Base extends MainWP_DB_Base { // phpcs:ig
     abstract public static function active_statuses(): array;
 
     /**
+     * Release a job's lock, only for the token that holds it.
+     *
+     * @param int    $job_id Job id.
+     * @param string $token  The holder's lock token.
+     *
+     * @return void
+     */
+    public function release_lock( int $job_id, string $token ): void {
+        $this->wpdb->query(
+            $this->wpdb->prepare(
+                'UPDATE ' . $this->table() . ' SET locked_until = 0, locked_by = %s, updated = %d WHERE id = %d AND locked_by = %s',
+                '',
+                time(),
+                $job_id,
+                $token
+            )
+        );
+    }
+
+    /**
      * Decode the checkpoint JSON on a job row.
      *
      * @param object|null $row Raw job row.

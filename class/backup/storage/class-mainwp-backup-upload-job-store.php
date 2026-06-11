@@ -383,27 +383,6 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
     }
 
     /**
-     * Release a job's lock, only for the token that holds it.
-     *
-     * @param int    $job_id Job id.
-     * @param string $token  The holder's lock token.
-     *
-     * @return void
-     */
-    public function release_lock( int $job_id, string $token ): void {
-        $this->wpdb->query(
-            $this->wpdb->prepare(
-                'UPDATE ' . $this->table_name( 'wp_backup_upload_job' ) .
-                ' SET locked_until = 0, locked_by = %s, updated = %d WHERE id = %d AND locked_by = %s',
-                '',
-                time(),
-                $job_id,
-                $token
-            )
-        );
-    }
-
-    /**
      * Update job columns by id.
      *
      * @param int   $job_id Job id.

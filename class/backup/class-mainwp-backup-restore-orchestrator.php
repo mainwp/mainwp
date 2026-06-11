@@ -170,16 +170,22 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * Before the child task starts the cancel is dashboard-only. While
      * the child task is running, the child is asked to cancel first and
      * the job is only marked cancelled once the child confirmed - so a
-     * cancelled job never hides a still-running child task. Once the
-     * dashboard-side verify began the child's work is done and the
-     * offer becomes a rollback instead.
+     * cancelled job never hides a still-running child task. A child
+     * mid-slice answers busy; instead of blocking the request on
+     * retries, the cancel is recorded as an intent the cron lane
+     * applies between slices. Once the dashboard-side verify began the
+     * child's work is done and the offer becomes a rollback instead.
      *
      * @param int $job_id Job id.
      *
      * @throws MainWP_Exception When the job is past the cancel window,
      *                          or the child could not confirm the cancel.
+     *
+     * @return string 'cancelled' when the job was cancelled, or
+     *                'cancel_pending' when the busy child deferred the
+     *                cancel to the cron lane.
      */
-    public function cancel_job( int $job_id ): void {
+    public function cancel_job( int $job_id ): string {
         $store = MainWP_Backup_Restore_Job_Store::instance();
         $job   = $store->get_job( $job_id );
         if ( null === $job ) {
@@ -187,7 +193,15 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         }
 
         if ( MainWP_Backup_Restore_Job_Store::STATUS_RUNNING === $job->status ) {
-            $this->cancel_child_task( $job );
+            $outcome = $this->request_child_cancel( $job );
+
+            if ( 'completed' === $outcome ) {
+                throw new MainWP_Exception( esc_html__( 'The restore already finished on the site and can no longer be cancelled.', 'mainwp' ) );
+            }
+            if ( 'busy' === $outcome ) {
+                $this->record_cancel_intent( $job_id );
+                return 'cancel_pending';
+            }
 
             // The cron lane may have advanced the job while the child
             // confirmation was in flight; a job that reached verifying or
@@ -206,7 +220,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             if ( ! $store->cancel_job( $job_id ) ) {
                 throw new MainWP_Exception( esc_html__( 'The restore reached its final state while the cancellation was confirmed and no longer needs cancelling.', 'mainwp' ) );
             }
-            return;
+            return 'cancelled';
         }
 
         $cancellable = array(
@@ -221,53 +235,111 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         }
 
         MainWP_Backup_Restore_Transfer_Driver::instance()->cleanup_staging( $job_id );
-        $store->cancel_job( $job_id );
+        if ( ! $store->cancel_job( $job_id ) ) {
+            throw new MainWP_Exception( esc_html__( 'The restore reached its final state while the cancellation was confirmed and no longer needs cancelling.', 'mainwp' ) );
+        }
+        return 'cancelled';
     }
 
     /**
-     * Cancel the in-flight child restore task and wait for confirmation.
+     * Ask the child to cancel its in-flight restore task, once.
      *
      * The child refuses while another runner holds the task lease (a
-     * slice in flight); a couple of retries cover the between-slice
-     * window. A child task that already completed cannot be cancelled -
-     * the restore happened - while one that already failed needs no
-     * child-side work.
+     * slice in flight) - that answer is surfaced as busy so the caller
+     * can defer instead of waiting. A child task that already completed
+     * cannot be cancelled - the restore happened - while one that
+     * already failed needs no child-side work.
      *
      * @param object $job Job row.
      *
-     * @throws MainWP_Exception When the child stays busy, already
-     *                          completed, or returned an error.
+     * @throws MainWP_Exception When the child returned an error.
+     *
+     * @return string 'ok' (cancelled), 'failed' (already failed, nothing
+     *                to cancel), 'completed' (restore happened), or
+     *                'busy' (slice in flight).
      */
-    private function cancel_child_task( object $job ): void {
+    private function request_child_cancel( object $job ): string {
         $website = $this->website( $job );
 
-        for ( $attempt = 0; $attempt < 3; $attempt++ ) {
-            if ( $attempt > 0 ) {
-                sleep( 2 );
-            }
+        $payload = MainWP_Connect::fetch_url_authed( $website, 'restore_task_cancel', array( 'task_id' => $job->child_task_id ), false, false, false );
+        $result  = is_array( $payload ) && isset( $payload['result'] ) ? (string) $payload['result'] : '';
+        $phase   = is_array( $payload ) && isset( $payload['phase'] ) ? (string) $payload['phase'] : '';
 
-            $payload = MainWP_Connect::fetch_url_authed( $website, 'restore_task_cancel', array( 'task_id' => $job->child_task_id ), false, false, false );
-            $result  = is_array( $payload ) && isset( $payload['result'] ) ? (string) $payload['result'] : '';
-            $phase   = is_array( $payload ) && isset( $payload['phase'] ) ? (string) $payload['phase'] : '';
-
-            if ( 'ok' === $result ) {
-                return;
-            }
-            if ( 'already_terminal' === $result ) {
-                if ( 'completed' === $phase ) {
-                    throw new MainWP_Exception( esc_html__( 'The restore already finished on the site and can no longer be cancelled.', 'mainwp' ) );
-                }
-                return; // Already failed: nothing left to cancel on the child.
-            }
-            if ( 'busy' === $result ) {
-                continue;
-            }
-
-            $message = is_array( $payload ) && isset( $payload['error'] ) ? (string) $payload['error'] : esc_html__( 'The child site did not confirm the cancellation.', 'mainwp' );
-            throw new MainWP_Exception( esc_html( $message ) );
+        if ( 'ok' === $result ) {
+            return 'ok';
+        }
+        if ( 'already_terminal' === $result ) {
+            return 'completed' === $phase ? 'completed' : 'failed';
+        }
+        if ( 'busy' === $result ) {
+            return 'busy';
         }
 
-        throw new MainWP_Exception( esc_html__( 'The site is in the middle of a restore step and could not be interrupted. Try cancelling again in a moment.', 'mainwp' ) );
+        $message = is_array( $payload ) && isset( $payload['error'] ) ? (string) $payload['error'] : esc_html__( 'The child site did not confirm the cancellation.', 'mainwp' );
+        throw new MainWP_Exception( esc_html( $message ) );
+    }
+
+    /**
+     * Record the cancel intent on the job's checkpoint for the cron
+     * lane to apply between child slices.
+     *
+     * The checkpoint is re-read fresh so an in-flight phase write is
+     * not clobbered. A job that left the running window meanwhile
+     * finished its restore and refuses, mirroring the synchronous path.
+     *
+     * @param int $job_id Job id.
+     *
+     * @throws MainWP_Exception When the job finished meanwhile.
+     */
+    private function record_cancel_intent( int $job_id ): void {
+        $store = MainWP_Backup_Restore_Job_Store::instance();
+        $fresh = $store->get_job( $job_id );
+
+        $intent_holders = array(
+            MainWP_Backup_Restore_Job_Store::STATUS_RUNNING,
+            MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE,
+        );
+        if ( null === $fresh || ! in_array( $fresh->status, $intent_holders, true ) ) {
+            throw new MainWP_Exception( esc_html__( 'The restore already finished on the site and can no longer be cancelled.', 'mainwp' ) );
+        }
+
+        $checkpoint                  = $fresh->checkpoint;
+        $checkpoint['cancel_intent'] = true;
+        $store->save_checkpoint( $job_id, $checkpoint );
+    }
+
+    /**
+     * Apply a recorded cancel intent before driving the child.
+     *
+     * @param object $job Job row.
+     *
+     * @return bool True when the child already completed its restore -
+     *              the intent clears and the normal completion path
+     *              takes over. False when the job was cancelled or the
+     *              child is still busy (nothing to drive this tick).
+     */
+    private function apply_cancel_intent( object $job ): bool {
+        $store   = MainWP_Backup_Restore_Job_Store::instance();
+        $outcome = $this->request_child_cancel( $job );
+
+        if ( 'busy' === $outcome ) {
+            return false; // The intent stays; the next tick retries.
+        }
+
+        if ( 'completed' === $outcome ) {
+            $fresh = $store->get_job( (int) $job->id );
+            if ( null !== $fresh ) {
+                $checkpoint = $fresh->checkpoint;
+                unset( $checkpoint['cancel_intent'] );
+                $store->save_checkpoint( (int) $job->id, $checkpoint );
+            }
+            return true;
+        }
+
+        // ok / already failed: the child confirmed - cancel the job.
+        MainWP_Backup_Restore_Transfer_Driver::instance()->cleanup_staging( (int) $job->id );
+        $store->cancel_job( (int) $job->id );
+        return false;
     }
 
     /**
@@ -305,6 +377,20 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         if ( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE === $status ) {
             // Resume the phase that failed.
             $status = isset( $job->checkpoint['resume_status'] ) ? (string) $job->checkpoint['resume_status'] : MainWP_Backup_Restore_Job_Store::STATUS_PENDING;
+        }
+
+        // A pending cancel is applied before any slice work: the restore
+        // must not be driven forward once the user asked it to stop.
+        if ( MainWP_Backup_Restore_Job_Store::STATUS_RUNNING === $status && ! empty( $job->checkpoint['cancel_intent'] ) ) {
+            if ( ! $this->apply_cancel_intent( $job ) ) {
+                return; // Cancelled, or the child is still busy.
+            }
+            // The child completed its restore: the intent was cleared on
+            // the row, so the stale copy must not be written back below.
+            $job = MainWP_Backup_Restore_Job_Store::instance()->get_job( (int) $job->id );
+            if ( null === $job ) {
+                return;
+            }
         }
 
         switch ( $status ) {

@@ -190,11 +190,16 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 if ( 'transferring' === data.status && data.artifact_total > 0 ) {
                     label += ' (' + ( data.artifact_index + 1 ) + '/' + data.artifact_total + ')';
                 }
-                $( '#mainwp-restore-status-text' ).text( label );
 
                 var terminal = ( 'completed' === data.status || 'failed_permanent' === data.status || 'cancelled' === data.status );
+                var cancelPending = ! terminal && !! data.cancel_requested;
+                if ( cancelPending ) {
+                    label = '<?php echo esc_js( esc_html__( 'Cancelling once the site finishes its current step', 'mainwp' ) ); ?>';
+                }
+                $( '#mainwp-restore-status-text' ).text( label );
+
                 $( '#mainwp-restore-spinner' ).toggle( ! terminal );
-                $( '#mainwp-restore-cancel-btn' ).toggle( ! terminal && [ 'pending', 'pre_snapshot', 'staging', 'transferring', 'failed_retryable', 'running' ].indexOf( data.status ) !== -1 );
+                $( '#mainwp-restore-cancel-btn' ).toggle( ! terminal && ! cancelPending && [ 'pending', 'pre_snapshot', 'staging', 'transferring', 'failed_retryable', 'running' ].indexOf( data.status ) !== -1 );
                 $( '#mainwp-restore-cancel-warning' ).toggle( 'running' === data.status );
                 $( '#mainwp-restore-rollback-btn' ).toggle( 'failed_permanent' === data.status && !! data.has_rollback );
 

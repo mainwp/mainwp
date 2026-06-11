@@ -420,11 +420,11 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
-	 * A child mid-slice reports busy; the job stays running and the
-	 * caller is told to retry instead of the dashboard abandoning a
-	 * still-running child task as cancelled.
+	 * A child mid-slice reports busy; instead of blocking the request on
+	 * retries, the cancel is recorded as an intent the cron lane applies
+	 * between slices. The job stays running until the child confirms.
 	 */
-	public function test_cancel_running_busy_child_keeps_job_running() {
+	public function test_cancel_running_busy_child_records_intent() {
 		$this->responses['restore_task_cancel'] = array(
 			'result' => 'busy',
 			'phase'  => 'replaying_db',
@@ -432,14 +432,96 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 
 		$job = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, array( 'child_task_id' => 'task-9-restore' ) );
 
-		try {
-			$this->orchestrator->cancel_job( (int) $job->id );
-			$this->fail( 'Expected the busy child to refuse the cancel' );
-		} catch ( MainWP_Exception $e ) {
-			$this->assertNotEmpty( $e->getMessage() );
-		}
+		$outcome = $this->orchestrator->cancel_job( (int) $job->id );
+		$this->assertSame( 'cancel_pending', $outcome );
 
-		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, MainWP_Backup_Restore_Job_Store::instance()->get_job( (int) $job->id )->status );
+		$fresh = MainWP_Backup_Restore_Job_Store::instance()->get_job( (int) $job->id );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, $fresh->status );
+		$this->assertTrue( ! empty( $fresh->checkpoint['cancel_intent'] ) );
+
+		$cancel_calls = 0;
+		foreach ( $this->calls as $call ) {
+			if ( 'restore_task_cancel' === $call['what'] ) {
+				++$cancel_calls;
+			}
+		}
+		$this->assertSame( 1, $cancel_calls, 'The busy child is asked once; the intent covers the rest.' );
+	}
+
+	/**
+	 * The cron lane applies a recorded cancel intent before driving the
+	 * child: the child confirms and the job cancels without slice work.
+	 */
+	public function test_run_job_applies_cancel_intent() {
+		$this->responses['restore_task_cancel'] = array(
+			'result' => 'ok',
+			'phase'  => 'failed',
+		);
+
+		$job = $this->make_job(
+			array( 'cancel_intent' => true ),
+			MainWP_Backup_Restore_Job_Store::STATUS_RUNNING,
+			array( 'child_task_id' => 'task-9-restore' )
+		);
+		$job = $this->tick( $job );
+
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED, $job->status );
+
+		foreach ( $this->calls as $call ) {
+			$this->assertNotSame( 'restore_task_run', $call['what'], 'A pending cancel must not drive the restore forward.' );
+		}
+	}
+
+	/**
+	 * A still-busy child keeps the intent for the next tick; the restore
+	 * is not driven forward under a pending cancel.
+	 */
+	public function test_run_job_keeps_intent_while_child_busy() {
+		$this->responses['restore_task_cancel'] = array(
+			'result' => 'busy',
+			'phase'  => 'replaying_db',
+		);
+
+		$job = $this->make_job(
+			array( 'cancel_intent' => true ),
+			MainWP_Backup_Restore_Job_Store::STATUS_RUNNING,
+			array( 'child_task_id' => 'task-9-restore' )
+		);
+		$job = $this->tick( $job );
+
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, $job->status );
+		$this->assertTrue( ! empty( $job->checkpoint['cancel_intent'] ) );
+
+		foreach ( $this->calls as $call ) {
+			$this->assertNotSame( 'restore_task_run', $call['what'], 'A pending cancel must not drive the restore forward.' );
+		}
+	}
+
+	/**
+	 * A child that completed before the intent could land finished its
+	 * restore: the intent clears and the job follows the normal
+	 * completion path instead of being relabeled cancelled.
+	 */
+	public function test_run_job_clears_intent_when_child_completed() {
+		$this->responses['restore_task_cancel'] = array(
+			'result' => 'already_terminal',
+			'phase'  => 'completed',
+		);
+		$this->responses['restore_task_run']    = array(
+			'task_id'   => 'task-9-restore',
+			'phase'     => 'completed',
+			'sub_state' => array( 'verification' => array( 'row_counts_ok' => true ) ),
+		);
+
+		$job = $this->make_job(
+			array( 'cancel_intent' => true ),
+			MainWP_Backup_Restore_Job_Store::STATUS_RUNNING,
+			array( 'child_task_id' => 'task-9-restore' )
+		);
+		$job = $this->tick( $job );
+
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_VERIFYING, $job->status );
+		$this->assertTrue( empty( $job->checkpoint['cancel_intent'] ) );
 	}
 
 	/**

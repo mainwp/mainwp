@@ -166,10 +166,11 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                 'status'         => (string) $job->status,
                 'last_error'     => (string) $job->last_error,
                 'attempt_count'  => (int) $job->attempt_count,
-                'artifact_index' => isset( $transfer['artifact_index'] ) ? (int) $transfer['artifact_index'] : 0,
-                'artifact_total' => count( $plan ),
-                'has_rollback'   => ! empty( $job->checkpoint['pre_snapshot_artifacts'] ),
-                'verification'   => isset( $job->checkpoint['verification'] ) ? $job->checkpoint['verification'] : array(),
+                'artifact_index'   => isset( $transfer['artifact_index'] ) ? (int) $transfer['artifact_index'] : 0,
+                'artifact_total'   => count( $plan ),
+                'has_rollback'     => ! empty( $job->checkpoint['pre_snapshot_artifacts'] ),
+                'cancel_requested' => ! empty( $job->checkpoint['cancel_intent'] ),
+                'verification'     => isset( $job->checkpoint['verification'] ) ? $job->checkpoint['verification'] : array(),
             )
         );
     }
@@ -182,12 +183,12 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         $job_id = isset( $_POST['job_id'] ) ? (int) $_POST['job_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by secure_request above.
 
         try {
-            MainWP_Backup_Restore_Orchestrator::instance()->cancel_job( $job_id );
+            $outcome = MainWP_Backup_Restore_Orchestrator::instance()->cancel_job( $job_id );
         } catch ( MainWP_Exception $e ) {
             wp_send_json( array( 'error' => $e->getMessage() ) );
             return;
         }
-        wp_send_json( array( 'result' => 'ok' ) );
+        wp_send_json( array( 'result' => 'cancel_pending' === $outcome ? 'pending' : 'ok' ) );
     }
 
     /**

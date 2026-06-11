@@ -55,4 +55,17 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 
 		$this->assertStringContainsString( 'mainwp-restore-cancel-warning', $output );
 	}
+
+	/**
+	 * A cancel deferred to the cron lane (busy child) is surfaced: the
+	 * progress poll carries cancel_requested and the page reacts to it
+	 * instead of leaving the user staring at a running status.
+	 *
+	 * @return void
+	 */
+	public function test_pending_cancel_state_surfaces() {
+		$output = $this->render_page();
+
+		$this->assertStringContainsString( 'cancel_requested', $output );
+	}
 }

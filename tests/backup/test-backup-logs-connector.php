@@ -189,4 +189,62 @@ class MainWP_Backup_Logs_Connector_Test extends \WP_UnitTestCase {
 
 		$this->assertCount( 0, $captured );
 	}
+
+	/**
+	 * The connector observes the pruned action.
+	 *
+	 * @return void
+	 */
+	public function test_connector_observes_pruned_action() {
+		$captured  = array();
+		$connector = $this->capturing_connector( $captured );
+
+		$this->assertContains( 'mainwp_backup_pruned', $connector->actions );
+		$this->assertArrayHasKey( 'pruned', $connector->get_action_labels() );
+	}
+
+	/**
+	 * A prune event becomes a log entry carrying the site, snapshots and
+	 * reason.
+	 *
+	 * @return void
+	 */
+	public function test_pruned_event_is_logged() {
+		$captured  = array();
+		$connector = $this->capturing_connector( $captured );
+
+		$connector->callback_mainwp_backup_pruned(
+			array(
+				'site_id'      => 42,
+				'task_id'      => 9,
+				'snapshot_ids' => array( 3, 4, 5 ),
+				'reason'       => 'count',
+				'size_bytes'   => 2048,
+			)
+		);
+
+		$this->assertCount( 1, $captured );
+		$this->assertSame( 42, $captured[0]['site_id'] );
+		$this->assertSame( 'backup', $captured[0]['context'] );
+		$this->assertSame( 'pruned', $captured[0]['action'] );
+		$this->assertSame( 9, $captured[0]['args']['task_id'] );
+		$this->assertSame( '3,4,5', $captured[0]['args']['snapshot_ids'] );
+		$this->assertSame( 'count', $captured[0]['args']['reason'] );
+		$this->assertSame( 2048, $captured[0]['args']['size_bytes'] );
+	}
+
+	/**
+	 * A malformed prune event is ignored.
+	 *
+	 * @return void
+	 */
+	public function test_malformed_pruned_event_is_ignored() {
+		$captured  = array();
+		$connector = $this->capturing_connector( $captured );
+
+		$connector->callback_mainwp_backup_pruned( 'not-an-array' );
+		$connector->callback_mainwp_backup_pruned( array() );
+
+		$this->assertCount( 0, $captured );
+	}
 }

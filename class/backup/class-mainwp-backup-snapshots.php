@@ -144,8 +144,9 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
     }
 
     /**
-     * Get the newest snapshot for a task across all of its sites - the
-     * run the backup list summarizes upload state from.
+     * Get the newest complete snapshot for a task across all of its sites
+     * - the run the backup list summarizes upload state from. Pruned rows
+     * stay for audit but never represent the task.
      *
      * @param int $task_id Scheduled task id.
      *
@@ -154,7 +155,7 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
     public function get_latest_for_task( int $task_id ): ?object {
         $row = $this->wpdb->get_row(
             $this->wpdb->prepare(
-                'SELECT * FROM ' . $this->table_name( 'wp_backup_snapshot' ) . ' WHERE task_id = %d ORDER BY id DESC LIMIT 1',
+                'SELECT * FROM ' . $this->table_name( 'wp_backup_snapshot' ) . " WHERE task_id = %d AND status = 'complete' ORDER BY id DESC LIMIT 1",
                 $task_id
             )
         );

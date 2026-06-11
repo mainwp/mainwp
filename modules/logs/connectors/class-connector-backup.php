@@ -30,6 +30,7 @@ class Connector_Backup extends Log_Connector {
     public $actions = array(
         'mainwp_backup_downloaded',
         'mainwp_backup_uploaded',
+        'mainwp_backup_pruned',
     );
 
     /**
@@ -50,6 +51,7 @@ class Connector_Backup extends Log_Connector {
         return array(
             'downloaded' => esc_html__( 'Downloaded', 'mainwp' ),
             'uploaded'   => esc_html__( 'Uploaded', 'mainwp' ),
+            'pruned'     => esc_html__( 'Pruned', 'mainwp' ),
         );
     }
 
@@ -126,6 +128,39 @@ class Connector_Backup extends Log_Connector {
             (int) $event['site_id'],
             'backup',
             'uploaded',
+            1
+        );
+    }
+
+    /**
+     * Log retention pruning of restorable backups.
+     *
+     * @action mainwp_backup_pruned
+     *
+     * @param array $event Prune details: site_id, task_id, snapshot_ids,
+     *                     reason, size_bytes.
+     */
+    public function callback_mainwp_backup_pruned( $event ) {
+        if ( ! is_array( $event ) || empty( $event['site_id'] ) || empty( $event['snapshot_ids'] ) ) {
+            return;
+        }
+
+        // translators: %s: Comma-separated snapshot ids.
+        $message = esc_html__( 'Backup pruned by retention policy: %s', 'mainwp' );
+
+        $args = array(
+            'snapshot_ids' => implode( ',', array_map( 'intval', (array) $event['snapshot_ids'] ) ),
+            'task_id'      => isset( $event['task_id'] ) ? (int) $event['task_id'] : 0,
+            'reason'       => isset( $event['reason'] ) ? sanitize_text_field( $event['reason'] ) : '',
+            'size_bytes'   => isset( $event['size_bytes'] ) ? (int) $event['size_bytes'] : 0,
+        );
+
+        $this->log(
+            $message,
+            $args,
+            (int) $event['site_id'],
+            'backup',
+            'pruned',
             1
         );
     }

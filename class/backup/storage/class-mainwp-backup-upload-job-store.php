@@ -26,6 +26,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 class MainWP_Backup_Upload_Job_Store extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
     // phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared -- unprepared SQL ok, table identifiers cannot be prepared.
 
+    const KIND_UPLOAD = 'upload';
+    const KIND_DELETE = 'delete';
+
     const STATUS_PENDING             = 'pending';
     const STATUS_CHUNKING            = 'chunking';
     const STATUS_UPLOADING           = 'uploading';
@@ -101,15 +104,18 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_DB_Base { // phpcs:ignore Ge
 
     /**
      * Atomically acquire the next runnable job: pending, mid-phase with an
-     * expired lease, or retryable past its backoff window.
+     * expired lease, or retryable past its backoff window. Each driver
+     * acquires only its own kind, so the upload and cloud delete lanes
+     * never steal each other's work.
      *
      * @param string   $token         Caller's lock token.
      * @param int      $lease_seconds Lease length.
      * @param int|null $now           Clock override for tests.
+     * @param string   $kind          Job kind: 'upload' or 'delete'.
      *
      * @return object|null The locked job, or null when none is runnable.
      */
-    public function acquire_next_job( string $token, int $lease_seconds = 300, ?int $now = null ): ?object {
+    public function acquire_next_job( string $token, int $lease_seconds = 300, ?int $now = null, string $kind = self::KIND_UPLOAD ): ?object {
         $now = null === $now ? time() : $now;
 
         $runnable = array(
@@ -125,9 +131,9 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_DB_Base { // phpcs:ignore Ge
         $claimed = $this->wpdb->query(
             $this->wpdb->prepare(
                 'UPDATE ' . $this->table_name( 'wp_backup_upload_job' ) .
-                ' SET locked_until = %d, locked_by = %s, updated = %d WHERE status IN (%s, %s, %s, %s, %s) AND next_retry_at <= %d AND locked_until < %d ORDER BY id ASC LIMIT 1',
-                array_merge(
-                    array( $now + $lease_seconds, $token, $now ),
+                ' SET locked_until = %d, locked_by = %s, updated = %d WHERE kind = %s AND status IN (%s, %s, %s, %s, %s) AND next_retry_at <= %d AND locked_until < %d ORDER BY id ASC LIMIT 1',
+                array_merge( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- the merged arrays supply all eleven replacements.
+                    array( $now + $lease_seconds, $token, $now, $kind ),
                     $runnable,
                     array( $now, $now )
                 )
@@ -167,17 +173,19 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_DB_Base { // phpcs:ignore Ge
     }
 
     /**
-     * All jobs for a snapshot, every destination's status.
+     * All jobs of one kind for a snapshot, every destination's status.
      *
-     * @param int $snapshot_id Snapshot id.
+     * @param int    $snapshot_id Snapshot id.
+     * @param string $kind        Job kind: 'upload' or 'delete'.
      *
      * @return object[]
      */
-    public function get_jobs_for_snapshot( int $snapshot_id ): array {
+    public function get_jobs_for_snapshot( int $snapshot_id, string $kind = self::KIND_UPLOAD ): array {
         $rows = $this->wpdb->get_results(
             $this->wpdb->prepare(
-                'SELECT * FROM ' . $this->table_name( 'wp_backup_upload_job' ) . ' WHERE snapshot_id = %d ORDER BY id ASC',
-                $snapshot_id
+                'SELECT * FROM ' . $this->table_name( 'wp_backup_upload_job' ) . ' WHERE snapshot_id = %d AND kind = %s ORDER BY id ASC',
+                $snapshot_id,
+                $kind
             )
         );
 
@@ -186,6 +194,55 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_DB_Base { // phpcs:ignore Ge
         }
 
         return array_values( array_filter( array_map( array( $this, 'decode_row' ), $rows ) ) );
+    }
+
+    /**
+     * Enqueue a cloud delete job for a pruned snapshot at one destination.
+     * Idempotent: a delete job that already exists for the pair is left
+     * untouched.
+     *
+     * @param int   $snapshot_id    Snapshot id.
+     * @param int   $destination_id Storage destination id.
+     * @param array $checkpoint     Initial checkpoint: prefix, keys, cursor, swept.
+     *
+     * @return bool Whether a row was inserted.
+     */
+    public function enqueue_delete_job( int $snapshot_id, int $destination_id, array $checkpoint ): bool {
+        $result = $this->wpdb->query(
+            $this->wpdb->prepare(
+                'INSERT IGNORE INTO ' . $this->table_name( 'wp_backup_upload_job' ) .
+                ' (snapshot_id, destination_id, kind, status, checkpoint, last_error, created, updated) VALUES (%d, %d, %s, %s, %s, %s, %d, %d)',
+                $snapshot_id,
+                $destination_id,
+                static::KIND_DELETE,
+                static::STATUS_PENDING,
+                (string) wp_json_encode( $checkpoint ),
+                '',
+                time(),
+                time()
+            )
+        );
+
+        return ! empty( $result );
+    }
+
+    /**
+     * Hard-delete a pruned snapshot's upload rows. The snapshot row keeps
+     * the audit trail; the resumable upload state has no further use once
+     * its remote keys are collected into delete jobs.
+     *
+     * @param int $snapshot_id Snapshot id.
+     *
+     * @return void
+     */
+    public function purge_upload_jobs_for_snapshot( int $snapshot_id ): void {
+        $this->wpdb->query(
+            $this->wpdb->prepare(
+                'DELETE FROM ' . $this->table_name( 'wp_backup_upload_job' ) . ' WHERE snapshot_id = %d AND kind = %s',
+                $snapshot_id,
+                static::KIND_UPLOAD
+            )
+        );
     }
 
     /**

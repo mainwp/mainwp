@@ -1380,6 +1380,11 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_DB_QUERY_FAILED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         } elseif ( 'full' === $pType && ! $information['full'] ) {
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+        } elseif ( 'files' === $pType && empty( $information['full'] ) ) {
+            // A child whose legacy backup action predates the files type
+            // answers with nothing on either slot; failing loudly beats
+            // reporting an empty success.
+            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         } elseif ( isset( $information['db'] ) || isset( $information['full'] ) ) {
             if ( ! empty( $information['db'] ) ) {
                 $backup_result['url']  = $information['db'];

@@ -101,6 +101,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 <div id="mainwp-restore-progress-pane" style="display:none;">
                     <div class="ui active inline loader" id="mainwp-restore-spinner"></div>
                     <span id="mainwp-restore-status-text"></span>
+                    <div class="ui small yellow message" id="mainwp-restore-cancel-warning" style="display:none;"><?php esc_html_e( 'Cancelling now stops the restore while the site is mid-change. Files already copied stay in place and the previous database tables are kept aside, so a rollback from the safety backup remains available if the site looks wrong afterwards.', 'mainwp' ); ?></div>
                     <div class="ui message" id="mainwp-restore-result-message" style="display:none;"></div>
                 </div>
             </div>
@@ -193,7 +194,8 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
 
                 var terminal = ( 'completed' === data.status || 'failed_permanent' === data.status || 'cancelled' === data.status );
                 $( '#mainwp-restore-spinner' ).toggle( ! terminal );
-                $( '#mainwp-restore-cancel-btn' ).toggle( ! terminal && [ 'pending', 'pre_snapshot', 'staging', 'transferring', 'failed_retryable' ].indexOf( data.status ) !== -1 );
+                $( '#mainwp-restore-cancel-btn' ).toggle( ! terminal && [ 'pending', 'pre_snapshot', 'staging', 'transferring', 'failed_retryable', 'running' ].indexOf( data.status ) !== -1 );
+                $( '#mainwp-restore-cancel-warning' ).toggle( 'running' === data.status );
                 $( '#mainwp-restore-rollback-btn' ).toggle( 'failed_permanent' === data.status && !! data.has_rollback );
 
                 if ( terminal ) {

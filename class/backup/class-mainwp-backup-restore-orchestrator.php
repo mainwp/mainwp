@@ -165,21 +165,32 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
     }
 
     /**
-     * Cancel a restore job while it is still safe to do so.
+     * Cancel a restore job.
      *
-     * Once the child task is running its destructive phases the
-     * dashboard no longer cancels - the offer becomes a rollback
-     * instead.
+     * Before the child task starts the cancel is dashboard-only. While
+     * the child task is running, the child is asked to cancel first and
+     * the job is only marked cancelled once the child confirmed - so a
+     * cancelled job never hides a still-running child task. Once the
+     * dashboard-side verify began the child's work is done and the
+     * offer becomes a rollback instead.
      *
      * @param int $job_id Job id.
      *
-     * @throws MainWP_Exception When the job is past the cancel window.
+     * @throws MainWP_Exception When the job is past the cancel window,
+     *                          or the child could not confirm the cancel.
      */
     public function cancel_job( int $job_id ): void {
         $store = MainWP_Backup_Restore_Job_Store::instance();
         $job   = $store->get_job( $job_id );
         if ( null === $job ) {
             throw new MainWP_Exception( esc_html__( 'Restore job not found.', 'mainwp' ) );
+        }
+
+        if ( MainWP_Backup_Restore_Job_Store::STATUS_RUNNING === $job->status ) {
+            $this->cancel_child_task( $job );
+            MainWP_Backup_Restore_Transfer_Driver::instance()->cleanup_staging( $job_id );
+            $store->cancel_job( $job_id );
+            return;
         }
 
         $cancellable = array(
@@ -190,11 +201,57 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE,
         );
         if ( ! in_array( $job->status, $cancellable, true ) ) {
-            throw new MainWP_Exception( esc_html__( 'The restore has already started changing the site and can no longer be cancelled. Use the rollback once it finishes or fails.', 'mainwp' ) );
+            throw new MainWP_Exception( esc_html__( 'The restore finished its work on the site and can no longer be cancelled. Use the rollback once it completes or fails.', 'mainwp' ) );
         }
 
         MainWP_Backup_Restore_Transfer_Driver::instance()->cleanup_staging( $job_id );
         $store->cancel_job( $job_id );
+    }
+
+    /**
+     * Cancel the in-flight child restore task and wait for confirmation.
+     *
+     * The child refuses while another runner holds the task lease (a
+     * slice in flight); a couple of retries cover the between-slice
+     * window. A child task that already completed cannot be cancelled -
+     * the restore happened - while one that already failed needs no
+     * child-side work.
+     *
+     * @param object $job Job row.
+     *
+     * @throws MainWP_Exception When the child stays busy, already
+     *                          completed, or returned an error.
+     */
+    private function cancel_child_task( object $job ): void {
+        $website = $this->website( $job );
+
+        for ( $attempt = 0; $attempt < 3; $attempt++ ) {
+            if ( $attempt > 0 ) {
+                sleep( 2 );
+            }
+
+            $payload = MainWP_Connect::fetch_url_authed( $website, 'restore_task_cancel', array( 'task_id' => $job->child_task_id ), false, false, false );
+            $result  = is_array( $payload ) && isset( $payload['result'] ) ? (string) $payload['result'] : '';
+            $phase   = is_array( $payload ) && isset( $payload['phase'] ) ? (string) $payload['phase'] : '';
+
+            if ( 'ok' === $result ) {
+                return;
+            }
+            if ( 'already_terminal' === $result ) {
+                if ( 'completed' === $phase ) {
+                    throw new MainWP_Exception( esc_html__( 'The restore already finished on the site and can no longer be cancelled.', 'mainwp' ) );
+                }
+                return; // Already failed: nothing left to cancel on the child.
+            }
+            if ( 'busy' === $result ) {
+                continue;
+            }
+
+            $message = is_array( $payload ) && isset( $payload['error'] ) ? (string) $payload['error'] : esc_html__( 'The child site did not confirm the cancellation.', 'mainwp' );
+            throw new MainWP_Exception( esc_html( $message ) );
+        }
+
+        throw new MainWP_Exception( esc_html__( 'The site is in the middle of a restore step and could not be interrupted. Try cancelling again in a moment.', 'mainwp' ) );
     }
 
     /**

@@ -381,15 +381,102 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
-	 * Cancel is allowed before the destructive window and refused after.
+	 * Cancel is allowed before the child task starts, and refused once
+	 * the dashboard-side verify began (the child's work is done).
 	 */
 	public function test_cancel_window() {
 		$early = $this->make_job();
 		$this->orchestrator->cancel_job( (int) $early->id );
 		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED, MainWP_Backup_Restore_Job_Store::instance()->get_job( (int) $early->id )->status );
 
-		$late = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_RUNNING );
+		$late = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_VERIFYING, array( 'child_task_id' => 'task-9-restore' ) );
 		$this->expectException( MainWP_Exception::class );
 		$this->orchestrator->cancel_job( (int) $late->id );
+	}
+
+	/**
+	 * Cancelling a running job cancels the child task first and only
+	 * marks the job cancelled once the child confirmed.
+	 */
+	public function test_cancel_running_cancels_child_task() {
+		$this->responses['restore_task_cancel'] = array(
+			'result' => 'ok',
+			'phase'  => 'failed',
+		);
+
+		$job = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, array( 'child_task_id' => 'task-9-restore' ) );
+		$this->orchestrator->cancel_job( (int) $job->id );
+
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED, MainWP_Backup_Restore_Job_Store::instance()->get_job( (int) $job->id )->status );
+
+		$cancel = null;
+		foreach ( $this->calls as $call ) {
+			if ( 'restore_task_cancel' === $call['what'] ) {
+				$cancel = $call;
+			}
+		}
+		$this->assertNotNull( $cancel );
+		$this->assertSame( 'task-9-restore', $cancel['params']['task_id'] );
+	}
+
+	/**
+	 * A child mid-slice reports busy; the job stays running and the
+	 * caller is told to retry instead of the dashboard abandoning a
+	 * still-running child task as cancelled.
+	 */
+	public function test_cancel_running_busy_child_keeps_job_running() {
+		$this->responses['restore_task_cancel'] = array(
+			'result' => 'busy',
+			'phase'  => 'replaying_db',
+		);
+
+		$job = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, array( 'child_task_id' => 'task-9-restore' ) );
+
+		try {
+			$this->orchestrator->cancel_job( (int) $job->id );
+			$this->fail( 'Expected the busy child to refuse the cancel' );
+		} catch ( MainWP_Exception $e ) {
+			$this->assertNotEmpty( $e->getMessage() );
+		}
+
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, MainWP_Backup_Restore_Job_Store::instance()->get_job( (int) $job->id )->status );
+	}
+
+	/**
+	 * A child task that already completed cannot be cancelled - the
+	 * restore happened; the job is left for the normal completion path.
+	 */
+	public function test_cancel_running_with_completed_child_refuses() {
+		$this->responses['restore_task_cancel'] = array(
+			'result' => 'already_terminal',
+			'phase'  => 'completed',
+		);
+
+		$job = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, array( 'child_task_id' => 'task-9-restore' ) );
+
+		try {
+			$this->orchestrator->cancel_job( (int) $job->id );
+			$this->fail( 'Expected the completed child task to refuse the cancel' );
+		} catch ( MainWP_Exception $e ) {
+			$this->assertNotEmpty( $e->getMessage() );
+		}
+
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, MainWP_Backup_Restore_Job_Store::instance()->get_job( (int) $job->id )->status );
+	}
+
+	/**
+	 * A child task that already failed needs no child-side work; the
+	 * job cancels directly.
+	 */
+	public function test_cancel_running_with_failed_child_cancels() {
+		$this->responses['restore_task_cancel'] = array(
+			'result' => 'already_terminal',
+			'phase'  => 'failed',
+		);
+
+		$job = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, array( 'child_task_id' => 'task-9-restore' ) );
+		$this->orchestrator->cancel_job( (int) $job->id );
+
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED, MainWP_Backup_Restore_Job_Store::instance()->get_job( (int) $job->id )->status );
 	}
 }

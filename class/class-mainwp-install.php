@@ -31,7 +31,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * @var string DB version info.
      */
-    protected $mainwp_db_version = '9.0.2.8'; // NOSONAR - no IP. Bumped so dbDelta creates the wp_backup_snapshot table (durable per-run backup records for incremental chains). Previous 9.0.2.7 bump added the granular wp_backup_progress columns.
+    protected $mainwp_db_version = '9.0.2.9'; // NOSONAR - no IP. Bumped so dbDelta creates the wp_backup_storage and wp_backup_upload_job tables and the wp_backup destinations column (cloud storage destinations and resumable upload state). Previous 9.0.2.8 bump added the wp_backup_snapshot table.
 
     /**
      * Protected variable to hold the database option name.
@@ -335,7 +335,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         $tbl  .= ') ' . $charset_collate;
         $sql[] = $tbl;
 
-        $tbl = 'CREATE TABLE ' . $this->table_name( 'wp_backup' ) . ' (
+        $tbl  = 'CREATE TABLE ' . $this->table_name( 'wp_backup' ) . ' (
   id int(11) NOT NULL auto_increment,
   userid int(11) NOT NULL,
   name text NOT NULL,
@@ -364,6 +364,8 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
   maximumFileDescriptorsOverride tinyint(1) NOT NULL DEFAULT 0,
   maximumFileDescriptorsAuto tinyint(1) NOT NULL DEFAULT 1,
   maximumFileDescriptors int(11) NOT NULL DEFAULT 150';
+        $tbl .= ",
+  destinations text NOT NULL DEFAULT ''";
         if ( empty( $currentVersion ) ) {
             $tbl .= ',
   PRIMARY KEY  (id)  ';
@@ -384,6 +386,44 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
   KEY idx_site_task (site_id, task_id),
   KEY idx_parent (parent_id)";
         if ( empty( $currentVersion ) || version_compare( $currentVersion, '9.0.2.8', '<' ) ) { // NOSONAR - none IP.
+            $tbl .= ',
+  PRIMARY KEY  (id)  ';
+        }
+        $tbl  .= ') ' . $charset_collate;
+        $sql[] = $tbl;
+
+        $tbl = 'CREATE TABLE ' . $this->table_name( 'wp_backup_storage' ) . " (
+  id int(11) NOT NULL auto_increment,
+  provider varchar(32) NOT NULL DEFAULT '',
+  name varchar(255) NOT NULL DEFAULT '',
+  settings longtext NOT NULL,
+  is_default tinyint(1) NOT NULL DEFAULT 0,
+  created int(11) NOT NULL DEFAULT 0,
+  updated int(11) NOT NULL DEFAULT 0,
+  KEY idx_provider (provider)";
+        if ( empty( $currentVersion ) || version_compare( $currentVersion, '9.0.2.9', '<' ) ) { // NOSONAR - none IP.
+            $tbl .= ',
+  PRIMARY KEY  (id)  ';
+        }
+        $tbl  .= ') ' . $charset_collate;
+        $sql[] = $tbl;
+
+        $tbl = 'CREATE TABLE ' . $this->table_name( 'wp_backup_upload_job' ) . " (
+  id bigint(20) unsigned NOT NULL auto_increment,
+  snapshot_id bigint(20) unsigned NOT NULL,
+  destination_id int(11) NOT NULL,
+  status varchar(32) NOT NULL DEFAULT 'pending',
+  attempt_count int(11) NOT NULL DEFAULT 0,
+  next_retry_at int(11) NOT NULL DEFAULT 0,
+  locked_until int(11) NOT NULL DEFAULT 0,
+  locked_by varchar(64) NOT NULL DEFAULT '',
+  checkpoint longtext NOT NULL,
+  last_error text NOT NULL DEFAULT '',
+  created int(11) NOT NULL DEFAULT 0,
+  updated int(11) NOT NULL DEFAULT 0,
+  UNIQUE KEY uniq_snap_dest (snapshot_id, destination_id),
+  KEY idx_status_retry (status, next_retry_at)";
+        if ( empty( $currentVersion ) || version_compare( $currentVersion, '9.0.2.9', '<' ) ) { // NOSONAR - none IP.
             $tbl .= ',
   PRIMARY KEY  (id)  ';
         }

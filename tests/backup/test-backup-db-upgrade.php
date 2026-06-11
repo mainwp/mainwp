@@ -63,16 +63,23 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 	public function tear_down() {
 		global $wpdb;
 
-		// A failed snapshot-table test can leave the table missing for later
+		// A failed table-level test can leave a table missing for later
 		// tests; rerun the installer against an older stored version first.
-		$snapshot_table = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
-		if ( ! $this->table_exists( $snapshot_table ) ) {
+		$snapshot_table   = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+		$storage_table    = MainWP_DB::instance()->get_table_name( 'wp_backup_storage' );
+		$upload_job_table = MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' );
+		if ( ! $this->table_exists( $snapshot_table ) || ! $this->table_exists( $storage_table ) || ! $this->table_exists( $upload_job_table ) ) {
 			$this->with_real_tables(
 				function () {
 					update_site_option( 'mainwp_db_version', '9.0.2.7' );
 					MainWP_Install::instance()->install();
 				}
 			);
+		}
+
+		$task_table = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		if ( ! $this->column_exists( $task_table, 'destinations' ) ) {
+			$wpdb->query( "ALTER TABLE {$task_table} ADD COLUMN destinations text NOT NULL DEFAULT ''" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
 		}
 
 		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_progress' );
@@ -226,8 +233,11 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 			'Upgrade must add child_backup_task_id to existing installs; the shipped db version needs a bump or dbDelta never runs.'
 		);
 
-		// The column stores the child's 64-char task ids intact.
+		// The column stores the child's 64-char task ids intact. A prior
+		// run's DDL can implicitly commit this fixture row past the
+		// transaction rollback, so clear any leftover first.
 		$task_id = str_pad( 'task-', 64, 'x' );
+		$wpdb->query( "DELETE FROM {$table} WHERE task_id = 999999 AND wp_id = 999999" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture cleanup, identifiers cannot be prepared.
 		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- test fixture.
 			$table,
 			array(
@@ -303,5 +313,105 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 				"Snapshot table must have the {$column} column."
 			);
 		}
+	}
+
+	/**
+	 * An install whose stored db version predates the storage table must
+	 * receive it when install() runs. Storage rows hold the configured
+	 * cloud destinations with encrypted settings.
+	 *
+	 * @return void
+	 */
+	public function test_upgrade_creates_storage_table_on_existing_install() {
+		global $wpdb;
+
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_storage' );
+		$this->assertTrue( $this->table_exists( $table ), 'Precondition: fresh install has the storage table.' );
+
+		$this->with_real_tables(
+			function () use ( $wpdb, $table ) {
+				$wpdb->query( "DROP TABLE {$table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery, WordPress.DB.RestrictedFunctions -- test fixture, identifiers cannot be prepared.
+				$this->assertFalse( $this->table_exists( $table ), 'Precondition: table dropped to simulate an older install.' );
+
+				update_site_option( 'mainwp_db_version', '9.0.2.8' );
+
+				MainWP_Install::instance()->install();
+			}
+		);
+
+		$this->assertTrue(
+			$this->table_exists( $table ),
+			'Upgrade must create the storage table on existing installs; the shipped db version needs a bump or dbDelta never runs.'
+		);
+
+		foreach ( array( 'id', 'provider', 'name', 'settings', 'is_default', 'created', 'updated' ) as $column ) {
+			$this->assertTrue(
+				$this->column_exists( $table, $column ),
+				"Storage table must have the {$column} column."
+			);
+		}
+	}
+
+	/**
+	 * An install whose stored db version predates the upload job table must
+	 * receive it when install() runs. Upload job rows are the resumable
+	 * per-snapshot-per-destination upload state.
+	 *
+	 * @return void
+	 */
+	public function test_upgrade_creates_upload_job_table_on_existing_install() {
+		global $wpdb;
+
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' );
+		$this->assertTrue( $this->table_exists( $table ), 'Precondition: fresh install has the upload job table.' );
+
+		$this->with_real_tables(
+			function () use ( $wpdb, $table ) {
+				$wpdb->query( "DROP TABLE {$table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery, WordPress.DB.RestrictedFunctions -- test fixture, identifiers cannot be prepared.
+				$this->assertFalse( $this->table_exists( $table ), 'Precondition: table dropped to simulate an older install.' );
+
+				update_site_option( 'mainwp_db_version', '9.0.2.8' );
+
+				MainWP_Install::instance()->install();
+			}
+		);
+
+		$this->assertTrue(
+			$this->table_exists( $table ),
+			'Upgrade must create the upload job table on existing installs; the shipped db version needs a bump or dbDelta never runs.'
+		);
+
+		foreach ( array( 'id', 'snapshot_id', 'destination_id', 'status', 'attempt_count', 'next_retry_at', 'locked_until', 'locked_by', 'checkpoint', 'last_error', 'created', 'updated' ) as $column ) {
+			$this->assertTrue(
+				$this->column_exists( $table, $column ),
+				"Upload job table must have the {$column} column."
+			);
+		}
+	}
+
+	/**
+	 * An install whose stored db version predates the destinations column
+	 * must receive it when install() runs. The column holds the storage
+	 * destination ids a task uploads to.
+	 *
+	 * @return void
+	 */
+	public function test_upgrade_adds_destinations_column_to_backup_task_table() {
+		global $wpdb;
+
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		$this->assertTrue( $this->column_exists( $table, 'destinations' ), 'Precondition: fresh install has destinations.' );
+
+		$wpdb->query( "ALTER TABLE {$table} DROP COLUMN destinations" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture, identifiers cannot be prepared.
+		$this->assertFalse( $this->column_exists( $table, 'destinations' ), 'Precondition: column dropped to simulate an older install.' );
+
+		update_site_option( 'mainwp_db_version', '9.0.2.8' );
+
+		MainWP_Install::instance()->install();
+
+		$this->assertTrue(
+			$this->column_exists( $table, 'destinations' ),
+			'Upgrade must add destinations to existing installs; the shipped db version needs a bump or dbDelta never runs.'
+		);
 	}
 }

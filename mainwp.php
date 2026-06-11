@@ -117,6 +117,7 @@ if ( ! function_exists( 'mainwp_autoload' ) ) {
         $autoload_types = array(
             'class'                                  => 'class',
             'class' . DIRECTORY_SEPARATOR . 'backup' => 'class',
+            'class' . DIRECTORY_SEPARATOR . 'backup' . DIRECTORY_SEPARATOR . 'storage' => 'class',
             'pages'                                  => 'page',
             'pages' . DIRECTORY_SEPARATOR . 'backup' => 'page',
             'widgets'                                => 'widget',

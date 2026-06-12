@@ -131,7 +131,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         $where .= $this->get_sql_where_allow_groups();
 
         $table_group = esc_sql( $this->table_name( 'group' ) );
-        return $this->wpdb->get_row( $this->wpdb->prepare( "SELECT * FROM `{$table_group}` WHERE 1 " . esc_sql( $where ) . ' AND name= %s', $this->escape( $name ) ) );
+        return $this->wpdb->get_row( $this->wpdb->prepare( "SELECT * FROM `{$table_group}` WHERE 1 " . esc_sql( $where ) . ' AND name= %s', $this->escape( $name ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name and WHERE fragment escaped via esc_sql, values prepared.
     }
 
     /**
@@ -148,7 +148,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
     public function get_group_by_id( $id ) {
         if ( MainWP_Utility::ctype_digit( $id ) ) {
             $table_group = esc_sql( $this->table_name( 'group' ) );
-            return $this->wpdb->get_row( $this->wpdb->prepare( "SELECT * FROM `{$table_group}` WHERE id= %d", $id ) );
+            return $this->wpdb->get_row( $this->wpdb->prepare( "SELECT * FROM `{$table_group}` WHERE id= %d", $id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name escaped via esc_sql, values prepared.
         }
 
         return null;
@@ -186,7 +186,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         $where .= $this->get_sql_where_allow_groups( '', $with_staging );
 
         $table_group = esc_sql( $this->table_name( 'group' ) );
-        return $this->wpdb->get_results( "SELECT * FROM `{$table_group}` WHERE " . esc_sql( $where ) . ' ORDER BY name', OBJECT_K );
+        return $this->wpdb->get_results( "SELECT * FROM `{$table_group}` WHERE " . esc_sql( $where ) . ' ORDER BY name', OBJECT_K ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name and WHERE fragment escaped via esc_sql, no user input.
     }
 
 
@@ -252,7 +252,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         $where .= $this->get_sql_where_allow_groups();
 
         $table_group = esc_sql( $this->table_name( 'group' ) );
-        return $this->wpdb->get_results( "SELECT * FROM `{$table_group}` WHERE " . esc_sql( $where ) . ' ORDER BY name', OBJECT_K );
+        return $this->wpdb->get_results( "SELECT * FROM `{$table_group}` WHERE " . esc_sql( $where ) . ' ORDER BY name', OBJECT_K ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name and WHERE fragment escaped via esc_sql, no user input.
     }
 
     /**
@@ -272,7 +272,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             $table_wp_group = esc_sql( $this->table_name( 'wp_group' ) );
             return $this->wpdb->get_results(
                 $this->wpdb->prepare(
-                    "SELECT * FROM `{$table_group}` gr JOIN `{$table_wp_group}` wpgr ON gr.id = wpgr.groupid WHERE wpgr.wpid = %d ORDER BY name",
+                    "SELECT * FROM `{$table_group}` gr JOIN `{$table_wp_group}` wpgr ON gr.id = wpgr.groupid WHERE wpgr.wpid = %d ORDER BY name", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table names escaped via esc_sql, values prepared.
                     $websiteid
                 ),
                 OBJECT_K
@@ -320,7 +320,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         $table_group    = esc_sql( $this->table_name( 'group' ) );
         $table_wp_group = esc_sql( $this->table_name( 'wp_group' ) );
         $where          = esc_sql( $where );
-        return $this->wpdb->get_results( "SELECT gr.*, COUNT(DISTINCT(wpgr.wpid)) as nrsites FROM `{$table_group}` gr LEFT JOIN `{$table_wp_group}` wpgr ON gr.id = wpgr.groupid WHERE 1 {$where} GROUP BY gr.id ORDER BY gr.name", OBJECT_K );
+        return $this->wpdb->get_results( "SELECT gr.*, COUNT(DISTINCT(wpgr.wpid)) as nrsites FROM `{$table_group}` gr LEFT JOIN `{$table_wp_group}` wpgr ON gr.id = wpgr.groupid WHERE 1 {$where} GROUP BY gr.id ORDER BY gr.name", OBJECT_K ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table names escaped via esc_sql; WHERE fragment built from intval() and internal helper, escaped via esc_sql.
     }
 
 
@@ -573,7 +573,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         }
         $table_action_log = esc_sql( $this->table_name( 'action_log' ) );
         $where            = esc_sql( $where );
-        $this->wpdb->query( "DELETE FROM `{$table_action_log}` WHERE 1 {$where}" );
+        $this->wpdb->query( "DELETE FROM `{$table_action_log}` WHERE 1 {$where}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name escaped via esc_sql; WHERE fragment built from time arithmetic, escaped via esc_sql.
     }
 
     /**
@@ -601,7 +601,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         }
 
         $table_request_log = esc_sql( $this->table_name( 'request_log' ) );
-        $var               = $this->wpdb->get_var( $this->wpdb->prepare( "SELECT id FROM `{$table_request_log}` WHERE wpid = %d ", $wpid ) );
+        $var               = $this->wpdb->get_var( $this->wpdb->prepare( "SELECT id FROM `{$table_request_log}` WHERE wpid = %d ", $wpid ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name escaped via esc_sql, values prepared.
         if ( null !== $var ) {
             $this->wpdb->update( $this->table_name( 'request_log' ), $updateValues, array( 'wpid' => $wpid ) );
         } else {
@@ -620,7 +620,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
     public function close_open_requests() {
         $table_request_log = esc_sql( $this->table_name( 'request_log' ) );
         $microtime_value   = esc_sql( microtime( true ) );
-        $this->wpdb->query( "UPDATE `{$table_request_log}` SET micro_timestamp_stop = micro_timestamp_start WHERE micro_timestamp_stop < micro_timestamp_start and {$microtime_value} - micro_timestamp_start > 7" );
+        $this->wpdb->query( "UPDATE `{$table_request_log}` SET micro_timestamp_stop = micro_timestamp_start WHERE micro_timestamp_stop < micro_timestamp_start and {$microtime_value} - micro_timestamp_start > 7" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name escaped via esc_sql; microtime value is a server-generated float, no user input.
     }
 
     /**
@@ -658,10 +658,10 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
     public function get_last_request_timestamp( $ip = null ) {
         $table_request_log = esc_sql( $this->table_name( 'request_log' ) );
         if ( null === $ip ) {
-            return $this->wpdb->get_var( "select micro_timestamp_start from `{$table_request_log}` order by micro_timestamp_start desc limit 1" );
+            return $this->wpdb->get_var( "select micro_timestamp_start from `{$table_request_log}` order by micro_timestamp_start desc limit 1" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name escaped via esc_sql, no user input.
         }
 
-        return $this->wpdb->get_var( $this->wpdb->prepare( "SELECT micro_timestamp_start FROM `{$table_request_log}` WHERE ip = %s order by micro_timestamp_start desc limit 1", esc_sql( $ip ) ) );
+        return $this->wpdb->get_var( $this->wpdb->prepare( "SELECT micro_timestamp_start FROM `{$table_request_log}` WHERE ip = %s order by micro_timestamp_start desc limit 1", esc_sql( $ip ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name escaped via esc_sql, values prepared.
     }
 
     /**
@@ -764,9 +764,9 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         if ( ! empty( $groupId ) ) {
             $table_group = esc_sql( $this->table_name( 'group' ) );
             if ( null !== $newColor ) {
-                $this->wpdb->query( $this->wpdb->prepare( "UPDATE `{$table_group}` SET name=%s, color=%s WHERE id=%d", $newName, $newColor, $groupId ) );
+                $this->wpdb->query( $this->wpdb->prepare( "UPDATE `{$table_group}` SET name=%s, color=%s WHERE id=%d", $newName, $newColor, $groupId ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name escaped via esc_sql, values prepared.
             } else {
-                $this->wpdb->query( $this->wpdb->prepare( "UPDATE `{$table_group}` SET name=%s WHERE id=%d", $newName, $groupId ) );
+                $this->wpdb->query( $this->wpdb->prepare( "UPDATE `{$table_group}` SET name=%s WHERE id=%d", $newName, $groupId ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name escaped via esc_sql, values prepared.
             }
             return $this->get_group_by_id( $groupId );
         } elseif ( ! empty( $newName ) ) {
@@ -801,8 +801,8 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             $group          = $this->get_group_by_id( $groupid );
             $table_group    = esc_sql( $this->table_name( 'group' ) );
             $table_wp_group = esc_sql( $this->table_name( 'wp_group' ) );
-            $nr             = $this->wpdb->query( $this->wpdb->prepare( "DELETE FROM `{$table_group}` WHERE id=%d", $groupid ) );
-            $this->wpdb->query( $this->wpdb->prepare( "DELETE FROM `{$table_wp_group}` WHERE groupid=%d", $groupid ) );
+            $nr             = $this->wpdb->query( $this->wpdb->prepare( "DELETE FROM `{$table_group}` WHERE id=%d", $groupid ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name escaped via esc_sql, values prepared.
+            $this->wpdb->query( $this->wpdb->prepare( "DELETE FROM `{$table_wp_group}` WHERE groupid=%d", $groupid ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name escaped via esc_sql, values prepared.
             if ( $nr ) {
                 /**
                  * Fires after a tag has been deleted.
@@ -830,7 +830,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      */
     public function update_note( $websiteid, $note ) {
         $table_wp = esc_sql( $this->table_name( 'wp' ) );
-        $this->wpdb->query( $this->wpdb->prepare( "UPDATE `{$table_wp}` SET note= %s WHERE id=%d", $this->escape( $note ), $websiteid ) );
+        $this->wpdb->query( $this->wpdb->prepare( "UPDATE `{$table_wp}` SET note= %s WHERE id=%d", $this->escape( $note ), $websiteid ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name escaped via esc_sql, values prepared.
     }
 
     /**
@@ -849,7 +849,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
     public function update_group( $groupid, $groupname, $groupcolor ) {
         if ( MainWP_Utility::ctype_digit( $groupid ) ) {
             $table_group = esc_sql( $this->table_name( 'group' ) );
-            $this->wpdb->query( $this->wpdb->prepare( "UPDATE `{$table_group}` SET name=%s, color=%s WHERE id=%d", $this->escape( $groupname ), $this->escape( $groupcolor ), $groupid ) );
+            $this->wpdb->query( $this->wpdb->prepare( "UPDATE `{$table_group}` SET name=%s, color=%s WHERE id=%d", $this->escape( $groupname ), $this->escape( $groupcolor ), $groupid ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name escaped via esc_sql, values prepared.
 
             return true;
         }
@@ -874,7 +874,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             $theUserId = 0;
         }
         $table_users = esc_sql( $this->table_name( 'users' ) );
-        $user_email  = $this->wpdb->get_var( $this->wpdb->prepare( "SELECT user_email FROM `{$table_users}` WHERE userid = %d", $theUserId ) );
+        $user_email  = $this->wpdb->get_var( $this->wpdb->prepare( "SELECT user_email FROM `{$table_users}` WHERE userid = %d", $theUserId ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name escaped via esc_sql, values prepared.
 
         if ( null === $user_email || empty( $user_email ) ) {
             $user_email = $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT user_email FROM `' . $this->wpdb->prefix . 'users` WHERE id = %d', $userid ) );
@@ -931,10 +931,10 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         }
 
         $table_users = esc_sql( $this->table_name( 'users' ) );
-        $row         = $this->wpdb->get_row( "SELECT * FROM `{$table_users}` WHERE userid= " . intval( $userid ), OBJECT );
+        $row         = $this->wpdb->get_row( "SELECT * FROM `{$table_users}` WHERE userid= " . intval( $userid ), OBJECT ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name escaped via esc_sql, userid cast via intval.
         if ( null === $row ) {
             $this->create_user_extension( $userid );
-            $row = $this->wpdb->get_row( "SELECT * FROM `{$table_users}` WHERE userid= " . intval( $userid ), OBJECT );
+            $row = $this->wpdb->get_row( "SELECT * FROM `{$table_users}` WHERE userid= " . intval( $userid ), OBJECT ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name escaped via esc_sql, userid cast via intval.
         }
 
         return $row;
@@ -1003,7 +1003,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             }
         }
         $table_users = esc_sql( $this->table_name( 'users' ) );
-        $row         = $this->wpdb->get_row( "SELECT * FROM `{$table_users}` WHERE userid= " . intval( $userid ), OBJECT );
+        $row         = $this->wpdb->get_row( "SELECT * FROM `{$table_users}` WHERE userid= " . intval( $userid ), OBJECT ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name escaped via esc_sql, userid cast via intval.
         if ( null === $row ) {
             $this->create_user_extension( $userid );
         }
@@ -1019,7 +1019,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             $this->wpdb->update( $this->table_name( 'users' ), $fields, array( 'userid' => $userid ) );
         }
 
-        return $this->wpdb->get_row( "SELECT * FROM `{$table_users}` WHERE userid= " . intval( $userid ), OBJECT );
+        return $this->wpdb->get_row( "SELECT * FROM `{$table_users}` WHERE userid= " . intval( $userid ), OBJECT ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name escaped via esc_sql, userid cast via intval.
     }
 
 
@@ -1144,7 +1144,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
 
         if ( ! empty( $groupids ) ) {
             $table_wp_group = esc_sql( $this->table_name( 'wp_group' ) );
-            $this->wpdb->query( $this->wpdb->prepare( "DELETE FROM `{$table_wp_group}` WHERE wpid=%d", $websiteid ) );
+            $this->wpdb->query( $this->wpdb->prepare( "DELETE FROM `{$table_wp_group}` WHERE wpid=%d", $websiteid ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name escaped via esc_sql, values prepared.
 
             // update groups.
             foreach ( $groupids as $groupid ) {

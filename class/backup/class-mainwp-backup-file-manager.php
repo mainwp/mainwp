@@ -83,12 +83,19 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
         $dbBackups   = array();
         $fullBackups = array();
 
+        // Files recorded by complete backup snapshots belong to snapshot
+        // retention; the sweep neither counts nor deletes them.
+        $protected = MainWP_Backup_Snapshots::instance()->get_protected_paths_for_site( $pSiteId );
+
         if ( file_exists( $dir ) ) {
             $dh = opendir( $dir );
             if ( $dh ) {
                 while ( false !== ( $file = readdir( $dh ) ) ) {
                     if ( '.' !== $file && '..' !== $file ) {
                         $theFile = $dir . $file;
+                        if ( isset( $protected[ MainWP_Backup_Snapshots::normalise_path( $theFile ) ] ) ) {
+                            continue;
+                        }
                         if ( 'db' === $pType && static::is_sql_file( $file ) ) {
                             $dbBackups[ filemtime( $theFile ) . $file ] = $theFile;
                         }
@@ -161,7 +168,9 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
      * @uses \MainWP\Dashboard\MainWP_Connect::download_to_file()
      * @uses \MainWP\Dashboard\MainWP_Connect::get_get_data_authed()
      */
+    // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber -- all throws are MainWP_Exception.
     public static function download_backup_artifact( object $website, string $remote_filename, string $local_file, $size, $http_user, $http_pass ): void {
+        // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber
         $escalated = false;
 
         if ( ! MainWP_Backup_Monitor::child_supports_download_token( $website ) ) {
@@ -214,10 +223,12 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
             $actual_hash = (string) hash_file( 'sha256', $local_file );
             if ( ! hash_equals( (string) $token_info['hash'], $actual_hash ) ) {
                 wp_delete_file( $local_file );
-                throw MainWP_Backup_Error_Codes::exception( // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+                // phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped; the hashes are hex digests.
+                throw MainWP_Backup_Error_Codes::exception(
                     MainWP_Backup_Error_Codes::ERR_HASH_MISMATCH,
                     'expected ' . $token_info['hash'] . ', got ' . $actual_hash
                 );
+                // phpcs:enable WordPress.Security.EscapeOutput.ExceptionNotEscaped
             }
         }
 

@@ -188,6 +188,61 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
     }
 
     /**
+     * Get the local artifact paths complete snapshots have recorded for a
+     * site - the files the legacy backups-on-server sweeper must not
+     * delete, since snapshot retention owns their lifecycle.
+     *
+     * Only complete rows count: a pruned snapshot's files were already
+     * removed by retention, so a leftover path matching a new file by
+     * name must not shield it. Paths are normalised with normalise_path()
+     * so callers compare candidates with the same helper.
+     *
+     * @param int $site_id Child site id.
+     *
+     * @return array<string, true> Set keyed by normalised absolute path.
+     */
+    public function get_protected_paths_for_site( int $site_id ): array {
+        $rows = $this->wpdb->get_results(
+            $this->wpdb->prepare(
+                'SELECT archives FROM ' . $this->table_name( 'wp_backup_snapshot' ) . " WHERE site_id = %d AND status = 'complete'",
+                $site_id
+            )
+        );
+
+        $paths = array();
+        foreach ( (array) $rows as $row ) {
+            $archives = json_decode( (string) $row->archives, true );
+            if ( ! is_array( $archives ) ) {
+                continue;
+            }
+            foreach ( $archives as $archive ) {
+                if ( ! empty( $archive['path'] ) && is_string( $archive['path'] ) ) {
+                    $paths[ static::normalise_path( $archive['path'] ) ] = true;
+                }
+            }
+        }
+        return $paths;
+    }
+
+    /**
+     * Lexically normalise an absolute path for set-membership checks.
+     *
+     * Collapses doubled separators and trims a trailing one. Deliberately
+     * not realpath(): the sweeper compares paths for files that may not
+     * exist on disk at comparison time, where realpath() returns false.
+     *
+     * @param string $path Absolute path.
+     *
+     * @return string Normalised path.
+     */
+    public static function normalise_path( string $path ): string {
+        return rtrim(
+            str_replace( DIRECTORY_SEPARATOR . DIRECTORY_SEPARATOR, DIRECTORY_SEPARATOR, $path ),
+            DIRECTORY_SEPARATOR
+        );
+    }
+
+    /**
      * Walk a snapshot chain from a leaf back through its parents.
      *
      * Returns the chain base first so a restore can apply rows in order.

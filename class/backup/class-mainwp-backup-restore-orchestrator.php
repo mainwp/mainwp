@@ -514,7 +514,13 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 }
 
                 $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, array( 'child_task_id' => $created['task_id'] ) );
-                do_action( 'mainwp_log_info', sprintf( 'Restore job %d: the site downloads %d backup files directly from cloud storage.', (int) $job->id, count( $pull_manifest['artifacts'] ) ) );
+                $artifact_count = count( $pull_manifest['artifacts'] );
+                do_action(
+                    'mainwp_log_info',
+                    1 === $artifact_count
+                        ? sprintf( 'Restore job %d: the site downloads 1 backup file directly from cloud storage.', (int) $job->id )
+                        : sprintf( 'Restore job %d: the site downloads %d backup files directly from cloud storage.', (int) $job->id, $artifact_count )
+                );
                 return;
             }
         }

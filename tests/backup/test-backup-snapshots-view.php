@@ -109,4 +109,34 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 
 		$this->assertStringContainsString( 'The database will not be changed', $output );
 	}
+
+	/**
+	 * Disabled rows explain themselves: the list renderer puts the
+	 * server's restore_reason into the row's title attribute, escaped.
+	 *
+	 * @return void
+	 */
+	public function test_disabled_rows_carry_restore_reason_tooltip() {
+		$output = $this->render_page();
+
+		$this->assertStringContainsString( 'snap.restore_reason', $output );
+		$this->assertMatchesRegularExpression(
+			'/title="[^"]*escAttr\( snap\.restore_reason \)/s',
+			$output,
+			'The restore_reason tooltip must pass through the attribute escaper.'
+		);
+	}
+
+	/**
+	 * A multisite child's confirm pane warns the restore is
+	 * network-wide, driven by the multisite flag in the list payload.
+	 *
+	 * @return void
+	 */
+	public function test_multisite_confirm_carries_network_warning() {
+		$output = $this->render_page();
+
+		$this->assertStringContainsString( 'every site in the network', $output );
+		$this->assertStringContainsString( 'response.multisite', $output );
+	}
 }

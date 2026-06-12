@@ -101,8 +101,10 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         $this->secure_request( 'mainwp_restore_snapshot_list' );
         $site_id = isset( $_POST['site_id'] ) ? (int) $_POST['site_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by secure_request above.
 
-        $entries = MainWP_Backup_Snapshot_Catalog::instance()->list_snapshots_for_site( $site_id );
-        $rows    = array();
+        $entries   = MainWP_Backup_Snapshot_Catalog::instance()->list_snapshots_for_site( $site_id );
+        $website   = MainWP_DB::instance()->get_website_by_id( $site_id );
+        $multisite = ! empty( $website ) && MainWP_Backup_Monitor::child_is_multisite( $website );
+        $rows      = array();
         foreach ( $entries as $entry ) {
             $rows[] = array(
                 'id'             => (int) $entry['snapshot']->id,
@@ -115,7 +117,12 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                 'restore_reason' => (string) $entry['restore_reason'],
             );
         }
-        wp_send_json( array( 'snapshots' => $rows ) );
+        wp_send_json(
+            array(
+                'snapshots' => $rows,
+                'multisite' => $multisite,
+            )
+        );
     }
 
     /**

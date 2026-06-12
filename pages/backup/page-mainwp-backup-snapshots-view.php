@@ -162,6 +162,12 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 'default': '<?php echo esc_js( esc_html__( 'Restoring replaces the site\'s files and database with the contents of this backup. Anything changed since the backup was taken will be overwritten.', 'mainwp' ) ); ?>',
                 'files': '<?php echo esc_js( esc_html__( 'Restoring this backup will replace the site\'s files with the snapshot\'s contents. The database will not be changed. Anything in the site files that changed after the snapshot was taken will be overwritten.', 'mainwp' ) ); ?>'
             };
+            var networkWarning = '<?php echo esc_js( esc_html__( 'This restores every site in the network to the backup\'s point in time.', 'mainwp' ) ); ?>';
+            var siteIsMultisite = false;
+
+            function escAttr( text ) {
+                return String( text ).replace( /&/g, '&amp;' ).replace( /"/g, '&quot;' ).replace( /</g, '&lt;' ).replace( />/g, '&gt;' );
+            }
 
             function loadSnapshots( siteId ) {
                 currentSite = siteId;
@@ -169,13 +175,15 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 $tbody.html( '<tr><td colspan="5"><div class="ui active inline loader mini"></div></td></tr>' );
                 $.post( ajaxurl, { action: 'mainwp_restore_snapshot_list', security: nonces.list, site_id: siteId }, function ( response ) {
                     var rows = '';
+                    siteIsMultisite = !! response.multisite;
                     ( response.snapshots || [] ).forEach( function ( snap ) {
                         var when = new Date( snap.created * 1000 ).toLocaleString();
                         var action = snap.restorable
                             ? '<a href="#" class="ui mini green button mainwp-restore-snapshot" data-snapshot="' + snap.id + '" data-snapshot-type="' + snap.type + '"><?php echo esc_js( esc_html__( 'Restore', 'mainwp' ) ); ?></a>'
                             : '';
                         var rowClass = snap.restorable ? '' : ' class="disabled"';
-                        rows += '<tr' + rowClass + '><td>#' + snap.id + '</td><td>' + snap.type + '</td><td>' + when + '</td><td>' + ( sourceLabels[ snap.source ] || snap.source ) + '</td><td>' + action + '</td></tr>';
+                        var rowTitle = ( ! snap.restorable && snap.restore_reason ) ? ' title="' + escAttr( snap.restore_reason ) + '"' : '';
+                        rows += '<tr' + rowClass + rowTitle + '><td>#' + snap.id + '</td><td>' + snap.type + '</td><td>' + when + '</td><td>' + ( sourceLabels[ snap.source ] || snap.source ) + '</td><td>' + action + '</td></tr>';
                     } );
                     if ( '' === rows ) {
                         rows = '<tr><td colspan="5"><?php echo esc_js( esc_html__( 'No backups recorded for this site yet.', 'mainwp' ) ); ?></td></tr>';
@@ -248,7 +256,11 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             $( document ).on( 'click', '.mainwp-restore-snapshot', function ( event ) {
                 event.preventDefault();
                 currentSnapshot = parseInt( $( this ).data( 'snapshot' ), 10 );
-                $( '#mainwp-restore-warning-text' ).text( restoreWarnings[ $( this ).data( 'snapshot-type' ) ] || restoreWarnings['default'] );
+                var warningText = restoreWarnings[ $( this ).data( 'snapshot-type' ) ] || restoreWarnings['default'];
+                if ( siteIsMultisite ) {
+                    warningText += ' ' + networkWarning;
+                }
+                $( '#mainwp-restore-warning-text' ).text( warningText );
                 $( '#mainwp-restore-consent' ).prop( 'checked', false );
                 $( '#mainwp-restore-start-btn' ).addClass( 'disabled' );
                 setPane( true );

@@ -1061,8 +1061,6 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         $success = false;
 
         $map_fields = array(
-            'http_user'   => 'http_user',
-            'http_pass'   => 'http_pass',
             'name'        => 'name',
             'adminname'   => 'admin',
             'ssl_version' => 'sslversion',
@@ -1071,23 +1069,31 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
 
         $update_fields = array();
 
+        // MWP-1548: encrypt http_user / http_pass at rest before they hit
+        // the raw SQL UPDATE. Same fail-closed contract as the other write
+        // paths in MainWP_DB. The stored row's value rides along so the
+        // superseded envelope's key file is retired. Credential fields are
+        // handled apart from $map_fields: an explicitly sent empty string
+        // clears the credential (and retires its key file), while an absent
+        // key leaves it unchanged.
+        foreach ( array( 'http_user', 'http_pass' ) as $field ) {
+            if ( ! array_key_exists( $field, $data ) ) {
+                continue;
+            }
+            // An explicitly sent JSON null is a clear too; only an absent
+            // key means "leave unchanged".
+            $value        = null === $data[ $field ] ? '' : $data[ $field ];
+            $old_envelope = isset( $website->{$field} ) ? $website->{$field} : null;
+            $encrypted    = MainWP_Credential_Storage::encrypt_credential( $value, $field, $old_envelope );
+            if ( false === $encrypted ) {
+                return false;
+            }
+            $update_fields[ $field ] = $encrypted;
+        }
+
         foreach ( $map_fields as $field => $name ) {
             if ( isset( $data[ $name ] ) && empty( ! $data[ $name ] ) ) {
-                $value = $data[ $name ];
-                // MWP-1548: encrypt http_user / http_pass at rest before
-                // they hit the raw SQL UPDATE. Same fail-closed contract
-                // as the other write paths in MainWP_DB. The stored row's
-                // value rides along so the superseded envelope's key file
-                // is retired.
-                if ( 'http_user' === $field || 'http_pass' === $field ) {
-                    $old_envelope = isset( $website->{$field} ) ? $website->{$field} : null;
-                    $encrypted    = MainWP_Credential_Storage::encrypt_credential( $value, $field, $old_envelope );
-                    if ( false === $encrypted ) {
-                        return false;
-                    }
-                    $value = $encrypted;
-                }
-                $update_fields[ $field ] = $value;
+                $update_fields[ $field ] = $data[ $name ];
             }
         }
 

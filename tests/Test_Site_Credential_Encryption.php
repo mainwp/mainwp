@@ -444,6 +444,59 @@ class Test_Site_Credential_Encryption extends \WP_UnitTestCase {
 		$this->assertContains( 'site_credential_http_pass_restkey', $deleted );
 	}
 
+	public function test_rest_api_update_website_empty_string_clears_column_and_retires_key(): void {
+		global $wpdb;
+
+		$deleted = array();
+		add_action(
+			'mainwp_delete_key_file',
+			function ( $file_key ) use ( &$deleted ) {
+				$deleted[] = $file_key;
+			}
+		);
+
+		$site_id = $this->seed_site_with_envelope( 'site_credential_http_pass_rest_clear' );
+
+		\MainWP\Dashboard\MainWP_DB_Common::instance()->rest_api_update_website(
+			$site_id,
+			array( 'http_pass' => '' )
+		);
+
+		// get_row, not get_var: wpdb::get_var() collapses '' to null.
+		$table = \MainWP\Dashboard\MainWP_DB::instance()->get_table_name( 'wp' );
+		$row   = $wpdb->get_row( $wpdb->prepare( "SELECT http_pass FROM `{$table}` WHERE id = %d", $site_id ) );
+		$this->assertSame( '', $row->http_pass );
+
+		$this->assertContains( 'site_credential_http_pass_rest_clear', $deleted );
+	}
+
+	public function test_rest_api_update_website_absent_http_pass_leaves_column_untouched(): void {
+		global $wpdb;
+
+		$deleted = array();
+		add_action(
+			'mainwp_delete_key_file',
+			function ( $file_key ) use ( &$deleted ) {
+				$deleted[] = $file_key;
+			}
+		);
+
+		$file_key = 'site_credential_http_pass_rest_absent';
+		$site_id  = $this->seed_site_with_envelope( $file_key );
+
+		\MainWP\Dashboard\MainWP_DB_Common::instance()->rest_api_update_website(
+			$site_id,
+			array( 'name' => 'Renamed Site' )
+		);
+
+		$table = \MainWP\Dashboard\MainWP_DB::instance()->get_table_name( 'wp' );
+		$row   = $wpdb->get_row( $wpdb->prepare( "SELECT http_pass, name FROM `{$table}` WHERE id = %d", $site_id ) );
+		$this->assertStringStartsWith( self::ENVELOPE_PREFIX, $row->http_pass );
+		$this->assertSame( 'Renamed Site', $row->name );
+
+		$this->assertNotContains( $file_key, $deleted );
+	}
+
 	public function test_update_website_values_retires_old_key_file(): void {
 		$deleted = array();
 		add_action(

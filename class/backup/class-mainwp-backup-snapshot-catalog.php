@@ -52,14 +52,26 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
      */
     public function list_snapshots_for_site( int $site_id ): array {
         $files_restorable = $this->site_supports_restore_files( $site_id );
+        $multisite_gated  = $this->site_is_multisite( $site_id ) && ! $this->site_supports_restore_multisite( $site_id );
 
         $entries = array();
         foreach ( MainWP_Backup_Snapshots::instance()->get_snapshots_for_site( $site_id ) as $snapshot ) {
-            $source    = $this->snapshot_source( $snapshot );
+            $source = $this->snapshot_source( $snapshot );
+
+            $reason = '';
+            if ( 'unavailable' === $source ) {
+                $reason = __( 'Removed by retention; no copy survives locally or in cloud storage.', 'mainwp' );
+            } elseif ( 'files' === $snapshot->type && ! $files_restorable ) {
+                $reason = __( 'Update the MainWP Child plugin on the site to restore files-only backups.', 'mainwp' );
+            } elseif ( $multisite_gated ) {
+                $reason = __( 'This site runs WordPress Multisite. Update the MainWP Child plugin to enable network-wide restore.', 'mainwp' );
+            }
+
             $entries[] = array(
-                'snapshot'   => $snapshot,
-                'source'     => $source,
-                'restorable' => 'unavailable' !== $source && ( 'files' !== $snapshot->type || $files_restorable ),
+                'snapshot'       => $snapshot,
+                'source'         => $source,
+                'restorable'     => '' === $reason,
+                'restore_reason' => $reason,
             );
         }
         return $entries;
@@ -75,6 +87,30 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
     private function site_supports_restore_files( int $site_id ): bool {
         $website = MainWP_DB::instance()->get_website_by_id( $site_id );
         return ! empty( $website ) && MainWP_Backup_Monitor::child_supports_restore_files( $website );
+    }
+
+    /**
+     * Whether a site's child reported running a multisite network.
+     *
+     * @param int $site_id Child site id.
+     *
+     * @return bool True when the child is a multisite install.
+     */
+    private function site_is_multisite( int $site_id ): bool {
+        $website = MainWP_DB::instance()->get_website_by_id( $site_id );
+        return ! empty( $website ) && MainWP_Backup_Monitor::child_is_multisite( $website );
+    }
+
+    /**
+     * Whether a site's child advertised whole-network restore support.
+     *
+     * @param int $site_id Child site id.
+     *
+     * @return bool True when the child restores multisite networks.
+     */
+    private function site_supports_restore_multisite( int $site_id ): bool {
+        $website = MainWP_DB::instance()->get_website_by_id( $site_id );
+        return ! empty( $website ) && MainWP_Backup_Monitor::child_supports_restore_multisite( $website );
     }
 
     /**
@@ -98,6 +134,9 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
         }
         if ( 'files' === $leaf->type && ! $this->site_supports_restore_files( (int) $leaf->site_id ) ) {
             return $this->refusal( __( 'This backup contains the site\'s files without a database, and the site\'s MainWP Child plugin predates files-only restore. Update the child plugin to restore it, or download the archive to recover individual files.', 'mainwp' ) );
+        }
+        if ( $this->site_is_multisite( (int) $leaf->site_id ) && ! $this->site_supports_restore_multisite( (int) $leaf->site_id ) ) {
+            return $this->refusal( __( 'This site runs WordPress Multisite, and its MainWP Child plugin predates network-wide restore. Update the child plugin to restore this backup.', 'mainwp' ) );
         }
 
         $chain = $snapshots->get_chain( $snapshot_id );

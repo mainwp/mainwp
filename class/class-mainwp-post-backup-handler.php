@@ -105,13 +105,14 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         $rows    = array();
         foreach ( $entries as $entry ) {
             $rows[] = array(
-                'id'         => (int) $entry['snapshot']->id,
-                'task_id'    => (int) $entry['snapshot']->task_id,
-                'type'       => (string) $entry['snapshot']->type,
-                'created'    => (int) $entry['snapshot']->created,
-                'status'     => (string) $entry['snapshot']->status,
-                'source'     => (string) $entry['source'],
-                'restorable' => (bool) $entry['restorable'],
+                'id'             => (int) $entry['snapshot']->id,
+                'task_id'        => (int) $entry['snapshot']->task_id,
+                'type'           => (string) $entry['snapshot']->type,
+                'created'        => (int) $entry['snapshot']->created,
+                'status'         => (string) $entry['snapshot']->status,
+                'source'         => (string) $entry['source'],
+                'restorable'     => (bool) $entry['restorable'],
+                'restore_reason' => (string) $entry['restore_reason'],
             );
         }
         wp_send_json( array( 'snapshots' => $rows ) );
@@ -163,9 +164,9 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
 
         wp_send_json(
             array(
-                'status'         => (string) $job->status,
-                'last_error'     => (string) $job->last_error,
-                'attempt_count'  => (int) $job->attempt_count,
+                'status'           => (string) $job->status,
+                'last_error'       => (string) $job->last_error,
+                'attempt_count'    => (int) $job->attempt_count,
                 'artifact_index'   => isset( $transfer['artifact_index'] ) ? (int) $transfer['artifact_index'] : 0,
                 'artifact_total'   => count( $plan ),
                 'has_rollback'     => ! empty( $job->checkpoint['pre_snapshot_artifacts'] ),

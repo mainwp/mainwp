@@ -116,6 +116,59 @@ class MainWP_Backup_Snapshot_Catalog_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A multisite child without network-restore support lists its
+	 * snapshots as non-restorable with a reason, and resolution refuses;
+	 * a child that advertises support restores normally.
+	 */
+	public function test_multisite_gate_follows_child_capability() {
+		$site_id = $this->create_test_site();
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		MainWP_DB::instance()->update_website_option( $website, 'child_is_multisite', '1' );
+
+		$snapshot_id = $this->make_snapshot(
+			array( array( 'file' => 'full.tar.gz', 'role' => 'full' ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+			array( 'site_id' => $site_id )
+		);
+
+		$entries = MainWP_Backup_Snapshot_Catalog::instance()->list_snapshots_for_site( $site_id );
+		$this->assertFalse( $entries[0]['restorable'], 'A multisite child without the capability must not be restorable.' );
+		$this->assertStringContainsString( 'Update the MainWP Child plugin', $entries[0]['restore_reason'] );
+
+		$resolved = MainWP_Backup_Snapshot_Catalog::instance()->resolve_restorable_chain( $snapshot_id );
+		$this->assertFalse( $resolved['ok'] );
+		$this->assertStringContainsString( 'Multisite', $resolved['error'] );
+
+		MainWP_DB::instance()->update_website_option( $website, 'restore_multisite_support', '1' );
+
+		$entries = MainWP_Backup_Snapshot_Catalog::instance()->list_snapshots_for_site( $site_id );
+		$this->assertTrue( $entries[0]['restorable'] );
+		$this->assertSame( '', $entries[0]['restore_reason'] );
+		$this->assertTrue( MainWP_Backup_Snapshot_Catalog::instance()->resolve_restorable_chain( $snapshot_id )['ok'] );
+	}
+
+	/**
+	 * Single-site children are unaffected by the multisite gate, and the
+	 * existing non-restorable cases carry reasons too.
+	 */
+	public function test_restore_reasons_for_existing_cases() {
+		$this->make_snapshot( array( array( 'file' => 'full.tar.gz', 'role' => 'full' ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+		$entries = MainWP_Backup_Snapshot_Catalog::instance()->list_snapshots_for_site( 9901 );
+		$this->assertTrue( $entries[0]['restorable'], 'A site with no multisite flags must restore as before.' );
+		$this->assertSame( '', $entries[0]['restore_reason'] );
+
+		$this->make_snapshot(
+			array( array( 'file' => 'gone.tar.gz', 'role' => 'full' ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+			array(
+				'site_id' => 9902,
+				'status'  => 'pruned',
+			)
+		);
+		$entries = MainWP_Backup_Snapshot_Catalog::instance()->list_snapshots_for_site( 9902 );
+		$this->assertFalse( $entries[0]['restorable'] );
+		$this->assertNotSame( '', $entries[0]['restore_reason'], 'Unavailable snapshots must explain themselves.' );
+	}
+
+	/**
 	 * A pruned snapshot lists as unavailable.
 	 */
 	public function test_pruned_snapshot_unavailable() {

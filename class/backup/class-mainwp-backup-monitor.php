@@ -268,6 +268,11 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         // pipeline; an empty value also clears the flag after a child
         // downgrade.
         MainWP_DB::instance()->update_website_option( $website, 'restore_files_support', empty( $preflight['restore_files'] ) ? '' : '1' );
+
+        // Remember whether restores can pull artifacts straight from
+        // cloud storage via presigned URLs; an empty value also clears
+        // the flag after a child downgrade.
+        MainWP_DB::instance()->update_website_option( $website, 'cloud_restore_pull_support', empty( $preflight['cloud_restore_pull'] ) ? '' : '1' );
     }
 
     /**
@@ -338,6 +343,20 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      */
     public static function child_supports_restore_files( object $website ): bool {
         return '1' === (string) MainWP_DB::instance()->get_website_option( $website, 'restore_files_support' );
+    }
+
+    /**
+     * Method child_supports_cloud_pull()
+     *
+     * Whether the child site advertised cloud-pull restore support in
+     * its last preflight report.
+     *
+     * @param object $website Website object.
+     *
+     * @return bool True when restores can pull artifacts from cloud storage directly.
+     */
+    public static function child_supports_cloud_pull( object $website ): bool {
+        return '1' === (string) MainWP_DB::instance()->get_website_option( $website, 'cloud_restore_pull_support' );
     }
 
     /**

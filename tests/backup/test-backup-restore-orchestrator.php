@@ -359,10 +359,22 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			'phase'   => 'queued',
 		);
 
+		$logged = array();
+		add_action(
+			'mainwp_log_info',
+			function ( $message ) use ( &$logged ) {
+				$logged[] = $message;
+			}
+		);
+
 		$job = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_STAGING );
 		$job = $this->tick( $job );
 
 		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, $job->status );
+
+		$this->assertNotEmpty( $logged, 'The direct cloud download must leave a log trail.' );
+		$this->assertStringContainsString( 'directly from cloud storage', implode( ' ', $logged ) );
+		$this->assertStringNotContainsString( 'X-Amz', implode( ' ', $logged ), 'Presigned URLs must never be logged.' );
 		$this->assertSame( 'task-9-restore', $job->child_task_id );
 		$this->assertSame( str_repeat( 'a', 64 ), $job->checkpoint['plan'][0]['sha256'], 'The plan must carry the upload-recorded hash, not a staged one.' );
 
@@ -428,12 +440,22 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			'error_code' => 'mainwp_cloud_pull_failed',
 		);
 
+		$logged = array();
+		add_action(
+			'mainwp_log_warning',
+			function ( $message ) use ( &$logged ) {
+				$logged[] = $message;
+			}
+		);
+
 		$job = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, array( 'child_task_id' => 'task-9-restore' ) );
 		$job = $this->tick( $job );
 
 		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_STAGING, $job->status );
 		$this->assertSame( '', (string) $job->child_task_id, 'The failed task handle must clear so staging creates a fresh one.' );
 		$this->assertTrue( ! empty( $job->checkpoint['cloud_pull_tried'] ) );
+		$this->assertNotEmpty( $logged, 'The fallback must leave a log trail.' );
+		$this->assertStringContainsString( 'standard transfer', implode( ' ', $logged ) );
 
 		$this->responses['restore_task_create'] = array(
 			'task_id' => 'task-10-restore',

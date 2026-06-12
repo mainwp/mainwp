@@ -509,10 +509,12 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                     $checkpoint['cloud_pull_tried'] = true;
                     $store->save_checkpoint( (int) $job->id, $checkpoint );
                     $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_STAGING, array( 'child_task_id' => $created['task_id'] ) );
+                    do_action( 'mainwp_log_warning', sprintf( 'Restore job %d: the site declined the direct cloud download; using the standard transfer.', (int) $job->id ) );
                     return;
                 }
 
                 $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, array( 'child_task_id' => $created['task_id'] ) );
+                do_action( 'mainwp_log_info', sprintf( 'Restore job %d: the site downloads %d backup files directly from cloud storage.', (int) $job->id, count( $pull_manifest['artifacts'] ) ) );
                 return;
             }
         }
@@ -633,6 +635,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 $checkpoint['transfer']         = array();
                 $store->save_checkpoint( (int) $job->id, $checkpoint );
                 $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_STAGING, array( 'child_task_id' => '' ) );
+                do_action( 'mainwp_log_warning', sprintf( 'Restore job %d: the direct cloud download failed on the site; retrying with the standard transfer.', (int) $job->id ) );
                 return;
             }
 

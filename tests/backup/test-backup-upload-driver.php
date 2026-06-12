@@ -313,6 +313,17 @@ class MainWP_Backup_Upload_Driver_Test extends \WP_UnitTestCase {
 		$this->assertCount( 3, $by_file['big.bin']['chunks'] );
 		$this->assertSame( 'whole', $by_file['small.txt']['mode'] );
 
+		// Every artifact records its whole-file hash, in the manifest and
+		// on the job checkpoint, so restores can verify end to end.
+		$big_sha   = hash_file( 'sha256', $this->temp_dirs[1] . '/big.bin' );
+		$small_sha = hash_file( 'sha256', $this->temp_dirs[1] . '/small.txt' );
+		$this->assertSame( $big_sha, $by_file['big.bin']['sha256'] );
+		$this->assertSame( $small_sha, $by_file['small.txt']['sha256'] );
+
+		$by_checkpoint = array_column( $jobs[0]->checkpoint['artifacts'], null, 'file' );
+		$this->assertSame( $big_sha, $by_checkpoint['big.bin']['sha256'] );
+		$this->assertSame( $small_sha, $by_checkpoint['small.txt']['sha256'] );
+
 		$upload = wp_upload_dir();
 		$this->assertDirectoryDoesNotExist( trailingslashit( $upload['basedir'] ) . 'mainwp/upload-staging/' . $snapshot_id . '-' . $dest_id );
 

@@ -343,6 +343,23 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
                 continue;
             }
 
+            // The artifact's whole-file hash rides the checkpoint and the
+            // manifest, so a later restore can verify the bytes end to end
+            // no matter how they travel.
+            if ( empty( $artifact['sha256'] ) ) {
+                if ( microtime( true ) >= $deadline ) {
+                    $store->save_checkpoint( (int) $job->id, $checkpoint );
+                    return false;
+                }
+                if ( ! is_file( $artifact['path'] ) ) {
+                    throw new \RuntimeException( esc_html( 'Backup artifact is missing locally: ' . $artifact['file'] ), 410 );
+                }
+                $hash                                        = hash_file( 'sha256', $artifact['path'] );
+                $artifact['sha256']                          = is_string( $hash ) ? $hash : '';
+                $checkpoint['artifacts'][ $index ]['sha256'] = $artifact['sha256'];
+                $store->save_checkpoint( (int) $job->id, $checkpoint );
+            }
+
             if ( 'whole' === $artifact['mode'] ) {
                 if ( microtime( true ) >= $deadline ) {
                     $store->save_checkpoint( (int) $job->id, $checkpoint );
@@ -393,10 +410,11 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
         $artifacts = array();
         foreach ( $checkpoint['artifacts'] as $artifact ) {
             $entry = array(
-                'file' => $artifact['file'],
-                'role' => $artifact['role'],
-                'size' => $artifact['size'],
-                'mode' => $artifact['mode'],
+                'file'   => $artifact['file'],
+                'role'   => $artifact['role'],
+                'size'   => $artifact['size'],
+                'mode'   => $artifact['mode'],
+                'sha256' => isset( $artifact['sha256'] ) ? (string) $artifact['sha256'] : '',
             );
             if ( 'chunked' === $artifact['mode'] && is_array( $artifact['chunks'] ) ) {
                 $entry['chunks'] = array_map(

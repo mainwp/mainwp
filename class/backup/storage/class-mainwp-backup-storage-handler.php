@@ -31,14 +31,14 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
      *
      * @var string[]
      */
-    const ALLOWED_PROVIDERS = array( 'local', 's3', 'gcs', 'dropbox' );
+    const ALLOWED_PROVIDERS = array( 'local', 's3', 'gcs', 'dropbox', 'sftp' );
 
     /**
      * Settings fields treated as secrets: never echoed, kept on blank edit.
      *
      * @var string[]
      */
-    const SECRET_FIELDS = array( 'secret_key', 'app_secret', 'refresh_token' );
+    const SECRET_FIELDS = array( 'secret_key', 'app_secret', 'refresh_token', 'password', 'private_key' );
 
     /**
      * Instance variable class.
@@ -99,7 +99,8 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
         if ( isset( $_POST['settings'] ) && is_array( $_POST['settings'] ) ) {
             $settings = array();
             foreach ( wp_unslash( $_POST['settings'] ) as $field => $value ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized per field below.
-                $settings[ sanitize_key( $field ) ] = sanitize_text_field( (string) $value );
+                // A PEM private key is multi-line; sanitize_text_field would strip its line breaks.
+                $settings[ sanitize_key( $field ) ] = 'private_key' === $field ? sanitize_textarea_field( (string) $value ) : sanitize_text_field( (string) $value );
             }
         }
 

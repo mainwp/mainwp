@@ -122,6 +122,7 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                             <option value="s3"><?php esc_html_e( 'S3 Compatible Storage', 'mainwp' ); ?></option>
                             <option value="gcs"><?php esc_html_e( 'Google Cloud Storage', 'mainwp' ); ?></option>
                             <option value="dropbox"><?php esc_html_e( 'Dropbox', 'mainwp' ); ?></option>
+                            <option value="sftp"><?php esc_html_e( 'SFTP', 'mainwp' ); ?></option>
                             <option value="local"><?php esc_html_e( 'Local Path', 'mainwp' ); ?></option>
                         </select>
                     </div>
@@ -219,6 +220,47 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                         </div>
                     </div>
                 </div>
+                <div class="mainwp-storage-fields" data-provider="sftp" style="display:none">
+                    <div class="ui grid field">
+                        <label class="six wide column middle aligned"><?php esc_html_e( 'Host', 'mainwp' ); ?></label>
+                        <div class="ten wide column">
+                            <input type="text" id="mainwp-storage-sftp-host" value="" placeholder="sftp.example.com"/>
+                        </div>
+                    </div>
+                    <div class="ui grid field">
+                        <label class="six wide column middle aligned"><?php esc_html_e( 'Port', 'mainwp' ); ?></label>
+                        <div class="ten wide column">
+                            <input type="text" id="mainwp-storage-sftp-port" value="" placeholder="22"/>
+                        </div>
+                    </div>
+                    <div class="ui grid field">
+                        <label class="six wide column middle aligned"><?php esc_html_e( 'Username', 'mainwp' ); ?></label>
+                        <div class="ten wide column">
+                            <input type="text" id="mainwp-storage-sftp-username" value="" autocomplete="off"/>
+                        </div>
+                    </div>
+                    <div class="ui grid field">
+                        <label class="six wide column middle aligned"><?php esc_html_e( 'Password', 'mainwp' ); ?></label>
+                        <div class="ten wide column">
+                            <input type="password" id="mainwp-storage-sftp-password" value="" autocomplete="new-password"/>
+                            <em><?php esc_html_e( 'With a private key set, this is the key passphrase. When editing, leave this empty to keep the saved password.', 'mainwp' ); ?></em>
+                        </div>
+                    </div>
+                    <div class="ui grid field">
+                        <label class="six wide column middle aligned"><?php esc_html_e( 'Private key', 'mainwp' ); ?></label>
+                        <div class="ten wide column">
+                            <textarea id="mainwp-storage-sftp-private-key" rows="4" autocomplete="off"></textarea>
+                            <em><?php esc_html_e( 'Optional PEM private key for key-based login. When editing, leave this empty to keep the saved key.', 'mainwp' ); ?></em>
+                        </div>
+                    </div>
+                    <div class="ui grid field">
+                        <label class="six wide column middle aligned"><?php esc_html_e( 'Directory path', 'mainwp' ); ?></label>
+                        <div class="ten wide column">
+                            <input type="text" id="mainwp-storage-sftp-base-path" value="" placeholder="/backups"/>
+                            <em><?php esc_html_e( 'An existing absolute path on the SFTP server. Backups store under it.', 'mainwp' ); ?></em>
+                        </div>
+                    </div>
+                </div>
                 <div class="mainwp-storage-fields" data-provider="local" style="display:none">
                     <div class="ui grid field">
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Directory path', 'mainwp' ); ?></label>
@@ -273,6 +315,16 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                         app_secret: jQuery( '#mainwp-storage-dropbox-app-secret' ).val(),
                         refresh_token: jQuery( '#mainwp-storage-dropbox-refresh-token' ).val(),
                         base_path: jQuery( '#mainwp-storage-dropbox-base-path' ).val()
+                    };
+                }
+                if ( jQuery( '#mainwp-storage-provider' ).val() === 'sftp' ) {
+                    return {
+                        host: jQuery( '#mainwp-storage-sftp-host' ).val(),
+                        port: jQuery( '#mainwp-storage-sftp-port' ).val(),
+                        username: jQuery( '#mainwp-storage-sftp-username' ).val(),
+                        password: jQuery( '#mainwp-storage-sftp-password' ).val(),
+                        private_key: jQuery( '#mainwp-storage-sftp-private-key' ).val(),
+                        base_path: jQuery( '#mainwp-storage-sftp-base-path' ).val()
                     };
                 }
                 return {
@@ -330,7 +382,7 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
 
             jQuery( '#mainwp-storage-reset' ).on( 'click', function () {
                 jQuery( '#mainwp-storage-id' ).val( 0 );
-                jQuery( '#mainwp-storage-name, #mainwp-storage-endpoint, #mainwp-storage-bucket, #mainwp-storage-region, #mainwp-storage-access-key, #mainwp-storage-secret-key, #mainwp-storage-base-path, #mainwp-storage-gcs-bucket, #mainwp-storage-gcs-access-key, #mainwp-storage-gcs-secret-key, #mainwp-storage-dropbox-app-key, #mainwp-storage-dropbox-app-secret, #mainwp-storage-dropbox-refresh-token, #mainwp-storage-dropbox-base-path' ).val( '' );
+                jQuery( '#mainwp-storage-name, #mainwp-storage-endpoint, #mainwp-storage-bucket, #mainwp-storage-region, #mainwp-storage-access-key, #mainwp-storage-secret-key, #mainwp-storage-base-path, #mainwp-storage-gcs-bucket, #mainwp-storage-gcs-access-key, #mainwp-storage-gcs-secret-key, #mainwp-storage-dropbox-app-key, #mainwp-storage-dropbox-app-secret, #mainwp-storage-dropbox-refresh-token, #mainwp-storage-dropbox-base-path, #mainwp-storage-sftp-host, #mainwp-storage-sftp-port, #mainwp-storage-sftp-username, #mainwp-storage-sftp-password, #mainwp-storage-sftp-private-key, #mainwp-storage-sftp-base-path' ).val( '' );
                 jQuery( '#mainwp-storage-form-title' ).text( '<?php echo esc_js( __( 'Add Storage Destination', 'mainwp' ) ); ?>' );
                 jQuery( this ).hide();
             } );

@@ -451,6 +451,29 @@ class MainWP_Backup_Storage_Page_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * The factory builds the SFTP provider for its slug. Constructing it
+	 * opens no connection, so no network is touched here; the data-call
+	 * behavior is covered by the SFTP provider tests.
+	 *
+	 * @return void
+	 */
+	public function test_factory_builds_sftp_provider() {
+		$provider = MainWP_Backup_Storage_Destinations::instance()->make_provider(
+			(object) array(
+				'provider' => 'sftp',
+				'settings' => array(
+					'host'      => 'sftp.example.com',
+					'username'  => 'u',
+					'password'  => 'p',
+					'base_path' => '/backups',
+				),
+			)
+		);
+
+		$this->assertInstanceOf( \MainWP\Dashboard\MainWP_Backup_Storage_SFTP::class, $provider );
+	}
+
+	/**
 	 * The add/edit form offers every registered provider with its own
 	 * settings fields block.
 	 *

@@ -15,9 +15,61 @@ use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_Exception;
 
 /**
+ * Transfer driver with the cloud-pull decision and manifest scripted.
+ */
+class Cloud_Pull_Stub_Transfer_Driver extends MainWP_Backup_Restore_Transfer_Driver { // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- test double.
+
+	/**
+	 * Whether the gates pass (the tried flag still wins).
+	 *
+	 * @var bool
+	 */
+	public $cloud_ok = false;
+
+	/**
+	 * Scripted manifest, or null for "cannot build one".
+	 *
+	 * @var array|null
+	 */
+	public $manifest = null;
+
+	/**
+	 * Scripted gate.
+	 *
+	 * @param object $website    Website.
+	 * @param array  $plan       Plan.
+	 * @param array  $checkpoint Checkpoint.
+	 *
+	 * @return bool
+	 */
+	public function can_use_cloud_pull( object $website, array $plan, array $checkpoint ): bool {
+		return $this->cloud_ok && empty( $checkpoint['cloud_pull_tried'] );
+	}
+
+	/**
+	 * Scripted manifest; fills plan hashes like the real one.
+	 *
+	 * @param array $plan Plan (by reference).
+	 *
+	 * @return array|null
+	 */
+	public function generate_pull_manifest( array &$plan ): ?array {
+		if ( null === $this->manifest ) {
+			return null;
+		}
+		foreach ( $plan as $index => $entry ) {
+			if ( empty( $entry['adopt_only'] ) ) {
+				$plan[ $index ]['sha256'] = str_repeat( 'a', 64 );
+			}
+		}
+		return $this->manifest;
+	}
+}
+
+/**
  * Orchestrator with the external reachability check pinned.
  */
-class Testable_Restore_Orchestrator extends MainWP_Backup_Restore_Orchestrator {
+class Testable_Restore_Orchestrator extends MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- test double above.
 
 	/**
 	 * Scripted reachability.
@@ -25,6 +77,13 @@ class Testable_Restore_Orchestrator extends MainWP_Backup_Restore_Orchestrator {
 	 * @var bool
 	 */
 	public $responds = true;
+
+	/**
+	 * Driver override.
+	 *
+	 * @var MainWP_Backup_Restore_Transfer_Driver|null
+	 */
+	public $driver = null;
 
 	/**
 	 * Pinned check.
@@ -35,6 +94,15 @@ class Testable_Restore_Orchestrator extends MainWP_Backup_Restore_Orchestrator {
 	 */
 	protected function site_responds( object $website ): bool {
 		return $this->responds;
+	}
+
+	/**
+	 * Pinned driver.
+	 *
+	 * @return MainWP_Backup_Restore_Transfer_Driver
+	 */
+	protected function transfer_driver(): MainWP_Backup_Restore_Transfer_Driver {
+		return null !== $this->driver ? $this->driver : parent::transfer_driver();
 	}
 }
 
@@ -244,6 +312,154 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$this->assertNotNull( $create );
 		$options = json_decode( $create['params']['options_json'], true );
 		$this->assertSame( 'files', $options['sub_type'] );
+	}
+
+	/**
+	 * Wire a cloud-pull-capable stub driver into the orchestrator.
+	 *
+	 * @param array|null $manifest Scripted manifest.
+	 *
+	 * @return Cloud_Pull_Stub_Transfer_Driver
+	 */
+	private function use_cloud_pull_driver( $manifest ) {
+		$driver                     = new Cloud_Pull_Stub_Transfer_Driver();
+		$driver->cloud_ok           = true;
+		$driver->manifest           = $manifest;
+		$this->orchestrator->driver = $driver;
+		return $driver;
+	}
+
+	/**
+	 * The scripted pull manifest used by the cloud-pull tests.
+	 *
+	 * @return array
+	 */
+	private function pull_manifest_fixture() {
+		return array(
+			'artifacts' => array(
+				array(
+					'file'   => 'db.zip',
+					'sha256' => str_repeat( 'a', 64 ),
+					'size'   => 10,
+					'url'    => 'https://bucket.example/5/files/db.zip?X-Amz-Signature=stub',
+				),
+			),
+		);
+	}
+
+	/**
+	 * When the destination presigns and the child can pull, staging is
+	 * skipped: the child task is created with the manifest and the job
+	 * goes straight to running.
+	 */
+	public function test_staging_uses_cloud_pull_when_available() {
+		$this->use_cloud_pull_driver( $this->pull_manifest_fixture() );
+		$this->responses['restore_task_create'] = array(
+			'task_id' => 'task-9-restore',
+			'phase'   => 'queued',
+		);
+
+		$job = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_STAGING );
+		$job = $this->tick( $job );
+
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, $job->status );
+		$this->assertSame( 'task-9-restore', $job->child_task_id );
+		$this->assertSame( str_repeat( 'a', 64 ), $job->checkpoint['plan'][0]['sha256'], 'The plan must carry the upload-recorded hash, not a staged one.' );
+
+		$create = null;
+		foreach ( $this->calls as $call ) {
+			if ( 'restore_task_create' === $call['what'] ) {
+				$create = $call;
+			}
+		}
+		$this->assertNotNull( $create );
+		$this->assertSame( $this->pull_manifest_fixture(), json_decode( $create['params']['pull_manifest_json'], true ) );
+
+		$chunks = 0;
+		foreach ( $this->calls as $call ) {
+			if ( 'restore_artifact_chunk' === $call['what'] ) {
+				++$chunks;
+			}
+		}
+		$this->assertSame( 0, $chunks, 'No bytes may stream through the dashboard on the pull path.' );
+	}
+
+	/**
+	 * A child that rejects the manifest keeps its created task: the job
+	 * stages once and streams into that same task without a second
+	 * create call.
+	 */
+	public function test_rejected_pull_manifest_falls_back_to_staged_transfer() {
+		$this->use_cloud_pull_driver( $this->pull_manifest_fixture() );
+		$this->responses['restore_task_create'] = array(
+			'task_id'                => 'task-9-restore',
+			'phase'                  => 'queued',
+			'pull_manifest_rejected' => true,
+		);
+
+		$job = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_STAGING );
+		$job = $this->tick( $job );
+
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_STAGING, $job->status );
+		$this->assertSame( 'task-9-restore', $job->child_task_id );
+		$this->assertTrue( ! empty( $job->checkpoint['cloud_pull_tried'] ) );
+
+		$job = $this->tick( $job );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING, $job->status );
+
+		$creates = 0;
+		foreach ( $this->calls as $call ) {
+			if ( 'restore_task_create' === $call['what'] ) {
+				++$creates;
+			}
+		}
+		$this->assertSame( 1, $creates, 'The rejected manifest must not trigger a second task create.' );
+	}
+
+	/**
+	 * A failed cloud pull on the child re-stages the job once with a
+	 * fresh task instead of failing the restore.
+	 */
+	public function test_running_pull_failure_falls_back_to_staging() {
+		$this->responses['restore_task_run'] = array(
+			'task_id'    => 'task-9-restore',
+			'phase'      => 'failed',
+			'error'      => 'This site could not download the backup from cloud storage directly.',
+			'error_code' => 'mainwp_cloud_pull_failed',
+		);
+
+		$job = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, array( 'child_task_id' => 'task-9-restore' ) );
+		$job = $this->tick( $job );
+
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_STAGING, $job->status );
+		$this->assertSame( '', (string) $job->child_task_id, 'The failed task handle must clear so staging creates a fresh one.' );
+		$this->assertTrue( ! empty( $job->checkpoint['cloud_pull_tried'] ) );
+
+		$this->responses['restore_task_create'] = array(
+			'task_id' => 'task-10-restore',
+			'phase'   => 'queued',
+		);
+		$job = $this->tick( $job );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING, $job->status );
+		$this->assertSame( 'task-10-restore', $job->child_task_id );
+	}
+
+	/**
+	 * A pull failure after the fallback already ran fails the job: the
+	 * fallback never loops.
+	 */
+	public function test_running_pull_failure_after_fallback_goes_permanent() {
+		$this->responses['restore_task_run'] = array(
+			'task_id'    => 'task-10-restore',
+			'phase'      => 'failed',
+			'error'      => 'This site could not download the backup from cloud storage directly.',
+			'error_code' => 'mainwp_cloud_pull_failed',
+		);
+
+		$job = $this->make_job( array( 'cloud_pull_tried' => true ), MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, array( 'child_task_id' => 'task-10-restore' ) );
+		$job = $this->tick( $job );
+
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
 	}
 
 	/**

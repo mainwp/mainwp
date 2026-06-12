@@ -484,6 +484,38 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         $store      = MainWP_Backup_Restore_Job_Store::instance();
         $checkpoint = $job->checkpoint;
         $plan       = (array) $checkpoint['plan'];
+        $driver     = $this->transfer_driver();
+
+        // Cloud pull: when the destination can presign and the child can
+        // download, the dashboard never touches the bytes - the child
+        // task is created with a presigned manifest and the job goes
+        // straight to running. Any gap (gate fails, manifest incomplete,
+        // child rejects it, pull fails later) lands on the staged
+        // transfer below instead.
+        if ( empty( $job->child_task_id ) && $driver->can_use_cloud_pull( $this->website( $job ), $plan, $checkpoint ) ) {
+            $pull_manifest = $driver->generate_pull_manifest( $plan );
+            if ( null !== $pull_manifest ) {
+                $checkpoint['plan'] = $plan; // Expected hashes filled from the upload records.
+                $store->save_checkpoint( (int) $job->id, $checkpoint );
+
+                $created = $this->create_child_restore_task( $job, $checkpoint, $plan, $pull_manifest );
+                if ( '' === $created['task_id'] ) {
+                    return; // Failure already recorded.
+                }
+
+                if ( $created['pull_rejected'] ) {
+                    // The child created the task but refused the
+                    // manifest: stage and stream into that same task.
+                    $checkpoint['cloud_pull_tried'] = true;
+                    $store->save_checkpoint( (int) $job->id, $checkpoint );
+                    $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_STAGING, array( 'child_task_id' => $created['task_id'] ) );
+                    return;
+                }
+
+                $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, array( 'child_task_id' => $created['task_id'] ) );
+                return;
+            }
+        }
 
         $needs_staging = false;
         foreach ( $plan as $entry ) {
@@ -507,12 +539,28 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             }
         }
 
-        $task_id = $this->create_child_restore_task( $job, $checkpoint, $plan );
-        if ( '' === $task_id ) {
+        // A child task may already exist when a rejected pull manifest
+        // routed this job back through staging.
+        if ( ! empty( $job->child_task_id ) ) {
+            $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING );
+            return;
+        }
+
+        $created = $this->create_child_restore_task( $job, $checkpoint, $plan );
+        if ( '' === $created['task_id'] ) {
             return; // Failure already recorded.
         }
 
-        $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING, array( 'child_task_id' => $task_id ) );
+        $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING, array( 'child_task_id' => $created['task_id'] ) );
+    }
+
+    /**
+     * The restore transfer driver (test seam).
+     *
+     * @return MainWP_Backup_Restore_Transfer_Driver
+     */
+    protected function transfer_driver(): MainWP_Backup_Restore_Transfer_Driver {
+        return MainWP_Backup_Restore_Transfer_Driver::instance();
     }
 
     /**
@@ -572,6 +620,22 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             return;
         }
         if ( 'failed' === $phase ) {
+            $error_code = isset( $payload['error_code'] ) ? (string) $payload['error_code'] : '';
+            if ( '' === $error_code && isset( $payload['sub_state']['error']['code'] ) ) {
+                $error_code = (string) $payload['sub_state']['error']['code'];
+            }
+
+            // A failed cloud pull never fails the restore: the job goes
+            // back through staging once, taking the standard transfer.
+            if ( 'mainwp_cloud_pull_failed' === $error_code && empty( $job->checkpoint['cloud_pull_tried'] ) ) {
+                $checkpoint                     = $job->checkpoint;
+                $checkpoint['cloud_pull_tried'] = true;
+                $checkpoint['transfer']         = array();
+                $store->save_checkpoint( (int) $job->id, $checkpoint );
+                $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_STAGING, array( 'child_task_id' => '' ) );
+                return;
+            }
+
             $error = isset( $payload['error'] ) ? (string) $payload['error'] : esc_html__( 'The restore failed on the child site.', 'mainwp' );
             if ( isset( $payload['sub_state']['error']['message'] ) ) {
                 $error = (string) $payload['sub_state']['error']['message'];
@@ -627,13 +691,16 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
     /**
      * Create the child restore task from the staged plan.
      *
-     * @param object $job        Job row.
-     * @param array  $checkpoint Checkpoint.
-     * @param array  $plan       Staged plan.
+     * @param object     $job           Job row.
+     * @param array      $checkpoint    Checkpoint.
+     * @param array      $plan          Staged plan.
+     * @param array|null $pull_manifest Presigned pull manifest, when the
+     *                                  child downloads from cloud storage.
      *
-     * @return string Child task id, or '' after recording a failure.
+     * @return array { task_id: string ('' after recording a failure),
+     *                 pull_rejected: bool }.
      */
-    private function create_child_restore_task( object $job, array $checkpoint, array $plan ): string {
+    private function create_child_restore_task( object $job, array $checkpoint, array $plan, ?array $pull_manifest = null ): array {
         $artifacts = array();
         foreach ( $plan as $entry ) {
             $artifacts[] = array(
@@ -645,35 +712,39 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             );
         }
 
-        $website = $this->website( $job );
-        $payload = MainWP_Connect::fetch_url_authed(
-            $website,
-            'restore_task_create',
-            array(
-                'restore_id'     => (string) $checkpoint['restore_id'],
-                'source_prefix'  => '',
-                'artifacts_json' => wp_json_encode( $artifacts ),
-                'options_json'   => wp_json_encode(
-                    array(
-                        'sub_type'         => (string) $checkpoint['sub_type'],
-                        'has_foreign_keys' => null,
-                        'file_rollback'    => ! empty( $checkpoint['options']['file_rollback'] ) || ! empty( $checkpoint['pre_snapshot_artifacts'] ),
-                    )
-                ),
+        $params = array(
+            'restore_id'     => (string) $checkpoint['restore_id'],
+            'source_prefix'  => '',
+            'artifacts_json' => wp_json_encode( $artifacts ),
+            'options_json'   => wp_json_encode(
+                array(
+                    'sub_type'         => (string) $checkpoint['sub_type'],
+                    'has_foreign_keys' => null,
+                    'file_rollback'    => ! empty( $checkpoint['options']['file_rollback'] ) || ! empty( $checkpoint['pre_snapshot_artifacts'] ),
+                )
             ),
-            false,
-            false,
-            false
         );
+        if ( null !== $pull_manifest ) {
+            $params['pull_manifest_json'] = wp_json_encode( $pull_manifest );
+        }
+
+        $website = $this->website( $job );
+        $payload = MainWP_Connect::fetch_url_authed( $website, 'restore_task_create', $params, false, false, false );
 
         if ( ! is_array( $payload ) || empty( $payload['task_id'] ) ) {
             $message   = is_array( $payload ) && isset( $payload['error'] ) ? (string) $payload['error'] : esc_html__( 'The child site did not accept the restore task.', 'mainwp' );
             $retryable = is_array( $payload ) && isset( $payload['error_code'] ) && 'mainwp_backup_already_running' === $payload['error_code'];
             $this->record_failure( $job, $message, $retryable );
-            return '';
+            return array(
+                'task_id'       => '',
+                'pull_rejected' => false,
+            );
         }
 
-        return sanitize_text_field( (string) $payload['task_id'] );
+        return array(
+            'task_id'       => sanitize_text_field( (string) $payload['task_id'] ),
+            'pull_rejected' => ! empty( $payload['pull_manifest_rejected'] ),
+        );
     }
 
     /**

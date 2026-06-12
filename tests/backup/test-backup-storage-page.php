@@ -498,9 +498,96 @@ class MainWP_Backup_Storage_Page_Test extends \WP_UnitTestCase {
 	public function test_storage_ajax_actions_register() {
 		MainWP_Backup_Storage_Handler::instance()->init();
 
-		foreach ( array( 'mainwp_storage_save', 'mainwp_storage_test', 'mainwp_storage_delete', 'mainwp_storage_default' ) as $action ) {
+		foreach ( array( 'mainwp_storage_save', 'mainwp_storage_test', 'mainwp_storage_delete', 'mainwp_storage_default', 'mainwp_storage_get' ) as $action ) {
 			$this->assertNotFalse( has_action( 'wp_ajax_' . $action ), "Action {$action} must register." );
 		}
+	}
+
+	/**
+	 * The edit prefill returns every non-secret setting and never a
+	 * secret, so the form can pre-fill without secrets reaching the
+	 * browser.
+	 *
+	 * @return void
+	 */
+	public function test_destination_for_edit_strips_secrets() {
+		add_filter(
+			'pre_http_request',
+			function () {
+				return array(
+					'headers'  => array( 'content-length' => '22' ),
+					'body'     => '',
+					'response' => array(
+						'code'    => 200,
+						'message' => 'OK',
+					),
+				);
+			}
+		);
+
+		$created = MainWP_Backup_Storage_Handler::save_destination(
+			array(
+				'id'       => 0,
+				'provider' => 's3',
+				'name'     => 'Edit me',
+				'settings' => array(
+					'endpoint'   => 'https://minio.example:9000',
+					'bucket'     => 'edit-bucket',
+					'region'     => 'us-east-1',
+					'access_key' => 'AKIA-EDIT',
+					'secret_key' => 'edit-secret-value',
+					'path_style' => 1,
+				),
+			)
+		);
+		$this->assertArrayNotHasKey( 'error', $created );
+
+		$result = MainWP_Backup_Storage_Handler::destination_for_edit( $created['id'] );
+
+		$this->assertSame( 'Edit me', $result['name'] );
+		$this->assertSame( 's3', $result['provider'] );
+		$this->assertSame( 'edit-bucket', $result['settings']['bucket'] );
+		$this->assertSame( 'AKIA-EDIT', $result['settings']['access_key'] );
+		$this->assertSame( 'https://minio.example:9000', $result['settings']['endpoint'] );
+		$this->assertArrayNotHasKey( 'secret_key', $result['settings'], 'Secrets must never reach the browser.' );
+
+		foreach ( MainWP_Backup_Storage_Handler::SECRET_FIELDS as $field ) {
+			$this->assertArrayNotHasKey( $field, $result['settings'] );
+		}
+
+		$this->assertArrayHasKey( 'error', MainWP_Backup_Storage_Handler::destination_for_edit( 999999 ) );
+	}
+
+	/**
+	 * A destination whose settings no longer decrypt prefills nothing
+	 * but still reports its name and provider with the credentials flag.
+	 *
+	 * @return void
+	 */
+	public function test_destination_for_edit_handles_invalid_credentials() {
+		global $wpdb;
+
+		$base    = $this->make_temp_dir();
+		$created = MainWP_Backup_Storage_Handler::save_destination(
+			array(
+				'id'       => 0,
+				'provider' => 'local',
+				'name'     => 'Broken creds',
+				'settings' => array( 'base_path' => $base ),
+			)
+		);
+
+		$wpdb->update( // phpcs:ignore WordPress.DB -- test fixture: corrupt the stored envelope.
+			MainWP_DB::instance()->get_table_name( 'wp_backup_storage' ),
+			array( 'settings' => 'garbage-not-an-envelope' ),
+			array( 'id' => $created['id'] )
+		);
+
+		$result = MainWP_Backup_Storage_Handler::destination_for_edit( $created['id'] );
+
+		$this->assertSame( 'Broken creds', $result['name'] );
+		$this->assertSame( array(), $result['settings'] );
+		$this->assertTrue( $result['credentials_invalid'] );
 	}
 
 	/**

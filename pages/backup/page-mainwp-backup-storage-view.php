@@ -209,7 +209,7 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Refresh token', 'mainwp' ); ?></label>
                         <div class="ten wide column">
                             <input type="password" id="mainwp-storage-dropbox-refresh-token" value="" autocomplete="new-password"/>
-                            <em><?php esc_html_e( 'A refresh token issued for the app with offline access. The dashboard mints short-lived access tokens from it automatically. When editing, leave this empty to keep the saved token.', 'mainwp' ); ?></em>
+                            <em><?php esc_html_e( 'Authorize the app once in a browser with offline access, then exchange the code it returns for a refresh token; the MainWP documentation walks through both steps. The dashboard mints short-lived access tokens from it automatically. When editing, leave this empty to keep the saved token.', 'mainwp' ); ?></em>
                         </div>
                     </div>
                     <div class="ui grid field">
@@ -383,9 +383,18 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
             jQuery( '#mainwp-storage-reset' ).on( 'click', function () {
                 jQuery( '#mainwp-storage-id' ).val( 0 );
                 jQuery( '#mainwp-storage-name, #mainwp-storage-endpoint, #mainwp-storage-bucket, #mainwp-storage-region, #mainwp-storage-access-key, #mainwp-storage-secret-key, #mainwp-storage-base-path, #mainwp-storage-gcs-bucket, #mainwp-storage-gcs-access-key, #mainwp-storage-gcs-secret-key, #mainwp-storage-dropbox-app-key, #mainwp-storage-dropbox-app-secret, #mainwp-storage-dropbox-refresh-token, #mainwp-storage-dropbox-base-path, #mainwp-storage-sftp-host, #mainwp-storage-sftp-port, #mainwp-storage-sftp-username, #mainwp-storage-sftp-password, #mainwp-storage-sftp-private-key, #mainwp-storage-sftp-base-path' ).val( '' );
+                jQuery( '#mainwp-storage-path-style, #mainwp-storage-is-default' ).prop( 'checked', false );
                 jQuery( '#mainwp-storage-form-title' ).text( '<?php echo esc_js( __( 'Add Storage Destination', 'mainwp' ) ); ?>' );
                 jQuery( this ).hide();
             } );
+
+            let settingsFieldMap = {
+                s3: { endpoint: '#mainwp-storage-endpoint', bucket: '#mainwp-storage-bucket', region: '#mainwp-storage-region', access_key: '#mainwp-storage-access-key' },
+                gcs: { bucket: '#mainwp-storage-gcs-bucket', access_key: '#mainwp-storage-gcs-access-key' },
+                dropbox: { app_key: '#mainwp-storage-dropbox-app-key', base_path: '#mainwp-storage-dropbox-base-path' },
+                sftp: { host: '#mainwp-storage-sftp-host', port: '#mainwp-storage-sftp-port', username: '#mainwp-storage-sftp-username', base_path: '#mainwp-storage-sftp-base-path' },
+                local: { base_path: '#mainwp-storage-base-path' }
+            };
 
             jQuery( '.mainwp-storage-edit' ).on( 'click', function () {
                 let row = jQuery( this ).closest( 'tr' );
@@ -394,7 +403,26 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                 jQuery( '#mainwp-storage-provider' ).val( row.data( 'provider' ) ).trigger( 'change' );
                 jQuery( '#mainwp-storage-form-title' ).text( '<?php echo esc_js( __( 'Edit Storage Destination', 'mainwp' ) ); ?>' );
                 jQuery( '#mainwp-storage-reset' ).show();
-                feedbackZone( '<?php echo esc_js( __( 'Re-enter the connection settings to update this destination. Leaving the secret key empty keeps the saved one.', 'mainwp' ) ); ?>', 'blue' );
+
+                jQuery.post( ajaxurl, mainwp_secure_data( {
+                    action: 'mainwp_storage_get',
+                    id: row.data( 'destination-id' )
+                } ), function ( response ) {
+                    if ( ! response || response.error ) {
+                        return; // The form still works; settings just are not pre-filled.
+                    }
+                    let map = settingsFieldMap[ response.provider ] || {};
+                    for ( let key in map ) {
+                        jQuery( map[ key ] ).val( typeof response.settings[ key ] !== 'undefined' ? response.settings[ key ] : '' );
+                    }
+                    jQuery( '#mainwp-storage-path-style' ).prop( 'checked', !! parseInt( response.settings.path_style || 0 ) );
+                    jQuery( '#mainwp-storage-is-default' ).prop( 'checked', !! response.is_default );
+                    if ( response.credentials_invalid ) {
+                        feedbackZone( '<?php echo esc_js( __( 'The saved credentials can no longer be read. Re-enter every setting for this destination.', 'mainwp' ) ); ?>', 'yellow' );
+                    }
+                }, 'json' );
+
+                feedbackZone( '<?php echo esc_js( __( 'Secret fields are never displayed. Leave a secret field empty to keep its saved value.', 'mainwp' ) ); ?>', 'blue' );
             } );
 
             jQuery( '.mainwp-storage-test' ).on( 'click', function () {

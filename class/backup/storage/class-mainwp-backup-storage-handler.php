@@ -73,6 +73,7 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
         $this->add_action( 'mainwp_storage_test', array( &$this, 'ajax_storage_test' ) );
         $this->add_action( 'mainwp_storage_delete', array( &$this, 'ajax_storage_delete' ) );
         $this->add_action( 'mainwp_storage_default', array( &$this, 'ajax_storage_default' ) );
+        $this->add_action( 'mainwp_storage_get', array( &$this, 'ajax_storage_get' ) );
     }
 
     /**
@@ -165,6 +166,48 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
         $confirmed = isset( $_POST['confirmed'] ) && '1' === $_POST['confirmed'];
         // phpcs:enable
         die( wp_json_encode( static::delete_destination_flow( $id, $confirmed ) ) );
+    }
+
+    /**
+     * Return a destination's non-secret fields so the edit form can
+     * pre-fill them. Secrets never leave the server.
+     *
+     * @return void
+     */
+    public function ajax_storage_get() {
+        $this->secure_request( 'mainwp_storage_get' );
+        $this->check_permission();
+        $id = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by secure_request.
+        die( wp_json_encode( static::destination_for_edit( $id ) ) );
+    }
+
+    /**
+     * A destination's edit-form view: name, provider, default flag, and
+     * settings with every secret field stripped.
+     *
+     * @param int $id Destination id.
+     *
+     * @return array {id, name, provider, is_default, settings, credentials_invalid} | {error}.
+     */
+    public static function destination_for_edit( $id ) {
+        $destination = MainWP_Backup_Storage_Destinations::instance()->get_destination( (int) $id );
+        if ( null === $destination ) {
+            return array( 'error' => esc_html__( 'The storage destination no longer exists.', 'mainwp' ) );
+        }
+
+        $settings = is_array( $destination->settings ) ? $destination->settings : array();
+        foreach ( static::SECRET_FIELDS as $field ) {
+            unset( $settings[ $field ] );
+        }
+
+        return array(
+            'id'                  => (int) $destination->id,
+            'name'                => (string) $destination->name,
+            'provider'            => (string) $destination->provider,
+            'is_default'          => ! empty( $destination->is_default ),
+            'settings'            => $settings,
+            'credentials_invalid' => ! empty( $destination->credentials_invalid ),
+        );
     }
 
     /**

@@ -242,6 +242,8 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
                 return new MainWP_Backup_Storage_Local( $settings );
             case 's3':
                 return new MainWP_Backup_Storage_S3( $settings );
+            case 'gcs':
+                return new MainWP_Backup_Storage_GCS( $settings );
             default:
                 throw new \RuntimeException( esc_html( 'Unknown storage provider: ' . $row->provider ), 0 );
         }

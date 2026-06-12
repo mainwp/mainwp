@@ -329,6 +329,74 @@ class MainWP_Backup_Storage_Page_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * A GCS destination saves through the handler: the provider is
+	 * allowed, the connection test runs against the pinned endpoint, and
+	 * the HMAC settings persist encrypted.
+	 *
+	 * @return void
+	 */
+	public function test_save_gcs_destination_persists() {
+		$urls = array();
+		add_filter(
+			'pre_http_request',
+			function ( $pre, $args, $url ) use ( &$urls ) {
+				$urls[] = $url;
+				return array(
+					'headers'  => array( 'content-length' => '22' ),
+					'body'     => '',
+					'response' => array(
+						'code'    => 200,
+						'message' => 'OK',
+					),
+				);
+			},
+			10,
+			3
+		);
+
+		$result = MainWP_Backup_Storage_Handler::save_destination(
+			array(
+				'id'       => 0,
+				'provider' => 'gcs',
+				'name'     => 'GCS bucket',
+				'settings' => array(
+					'bucket'     => 'gcs-bucket',
+					'access_key' => 'GOOG1KEY',
+					'secret_key' => 'gcs-secret',
+				),
+			)
+		);
+
+		$this->assertArrayNotHasKey( 'error', $result );
+		$this->assertStringStartsWith( 'https://storage.googleapis.com/gcs-bucket', $urls[0] );
+
+		$row = MainWP_Backup_Storage_Destinations::instance()->get_destination( $result['id'] );
+		$this->assertSame( 'gcs', $row->provider );
+		$this->assertSame( 'gcs-secret', $row->settings['secret_key'] );
+		$this->assertInstanceOf(
+			\MainWP\Dashboard\MainWP_Backup_Storage_GCS::class,
+			MainWP_Backup_Storage_Destinations::instance()->make_provider( $row )
+		);
+	}
+
+	/**
+	 * The add/edit form offers every registered provider with its own
+	 * settings fields block.
+	 *
+	 * @return void
+	 */
+	public function test_provider_dropdown_offers_registered_providers() {
+		ob_start();
+		MainWP_Backup_Storage_View::render_form();
+		$output = ob_get_clean();
+
+		foreach ( MainWP_Backup_Storage_Handler::ALLOWED_PROVIDERS as $provider ) {
+			$this->assertStringContainsString( 'value="' . $provider . '"', $output, "The provider dropdown must offer {$provider}." );
+			$this->assertStringContainsString( 'data-provider="' . $provider . '"', $output, "A settings fields block must exist for {$provider}." );
+		}
+	}
+
+	/**
 	 * The storage AJAX actions register through the handler.
 	 *
 	 * @return void

@@ -31,7 +31,7 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
      *
      * @var string[]
      */
-    const ALLOWED_PROVIDERS = array( 'local', 's3' );
+    const ALLOWED_PROVIDERS = array( 'local', 's3', 'gcs' );
 
     /**
      * Settings fields treated as secrets: never echoed, kept on blank edit.

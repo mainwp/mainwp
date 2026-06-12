@@ -120,6 +120,7 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                     <div class="ten wide column">
                         <select id="mainwp-storage-provider" class="ui dropdown">
                             <option value="s3"><?php esc_html_e( 'S3 Compatible Storage', 'mainwp' ); ?></option>
+                            <option value="gcs"><?php esc_html_e( 'Google Cloud Storage', 'mainwp' ); ?></option>
                             <option value="local"><?php esc_html_e( 'Local Path', 'mainwp' ); ?></option>
                         </select>
                     </div>
@@ -165,6 +166,28 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                         </div>
                     </div>
                 </div>
+                <div class="mainwp-storage-fields" data-provider="gcs" style="display:none">
+                    <div class="ui grid field">
+                        <label class="six wide column middle aligned"><?php esc_html_e( 'Bucket', 'mainwp' ); ?></label>
+                        <div class="ten wide column">
+                            <input type="text" id="mainwp-storage-gcs-bucket" value=""/>
+                        </div>
+                    </div>
+                    <div class="ui grid field">
+                        <label class="six wide column middle aligned"><?php esc_html_e( 'HMAC access key', 'mainwp' ); ?></label>
+                        <div class="ten wide column">
+                            <input type="text" id="mainwp-storage-gcs-access-key" value="" autocomplete="off"/>
+                            <em><?php esc_html_e( 'Create an HMAC key for a service account under Cloud Storage > Settings > Interoperability in the Google Cloud console.', 'mainwp' ); ?></em>
+                        </div>
+                    </div>
+                    <div class="ui grid field">
+                        <label class="six wide column middle aligned"><?php esc_html_e( 'HMAC secret', 'mainwp' ); ?></label>
+                        <div class="ten wide column">
+                            <input type="password" id="mainwp-storage-gcs-secret-key" value="" autocomplete="new-password"/>
+                            <em><?php esc_html_e( 'When editing, leave this empty to keep the saved secret.', 'mainwp' ); ?></em>
+                        </div>
+                    </div>
+                </div>
                 <div class="mainwp-storage-fields" data-provider="local" style="display:none">
                     <div class="ui grid field">
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Directory path', 'mainwp' ); ?></label>
@@ -205,6 +228,13 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
             let collectSettings = function () {
                 if ( jQuery( '#mainwp-storage-provider' ).val() === 'local' ) {
                     return { base_path: jQuery( '#mainwp-storage-base-path' ).val() };
+                }
+                if ( jQuery( '#mainwp-storage-provider' ).val() === 'gcs' ) {
+                    return {
+                        bucket: jQuery( '#mainwp-storage-gcs-bucket' ).val(),
+                        access_key: jQuery( '#mainwp-storage-gcs-access-key' ).val(),
+                        secret_key: jQuery( '#mainwp-storage-gcs-secret-key' ).val()
+                    };
                 }
                 return {
                     endpoint: jQuery( '#mainwp-storage-endpoint' ).val(),
@@ -261,7 +291,7 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
 
             jQuery( '#mainwp-storage-reset' ).on( 'click', function () {
                 jQuery( '#mainwp-storage-id' ).val( 0 );
-                jQuery( '#mainwp-storage-name, #mainwp-storage-endpoint, #mainwp-storage-bucket, #mainwp-storage-region, #mainwp-storage-access-key, #mainwp-storage-secret-key, #mainwp-storage-base-path' ).val( '' );
+                jQuery( '#mainwp-storage-name, #mainwp-storage-endpoint, #mainwp-storage-bucket, #mainwp-storage-region, #mainwp-storage-access-key, #mainwp-storage-secret-key, #mainwp-storage-base-path, #mainwp-storage-gcs-bucket, #mainwp-storage-gcs-access-key, #mainwp-storage-gcs-secret-key' ).val( '' );
                 jQuery( '#mainwp-storage-form-title' ).text( '<?php echo esc_js( __( 'Add Storage Destination', 'mainwp' ) ); ?>' );
                 jQuery( this ).hide();
             } );

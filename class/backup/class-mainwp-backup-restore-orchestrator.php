@@ -226,7 +226,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         if ( MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING === $job->status && ! empty( $job->child_task_id ) ) {
             try {
                 $this->request_child_cancel( $job );
-            } catch ( MainWP_Exception $e ) {
+            } catch ( \Throwable $e ) {
                 do_action( 'mainwp_log_info', sprintf( 'Restore job %d: the site did not confirm cancelling its transfer task: %s', (int) $job->id, $e->getMessage() ) );
             }
         }

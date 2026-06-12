@@ -661,7 +661,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             return $this->wpdb->get_var( "select micro_timestamp_start from `{$table_request_log}` order by micro_timestamp_start desc limit 1" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name escaped via esc_sql, no user input.
         }
 
-        return $this->wpdb->get_var( $this->wpdb->prepare( "SELECT micro_timestamp_start FROM `{$table_request_log}` WHERE ip = %s order by micro_timestamp_start desc limit 1", esc_sql( $ip ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name escaped via esc_sql, values prepared.
+        return $this->wpdb->get_var( $this->wpdb->prepare( "SELECT micro_timestamp_start FROM `{$table_request_log}` WHERE ip = %s order by micro_timestamp_start desc limit 1", $ip ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name escaped via esc_sql, values prepared.
     }
 
     /**

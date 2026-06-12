@@ -207,10 +207,11 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends \WP_UnitTestCase {
 	 *
 	 * @param string $content Artifact content split into two chunks.
 	 * @param bool   $corrupt Whether to corrupt the second chunk's bytes.
+	 * @param string $algo    Chunk content-address algorithm.
 	 *
 	 * @return array Plan entry for the chunked artifact.
 	 */
-	private function make_chunked_remote( $content, $corrupt = false ) {
+	private function make_chunked_remote( $content, $corrupt = false, $algo = 'sha256' ) {
 		$remote = $this->dir . '/remote';
 		$half   = (int) ( strlen( $content ) / 2 );
 		$parts  = array( substr( $content, 0, $half ), substr( $content, $half ) );
@@ -220,10 +221,10 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends \WP_UnitTestCase {
 		$chunks = array();
 		$offset = 0;
 		foreach ( $parts as $index => $piece ) {
-			$hash     = hash( 'sha256', $piece );
+			$hash     = hash( $algo, $piece );
 			$chunks[] = array(
 				'hash'   => $hash,
-				'algo'   => 'sha256',
+				'algo'   => $algo,
 				'offset' => $offset,
 				'length' => strlen( $piece ),
 			);
@@ -278,6 +279,27 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends \WP_UnitTestCase {
 		$this->assertTrue( $outcome['done'] );
 		$this->assertSame( $content, file_get_contents( $plan[0]['staged_path'] ) );
 		$this->assertSame( hash( 'sha256', $content ), $plan[0]['sha256'] );
+	}
+
+	/**
+	 * Chunk pieces verify with the algorithm the upload recorded, not a
+	 * hardcoded one: the production chunker content-addresses with
+	 * xxh128 where available, and reassembly must honor that.
+	 */
+	public function test_stage_remote_chunked_verifies_with_recorded_algo() {
+		$algo = \MainWP\Dashboard\MainWP_Backup_Chunker::hash_algo();
+		if ( 'sha256' === $algo ) {
+			$this->markTestSkipped( 'No non-sha256 chunk algorithm available on this PHP.' );
+		}
+
+		$content = str_repeat( 'chunky-data-', 50 );
+		$plan    = array( $this->make_chunked_remote( $content, false, $algo ) );
+
+		$outcome = $this->driver->stage_artifacts( 777001, $plan, microtime( true ) + 60 );
+
+		$this->assertNull( $outcome['error'] );
+		$this->assertTrue( $outcome['done'] );
+		$this->assertSame( $content, file_get_contents( $plan[0]['staged_path'] ) );
 	}
 
 	/**

@@ -261,7 +261,10 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
                 );
             }
 
-            $actual = (string) hash_file( 'sha256', $piece );
+            // Chunks are content-addressed with the algorithm the upload
+            // recorded (xxh128 where available); verify with that one.
+            $algo   = isset( $chunk['algo'] ) && is_string( $chunk['algo'] ) && in_array( $chunk['algo'], hash_algos(), true ) ? $chunk['algo'] : 'sha256';
+            $actual = (string) hash_file( $algo, $piece );
             if ( ! hash_equals( (string) $chunk['hash'], $actual ) ) {
                 wp_delete_file( $piece );
                 return $this->stage_state(

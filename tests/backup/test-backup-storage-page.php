@@ -380,6 +380,77 @@ class MainWP_Backup_Storage_Page_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * A Dropbox destination saves through the handler, and editing with
+	 * blank secrets keeps the stored app secret and refresh token.
+	 *
+	 * @return void
+	 */
+	public function test_save_dropbox_destination_keeps_secrets_on_edit() {
+		add_filter(
+			'pre_http_request',
+			function () {
+				// One shape serves every call in the connection test: the
+				// token mint reads access_token, the probe head reads size.
+				return array(
+					'headers'  => array(),
+					'body'     => wp_json_encode(
+						array(
+							'access_token' => 'test-token',
+							'expires_in'   => 14400,
+							'.tag'         => 'file',
+							'size'         => 22,
+						)
+					),
+					'response' => array(
+						'code'    => 200,
+						'message' => 'OK',
+					),
+				);
+			}
+		);
+
+		$created = MainWP_Backup_Storage_Handler::save_destination(
+			array(
+				'id'       => 0,
+				'provider' => 'dropbox',
+				'name'     => 'Dropbox app',
+				'settings' => array(
+					'app_key'       => 'app-key',
+					'app_secret'    => 'original-app-secret',
+					'refresh_token' => 'original-refresh-token',
+					'base_path'     => 'mainwp',
+				),
+			)
+		);
+		$this->assertArrayNotHasKey( 'error', $created );
+
+		$row = MainWP_Backup_Storage_Destinations::instance()->get_destination( $created['id'] );
+		$this->assertInstanceOf(
+			\MainWP\Dashboard\MainWP_Backup_Storage_Dropbox::class,
+			MainWP_Backup_Storage_Destinations::instance()->make_provider( $row )
+		);
+
+		$updated = MainWP_Backup_Storage_Handler::save_destination(
+			array(
+				'id'       => $created['id'],
+				'provider' => 'dropbox',
+				'name'     => 'Dropbox renamed',
+				'settings' => array(
+					'app_key'       => 'app-key',
+					'app_secret'    => '',
+					'refresh_token' => '',
+					'base_path'     => 'mainwp',
+				),
+			)
+		);
+		$this->assertArrayNotHasKey( 'error', $updated );
+
+		$row = MainWP_Backup_Storage_Destinations::instance()->get_destination( $created['id'] );
+		$this->assertSame( 'original-app-secret', $row->settings['app_secret'], 'A blank app secret on edit must keep the stored one.' );
+		$this->assertSame( 'original-refresh-token', $row->settings['refresh_token'], 'A blank refresh token on edit must keep the stored one.' );
+	}
+
+	/**
 	 * The add/edit form offers every registered provider with its own
 	 * settings fields block.
 	 *

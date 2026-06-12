@@ -121,6 +121,7 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                         <select id="mainwp-storage-provider" class="ui dropdown">
                             <option value="s3"><?php esc_html_e( 'S3 Compatible Storage', 'mainwp' ); ?></option>
                             <option value="gcs"><?php esc_html_e( 'Google Cloud Storage', 'mainwp' ); ?></option>
+                            <option value="dropbox"><?php esc_html_e( 'Dropbox', 'mainwp' ); ?></option>
                             <option value="local"><?php esc_html_e( 'Local Path', 'mainwp' ); ?></option>
                         </select>
                     </div>
@@ -188,6 +189,36 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                         </div>
                     </div>
                 </div>
+                <div class="mainwp-storage-fields" data-provider="dropbox" style="display:none">
+                    <div class="ui grid field">
+                        <label class="six wide column middle aligned"><?php esc_html_e( 'App key', 'mainwp' ); ?></label>
+                        <div class="ten wide column">
+                            <input type="text" id="mainwp-storage-dropbox-app-key" value="" autocomplete="off"/>
+                            <em><?php esc_html_e( 'Create a scoped app with the files.content.write and files.content.read permissions in the Dropbox App Console.', 'mainwp' ); ?></em>
+                        </div>
+                    </div>
+                    <div class="ui grid field">
+                        <label class="six wide column middle aligned"><?php esc_html_e( 'App secret', 'mainwp' ); ?></label>
+                        <div class="ten wide column">
+                            <input type="password" id="mainwp-storage-dropbox-app-secret" value="" autocomplete="new-password"/>
+                            <em><?php esc_html_e( 'When editing, leave this empty to keep the saved secret.', 'mainwp' ); ?></em>
+                        </div>
+                    </div>
+                    <div class="ui grid field">
+                        <label class="six wide column middle aligned"><?php esc_html_e( 'Refresh token', 'mainwp' ); ?></label>
+                        <div class="ten wide column">
+                            <input type="password" id="mainwp-storage-dropbox-refresh-token" value="" autocomplete="new-password"/>
+                            <em><?php esc_html_e( 'A refresh token issued for the app with offline access. The dashboard mints short-lived access tokens from it automatically. When editing, leave this empty to keep the saved token.', 'mainwp' ); ?></em>
+                        </div>
+                    </div>
+                    <div class="ui grid field">
+                        <label class="six wide column middle aligned"><?php esc_html_e( 'Folder', 'mainwp' ); ?></label>
+                        <div class="ten wide column">
+                            <input type="text" id="mainwp-storage-dropbox-base-path" value="" placeholder="mainwp-backups"/>
+                            <em><?php esc_html_e( 'Backups store under this folder. Leave empty to use the app folder root.', 'mainwp' ); ?></em>
+                        </div>
+                    </div>
+                </div>
                 <div class="mainwp-storage-fields" data-provider="local" style="display:none">
                     <div class="ui grid field">
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Directory path', 'mainwp' ); ?></label>
@@ -234,6 +265,14 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                         bucket: jQuery( '#mainwp-storage-gcs-bucket' ).val(),
                         access_key: jQuery( '#mainwp-storage-gcs-access-key' ).val(),
                         secret_key: jQuery( '#mainwp-storage-gcs-secret-key' ).val()
+                    };
+                }
+                if ( jQuery( '#mainwp-storage-provider' ).val() === 'dropbox' ) {
+                    return {
+                        app_key: jQuery( '#mainwp-storage-dropbox-app-key' ).val(),
+                        app_secret: jQuery( '#mainwp-storage-dropbox-app-secret' ).val(),
+                        refresh_token: jQuery( '#mainwp-storage-dropbox-refresh-token' ).val(),
+                        base_path: jQuery( '#mainwp-storage-dropbox-base-path' ).val()
                     };
                 }
                 return {
@@ -291,7 +330,7 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
 
             jQuery( '#mainwp-storage-reset' ).on( 'click', function () {
                 jQuery( '#mainwp-storage-id' ).val( 0 );
-                jQuery( '#mainwp-storage-name, #mainwp-storage-endpoint, #mainwp-storage-bucket, #mainwp-storage-region, #mainwp-storage-access-key, #mainwp-storage-secret-key, #mainwp-storage-base-path, #mainwp-storage-gcs-bucket, #mainwp-storage-gcs-access-key, #mainwp-storage-gcs-secret-key' ).val( '' );
+                jQuery( '#mainwp-storage-name, #mainwp-storage-endpoint, #mainwp-storage-bucket, #mainwp-storage-region, #mainwp-storage-access-key, #mainwp-storage-secret-key, #mainwp-storage-base-path, #mainwp-storage-gcs-bucket, #mainwp-storage-gcs-access-key, #mainwp-storage-gcs-secret-key, #mainwp-storage-dropbox-app-key, #mainwp-storage-dropbox-app-secret, #mainwp-storage-dropbox-refresh-token, #mainwp-storage-dropbox-base-path' ).val( '' );
                 jQuery( '#mainwp-storage-form-title' ).text( '<?php echo esc_js( __( 'Add Storage Destination', 'mainwp' ) ); ?>' );
                 jQuery( this ).hide();
             } );

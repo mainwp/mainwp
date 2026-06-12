@@ -1,0 +1,551 @@
+<?php
+/**
+ * MainWP Backup Storage Dropbox Provider.
+ *
+ * Dropbox API v2 over the WP HTTP API using the OAuth refresh-token
+ * flow: Dropbox apps issue four-hour access tokens, and uploads run
+ * from cron, so the destination stores the app key, app secret, and a
+ * refresh token, and the provider mints access tokens itself. Minted
+ * tokens cache in a transient keyed by the credential pair and re-mint
+ * once on a 401. Uploads and downloads use the content endpoint with
+ * the path in the Dropbox-API-Arg header; metadata, delete, and list
+ * calls use the RPC endpoint. Dropbox reports many distinct failures
+ * as HTTP 409, disambiguated only by the error summary in the body, so
+ * missing paths map to absence and every other 409 throws. Every
+ * method throws \RuntimeException on transport or service errors with
+ * the HTTP status as the code (0 for network failures), matching the
+ * other providers, so the upload driver can map 401/403 to a re-enter
+ * credentials state and everything else to retry.
+ *
+ * @package MainWP/Dashboard
+ */
+
+namespace MainWP\Dashboard;
+
+// Exit if accessed directly.
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+/**
+ * Class MainWP_Backup_Storage_Dropbox
+ *
+ * @package MainWP\Dashboard
+ */
+class MainWP_Backup_Storage_Dropbox implements MainWP_Backup_Storage_Provider { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
+
+    /**
+     * RPC endpoint base.
+     *
+     * @var string
+     */
+    const API_BASE = 'https://api.dropboxapi.com';
+
+    /**
+     * Content endpoint base for uploads and downloads.
+     *
+     * @var string
+     */
+    const CONTENT_BASE = 'https://content.dropboxapi.com';
+
+    /**
+     * Seconds subtracted from the reported token lifetime before the
+     * cached token expires, so a token never goes stale mid-request.
+     *
+     * @var int
+     */
+    const TOKEN_MARGIN = 300;
+
+    /**
+     * Provider settings.
+     *
+     * @var array
+     */
+    private $settings;
+
+    /**
+     * HTTP transport callable: fn(string $url, array $args): array|\WP_Error.
+     *
+     * @var callable
+     */
+    private $transport;
+
+    /**
+     * Constructor.
+     *
+     * @param array         $settings  Provider settings: app_key, app_secret, refresh_token, base_path.
+     * @param callable|null $transport Transport override for tests.
+     */
+    public function __construct( array $settings, $transport = null ) {
+        $this->settings  = $settings;
+        $this->transport = is_callable( $transport ) ? $transport : array( static::class, 'default_transport' );
+    }
+
+    /**
+     * Default transport over the WP HTTP API.
+     *
+     * @param string $url  Request URL.
+     * @param array  $args Request args.
+     *
+     * @return array|\WP_Error
+     */
+    public static function default_transport( $url, $args ) {
+        return wp_remote_request( $url, $args );
+    }
+
+    /**
+     * Store an object.
+     *
+     * @param string $key          Object key.
+     * @param string $body         Object bytes.
+     * @param string $content_type MIME type; Dropbox uploads always go as octet-stream.
+     *
+     * @return bool
+     *
+     * @throws \RuntimeException On transport or service errors.
+     */
+    public function put_object( string $key, string $body, string $content_type = 'application/octet-stream' ): bool {
+        unset( $content_type );
+
+        $response = $this->content_request(
+            '/2/files/upload',
+            array(
+                'path' => $this->object_path( $key ),
+                'mode' => 'overwrite',
+                'mute' => true,
+            ),
+            $body
+        );
+
+        $this->expect_status( $response, array( 200 ), 'PUT ' . $key );
+
+        return true;
+    }
+
+    /**
+     * Check whether an object exists.
+     *
+     * @param string $key Object key.
+     *
+     * @return array|false
+     *
+     * @throws \RuntimeException On transport or service errors.
+     */
+    public function head_object( string $key ) {
+        $response = $this->api_request( '/2/files/get_metadata', array( 'path' => $this->object_path( $key ) ) );
+
+        if ( $this->is_missing_path( $response ) ) {
+            return false;
+        }
+
+        $this->expect_status( $response, array( 200 ), 'HEAD ' . $key );
+
+        $data = json_decode( (string) wp_remote_retrieve_body( $response ), true );
+
+        return array( 'size' => is_array( $data ) && isset( $data['size'] ) ? (int) $data['size'] : 0 );
+    }
+
+    /**
+     * Download an object to a local file, streamed.
+     *
+     * @param string $key        Object key.
+     * @param string $local_path Target file path.
+     *
+     * @return bool
+     *
+     * @throws \RuntimeException On transport or service errors.
+     */
+    public function get_object( string $key, string $local_path ): bool {
+        $response = $this->content_request(
+            '/2/files/download',
+            array( 'path' => $this->object_path( $key ) ),
+            null,
+            array(
+                'stream'   => true,
+                'filename' => $local_path,
+            )
+        );
+
+        $this->expect_status( $response, array( 200 ), 'GET ' . $key );
+
+        return true;
+    }
+
+    /**
+     * Delete an object; a missing object counts as deleted.
+     *
+     * @param string $key Object key.
+     *
+     * @return bool
+     *
+     * @throws \RuntimeException On transport or service errors.
+     */
+    public function delete_object( string $key ): bool {
+        $response = $this->api_request( '/2/files/delete_v2', array( 'path' => $this->object_path( $key ) ) );
+
+        if ( $this->is_missing_path( $response ) ) {
+            return true;
+        }
+
+        $this->expect_status( $response, array( 200 ), 'DELETE ' . $key );
+
+        return true;
+    }
+
+    /**
+     * List one page of objects under a prefix.
+     *
+     * @param string      $prefix Key prefix filter; folder-aligned on Dropbox.
+     * @param string|null $token  Continuation cursor from the previous page.
+     *
+     * @return array
+     *
+     * @throws \RuntimeException On transport or service errors.
+     */
+    public function list_objects( string $prefix = '', ?string $token = null ): array {
+        if ( null !== $token && '' !== $token ) {
+            $response = $this->api_request( '/2/files/list_folder/continue', array( 'cursor' => $token ) );
+        } else {
+            $response = $this->api_request(
+                '/2/files/list_folder',
+                array(
+                    'path'      => $this->folder_path( $prefix ),
+                    'recursive' => true,
+                    'limit'     => 1000,
+                )
+            );
+
+            if ( $this->is_missing_path( $response ) ) {
+                return array(
+                    'objects'    => array(),
+                    'next_token' => null,
+                    'truncated'  => false,
+                );
+            }
+        }
+
+        $this->expect_status( $response, array( 200 ), 'LIST ' . $prefix );
+
+        return $this->parse_list_response( (string) wp_remote_retrieve_body( $response ) );
+    }
+
+    /**
+     * Prove the credentials work: mint a token, write a probe object,
+     * verify it, delete it.
+     *
+     * @return array
+     *
+     * @throws \RuntimeException Internally on a missing probe; always caught and reported in the result.
+     */
+    public function connection_test(): array {
+        $probe = '.mainwp-probe-' . uniqid() . '.txt';
+
+        try {
+            $this->put_object( $probe, 'mainwp-connection-test' );
+
+            if ( false === $this->head_object( $probe ) ) {
+                throw new \RuntimeException( 'Probe object missing after upload.', 0 );
+            }
+
+            $this->delete_object( $probe );
+        } catch ( \RuntimeException $e ) {
+            return array(
+                'ok'    => false,
+                'error' => $e->getMessage() . ( $e->getCode() ? ' (HTTP ' . $e->getCode() . ')' : '' ),
+            );
+        }
+
+        return array(
+            'ok'    => true,
+            'error' => null,
+        );
+    }
+
+    /**
+     * Send an RPC request with a JSON body.
+     *
+     * @param string $endpoint Endpoint path on the API base.
+     * @param array  $arg      Request argument object.
+     *
+     * @return array Transport response.
+     */
+    private function api_request( string $endpoint, array $arg ) {
+        return $this->authed_request(
+            static::API_BASE . $endpoint,
+            array( 'Content-Type' => 'application/json' ),
+            (string) wp_json_encode( $arg )
+        );
+    }
+
+    /**
+     * Send a content request: the argument rides in the Dropbox-API-Arg
+     * header and the body carries raw bytes (or nothing for downloads).
+     *
+     * @param string      $endpoint   Endpoint path on the content base.
+     * @param array       $arg        Request argument object.
+     * @param string|null $body       Raw bytes to upload.
+     * @param array       $extra_args Additional WP HTTP args (stream, filename).
+     *
+     * @return array Transport response.
+     */
+    private function content_request( string $endpoint, array $arg, ?string $body = null, array $extra_args = array() ) {
+        $headers = array( 'Dropbox-API-Arg' => (string) wp_json_encode( $arg ) );
+        if ( null !== $body ) {
+            $headers['Content-Type'] = 'application/octet-stream';
+        }
+
+        return $this->authed_request( static::CONTENT_BASE . $endpoint, $headers, $body, $extra_args );
+    }
+
+    /**
+     * Send a bearer-authed request, re-minting the access token once
+     * when Dropbox rejects it.
+     *
+     * @param string      $url        Request URL.
+     * @param array       $headers    Request headers without authorization.
+     * @param string|null $body       Request body.
+     * @param array       $extra_args Additional WP HTTP args.
+     *
+     * @return array Transport response.
+     */
+    private function authed_request( string $url, array $headers, ?string $body = null, array $extra_args = array() ) {
+        $response = $this->send_authed( $url, $headers, $body, $extra_args, $this->access_token() );
+
+        if ( 401 === $this->status( $response ) ) {
+            delete_transient( $this->token_cache_key() );
+            $response = $this->send_authed( $url, $headers, $body, $extra_args, $this->access_token() );
+        }
+
+        return $response;
+    }
+
+    /**
+     * Send one request with a bearer token through the transport.
+     *
+     * @param string      $url        Request URL.
+     * @param array       $headers    Request headers without authorization.
+     * @param string|null $body       Request body.
+     * @param array       $extra_args Additional WP HTTP args.
+     * @param string      $token      Access token.
+     *
+     * @return array Transport response.
+     */
+    private function send_authed( string $url, array $headers, ?string $body, array $extra_args, string $token ) {
+        $headers['Authorization'] = 'Bearer ' . $token;
+
+        $args = array_merge(
+            array(
+                'method'  => 'POST',
+                'headers' => $headers,
+                'timeout' => 120,
+            ),
+            $extra_args
+        );
+
+        if ( null !== $body ) {
+            $args['body'] = $body;
+        }
+
+        return $this->send( $url, $args );
+    }
+
+    /**
+     * Call the transport and normalize transport-level failures.
+     *
+     * @param string $url  Request URL.
+     * @param array  $args Request args.
+     *
+     * @return array Transport response.
+     *
+     * @throws \RuntimeException When the transport itself fails.
+     */
+    private function send( string $url, array $args ) {
+        $response = call_user_func( $this->transport, $url, $args );
+
+        if ( is_wp_error( $response ) ) {
+            throw new \RuntimeException( 'Storage request failed: ' . esc_html( $response->get_error_message() ), 0 );
+        }
+
+        return $response;
+    }
+
+    /**
+     * A usable access token: the cached one, or a fresh mint from the
+     * refresh token.
+     *
+     * @return string
+     *
+     * @throws \RuntimeException When the mint fails; the HTTP status rides as the code.
+     */
+    private function access_token(): string {
+        $cached = get_transient( $this->token_cache_key() );
+        if ( is_string( $cached ) && '' !== $cached ) {
+            return $cached;
+        }
+
+        $response = $this->send(
+            static::API_BASE . '/oauth2/token',
+            array(
+                'method'  => 'POST',
+                'timeout' => 30,
+                'body'    => array(
+                    'grant_type'    => 'refresh_token',
+                    'refresh_token' => isset( $this->settings['refresh_token'] ) ? (string) $this->settings['refresh_token'] : '',
+                    'client_id'     => isset( $this->settings['app_key'] ) ? (string) $this->settings['app_key'] : '',
+                    'client_secret' => isset( $this->settings['app_secret'] ) ? (string) $this->settings['app_secret'] : '',
+                ),
+            )
+        );
+
+        $this->expect_status( $response, array( 200 ), 'token request' );
+
+        $data  = json_decode( (string) wp_remote_retrieve_body( $response ), true );
+        $token = is_array( $data ) && isset( $data['access_token'] ) ? (string) $data['access_token'] : '';
+
+        if ( '' === $token ) {
+            throw new \RuntimeException( 'Storage request token request returned no access token.', 0 );
+        }
+
+        $lifetime = is_array( $data ) && isset( $data['expires_in'] ) ? (int) $data['expires_in'] : 14400;
+        set_transient( $this->token_cache_key(), $token, max( 60, $lifetime - static::TOKEN_MARGIN ) );
+
+        return $token;
+    }
+
+    /**
+     * The transient key caching the access token for this credential
+     * pair.
+     *
+     * @return string
+     */
+    private function token_cache_key(): string {
+        $app_key       = isset( $this->settings['app_key'] ) ? (string) $this->settings['app_key'] : '';
+        $refresh_token = isset( $this->settings['refresh_token'] ) ? (string) $this->settings['refresh_token'] : '';
+
+        return 'mainwp_dropbox_token_' . md5( $app_key . '|' . $refresh_token );
+    }
+
+    /**
+     * Whether a response is Dropbox's missing-path 409.
+     *
+     * @param array $response Transport response.
+     *
+     * @return bool
+     */
+    private function is_missing_path( $response ): bool {
+        if ( 409 !== $this->status( $response ) ) {
+            return false;
+        }
+
+        $data    = json_decode( (string) wp_remote_retrieve_body( $response ), true );
+        $summary = is_array( $data ) && isset( $data['error_summary'] ) ? (string) $data['error_summary'] : '';
+
+        return false !== strpos( $summary, 'not_found' );
+    }
+
+    /**
+     * The HTTP status of a transport response.
+     *
+     * @param array $response Transport response.
+     *
+     * @return int
+     */
+    private function status( $response ): int {
+        return (int) wp_remote_retrieve_response_code( $response );
+    }
+
+    /**
+     * Throw unless the response status is one of the accepted codes.
+     *
+     * @param array  $response Transport response.
+     * @param array  $accepted Accepted status codes.
+     * @param string $context  Operation description for the error message.
+     *
+     * @return void
+     *
+     * @throws \RuntimeException With the HTTP status as the exception code.
+     */
+    private function expect_status( $response, array $accepted, string $context ): void {
+        $code = $this->status( $response );
+        if ( ! in_array( $code, $accepted, true ) ) {
+            throw new \RuntimeException( esc_html( 'Storage request ' . $context . ' returned HTTP ' . $code . '.' ), (int) $code );
+        }
+    }
+
+    /**
+     * The Dropbox path of an object key under the configured base path.
+     *
+     * @param string $key Object key.
+     *
+     * @return string
+     */
+    private function object_path( string $key ): string {
+        $base = $this->base_path();
+        return '/' . ( '' !== $base ? $base . '/' : '' ) . ltrim( $key, '/' );
+    }
+
+    /**
+     * The Dropbox folder path of a key prefix; the root is the empty
+     * string per the Dropbox API.
+     *
+     * @param string $prefix Key prefix.
+     *
+     * @return string
+     */
+    private function folder_path( string $prefix ): string {
+        $base = $this->base_path();
+        $path = trim( ( '' !== $base ? $base . '/' : '' ) . $prefix, '/' );
+        return '' === $path ? '' : '/' . $path;
+    }
+
+    /**
+     * The normalized base path setting.
+     *
+     * @return string
+     */
+    private function base_path(): string {
+        return isset( $this->settings['base_path'] ) ? trim( (string) $this->settings['base_path'], '/' ) : '';
+    }
+
+    /**
+     * Parse a list_folder response page onto the provider pagination
+     * contract: file entries as keys relative to the base path.
+     *
+     * @param string $body Response body.
+     *
+     * @return array {objects, next_token, truncated}.
+     *
+     * @throws \RuntimeException When the body is not parseable JSON.
+     */
+    private function parse_list_response( string $body ): array {
+        $data = json_decode( $body, true );
+
+        if ( ! is_array( $data ) ) {
+            throw new \RuntimeException( 'Storage list response was not valid JSON.', 0 );
+        }
+
+        $base    = $this->base_path();
+        $objects = array();
+        foreach ( isset( $data['entries'] ) && is_array( $data['entries'] ) ? $data['entries'] : array() as $entry ) {
+            if ( ! is_array( $entry ) || 'file' !== ( $entry['.tag'] ?? '' ) ) {
+                continue;
+            }
+            $key = ltrim( isset( $entry['path_display'] ) ? (string) $entry['path_display'] : '', '/' );
+            if ( '' !== $base && 0 === strpos( $key, $base . '/' ) ) {
+                $key = substr( $key, strlen( $base ) + 1 );
+            }
+            $objects[] = array(
+                'key'  => $key,
+                'size' => isset( $entry['size'] ) ? (int) $entry['size'] : 0,
+            );
+        }
+
+        $truncated = ! empty( $data['has_more'] );
+
+        return array(
+            'objects'    => $objects,
+            'next_token' => $truncated && isset( $data['cursor'] ) ? (string) $data['cursor'] : null,
+            'truncated'  => $truncated,
+        );
+    }
+}

@@ -47,6 +47,185 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
     }
 
     /**
+     * Lifetime of presigned pull URLs in seconds. Generated immediately
+     * before the child task is created, so the window starts when the
+     * child can first use them.
+     *
+     * @var int
+     */
+    const PRESIGN_TTL_SECONDS = 3600;
+
+    /**
+     * Whether a restore can skip staging and let the child pull its
+     * artifacts straight from cloud storage.
+     *
+     * All four gates must hold: cloud pull was not already tried for
+     * this job, the child advertised the capability, every artifact the
+     * child needs is remote-sourced, and every involved destination can
+     * presign GET URLs.
+     *
+     * @param object $website    Website object.
+     * @param array  $plan       Plan entries.
+     * @param array  $checkpoint Job checkpoint.
+     *
+     * @return bool
+     */
+    public function can_use_cloud_pull( object $website, array $plan, array $checkpoint ): bool {
+        if ( ! empty( $checkpoint['cloud_pull_tried'] ) ) {
+            return false;
+        }
+        if ( ! MainWP_Backup_Monitor::child_supports_cloud_pull( $website ) ) {
+            return false;
+        }
+
+        $snapshot_ids = array();
+        foreach ( $plan as $entry ) {
+            if ( ! empty( $entry['adopt_only'] ) ) {
+                continue;
+            }
+            if ( ! in_array( $entry['source'], array( 'remote', 'remote_chunked' ), true ) ) {
+                return false;
+            }
+            $snapshot_ids[ (int) $entry['snapshot_id'] ] = true;
+        }
+        if ( empty( $snapshot_ids ) ) {
+            return false;
+        }
+
+        foreach ( array_keys( $snapshot_ids ) as $snapshot_id ) {
+            $provider = $this->provider_for_snapshot( $snapshot_id );
+            if ( ! $provider instanceof MainWP_Backup_Presignable_Provider || ! $provider->supports_presigned_get() ) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Build the presigned pull manifest for a plan, filling each plan
+     * entry's expected hash from the upload record on the way.
+     *
+     * Returns null whenever the manifest cannot be complete - an upload
+     * recorded before artifact hashes existed, a missing chunk hash, or
+     * a presigned URL that is not https - and the caller stages through
+     * the standard path instead. No partial manifest ever leaves here.
+     *
+     * @param array $plan Plan entries (by reference; sha256 is filled in).
+     *
+     * @return array|null { artifacts: array } or null.
+     */
+    public function generate_pull_manifest( array &$plan ): ?array { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- all-or-nothing manifest assembly.
+        $providers = array();
+        $records   = array();
+        $artifacts = array();
+
+        foreach ( $plan as $index => $entry ) {
+            if ( ! empty( $entry['adopt_only'] ) ) {
+                continue;
+            }
+            $snapshot_id = (int) $entry['snapshot_id'];
+
+            if ( ! isset( $providers[ $snapshot_id ] ) ) {
+                $provider = $this->provider_for_snapshot( $snapshot_id );
+                if ( ! $provider instanceof MainWP_Backup_Presignable_Provider || ! $provider->supports_presigned_get() ) {
+                    return null;
+                }
+                $providers[ $snapshot_id ] = $provider;
+                $records[ $snapshot_id ]   = $this->upload_artifacts_for_snapshot( $snapshot_id );
+            }
+
+            $source = isset( $entry['source_file'] ) ? (string) $entry['source_file'] : '';
+            $record = isset( $records[ $snapshot_id ][ $source ] ) ? $records[ $snapshot_id ][ $source ] : null;
+            if ( null === $record || empty( $record['sha256'] ) ) {
+                return null; // Uploaded before hashes were recorded: stage instead.
+            }
+
+            $prefix   = $this->snapshot_prefix( $snapshot_id );
+            $provider = $providers[ $snapshot_id ];
+            $item     = array(
+                'file'   => (string) $entry['file'],
+                'sha256' => (string) $record['sha256'],
+                'size'   => isset( $record['size'] ) ? (int) $record['size'] : 0,
+            );
+
+            if ( 'chunked' === ( isset( $record['mode'] ) ? $record['mode'] : '' ) && ! empty( $record['chunks'] ) ) {
+                $chunks = array();
+                foreach ( (array) $record['chunks'] as $chunk ) {
+                    if ( empty( $chunk['hash'] ) ) {
+                        return null;
+                    }
+                    $url = $provider->presigned_get_url( $prefix . 'chunks/' . $chunk['hash'] . '.bin', static::PRESIGN_TTL_SECONDS );
+                    if ( 0 !== strpos( $url, 'https://' ) ) {
+                        return null;
+                    }
+                    $chunks[] = array(
+                        'hash' => (string) $chunk['hash'],
+                        'algo' => isset( $chunk['algo'] ) ? (string) $chunk['algo'] : 'sha256',
+                        'url'  => $url,
+                    );
+                }
+                $item['chunks'] = $chunks;
+            } else {
+                $url = $provider->presigned_get_url( $prefix . 'files/' . $source, static::PRESIGN_TTL_SECONDS );
+                if ( 0 !== strpos( $url, 'https://' ) ) {
+                    return null;
+                }
+                $item['url'] = $url;
+            }
+
+            $plan[ $index ]['sha256'] = (string) $record['sha256'];
+            if ( empty( $plan[ $index ]['size'] ) ) {
+                $plan[ $index ]['size'] = (int) $record['size'];
+            }
+            $artifacts[] = $item;
+        }
+
+        if ( empty( $artifacts ) ) {
+            return null;
+        }
+
+        return array( 'artifacts' => $artifacts );
+    }
+
+    /**
+     * The completed upload record's artifacts for a snapshot, indexed
+     * by source basename (test seam).
+     *
+     * @param int $snapshot_id Snapshot id.
+     *
+     * @return array<string,array> Upload checkpoint artifact entries.
+     */
+    protected function upload_artifacts_for_snapshot( int $snapshot_id ): array {
+        foreach ( MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $snapshot_id ) as $job ) {
+            if ( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE !== $job->status || ! is_array( $job->checkpoint ) || empty( $job->checkpoint['artifacts'] ) ) {
+                continue;
+            }
+            $by_file = array();
+            foreach ( (array) $job->checkpoint['artifacts'] as $artifact ) {
+                if ( ! empty( $artifact['file'] ) ) {
+                    $by_file[ (string) $artifact['file'] ] = $artifact;
+                }
+            }
+            return $by_file;
+        }
+        return array();
+    }
+
+    /**
+     * The remote key prefix of a snapshot (test seam).
+     *
+     * @param int $snapshot_id Snapshot id.
+     *
+     * @return string {site}/{snapshot}/.
+     */
+    protected function snapshot_prefix( int $snapshot_id ): string {
+        $snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+        $site_id  = null !== $snapshot ? (int) $snapshot->site_id : 0;
+        return $site_id . '/' . $snapshot_id . '/';
+    }
+
+    /**
      * The staging directory for a restore job.
      *
      * @param int $job_id Restore job id.

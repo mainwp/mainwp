@@ -190,6 +190,61 @@ class Test_Site_Credential_Encryption extends \WP_UnitTestCase {
 		$this->assertSame( array(), $deleted );
 	}
 
+	public function test_encrypt_unchanged_plaintext_reuses_old_envelope(): void {
+		$deleted = array();
+		add_action(
+			'mainwp_delete_key_file',
+			function ( $file_key ) use ( &$deleted ) {
+				$deleted[] = $file_key;
+			}
+		);
+
+		// The Edit Site form posts the decrypted http_user back as
+		// plaintext on every save. When the value is unchanged the stored
+		// envelope must be reused instead of re-encrypting into a new key
+		// file and retiring the old one (key-file churn). The old envelope
+		// is seeded with a distinct file_key because the stub encryptor
+		// reuses one key per field, which would mask a re-encryption.
+		$old_envelope = self::ENVELOPE_PREFIX . wp_json_encode(
+			array(
+				'encrypted_val' => 'STUB:' . base64_encode( 'unchanged-user' ),
+				'file_key'      => 'site_credential_http_user_churn_key',
+			)
+		);
+		$result       = \MainWP\Dashboard\MainWP_Credential_Storage::encrypt_credential( 'unchanged-user', 'http_user', $old_envelope );
+
+		$this->assertSame( $old_envelope, $result );
+		$this->assertSame( array(), $deleted );
+	}
+
+	public function test_encrypt_unreadable_old_envelope_falls_through_to_fresh_encryption(): void {
+		$deleted = array();
+		add_action(
+			'mainwp_delete_key_file',
+			function ( $file_key ) use ( &$deleted ) {
+				$deleted[] = $file_key;
+			}
+		);
+
+		// An old envelope whose key file is gone decrypts to ''. The
+		// unchanged-value comparison must fail and the plaintext must be
+		// re-encrypted, repairing the broken envelope and retiring the
+		// stale key reference.
+		$broken = self::ENVELOPE_PREFIX . wp_json_encode(
+			array(
+				'encrypted_val' => 'UNREADABLE',
+				'file_key'      => 'site_credential_http_user_stale_key',
+			)
+		);
+
+		$result = \MainWP\Dashboard\MainWP_Credential_Storage::encrypt_credential( 'repair-me', 'http_user', $broken );
+
+		$this->assertStringStartsWith( self::ENVELOPE_PREFIX, $result );
+		$this->assertNotSame( $broken, $result );
+		$this->assertSame( 'repair-me', \MainWP\Dashboard\MainWP_Credential_Storage::decrypt_credential( $result ) );
+		$this->assertSame( array( 'site_credential_http_user_stale_key' ), $deleted );
+	}
+
 	public function test_encrypt_credential_empty_string_retires_old_key_and_returns_empty(): void {
 		$deleted = array();
 		add_action(

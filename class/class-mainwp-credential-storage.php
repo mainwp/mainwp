@@ -55,6 +55,8 @@ class MainWP_Credential_Storage {
      *   - the input unchanged when input is '' (credential cleared); the
      *     old envelope's key file is retired since nothing references it
      *   - the input unchanged when input is already an envelope (idempotent)
+     *   - the old envelope when the plaintext matches its decrypted value
+     *     (unchanged save; no re-encryption, no key file rotation)
      *   - false when the encryption layer fails to produce an envelope
      *
      * Callers MUST treat a `false` return as a hard failure and refuse
@@ -85,6 +87,16 @@ class MainWP_Credential_Storage {
         }
         if ( static::is_credential_envelope( $plaintext ) ) {
             return $plaintext;
+        }
+        if ( static::is_credential_envelope( $old_envelope )
+            && static::decrypt_credential( $old_envelope ) === $plaintext ) {
+            // Unchanged value: reuse the stored envelope instead of
+            // producing a new key file and retiring the old one. The
+            // Edit Site form posts http_user back as plaintext on every
+            // save, so without this every save rotated the key file.
+            // An unreadable old envelope decrypts to '' and never
+            // matches a non-empty plaintext, so it is re-encrypted.
+            return $old_envelope;
         }
         $prefix   = 'site_credential_' . sanitize_key( $field ) . '_';
         $envelope = apply_filters( 'mainwp_encrypt_key_value', false, $plaintext, $prefix, false );

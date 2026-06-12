@@ -93,8 +93,7 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
         }
 
         foreach ( array_keys( $snapshot_ids ) as $snapshot_id ) {
-            $provider = $this->provider_for_snapshot( $snapshot_id );
-            if ( ! $provider instanceof MainWP_Backup_Presignable_Provider || ! $provider->supports_presigned_get() ) {
+            if ( null === $this->presignable_upload_for_snapshot( $snapshot_id ) ) {
                 return false;
             }
         }
@@ -116,8 +115,7 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
      * @return array|null { artifacts: array } or null.
      */
     public function generate_pull_manifest( array &$plan ): ?array { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- all-or-nothing manifest assembly.
-        $providers = array();
-        $records   = array();
+        $uploads   = array();
         $artifacts = array();
 
         foreach ( $plan as $index => $entry ) {
@@ -126,23 +124,22 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
             }
             $snapshot_id = (int) $entry['snapshot_id'];
 
-            if ( ! isset( $providers[ $snapshot_id ] ) ) {
-                $provider = $this->provider_for_snapshot( $snapshot_id );
-                if ( ! $provider instanceof MainWP_Backup_Presignable_Provider || ! $provider->supports_presigned_get() ) {
+            if ( ! isset( $uploads[ $snapshot_id ] ) ) {
+                $upload = $this->presignable_upload_for_snapshot( $snapshot_id );
+                if ( null === $upload ) {
                     return null;
                 }
-                $providers[ $snapshot_id ] = $provider;
-                $records[ $snapshot_id ]   = $this->upload_artifacts_for_snapshot( $snapshot_id );
+                $uploads[ $snapshot_id ] = $upload;
             }
 
             $source = isset( $entry['source_file'] ) ? (string) $entry['source_file'] : '';
-            $record = isset( $records[ $snapshot_id ][ $source ] ) ? $records[ $snapshot_id ][ $source ] : null;
+            $record = isset( $uploads[ $snapshot_id ]['artifacts'][ $source ] ) ? $uploads[ $snapshot_id ]['artifacts'][ $source ] : null;
             if ( null === $record || empty( $record['sha256'] ) ) {
                 return null; // Uploaded before hashes were recorded: stage instead.
             }
 
             $prefix   = $this->snapshot_prefix( $snapshot_id );
-            $provider = $providers[ $snapshot_id ];
+            $provider = $uploads[ $snapshot_id ]['provider'];
             $item     = array(
                 'file'   => (string) $entry['file'],
                 'sha256' => (string) $record['sha256'],
@@ -189,27 +186,51 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
     }
 
     /**
-     * The completed upload record's artifacts for a snapshot, indexed
-     * by source basename (test seam).
+     * The first PRESIGNABLE completed upload of a snapshot: its
+     * provider plus the upload record's artifacts indexed by source
+     * basename (test seam).
+     *
+     * Scans every complete upload job, so a non-presignable destination
+     * that happened to upload first never shadows a presignable copy at
+     * another destination.
      *
      * @param int $snapshot_id Snapshot id.
      *
-     * @return array<string,array> Upload checkpoint artifact entries.
+     * @return array|null { provider: MainWP_Backup_Presignable_Provider,
+     *                      artifacts: array<string,array> } or null.
      */
-    protected function upload_artifacts_for_snapshot( int $snapshot_id ): array {
+    protected function presignable_upload_for_snapshot( int $snapshot_id ): ?array {
         foreach ( MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $snapshot_id ) as $job ) {
             if ( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE !== $job->status || ! is_array( $job->checkpoint ) || empty( $job->checkpoint['artifacts'] ) ) {
                 continue;
             }
+
+            $destination = MainWP_Backup_Storage_Destinations::instance()->get_destination( (int) $job->destination_id );
+            if ( null === $destination ) {
+                continue;
+            }
+            try {
+                $provider = MainWP_Backup_Storage_Destinations::instance()->make_provider( $destination );
+            } catch ( \Throwable $e ) {
+                continue;
+            }
+            if ( ! $provider instanceof MainWP_Backup_Presignable_Provider || ! $provider->supports_presigned_get() ) {
+                continue;
+            }
+
             $by_file = array();
             foreach ( (array) $job->checkpoint['artifacts'] as $artifact ) {
                 if ( ! empty( $artifact['file'] ) ) {
                     $by_file[ (string) $artifact['file'] ] = $artifact;
                 }
             }
-            return $by_file;
+
+            return array(
+                'provider'  => $provider,
+                'artifacts' => $by_file,
+            );
         }
-        return array();
+        return null;
     }
 
     /**

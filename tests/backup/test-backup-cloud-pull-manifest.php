@@ -84,25 +84,24 @@ class Pull_Manifest_Test_Driver extends MainWP_Backup_Restore_Transfer_Driver { 
 	public $upload_records = array();
 
 	/**
-	 * Pinned provider.
+	 * Pinned presignable pair built from the scripted provider and
+	 * records.
 	 *
 	 * @param int $snapshot_id Snapshot id.
 	 *
-	 * @return MainWP_Backup_Storage_Provider|null
+	 * @return array|null
 	 */
-	protected function provider_for_snapshot( int $snapshot_id ): ?MainWP_Backup_Storage_Provider {
-		return $this->provider;
-	}
-
-	/**
-	 * Scripted records.
-	 *
-	 * @param int $snapshot_id Snapshot id.
-	 *
-	 * @return array
-	 */
-	protected function upload_artifacts_for_snapshot( int $snapshot_id ): array {
-		return isset( $this->upload_records[ $snapshot_id ] ) ? $this->upload_records[ $snapshot_id ] : array();
+	protected function presignable_upload_for_snapshot( int $snapshot_id ): ?array {
+		if ( ! $this->provider instanceof MainWP_Backup_Presignable_Provider || ! $this->provider->supports_presigned_get() ) {
+			return null;
+		}
+		if ( empty( $this->upload_records[ $snapshot_id ] ) ) {
+			return null;
+		}
+		return array(
+			'provider'  => $this->provider,
+			'artifacts' => $this->upload_records[ $snapshot_id ],
+		);
 	}
 
 	/**
@@ -326,6 +325,117 @@ class MainWP_Backup_Cloud_Pull_Manifest_Test extends MainWP_Abilities_Test_Case 
 		$this->assertSame( str_repeat( 'a', 64 ), $plan[0]['sha256'], 'The plan entry must learn its expected hash.' );
 		$this->assertSame( str_repeat( 'b', 64 ), $plan[1]['sha256'] );
 		$this->assertSame( '', $plan[2]['sha256'], 'Adopt-only entries are untouched.' );
+	}
+
+	/**
+	 * With real destination and upload rows, a presignable copy is
+	 * found even when a non-presignable destination uploaded first -
+	 * and without one, cloud pull declines.
+	 *
+	 * @return void
+	 */
+	public function test_presignable_copy_found_behind_local_destination() {
+		add_filter(
+			'pre_http_request',
+			function () {
+				return array(
+					'headers'  => array( 'content-length' => '22' ),
+					'body'     => '',
+					'response' => array(
+						'code'    => 200,
+						'message' => 'OK',
+					),
+				);
+			}
+		);
+
+		$site_id = $this->create_test_site();
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		MainWP_DB::instance()->update_website_option( $website, 'cloud_restore_pull_support', '1' );
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+
+		$snapshot_id = \MainWP\Dashboard\MainWP_Backup_Snapshots::instance()->record_snapshot(
+			array(
+				'task_id'  => 0,
+				'site_id'  => $site_id,
+				'type'     => 'db',
+				'archives' => array(),
+			)
+		);
+
+		$dir   = get_temp_dir() . 'mainwp-pullsel-' . uniqid();
+		mkdir( $dir );
+		$local = \MainWP\Dashboard\MainWP_Backup_Storage_Handler::save_destination(
+			array(
+				'id'       => 0,
+				'provider' => 'local',
+				'name'     => 'Pull-select local',
+				'settings' => array( 'base_path' => $dir ),
+			)
+		);
+		$s3    = \MainWP\Dashboard\MainWP_Backup_Storage_Handler::save_destination(
+			array(
+				'id'       => 0,
+				'provider' => 's3',
+				'name'     => 'Pull-select s3',
+				'settings' => array(
+					'bucket'     => 'pull-select',
+					'region'     => 'us-east-1',
+					'access_key' => 'AKIA-PULL',
+					'secret_key' => 'pull-secret',
+				),
+			)
+		);
+
+		$store = \MainWP\Dashboard\MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $local['id'], $s3['id'] ) );
+		$checkpoint = array(
+			'artifacts' => array(
+				array(
+					'file'   => 'db.zip',
+					'role'   => 'db',
+					'size'   => 10,
+					'mode'   => 'whole',
+					'sha256' => str_repeat( 'c', 64 ),
+				),
+			),
+		);
+		foreach ( $store->get_jobs_for_snapshot( $snapshot_id ) as $job ) {
+			$store->save_checkpoint( (int) $job->id, $checkpoint );
+			$store->complete_job( (int) $job->id );
+		}
+
+		$plan = array(
+			array(
+				'role'        => 'db',
+				'file'        => 's' . $snapshot_id . '-db.zip',
+				'source_file' => 'db.zip',
+				'size'        => 10,
+				'sha256'      => '',
+				'snapshot_id' => $snapshot_id,
+				'source'      => 'remote',
+				'local_path'  => '',
+				'remote_key'  => $site_id . '/' . $snapshot_id . '/files/db.zip',
+				'adopt_only'  => false,
+			),
+		);
+
+		$driver = new MainWP_Backup_Restore_Transfer_Driver();
+
+		$this->assertTrue( $driver->can_use_cloud_pull( $website, $plan, array() ), 'The presignable copy behind the local destination must be found.' );
+
+		$manifest = $driver->generate_pull_manifest( $plan );
+		$this->assertNotNull( $manifest );
+		$this->assertStringStartsWith( 'https://pull-select.s3.amazonaws.com/' . $site_id . '/' . $snapshot_id . '/files/db.zip?', $manifest['artifacts'][0]['url'] );
+		$this->assertStringContainsString( 'X-Amz-Signature=', $manifest['artifacts'][0]['url'] );
+
+		// Without any presignable copy, cloud pull declines.
+		global $wpdb;
+		$wpdb->query( $wpdb->prepare( 'UPDATE ' . MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' ) . ' SET status = %s WHERE snapshot_id = %d AND destination_id = %d', 'failed_permanent', $snapshot_id, $s3['id'] ) ); // phpcs:ignore WordPress.DB -- test fixture.
+		$this->assertFalse( $driver->can_use_cloud_pull( $website, $plan, array() ), 'A local-only copy must decline cloud pull.' );
+
+		array_map( 'unlink', glob( $dir . '/*' ) ?: array() );
+		rmdir( $dir );
 	}
 
 	/**

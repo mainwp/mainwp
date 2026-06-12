@@ -25,7 +25,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * @package MainWP\Dashboard
  */
-class MainWP_Backup_Storage_S3 implements MainWP_Backup_Storage_Provider { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
+class MainWP_Backup_Storage_S3 implements MainWP_Backup_Storage_Provider, MainWP_Backup_Presignable_Provider { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
     /**
      * Default AWS endpoint.
@@ -233,6 +233,40 @@ class MainWP_Backup_Storage_S3 implements MainWP_Backup_Storage_Provider { // ph
         return array(
             'ok'    => true,
             'error' => null,
+        );
+    }
+
+    /**
+     * Whether this destination can issue presigned GET URLs: it needs
+     * the full credential set for query-parameter authentication.
+     *
+     * @return bool
+     */
+    public function supports_presigned_get(): bool {
+        foreach ( array( 'bucket', 'region', 'access_key', 'secret_key' ) as $field ) {
+            if ( empty( $this->settings[ $field ] ) ) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * A presigned GET URL for an object, computed offline from the
+     * stored credentials.
+     *
+     * @param string $key Object key.
+     * @param int    $ttl Lifetime in seconds.
+     *
+     * @return string
+     */
+    public function presigned_get_url( string $key, int $ttl ): string {
+        return $this->signer->presign(
+            $this->object_url( $key ),
+            isset( $this->settings['region'] ) ? (string) $this->settings['region'] : 'us-east-1',
+            isset( $this->settings['access_key'] ) ? (string) $this->settings['access_key'] : '',
+            isset( $this->settings['secret_key'] ) ? (string) $this->settings['secret_key'] : '',
+            $ttl
         );
     }
 

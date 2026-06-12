@@ -214,6 +214,26 @@ class MainWP_Backup_Storage_GCS_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * GCS destinations presign against the pinned endpoint with the HMAC
+	 * pair; the pinned region default keeps the credential scope valid.
+	 *
+	 * @return void
+	 */
+	public function test_presigned_get_url_uses_pinned_endpoint() {
+		$provider = $this->make_provider( array( $this->response( 200 ) ) );
+
+		$this->assertInstanceOf( \MainWP\Dashboard\MainWP_Backup_Presignable_Provider::class, $provider );
+		$this->assertTrue( $provider->supports_presigned_get() );
+
+		$url = $provider->presigned_get_url( '4/42/files/full.zip', 3600 );
+
+		$this->assertStringStartsWith( 'https://storage.googleapis.com/example-bucket/4/42/files/full.zip?', $url );
+		$this->assertStringContainsString( rawurlencode( 'GOOG1EXAMPLEHMACKEYID/' ), $url );
+		$this->assertStringContainsString( rawurlencode( '/us-east1/s3/aws4_request' ), $url );
+		$this->assertSame( array(), $this->requests, 'Presigning must not perform any HTTP request.' );
+	}
+
+	/**
 	 * The connection test walks HEAD bucket, PUT probe, HEAD probe,
 	 * DELETE probe against the pinned endpoint and reports success.
 	 *

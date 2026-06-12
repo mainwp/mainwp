@@ -303,6 +303,63 @@ class MainWP_Backup_Storage_S3_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * The provider can presign GET URLs when its credentials are
+	 * complete, and reports no support when they are not.
+	 *
+	 * @return void
+	 */
+	public function test_supports_presigned_get_requires_credentials() {
+		$provider = $this->make_provider( array( $this->response( 200 ) ) );
+		$this->assertInstanceOf( \MainWP\Dashboard\MainWP_Backup_Presignable_Provider::class, $provider );
+		$this->assertTrue( $provider->supports_presigned_get() );
+
+		$provider = $this->make_provider( array( $this->response( 200 ) ), array( 'secret_key' => '' ) );
+		$this->assertFalse( $provider->supports_presigned_get() );
+
+		$provider = $this->make_provider( array( $this->response( 200 ) ), array( 'bucket' => '' ) );
+		$this->assertFalse( $provider->supports_presigned_get() );
+	}
+
+	/**
+	 * Presigned URLs carry the query auth parameters, address the object
+	 * like every other call, and are computed offline: the transport is
+	 * never invoked.
+	 *
+	 * @return void
+	 */
+	public function test_presigned_get_url_is_offline_and_addressed() {
+		$provider = $this->make_provider( array( $this->response( 200 ) ) );
+
+		$url = $provider->presigned_get_url( '4/42/files/full.zip', 3600 );
+
+		$this->assertStringStartsWith( 'https://example-bucket.s3.amazonaws.com/4/42/files/full.zip?', $url );
+		$this->assertStringContainsString( 'X-Amz-Algorithm=AWS4-HMAC-SHA256', $url );
+		$this->assertStringContainsString( 'X-Amz-Expires=3600', $url );
+		$this->assertStringContainsString( 'X-Amz-SignedHeaders=host', $url );
+		$this->assertStringContainsString( 'X-Amz-Signature=', $url );
+		$this->assertSame( array(), $this->requests, 'Presigning must not perform any HTTP request.' );
+	}
+
+	/**
+	 * Presigned URLs respect path-style addressing and custom endpoints.
+	 *
+	 * @return void
+	 */
+	public function test_presigned_get_url_path_style() {
+		$provider = $this->make_provider(
+			array( $this->response( 200 ) ),
+			array(
+				'endpoint'   => 'http://127.0.0.1:9000',
+				'path_style' => 1,
+			)
+		);
+
+		$url = $provider->presigned_get_url( 'k.bin', 600 );
+
+		$this->assertStringStartsWith( 'http://127.0.0.1:9000/example-bucket/k.bin?', $url );
+	}
+
+	/**
 	 * The connection test walks HEAD bucket, PUT probe, HEAD probe,
 	 * DELETE probe and reports success.
 	 *

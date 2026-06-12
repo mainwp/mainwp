@@ -1551,7 +1551,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
                 'Full backup tolerance before update',
                 'Abandoned plugins/themes tolerance',
                 'Primary backup system',
-                'MainWP legacy backups enabled',
+                'MainWP native backups enabled',
                 'Backups kept on server',
                 'Backup to external sources',
                 'Archive format',

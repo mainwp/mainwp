@@ -478,7 +478,12 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
             return; // Verified present.
         }
 
-        $provider->put_object( $key, (string) file_get_contents( $artifact['path'] ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local artifact read.
+        $body = file_get_contents( $artifact['path'] ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local artifact read.
+        if ( false === $body ) {
+            throw new \RuntimeException( esc_html( 'Could not read backup artifact for upload: ' . $artifact['file'] ), 410 );
+        }
+
+        $provider->put_object( $key, $body );
     }
 
     /**

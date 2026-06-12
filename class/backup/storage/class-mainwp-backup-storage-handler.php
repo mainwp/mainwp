@@ -575,7 +575,9 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
         foreach ( $tasks as $task ) {
             $ids = json_decode( (string) $task->destinations, true );
             $ids = is_array( $ids ) ? array_values( array_diff( array_map( 'intval', $ids ), array( $id ) ) ) : array();
-            MainWP_DB_Backup::instance()->update_backup_task_with_values( (int) $task->id, array( 'destinations' => wp_json_encode( $ids ) ) );
+            if ( false === MainWP_DB_Backup::instance()->update_backup_task_with_values( (int) $task->id, array( 'destinations' => wp_json_encode( $ids ) ) ) ) {
+                return array( 'error' => esc_html__( 'Could not detach this destination from a backup task. The destination was left in place.', 'mainwp' ) );
+            }
         }
 
         static::fail_pending_jobs_for_destination( $id );

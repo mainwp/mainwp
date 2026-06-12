@@ -289,7 +289,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     }
                 }
 
-                MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Requesting backup' . ( $use_spine ? ' task' : '' ) . ': ' . MainWP_Utility::value_to_string( $params, 1 ) );
+                MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Requesting backup' . ( $use_spine ? ' task' : '' ) . ': ' . MainWP_Utility::value_to_string( $params ) );
 
                 $information = MainWP_Connect::fetch_url_authed( $website, $use_spine ? 'backup_task_create' : 'backup', $params, false, false, false );
             } catch ( MainWP_Exception $e ) {
@@ -492,6 +492,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     }
                     return false;
                 } elseif ( 'done' === $temp['status'] ) {
+                    $information = array();
                     if ( 'full' === $type || 'files' === $type ) {
                         $information['full'] = $temp['file'];
                         $information['db']   = false;
@@ -1380,7 +1381,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
         MainWP_Backup_Monitor::negotiate_backup_preflight( $website, $archiveFormat );
 
-        MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Requesting backup: ' . MainWP_Utility::value_to_string( $params, 1 ) );
+        MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Requesting backup: ' . MainWP_Utility::value_to_string( $params ) );
 
         $information = MainWP_Connect::fetch_url_authed( $website, 'backup', $params, false, false, false );
         do_action( 'mainwp_managesite_backup', $website, array( 'type' => $pType ), $information );

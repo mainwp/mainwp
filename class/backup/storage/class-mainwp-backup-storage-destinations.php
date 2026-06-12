@@ -261,7 +261,11 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
      * @return string|false Envelope, or false when encryption is unavailable.
      */
     private function encrypt_settings( array $settings ) {
-        $envelope = MainWP_Credential_Storage::encrypt_credential( (string) wp_json_encode( $settings ), 'storage_destination' );
+        $json = wp_json_encode( $settings );
+        if ( false === $json ) {
+            return false;
+        }
+        $envelope = MainWP_Credential_Storage::encrypt_credential( $json, 'storage_destination' );
         if ( ! is_string( $envelope ) || ! MainWP_Credential_Storage::is_credential_envelope( $envelope ) ) {
             return false;
         }

@@ -1767,6 +1767,8 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
         curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, $method );
         curl_setopt( $ch, CURLOPT_URL, $baseURL . $url );
         curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+        curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 30 );
+        curl_setopt( $ch, CURLOPT_TIMEOUT, 300 );
 
         // Set Authorization Header.
         if ( $accessToken ) {
@@ -2251,6 +2253,8 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
         curl_setopt( $curl, CURLOPT_URL, $baseurl . $url );
         curl_setopt( $curl, CURLOPT_POST, true );
         curl_setopt( $curl, CURLOPT_RETURNTRANSFER, true );
+        curl_setopt( $curl, CURLOPT_CONNECTTIMEOUT, 30 );
+        curl_setopt( $curl, CURLOPT_TIMEOUT, 300 );
 
         $headers = array(
             "Authorization: Bearer $accessToken",

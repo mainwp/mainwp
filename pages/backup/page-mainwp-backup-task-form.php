@@ -249,6 +249,7 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
         if ( false === $globalArchiveFormat ) {
             $globalArchiveFormat = 'tar.gz';
         }
+        $globalArchiveFormatText = 'Tar GZip';
         if ( 'zip' === $globalArchiveFormat ) {
             $globalArchiveFormatText = 'Zip';
         } elseif ( 'tar' === $globalArchiveFormat ) {

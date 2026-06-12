@@ -45,7 +45,7 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
             <?php static::render_form(); ?>
         </div>
         <?php
-        static::render_scripts();
+        self::render_scripts();
         MainWP_Backup_Page::render_footer( 'Storage' );
     }
 

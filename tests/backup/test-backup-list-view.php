@@ -102,14 +102,15 @@ class MainWP_Backup_List_View_Test extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * The task name column strips slashes.
+	 * The task name column strips slashes and escapes for HTML output, since
+	 * single_row() echoes the column return value unescaped.
 	 *
 	 * @return void
 	 */
 	public function test_column_task_name_strips_slashes() {
 		$view = new MainWP_Backup_List_View();
 
-		$this->assertSame( "Bob's backup", $view->column_task_name( $this->make_item( array( 'name' => "Bob\\'s backup" ) ) ) );
+		$this->assertSame( 'Bob&#039;s backup', $view->column_task_name( $this->make_item( array( 'name' => "Bob\\'s backup" ) ) ) );
 	}
 
 	/**

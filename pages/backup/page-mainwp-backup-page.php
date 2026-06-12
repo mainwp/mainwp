@@ -191,9 +191,9 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                             <?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ManageBackupsStorage' ) ) { ?>
                             <a href="<?php echo esc_url( admin_url( 'admin.php?page=ManageBackupsStorage' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Storage', 'mainwp' ); ?></a>
                             <?php } ?>
-                            <?php if ( \mainwp_current_user_can( 'dashboard', 'execute_backups' ) && ! MainWP_Menu::is_disable_menu_item( 3, 'ManageBackupsSnapshots' ) ) { ?>
+                        <?php } ?>
+                        <?php if ( \mainwp_current_user_can( 'dashboard', 'execute_backups' ) && ! MainWP_Menu::is_disable_menu_item( 3, 'ManageBackupsSnapshots' ) ) { ?>
                             <a href="<?php echo esc_url( admin_url( 'admin.php?page=ManageBackupsSnapshots' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Snapshots & Restore', 'mainwp' ); ?></a>
-                            <?php } ?>
                         <?php } ?>
                     <?php } ?>
                     <?php
@@ -259,6 +259,13 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                     'slug'       => 'ManageBackupsStorage',
                     'right'      => 'edit_backup_tasks',
                 ),
+                array(
+                    'title'      => esc_html__( 'Snapshots & Restore', 'mainwp' ),
+                    'parent_key' => 'ManageBackups',
+                    'href'       => 'admin.php?page=ManageBackupsSnapshots',
+                    'slug'       => 'ManageBackupsSnapshots',
+                    'right'      => 'execute_backups',
+                ),
             );
 
             MainWP_Menu::init_subpages_left_menu( $subPages, $init_sub_subleftmenu, 'ManageBackups', 'ManageBackups' );
@@ -320,7 +327,7 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             static::render_header( '' );
             ?>
             <?php if ( 0 === count( $primaryBackupMethods ) ) { ?>
-                <div class="ui blue message"><?php /* translators: 1: opening anchor tag, 2: closing anchor tag */ printf( esc_html__( 'Did you know that MainWP has extensions for working with popular backup plugins? Visit the %1$sextensions site%2$s for options.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank" ?>', '</a>' ); // NOSONAR - noopener - open safe. ?></div>
+                <div class="ui blue message"><?php /* translators: 1: opening anchor tag, 2: closing anchor tag */ printf( esc_html__( 'Did you know that MainWP has extensions for working with popular backup plugins? Visit the %1$sextensions site%2$s for options.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank">', '</a>' ); // NOSONAR - noopener - open safe. ?></div>
             <?php } ?>
             <div class="ui alt segment">
                 <div id="mainwp_managebackups_add_message" class="ui green message" style="display:

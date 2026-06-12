@@ -176,8 +176,8 @@ class MainWP_Backup_List_View { // phpcs:ignore Generic.Classes.OpeningBraceSame
     public function column_actions( $item ) {
 
         $actions = array(
-            'edit'   => sprintf( '<a class="item" href="admin.php?page=ManageBackups&id=%s"><i class="edit outline icon"></i> ' . esc_html__( 'Edit', 'mainwp' ) . '</a>', $item->id ),
-            'delete' => sprintf( '<a class="submitdelete item" href="#" task_id="%s" onClick="return managebackups_remove(this);"><i class="trash alternate outline icon"></i> ' . esc_html__( 'Delete', 'mainwp' ) . '</a>', $item->id ),
+            'edit'   => sprintf( '<a class="item" href="admin.php?page=ManageBackups&id=%d"><i class="edit outline icon"></i> ' . esc_html__( 'Edit', 'mainwp' ) . '</a>', (int) $item->id ),
+            'delete' => sprintf( '<a class="submitdelete item" href="#" task_id="%d" onClick="return managebackups_remove(this);"><i class="trash alternate outline icon"></i> ' . esc_html__( 'Delete', 'mainwp' ) . '</a>', (int) $item->id ),
         );
 
         if ( ! \mainwp_current_user_can( 'dashboard', 'edit_backup_tasks' ) ) {
@@ -190,10 +190,10 @@ class MainWP_Backup_List_View { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
         if ( 1 === (int) $item->paused ) {
             if ( \mainwp_current_user_can( 'dashboard', 'pause_resume_backup_tasks' ) ) {
-                $actions['resume'] = sprintf( '<a href="#" class="item" task_id="%s" onClick="return managebackups_resume(this)"><i class="play icon"></i> ' . esc_html__( 'Resume', 'mainwp' ) . '</a>', $item->id );
+                $actions['resume'] = sprintf( '<a href="#" class="item" task_id="%d" onClick="return managebackups_resume(this)"><i class="play icon"></i> ' . esc_html__( 'Resume', 'mainwp' ) . '</a>', (int) $item->id );
             }
         } elseif ( \mainwp_current_user_can( 'dashboard', 'pause_resume_backup_tasks' ) ) {
-                $actions['pause'] = sprintf( '<a href="#" class="item" task_id="%s" onClick="return managebackups_pause(this)"><i class="pause icon"></i> ' . esc_html__( 'Pause', 'mainwp' ) . '</a>', $item->id );
+                $actions['pause'] = sprintf( '<a href="#" class="item" task_id="%d" onClick="return managebackups_pause(this)"><i class="pause icon"></i> ' . esc_html__( 'Pause', 'mainwp' ) . '</a>', (int) $item->id );
         }
 
         $out = '<div class="ui right pointing dropdown" style="z-index:999">
@@ -218,7 +218,7 @@ class MainWP_Backup_List_View { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @return string Action content.
      */
     public function column_task_name( $item ) {
-        return stripslashes( $item->name );
+        return esc_html( stripslashes( $item->name ) );
     }
 
     /**
@@ -246,7 +246,7 @@ class MainWP_Backup_List_View { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @return string Action content.
      */
     public function column_schedule( $item ) {
-        return strtoupper( $item->schedule );
+        return esc_html( strtoupper( $item->schedule ) );
     }
 
     /**
@@ -259,7 +259,9 @@ class MainWP_Backup_List_View { // phpcs:ignore Generic.Classes.OpeningBraceSame
     public function column_destination( $item ) {
         $extraOutput = apply_filters( 'mainwp_backuptask_column_destination', '', $item->id );
         if ( '' !== $extraOutput ) {
-            return trim( $extraOutput, '<br />' );
+            // Strip a trailing <br /> that legacy extensions append, not the
+            // individual characters trim() would have removed.
+            return (string) preg_replace( '#(?:\s*<br\s*/?>\s*)+$#i', '', $extraOutput );
         }
 
         $storage = $this->storage_destination_summary( $item );
@@ -362,7 +364,7 @@ class MainWP_Backup_List_View { // phpcs:ignore Generic.Classes.OpeningBraceSame
         $output .= '<strong>' . esc_html__( 'NEXT RUN: ', 'mainwp' ) . '</strong>' . ( empty( $item->last_run ) ? esc_html__( 'Any minute', 'mainwp' ) : MainWP_Utility::format_timestamp( ( 'daily' === $item->schedule ? ( 60 * 60 * 24 ) : ( 'weekly' === $item->schedule ? ( 60 * 60 * 24 * 7 ) : ( 60 * 60 * 24 * 30 ) ) ) + MainWP_Utility::get_timestamp( $item->last_run ) ) );
         $output .= '<strong>';
         if ( ! empty( $item->last_run ) && $item->completed < $item->last_run ) {
-            $output         .= esc_html__( '<br />CURRENTLY RUNNING: ', 'mainwp' ) . '</strong>';
+            $output         .= '<br />' . esc_html__( 'CURRENTLY RUNNING: ', 'mainwp' ) . '</strong>';
             $completed_sites = $item->completed_sites;
             if ( '' !== $completed_sites ) {
                 $completed_sites = json_decode( $completed_sites, 1 );
@@ -383,6 +385,6 @@ class MainWP_Backup_List_View { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @return string Action content.
      */
     public function column_trigger( $item ) {
-        return '<span class="backup_run_loading"><img src="' . MAINWP_PLUGIN_URL . 'assets/images/loader.gif" /></span>&nbsp;<a href="#" class="backup_run_now" task_id="' . $item->id . '" task_type="' . $item->type . '">' . esc_html__( 'Run now', 'mainwp' ) . '</a>';
+        return '<span class="backup_run_loading"><img src="' . MAINWP_PLUGIN_URL . 'assets/images/loader.gif" /></span>&nbsp;<a href="#" class="backup_run_now" task_id="' . (int) $item->id . '" task_type="' . esc_attr( $item->type ) . '">' . esc_html__( 'Run now', 'mainwp' ) . '</a>';
     }
 }

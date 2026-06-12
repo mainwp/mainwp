@@ -4438,21 +4438,19 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         }
 
         // Get selected backup method.
-        $backup_method = array_filter(
-            $primary_backup_methods,
-            function ( $method ) use ( $primary_backup ) {
-                return $method['value'] === $primary_backup;
-            }
+        $backup_method = array_values(
+            array_filter(
+                $primary_backup_methods,
+                function ( $method ) use ( $primary_backup ) {
+                    return $method['value'] === $primary_backup;
+                }
+            )
         );
 
-        if ( empty( $backup_method ) ) {
-            $backup_method = array(
-                'value' => '',
-                'title' => 'Native backups',
-            );
-        }
-
-        return $backup_method;
+        return $backup_method[0] ?? array(
+            'value' => '',
+            'title' => 'Native backups',
+        );
     }
 
     /**
@@ -4946,12 +4944,12 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                     'context'     => array( 'view', 'backups_view', 'backups_edit' ),
                 ),
                 'mainwp_backups_on_server'                 => array(
-                    'type'        => 'integer',
+                    'type'        => 'string',
                     'description' => __( 'Backups on server.', 'mainwp' ),
                     'context'     => array( 'view', 'edit', 'backups_view', 'backups_edit' ),
                 ),
                 'mainwp_backup_on_external_sources'        => array(
-                    'type'        => 'integer',
+                    'type'        => 'string',
                     'description' => __( 'Backups on external sources.', 'mainwp' ),
                     'context'     => array( 'view', 'edit', 'backups_view', 'backups_edit' ),
                 ),

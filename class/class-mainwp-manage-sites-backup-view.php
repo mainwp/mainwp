@@ -186,6 +186,7 @@ class MainWP_Manage_Sites_Backup_View { // phpcs:ignore Generic.Classes.OpeningB
                 if ( false === $globalArchiveFormat ) {
                     $globalArchiveFormat = 'tar.gz';
                 }
+                $globalArchiveFormatText = 'Tar GZip';
                 if ( 'zip' === $globalArchiveFormat ) {
                     $globalArchiveFormatText = 'Zip';
                 } elseif ( 'tar' === $globalArchiveFormat ) {

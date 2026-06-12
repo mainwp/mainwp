@@ -60,7 +60,9 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
      * @uses \MainWP\Dashboard\MainWP_Utility::end_session()
      */
     public static function backup_download_file( int $pSiteId, string $pType, string $pUrl, string $pFile ): bool {
-        $hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
+        if ( ! MainWP_System_Utility::get_wp_file_system() ) {
+            throw new MainWP_Exception( esc_html__( 'Could not initialize the WordPress filesystem to store the backup.', 'mainwp' ) );
+        }
 
         /**
          * WordPress filesystem instance.
@@ -142,6 +144,7 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
         return true;
     }
 
+    // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber -- all throws are MainWP_Exception.
     /**
      * Method download_backup_artifact()
      *
@@ -168,7 +171,6 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
      * @uses \MainWP\Dashboard\MainWP_Connect::download_to_file()
      * @uses \MainWP\Dashboard\MainWP_Connect::get_get_data_authed()
      */
-    // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber -- all throws are MainWP_Exception.
     public static function download_backup_artifact( object $website, string $remote_filename, string $local_file, $size, $http_user, $http_pass ): void {
         // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber
         $escalated = false;

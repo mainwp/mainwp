@@ -95,15 +95,40 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
     }
 
     /**
+     * Verify the current user may manage restores for a child site.
+     *
+     * The restore endpoints are gated by the `execute_backups` capability at
+     * registration, but that does not scope access to individual sites. Without
+     * a per-site check, a user could act on any site by passing its id. Sends a
+     * JSON error and returns null when access is denied.
+     *
+     * @param int $site_id Child site id.
+     *
+     * @return object|null The website object when authorized, null otherwise.
+     */
+    private function authorize_restore_site( $site_id ) {
+        $website = MainWP_DB::instance()->get_website_by_id( $site_id );
+        if ( ! MainWP_System_Utility::can_edit_website( $website ) || ! \mainwp_current_user_can( 'site', $site_id ) ) {
+            wp_send_json( array( 'error' => esc_html__( 'You are not allowed to manage backups for this site.', 'mainwp' ) ) );
+            return null;
+        }
+        return $website;
+    }
+
+    /**
      * List a site's snapshots with restore availability.
      */
     public function mainwp_restore_snapshot_list() {
         $this->secure_request( 'mainwp_restore_snapshot_list' );
         $site_id = isset( $_POST['site_id'] ) ? (int) $_POST['site_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by secure_request above.
 
+        $website = $this->authorize_restore_site( $site_id );
+        if ( null === $website ) {
+            return;
+        }
+
         $entries   = MainWP_Backup_Snapshot_Catalog::instance()->list_snapshots_for_site( $site_id );
-        $website   = MainWP_DB::instance()->get_website_by_id( $site_id );
-        $multisite = ! empty( $website ) && MainWP_Backup_Monitor::child_is_multisite( $website );
+        $multisite = MainWP_Backup_Monitor::child_is_multisite( $website );
         $rows      = array();
         foreach ( $entries as $entry ) {
             $rows[] = array(
@@ -136,6 +161,10 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         $pre_snapshot = isset( $_POST['pre_snapshot'] ) && '1' === $_POST['pre_snapshot'];
         // phpcs:enable WordPress.Security.NonceVerification.Missing
 
+        if ( null === $this->authorize_restore_site( $site_id ) ) {
+            return;
+        }
+
         try {
             $job_id = MainWP_Backup_Restore_Orchestrator::instance()->initiate_restore(
                 $site_id,
@@ -166,6 +195,10 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             return;
         }
 
+        if ( null === $this->authorize_restore_site( (int) $job->site_id ) ) {
+            return;
+        }
+
         $transfer = isset( $job->checkpoint['transfer'] ) ? (array) $job->checkpoint['transfer'] : array();
         $plan     = isset( $job->checkpoint['plan'] ) ? (array) $job->checkpoint['plan'] : array();
 
@@ -190,6 +223,16 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         $this->secure_request( 'mainwp_restore_cancel' );
         $job_id = isset( $_POST['job_id'] ) ? (int) $_POST['job_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by secure_request above.
 
+        $job = MainWP_Backup_Restore_Job_Store::instance()->get_job( $job_id );
+        if ( null === $job ) {
+            wp_send_json( array( 'error' => esc_html__( 'Restore job not found.', 'mainwp' ) ) );
+            return;
+        }
+
+        if ( null === $this->authorize_restore_site( (int) $job->site_id ) ) {
+            return;
+        }
+
         try {
             $outcome = MainWP_Backup_Restore_Orchestrator::instance()->cancel_job( $job_id );
         } catch ( MainWP_Exception $e ) {
@@ -209,6 +252,10 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         $job = MainWP_Backup_Restore_Job_Store::instance()->get_job( $job_id );
         if ( null === $job ) {
             wp_send_json( array( 'error' => esc_html__( 'Restore job not found.', 'mainwp' ) ) );
+            return;
+        }
+
+        if ( null === $this->authorize_restore_site( (int) $job->site_id ) ) {
             return;
         }
 

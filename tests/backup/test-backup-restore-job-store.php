@@ -137,6 +137,36 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * A job advancing out of a retryable failure sheds the recorded error;
+	 * the message would otherwise keep displaying through later phases.
+	 */
+	public function test_set_status_to_non_failure_clears_last_error() {
+		$job_id = $this->store->create_job( 8801, 42, array() );
+		$this->store->fail_retryable( $job_id, 'network timeout', 1, time() - 1 );
+
+		$this->assertSame( 'network timeout', $this->store->get_job( $job_id )->last_error );
+
+		$this->store->set_status( $job_id, MainWP_Backup_Restore_Job_Store::STATUS_STAGING );
+
+		$job = $this->store->get_job( $job_id );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_STAGING, $job->status );
+		$this->assertSame( '', $job->last_error );
+	}
+
+	/**
+	 * Moving to a failure status through set_status leaves the recorded
+	 * error alone - the failure writers own that column.
+	 */
+	public function test_set_status_to_failure_keeps_last_error() {
+		$job_id = $this->store->create_job( 8801, 42, array() );
+		$this->store->fail_retryable( $job_id, 'network timeout', 1, time() - 1 );
+
+		$this->store->set_status( $job_id, MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE );
+
+		$this->assertSame( 'network timeout', $this->store->get_job( $job_id )->last_error );
+	}
+
+	/**
 	 * Cancelled jobs leave the active set.
 	 */
 	public function test_cancel_job() {

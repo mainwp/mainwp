@@ -215,6 +215,8 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     window.clearTimeout( pollTimer );
                 } else if ( data.last_error ) {
                     $( '#mainwp-restore-result-message' ).removeClass( 'green' ).addClass( 'red' ).text( data.last_error ).show();
+                } else {
+                    $( '#mainwp-restore-result-message' ).hide();
                 }
             }
 

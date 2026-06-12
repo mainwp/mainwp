@@ -197,7 +197,13 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
      * @param array  $extra  Extra columns (child_task_id, pre_snapshot_task_id).
      */
     public function set_status( int $job_id, string $status, array $extra = array() ): void {
-        $row    = array_merge( array( 'status' => $status ), $extra );
+        $row = array_merge( array( 'status' => $status ), $extra );
+        if ( ! in_array( $status, array( self::STATUS_FAILED_RETRYABLE, self::STATUS_FAILED_PERMANENT ), true ) && ! array_key_exists( 'last_error', $row ) ) {
+            // A job moving forward has outlived its recorded failure;
+            // leaving the message in place keeps it displaying through
+            // every later phase.
+            $row['last_error'] = '';
+        }
         $format = array_fill( 0, count( $row ), '%s' );
         $this->update_job( $job_id, $row, $format );
     }

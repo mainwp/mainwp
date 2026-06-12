@@ -770,23 +770,22 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         }
 
         $max_chain_length = isset( $pTask->max_chain_length ) ? (int) $pTask->max_chain_length : 0;
-        if ( $max_chain_length > 0 ) {
-            $chain = MainWP_Backup_Snapshots::instance()->get_chain( (int) $base->id );
-            // A chain at its limit restarts with a new full base, turning
-            // the old chain into a complete, prunable retention unit. A
-            // chain whose walk never reaches a full base, or that crosses
-            // a non-complete link (a pruned ancestor's artifacts are gone),
-            // is broken and cannot restore completely - restarting is the
-            // safe answer.
-            $has_broken_link = (bool) array_filter( $chain, static fn( $link ) => 'complete' !== $link->status );
-            if ( $has_broken_link || count( $chain ) >= $max_chain_length || 'full' !== $chain[0]->type ) {
-                return array(
-                    'type'   => 'full',
-                    'mode'   => 'full',
-                    'params' => array( 'emit_manifest' => '1' ),
-                    'notice' => '',
-                );
-            }
+        $chain            = MainWP_Backup_Snapshots::instance()->get_chain( (int) $base->id );
+        // A chain at its limit restarts with a new full base, turning
+        // the old chain into a complete, prunable retention unit. A
+        // chain whose walk never reaches a full base, or that crosses
+        // a non-complete link (a pruned ancestor's artifacts are gone),
+        // is broken and cannot restore completely - restarting is the
+        // safe answer, with or without a length limit.
+        $has_broken_link = (bool) array_filter( $chain, static fn( $link ) => 'complete' !== $link->status );
+        $at_length_limit = $max_chain_length > 0 && count( $chain ) >= $max_chain_length;
+        if ( $has_broken_link || 'full' !== $chain[0]->type || $at_length_limit ) {
+            return array(
+                'type'   => 'full',
+                'mode'   => 'full',
+                'params' => array( 'emit_manifest' => '1' ),
+                'notice' => '',
+            );
         }
 
         $escalate_to_full = in_array( $marker, array( 'push', 'chunk-push', 'full' ), true );

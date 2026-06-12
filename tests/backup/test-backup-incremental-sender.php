@@ -548,6 +548,70 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * The broken-chain rule holds when the length limit is off: a pruned
+	 * ancestor makes every further increment unrestorable regardless of
+	 * how long the chain may grow.
+	 *
+	 * @return void
+	 */
+	public function test_pruned_base_with_zero_limit_restarts_chain_with_full() {
+		$site_id = $this->create_test_site();
+		$base_id = $this->record_base_snapshot( $site_id );
+		$this->record_increment( $site_id, $base_id );
+		MainWP_Backup_Snapshots::instance()->set_status( $base_id, 'pruned' );
+
+		$this->mock_child_actions(
+			array(
+				'backup_preflight'   => $this->preflight_response(),
+				'backup_task_create' => array(
+					'task_id' => 'child-task-1',
+					'phase'   => 'queued',
+				),
+			)
+		);
+
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$cycle   = $this->run_cycle( $site_id, $this->make_task( $website, 11, array( 'max_chain_length' => 0 ) ) );
+
+		$this->assertNull( $cycle['exception'] );
+
+		$params = $this->last_call_params( 'backup_task_create' );
+		$this->assertSame( 'full', $params['type'], 'A pruned ancestor breaks the chain whether or not a length limit applies.' );
+		$this->assertSame( '1', (string) $params['emit_manifest'] );
+	}
+
+	/**
+	 * A chain that never reaches a full base is broken under an unlimited
+	 * length setting too.
+	 *
+	 * @return void
+	 */
+	public function test_broken_chain_with_zero_limit_restarts_full() {
+		$site_id = $this->create_test_site();
+		// An increment whose parent row is gone: the chain walk stops at it.
+		$this->record_increment( $site_id, 99999999 );
+
+		$this->mock_child_actions(
+			array(
+				'backup_preflight'   => $this->preflight_response(),
+				'backup_task_create' => array(
+					'task_id' => 'child-task-1',
+					'phase'   => 'queued',
+				),
+			)
+		);
+
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$cycle   = $this->run_cycle( $site_id, $this->make_task( $website, 11, array( 'max_chain_length' => 0 ) ) );
+
+		$this->assertNull( $cycle['exception'] );
+
+		$params = $this->last_call_params( 'backup_task_create' );
+		$this->assertSame( 'full', $params['type'], 'A broken chain restarts regardless of the length limit.' );
+		$this->assertSame( '1', (string) $params['emit_manifest'] );
+	}
+
+	/**
 	 * With no snapshot history the first run is a manifest-emitting full -
 	 * the chain base.
 	 *

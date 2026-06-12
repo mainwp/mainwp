@@ -370,6 +370,62 @@ class MainWP_Backup_Storage_Dropbox implements MainWP_Backup_Storage_Provider { 
     }
 
     /**
+     * Exchange an OAuth authorization code for a refresh token.
+     *
+     * The Connect Dropbox flow calls this once on the OAuth callback;
+     * the refresh token it returns is what the destination stores. The
+     * error message never echoes the response body, only the HTTP
+     * status, so nothing the service returns can leak into the UI.
+     *
+     * @param string        $app_key      App key (OAuth client id).
+     * @param string        $app_secret   App secret.
+     * @param string        $code         Single-use authorization code.
+     * @param string        $redirect_uri The exact redirect URI the authorize step used.
+     * @param callable|null $transport    Transport override for tests.
+     *
+     * @return array { refresh_token } on success, { error } on failure.
+     */
+    public static function exchange_authorization_code( string $app_key, string $app_secret, string $code, string $redirect_uri, $transport = null ): array {
+        $transport = is_callable( $transport ) ? $transport : array( static::class, 'default_transport' );
+
+        $response = call_user_func(
+            $transport,
+            static::API_BASE . '/oauth2/token',
+            array(
+                'method'  => 'POST',
+                'timeout' => 30,
+                'body'    => array(
+                    'grant_type'    => 'authorization_code',
+                    'code'          => $code,
+                    'client_id'     => $app_key,
+                    'client_secret' => $app_secret,
+                    'redirect_uri'  => $redirect_uri,
+                ),
+            )
+        );
+
+        if ( is_wp_error( $response ) ) {
+            return array( 'error' => esc_html__( 'The Dropbox code exchange could not be sent. Check the dashboard\'s outbound connectivity and try again.', 'mainwp' ) );
+        }
+
+        $status = (int) wp_remote_retrieve_response_code( $response );
+        $data   = json_decode( (string) wp_remote_retrieve_body( $response ), true );
+        $token  = is_array( $data ) && isset( $data['refresh_token'] ) ? (string) $data['refresh_token'] : '';
+
+        if ( 200 !== $status || '' === $token ) {
+            return array(
+                'error' => sprintf(
+                    /* translators: %d: HTTP status of the failed exchange. */
+                    esc_html__( 'Dropbox did not issue a refresh token (HTTP %d). The access code is single use and expires quickly; start the connection again.', 'mainwp' ),
+                    $status
+                ),
+            );
+        }
+
+        return array( 'refresh_token' => $token );
+    }
+
+    /**
      * A usable access token: the cached one, or a fresh mint from the
      * refresh token.
      *

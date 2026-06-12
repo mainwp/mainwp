@@ -482,6 +482,85 @@ class MainWP_Backup_Storage_Dropbox_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * The authorization-code exchange posts the code with the app
+	 * credentials and the redirect URI, returning the refresh token.
+	 *
+	 * @return void
+	 */
+	public function test_exchange_authorization_code_returns_refresh_token() {
+		$requests  = array();
+		$transport = function ( $url, $args ) use ( &$requests ) {
+			$requests[] = array(
+				'url'  => $url,
+				'args' => $args,
+			);
+			return $this->response(
+				200,
+				wp_json_encode(
+					array(
+						'access_token'  => 'short-lived',
+						'refresh_token' => 'long-lived-refresh',
+						'expires_in'    => 14400,
+					)
+				)
+			);
+		};
+
+		$result = MainWP_Backup_Storage_Dropbox::exchange_authorization_code( 'app-key', 'app-secret', 'auth-code-1', 'https://dash.example/wp-admin/admin.php?page=ManageBackupsStorage&mainwp_dropbox_oauth=1', $transport );
+
+		$this->assertSame( 'long-lived-refresh', $result['refresh_token'] );
+		$this->assertArrayNotHasKey( 'error', $result );
+
+		$this->assertSame( 'https://api.dropboxapi.com/oauth2/token', $requests[0]['url'] );
+		$body = $requests[0]['args']['body'];
+		$this->assertSame( 'authorization_code', $body['grant_type'] );
+		$this->assertSame( 'auth-code-1', $body['code'] );
+		$this->assertSame( 'app-key', $body['client_id'] );
+		$this->assertSame( 'app-secret', $body['client_secret'] );
+		$this->assertStringContainsString( 'mainwp_dropbox_oauth=1', $body['redirect_uri'] );
+	}
+
+	/**
+	 * A rejected exchange (bad/expired code) reports an error without a
+	 * token and without echoing the response body.
+	 *
+	 * @return void
+	 */
+	public function test_exchange_authorization_code_reports_failure() {
+		$transport = function () {
+			return $this->response( 400, '{"error": "invalid_grant", "error_description": "code has expired"}' );
+		};
+
+		$result = MainWP_Backup_Storage_Dropbox::exchange_authorization_code( 'k', 's', 'expired-code', 'https://dash.example/cb', $transport );
+
+		$this->assertArrayHasKey( 'error', $result );
+		$this->assertStringContainsString( '400', $result['error'] );
+		$this->assertArrayNotHasKey( 'refresh_token', $result );
+
+		$no_token = MainWP_Backup_Storage_Dropbox::exchange_authorization_code(
+			'k',
+			's',
+			'c',
+			'https://dash.example/cb',
+			function () {
+				return $this->response( 200, '{"access_token": "only-short-lived"}' );
+			}
+		);
+		$this->assertArrayHasKey( 'error', $no_token, 'A grant without offline access returns no refresh token and must error.' );
+
+		$transport_error = MainWP_Backup_Storage_Dropbox::exchange_authorization_code(
+			'k',
+			's',
+			'c',
+			'https://dash.example/cb',
+			function () {
+				return new \WP_Error( 'http_request_failed', 'timed out' );
+			}
+		);
+		$this->assertArrayHasKey( 'error', $transport_error );
+	}
+
+	/**
 	 * An empty base path maps keys straight to the Dropbox root.
 	 *
 	 * @return void

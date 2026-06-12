@@ -51,7 +51,9 @@ class MainWP_Credential_Storage {
      *
      * Returns:
      *   - the prefixed envelope string on success
-     *   - the input unchanged when input is empty / null / not a string
+     *   - the input unchanged when input is null (not provided) or not a string
+     *   - the input unchanged when input is '' (credential cleared); the
+     *     old envelope's key file is retired since nothing references it
      *   - the input unchanged when input is already an envelope (idempotent)
      *   - false when the encryption layer fails to produce an envelope
      *
@@ -71,7 +73,11 @@ class MainWP_Credential_Storage {
      * @return string|false|mixed
      */
     public static function encrypt_credential( $plaintext, $field = 'http_pass', $old_envelope = null ) {
-        if ( null === $plaintext || '' === $plaintext ) {
+        if ( null === $plaintext ) {
+            return $plaintext;
+        }
+        if ( '' === $plaintext ) {
+            static::retire_superseded_key_file( $old_envelope, '' );
             return $plaintext;
         }
         if ( ! is_string( $plaintext ) ) {

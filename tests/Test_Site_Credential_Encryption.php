@@ -190,6 +190,50 @@ class Test_Site_Credential_Encryption extends \WP_UnitTestCase {
 		$this->assertSame( array(), $deleted );
 	}
 
+	public function test_encrypt_credential_empty_string_retires_old_key_and_returns_empty(): void {
+		$deleted = array();
+		add_action(
+			'mainwp_delete_key_file',
+			function ( $file_key ) use ( &$deleted ) {
+				$deleted[] = $file_key;
+			}
+		);
+
+		$old_envelope = self::ENVELOPE_PREFIX . wp_json_encode(
+			array(
+				'encrypted_val' => 'STUB:' . base64_encode( 'old-pw' ),
+				'file_key'      => 'site_credential_http_pass_clear_key',
+			)
+		);
+
+		$result = \MainWP\Dashboard\MainWP_Credential_Storage::encrypt_credential( '', 'http_pass', $old_envelope );
+
+		$this->assertSame( '', $result );
+		$this->assertSame( array( 'site_credential_http_pass_clear_key' ), $deleted );
+	}
+
+	public function test_encrypt_credential_null_does_not_retire_old_key(): void {
+		$deleted = array();
+		add_action(
+			'mainwp_delete_key_file',
+			function ( $file_key ) use ( &$deleted ) {
+				$deleted[] = $file_key;
+			}
+		);
+
+		$old_envelope = self::ENVELOPE_PREFIX . wp_json_encode(
+			array(
+				'encrypted_val' => 'STUB:' . base64_encode( 'some-pw' ),
+				'file_key'      => 'site_credential_http_pass_null_key',
+			)
+		);
+
+		$result = \MainWP\Dashboard\MainWP_Credential_Storage::encrypt_credential( null, 'http_pass', $old_envelope );
+
+		$this->assertNull( $result );
+		$this->assertSame( array(), $deleted, 'null means not provided and must not retire the old key file' );
+	}
+
 	// ---------------------------------------------------------------------
 	// decrypt_credential
 	// ---------------------------------------------------------------------
@@ -417,6 +461,34 @@ class Test_Site_Credential_Encryption extends \WP_UnitTestCase {
 		);
 
 		$this->assertContains( 'site_credential_http_pass_valueskey', $deleted );
+	}
+
+	public function test_update_website_values_empty_string_clears_column_and_retires_key(): void {
+		global $wpdb;
+
+		$deleted = array();
+		add_action(
+			'mainwp_delete_key_file',
+			function ( $file_key ) use ( &$deleted ) {
+				$deleted[] = $file_key;
+			}
+		);
+
+		$site_id = $this->seed_site_with_envelope( 'site_credential_http_pass_values_clear' );
+
+		$result = \MainWP\Dashboard\MainWP_DB::instance()->update_website_values(
+			$site_id,
+			array( 'http_pass' => '' )
+		);
+
+		$this->assertNotFalse( $result );
+
+		// get_row, not get_var: wpdb::get_var() collapses '' to null.
+		$table = \MainWP\Dashboard\MainWP_DB::instance()->get_table_name( 'wp' );
+		$row   = $wpdb->get_row( $wpdb->prepare( "SELECT http_pass FROM `{$table}` WHERE id = %d", $site_id ) );
+		$this->assertSame( '', $row->http_pass );
+
+		$this->assertContains( 'site_credential_http_pass_values_clear', $deleted );
 	}
 
 	public function test_update_website_values_without_credentials_reads_no_prior_row(): void {

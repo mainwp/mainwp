@@ -38,6 +38,7 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
         MainWP_Backup_Page::render_header( 'Storage' );
         ?>
         <div class="ui alt segment" id="mainwp-backup-storage">
+            <?php static::render_oauth_notice(); ?>
             <div class="ui message" id="mainwp-storage-message-zone" style="display:none"></div>
             <?php static::render_list_table(); ?>
             <div class="ui hidden divider"></div>
@@ -46,6 +47,27 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
         <?php
         static::render_scripts();
         MainWP_Backup_Page::render_footer( 'Storage' );
+    }
+
+    /**
+     * Render the pending Connect Dropbox result once, then consume it.
+     *
+     * @return void
+     */
+    public static function render_oauth_notice(): void {
+        $notice = MainWP_Backup_Storage_Handler::consume_dropbox_oauth_notice();
+        if ( null === $notice ) {
+            return;
+        }
+        if ( isset( $notice['error'] ) ) {
+            ?>
+            <div class="ui red message"><?php echo esc_html( $notice['error'] ); ?></div>
+            <?php
+            return;
+        }
+        ?>
+        <div class="ui green message"><?php esc_html_e( 'Dropbox connected. The destination passed its connection test and was saved.', 'mainwp' ); ?></div>
+        <?php
     }
 
     /**
@@ -206,17 +228,31 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                         </div>
                     </div>
                     <div class="ui grid field">
-                        <label class="six wide column middle aligned"><?php esc_html_e( 'Refresh token', 'mainwp' ); ?></label>
-                        <div class="ten wide column">
-                            <input type="password" id="mainwp-storage-dropbox-refresh-token" value="" autocomplete="new-password"/>
-                            <em><?php esc_html_e( 'Authorize the app once in a browser with offline access, then exchange the code it returns for a refresh token; the MainWP documentation walks through both steps. The dashboard mints short-lived access tokens from it automatically. When editing, leave this empty to keep the saved token.', 'mainwp' ); ?></em>
-                        </div>
-                    </div>
-                    <div class="ui grid field">
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Folder', 'mainwp' ); ?></label>
                         <div class="ten wide column">
                             <input type="text" id="mainwp-storage-dropbox-base-path" value="" placeholder="mainwp-backups"/>
                             <em><?php esc_html_e( 'Backups store under this folder. Leave empty to use the app folder root.', 'mainwp' ); ?></em>
+                        </div>
+                    </div>
+                    <div class="ui grid field">
+                        <label class="six wide column middle aligned"><?php esc_html_e( 'Redirect URI', 'mainwp' ); ?></label>
+                        <div class="ten wide column">
+                            <input type="text" readonly value="<?php echo esc_attr( MainWP_Backup_Storage_Handler::dropbox_redirect_uri() ); ?>" onfocus="this.select();"/>
+                            <em><?php esc_html_e( 'Add this exact address to the Redirect URIs list on your app\'s settings page in the Dropbox App Console before connecting.', 'mainwp' ); ?></em>
+                        </div>
+                    </div>
+                    <div class="ui grid field">
+                        <label class="six wide column middle aligned"></label>
+                        <div class="ten wide column">
+                            <button type="button" class="ui basic green button" id="mainwp-storage-dropbox-connect"><?php esc_html_e( 'Connect Dropbox', 'mainwp' ); ?></button>
+                            <em><?php esc_html_e( 'Fill in the destination name, app key, and app secret, then connect. Dropbox asks for approval and the destination saves itself with a connection test.', 'mainwp' ); ?></em>
+                        </div>
+                    </div>
+                    <div class="ui grid field">
+                        <label class="six wide column middle aligned"><?php esc_html_e( 'Refresh token', 'mainwp' ); ?></label>
+                        <div class="ten wide column">
+                            <input type="password" id="mainwp-storage-dropbox-refresh-token" value="" autocomplete="new-password"/>
+                            <em><?php esc_html_e( 'Advanced: paste a refresh token here to skip the Connect button, for example one issued on another dashboard. The dashboard mints short-lived access tokens from it automatically. When editing, leave this empty to keep the saved token.', 'mainwp' ); ?></em>
                         </div>
                     </div>
                 </div>
@@ -356,6 +392,17 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                 let provider = jQuery( this ).val();
                 jQuery( '.mainwp-storage-fields' ).hide();
                 jQuery( '.mainwp-storage-fields[data-provider="' + provider + '"]' ).show();
+            } );
+
+            jQuery( '#mainwp-storage-dropbox-connect' ).on( 'click', function () {
+                feedbackZone( '<?php echo esc_js( __( 'Connecting to Dropbox...', 'mainwp' ) ); ?>', 'green' );
+                jQuery.post( ajaxurl, destinationData( 'mainwp_dropbox_oauth_start' ), function ( response ) {
+                    if ( response && response.authorize_url ) {
+                        location.href = response.authorize_url;
+                    } else {
+                        feedbackZone( response && response.error ? response.error : '<?php echo esc_js( __( 'The Dropbox connection could not be started.', 'mainwp' ) ); ?>', 'red' );
+                    }
+                }, 'json' );
             } );
 
             jQuery( '#mainwp-storage-save' ).on( 'click', function () {

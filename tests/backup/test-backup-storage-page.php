@@ -643,6 +643,48 @@ class MainWP_Backup_Storage_Page_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * The Dropbox block offers the Connect button and shows the exact
+	 * redirect URI the app must register.
+	 *
+	 * @return void
+	 */
+	public function test_dropbox_block_offers_connect_button_and_redirect_uri() {
+		ob_start();
+		MainWP_Backup_Storage_View::render_form();
+		$output = ob_get_clean();
+
+		$this->assertStringContainsString( 'mainwp-storage-dropbox-connect', $output );
+		$this->assertStringContainsString( esc_attr( MainWP_Backup_Storage_Handler::dropbox_redirect_uri() ), $output, 'The redirect URI to register must be displayed.' );
+	}
+
+	/**
+	 * A pending OAuth result renders once as a notice and is consumed.
+	 *
+	 * @return void
+	 */
+	public function test_oauth_notice_renders_once() {
+		set_transient( 'mainwp_dropbox_oauth_notice_' . get_current_user_id(), array( 'error' => 'Dropbox declined.' ), 60 );
+
+		ob_start();
+		MainWP_Backup_Storage_View::render_oauth_notice();
+		$first = ob_get_clean();
+
+		$this->assertStringContainsString( 'Dropbox declined.', $first );
+
+		ob_start();
+		MainWP_Backup_Storage_View::render_oauth_notice();
+		$second = ob_get_clean();
+
+		$this->assertSame( '', $second, 'The notice must consume on first render.' );
+
+		set_transient( 'mainwp_dropbox_oauth_notice_' . get_current_user_id(), array( 'id' => 7 ), 60 );
+		ob_start();
+		MainWP_Backup_Storage_View::render_oauth_notice();
+		$success = ob_get_clean();
+		$this->assertStringContainsString( 'connected', $success );
+	}
+
+	/**
 	 * The storage AJAX actions register through the handler.
 	 *
 	 * @return void

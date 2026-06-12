@@ -237,6 +237,19 @@ class MainWP_Api_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         // Clear cached of all activations to reload for next loading.
         update_option( 'mainwp_extensions_all_activation_cached', '' );
 
+        // The stored row's envelope is about to be replaced (or cleared);
+        // capture the key file it references so it can be retired once the
+        // new value is persisted. Without this every license change left
+        // the old key file behind.
+        $old_info     = get_option( $ext_key . '_APIManAdder' );
+        $old_file_key = ( is_array( $old_info )
+            && isset( $old_info['api_key'] )
+            && is_array( $old_info['api_key'] )
+            && ! empty( $old_info['api_key']['file_key'] )
+            && is_string( $old_info['api_key']['file_key'] ) )
+            ? $old_info['api_key']['file_key']
+            : '';
+
         // MWP-1546: encrypt the 'api_key' field at rest using the same
         // mainwp_encrypt_key_value filter that 3rd-party API keys use. Other
         // array members (activated_key, deactivate_checkbox, product_id,
@@ -270,7 +283,23 @@ class MainWP_Api_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             MainWP_Utility::update_option( $ext_key . '_stable_apiadder', $stable_info );
         }
 
-        return MainWP_Utility::update_option( $ext_key . '_APIManAdder', $info );
+        $updated = MainWP_Utility::update_option( $ext_key . '_APIManAdder', $info );
+
+        // Retire after the write: a refused or failed write keeps the
+        // stored envelope, which still needs its key file. An unchanged
+        // value reuses its key file and is skipped by the helper.
+        if ( $updated && '' !== $old_file_key ) {
+            $new_file_key = ( is_array( $info )
+                && isset( $info['api_key'] )
+                && is_array( $info['api_key'] )
+                && ! empty( $info['api_key']['file_key'] )
+                && is_string( $info['api_key']['file_key'] ) )
+                ? $info['api_key']['file_key']
+                : '';
+            MainWP_Credential_Storage::retire_key_file_if_changed( $old_file_key, $new_file_key );
+        }
+
+        return $updated;
     }
 
     /**

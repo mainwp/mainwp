@@ -121,6 +121,30 @@ class MainWP_Credential_Storage {
     }
 
     /**
+     * Fire mainwp_delete_key_file when a stored key file id is replaced.
+     *
+     * For storage shapes that hold the {encrypted_val, file_key} envelope
+     * as a raw array (extension license options) rather than the prefixed
+     * string this class produces. Best-effort: nothing happens without a
+     * prior key, and a reused key is never deleted. A replacement with no
+     * new key (the credential was cleared) still retires the old file -
+     * nothing references it after the write.
+     *
+     * @param mixed $old_file_key Key file id the stored value referenced.
+     * @param mixed $new_file_key Key file id the replacement uses, '' when cleared.
+     * @return void
+     */
+    public static function retire_key_file_if_changed( $old_file_key, $new_file_key ) {
+        if ( ! is_string( $old_file_key ) || '' === $old_file_key ) {
+            return;
+        }
+        if ( is_string( $new_file_key ) && $old_file_key === $new_file_key ) {
+            return;
+        }
+        do_action( 'mainwp_delete_key_file', $old_file_key );
+    }
+
+    /**
      * Decrypt a stored credential.
      *
      * Returns:

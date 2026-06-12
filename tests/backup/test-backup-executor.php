@@ -442,6 +442,91 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * The scheduled-task download sweep must skip archives recorded by
+	 * complete backup snapshots: snapshot retention owns their lifecycle.
+	 *
+	 * @return void
+	 */
+	public function test_executor_sweep_skips_snapshot_recorded_file() {
+		global $wpdb;
+
+		list( $site_id, $task ) = $this->site_and_task();
+		$content                = 'PK' . "\x03\x04" . str_repeat( 'x', 4092 );
+
+		// Like seed_download_ready_progress(), but with the sweep still due.
+		$this->give_site_real_privkey( $site_id );
+		MainWP_DB_Backup::instance()->add_backup_task_progress( $task->id, $site_id, array() );
+		MainWP_DB_Backup::instance()->update_backup_task_progress(
+			$task->id,
+			$site_id,
+			array(
+				'dtsFetched'   => time(),
+				'pid'          => 12345,
+				'removedFiles' => 0,
+				'fetchResult'  => wp_json_encode(
+					array(
+						'full' => 'backup-file.zip',
+						'db'   => false,
+						'size' => strlen( $content ),
+					)
+				),
+			)
+		);
+		$this->mock_child_action( 'delete_backup', array( 'result' => 'ok' ) );
+
+		add_filter(
+			'mainwp_download_to_file_pre',
+			function ( $pre, $url, $file ) use ( $content ) {
+				unset( $pre, $url );
+				file_put_contents( $file, $content ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- test fixture.
+				return true;
+			},
+			10,
+			3
+		);
+
+		$dir = \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_specific_dir( $site_id );
+		wp_mkdir_p( $dir );
+		$protected   = $dir . 'protected.zip';
+		$unprotected = $dir . 'unprotected.zip';
+		file_put_contents( $protected, 'PK' . "\x03\x04" . str_repeat( 'p', 32 ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- test fixture.
+		touch( $protected, time() - 600 );
+		file_put_contents( $unprotected, 'PK' . "\x03\x04" . str_repeat( 'u', 32 ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- test fixture.
+		touch( $unprotected, time() - 300 );
+
+		\MainWP\Dashboard\MainWP_Backup_Snapshots::instance()->record_snapshot(
+			array(
+				'task_id'  => 990500,
+				'site_id'  => $site_id,
+				'type'     => 'full',
+				'archives' => array(
+					array(
+						'file' => 'protected.zip',
+						'size' => 36,
+						'role' => 'full',
+						'path' => $protected,
+					),
+				),
+			)
+		);
+
+		update_option( 'mainwp_backupsOnServer', 1 );
+
+		try {
+			$result = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+			$this->assertNotFalse( $result );
+
+			$this->assertFileExists( $protected, 'A snapshot-recorded archive must survive the scheduled-task sweep.' );
+			$this->assertFileDoesNotExist( $unprotected, 'An unrecorded archive past the retention count must be deleted.' );
+		} finally {
+			delete_option( 'mainwp_backupsOnServer' );
+			$snapshot_table = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+			$wpdb->query( $wpdb->prepare( "DELETE FROM {$snapshot_table} WHERE site_id = %d", $site_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
+			array_map( 'unlink', glob( $dir . '*' ) ?: array() ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test cleanup.
+		}
+	}
+
+	/**
 	 * A downloaded file that fails validation is reported and the download
 	 * is not marked complete.
 	 *

@@ -556,12 +556,21 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             if ( 1 !== $backupTaskProgress->removedFiles ) {
                 $dbBackups   = array();
                 $fullBackups = array();
+
+                // Files recorded by complete backup snapshots belong to
+                // snapshot retention; the sweep neither counts nor deletes
+                // them.
+                $protected = MainWP_Backup_Snapshots::instance()->get_protected_paths_for_site( (int) $website->id );
+
                 if ( $wp_filesystem->exists( $dir ) ) {
                     $dh = opendir( $dir );
                     if ( $dh ) {
                         while ( false !== ( $file = readdir( $dh ) ) ) {
                             if ( '.' !== $file && '..' !== $file ) {
                                 $theFile = $dir . $file;
+                                if ( isset( $protected[ MainWP_Backup_Snapshots::normalise_path( $theFile ) ] ) ) {
+                                    continue;
+                                }
                                 if ( $information['db'] && MainWP_Backup_File_Manager::is_sql_file( $file ) ) {
                                     $dbBackups[ filemtime( $theFile ) . $file ] = $theFile;
                                 }

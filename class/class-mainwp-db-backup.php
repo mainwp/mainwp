@@ -558,7 +558,14 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * @return object[] Backup tasks.
      */
     public function get_backup_tasks_due_by_next_run() {
-        return $this->wpdb->get_results( 'SELECT * FROM ' . esc_sql( $this->table_name( 'wp_backup' ) ) . ' WHERE paused = 0 AND next_run > 0 AND next_run <= ' . absint( time() ), OBJECT );
+        $table_wp_backup = esc_sql( $this->table_name( 'wp_backup' ) );
+        return $this->wpdb->get_results(
+            $this->wpdb->prepare(
+                "SELECT * FROM `{$table_wp_backup}` WHERE paused = 0 AND next_run > 0 AND next_run <= %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name escaped via esc_sql, cutoff prepared.
+                time()
+            ),
+            OBJECT
+        );
     }
 
     /**

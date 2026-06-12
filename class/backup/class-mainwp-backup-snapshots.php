@@ -65,12 +65,20 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
      * @return int Snapshot id, 0 on failure.
      */
     public function record_snapshot( array $data ): int {
+        $archives = '[]';
+        if ( isset( $data['archives'] ) && is_array( $data['archives'] ) ) {
+            $archives = wp_json_encode( $data['archives'] );
+            if ( false === $archives ) {
+                return 0;
+            }
+        }
+
         $row = array(
             'task_id'       => isset( $data['task_id'] ) ? (int) $data['task_id'] : 0,
             'site_id'       => isset( $data['site_id'] ) ? (int) $data['site_id'] : 0,
             'type'          => isset( $data['type'] ) ? (string) $data['type'] : 'full',
             'created'       => time(),
-            'archives'      => isset( $data['archives'] ) && is_array( $data['archives'] ) ? wp_json_encode( $data['archives'] ) : '[]',
+            'archives'      => $archives,
             'manifest_path' => isset( $data['manifest_path'] ) ? (string) $data['manifest_path'] : '',
             'status'        => 'complete',
         );

@@ -582,6 +582,8 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
         switch ( $provider ) {
             case 's3':
                 return MainWP_Backup_Error_Codes::ERR_S3_FAILED;
+            case 'gcs':
+                return MainWP_Backup_Error_Codes::ERR_GCS_FAILED;
             case 'dropbox':
                 return MainWP_Backup_Error_Codes::ERR_DROPBOX_FAILED;
             case 'ftp':

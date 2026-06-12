@@ -170,6 +170,19 @@ class MainWP_Backup_Error_Codes_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * The Google Cloud Storage upload code is registered and is error
+	 * severity, alongside the other provider upload codes.
+	 *
+	 * @return void
+	 */
+	public function test_registers_gcs_error_code() {
+		$registered = MainWP_Backup_Error_Codes::get_registered_codes();
+		$this->assertContains( 'mainwp_backup_gcs_failed', $registered );
+		$this->assertSame( 'mainwp_backup_gcs_failed', MainWP_Backup_Error_Codes::ERR_GCS_FAILED );
+		$this->assertSame( 'error', MainWP_Backup_Error_Codes::severity( MainWP_Backup_Error_Codes::ERR_GCS_FAILED ) );
+	}
+
+	/**
 	 * Warning-severity codes map to 'warning'.
 	 *
 	 * @return void

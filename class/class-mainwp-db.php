@@ -3359,16 +3359,28 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             // is present in $fields. Generic-fields updaters (clone
             // flow in extensions-handler, callers that pass arbitrary
             // column subsets) must go through the same fail-closed
-            // contract as add_website / update_website.
+            // contract as add_website / update_website. The stored values
+            // are read first so each superseded envelope's key file is
+            // retired; the retirement is best-effort, so this read does
+            // not need the FOR UPDATE lock taken below.
+            $prior = null;
+            if ( array_key_exists( 'http_user', $fields ) || array_key_exists( 'http_pass', $fields ) ) {
+                $prior = $this->wpdb->get_row(
+                    $this->wpdb->prepare(
+                        'SELECT http_user, http_pass FROM ' . $this->table_name( 'wp' ) . ' WHERE id = %d', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted helper.
+                        $websiteid
+                    )
+                );
+            }
             if ( array_key_exists( 'http_user', $fields ) ) {
-                $encrypted = MainWP_Credential_Storage::encrypt_credential( $fields['http_user'], 'http_user' );
+                $encrypted = MainWP_Credential_Storage::encrypt_credential( $fields['http_user'], 'http_user', $prior ? $prior->http_user : null );
                 if ( false === $encrypted ) {
                     return false;
                 }
                 $fields['http_user'] = $encrypted;
             }
             if ( array_key_exists( 'http_pass', $fields ) ) {
-                $encrypted = MainWP_Credential_Storage::encrypt_credential( $fields['http_pass'], 'http_pass' );
+                $encrypted = MainWP_Credential_Storage::encrypt_credential( $fields['http_pass'], 'http_pass', $prior ? $prior->http_pass : null );
                 if ( false === $encrypted ) {
                     return false;
                 }

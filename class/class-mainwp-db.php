@@ -3363,6 +3363,18 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             // are read first so each superseded envelope's key file is
             // retired; the retirement is best-effort, so this read does
             // not need the FOR UPDATE lock taken below.
+            // An explicit null credential means "not provided" and must
+            // behave exactly like an absent key; leaving it in $fields
+            // would write NULL over the stored envelope without retiring
+            // its key file.
+            foreach ( array( 'http_user', 'http_pass' ) as $cred_field ) {
+                if ( array_key_exists( $cred_field, $fields ) && null === $fields[ $cred_field ] ) {
+                    unset( $fields[ $cred_field ] );
+                }
+            }
+            if ( empty( $fields ) ) {
+                return false;
+            }
             $prior = null;
             if ( array_key_exists( 'http_user', $fields ) || array_key_exists( 'http_pass', $fields ) ) {
                 $prior = $this->wpdb->get_row(
@@ -3419,26 +3431,26 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
     /**
      * Update child site.
      *
-     * @param int    $websiteid Website ID.
-     * @param string $url Child site URL.
-     * @param int    $userid Current user ID.
-     * @param string $name Child site name.
-     * @param string $siteadmin Child site administrator username.
-     * @param array  $groupids Group IDs.
-     * @param array  $groupnames Group Names.
-     * @param string $pluginDir Plugin directory.
-     * @param mixed  $maximumFileDescriptorsOverride Overwrite the Maximum File Descriptors option.
-     * @param mixed  $maximumFileDescriptorsAuto Auto set the Maximum File Descriptors option.
-     * @param mixed  $maximumFileDescriptors Set the Maximum File Descriptors option.
-     * @param int    $verifyCertificate Whether or not to verify SSL Certificate.
-     * @param mixed  $archiveFormat Backup archive formate.
-     * @param string $uniqueId Unique security ID.
-     * @param string $http_user HTTP Basic Authentication username.
-     * @param string $http_pass HTTP Basic Authentication password.
-     * @param int    $sslVersion SSL Version.
-     * @param bool   $disableHealthChecking Disable Site health threshold.
-     * @param int    $healthThreshold Site health threshold.
-     * @param string $backup_method Primary backup method.
+     * @param int         $websiteid Website ID.
+     * @param string      $url Child site URL.
+     * @param int         $userid Current user ID.
+     * @param string      $name Child site name.
+     * @param string      $siteadmin Child site administrator username.
+     * @param array       $groupids Group IDs.
+     * @param array       $groupnames Group Names.
+     * @param string      $pluginDir Plugin directory.
+     * @param mixed       $maximumFileDescriptorsOverride Overwrite the Maximum File Descriptors option.
+     * @param mixed       $maximumFileDescriptorsAuto Auto set the Maximum File Descriptors option.
+     * @param mixed       $maximumFileDescriptors Set the Maximum File Descriptors option.
+     * @param int         $verifyCertificate Whether or not to verify SSL Certificate.
+     * @param mixed       $archiveFormat Backup archive formate.
+     * @param string      $uniqueId Unique security ID.
+     * @param string|null $http_user HTTP Basic Authentication username. Null means not provided; the stored value is kept.
+     * @param string|null $http_pass HTTP Basic Authentication password. Null means not provided; the stored value is kept.
+     * @param int         $sslVersion SSL Version.
+     * @param bool        $disableHealthChecking Disable Site health threshold.
+     * @param int         $healthThreshold Site health threshold.
+     * @param string      $backup_method Primary backup method.
      *
      * @return boolean ture on success or false on failure.
      *
@@ -3483,24 +3495,32 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 if ( false === $encrypted_http_user || false === $encrypted_http_pass ) {
                     return false;
                 }
+                $update_values = array(
+                    'url'                   => $url,
+                    'name'                  => wp_strip_all_tags( $name ),
+                    'adminname'             => $siteadmin,
+                    'pluginDir'             => $pluginDir,
+                    'verify_certificate'    => intval( $verifyCertificate ),
+                    'ssl_version'           => intval( $sslVersion ),
+                    'wpe'                   => intval( $wpe ),
+                    'uniqueId'              => $uniqueId,
+                    'disable_health_check'  => $disableHealthChecking,
+                    'health_threshold'      => $healthThreshold,
+                    'primary_backup_method' => $backup_method,
+                );
+                // A null credential means "not provided": leave the
+                // stored column alone. Writing it through would replace
+                // the envelope with NULL and orphan its key file.
+                if ( null !== $encrypted_http_user ) {
+                    $update_values['http_user'] = $encrypted_http_user;
+                }
+                if ( null !== $encrypted_http_pass ) {
+                    $update_values['http_pass'] = $encrypted_http_pass;
+                }
                 // update admin.
                 $this->wpdb->update(
                     $this->table_name( 'wp' ),
-                    array(
-                        'url'                   => $url,
-                        'name'                  => wp_strip_all_tags( $name ),
-                        'adminname'             => $siteadmin,
-                        'pluginDir'             => $pluginDir,
-                        'verify_certificate'    => intval( $verifyCertificate ),
-                        'ssl_version'           => intval( $sslVersion ),
-                        'wpe'                   => intval( $wpe ),
-                        'uniqueId'              => $uniqueId,
-                        'http_user'             => $encrypted_http_user,
-                        'http_pass'             => $encrypted_http_pass,
-                        'disable_health_check'  => $disableHealthChecking,
-                        'health_threshold'      => $healthThreshold,
-                        'primary_backup_method' => $backup_method,
-                    ),
+                    $update_values,
                     array( 'id' => $websiteid )
                 );
                 $this->wpdb->update(

@@ -563,6 +563,129 @@ class Test_Site_Credential_Encryption extends \WP_UnitTestCase {
 		$this->assertSame( array(), $deleted );
 	}
 
+	public function test_update_website_values_explicit_null_leaves_column_untouched(): void {
+		global $wpdb;
+
+		$deleted = array();
+		add_action(
+			'mainwp_delete_key_file',
+			function ( $file_key ) use ( &$deleted ) {
+				$deleted[] = $file_key;
+			}
+		);
+
+		$site_id = $this->seed_site_with_envelope( 'site_credential_http_pass_values_null' );
+
+		$table  = \MainWP\Dashboard\MainWP_DB::instance()->get_table_name( 'wp' );
+		$before = $wpdb->get_row( $wpdb->prepare( "SELECT http_pass FROM `{$table}` WHERE id = %d", $site_id ) );
+
+		// Explicit null means "not provided" and must behave exactly like
+		// an absent key: the column stays untouched, other fields update.
+		$result = \MainWP\Dashboard\MainWP_DB::instance()->update_website_values(
+			$site_id,
+			array(
+				'http_pass'            => null,
+				'offline_check_result' => 1,
+			)
+		);
+
+		$this->assertNotFalse( $result );
+
+		$row = $wpdb->get_row( $wpdb->prepare( "SELECT http_pass, offline_check_result FROM `{$table}` WHERE id = %d", $site_id ) );
+		$this->assertSame( $before->http_pass, $row->http_pass, 'explicit null must not overwrite the stored envelope' );
+		$this->assertSame( '1', (string) $row->offline_check_result );
+		$this->assertSame( array(), $deleted );
+	}
+
+	public function test_update_website_values_only_null_credentials_updates_nothing(): void {
+		global $wpdb;
+
+		$deleted = array();
+		add_action(
+			'mainwp_delete_key_file',
+			function ( $file_key ) use ( &$deleted ) {
+				$deleted[] = $file_key;
+			}
+		);
+
+		$site_id = $this->seed_site_with_envelope( 'site_credential_http_pass_values_null_only' );
+
+		$table  = \MainWP\Dashboard\MainWP_DB::instance()->get_table_name( 'wp' );
+		$before = $wpdb->get_row( $wpdb->prepare( "SELECT http_pass FROM `{$table}` WHERE id = %d", $site_id ) );
+
+		$result = \MainWP\Dashboard\MainWP_DB::instance()->update_website_values(
+			$site_id,
+			array( 'http_pass' => null )
+		);
+
+		$this->assertFalse( $result, 'nothing left to update once the null credential is dropped' );
+
+		$row = $wpdb->get_row( $wpdb->prepare( "SELECT http_pass FROM `{$table}` WHERE id = %d", $site_id ) );
+		$this->assertSame( $before->http_pass, $row->http_pass );
+		$this->assertSame( array(), $deleted );
+	}
+
+	public function test_update_website_null_credentials_leave_columns_untouched(): void {
+		global $wpdb;
+
+		$deleted = array();
+		add_action(
+			'mainwp_delete_key_file',
+			function ( $file_key ) use ( &$deleted ) {
+				$deleted[] = $file_key;
+			}
+		);
+
+		$user_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$site_id = \MainWP\Dashboard\MainWP_DB::instance()->add_website(
+			$user_id,
+			'Null Update Test',
+			'http://null-update-' . wp_generate_uuid4() . '.example/',
+			'admin',
+			base64_encode( 'pub-' . wp_generate_uuid4() ),
+			base64_encode( 'priv-' . wp_generate_uuid4() ),
+			array(
+				'http_user' => 'authuser',
+				'http_pass' => 'seed-pw',
+			)
+		);
+		$this->assertNotFalse( $site_id );
+
+		// can_edit_website() compares the row's userid against the
+		// current user when the install is not single-user.
+		wp_set_current_user( $user_id );
+
+		$table  = \MainWP\Dashboard\MainWP_DB::instance()->get_table_name( 'wp' );
+		$before = $wpdb->get_row( $wpdb->prepare( "SELECT http_user, http_pass FROM `{$table}` WHERE id = %d", $site_id ) );
+		$this->assertStringStartsWith( self::ENVELOPE_PREFIX, $before->http_user );
+		$this->assertStringStartsWith( self::ENVELOPE_PREFIX, $before->http_pass );
+
+		// The 20-arg positional signature with $http_user / $http_pass
+		// left at their null defaults: "not provided" must leave the
+		// stored envelopes alone instead of NULLing the columns.
+		$result = \MainWP\Dashboard\MainWP_DB::instance()->update_website(
+			$site_id,
+			'http://null-update-renamed.example/',
+			$user_id,
+			'Null Update Renamed',
+			'admin',
+			array(),
+			array(),
+			'',
+			0,
+			0,
+			0
+		);
+
+		$this->assertTrue( $result );
+
+		$row = $wpdb->get_row( $wpdb->prepare( "SELECT http_user, http_pass, name FROM `{$table}` WHERE id = %d", $site_id ) );
+		$this->assertSame( $before->http_user, $row->http_user, 'null http_user must not overwrite the stored envelope' );
+		$this->assertSame( $before->http_pass, $row->http_pass, 'null http_pass must not overwrite the stored envelope' );
+		$this->assertSame( 'Null Update Renamed', $row->name );
+		$this->assertSame( array(), $deleted );
+	}
+
 	public function test_legacy_plaintext_row_survives_decrypt(): void {
 		global $wpdb;
 

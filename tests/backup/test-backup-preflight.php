@@ -341,6 +341,58 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A multisite child that advertises network restore gets both flags
+	 * stored; omitting them clears previously stored values.
+	 *
+	 * @return void
+	 */
+	public function test_preflight_stamps_multisite_flags() {
+		$site_id = $this->create_test_site();
+
+		$this->run_backup_site(
+			$site_id,
+			array(
+				'backup_preflight' => $this->preflight_response(
+					array(
+						'is_multisite'      => 1,
+						'restore_multisite' => 1,
+					)
+				),
+				'backup'           => array( 'error' => 'stop here' ),
+			)
+		);
+
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$this->assertTrue( MainWP_Backup_Monitor::child_is_multisite( $website ) );
+		$this->assertTrue( MainWP_Backup_Monitor::child_supports_restore_multisite( $website ) );
+	}
+
+	/**
+	 * A preflight without the multisite keys clears previously stored
+	 * flags, covering a downgrade or a dissolved network.
+	 *
+	 * @return void
+	 */
+	public function test_preflight_clears_multisite_flags_when_omitted() {
+		$site_id = $this->create_test_site();
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		MainWP_DB::instance()->update_website_option( $website, 'child_is_multisite', '1' );
+		MainWP_DB::instance()->update_website_option( $website, 'restore_multisite_support', '1' );
+
+		$this->run_backup_site(
+			$site_id,
+			array(
+				'backup_preflight' => $this->preflight_response(),
+				'backup'           => array( 'error' => 'stop here' ),
+			)
+		);
+
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$this->assertFalse( MainWP_Backup_Monitor::child_is_multisite( $website ), 'An omitted key clears the stored flag.' );
+		$this->assertFalse( MainWP_Backup_Monitor::child_supports_restore_multisite( $website ) );
+	}
+
+	/**
 	 * A site that never reported incremental support does not support it.
 	 *
 	 * @return void

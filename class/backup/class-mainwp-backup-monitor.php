@@ -273,6 +273,12 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         // cloud storage via presigned URLs; an empty value also clears
         // the flag after a child downgrade.
         MainWP_DB::instance()->update_website_option( $website, 'cloud_restore_pull_support', empty( $preflight['cloud_restore_pull'] ) ? '' : '1' );
+
+        // Remember the install's multisite state and whether the child
+        // can restore a whole network; empty values also clear the
+        // flags after a downgrade or a network being dissolved.
+        MainWP_DB::instance()->update_website_option( $website, 'child_is_multisite', empty( $preflight['is_multisite'] ) ? '' : '1' );
+        MainWP_DB::instance()->update_website_option( $website, 'restore_multisite_support', empty( $preflight['restore_multisite'] ) ? '' : '1' );
     }
 
     /**
@@ -357,6 +363,34 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      */
     public static function child_supports_cloud_pull( object $website ): bool {
         return '1' === (string) MainWP_DB::instance()->get_website_option( $website, 'cloud_restore_pull_support' );
+    }
+
+    /**
+     * Method child_is_multisite()
+     *
+     * Whether the child reported running a WordPress multisite network
+     * in its last preflight report.
+     *
+     * @param object $website Website object.
+     *
+     * @return bool True when the child is a multisite install.
+     */
+    public static function child_is_multisite( object $website ): bool {
+        return '1' === (string) MainWP_DB::instance()->get_website_option( $website, 'child_is_multisite' );
+    }
+
+    /**
+     * Method child_supports_restore_multisite()
+     *
+     * Whether the child site advertised whole-network restore support
+     * in its last preflight report.
+     *
+     * @param object $website Website object.
+     *
+     * @return bool True when the child can restore a multisite network.
+     */
+    public static function child_supports_restore_multisite( object $website ): bool {
+        return '1' === (string) MainWP_DB::instance()->get_website_option( $website, 'restore_multisite_support' );
     }
 
     /**

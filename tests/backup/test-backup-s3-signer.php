@@ -158,6 +158,78 @@ class MainWP_Backup_S3_Signer_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Presigned GET example from "Authenticating Requests: Using Query
+	 * Parameters": GET /test.txt, 86400 second lifetime, host-only signed
+	 * headers, UNSIGNED-PAYLOAD. The expected signature is ground truth
+	 * from the service documentation.
+	 *
+	 * @return void
+	 */
+	public function test_presign_get_object_documentation_example() {
+		$url = $this->make_signer()->presign(
+			'https://examplebucket.s3.amazonaws.com/test.txt',
+			self::REGION,
+			self::ACCESS_KEY,
+			self::SECRET_KEY,
+			86400
+		);
+
+		$parts = wp_parse_url( $url );
+		$this->assertSame( 'examplebucket.s3.amazonaws.com', $parts['host'] );
+		$this->assertSame( '/test.txt', $parts['path'] );
+
+		parse_str( $parts['query'], $params );
+		$this->assertSame( 'AWS4-HMAC-SHA256', $params['X-Amz-Algorithm'] );
+		$this->assertSame( 'AKIAIOSFODNN7EXAMPLE/20130524/us-east-1/s3/aws4_request', $params['X-Amz-Credential'] );
+		$this->assertSame( '20130524T000000Z', $params['X-Amz-Date'] );
+		$this->assertSame( '86400', $params['X-Amz-Expires'] );
+		$this->assertSame( 'host', $params['X-Amz-SignedHeaders'] );
+		$this->assertSame( 'aeeed9bbccd4d02ee5c0109b86d86835f995330da4c265957d157751f604d404', $params['X-Amz-Signature'] );
+	}
+
+	/**
+	 * Presigning is deterministic under a fixed clock and signs only the
+	 * host header, never a content hash, so the URL works from any
+	 * client.
+	 *
+	 * @return void
+	 */
+	public function test_presign_is_deterministic_and_signs_host_only() {
+		$signer = $this->make_signer();
+
+		$a = $signer->presign( 'https://examplebucket.s3.amazonaws.com/4/42/files/full.zip', self::REGION, self::ACCESS_KEY, self::SECRET_KEY, 3600 );
+		$b = $signer->presign( 'https://examplebucket.s3.amazonaws.com/4/42/files/full.zip', self::REGION, self::ACCESS_KEY, self::SECRET_KEY, 3600 );
+
+		$this->assertSame( $a, $b );
+		$this->assertStringContainsString( 'X-Amz-SignedHeaders=host', $a );
+		$this->assertStringNotContainsString( 'x-amz-content-sha256', $a );
+	}
+
+	/**
+	 * Query parameters already on the URL survive presigning and are
+	 * part of the signed canonical query.
+	 *
+	 * @return void
+	 */
+	public function test_presign_preserves_existing_query_parameters() {
+		$url = $this->make_signer()->presign(
+			'http://127.0.0.1:9000/bucket/key.bin?versionId=abc123',
+			self::REGION,
+			self::ACCESS_KEY,
+			self::SECRET_KEY,
+			3600
+		);
+
+		$parts = wp_parse_url( $url );
+		parse_str( $parts['query'], $params );
+
+		$this->assertSame( 'abc123', $params['versionId'] );
+		$this->assertSame( '127.0.0.1', $parts['host'] );
+		$this->assertSame( 9000, $parts['port'], 'Non-standard ports must survive into the presigned URL.' );
+		$this->assertArrayHasKey( 'X-Amz-Signature', $params );
+	}
+
+	/**
 	 * A non-default port must be part of the signed Host header (MinIO and
 	 * other S3-compatible endpoints run on explicit ports).
 	 *

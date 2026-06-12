@@ -107,7 +107,95 @@ class MainWP_Backup_S3_Signer { // phpcs:ignore Generic.Classes.OpeningBraceSame
             )
         );
 
-        $signing_key = hash_hmac(
+        $signature = hash_hmac( 'sha256', $string_to_sign, $this->signing_key( $region, $secret_key ) );
+
+        $send_headers['Authorization'] = sprintf(
+            'AWS4-HMAC-SHA256 Credential=%s/%s,SignedHeaders=%s,Signature=%s',
+            $access_key,
+            $scope,
+            $signed_header_names,
+            $signature
+        );
+
+        return $send_headers;
+    }
+
+    /**
+     * Presign a GET URL with query-parameter authentication, per
+     * "Authenticating Requests: Using Query Parameters". Only the host
+     * header is signed and the payload is UNSIGNED-PAYLOAD, so any
+     * client can use the URL until it expires.
+     *
+     * @param string $url        Full object URL with an already-encoded path.
+     * @param string $region     Region for the credential scope.
+     * @param string $access_key Access key id.
+     * @param string $secret_key Secret access key.
+     * @param int    $expires    Lifetime in seconds.
+     *
+     * @return string The presigned URL.
+     */
+    public function presign( $url, $region, $access_key, $secret_key, $expires ) {
+        $parts = wp_parse_url( $url );
+        $host  = $parts['host'] . ( isset( $parts['port'] ) ? ':' . $parts['port'] : '' );
+        $path  = isset( $parts['path'] ) && '' !== $parts['path'] ? $parts['path'] : '/';
+        $query = isset( $parts['query'] ) ? $parts['query'] : '';
+
+        $amz_date = gmdate( 'Ymd\THis\Z', call_user_func( $this->clock ) );
+        $scope    = gmdate( 'Ymd', call_user_func( $this->clock ) ) . '/' . $region . '/s3/aws4_request';
+
+        $auth_params = array(
+            'X-Amz-Algorithm'     => 'AWS4-HMAC-SHA256',
+            'X-Amz-Credential'    => $access_key . '/' . $scope,
+            'X-Amz-Date'          => $amz_date,
+            'X-Amz-Expires'       => (string) (int) $expires,
+            'X-Amz-SignedHeaders' => 'host',
+        );
+
+        foreach ( $auth_params as $name => $value ) {
+            $query .= ( '' === $query ? '' : '&' ) . $name . '=' . rawurlencode( $value );
+        }
+
+        $canonical_query = static::canonical_query( $query );
+
+        $canonical_request = implode(
+            "\n",
+            array(
+                'GET',
+                $path,
+                $canonical_query,
+                'host:' . $host . "\n",
+                'host',
+                static::UNSIGNED_PAYLOAD,
+            )
+        );
+
+        $string_to_sign = implode(
+            "\n",
+            array(
+                'AWS4-HMAC-SHA256',
+                $amz_date,
+                $scope,
+                hash( 'sha256', $canonical_request ),
+            )
+        );
+
+        $signature = hash_hmac( 'sha256', $string_to_sign, $this->signing_key( $region, $secret_key ) );
+
+        $scheme = isset( $parts['scheme'] ) ? $parts['scheme'] : 'https';
+
+        return $scheme . '://' . $host . $path . '?' . $canonical_query . '&X-Amz-Signature=' . $signature;
+    }
+
+    /**
+     * Derive the SigV4 signing key for today's date.
+     *
+     * @param string $region     Region for the credential scope.
+     * @param string $secret_key Secret access key.
+     *
+     * @return string Binary signing key.
+     */
+    private function signing_key( $region, $secret_key ) {
+        return hash_hmac(
             'sha256',
             'aws4_request',
             hash_hmac(
@@ -123,18 +211,6 @@ class MainWP_Backup_S3_Signer { // phpcs:ignore Generic.Classes.OpeningBraceSame
             ),
             true
         );
-
-        $signature = hash_hmac( 'sha256', $string_to_sign, $signing_key );
-
-        $send_headers['Authorization'] = sprintf(
-            'AWS4-HMAC-SHA256 Credential=%s/%s,SignedHeaders=%s,Signature=%s',
-            $access_key,
-            $scope,
-            $signed_header_names,
-            $signature
-        );
-
-        return $send_headers;
     }
 
     /**

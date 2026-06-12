@@ -474,6 +474,158 @@ class MainWP_Backup_Storage_Page_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Starting the Dropbox connection stashes the pending destination
+	 * encrypted server-side and returns the authorize URL; secrets never
+	 * appear in the response.
+	 *
+	 * @return void
+	 */
+	public function test_dropbox_oauth_start_stashes_and_returns_authorize_url() {
+		$result = MainWP_Backup_Storage_Handler::start_dropbox_oauth(
+			array(
+				'id'         => 0,
+				'name'       => 'OAuth Dropbox',
+				'is_default' => 0,
+				'settings'   => array(
+					'app_key'    => 'oauth-app-key',
+					'app_secret' => 'oauth-app-secret',
+					'base_path'  => 'mainwp',
+				),
+			)
+		);
+
+		$this->assertArrayNotHasKey( 'error', $result );
+		$this->assertStringStartsWith( 'https://www.dropbox.com/oauth2/authorize?', $result['authorize_url'] );
+		$this->assertStringNotContainsString( 'oauth-app-secret', wp_json_encode( $result ), 'The app secret must never reach the browser.' );
+
+		parse_str( (string) wp_parse_url( $result['authorize_url'], PHP_URL_QUERY ), $params );
+		$this->assertSame( 'oauth-app-key', $params['client_id'] );
+		$this->assertSame( 'code', $params['response_type'] );
+		$this->assertSame( 'offline', $params['token_access_type'] );
+		$this->assertMatchesRegularExpression( '/^[a-f0-9]{32}$/', $params['state'] );
+		$this->assertStringContainsString( 'mainwp_dropbox_oauth=1', $params['redirect_uri'] );
+
+		$envelope = get_transient( 'mainwp_dropbox_oauth_' . $params['state'] );
+		$this->assertTrue( \MainWP\Dashboard\MainWP_Credential_Storage::is_credential_envelope( (string) $envelope ), 'The stash must be encrypted at rest.' );
+
+		$stash = json_decode( \MainWP\Dashboard\MainWP_Credential_Storage::decrypt_credential( (string) $envelope ), true );
+		$this->assertSame( 'oauth-app-secret', $stash['app_secret'] );
+		$this->assertSame( get_current_user_id(), (int) $stash['user_id'] );
+	}
+
+	/**
+	 * The connection cannot start without the fields the exchange needs.
+	 *
+	 * @return void
+	 */
+	public function test_dropbox_oauth_start_requires_fields() {
+		$result = MainWP_Backup_Storage_Handler::start_dropbox_oauth(
+			array(
+				'id'       => 0,
+				'name'     => 'No secret',
+				'settings' => array( 'app_key' => 'k' ),
+			)
+		);
+
+		$this->assertArrayHasKey( 'error', $result );
+	}
+
+	/**
+	 * Completing the connection consumes the stash exactly once,
+	 * exchanges the code, and saves the destination with the issued
+	 * refresh token.
+	 *
+	 * @return void
+	 */
+	public function test_complete_dropbox_oauth_saves_destination_once() {
+		add_filter(
+			'pre_http_request',
+			function () {
+				return array(
+					'headers'  => array(),
+					'body'     => wp_json_encode(
+						array(
+							'access_token' => 'short',
+							'expires_in'   => 14400,
+							'.tag'         => 'file',
+							'size'         => 22,
+						)
+					),
+					'response' => array(
+						'code'    => 200,
+						'message' => 'OK',
+					),
+				);
+			}
+		);
+
+		$start = MainWP_Backup_Storage_Handler::start_dropbox_oauth(
+			array(
+				'id'         => 0,
+				'name'       => 'OAuth Dropbox',
+				'is_default' => 0,
+				'settings'   => array(
+					'app_key'    => 'oauth-app-key',
+					'app_secret' => 'oauth-app-secret',
+					'base_path'  => 'mainwp',
+				),
+			)
+		);
+		parse_str( (string) wp_parse_url( $start['authorize_url'], PHP_URL_QUERY ), $params );
+
+		$exchange = function ( $url, $args ) {
+			$this->assertSame( 'https://api.dropboxapi.com/oauth2/token', $url );
+			$this->assertSame( 'authorization_code', $args['body']['grant_type'] );
+			return array(
+				'headers'  => array(),
+				'body'     => wp_json_encode( array( 'refresh_token' => 'issued-refresh-token' ) ),
+				'response' => array(
+					'code'    => 200,
+					'message' => 'OK',
+				),
+			);
+		};
+
+		$result = MainWP_Backup_Storage_Handler::complete_dropbox_oauth( $params['state'], 'auth-code', $exchange );
+
+		$this->assertArrayNotHasKey( 'error', $result );
+		$row = MainWP_Backup_Storage_Destinations::instance()->get_destination( $result['id'] );
+		$this->assertSame( 'dropbox', $row->provider );
+		$this->assertSame( 'issued-refresh-token', $row->settings['refresh_token'] );
+		$this->assertSame( 'oauth-app-secret', $row->settings['app_secret'] );
+
+		$replay = MainWP_Backup_Storage_Handler::complete_dropbox_oauth( $params['state'], 'auth-code', $exchange );
+		$this->assertArrayHasKey( 'error', $replay, 'The state stash must be single use.' );
+	}
+
+	/**
+	 * A stash started by a different user, an unknown state, or a failed
+	 * exchange all refuse without saving anything.
+	 *
+	 * @return void
+	 */
+	public function test_complete_dropbox_oauth_refusals() {
+		$this->assertArrayHasKey( 'error', MainWP_Backup_Storage_Handler::complete_dropbox_oauth( str_repeat( 'a', 32 ), 'code' ) );
+		$this->assertArrayHasKey( 'error', MainWP_Backup_Storage_Handler::complete_dropbox_oauth( 'not-a-state!', 'code' ) );
+
+		$start = MainWP_Backup_Storage_Handler::start_dropbox_oauth(
+			array(
+				'id'       => 0,
+				'name'     => 'Other user',
+				'settings' => array(
+					'app_key'    => 'k',
+					'app_secret' => 's',
+				),
+			)
+		);
+		parse_str( (string) wp_parse_url( $start['authorize_url'], PHP_URL_QUERY ), $params );
+
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$result = MainWP_Backup_Storage_Handler::complete_dropbox_oauth( $params['state'], 'code' );
+		$this->assertArrayHasKey( 'error', $result, 'A different user must not be able to complete the connection.' );
+	}
+
+	/**
 	 * The add/edit form offers every registered provider with its own
 	 * settings fields block.
 	 *

@@ -74,6 +74,208 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
         $this->add_action( 'mainwp_storage_delete', array( &$this, 'ajax_storage_delete' ) );
         $this->add_action( 'mainwp_storage_default', array( &$this, 'ajax_storage_default' ) );
         $this->add_action( 'mainwp_storage_get', array( &$this, 'ajax_storage_get' ) );
+        $this->add_action( 'mainwp_dropbox_oauth_start', array( &$this, 'ajax_dropbox_oauth_start' ) );
+        add_action( 'admin_init', array( &$this, 'handle_dropbox_oauth_callback' ) );
+    }
+
+    /**
+     * The exact redirect URI the Dropbox app must register and the
+     * authorize/exchange steps both use.
+     *
+     * @return string
+     */
+    public static function dropbox_redirect_uri() {
+        return admin_url( 'admin.php?page=ManageBackupsStorage&mainwp_dropbox_oauth=1' );
+    }
+
+    /**
+     * Begin the Connect Dropbox flow: stash the pending destination
+     * encrypted server-side and hand the browser the authorize URL.
+     *
+     * @return void
+     */
+    public function ajax_dropbox_oauth_start() {
+        $this->secure_request( 'mainwp_dropbox_oauth_start' );
+        $this->check_permission();
+        die( wp_json_encode( static::start_dropbox_oauth( $this->read_destination_input() ) ) );
+    }
+
+    /**
+     * Validate the pending Dropbox destination, stash it encrypted in a
+     * single-use state transient, and build the authorize URL.
+     *
+     * The app secret never returns to the browser: it travels only into
+     * the encrypted stash, which the OAuth callback consumes.
+     *
+     * @param array $input Destination fields: id, name, is_default, settings{app_key, app_secret, base_path}.
+     *
+     * @return array {authorize_url} | {error}.
+     */
+    public static function start_dropbox_oauth( array $input ) {
+        $settings   = isset( $input['settings'] ) && is_array( $input['settings'] ) ? $input['settings'] : array();
+        $id         = isset( $input['id'] ) ? (int) $input['id'] : 0;
+        $name       = isset( $input['name'] ) ? trim( (string) $input['name'] ) : '';
+        $app_key    = isset( $settings['app_key'] ) ? trim( (string) $settings['app_key'] ) : '';
+        $app_secret = isset( $settings['app_secret'] ) ? trim( (string) $settings['app_secret'] ) : '';
+
+        // Re-connecting an existing destination with a blank secret uses
+        // the stored one, matching the save flow's blank-keeps-stored rule.
+        if ( $id > 0 && '' === $app_secret ) {
+            $existing = MainWP_Backup_Storage_Destinations::instance()->get_destination( $id );
+            if ( null !== $existing && is_array( $existing->settings ) && isset( $existing->settings['app_secret'] ) ) {
+                $app_secret = (string) $existing->settings['app_secret'];
+            }
+        }
+
+        if ( '' === $name || '' === $app_key || '' === $app_secret ) {
+            return array( 'error' => esc_html__( 'A destination name, the app key, and the app secret are required before connecting.', 'mainwp' ) );
+        }
+
+        $stash = array(
+            'user_id'        => get_current_user_id(),
+            'destination_id' => $id,
+            'name'           => $name,
+            'app_key'        => $app_key,
+            'app_secret'     => $app_secret,
+            'base_path'      => isset( $settings['base_path'] ) ? (string) $settings['base_path'] : '',
+            'is_default'     => empty( $input['is_default'] ) ? 0 : 1,
+        );
+
+        $envelope = MainWP_Credential_Storage::encrypt_credential( (string) wp_json_encode( $stash ), 'storage_destination' );
+        if ( ! is_string( $envelope ) || ! MainWP_Credential_Storage::is_credential_envelope( $envelope ) ) {
+            return array( 'error' => esc_html__( 'The connection could not be prepared. Check that the dashboard can encrypt credentials.', 'mainwp' ) );
+        }
+
+        $state = bin2hex( random_bytes( 16 ) );
+        set_transient( 'mainwp_dropbox_oauth_' . $state, $envelope, 10 * MINUTE_IN_SECONDS );
+
+        return array(
+            'authorize_url' => 'https://www.dropbox.com/oauth2/authorize?' . http_build_query(
+                array(
+                    'client_id'         => $app_key,
+                    'response_type'     => 'code',
+                    'token_access_type' => 'offline',
+                    'state'             => $state,
+                    'redirect_uri'      => static::dropbox_redirect_uri(),
+                )
+            ),
+        );
+    }
+
+    /**
+     * Complete the Connect Dropbox flow: consume the single-use state
+     * stash, exchange the code for a refresh token, and save the
+     * destination through the normal test-then-persist path.
+     *
+     * @param string        $state     State token from the callback.
+     * @param string        $code      Single-use authorization code.
+     * @param callable|null $transport Exchange transport override for tests.
+     *
+     * @return array {id} on success, {error} on failure.
+     */
+    public static function complete_dropbox_oauth( $state, $code, $transport = null ) {
+        if ( ! is_string( $state ) || ! preg_match( '/^[a-f0-9]{32}$/', $state ) ) {
+            return array( 'error' => esc_html__( 'The Dropbox connection request is not valid. Start the connection again.', 'mainwp' ) );
+        }
+
+        // Consume first: whatever happens next, the state is single use.
+        $key      = 'mainwp_dropbox_oauth_' . $state;
+        $envelope = get_transient( $key );
+        delete_transient( $key );
+
+        if ( ! is_string( $envelope ) || '' === $envelope ) {
+            return array( 'error' => esc_html__( 'The Dropbox connection expired or was already used. Start the connection again.', 'mainwp' ) );
+        }
+
+        $plaintext = MainWP_Credential_Storage::decrypt_credential( $envelope );
+        $data      = json_decode( substr( $envelope, strlen( MainWP_Credential_Storage::ENVELOPE_PREFIX ) ), true );
+        if ( is_array( $data ) && ! empty( $data['file_key'] ) ) {
+            // The stash's key material is spent along with the stash.
+            MainWP_Credential_Storage::retire_key_file_if_changed( (string) $data['file_key'], '' );
+        }
+
+        $stash = json_decode( (string) $plaintext, true );
+        if ( ! is_array( $stash ) || empty( $stash['app_key'] ) || empty( $stash['app_secret'] ) ) {
+            return array( 'error' => esc_html__( 'The Dropbox connection could not be read back. Start the connection again.', 'mainwp' ) );
+        }
+
+        if ( get_current_user_id() !== (int) $stash['user_id'] ) {
+            return array( 'error' => esc_html__( 'This Dropbox connection was started by a different user. Start the connection again.', 'mainwp' ) );
+        }
+
+        $exchange = MainWP_Backup_Storage_Dropbox::exchange_authorization_code(
+            (string) $stash['app_key'],
+            (string) $stash['app_secret'],
+            (string) $code,
+            static::dropbox_redirect_uri(),
+            $transport
+        );
+        if ( isset( $exchange['error'] ) ) {
+            return array( 'error' => $exchange['error'] );
+        }
+
+        return static::save_destination(
+            array(
+                'id'         => isset( $stash['destination_id'] ) ? (int) $stash['destination_id'] : 0,
+                'provider'   => 'dropbox',
+                'name'       => (string) $stash['name'],
+                'is_default' => empty( $stash['is_default'] ) ? 0 : 1,
+                'settings'   => array(
+                    'app_key'       => (string) $stash['app_key'],
+                    'app_secret'    => (string) $stash['app_secret'],
+                    'refresh_token' => (string) $exchange['refresh_token'],
+                    'base_path'     => isset( $stash['base_path'] ) ? (string) $stash['base_path'] : '',
+                ),
+            )
+        );
+    }
+
+    /**
+     * The OAuth callback: Dropbox lands the browser back on the Storage
+     * page with code and state. Completes the connection server-side,
+     * stashes a notice, and reloads the page clean.
+     *
+     * @return void
+     */
+    public function handle_dropbox_oauth_callback() {
+        // phpcs:disable WordPress.Security.NonceVerification.Recommended -- the single-use server-stashed state token is the CSRF control; it is unguessable, user-bound, and consumed on first use.
+        if ( ! isset( $_GET['mainwp_dropbox_oauth'], $_GET['state'] ) ) {
+            return;
+        }
+        if ( ! \mainwp_current_user_can( 'dashboard', 'edit_backup_tasks' ) ) {
+            return;
+        }
+
+        $state = strtolower( sanitize_key( wp_unslash( $_GET['state'] ) ) );
+        $code  = isset( $_GET['code'] ) ? sanitize_text_field( wp_unslash( $_GET['code'] ) ) : '';
+
+        if ( isset( $_GET['error'] ) ) {
+            // The user declined on the Dropbox side; consume the stash anyway.
+            static::complete_dropbox_oauth( $state, '' );
+            $result = array( 'error' => esc_html__( 'The Dropbox authorization was declined. Nothing was saved.', 'mainwp' ) );
+        } elseif ( '' === $code ) {
+            $result = array( 'error' => esc_html__( 'Dropbox returned no access code. Start the connection again.', 'mainwp' ) );
+        } else {
+            $result = static::complete_dropbox_oauth( $state, $code );
+        }
+        // phpcs:enable WordPress.Security.NonceVerification.Recommended
+
+        set_transient( 'mainwp_dropbox_oauth_notice_' . get_current_user_id(), $result, MINUTE_IN_SECONDS );
+        wp_safe_redirect( admin_url( 'admin.php?page=ManageBackupsStorage' ) );
+        exit;
+    }
+
+    /**
+     * Read and clear the pending OAuth result notice for the current
+     * user, for the Storage page render.
+     *
+     * @return array|null {id}|{error}, or null when none is pending.
+     */
+    public static function consume_dropbox_oauth_notice() {
+        $key    = 'mainwp_dropbox_oauth_notice_' . get_current_user_id();
+        $notice = get_transient( $key );
+        delete_transient( $key );
+        return is_array( $notice ) ? $notice : null;
     }
 
     /**

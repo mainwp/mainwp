@@ -279,7 +279,6 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
         ?>
 
         <div class="ui divider hidden"></div>
-        <div class="ui message" id="mainwp-message-zone" style="display:none"></div>
             <h3 class="header"><?php esc_html_e( 'Backup Details', 'mainwp' ); ?></h3>
             <div class="ui grid field">
                 <label class="six wide column middle aligned"><?php esc_html_e( 'Backup task name', 'mainwp' ); ?></label>

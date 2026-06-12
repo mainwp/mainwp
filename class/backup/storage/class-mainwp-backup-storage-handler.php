@@ -75,7 +75,10 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
         $this->add_action( 'mainwp_storage_default', array( &$this, 'ajax_storage_default' ) );
         $this->add_action( 'mainwp_storage_get', array( &$this, 'ajax_storage_get' ) );
         $this->add_action( 'mainwp_dropbox_oauth_start', array( &$this, 'ajax_dropbox_oauth_start' ) );
-        add_action( 'admin_init', array( &$this, 'handle_dropbox_oauth_callback' ) );
+
+        // init() itself runs during admin_init (priority 20), so a later
+        // admin_init registration would never fire - sniff directly.
+        $this->handle_dropbox_oauth_callback();
     }
 
     /**

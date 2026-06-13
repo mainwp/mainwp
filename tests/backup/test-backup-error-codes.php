@@ -170,6 +170,23 @@ class MainWP_Backup_Error_Codes_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * The wall-clock timeout and unknown-phase codes are registered and are
+	 * error severity. The child emits both on failures that previously
+	 * reached the dashboard as a bare "failed" with no reason or code.
+	 *
+	 * @return void
+	 */
+	public function test_registers_silent_failure_codes() {
+		$registered = MainWP_Backup_Error_Codes::get_registered_codes();
+		$this->assertContains( 'mainwp_backup_wall_clock_exceeded', $registered );
+		$this->assertContains( 'mainwp_backup_unknown_phase', $registered );
+		$this->assertSame( 'mainwp_backup_wall_clock_exceeded', MainWP_Backup_Error_Codes::ERR_WALL_CLOCK );
+		$this->assertSame( 'mainwp_backup_unknown_phase', MainWP_Backup_Error_Codes::ERR_UNKNOWN_PHASE );
+		$this->assertSame( 'error', MainWP_Backup_Error_Codes::severity( MainWP_Backup_Error_Codes::ERR_WALL_CLOCK ) );
+		$this->assertSame( 'error', MainWP_Backup_Error_Codes::severity( MainWP_Backup_Error_Codes::ERR_UNKNOWN_PHASE ) );
+	}
+
+	/**
 	 * The Google Cloud Storage upload code is registered and is error
 	 * severity, alongside the other provider upload codes.
 	 *

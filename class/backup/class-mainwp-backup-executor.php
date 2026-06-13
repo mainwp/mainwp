@@ -1280,11 +1280,11 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         $subfolder = MainWP_Backup_File_Manager::normalize_filename( $subfolder );
 
         if ( MainWP_System_Utility::is_suspended_site( $website ) ) {
-            throw new MainWP_Exception( 'Suspended site.', '', 'SUSPENDED_SITE' );
+            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_SUSPENDED_SITE ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         }
 
         if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
-            throw new MainWP_Exception( 'You are not allowed to backup this site' );
+            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_NO_PERMISSION ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         }
 
         $websiteCleanUrl = $website->url;

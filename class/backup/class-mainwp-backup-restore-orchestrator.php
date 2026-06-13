@@ -362,7 +362,8 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         try {
             $this->run_job( $job, $deadline );
         } catch ( \Throwable $e ) {
-            $this->record_failure( $job, $e->getMessage(), true );
+            $code = ( $e instanceof MainWP_Exception ) ? $e->get_message_error_code() : '';
+            $this->record_failure( $job, MainWP_Backup_Error_Codes::sanitize_message( $e->getMessage() ), true, $code );
         }
 
         $store->release_lock( (int) $job->id, $token );
@@ -483,8 +484,9 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 return;
             }
             if ( 'failed' === $phase || '' === $phase ) {
-                $error = is_array( $payload ) && isset( $payload['error'] ) ? (string) $payload['error'] : esc_html__( 'The pre-restore safety backup failed.', 'mainwp' );
-                $store->fail_permanent( (int) $job->id, $error );
+                $error      = is_array( $payload ) && isset( $payload['error'] ) ? (string) $payload['error'] : esc_html__( 'The pre-restore safety backup failed.', 'mainwp' );
+                $error_code = is_array( $payload ) && isset( $payload['error_code'] ) ? (string) $payload['error_code'] : '';
+                $this->record_failure( $job, $error, false, $error_code );
                 return;
             }
         }
@@ -556,7 +558,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             $store->save_checkpoint( (int) $job->id, $checkpoint );
 
             if ( null !== $outcome['error'] ) {
-                $store->fail_permanent( (int) $job->id, $outcome['error'] );
+                $this->record_failure( $job, (string) $outcome['error'], false, isset( $outcome['error_code'] ) ? (string) $outcome['error_code'] : '' );
                 return;
             }
             if ( ! $outcome['done'] ) {
@@ -631,8 +633,9 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
 
         // A terminal failed phase carries an error key too - phase wins.
         if ( ! is_array( $payload ) || ( ! isset( $payload['phase'] ) && isset( $payload['error'] ) ) ) {
-            $message = is_array( $payload ) && isset( $payload['error'] ) ? (string) $payload['error'] : esc_html__( 'The child site returned no restore status.', 'mainwp' );
-            $this->record_failure( $job, $message, true );
+            $message    = is_array( $payload ) && isset( $payload['error'] ) ? (string) $payload['error'] : esc_html__( 'The child site returned no restore status.', 'mainwp' );
+            $error_code = is_array( $payload ) && isset( $payload['error_code'] ) ? (string) $payload['error_code'] : '';
+            $this->record_failure( $job, $message, true, $error_code );
             return;
         }
 
@@ -666,7 +669,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             if ( isset( $payload['sub_state']['error']['message'] ) ) {
                 $error = (string) $payload['sub_state']['error']['message'];
             }
-            $store->fail_permanent( (int) $job->id, $error );
+            $this->record_failure( $job, $error, false, $error_code );
             return;
         }
         // Still working: the next tick polls again.
@@ -758,9 +761,10 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         $payload = MainWP_Connect::fetch_url_authed( $website, 'restore_task_create', $params, false, false, false );
 
         if ( ! is_array( $payload ) || empty( $payload['task_id'] ) ) {
-            $message   = is_array( $payload ) && isset( $payload['error'] ) ? (string) $payload['error'] : esc_html__( 'The child site did not accept the restore task.', 'mainwp' );
-            $retryable = is_array( $payload ) && isset( $payload['error_code'] ) && 'mainwp_backup_already_running' === $payload['error_code'];
-            $this->record_failure( $job, $message, $retryable );
+            $message    = is_array( $payload ) && isset( $payload['error'] ) ? (string) $payload['error'] : esc_html__( 'The child site did not accept the restore task.', 'mainwp' );
+            $error_code = is_array( $payload ) && isset( $payload['error_code'] ) ? (string) $payload['error_code'] : '';
+            $retryable  = 'mainwp_backup_already_running' === $error_code;
+            $this->record_failure( $job, $message, $retryable, $error_code );
             return array(
                 'task_id'       => '',
                 'pull_rejected' => false,
@@ -779,15 +783,17 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * The current status is saved as the resume point so a retry
      * continues the phase that failed instead of starting over.
      *
-     * @param object $job       Job row.
-     * @param string $error     Error text.
-     * @param bool   $retryable Whether a retry can succeed.
+     * @param object $job        Job row.
+     * @param string $error      Error text.
+     * @param bool   $retryable  Whether a retry can succeed.
+     * @param string $error_code Stable error code matching $error, or '' when none.
      */
-    private function record_failure( object $job, string $error, bool $retryable ): void {
+    private function record_failure( object $job, string $error, bool $retryable, string $error_code = '' ): void {
         $store    = MainWP_Backup_Restore_Job_Store::instance();
         $attempts = (int) $job->attempt_count + 1;
 
         if ( ! $retryable || MainWP_Backup_Backoff::attempts_exhausted( $attempts ) ) {
+            $this->stamp_error_code( $job, $error_code );
             $store->fail_permanent( (int) $job->id, $error );
             return;
         }
@@ -799,9 +805,30 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         $checkpoint['resume_status'] = MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE === $job->status && isset( $checkpoint['resume_status'] )
             ? (string) $checkpoint['resume_status']
             : (string) $job->status;
+        // Keep the code in step with last_error so the progress poll can carry
+        // a stable machine-readable code for support and AI diagnosis.
+        $checkpoint['last_error_code'] = $error_code;
         $store->save_checkpoint( (int) $job->id, $checkpoint );
 
         $store->fail_retryable( (int) $job->id, $error, $attempts, time() + MainWP_Backup_Backoff::delay_for_attempt( $attempts ) );
+    }
+
+    /**
+     * Persist the error code that matches the job's current last_error.
+     *
+     * Rides in the checkpoint JSON so the restore progress poll can report a
+     * stable code without a schema change. Reads the row fresh so a concurrent
+     * checkpoint from the failed phase is not clobbered.
+     *
+     * @param object $job        Job row.
+     * @param string $error_code Error code, or '' when the failure carried none.
+     */
+    private function stamp_error_code( object $job, string $error_code ): void {
+        $store                         = MainWP_Backup_Restore_Job_Store::instance();
+        $fresh                         = $store->get_job( (int) $job->id );
+        $checkpoint                    = null !== $fresh ? $fresh->checkpoint : $job->checkpoint;
+        $checkpoint['last_error_code'] = $error_code;
+        $store->save_checkpoint( (int) $job->id, $checkpoint );
     }
 
     /**

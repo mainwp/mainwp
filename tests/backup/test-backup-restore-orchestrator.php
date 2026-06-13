@@ -565,6 +565,32 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
+	 * A failed child task carries its error code through to the job
+	 * checkpoint so the progress poll can report a stable code for support
+	 * and AI diagnosis alongside the human-readable last_error.
+	 */
+	public function test_child_failure_surfaces_error_code() {
+		$this->responses['restore_task_run'] = array(
+			'task_id'    => 'task-9-restore',
+			'phase'      => 'failed',
+			'error'      => 'The database could not be replayed from the backup.',
+			'error_code' => 'mainwp_restore_db_replay',
+			'sub_state'  => array(
+				'error' => array(
+					'message' => 'The database could not be replayed from the backup.',
+					'code'    => 'mainwp_restore_db_replay',
+				),
+			),
+		);
+
+		$job = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, array( 'child_task_id' => 'task-9-restore' ) );
+		$job = $this->tick( $job );
+
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
+		$this->assertSame( 'mainwp_restore_db_replay', $job->checkpoint['last_error_code'] );
+	}
+
+	/**
 	 * An unreachable site after restore is a retryable failure that
 	 * resumes the verifying phase.
 	 */

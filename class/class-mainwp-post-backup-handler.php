@@ -175,7 +175,12 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                 )
             );
         } catch ( MainWP_Exception $e ) {
-            wp_send_json( array( 'error' => $e->getMessage() ) );
+            wp_send_json(
+                array(
+                    'error'      => $e->getMessage(),
+                    'error_code' => $e->get_message_error_code(),
+                )
+            );
             return;
         }
 
@@ -206,6 +211,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             array(
                 'status'           => (string) $job->status,
                 'last_error'       => (string) $job->last_error,
+                'error_code'       => isset( $job->checkpoint['last_error_code'] ) ? (string) $job->checkpoint['last_error_code'] : '',
                 'attempt_count'    => (int) $job->attempt_count,
                 'artifact_index'   => isset( $transfer['artifact_index'] ) ? (int) $transfer['artifact_index'] : 0,
                 'artifact_total'   => count( $plan ),
@@ -236,7 +242,12 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         try {
             $outcome = MainWP_Backup_Restore_Orchestrator::instance()->cancel_job( $job_id );
         } catch ( MainWP_Exception $e ) {
-            wp_send_json( array( 'error' => $e->getMessage() ) );
+            wp_send_json(
+                array(
+                    'error'      => $e->getMessage(),
+                    'error_code' => $e->get_message_error_code(),
+                )
+            );
             return;
         }
         wp_send_json( array( 'result' => 'cancel_pending' === $outcome ? 'pending' : 'ok' ) );
@@ -262,7 +273,12 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         try {
             $rollback_id = MainWP_Backup_Restore_Orchestrator::instance()->initiate_rollback( $job );
         } catch ( MainWP_Exception $e ) {
-            wp_send_json( array( 'error' => $e->getMessage() ) );
+            wp_send_json(
+                array(
+                    'error'      => $e->getMessage(),
+                    'error_code' => $e->get_message_error_code(),
+                )
+            );
             return;
         }
         wp_send_json( array( 'job_id' => $rollback_id ) );

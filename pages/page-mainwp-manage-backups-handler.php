@@ -442,6 +442,11 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
 
         if ( $updateRun ) {
             MainWP_DB_Backup::instance()->update_backup_run( $task->id );
+            // Start each run with a clean error slate so the Manage Backups list
+            // reflects only the latest run, never a stale error from a past one.
+            // Continue-loop ticks pass $updateRun = false, so per-site errors
+            // accumulated earlier in the same run are preserved.
+            MainWP_DB_Backup::instance()->update_backup_errors( $task->id, '' );
         }
 
         $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );

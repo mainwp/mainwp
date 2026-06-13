@@ -322,16 +322,47 @@ class MainWP_Backup_List_View { // phpcs:ignore Generic.Classes.OpeningBraceSame
         $statuses = array_column( $jobs, 'status' );
 
         if ( in_array( MainWP_Backup_Upload_Job_Store::STATUS_CREDENTIALS_INVALID, $statuses, true ) ) {
-            return '<span class="ui small red label">' . esc_html__( 'Re-enter credentials', 'mainwp' ) . '</span>';
+            return $this->upload_failed_label( esc_html__( 'Re-enter credentials', 'mainwp' ), $jobs, MainWP_Backup_Upload_Job_Store::STATUS_CREDENTIALS_INVALID );
         }
         if ( in_array( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_PERMANENT, $statuses, true ) ) {
-            return '<span class="ui small red label">' . esc_html__( 'Upload failed', 'mainwp' ) . '</span>';
+            return $this->upload_failed_label( esc_html__( 'Upload failed', 'mainwp' ), $jobs, MainWP_Backup_Upload_Job_Store::STATUS_FAILED_PERMANENT );
         }
         if ( count( array_keys( $statuses, MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE, true ) ) === count( $statuses ) ) {
             return '<span class="ui small green label">' . esc_html__( 'Uploaded', 'mainwp' ) . '</span>';
         }
 
         return '<span class="ui small blue label">' . esc_html__( 'Uploading', 'mainwp' ) . '</span>';
+    }
+
+    /**
+     * A failed-upload label, with the sanitized failure reason on hover.
+     *
+     * The reason lives on the upload job's last_error column and was otherwise
+     * never shown, leaving the user a bare "Upload failed" with no cause. The
+     * text is stripped of markup and run through the sanitizer so no path,
+     * SQL, or credential leaks into the tooltip.
+     *
+     * @param string   $label  Already-escaped label text.
+     * @param object[] $jobs   Upload job rows.
+     * @param string   $status Status whose last_error to surface.
+     *
+     * @return string Label markup.
+     */
+    private function upload_failed_label( $label, $jobs, $status ) {
+        $reason = '';
+        foreach ( $jobs as $job ) {
+            if ( isset( $job->status ) && $status === $job->status && ! empty( $job->last_error ) ) {
+                $reason = (string) $job->last_error;
+                break;
+            }
+        }
+
+        if ( '' === $reason ) {
+            return '<span class="ui small red label">' . $label . '</span>';
+        }
+
+        $reason = trim( preg_replace( '/\s+/', ' ', wp_strip_all_tags( MainWP_Backup_Error_Codes::sanitize_message( $reason ) ) ) );
+        return '<span class="ui small red label" data-tooltip="' . esc_attr( $reason ) . '" data-position="top left" data-variation="wide inverted">' . $label . '</span>';
     }
 
     /**
@@ -373,6 +404,19 @@ class MainWP_Backup_List_View { // phpcs:ignore Generic.Classes.OpeningBraceSame
                 $completed_sites = array();
             }
             $output .= count( $completed_sites ) . '/' . count( $item->the_sites );
+        }
+
+        // Surface the last run's errors. They are stored on the task row but
+        // were otherwise only emailed (when notifications are on) and never
+        // shown here. The reason is sanitized and shown on hover so support and
+        // the user can see what failed without leaking paths or SQL.
+        if ( ! empty( $item->backup_errors ) ) {
+            $error_text = wp_strip_all_tags( MainWP_Backup_Error_Codes::sanitize_message( $item->backup_errors ) );
+            $error_text = trim( preg_replace( '/\s+/', ' ', $error_text ) );
+            if ( '' !== $error_text ) {
+                $output .= '<br /><span class="ui small red label" data-tooltip="' . esc_attr( $error_text ) . '" data-position="top left" data-variation="wide inverted">'
+                    . '<i class="exclamation triangle icon"></i> ' . esc_html__( 'Last run reported errors', 'mainwp' ) . '</span>';
+            }
         }
         return $output;
     }

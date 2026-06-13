@@ -3956,7 +3956,7 @@ globalThis.mainwp_backup_error_severity = function (pError) {
             code = pError.error_code;
         }
     }
-    let warningCodes = ['mainwp_backup_memory_limit', 'mainwp_backup_file_skipped', 'mainwp_backup_already_running'];
+    let warningCodes = ['mainwp_backup_memory_limit', 'mainwp_backup_file_skipped', 'mainwp_backup_already_running', 'mainwp_backup_incremental_base_missing', 'mainwp_backup_manifest_chunk_send_failed'];
     return warningCodes.indexOf(code) !== -1 ? 'warning' : 'error';
 };
 

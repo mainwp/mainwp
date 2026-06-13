@@ -374,8 +374,27 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
             return $this->stage_state( 'error', __( 'The staged download could not be moved into place.', 'mainwp' ) );
         }
 
+        $downloaded = (string) hash_file( 'sha256', $final );
+
+        // When a backup-time hash was recorded, a downloaded cloud object
+        // that does not match it is corrupt or tampered: reject it rather
+        // than restore unverified bytes. Uploads predating artifact hashing
+        // carry no expected hash, so those still stage as before.
+        $expected = isset( $entry['expected_sha256'] ) ? (string) $entry['expected_sha256'] : '';
+        if ( '' !== $expected && ! hash_equals( $expected, $downloaded ) ) {
+            wp_delete_file( $final );
+            return $this->stage_state(
+                'error',
+                sprintf(
+                    /* translators: %s: artifact file name. */
+                    __( 'The backup file downloaded from cloud storage failed its integrity check: %s', 'mainwp' ),
+                    $entry['file']
+                )
+            );
+        }
+
         $entry['staged_path'] = $final;
-        $entry['sha256']      = (string) hash_file( 'sha256', $final );
+        $entry['sha256']      = $downloaded;
         return $this->stage_state( 'staged' );
     }
 

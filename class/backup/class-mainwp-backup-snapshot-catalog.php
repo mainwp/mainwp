@@ -116,18 +116,26 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
     /**
      * Resolve a snapshot into a restorable chain.
      *
-     * @param int $snapshot_id Snapshot to restore.
+     * @param int $snapshot_id      Snapshot to restore.
+     * @param int $expected_site_id Site the caller is authorized for. When
+     *                              greater than zero, the snapshot must
+     *                              belong to it; this stops a user scoped to
+     *                              one site from restoring another site's
+     *                              backup by passing its snapshot id.
      *
      * @return array { ok: bool, error: string|null, chain: object[],
      *                 sub_type: string, plan: array[] } - plan entries:
      *                 { role, file, size, sha256, snapshot_id, source,
      *                 local_path, remote_key, adopt_only }.
      */
-    public function resolve_restorable_chain( int $snapshot_id ): array {
+    public function resolve_restorable_chain( int $snapshot_id, int $expected_site_id = 0 ): array {
         $snapshots = MainWP_Backup_Snapshots::instance();
         $leaf      = $snapshots->get_snapshot_by_id( $snapshot_id );
         if ( null === $leaf ) {
             return $this->refusal( __( 'The selected backup no longer exists.', 'mainwp' ) );
+        }
+        if ( $expected_site_id > 0 && (int) $leaf->site_id !== $expected_site_id ) {
+            return $this->refusal( __( 'The selected backup does not belong to this site.', 'mainwp' ) );
         }
         if ( 'complete' !== $leaf->status ) {
             return $this->refusal( __( 'The selected backup was removed by retention and can no longer be restored.', 'mainwp' ) );
@@ -244,30 +252,36 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
         $local_path = isset( $archive['path'] ) ? (string) $archive['path'] : '';
         $has_local  = '' !== $local_path && file_exists( $local_path );
 
-        $source     = 'unavailable';
-        $remote_key = '';
+        $source          = 'unavailable';
+        $remote_key      = '';
+        $expected_sha256 = '';
         if ( $has_local ) {
             $source = 'local';
         } elseif ( isset( $remote[ $file ] ) ) {
-            $source     = $remote[ $file ]['chunked'] ? 'remote_chunked' : 'remote';
-            $remote_key = $remote[ $file ]['key'];
+            $source          = $remote[ $file ]['chunked'] ? 'remote_chunked' : 'remote';
+            $remote_key      = $remote[ $file ]['key'];
+            $expected_sha256 = isset( $remote[ $file ]['sha256'] ) ? (string) $remote[ $file ]['sha256'] : '';
         }
 
         return array(
-            'role'        => (string) $archive['role'],
+            'role'            => (string) $archive['role'],
             // The wire/staging name is namespaced by snapshot: every
             // increment in a chain carries the same sidecar basenames
             // (tombstones.list, partNNN), and colliding names would
             // silently lose all but the first copy.
-            'file'        => 's' . (int) $snapshot->id . '-' . $file,
-            'source_file' => $file,
-            'size'        => isset( $archive['size'] ) ? (int) $archive['size'] : 0,
-            'sha256'      => '',
-            'snapshot_id' => (int) $snapshot->id,
-            'source'      => $source,
-            'local_path'  => $has_local ? $local_path : '',
-            'remote_key'  => $remote_key,
-            'adopt_only'  => false,
+            'file'            => 's' . (int) $snapshot->id . '-' . $file,
+            'source_file'     => $file,
+            'size'            => isset( $archive['size'] ) ? (int) $archive['size'] : 0,
+            'sha256'          => '',
+            // Trusted backup-time hash for a remote artifact, empty when the
+            // upload predates artifact hashing. The staging fallback verifies
+            // a downloaded object against this when present.
+            'expected_sha256' => $expected_sha256,
+            'snapshot_id'     => (int) $snapshot->id,
+            'source'          => $source,
+            'local_path'      => $has_local ? $local_path : '',
+            'remote_key'      => $remote_key,
+            'adopt_only'      => false,
         );
     }
 
@@ -301,6 +315,10 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
                     'key'            => $snapshot->site_id . '/' . $snapshot->id . '/files/' . $artifact['file'],
                     'chunked'        => $chunked,
                     'destination_id' => (int) $job->destination_id,
+                    // Backup-time hash recorded at upload. Carried into the
+                    // plan so the staging fallback can verify a downloaded
+                    // cloud object instead of trusting whatever bytes arrive.
+                    'sha256'         => isset( $artifact['sha256'] ) ? (string) $artifact['sha256'] : '',
                 );
             }
         }

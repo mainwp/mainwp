@@ -183,6 +183,28 @@ class MainWP_Backup_Snapshot_Catalog_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Resolution refuses a snapshot that belongs to a different site than
+	 * the caller is authorized for: a user scoped to one site cannot
+	 * restore another site's backup by passing its snapshot id. With no
+	 * expected site (0) the resolve is unscoped and succeeds.
+	 */
+	public function test_resolve_refuses_snapshot_from_other_site() {
+		$id = $this->make_snapshot(
+			array( array( 'file' => 'full.tar.gz', 'role' => 'full' ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+			array( 'site_id' => 9901 )
+		);
+
+		$catalog = MainWP_Backup_Snapshot_Catalog::instance();
+
+		$crossed = $catalog->resolve_restorable_chain( $id, 9902 );
+		$this->assertFalse( $crossed['ok'], 'A snapshot from another site must not resolve for the authorized site.' );
+		$this->assertStringContainsString( 'does not belong to this site', $crossed['error'] );
+
+		$this->assertTrue( $catalog->resolve_restorable_chain( $id, 9901 )['ok'], 'The owning site must still resolve.' );
+		$this->assertTrue( $catalog->resolve_restorable_chain( $id )['ok'], 'An unscoped resolve must stay backward compatible.' );
+	}
+
+	/**
 	 * Resolving a pruned snapshot refuses cleanly.
 	 */
 	public function test_resolve_pruned_refused() {

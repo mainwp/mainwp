@@ -202,6 +202,69 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * A downloaded whole-file remote artifact whose bytes do not match the
+	 * recorded backup-time hash fails staging closed instead of restoring
+	 * unverified bytes; the staged file is removed.
+	 */
+	public function test_stage_remote_artifact_integrity_mismatch_fails() {
+		$remote = $this->dir . '/remote';
+		mkdir( $remote . '/4/8/files', 0777, true );
+		file_put_contents( $remote . '/4/8/files/db.tar.gz', 'tampered-bytes' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+		$this->driver->remote_base = $remote;
+
+		$plan = array(
+			array(
+				'role'            => 'db',
+				'file'            => 'db.tar.gz',
+				'size'            => 14,
+				'sha256'          => '',
+				'expected_sha256' => hash( 'sha256', 'original-bytes' ),
+				'snapshot_id'     => 8,
+				'source'          => 'remote',
+				'local_path'      => '',
+				'remote_key'      => '4/8/files/db.tar.gz',
+				'adopt_only'      => false,
+			),
+		);
+
+		$outcome = $this->driver->stage_artifacts( 777001, $plan, microtime( true ) + 60 );
+		$this->assertFalse( $outcome['done'] );
+		$this->assertStringContainsString( 'integrity', $outcome['error'] );
+		$this->assertFileDoesNotExist( $this->driver->staging_dir( 777001 ) . 'db.tar.gz' );
+	}
+
+	/**
+	 * A downloaded whole-file remote artifact that matches the recorded
+	 * backup-time hash stages normally.
+	 */
+	public function test_stage_remote_artifact_integrity_match_passes() {
+		$remote = $this->dir . '/remote';
+		mkdir( $remote . '/4/8/files', 0777, true );
+		file_put_contents( $remote . '/4/8/files/db.tar.gz', 'remote-bytes' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+		$this->driver->remote_base = $remote;
+
+		$plan = array(
+			array(
+				'role'            => 'db',
+				'file'            => 'db.tar.gz',
+				'size'            => 12,
+				'sha256'          => '',
+				'expected_sha256' => hash( 'sha256', 'remote-bytes' ),
+				'snapshot_id'     => 8,
+				'source'          => 'remote',
+				'local_path'      => '',
+				'remote_key'      => '4/8/files/db.tar.gz',
+				'adopt_only'      => false,
+			),
+		);
+
+		$outcome = $this->driver->stage_artifacts( 777001, $plan, microtime( true ) + 60 );
+		$this->assertTrue( $outcome['done'] );
+		$this->assertFileExists( $plan[0]['staged_path'] );
+		$this->assertSame( hash( 'sha256', 'remote-bytes' ), $plan[0]['sha256'] );
+	}
+
+	/**
 	 * Build a chunked remote layout: manifest plus content-addressed
 	 * pieces under {site 0}/{snapshot 44}/.
 	 *

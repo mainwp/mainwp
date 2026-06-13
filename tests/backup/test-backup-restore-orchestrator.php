@@ -643,6 +643,32 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
+	 * Rollback honors the one-active-restore-per-site guard: with another
+	 * restore already active for the site it refuses, so a double-click or
+	 * a rollback during a running restore cannot open a second active job.
+	 */
+	public function test_rollback_refuses_while_restore_active() {
+		$failed = $this->make_job(
+			array(
+				'pre_snapshot_artifacts' => array(
+					array(
+						'file' => 'backup-pre.tar.gz',
+						'size' => 1234,
+						'role' => 'full',
+					),
+				),
+			),
+			MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT
+		);
+
+		// A second, still-active restore for the same site.
+		$this->make_job();
+
+		$this->expectException( MainWP_Exception::class );
+		$this->orchestrator->initiate_rollback( $failed );
+	}
+
+	/**
 	 * Cancel is allowed before the child task starts, and refused once
 	 * the dashboard-side verify began (the child's work is done).
 	 */

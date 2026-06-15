@@ -89,14 +89,21 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
                 continue;
             }
 
+            // Denormalize the destination's provider onto the job so the
+            // offsite rollup can tell local from cloud even if the
+            // destination row is later deleted.
+            $destination = MainWP_Backup_Storage_Destinations::instance()->get_destination( $destination_id );
+            $provider    = ( null !== $destination && isset( $destination->provider ) ) ? (string) $destination->provider : '';
+
             // The unique key on (snapshot_id, destination_id) makes the
             // duplicate insert a no-op rather than an error.
             $result = $this->wpdb->query(
                 $this->wpdb->prepare(
                     'INSERT IGNORE INTO ' . $this->table_name( 'wp_backup_upload_job' ) .
-                    ' (snapshot_id, destination_id, status, checkpoint, last_error, created, updated) VALUES (%d, %d, %s, %s, %s, %d, %d)',
+                    ' (snapshot_id, destination_id, provider, status, checkpoint, last_error, created, updated) VALUES (%d, %d, %s, %s, %s, %s, %d, %d)',
                     $snapshot_id,
                     $destination_id,
+                    $provider,
                     static::STATUS_PENDING,
                     '',
                     '',
@@ -304,7 +311,7 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
      *              was already terminal and the write was refused.
      */
     public function complete_job( int $job_id ): bool {
-        return $this->terminal_update(
+        $settled = $this->terminal_update(
             $job_id,
             array(
                 'status'       => static::STATUS_COMPLETE,
@@ -312,6 +319,10 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
                 'locked_by'    => '',
             )
         );
+        if ( $settled ) {
+            $this->fire_settled( $job_id );
+        }
+        return $settled;
     }
 
     /**
@@ -354,7 +365,7 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
      *              was already terminal and the write was refused.
      */
     public function fail_permanent( int $job_id, string $error ): bool {
-        return $this->terminal_update(
+        $settled = $this->terminal_update(
             $job_id,
             array(
                 'status'       => static::STATUS_FAILED_PERMANENT,
@@ -363,6 +374,10 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
                 'locked_by'    => '',
             )
         );
+        if ( $settled ) {
+            $this->fire_settled( $job_id );
+        }
+        return $settled;
     }
 
     /**
@@ -376,7 +391,7 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
      *              was already terminal and the write was refused.
      */
     public function invalidate_credentials( int $job_id, string $error ): bool {
-        return $this->terminal_update(
+        $settled = $this->terminal_update(
             $job_id,
             array(
                 'status'       => static::STATUS_CREDENTIALS_INVALID,
@@ -385,6 +400,39 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
                 'locked_by'    => '',
             )
         );
+        if ( $settled ) {
+            $this->fire_settled( $job_id );
+        }
+        return $settled;
     }
 
+    /**
+     * Announce that an upload job reached a terminal state so the
+     * snapshot's offsite-verified rollup recomputes once. Delete-kind
+     * jobs never affect offsite state, so only upload jobs fire.
+     *
+     * @param int $job_id Job id.
+     *
+     * @return void
+     */
+    private function fire_settled( int $job_id ): void {
+        $row = $this->wpdb->get_row(
+            $this->wpdb->prepare(
+                'SELECT snapshot_id, kind FROM ' . $this->table_name( 'wp_backup_upload_job' ) . ' WHERE id = %d',
+                $job_id
+            )
+        );
+        if ( null === $row || static::KIND_UPLOAD !== $row->kind ) {
+            return;
+        }
+
+        /**
+         * Fires when an upload job reaches a terminal state (complete,
+         * failed_permanent, credentials_invalid), so a single listener can
+         * recompute the snapshot's offsite-verified state.
+         *
+         * @param int $snapshot_id Snapshot id.
+         */
+        do_action( 'mainwp_backup_upload_job_settled', (int) $row->snapshot_id );
+    }
 }

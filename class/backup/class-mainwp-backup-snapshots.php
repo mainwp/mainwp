@@ -301,6 +301,30 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
     }
 
     /**
+     * Update a snapshot's offsite-verified state and verified time. Kept
+     * separate from status so retention, chaining and the catalog keep
+     * reading status as a strict complete/pruned lifecycle.
+     *
+     * @param int    $snapshot_id Snapshot id.
+     * @param string $state       '', pending, verified, partial or failed.
+     * @param int    $verified_at Epoch when verified; 0 for any other state.
+     *
+     * @return void
+     */
+    public function set_offsite_state( int $snapshot_id, string $state, int $verified_at = 0 ): void {
+        $this->wpdb->update(
+            $this->table_name( 'wp_backup_snapshot' ),
+            array(
+                'offsite_state' => $state,
+                'verified_at'   => $verified_at,
+            ),
+            array( 'id' => $snapshot_id ),
+            array( '%s', '%d' ),
+            array( '%d' )
+        );
+    }
+
+    /**
      * Decode the archives JSON on a snapshot row and normalize parent_id.
      *
      * @param object|null $row Raw snapshot row.

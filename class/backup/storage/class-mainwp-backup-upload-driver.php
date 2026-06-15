@@ -67,6 +67,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
      */
     public function init(): void {
         add_action( 'mainwp_backup_snapshot_recorded', array( $this, 'on_snapshot_recorded' ), 10, 3 );
+        add_action( 'mainwp_backup_upload_job_settled', array( $this, 'resolve_snapshot_offsite_state' ), 10, 1 );
     }
 
     /**
@@ -98,6 +99,68 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
         }
 
         MainWP_Backup_Upload_Job_Store::instance()->enqueue_for_snapshot( (int) $snapshot_id, array_map( 'intval', $destination_ids ) );
+        $this->resolve_snapshot_offsite_state( (int) $snapshot_id );
+    }
+
+    /**
+     * Recompute a snapshot's offsite-verified state from its non-local
+     * upload jobs and persist it. Runs at enqueue and on every terminal
+     * upload transition (via mainwp_backup_upload_job_settled), so an
+     * all-failed snapshot reaches failed instead of sticking at pending.
+     *
+     * Local-provider jobs never count - offsite must mean off the
+     * dashboard too - and a blank provider (a legacy, pre-migration row)
+     * is unknown and can never grant verified.
+     *
+     * @param int $snapshot_id Snapshot id.
+     *
+     * @return void
+     */
+    public function resolve_snapshot_offsite_state( int $snapshot_id ): void {
+        $jobs   = MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $snapshot_id, MainWP_Backup_Upload_Job_Store::KIND_UPLOAD );
+        $active = MainWP_Backup_Upload_Job_Store::active_statuses();
+
+        $relevant = array();
+        foreach ( $jobs as $job ) {
+            $provider = isset( $job->provider ) ? (string) $job->provider : '';
+            if ( '' === $provider || 'local' === $provider ) {
+                continue;
+            }
+            $relevant[] = $job;
+        }
+
+        $snapshots = MainWP_Backup_Snapshots::instance();
+
+        if ( empty( $relevant ) ) {
+            $snapshots->set_offsite_state( $snapshot_id, '' );
+            return;
+        }
+
+        $complete = 0;
+        foreach ( $relevant as $job ) {
+            if ( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE === $job->status ) {
+                ++$complete;
+            } elseif ( in_array( $job->status, $active, true ) ) {
+                $snapshots->set_offsite_state( $snapshot_id, 'pending' );
+                return;
+            }
+        }
+
+        if ( count( $relevant ) === $complete ) {
+            $snapshots->set_offsite_state( $snapshot_id, 'verified', time() );
+
+            /**
+             * Fires when every non-local copy of a snapshot is verified
+             * present at its destination (chunks, whole artifacts and the
+             * manifest all HEAD-confirmed).
+             *
+             * @param int $snapshot_id Snapshot id.
+             */
+            do_action( 'mainwp_backup_snapshot_offsite_verified', $snapshot_id );
+            return;
+        }
+
+        $snapshots->set_offsite_state( $snapshot_id, $complete > 0 ? 'partial' : 'failed' );
     }
 
     /**
@@ -445,7 +508,10 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
             'artifacts'   => $artifacts,
         );
 
-        $provider->put_object( $this->remote_prefix( $job ) . 'manifest.json', (string) wp_json_encode( $manifest ), 'application/json' );
+        $json = (string) wp_json_encode( $manifest );
+        $key  = $this->remote_prefix( $job ) . 'manifest.json';
+        $provider->put_object( $key, $json, 'application/json' );
+        $this->confirm_remote_object( $provider, $key, strlen( $json ) );
 
         $checkpoint['manifest_submitted'] = true;
         MainWP_Backup_Upload_Job_Store::instance()->save_checkpoint( (int) $job->id, $checkpoint );
@@ -484,6 +550,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
         }
 
         $provider->put_object( $key, $body );
+        $this->confirm_remote_object( $provider, $key, strlen( $body ) );
     }
 
     /**
@@ -515,9 +582,32 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
         $bytes = $this->read_chunk_bytes( $artifact, $chunk, $staged );
 
         $provider->put_object( $key, $bytes );
+        $this->confirm_remote_object( $provider, $key, strlen( $bytes ) );
 
         if ( is_file( $staged ) ) {
             unlink( $staged ); // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- progressive staging reclaim.
+        }
+    }
+
+    /**
+     * Confirm a just-written object is present at the destination at the
+     * expected byte size. A mismatch throws retryable, so the job never
+     * reaches complete - and the snapshot never reaches offsite-verified -
+     * on a torn or truncated write. The verified state therefore implies a
+     * remotely restorable copy, not just bytes that left the dashboard.
+     *
+     * @param MainWP_Backup_Storage_Provider $provider      Destination provider.
+     * @param string                         $key           Object key just written.
+     * @param int                            $expected_size Bytes written.
+     *
+     * @return void
+     *
+     * @throws \RuntimeException When the destination did not return the expected size.
+     */
+    private function confirm_remote_object( MainWP_Backup_Storage_Provider $provider, string $key, int $expected_size ): void {
+        $head = $provider->head_object( $key );
+        if ( ! is_array( $head ) || ! isset( $head['size'] ) || (int) $head['size'] !== $expected_size ) {
+            throw new \RuntimeException( esc_html( 'Upload verification failed; the destination did not confirm ' . $key . ' at the expected size.' ) );
         }
     }
 

@@ -40,6 +40,8 @@ class MainWP_Backup_Upload_Driver_Test extends \WP_UnitTestCase {
 	public function set_up() {
 		parent::set_up();
 		remove_all_actions( 'mainwp_backup_snapshot_recorded' );
+		remove_all_actions( 'mainwp_backup_upload_job_settled' );
+		remove_all_actions( 'mainwp_backup_snapshot_offsite_verified' );
 		add_filter(
 			'mainwp_backup_upload_chunk_size',
 			function () {
@@ -204,6 +206,57 @@ class MainWP_Backup_Upload_Driver_Test extends \WP_UnitTestCase {
 				'parent_id'     => null,
 				'archives'      => $archives,
 				'manifest_path' => '',
+			)
+		);
+	}
+
+	/**
+	 * Record a snapshot row with no artifacts, for state-machine tests that
+	 * do not drive a real upload.
+	 *
+	 * @param int $site_id Site id for the snapshot row.
+	 *
+	 * @return int Snapshot id.
+	 */
+	private function record_bare_snapshot( $site_id = 4 ) {
+		return MainWP_Backup_Snapshots::instance()->record_snapshot(
+			array(
+				'task_id'       => 0,
+				'site_id'       => $site_id,
+				'type'          => 'full',
+				'parent_id'     => null,
+				'archives'      => array(),
+				'manifest_path' => '',
+			)
+		);
+	}
+
+	/**
+	 * Insert an upload-job row directly with a chosen provider and status,
+	 * for resolver tests that exercise the rollup buckets.
+	 *
+	 * @param int    $snapshot_id    Snapshot id.
+	 * @param int    $destination_id Destination id.
+	 * @param string $provider       Denormalized provider slug.
+	 * @param string $status         Job status.
+	 *
+	 * @return void
+	 */
+	private function seed_upload_job( $snapshot_id, $destination_id, $provider, $status ) {
+		global $wpdb;
+
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' );
+		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
+			$table,
+			array(
+				'snapshot_id'    => $snapshot_id,
+				'destination_id' => $destination_id,
+				'kind'           => 'upload',
+				'provider'       => $provider,
+				'status'         => $status,
+				'checkpoint'     => '',
+				'created'        => time(),
+				'updated'        => time(),
 			)
 		);
 	}
@@ -556,5 +609,220 @@ class MainWP_Backup_Upload_Driver_Test extends \WP_UnitTestCase {
 		$job = $store->get_jobs_for_snapshot( $snapshot_id )[0];
 		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
 		$this->assertStringContainsString( 'destination', strtolower( $job->last_error ) );
+	}
+
+	/**
+	 * Enqueue stamps each job with its destination's provider so the
+	 * offsite rollup can tell local from cloud even if the destination is
+	 * later deleted.
+	 *
+	 * @return void
+	 */
+	public function test_enqueue_stamps_destination_provider() {
+		$s3_id = MainWP_Backup_Storage_Destinations::instance()->add_destination(
+			array(
+				'provider' => 's3',
+				'name'     => 'Stamp test',
+				'settings' => array( 'bucket' => 'b', 'region' => 'us-east-1', 'access_key' => 'k', 'secret_key' => 's' ),
+			)
+		);
+		list( $local_id ) = $this->make_local_destination();
+		$snapshot_id      = $this->record_bare_snapshot();
+
+		MainWP_Backup_Upload_Job_Store::instance()->enqueue_for_snapshot( $snapshot_id, array( $s3_id, $local_id ) );
+
+		$by_dest = array_column( MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $snapshot_id ), null, 'destination_id' );
+		$this->assertSame( 's3', $by_dest[ $s3_id ]->provider );
+		$this->assertSame( 'local', $by_dest[ $local_id ]->provider );
+	}
+
+	/**
+	 * A snapshot whose non-local copies all completed resolves to
+	 * verified, stamps verified_at, and announces itself.
+	 *
+	 * @return void
+	 */
+	public function test_resolve_offsite_state_verified_when_all_nonlocal_complete() {
+		$snapshot_id = $this->record_bare_snapshot();
+		$this->seed_upload_job( $snapshot_id, 1, 's3', MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE );
+		$this->seed_upload_job( $snapshot_id, 2, 'gcs', MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE );
+
+		$verified = array();
+		add_action(
+			'mainwp_backup_snapshot_offsite_verified',
+			function ( $id ) use ( &$verified ) {
+				$verified[] = $id;
+			}
+		);
+
+		MainWP_Backup_Upload_Driver::instance()->resolve_snapshot_offsite_state( $snapshot_id );
+
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+		$this->assertSame( 'verified', $snapshot->offsite_state );
+		$this->assertGreaterThan( 0, (int) $snapshot->verified_at );
+		$this->assertSame( array( $snapshot_id ), $verified );
+	}
+
+	/**
+	 * A local-only snapshot never reaches verified: local uploads are off
+	 * the dashboard's own disk, not offsite.
+	 *
+	 * @return void
+	 */
+	public function test_resolve_offsite_state_local_only_stays_empty() {
+		$snapshot_id = $this->record_bare_snapshot();
+		$this->seed_upload_job( $snapshot_id, 1, 'local', MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE );
+
+		MainWP_Backup_Upload_Driver::instance()->resolve_snapshot_offsite_state( $snapshot_id );
+
+		$this->assertSame( '', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id )->offsite_state );
+	}
+
+	/**
+	 * A snapshot with no upload jobs at all stays unset.
+	 *
+	 * @return void
+	 */
+	public function test_resolve_offsite_state_no_destinations_stays_empty() {
+		$snapshot_id = $this->record_bare_snapshot();
+
+		MainWP_Backup_Upload_Driver::instance()->resolve_snapshot_offsite_state( $snapshot_id );
+
+		$this->assertSame( '', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id )->offsite_state );
+	}
+
+	/**
+	 * A legacy upload row with a blank provider is treated as unknown and
+	 * can never grant verified.
+	 *
+	 * @return void
+	 */
+	public function test_resolve_offsite_state_blank_provider_never_verifies() {
+		$snapshot_id = $this->record_bare_snapshot();
+		$this->seed_upload_job( $snapshot_id, 1, '', MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE );
+
+		MainWP_Backup_Upload_Driver::instance()->resolve_snapshot_offsite_state( $snapshot_id );
+
+		$this->assertSame( '', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id )->offsite_state );
+	}
+
+	/**
+	 * One non-local copy complete and another failed resolves to partial.
+	 *
+	 * @return void
+	 */
+	public function test_resolve_offsite_state_partial_on_mixed_outcome() {
+		$snapshot_id = $this->record_bare_snapshot();
+		$this->seed_upload_job( $snapshot_id, 1, 's3', MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE );
+		$this->seed_upload_job( $snapshot_id, 2, 'gcs', MainWP_Backup_Upload_Job_Store::STATUS_FAILED_PERMANENT );
+
+		MainWP_Backup_Upload_Driver::instance()->resolve_snapshot_offsite_state( $snapshot_id );
+
+		$this->assertSame( 'partial', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id )->offsite_state );
+	}
+
+	/**
+	 * All non-local copies terminal-failed resolves to failed, not stuck
+	 * pending - the rollup runs on the terminal-failure transition.
+	 *
+	 * @return void
+	 */
+	public function test_resolve_offsite_state_failed_when_all_terminal_failed() {
+		$snapshot_id = $this->record_bare_snapshot();
+		$this->seed_upload_job( $snapshot_id, 1, 's3', MainWP_Backup_Upload_Job_Store::STATUS_FAILED_PERMANENT );
+		$this->seed_upload_job( $snapshot_id, 2, 'gcs', MainWP_Backup_Upload_Job_Store::STATUS_CREDENTIALS_INVALID );
+
+		MainWP_Backup_Upload_Driver::instance()->resolve_snapshot_offsite_state( $snapshot_id );
+
+		$this->assertSame( 'failed', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id )->offsite_state );
+	}
+
+	/**
+	 * Any non-terminal non-local job keeps the snapshot pending.
+	 *
+	 * @return void
+	 */
+	public function test_resolve_offsite_state_pending_while_in_flight() {
+		$snapshot_id = $this->record_bare_snapshot();
+		$this->seed_upload_job( $snapshot_id, 1, 's3', MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE );
+		$this->seed_upload_job( $snapshot_id, 2, 'gcs', MainWP_Backup_Upload_Job_Store::STATUS_UPLOADING );
+
+		MainWP_Backup_Upload_Driver::instance()->resolve_snapshot_offsite_state( $snapshot_id );
+
+		$this->assertSame( 'pending', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id )->offsite_state );
+	}
+
+	/**
+	 * Completing a real local-destination upload drives the rollup through
+	 * the settle signal: the job reaches complete and the snapshot, being
+	 * local-only, settles to empty (never verified).
+	 *
+	 * @return void
+	 */
+	public function test_terminal_transition_drives_rollup_local_stays_empty() {
+		MainWP_Backup_Upload_Driver::instance()->init();
+		list( $dest_id ) = $this->make_local_destination();
+		$snapshot_id     = $this->make_snapshot( $this->standard_files() );
+		MainWP_Backup_Upload_Job_Store::instance()->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE, MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $snapshot_id )[0]->status );
+		$this->assertSame( '', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id )->offsite_state );
+	}
+
+	/**
+	 * A post-write HEAD whose size does not match keeps the job retryable
+	 * and the snapshot out of verified: complete must imply a remotely
+	 * present object.
+	 *
+	 * @return void
+	 */
+	public function test_head_size_mismatch_keeps_job_retryable() {
+		MainWP_Backup_Upload_Driver::instance()->init();
+		$dest_id = MainWP_Backup_Storage_Destinations::instance()->add_destination(
+			array(
+				'provider' => 's3',
+				'name'     => 'Torn writer',
+				'settings' => array( 'bucket' => 'b', 'region' => 'us-east-1', 'access_key' => 'k', 'secret_key' => 's' ),
+			)
+		);
+		$snapshot_id = $this->make_snapshot( array( 'small.txt' => array( 'size' => 100, 'role' => 'db' ) ) );
+		MainWP_Backup_Upload_Job_Store::instance()->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+
+		// PUTs succeed; every HEAD reports a size that never matches what
+		// was written, so the post-write confirmation always fails.
+		add_filter(
+			'pre_http_request',
+			function ( $pre, $args ) {
+				$method = isset( $args['method'] ) ? strtoupper( $args['method'] ) : 'GET';
+				if ( 'HEAD' === $method ) {
+					return array(
+						'headers'  => array( 'content-length' => '1' ),
+						'body'     => '',
+						'response' => array(
+							'code'    => 200,
+							'message' => 'OK',
+						),
+					);
+				}
+				return array(
+					'headers'  => array(),
+					'body'     => '',
+					'response' => array(
+						'code'    => 200,
+						'message' => 'OK',
+					),
+				);
+			},
+			10,
+			2
+		);
+
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+
+		$job = MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $snapshot_id )[0];
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_RETRYABLE, $job->status, 'A HEAD size mismatch must keep the job retryable.' );
+		$this->assertNotSame( 'verified', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id )->offsite_state );
 	}
 }

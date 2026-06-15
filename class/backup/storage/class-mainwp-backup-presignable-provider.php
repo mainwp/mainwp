@@ -38,4 +38,15 @@ interface MainWP_Backup_Presignable_Provider {
      * @return string
      */
     public function presigned_get_url( string $key, int $ttl ): string;
+
+    /**
+     * The host every presigned URL for this destination resolves to,
+     * accounting for the provider's addressing style (virtual-hosted
+     * {bucket}.{endpoint} vs path-style {endpoint}/{bucket}). The
+     * restore transfer driver asserts each presigned URL points at this
+     * host before handing the manifest to a child.
+     *
+     * @return string
+     */
+    public function object_host(): string;
 }

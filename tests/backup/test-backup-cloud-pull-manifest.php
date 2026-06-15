@@ -29,6 +29,20 @@ class Presignable_Stub_Provider extends MainWP_Backup_Storage_Local implements M
 	public $scheme = 'https';
 
 	/**
+	 * Host the stub presigns with (the URL host).
+	 *
+	 * @var string
+	 */
+	public $presign_host = 'bucket.example';
+
+	/**
+	 * Host the stub reports as its effective object host.
+	 *
+	 * @var string
+	 */
+	public $object_host = 'bucket.example';
+
+	/**
 	 * Scripted support flag.
 	 *
 	 * @var bool
@@ -60,7 +74,16 @@ class Presignable_Stub_Provider extends MainWP_Backup_Storage_Local implements M
 	 * @return string
 	 */
 	public function presigned_get_url( string $key, int $ttl ): string {
-		return $this->scheme . '://bucket.example/' . $key . '?X-Amz-Expires=' . $ttl . '&X-Amz-Signature=stub';
+		return $this->scheme . '://' . $this->presign_host . '/' . $key . '?X-Amz-Expires=' . $ttl . '&X-Amz-Signature=stub';
+	}
+
+	/**
+	 * Scripted effective object host.
+	 *
+	 * @return string
+	 */
+	public function object_host(): string {
+		return $this->object_host;
 	}
 }
 
@@ -325,6 +348,39 @@ class MainWP_Backup_Cloud_Pull_Manifest_Test extends MainWP_Abilities_Test_Case 
 		$this->assertSame( str_repeat( 'a', 64 ), $plan[0]['sha256'], 'The plan entry must learn its expected hash.' );
 		$this->assertSame( str_repeat( 'b', 64 ), $plan[1]['sha256'] );
 		$this->assertSame( '', $plan[2]['sha256'], 'Adopt-only entries are untouched.' );
+	}
+
+	/**
+	 * A presigned URL whose host is not the provider's effective object
+	 * host is rejected and the restore stages instead - the dashboard
+	 * never hands the child a URL pointed off the configured destination.
+	 */
+	public function test_generate_pull_manifest_rejects_host_mismatch() {
+		$this->driver->upload_records        = $this->upload_record();
+		$this->driver->provider->object_host = 'evil.example';
+		$plan                                = array( $this->plan_entry() );
+
+		$this->assertNull(
+			$this->driver->generate_pull_manifest( $plan ),
+			'A presigned host that is not the object host must drop to staging.'
+		);
+	}
+
+	/**
+	 * Virtual-hosted S3 addressing ({bucket}.{endpoint}) is accepted: the
+	 * assertion compares against the provider's effective object host, not
+	 * the raw endpoint host, so bucket.s3.amazonaws.com is not rejected.
+	 */
+	public function test_generate_pull_manifest_allows_virtual_hosted_bucket() {
+		$this->driver->upload_records         = $this->upload_record();
+		$this->driver->provider->presign_host = 'bucket.s3.amazonaws.com';
+		$this->driver->provider->object_host  = 'bucket.s3.amazonaws.com';
+		$plan                                 = array( $this->plan_entry() );
+
+		$manifest = $this->driver->generate_pull_manifest( $plan );
+
+		$this->assertNotNull( $manifest, 'A virtual-hosted bucket host must be accepted.' );
+		$this->assertStringStartsWith( 'https://bucket.s3.amazonaws.com/', $manifest['artifacts'][0]['url'] );
 	}
 
 	/**

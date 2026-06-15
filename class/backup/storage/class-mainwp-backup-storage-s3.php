@@ -348,6 +348,19 @@ class MainWP_Backup_Storage_S3 implements MainWP_Backup_Storage_Provider, MainWP
     }
 
     /**
+     * The host every presigned URL for this destination resolves to. It
+     * is derived from the same bucket_url() the presigned URLs are built
+     * from, so virtual-hosted ({bucket}.{endpoint}) and path-style
+     * ({endpoint}/{bucket}) destinations both report the correct host.
+     *
+     * @return string
+     */
+    public function object_host(): string {
+        $host = wp_parse_url( $this->bucket_url(), PHP_URL_HOST );
+        return is_string( $host ) ? $host : '';
+    }
+
+    /**
      * The URL of the bucket root, per addressing style.
      *
      * @return string

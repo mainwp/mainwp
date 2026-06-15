@@ -138,9 +138,10 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
                 return null; // Uploaded before hashes were recorded: stage instead.
             }
 
-            $prefix   = $this->snapshot_prefix( $snapshot_id );
-            $provider = $uploads[ $snapshot_id ]['provider'];
-            $item     = array(
+            $prefix        = $this->snapshot_prefix( $snapshot_id );
+            $provider      = $uploads[ $snapshot_id ]['provider'];
+            $expected_host = $provider->object_host();
+            $item          = array(
                 'file'   => (string) $entry['file'],
                 'sha256' => (string) $record['sha256'],
                 'size'   => isset( $record['size'] ) ? (int) $record['size'] : 0,
@@ -153,7 +154,7 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
                         return null;
                     }
                     $url = $provider->presigned_get_url( $prefix . 'chunks/' . $chunk['hash'] . '.bin', static::PRESIGN_TTL_SECONDS );
-                    if ( 0 !== strpos( $url, 'https://' ) ) {
+                    if ( 0 !== strpos( $url, 'https://' ) || wp_parse_url( $url, PHP_URL_HOST ) !== $expected_host ) {
                         return null;
                     }
                     $chunks[] = array(
@@ -165,7 +166,7 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
                 $item['chunks'] = $chunks;
             } else {
                 $url = $provider->presigned_get_url( $prefix . 'files/' . $source, static::PRESIGN_TTL_SECONDS );
-                if ( 0 !== strpos( $url, 'https://' ) ) {
+                if ( 0 !== strpos( $url, 'https://' ) || wp_parse_url( $url, PHP_URL_HOST ) !== $expected_host ) {
                     return null;
                 }
                 $item['url'] = $url;

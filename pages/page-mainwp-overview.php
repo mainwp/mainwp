@@ -55,6 +55,7 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         'recent_pages'             => true,
         'security_issues'          => true,
         'backup_tasks'             => true,
+        'backup_fleet_health'      => true,
         'non_mainwp_changes'       => true,
         'clients'                  => true,
         'get-started'              => true,
@@ -263,6 +264,11 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         // Load the Connection Status widget.
         if ( ! MainWP_System_Utility::get_current_wpid() && static::$enable_widgets['connection_status'] ) {
             MainWP_UI::add_widget_box( 'connection_status', array( MainWP_Connection_Status::get_class_name(), 'render' ), $page, array( -1, -1, 4, 30 ) );
+        }
+
+        // Load the Backup Fleet Health widget.
+        if ( ! MainWP_System_Utility::get_current_wpid() && static::$enable_widgets['backup_fleet_health'] && MainWP_Backup_Fleet_Health::is_visible() ) {
+            MainWP_UI::add_widget_box( 'backup_fleet_health', array( MainWP_Backup_Fleet_Health::get_class_name(), 'render' ), $page, array( -1, -1, 4, 30 ) );
         }
 
         // Load the Connection Status widget.

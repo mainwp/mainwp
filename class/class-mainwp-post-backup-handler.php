@@ -137,6 +137,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                 'type'           => (string) $entry['snapshot']->type,
                 'created'        => (int) $entry['snapshot']->created,
                 'status'         => (string) $entry['snapshot']->status,
+                'offsite_state'  => isset( $entry['snapshot']->offsite_state ) ? (string) $entry['snapshot']->offsite_state : '',
                 'source'         => (string) $entry['source'],
                 'restorable'     => (bool) $entry['restorable'],
                 'restore_reason' => (string) $entry['restore_reason'],

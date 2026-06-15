@@ -304,7 +304,7 @@ class MainWP_Backup_List_View { // phpcs:ignore Generic.Classes.OpeningBraceSame
         if ( null !== $snapshot ) {
             $jobs = MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( (int) $snapshot->id );
             if ( ! empty( $jobs ) ) {
-                $output .= ' ' . $this->upload_state_label( $jobs );
+                $output .= ' ' . $this->upload_state_label( $jobs, $snapshot );
             }
         }
 
@@ -314,11 +314,12 @@ class MainWP_Backup_List_View { // phpcs:ignore Generic.Classes.OpeningBraceSame
     /**
      * The worst-state-wins label for a snapshot's upload jobs.
      *
-     * @param object[] $jobs Upload job rows.
+     * @param object[]    $jobs     Upload job rows.
+     * @param object|null $snapshot Snapshot row, for the offsite-verified state.
      *
      * @return string Label markup.
      */
-    private function upload_state_label( $jobs ) {
+    private function upload_state_label( $jobs, $snapshot = null ) {
         $statuses = array_column( $jobs, 'status' );
 
         if ( in_array( MainWP_Backup_Upload_Job_Store::STATUS_CREDENTIALS_INVALID, $statuses, true ) ) {
@@ -327,6 +328,14 @@ class MainWP_Backup_List_View { // phpcs:ignore Generic.Classes.OpeningBraceSame
         if ( in_array( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_PERMANENT, $statuses, true ) ) {
             return $this->upload_failed_label( esc_html__( 'Upload failed', 'mainwp' ), $jobs, MainWP_Backup_Upload_Job_Store::STATUS_FAILED_PERMANENT );
         }
+
+        // A non-local copy (artifacts and manifest) is HEAD-confirmed at its
+        // destination: distinct from "Uploaded", which only means the bytes
+        // left the dashboard.
+        if ( null !== $snapshot && isset( $snapshot->offsite_state ) && 'verified' === $snapshot->offsite_state ) {
+            return '<span class="ui small green label">' . esc_html__( 'Offsite Verified', 'mainwp' ) . '</span>';
+        }
+
         if ( count( array_keys( $statuses, MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE, true ) ) === count( $statuses ) ) {
             return '<span class="ui small green label">' . esc_html__( 'Uploaded', 'mainwp' ) . '</span>';
         }

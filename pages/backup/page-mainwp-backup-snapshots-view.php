@@ -157,6 +157,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 'remote_chunked': '<?php echo esc_js( esc_html__( 'Cloud storage', 'mainwp' ) ); ?>',
                 'unavailable': '<?php echo esc_js( esc_html__( 'Removed by retention', 'mainwp' ) ); ?>'
             };
+            var offsiteVerifiedLabel = '<?php echo esc_js( esc_html__( 'Offsite Verified', 'mainwp' ) ); ?>';
 
             var restoreWarnings = {
                 'default': '<?php echo esc_js( esc_html__( 'Restoring replaces the site\'s files and database with the contents of this backup. Anything changed since the backup was taken will be overwritten.', 'mainwp' ) ); ?>',
@@ -183,7 +184,11 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                             : '';
                         var rowClass = snap.restorable ? '' : ' class="disabled"';
                         var rowTitle = ( ! snap.restorable && snap.restore_reason ) ? ' title="' + escAttr( snap.restore_reason ) + '"' : '';
-                        rows += '<tr' + rowClass + rowTitle + '><td>#' + snap.id + '</td><td>' + snap.type + '</td><td>' + when + '</td><td>' + ( sourceLabels[ snap.source ] || snap.source ) + '</td><td>' + action + '</td></tr>';
+                        var sourceCell = ( sourceLabels[ snap.source ] || snap.source );
+                        if ( 'verified' === snap.offsite_state ) {
+                            sourceCell += ' <span class="ui mini green label">' + offsiteVerifiedLabel + '</span>';
+                        }
+                        rows += '<tr' + rowClass + rowTitle + '><td>#' + snap.id + '</td><td>' + snap.type + '</td><td>' + when + '</td><td>' + sourceCell + '</td><td>' + action + '</td></tr>';
                     } );
                     if ( '' === rows ) {
                         rows = '<tr><td colspan="5"><?php echo esc_js( esc_html__( 'No backups recorded for this site yet.', 'mainwp' ) ); ?></td></tr>';

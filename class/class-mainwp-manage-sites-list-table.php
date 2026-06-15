@@ -164,6 +164,37 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
     }
 
     /**
+     * Method column_backup_health()
+     *
+     * Native backup-health badge for a child site. Reads the request-scoped
+     * fleet health map (computed once) so the column never queries per row.
+     *
+     * @param mixed $item Child site row.
+     *
+     * @return string Badge markup.
+     */
+    public function column_backup_health( $item ) {
+        if ( ! static::backup_health_visible() ) {
+            return '';
+        }
+
+        $map     = MainWP_Backup_Snapshots::instance()->get_health_map_for_current_user();
+        $site_id = (int) $item['id'];
+        $bucket  = isset( $map[ $site_id ] ) ? $map[ $site_id ] : MainWP_Backup_Snapshots::HEALTH_BUCKET_UNKNOWN;
+
+        $badges = array(
+            MainWP_Backup_Snapshots::HEALTH_BUCKET_PROTECTED => array( 'green', esc_html__( 'Protected', 'mainwp' ), esc_attr__( 'Recent verified offsite backup.', 'mainwp' ) ),
+            MainWP_Backup_Snapshots::HEALTH_BUCKET_AT_RISK => array( 'orange', esc_html__( 'At Risk', 'mainwp' ), esc_attr__( 'Backup aging or offsite not verified.', 'mainwp' ) ),
+            MainWP_Backup_Snapshots::HEALTH_BUCKET_CRITICAL => array( 'red', esc_html__( 'Critical', 'mainwp' ), esc_attr__( 'No recent backup in over 7 days.', 'mainwp' ) ),
+            MainWP_Backup_Snapshots::HEALTH_BUCKET_UNKNOWN => array( 'grey', esc_html__( 'No Backup', 'mainwp' ), esc_attr__( 'No completed snapshot.', 'mainwp' ) ),
+        );
+
+        $badge = isset( $badges[ $bucket ] ) ? $badges[ $bucket ] : $badges[ MainWP_Backup_Snapshots::HEALTH_BUCKET_UNKNOWN ];
+
+        return '<span class="ui ' . esc_attr( $badge[0] ) . ' empty circular label" data-tooltip="' . $badge[2] . '" data-inverted=""></span> ' . $badge[1];
+    }
+
+    /**
      * Method column_site_preview()
      *
      * Site preview column.
@@ -219,6 +250,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             case 'plugin_update':
             case 'theme_update':
             case 'backup':
+            case 'backup_health':
             case 'wpcore_version':
             case 'security':
             case 'uptime':
@@ -303,6 +335,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             'uptime'         => esc_html__( 'Uptime', 'mainwp' ),
             'last_sync'      => esc_html__( 'Last Sync', 'mainwp' ),
             'backup'         => esc_html__( 'Backups', 'mainwp' ),
+            'backup_health'  => esc_html__( 'Backup Health', 'mainwp' ),
             'phpversion'     => esc_html__( 'PHP', 'mainwp' ),
             'last_post'      => esc_html__( 'Last Post', 'mainwp' ),
             'site_health'    => esc_html__( 'Health', 'mainwp' ),
@@ -380,7 +413,55 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             unset( $columns['backup'] );
         }
 
+        if ( isset( $columns['backup_health'] ) && ! static::backup_health_visible() ) {
+            unset( $columns['backup_health'] );
+        }
+
         return $columns;
+    }
+
+    /**
+     * Whether the backup-health column, filter and count-bar should show.
+     * Gated on native backups being enabled and the execute_backups
+     * capability, matching the backup column and snapshots page.
+     *
+     * @return bool
+     */
+    public static function backup_health_visible() {
+        return MainWP_Backup_Settings::is_native_backups_enabled()
+            && \mainwp_current_user_can( 'dashboard', 'execute_backups' );
+    }
+
+    /**
+     * Site ids in a backup-health bucket, for the status filter. Reads the
+     * request-scoped health map (one latest-per-site query) and returns the
+     * ids classified into $bucket. The caller builds the wp.id IN / NOT IN
+     * clause, so this returns the positive set only.
+     *
+     * @param string $bucket Bucket key (HEALTH_BUCKET_*).
+     *
+     * @return int[]|null Matching site ids, or null when the feature is
+     *                    gated off or the bucket is not recognized.
+     */
+    private static function get_backup_health_site_ids_for_bucket( $bucket ) {
+        $valid = array(
+            MainWP_Backup_Snapshots::HEALTH_BUCKET_PROTECTED,
+            MainWP_Backup_Snapshots::HEALTH_BUCKET_AT_RISK,
+            MainWP_Backup_Snapshots::HEALTH_BUCKET_CRITICAL,
+            MainWP_Backup_Snapshots::HEALTH_BUCKET_UNKNOWN,
+        );
+
+        if ( ! static::backup_health_visible() || ! in_array( $bucket, $valid, true ) ) {
+            return null;
+        }
+
+        $ids = array();
+        foreach ( MainWP_Backup_Snapshots::instance()->get_health_map_for_current_user() as $site_id => $site_bucket ) {
+            if ( $site_bucket === $bucket ) {
+                $ids[] = (int) $site_id;
+            }
+        }
+        return $ids;
     }
 
     /**
@@ -462,6 +543,10 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
         );
         $defines[] = array(
             'targets'   => array( 'manage-site_health-column' ),
+            'className' => 'center aligned collapsing',
+        );
+        $defines[] = array(
+            'targets'   => array( 'manage-backup_health-column' ),
             'className' => 'center aligned collapsing',
         );
         $defines[] = array(
@@ -651,6 +736,12 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                         <div class="item" data-value="phpver82"><?php esc_html_e( 'PHP < 8.2', 'mainwp' ); ?></div>
                         <div class="item" data-value="phpver83"><?php esc_html_e( 'PHP < 8.3', 'mainwp' ); ?></div>
                         <div class="item" data-value="phpver84"><?php esc_html_e( 'PHP < 8.4', 'mainwp' ); ?></div>
+                        <?php if ( static::backup_health_visible() ) : ?>
+                        <div class="item" data-value="backup_health_protected"><?php esc_html_e( 'Backup: Protected', 'mainwp' ); ?></div>
+                        <div class="item" data-value="backup_health_at_risk"><?php esc_html_e( 'Backup: At Risk', 'mainwp' ); ?></div>
+                        <div class="item" data-value="backup_health_critical"><?php esc_html_e( 'Backup: Critical', 'mainwp' ); ?></div>
+                        <div class="item" data-value="backup_health_unknown"><?php esc_html_e( 'Backup: None', 'mainwp' ); ?></div>
+                        <?php endif; ?>
                     </div>
                 </div>
                 <?php if ( \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) { ?>
@@ -899,6 +990,13 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             $site_status = sanitize_text_field( wp_unslash( $_REQUEST['status'] ) );
         }
 
+        // Drop a persisted backup-health filter when the feature is gated
+        // off, so a stale selection cannot silently hide sites.
+        if ( 0 === strpos( (string) $site_status, 'backup_health_' ) && ! static::backup_health_visible() ) {
+            $site_status = '';
+            MainWP_Utility::update_user_option( 'mainwp_managesites_filter_status', '' );
+        }
+
         if ( $get_all && ! $selected_one_time_siteids ) {
             MainWP_Utility::update_user_option( 'mainwp_managesites_filter_group', '' );
             MainWP_Utility::update_user_option( 'mainwp_managesites_filter_client', '' );
@@ -1002,6 +1100,21 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                 $where = 'wp.suspended = 1'; // query for suspended sites.
                 if ( $is_not ) {
                     $where = 'wp.suspended = 0'; // query for not suspended sites.
+                }
+            } elseif ( 0 === strpos( $site_status, 'backup_health_' ) ) {
+                $health_ids = static::get_backup_health_site_ids_for_bucket( substr( $site_status, strlen( 'backup_health_' ) ) );
+                if ( null === $health_ids ) {
+                    $where = null; // unknown bucket or feature off: no filtering.
+                } elseif ( empty( $health_ids ) ) {
+                    $where = 'wp.id = -1'; // so get empty results.
+                    if ( $is_not ) {
+                        $where = 'wp.id != -1'; // so query with all sites.
+                    }
+                } else {
+                    $where = 'wp.id IN (' . implode( ',', $health_ids ) . ') ';
+                    if ( $is_not ) {
+                        $where = 'wp.id NOT IN (' . implode( ',', $health_ids ) . ') ';
+                    }
                 }
             }
         }
@@ -1292,6 +1405,8 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
          * @since 4.1
          */
         do_action( 'mainwp_before_manage_sites_table' );
+
+        MainWP_Backup_Fleet_Health::render_compact_bar();
         ?>
         <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-columns-notice' ) ) : ?>
             <div class="ui message">

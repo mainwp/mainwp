@@ -49,6 +49,33 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
     }
 
     /**
+     * Backup-health bucket keys. Internal identifiers - the UI maps these
+     * to user-facing labels and badge colors.
+     */
+    const HEALTH_BUCKET_PROTECTED = 'protected';
+    const HEALTH_BUCKET_AT_RISK   = 'at_risk';
+    const HEALTH_BUCKET_CRITICAL  = 'critical';
+    const HEALTH_BUCKET_UNKNOWN   = 'unknown';
+
+    /**
+     * Age thresholds for backup-health classification, in seconds. A
+     * snapshot newer than the at-risk window can be Protected; one older
+     * than the critical window is Critical.
+     */
+    const HEALTH_WINDOW_AT_RISK  = DAY_IN_SECONDS;
+    const HEALTH_WINDOW_CRITICAL = 7 * DAY_IN_SECONDS;
+
+    /**
+     * Request-scoped backup-health map cache, keyed by user id. The fleet
+     * health map is computed once per user per request and reused by the
+     * column, the count-bar, the status filter and the summary widget so a
+     * page render issues a single latest-per-site query.
+     *
+     * @var array<int, array<int, string>>
+     */
+    private static $health_map_cache = array();
+
+    /**
      * Record a completed backup run as a snapshot row.
      *
      * @param array $data {
@@ -168,6 +195,141 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
             )
         );
         return $this->decode_row( $row );
+    }
+
+    /**
+     * Get the newest complete snapshot for each of the given sites in one
+     * query - the bulk read behind the fleet backup-health view.
+     *
+     * "Newest" is the highest id complete row per site, matching every
+     * other snapshot read; id is monotonic with insert order. Pruned and
+     * other non-complete rows are excluded, so a site whose only rows are
+     * pruned is absent from the result and the caller treats it as having
+     * no backup. No archives decode - callers only need created/state.
+     *
+     * @param int[] $site_ids Child site ids. Empty or all-invalid returns [].
+     *
+     * @return array<int, object> Rows keyed by site_id: id, site_id,
+     *                            created, offsite_state, status.
+     */
+    public function get_latest_per_site( array $site_ids ): array {
+        $site_ids = array_values(
+            array_filter(
+                array_map( 'intval', $site_ids ),
+                static function ( $id ) {
+                    return $id > 0;
+                }
+            )
+        );
+
+        if ( empty( $site_ids ) ) {
+            return array();
+        }
+
+        $table        = $this->table_name( 'wp_backup_snapshot' );
+        $placeholders = implode( ',', array_fill( 0, count( $site_ids ), '%d' ) );
+
+        $rows = $this->wpdb->get_results(
+            $this->wpdb->prepare(
+                'SELECT s.id, s.site_id, s.created, s.offsite_state, s.status FROM ' . $table . ' s '
+                . 'JOIN ( SELECT site_id, MAX(id) AS max_id FROM ' . $table . ' '
+                . "WHERE status = 'complete' AND site_id IN ( {$placeholders} ) GROUP BY site_id ) latest ON s.id = latest.max_id", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- $placeholders is a counted %d list over intval-sanitized ids; table identifier from table_name().
+                ...$site_ids
+            )
+        );
+
+        $keyed = array();
+        foreach ( (array) $rows as $row ) {
+            $keyed[ (int) $row->site_id ] = $row;
+        }
+        return $keyed;
+    }
+
+    /**
+     * Classify a site's backup health from its latest complete snapshot.
+     *
+     * Pure: takes the snapshot row (or null) and the current epoch so the
+     * thresholds are testable without clock dependence. A recent complete
+     * snapshot whose offsite upload failed stays At-Risk, not Critical -
+     * the local copy still exists; offsite verification only separates
+     * Protected from At-Risk inside the 24h window.
+     *
+     * @param object|null $snapshot Latest complete snapshot row, or null.
+     * @param int         $now      Current epoch.
+     *
+     * @return string One of the HEALTH_BUCKET_* constants.
+     */
+    public static function classify_backup_health( ?object $snapshot, int $now ): string {
+        if ( null === $snapshot ) {
+            return self::HEALTH_BUCKET_UNKNOWN;
+        }
+
+        $age = $now - (int) $snapshot->created;
+
+        if ( $age > self::HEALTH_WINDOW_CRITICAL ) {
+            return self::HEALTH_BUCKET_CRITICAL;
+        }
+
+        if ( $age <= self::HEALTH_WINDOW_AT_RISK && 'verified' === (string) $snapshot->offsite_state ) {
+            return self::HEALTH_BUCKET_PROTECTED;
+        }
+
+        // 24h < age <= 7d (any state), or age <= 24h but not verified.
+        return self::HEALTH_BUCKET_AT_RISK;
+    }
+
+    /**
+     * Build the backup-health bucket map for every site the current user
+     * can see, computed once per request.
+     *
+     * Gated: returns an empty map (and runs no query) unless native backups
+     * are enabled and the user holds the execute_backups capability - the
+     * same gate the legacy backup column and the snapshots page use. The
+     * result is memoized per user for the request so the column, count-bar,
+     * status filter and summary widget share a single latest-per-site read.
+     *
+     * @return array<int, string> Bucket key (HEALTH_BUCKET_*) keyed by site_id.
+     */
+    public function get_health_map_for_current_user(): array {
+        if ( ! MainWP_Backup_Settings::is_native_backups_enabled()
+            || ! \mainwp_current_user_can( 'dashboard', 'execute_backups' ) ) {
+            return array();
+        }
+
+        $user_id = get_current_user_id();
+        if ( isset( static::$health_map_cache[ $user_id ] ) ) {
+            return static::$health_map_cache[ $user_id ];
+        }
+
+        $sql    = MainWP_DB::instance()->get_sql_websites_for_current_user_by_params(
+            array( 'select_wp_fields' => array( 'id' ) )
+        );
+        $result = MainWP_DB::instance()->query( $sql );
+
+        $site_ids = array();
+        while ( $result && ( $site = MainWP_DB::fetch_object( $result ) ) ) {
+            $site_ids[] = (int) $site->id;
+        }
+
+        $snapshots = $this->get_latest_per_site( $site_ids );
+        $now       = time();
+        $map       = array();
+        foreach ( $site_ids as $id ) {
+            $map[ $id ] = static::classify_backup_health( isset( $snapshots[ $id ] ) ? $snapshots[ $id ] : null, $now );
+        }
+
+        static::$health_map_cache[ $user_id ] = $map;
+        return $map;
+    }
+
+    /**
+     * Clear the request-scoped backup-health map cache. For tests and any
+     * caller that mutates snapshots and needs a fresh classification.
+     *
+     * @return void
+     */
+    public static function flush_health_map_cache(): void {
+        static::$health_map_cache = array();
     }
 
     /**

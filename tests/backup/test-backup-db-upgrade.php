@@ -95,11 +95,24 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 			if ( ! $this->column_exists( $upload_job_table, 'kind' ) ) {
 				$wpdb->query( "ALTER TABLE {$upload_job_table} ADD COLUMN kind varchar(10) NOT NULL DEFAULT 'upload'" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
 			}
+			if ( ! $this->column_exists( $upload_job_table, 'provider' ) ) {
+				$wpdb->query( "ALTER TABLE {$upload_job_table} ADD COLUMN provider varchar(20) NOT NULL DEFAULT ''" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
+			}
 			if ( ! $this->index_exists( $upload_job_table, 'uniq_snap_dest_kind' ) ) {
 				$wpdb->query( "ALTER TABLE {$upload_job_table} ADD UNIQUE KEY uniq_snap_dest_kind (snapshot_id, destination_id, kind)" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
 			}
 			if ( $this->index_exists( $upload_job_table, 'uniq_snap_dest' ) ) {
 				$wpdb->query( "ALTER TABLE {$upload_job_table} DROP INDEX uniq_snap_dest" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
+			}
+		}
+
+		$snapshot_table = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+		if ( $this->table_exists( $snapshot_table ) ) {
+			if ( ! $this->column_exists( $snapshot_table, 'offsite_state' ) ) {
+				$wpdb->query( "ALTER TABLE {$snapshot_table} ADD COLUMN offsite_state varchar(20) NOT NULL DEFAULT ''" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
+			}
+			if ( ! $this->column_exists( $snapshot_table, 'verified_at' ) ) {
+				$wpdb->query( "ALTER TABLE {$snapshot_table} ADD COLUMN verified_at int(11) NOT NULL DEFAULT 0" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
 			}
 		}
 
@@ -276,6 +289,44 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 			$this->column_exists( $table, 'busy_since' ),
 			'Upgrade must add busy_since to existing installs; the shipped db version needs a bump or dbDelta never runs.'
 		);
+	}
+
+	/**
+	 * An install whose stored db version predates the offsite-verified
+	 * state machine must receive its columns when install() runs:
+	 * offsite_state / verified_at on the snapshot table, the denormalized
+	 * provider on the upload-job table, and the idx_offsite_state index.
+	 * Re-running install() stays idempotent.
+	 *
+	 * @return void
+	 */
+	public function test_upgrade_adds_offsite_state_machine_columns() {
+		global $wpdb;
+
+		$snapshot_table   = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+		$upload_job_table = MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' );
+
+		$this->assertTrue( $this->column_exists( $snapshot_table, 'offsite_state' ), 'Precondition: fresh install has offsite_state.' );
+		$this->assertTrue( $this->column_exists( $snapshot_table, 'verified_at' ), 'Precondition: fresh install has verified_at.' );
+		$this->assertTrue( $this->column_exists( $upload_job_table, 'provider' ), 'Precondition: fresh install has provider.' );
+
+		$wpdb->query( "ALTER TABLE {$snapshot_table} DROP COLUMN offsite_state" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture, identifiers cannot be prepared.
+		$wpdb->query( "ALTER TABLE {$snapshot_table} DROP COLUMN verified_at" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture, identifiers cannot be prepared.
+		$wpdb->query( "ALTER TABLE {$upload_job_table} DROP COLUMN provider" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture, identifiers cannot be prepared.
+		$this->assertFalse( $this->column_exists( $snapshot_table, 'offsite_state' ), 'Precondition: offsite_state dropped to simulate an older install.' );
+		$this->assertFalse( $this->column_exists( $upload_job_table, 'provider' ), 'Precondition: provider dropped to simulate an older install.' );
+
+		update_site_option( 'mainwp_db_version', '9.0.2.12' );
+		MainWP_Install::instance()->install();
+
+		$this->assertTrue( $this->column_exists( $snapshot_table, 'offsite_state' ), 'Upgrade must add offsite_state.' );
+		$this->assertTrue( $this->column_exists( $snapshot_table, 'verified_at' ), 'Upgrade must add verified_at.' );
+		$this->assertTrue( $this->column_exists( $upload_job_table, 'provider' ), 'Upgrade must add provider.' );
+		$this->assertTrue( $this->index_exists( $snapshot_table, 'idx_offsite_state' ), 'Upgrade must add the idx_offsite_state index.' );
+
+		update_site_option( 'mainwp_db_version', '9.0.2.12' );
+		MainWP_Install::instance()->install();
+		$this->assertTrue( $this->column_exists( $snapshot_table, 'offsite_state' ), 'Re-running install must remain idempotent.' );
 	}
 
 	/**

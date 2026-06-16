@@ -282,6 +282,9 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     'href'   => $wp_admin_href,
                     'title'  => esc_html__( 'Go to WP Admin', 'mainwp' ),
                     'access' => true,
+                    'class'  => 'open_newwindow_wpadmin',
+                    'target' => '_blank',
+                    'rel'    => 'noopener noreferrer',
                 );
             }
         }

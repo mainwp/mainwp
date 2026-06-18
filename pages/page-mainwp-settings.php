@@ -126,7 +126,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                         if ( isset( $act_info['activated_key'] ) ) {
                             $act_info['activated_key'] = 'Deactivated';
                         }
-                        MainWP_Api_Manager::instance()->set_activation_info( $ext['api'], $act_info );
+                        MainWP_Api_Manager::instance()->set_activation_info( $ext['api'], $act_info, true );
                     }
                     $new_extensions[] = $ext;
                 }

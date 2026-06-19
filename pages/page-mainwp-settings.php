@@ -637,6 +637,8 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 MainWP_Utility::update_option( 'mainwp_backup_before_upgrade', $val );
                 $val = ( ! isset( $_POST['mainwp_backup_before_upgrade_days'] ) ? 7 : intval( $_POST['mainwp_backup_before_upgrade_days'] ) );
                 MainWP_Utility::update_option( 'mainwp_backup_before_upgrade_days', $val );
+                $val = ( ! isset( $_POST['mainwp_backup_before_upgrade_require_offsite'] ) ? 0 : 1 );
+                MainWP_Utility::update_option( 'mainwp_backup_before_upgrade_require_offsite', $val );
 
                 if ( is_plugin_active( 'mainwp-comments-extension/mainwp-comments-extension.php' ) ) {
                     MainWP_Utility::update_option( 'mainwp_maximumComments', isset( $_POST['mainwp_maximumComments'] ) ? intval( $_POST['mainwp_maximumComments'] ) : 50 );
@@ -788,6 +790,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             'mainwp_disable_update_confirmations',
             'mainwp_backup_before_upgrade',
             'mainwp_backup_before_upgrade_days',
+            'mainwp_backup_before_upgrade_require_offsite',
             'mainwp_maximumComments',
             'mainwp_automatic_update_next_run_timestamp',
             'mainwp_delay_autoupdate',
@@ -992,6 +995,8 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                     if ( empty( $mainwp_backup_before_upgrade_days ) || ! ctype_digit( $mainwp_backup_before_upgrade_days ) ) {
                         $mainwp_backup_before_upgrade_days = 7;
                     }
+                    $backup_before_upgrade_require_offsite = (int) get_option( 'mainwp_backup_before_upgrade_require_offsite', 0 );
+
                     $mainwp_show_language_updates = get_option( 'mainwp_show_language_updates', 1 );
                     $enableNativeBackups          = MainWP_Backup_Settings::is_native_backups_enabled();
                     $primaryBackup                = get_option( 'mainwp_primaryBackup' );
@@ -1123,6 +1128,17 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                         </label>
                         <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Set the number of days without of backup tolerance.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                             <input type="text"  class="settings-field-value-change-handler" name="mainwp_backup_before_upgrade_days" id="mainwp_backup_before_upgrade_days" value="<?php echo esc_attr( $mainwp_backup_before_upgrade_days ); ?>" />
+                        </div>
+                    </div>
+                    <div class="ui grid field mainwp-child-field settings-field-indicator-wrapper settings-field-indicator-updates" default-indi-value="0" <?php echo 1 === (int) $backup_before_upgrade ? '' : 'style="display:none"'; ?> >
+                        <label class="six wide column middle aligned">
+                        <?php
+                        MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_backup_before_upgrade_require_offsite', $backup_before_upgrade_require_offsite );
+                        esc_html_e( 'Require an offsite-verified backup', 'mainwp' );
+                        ?>
+                        </label>
+                        <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'When enabled, a native backup only counts if a copy was uploaded and verified on offsite storage. Leave off to count a recent native backup stored on the Dashboard.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                            <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_backup_before_upgrade_require_offsite" id="mainwp_backup_before_upgrade_require_offsite" <?php echo 1 === (int) $backup_before_upgrade_require_offsite ? 'checked="true"' : ''; ?>/>
                         </div>
                     </div>
                     <?php } ?>

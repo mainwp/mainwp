@@ -12,6 +12,7 @@
 namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Backup_Executor;
+use MainWP\Dashboard\MainWP_Backup_Snapshots;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_Exception;
 use MainWP\Dashboard\MainWP_System_Utility;
@@ -405,5 +406,158 @@ class MainWP_Backup_Executor_Contract_Test extends MainWP_Abilities_Test_Case {
 
 		unlink( $sql_archive );
 		unlink( $full_archive );
+	}
+
+	/**
+	 * has_recent_native_backup() sees a fresh complete native snapshot and
+	 * returns false for a site that has none.
+	 *
+	 * @return void
+	 */
+	public function test_has_recent_native_backup_true_for_fresh_snapshot() {
+		$site_id = $this->create_test_site();
+
+		$this->assertFalse(
+			MainWP_Backup_Executor::has_recent_native_backup( $site_id, 7 ),
+			'A site with no snapshots has no recent native backup.'
+		);
+
+		$this->record_native_snapshot( $site_id );
+
+		$this->assertTrue(
+			MainWP_Backup_Executor::has_recent_native_backup( $site_id, 7 ),
+			'A fresh complete full snapshot is a recent native backup.'
+		);
+	}
+
+	/**
+	 * Stale, pruned, and files-only snapshots do not count as a recent
+	 * native backup.
+	 *
+	 * @return void
+	 */
+	public function test_has_recent_native_backup_ignores_stale_pruned_and_files_only() {
+		$site_id = $this->create_test_site();
+
+		$stale = $this->record_native_snapshot( $site_id, array( 'created' => time() - 10 * DAY_IN_SECONDS ) );
+		$this->assertFalse(
+			MainWP_Backup_Executor::has_recent_native_backup( $site_id, 7 ),
+			'A snapshot older than the window is not recent.'
+		);
+		$this->delete_native_snapshot( $stale );
+
+		$pruned = $this->record_native_snapshot( $site_id, array( 'status' => 'pruned' ) );
+		$this->assertFalse(
+			MainWP_Backup_Executor::has_recent_native_backup( $site_id, 7 ),
+			'A pruned snapshot does not count.'
+		);
+		$this->delete_native_snapshot( $pruned );
+
+		$this->record_native_snapshot( $site_id, array( 'type' => 'files' ) );
+		$this->assertFalse(
+			MainWP_Backup_Executor::has_recent_native_backup( $site_id, 7 ),
+			'A files-only snapshot has no database to protect an update.'
+		);
+	}
+
+	/**
+	 * With the require-offsite policy on, only an offsite-verified snapshot
+	 * satisfies the freshness check.
+	 *
+	 * @return void
+	 */
+	public function test_has_recent_native_backup_require_offsite() {
+		$site_id = $this->create_test_site();
+		$id      = $this->record_native_snapshot( $site_id );
+
+		$this->assertFalse(
+			MainWP_Backup_Executor::has_recent_native_backup( $site_id, 7, true ),
+			'A fresh but unverified snapshot fails the offsite-verified bar.'
+		);
+
+		MainWP_Backup_Snapshots::instance()->set_offsite_state( $id, 'verified', time() );
+
+		$this->assertTrue(
+			MainWP_Backup_Executor::has_recent_native_backup( $site_id, 7, true ),
+			'A fresh verified snapshot satisfies the offsite-verified bar.'
+		);
+	}
+
+	/**
+	 * Native and legacy freshness are independent signals, so the gate's
+	 * OR-combine passes on either alone: a native snapshot with no archive on
+	 * disk, or a legacy archive with no native snapshot.
+	 *
+	 * @return void
+	 */
+	public function test_native_and_legacy_freshness_are_independent() {
+		$native_site = $this->create_test_site();
+		$this->record_native_snapshot( $native_site );
+
+		$this->assertTrue( MainWP_Backup_Executor::has_recent_native_backup( $native_site, 7 ) );
+		$this->assertFalse( MainWP_Backup_Executor::has_recent_backup( $native_site, 7 ), 'No legacy archive on disk.' );
+
+		$legacy_site = $this->create_test_site();
+		$dir         = MainWP_System_Utility::get_mainwp_specific_dir( $legacy_site );
+		wp_mkdir_p( $dir );
+		$archive = $dir . 'full-example-June-1-2026.tar.gz';
+		file_put_contents( $archive, 'x' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- test fixture.
+
+		$this->assertFalse( MainWP_Backup_Executor::has_recent_native_backup( $legacy_site, 7 ), 'No native snapshot recorded.' );
+		$this->assertTrue( MainWP_Backup_Executor::has_recent_backup( $legacy_site, 7 ) );
+
+		unlink( $archive );
+	}
+
+	/**
+	 * Record a native snapshot row with controllable created/status/state.
+	 *
+	 * record_snapshot() always stamps a fresh complete row, so age, status
+	 * and offsite-state overrides are applied with a direct update.
+	 *
+	 * @param int   $site_id Child site id.
+	 * @param array $args    Overrides: type, created, status, offsite_state.
+	 *
+	 * @return int Snapshot id.
+	 */
+	private function record_native_snapshot( $site_id, $args = array() ) {
+		$id = MainWP_Backup_Snapshots::instance()->record_snapshot(
+			array(
+				'task_id'       => 1,
+				'site_id'       => (int) $site_id,
+				'type'          => isset( $args['type'] ) ? (string) $args['type'] : 'full',
+				'archives'      => array(),
+				'manifest_path' => '',
+			)
+		);
+
+		$update = array();
+		if ( isset( $args['created'] ) ) {
+			$update['created'] = (int) $args['created'];
+		}
+		if ( isset( $args['status'] ) ) {
+			$update['status'] = (string) $args['status'];
+		}
+		if ( isset( $args['offsite_state'] ) ) {
+			$update['offsite_state'] = (string) $args['offsite_state'];
+		}
+		if ( ! empty( $update ) ) {
+			global $wpdb;
+			$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ), $update, array( 'id' => (int) $id ) ); // phpcs:ignore WordPress.DB -- test fixture adjust.
+		}
+
+		return (int) $id;
+	}
+
+	/**
+	 * Delete a snapshot row by id between assertions in one test.
+	 *
+	 * @param int $id Snapshot id.
+	 *
+	 * @return void
+	 */
+	private function delete_native_snapshot( $id ) {
+		global $wpdb;
+		$wpdb->delete( MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ), array( 'id' => (int) $id ) ); // phpcs:ignore WordPress.DB -- test fixture cleanup.
 	}
 }

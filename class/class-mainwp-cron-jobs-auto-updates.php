@@ -603,7 +603,12 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
                         $mainwp_backup_before_upgrade_days = 7;
                     }
 
-                    if ( MainWP_Backup_Executor::has_recent_backup( $siteId, (int) $mainwp_backup_before_upgrade_days ) ) {
+                    $require_offsite = (bool) get_option( 'mainwp_backup_before_upgrade_require_offsite', 0 );
+
+                    // A recent native snapshot counts as protection; the legacy
+                    // archive-directory scan still counts third-party backups.
+                    if ( MainWP_Backup_Executor::has_recent_native_backup( $siteId, (int) $mainwp_backup_before_upgrade_days, $require_offsite )
+                        || MainWP_Backup_Executor::has_recent_backup( $siteId, (int) $mainwp_backup_before_upgrade_days ) ) {
                         $sitesCheckCompleted[ $siteId ] = true;
                         MainWP_Utility::update_option( 'mainwp_automaticUpdate_backupChecks', $sitesCheckCompleted );
                         continue;

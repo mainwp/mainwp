@@ -1725,6 +1725,50 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     }
 
     /**
+     * Method has_recent_native_backup()
+     *
+     * Whether the site has a recent native snapshot that carries a database
+     * - the signal the pre-update gate should trust instead of the legacy
+     * archive-directory mtime scan. Reads the snapshot history newest-first
+     * and judges the newest complete, database-bearing row: a files-only run
+     * protects no data an update could break, and a pruned row is gone.
+     *
+     * When $require_offsite is set the newest such snapshot must additionally
+     * be offsite-verified, so the gate only counts a copy that left the
+     * dashboard. Off by default: a site with no cloud destination should not
+     * be forced to back up on every update.
+     *
+     * @param int  $site_id         Child site ID.
+     * @param int  $max_age_days    Freshness window in days.
+     * @param bool $require_offsite Require offsite_state = 'verified' too.
+     *
+     * @return bool True when a recent native backup exists.
+     */
+    public static function has_recent_native_backup( int $site_id, int $max_age_days, bool $require_offsite = false ): bool {
+        $snapshots = MainWP_Backup_Snapshots::instance()->get_snapshots_for_site( $site_id );
+
+        foreach ( $snapshots as $snapshot ) {
+            if ( 'complete' !== (string) $snapshot->status || 'files' === (string) $snapshot->type ) {
+                continue;
+            }
+
+            // Newest-first order: the first match is the newest backup that
+            // could protect an update, so its freshness decides the gate.
+            if ( (int) $snapshot->created < time() - $max_age_days * DAY_IN_SECONDS ) {
+                return false;
+            }
+
+            if ( $require_offsite && 'verified' !== (string) $snapshot->offsite_state ) {
+                return false;
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * Method map_task_status()
      *
      * Map a child task payload onto the contract status shape. Unknown

@@ -377,6 +377,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 'mainwp_pluginAutomaticDailyUpdate',
                 'mainwp_themeAutomaticDailyUpdate',
                 'mainwp_backup_before_upgrade',
+                'mainwp_backup_before_upgrade_require_offsite',
                 'mainwp_enableNativeBackups',
                 'mainwp_maximumInstallUpdateRequests',
                 'mainwp_maximumSyncRequests',

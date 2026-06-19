@@ -23,6 +23,7 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
     // phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery -- dedicated restore job table; identifiers cannot be prepared.
 
     const STATUS_PENDING          = 'pending';
+    const STATUS_PREFLIGHT        = 'preflight';
     const STATUS_PRE_SNAPSHOT     = 'pre_snapshot';
     const STATUS_STAGING          = 'staging';
     const STATUS_TRANSFERRING     = 'transferring';
@@ -69,6 +70,7 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
     public static function active_statuses(): array {
         return array(
             self::STATUS_PENDING,
+            self::STATUS_PREFLIGHT,
             self::STATUS_PRE_SNAPSHOT,
             self::STATUS_STAGING,
             self::STATUS_TRANSFERRING,
@@ -150,6 +152,7 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
         $now          = null === $now ? time() : $now;
         $statuses     = array(
             self::STATUS_PENDING,
+            self::STATUS_PREFLIGHT,
             self::STATUS_PRE_SNAPSHOT,
             self::STATUS_STAGING,
             self::STATUS_TRANSFERRING,
@@ -294,5 +297,4 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
             )
         );
     }
-
 }

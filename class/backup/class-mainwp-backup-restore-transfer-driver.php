@@ -248,6 +248,50 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
     }
 
     /**
+     * Whether every whole-file cloud artifact a restore plan would pull is
+     * still present in offsite storage.
+     *
+     * The restore preflight calls this before any transfer or destructive
+     * work. It HEAD-confirms each whole-file remote artifact and returns
+     * false the moment one is gone, so the orchestrator can stop with a
+     * clear reason. It never false-blocks: local and chunked artifacts, an
+     * unresolvable provider, or a transient HEAD error all defer to staging,
+     * which verifies bytes as it streams them.
+     *
+     * @param array $plan Restore plan entries.
+     *
+     * @return bool False only when a remote artifact is confirmed missing.
+     */
+    public function remote_artifacts_present( array $plan ): bool {
+        foreach ( $plan as $entry ) {
+            if ( ! empty( $entry['adopt_only'] ) || 'remote' !== ( isset( $entry['source'] ) ? (string) $entry['source'] : '' ) ) {
+                continue;
+            }
+
+            $snapshot_id = (int) $entry['snapshot_id'];
+            $upload      = $this->presignable_upload_for_snapshot( $snapshot_id );
+            if ( null === $upload || ! method_exists( $upload['provider'], 'head_object' ) ) {
+                continue;
+            }
+
+            $source_file = isset( $entry['source_file'] ) ? (string) $entry['source_file'] : '';
+            if ( '' === $source_file ) {
+                continue;
+            }
+
+            try {
+                if ( false === $upload['provider']->head_object( $this->snapshot_prefix( $snapshot_id ) . 'files/' . $source_file ) ) {
+                    return false;
+                }
+            } catch ( \Throwable $e ) {
+                continue; // A transient HEAD error must not false-block a restore.
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * The staging directory for a restore job.
      *
      * @param int $job_id Restore job id.

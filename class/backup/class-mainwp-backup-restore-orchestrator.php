@@ -400,6 +400,9 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             case MainWP_Backup_Restore_Job_Store::STATUS_PENDING:
                 $this->phase_pending( $job );
                 break;
+            case MainWP_Backup_Restore_Job_Store::STATUS_PREFLIGHT:
+                $this->phase_preflight( $job );
+                break;
             case MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT:
                 $this->phase_pre_snapshot( $job, $deadline );
                 break;
@@ -427,7 +430,36 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * @param object $job Job row.
      */
     private function phase_pending( object $job ): void {
+        // Preflight runs first so a doomed restore (a vanished cloud artifact)
+        // is stopped before the optional safety backup spends real work.
+        MainWP_Backup_Restore_Job_Store::instance()->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_PREFLIGHT );
+    }
+
+    /**
+     * Preflight: fail a doomed restore fast, before any transfer or
+     * destructive work, then route to the optional safety backup or
+     * straight to staging.
+     *
+     * The cheap, high-value dashboard check is remote-artifact
+     * availability: a snapshot the child would pull from cloud storage must
+     * still exist there. Disk, database-permission, and writeability checks
+     * run child-side as the restore task starts.
+     *
+     * @param object $job Job row.
+     */
+    private function phase_preflight( object $job ): void {
         $store = MainWP_Backup_Restore_Job_Store::instance();
+        $plan  = isset( $job->checkpoint['plan'] ) ? (array) $job->checkpoint['plan'] : array();
+
+        if ( ! $this->transfer_driver()->remote_artifacts_present( $plan ) ) {
+            $this->record_failure(
+                $job,
+                MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_RESTORE_ARTIFACT_MISSING ),
+                false,
+                MainWP_Backup_Error_Codes::ERR_RESTORE_ARTIFACT_MISSING
+            );
+            return;
+        }
 
         if ( ! empty( $job->checkpoint['options']['pre_snapshot'] ) ) {
             $task_id = MainWP_Backup_Executor::trigger_backup( (int) $job->site_id, 'full' );

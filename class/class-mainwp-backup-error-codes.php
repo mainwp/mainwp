@@ -68,6 +68,10 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
     const ERR_WALL_CLOCK      = 'mainwp_backup_wall_clock_exceeded';
     const ERR_UNKNOWN_PHASE   = 'mainwp_backup_unknown_phase';
 
+    // Restore preflight.
+    const ERR_RESTORE_ARTIFACT_MISSING = 'mainwp_restore_artifact_missing';
+    const ERR_RESTORE_DB_PERMS         = 'mainwp_restore_db_perms';
+
     // Incremental backups.
     const ERR_INCREMENTAL_BASE_MISSING = 'mainwp_backup_incremental_base_missing';
     const ERR_MANIFEST_TOO_LARGE       = 'mainwp_backup_manifest_too_large';
@@ -217,6 +221,8 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
             self::ERR_ALREADY_RUNNING            => esc_html__( 'Another backup is in progress for this site. Wait for it to finish or for the stale process to be detected, then try again.', 'mainwp' ),
             self::ERR_WALL_CLOCK                 => esc_html__( 'The backup ran past the maximum time allowed on the child site and was stopped. The site may be very large or the host may limit how long a process can run. Try running the backup during off-peak hours, or split large folders into separate schedules.', 'mainwp' ),
             self::ERR_UNKNOWN_PHASE              => esc_html__( 'The backup reached a step the child site does not recognize. This usually means the MainWP Child plugin is older than the dashboard. Update the MainWP Child plugin on the site to the latest version, then run the backup again.', 'mainwp' ),
+            self::ERR_RESTORE_ARTIFACT_MISSING   => esc_html__( 'A backup file this restore needs is no longer in offsite storage, so the restore was stopped before any changes were made. The cloud copy may have been removed by retention or deleted at the storage provider. Run a fresh backup for this site, then restore again.', 'mainwp' ),
+            self::ERR_RESTORE_DB_PERMS           => esc_html__( 'The site database user is missing a permission the restore needs to swap tables, so the restore was stopped before any changes were made. Grant the database user the CREATE, DROP, and ALTER permissions, or ask your host, then try again.', 'mainwp' ),
             self::ERR_SUSPENDED_SITE             => esc_html__( 'This site is suspended in the dashboard, so backups are not run for it. Unsuspend the site to run backups.', 'mainwp' ),
             self::ERR_NO_PERMISSION              => esc_html__( 'You do not have permission to run backups. Ask the dashboard administrator to grant backup access to your user role.', 'mainwp' ),
             self::ERR_LEGACY_DISABLED            => esc_html__( 'Native backups are not enabled for this site. Go to Settings > Backups to enable the legacy backup feature.', 'mainwp' ),

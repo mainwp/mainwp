@@ -253,10 +253,13 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
-	 * Without a pre-snapshot, pending routes straight to staging.
+	 * Pending routes to preflight first; preflight with a clean local plan
+	 * (nothing to pull from cloud) then routes on to staging.
 	 */
-	public function test_pending_routes_to_staging() {
+	public function test_pending_routes_through_preflight_to_staging() {
 		$job = $this->make_job();
+		$job = $this->tick( $job );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_PREFLIGHT, $job->status );
 		$job = $this->tick( $job );
 		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_STAGING, $job->status );
 	}

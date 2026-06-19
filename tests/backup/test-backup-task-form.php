@@ -86,6 +86,21 @@ class MainWP_Backup_Task_Form_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * The archive-type field guides large sites toward tar.gz, which resumes
+	 * across timeouts where ZIP restarts from the beginning.
+	 *
+	 * @return void
+	 */
+	public function test_render_task_details_outputs_archive_format_note() {
+		ob_start();
+		MainWP_Backup_Task_Form::render_task_details( null, 'Tar GZip', 'site', false, true );
+		$output = ob_get_clean();
+
+		$this->assertStringContainsString( 'mainwp-archive-format-note', $output );
+		$this->assertStringContainsString( 'resumes across timeouts', $output );
+	}
+
+	/**
 	 * An existing database task pre-selects the db type and hides the
 	 * full-backup excludes section.
 	 *

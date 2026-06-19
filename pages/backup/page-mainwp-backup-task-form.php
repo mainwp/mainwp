@@ -412,6 +412,7 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
                             ?>
                             selected<?php endif; ?>><?php esc_html_e( 'Tar BZip2', 'mainwp' ); ?></option>
                     </select>
+                    <em class="mainwp-archive-format-note"><?php esc_html_e( 'For large sites, Tar GZip is the safer choice. It resumes across timeouts, while Zip restarts from the beginning whenever a slice runs out of time.', 'mainwp' ); ?></em>
                 </div>
             </div>
             <?php

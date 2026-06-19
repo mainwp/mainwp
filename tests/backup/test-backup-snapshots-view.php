@@ -139,4 +139,31 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'every site in the network', $output );
 		$this->assertStringContainsString( 'response.multisite', $output );
 	}
+
+	/**
+	 * A WooCommerce store restoring an aged backup gets a strong order-loss
+	 * warning, driven by the flag and age in the list payload.
+	 *
+	 * @return void
+	 */
+	public function test_woocommerce_age_warning_present() {
+		$output = $this->render_page();
+
+		$this->assertStringContainsString( 'response.site_has_woocommerce', $output );
+		$this->assertStringContainsString( 'removes any orders and customers', $output );
+		$this->assertStringContainsString( 'data-snapshot-age', $output );
+	}
+
+	/**
+	 * The destructive restore sends the consent flag the server now
+	 * requires, and the page recovers when the server asks for it.
+	 *
+	 * @return void
+	 */
+	public function test_restore_sends_and_handles_confirm_destructive() {
+		$output = $this->render_page();
+
+		$this->assertStringContainsString( 'confirm_destructive', $output );
+		$this->assertStringContainsString( 'response.needs_confirmation', $output );
+	}
 }

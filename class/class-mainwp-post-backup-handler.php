@@ -116,6 +116,25 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
     }
 
     /**
+     * Whether a restore must be explicitly confirmed before it runs.
+     *
+     * A restore that rewrites the database - anything but a files-only
+     * snapshot - overwrites live data, so the server requires the same
+     * consent the modal collects and a direct AJAX call cannot skip it. The
+     * caller surfaces the WooCommerce/backup-age reason; this only decides
+     * whether the gate fires.
+     *
+     * @param object|null $snapshot            Snapshot row being restored.
+     * @param bool        $confirm_destructive Whether the request carried consent.
+     *
+     * @return bool True when consent is required but absent.
+     */
+    public static function restore_needs_confirmation( $snapshot, $confirm_destructive ) {
+        $destructive = null !== $snapshot && 'files' !== (string) $snapshot->type;
+        return $destructive && ! $confirm_destructive;
+    }
+
+    /**
      * List a site's snapshots with restore availability.
      */
     public function mainwp_restore_snapshot_list() {
@@ -136,6 +155,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                 'task_id'        => (int) $entry['snapshot']->task_id,
                 'type'           => (string) $entry['snapshot']->type,
                 'created'        => (int) $entry['snapshot']->created,
+                'age_days'       => max( 0, (int) floor( ( time() - (int) $entry['snapshot']->created ) / DAY_IN_SECONDS ) ),
                 'status'         => (string) $entry['snapshot']->status,
                 'offsite_state'  => isset( $entry['snapshot']->offsite_state ) ? (string) $entry['snapshot']->offsite_state : '',
                 'source'         => (string) $entry['source'],
@@ -145,8 +165,9 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         }
         wp_send_json(
             array(
-                'snapshots' => $rows,
-                'multisite' => $multisite,
+                'snapshots'            => $rows,
+                'multisite'            => $multisite,
+                'site_has_woocommerce' => MainWP_Utility::site_has_woocommerce( (int) $website->id ),
             )
         );
     }
@@ -157,12 +178,30 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
     public function mainwp_restore_initiate() {
         $this->secure_request( 'mainwp_restore_initiate' );
         // phpcs:disable WordPress.Security.NonceVerification.Missing -- verified by secure_request above.
-        $site_id      = isset( $_POST['site_id'] ) ? (int) $_POST['site_id'] : 0;
-        $snapshot_id  = isset( $_POST['snapshot_id'] ) ? (int) $_POST['snapshot_id'] : 0;
-        $pre_snapshot = isset( $_POST['pre_snapshot'] ) && '1' === $_POST['pre_snapshot'];
+        $site_id             = isset( $_POST['site_id'] ) ? (int) $_POST['site_id'] : 0;
+        $snapshot_id         = isset( $_POST['snapshot_id'] ) ? (int) $_POST['snapshot_id'] : 0;
+        $pre_snapshot        = isset( $_POST['pre_snapshot'] ) && '1' === $_POST['pre_snapshot'];
+        $confirm_destructive = isset( $_POST['confirm_destructive'] ) && '1' === $_POST['confirm_destructive'];
         // phpcs:enable WordPress.Security.NonceVerification.Missing
 
-        if ( null === $this->authorize_restore_site( $site_id ) ) {
+        $website = $this->authorize_restore_site( $site_id );
+        if ( null === $website ) {
+            return;
+        }
+
+        // Re-derive destructive risk server-side. The modal collects consent,
+        // but a direct AJAX call can omit it, so a database-bearing restore is
+        // refused here until confirm_destructive is set. The response carries
+        // the reason (WooCommerce, backup age) for the modal to explain.
+        $snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+        if ( self::restore_needs_confirmation( $snapshot, $confirm_destructive ) ) {
+            wp_send_json(
+                array(
+                    'needs_confirmation'   => true,
+                    'site_has_woocommerce' => MainWP_Utility::site_has_woocommerce( (int) $website->id ),
+                    'age_days'             => max( 0, (int) floor( ( time() - (int) $snapshot->created ) / DAY_IN_SECONDS ) ),
+                )
+            );
             return;
         }
 

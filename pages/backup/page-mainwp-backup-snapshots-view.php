@@ -165,6 +165,9 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             };
             var networkWarning = '<?php echo esc_js( esc_html__( 'This restores every site in the network to the backup\'s point in time.', 'mainwp' ) ); ?>';
             var siteIsMultisite = false;
+            var siteHasWooCommerce = false;
+            var wooMaxAgeDays = <?php echo (int) apply_filters( 'mainwp_restore_woo_max_age_days', 1 ); ?>;
+            var wooAgeWarning = '<?php echo esc_js( esc_html__( 'This store runs WooCommerce and this backup is %d day(s) old. Restoring its database removes any orders and customers created since the backup was taken. Consider a files-only restore to keep the current store data.', 'mainwp' ) ); ?>';
 
             function escAttr( text ) {
                 return String( text ).replace( /&/g, '&amp;' ).replace( /"/g, '&quot;' ).replace( /</g, '&lt;' ).replace( />/g, '&gt;' );
@@ -177,10 +180,11 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 $.post( ajaxurl, { action: 'mainwp_restore_snapshot_list', security: nonces.list, site_id: siteId }, function ( response ) {
                     var rows = '';
                     siteIsMultisite = !! response.multisite;
+                    siteHasWooCommerce = !! response.site_has_woocommerce;
                     ( response.snapshots || [] ).forEach( function ( snap ) {
                         var when = new Date( snap.created * 1000 ).toLocaleString();
                         var action = snap.restorable
-                            ? '<a href="#" class="ui mini green button mainwp-restore-snapshot" data-snapshot="' + snap.id + '" data-snapshot-type="' + snap.type + '"><?php echo esc_js( esc_html__( 'Restore', 'mainwp' ) ); ?></a>'
+                            ? '<a href="#" class="ui mini green button mainwp-restore-snapshot" data-snapshot="' + snap.id + '" data-snapshot-type="' + snap.type + '" data-snapshot-age="' + ( parseInt( snap.age_days, 10 ) || 0 ) + '"><?php echo esc_js( esc_html__( 'Restore', 'mainwp' ) ); ?></a>'
                             : '';
                         var rowClass = snap.restorable ? '' : ' class="disabled"';
                         var rowTitle = ( ! snap.restorable && snap.restore_reason ) ? ' title="' + escAttr( snap.restore_reason ) + '"' : '';
@@ -261,9 +265,14 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             $( document ).on( 'click', '.mainwp-restore-snapshot', function ( event ) {
                 event.preventDefault();
                 currentSnapshot = parseInt( $( this ).data( 'snapshot' ), 10 );
-                var warningText = restoreWarnings[ $( this ).data( 'snapshot-type' ) ] || restoreWarnings['default'];
+                var snapType = $( this ).data( 'snapshot-type' );
+                var snapAge = parseInt( $( this ).data( 'snapshot-age' ), 10 ) || 0;
+                var warningText = restoreWarnings[ snapType ] || restoreWarnings['default'];
                 if ( siteIsMultisite ) {
                     warningText += ' ' + networkWarning;
+                }
+                if ( siteHasWooCommerce && 'files' !== snapType && snapAge > wooMaxAgeDays ) {
+                    warningText += ' ' + wooAgeWarning.replace( '%d', snapAge );
                 }
                 $( '#mainwp-restore-warning-text' ).text( warningText );
                 $( '#mainwp-restore-consent' ).prop( 'checked', false );
@@ -285,8 +294,16 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     security: nonces.initiate,
                     site_id: currentSite,
                     snapshot_id: currentSnapshot,
-                    pre_snapshot: $( '#mainwp-restore-presnapshot' ).is( ':checked' ) ? 1 : 0
+                    pre_snapshot: $( '#mainwp-restore-presnapshot' ).is( ':checked' ) ? 1 : 0,
+                    confirm_destructive: $( '#mainwp-restore-consent' ).is( ':checked' ) ? 1 : 0
                 }, function ( response ) {
+                    if ( response.needs_confirmation ) {
+                        setPane( true );
+                        $( '#mainwp-restore-consent' ).prop( 'checked', false );
+                        $( '#mainwp-restore-start-btn' ).addClass( 'disabled' );
+                        $( '#mainwp-restore-result-message' ).addClass( 'red' ).text( '<?php echo esc_js( esc_html__( 'This restore needs confirmation. Review the warning and check the box to continue.', 'mainwp' ) ); ?>' ).show();
+                        return;
+                    }
                     if ( response.error ) {
                         setPane( false );
                         $( '#mainwp-restore-spinner' ).hide();

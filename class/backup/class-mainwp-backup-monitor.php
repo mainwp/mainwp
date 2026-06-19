@@ -187,16 +187,18 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      *
      * Stores the child backup directory hash in site metadata for later
      * operations (sensitive value: stored only, never rendered), blocks
-     * the backup when the child disk space is critically low, and logs
-     * advisory warnings for the rest of the report.
+     * the backup when the child disk space is critically low, warns when ZIP
+     * is chosen for a large site, and logs advisory warnings for the rest of
+     * the report.
      *
-     * @param object $website     Website object.
-     * @param string $archive_ext Requested archive extension (zip, tar.gz, tar.bz2, tar).
+     * @param object      $website     Website object.
+     * @param string      $archive_ext Requested archive extension (zip, tar.gz, tar.bz2, tar).
+     * @param object|null $task        Backup task, when known, so a ZIP large-site warning can be surfaced on it.
      *
      * @return void
      * @throws MainWP_Exception When the child reports critically low disk space.
      */
-    public static function negotiate_backup_preflight( object &$website, string $archive_ext = '' ): void { // phpcs:ignore -- NOSONAR - complex.
+    public static function negotiate_backup_preflight( object &$website, string $archive_ext = '', ?object $task = null ): void { // phpcs:ignore -- NOSONAR - complex.
         try {
             $preflight = MainWP_Connect::fetch_with_retry( $website, 'backup_preflight', array() );
         } catch ( \Exception $e ) {
@@ -239,6 +241,35 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         );
         if ( isset( $format_support[ $archive_ext ] ) && isset( $preflight[ $format_support[ $archive_ext ] ] ) && ! $preflight[ $format_support[ $archive_ext ] ] ) {
             do_action( 'mainwp_log_warning', sprintf( 'Child site reports no support for the requested %s archive format.', $archive_ext ) );
+        }
+
+        // ZIP archiving restarts from the beginning on each slice timeout, so a
+        // large site can burn the resume budget and stall; tar.gz appends and
+        // resumes. Warn when ZIP is chosen for a site whose estimated backup
+        // size is over the guardrail threshold, and surface it on the task so
+        // the warning is visible before the run.
+        if ( 'zip' === $archive_ext && isset( $preflight['estimated_bytes'] ) && is_numeric( $preflight['estimated_bytes'] ) ) {
+            $zip_threshold = (int) apply_filters( 'mainwp_zip_guardrail_bytes', 2 * GB_IN_BYTES );
+            if ( $zip_threshold > 0 && (int) $preflight['estimated_bytes'] > $zip_threshold ) {
+                $zip_warning = sprintf(
+                    /* translators: %s: estimated backup size */
+                    esc_html__( 'ZIP is not recommended for large sites (estimated %s): it restarts from the beginning on every timeout, while tar.gz resumes across timeouts.', 'mainwp' ),
+                    esc_html( size_format( (int) $preflight['estimated_bytes'] ) )
+                );
+                do_action( 'mainwp_log_warning', $zip_warning );
+                if ( is_object( $task ) && ! empty( $task->id ) && MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id ) ) {
+                    MainWP_DB_Backup::instance()->update_backup_errors( $task->id, $zip_warning . "\n" );
+                }
+            }
+        }
+
+        // The file-walker holds the whole entry list in memory while it sorts,
+        // so a very large file count is an advisory memory risk for any format.
+        if ( isset( $preflight['file_count'] ) && is_numeric( $preflight['file_count'] ) ) {
+            $filecount_advisory = (int) apply_filters( 'mainwp_backup_filecount_advisory', 100000 );
+            if ( $filecount_advisory > 0 && (int) $preflight['file_count'] > $filecount_advisory ) {
+                do_action( 'mainwp_log_warning', sprintf( 'Child site reports a large file count (%d); backups may need extra memory.', (int) $preflight['file_count'] ) );
+            }
         }
 
         if ( ! empty( $preflight['backup_dir_hash'] ) && is_string( $preflight['backup_dir_hash'] ) ) {

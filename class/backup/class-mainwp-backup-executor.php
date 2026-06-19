@@ -235,7 +235,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     'f'                     => $file,
                 );
 
-                MainWP_Backup_Monitor::negotiate_backup_preflight( $website, MainWP_Backup_Settings::get_current_archive_extension( $website, $pTask ) );
+                MainWP_Backup_Monitor::negotiate_backup_preflight( $website, MainWP_Backup_Settings::get_current_archive_extension( $website, $pTask ), $pTask );
 
                 $use_spine = MainWP_Backup_Monitor::child_supports_task_spine( $website );
 

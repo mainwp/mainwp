@@ -92,12 +92,13 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 	 * Run backup_site() with a mocked child, tolerating the expected
 	 * failure after the negotiation phase.
 	 *
-	 * @param int   $site_id   Site ID.
-	 * @param array $responses Child action responses.
+	 * @param int    $site_id        Site ID.
+	 * @param array  $responses      Child action responses.
+	 * @param string $archive_format Task archive format (zip, tar.gz, ...).
 	 *
 	 * @return MainWP_Exception|null The exception raised, if any.
 	 */
-	private function run_backup_site( $site_id, $responses ) {
+	private function run_backup_site( $site_id, $responses, $archive_format = 'zip' ) {
 		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
 		$task    = (object) array(
 			'id'                             => 1,
@@ -109,7 +110,7 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 			'excludenonwp'                   => 0,
 			'excludezip'                     => 0,
 			'filename'                       => '',
-			'archiveFormat'                  => 'zip',
+			'archiveFormat'                  => $archive_format,
 			'loadFilesBeforeZip'             => 1,
 			'maximumFileDescriptorsOverride' => 0,
 			'maximumFileDescriptorsAuto'     => 1,
@@ -146,6 +147,187 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 
 		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
 		$this->assertSame( 'abc123def456gh78', MainWP_DB::instance()->get_website_option( $website, 'backup_dir_hash' ) );
+	}
+
+	/**
+	 * Capture mainwp_log_warning messages fired during a backup run.
+	 *
+	 * @param int    $site_id        Site ID.
+	 * @param array  $preflight      Preflight response overrides.
+	 * @param string $archive_format Task archive format.
+	 *
+	 * @return array The warning messages logged.
+	 */
+	private function capture_backup_warnings( $site_id, $preflight, $archive_format ) {
+		$warnings = array();
+		add_action(
+			'mainwp_log_warning',
+			function ( $message ) use ( &$warnings ) {
+				$warnings[] = $message;
+			}
+		);
+
+		$this->run_backup_site(
+			$site_id,
+			array(
+				'backup_preflight' => $preflight,
+				'backup'           => array( 'error' => 'stop here' ),
+			),
+			$archive_format
+		);
+
+		return $warnings;
+	}
+
+	/**
+	 * Choosing ZIP for a site whose estimated backup size is over the
+	 * guardrail threshold warns before the backup runs. ZIP restarts from
+	 * zero on each slice timeout; tar.gz appends and resumes.
+	 *
+	 * @return void
+	 */
+	public function test_zip_on_large_site_warns() {
+		$warnings = $this->capture_backup_warnings(
+			$this->create_test_site(),
+			$this->preflight_response( array( 'estimated_bytes' => 3 * GB_IN_BYTES ) ),
+			'zip'
+		);
+
+		$this->assertNotEmpty(
+			array_filter(
+				$warnings,
+				function ( $message ) {
+					return false !== stripos( $message, 'ZIP is not recommended' );
+				}
+			),
+			'A ZIP large-site guardrail warning must be logged.'
+		);
+	}
+
+	/**
+	 * A small site keeps ZIP available without any guardrail warning.
+	 *
+	 * @return void
+	 */
+	public function test_zip_under_threshold_is_silent() {
+		$warnings = $this->capture_backup_warnings(
+			$this->create_test_site(),
+			$this->preflight_response( array( 'estimated_bytes' => 100 * MB_IN_BYTES ) ),
+			'zip'
+		);
+
+		$this->assertEmpty(
+			array_filter(
+				$warnings,
+				function ( $message ) {
+					return false !== stripos( $message, 'ZIP is not recommended' );
+				}
+			),
+			'A small ZIP site must not trigger the guardrail.'
+		);
+	}
+
+	/**
+	 * The default tar.gz path resumes across timeouts, so a large site on
+	 * tar.gz never sees the ZIP guardrail warning.
+	 *
+	 * @return void
+	 */
+	public function test_targz_on_large_site_is_silent() {
+		$warnings = $this->capture_backup_warnings(
+			$this->create_test_site(),
+			$this->preflight_response( array( 'estimated_bytes' => 3 * GB_IN_BYTES ) ),
+			'tar.gz'
+		);
+
+		$this->assertEmpty(
+			array_filter(
+				$warnings,
+				function ( $message ) {
+					return false !== stripos( $message, 'ZIP is not recommended' );
+				}
+			),
+			'tar.gz must not trigger the ZIP guardrail.'
+		);
+	}
+
+	/**
+	 * The guardrail threshold is filterable, so a site can be flagged at a
+	 * lower size than the 2GB default.
+	 *
+	 * @return void
+	 */
+	public function test_zip_guardrail_threshold_is_filterable() {
+		add_filter(
+			'mainwp_zip_guardrail_bytes',
+			function () {
+				return 1 * MB_IN_BYTES;
+			}
+		);
+
+		$warnings = $this->capture_backup_warnings(
+			$this->create_test_site(),
+			$this->preflight_response( array( 'estimated_bytes' => 50 * MB_IN_BYTES ) ),
+			'zip'
+		);
+
+		$this->assertNotEmpty(
+			array_filter(
+				$warnings,
+				function ( $message ) {
+					return false !== stripos( $message, 'ZIP is not recommended' );
+				}
+			),
+			'Lowering the guardrail threshold must flag a smaller site.'
+		);
+	}
+
+	/**
+	 * An old child that does not report a size estimate gets no guardrail
+	 * warning and no fatal error.
+	 *
+	 * @return void
+	 */
+	public function test_zip_without_estimate_is_silent() {
+		$warnings = $this->capture_backup_warnings(
+			$this->create_test_site(),
+			$this->preflight_response(),
+			'zip'
+		);
+
+		$this->assertEmpty(
+			array_filter(
+				$warnings,
+				function ( $message ) {
+					return false !== stripos( $message, 'ZIP is not recommended' );
+				}
+			),
+			'A preflight without estimated_bytes must not trigger the guardrail.'
+		);
+	}
+
+	/**
+	 * A very large file count logs a memory advisory regardless of the
+	 * archive format, since the file-walker holds the entry list in memory.
+	 *
+	 * @return void
+	 */
+	public function test_large_file_count_logs_memory_advisory() {
+		$warnings = $this->capture_backup_warnings(
+			$this->create_test_site(),
+			$this->preflight_response( array( 'file_count' => 200000 ) ),
+			'tar.gz'
+		);
+
+		$this->assertNotEmpty(
+			array_filter(
+				$warnings,
+				function ( $message ) {
+					return false !== stripos( $message, 'large file count' );
+				}
+			),
+			'A large file count must log a memory advisory.'
+		);
 	}
 
 	/**

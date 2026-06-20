@@ -81,29 +81,38 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
     }
 
     /**
-     * Create a restore job.
+     * Create a restore job, refusing a duplicate while one is already
+     * active for the site.
+     *
+     * The conditional INSERT writes a row only when no active job exists
+     * for the site, so a racing double-submit cannot persist two pending
+     * restores. The NOT EXISTS subquery reads a different alias from the
+     * insert target, so the engine accepts reading the table it writes.
      *
      * @param int   $site_id     Child site id.
      * @param int   $snapshot_id Snapshot id.
      * @param array $checkpoint  Initial checkpoint (plan + options).
      *
-     * @return int Job id, or 0 on failure.
+     * @return int Job id (> 0) on insert; 0 when an active job already holds
+     *             the site; -1 on a database error (kept distinct so a real
+     *             failure is never read as a benign duplicate).
      */
     public function create_job( int $site_id, int $snapshot_id, array $checkpoint ): int {
-        $now      = time();
-        $inserted = $this->wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- dedicated restore job table.
-            $this->table(),
-            array(
-                'site_id'     => $site_id,
-                'snapshot_id' => $snapshot_id,
-                'status'      => self::STATUS_PENDING,
-                'checkpoint'  => wp_json_encode( $checkpoint ),
-                'created'     => $now,
-                'updated'     => $now,
-            ),
-            array( '%d', '%d', '%s', '%s', '%d', '%d' )
+        $now          = time();
+        $statuses     = self::active_statuses();
+        $placeholders = implode( ',', array_fill( 0, count( $statuses ), '%s' ) );
+
+        $result = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- the atomic create gate; must hit the DB engine.
+            $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- replacements and placeholders come from the same counted array.
+                'INSERT INTO ' . $this->table() . ' ( site_id, snapshot_id, status, checkpoint, created, updated ) SELECT %d, %d, %s, %s, %d, %d FROM DUAL WHERE NOT EXISTS ( SELECT 1 FROM ' . $this->table() . " WHERE site_id = %d AND status IN ( {$placeholders} ) LIMIT 1 )", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- placeholder list built from a counted array; table name from trusted helper.
+                array_merge( array( $site_id, $snapshot_id, self::STATUS_PENDING, wp_json_encode( $checkpoint ), $now, $now, $site_id ), $statuses )
+            )
         );
-        return $inserted ? (int) $this->wpdb->insert_id : 0;
+
+        if ( false === $result ) {
+            return -1; // A real engine failure, not a suppressed duplicate.
+        }
+        return 1 === (int) $result ? (int) $this->wpdb->insert_id : 0;
     }
 
     /**

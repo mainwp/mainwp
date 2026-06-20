@@ -78,8 +78,16 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 	 * create only runs once the first job for that site has finished.
 	 */
 	public function test_acquire_next_job_one_locked_per_site() {
+		global $wpdb;
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+
 		$this->store->create_job( 9901, 42, array() );
-		$job_b = $this->store->create_job( 9901, 43, array() );
+		// Seed the duplicate row directly. create_job's own guard suppresses
+		// a second active row per site, so this row models the rare case of
+		// two coexisting rows; the claim gate must still serialize them.
+		$now = time();
+		$wpdb->query( $wpdb->prepare( 'INSERT INTO ' . $table . ' ( site_id, snapshot_id, status, checkpoint, created, updated ) VALUES ( %d, %d, %s, %s, %d, %d )', 9901, 43, MainWP_Backup_Restore_Job_Store::STATUS_PENDING, '[]', $now, $now ) ); // phpcs:ignore WordPress.DB -- direct seed of the second-row race.
+		$job_b = (int) $wpdb->insert_id;
 
 		$first = $this->store->acquire_next_job( 'token-a', 300 );
 		$this->assertNotNull( $first );
@@ -92,7 +100,28 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 		$this->store->complete_job( (int) $first->id );
 		$third = $this->store->acquire_next_job( 'token-b', 300 );
 		$this->assertNotNull( $third, 'The duplicate runs once the first job finishes.' );
-		$this->assertSame( (int) $job_b, (int) $third->id );
+		$this->assertSame( $job_b, (int) $third->id );
+	}
+
+	/**
+	 * The atomic create gate refuses a second active job for a site, so a
+	 * racing double-submit cannot persist a duplicate restore. A different
+	 * site is unaffected, and once the first job goes terminal the site can
+	 * start a fresh restore (the rollback-after-failure path depends on this).
+	 */
+	public function test_create_job_refuses_duplicate_active_per_site() {
+		$first = $this->store->create_job( 7001, 5, array() );
+		$this->assertGreaterThan( 0, $first );
+
+		$dup = $this->store->create_job( 7001, 5, array() );
+		$this->assertSame( 0, $dup, 'A second active job for the same site is suppressed.' );
+
+		$other = $this->store->create_job( 7002, 5, array() );
+		$this->assertGreaterThan( 0, $other, 'A different site is unaffected.' );
+
+		$this->store->complete_job( $first );
+		$after = $this->store->create_job( 7001, 6, array() );
+		$this->assertGreaterThan( 0, $after, 'A terminal job no longer blocks a fresh restore for the site.' );
 	}
 
 	/**

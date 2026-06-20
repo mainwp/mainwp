@@ -91,7 +91,11 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         );
 
         $job_id = MainWP_Backup_Restore_Job_Store::instance()->create_job( $site_id, $snapshot_id, $checkpoint );
-        if ( 0 === $job_id ) {
+        if ( $job_id <= 0 ) {
+            if ( 0 === $job_id && null !== MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $site_id ) ) {
+                // A concurrent submit won the create race for this site.
+                throw new MainWP_Exception( esc_html__( 'A restore is already running for this site. Wait for it to finish before starting another.', 'mainwp' ) );
+            }
             throw new MainWP_Exception( esc_html__( 'The restore job could not be recorded.', 'mainwp' ) );
         }
 
@@ -148,7 +152,11 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         );
 
         $job_id = MainWP_Backup_Restore_Job_Store::instance()->create_job( (int) $failed_job->site_id, (int) $failed_job->snapshot_id, $checkpoint );
-        if ( 0 === $job_id ) {
+        if ( $job_id <= 0 ) {
+            if ( 0 === $job_id && null !== MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( (int) $failed_job->site_id ) ) {
+                // A concurrent submit won the create race for this site.
+                throw new MainWP_Exception( esc_html__( 'A restore is already running for this site. Wait for it to finish before rolling back.', 'mainwp' ) );
+            }
             throw new MainWP_Exception( esc_html__( 'The rollback job could not be recorded.', 'mainwp' ) );
         }
         return $job_id;

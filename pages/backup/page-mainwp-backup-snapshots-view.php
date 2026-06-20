@@ -289,6 +289,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 if ( $( this ).hasClass( 'disabled' ) ) {
                     return;
                 }
+                $( this ).addClass( 'disabled' ); // Block a second submit while this request is in flight.
                 $.post( ajaxurl, {
                     action: 'mainwp_restore_initiate',
                     security: nonces.initiate,

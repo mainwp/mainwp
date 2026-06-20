@@ -150,7 +150,9 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         $multisite = MainWP_Backup_Monitor::child_is_multisite( $website );
         $rows      = array();
         foreach ( $entries as $entry ) {
-            $rows[] = array(
+            $archives   = isset( $entry['snapshot']->archives ) && is_array( $entry['snapshot']->archives ) ? $entry['snapshot']->archives : array();
+            $size_bytes = (int) array_sum( array_column( $archives, 'size' ) );
+            $rows[]     = array(
                 'id'             => (int) $entry['snapshot']->id,
                 'task_id'        => (int) $entry['snapshot']->task_id,
                 'type'           => (string) $entry['snapshot']->type,
@@ -161,6 +163,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                 'source'         => (string) $entry['source'],
                 'restorable'     => (bool) $entry['restorable'],
                 'restore_reason' => (string) $entry['restore_reason'],
+                'size_label'     => $size_bytes > 0 ? MainWP_Utility::human_filesize( $size_bytes ) : '',
             );
         }
         wp_send_json(
@@ -168,6 +171,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                 'snapshots'            => $rows,
                 'multisite'            => $multisite,
                 'site_has_woocommerce' => MainWP_Utility::site_has_woocommerce( (int) $website->id ),
+                'site_url'             => (string) $website->url,
             )
         );
     }

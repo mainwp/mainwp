@@ -59,7 +59,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
         <div id="mainwp-backup-snapshots" class="ui alt segment">
             <div class="mainwp-main-content">
                 <?php if ( $locked ) : ?>
-                    <h3 class="ui dividing header"><?php esc_html_e( 'Snapshots & Restore', 'mainwp' ); ?></h3>
+                    <h3 class="ui dividing header" style="scroll-margin-top: 6em; padding-top: .5em;"><?php esc_html_e( 'Snapshots & Restore', 'mainwp' ); ?></h3>
                 <?php endif; ?>
                 <div class="ui form">
                     <?php if ( ! $locked ) : ?>
@@ -86,12 +86,13 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                             <th scope="col"><?php esc_html_e( 'Backup', 'mainwp' ); ?></th>
                             <th scope="col"><?php esc_html_e( 'Type', 'mainwp' ); ?></th>
                             <th scope="col"><?php esc_html_e( 'Created', 'mainwp' ); ?></th>
+                            <th scope="col"><?php esc_html_e( 'Size', 'mainwp' ); ?></th>
                             <th scope="col"><?php esc_html_e( 'Available from', 'mainwp' ); ?></th>
                             <th scope="col" class="collapsing"></th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr><td colspan="5"><?php echo $locked ? esc_html__( 'Loading backups...', 'mainwp' ) : esc_html__( 'Select a site to list its backups.', 'mainwp' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- esc_html__ escapes both branches. ?></td></tr>
+                        <tr><td colspan="6"><?php echo $locked ? esc_html__( 'Loading backups...', 'mainwp' ) : esc_html__( 'Select a site to list its backups.', 'mainwp' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- esc_html__ escapes both branches. ?></td></tr>
                     </tbody>
                 </table>
             </div>
@@ -123,8 +124,11 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 <div id="mainwp-restore-progress-pane" style="display:none;">
                     <div class="ui active inline loader" id="mainwp-restore-spinner"></div>
                     <span id="mainwp-restore-status-text"></span>
+                    <div class="ui tiny indicating progress" id="mainwp-restore-progress-bar" style="display:none;margin-top:.75em;"><div class="bar"></div></div>
+                    <div class="ui small blue message" id="mainwp-restore-safety-note" style="display:none;"><?php esc_html_e( 'A safety backup was taken before this restore. If the result looks wrong, you can roll back to it.', 'mainwp' ); ?></div>
                     <div class="ui small yellow message" id="mainwp-restore-cancel-warning" style="display:none;"><?php esc_html_e( 'Cancelling now stops the restore while the site is mid-change. Files already copied stay in place and the previous database tables are kept aside, so a rollback from the safety backup remains available if the site looks wrong afterwards.', 'mainwp' ); ?></div>
                     <div class="ui message" id="mainwp-restore-result-message" style="display:none;"></div>
+                    <div id="mainwp-restore-visit-site-wrap" style="display:none;margin-top:.5em;"><a id="mainwp-restore-visit-site" href="#" target="_blank" rel="noopener" class="ui tiny basic button"><i class="external alternate icon"></i><?php esc_html_e( 'Visit site', 'mainwp' ); ?></a></div>
                 </div>
             </div>
             <div class="actions">
@@ -147,6 +151,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
     private static function render_script( int $site_id ): void { // phpcs:ignore -- NOSONAR - page script.
         $labels = array(
             'pending'          => esc_html__( 'Queued', 'mainwp' ),
+            'preflight'        => esc_html__( 'Checking the site is ready', 'mainwp' ),
             'pre_snapshot'     => esc_html__( 'Creating the safety backup', 'mainwp' ),
             'staging'          => esc_html__( 'Preparing backup files', 'mainwp' ),
             'transferring'     => esc_html__( 'Sending files to the site', 'mainwp' ),
@@ -172,6 +177,8 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             var currentSnapshot = 0;
             var currentJob = 0;
             var pollTimer = null;
+            var currentSiteUrl = '';
+            var phaseOrder = [ 'pending', 'preflight', 'pre_snapshot', 'staging', 'transferring', 'running', 'verifying', 'completed' ];
 
             var sourceLabels = {
                 'local': '<?php echo esc_js( esc_html__( 'This dashboard', 'mainwp' ) ); ?>',
@@ -183,7 +190,9 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
 
             var restoreWarnings = {
                 'default': '<?php echo esc_js( esc_html__( 'Restoring replaces the site\'s files and database with the contents of this backup. Anything changed since the backup was taken will be overwritten.', 'mainwp' ) ); ?>',
-                'files': '<?php echo esc_js( esc_html__( 'Restoring this backup will replace the site\'s files with the snapshot\'s contents. The database will not be changed. Anything in the site files that changed after the snapshot was taken will be overwritten.', 'mainwp' ) ); ?>'
+                'files': '<?php echo esc_js( esc_html__( 'Restoring this backup will replace the site\'s files with the snapshot\'s contents. The database will not be changed. Anything in the site files that changed after the snapshot was taken will be overwritten.', 'mainwp' ) ); ?>',
+                'db': '<?php echo esc_js( esc_html__( 'Restoring this backup replaces the site\'s database with the snapshot\'s contents. Files are not changed. Anything in the database that changed after the snapshot was taken will be overwritten.', 'mainwp' ) ); ?>',
+                'incremental': '<?php echo esc_js( esc_html__( 'Restoring this incremental backup rebuilds the site\'s files and database as of this point in the backup chain. Anything changed since then will be overwritten.', 'mainwp' ) ); ?>'
             };
             var networkWarning = '<?php echo esc_js( esc_html__( 'This restores every site in the network to the backup\'s point in time.', 'mainwp' ) ); ?>';
             var siteIsMultisite = false;
@@ -198,11 +207,12 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             function loadSnapshots( siteId ) {
                 currentSite = siteId;
                 var $tbody = $( '#mainwp-restore-snapshots-table tbody' );
-                $tbody.html( '<tr><td colspan="5"><div class="ui active inline loader mini"></div></td></tr>' );
+                $tbody.html( '<tr><td colspan="6"><div class="ui active inline loader mini"></div></td></tr>' );
                 $.post( ajaxurl, { action: 'mainwp_restore_snapshot_list', security: nonces.list, site_id: siteId }, function ( response ) {
                     var rows = '';
                     siteIsMultisite = !! response.multisite;
                     siteHasWooCommerce = !! response.site_has_woocommerce;
+                    currentSiteUrl = response.site_url || '';
                     ( response.snapshots || [] ).forEach( function ( snap ) {
                         var when = new Date( snap.created * 1000 ).toLocaleString();
                         var action = snap.restorable
@@ -214,10 +224,11 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         if ( 'verified' === snap.offsite_state ) {
                             sourceCell += ' <span class="ui mini green label">' + offsiteVerifiedLabel + '</span>';
                         }
-                        rows += '<tr' + rowClass + rowTitle + '><td>#' + snap.id + '</td><td>' + snap.type + '</td><td>' + when + '</td><td>' + sourceCell + '</td><td>' + action + '</td></tr>';
+                        var sizeCell = snap.size_label ? escAttr( snap.size_label ) : '&mdash;';
+                        rows += '<tr' + rowClass + rowTitle + '><td>#' + snap.id + '</td><td>' + snap.type + '</td><td>' + when + '</td><td>' + sizeCell + '</td><td>' + sourceCell + '</td><td>' + action + '</td></tr>';
                     } );
                     if ( '' === rows ) {
-                        rows = '<tr><td colspan="5"><?php echo esc_js( esc_html__( 'No backups recorded for this site yet.', 'mainwp' ) ); ?></td></tr>';
+                        rows = '<tr><td colspan="6"><?php echo esc_js( esc_html__( 'No backups recorded for this site yet.', 'mainwp' ) ); ?></td></tr>';
                     }
                     $tbody.html( rows );
                 }, 'json' );
@@ -247,10 +258,31 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 $( '#mainwp-restore-cancel-warning' ).toggle( 'running' === data.status && ! cancelPending );
                 $( '#mainwp-restore-rollback-btn' ).toggle( ( 'failed_permanent' === data.status || 'cancelled' === data.status ) && !! data.has_rollback );
 
+                // Surface the safety backup whenever one exists for this run,
+                // so the safety net is visible and not implied (L4).
+                $( '#mainwp-restore-safety-note' ).toggle( !! data.has_rollback );
+
+                // A phase progress bar across the known sequence (L3). The
+                // failed/cancelled states leave it where it stopped.
+                var $bar = $( '#mainwp-restore-progress-bar' );
+                var idx = phaseOrder.indexOf( data.status );
+                if ( 'failed_permanent' === data.status || 'cancelled' === data.status ) {
+                    $bar.hide();
+                } else if ( idx >= 0 ) {
+                    var pct = Math.round( ( idx + 1 ) / phaseOrder.length * 100 );
+                    $bar.show().find( '.bar' ).css( 'width', pct + '%' );
+                }
+
                 if ( terminal ) {
                     var $message = $( '#mainwp-restore-result-message' );
                     $message.removeClass( 'green red' ).addClass( 'completed' === data.status ? 'green' : 'red' );
                     $message.text( 'completed' === data.status ? '<?php echo esc_js( esc_html__( 'The site was restored and responds normally.', 'mainwp' ) ); ?>' : ( data.last_error || label ) ).show();
+                    // Offer to open the restored site, and let the safety note
+                    // stay visible while a rollback is still available (L5).
+                    $( '#mainwp-restore-visit-site-wrap' ).toggle( 'completed' === data.status && '' !== currentSiteUrl );
+                    if ( 'completed' === data.status && '' !== currentSiteUrl ) {
+                        $( '#mainwp-restore-visit-site' ).attr( 'href', currentSiteUrl );
+                    }
                     window.clearTimeout( pollTimer );
                 } else if ( data.last_error ) {
                     $( '#mainwp-restore-result-message' ).removeClass( 'green' ).addClass( 'red' ).text( data.last_error ).show();
@@ -284,6 +316,12 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 }
             } );
 
+            // Initialise the modal once. Re-initialising on every open (the
+            // former `.modal({...}).modal('show')` chain) re-ran setup against an
+            // in-flight open/close transition and threw InvalidStateError; a single
+            // init plus a guarded show keeps the transition state consistent (M5).
+            $( '#mainwp-restore-modal' ).modal( { closable: false } );
+
             $( document ).on( 'click', '.mainwp-restore-snapshot', function ( event ) {
                 event.preventDefault();
                 currentSnapshot = parseInt( $( this ).data( 'snapshot' ), 10 );
@@ -300,7 +338,9 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 $( '#mainwp-restore-consent' ).prop( 'checked', false );
                 $( '#mainwp-restore-start-btn' ).addClass( 'disabled' );
                 setPane( true );
-                $( '#mainwp-restore-modal' ).modal( { closable: false } ).modal( 'show' );
+                if ( ! $( '#mainwp-restore-modal' ).modal( 'is active' ) ) {
+                    $( '#mainwp-restore-modal' ).modal( 'show' );
+                }
             } );
 
             $( '#mainwp-restore-consent' ).on( 'change', function () {

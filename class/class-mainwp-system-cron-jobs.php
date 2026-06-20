@@ -75,6 +75,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         add_action( 'mainwp_cronreconnect_action', array( $this, 'cron_reconnect' ) );
         add_action( 'mainwp_cronbackups_action', array( $this, 'cron_backups' ) );
         add_action( 'mainwp_cronbackups_continue_action', array( $this, 'cron_backups_continue' ) );
+        add_action( 'mainwp_restore_continue_action', array( $this, 'cron_restore_continue' ) );
         add_action( 'mainwp_cronbackups_prune_action', array( $this, 'cron_backups_prune' ) );
         add_action( 'mainwp_cronupdatescheck_action', array( $this, 'cron_updates_check' ) );
         add_action( 'mainwp_cronpingchilds_action', array( $this, 'cron_ping_childs' ) );
@@ -1475,6 +1476,30 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
             }
         }
         MainWP_DB::free_result( $websites );
+    }
+
+    /**
+     * Method cron_restore_continue()
+     *
+     * Drive pending native restore jobs on the dedicated immediate-kick
+     * lane. The restore orchestrator schedules this as a single event so a
+     * restore advances without waiting for the five-minute backup
+     * continuation cron; the periodic lane still calls
+     * process_pending_restore_jobs() as the backstop. Kept separate from
+     * cron_backups_continue() so a restore kick does not also spin the
+     * upload, cloud-delete, retention, and legacy-backup lanes.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Backup_Restore_Orchestrator::process_pending_restore_jobs()
+     */
+    public function cron_restore_continue() {
+        if ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
+            return;
+        }
+
+        ignore_user_abort( true );
+        MainWP_System_Utility::set_time_limit( 0 );
+
+        MainWP_Backup_Restore_Orchestrator::instance()->process_pending_restore_jobs();
     }
 
     /**

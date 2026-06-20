@@ -99,6 +99,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             throw new MainWP_Exception( esc_html__( 'The restore job could not be recorded.', 'mainwp' ) );
         }
 
+        $this->schedule_continuation();
         return $job_id;
     }
 
@@ -159,6 +160,8 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             }
             throw new MainWP_Exception( esc_html__( 'The rollback job could not be recorded.', 'mainwp' ) );
         }
+
+        $this->schedule_continuation();
         return $job_id;
     }
 
@@ -353,7 +356,34 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
     }
 
     /**
+     * Schedule an immediate continuation tick on the dedicated restore
+     * lane so a job advances without waiting for the 5-minute backup
+     * continuation cron.
+     *
+     * WordPress de-duplicates an identical pending single event within its
+     * ~10-minute window, and spawn_cron only spawns once per
+     * WP_CRON_LOCK_TIMEOUT, so repeated calls collapse into a natural
+     * throttle rather than a busy loop. Under DISABLE_WP_CRON spawn_cron
+     * is a no-op and the periodic cron remains the backstop.
+     */
+    protected function schedule_continuation(): void {
+        if ( ! wp_next_scheduled( 'mainwp_restore_continue_action' ) ) {
+            wp_schedule_single_event( time(), 'mainwp_restore_continue_action' );
+        }
+        spawn_cron();
+    }
+
+    /**
      * Drive pending restore jobs for one budgeted cron slice.
+     *
+     * Cheap phases (pending -> preflight -> staging ...) are drained in a
+     * single slice instead of one phase per 5-minute tick: the loop keeps
+     * advancing the job while it makes forward progress to another active
+     * phase and the budget holds. A phase that returns without changing the
+     * status (the child is still working), reaches a terminal state, or
+     * backs off (failed_retryable) ends the drain. When the slice ends with
+     * the job still mid-flight, a near-term continuation is scheduled so the
+     * next poll does not wait for the periodic cron.
      *
      * @param int $budget_seconds Slice budget.
      */
@@ -366,15 +396,44 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         if ( null === $job ) {
             return;
         }
+        $job_id = (int) $job->id;
 
         try {
-            $this->run_job( $job, $deadline );
+            while ( true ) {
+                $before = $job->status;
+                $this->run_job( $job, $deadline );
+
+                $job = $store->get_job( $job_id );
+                if ( null === $job ) {
+                    break;
+                }
+                $after = $job->status;
+                if ( $after === $before
+                    || MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE === $after
+                    || ! in_array( $after, MainWP_Backup_Restore_Job_Store::active_statuses(), true )
+                    || microtime( true ) >= $deadline
+                ) {
+                    break;
+                }
+            }
         } catch ( \Throwable $e ) {
             $code = ( $e instanceof MainWP_Exception ) ? $e->get_message_error_code() : '';
             $this->record_failure( $job, MainWP_Backup_Error_Codes::sanitize_message( $e->getMessage() ), true, $code );
+        } finally {
+            $store->release_lock( $job_id, $token );
         }
 
-        $store->release_lock( (int) $job->id, $token );
+        // Still mid-flight on a phase that polls the child: kick a near-term
+        // continuation rather than idling until the 5-minute cron. Skipped
+        // for terminal jobs and for failed_retryable (its next_retry_at
+        // backoff gates re-acquisition, so a spawn now would only no-op).
+        $job = $store->get_job( $job_id );
+        if ( null !== $job
+            && MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE !== $job->status
+            && in_array( $job->status, MainWP_Backup_Restore_Job_Store::active_statuses(), true )
+        ) {
+            $this->schedule_continuation();
+        }
     }
 
     /**

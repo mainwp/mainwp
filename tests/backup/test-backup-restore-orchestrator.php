@@ -86,6 +86,14 @@ class Testable_Restore_Orchestrator extends MainWP_Backup_Restore_Orchestrator {
 	public $driver = null;
 
 	/**
+	 * Count of continuation kicks, so tests can assert the immediate
+	 * kick fires without scheduling real cron.
+	 *
+	 * @var int
+	 */
+	public $continuation_count = 0;
+
+	/**
 	 * Pinned check.
 	 *
 	 * @param object $website Website.
@@ -94,6 +102,13 @@ class Testable_Restore_Orchestrator extends MainWP_Backup_Restore_Orchestrator {
 	 */
 	protected function site_responds( object $website ): bool {
 		return $this->responds;
+	}
+
+	/**
+	 * Record the kick instead of scheduling real cron / spawning a loopback.
+	 */
+	protected function schedule_continuation(): void {
+		++$this->continuation_count;
 	}
 
 	/**
@@ -915,5 +930,84 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$this->orchestrator->cancel_job( (int) $job->id );
 
 		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED, MainWP_Backup_Restore_Job_Store::instance()->get_job( (int) $job->id )->status );
+	}
+
+	/**
+	 * Initiating a job kicks an immediate continuation so the restore
+	 * starts within seconds instead of waiting for the next 5-minute tick.
+	 */
+	public function test_initiate_rollback_kicks_immediate_continuation() {
+		$failed = $this->make_job(
+			array(
+				'pre_snapshot_artifacts' => array(
+					array(
+						'file' => 'backup-pre.tar.gz',
+						'size' => 1234,
+						'role' => 'full',
+					),
+				),
+			),
+			MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT
+		);
+
+		$this->assertSame( 0, $this->orchestrator->continuation_count );
+		$this->orchestrator->initiate_rollback( $failed );
+		$this->assertSame( 1, $this->orchestrator->continuation_count, 'initiate_rollback must kick a continuation.' );
+	}
+
+	/**
+	 * One budgeted slice drains the cheap phases (pending -> preflight ->
+	 * staging -> running) instead of advancing a single phase per tick, and
+	 * schedules a near-term continuation because the job is still mid-flight.
+	 */
+	public function test_process_pending_drains_multiple_phases_in_one_slice() {
+		$this->use_cloud_pull_driver( $this->pull_manifest_fixture() );
+		$this->responses['restore_task_create'] = array(
+			'task_id' => 'task-9-restore',
+			'phase'   => 'queued',
+		);
+
+		$this->make_job(); // pending, local plan, pre_snapshot off.
+
+		$this->orchestrator->process_pending_restore_jobs( 30 );
+
+		$job = MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $this->site_id );
+		$this->assertNotNull( $job );
+		$this->assertSame(
+			MainWP_Backup_Restore_Job_Store::STATUS_RUNNING,
+			$job->status,
+			'A single slice must drain pending -> preflight -> staging -> running.'
+		);
+		$this->assertGreaterThanOrEqual( 1, $this->orchestrator->continuation_count, 'A mid-flight job must schedule a continuation.' );
+	}
+
+	/**
+	 * A slice that reaches a terminal state does not schedule a
+	 * continuation - there is nothing left to drive.
+	 */
+	public function test_process_pending_no_continuation_when_terminal() {
+		$this->orchestrator->responds = true;
+		$this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_VERIFYING, array( 'child_task_id' => 'task-9-restore' ) );
+
+		$this->orchestrator->process_pending_restore_jobs( 30 );
+
+		$job = MainWP_Backup_Restore_Job_Store::instance()->get_job( $this->job_id_for_site() );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_COMPLETED, $job->status );
+		$this->assertSame( 0, $this->orchestrator->continuation_count, 'A terminal job must not kick a continuation.' );
+	}
+
+	/**
+	 * Newest job id for the test site (active or terminal).
+	 *
+	 * @return int
+	 */
+	private function job_id_for_site() {
+		global $wpdb;
+		return (int) $wpdb->get_var( // phpcs:ignore WordPress.DB -- test helper.
+			$wpdb->prepare(
+				'SELECT id FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ) . ' WHERE site_id = %d ORDER BY id DESC LIMIT 1',
+				$this->site_id
+			)
+		);
 	}
 }

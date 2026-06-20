@@ -956,29 +956,50 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
-	 * One budgeted slice drains the cheap phases (pending -> preflight ->
-	 * staging -> running) instead of advancing a single phase per tick, and
-	 * schedules a near-term continuation because the job is still mid-flight.
+	 * One budgeted slice drains every phase to completion instead of
+	 * advancing a single phase per 5-minute tick: pending -> preflight ->
+	 * staging -> running (the child poll runs to a terminal phase within the
+	 * slice) -> verifying -> completed.
 	 */
-	public function test_process_pending_drains_multiple_phases_in_one_slice() {
+	public function test_process_pending_drains_to_completion_in_one_slice() {
 		$this->use_cloud_pull_driver( $this->pull_manifest_fixture() );
 		$this->responses['restore_task_create'] = array(
 			'task_id' => 'task-9-restore',
 			'phase'   => 'queued',
+		);
+		$this->responses['restore_task_run'] = array(
+			'task_id'   => 'task-9-restore',
+			'phase'     => 'completed',
+			'sub_state' => array( 'verification' => array( 'row_counts_ok' => true ) ),
 		);
 
 		$this->make_job(); // pending, local plan, pre_snapshot off.
 
 		$this->orchestrator->process_pending_restore_jobs( 30 );
 
-		$job = MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $this->site_id );
-		$this->assertNotNull( $job );
+		$job = MainWP_Backup_Restore_Job_Store::instance()->get_job( $this->job_id_for_site() );
 		$this->assertSame(
-			MainWP_Backup_Restore_Job_Store::STATUS_RUNNING,
+			MainWP_Backup_Restore_Job_Store::STATUS_COMPLETED,
 			$job->status,
-			'A single slice must drain pending -> preflight -> staging -> running.'
+			'A single slice must drain pending all the way to completed.'
 		);
-		$this->assertGreaterThanOrEqual( 1, $this->orchestrator->continuation_count, 'A mid-flight job must schedule a continuation.' );
+		$this->assertSame( 0, $this->orchestrator->continuation_count, 'A completed job leaves nothing to continue.' );
+	}
+
+	/**
+	 * A slice that ends with the child still mid-restore schedules a
+	 * near-term continuation so the next child poll does not wait for the
+	 * 5-minute backstop. A zero budget makes phase_running return at the
+	 * (already-passed) deadline without polling, isolating the re-kick.
+	 */
+	public function test_process_pending_rekicks_a_mid_flight_running_job() {
+		$this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, array( 'child_task_id' => 'task-9-restore' ) );
+
+		$this->orchestrator->process_pending_restore_jobs( 0 );
+
+		$job = MainWP_Backup_Restore_Job_Store::instance()->get_job( $this->job_id_for_site() );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, $job->status, 'A still-working restore stays running.' );
+		$this->assertSame( 1, $this->orchestrator->continuation_count, 'A mid-flight job must schedule a continuation.' );
 	}
 
 	/**

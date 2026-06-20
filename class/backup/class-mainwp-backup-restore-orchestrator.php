@@ -480,7 +480,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 $this->phase_transferring( $job, $deadline );
                 break;
             case MainWP_Backup_Restore_Job_Store::STATUS_RUNNING:
-                $this->phase_running( $job );
+                $this->phase_running( $job, $deadline );
                 break;
             case MainWP_Backup_Restore_Job_Store::STATUS_VERIFYING:
                 $this->phase_verifying( $job );
@@ -721,57 +721,73 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
     }
 
     /**
-     * Running: drive the child restore task one slice per round trip.
+     * Running: drive the child restore task within the slice budget.
      *
-     * @param object $job Job row.
+     * The child advances its restore one step per restore_task_run round
+     * trip, so the poll loops until the child reaches a terminal phase or
+     * the slice deadline passes - the same shape as the pre_snapshot,
+     * staging, and transferring phases. Polling within the slice (rather
+     * than one round trip per cron tick) is what lets a restore finish in
+     * a single continuation: the post-slice continuation kick is a no-op
+     * when fired from inside a cron run (WP-Cron holds its own lock), so a
+     * once-per-tick poll would otherwise fall back to the 5-minute backstop
+     * between child steps on a low-traffic dashboard.
+     *
+     * @param object $job      Job row.
+     * @param float  $deadline Slice deadline.
      */
-    private function phase_running( object $job ): void {
+    private function phase_running( object $job, float $deadline ): void {
         $store   = MainWP_Backup_Restore_Job_Store::instance();
         $website = $this->website( $job );
-        $payload = MainWP_Connect::fetch_url_authed( $website, 'restore_task_run', array( 'task_id' => $job->child_task_id ), false, false, false );
 
-        // A terminal failed phase carries an error key too - phase wins.
-        if ( ! is_array( $payload ) || ( ! isset( $payload['phase'] ) && isset( $payload['error'] ) ) ) {
-            $message    = is_array( $payload ) && isset( $payload['error'] ) ? (string) $payload['error'] : esc_html__( 'The child site returned no restore status.', 'mainwp' );
-            $error_code = is_array( $payload ) && isset( $payload['error_code'] ) ? (string) $payload['error_code'] : '';
-            $this->record_failure( $job, $message, true, $error_code );
-            return;
-        }
+        while ( microtime( true ) < $deadline ) {
+            $payload = MainWP_Connect::fetch_url_authed( $website, 'restore_task_run', array( 'task_id' => $job->child_task_id ), false, false, false );
 
-        $phase = isset( $payload['phase'] ) ? (string) $payload['phase'] : '';
-        if ( 'completed' === $phase ) {
-            $checkpoint                 = $job->checkpoint;
-            $checkpoint['verification'] = isset( $payload['sub_state']['verification'] ) ? $payload['sub_state']['verification'] : array();
-            $store->save_checkpoint( (int) $job->id, $checkpoint );
-            $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_VERIFYING );
-            return;
-        }
-        if ( 'failed' === $phase ) {
-            $error_code = isset( $payload['error_code'] ) ? (string) $payload['error_code'] : '';
-            if ( '' === $error_code && isset( $payload['sub_state']['error']['code'] ) ) {
-                $error_code = (string) $payload['sub_state']['error']['code'];
-            }
-
-            // A failed cloud pull never fails the restore: the job goes
-            // back through staging once, taking the standard transfer.
-            if ( 'mainwp_cloud_pull_failed' === $error_code && empty( $job->checkpoint['cloud_pull_tried'] ) ) {
-                $checkpoint                     = $job->checkpoint;
-                $checkpoint['cloud_pull_tried'] = true;
-                $checkpoint['transfer']         = array();
-                $store->save_checkpoint( (int) $job->id, $checkpoint );
-                $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_STAGING, array( 'child_task_id' => '' ) );
-                do_action( 'mainwp_log_warning', sprintf( 'Restore job %d: the direct cloud download failed on the site; retrying with the standard transfer.', (int) $job->id ) );
+            // A terminal failed phase carries an error key too - phase wins.
+            if ( ! is_array( $payload ) || ( ! isset( $payload['phase'] ) && isset( $payload['error'] ) ) ) {
+                $message    = is_array( $payload ) && isset( $payload['error'] ) ? (string) $payload['error'] : esc_html__( 'The child site returned no restore status.', 'mainwp' );
+                $error_code = is_array( $payload ) && isset( $payload['error_code'] ) ? (string) $payload['error_code'] : '';
+                $this->record_failure( $job, $message, true, $error_code );
                 return;
             }
 
-            $error = isset( $payload['error'] ) ? (string) $payload['error'] : esc_html__( 'The restore failed on the child site.', 'mainwp' );
-            if ( isset( $payload['sub_state']['error']['message'] ) ) {
-                $error = (string) $payload['sub_state']['error']['message'];
+            $phase = isset( $payload['phase'] ) ? (string) $payload['phase'] : '';
+            if ( 'completed' === $phase ) {
+                $checkpoint                 = $job->checkpoint;
+                $checkpoint['verification'] = isset( $payload['sub_state']['verification'] ) ? $payload['sub_state']['verification'] : array();
+                $store->save_checkpoint( (int) $job->id, $checkpoint );
+                $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_VERIFYING );
+                return;
             }
-            $this->record_failure( $job, $error, false, $error_code );
-            return;
+            if ( 'failed' === $phase ) {
+                $error_code = isset( $payload['error_code'] ) ? (string) $payload['error_code'] : '';
+                if ( '' === $error_code && isset( $payload['sub_state']['error']['code'] ) ) {
+                    $error_code = (string) $payload['sub_state']['error']['code'];
+                }
+
+                // A failed cloud pull never fails the restore: the job goes
+                // back through staging once, taking the standard transfer.
+                if ( 'mainwp_cloud_pull_failed' === $error_code && empty( $job->checkpoint['cloud_pull_tried'] ) ) {
+                    $checkpoint                     = $job->checkpoint;
+                    $checkpoint['cloud_pull_tried'] = true;
+                    $checkpoint['transfer']         = array();
+                    $store->save_checkpoint( (int) $job->id, $checkpoint );
+                    $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_STAGING, array( 'child_task_id' => '' ) );
+                    do_action( 'mainwp_log_warning', sprintf( 'Restore job %d: the direct cloud download failed on the site; retrying with the standard transfer.', (int) $job->id ) );
+                    return;
+                }
+
+                $error = isset( $payload['error'] ) ? (string) $payload['error'] : esc_html__( 'The restore failed on the child site.', 'mainwp' );
+                if ( isset( $payload['sub_state']['error']['message'] ) ) {
+                    $error = (string) $payload['sub_state']['error']['message'];
+                }
+                $this->record_failure( $job, $error, false, $error_code );
+                return;
+            }
+            // Still working within this slice: poll the child again.
         }
-        // Still working: the next tick polls again.
+        // Slice budget spent with the child still working: the next
+        // continuation (or the periodic cron) polls again.
     }
 
     /**

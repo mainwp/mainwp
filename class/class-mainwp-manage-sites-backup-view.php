@@ -34,13 +34,17 @@ class MainWP_Manage_Sites_Backup_View { // phpcs:ignore Generic.Classes.OpeningB
         $mwpDir = MainWP_System_Utility::get_mainwp_dir();
         $mwpDir = $mwpDir[0];
         // phpcs:disable WordPress.Security.EscapeOutput
-        $output = '';
+        // Native backups surface restore on their own panel on this tab, so the
+        // legacy per-file SiteRestore link (the broken legacy restore path) is
+        // suppressed when native is enabled. The Download link stays either way.
+        $native_backups = MainWP_Backup_Settings::is_native_backups_enabled();
+        $output         = '';
         foreach ( $fullBackups as $fullBackup ) {
             $downloadLink = admin_url( '?sig=' . MainWP_System_Utility::get_download_sig( $fullBackup ) . '&mwpdl=' . rawurlencode( str_replace( $mwpDir, '', $fullBackup ) ) );
             $output      .= '<div class="ui grid field">';
             $output      .= '<label class="six wide column middle aligned">' . MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( filemtime( $fullBackup ) ) ) . ' - ' . MainWP_Utility::human_filesize( filesize( $fullBackup ) ) . '</label>';
-            $output      .= '<div class="ten wide column ui toggle checkbox"><a title="' . basename( $fullBackup ) . '" href="' . esc_url( $downloadLink ) . '" class="button">Download</a>';
-            $output      .= '<a href="admin.php?page=SiteRestore&websiteid=' . intval( $website->id ) . '&f=' . base64_encode( $downloadLink ) . '&size=' . filesize( $fullBackup ) . '&_opennonce=' . wp_create_nonce( 'mainwp-admin-nonce' ) . '" class="mainwp-upgrade-button button" target="_blank" title="' . basename( $fullBackup ) . '">Restore</a>'; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() used for http encoding compatible.
+            $restoreLink  = $native_backups ? '' : '<a href="admin.php?page=SiteRestore&websiteid=' . intval( $website->id ) . '&f=' . base64_encode( $downloadLink ) . '&size=' . filesize( $fullBackup ) . '&_opennonce=' . wp_create_nonce( 'mainwp-admin-nonce' ) . '" class="mainwp-upgrade-button button" target="_blank" title="' . basename( $fullBackup ) . '">Restore</a>'; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() used for http encoding compatible.
+            $output      .= '<div class="ten wide column ui toggle checkbox"><a title="' . basename( $fullBackup ) . '" href="' . esc_url( $downloadLink ) . '" class="button">Download</a>' . $restoreLink;
             $output      .= '</div>';
             $output      .= '</div>';
         }
@@ -93,6 +97,12 @@ class MainWP_Manage_Sites_Backup_View { // phpcs:ignore Generic.Classes.OpeningB
         <?php if ( empty( $primaryBackupMethods ) ) { ?>
             <div class="ui blue message"><?php printf( /* translators: 1: Opening anchor tag, 2: Closing anchor tag with icon. */ esc_html__( 'Did you know that MainWP has Extensions for working with popular backup plugins? Visit the %1$sExtensions Site%2$s for options.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank" ?>', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?></div>
             <?php
+        }
+
+        // Native restore lives on its own surface so the per-site Backups tab
+        // reaches the working snapshot restore flow, not the legacy per-file link.
+        if ( MainWP_Backup_Settings::is_native_backups_enabled() ) {
+            MainWP_Backup_Snapshots_View::render_restore_surface( (int) $website->id, true );
         }
         ?>
         <div class="ui alt segment">

@@ -28,25 +28,47 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
     /**
      * Render the snapshots page.
      */
-    public static function render(): void { // phpcs:ignore -- NOSONAR - page assembly.
+    public static function render(): void {
         if ( ! \mainwp_current_user_can( 'dashboard', 'execute_backups' ) ) {
             \mainwp_do_not_have_permissions( esc_html__( 'restore backups', 'mainwp' ) );
             return;
         }
 
-        $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
-        $site_id  = isset( $_GET['site_id'] ) ? (int) $_GET['site_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display filter only.
+        $site_id = isset( $_GET['site_id'] ) ? (int) $_GET['site_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display filter only.
 
         MainWP_Backup_Page::render_header( 'Snapshots' );
+        static::render_restore_surface( $site_id, false );
+    }
+
+    /**
+     * Render the restore surface: the site picker (standalone only), the
+     * snapshot list, the confirm/progress/cancel/rollback modal, and the page
+     * script. Shared by the standalone Snapshots page and the per-site Backups
+     * tab so both speak to the same restore flow.
+     *
+     * @param int  $site_id Preselected (standalone) or locked (per-site) site id; 0 = none.
+     * @param bool $locked  When true, render for one fixed site: no site picker,
+     *                      and a section heading is shown for the embedded context.
+     */
+    public static function render_restore_surface( int $site_id, bool $locked = false ): void { // phpcs:ignore -- NOSONAR - page assembly.
+        if ( ! \mainwp_current_user_can( 'dashboard', 'execute_backups' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'restore backups', 'mainwp' ) );
+            return;
+        }
         ?>
         <div id="mainwp-backup-snapshots" class="ui alt segment">
             <div class="mainwp-main-content">
+                <?php if ( $locked ) : ?>
+                    <h3 class="ui dividing header"><?php esc_html_e( 'Snapshots & Restore', 'mainwp' ); ?></h3>
+                <?php endif; ?>
                 <div class="ui form">
+                    <?php if ( ! $locked ) : ?>
                     <div class="inline field">
                         <label><?php esc_html_e( 'Site', 'mainwp' ); ?></label>
                         <select id="mainwp-restore-site-selector" class="ui search selection dropdown">
                             <option value="0"><?php esc_html_e( 'Select a site', 'mainwp' ); ?></option>
                             <?php
+                            $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
                             while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) { // phpcs:ignore Generic.CodeAnalysis.AssignmentInCondition -- standard MainWP result loop.
                                 ?>
                                 <option value="<?php echo (int) $website->id; ?>" <?php selected( $site_id, (int) $website->id ); ?>><?php echo esc_html( stripslashes( $website->name ) ); ?></option>
@@ -56,9 +78,9 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                             ?>
                         </select>
                     </div>
-                </div>
+                    <?php endif; ?>
 
-                <table class="ui table" id="mainwp-restore-snapshots-table">
+                    <table class="ui table" id="mainwp-restore-snapshots-table">
                     <thead>
                         <tr>
                             <th scope="col"><?php esc_html_e( 'Backup', 'mainwp' ); ?></th>
@@ -69,7 +91,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         </tr>
                     </thead>
                     <tbody>
-                        <tr><td colspan="5"><?php esc_html_e( 'Select a site to list its backups.', 'mainwp' ); ?></td></tr>
+                        <tr><td colspan="5"><?php echo $locked ? esc_html__( 'Loading backups...', 'mainwp' ) : esc_html__( 'Select a site to list its backups.', 'mainwp' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- esc_html__ escapes both branches. ?></td></tr>
                     </tbody>
                 </table>
             </div>

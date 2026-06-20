@@ -50,7 +50,10 @@ class MainWP_Manage_Sites_Backup_View { // phpcs:ignore Generic.Classes.OpeningB
         }
 
         ?>
-        <h3 class="ui dividing header"><?php esc_html_e( 'Backup Details', 'mainwp' ); ?></h3>
+        <h3 class="ui dividing header"><?php echo $native_backups ? esc_html__( 'Downloadable archives', 'mainwp' ) : esc_html__( 'Backup Details', 'mainwp' ); ?></h3>
+        <?php if ( $native_backups ) : ?>
+        <p><?php esc_html_e( 'These are one-off archives you can download. They are separate from the restorable snapshot history shown above and are not restored from this list.', 'mainwp' ); ?></p>
+        <?php endif; ?>
         <h3 class="header"><?php echo '' === $output ? esc_html__( 'No full backup has been taken yet', 'mainwp' ) : esc_html__( 'Last backups from your files', 'mainwp' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></h3>
         <?php
         echo $output;
@@ -164,8 +167,12 @@ class MainWP_Manage_Sites_Backup_View { // phpcs:ignore Generic.Classes.OpeningB
             return;
         }
 
+        // Under native backups this form produces a one-off downloadable
+        // archive (the legacy path), not a restorable snapshot, so its
+        // heading and action are labelled to say so.
+        $native_backups = MainWP_Backup_Settings::is_native_backups_enabled();
         ?>
-            <h3 class="ui dividing header"><?php esc_html_e( 'Backup Options', 'mainwp' ); ?></h3>
+            <h3 class="ui dividing header"><?php echo $native_backups ? esc_html__( 'Create a downloadable archive', 'mainwp' ) : esc_html__( 'Backup Options', 'mainwp' ); // phpcs:ignore WordPress.Security.EscapeOutput -- esc_html__ output. ?></h3>
             <form method="POST" action="" class="ui form">
                 <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                 <input type="hidden" name="site_id" id="backup_site_id" value="<?php echo intval( $website->id ); ?>"/>
@@ -300,7 +307,7 @@ class MainWP_Manage_Sites_Backup_View { // phpcs:ignore Generic.Classes.OpeningB
                         </div>
                     </div>
                 </div>
-                <input type="button" name="backup_btnSubmit" id="backup_btnSubmit" class="ui button green big floated" value="<?php esc_attr_e( 'Backup Now', 'mainwp' ); ?>"/>
+                <input type="button" name="backup_btnSubmit" id="backup_btnSubmit" class="ui button green big floated" value="<?php echo $native_backups ? esc_attr__( 'Create downloadable archive', 'mainwp' ) : esc_attr__( 'Backup Now', 'mainwp' ); // phpcs:ignore WordPress.Security.EscapeOutput -- esc_attr__ output. ?>"/>
             </form>
         <?php
     }

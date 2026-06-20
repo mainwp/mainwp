@@ -130,4 +130,56 @@ class MainWP_Backup_Restore_Nav_Link_Test extends MainWP_Abilities_Test_Case {
 		$this->assertStringContainsString( '>Download</a>', $native_on, 'Native on: the Download link stays.' );
 		$this->assertStringContainsString( 'page=SiteRestore', $native_off, 'Native off: the legacy restore link remains.' );
 	}
+
+	/**
+	 * Under native backups the legacy archive section is relabelled
+	 * "Downloadable archives" with a note that it is separate from the
+	 * restorable snapshot history, so the native list reads as the single
+	 * source of truth. Off, the original "Backup Details" heading stays.
+	 *
+	 * @return void
+	 */
+	public function test_native_relabels_legacy_archive_section() {
+		$this->as_admin();
+
+		$site_id = $this->create_test_site();
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		ob_start();
+		MainWP_Manage_Sites_Backup_View::show_backups( $website, array(), array() );
+		$native_on = ob_get_clean();
+
+		update_option( 'mainwp_enableNativeBackups', '' );
+		ob_start();
+		MainWP_Manage_Sites_Backup_View::show_backups( $website, array(), array() );
+		$native_off = ob_get_clean();
+
+		$this->assertStringContainsString( 'Downloadable archives', $native_on, 'Native on: the legacy section is relabelled.' );
+		$this->assertStringContainsString( 'not restored from this list', $native_on, 'Native on: a note clarifies these are not restorable.' );
+		$this->assertStringNotContainsString( 'Downloadable archives', $native_off, 'Native off: the legacy heading is unchanged.' );
+		$this->assertStringContainsString( 'Backup Details', $native_off, 'Native off: the original heading stays.' );
+	}
+
+	/**
+	 * Under native backups the Backup Options form and its action read as
+	 * creating a one-off downloadable archive, not a restorable snapshot.
+	 *
+	 * @return void
+	 */
+	public function test_native_relabels_backup_now_action() {
+		$this->as_admin();
+		update_option( 'mainwp_enableNativeBackups', 1 );
+
+		$site_id = $this->create_test_site();
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+
+		ob_start();
+		MainWP_Manage_Sites_Backup_View::render_backup_site( $website );
+		$out = ob_get_clean();
+
+		$this->assertStringContainsString( 'Create a downloadable archive', $out, 'Native on: the section heading reads as creating a downloadable archive.' );
+		$this->assertStringContainsString( 'value="Create downloadable archive"', $out, 'Native on: the action button itself is relabelled, not just the heading.' );
+		$this->assertStringNotContainsString( 'value="Backup Now"', $out, 'Native on: the misleading Backup Now button label must be gone.' );
+	}
 }

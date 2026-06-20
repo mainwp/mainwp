@@ -16,6 +16,27 @@ jQuery(function () {
         mainwpPopup('#managesite-backup-status-box').close(true);
     });
 
+    // Keep each known-location exclude textarea hidden until its toggle is on,
+    // so an empty box is not shown as a large blank area (L2).
+    [
+        { box: '#mainwp-known-backup-locations', area: '#mainwp-kbl-content' },
+        { box: '#mainwp-known-cache-locations', area: '#mainwp-kcl-content' },
+        { box: '#mainwp-non-wordpress-folders', area: '#mainwp-nwl-content' }
+    ].forEach(function (pair) {
+        let $box = jQuery(pair.box);
+        let $row = jQuery(pair.area).closest('.field');
+        if (!$box.length || !$row.length) {
+            return;
+        }
+        let sync = function () {
+            let on = $box.is(':checked');
+            $row.toggle(on);
+            jQuery(pair.area).prop('disabled', !on);
+        };
+        sync();
+        $box.on('change', sync);
+    });
+
 });
 let backup = function () {
     backupError = false;

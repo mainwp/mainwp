@@ -73,6 +73,29 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Per-site run serialization: two pending rows for one site never hold
+	 * a lock at the same time. The duplicate row a racing double-submit can
+	 * create only runs once the first job for that site has finished.
+	 */
+	public function test_acquire_next_job_one_locked_per_site() {
+		$this->store->create_job( 9901, 42, array() );
+		$job_b = $this->store->create_job( 9901, 43, array() );
+
+		$first = $this->store->acquire_next_job( 'token-a', 300 );
+		$this->assertNotNull( $first );
+
+		$second = $this->store->acquire_next_job( 'token-b', 300 );
+		$this->assertNull( $second, 'A second job for the same site must not lock while the first is leased.' );
+
+		// Terminalize the first - not release_lock, which would leave it
+		// re-claimable at the lower id - so the second row becomes claimable.
+		$this->store->complete_job( (int) $first->id );
+		$third = $this->store->acquire_next_job( 'token-b', 300 );
+		$this->assertNotNull( $third, 'The duplicate runs once the first job finishes.' );
+		$this->assertSame( (int) $job_b, (int) $third->id );
+	}
+
+	/**
 	 * Terminal jobs are never claimed.
 	 */
 	public function test_terminal_jobs_not_claimed() {

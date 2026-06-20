@@ -162,10 +162,14 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
         );
         $placeholders = implode( ',', array_fill( 0, count( $statuses ), '%s' ) );
 
+        // The site_id NOT IN (...) clause serializes runs per site: a site
+        // that already holds a live lease is skipped, so two rows for one
+        // site never lock at once. The inner select is wrapped in a derived
+        // table so MySQL does not reject reading the table it is updating.
         $claimed = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- the atomic claim gate; must hit the DB engine.
             $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- replacements and placeholders come from the same counted array.
-                'UPDATE ' . $this->table() . " SET locked_until = %d, locked_by = %s, updated = %d WHERE status IN ( {$placeholders} ) AND next_retry_at <= %d AND locked_until < %d ORDER BY id ASC LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- placeholder list built from a counted array.
-                array_merge( array( $now + $lease_seconds, $token, $now ), $statuses, array( $now, $now ) )
+                'UPDATE ' . $this->table() . " SET locked_until = %d, locked_by = %s, updated = %d WHERE status IN ( {$placeholders} ) AND next_retry_at <= %d AND locked_until < %d AND site_id NOT IN ( SELECT site_id FROM ( SELECT site_id FROM " . $this->table() . ' WHERE locked_until >= %d ) AS mainwp_locked_sites ) ORDER BY id ASC LIMIT 1', // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- placeholder list built from a counted array; table name from trusted helper.
+                array_merge( array( $now + $lease_seconds, $token, $now ), $statuses, array( $now, $now, $now ) )
             )
         );
         if ( 1 !== $claimed ) {

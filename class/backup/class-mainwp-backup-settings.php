@@ -159,6 +159,18 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     }
 
     /**
+     * Method get_on_demand_retention_count()
+     *
+     * Get the configured number of on-demand ("Back up now") snapshots to
+     * keep per site before the retention engine prunes the oldest.
+     *
+     * @return int Retention count (default 5, minimum 1).
+     */
+    public static function get_on_demand_retention_count(): int {
+        return max( 1, (int) get_option( 'mainwp_on_demand_retention_count', 5 ) );
+    }
+
+    /**
      * Method handle_settings_post()
      *
      * Update Child Site Settings.
@@ -180,6 +192,9 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 MainWP_Utility::update_option( 'mainwp_maximumFileDescriptorsAuto', ( ! isset( $_POST['mainwp_maximumFileDescriptorsAuto'] ) ? 0 : 1 ) );
                 if ( ! empty( $_POST['mainwp_options_backupOnExternalSources'] ) && 0 <= $_POST['mainwp_options_backupOnExternalSources'] ) {
                     MainWP_Utility::update_option( 'mainwp_backupOnExternalSources', ( isset( $_POST['mainwp_options_backupOnExternalSources'] ) ? intval( $_POST['mainwp_options_backupOnExternalSources'] ) : 1 ) );
+                }
+                if ( isset( $_POST['mainwp_options_onDemandRetentionCount'] ) ) {
+                    MainWP_Utility::update_option( 'mainwp_on_demand_retention_count', max( 1, intval( $_POST['mainwp_options_onDemandRetentionCount'] ) ) );
                 }
                 MainWP_Utility::update_option( 'mainwp_archiveFormat', ( isset( $_POST['mainwp_archiveFormat'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_archiveFormat'] ) ) : '' ) );
 

@@ -95,6 +95,15 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         <tr><td colspan="6"><?php echo $locked ? esc_html__( 'Loading backups...', 'mainwp' ) : esc_html__( 'Select a site to list its backups.', 'mainwp' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- esc_html__ escapes both branches. ?></td></tr>
                     </tbody>
                 </table>
+
+                <?php if ( MainWP_Backup_Settings::is_native_backups_enabled() ) : ?>
+                <div class="mainwp-native-backup-now-row" style="margin-top: 1em;">
+                    <button type="button" class="ui green button<?php echo $site_id > 0 ? '' : ' disabled'; ?>" id="mainwp-native-backup-now-btn" <?php disabled( 0, $site_id ); ?>>
+                        <i class="cloud upload alternate icon"></i><?php esc_html_e( 'Back up now', 'mainwp' ); ?>
+                    </button>
+                    <span id="mainwp-native-backup-now-status" class="mainwp-native-backup-now-status" style="margin-left: 1em; color: var(--mainwp-text-color, inherit);"></span>
+                </div>
+                <?php endif; ?>
             </div>
         </div>
 
@@ -170,13 +179,16 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 initiate: '<?php echo esc_js( wp_create_nonce( 'mainwp_restore_initiate' ) ); ?>',
                 progress: '<?php echo esc_js( wp_create_nonce( 'mainwp_restore_progress' ) ); ?>',
                 cancel:   '<?php echo esc_js( wp_create_nonce( 'mainwp_restore_cancel' ) ); ?>',
-                rollback: '<?php echo esc_js( wp_create_nonce( 'mainwp_restore_rollback' ) ); ?>'
+                rollback: '<?php echo esc_js( wp_create_nonce( 'mainwp_restore_rollback' ) ); ?>',
+                nativeBackupInitiate: '<?php echo esc_js( wp_create_nonce( 'mainwp_native_backup_initiate' ) ); ?>',
+                nativeBackupProgress: '<?php echo esc_js( wp_create_nonce( 'mainwp_native_backup_progress' ) ); ?>'
             };
             var statusLabels = <?php echo wp_json_encode( $labels ); ?>;
             var currentSite = <?php echo (int) $site_id; ?>;
             var currentSnapshot = 0;
             var currentJob = 0;
             var pollTimer = null;
+            var backupPollTimer = null;
             var currentSiteUrl = '';
             var phaseOrder = [ 'pending', 'preflight', 'pre_snapshot', 'staging', 'transferring', 'running', 'verifying', 'completed' ];
 
@@ -206,6 +218,9 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
 
             function loadSnapshots( siteId ) {
                 currentSite = siteId;
+                if ( siteId > 0 ) {
+                    $( '#mainwp-native-backup-now-btn' ).prop( 'disabled', false ).removeClass( 'disabled' );
+                }
                 var $tbody = $( '#mainwp-restore-snapshots-table tbody' );
                 $tbody.html( '<tr><td colspan="6"><div class="ui active inline loader mini"></div></td></tr>' );
                 $.post( ajaxurl, { action: 'mainwp_restore_snapshot_list', security: nonces.list, site_id: siteId }, function ( response ) {
@@ -398,6 +413,62 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
 
             $( '#mainwp-restore-close-btn' ).on( 'click', function () {
                 window.clearTimeout( pollTimer );
+            } );
+
+            // On-demand "Back up now": kick the native backup, then poll the
+            // same way the restore flow does and refresh the list on success.
+            function setBackupStatus( text, isError ) {
+                $( '#mainwp-native-backup-now-status' ).text( text ).css( 'color', isError ? '#AD0000' : '' );
+            }
+
+            function reenableBackupBtn() {
+                $( '#mainwp-native-backup-now-btn' ).prop( 'disabled', false ).removeClass( 'disabled' );
+            }
+
+            function pollBackup() {
+                $.post( ajaxurl, { action: 'mainwp_native_backup_progress', security: nonces.nativeBackupProgress, site_id: currentSite }, function ( data ) {
+                    if ( data.error ) {
+                        setBackupStatus( data.error, true );
+                        reenableBackupBtn();
+                        return;
+                    }
+                    if ( 'completed' === data.status ) {
+                        setBackupStatus( '<?php echo esc_js( esc_html__( 'Backup complete.', 'mainwp' ) ); ?>', false );
+                        reenableBackupBtn();
+                        loadSnapshots( currentSite );
+                        return;
+                    }
+                    if ( 'failed' === data.status ) {
+                        setBackupStatus( data.error || '<?php echo esc_js( esc_html__( 'Backup failed.', 'mainwp' ) ); ?>', true );
+                        reenableBackupBtn();
+                        return;
+                    }
+                    var running = '<?php echo esc_js( esc_html__( 'Backing up...', 'mainwp' ) ); ?>';
+                    if ( 'queued' === data.status ) {
+                        running = '<?php echo esc_js( esc_html__( 'Queued; waiting for a free slot...', 'mainwp' ) ); ?>';
+                    } else if ( data.phase ) {
+                        running += ' (' + escAttr( data.phase ) + ')';
+                    }
+                    setBackupStatus( running, false );
+                    backupPollTimer = window.setTimeout( pollBackup, 5000 );
+                }, 'json' );
+            }
+
+            $( '#mainwp-native-backup-now-btn' ).on( 'click', function () {
+                if ( $( this ).prop( 'disabled' ) || $( this ).hasClass( 'disabled' ) || ! ( currentSite > 0 ) ) {
+                    return;
+                }
+                $( this ).prop( 'disabled', true ).addClass( 'disabled' );
+                window.clearTimeout( backupPollTimer );
+                setBackupStatus( '<?php echo esc_js( esc_html__( 'Starting backup...', 'mainwp' ) ); ?>', false );
+                $.post( ajaxurl, { action: 'mainwp_native_backup_initiate', security: nonces.nativeBackupInitiate, site_id: currentSite }, function ( response ) {
+                    if ( response.error ) {
+                        setBackupStatus( response.error, true );
+                        reenableBackupBtn();
+                        return;
+                    }
+                    backupPollTimer = window.setTimeout( pollBackup, 1500 );
+                }, 'json' );
             } );
 
             if ( currentSite > 0 ) {

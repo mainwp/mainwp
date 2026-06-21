@@ -258,4 +258,29 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'mainwp-restore-visit-site', $output );
 		$this->assertStringContainsString( 'response.site_url', $output );
 	}
+
+	/**
+	 * With native backups enabled, the restore surface offers an on-demand
+	 * "Back up now" button wired to the native backup endpoints, and the
+	 * completion path refreshes the snapshot list rather than reloading.
+	 *
+	 * @return void
+	 */
+	public function test_back_up_now_button_and_poll_present() {
+		update_option( 'mainwp_enableNativeBackups', 1 );
+
+		$output = $this->render_page();
+
+		$this->assertStringContainsString( 'mainwp-native-backup-now-btn', $output, 'The Back up now button must render under native backups.' );
+		$this->assertStringContainsString( 'mainwp_native_backup_initiate', $output );
+		$this->assertStringContainsString( 'mainwp_native_backup_progress', $output );
+		$this->assertStringContainsString( 'function pollBackup', $output, 'The poll loop must be present.' );
+		$this->assertMatchesRegularExpression(
+			"/'completed' === data\.status[^}]*loadSnapshots\( currentSite \)/s",
+			$output,
+			'A completed backup must refresh the list in place, not reload.'
+		);
+
+		delete_option( 'mainwp_enableNativeBackups' );
+	}
 }

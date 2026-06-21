@@ -42,6 +42,7 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
 
         $backupsOnServer            = get_option( 'mainwp_backupsOnServer' );
         $backupOnExternalSources    = get_option( 'mainwp_backupOnExternalSources' );
+        $onDemandRetentionCount     = MainWP_Backup_Settings::get_on_demand_retention_count();
         $archiveFormat              = get_option( 'mainwp_archiveFormat' );
         $maximumFileDescriptors     = get_option( 'mainwp_maximumFileDescriptors' );
         $maximumFileDescriptorsAuto = get_option( 'mainwp_maximumFileDescriptorsAuto' );
@@ -132,6 +133,18 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
             </label>
             <div class="ten wide column">
                 <span data-tooltip="<?php esc_attr_e( 'The number of backups to keep on your external sources. This does not affect backups on the server. 0 sets unlimited.', 'mainwp' ); ?>" data-inverted=""><input type="text" class="settings-field-value-change-handler" name="mainwp_options_backupOnExternalSources" value="<?php echo false === $backupOnExternalSources ? 1 : intval( $backupOnExternalSources ); ?>"/></span>
+            </div>
+        </div>
+
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="5">
+            <label class="six wide column middle aligned">
+            <?php
+            MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_on_demand_retention_count', (int) $onDemandRetentionCount );
+            esc_html_e( 'On-demand backups to keep', 'mainwp' );
+            ?>
+            </label>
+            <div class="ten wide column">
+                <span data-tooltip="<?php esc_attr_e( 'How many on-demand (Back up now) snapshots to keep per site before the oldest are pruned. Minimum 1.', 'mainwp' ); ?>" data-inverted=""><input type="text" class="settings-field-value-change-handler" name="mainwp_options_onDemandRetentionCount" value="<?php echo intval( $onDemandRetentionCount ); ?>"/></span>
             </div>
         </div>
 

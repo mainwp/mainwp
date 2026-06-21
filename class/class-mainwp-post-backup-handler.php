@@ -87,6 +87,8 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             $this->add_action( 'mainwp_restore_progress', array( &$this, 'mainwp_restore_progress' ) );
             $this->add_action( 'mainwp_restore_cancel', array( &$this, 'mainwp_restore_cancel' ) );
             $this->add_action( 'mainwp_restore_rollback', array( &$this, 'mainwp_restore_rollback' ) );
+            $this->add_action( 'mainwp_native_backup_initiate', array( &$this, 'mainwp_native_backup_initiate' ) );
+            $this->add_action( 'mainwp_native_backup_progress', array( &$this, 'mainwp_native_backup_progress' ) );
         }
         // Intentionally not capability-gated: the backup-before-update check is
         // read-only and used by the updates flow, where a user without backup
@@ -326,6 +328,157 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             return;
         }
         wp_send_json( array( 'job_id' => $rollback_id ) );
+    }
+
+    /**
+     * Start an on-demand native backup for a site.
+     *
+     * Prepares the per-site hidden manual task, then kicks the first slice.
+     * The task is a real wp_backup row, so recording, retention, offsite
+     * upload, and the existing continue cron all apply: a closed tab still
+     * finishes the backup. Returns a job handle (the task id) for the
+     * progress poll to follow.
+     */
+    public function mainwp_native_backup_initiate() {
+        $this->secure_request( 'mainwp_native_backup_initiate' );
+        $site_id = isset( $_POST['site_id'] ) ? (int) $_POST['site_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by secure_request above.
+
+        if ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
+            wp_send_json( array( 'error' => esc_html__( 'Native backups are not enabled.', 'mainwp' ) ) );
+            return;
+        }
+
+        $website = $this->authorize_restore_site( $site_id );
+        if ( null === $website ) {
+            return;
+        }
+
+        // A restore in flight for this site holds the child's single-backup
+        // slot; refuse until it finishes so the two heavy operations cannot
+        // collide on the same child.
+        if ( null !== MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $site_id ) ) {
+            wp_send_json( array( 'error' => esc_html__( 'A restore is in progress for this site. Try again once it finishes.', 'mainwp' ) ) );
+            return;
+        }
+
+        static::raise_backup_resource_limits();
+
+        $task = MainWP_DB_Backup::instance()->ensure_manual_backup_task( $website );
+        if ( empty( $task ) ) {
+            wp_send_json( array( 'error' => esc_html__( 'Could not prepare the on-demand backup.', 'mainwp' ) ) );
+            return;
+        }
+
+        // A run already in flight (last_run newer than completed): follow it
+        // instead of resetting the run mid-flight.
+        if ( (int) $task->completed < (int) $task->last_run ) {
+            wp_send_json(
+                array(
+                    'job_id'  => (int) $task->id,
+                    'started' => (int) $task->last_run,
+                    'status'  => 'running',
+                )
+            );
+            return;
+        }
+
+        // Kick the first step. updateRun = true resets completed_sites and
+        // stamps last_run, which both starts the run and makes it eligible
+        // for the cron_backups_continue backstop. A false return means no
+        // concurrency slot was free; the poll and the cron retry it.
+        $started  = time();
+        $had_slot = ( false !== MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, true ) );
+
+        wp_send_json(
+            array(
+                'job_id'  => (int) $task->id,
+                'started' => $started,
+                'status'  => $had_slot ? 'running' : 'queued',
+            )
+        );
+    }
+
+    /**
+     * Drive and report an on-demand native backup.
+     *
+     * Each poll pushes the run one child round-trip (the child advances on
+     * its own; polling only checks phase) and reports running, completed, or
+     * failed. On completion the caller refreshes the snapshot list.
+     */
+    public function mainwp_native_backup_progress() {
+        $this->secure_request( 'mainwp_native_backup_progress' );
+        $site_id = isset( $_POST['site_id'] ) ? (int) $_POST['site_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by secure_request above.
+
+        $website = $this->authorize_restore_site( $site_id );
+        if ( null === $website ) {
+            return;
+        }
+
+        $task = MainWP_DB_Backup::instance()->get_manual_backup_task( $site_id );
+        if ( empty( $task ) ) {
+            wp_send_json( array( 'error' => esc_html__( 'No on-demand backup is running for this site.', 'mainwp' ) ) );
+            return;
+        }
+
+        static::raise_backup_resource_limits();
+
+        // Drive one step. updateRun = false so the in-flight run is never
+        // reset. The cron backstop covers a closed tab between polls.
+        if ( (int) $task->completed < (int) $task->last_run ) {
+            MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, false );
+            $task = MainWP_DB_Backup::instance()->get_manual_backup_task( $site_id );
+        }
+
+        if ( $task && (int) $task->completed < (int) $task->last_run ) {
+            $progress = MainWP_DB_Backup::instance()->get_backup_task_progress( (int) $task->id, $site_id );
+            wp_send_json(
+                array(
+                    'status'           => 'running',
+                    'phase'            => $progress && ! empty( $progress->child_phase ) ? (string) $progress->child_phase : '',
+                    'bytes_downloaded' => $progress ? (int) $progress->bytes_downloaded : 0,
+                    'bytes_expected'   => $progress ? (int) $progress->bytes_expected : 0,
+                )
+            );
+            return;
+        }
+
+        // The run is closed: success when a fresh snapshot landed without a
+        // recorded error, otherwise surface the recorded failure.
+        $errors = $task ? (string) $task->backup_errors : '';
+        $latest = MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, (int) $task->id );
+        $fresh  = null !== $latest && (int) $latest->created >= (int) $task->last_run;
+
+        if ( '' === $errors && $fresh ) {
+            wp_send_json(
+                array(
+                    'status'      => 'completed',
+                    'snapshot_id' => (int) $latest->id,
+                )
+            );
+            return;
+        }
+
+        wp_send_json(
+            array(
+                'status' => 'failed',
+                'error'  => '' !== $errors ? static::humanize_backup_errors( $errors ) : esc_html__( 'The on-demand backup did not produce a snapshot.', 'mainwp' ),
+            )
+        );
+    }
+
+    /**
+     * Flatten the task's stored HTML backup_errors into a readable single
+     * line. The errors are stored as an HTML list, so block boundaries are
+     * turned into spaces before the tags are stripped; without this the
+     * site name and the message run together (e.g. "child6-4.localRequired").
+     *
+     * @param string $errors Stored backup_errors HTML.
+     *
+     * @return string A flattened, space-separated message.
+     */
+    protected static function humanize_backup_errors( $errors ) {
+        $spaced = str_replace( array( '<br>', '<br/>', '<br />', '</li>', '<li>', '</ol>', '<ol>' ), ' ', (string) $errors );
+        return trim( preg_replace( '/\s+/', ' ', wp_strip_all_tags( $spaced ) ) );
     }
 
     /*

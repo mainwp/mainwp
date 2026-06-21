@@ -428,6 +428,183 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
     }
 
     /**
+     * Method get_manual_backup_task()
+     *
+     * Fetch the per-site hidden on-demand ("manual") backup task, if it
+     * exists. The manual task is identified by template = 1, schedule =
+     * 'manual', and a single-site sites value.
+     *
+     * @param int $site_id Child site id.
+     *
+     * @return object|null The task row, or null when none exists.
+     */
+    public function get_manual_backup_task( $site_id ) {
+        $site_id = (int) $site_id;
+
+        return $this->wpdb->get_row(
+            $this->wpdb->prepare(
+                'SELECT * FROM ' . esc_sql( $this->table_name( 'wp_backup' ) ) . " WHERE template = 1 AND schedule = 'manual' AND sites = %s LIMIT 1",
+                (string) $site_id
+            ),
+            OBJECT
+        );
+    }
+
+    /**
+     * Method ensure_manual_backup_task()
+     *
+     * Get-or-create the per-site hidden on-demand backup task and refresh
+     * its destinations and retention on every call. The task is a
+     * standalone full backup (never incremental) so each on-demand
+     * snapshot restores on its own; it runs as the site owner so the
+     * executor permission check passes; and it stays off the schedule list
+     * (template = 1) and out of the schedulers (schedule 'manual',
+     * next_run 0), driven only on demand and by the existing continue cron.
+     *
+     * @param object $website Child site object (needs id and userid).
+     *
+     * @return object|false The refreshed task row, or false on failure.
+     */
+    public function ensure_manual_backup_task( $website ) {
+        if ( empty( $website ) || empty( $website->id ) ) {
+            return false;
+        }
+
+        $site_id = (int) $website->id;
+        $task    = $this->get_manual_backup_task( $site_id );
+
+        if ( empty( $task ) ) {
+            // Hold a short lock so a double-click cannot create two rows.
+            $lock_key = 'mwp_manual_backup_task_' . $site_id;
+            if ( false === get_transient( $lock_key ) ) {
+                set_transient( $lock_key, 1, 10 );
+                $task = $this->get_manual_backup_task( $site_id );
+                if ( empty( $task ) ) {
+                    $this->add_backup_task(
+                        (int) $website->userid,
+                        'On-demand backup',
+                        'manual',
+                        'full',
+                        '',                // exclude.
+                        (string) $site_id, // sites.
+                        '',                // groups.
+                        '',                // subfolder.
+                        '',                // filename.
+                        1,                 // template: hidden from the schedule list.
+                        1,                 // excludebackup.
+                        1,                 // excludecache.
+                        0,                 // excludenonwp.
+                        0,                 // excludezip.
+                        'site',            // archiveFormat: follow the site's format.
+                        0,                 // maximumFileDescriptorsOverride.
+                        1,                 // maximumFileDescriptorsAuto.
+                        150,               // maximumFileDescriptors.
+                        0                  // loadFilesBeforeZip.
+                    );
+                }
+                delete_transient( $lock_key );
+            }
+            $task = $this->get_manual_backup_task( $site_id );
+        }
+
+        if ( empty( $task ) ) {
+            return false;
+        }
+
+        // Refresh destinations and retention each run so a settings or
+        // schedule change takes effect on the next on-demand backup.
+        $this->update_backup_task_with_values(
+            (int) $task->id,
+            array(
+                'destinations'     => wp_json_encode( $this->manual_backup_task_destinations( $site_id ) ),
+                'retention_count'  => MainWP_Backup_Settings::get_on_demand_retention_count(),
+                'next_run'         => 0,
+                'paused'           => 0,
+                'max_chain_length' => 0,
+            )
+        );
+
+        return $this->get_manual_backup_task( $site_id );
+    }
+
+    /**
+     * Method manual_backup_task_destinations()
+     *
+     * Build the offsite destinations an on-demand backup should use for a
+     * site: the deduped union of the destinations configured on every
+     * scheduled task that targets the site, whether the site is listed
+     * directly or reached through a group. An empty result means the site
+     * has no configured offsite destination, so the on-demand backup stays
+     * local on the dashboard.
+     *
+     * @param int $site_id Child site id.
+     *
+     * @return array List of destination ids (integers), deduped.
+     */
+    public function manual_backup_task_destinations( $site_id ) {
+        $site_id = (int) $site_id;
+        $union   = array();
+
+        $tasks = $this->get_backup_tasks();
+        if ( empty( $tasks ) ) {
+            return array();
+        }
+
+        foreach ( $tasks as $task ) {
+            if ( empty( $task->destinations ) || ! $this->task_targets_site( $task, $site_id ) ) {
+                continue;
+            }
+            $ids = json_decode( (string) $task->destinations, true );
+            if ( is_array( $ids ) ) {
+                foreach ( $ids as $id ) {
+                    $union[] = (int) $id;
+                }
+            }
+        }
+
+        return array_values( array_unique( $union ) );
+    }
+
+    /**
+     * Method task_targets_site()
+     *
+     * Whether a scheduled task backs up a given site, either listed
+     * directly in its sites column or reached through one of its groups.
+     *
+     * @param object $task    Backup task row.
+     * @param int    $site_id Child site id.
+     *
+     * @return bool True when the task targets the site.
+     */
+    protected function task_targets_site( $task, $site_id ) {
+        $site_id = (int) $site_id;
+
+        if ( ! empty( $task->sites ) ) {
+            foreach ( explode( ',', (string) $task->sites ) as $id ) {
+                if ( (int) $id === $site_id ) {
+                    return true;
+                }
+            }
+        }
+
+        if ( ! empty( $task->groups ) ) {
+            foreach ( explode( ',', (string) $task->groups ) as $group_id ) {
+                $group_sites = $this->get_websites_by_group_id( $group_id );
+                if ( empty( $group_sites ) ) {
+                    continue;
+                }
+                foreach ( $group_sites as $group_site ) {
+                    if ( (int) $group_site->id === $site_id ) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Method update_backup_run()
      *
      * Update backup run.

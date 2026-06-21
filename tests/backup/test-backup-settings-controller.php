@@ -95,6 +95,7 @@ class MainWP_Backup_Settings_Controller_Test extends \WP_Test_REST_TestCase {
 		delete_option( 'mainwp_backup_max_concurrent' );
 		delete_option( 'mainwp_options_loadFilesBeforeZip' );
 		delete_option( 'mainwp_maximumFileDescriptors' );
+		delete_option( 'mainwp_on_demand_retention_count' );
 
 		parent::tearDown();
 	}
@@ -269,9 +270,62 @@ class MainWP_Backup_Settings_Controller_Test extends \WP_Test_REST_TestCase {
 			'mainwp_maximum_file_descriptors_auto',
 			'mainwp_maximum_file_descriptors',
 			'mainwp_backup_max_concurrent',
+			'mainwp_on_demand_retention_count',
 		);
 		foreach ( $keys as $key ) {
 			$this->assertArrayHasKey( $key, $data, "settings/backups must expose $key" );
+		}
+	}
+
+	/**
+	 * GET settings/backups exposes the on-demand retention count, defaulting
+	 * to 5 when the option has never been saved.
+	 *
+	 * @return void
+	 */
+	public function test_backups_settings_route_exposes_on_demand_retention_default() {
+		$response = $this->do_authenticated_request( 'GET', '/mainwp/v2/settings/backups' );
+		$this->assertSame( 200, $response->get_status() );
+
+		$data = $response->get_data()['data'];
+		$this->assertArrayHasKey( 'mainwp_on_demand_retention_count', $data );
+		$this->assertSame( 5, (int) $data['mainwp_on_demand_retention_count'] );
+	}
+
+	/**
+	 * PUT settings/backups/edit persists the on-demand retention count.
+	 *
+	 * @return void
+	 */
+	public function test_backups_edit_persists_on_demand_retention_count() {
+		$response = $this->do_authenticated_request(
+			'PUT',
+			'/mainwp/v2/settings/backups/edit',
+			array( 'mainwp_on_demand_retention_count' => 7 )
+		);
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( 7, (int) get_option( 'mainwp_on_demand_retention_count' ) );
+	}
+
+	/**
+	 * The on-demand retention count is bound to 1-100; out-of-range values
+	 * are refused before anything is written.
+	 *
+	 * @return void
+	 */
+	public function test_backups_edit_rejects_out_of_range_on_demand_retention() {
+		update_option( 'mainwp_on_demand_retention_count', 5 );
+
+		foreach ( array( 0, 101 ) as $bad ) {
+			$response = $this->do_authenticated_request(
+				'PUT',
+				'/mainwp/v2/settings/backups/edit',
+				array( 'mainwp_on_demand_retention_count' => $bad )
+			);
+
+			$this->assertSame( 400, $response->get_status(), "Value {$bad} must be rejected." );
+			$this->assertSame( 5, (int) get_option( 'mainwp_on_demand_retention_count' ), 'A rejected request must not change the option.' );
 		}
 	}
 

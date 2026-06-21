@@ -103,6 +103,10 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     </button>
                     <span id="mainwp-native-backup-now-status" class="mainwp-native-backup-now-status" style="margin-left: 1em; color: var(--mainwp-text-color, inherit);"></span>
                 </div>
+                    <?php $backup_now_local_only = $site_id > 0 && empty( MainWP_DB_Backup::instance()->manual_backup_task_destinations( $site_id ) ); ?>
+                <div id="mainwp-native-backup-now-note" class="mainwp-native-backup-now-note" data-local-only="<?php echo $backup_now_local_only ? '1' : '0'; ?>" style="margin-top: .5em; opacity: .8;<?php echo $backup_now_local_only ? '' : ' display: none;'; ?>">
+                    <i class="info circle icon"></i><?php esc_html_e( 'No backup destination is configured for this site, so this backup will be kept on the dashboard.', 'mainwp' ); ?>
+                </div>
                 <?php endif; ?>
             </div>
         </div>
@@ -228,6 +232,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     siteIsMultisite = !! response.multisite;
                     siteHasWooCommerce = !! response.site_has_woocommerce;
                     currentSiteUrl = response.site_url || '';
+                    $( '#mainwp-native-backup-now-note' ).attr( 'data-local-only', response.local_only ? '1' : '0' ).toggle( !! response.local_only );
                     ( response.snapshots || [] ).forEach( function ( snap ) {
                         var when = new Date( snap.created * 1000 ).toLocaleString();
                         var action = snap.restorable

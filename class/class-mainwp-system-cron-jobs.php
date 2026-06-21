@@ -75,6 +75,11 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         add_action( 'mainwp_cronreconnect_action', array( $this, 'cron_reconnect' ) );
         add_action( 'mainwp_cronbackups_action', array( $this, 'cron_backups' ) );
         add_action( 'mainwp_cronbackups_continue_action', array( $this, 'cron_backups_continue' ) );
+        // Single-event lane (never added to get_cron_jobs): an on-demand backup
+        // schedules this to continue immediately instead of waiting for the
+        // 5-minute recurring mainwp_cronbackups_continue_action, which WordPress
+        // would de-duplicate against. Reuses the same continue handler.
+        add_action( 'mainwp_native_backup_continue_action', array( $this, 'cron_backups_continue' ) );
         add_action( 'mainwp_restore_continue_action', array( $this, 'cron_restore_continue' ) );
         add_action( 'mainwp_cronbackups_prune_action', array( $this, 'cron_backups_prune' ) );
         add_action( 'mainwp_cronupdatescheck_action', array( $this, 'cron_updates_check' ) );

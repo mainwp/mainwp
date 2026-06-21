@@ -18,6 +18,7 @@ namespace MainWP\Dashboard\Tests;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_DB_Backup;
 use MainWP\Dashboard\MainWP_Backup_Settings;
+use MainWP\Dashboard\MainWP_Post_Backup_Handler;
 
 /**
  * Class MainWP_Backup_Manual_Task_Test
@@ -215,5 +216,44 @@ class MainWP_Backup_Manual_Task_Test extends \WP_UnitTestCase {
 	 */
 	public function test_destinations_empty_when_no_scheduled_task() {
 		$this->assertSame( array(), MainWP_DB_Backup::instance()->manual_backup_task_destinations( $this->site_id ) );
+	}
+
+	/**
+	 * Deleting a site removes its hidden manual task so no orphan row is
+	 * left behind.
+	 *
+	 * @return void
+	 */
+	public function test_delete_site_removes_manual_task() {
+		MainWP_DB_Backup::instance()->ensure_manual_backup_task( $this->website() );
+		$this->assertIsObject( MainWP_DB_Backup::instance()->get_manual_backup_task( $this->site_id ) );
+
+		MainWP_Post_Backup_Handler::instance()->hook_delete_manual_backup_task( (object) array( 'id' => $this->site_id ) );
+
+		$this->assertNull( MainWP_DB_Backup::instance()->get_manual_backup_task( $this->site_id ), 'Deleting the site must remove its hidden manual task.' );
+	}
+
+	/**
+	 * The cleanup handler ignores an empty site object instead of fataling.
+	 *
+	 * @return void
+	 */
+	public function test_delete_site_handler_ignores_empty_site() {
+		$this->assertFalse( MainWP_Post_Backup_Handler::instance()->hook_delete_manual_backup_task( null ) );
+	}
+
+	/**
+	 * init() registers the cleanup on mainwp_delete_site so the row is
+	 * removed when a site is deleted from the dashboard.
+	 *
+	 * @return void
+	 */
+	public function test_delete_site_listener_registered_on_init() {
+		MainWP_Post_Backup_Handler::instance()->init();
+
+		$this->assertNotFalse(
+			has_action( 'mainwp_delete_site', array( MainWP_Post_Backup_Handler::instance(), 'hook_delete_manual_backup_task' ) ),
+			'init() must register the manual-task cleanup on site deletion.'
+		);
 	}
 }

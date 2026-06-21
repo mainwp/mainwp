@@ -94,6 +94,37 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         // read-only and used by the updates flow, where a user without backup
         // rights still needs it.
         $this->add_action( 'mainwp_checkbackups', array( &$this, 'mainwp_checkbackups' ) );
+
+        // Remove the per-site hidden on-demand backup task when its site is
+        // deleted from the dashboard, so no orphan wp_backup row is left
+        // behind. Registered unconditionally (this is a plain action, not an
+        // AJAX endpoint) so it fires on the manage-sites deletion path.
+        add_action( 'mainwp_delete_site', array( $this, 'hook_delete_manual_backup_task' ), 10, 1 );
+    }
+
+    /**
+     * Remove a site's hidden on-demand backup task when the site is deleted.
+     *
+     * One manual wp_backup row (template = 1, schedule = 'manual') is created
+     * per site the first time "Back up now" runs; without this it would
+     * outlive the site. Hooked on mainwp_delete_site, which the manage-sites
+     * deletion path fires after the site row is gone.
+     *
+     * @param object $site Deleted site object.
+     *
+     * @return bool True when the cleanup ran, false on an empty site.
+     */
+    public function hook_delete_manual_backup_task( $site ) {
+        if ( empty( $site ) || empty( $site->id ) ) {
+            return false;
+        }
+
+        $task = MainWP_DB_Backup::instance()->get_manual_backup_task( $site->id );
+        if ( $task ) {
+            MainWP_DB_Backup::instance()->remove_backup_task( (int) $task->id );
+        }
+
+        return true;
     }
 
     /**
@@ -174,6 +205,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                 'multisite'            => $multisite,
                 'site_has_woocommerce' => MainWP_Utility::site_has_woocommerce( (int) $website->id ),
                 'site_url'             => (string) $website->url,
+                'local_only'           => empty( MainWP_DB_Backup::instance()->manual_backup_task_destinations( $site_id ) ),
             )
         );
     }
@@ -389,6 +421,11 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         $started  = time();
         $had_slot = ( false !== MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, true ) );
 
+        // last_run is now stamped, so the task is eligible for a continue.
+        // Kick one immediately so a tab-closed run finishes within seconds
+        // instead of waiting for the 5-minute recurring backup cron.
+        static::kick_backup_continuation();
+
         wp_send_json(
             array(
                 'job_id'  => (int) $task->id,
@@ -396,6 +433,27 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                 'status'  => $had_slot ? 'running' : 'queued',
             )
         );
+    }
+
+    /**
+     * Schedule an immediate backup continuation.
+     *
+     * Mirrors the restore orchestrator's near-term lane: a dedicated
+     * single-event hook driven by spawn_cron, guarded so repeated kicks
+     * collapse into one pending event. The hook reuses cron_backups_continue;
+     * the recurring mainwp_cronbackups_continue_action cannot serve here
+     * because WordPress de-duplicates a single event against the recurring
+     * occurrence and spawn_cron will not run a future-dated recurring event
+     * early. Under DISABLE_WP_CRON spawn_cron is a no-op and the 5-minute
+     * recurring cron remains the backstop.
+     *
+     * @return void
+     */
+    protected static function kick_backup_continuation() {
+        if ( ! wp_next_scheduled( 'mainwp_native_backup_continue_action' ) ) {
+            wp_schedule_single_event( time(), 'mainwp_native_backup_continue_action' );
+        }
+        spawn_cron();
     }
 
     /**

@@ -1643,6 +1643,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             $update_if_present( 'mainwp_maximum_file_descriptors_auto', 'mainwp_maximumFileDescriptorsAuto', 'int' );
             $update_if_present( 'mainwp_maximum_file_descriptors', 'mainwp_maximumFileDescriptors', 'int' );
             $update_if_present( 'mainwp_backup_max_concurrent', 'mainwp_backup_max_concurrent', 'int' );
+            $update_if_present( 'mainwp_on_demand_retention_count', 'mainwp_on_demand_retention_count', 'int' );
 
             $settings = $this->get_backup_settings_data();
         } catch ( \Exception $e ) {
@@ -2574,6 +2575,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         $primary_backup  = array( '', 'module-api-backups' );
         $max_concurrent  = range( 1, 10 );
         $max_descriptors = range( 1, 65535 );
+        $retention_count = range( 1, 100 );
 
         return array(
             'mainwp_enable_native_backups'         => array(
@@ -2664,6 +2666,13 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 'type'              => 'integer',
                 'sanitize_callback' => $this->make_enum_sanitizer( $max_concurrent ),
                 'validate_callback' => $this->make_enum_validator( $max_concurrent ),
+            ),
+            'mainwp_on_demand_retention_count'     => array(
+                'required'          => false,
+                'description'       => __( 'How many on-demand backup snapshots to keep per site (1-100).', 'mainwp' ),
+                'type'              => 'integer',
+                'sanitize_callback' => $this->make_enum_sanitizer( $retention_count ),
+                'validate_callback' => $this->make_enum_validator( $retention_count ),
             ),
         );
     }
@@ -4478,6 +4487,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             'mainwp_maximum_file_descriptors_auto' => (int) get_option( 'mainwp_maximumFileDescriptorsAuto' ),
             'mainwp_maximum_file_descriptors'      => (int) get_option( 'mainwp_maximumFileDescriptors', 150 ),
             'mainwp_backup_max_concurrent'         => MainWP_Backup_Settings::get_max_concurrent_backups(),
+            'mainwp_on_demand_retention_count'     => MainWP_Backup_Settings::get_on_demand_retention_count(),
         );
     }
 
@@ -4991,6 +5001,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 'mainwp_backup_max_concurrent'             => array(
                     'type'        => 'integer',
                     'description' => __( 'Maximum concurrent backup tasks.', 'mainwp' ),
+                    'context'     => array( 'backups_view', 'backups_edit' ),
+                ),
+                'mainwp_on_demand_retention_count'         => array(
+                    'type'        => 'integer',
+                    'description' => __( 'How many on-demand backup snapshots to keep per site (1-100).', 'mainwp' ),
                     'context'     => array( 'backups_view', 'backups_edit' ),
                 ),
             ),

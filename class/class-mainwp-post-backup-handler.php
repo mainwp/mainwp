@@ -79,6 +79,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             $this->add_action( 'mainwp_backup_getfilesize', array( &$this, 'mainwp_backup_getfilesize' ) );
             $this->add_action( 'mainwp_backup_upload_getprogress', array( &$this, 'mainwp_backup_upload_getprogress' ) );
             $this->add_action( 'mainwp_backup_upload_checkstatus', array( &$this, 'mainwp_backup_upload_checkstatus' ) );
+            $this->add_action( 'mainwp_backup_refresh_archives', array( &$this, 'mainwp_backup_refresh_archives' ) );
         }
         // Page: ManageBackupsSnapshots (restore).
         if ( \mainwp_current_user_can( 'dashboard', 'execute_backups' ) ) {
@@ -760,6 +761,33 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             $this->die_exception_error( $e );
         }
         // phpcs:enable
+    }
+
+    /**
+     * Method mainwp_backup_refresh_archives()
+     *
+     * Return the current "Downloadable archives" list markup for a site so the
+     * legacy backup modal can refresh the list in place after an archive
+     * finishes, instead of reloading the whole admin page.
+     *
+     * @return void
+     *
+     * @uses \MainWP\Dashboard\MainWP_Manage_Sites::show_backups()
+     */
+    public function mainwp_backup_refresh_archives() {
+        $this->secure_request( 'mainwp_backup_refresh_archives' );
+        $site_id = isset( $_POST['site_id'] ) ? (int) $_POST['site_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by secure_request above.
+
+        $website = $this->authorize_restore_site( $site_id );
+        if ( null === $website ) {
+            return;
+        }
+
+        ob_start();
+        MainWP_Manage_Sites::show_backups( $website );
+        $html = ob_get_clean();
+
+        wp_send_json( array( 'result' => $html ) );
     }
 
     /**

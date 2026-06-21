@@ -97,6 +97,7 @@ class MainWP_Backup_Ajax_Registration_Test extends \WP_UnitTestCase {
 			'mainwp_backup_upload_checkstatus' => 'execute_backups',
 			'mainwp_native_backup_initiate'    => 'execute_backups',
 			'mainwp_native_backup_progress'    => 'execute_backups',
+			'mainwp_backup_refresh_archives'   => 'execute_backups',
 		);
 	}
 

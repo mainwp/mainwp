@@ -4,6 +4,7 @@
  */
 let backupDownloadRunning = false;
 let backupError = false;
+let backupCompleted = false;
 let backupContinueRetries = 0;
 let backupContinueRetriesUnique = [];
 
@@ -40,6 +41,7 @@ jQuery(function () {
 });
 let backup = function () {
     backupError = false;
+    backupCompleted = false;
     backupContinueRetries = 0;
 
     jQuery('#backup_loading').show();
@@ -83,8 +85,18 @@ let backup = function () {
 
     mainwpPopup('#managesite-backup-status-box').init({
         callback: function () {
-            if (!backupError) {
-                location.reload();
+            // Refresh the downloadable-archives list in place instead of
+            // reloading the whole page, and only after a clean completion.
+            if (backupCompleted && !backupError) {
+                let refreshData = mainwp_secure_data({
+                    action: 'mainwp_backup_refresh_archives',
+                    site_id: jQuery('#backup_site_id').val()
+                });
+                jQuery.post(ajaxurl, refreshData, function (response) {
+                    if (response && response.result) {
+                        jQuery('#mainwp-downloadable-archives-list').html(response.result);
+                    }
+                }, 'json');
             }
         }
     });
@@ -482,13 +494,11 @@ backup_upload_file = function (pSiteId, pFile, pRegexFile, pSubfolder, pRemoteDe
             dataType: 'json'
         });
     } else {
+        backupCompleted = true;
         appendToDiv(backsprocessContentEl, MainWP.I18n.t('Backup completed!'));
         jQuery('#managesite-backup-status-close').prop('value', 'Close');
-        if (!backupError) {
-            setTimeout(function () {
-                mainwpPopup('#managesite-backup-status-box').close(true);
-            }, 3000);
-        }
+        // The archive list refreshes in place when the user closes the modal
+        // (see the init callback), so do not auto-close or reload the page.
         return;
     }
 };

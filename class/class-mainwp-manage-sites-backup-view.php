@@ -147,7 +147,11 @@ class MainWP_Manage_Sites_Backup_View { // phpcs:ignore Generic.Classes.OpeningB
         if ( empty( $website ) ) {
             return;
         }
+        // Wrap the list so the legacy backup modal can refresh it in place
+        // (mainwp_backup_refresh_archives) instead of reloading the whole page.
+        echo '<div id="mainwp-downloadable-archives-list">';
         MainWP_Manage_Sites::show_backups( $website );
+        echo '</div>';
     }
 
     /**

@@ -357,6 +357,7 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                                     <input type="checkbox" name="">
                                                 </div>
                                                 <?php MainWP_Utility::mainwp_display_site( $website, true, true ); ?>
+                                                <?php echo MainWP_Updates::get_native_backup_indicator( $website ); // phpcs:ignore WordPress.Security.EscapeOutput -- markup built from escaped parts. ?>
                                             </td>
                                             <td sort-value="<?php echo count( $plugin_upgrades ); ?>"><strong class="mainwp-768-show"><?php echo esc_html__( 'Updates: ', 'mainwp' ); ?></strong> <?php echo count( $plugin_upgrades ) . ' ' . esc_html( _n( 'Update', 'Updates', count( $plugin_upgrades ), 'mainwp' ) ); ?></td>
                                             <?php if ( $user_can_see_client ) { ?>
@@ -613,6 +614,7 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                                     <input type="checkbox" name=""><label>
                                                 </div>
                                                 <?php MainWP_Utility::mainwp_display_site( $website, true, true ); ?>
+                                                <?php echo MainWP_Updates::get_native_backup_indicator( $website ); // phpcs:ignore WordPress.Security.EscapeOutput -- markup built from escaped parts. ?>
                                             </td>
                                             <td sort-value="<?php echo count( $theme_upgrades ); ?>"><strong class="mainwp-768-show"><?php esc_html_e( 'Updates:', 'mainwp' ); ?></strong> <?php echo count( $theme_upgrades ) . ' ' . esc_html( _n( 'Update', 'Updates', count( $theme_upgrades ), 'mainwp' ) ); ?></td>
                                             <?php if ( $user_can_see_client ) { ?>

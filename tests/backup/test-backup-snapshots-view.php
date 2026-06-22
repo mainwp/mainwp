@@ -283,4 +283,36 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 
 		delete_option( 'mainwp_enableNativeBackups' );
 	}
+
+	/**
+	 * A restore that failed but rolled the database back reassures the user
+	 * their data is safe, keyed off the child's rolled-back error code rather
+	 * than the raw error text.
+	 *
+	 * @return void
+	 */
+	public function test_rolled_back_outcome_message_present() {
+		$output = $this->render_page();
+
+		$this->assertStringContainsString( 'restoreOutcomeMessages', $output, 'The outcome message map must be present.' );
+		$this->assertStringContainsString( 'mainwp_restore_rolled_back', $output, 'The rolled-back code must be handled.' );
+		$this->assertMatchesRegularExpression(
+			"/data\.error_code/s",
+			$output,
+			'The terminal branch must read the error code.'
+		);
+	}
+
+	/**
+	 * A rollback that could not finish surfaces a maintenance-mode notice and
+	 * branches on the rollback-failed code.
+	 *
+	 * @return void
+	 */
+	public function test_rollback_failed_maintenance_notice_present() {
+		$output = $this->render_page();
+
+		$this->assertStringContainsString( 'mainwp-restore-maintenance-note', $output, 'The maintenance notice element must render.' );
+		$this->assertStringContainsString( 'mainwp_restore_rollback_failed', $output, 'The rollback-failed code must be handled.' );
+	}
 }

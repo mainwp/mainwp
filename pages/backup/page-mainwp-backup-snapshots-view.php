@@ -141,6 +141,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     <div class="ui small blue message" id="mainwp-restore-safety-note" style="display:none;"><?php esc_html_e( 'A safety backup was taken before this restore. If the result looks wrong, you can roll back to it.', 'mainwp' ); ?></div>
                     <div class="ui small yellow message" id="mainwp-restore-cancel-warning" style="display:none;"><?php esc_html_e( 'Cancelling now stops the restore while the site is mid-change. Files already copied stay in place and the previous database tables are kept aside, so a rollback from the safety backup remains available if the site looks wrong afterwards.', 'mainwp' ); ?></div>
                     <div class="ui message" id="mainwp-restore-result-message" style="display:none;"></div>
+                    <div class="ui small red message" id="mainwp-restore-maintenance-note" style="display:none;"><?php esc_html_e( 'The site is in maintenance mode until the database is checked, so it will not serve visitors until then.', 'mainwp' ); ?></div>
                     <div id="mainwp-restore-visit-site-wrap" style="display:none;margin-top:.5em;"><a id="mainwp-restore-visit-site" href="#" target="_blank" rel="noopener" class="ui tiny basic button"><i class="external alternate icon"></i><?php esc_html_e( 'Visit site', 'mainwp' ); ?></a></div>
                 </div>
             </div>
@@ -195,6 +196,17 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             var backupPollTimer = null;
             var currentSiteUrl = '';
             var phaseOrder = [ 'pending', 'preflight', 'pre_snapshot', 'staging', 'transferring', 'running', 'verifying', 'completed' ];
+
+            // The child reports two recovery outcomes when an in-place database
+            // restore fails: rolled_back means the previous database was put
+            // back and no data was lost; rollback_failed means recovery could
+            // not finish and the site is held in maintenance. Both arrive as a
+            // failed restore carrying an error_code, so the terminal branch
+            // speaks to the outcome rather than echoing the raw child error.
+            var restoreOutcomeMessages = {
+                'mainwp_restore_rolled_back': '<?php echo esc_js( esc_html__( 'The restore could not finish, so the database was returned to how it was before the restore started. No data was lost. Check the site, then try the restore again.', 'mainwp' ) ); ?>',
+                'mainwp_restore_rollback_failed': '<?php echo esc_js( esc_html__( 'The restore could not finish and the database could not be returned to its previous state automatically, so it may be in a partial state. Have your host or a database administrator check the database before bringing the site back online.', 'mainwp' ) ); ?>'
+            };
 
             var sourceLabels = {
                 'local': '<?php echo esc_js( esc_html__( 'This dashboard', 'mainwp' ) ); ?>',
@@ -295,8 +307,25 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
 
                 if ( terminal ) {
                     var $message = $( '#mainwp-restore-result-message' );
-                    $message.removeClass( 'green red' ).addClass( 'completed' === data.status ? 'green' : 'red' );
-                    $message.text( 'completed' === data.status ? '<?php echo esc_js( esc_html__( 'The site was restored and responds normally.', 'mainwp' ) ); ?>' : ( data.last_error || label ) ).show();
+                    var rolledBack = 'mainwp_restore_rolled_back' === data.error_code;
+                    var rollbackFailed = 'mainwp_restore_rollback_failed' === data.error_code;
+                    var outcome = data.error_code ? restoreOutcomeMessages[ data.error_code ] : '';
+                    $message.removeClass( 'green red blue' );
+                    if ( 'completed' === data.status ) {
+                        $message.addClass( 'green' ).text( '<?php echo esc_js( esc_html__( 'The site was restored and responds normally.', 'mainwp' ) ); ?>' );
+                    } else if ( rolledBack && outcome ) {
+                        // The restore failed but the database was recovered:
+                        // the data is safe, so this reads as information.
+                        $message.addClass( 'blue' ).text( outcome );
+                    } else if ( rollbackFailed && outcome ) {
+                        $message.addClass( 'red' ).text( outcome );
+                    } else {
+                        $message.addClass( 'red' ).text( data.last_error || label );
+                    }
+                    $message.show();
+                    // The maintenance notice belongs only to the unrecovered
+                    // case, where the site is deliberately held offline.
+                    $( '#mainwp-restore-maintenance-note' ).toggle( rollbackFailed );
                     // Offer to open the restored site, and let the safety note
                     // stay visible while a rollback is still available (L5).
                     $( '#mainwp-restore-visit-site-wrap' ).toggle( 'completed' === data.status && '' !== currentSiteUrl );
@@ -326,6 +355,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 currentJob = jobId;
                 setPane( false );
                 $( '#mainwp-restore-result-message' ).hide();
+                $( '#mainwp-restore-maintenance-note' ).hide();
                 poll();
             }
 

@@ -308,15 +308,7 @@ class MainWP_Bulk_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
             'query_var'           => false,
             'can_export'          => false,
             'rewrite'             => false,
-            'capabilities'        => array(
-                'edit_post'          => 'read',
-                'edit_posts'         => 'read',
-                'edit_others_posts'  => 'read',
-                'publish_posts'      => 'read',
-                'read_post'          => 'read',
-                'read_private_posts' => 'read',
-                'delete_post'        => 'read',
-            ),
+            'capabilities'        => $this->get_admin_only_capabilities(),
         );
 
         register_post_type( 'bulkpost', $args );
@@ -358,20 +350,37 @@ class MainWP_Bulk_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
             'query_var'           => false,
             'can_export'          => false,
             'rewrite'             => false,
-            'capabilities'        => array(
-                'edit_post'          => 'read',
-                'edit_posts'         => 'read',
-                'edit_others_posts'  => 'read',
-                'publish_posts'      => 'read',
-                'read_post'          => 'read',
-                'read_private_posts' => 'read',
-                'delete_post'        => 'read',
-            ),
+            'capabilities'        => $this->get_admin_only_capabilities(),
         );
 
         register_post_type( 'bulkpage', $args );
 
         do_action( 'mainwp_register_post_type' );
+    }
+
+    /**
+     * Get admin-only capabilities for MainWP bulk content post types.
+     *
+     * @return array
+     */
+    private function get_admin_only_capabilities() {
+        return array(
+            'edit_post'              => 'manage_options',
+            'read_post'              => 'manage_options',
+            'delete_post'            => 'manage_options',
+            'edit_posts'             => 'manage_options',
+            'edit_others_posts'      => 'manage_options',
+            'delete_posts'           => 'manage_options',
+            'publish_posts'          => 'manage_options',
+            'read_private_posts'     => 'manage_options',
+            'read'                   => 'manage_options',
+            'delete_private_posts'   => 'manage_options',
+            'delete_published_posts' => 'manage_options',
+            'delete_others_posts'    => 'manage_options',
+            'edit_private_posts'     => 'manage_options',
+            'edit_published_posts'   => 'manage_options',
+            'create_posts'           => 'manage_options',
+        );
     }
 
     /**

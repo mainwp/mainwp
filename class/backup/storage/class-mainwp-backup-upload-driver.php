@@ -236,6 +236,11 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
                 $store->save_checkpoint( (int) $job->id, $checkpoint );
             }
 
+            // Resolve this snapshot's encryption once per tick. An armed
+            // snapshot whose key is unreadable raises here and parks the job
+            // rather than ever uploading its bytes in clear.
+            $enc = $this->encryption_context_for( $snapshot );
+
             $status = $job->status;
 
             if ( MainWP_Backup_Upload_Job_Store::STATUS_PENDING === $status || MainWP_Backup_Upload_Job_Store::STATUS_FAILED_RETRYABLE === $status ) {
@@ -252,7 +257,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
             }
 
             if ( MainWP_Backup_Upload_Job_Store::STATUS_UPLOADING === $status ) {
-                if ( ! $this->phase_uploading( $job, $checkpoint, $provider, $deadline ) ) {
+                if ( ! $this->phase_uploading( $job, $checkpoint, $provider, $deadline, $enc ) ) {
                     return;
                 }
                 $status = MainWP_Backup_Upload_Job_Store::STATUS_SUBMITTING;
@@ -263,7 +268,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
                 if ( microtime( true ) >= $deadline ) {
                     return;
                 }
-                $this->phase_submitting( $job, $checkpoint, $snapshot, $provider );
+                $this->phase_submitting( $job, $checkpoint, $snapshot, $provider, $enc );
             }
 
             $store->complete_job( (int) $job->id );
@@ -392,12 +397,13 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
      * @param array                          $checkpoint Checkpoint, modified in place.
      * @param MainWP_Backup_Storage_Provider $provider   Destination provider.
      * @param float                          $deadline   Monotonic deadline.
+     * @param array                          $enc        Encryption context for the snapshot.
      *
      * @return bool True when the phase finished; false on deadline.
      *
      * @throws \RuntimeException When a source artifact disappeared.
      */
-    private function phase_uploading( object $job, array &$checkpoint, MainWP_Backup_Storage_Provider $provider, float $deadline ): bool {
+    private function phase_uploading( object $job, array &$checkpoint, MainWP_Backup_Storage_Provider $provider, float $deadline, array $enc ): bool {
         $store  = MainWP_Backup_Upload_Job_Store::instance();
         $prefix = $this->remote_prefix( $job );
 
@@ -428,7 +434,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
                     $store->save_checkpoint( (int) $job->id, $checkpoint );
                     return false;
                 }
-                $this->upload_whole_artifact( $artifact, $prefix, $provider );
+                $this->upload_whole_artifact( $artifact, $prefix, $provider, $enc );
                 $checkpoint['artifacts'][ $index ]['done'] = true;
                 $store->save_checkpoint( (int) $job->id, $checkpoint );
                 continue;
@@ -444,7 +450,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
                     return false;
                 }
 
-                $this->upload_chunk( $artifact, $chunks[ $i ], $prefix, $provider, $job );
+                $this->upload_chunk( $artifact, $chunks[ $i ], $prefix, $provider, $job, $enc );
 
                 $checkpoint['artifacts'][ $index ]['chunks'][ $i ]['remote_present'] = true;
                 $checkpoint['artifacts'][ $index ]['chunks_cursor']                  = $i + 1;
@@ -466,10 +472,11 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
      * @param array                          $checkpoint Checkpoint.
      * @param object                         $snapshot   Snapshot row.
      * @param MainWP_Backup_Storage_Provider $provider   Destination provider.
+     * @param array                          $enc        Encryption context for the snapshot.
      *
      * @return void
      */
-    private function phase_submitting( object $job, array &$checkpoint, object $snapshot, MainWP_Backup_Storage_Provider $provider ): void {
+    private function phase_submitting( object $job, array &$checkpoint, object $snapshot, MainWP_Backup_Storage_Provider $provider, array $enc ): void {
         $artifacts = array();
         foreach ( $checkpoint['artifacts'] as $artifact ) {
             $entry = array(
@@ -508,10 +515,35 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
             'artifacts'   => $artifacts,
         );
 
+        // For an encrypted snapshot the manifest carries the keying material a
+        // disaster recovery needs: the wrapped DEK, the passphrase-wrapped KEK
+        // recovery blob, and the cipher markers. The manifest itself stays
+        // plaintext - it holds only wrapped keys, never archive bytes - and a
+        // sibling HMAC keyed by the KEK lets a recovering dashboard trust the
+        // chunk list and hashes it reads back from the bucket.
+        if ( ! empty( $enc['encrypt'] ) ) {
+            $meta                   = is_array( $enc['meta'] ) ? $enc['meta'] : array();
+            $manifest['encryption'] = array(
+                'cipher'         => MainWP_Backup_Encryption::CIPHER_ID,
+                'overhead'       => MainWP_Backup_Archive_Cipher::OVERHEAD,
+                'wrapped_dek'    => isset( $meta['wrapped_dek'] ) ? (string) $meta['wrapped_dek'] : '',
+                'kek_version_id' => isset( $meta['kek_version_id'] ) ? (string) $meta['kek_version_id'] : '',
+            );
+            $manifest['recovery']   = MainWP_Backup_Encryption::instance()->get_recovery_blob();
+            $manifest['site_url']   = $this->snapshot_site_url( $snapshot );
+        }
+
         $json = (string) wp_json_encode( $manifest );
         $key  = $this->remote_prefix( $job ) . 'manifest.json';
         $provider->put_object( $key, $json, 'application/json' );
         $this->confirm_remote_object( $provider, $key, strlen( $json ) );
+
+        if ( ! empty( $enc['encrypt'] ) ) {
+            $hmac     = MainWP_Backup_Encryption::instance()->manifest_hmac( $json, $enc['kek'] );
+            $hmac_key = $this->remote_prefix( $job ) . 'manifest.json.hmac';
+            $provider->put_object( $hmac_key, $hmac, 'text/plain' );
+            $this->confirm_remote_object( $provider, $hmac_key, strlen( $hmac ) );
+        }
 
         $checkpoint['manifest_submitted'] = true;
         MainWP_Backup_Upload_Job_Store::instance()->save_checkpoint( (int) $job->id, $checkpoint );
@@ -524,12 +556,13 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
      * @param array                          $artifact Artifact checkpoint entry.
      * @param string                         $prefix   Remote key prefix.
      * @param MainWP_Backup_Storage_Provider $provider Destination provider.
+     * @param array                          $enc      Encryption context for the snapshot.
      *
      * @return void
      *
      * @throws \RuntimeException When the source file disappeared.
      */
-    private function upload_whole_artifact( array $artifact, string $prefix, MainWP_Backup_Storage_Provider $provider ): void {
+    private function upload_whole_artifact( array $artifact, string $prefix, MainWP_Backup_Storage_Provider $provider, array $enc ): void {
         $key = $prefix . 'files/' . $artifact['file'];
 
         if ( ! is_file( $artifact['path'] ) ) {
@@ -539,8 +572,12 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
         clearstatcache( true, $artifact['path'] );
         $size = (int) filesize( $artifact['path'] );
 
+        // When sealed, the remote object carries the cipher framing overhead,
+        // so the already-present check compares against the ciphertext size.
+        $expected_remote = $size + $this->seal_overhead( $enc );
+
         $head = $provider->head_object( $key );
-        if ( is_array( $head ) && (int) $head['size'] === $size ) {
+        if ( is_array( $head ) && (int) $head['size'] === $expected_remote ) {
             return; // Verified present.
         }
 
@@ -548,6 +585,8 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
         if ( false === $body ) {
             throw new \RuntimeException( esc_html( 'Could not read backup artifact for upload: ' . $artifact['file'] ), 410 );
         }
+
+        $body = $this->maybe_seal_whole( $body, $enc, (string) $artifact['file'] );
 
         $provider->put_object( $key, $body );
         $this->confirm_remote_object( $provider, $key, strlen( $body ) );
@@ -562,17 +601,22 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
      * @param string                         $prefix   Remote key prefix.
      * @param MainWP_Backup_Storage_Provider $provider Destination provider.
      * @param object                         $job      Job row, for the staging dir.
+     * @param array                          $enc      Encryption context for the snapshot.
      *
      * @return void
      *
      * @throws \RuntimeException When neither the staged chunk nor the source artifact can supply the bytes.
      */
-    private function upload_chunk( array $artifact, array $chunk, string $prefix, MainWP_Backup_Storage_Provider $provider, object $job ): void {
+    private function upload_chunk( array $artifact, array $chunk, string $prefix, MainWP_Backup_Storage_Provider $provider, object $job, array $enc ): void {
         $key    = $prefix . 'chunks/' . $chunk['hash'] . '.bin';
         $staged = $this->staging_dir( $job ) . DIRECTORY_SEPARATOR . $chunk['hash'] . '.bin';
 
+        // When sealed, the remote object carries the cipher framing overhead,
+        // so the already-present check compares against the ciphertext size.
+        $expected_remote = (int) $chunk['length'] + $this->seal_overhead( $enc );
+
         $head = $provider->head_object( $key );
-        if ( is_array( $head ) && (int) $head['size'] === (int) $chunk['length'] ) {
+        if ( is_array( $head ) && (int) $head['size'] === $expected_remote ) {
             if ( is_file( $staged ) ) {
                 unlink( $staged ); // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- progressive staging reclaim.
             }
@@ -580,6 +624,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
         }
 
         $bytes = $this->read_chunk_bytes( $artifact, $chunk, $staged );
+        $bytes = $this->maybe_seal_chunk( $bytes, $enc, (string) $chunk['hash'] );
 
         $provider->put_object( $key, $bytes );
         $this->confirm_remote_object( $provider, $key, strlen( $bytes ) );
@@ -650,6 +695,99 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
         }
 
         throw new \RuntimeException( esc_html( 'Chunk bytes are unavailable locally for ' . $artifact['file'] ), 410 );
+    }
+
+    /**
+     * Resolve a snapshot's encryption context for a tick: whether to seal, the
+     * data key, the dashboard KEK (for the manifest HMAC), and the stored
+     * metadata to echo into the manifest. A plaintext (legacy or unarmed)
+     * snapshot returns a context that seals nothing.
+     *
+     * @param object $snapshot Snapshot row with decoded encryption metadata.
+     *
+     * @return array
+     *
+     * @throws \RuntimeException When the snapshot is encrypted but its key is unreadable.
+     */
+    private function encryption_context_for( object $snapshot ): array {
+        $meta = isset( $snapshot->encryption ) ? $snapshot->encryption : array();
+        if ( ! MainWP_Backup_Encryption::meta_is_encrypted( $meta ) ) {
+            return array( 'encrypt' => false );
+        }
+
+        $encryption = MainWP_Backup_Encryption::instance();
+        $kek        = $encryption->load_kek();
+        if ( null === $kek ) {
+            throw new \RuntimeException( esc_html( 'Backup encryption key is unavailable; refusing to upload this snapshot in clear.' ) );
+        }
+
+        return array(
+            'encrypt'     => true,
+            'dek'         => $encryption->dek_from_meta( $meta, (int) $snapshot->id, $kek ),
+            'kek'         => $kek,
+            'snapshot_id' => (int) $snapshot->id,
+            'meta'        => $meta,
+        );
+    }
+
+    /**
+     * The framing overhead a seal adds, or zero when the context is plaintext.
+     *
+     * @param array $enc Encryption context.
+     *
+     * @return int
+     */
+    private function seal_overhead( array $enc ): int {
+        return empty( $enc['encrypt'] ) ? 0 : MainWP_Backup_Archive_Cipher::OVERHEAD;
+    }
+
+    /**
+     * Seal a whole-artifact body when the context is encrypting, binding it to
+     * its snapshot and filename. A pass-through otherwise.
+     *
+     * @param string $bytes Plaintext body.
+     * @param array  $enc   Encryption context.
+     * @param string $file  Artifact filename.
+     *
+     * @return string
+     */
+    private function maybe_seal_whole( string $bytes, array $enc, string $file ): string {
+        if ( empty( $enc['encrypt'] ) ) {
+            return $bytes;
+        }
+        return MainWP_Backup_Archive_Cipher::seal( $bytes, $enc['dek'], 'snapshot:' . $enc['snapshot_id'] . ':whole:' . $file );
+    }
+
+    /**
+     * Seal a chunk body when the context is encrypting, binding it to its
+     * snapshot and content hash. The binding is the hash, not the offset, so
+     * identical chunks that dedupe to one remote object stay decryptable at
+     * every position they appear. A pass-through otherwise.
+     *
+     * @param string $bytes Plaintext chunk.
+     * @param array  $enc   Encryption context.
+     * @param string $hash  Chunk content hash.
+     *
+     * @return string
+     */
+    private function maybe_seal_chunk( string $bytes, array $enc, string $hash ): string {
+        if ( empty( $enc['encrypt'] ) ) {
+            return $bytes;
+        }
+        return MainWP_Backup_Archive_Cipher::seal( $bytes, $enc['dek'], 'snapshot:' . $enc['snapshot_id'] . ':chunk:' . $hash );
+    }
+
+    /**
+     * Best-effort child site URL for the manifest, so a disaster recovery can
+     * tell which site an archive belongs to. Empty when the site is gone.
+     *
+     * @param object $snapshot Snapshot row.
+     *
+     * @return string
+     */
+    private function snapshot_site_url( object $snapshot ): string {
+        $website = MainWP_DB::instance()->get_website_by_id( (int) $snapshot->site_id );
+        return ( $website && ! empty( $website->url ) ) ? (string) $website->url : '';
     }
 
     /**

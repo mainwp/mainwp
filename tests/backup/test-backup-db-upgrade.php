@@ -114,6 +114,9 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 			if ( ! $this->column_exists( $snapshot_table, 'verified_at' ) ) {
 				$wpdb->query( "ALTER TABLE {$snapshot_table} ADD COLUMN verified_at int(11) NOT NULL DEFAULT 0" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
 			}
+			if ( ! $this->column_exists( $snapshot_table, 'encryption' ) ) {
+				$wpdb->query( "ALTER TABLE {$snapshot_table} ADD COLUMN encryption text NOT NULL DEFAULT ''" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
+			}
 		}
 
 		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_progress' );
@@ -327,6 +330,36 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		update_site_option( 'mainwp_db_version', '9.0.2.12' );
 		MainWP_Install::instance()->install();
 		$this->assertTrue( $this->column_exists( $snapshot_table, 'offsite_state' ), 'Re-running install must remain idempotent.' );
+	}
+
+	/**
+	 * An install whose stored db version predates the archive-encryption
+	 * column must receive it when install() runs: encryption holds the
+	 * per-snapshot wrapped data key and cipher markers. Re-running install()
+	 * stays idempotent.
+	 *
+	 * @return void
+	 */
+	public function test_upgrade_adds_encryption_column_to_snapshot_table() {
+		global $wpdb;
+
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+		$this->assertTrue( $this->column_exists( $table, 'encryption' ), 'Precondition: fresh install has encryption.' );
+
+		$wpdb->query( "ALTER TABLE {$table} DROP COLUMN encryption" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture, identifiers cannot be prepared.
+		$this->assertFalse( $this->column_exists( $table, 'encryption' ), 'Precondition: column dropped to simulate an older install.' );
+
+		update_site_option( 'mainwp_db_version', '9.0.2.13' );
+		MainWP_Install::instance()->install();
+
+		$this->assertTrue(
+			$this->column_exists( $table, 'encryption' ),
+			'Upgrade must add encryption to existing installs; the shipped db version needs a bump or dbDelta never runs.'
+		);
+
+		update_site_option( 'mainwp_db_version', '9.0.2.13' );
+		MainWP_Install::instance()->install();
+		$this->assertTrue( $this->column_exists( $table, 'encryption' ), 'Re-running install must remain idempotent.' );
 	}
 
 	/**

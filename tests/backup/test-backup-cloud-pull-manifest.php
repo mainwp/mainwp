@@ -9,11 +9,14 @@
 
 namespace MainWP\Dashboard\Tests;
 
+use MainWP\Dashboard\MainWP_Backup_Encryption;
 use MainWP\Dashboard\MainWP_Backup_Presignable_Provider;
 use MainWP\Dashboard\MainWP_Backup_Restore_Transfer_Driver;
+use MainWP\Dashboard\MainWP_Backup_Snapshots;
 use MainWP\Dashboard\MainWP_Backup_Storage_Local;
 use MainWP\Dashboard\MainWP_Backup_Storage_Provider;
 use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_Keys_Manager;
 
 /**
  * A presignable provider stub with a scriptable scheme and support
@@ -275,6 +278,51 @@ class MainWP_Backup_Cloud_Pull_Manifest_Test extends MainWP_Abilities_Test_Case 
 			$this->driver->can_use_cloud_pull( $this->website(), $plan, array() ),
 			'A non-presignable provider must stage instead.'
 		);
+	}
+
+	/**
+	 * An encrypted snapshot declines cloud pull even when every other gate
+	 * holds: the child has no key, so its ciphertext must stage and decrypt on
+	 * the dashboard instead of being pulled straight from cloud storage.
+	 *
+	 * @return void
+	 */
+	public function test_encrypted_snapshot_declines_cloud_pull() {
+		update_option( MainWP_Backup_Encryption::ENABLED_OPTION, '1' );
+		$enc = MainWP_Backup_Encryption::instance();
+		$enc->set_recovery_passphrase( 'cloud pull gate passphrase' );
+
+		$snapshot_id = MainWP_Backup_Snapshots::instance()->record_snapshot(
+			array(
+				'task_id'       => 0,
+				'site_id'       => 4,
+				'type'          => 'full',
+				'parent_id'     => null,
+				'archives'      => array(),
+				'manifest_path' => '',
+			)
+		);
+
+		$this->driver->upload_records = array(
+			$snapshot_id => array(
+				'full.zip' => array(
+					'file'   => 'full.zip',
+					'mode'   => 'whole',
+					'size'   => 1000,
+					'sha256' => str_repeat( 'a', 64 ),
+				),
+			),
+		);
+		$plan = array( $this->plan_entry( array( 'snapshot_id' => $snapshot_id ) ) );
+
+		$this->assertFalse(
+			$this->driver->can_use_cloud_pull( $this->website(), $plan, array() ),
+			'An encrypted snapshot must decline cloud pull; the child cannot decrypt.'
+		);
+
+		MainWP_Keys_Manager::instance()->delete_key_file( $enc->kek_filename() );
+		delete_option( MainWP_Backup_Encryption::ENABLED_OPTION );
+		delete_option( MainWP_Backup_Encryption::RECOVERY_OPTION );
 	}
 
 	/**

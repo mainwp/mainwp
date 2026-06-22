@@ -230,6 +230,23 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 if ( ! $updated_enableNativeBackups ) {
                     MainWP_Utility::update_option( 'mainwp_enableNativeBackups', $enableNativeBackups );
                 }
+
+                // Archive encryption. A non-empty passphrase creates or re-wraps
+                // the dashboard key. The toggle can only arm when a recovery
+                // passphrase exists, so a backup is never sealed without a way to
+                // recover it. Turning encryption off never removes the key
+                // material - already-encrypted snapshots still need it.
+                $encryption     = MainWP_Backup_Encryption::instance();
+                $enc_passphrase = isset( $_POST['mainwp_options_backupEncryptionPassphrase'] ) ? (string) wp_unslash( $_POST['mainwp_options_backupEncryptionPassphrase'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- used verbatim as key material, never stored or rendered.
+                if ( '' !== trim( $enc_passphrase ) ) {
+                    $encryption->set_recovery_passphrase( $enc_passphrase );
+                }
+                $enableEncryption = ( isset( $_POST['mainwp_options_enableBackupEncryption'] ) && ! empty( $_POST['mainwp_options_enableBackupEncryption'] ) ) ? 1 : 0;
+                if ( $enableEncryption && empty( $encryption->get_recovery_blob() ) ) {
+                    $enableEncryption = 0;
+                }
+                MainWP_Utility::update_option( MainWP_Backup_Encryption::ENABLED_OPTION, $enableEncryption );
+
                 return true;
             }
         }

@@ -14,6 +14,8 @@
 namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Backup_Snapshots;
+use MainWP\Dashboard\MainWP_Backup_Encryption;
+use MainWP\Dashboard\MainWP_Keys_Manager;
 use MainWP\Dashboard\MainWP_DB;
 
 /**
@@ -30,7 +32,29 @@ class MainWP_Backup_Snapshots_Test extends \WP_UnitTestCase {
 		global $wpdb;
 		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
 		$wpdb->query( "DELETE FROM {$table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
+
+		// Encryption state leaks across tests through the KEK key file and
+		// options; reset it so a record_snapshot in one test is not armed by
+		// a passphrase set in another.
+		$enc = MainWP_Backup_Encryption::instance();
+		MainWP_Keys_Manager::instance()->delete_key_file( $enc->kek_filename() );
+		delete_option( MainWP_Backup_Encryption::ENABLED_OPTION );
+		delete_option( MainWP_Backup_Encryption::RECOVERY_OPTION );
+
 		parent::tear_down();
+	}
+
+	/**
+	 * Arm encryption: turn the toggle on and set a recovery passphrase, which
+	 * creates the dashboard KEK.
+	 *
+	 * @return MainWP_Backup_Encryption
+	 */
+	private function arm_encryption() {
+		$enc = MainWP_Backup_Encryption::instance();
+		update_option( MainWP_Backup_Encryption::ENABLED_OPTION, '1' );
+		$enc->set_recovery_passphrase( 'snapshot encryption passphrase' );
+		return $enc;
 	}
 
 	/**
@@ -177,5 +201,66 @@ class MainWP_Backup_Snapshots_Test extends \WP_UnitTestCase {
 
 		$this->assertCount( 1, $chain );
 		$this->assertSame( $leaf, (int) $chain[0]->id );
+	}
+
+	/**
+	 * When encryption is armed, recording a snapshot writes per-snapshot key
+	 * material, and the wrapped DEK unwraps under the KEK to a usable 32-byte
+	 * key bound to that snapshot.
+	 *
+	 * @return void
+	 */
+	public function test_record_snapshot_attaches_encryption_when_armed() {
+		$enc = $this->arm_encryption();
+		$id  = $this->record();
+		$this->assertGreaterThan( 0, $id );
+
+		// The raw column holds metadata JSON, not the empty default.
+		global $wpdb;
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+		$raw   = $wpdb->get_var( $wpdb->prepare( "SELECT encryption FROM {$table} WHERE id = %d", $id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- identifiers cannot be prepared.
+		$this->assertNotEmpty( $raw );
+
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id );
+		$this->assertTrue( MainWP_Backup_Encryption::meta_is_encrypted( $snapshot->encryption ) );
+		$this->assertSame( 1, $snapshot->encryption['enc'] );
+		$this->assertSame( 'aes-256-gcm', $snapshot->encryption['cipher'] );
+		$this->assertSame( 28, $snapshot->encryption['overhead'] );
+
+		$kek = $enc->load_kek();
+		$dek = $enc->dek_from_meta( $snapshot->encryption, $id, $kek );
+		$this->assertSame( 32, strlen( $dek ) );
+	}
+
+	/**
+	 * Without encryption armed, a recorded snapshot stays plaintext: its
+	 * encryption metadata decodes to an empty array (the mixed-mode legacy
+	 * signal), and meta_is_encrypted is false.
+	 *
+	 * @return void
+	 */
+	public function test_record_snapshot_leaves_plaintext_when_not_armed() {
+		$id       = $this->record();
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id );
+
+		$this->assertSame( array(), $snapshot->encryption );
+		$this->assertFalse( MainWP_Backup_Encryption::meta_is_encrypted( $snapshot->encryption ) );
+	}
+
+	/**
+	 * A snapshot's wrapped DEK is bound to its own id: unwrapping it against a
+	 * different snapshot id is rejected, so a catalog-row swap cannot move key
+	 * material between snapshots.
+	 *
+	 * @return void
+	 */
+	public function test_wrapped_dek_is_bound_to_its_snapshot() {
+		$enc      = $this->arm_encryption();
+		$id       = $this->record();
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id );
+		$kek      = $enc->load_kek();
+
+		$this->expectException( \RuntimeException::class );
+		$enc->dek_from_meta( $snapshot->encryption, $id + 1, $kek );
 	}
 }

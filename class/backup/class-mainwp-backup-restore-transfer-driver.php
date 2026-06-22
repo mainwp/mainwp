@@ -93,12 +93,31 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
         }
 
         foreach ( array_keys( $snapshot_ids ) as $snapshot_id ) {
+            // An encrypted snapshot must stage and decrypt on the dashboard:
+            // the child has no key, so it cannot pull ciphertext straight from
+            // cloud storage.
+            if ( $this->snapshot_is_encrypted( $snapshot_id ) ) {
+                return false;
+            }
             if ( null === $this->presignable_upload_for_snapshot( $snapshot_id ) ) {
                 return false;
             }
         }
 
         return true;
+    }
+
+    /**
+     * Whether a snapshot's offsite copies are encrypted.
+     *
+     * @param int $snapshot_id Snapshot id.
+     *
+     * @return bool
+     */
+    private function snapshot_is_encrypted( int $snapshot_id ): bool {
+        $snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+        $meta     = ( null !== $snapshot && isset( $snapshot->encryption ) ) ? $snapshot->encryption : array();
+        return MainWP_Backup_Encryption::meta_is_encrypted( $meta );
     }
 
     /**
@@ -402,6 +421,18 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
             return $this->stage_state( 'error', __( 'No storage destination holds a copy of this backup.', 'mainwp' ) );
         }
 
+        $enc = $this->resolve_artifact_encryption( $entry );
+        if ( null === $enc ) {
+            return $this->stage_state(
+                'error',
+                sprintf(
+                    /* translators: %s: artifact file name. */
+                    __( 'This backup is encrypted but its key is unavailable on this dashboard: %s', 'mainwp' ),
+                    $entry['file']
+                )
+            );
+        }
+
         $temp  = $staging . $entry['file'] . '.downloading';
         $final = $staging . $entry['file'];
 
@@ -417,6 +448,20 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
         }
         if ( ! rename( $temp, $final ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions -- atomic promote of the staged download.
             return $this->stage_state( 'error', __( 'The staged download could not be moved into place.', 'mainwp' ) );
+        }
+
+        // Decrypt in place before hashing so the integrity check runs against
+        // the plaintext, exactly as it does for an unencrypted artifact.
+        if ( ! $this->maybe_decrypt_file( $final, $enc, 'snapshot:' . (int) $entry['snapshot_id'] . ':whole:' . $entry['file'] ) ) {
+            wp_delete_file( $final );
+            return $this->stage_state(
+                'error',
+                sprintf(
+                    /* translators: %s: artifact file name. */
+                    __( 'The backup file could not be decrypted: %s. The stored backup may be corrupted or the key is wrong.', 'mainwp' ),
+                    $entry['file']
+                )
+            );
         }
 
         $downloaded = (string) hash_file( 'sha256', $final );
@@ -464,6 +509,21 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
         $provider = $this->provider_for_snapshot( (int) $entry['snapshot_id'] );
         if ( null === $provider ) {
             return $this->stage_state( 'error', __( 'No storage destination holds a copy of this backup.', 'mainwp' ) );
+        }
+
+        // Resolve the artifact's data key once for the whole reassembly. A
+        // chain can mix an encrypted artifact with a legacy plaintext one, so
+        // this is resolved per artifact from its own snapshot.
+        $enc = $this->resolve_artifact_encryption( $entry );
+        if ( null === $enc ) {
+            return $this->stage_state(
+                'error',
+                sprintf(
+                    /* translators: %s: artifact file name. */
+                    __( 'This backup is encrypted but its key is unavailable on this dashboard: %s', 'mainwp' ),
+                    $entry['file']
+                )
+            );
         }
 
         if ( empty( $entry['chunks'] ) ) {
@@ -525,6 +585,22 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
                 );
             }
 
+            // Decrypt the piece before verifying and appending, so the content
+            // hash and byte count are taken over the plaintext - the chunk hash
+            // recorded at backup time is the plaintext hash.
+            if ( ! $this->maybe_decrypt_file( $piece, $enc, 'snapshot:' . (int) $entry['snapshot_id'] . ':chunk:' . $chunk['hash'] ) ) {
+                wp_delete_file( $piece );
+                return $this->stage_state(
+                    'error',
+                    sprintf(
+                        /* translators: 1: artifact file name, 2: chunk hash. */
+                        __( 'A piece of the cloud copy could not be decrypted: %1$s (chunk %2$s). The stored backup may be corrupted or the key is wrong.', 'mainwp' ),
+                        $entry['file'],
+                        $chunk['hash']
+                    )
+                );
+            }
+
             // Chunks are content-addressed with the algorithm the upload
             // recorded (xxh128 where available); verify with that one.
             $algo   = isset( $chunk['algo'] ) && is_string( $chunk['algo'] ) && in_array( $chunk['algo'], hash_algos(), true ) ? $chunk['algo'] : 'sha256';
@@ -575,8 +651,26 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
             return $this->stage_state( 'error', __( 'The reassembled backup could not be moved into place.', 'mainwp' ) );
         }
 
+        $entry['sha256'] = (string) hash_file( 'sha256', $final );
+
+        // A reassembled artifact that does not match its backup-time whole-file
+        // hash is corrupt or tampered; reject it rather than restore unverified
+        // bytes. Uploads predating artifact hashing carry no expected hash.
+        $expected = isset( $entry['expected_sha256'] ) ? (string) $entry['expected_sha256'] : '';
+        if ( '' !== $expected && ! hash_equals( $expected, $entry['sha256'] ) ) {
+            wp_delete_file( $final );
+            unset( $entry['reassembly'], $entry['chunks'] );
+            return $this->stage_state(
+                'error',
+                sprintf(
+                    /* translators: %s: artifact file name. */
+                    __( 'The reassembled backup failed its integrity check: %s. The stored backup may be corrupted.', 'mainwp' ),
+                    $entry['file']
+                )
+            );
+        }
+
         $entry['staged_path'] = $final;
-        $entry['sha256']      = (string) hash_file( 'sha256', $final );
         unset( $entry['reassembly'], $entry['chunks'] );
         return $this->stage_state( 'staged' );
     }
@@ -653,6 +747,68 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
             'state' => $state,
             'error' => $error,
         );
+    }
+
+    /**
+     * Resolve an artifact's decryption context from its own snapshot, so a
+     * chain mixing encrypted and legacy plaintext snapshots decrypts each
+     * artifact correctly. Returns a context that decrypts nothing for a
+     * plaintext snapshot, or null when the snapshot is encrypted but its key
+     * cannot be loaded (the caller surfaces that as a staging error).
+     *
+     * @param array $entry Plan entry.
+     *
+     * @return array|null { encrypt: bool, dek?: string } or null when the key is missing.
+     */
+    private function resolve_artifact_encryption( array $entry ): ?array {
+        $snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( (int) $entry['snapshot_id'] );
+        $meta     = ( null !== $snapshot && isset( $snapshot->encryption ) ) ? $snapshot->encryption : array();
+        if ( ! MainWP_Backup_Encryption::meta_is_encrypted( $meta ) ) {
+            return array( 'encrypt' => false );
+        }
+
+        $encryption = MainWP_Backup_Encryption::instance();
+        $kek        = $encryption->load_kek();
+        if ( null === $kek ) {
+            return null;
+        }
+        try {
+            $dek = $encryption->dek_from_meta( $meta, (int) $entry['snapshot_id'], $kek );
+        } catch ( \Throwable $e ) {
+            return null;
+        }
+        return array(
+            'encrypt' => true,
+            'dek'     => $dek,
+        );
+    }
+
+    /**
+     * Decrypt a downloaded object file in place when the context is encrypting;
+     * a pass-through for a plaintext context. Returns false when the bytes
+     * cannot be read or the seal fails to open, which the caller turns into a
+     * staging error rather than restoring garbage.
+     *
+     * @param string $path Local file holding the downloaded bytes.
+     * @param array  $enc  Decryption context.
+     * @param string $aad  The AAD the unit was sealed with.
+     *
+     * @return bool
+     */
+    private function maybe_decrypt_file( string $path, array $enc, string $aad ): bool {
+        if ( empty( $enc['encrypt'] ) ) {
+            return true;
+        }
+        $cipher = file_get_contents( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- local staged object read.
+        if ( false === $cipher ) {
+            return false;
+        }
+        try {
+            $plain = MainWP_Backup_Archive_Cipher::open( $cipher, $enc['dek'], $aad );
+        } catch ( \Throwable $e ) {
+            return false;
+        }
+        return strlen( $plain ) === file_put_contents( $path, $plain ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- local staged plaintext write.
     }
 
     /**

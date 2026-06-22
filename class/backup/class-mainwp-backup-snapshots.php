@@ -125,6 +125,15 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
 
         $snapshot_id = (int) $this->wpdb->insert_id;
 
+        // When encryption is armed, mint this snapshot's key material and store
+        // it before any upload job can run, so the wrapped DEK is bound to this
+        // exact snapshot id. Fail closed: if the metadata cannot be persisted,
+        // drop the row so no upload ever ships this snapshot's bytes in clear.
+        if ( MainWP_Backup_Encryption::instance()->is_armed() && ! $this->attach_encryption_meta( $snapshot_id ) ) {
+            $this->wpdb->delete( $this->table_name( 'wp_backup_snapshot' ), array( 'id' => $snapshot_id ), array( '%d' ) );
+            return 0;
+        }
+
         /**
          * Fires after a completed backup run is recorded as a snapshot.
          *
@@ -502,6 +511,42 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
         $row->archives  = is_array( $decoded ) ? $decoded : array();
         $row->parent_id = isset( $row->parent_id ) && null !== $row->parent_id ? (int) $row->parent_id : null;
 
+        // Empty/absent encryption decodes to an empty array, the mixed-mode
+        // "this snapshot is plaintext" signal legacy rows carry implicitly.
+        $encryption      = property_exists( $row, 'encryption' ) ? json_decode( (string) $row->encryption, true ) : null;
+        $row->encryption = is_array( $encryption ) ? $encryption : array();
+
         return $row;
+    }
+
+    /**
+     * Mint and persist a snapshot's archive-encryption metadata: a fresh DEK
+     * wrapped under the dashboard KEK, plus the cipher and key-version markers
+     * a later upload and restore read back. The raw DEK is never stored.
+     *
+     * @param int $snapshot_id The snapshot to attach metadata to.
+     *
+     * @return bool True when the metadata was written; false on any failure
+     *              (the caller drops the snapshot rather than ship it in clear).
+     */
+    private function attach_encryption_meta( int $snapshot_id ): bool {
+        try {
+            $meta = MainWP_Backup_Encryption::instance()->snapshot_encryption_meta( $snapshot_id );
+            $json = wp_json_encode( $meta );
+            if ( false === $json ) {
+                return false;
+            }
+            $updated = $this->wpdb->update(
+                $this->table_name( 'wp_backup_snapshot' ),
+                array( 'encryption' => $json ),
+                array( 'id' => $snapshot_id ),
+                array( '%s' ),
+                array( '%d' )
+            );
+            return false !== $updated;
+        } catch ( \Throwable $e ) {
+            MainWP_Logger::instance()->debug( 'backup encryption :: snapshot[' . $snapshot_id . '] :: setup failed[' . $e->getMessage() . ']' );
+            return false;
+        }
     }
 }

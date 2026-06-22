@@ -121,6 +121,36 @@ class MainWP_Backup_Storage_S3_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * With a per-destination sse setting, PUT carries the server-side
+	 * encryption header and it joins the signed set.
+	 *
+	 * @return void
+	 */
+	public function test_put_object_adds_sse_header_when_configured() {
+		$provider = $this->make_provider( array( $this->response( 200 ) ), array( 'sse' => 'AES256' ) );
+
+		$provider->put_object( 'k.bin', 'x' );
+
+		$headers = $this->requests[0]['args']['headers'];
+		$this->assertSame( 'AES256', $headers['x-amz-server-side-encryption'] );
+		$this->assertStringContainsString( 'x-amz-server-side-encryption', $headers['Authorization'], 'The SSE header must be signed.' );
+	}
+
+	/**
+	 * Without the sse setting, PUT carries no server-side encryption header,
+	 * so endpoints that reject it (MinIO default, GCS over S3) are unaffected.
+	 *
+	 * @return void
+	 */
+	public function test_put_object_omits_sse_header_by_default() {
+		$provider = $this->make_provider( array( $this->response( 200 ) ) );
+
+		$provider->put_object( 'k.bin', 'x' );
+
+		$this->assertArrayNotHasKey( 'x-amz-server-side-encryption', $this->requests[0]['args']['headers'] );
+	}
+
+	/**
 	 * Path-style addressing puts the bucket in the path; custom endpoints
 	 * with ports survive intact.
 	 *

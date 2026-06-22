@@ -92,12 +92,18 @@ class MainWP_Backup_Storage_S3 implements MainWP_Backup_Storage_Provider, MainWP
      * @throws \RuntimeException On transport or service errors.
      */
     public function put_object( string $key, string $body, string $content_type = 'application/octet-stream' ): bool {
-        $response = $this->request(
-            'PUT',
-            $this->object_url( $key ),
-            array( 'Content-Type' => $content_type ),
-            $body
-        );
+        $headers = array( 'Content-Type' => $content_type );
+
+        // Optional bucket-side encryption, opt-in per destination and off by
+        // default so S3-compatible endpoints that reject the header (MinIO in
+        // its default mode, GCS over the S3 API) are never sent it. The header
+        // joins the signed set, as AWS requires for x-amz-* headers.
+        $sse = isset( $this->settings['sse'] ) ? (string) $this->settings['sse'] : '';
+        if ( '' !== $sse ) {
+            $headers['x-amz-server-side-encryption'] = $sse;
+        }
+
+        $response = $this->request( 'PUT', $this->object_url( $key ), $headers, $body );
 
         $this->expect_status( $response, array( 200 ), 'PUT ' . $key );
 

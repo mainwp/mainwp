@@ -14,10 +14,14 @@
 
 namespace MainWP\Dashboard\Tests;
 
+use MainWP\Dashboard\MainWP_Backup_Archive_Cipher;
+use MainWP\Dashboard\MainWP_Backup_Chunker;
+use MainWP\Dashboard\MainWP_Backup_Encryption;
 use MainWP\Dashboard\MainWP_Backup_Snapshots;
 use MainWP\Dashboard\MainWP_Backup_Storage_Destinations;
 use MainWP\Dashboard\MainWP_Backup_Upload_Driver;
 use MainWP\Dashboard\MainWP_Backup_Upload_Job_Store;
+use MainWP\Dashboard\MainWP_Keys_Manager;
 use MainWP\Dashboard\MainWP_DB;
 
 /**
@@ -70,7 +74,28 @@ class MainWP_Backup_Upload_Driver_Test extends \WP_UnitTestCase {
 		$upload = wp_upload_dir();
 		$this->remove_dir( trailingslashit( $upload['basedir'] ) . 'mainwp/upload-staging' );
 
+		// Encryption state lives in a filesystem KEK file and options that
+		// outlive the per-test DB rollback; clear it so an armed test does not
+		// silently arm a later plaintext one.
+		$enc = MainWP_Backup_Encryption::instance();
+		MainWP_Keys_Manager::instance()->delete_key_file( $enc->kek_filename() );
+		delete_option( MainWP_Backup_Encryption::ENABLED_OPTION );
+		delete_option( MainWP_Backup_Encryption::RECOVERY_OPTION );
+
 		parent::tear_down();
+	}
+
+	/**
+	 * Arm encryption: turn the toggle on and set a recovery passphrase, which
+	 * creates the dashboard KEK. Returns the encryption singleton.
+	 *
+	 * @return MainWP_Backup_Encryption
+	 */
+	private function arm_encryption() {
+		$enc = MainWP_Backup_Encryption::instance();
+		update_option( MainWP_Backup_Encryption::ENABLED_OPTION, '1' );
+		$enc->set_recovery_passphrase( 'upload driver encryption passphrase' );
+		return $enc;
 	}
 
 	/**
@@ -824,5 +849,140 @@ class MainWP_Backup_Upload_Driver_Test extends \WP_UnitTestCase {
 		$job = MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $snapshot_id )[0];
 		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_RETRYABLE, $job->status, 'A HEAD size mismatch must keep the job retryable.' );
 		$this->assertNotSame( 'verified', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id )->offsite_state );
+	}
+
+	/**
+	 * An armed run lands ciphertext objects, not the source bytes: each chunk
+	 * and whole file is sealed (plaintext + 28), decrypts back under the
+	 * snapshot DEK, and the manifest carries the encryption block, the recovery
+	 * blob, and a sibling HMAC over its exact bytes.
+	 *
+	 * @return void
+	 */
+	public function test_armed_run_uploads_ciphertext_and_signed_manifest() {
+		$enc                    = $this->arm_encryption();
+		list( $dest_id, $base ) = $this->make_local_destination();
+		$snapshot_id            = $this->make_snapshot( $this->standard_files(), 0, 4 );
+		MainWP_Backup_Upload_Job_Store::instance()->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+
+		$jobs = MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $snapshot_id );
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE, $jobs[0]->status, 'Sealed upload must complete; the +28 confirm-size must match.' );
+
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+		$paths    = array_column( $snapshot->archives, 'path', 'file' );
+		$kek      = $enc->load_kek();
+		$dek      = $enc->dek_from_meta( $snapshot->encryption, $snapshot_id, $kek );
+		$prefix   = $base . '/4/' . $snapshot_id;
+
+		// Each chunk object is ciphertext (plaintext + 28) and opens to the
+		// source slice under the snapshot DEK and the chunk-hash AAD.
+		$big  = file_get_contents( $paths['big.bin'] );
+		$algo = MainWP_Backup_Chunker::hash_algo();
+		foreach ( array( 0, 1024, 2048 ) as $offset ) {
+			$slice = substr( $big, $offset, 1024 );
+			$hash  = hash( $algo, $slice );
+			$blob  = file_get_contents( $prefix . '/chunks/' . $hash . '.bin' );
+			$this->assertSame( strlen( $slice ) + 28, strlen( $blob ), 'Chunk object must be ciphertext + framing.' );
+			$this->assertNotSame( $slice, $blob, 'Chunk object must not be plaintext.' );
+			$this->assertSame( $slice, MainWP_Backup_Archive_Cipher::open( $blob, $dek, 'snapshot:' . $snapshot_id . ':chunk:' . $hash ) );
+		}
+
+		// The whole small file is sealed too and opens under its whole AAD.
+		$small      = file_get_contents( $paths['small.txt'] );
+		$small_blob = file_get_contents( $prefix . '/files/small.txt' );
+		$this->assertSame( strlen( $small ) + 28, strlen( $small_blob ) );
+		$this->assertSame( $small, MainWP_Backup_Archive_Cipher::open( $small_blob, $dek, 'snapshot:' . $snapshot_id . ':whole:small.txt' ) );
+
+		// The manifest stays readable JSON and carries the keying material.
+		$json     = file_get_contents( $prefix . '/manifest.json' );
+		$manifest = json_decode( $json, true );
+		$this->assertSame( 'aes-256-gcm', $manifest['encryption']['cipher'] );
+		$this->assertSame( 28, $manifest['encryption']['overhead'] );
+		$this->assertNotEmpty( $manifest['encryption']['wrapped_dek'] );
+		$this->assertNotEmpty( $manifest['recovery']['wrapped_kek'] );
+
+		// The sibling HMAC authenticates the exact manifest bytes under the KEK.
+		$this->assertFileExists( $prefix . '/manifest.json.hmac' );
+		$this->assertSame( $enc->manifest_hmac( $json, $kek ), file_get_contents( $prefix . '/manifest.json.hmac' ) );
+	}
+
+	/**
+	 * Two destinations for one snapshot seal under the same per-snapshot DEK,
+	 * so one key recovers the bytes from either copy. The DEK is minted once at
+	 * record time, not per upload job, so the destinations cannot diverge.
+	 *
+	 * @return void
+	 */
+	public function test_armed_multi_destination_shares_one_dek() {
+		$enc                     = $this->arm_encryption();
+		list( $dest_a, $base_a ) = $this->make_local_destination();
+		list( $dest_b, $base_b ) = $this->make_local_destination();
+		$snapshot_id             = $this->make_snapshot( array( 'small.txt' => array( 'size' => 100, 'role' => 'db' ) ), 0, 4 );
+		MainWP_Backup_Upload_Job_Store::instance()->enqueue_for_snapshot( $snapshot_id, array( $dest_a, $dest_b ) );
+
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+		$paths    = array_column( $snapshot->archives, 'path', 'file' );
+		$dek      = $enc->dek_from_meta( $snapshot->encryption, $snapshot_id, $enc->load_kek() );
+		$small    = file_get_contents( $paths['small.txt'] );
+		$aad      = 'snapshot:' . $snapshot_id . ':whole:small.txt';
+
+		$blob_a = file_get_contents( $base_a . '/4/' . $snapshot_id . '/files/small.txt' );
+		$blob_b = file_get_contents( $base_b . '/4/' . $snapshot_id . '/files/small.txt' );
+
+		$this->assertNotSame( $blob_a, $blob_b, 'Independent seals use fresh nonces, so the ciphertexts differ.' );
+		$this->assertSame( $small, MainWP_Backup_Archive_Cipher::open( $blob_a, $dek, $aad ) );
+		$this->assertSame( $small, MainWP_Backup_Archive_Cipher::open( $blob_b, $dek, $aad ) );
+	}
+
+	/**
+	 * Re-entry over an encrypted destination skips intact ciphertext objects
+	 * instead of re-uploading: the already-present check accounts for the
+	 * cipher framing overhead.
+	 *
+	 * @return void
+	 */
+	public function test_armed_reentry_skips_intact_ciphertext() {
+		$this->arm_encryption();
+		list( $dest_id, $base ) = $this->make_local_destination();
+		$snapshot_id            = $this->make_snapshot( $this->standard_files() );
+		$store                  = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+
+		$prefix = $base . '/4/' . $snapshot_id;
+		$chunks = glob( $prefix . '/chunks/*.bin' );
+		$this->assertNotEmpty( $chunks );
+		$intact = $chunks[0];
+		$past   = time() - 3600;
+		touch( $intact, $past );
+
+		// Rewind to the upload phase distrusting prior work, then run again.
+		$job        = $store->get_jobs_for_snapshot( $snapshot_id )[0];
+		$checkpoint = $job->checkpoint;
+		foreach ( $checkpoint['artifacts'] as &$artifact ) {
+			$artifact['chunks_cursor'] = 0;
+			$artifact['done']          = false;
+			if ( is_array( $artifact['chunks'] ) ) {
+				foreach ( $artifact['chunks'] as &$chunk ) {
+					$chunk['remote_present'] = false;
+				}
+				unset( $chunk );
+			}
+		}
+		unset( $artifact );
+		$checkpoint['manifest_submitted'] = false;
+		$store->save_checkpoint( (int) $job->id, $checkpoint );
+		$store->set_status( (int) $job->id, MainWP_Backup_Upload_Job_Store::STATUS_UPLOADING );
+
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+
+		clearstatcache();
+		$this->assertSame( $past, filemtime( $intact ), 'An intact ciphertext chunk must be skipped, not rewritten.' );
 	}
 }

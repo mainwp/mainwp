@@ -148,6 +148,37 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
             </div>
         </div>
 
+        <?php
+        $encryptionEnabled     = MainWP_Backup_Encryption::instance()->is_enabled_setting();
+        $hasRecoveryPassphrase = ! empty( MainWP_Backup_Encryption::instance()->get_recovery_blob() );
+        ?>
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="0">
+            <label class="six wide column middle aligned">
+            <?php
+            MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_backup_encryption_enabled', (int) $encryptionEnabled );
+            esc_html_e( 'Encrypt backup archives', 'mainwp' );
+            ?>
+            </label>
+            <div class="ten wide column">
+                <div class="ui toggle checkbox">
+                    <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_options_enableBackupEncryption" id="mainwp_options_enableBackupEncryption" <?php echo $encryptionEnabled ? 'checked="true"' : ''; ?>/>
+                </div>
+                <div class="ui small message" style="margin-top: 1em;">
+                    <?php esc_html_e( 'Encrypts each backup archive on the dashboard before it is uploaded to remote storage, so the provider only ever holds ciphertext. Applies to new backups; existing snapshots are unchanged. Set a recovery passphrase below before turning this on.', 'mainwp' ); ?>
+                </div>
+            </div>
+        </div>
+
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?>>
+            <label class="six wide column middle aligned"><?php esc_html_e( 'Backup recovery passphrase', 'mainwp' ); ?></label>
+            <div class="ten wide column">
+                <input type="password" autocomplete="new-password" name="mainwp_options_backupEncryptionPassphrase" id="mainwp_options_backupEncryptionPassphrase" value="" placeholder="<?php echo $hasRecoveryPassphrase ? esc_attr__( 'A recovery passphrase is set; enter a new one to change it', 'mainwp' ) : esc_attr__( 'Set a recovery passphrase', 'mainwp' ); ?>"/>
+                <div class="ui small message" style="margin-top: 1em;">
+                    <?php esc_html_e( 'This passphrase recovers your encrypted backups if the dashboard and its key file are lost. Store it somewhere safe and separate from the dashboard. A long, unique passphrase (20 characters or more) is strongly recommended. Leave blank to keep the current one.', 'mainwp' ); ?>
+                </div>
+            </div>
+        </div>
+
         <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="tar.gz">
             <label class="six wide column middle aligned">
             <?php

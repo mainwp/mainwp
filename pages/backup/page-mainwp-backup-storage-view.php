@@ -189,6 +189,17 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                             <label><?php esc_html_e( 'Required by MinIO and some self hosted services.', 'mainwp' ); ?></label>
                         </div>
                     </div>
+                    <div class="ui grid field">
+                        <label class="six wide column middle aligned"><?php esc_html_e( 'Server-side encryption', 'mainwp' ); ?></label>
+                        <div class="ten wide column">
+                            <select id="mainwp-storage-sse">
+                                <option value=""><?php esc_html_e( 'None', 'mainwp' ); ?></option>
+                                <option value="AES256"><?php esc_html_e( 'SSE-S3 (AES-256)', 'mainwp' ); ?></option>
+                                <option value="aws:kms"><?php esc_html_e( 'SSE-KMS (account default key)', 'mainwp' ); ?></option>
+                            </select>
+                            <em><?php esc_html_e( 'Ask the S3 service to encrypt objects at rest. Archives are already encrypted before they leave the dashboard, so this adds a second layer at the bucket. Leave it on None for MinIO and other S3 compatible services that reject the header.', 'mainwp' ); ?></em>
+                        </div>
+                    </div>
                 </div>
                 <div class="mainwp-storage-fields" data-provider="gcs" style="display:none">
                     <div class="ui grid field">
@@ -369,7 +380,8 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                     region: jQuery( '#mainwp-storage-region' ).val(),
                     access_key: jQuery( '#mainwp-storage-access-key' ).val(),
                     secret_key: jQuery( '#mainwp-storage-secret-key' ).val(),
-                    path_style: jQuery( '#mainwp-storage-path-style' ).is( ':checked' ) ? 1 : 0
+                    path_style: jQuery( '#mainwp-storage-path-style' ).is( ':checked' ) ? 1 : 0,
+                    sse: jQuery( '#mainwp-storage-sse' ).val()
                 };
             };
 
@@ -429,14 +441,14 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
 
             jQuery( '#mainwp-storage-reset' ).on( 'click', function () {
                 jQuery( '#mainwp-storage-id' ).val( 0 );
-                jQuery( '#mainwp-storage-name, #mainwp-storage-endpoint, #mainwp-storage-bucket, #mainwp-storage-region, #mainwp-storage-access-key, #mainwp-storage-secret-key, #mainwp-storage-base-path, #mainwp-storage-gcs-bucket, #mainwp-storage-gcs-access-key, #mainwp-storage-gcs-secret-key, #mainwp-storage-dropbox-app-key, #mainwp-storage-dropbox-app-secret, #mainwp-storage-dropbox-refresh-token, #mainwp-storage-dropbox-base-path, #mainwp-storage-sftp-host, #mainwp-storage-sftp-port, #mainwp-storage-sftp-username, #mainwp-storage-sftp-password, #mainwp-storage-sftp-private-key, #mainwp-storage-sftp-base-path' ).val( '' );
+                jQuery( '#mainwp-storage-name, #mainwp-storage-endpoint, #mainwp-storage-bucket, #mainwp-storage-region, #mainwp-storage-access-key, #mainwp-storage-secret-key, #mainwp-storage-sse, #mainwp-storage-base-path, #mainwp-storage-gcs-bucket, #mainwp-storage-gcs-access-key, #mainwp-storage-gcs-secret-key, #mainwp-storage-dropbox-app-key, #mainwp-storage-dropbox-app-secret, #mainwp-storage-dropbox-refresh-token, #mainwp-storage-dropbox-base-path, #mainwp-storage-sftp-host, #mainwp-storage-sftp-port, #mainwp-storage-sftp-username, #mainwp-storage-sftp-password, #mainwp-storage-sftp-private-key, #mainwp-storage-sftp-base-path' ).val( '' );
                 jQuery( '#mainwp-storage-path-style, #mainwp-storage-is-default' ).prop( 'checked', false );
                 jQuery( '#mainwp-storage-form-title' ).text( '<?php echo esc_js( __( 'Add Storage Destination', 'mainwp' ) ); ?>' );
                 jQuery( this ).hide();
             } );
 
             let settingsFieldMap = {
-                s3: { endpoint: '#mainwp-storage-endpoint', bucket: '#mainwp-storage-bucket', region: '#mainwp-storage-region', access_key: '#mainwp-storage-access-key' },
+                s3: { endpoint: '#mainwp-storage-endpoint', bucket: '#mainwp-storage-bucket', region: '#mainwp-storage-region', access_key: '#mainwp-storage-access-key', sse: '#mainwp-storage-sse' },
                 gcs: { bucket: '#mainwp-storage-gcs-bucket', access_key: '#mainwp-storage-gcs-access-key' },
                 dropbox: { app_key: '#mainwp-storage-dropbox-app-key', base_path: '#mainwp-storage-dropbox-base-path' },
                 sftp: { host: '#mainwp-storage-sftp-host', port: '#mainwp-storage-sftp-port', username: '#mainwp-storage-sftp-username', base_path: '#mainwp-storage-sftp-base-path' },

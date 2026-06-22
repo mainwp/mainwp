@@ -151,6 +151,22 @@ class MainWP_Backup_Storage_S3_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * The aws:kms value rides the same signed header, so SSE-KMS works
+	 * without a custom key id; the account default KMS key is used.
+	 *
+	 * @return void
+	 */
+	public function test_put_object_adds_kms_sse_header_when_configured() {
+		$provider = $this->make_provider( array( $this->response( 200 ) ), array( 'sse' => 'aws:kms' ) );
+
+		$provider->put_object( 'k.bin', 'x' );
+
+		$headers = $this->requests[0]['args']['headers'];
+		$this->assertSame( 'aws:kms', $headers['x-amz-server-side-encryption'] );
+		$this->assertStringContainsString( 'x-amz-server-side-encryption', $headers['Authorization'], 'The SSE header must be signed.' );
+	}
+
+	/**
 	 * Path-style addressing puts the bucket in the path; custom endpoints
 	 * with ports survive intact.
 	 *

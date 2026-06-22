@@ -643,6 +643,76 @@ class MainWP_Backup_Storage_Page_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * The S3 settings block offers the server-side encryption select with
+	 * its three values, and no other provider block carries it: only S3
+	 * understands the x-amz-server-side-encryption header.
+	 *
+	 * @return void
+	 */
+	public function test_s3_block_offers_server_side_encryption_select() {
+		ob_start();
+		MainWP_Backup_Storage_View::render_form();
+		$output = ob_get_clean();
+
+		$s3_start  = strpos( $output, 'data-provider="s3"' );
+		$gcs_start = strpos( $output, 'data-provider="gcs"' );
+		$this->assertNotFalse( $s3_start );
+		$this->assertNotFalse( $gcs_start );
+
+		$s3_block = substr( $output, $s3_start, $gcs_start - $s3_start );
+		$this->assertStringContainsString( 'id="mainwp-storage-sse"', $s3_block, 'The SSE select belongs in the S3 block.' );
+		$this->assertStringContainsString( 'value="AES256"', $s3_block );
+		$this->assertStringContainsString( 'value="aws:kms"', $s3_block );
+
+		$after_s3 = substr( $output, $gcs_start );
+		$this->assertStringNotContainsString( 'id="mainwp-storage-sse"', $after_s3, 'No non-S3 block may carry the SSE select.' );
+	}
+
+	/**
+	 * An S3 destination persists its server-side encryption choice, and the
+	 * edit prefill returns it so the form round-trips the value.
+	 *
+	 * @return void
+	 */
+	public function test_s3_destination_persists_and_prefills_sse() {
+		add_filter(
+			'pre_http_request',
+			function () {
+				return array(
+					'headers'  => array( 'content-length' => '22' ),
+					'body'     => '',
+					'response' => array(
+						'code'    => 200,
+						'message' => 'OK',
+					),
+				);
+			}
+		);
+
+		$created = MainWP_Backup_Storage_Handler::save_destination(
+			array(
+				'id'       => 0,
+				'provider' => 's3',
+				'name'     => 'Encrypted bucket',
+				'settings' => array(
+					'bucket'     => 'b',
+					'region'     => 'us-east-1',
+					'access_key' => 'AKIA-SSE',
+					'secret_key' => 'sse-secret',
+					'sse'        => 'AES256',
+				),
+			)
+		);
+		$this->assertArrayNotHasKey( 'error', $created );
+
+		$row = MainWP_Backup_Storage_Destinations::instance()->get_destination( $created['id'] );
+		$this->assertSame( 'AES256', $row->settings['sse'], 'The SSE choice must persist on the destination.' );
+
+		$edit = MainWP_Backup_Storage_Handler::destination_for_edit( $created['id'] );
+		$this->assertSame( 'AES256', $edit['settings']['sse'], 'The edit prefill must round-trip the SSE choice.' );
+	}
+
+	/**
 	 * The Dropbox block offers the Connect button and shows the exact
 	 * redirect URI the app must register.
 	 *

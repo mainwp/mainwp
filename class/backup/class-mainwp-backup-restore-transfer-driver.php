@@ -451,8 +451,13 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
         }
 
         // Decrypt in place before hashing so the integrity check runs against
-        // the plaintext, exactly as it does for an unencrypted artifact.
-        if ( ! $this->maybe_decrypt_file( $final, $enc, 'snapshot:' . (int) $entry['snapshot_id'] . ':whole:' . $entry['file'] ) ) {
+        // the plaintext, exactly as it does for an unencrypted artifact. The
+        // AAD must be the basename the upload sealed under - the snapshot's own
+        // archive name (source_file), not the chain-namespaced staging name in
+        // 'file' - or AES-GCM authentication fails and a valid backup reads as
+        // undecryptable.
+        $sealed_name = ! empty( $entry['source_file'] ) ? (string) $entry['source_file'] : (string) $entry['file'];
+        if ( ! $this->maybe_decrypt_file( $final, $enc, 'snapshot:' . (int) $entry['snapshot_id'] . ':whole:' . $sealed_name ) ) {
             wp_delete_file( $final );
             return $this->stage_state(
                 'error',

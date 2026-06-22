@@ -865,4 +865,107 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command { // phpcs:ignore Generic.Cl
             }
         }
     }
+
+    /**
+     * Restore a child site from a native backup snapshot.
+     *
+     * Drives a remote restore of a child site entirely from the dashboard
+     * command line: it resolves the snapshot chain, enforces the same
+     * destructive confirmation the dashboard requires, starts the restore
+     * job, and follows it to completion. WooCommerce orders and any other
+     * data written since the backup are lost on a database-bearing restore,
+     * so it refuses to overwrite a live database without --confirm-destructive.
+     *
+     * ## OPTIONS
+     *
+     * <action>
+     * : The backup action to run. Only "restore" is supported.
+     *
+     * [<snapshot-id>]
+     * : The id of the snapshot to restore.
+     *
+     * [--site=<id>]
+     * : The id of the child site to restore.
+     *
+     * [--pre-snapshot]
+     * : Take a safety backup of the site before restoring, enabling file rollback.
+     *
+     * [--confirm-destructive]
+     * : Confirm a database-bearing restore that overwrites live data.
+     *
+     * [--yes]
+     * : Alias for --confirm-destructive.
+     *
+     * [--timeout=<seconds>]
+     * : Stop following the job after this many seconds; the restore then continues in the background. 0 (default) follows to the end.
+     *
+     * ## EXAMPLES
+     *
+     *     wp mainwp backup restore 42 --site=5 --confirm-destructive
+     *     wp mainwp backup restore 42 --site=5 --pre-snapshot --yes
+     *
+     * ## Synopsis <action> [<snapshot-id>] [--site=<id>] [--pre-snapshot] [--confirm-destructive] [--yes] [--timeout=<seconds>]
+     *
+     * @param array $args       Function arguments.
+     * @param array $assoc_args Function associate arguments.
+     */
+    public function backup( $args, $assoc_args ) {
+        $action = isset( $args[0] ) ? $args[0] : '';
+        if ( 'restore' !== $action ) {
+            \WP_CLI::error( 'Unknown subcommand. Usage: wp mainwp backup restore <snapshot-id> --site=<id> [--pre-snapshot] [--confirm-destructive] [--yes] [--timeout=<seconds>]' );
+            return;
+        }
+
+        $snapshot_id = isset( $args[1] ) ? (int) $args[1] : 0;
+        if ( $snapshot_id <= 0 ) {
+            \WP_CLI::error( 'Provide the snapshot id. Usage: wp mainwp backup restore <snapshot-id> --site=<id>' );
+            return;
+        }
+
+        $site_id = isset( $assoc_args['site'] ) ? (int) $assoc_args['site'] : 0;
+        if ( $site_id <= 0 ) {
+            \WP_CLI::error( 'Provide the child site id with --site=<id>.' );
+            return;
+        }
+
+        $pre_snapshot = isset( $assoc_args['pre-snapshot'] );
+        $confirmed    = isset( $assoc_args['confirm-destructive'] ) || isset( $assoc_args['yes'] );
+        $timeout      = isset( $assoc_args['timeout'] ) ? max( 0, (int) $assoc_args['timeout'] ) : 0;
+
+        // The staging and transfer driver reads and writes files through
+        // WP_Filesystem, which CLI does not initialise on its own.
+        if ( ! function_exists( 'WP_Filesystem' ) ) {
+            require_once ABSPATH . 'wp-admin/includes/file.php'; // NOSONAR - WP compatible.
+        }
+        WP_Filesystem();
+
+        $runner = new MainWP_Backup_CLI_Restore_Runner( null, null, null, 60, 2, 120, $timeout );
+
+        $progress = function ( $job ) {
+            \WP_CLI::log( '  ' . $job->status );
+        };
+
+        $result = $runner->run( $site_id, $snapshot_id, array( 'pre_snapshot' => $pre_snapshot ), $confirmed, $progress );
+
+        if ( ! empty( $result['needs_confirmation'] ) ) {
+            \WP_CLI::warning( 'This restore overwrites the live database for site ' . $site_id . '.' );
+            \WP_CLI::log( '  backup age: ' . (int) $result['age_days'] . ' day(s)' );
+            if ( ! empty( $result['site_has_woocommerce'] ) ) {
+                \WP_CLI::log( '  this site runs WooCommerce; orders placed since the backup will be lost.' );
+            }
+            \WP_CLI::error( 'Re-run with --confirm-destructive (or --yes) to proceed.' );
+            return;
+        }
+
+        if ( ! empty( $result['ok'] ) ) {
+            \WP_CLI::success( 'Restore completed.' );
+            return;
+        }
+
+        $message = '' !== (string) $result['error'] ? (string) $result['error'] : 'The restore failed.';
+        if ( '' !== (string) $result['error_code'] ) {
+            $message .= ' (' . $result['error_code'] . ')';
+        }
+        \WP_CLI::error( $message );
+    }
 }

@@ -278,6 +278,74 @@ class MainWP_Backup_Restore_Decryption_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Staging decrypts a whole-file artifact whose plan carries the
+	 * chain-namespaced staging name in 'file' and the snapshot's own basename
+	 * in 'source_file', as a resolve-built plan does. The upload seals under
+	 * the basename, so the open AAD must follow source_file; keying it on the
+	 * namespaced 'file' makes AES-GCM authentication fail and a valid backup
+	 * read as undecryptable. The earlier whole-file test hand-builds an
+	 * unprefixed plan and so cannot catch this.
+	 *
+	 * @return void
+	 */
+	public function test_namespaced_whole_file_decrypts_via_source_file_aad() {
+		$this->arm();
+
+		$base    = $this->dir . '/dest';
+		$dest_id = MainWP_Backup_Storage_Destinations::instance()->add_destination(
+			array(
+				'provider' => 'local',
+				'name'     => 'namespaced aad',
+				'settings' => array( 'base_path' => $base ),
+			)
+		);
+
+		$src = $this->dir . '/src';
+		mkdir( $src );
+		$small = 'a small database dump';
+		file_put_contents( $src . '/db.sql.gz', $small );
+
+		$snapshot_id = $this->record(
+			4,
+			array(
+				array(
+					'file' => 'db.sql.gz',
+					'size' => strlen( $small ),
+					'role' => 'db',
+					'path' => $src . '/db.sql.gz',
+				),
+			)
+		);
+		MainWP_Backup_Upload_Job_Store::instance()->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+
+		$this->driver->remote_base = $base;
+
+		// A resolve-built plan: 'file' is the chain-namespaced staging name,
+		// 'source_file' is the basename the upload sealed under.
+		$plan    = array(
+			array(
+				'role'            => 'db',
+				'file'            => 's' . $snapshot_id . '-db.sql.gz',
+				'source_file'     => 'db.sql.gz',
+				'size'            => strlen( $small ),
+				'sha256'          => '',
+				'snapshot_id'     => $snapshot_id,
+				'source'          => 'remote',
+				'local_path'      => '',
+				'remote_key'      => '4/' . $snapshot_id . '/files/db.sql.gz',
+				'expected_sha256' => hash( 'sha256', $small ),
+				'adopt_only'      => false,
+			),
+		);
+		$outcome = $this->driver->stage_artifacts( 888001, $plan, microtime( true ) + 60 );
+
+		$this->assertTrue( $outcome['done'], (string) $outcome['error'] );
+		$this->assertSame( $small, file_get_contents( $plan[0]['staged_path'] ) );
+		$this->assertSame( hash( 'sha256', $small ), $plan[0]['sha256'] );
+	}
+
+	/**
 	 * A restore plan that mixes an encrypted snapshot with a plaintext one
 	 * decrypts each artifact from its own snapshot. The encrypted artifact
 	 * still decrypts after the toggle is turned off, since the key survives.

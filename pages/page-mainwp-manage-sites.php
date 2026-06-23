@@ -2147,6 +2147,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                  */
                 do_action( 'mainwp_site_suspended', $website, $suspended );
             }
+            MainWP_Manage_Sites_List_Table::invalidate_manage_sites_cache();
             $updated = true;
         }
     // phpcs:enable

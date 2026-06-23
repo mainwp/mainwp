@@ -91,21 +91,21 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses \MainWP\Dashboard\MainWP_Post_Page_Handler::get_class_name()
      */
     public static function init_menu() {
-        $_page = add_submenu_page( 'mainwp_tab', esc_html__( 'Posts', 'mainwp' ), '<span id="mainwp-Posts">' . esc_html__( 'Posts', 'mainwp' ) . '</span>', 'read', 'PostBulkManage', array( static::get_class_name(), 'render' ) );
+        $_page = add_submenu_page( 'mainwp_tab', esc_html__( 'Posts', 'mainwp' ), '<span id="mainwp-Posts">' . esc_html__( 'Posts', 'mainwp' ) . '</span>', 'manage_options', 'PostBulkManage', array( static::get_class_name(), 'render' ) );
         add_action( 'load-' . $_page, array( static::get_class_name(), 'on_load_page' ) );
         add_filter( 'manage_' . $_page . '_columns', array( static::get_class_name(), 'get_manage_columns' ) );
 
         if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PostBulkAdd' ) ) {
-            $_page = add_submenu_page( 'mainwp_tab', esc_html__( 'Posts', 'mainwp' ), '<div class="mainwp-hidden">' . esc_html__( 'Add New', 'mainwp' ) . '</div>', 'read', 'PostBulkAdd', array( static::get_class_name(), 'render_bulk_add' ) );
+            $_page = add_submenu_page( 'mainwp_tab', esc_html__( 'Posts', 'mainwp' ), '<div class="mainwp-hidden">' . esc_html__( 'Add New', 'mainwp' ) . '</div>', 'manage_options', 'PostBulkAdd', array( static::get_class_name(), 'render_bulk_add' ) );
             add_action( 'load-' . $_page, array( static::get_class_name(), 'on_load_add_edit' ) );
         }
 
         if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PostBulkEdit' ) ) {
-            $_page = add_submenu_page( 'mainwp_tab', esc_html__( 'Posts', 'mainwp' ), '<div class="mainwp-hidden">' . esc_html__( 'Edit Post', 'mainwp' ) . '</div>', 'read', 'PostBulkEdit', array( static::get_class_name(), 'render_bulk_edit' ) );
+            $_page = add_submenu_page( 'mainwp_tab', esc_html__( 'Posts', 'mainwp' ), '<div class="mainwp-hidden">' . esc_html__( 'Edit Post', 'mainwp' ) . '</div>', 'manage_options', 'PostBulkEdit', array( static::get_class_name(), 'render_bulk_edit' ) );
             add_action( 'load-' . $_page, array( static::get_class_name(), 'on_load_add_edit' ) );
         }
 
-        add_submenu_page( 'mainwp_tab', 'Posting new bulkpost', '<div class="mainwp-hidden">' . esc_html__( 'Posts', 'mainwp' ) . '</div>', 'read', 'PostingBulkPost', array( MainWP_Post_Page_Handler::get_class_name(), 'posting_bulk' ) );
+        add_submenu_page( 'mainwp_tab', 'Posting new bulkpost', '<div class="mainwp-hidden">' . esc_html__( 'Posts', 'mainwp' ) . '</div>', 'manage_options', 'PostingBulkPost', array( MainWP_Post_Page_Handler::get_class_name(), 'posting_bulk' ) );
 
         /**
          * Posts Subpages
@@ -123,7 +123,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 if ( MainWP_Menu::is_disable_menu_item( 3, 'Post' . $subPage['slug'] ) ) {
                     continue;
                 }
-                add_submenu_page( 'mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . $subPage['title'] . '</div>', 'read', 'Post' . $subPage['slug'], $subPage['callback'] );
+                add_submenu_page( 'mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . $subPage['title'] . '</div>', 'manage_options', 'Post' . $subPage['slug'], $subPage['callback'] );
             }
         }
         static::init_left_menu( static::$subPages );

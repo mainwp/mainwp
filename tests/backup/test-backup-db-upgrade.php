@@ -117,6 +117,12 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 			if ( ! $this->column_exists( $snapshot_table, 'encryption' ) ) {
 				$wpdb->query( "ALTER TABLE {$snapshot_table} ADD COLUMN encryption text NOT NULL DEFAULT ''" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
 			}
+			if ( ! $this->column_exists( $snapshot_table, 'test_restore_state' ) ) {
+				$wpdb->query( "ALTER TABLE {$snapshot_table} ADD COLUMN test_restore_state varchar(20) NOT NULL DEFAULT ''" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
+			}
+			if ( ! $this->column_exists( $snapshot_table, 'test_restore_at' ) ) {
+				$wpdb->query( "ALTER TABLE {$snapshot_table} ADD COLUMN test_restore_at int(11) NOT NULL DEFAULT 0" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
+			}
 		}
 
 		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_progress' );
@@ -360,6 +366,40 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		update_site_option( 'mainwp_db_version', '9.0.2.13' );
 		MainWP_Install::instance()->install();
 		$this->assertTrue( $this->column_exists( $table, 'encryption' ), 'Re-running install must remain idempotent.' );
+	}
+
+	/**
+	 * An install whose stored db version predates the verified-restore columns
+	 * must receive them when install() runs: test_restore_state and
+	 * test_restore_at hold the sandbox test-restore outcome and the time it ran.
+	 * Re-running install() stays idempotent.
+	 *
+	 * @return void
+	 */
+	public function test_upgrade_adds_test_restore_columns_to_snapshot_table() {
+		global $wpdb;
+
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+		$this->assertTrue( $this->column_exists( $table, 'test_restore_state' ), 'Precondition: fresh install has test_restore_state.' );
+		$this->assertTrue( $this->column_exists( $table, 'test_restore_at' ), 'Precondition: fresh install has test_restore_at.' );
+
+		$wpdb->query( "ALTER TABLE {$table} DROP COLUMN test_restore_state" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture, identifiers cannot be prepared.
+		$wpdb->query( "ALTER TABLE {$table} DROP COLUMN test_restore_at" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture, identifiers cannot be prepared.
+		$this->assertFalse( $this->column_exists( $table, 'test_restore_state' ), 'Precondition: column dropped to simulate an older install.' );
+
+		update_site_option( 'mainwp_db_version', '9.0.2.14' );
+		MainWP_Install::instance()->install();
+
+		$this->assertTrue(
+			$this->column_exists( $table, 'test_restore_state' ),
+			'Upgrade must add test_restore_state to existing installs; the shipped db version needs a bump or dbDelta never runs.'
+		);
+		$this->assertTrue( $this->column_exists( $table, 'test_restore_at' ), 'Upgrade must add test_restore_at.' );
+		$this->assertTrue( $this->index_exists( $table, 'idx_test_restore_state' ), 'Upgrade must add the idx_test_restore_state index.' );
+
+		update_site_option( 'mainwp_db_version', '9.0.2.14' );
+		MainWP_Install::instance()->install();
+		$this->assertTrue( $this->column_exists( $table, 'test_restore_state' ), 'Re-running install must remain idempotent.' );
 	}
 
 	/**

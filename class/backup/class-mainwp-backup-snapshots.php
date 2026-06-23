@@ -496,6 +496,31 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
     }
 
     /**
+     * Record the outcome of a sandbox test-restore on a snapshot. Kept
+     * separate from offsite_state so the offsite state machine (bytes are
+     * retrievable) and the verified-restore result (bytes reconstitute a
+     * working site) stay independent signals.
+     *
+     * @param int    $snapshot_id Snapshot id.
+     * @param string $state       '', pass, fail, or unsupported.
+     * @param int    $tested_at   Epoch when the test-restore ran; 0 to clear.
+     *
+     * @return void
+     */
+    public function set_test_restore_result( int $snapshot_id, string $state, int $tested_at = 0 ): void {
+        $this->wpdb->update(
+            $this->table_name( 'wp_backup_snapshot' ),
+            array(
+                'test_restore_state' => $state,
+                'test_restore_at'    => $tested_at,
+            ),
+            array( 'id' => $snapshot_id ),
+            array( '%s', '%d' ),
+            array( '%d' )
+        );
+    }
+
+    /**
      * Decode the archives JSON on a snapshot row and normalize parent_id.
      *
      * @param object|null $row Raw snapshot row.

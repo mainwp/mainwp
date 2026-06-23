@@ -31,7 +31,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * @var string DB version info.
      */
-    protected $mainwp_db_version = '9.0.2.14'; // NOSONAR - no IP. Bumped so dbDelta adds wp_backup_snapshot.encryption for the per-snapshot archive-encryption metadata (wrapped data key + cipher). Previous 9.0.2.13 bump added wp_backup_snapshot.offsite_state/verified_at and wp_backup_upload_job.provider for the offsite-verified state machine.
+    protected $mainwp_db_version = '9.0.2.15'; // NOSONAR - no IP. Bumped so dbDelta adds wp_backup_snapshot.test_restore_state/test_restore_at for the verified-restore (sandbox test-restore) result. Previous 9.0.2.14 bump added wp_backup_snapshot.encryption for the per-snapshot archive-encryption metadata; 9.0.2.13 added wp_backup_snapshot.offsite_state/verified_at and wp_backup_upload_job.provider for the offsite-verified state machine.
 
     /**
      * Protected variable to hold the database option name.
@@ -397,9 +397,12 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
   offsite_state varchar(20) NOT NULL DEFAULT '',
   verified_at int(11) NOT NULL DEFAULT 0,
   encryption text NOT NULL DEFAULT '',
+  test_restore_state varchar(20) NOT NULL DEFAULT '',
+  test_restore_at int(11) NOT NULL DEFAULT 0,
   KEY idx_site_task (site_id, task_id),
   KEY idx_parent (parent_id),
-  KEY idx_offsite_state (offsite_state)";
+  KEY idx_offsite_state (offsite_state),
+  KEY idx_test_restore_state (test_restore_state)";
         if ( empty( $currentVersion ) || version_compare( $currentVersion, '9.0.2.8', '<' ) ) { // NOSONAR - none IP.
             $tbl .= ',
   PRIMARY KEY  (id)  ';

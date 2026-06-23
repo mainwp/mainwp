@@ -1778,7 +1778,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
      *
      * Render page navigation.
      *
-     * @param array $subitems [access, active, style].
+     * @param array $subitems [access, active, style, target, rel].
      * @param null  $name_caller Menu Name.
      */
     public static function render_page_navigation( $subitems = array(), $name_caller = null ) {  //phpcs:ignore -- NOSONAR - complex.
@@ -1851,8 +1851,20 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                             $style = $item['style'];
                         }
 
+                        $target = '';
+                        if ( isset( $item['target'] ) ) {
+                            $target = $item['target'];
+                        }
+
+                        $rel = '';
+                        if ( isset( $item['rel'] ) ) {
+                            $rel = $item['rel'];
+                        } elseif ( '_blank' === $target ) {
+                            $rel = 'noopener noreferrer';
+                        }
+
                         ?>
-                        <a class="<?php echo esc_attr( $class ); ?> item" style="<?php echo esc_attr( $style ); ?>" href="<?php echo esc_url( $item['href'] ); ?>">
+                        <a class="<?php echo esc_attr( $class ); ?> item" style="<?php echo esc_attr( $style ); ?>" href="<?php echo esc_url( $item['href'] ); ?>" <?php if ( ! empty( $target ) ) : ?>target="<?php echo esc_attr( $target ); ?>"<?php endif; ?> <?php if ( ! empty( $rel ) ) : ?>rel="<?php echo esc_attr( $rel ); ?>"<?php endif; ?>>
                         <?php echo isset( $item['before_title'] ) ? $item['before_title'] : ''; ?> <?php echo esc_html( $item['title'] ); ?> <?php echo isset( $item['after_title'] ) ? $item['after_title'] : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?>
                         </a>
                         <?php

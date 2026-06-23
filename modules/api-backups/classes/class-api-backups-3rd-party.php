@@ -534,7 +534,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
         }
 
         if ( empty( $backup_api ) ) {
-            $title   = esc_html__( 'No API Backup Solution has been chosen.', 'mainwp' );
+            $title = esc_html__( 'No API Backup Solution has been chosen.', 'mainwp' );
             /* translators: %1$s: Link to API Backups Settings page, %2$s: Link to Child Site Settings page */
             $msg_format = __( 'Please double check that you have set the API Key on the %1$s page and have set the Instance ID on the %2$s page.', 'mainwp' );
             $message    = sprintf(
@@ -542,7 +542,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                 '<a href="' . esc_url( admin_url( 'admin.php?page=SettingsApiBackups' ) ) . '">' . esc_html__( 'API Backups Settings', 'mainwp' ) . '</a>',
                 '<a href="' . esc_url( admin_url( 'admin.php?page=managesites&id=' . intval( $website_id ) ) ) . '">' . esc_html__( 'Child Site &rarr; Settings page', 'mainwp' ) . '</a>'
             );
-            $icon    = '<em data-emoji=":closed_lock_with_key:" class="big"></em>';
+            $icon       = '<em data-emoji=":closed_lock_with_key:" class="big"></em>';
             \MainWP\Dashboard\MainWP_UI::render_empty_page_placeholder( $title, $message, $icon );
         } else {
             $columns = 'one';
@@ -720,7 +720,8 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
                                 <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-module-api-backups-info-message"></i>
                                 <div><?php esc_html_e( 'You can create up to 5 manual backups. Each manual backup will be stored for 14 days.', 'mainwp' ); ?></div>
                             </div>
-                        <?php endif;
+                            <?php
+                        endif;
                         $el_id_wp_1 = $website['id'];
                         ?>
                         <table id="mainwp-siteid-<?php echo intval( $el_id_wp_1 ); ?>-table" class="ui mainwp-api-backup-table table" style="width:100%">
@@ -3492,13 +3493,20 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      */
     public static function call_plesk_api( $method, $url, $baseurl, $api_key, $backup_data = array() ) {
 
+        // To fix double slash issue in url if exists. If url starts with / and baseurl ends with /, then remove the last slash from baseurl.
+        if ( '/' === substr( $url, 0, 1 ) && '/' === substr( $baseurl, -1 ) ) {
+            $baseurl = rtrim( $baseurl, '/' );
+        }
+
+        $full_url = $baseurl . $url;
+
         $curl = curl_init();
 
         $api_Key = $api_key;
         curl_setopt_array(
             $curl,
             array(
-                CURLOPT_URL            => $baseurl . $url,
+                CURLOPT_URL            => $full_url,
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_ENCODING       => '',
                 CURLOPT_MAXREDIRS      => 10,

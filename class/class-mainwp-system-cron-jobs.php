@@ -81,6 +81,11 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         // would de-duplicate against. Reuses the same continue handler.
         add_action( 'mainwp_native_backup_continue_action', array( $this, 'cron_backups_continue' ) );
         add_action( 'mainwp_restore_continue_action', array( $this, 'cron_restore_continue' ) );
+        // Single-event lane (never added to get_cron_jobs): the test-restore
+        // sampler schedules this to drain a backlog immediately instead of
+        // waiting for the recurring five-minute lane, which WordPress would
+        // de-duplicate the single event against. Parallels the restore lane.
+        add_action( 'mainwp_testrestore_continue_action', array( $this, 'cron_testrestore_continue' ) );
         add_action( 'mainwp_cronbackups_prune_action', array( $this, 'cron_backups_prune' ) );
         add_action( 'mainwp_cronupdatescheck_action', array( $this, 'cron_updates_check' ) );
         add_action( 'mainwp_cronpingchilds_action', array( $this, 'cron_ping_childs' ) );
@@ -1508,6 +1513,26 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
     }
 
     /**
+     * Drive the test-restore sampler on its dedicated immediate-kick lane.
+     * The sampler schedules this as a single event so a backlog of overdue
+     * snapshots drains without waiting for the five-minute backup continuation
+     * cron; the periodic lane still calls process_pending_jobs() as the
+     * backstop.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Backup_TestRestore_Scheduler::process_pending_jobs()
+     */
+    public function cron_testrestore_continue() {
+        if ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
+            return;
+        }
+
+        ignore_user_abort( true );
+        MainWP_System_Utility::set_time_limit( 0 );
+
+        MainWP_Backup_TestRestore_Scheduler::instance()->process_pending_jobs();
+    }
+
+    /**
      * Method cron_backups_continue()
      *
      * Execute remaining backup tasks.
@@ -1550,6 +1575,12 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         MainWP_Backup_Cloud_Delete_Driver::instance()->process_pending_delete_jobs();
         MainWP_Backup_Retention_Scheduler::instance()->process_post_snapshot_queue();
         MainWP_Backup_Restore_Orchestrator::instance()->process_pending_restore_jobs();
+
+        // Sample one snapshot per tick for a verified (sandbox) test-restore.
+        // Runs last and dashboard-side only, so it never delays the real backup
+        // lanes or touches a child site. Placed before the empty-tasks return
+        // below so it still runs on the common tick that has no legacy task.
+        MainWP_Backup_TestRestore_Scheduler::instance()->process_pending_jobs();
 
         if ( empty( $tasks ) ) {
             return;

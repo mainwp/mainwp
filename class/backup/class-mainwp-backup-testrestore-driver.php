@@ -43,6 +43,14 @@ class MainWP_Backup_TestRestore_Driver { // phpcs:ignore Generic.Classes.Opening
     const STATE_UNSUPPORTED = 'unsupported';
 
     /**
+     * Error code returned when the restorable chain cannot be resolved (pruned
+     * chain, no surviving artifact). An availability problem, not a
+     * reconstitution failure, so verify_snapshot() reports it without recording
+     * a result; the sampler stamps its own backoff instead.
+     */
+    const ERR_UNRESOLVABLE = 'mainwp_testrestore_unresolvable';
+
+    /**
      * Staging-job-id namespace for test-restores, kept far above real restore
      * job ids so their staging directories never collide.
      */
@@ -103,7 +111,7 @@ class MainWP_Backup_TestRestore_Driver { // phpcs:ignore Generic.Classes.Opening
         $resolved = $this->catalog()->resolve_restorable_chain( $snapshot_id, 0 );
         if ( empty( $resolved['ok'] ) ) {
             $result['error']      = isset( $resolved['error'] ) ? (string) $resolved['error'] : '';
-            $result['error_code'] = 'mainwp_testrestore_unresolvable';
+            $result['error_code'] = self::ERR_UNRESOLVABLE;
             return $result;
         }
 

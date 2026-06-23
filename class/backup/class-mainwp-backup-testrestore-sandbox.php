@@ -298,6 +298,37 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
     }
 
     /**
+     * Probe whether this host can host a sandbox at all.
+     *
+     * Brings up and immediately tears down a throwaway sandbox, so the verdict
+     * reflects the exact CREATE-database privilege (and decompression
+     * extension) checks a real run hits rather than a guess. The sampler caches
+     * this so a host the dashboard database user cannot create on - common on
+     * managed hosting - is skipped once instead of retried on every snapshot.
+     *
+     * @return array{capable:bool,reason:string} Whether a sandbox can be hosted,
+     *                                            and the operator-facing reason
+     *                                            when it cannot.
+     */
+    public static function probe_capability(): array {
+        $sandbox = new self();
+        try {
+            $sandbox->bring_up();
+            return array(
+                'capable' => true,
+                'reason'  => '',
+            );
+        } catch ( \Throwable $e ) {
+            return array(
+                'capable' => false,
+                'reason'  => $e->getMessage(),
+            );
+        } finally {
+            $sandbox->tear_down();
+        }
+    }
+
+    /**
      * Open the dedicated connection to the same server $wpdb uses.
      *
      * @throws MainWP_Exception When the connection cannot be opened.

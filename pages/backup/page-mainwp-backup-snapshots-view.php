@@ -80,6 +80,16 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     </div>
                     <?php endif; ?>
 
+                    <?php
+                    $test_restore_notice = MainWP_Backup_TestRestore_Scheduler::instance()->get_capability_notice();
+                    if ( ! $locked && '' !== $test_restore_notice ) :
+                        ?>
+                    <div class="ui small info message">
+                        <i class="info circle icon"></i>
+                        <?php echo esc_html( $test_restore_notice ); ?>
+                    </div>
+                    <?php endif; ?>
+
                     <table class="ui table" id="mainwp-restore-snapshots-table">
                     <thead>
                         <tr>
@@ -88,11 +98,12 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                             <th scope="col"><?php esc_html_e( 'Created', 'mainwp' ); ?></th>
                             <th scope="col"><?php esc_html_e( 'Size', 'mainwp' ); ?></th>
                             <th scope="col"><?php esc_html_e( 'Available from', 'mainwp' ); ?></th>
+                            <th scope="col"><?php esc_html_e( 'Test Restore', 'mainwp' ); ?></th>
                             <th scope="col" class="collapsing"></th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr><td colspan="6"><?php echo $locked ? esc_html__( 'Loading backups...', 'mainwp' ) : esc_html__( 'Select a site to list its backups.', 'mainwp' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- esc_html__ escapes both branches. ?></td></tr>
+                        <tr><td colspan="7"><?php echo $locked ? esc_html__( 'Loading backups...', 'mainwp' ) : esc_html__( 'Select a site to list its backups.', 'mainwp' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- esc_html__ escapes both branches. ?></td></tr>
                     </tbody>
                 </table>
 
@@ -215,6 +226,12 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 'unavailable': '<?php echo esc_js( esc_html__( 'Removed by retention', 'mainwp' ) ); ?>'
             };
             var offsiteVerifiedLabel = '<?php echo esc_js( esc_html__( 'Offsite Verified', 'mainwp' ) ); ?>';
+            var testRestoreLabels = {
+                'pass': '<?php echo esc_js( esc_html__( 'Test-restored', 'mainwp' ) ); ?>',
+                'fail': '<?php echo esc_js( esc_html__( 'Test-restore failed', 'mainwp' ) ); ?>',
+                'unsupported': '<?php echo esc_js( esc_html__( 'Couldn\'t test here', 'mainwp' ) ); ?>',
+                'unavailable': '<?php echo esc_js( esc_html__( 'Artifacts unavailable', 'mainwp' ) ); ?>'
+            };
 
             var restoreWarnings = {
                 'default': '<?php echo esc_js( esc_html__( 'Restoring replaces the site\'s files and database with the contents of this backup. Anything changed since the backup was taken will be overwritten.', 'mainwp' ) ); ?>',
@@ -257,10 +274,21 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                             sourceCell += ' <span class="ui mini green label">' + offsiteVerifiedLabel + '</span>';
                         }
                         var sizeCell = snap.size_label ? escAttr( snap.size_label ) : '&mdash;';
-                        rows += '<tr' + rowClass + rowTitle + '><td>#' + snap.id + '</td><td>' + snap.type + '</td><td>' + when + '</td><td>' + sizeCell + '</td><td>' + sourceCell + '</td><td>' + action + '</td></tr>';
+                        var testRestoreCell = '&mdash;';
+                        if ( 'pass' === snap.test_restore_state ) {
+                            var testedOn = snap.test_restore_at > 0 ? ' ' + new Date( snap.test_restore_at * 1000 ).toLocaleDateString() : '';
+                            testRestoreCell = '<span class="ui mini green label"><i class="check icon"></i>' + testRestoreLabels.pass + '</span>' + testedOn;
+                        } else if ( 'fail' === snap.test_restore_state ) {
+                            testRestoreCell = '<span class="ui mini red label">' + testRestoreLabels.fail + '</span>';
+                        } else if ( 'unsupported' === snap.test_restore_state ) {
+                            testRestoreCell = '<span class="ui mini grey label">' + testRestoreLabels.unsupported + '</span>';
+                        } else if ( 'unavailable' === snap.test_restore_state ) {
+                            testRestoreCell = '<span class="ui mini grey label">' + testRestoreLabels.unavailable + '</span>';
+                        }
+                        rows += '<tr' + rowClass + rowTitle + '><td>#' + snap.id + '</td><td>' + snap.type + '</td><td>' + when + '</td><td>' + sizeCell + '</td><td>' + sourceCell + '</td><td>' + testRestoreCell + '</td><td>' + action + '</td></tr>';
                     } );
                     if ( '' === rows ) {
-                        rows = '<tr><td colspan="6"><?php echo esc_js( esc_html__( 'No backups recorded for this site yet.', 'mainwp' ) ); ?></td></tr>';
+                        rows = '<tr><td colspan="7"><?php echo esc_js( esc_html__( 'No backups recorded for this site yet.', 'mainwp' ) ); ?></td></tr>';
                     }
                     $tbody.html( rows );
                 }, 'json' );

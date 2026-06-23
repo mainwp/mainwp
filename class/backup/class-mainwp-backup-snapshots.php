@@ -521,6 +521,63 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
     }
 
     /**
+     * Snapshots due for a sandbox test-restore: the newest complete snapshot
+     * per site whose last test-restore is older than the cadence cutoff
+     * (never-tested counts as overdue and sorts first).
+     *
+     * Uses the same latest-per-site join the fleet-health map relies on, and
+     * runs unscoped by user - the sampler is a background cron lane that
+     * covers every site, not a per-operator view.
+     *
+     * @param int $limit  Most rows to return.
+     * @param int $cutoff Epoch; a snapshot is due when test_restore_at is below it.
+     *
+     * @return object[] Rows of id, site_id, created, test_restore_state, test_restore_at.
+     */
+    public function get_test_restore_candidates( int $limit, int $cutoff ): array {
+        $limit = max( 1, $limit );
+        $table = $this->table_name( 'wp_backup_snapshot' );
+
+        return (array) $this->wpdb->get_results(
+            $this->wpdb->prepare(
+                'SELECT s.id, s.site_id, s.created, s.test_restore_state, s.test_restore_at FROM ' . $table . ' s '
+                . 'JOIN ( SELECT site_id, MAX(id) AS max_id FROM ' . $table . " WHERE status = 'complete' GROUP BY site_id ) latest ON s.id = latest.max_id "
+                . 'WHERE s.test_restore_at < %d ORDER BY s.test_restore_at ASC, s.id DESC LIMIT %d', // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- table identifier from table_name(); the %d placeholders are prepared.
+                $cutoff,
+                $limit
+            )
+        );
+    }
+
+    /**
+     * Atomically claim a snapshot for test-restore.
+     *
+     * Stamps test_restore_at to now, but only while the snapshot is still due
+     * (a compare-and-swap on the same cutoff the candidate query used). Two
+     * overlapping cron ticks cannot both win the same row, and a claimed run
+     * that dies or returns without recording still backs the snapshot off for
+     * the cadence window instead of being re-selected every tick.
+     *
+     * @param int $snapshot_id Snapshot id.
+     * @param int $now         Epoch to stamp on a winning claim.
+     * @param int $cutoff      Due threshold; the claim wins only if test_restore_at is below it.
+     *
+     * @return bool True when this caller won the claim (exactly one row updated).
+     */
+    public function claim_for_test_restore( int $snapshot_id, int $now, int $cutoff ): bool {
+        $updated = $this->wpdb->query(
+            $this->wpdb->prepare(
+                'UPDATE ' . $this->table_name( 'wp_backup_snapshot' ) . ' SET test_restore_at = %d WHERE id = %d AND test_restore_at < %d', // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table identifier from table_name(); values are prepared.
+                $now,
+                $snapshot_id,
+                $cutoff
+            )
+        );
+
+        return 1 === (int) $updated;
+    }
+
+    /**
      * Decode the archives JSON on a snapshot row and normalize parent_id.
      *
      * @param object|null $row Raw snapshot row.

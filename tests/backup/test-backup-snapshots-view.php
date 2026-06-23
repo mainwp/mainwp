@@ -10,6 +10,7 @@
 namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Backup_Snapshots_View;
+use MainWP\Dashboard\MainWP_Backup_TestRestore_Scheduler;
 
 /**
  * Class MainWP_Backup_Snapshots_View_Test
@@ -314,5 +315,70 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 
 		$this->assertStringContainsString( 'mainwp-restore-maintenance-note', $output, 'The maintenance notice element must render.' );
 		$this->assertStringContainsString( 'mainwp_restore_rollback_failed', $output, 'The rollback-failed code must be handled.' );
+	}
+
+	/**
+	 * The snapshot list carries a Test Restore column.
+	 *
+	 * @return void
+	 */
+	public function test_test_restore_column_header_present() {
+		$output = $this->render_page();
+
+		$this->assertStringContainsString( '>Test Restore</th>', $output, 'The snapshot table must have a Test Restore header.' );
+	}
+
+	/**
+	 * The list renders each test-restore state distinctly: a green pass with a
+	 * date, a red fail, a neutral couldn't-test and artifacts-unavailable, and a
+	 * dash when never tested.
+	 *
+	 * @return void
+	 */
+	public function test_test_restore_states_render_distinctly() {
+		$output = $this->render_page();
+
+		$this->assertStringContainsString( 'snap.test_restore_state', $output, 'The list must read the per-snapshot test-restore state.' );
+		$this->assertMatchesRegularExpression( "/'pass' === snap\.test_restore_state/s", $output, 'A pass must be handled.' );
+		$this->assertMatchesRegularExpression( "/'fail' === snap\.test_restore_state/s", $output, 'A fail must be handled.' );
+		$this->assertMatchesRegularExpression( "/'unsupported' === snap\.test_restore_state/s", $output, 'An unsupported host must be handled.' );
+		$this->assertMatchesRegularExpression( "/'unavailable' === snap\.test_restore_state/s", $output, 'An unavailable snapshot must be handled.' );
+		$this->assertMatchesRegularExpression( "/ui mini green label[^']*check icon/s", $output, 'A pass must render a green checked label.' );
+		$this->assertStringContainsString( 'ui mini red label', $output, 'A fail must render a red label.' );
+		$this->assertMatchesRegularExpression( "/snap\.test_restore_at \* 1000/s", $output, 'A pass must show the test-restore date.' );
+	}
+
+	/**
+	 * When the host cannot host a sandbox, the standalone page shows the
+	 * operator notice; when it can, it does not.
+	 *
+	 * @return void
+	 */
+	public function test_capability_notice_rendered_only_when_incapable() {
+		update_option(
+			MainWP_Backup_TestRestore_Scheduler::CAPABILITY_OPTION,
+			array(
+				'capable'    => false,
+				'reason'     => 'Sandbox needs the CREATE privilege here',
+				'checked_at' => time(),
+			),
+			false
+		);
+		$incapable = $this->render_page();
+		$this->assertStringContainsString( 'Sandbox needs the CREATE privilege here', $incapable, 'An incapable host surfaces the operator notice.' );
+
+		update_option(
+			MainWP_Backup_TestRestore_Scheduler::CAPABILITY_OPTION,
+			array(
+				'capable'    => true,
+				'reason'     => '',
+				'checked_at' => time(),
+			),
+			false
+		);
+		$capable = $this->render_page();
+		$this->assertStringNotContainsString( 'Sandbox needs the CREATE privilege here', $capable, 'A capable host shows no notice.' );
+
+		delete_option( MainWP_Backup_TestRestore_Scheduler::CAPABILITY_OPTION );
 	}
 }

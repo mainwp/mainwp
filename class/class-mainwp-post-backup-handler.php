@@ -187,17 +187,19 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             $archives   = isset( $entry['snapshot']->archives ) && is_array( $entry['snapshot']->archives ) ? $entry['snapshot']->archives : array();
             $size_bytes = (int) array_sum( array_column( $archives, 'size' ) );
             $rows[]     = array(
-                'id'             => (int) $entry['snapshot']->id,
-                'task_id'        => (int) $entry['snapshot']->task_id,
-                'type'           => (string) $entry['snapshot']->type,
-                'created'        => (int) $entry['snapshot']->created,
-                'age_days'       => max( 0, (int) floor( ( time() - (int) $entry['snapshot']->created ) / DAY_IN_SECONDS ) ),
-                'status'         => (string) $entry['snapshot']->status,
-                'offsite_state'  => isset( $entry['snapshot']->offsite_state ) ? (string) $entry['snapshot']->offsite_state : '',
-                'source'         => (string) $entry['source'],
-                'restorable'     => (bool) $entry['restorable'],
-                'restore_reason' => (string) $entry['restore_reason'],
-                'size_label'     => $size_bytes > 0 ? MainWP_Utility::human_filesize( $size_bytes ) : '',
+                'id'                 => (int) $entry['snapshot']->id,
+                'task_id'            => (int) $entry['snapshot']->task_id,
+                'type'               => (string) $entry['snapshot']->type,
+                'created'            => (int) $entry['snapshot']->created,
+                'age_days'           => max( 0, (int) floor( ( time() - (int) $entry['snapshot']->created ) / DAY_IN_SECONDS ) ),
+                'status'             => (string) $entry['snapshot']->status,
+                'offsite_state'      => isset( $entry['snapshot']->offsite_state ) ? (string) $entry['snapshot']->offsite_state : '',
+                'source'             => (string) $entry['source'],
+                'restorable'         => (bool) $entry['restorable'],
+                'restore_reason'     => (string) $entry['restore_reason'],
+                'size_label'         => $size_bytes > 0 ? MainWP_Utility::human_filesize( $size_bytes ) : '',
+                'test_restore_state' => isset( $entry['snapshot']->test_restore_state ) ? (string) $entry['snapshot']->test_restore_state : '',
+                'test_restore_at'    => isset( $entry['snapshot']->test_restore_at ) ? (int) $entry['snapshot']->test_restore_at : 0,
             );
         }
         wp_send_json(

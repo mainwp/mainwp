@@ -333,6 +333,66 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
+	 * A preserve-orders restore carries the flag and the backup timestamp
+	 * through to the child task-create options.
+	 */
+	public function test_staging_sends_preserve_orders_and_woo_order_since() {
+		$this->responses['restore_task_create'] = array(
+			'task_id' => 'task-9-restore',
+			'phase'   => 'queued',
+		);
+
+		$job = $this->make_job(
+			array(
+				'options' => array(
+					'pre_snapshot'    => false,
+					'file_rollback'   => false,
+					'preserve_orders' => true,
+					'woo_order_since' => 1700000000,
+				),
+			),
+			MainWP_Backup_Restore_Job_Store::STATUS_STAGING
+		);
+		$this->tick( $job );
+
+		$create = null;
+		foreach ( $this->calls as $call ) {
+			if ( 'restore_task_create' === $call['what'] ) {
+				$create = $call;
+			}
+		}
+		$this->assertNotNull( $create );
+		$options = json_decode( $create['params']['options_json'], true );
+		$this->assertTrue( $options['preserve_orders'] );
+		$this->assertSame( 1700000000, $options['woo_order_since'] );
+	}
+
+	/**
+	 * Without the opt-in, the child task-create options carry preserve_orders
+	 * off and a zero timestamp - a non-preserve restore is unchanged.
+	 */
+	public function test_staging_preserve_orders_default_off() {
+		$this->responses['restore_task_create'] = array(
+			'task_id' => 'task-9-restore',
+			'phase'   => 'queued',
+		);
+
+		$job = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_STAGING );
+		$this->tick( $job );
+
+		$create = null;
+		foreach ( $this->calls as $call ) {
+			if ( 'restore_task_create' === $call['what'] ) {
+				$create = $call;
+			}
+		}
+		$this->assertNotNull( $create );
+		$options = json_decode( $create['params']['options_json'], true );
+		$this->assertFalse( $options['preserve_orders'] );
+		$this->assertSame( 0, $options['woo_order_since'] );
+	}
+
+	/**
 	 * Wire a cloud-pull-capable stub driver into the orchestrator.
 	 *
 	 * @param array|null $manifest Scripted manifest.

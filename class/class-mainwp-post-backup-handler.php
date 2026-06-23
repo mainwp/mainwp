@@ -223,6 +223,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         $snapshot_id         = isset( $_POST['snapshot_id'] ) ? (int) $_POST['snapshot_id'] : 0;
         $pre_snapshot        = isset( $_POST['pre_snapshot'] ) && '1' === $_POST['pre_snapshot'];
         $confirm_destructive = isset( $_POST['confirm_destructive'] ) && '1' === $_POST['confirm_destructive'];
+        $preserve_orders     = isset( $_POST['preserve_orders'] ) && '1' === $_POST['preserve_orders'];
         // phpcs:enable WordPress.Security.NonceVerification.Missing
 
         $website = $this->authorize_restore_site( $site_id );
@@ -246,13 +247,20 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             return;
         }
 
+        // Order preservation applies only to a database-bearing restore; the
+        // backup's created time bounds the customer capture on the child.
+        $preserve_orders = $preserve_orders && null !== $snapshot && 'files' !== (string) $snapshot->type;
+        $woo_order_since = $preserve_orders ? (int) $snapshot->created : 0;
+
         try {
             $job_id = MainWP_Backup_Restore_Orchestrator::instance()->initiate_restore(
                 $site_id,
                 $snapshot_id,
                 array(
-                    'pre_snapshot'  => $pre_snapshot,
-                    'file_rollback' => $pre_snapshot,
+                    'pre_snapshot'    => $pre_snapshot,
+                    'file_rollback'   => $pre_snapshot,
+                    'preserve_orders' => $preserve_orders,
+                    'woo_order_since' => $woo_order_since,
                 )
             );
         } catch ( MainWP_Exception $e ) {

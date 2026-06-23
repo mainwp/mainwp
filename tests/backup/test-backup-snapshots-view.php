@@ -58,6 +58,52 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * The confirm modal carries the keep-orders opt-in, its helper text, and
+	 * posts the preserve_orders field.
+	 */
+	public function test_preserve_orders_checkbox_present() {
+		$output = $this->render_page();
+
+		$this->assertStringContainsString( 'mainwp-restore-preserve-orders-box', $output );
+		$this->assertStringContainsString( 'Preserve orders placed since the backup', $output );
+		$this->assertStringContainsString( 'preserve_orders:', $output );
+	}
+
+	/**
+	 * The opt-in is hidden until the snapshot click handler shows it, so a
+	 * non-WooCommerce or files-only restore never sees it.
+	 */
+	public function test_preserve_orders_box_hidden_by_default() {
+		$output = $this->render_page();
+
+		$this->assertMatchesRegularExpression( '/id="mainwp-restore-preserve-orders-box"[^>]*style="display:none;"/', $output );
+	}
+
+	/**
+	 * The opt-in is shown only for a WooCommerce store restoring a
+	 * database-bearing snapshot.
+	 */
+	public function test_preserve_orders_toggle_gated_on_woocommerce() {
+		$output = $this->render_page();
+
+		$this->assertStringContainsString( "siteHasWooCommerce && 'files' !== snapType", $output );
+		$this->assertStringContainsString( "#mainwp-restore-preserve-orders-box' ).toggle( showPreserve )", $output );
+	}
+
+	/**
+	 * A completed preserve restore reports its outcome: the note element and
+	 * the function that fills it from the verification payload are present.
+	 */
+	public function test_preserve_outcome_note_rendered() {
+		$output = $this->render_page();
+
+		$this->assertStringContainsString( 'mainwp-restore-preserve-note', $output );
+		$this->assertStringContainsString( 'function showPreserveNote(', $output );
+		$this->assertStringContainsString( 'verification.woo_preserve', $output );
+		$this->assertStringContainsString( 'orphan_customer_orders', $output );
+	}
+
+	/**
 	 * A cancel deferred to the cron lane (busy child) is surfaced: the
 	 * progress poll carries cancel_requested and the page reacts to it
 	 * instead of leaving the user staring at a running status.

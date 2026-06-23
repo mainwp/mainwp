@@ -84,8 +84,10 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             'sub_type'   => $resolved['sub_type'],
             'plan'       => $resolved['plan'],
             'options'    => array(
-                'pre_snapshot'  => ! empty( $options['pre_snapshot'] ),
-                'file_rollback' => ! empty( $options['file_rollback'] ),
+                'pre_snapshot'    => ! empty( $options['pre_snapshot'] ),
+                'file_rollback'   => ! empty( $options['file_rollback'] ),
+                'preserve_orders' => ! empty( $options['preserve_orders'] ),
+                'woo_order_since' => isset( $options['woo_order_since'] ) ? (int) $options['woo_order_since'] : 0,
             ),
             'transfer'   => array(),
         );
@@ -755,6 +757,12 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             if ( 'completed' === $phase ) {
                 $checkpoint                 = $job->checkpoint;
                 $checkpoint['verification'] = isset( $payload['sub_state']['verification'] ) ? $payload['sub_state']['verification'] : array();
+                // Carry the order-preservation outcome (customers and stock
+                // re-applied) alongside verification so the dashboard reports
+                // what was kept rather than hiding it.
+                if ( isset( $payload['sub_state']['progress']['woo_preserve'] ) ) {
+                    $checkpoint['verification']['woo_preserve'] = $payload['sub_state']['progress']['woo_preserve'];
+                }
                 $store->save_checkpoint( (int) $job->id, $checkpoint );
                 $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_VERIFYING );
                 return;
@@ -865,6 +873,8 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                     'sub_type'         => (string) $checkpoint['sub_type'],
                     'has_foreign_keys' => null,
                     'file_rollback'    => ! empty( $checkpoint['options']['file_rollback'] ) || ! empty( $checkpoint['pre_snapshot_artifacts'] ),
+                    'preserve_orders'  => ! empty( $checkpoint['options']['preserve_orders'] ),
+                    'woo_order_since'  => isset( $checkpoint['options']['woo_order_since'] ) ? (int) $checkpoint['options']['woo_order_since'] : 0,
                 )
             ),
         );

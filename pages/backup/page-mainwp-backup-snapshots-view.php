@@ -143,6 +143,13 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                                 <label><?php esc_html_e( 'I understand this replaces the current site content.', 'mainwp' ); ?></label>
                             </div>
                         </div>
+                        <div class="field" id="mainwp-restore-preserve-orders-box" style="display:none;">
+                            <div class="ui checkbox">
+                                <input type="checkbox" id="mainwp-restore-preserve-orders">
+                                <label><?php esc_html_e( 'Preserve orders placed since the backup', 'mainwp' ); ?></label>
+                            </div>
+                            <div class="mainwp-restore-preserve-orders-desc" style="margin: .35em 0 0 1.85em; opacity: .8; font-size: .9em;"><?php esc_html_e( 'Orders received, customer accounts registered, and product stock changes made after this backup date stay on the site after the restore. The restore still replaces all other database content with the backup version. This works on stores that keep orders in the WooCommerce High-Performance Order Storage tables with synchronization turned off, and only when WooCommerce has not changed version since the backup. The restore stops with an explanation if the store does not meet those conditions, and your data is left untouched. It keeps the current orders as they are and does not restore older orders from the backup.', 'mainwp' ); ?></div>
+                        </div>
                     </div>
                 </div>
                 <div id="mainwp-restore-progress-pane" style="display:none;">
@@ -152,6 +159,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     <div class="ui small blue message" id="mainwp-restore-safety-note" style="display:none;"><?php esc_html_e( 'A safety backup was taken before this restore. If the result looks wrong, you can roll back to it.', 'mainwp' ); ?></div>
                     <div class="ui small yellow message" id="mainwp-restore-cancel-warning" style="display:none;"><?php esc_html_e( 'Cancelling now stops the restore while the site is mid-change. Files already copied stay in place and the previous database tables are kept aside, so a rollback from the safety backup remains available if the site looks wrong afterwards.', 'mainwp' ); ?></div>
                     <div class="ui message" id="mainwp-restore-result-message" style="display:none;"></div>
+                    <div class="ui small message" id="mainwp-restore-preserve-note" style="display:none;"></div>
                     <div class="ui small red message" id="mainwp-restore-maintenance-note" style="display:none;"><?php esc_html_e( 'The site is in maintenance mode until the database is checked, so it will not serve visitors until then.', 'mainwp' ); ?></div>
                     <div id="mainwp-restore-visit-site-wrap" style="display:none;margin-top:.5em;"><a id="mainwp-restore-visit-site" href="#" target="_blank" rel="noopener" class="ui tiny basic button"><i class="external alternate icon"></i><?php esc_html_e( 'Visit site', 'mainwp' ); ?></a></div>
                 </div>
@@ -341,6 +349,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     $message.removeClass( 'green red blue' );
                     if ( 'completed' === data.status ) {
                         $message.addClass( 'green' ).text( '<?php echo esc_js( esc_html__( 'The site was restored and responds normally.', 'mainwp' ) ); ?>' );
+                        showPreserveNote( data.verification );
                     } else if ( rolledBack && outcome ) {
                         // The restore failed but the database was recovered:
                         // the data is safe, so this reads as information.
@@ -366,6 +375,29 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 } else {
                     $( '#mainwp-restore-result-message' ).hide();
                 }
+            }
+
+            // Report the WooCommerce order-preservation outcome on a completed
+            // restore: what was re-added, and a warning when any kept order
+            // still points at a customer that could not be brought back.
+            function showPreserveNote( verification ) {
+                var $note = $( '#mainwp-restore-preserve-note' ).removeClass( 'blue yellow' ).hide();
+                if ( ! verification || ! verification.woo_preserve ) {
+                    return;
+                }
+                var p = verification.woo_preserve;
+                var restored = parseInt( p.customers_restored, 10 ) || 0;
+                var stockApplied = parseInt( p.stock_applied, 10 ) || 0;
+                var text = '<?php echo esc_js( esc_html__( 'Live orders were kept. Customer accounts re-added: %1$d. Product stock re-applied: %2$d.', 'mainwp' ) ); ?>';
+                text = text.split( '%1$d' ).join( restored ).split( '%2$d' ).join( stockApplied );
+                var orphans = ( verification.woo_orphans && parseInt( verification.woo_orphans.orphan_customer_orders, 10 ) ) || 0;
+                if ( orphans > 0 ) {
+                    text += ' ' + '<?php echo esc_js( esc_html__( '%d order(s) still reference a customer that could not be restored; review them.', 'mainwp' ) ); ?>'.split( '%d' ).join( orphans );
+                    $note.addClass( 'yellow' );
+                } else {
+                    $note.addClass( 'blue' );
+                }
+                $note.text( text ).show();
             }
 
             function poll() {
@@ -415,6 +447,14 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 $( '#mainwp-restore-warning-text' ).text( warningText );
                 $( '#mainwp-restore-consent' ).prop( 'checked', false );
                 $( '#mainwp-restore-start-btn' ).addClass( 'disabled' );
+                // The keep-orders option only applies to a WooCommerce store
+                // restoring a database-bearing snapshot. The child enforces the
+                // supported configuration; this just offers the opt-in.
+                var showPreserve = siteHasWooCommerce && 'files' !== snapType;
+                $( '#mainwp-restore-preserve-orders-box' ).toggle( showPreserve );
+                if ( ! showPreserve ) {
+                    $( '#mainwp-restore-preserve-orders' ).prop( 'checked', false );
+                }
                 setPane( true );
                 if ( ! $( '#mainwp-restore-modal' ).modal( 'is active' ) ) {
                     $( '#mainwp-restore-modal' ).modal( 'show' );
@@ -436,7 +476,8 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     site_id: currentSite,
                     snapshot_id: currentSnapshot,
                     pre_snapshot: $( '#mainwp-restore-presnapshot' ).is( ':checked' ) ? 1 : 0,
-                    confirm_destructive: $( '#mainwp-restore-consent' ).is( ':checked' ) ? 1 : 0
+                    confirm_destructive: $( '#mainwp-restore-consent' ).is( ':checked' ) ? 1 : 0,
+                    preserve_orders: $( '#mainwp-restore-preserve-orders' ).is( ':checked' ) ? 1 : 0
                 }, function ( response ) {
                     if ( response.needs_confirmation ) {
                         setPane( true );

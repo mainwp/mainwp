@@ -890,6 +890,9 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command { // phpcs:ignore Generic.Cl
      * [--pre-snapshot]
      * : Take a safety backup of the site before restoring, enabling file rollback.
      *
+     * [--preserve-orders]
+     * : Keep orders, customers, and product stock placed on the live store since the backup. WooCommerce stores using High-Performance Order Storage with synchronization off only; the restore stops with an explanation otherwise. No effect on files-only restores.
+     *
      * [--confirm-destructive]
      * : Confirm a database-bearing restore that overwrites live data.
      *
@@ -903,8 +906,9 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command { // phpcs:ignore Generic.Cl
      *
      *     wp mainwp backup restore 42 --site=5 --confirm-destructive
      *     wp mainwp backup restore 42 --site=5 --pre-snapshot --yes
+     *     wp mainwp backup restore 42 --site=5 --preserve-orders --confirm-destructive
      *
-     * ## Synopsis <action> [<snapshot-id>] [--site=<id>] [--pre-snapshot] [--confirm-destructive] [--yes] [--timeout=<seconds>]
+     * ## Synopsis <action> [<snapshot-id>] [--site=<id>] [--pre-snapshot] [--preserve-orders] [--confirm-destructive] [--yes] [--timeout=<seconds>]
      *
      * @param array $args       Function arguments.
      * @param array $assoc_args Function associate arguments.
@@ -928,9 +932,10 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command { // phpcs:ignore Generic.Cl
             return;
         }
 
-        $pre_snapshot = isset( $assoc_args['pre-snapshot'] );
-        $confirmed    = isset( $assoc_args['confirm-destructive'] ) || isset( $assoc_args['yes'] );
-        $timeout      = isset( $assoc_args['timeout'] ) ? max( 0, (int) $assoc_args['timeout'] ) : 0;
+        $pre_snapshot    = isset( $assoc_args['pre-snapshot'] );
+        $preserve_orders = isset( $assoc_args['preserve-orders'] );
+        $confirmed       = isset( $assoc_args['confirm-destructive'] ) || isset( $assoc_args['yes'] );
+        $timeout         = isset( $assoc_args['timeout'] ) ? max( 0, (int) $assoc_args['timeout'] ) : 0;
 
         // The staging and transfer driver reads and writes files through
         // WP_Filesystem, which CLI does not initialise on its own.
@@ -945,13 +950,22 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command { // phpcs:ignore Generic.Cl
             \WP_CLI::log( '  ' . $job->status );
         };
 
-        $result = $runner->run( $site_id, $snapshot_id, array( 'pre_snapshot' => $pre_snapshot ), $confirmed, $progress );
+        $result = $runner->run(
+            $site_id,
+            $snapshot_id,
+            array(
+                'pre_snapshot'    => $pre_snapshot,
+                'preserve_orders' => $preserve_orders,
+            ),
+            $confirmed,
+            $progress
+        );
 
         if ( ! empty( $result['needs_confirmation'] ) ) {
             \WP_CLI::warning( 'This restore overwrites the live database for site ' . $site_id . '.' );
             \WP_CLI::log( '  backup age: ' . (int) $result['age_days'] . ' day(s)' );
             if ( ! empty( $result['site_has_woocommerce'] ) ) {
-                \WP_CLI::log( '  this site runs WooCommerce; orders placed since the backup will be lost.' );
+                \WP_CLI::log( '  this site runs WooCommerce; orders placed since the backup will be lost unless you add --preserve-orders.' );
             }
             \WP_CLI::error( 'Re-run with --confirm-destructive (or --yes) to proceed.' );
             return;

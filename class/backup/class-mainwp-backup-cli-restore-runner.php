@@ -156,13 +156,20 @@ class MainWP_Backup_CLI_Restore_Runner {
             );
         }
 
+        // Order preservation applies only to a database-bearing restore; the
+        // backup's created time bounds the customer capture on the child.
+        $preserve_orders = ! empty( $options['preserve_orders'] ) && null !== $snapshot && 'files' !== (string) $snapshot->type;
+        $woo_order_since = $preserve_orders ? (int) $snapshot->created : 0;
+
         try {
             $job_id = $this->orchestrator->initiate_restore(
                 $site_id,
                 $snapshot_id,
                 array(
-                    'pre_snapshot'  => ! empty( $options['pre_snapshot'] ),
-                    'file_rollback' => ! empty( $options['pre_snapshot'] ),
+                    'pre_snapshot'    => ! empty( $options['pre_snapshot'] ),
+                    'file_rollback'   => ! empty( $options['pre_snapshot'] ),
+                    'preserve_orders' => $preserve_orders,
+                    'woo_order_since' => $woo_order_since,
                 )
             );
         } catch ( MainWP_Exception $e ) {

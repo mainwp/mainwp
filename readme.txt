@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 6.1.1
+Stable tag: 6.1.2
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -132,6 +132,9 @@ Please follow the steps outlined in the [MainWP Voice](https://voice.mainwp.com/
 = I have more questions. Do you have any other information? =
 Yes, we have a quick FAQ with many more questions and answers [here](https://mainwp.com/preinstall-faq/).
 
+= Where do I report security bugs found in this plugin? =
+Please report security bugs found in the source code of the MainWP plugin through the [Patchstack Vulnerability Disclosure Program](https://patchstack.com/database/vdp/9e5fb39c-dd7e-4c6b-a871-c6a046430f0f). The Patchstack team will assist you with verification, CVE assignment, and notify the developers of this plugin.
+
 == Screenshots ==
 
 1. Sites - Operations
@@ -147,6 +150,15 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 11. Dashboard Insights
 
 == Changelog ==
+
+= 6.1.2 - 6-23-2026 =
+
+* Security: Restricted access to MainWP `bulkpost` and `bulkpage` custom post type functionality by requiring the `manage_options` capability.
+* Fixed: Improved Plesk API URL construction to properly handle slash combinations in request paths and prevent potential request errors.
+* Fixed: Resolved an issue where the "Manage Sites" list did not immediately reflect changes to a site's suspension status.
+* Fixed: Resolved a support modal overlay issue on the Lighthouse Integration page.
+* Added: Category management for custom post types now shows site associations through contextual tooltips/popups, making it easier to see which sites contain each category.
+* Updated: Updated page navigation links that open in new tabs to include proper attributes, helping protect user sessions.
 
 = 6.1.1 - 6-2-2026 =
 

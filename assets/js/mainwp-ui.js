@@ -469,6 +469,15 @@ let mainwp_newpost_updateCategories = function () {
                     let arrVal = pSelectedCategories.split(",");
                     catsSelection.dropdown('set selected', arrVal);
                     updateCategoriesPostFunc();
+                    let popWrapper = jQuery('#categorychecklist .mainwp-html-popup');
+                    if( popWrapper.length > 0 ) {
+                        jQuery(popWrapper).each(
+                            function(){
+                                mainwp_init_html_popup(this);
+                            }
+                        );
+                    }
+
                 }
             };
         }(selected_categories), 'json');

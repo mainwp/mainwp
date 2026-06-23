@@ -240,7 +240,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     if ( is_array( $new_cats ) && ! empty( $new_cats ) ) {
                         $current = current( $new_cats );
                         if ( is_array( $current ) && ! empty( $current ) ) { // new site's category format data.
-                            static::arrange_categories_list( $new_cats, $allCategories_new_tree );
+                            static::arrange_categories_list( $new_cats, $allCategories_new_tree, $website );
                         } elseif ( is_string( $current ) ) { // old format.
                             $allCategories = array_unique( array_merge( $allCategories, $new_cats ) );
                         }
@@ -248,7 +248,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 } else {
                     $custom_categories = apply_filters( 'mainwp_edit_post_get_categories', false, $website, $_REQUEST );
                     if ( is_array( $custom_categories ) && ! empty( $custom_categories ) ) {
-                        static::arrange_categories_list( $custom_categories, $allCategories_new_tree );
+                        static::arrange_categories_list( $custom_categories, $allCategories_new_tree, $website );
                     }
                 }
             }
@@ -293,6 +293,30 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @param array $check_printed_cats_names check printed cats slugs.
      */
     public static function print_catergories_tree( $print_cats, &$check_printed_cats_names = array() ) { // phpcs:ignore Squiz.Functions.MultiLineFunctionDeclaration.ContentAfterBrace -- NOSONAR - complexity.
+
+        // Build the list of sites for each category to show in tooltip.
+        $cats_sites = array();
+        foreach ( $print_cats as $item ) {
+
+            $term_pt = isset( $item['term_post_type'] ) && ! empty( $item['term_post_type'] ) ? sanitize_text_field( wp_unslash( $item['term_post_type'] ) ) : '';
+
+            $print_slug = $item['slug'];
+
+            if ( ! empty( $term_pt ) ) {
+                $print_slug .= '_' . $term_pt;
+            }
+
+            if ( isset( $item['site_id'] ) && isset( $item['site_name'] ) ) {
+                if ( ! isset( $cats_sites[ $print_slug ] ) ) {
+                    $cats_sites[ $print_slug ] = array();
+                }
+
+                if ( ! in_array( $item['site_name'], $cats_sites[ $print_slug ], true ) ) {
+                    $cats_sites[ $print_slug ][] = $item['site_name'];
+                }
+            }
+        }
+
         foreach ( $print_cats as $item ) {
 
             $level   = isset( $item['level'] ) ? $item['level'] : 0;
@@ -324,8 +348,12 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     $cat_val = esc_attr( $item['name'] );
                 }
 
+                if ( ! empty( $cats_sites[ $print_slug ] ) ) {
+                    $cls .= ' mainwp-html-popup ';
+                }
+
                 $title = ! empty( $term_pt ) ? '<strong>' . esc_html( $item['name'] ) . '</strong>' : esc_html( $item['name'] );
-                echo '<div class="item ' . esc_attr( $cls ) . '" data-value="' . $cat_val . '" data-slug="' . esc_attr( $item['slug'] ) . '" post-type="' . esc_attr( $term_pt ) . '"class="sitecategory-list">' . $title . '</div>'; //phpcs:ignore -- ok.
+                echo '<div class="item ' . esc_attr( $cls ) . '" data-value="' . $cat_val . '" data-slug="' . esc_attr( $item['slug'] ) . '" post-type="' . esc_attr( $term_pt ) . '" ' . ( ! empty( $cats_sites[ $print_slug ] ) ? ' data-position="left center" data-html="' . esc_attr__( implode( ', ', $cats_sites[ $print_slug ] ) ) . '"  data-inverted=""' : '') . '>' . $title . '</div>';  //phpcs:ignore -- $title ok.
             }
 
             if ( ! empty( $item['children'] ) ) {
@@ -339,10 +367,13 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
      *
      * Tweaked John#105641 at StackOver#4284616.
      *
-     * @param array $categories categories.
-     * @param array $save_all_cats_tree all categories tree.
+     * Builds a hierarchical category tree from a flat category list.
+     *
+     * @param array  $categories categories.
+     * @param array  $save_all_cats_tree all categories tree.
+     * @param object $website website object.
      */
-    public static function arrange_categories_list( $categories, &$save_all_cats_tree ) { //phpcs:ignore -- NOSONAR - complex.
+    public static function arrange_categories_list( $categories, &$save_all_cats_tree, $website = null ) { //phpcs:ignore -- NOSONAR - complex.
 
         if ( ! is_array( $save_all_cats_tree ) ) {
             $save_all_cats_tree = array();
@@ -353,8 +384,8 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
         }
 
         $tree_cats  = $save_all_cats_tree;
-        $all_cats   = array();
-        $child_cats = array();
+        $all_cats   = array(); // Category lookup indexed by term_id.
+        $child_cats = array(); // Categories waiting for their parent to be processed.
 
         foreach ( $categories as $cat ) {
 
@@ -362,40 +393,53 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 continue;
             }
 
+            $cat['site_id']   = $website ? $website->id : null;
+            $cat['site_name'] = $website ? $website->name : null;
+
             $cat['children'] = array();
             $term_id         = $cat['term_id'];
 
-            // If this is a top-level.
+            // Top-level category.
             if ( empty( $cat['parent'] ) ) {
                 $cat['level']         = 0;
                 $all_cats[ $term_id ] = $cat;
-                $tree_cats[]          =& $all_cats[ $term_id ];
-                // If this isn't a top-level.
+                // Store by reference so child relationships added later
+                // are reflected in the final tree structure.
+                $tree_cats[] =& $all_cats[ $term_id ];
             } else {
+                // Parent may not have been processed yet, so defer linking.
                 $cat['level']           = isset( $all_cats[ $cat['parent'] ] ) && isset( $all_cats[ $cat['parent'] ]['level'] ) ? $all_cats[ $cat['parent'] ]['level'] + 1 : 1;
                 $child_cats[ $term_id ] = $cat;
             }
         }
 
+        // Multiple passes are needed when categories are not ordered by hierarchy.
+        // Limit iterations to prevent infinite loops caused by invalid parent IDs.
         $stop  = count( $categories );
         $limit = 0;
         $count = count( $child_cats );
-        // Process child cats.
+
         while ( $count > 0 && $limit < $stop ) {
             foreach ( $child_cats as $cat ) {
                 $term_id = $cat['term_id'];
                 $pid     = isset( $cat['parent'] ) ? $cat['parent'] : -1;
 
                 if ( isset( $all_cats[ $pid ] ) ) {
-                    $cat['level']                   = isset( $all_cats[ $pid ] ) && isset( $all_cats[ $pid ]['level'] ) ? $all_cats[ $pid ]['level'] + 1 : 1;
-                    $all_cats[ $term_id ]           = $cat;
+                    $cat['level']         = isset( $all_cats[ $pid ]['level'] ) ? $all_cats[ $pid ]['level'] + 1 : 1;
+                    $all_cats[ $term_id ] = $cat;
+
+                    // Link child to parent by reference so nested descendants
+                    // automatically become part of the tree.
                     $all_cats[ $pid ]['children'][] =& $all_cats[ $term_id ];
-                    unset( $child_cats[ $cat['term_id'] ] );
+
+                    unset( $child_cats[ $term_id ] );
                 }
             }
             ++$limit;
         }
-        $save_all_cats_tree = $tree_cats; // to prevent it deleted by reference.
+
+        // Return the completed category tree.
+        $save_all_cats_tree = $tree_cats;
     }
 
     /**

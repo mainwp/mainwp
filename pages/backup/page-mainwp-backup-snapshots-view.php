@@ -213,6 +213,12 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             var currentJob = 0;
             var pollTimer = null;
             var backupPollTimer = null;
+            var backupElapsedTimer = null;
+            var backupStartTime = null;
+            var backupProgressCache = null;
+            var backupLastPhase = null;
+            var backupPhaseStartTime = null;
+            var backupPhaseStartPercent = 0;
             var currentSiteUrl = '';
             var phaseOrder = [ 'pending', 'preflight', 'pre_snapshot', 'staging', 'transferring', 'running', 'verifying', 'completed' ];
 
@@ -255,6 +261,49 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
 
             function escAttr( text ) {
                 return String( text ).replace( /&/g, '&amp;' ).replace( /"/g, '&quot;' ).replace( /</g, '&lt;' ).replace( />/g, '&gt;' );
+            }
+
+            // Format a duration as m:ss, rolling to h:mm:ss past an hour.
+            function fmtClock( ms ) {
+                var total = Math.max( 0, Math.floor( ms / 1000 ) );
+                var s = total % 60;
+                var m = Math.floor( total / 60 ) % 60;
+                var h = Math.floor( total / 3600 );
+                var ss = s < 10 ? '0' + s : '' + s;
+                if ( h > 0 ) {
+                    var mm = m < 10 ? '0' + m : '' + m;
+                    return h + ':' + mm + ':' + ss;
+                }
+                return m + ':' + ss;
+            }
+
+            // Sole writer of the backup-now status line. The poll refreshes the
+            // cached fields; this ticks the elapsed clock every second so it
+            // advances smoothly between the slower polls.
+            function renderBackupStatus() {
+                if ( ! backupProgressCache ) {
+                    return;
+                }
+                var c = backupProgressCache;
+                var parts = [ c.label ];
+                if ( c.percent !== null && c.percent !== undefined ) {
+                    parts.push( c.percent + '%' );
+                }
+                if ( backupStartTime ) {
+                    parts.push( '(' + fmtClock( Date.now() - backupStartTime ) + ')' );
+                }
+                if ( c.eta ) {
+                    parts.push( c.eta );
+                }
+                $( '#mainwp-native-backup-now-status' ).text( parts.join( ' ' ) ).css( 'color', '' );
+            }
+
+            function stopBackupTimers() {
+                window.clearTimeout( backupPollTimer );
+                if ( backupElapsedTimer ) {
+                    window.clearInterval( backupElapsedTimer );
+                    backupElapsedTimer = null;
+                }
             }
 
             function loadSnapshots( siteId ) {
@@ -532,28 +581,50 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             function pollBackup() {
                 $.post( ajaxurl, { action: 'mainwp_native_backup_progress', security: nonces.nativeBackupProgress, site_id: currentSite }, function ( data ) {
                     if ( data.error ) {
+                        stopBackupTimers();
                         setBackupStatus( data.error, true );
                         reenableBackupBtn();
                         return;
                     }
                     if ( 'completed' === data.status ) {
+                        stopBackupTimers();
                         setBackupStatus( '<?php echo esc_js( esc_html__( 'Backup complete.', 'mainwp' ) ); ?>', false );
                         reenableBackupBtn();
                         loadSnapshots( currentSite );
                         return;
                     }
                     if ( 'failed' === data.status ) {
+                        stopBackupTimers();
                         setBackupStatus( data.error || '<?php echo esc_js( esc_html__( 'Backup failed.', 'mainwp' ) ); ?>', true );
                         reenableBackupBtn();
                         return;
                     }
-                    var running = '<?php echo esc_js( esc_html__( 'Backing up...', 'mainwp' ) ); ?>';
+
+                    // Running: refresh the cached fields and let the 1s renderer
+                    // paint them. The human label comes from the server; the raw
+                    // phase string is used only to reset the per-phase ETA.
+                    var label = data.label || '<?php echo esc_js( esc_html__( 'Backing up...', 'mainwp' ) ); ?>';
                     if ( 'queued' === data.status ) {
-                        running = '<?php echo esc_js( esc_html__( 'Queued; waiting for a free slot...', 'mainwp' ) ); ?>';
-                    } else if ( data.phase ) {
-                        running += ' (' + escAttr( data.phase ) + ')';
+                        label = '<?php echo esc_js( esc_html__( 'Queued; waiting for a free slot...', 'mainwp' ) ); ?>';
                     }
-                    setBackupStatus( running, false );
+                    var pct = ( data.percent !== null && data.percent !== undefined ) ? data.percent : null;
+
+                    if ( data.phase !== backupLastPhase ) {
+                        backupLastPhase = data.phase;
+                        backupPhaseStartTime = Date.now();
+                        backupPhaseStartPercent = ( pct !== null ) ? pct : 0;
+                    }
+
+                    var eta = '';
+                    if ( pct !== null && pct > 0 && pct < 100 && backupPhaseStartTime ) {
+                        var denom = pct - backupPhaseStartPercent;
+                        if ( denom > 0 ) {
+                            eta = '~' + fmtClock( ( Date.now() - backupPhaseStartTime ) * ( 100 - pct ) / denom ) + ' <?php echo esc_js( esc_html__( 'remaining', 'mainwp' ) ); ?>';
+                        }
+                    }
+
+                    backupProgressCache = { label: label, percent: pct, eta: eta };
+                    renderBackupStatus();
                     backupPollTimer = window.setTimeout( pollBackup, 5000 );
                 }, 'json' );
             }
@@ -563,10 +634,17 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     return;
                 }
                 $( this ).prop( 'disabled', true ).addClass( 'disabled' );
-                window.clearTimeout( backupPollTimer );
+                stopBackupTimers();
+                backupStartTime = Date.now();
+                backupLastPhase = null;
+                backupPhaseStartTime = null;
+                backupPhaseStartPercent = 0;
+                backupProgressCache = { label: '<?php echo esc_js( esc_html__( 'Starting backup...', 'mainwp' ) ); ?>', percent: null, eta: '' };
+                backupElapsedTimer = window.setInterval( renderBackupStatus, 1000 );
                 setBackupStatus( '<?php echo esc_js( esc_html__( 'Starting backup...', 'mainwp' ) ); ?>', false );
                 $.post( ajaxurl, { action: 'mainwp_native_backup_initiate', security: nonces.nativeBackupInitiate, site_id: currentSite }, function ( response ) {
                     if ( response.error ) {
+                        stopBackupTimers();
                         setBackupStatus( response.error, true );
                         reenableBackupBtn();
                         return;

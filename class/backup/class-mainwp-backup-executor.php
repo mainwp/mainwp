@@ -1612,14 +1612,36 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         if ( isset( $progress['bytes_total'] ) ) {
             $fields['bytes_expected'] = max( 0, (int) $progress['bytes_total'] );
         }
+        if ( isset( $progress['total_bytes'] ) ) {
+            // The raw file-size total reported while archiving. It never shares
+            // a payload with bytes_total (a different phase), so the same
+            // bytes_expected column carries whichever the phase provides.
+            $fields['bytes_expected'] = max( 0, (int) $progress['total_bytes'] );
+        }
         if ( isset( $progress['current_file'] ) ) {
             $fields['current_file'] = substr( sanitize_text_field( (string) $progress['current_file'] ), 0, 255 );
         }
         if ( isset( $progress['files_processed'] ) ) {
             $fields['files_processed'] = max( 0, (int) $progress['files_processed'] );
         }
+        if ( isset( $progress['files_scanned'] ) ) {
+            // A live scanned-file count during the archiving walk takes
+            // precedence over a processed count from an earlier phase.
+            $fields['files_processed'] = max( 0, (int) $progress['files_scanned'] );
+        }
         if ( isset( $progress['files_total'] ) ) {
             $fields['files_total'] = max( 0, (int) $progress['files_total'] );
+        }
+
+        // While archiving, the processed-file count from the database dump is
+        // stale. Unless the child reports a live scanned count, zero it so the
+        // poll response falls back to the byte estimate rather than a
+        // misleading file ratio.
+        if ( isset( $fields['child_phase'] )
+            && MainWP_Backup_Task_Phase::ArchivingFiles->value === $fields['child_phase']
+            && ! isset( $progress['files_scanned'] )
+            && ! isset( $progress['files_processed'] ) ) {
+            $fields['files_processed'] = 0;
         }
 
         if ( ! empty( $fields ) ) {

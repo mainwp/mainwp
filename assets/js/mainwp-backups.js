@@ -641,6 +641,10 @@ let manageBackupsTaskRemoteDestinations;
 let manageBackupsTaskId;
 let manageBackupsTaskType;
 let manageBackupsTaskError;
+let manageBackupsSiteStartTime = null;
+let manageBackupsLastPhase = null;
+let manageBackupsPhaseStartTime = null;
+let manageBackupsPhaseStartPercent = 0;
 
 let managebackups_format_bytes = function (bytes) {
     if (bytes >= 1073741824)
@@ -652,16 +656,56 @@ let managebackups_format_bytes = function (bytes) {
     return bytes + ' B';
 };
 
+// Format a duration as m:ss, rolling to h:mm:ss past an hour.
+let managebackups_fmt_clock = function (ms) {
+    let total = Math.max(0, Math.floor(ms / 1000));
+    let s = total % 60;
+    let m = Math.floor(total / 60) % 60;
+    let h = Math.floor(total / 3600);
+    let ss = s < 10 ? '0' + s : '' + s;
+    if (h > 0) {
+        let mm = m < 10 ? '0' + m : '' + m;
+        return h + ':' + mm + ':' + ss;
+    }
+    return m + ':' + ss;
+};
+
 // Render the recorded child task phase next to the create-progress bar and
 // drive the bar from the recorded counters when the child reports them.
 let managebackups_render_task_phase = function (siteId, progress) {
-    let text = progress.label;
-    if (progress.files_total > 0) {
-        text += ' (' + progress.files_processed + '/' + progress.files_total + ')';
+    let parts = [progress.label + '...'];
+
+    // Show the file count only when a processed count is actually moving;
+    // during archiving it is normalized to zero, so fall back to the size.
+    if (progress.files_processed > 0 && progress.files_total > 0) {
+        parts.push('(' + progress.files_processed + '/' + progress.files_total + ')');
     } else if (progress.bytes_done > 0) {
-        text += ' (' + managebackups_format_bytes(progress.bytes_done) + ')';
+        parts.push('(' + managebackups_format_bytes(progress.bytes_done) + ')');
     }
-    jQuery('.managebackups-task-status-phase[siteId="' + siteId + '"]').text(text + '...');
+
+    let pct = (progress.percent !== null && progress.percent !== undefined) ? progress.percent : null;
+    if (pct !== null) {
+        parts.push(pct + '%');
+    }
+
+    if (manageBackupsSiteStartTime) {
+        parts.push('(' + managebackups_fmt_clock(Date.now() - manageBackupsSiteStartTime) + ')');
+    }
+
+    // Per-phase, self-correcting ETA from the displayed percent.
+    if (progress.phase !== manageBackupsLastPhase) {
+        manageBackupsLastPhase = progress.phase;
+        manageBackupsPhaseStartTime = Date.now();
+        manageBackupsPhaseStartPercent = (pct !== null) ? pct : 0;
+    }
+    if (pct !== null && pct > 0 && pct < 100 && manageBackupsPhaseStartTime) {
+        let denom = pct - manageBackupsPhaseStartPercent;
+        if (denom > 0) {
+            parts.push('~' + managebackups_fmt_clock((Date.now() - manageBackupsPhaseStartTime) * (100 - pct) / denom) + ' ' + __('remaining'));
+        }
+    }
+
+    jQuery('.managebackups-task-status-phase[siteId="' + siteId + '"]').text(parts.join(' '));
 
     let progressBar = jQuery('#managebackups-task-status-create-progress[siteId="' + siteId + '"]');
     if (progress.bytes_done > 0 && progressBar.progress('get value') < progressBar.progress('get total')) {
@@ -732,6 +776,10 @@ managebackups_run_next = function () {
     });
 
     jQuery('#managebackups-task-status-create-progress[siteId="' + siteId + '"]').progress({ value: 0, total: size });
+    manageBackupsSiteStartTime = Date.now();
+    manageBackupsLastPhase = null;
+    manageBackupsPhaseStartTime = null;
+    manageBackupsPhaseStartPercent = 0;
     let interVal = setInterval(function () {
         let data = mainwp_secure_data({
             action: 'mainwp_createbackup_getfilesize',

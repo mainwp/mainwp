@@ -499,15 +499,13 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         }
 
         if ( $task && (int) $task->completed < (int) $task->last_run ) {
-            $progress = MainWP_DB_Backup::instance()->get_backup_task_progress( (int) $task->id, $site_id );
-            wp_send_json(
-                array(
-                    'status'           => 'running',
-                    'phase'            => $progress && ! empty( $progress->child_phase ) ? (string) $progress->child_phase : '',
-                    'bytes_downloaded' => $progress ? (int) $progress->bytes_downloaded : 0,
-                    'bytes_expected'   => $progress ? (int) $progress->bytes_expected : 0,
-                )
-            );
+            // Reuse the shared progress shape (label, percent, counters, bytes)
+            // and pin the status to running: snapshot freshness, checked below,
+            // is the authoritative completion gate, not the child phase.
+            $progress           = MainWP_DB_Backup::instance()->get_backup_task_progress( (int) $task->id, $site_id );
+            $response           = static::build_task_progress_response( $progress );
+            $response['status'] = 'running';
+            wp_send_json( $response );
             return;
         }
 
@@ -661,8 +659,13 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         $bytes_done      = (int) $row->bytes_downloaded;
         $bytes_expected  = (int) $row->bytes_expected;
 
+        // A live file ratio wins when a processed count is actually moving (the
+        // database dump, or the archiving walk once it reports a scanned count).
+        // Otherwise fall back to the byte ratio - during archiving that is the
+        // compressed archive against the raw file total, so it is a rough,
+        // monotonic estimate rather than an exact figure.
         $percent = null;
-        if ( $files_total > 0 ) {
+        if ( $files_processed > 0 && $files_total > 0 ) {
             $percent = (int) round( min( 100, $files_processed * 100 / $files_total ) );
         } elseif ( $bytes_expected > 0 ) {
             $percent = (int) round( min( 100, $bytes_done * 100 / $bytes_expected ) );

@@ -94,6 +94,9 @@ class MainWP_Backup_Progress_Recording_Test extends \WP_UnitTestCase {
 	/**
 	 * A payload without the optional progress key still mirrors the phase
 	 * and leaves prior counters untouched (older children, early phases).
+	 * Archiving is the exception - it clears the stale processed count - so
+	 * this guards a non-archiving phase; see
+	 * test_archiving_phase_clears_stale_file_count.
 	 *
 	 * @return void
 	 */
@@ -107,13 +110,193 @@ class MainWP_Backup_Progress_Recording_Test extends \WP_UnitTestCase {
 		MainWP_Backup_Executor::record_child_progress(
 			self::TASK_ID,
 			self::SITE_ID,
+			array( 'phase' => 'dumping_db' )
+		);
+
+		$row = $this->get_row();
+
+		$this->assertSame( 'dumping_db', $row->child_phase );
+		$this->assertSame( 5, (int) $row->files_processed );
+	}
+
+	/**
+	 * Entering the archiving phase clears the stale processed-file count left
+	 * by the database dump, so progress falls back to the byte signal instead
+	 * of a misleading file ratio. The walk reports the phase before it knows
+	 * any counts, so a phase-only archiving payload must zero the count.
+	 *
+	 * @return void
+	 */
+	public function test_archiving_phase_clears_stale_file_count() {
+		MainWP_DB_Backup::instance()->update_backup_task_progress(
+			self::TASK_ID,
+			self::SITE_ID,
+			array(
+				'files_processed' => 5,
+				'files_total'     => 5,
+			)
+		);
+
+		MainWP_Backup_Executor::record_child_progress(
+			self::TASK_ID,
+			self::SITE_ID,
 			array( 'phase' => 'archiving_files' )
 		);
 
 		$row = $this->get_row();
 
 		$this->assertSame( 'archiving_files', $row->child_phase );
-		$this->assertSame( 5, (int) $row->files_processed );
+		$this->assertSame( 0, (int) $row->files_processed );
+	}
+
+	/**
+	 * The archiving raw byte total lands in the bytes_expected column, and a
+	 * payload carrying archiving totals without a live count zeroes the
+	 * processed count.
+	 *
+	 * @return void
+	 */
+	public function test_total_bytes_maps_to_bytes_expected() {
+		MainWP_Backup_Executor::record_child_progress(
+			self::TASK_ID,
+			self::SITE_ID,
+			array(
+				'phase'    => 'archiving_files',
+				'progress' => array(
+					'total_bytes' => 102400,
+					'bytes_done'  => 1024,
+					'files_total' => 50000,
+				),
+			)
+		);
+
+		$row = $this->get_row();
+
+		$this->assertSame( 102400, (int) $row->bytes_expected );
+		$this->assertSame( 50000, (int) $row->files_total );
+		$this->assertSame( 0, (int) $row->files_processed );
+	}
+
+	/**
+	 * A live scanned-file count maps onto the processed column and is not
+	 * cleared, so the archiving phase can show a real climbing count.
+	 *
+	 * @return void
+	 */
+	public function test_files_scanned_maps_to_files_processed() {
+		MainWP_Backup_Executor::record_child_progress(
+			self::TASK_ID,
+			self::SITE_ID,
+			array(
+				'phase'    => 'archiving_files',
+				'progress' => array(
+					'files_scanned' => 1234,
+					'files_total'   => 50000,
+				),
+			)
+		);
+
+		$row = $this->get_row();
+
+		$this->assertSame( 1234, (int) $row->files_processed );
+		$this->assertSame( 50000, (int) $row->files_total );
+	}
+
+	/**
+	 * The upload artifact size still maps onto bytes_expected via bytes_total,
+	 * alongside the archiving total_bytes mapping.
+	 *
+	 * @return void
+	 */
+	public function test_bytes_total_uploading_still_maps_bytes_expected() {
+		MainWP_Backup_Executor::record_child_progress(
+			self::TASK_ID,
+			self::SITE_ID,
+			array(
+				'phase'    => 'uploading',
+				'progress' => array(
+					'bytes_done'  => 500,
+					'bytes_total' => 8192,
+				),
+			)
+		);
+
+		$row = $this->get_row();
+
+		$this->assertSame( 8192, (int) $row->bytes_expected );
+	}
+
+	/**
+	 * During archiving without a live count the percent is the rough
+	 * compressed-versus-raw byte ratio, not the stale file ratio.
+	 *
+	 * @return void
+	 */
+	public function test_percent_archiving_uses_bytes_without_live_count() {
+		MainWP_DB_Backup::instance()->update_backup_task_progress(
+			self::TASK_ID,
+			self::SITE_ID,
+			array(
+				'child_phase'      => 'archiving_files',
+				'files_processed'  => 0,
+				'files_total'      => 50000,
+				'bytes_downloaded' => 5000,
+				'bytes_expected'   => 100000,
+			)
+		);
+
+		$response = \MainWP\Dashboard\MainWP_Post_Backup_Handler::build_task_progress_response( $this->get_row() );
+
+		$this->assertSame( 5, $response['percent'] );
+	}
+
+	/**
+	 * During archiving with a live scanned count the percent prefers the file
+	 * ratio.
+	 *
+	 * @return void
+	 */
+	public function test_percent_archiving_live_count_uses_files_ratio() {
+		MainWP_Backup_Executor::record_child_progress(
+			self::TASK_ID,
+			self::SITE_ID,
+			array(
+				'phase'    => 'archiving_files',
+				'progress' => array(
+					'files_scanned' => 25000,
+					'files_total'   => 50000,
+					'bytes_done'    => 3000,
+					'total_bytes'   => 100000,
+				),
+			)
+		);
+
+		$response = \MainWP\Dashboard\MainWP_Post_Backup_Handler::build_task_progress_response( $this->get_row() );
+
+		$this->assertSame( 50, $response['percent'] );
+	}
+
+	/**
+	 * A byte ratio above the raw total caps at 100.
+	 *
+	 * @return void
+	 */
+	public function test_percent_caps_at_100() {
+		MainWP_Backup_Executor::record_child_progress(
+			self::TASK_ID,
+			self::SITE_ID,
+			array(
+				'phase'    => 'archiving_files',
+				'progress' => array(
+					'bytes_done'  => 120000,
+					'total_bytes' => 100000,
+				),
+			)
+		);
+
+		$response = \MainWP\Dashboard\MainWP_Post_Backup_Handler::build_task_progress_response( $this->get_row() );
+
+		$this->assertSame( 100, $response['percent'] );
 	}
 
 	/**

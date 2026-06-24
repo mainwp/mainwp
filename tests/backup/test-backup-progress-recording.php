@@ -277,11 +277,12 @@ class MainWP_Backup_Progress_Recording_Test extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * A byte ratio above the raw total caps at 100.
+	 * A still-running phase never reports 100% even when the byte ratio would
+	 * overshoot; completion is signalled by the terminal status.
 	 *
 	 * @return void
 	 */
-	public function test_percent_caps_at_100() {
+	public function test_percent_running_phase_caps_below_100() {
 		MainWP_Backup_Executor::record_child_progress(
 			self::TASK_ID,
 			self::SITE_ID,
@@ -296,7 +297,105 @@ class MainWP_Backup_Progress_Recording_Test extends \WP_UnitTestCase {
 
 		$response = \MainWP\Dashboard\MainWP_Post_Backup_Handler::build_task_progress_response( $this->get_row() );
 
+		$this->assertSame( 'running', $response['status'] );
+		$this->assertSame( 99, $response['percent'] );
+	}
+
+	/**
+	 * A terminal completed phase is allowed to report 100%.
+	 *
+	 * @return void
+	 */
+	public function test_percent_completed_phase_allows_100() {
+		MainWP_Backup_Executor::record_child_progress(
+			self::TASK_ID,
+			self::SITE_ID,
+			array(
+				'phase'    => 'completed',
+				'progress' => array(
+					'bytes_done'  => 100,
+					'bytes_total' => 100,
+				),
+			)
+		);
+
+		$response = \MainWP\Dashboard\MainWP_Post_Backup_Handler::build_task_progress_response( $this->get_row() );
+
+		$this->assertSame( 'completed', $response['status'] );
 		$this->assertSame( 100, $response['percent'] );
+	}
+
+	/**
+	 * Uploading after a database dump uses the byte ratio, so the dump's stale
+	 * table count cannot misreport the upload as complete.
+	 *
+	 * @return void
+	 */
+	public function test_uploading_after_db_prefers_bytes_over_stale_file_count() {
+		MainWP_Backup_Executor::record_child_progress(
+			self::TASK_ID,
+			self::SITE_ID,
+			array(
+				'phase'    => 'dumping_db',
+				'progress' => array(
+					'files_processed' => 12,
+					'files_total'     => 12,
+				),
+			)
+		);
+
+		MainWP_Backup_Executor::record_child_progress(
+			self::TASK_ID,
+			self::SITE_ID,
+			array(
+				'phase'    => 'uploading',
+				'progress' => array(
+					'bytes_done'  => 6,
+					'bytes_total' => 10,
+				),
+			)
+		);
+
+		$response = \MainWP\Dashboard\MainWP_Post_Backup_Handler::build_task_progress_response( $this->get_row() );
+
+		$this->assertSame( 60, $response['percent'] );
+	}
+
+	/**
+	 * Moving from the database dump into archiving clears the stale processed
+	 * count, so the archiving percent comes from bytes, not the dump's tables.
+	 *
+	 * @return void
+	 */
+	public function test_archiving_after_db_clears_count_and_uses_bytes() {
+		MainWP_Backup_Executor::record_child_progress(
+			self::TASK_ID,
+			self::SITE_ID,
+			array(
+				'phase'    => 'dumping_db',
+				'progress' => array(
+					'files_processed' => 12,
+					'files_total'     => 12,
+				),
+			)
+		);
+
+		MainWP_Backup_Executor::record_child_progress(
+			self::TASK_ID,
+			self::SITE_ID,
+			array(
+				'phase'    => 'archiving_files',
+				'progress' => array(
+					'bytes_done'  => 5000,
+					'total_bytes' => 100000,
+				),
+			)
+		);
+
+		$row = $this->get_row();
+
+		$this->assertSame( 0, (int) $row->files_processed );
+		$this->assertSame( 5, \MainWP\Dashboard\MainWP_Post_Backup_Handler::build_task_progress_response( $row )['percent'] );
 	}
 
 	/**

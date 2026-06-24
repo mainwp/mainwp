@@ -659,16 +659,27 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         $bytes_done      = (int) $row->bytes_downloaded;
         $bytes_expected  = (int) $row->bytes_expected;
 
-        // A live file ratio wins when a processed count is actually moving (the
-        // database dump, or the archiving walk once it reports a scanned count).
-        // Otherwise fall back to the byte ratio - during archiving that is the
-        // compressed archive against the raw file total, so it is a rough,
-        // monotonic estimate rather than an exact figure.
+        // A file ratio is meaningful only while counters advance for the
+        // current phase: the database dump (tables done) or the archiving walk
+        // once it reports a scanned count. Other phases - and archiving before a
+        // live count exists - use the byte ratio, which during archiving is the
+        // compressed archive against the raw file total, a rough monotonic
+        // estimate. This keeps a stale count from an earlier phase (e.g. the
+        // dump's tables) out of the upload percent.
+        $file_ratio_phase = MainWP_Backup_Task_Phase::DumpingDb === $phase
+            || MainWP_Backup_Task_Phase::ArchivingFiles === $phase;
+
         $percent = null;
-        if ( $files_processed > 0 && $files_total > 0 ) {
+        if ( $file_ratio_phase && $files_processed > 0 && $files_total > 0 ) {
             $percent = (int) round( min( 100, $files_processed * 100 / $files_total ) );
         } elseif ( $bytes_expected > 0 ) {
             $percent = (int) round( min( 100, $bytes_done * 100 / $bytes_expected ) );
+        }
+
+        // A running phase never reads 100%; completion is signalled by the
+        // terminal status, not a full bar mid-phase.
+        if ( null !== $percent && 'running' === $status && $percent >= 100 ) {
+            $percent = 99;
         }
 
         return array(

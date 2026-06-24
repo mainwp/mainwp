@@ -219,6 +219,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             var backupLastPhase = null;
             var backupPhaseStartTime = null;
             var backupPhaseStartPercent = 0;
+            var backupPollRetries = 0;
             var currentSiteUrl = '';
             var phaseOrder = [ 'pending', 'preflight', 'pre_snapshot', 'staging', 'transferring', 'running', 'verifying', 'completed' ];
 
@@ -580,6 +581,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
 
             function pollBackup() {
                 $.post( ajaxurl, { action: 'mainwp_native_backup_progress', security: nonces.nativeBackupProgress, site_id: currentSite }, function ( data ) {
+                    backupPollRetries = 0; // A response arrived: clear the transient-failure count.
                     if ( data.error ) {
                         stopBackupTimers();
                         setBackupStatus( data.error, true );
@@ -626,7 +628,21 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     backupProgressCache = { label: label, percent: pct, eta: eta };
                     renderBackupStatus();
                     backupPollTimer = window.setTimeout( pollBackup, 5000 );
-                }, 'json' );
+                }, 'json' ).fail( function () {
+                    // A transport error (lost connection, timeout, a 503 while the
+                    // child is in maintenance) skips the success callback. Retry a
+                    // few times so a blip does not abandon a running backup, then
+                    // stop the clock and let the operator reload rather than leave
+                    // the timer ticking and the button stuck.
+                    backupPollRetries++;
+                    if ( backupPollRetries <= 3 ) {
+                        backupPollTimer = window.setTimeout( pollBackup, 3000 );
+                        return;
+                    }
+                    stopBackupTimers();
+                    setBackupStatus( '<?php echo esc_js( esc_html__( 'Lost the connection while backing up. The backup may still be running; reload to check.', 'mainwp' ) ); ?>', true );
+                    reenableBackupBtn();
+                } );
             }
 
             $( '#mainwp-native-backup-now-btn' ).on( 'click', function () {
@@ -650,7 +666,13 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         return;
                     }
                     backupPollTimer = window.setTimeout( pollBackup, 1500 );
-                }, 'json' );
+                }, 'json' ).fail( function () {
+                    // The kickoff request never reached the handler, so nothing
+                    // started: stop the clock, report it, and re-enable the button.
+                    stopBackupTimers();
+                    setBackupStatus( '<?php echo esc_js( esc_html__( 'Could not start the backup. Please try again.', 'mainwp' ) ); ?>', true );
+                    reenableBackupBtn();
+                } );
             } );
 
             if ( currentSite > 0 ) {

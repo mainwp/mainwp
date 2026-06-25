@@ -287,11 +287,24 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         }
 
         $plugins = json_decode( (string) $website->plugins, true );
-        if ( ! is_array( $plugins ) || ! isset( $plugins['woocommerce/woocommerce.php'] ) ) {
+        if ( ! is_array( $plugins ) ) {
             return false;
         }
 
-        return 1 === (int) ( $plugins['woocommerce/woocommerce.php']['active'] ?? 0 );
+        // The synced plugins column is a numeric list of {slug, active, ...}
+        // objects (the shape every other reader iterates). Match WooCommerce by
+        // its slug, while still tolerating an older path-keyed map.
+        foreach ( $plugins as $key => $plugin ) {
+            if ( ! is_array( $plugin ) ) {
+                continue;
+            }
+            $slug = isset( $plugin['slug'] ) ? (string) $plugin['slug'] : (string) $key;
+            if ( 'woocommerce/woocommerce.php' === $slug ) {
+                return 1 === (int) ( $plugin['active'] ?? 0 );
+            }
+        }
+
+        return false;
     }
 
     /**

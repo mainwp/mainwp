@@ -41,6 +41,31 @@ class MainWP_Backup_Restore_Warning_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * The real synced plugins column is a numeric LIST of {slug, active}
+	 * objects, not a map keyed by plugin path. Active WooCommerce in that
+	 * production shape must read as present.
+	 *
+	 * @return void
+	 */
+	public function test_site_has_woocommerce_true_for_synced_list_format() {
+		$plugins = '[{"mainwp":"T","name":"MainWP Child","slug":"mainwp-child\/mainwp-child.php","version":"7.0.0","active":1},'
+			. '{"mainwp":"F","name":"WooCommerce","slug":"woocommerce\/woocommerce.php","version":"10.9.1","active":1}]';
+		$site_id = $this->make_site_with_plugins( $plugins );
+		$this->assertTrue( MainWP_Utility::site_has_woocommerce( $site_id ) );
+	}
+
+	/**
+	 * Inactive WooCommerce in the synced list shape does not count.
+	 *
+	 * @return void
+	 */
+	public function test_site_has_woocommerce_false_for_inactive_in_list_format() {
+		$plugins = '[{"name":"WooCommerce","slug":"woocommerce\/woocommerce.php","active":0}]';
+		$site_id = $this->make_site_with_plugins( $plugins );
+		$this->assertFalse( MainWP_Utility::site_has_woocommerce( $site_id ) );
+	}
+
+	/**
 	 * Inactive WooCommerce does not count.
 	 *
 	 * @return void

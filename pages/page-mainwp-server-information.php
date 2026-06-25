@@ -447,6 +447,10 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             /* translators: 1: line break tag, 2: opening anchor tag, 3: closing anchor tag */
             echo "<div class='ui yellow message'>" . sprintf( esc_html__( 'Your host needs to update OpenSSL to at least version 1.1.0 which is already over 4 years old and contains patches for over 60 vulnerabilities.%1$sThese range from Denial of Service to Remote Code Execution. %2$sClick here for more information.%3$s', 'mainwp' ), '<br/>', '<a href="https://community.letsencrypt.org/t/openssl-client-compatibility-changes-for-let-s-encrypt-certificates/143816" target="_blank">', '</a>' ) . '</div>';
         }
+
+        // Detect issues before rendering.
+        $datatable_rows = MainWP_Server_Information_Handler::get_database_report_rows();
+
         static::render_detected_issues_summary();
         ?>
         <style type="text/css">
@@ -519,6 +523,8 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                     <?php static::render_mysql_check_tbody(); ?>
                 </tbody>
         </table>
+
+        <?php self::render_report_section_table( 'mainwp-system-report-mainwp-database-table', __( 'Database', 'mainwp' ), $datatable_rows, 'Database' ); ?>
 
         <?php self::render_report_section_table( 'mainwp-system-report-connectivity-table', __( 'Connectivity & Authentication', 'mainwp' ), MainWP_Server_Information_Handler::get_connectivity_report_rows(), 'Connectivity & Authentication' ); ?>
 

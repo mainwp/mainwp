@@ -1071,7 +1071,9 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
             );
         }
 
-        return $issues;
+        $db_issues = MainWP_Database_Schema_Checker::get_detected_db_issues();
+
+        return array_merge( $issues, is_array( $db_issues ) ? $db_issues : array() );
     }
 
     /**
@@ -1166,25 +1168,25 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
 
         return self::add_export_labels_to_rows(
             array(
-            array(
-                'label'  => esc_html__( 'MainWP Dashboard Version', 'mainwp' ),
-                'value'  => $version_value,
-                'status' => ( false !== $latest_version && $current_version === $latest_version ) ? 'pass' : 'warning',
-            ),
-            array(
-                'label' => esc_html__( 'Number of connected sites', 'mainwp' ),
-                'value' => (string) MainWP_DB::instance()->get_websites_count(),
-            ),
-            array(
-                'label' => esc_html__( 'MainWP upload directory', 'mainwp' ),
-                'value' => $upload_directory['value'],
-                'status' => $upload_directory['status'],
-            ),
-            array(
-                'label' => esc_html__( 'MainWP REST API enabled', 'mainwp' ),
-                'value' => static::format_boolean_label( Rest_Api_V1::instance()->is_rest_api_enabled() ),
-                'status' => Rest_Api_V1::instance()->is_rest_api_enabled() ? 'pass' : 'warning',
-            ),
+                array(
+                    'label'  => esc_html__( 'MainWP Dashboard Version', 'mainwp' ),
+                    'value'  => $version_value,
+                    'status' => ( false !== $latest_version && $current_version === $latest_version ) ? 'pass' : 'warning',
+                ),
+                array(
+                    'label' => esc_html__( 'Number of connected sites', 'mainwp' ),
+                    'value' => (string) MainWP_DB::instance()->get_websites_count(),
+                ),
+                array(
+                    'label'  => esc_html__( 'MainWP upload directory', 'mainwp' ),
+                    'value'  => $upload_directory['value'],
+                    'status' => $upload_directory['status'],
+                ),
+                array(
+                    'label'  => esc_html__( 'MainWP REST API enabled', 'mainwp' ),
+                    'value'  => static::format_boolean_label( Rest_Api_V1::instance()->is_rest_api_enabled() ),
+                    'status' => Rest_Api_V1::instance()->is_rest_api_enabled() ? 'pass' : 'warning',
+                ),
             ),
             array(
                 'MainWP Dashboard Version',
@@ -1211,63 +1213,63 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
 
         return self::add_export_labels_to_rows(
             array(
-            array(
-                'label'      => esc_html__( 'Dashboard home URL', 'mainwp' ),
-                'value'      => home_url( '/' ),
-                'visibility' => 'full_only',
-            ),
-            array(
-                'label'      => esc_html__( 'Dashboard site URL', 'mainwp' ),
-                'value'      => site_url( '/' ),
-                'visibility' => 'full_only',
-            ),
-            array(
-                'label'           => esc_html__( 'Public Dashboard IP', 'mainwp' ),
-                'value'           => $public_ip['value'],
-                'status'          => $public_ip['status'],
-                'visibility'      => 'community_masked',
-                'community_value' => $public_ip['community_value'],
-            ),
-            array(
-                'label'  => esc_html__( 'HTTPS', 'mainwp' ),
-                'value'  => is_ssl() ? esc_html__( 'Enabled', 'mainwp' ) : esc_html__( 'Disabled', 'mainwp' ),
-            ),
-            array(
-                'label'  => esc_html__( 'Permalink structure', 'mainwp' ),
-                'value'  => $permalink['value'],
-                'status' => $permalink['status'],
-            ),
-            array(
-                'label'      => esc_html__( 'WordPress REST API endpoint', 'mainwp' ),
-                'value'      => rest_url(),
-                'visibility' => 'full_only',
-            ),
-            array(
-                'label'  => esc_html__( 'WordPress REST API reachability', 'mainwp' ),
-                'value'  => $rest_api['value'],
-                'status' => $rest_api['status'],
-            ),
-            array(
-                'label'  => esc_html__( 'Server self connect', 'mainwp' ),
-                'value'  => $self_connect['value'],
-                'status' => $self_connect['status'],
-            ),
-            array(
-                'label' => esc_html__( 'Verify SSL certificate', 'mainwp' ),
-                'value' => static::format_boolean_label( $ssl_verify ),
-            ),
-            array(
-                'label' => esc_html__( 'Verify connection method', 'mainwp' ),
-                'value' => 2 === $verify_con ? esc_html__( 'PHPSECLIB (fallback)', 'mainwp' ) : esc_html__( 'OpenSSL (default)', 'mainwp' ),
-            ),
-            array(
-                'label' => esc_html__( 'OpenSSL signature algorithm', 'mainwp' ),
-                'value' => $signature,
-            ),
-            array(
-                'label' => esc_html__( 'Force IPv4', 'mainwp' ),
-                'value' => static::format_boolean_label( (int) get_option( 'mainwp_forceUseIPv4', 0 ) ),
-            ),
+                array(
+                    'label'      => esc_html__( 'Dashboard home URL', 'mainwp' ),
+                    'value'      => home_url( '/' ),
+                    'visibility' => 'full_only',
+                ),
+                array(
+                    'label'      => esc_html__( 'Dashboard site URL', 'mainwp' ),
+                    'value'      => site_url( '/' ),
+                    'visibility' => 'full_only',
+                ),
+                array(
+                    'label'           => esc_html__( 'Public Dashboard IP', 'mainwp' ),
+                    'value'           => $public_ip['value'],
+                    'status'          => $public_ip['status'],
+                    'visibility'      => 'community_masked',
+                    'community_value' => $public_ip['community_value'],
+                ),
+                array(
+                    'label' => esc_html__( 'HTTPS', 'mainwp' ),
+                    'value' => is_ssl() ? esc_html__( 'Enabled', 'mainwp' ) : esc_html__( 'Disabled', 'mainwp' ),
+                ),
+                array(
+                    'label'  => esc_html__( 'Permalink structure', 'mainwp' ),
+                    'value'  => $permalink['value'],
+                    'status' => $permalink['status'],
+                ),
+                array(
+                    'label'      => esc_html__( 'WordPress REST API endpoint', 'mainwp' ),
+                    'value'      => rest_url(),
+                    'visibility' => 'full_only',
+                ),
+                array(
+                    'label'  => esc_html__( 'WordPress REST API reachability', 'mainwp' ),
+                    'value'  => $rest_api['value'],
+                    'status' => $rest_api['status'],
+                ),
+                array(
+                    'label'  => esc_html__( 'Server self connect', 'mainwp' ),
+                    'value'  => $self_connect['value'],
+                    'status' => $self_connect['status'],
+                ),
+                array(
+                    'label' => esc_html__( 'Verify SSL certificate', 'mainwp' ),
+                    'value' => static::format_boolean_label( $ssl_verify ),
+                ),
+                array(
+                    'label' => esc_html__( 'Verify connection method', 'mainwp' ),
+                    'value' => 2 === $verify_con ? esc_html__( 'PHPSECLIB (fallback)', 'mainwp' ) : esc_html__( 'OpenSSL (default)', 'mainwp' ),
+                ),
+                array(
+                    'label' => esc_html__( 'OpenSSL signature algorithm', 'mainwp' ),
+                    'value' => $signature,
+                ),
+                array(
+                    'label' => esc_html__( 'Force IPv4', 'mainwp' ),
+                    'value' => static::format_boolean_label( (int) get_option( 'mainwp_forceUseIPv4', 0 ) ),
+                ),
             ),
             array(
                 'Dashboard home URL',
@@ -1299,8 +1301,8 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
 
         $rows = array(
             array(
-                'label'  => esc_html__( 'Use WP Cron', 'mainwp' ),
-                'value'  => static::format_boolean_label( ( false === get_option( 'mainwp_wp_cron' ) ) || 1 === (int) get_option( 'mainwp_wp_cron', 1 ) ),
+                'label' => esc_html__( 'Use WP Cron', 'mainwp' ),
+                'value' => static::format_boolean_label( ( false === get_option( 'mainwp_wp_cron' ) ) || 1 === (int) get_option( 'mainwp_wp_cron', 1 ) ),
             ),
             array(
                 'label' => esc_html__( 'Daily update frequency', 'mainwp' ),
@@ -1385,146 +1387,146 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
 
         return self::add_export_labels_to_rows(
             array(
-            array(
-                'label' => esc_html__( 'Timezone', 'mainwp' ),
-                'value' => static::get_timezone_label(),
-            ),
-            array(
-                'label' => esc_html__( 'Date format', 'mainwp' ),
-                'value' => (string) get_option( 'date_format', $default_setting['date_format'] ),
-            ),
-            array(
-                'label' => esc_html__( 'Time format', 'mainwp' ),
-                'value' => (string) get_option( 'time_format', $default_setting['time_format'] ),
-            ),
-            array(
-                'label' => esc_html__( 'Sidebar position', 'mainwp' ),
-                'value' => 0 === (int) $sidebar ? esc_html__( 'Left', 'mainwp' ) : esc_html__( 'Right', 'mainwp' ),
-            ),
-            array(
-                'label' => esc_html__( 'Hide Update Everything', 'mainwp' ),
-                'value' => static::format_boolean_label( (int) get_option( 'mainwp_hide_update_everything', $default_setting['mainwp_hide_update_everything'] ) ),
-            ),
-            array(
-                'label' => esc_html__( 'Dashboard widgets shown', 'mainwp' ),
-                'value' => sprintf(
-                    /* translators: %d: visible widget count */
-                    esc_html__( '%d visible', 'mainwp' ),
-                    count( $show_widgets )
+                array(
+                    'label' => esc_html__( 'Timezone', 'mainwp' ),
+                    'value' => static::get_timezone_label(),
                 ),
-            ),
-            array(
-                'label' => esc_html__( 'WP Core advanced automatic updates', 'mainwp' ),
-                'value' => static::get_trusted_update_mode_label( get_option( 'mainwp_automaticDailyUpdate', $default_setting['mainwp_automaticDailyUpdate'] ) ),
-            ),
-            array(
-                'label' => esc_html__( 'Plugin advanced automatic updates', 'mainwp' ),
-                'value' => static::get_trusted_update_mode_label( get_option( 'mainwp_pluginAutomaticDailyUpdate', $default_setting['mainwp_pluginAutomaticDailyUpdate'] ) ),
-            ),
-            array(
-                'label' => esc_html__( 'Theme advanced automatic updates', 'mainwp' ),
-                'value' => static::get_trusted_update_mode_label( get_option( 'mainwp_themeAutomaticDailyUpdate', $default_setting['mainwp_themeAutomaticDailyUpdate'] ) ),
-            ),
-            array(
-                'label' => esc_html__( 'Translation advanced automatic updates', 'mainwp' ),
-                'value' => static::get_trusted_update_mode_label( get_option( 'mainwp_transAutomaticDailyUpdate', 0 ) ),
-            ),
-            array(
-                'label' => esc_html__( 'Automatic updates frequency', 'mainwp' ),
-                'value' => ucfirst( (string) $frequency_auto_update ),
-            ),
-            array(
-                'label' => esc_html__( 'Automatic updates time', 'mainwp' ),
-                'value' => (string) $time_auto_update,
-            ),
-            array(
-                'label' => esc_html__( 'Automatic updates day', 'mainwp' ),
-                'value' => static::get_automatic_updates_day_label( $frequency_auto_update ),
-            ),
-            array(
-                'label' => esc_html__( 'Advanced automatic updates delay', 'mainwp' ),
-                'value' => static::format_delay_label( (int) get_option( 'mainwp_delay_autoupdate', 1 ) ),
-            ),
-            array(
-                'label' => esc_html__( 'Show language updates', 'mainwp' ),
-                'value' => static::format_boolean_label( (int) get_option( 'mainwp_show_language_updates', $default_setting['mainwp_show_language_updates'] ) ),
-            ),
-            array(
-                'label' => esc_html__( 'Disable update confirmations', 'mainwp' ),
-                'value' => static::format_boolean_label( (int) get_option( 'mainwp_disable_update_confirmations', $default_setting['mainwp_disable_update_confirmations'] ) ),
-            ),
-            array(
-                'label' => esc_html__( 'After updates HTTP response check', 'mainwp' ),
-                'value' => static::format_boolean_label( (int) get_option( 'mainwp_check_http_response', $default_setting['mainwp_check_http_response'] ) ),
-            ),
-            array(
-                'label' => esc_html__( 'After updates HTTP response method', 'mainwp' ),
-                'value' => strtoupper( (string) get_option( 'mainwp_check_http_response_method', $default_setting['mainwp_check_http_response_method'] ) ),
-            ),
-            array(
-                'label' => esc_html__( 'Backup before update', 'mainwp' ),
-                'value' => static::format_boolean_label( (int) get_option( 'mainwp_backup_before_upgrade', $default_setting['mainwp_backup_before_upgrade'] ) ),
-            ),
-            array(
-                'label' => esc_html__( 'Full backup tolerance before update', 'mainwp' ),
-                'value' => sprintf(
-                    /* translators: %d: days */
-                    esc_html__( '%d days', 'mainwp' ),
-                    (int) get_option( 'mainwp_backup_before_upgrade_days', $default_setting['mainwp_backup_before_upgrade_days'] )
+                array(
+                    'label' => esc_html__( 'Date format', 'mainwp' ),
+                    'value' => (string) get_option( 'date_format', $default_setting['date_format'] ),
                 ),
-            ),
-            array(
-                'label' => esc_html__( 'Abandoned plugins/themes tolerance', 'mainwp' ),
-                'value' => sprintf(
-                    /* translators: %d: days */
-                    esc_html__( '%d days', 'mainwp' ),
-                    (int) get_option( 'mainwp_numberdays_Outdate_Plugin_Theme', $default_setting['mainwp_numberdays_Outdate_Plugin_Theme'] )
+                array(
+                    'label' => esc_html__( 'Time format', 'mainwp' ),
+                    'value' => (string) get_option( 'time_format', $default_setting['time_format'] ),
                 ),
-            ),
-            array(
-                'label' => esc_html__( 'Primary backup system', 'mainwp' ),
-                'value' => static::get_primary_backup_method_label(),
-            ),
-            array(
-                'label' => esc_html__( 'MainWP legacy backups enabled', 'mainwp' ),
-                'value' => static::format_boolean_label( (int) get_option( 'mainwp_enableLegacyBackupFeature', 0 ) ),
-            ),
-            array(
-                'label' => esc_html__( 'Backups kept on server', 'mainwp' ),
-                'value' => (string) ( false === get_option( 'mainwp_backupsOnServer' ) ? 1 : intval( get_option( 'mainwp_backupsOnServer' ) ) ),
-            ),
-            array(
-                'label' => esc_html__( 'Backup to external sources', 'mainwp' ),
-                'value' => static::format_boolean_label( (int) get_option( 'mainwp_backupOnExternalSources', 0 ) ),
-            ),
-            array(
-                'label' => esc_html__( 'Archive format', 'mainwp' ),
-                'value' => static::format_archive_format_label( get_option( 'mainwp_archiveFormat', 'tar.gz' ) ),
-            ),
-            array(
-                'label' => esc_html__( 'Auto detect maximum file descriptors on child sites', 'mainwp' ),
-                'value' => static::format_boolean_label( (int) get_option( 'mainwp_maximumFileDescriptorsAuto', 1 ) ),
-            ),
-            array(
-                'label' => esc_html__( 'Maximum file descriptors fallback value', 'mainwp' ),
-                'value' => (string) ( false === get_option( 'mainwp_maximumFileDescriptors' ) ? 150 : intval( get_option( 'mainwp_maximumFileDescriptors' ) ) ),
-            ),
-            array(
-                'label' => esc_html__( 'Load files in memory before zipping', 'mainwp' ),
-                'value' => static::format_boolean_label( (int) get_option( 'mainwp_options_loadFilesBeforeZip', 1 ) ),
-            ),
-            array(
-                'label' => esc_html__( 'Send email when backup fails', 'mainwp' ),
-                'value' => static::format_boolean_label( (int) get_option( 'mainwp_notificationOnBackupFail', 1 ) ),
-            ),
-            array(
-                'label' => esc_html__( 'Send email when backup starts', 'mainwp' ),
-                'value' => static::format_boolean_label( (int) get_option( 'mainwp_notificationOnBackupStart', 1 ) ),
-            ),
-            array(
-                'label' => esc_html__( 'Execute backup tasks in chunks', 'mainwp' ),
-                'value' => static::format_boolean_label( (int) get_option( 'mainwp_chunkedBackupTasks', 1 ) ),
-            ),
+                array(
+                    'label' => esc_html__( 'Sidebar position', 'mainwp' ),
+                    'value' => 0 === (int) $sidebar ? esc_html__( 'Left', 'mainwp' ) : esc_html__( 'Right', 'mainwp' ),
+                ),
+                array(
+                    'label' => esc_html__( 'Hide Update Everything', 'mainwp' ),
+                    'value' => static::format_boolean_label( (int) get_option( 'mainwp_hide_update_everything', $default_setting['mainwp_hide_update_everything'] ) ),
+                ),
+                array(
+                    'label' => esc_html__( 'Dashboard widgets shown', 'mainwp' ),
+                    'value' => sprintf(
+                        /* translators: %d: visible widget count */
+                        esc_html__( '%d visible', 'mainwp' ),
+                        count( $show_widgets )
+                    ),
+                ),
+                array(
+                    'label' => esc_html__( 'WP Core advanced automatic updates', 'mainwp' ),
+                    'value' => static::get_trusted_update_mode_label( get_option( 'mainwp_automaticDailyUpdate', $default_setting['mainwp_automaticDailyUpdate'] ) ),
+                ),
+                array(
+                    'label' => esc_html__( 'Plugin advanced automatic updates', 'mainwp' ),
+                    'value' => static::get_trusted_update_mode_label( get_option( 'mainwp_pluginAutomaticDailyUpdate', $default_setting['mainwp_pluginAutomaticDailyUpdate'] ) ),
+                ),
+                array(
+                    'label' => esc_html__( 'Theme advanced automatic updates', 'mainwp' ),
+                    'value' => static::get_trusted_update_mode_label( get_option( 'mainwp_themeAutomaticDailyUpdate', $default_setting['mainwp_themeAutomaticDailyUpdate'] ) ),
+                ),
+                array(
+                    'label' => esc_html__( 'Translation advanced automatic updates', 'mainwp' ),
+                    'value' => static::get_trusted_update_mode_label( get_option( 'mainwp_transAutomaticDailyUpdate', 0 ) ),
+                ),
+                array(
+                    'label' => esc_html__( 'Automatic updates frequency', 'mainwp' ),
+                    'value' => ucfirst( (string) $frequency_auto_update ),
+                ),
+                array(
+                    'label' => esc_html__( 'Automatic updates time', 'mainwp' ),
+                    'value' => (string) $time_auto_update,
+                ),
+                array(
+                    'label' => esc_html__( 'Automatic updates day', 'mainwp' ),
+                    'value' => static::get_automatic_updates_day_label( $frequency_auto_update ),
+                ),
+                array(
+                    'label' => esc_html__( 'Advanced automatic updates delay', 'mainwp' ),
+                    'value' => static::format_delay_label( (int) get_option( 'mainwp_delay_autoupdate', 1 ) ),
+                ),
+                array(
+                    'label' => esc_html__( 'Show language updates', 'mainwp' ),
+                    'value' => static::format_boolean_label( (int) get_option( 'mainwp_show_language_updates', $default_setting['mainwp_show_language_updates'] ) ),
+                ),
+                array(
+                    'label' => esc_html__( 'Disable update confirmations', 'mainwp' ),
+                    'value' => static::format_boolean_label( (int) get_option( 'mainwp_disable_update_confirmations', $default_setting['mainwp_disable_update_confirmations'] ) ),
+                ),
+                array(
+                    'label' => esc_html__( 'After updates HTTP response check', 'mainwp' ),
+                    'value' => static::format_boolean_label( (int) get_option( 'mainwp_check_http_response', $default_setting['mainwp_check_http_response'] ) ),
+                ),
+                array(
+                    'label' => esc_html__( 'After updates HTTP response method', 'mainwp' ),
+                    'value' => strtoupper( (string) get_option( 'mainwp_check_http_response_method', $default_setting['mainwp_check_http_response_method'] ) ),
+                ),
+                array(
+                    'label' => esc_html__( 'Backup before update', 'mainwp' ),
+                    'value' => static::format_boolean_label( (int) get_option( 'mainwp_backup_before_upgrade', $default_setting['mainwp_backup_before_upgrade'] ) ),
+                ),
+                array(
+                    'label' => esc_html__( 'Full backup tolerance before update', 'mainwp' ),
+                    'value' => sprintf(
+                        /* translators: %d: days */
+                        esc_html__( '%d days', 'mainwp' ),
+                        (int) get_option( 'mainwp_backup_before_upgrade_days', $default_setting['mainwp_backup_before_upgrade_days'] )
+                    ),
+                ),
+                array(
+                    'label' => esc_html__( 'Abandoned plugins/themes tolerance', 'mainwp' ),
+                    'value' => sprintf(
+                        /* translators: %d: days */
+                        esc_html__( '%d days', 'mainwp' ),
+                        (int) get_option( 'mainwp_numberdays_Outdate_Plugin_Theme', $default_setting['mainwp_numberdays_Outdate_Plugin_Theme'] )
+                    ),
+                ),
+                array(
+                    'label' => esc_html__( 'Primary backup system', 'mainwp' ),
+                    'value' => static::get_primary_backup_method_label(),
+                ),
+                array(
+                    'label' => esc_html__( 'MainWP legacy backups enabled', 'mainwp' ),
+                    'value' => static::format_boolean_label( (int) get_option( 'mainwp_enableLegacyBackupFeature', 0 ) ),
+                ),
+                array(
+                    'label' => esc_html__( 'Backups kept on server', 'mainwp' ),
+                    'value' => (string) ( false === get_option( 'mainwp_backupsOnServer' ) ? 1 : intval( get_option( 'mainwp_backupsOnServer' ) ) ),
+                ),
+                array(
+                    'label' => esc_html__( 'Backup to external sources', 'mainwp' ),
+                    'value' => static::format_boolean_label( (int) get_option( 'mainwp_backupOnExternalSources', 0 ) ),
+                ),
+                array(
+                    'label' => esc_html__( 'Archive format', 'mainwp' ),
+                    'value' => static::format_archive_format_label( get_option( 'mainwp_archiveFormat', 'tar.gz' ) ),
+                ),
+                array(
+                    'label' => esc_html__( 'Auto detect maximum file descriptors on child sites', 'mainwp' ),
+                    'value' => static::format_boolean_label( (int) get_option( 'mainwp_maximumFileDescriptorsAuto', 1 ) ),
+                ),
+                array(
+                    'label' => esc_html__( 'Maximum file descriptors fallback value', 'mainwp' ),
+                    'value' => (string) ( false === get_option( 'mainwp_maximumFileDescriptors' ) ? 150 : intval( get_option( 'mainwp_maximumFileDescriptors' ) ) ),
+                ),
+                array(
+                    'label' => esc_html__( 'Load files in memory before zipping', 'mainwp' ),
+                    'value' => static::format_boolean_label( (int) get_option( 'mainwp_options_loadFilesBeforeZip', 1 ) ),
+                ),
+                array(
+                    'label' => esc_html__( 'Send email when backup fails', 'mainwp' ),
+                    'value' => static::format_boolean_label( (int) get_option( 'mainwp_notificationOnBackupFail', 1 ) ),
+                ),
+                array(
+                    'label' => esc_html__( 'Send email when backup starts', 'mainwp' ),
+                    'value' => static::format_boolean_label( (int) get_option( 'mainwp_notificationOnBackupStart', 1 ) ),
+                ),
+                array(
+                    'label' => esc_html__( 'Execute backup tasks in chunks', 'mainwp' ),
+                    'value' => static::format_boolean_label( (int) get_option( 'mainwp_chunkedBackupTasks', 1 ) ),
+                ),
             ),
             array(
                 'Timezone',
@@ -1588,91 +1590,91 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
 
         return self::add_export_labels_to_rows(
             array(
-            array(
-                'label' => esc_html__( 'Maximum simultaneous requests', 'mainwp' ),
-                'value' => (string) ( false === get_option( 'mainwp_maximumRequests' ) ? 4 : intval( get_option( 'mainwp_maximumRequests' ) ) ),
-            ),
-            array(
-                'label' => esc_html__( 'Minimum delay between requests', 'mainwp' ),
-                'value' => sprintf(
-                    /* translators: %d: milliseconds */
-                    esc_html__( '%d ms', 'mainwp' ),
-                    (int) ( false === get_option( 'mainwp_minimumDelay' ) ? 200 : intval( get_option( 'mainwp_minimumDelay' ) ) )
+                array(
+                    'label' => esc_html__( 'Maximum simultaneous requests', 'mainwp' ),
+                    'value' => (string) ( false === get_option( 'mainwp_maximumRequests' ) ? 4 : intval( get_option( 'mainwp_maximumRequests' ) ) ),
                 ),
-            ),
-            array(
-                'label' => esc_html__( 'Maximum simultaneous requests per IP', 'mainwp' ),
-                'value' => (string) ( false === get_option( 'mainwp_maximumIPRequests' ) ? 1 : intval( get_option( 'mainwp_maximumIPRequests' ) ) ),
-            ),
-            array(
-                'label' => esc_html__( 'Minimum delay between requests to the same IP', 'mainwp' ),
-                'value' => sprintf(
-                    /* translators: %d: milliseconds */
-                    esc_html__( '%d ms', 'mainwp' ),
-                    (int) ( false === get_option( 'mainwp_minimumIPDelay' ) ? 1000 : intval( get_option( 'mainwp_minimumIPDelay' ) ) )
+                array(
+                    'label' => esc_html__( 'Minimum delay between requests', 'mainwp' ),
+                    'value' => sprintf(
+                        /* translators: %d: milliseconds */
+                        esc_html__( '%d ms', 'mainwp' ),
+                        (int) ( false === get_option( 'mainwp_minimumDelay' ) ? 200 : intval( get_option( 'mainwp_minimumDelay' ) ) )
+                    ),
                 ),
-            ),
-            array(
-                'label' => esc_html__( 'Maximum simultaneous sync requests', 'mainwp' ),
-                'value' => (string) ( false === get_option( 'mainwp_maximumSyncRequests' ) ? 8 : intval( get_option( 'mainwp_maximumSyncRequests' ) ) ),
-            ),
-            array(
-                'label' => esc_html__( 'Maximum simultaneous install and update requests', 'mainwp' ),
-                'value' => (string) ( false === get_option( 'mainwp_maximumInstallUpdateRequests' ) ? 3 : intval( get_option( 'mainwp_maximumInstallUpdateRequests' ) ) ),
-            ),
-            array(
-                'label' => esc_html__( 'Maximum simultaneous uptime monitoring requests', 'mainwp' ),
-                'value' => (string) ( false === get_option( 'mainwp_maximum_uptime_monitoring_requests' ) ? 10 : intval( get_option( 'mainwp_maximum_uptime_monitoring_requests' ) ) ),
-            ),
-            array(
-                'label' => esc_html__( 'Sites processed per sync batch', 'mainwp' ),
-                'value' => (string) ( false === get_option( 'mainwp_chunksitesnumber' ) ? 10 : intval( get_option( 'mainwp_chunksitesnumber' ) ) ),
-            ),
-            array(
-                'label' => esc_html__( 'Sync batch sleep interval', 'mainwp' ),
-                'value' => sprintf(
-                    /* translators: %d: seconds */
-                    esc_html__( '%d seconds', 'mainwp' ),
-                    (int) ( false === get_option( 'mainwp_chunksleepinterval' ) ? 5 : intval( get_option( 'mainwp_chunksleepinterval' ) ) )
+                array(
+                    'label' => esc_html__( 'Maximum simultaneous requests per IP', 'mainwp' ),
+                    'value' => (string) ( false === get_option( 'mainwp_maximumIPRequests' ) ? 1 : intval( get_option( 'mainwp_maximumIPRequests' ) ) ),
                 ),
-            ),
-            array(
-                'label' => esc_html__( 'Optimize data loading', 'mainwp' ),
-                'value' => static::format_boolean_label( (int) get_option( 'mainwp_optimize', $default_setting['mainwp_optimize'] ) ),
-            ),
-            array(
-                'label' => esc_html__( 'Browser cache expiration time', 'mainwp' ),
-                'value' => sprintf(
-                    /* translators: %d: minutes */
-                    esc_html__( '%d minutes', 'mainwp' ),
-                    (int) get_option( 'mainwp_warm_cache_pages_ttl', 10 )
+                array(
+                    'label' => esc_html__( 'Minimum delay between requests to the same IP', 'mainwp' ),
+                    'value' => sprintf(
+                        /* translators: %d: milliseconds */
+                        esc_html__( '%d ms', 'mainwp' ),
+                        (int) ( false === get_option( 'mainwp_minimumIPDelay' ) ? 1000 : intval( get_option( 'mainwp_minimumIPDelay' ) ) )
+                    ),
                 ),
-            ),
-            array(
-                'label' => esc_html__( 'Verify SSL certificate', 'mainwp' ),
-                'value' => static::format_boolean_label( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || 1 === (int) get_option( 'mainwp_sslVerifyCertificate', 1 ) ),
-            ),
-            array(
-                'label' => esc_html__( 'Verify connection method', 'mainwp' ),
-                'value' => 2 === (int) get_option( 'mainwp_verify_connection_method', 1 ) ? esc_html__( 'PHPSECLIB (fallback)', 'mainwp' ) : esc_html__( 'OpenSSL (default)', 'mainwp' ),
-            ),
-            array(
-                'label' => esc_html__( 'OpenSSL signature algorithm', 'mainwp' ),
-                'value' => isset( $sign_algs[ $signature_algo ] ) ? $sign_algs[ $signature_algo ] : (string) $signature_algo,
-            ),
-            array(
-                'label' => esc_html__( 'Force IPv4', 'mainwp' ),
-                'value' => static::format_boolean_label( (int) get_option( 'mainwp_forceUseIPv4', 0 ) ),
-            ),
-            array(
-                'label' => esc_html__( 'Selected data to sync', 'mainwp' ),
-                'value' => sprintf(
-                    /* translators: 1: enabled count, 2: total count */
-                    esc_html__( '%1$d of %2$d enabled', 'mainwp' ),
-                    $enabled_sync,
-                    count( $sync_defaults )
+                array(
+                    'label' => esc_html__( 'Maximum simultaneous sync requests', 'mainwp' ),
+                    'value' => (string) ( false === get_option( 'mainwp_maximumSyncRequests' ) ? 8 : intval( get_option( 'mainwp_maximumSyncRequests' ) ) ),
                 ),
-            ),
+                array(
+                    'label' => esc_html__( 'Maximum simultaneous install and update requests', 'mainwp' ),
+                    'value' => (string) ( false === get_option( 'mainwp_maximumInstallUpdateRequests' ) ? 3 : intval( get_option( 'mainwp_maximumInstallUpdateRequests' ) ) ),
+                ),
+                array(
+                    'label' => esc_html__( 'Maximum simultaneous uptime monitoring requests', 'mainwp' ),
+                    'value' => (string) ( false === get_option( 'mainwp_maximum_uptime_monitoring_requests' ) ? 10 : intval( get_option( 'mainwp_maximum_uptime_monitoring_requests' ) ) ),
+                ),
+                array(
+                    'label' => esc_html__( 'Sites processed per sync batch', 'mainwp' ),
+                    'value' => (string) ( false === get_option( 'mainwp_chunksitesnumber' ) ? 10 : intval( get_option( 'mainwp_chunksitesnumber' ) ) ),
+                ),
+                array(
+                    'label' => esc_html__( 'Sync batch sleep interval', 'mainwp' ),
+                    'value' => sprintf(
+                        /* translators: %d: seconds */
+                        esc_html__( '%d seconds', 'mainwp' ),
+                        (int) ( false === get_option( 'mainwp_chunksleepinterval' ) ? 5 : intval( get_option( 'mainwp_chunksleepinterval' ) ) )
+                    ),
+                ),
+                array(
+                    'label' => esc_html__( 'Optimize data loading', 'mainwp' ),
+                    'value' => static::format_boolean_label( (int) get_option( 'mainwp_optimize', $default_setting['mainwp_optimize'] ) ),
+                ),
+                array(
+                    'label' => esc_html__( 'Browser cache expiration time', 'mainwp' ),
+                    'value' => sprintf(
+                        /* translators: %d: minutes */
+                        esc_html__( '%d minutes', 'mainwp' ),
+                        (int) get_option( 'mainwp_warm_cache_pages_ttl', 10 )
+                    ),
+                ),
+                array(
+                    'label' => esc_html__( 'Verify SSL certificate', 'mainwp' ),
+                    'value' => static::format_boolean_label( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || 1 === (int) get_option( 'mainwp_sslVerifyCertificate', 1 ) ),
+                ),
+                array(
+                    'label' => esc_html__( 'Verify connection method', 'mainwp' ),
+                    'value' => 2 === (int) get_option( 'mainwp_verify_connection_method', 1 ) ? esc_html__( 'PHPSECLIB (fallback)', 'mainwp' ) : esc_html__( 'OpenSSL (default)', 'mainwp' ),
+                ),
+                array(
+                    'label' => esc_html__( 'OpenSSL signature algorithm', 'mainwp' ),
+                    'value' => isset( $sign_algs[ $signature_algo ] ) ? $sign_algs[ $signature_algo ] : (string) $signature_algo,
+                ),
+                array(
+                    'label' => esc_html__( 'Force IPv4', 'mainwp' ),
+                    'value' => static::format_boolean_label( (int) get_option( 'mainwp_forceUseIPv4', 0 ) ),
+                ),
+                array(
+                    'label' => esc_html__( 'Selected data to sync', 'mainwp' ),
+                    'value' => sprintf(
+                        /* translators: 1: enabled count, 2: total count */
+                        esc_html__( '%1$d of %2$d enabled', 'mainwp' ),
+                        $enabled_sync,
+                        count( $sync_defaults )
+                    ),
+                ),
             ),
             array(
                 'Maximum simultaneous requests',
@@ -1719,50 +1721,50 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
 
         return self::add_export_labels_to_rows(
             array(
-            array(
-                'label' => esc_html__( 'Enable uptime monitoring', 'mainwp' ),
-                'value' => static::format_boolean_label( ! empty( $monitoring_settings['active'] ) ),
-            ),
-            array(
-                'label' => esc_html__( 'Monitor type', 'mainwp' ),
-                'value' => static::format_monitor_type_label( $monitoring_settings['type'] ?? 'http' ),
-            ),
-            array(
-                'label' => esc_html__( 'Method', 'mainwp' ),
-                'value' => strtoupper( (string) ( $monitoring_settings['method'] ?? 'get' ) ),
-            ),
-            array(
-                'label' => esc_html__( 'Interval', 'mainwp' ),
-                'value' => (string) $interval_value,
-            ),
-            array(
-                'label' => esc_html__( 'Timeout', 'mainwp' ),
-                'value' => (string) $timeout_value,
-            ),
-            array(
-                'label' => esc_html__( 'Up HTTP codes', 'mainwp' ),
-                'value' => ! empty( $monitoring_settings['up_status_codes'] ) ? (string) $monitoring_settings['up_status_codes'] : esc_html__( 'Default', 'mainwp' ),
-            ),
-            array(
-                'label' => esc_html__( 'Down confirmation check', 'mainwp' ),
-                'value' => ! empty( $monitoring_settings['maxretries'] ) ? esc_html__( 'Enabled', 'mainwp' ) : esc_html__( 'Disabled', 'mainwp' ),
-            ),
-            array(
-                'label' => esc_html__( 'Keyword monitoring value', 'mainwp' ),
-                'value' => ! empty( $monitoring_settings['keyword'] ) ? (string) $monitoring_settings['keyword'] : esc_html__( 'Not configured', 'mainwp' ),
-            ),
-            array(
-                'label' => esc_html__( 'Monitoring data retention', 'mainwp' ),
-                'value' => static::format_retention_days_label( $retention_days ),
-            ),
-            array(
-                'label' => esc_html__( 'Enable site health monitoring', 'mainwp' ),
-                'value' => static::format_boolean_label( $site_health ),
-            ),
-            array(
-                'label' => esc_html__( 'Site Health threshold', 'mainwp' ),
-                'value' => 100 === $threshold ? esc_html__( 'Good', 'mainwp' ) : esc_html__( 'Should be improved', 'mainwp' ),
-            ),
+                array(
+                    'label' => esc_html__( 'Enable uptime monitoring', 'mainwp' ),
+                    'value' => static::format_boolean_label( ! empty( $monitoring_settings['active'] ) ),
+                ),
+                array(
+                    'label' => esc_html__( 'Monitor type', 'mainwp' ),
+                    'value' => static::format_monitor_type_label( $monitoring_settings['type'] ?? 'http' ),
+                ),
+                array(
+                    'label' => esc_html__( 'Method', 'mainwp' ),
+                    'value' => strtoupper( (string) ( $monitoring_settings['method'] ?? 'get' ) ),
+                ),
+                array(
+                    'label' => esc_html__( 'Interval', 'mainwp' ),
+                    'value' => (string) $interval_value,
+                ),
+                array(
+                    'label' => esc_html__( 'Timeout', 'mainwp' ),
+                    'value' => (string) $timeout_value,
+                ),
+                array(
+                    'label' => esc_html__( 'Up HTTP codes', 'mainwp' ),
+                    'value' => ! empty( $monitoring_settings['up_status_codes'] ) ? (string) $monitoring_settings['up_status_codes'] : esc_html__( 'Default', 'mainwp' ),
+                ),
+                array(
+                    'label' => esc_html__( 'Down confirmation check', 'mainwp' ),
+                    'value' => ! empty( $monitoring_settings['maxretries'] ) ? esc_html__( 'Enabled', 'mainwp' ) : esc_html__( 'Disabled', 'mainwp' ),
+                ),
+                array(
+                    'label' => esc_html__( 'Keyword monitoring value', 'mainwp' ),
+                    'value' => ! empty( $monitoring_settings['keyword'] ) ? (string) $monitoring_settings['keyword'] : esc_html__( 'Not configured', 'mainwp' ),
+                ),
+                array(
+                    'label' => esc_html__( 'Monitoring data retention', 'mainwp' ),
+                    'value' => static::format_retention_days_label( $retention_days ),
+                ),
+                array(
+                    'label' => esc_html__( 'Enable site health monitoring', 'mainwp' ),
+                    'value' => static::format_boolean_label( $site_health ),
+                ),
+                array(
+                    'label' => esc_html__( 'Site Health threshold', 'mainwp' ),
+                    'value' => 100 === $threshold ? esc_html__( 'Good', 'mainwp' ) : esc_html__( 'Should be improved', 'mainwp' ),
+                ),
             ),
             array(
                 'Enable uptime monitoring',
@@ -1841,42 +1843,42 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
 
         return self::add_export_labels_to_rows(
             array(
-            array(
-                'label' => esc_html__( 'Currency', 'mainwp' ),
-                'value' => (string) $selected_currency,
-            ),
-            array(
-                'label' => esc_html__( 'Currency position', 'mainwp' ),
-                'value' => (string) $currency_format['currency_position'],
-            ),
-            array(
-                'label' => esc_html__( 'Thousand separator', 'mainwp' ),
-                'value' => '' === (string) $currency_format['thousand_separator'] ? esc_html__( 'None', 'mainwp' ) : (string) $currency_format['thousand_separator'],
-            ),
-            array(
-                'label' => esc_html__( 'Decimal separator', 'mainwp' ),
-                'value' => (string) $currency_format['decimal_separator'],
-            ),
-            array(
-                'label' => esc_html__( 'Decimals', 'mainwp' ),
-                'value' => (string) intval( $currency_format['decimals'] ),
-            ),
-            array(
-                'label' => esc_html__( 'Product categories', 'mainwp' ),
-                'value' => sprintf(
-                    /* translators: %d: count */
-                    esc_html__( '%d configured', 'mainwp' ),
-                    count( $product_types )
+                array(
+                    'label' => esc_html__( 'Currency', 'mainwp' ),
+                    'value' => (string) $selected_currency,
                 ),
-            ),
-            array(
-                'label' => esc_html__( 'Payment methods', 'mainwp' ),
-                'value' => sprintf(
-                    /* translators: %d: count */
-                    esc_html__( '%d configured', 'mainwp' ),
-                    count( $custom_payment_methods )
+                array(
+                    'label' => esc_html__( 'Currency position', 'mainwp' ),
+                    'value' => (string) $currency_format['currency_position'],
                 ),
-            ),
+                array(
+                    'label' => esc_html__( 'Thousand separator', 'mainwp' ),
+                    'value' => '' === (string) $currency_format['thousand_separator'] ? esc_html__( 'None', 'mainwp' ) : (string) $currency_format['thousand_separator'],
+                ),
+                array(
+                    'label' => esc_html__( 'Decimal separator', 'mainwp' ),
+                    'value' => (string) $currency_format['decimal_separator'],
+                ),
+                array(
+                    'label' => esc_html__( 'Decimals', 'mainwp' ),
+                    'value' => (string) intval( $currency_format['decimals'] ),
+                ),
+                array(
+                    'label' => esc_html__( 'Product categories', 'mainwp' ),
+                    'value' => sprintf(
+                        /* translators: %d: count */
+                        esc_html__( '%d configured', 'mainwp' ),
+                        count( $product_types )
+                    ),
+                ),
+                array(
+                    'label' => esc_html__( 'Payment methods', 'mainwp' ),
+                    'value' => sprintf(
+                        /* translators: %d: count */
+                        esc_html__( '%d configured', 'mainwp' ),
+                        count( $custom_payment_methods )
+                    ),
+                ),
             ),
             array(
                 'Currency',
@@ -1913,34 +1915,34 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
 
         return self::add_export_labels_to_rows(
             array(
-            array(
-                'label' => esc_html__( 'Enable Network Activity logging', 'mainwp' ),
-                'value' => static::format_boolean_label( ! empty( $options['enabled'] ) ),
-            ),
-            array(
-                'label' => esc_html__( 'Automatically archive logs', 'mainwp' ),
-                'value' => static::format_boolean_label( ! empty( $options['auto_archive'] ) ),
-            ),
-            array(
-                'label' => esc_html__( 'Data retention period', 'mainwp' ),
-                'value' => static::format_log_retention_label( isset( $options['records_logs_ttl'] ) ? intval( $options['records_logs_ttl'] ) : 3 * YEAR_IN_SECONDS ),
-            ),
-            array(
-                'label' => esc_html__( 'Child-site Network Activity retention', 'mainwp' ),
-                'value' => static::format_retention_days_label( isset( $options['child_logs_ttl'] ) ? intval( $options['child_logs_ttl'] ) : 7 ),
-            ),
-            array(
-                'label' => esc_html__( 'Disabled dashboard event types', 'mainwp' ),
-                'value' => (string) $dashboard_disabled,
-            ),
-            array(
-                'label' => esc_html__( 'Disabled child-site event types', 'mainwp' ),
-                'value' => (string) $child_disabled,
-            ),
-            array(
-                'label' => esc_html__( 'Disabled change-log event types', 'mainwp' ),
-                'value' => (string) $changes_disabled,
-            ),
+                array(
+                    'label' => esc_html__( 'Enable Network Activity logging', 'mainwp' ),
+                    'value' => static::format_boolean_label( ! empty( $options['enabled'] ) ),
+                ),
+                array(
+                    'label' => esc_html__( 'Automatically archive logs', 'mainwp' ),
+                    'value' => static::format_boolean_label( ! empty( $options['auto_archive'] ) ),
+                ),
+                array(
+                    'label' => esc_html__( 'Data retention period', 'mainwp' ),
+                    'value' => static::format_log_retention_label( isset( $options['records_logs_ttl'] ) ? intval( $options['records_logs_ttl'] ) : 3 * YEAR_IN_SECONDS ),
+                ),
+                array(
+                    'label' => esc_html__( 'Child-site Network Activity retention', 'mainwp' ),
+                    'value' => static::format_retention_days_label( isset( $options['child_logs_ttl'] ) ? intval( $options['child_logs_ttl'] ) : 7 ),
+                ),
+                array(
+                    'label' => esc_html__( 'Disabled dashboard event types', 'mainwp' ),
+                    'value' => (string) $dashboard_disabled,
+                ),
+                array(
+                    'label' => esc_html__( 'Disabled child-site event types', 'mainwp' ),
+                    'value' => (string) $child_disabled,
+                ),
+                array(
+                    'label' => esc_html__( 'Disabled change-log event types', 'mainwp' ),
+                    'value' => (string) $changes_disabled,
+                ),
             ),
             array(
                 'Enable Network Activity logging',
@@ -2058,22 +2060,22 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
     public static function get_tools_report_rows() {
         return self::add_export_labels_to_rows(
             array(
-            array(
-                'label' => esc_html__( 'Current MainWP theme', 'mainwp' ),
-                'value' => MainWP_Settings::get_instance()->get_current_user_theme(),
-            ),
-            array(
-                'label' => esc_html__( 'Guided tours', 'mainwp' ),
-                'value' => static::format_boolean_label( (int) get_option( 'mainwp_enable_guided_tours', 0 ) ),
-            ),
-            array(
-                'label' => esc_html__( 'Chatbase', 'mainwp' ),
-                'value' => static::format_boolean_label( (int) get_option( 'mainwp_enable_guided_chatbase', 0 ) ),
-            ),
-            array(
-                'label' => esc_html__( 'Guided video', 'mainwp' ),
-                'value' => static::format_boolean_label( (int) get_option( 'mainwp_enable_guided_video', 0 ) ),
-            ),
+                array(
+                    'label' => esc_html__( 'Current MainWP theme', 'mainwp' ),
+                    'value' => MainWP_Settings::get_instance()->get_current_user_theme(),
+                ),
+                array(
+                    'label' => esc_html__( 'Guided tours', 'mainwp' ),
+                    'value' => static::format_boolean_label( (int) get_option( 'mainwp_enable_guided_tours', 0 ) ),
+                ),
+                array(
+                    'label' => esc_html__( 'Chatbase', 'mainwp' ),
+                    'value' => static::format_boolean_label( (int) get_option( 'mainwp_enable_guided_chatbase', 0 ) ),
+                ),
+                array(
+                    'label' => esc_html__( 'Guided video', 'mainwp' ),
+                    'value' => static::format_boolean_label( (int) get_option( 'mainwp_enable_guided_video', 0 ) ),
+                ),
             ),
             array(
                 'Current MainWP theme',
@@ -2095,32 +2097,32 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
 
         return self::add_export_labels_to_rows(
             array(
-            array(
-                'label' => esc_html__( 'WP_DEBUG', 'mainwp' ),
-                'value' => static::format_boolean_label( defined( 'WP_DEBUG' ) && WP_DEBUG ),
-            ),
-            array(
-                'label' => esc_html__( 'WP_DEBUG_LOG', 'mainwp' ),
-                'value' => static::format_boolean_label( defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ),
-            ),
-            array(
-                'label' => esc_html__( 'WP_DEBUG_DISPLAY', 'mainwp' ),
-                'value' => static::format_boolean_label( defined( 'WP_DEBUG_DISPLAY' ) && WP_DEBUG_DISPLAY ),
-            ),
-            array(
-                'label' => esc_html__( 'PHP log_errors', 'mainwp' ),
-                'value' => static::format_boolean_label( filter_var( ini_get( 'log_errors' ), FILTER_VALIDATE_BOOLEAN ) ),
-            ),
-            array(
-                'label'           => esc_html__( 'PHP error_log path', 'mainwp' ),
-                'value'           => ! empty( $error_log_path ) ? $error_log_path : esc_html__( 'Not set', 'mainwp' ),
-                'visibility'      => 'community_masked',
-                'community_value' => ! empty( $error_log_path ) ? esc_html__( 'Configured', 'mainwp' ) : esc_html__( 'Not set', 'mainwp' ),
-            ),
-            array(
-                'label' => esc_html__( 'PHP error_log readable', 'mainwp' ),
-                'value' => static::format_boolean_label( $log_readable ),
-            ),
+                array(
+                    'label' => esc_html__( 'WP_DEBUG', 'mainwp' ),
+                    'value' => static::format_boolean_label( defined( 'WP_DEBUG' ) && WP_DEBUG ),
+                ),
+                array(
+                    'label' => esc_html__( 'WP_DEBUG_LOG', 'mainwp' ),
+                    'value' => static::format_boolean_label( defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG ),
+                ),
+                array(
+                    'label' => esc_html__( 'WP_DEBUG_DISPLAY', 'mainwp' ),
+                    'value' => static::format_boolean_label( defined( 'WP_DEBUG_DISPLAY' ) && WP_DEBUG_DISPLAY ),
+                ),
+                array(
+                    'label' => esc_html__( 'PHP log_errors', 'mainwp' ),
+                    'value' => static::format_boolean_label( filter_var( ini_get( 'log_errors' ), FILTER_VALIDATE_BOOLEAN ) ),
+                ),
+                array(
+                    'label'           => esc_html__( 'PHP error_log path', 'mainwp' ),
+                    'value'           => ! empty( $error_log_path ) ? $error_log_path : esc_html__( 'Not set', 'mainwp' ),
+                    'visibility'      => 'community_masked',
+                    'community_value' => ! empty( $error_log_path ) ? esc_html__( 'Configured', 'mainwp' ) : esc_html__( 'Not set', 'mainwp' ),
+                ),
+                array(
+                    'label' => esc_html__( 'PHP error_log readable', 'mainwp' ),
+                    'value' => static::format_boolean_label( $log_readable ),
+                ),
             ),
             array(
                 'WP_DEBUG',
@@ -2139,7 +2141,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
      * @return array<int,array<string,mixed>>
      */
     public static function get_conflict_signal_report_rows() {
-        $caching_plugins     = static::get_active_plugins_by_keyword_group(
+        $caching_plugins  = static::get_active_plugins_by_keyword_group(
             array(
                 'cache',
                 'rocket',
@@ -2154,7 +2156,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
                 'hummingbird',
             )
         );
-        $security_plugins    = static::get_active_plugins_by_keyword_group(
+        $security_plugins = static::get_active_plugins_by_keyword_group(
             array(
                 'wordfence',
                 'sucuri',
@@ -2169,36 +2171,29 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
                 'limit login',
             )
         );
-        $maintenance_plugins = static::get_active_plugins_by_keyword_group(
-            array(
-                'maintenance',
-                'coming soon',
-                'seedprod',
-                'lightstart',
-            )
-        );
-        $maintenance_mode    = static::get_maintenance_mode_indicators();
-        $dropins             = static::get_dropin_conflict_indicators();
+
+        $maintenance_mode = static::get_maintenance_mode_indicators();
+        $dropins          = static::get_dropin_conflict_indicators();
 
         return self::add_export_labels_to_rows(
             array(
-            array(
-                'label' => esc_html__( 'Caching / performance plugins', 'mainwp' ),
-                'value' => static::format_conflict_items_label( $caching_plugins ),
-            ),
-            array(
-                'label' => esc_html__( 'Security / access-control plugins', 'mainwp' ),
-                'value' => static::format_conflict_items_label( $security_plugins ),
-            ),
-            array(
-                'label'  => esc_html__( 'Maintenance mode indicators', 'mainwp' ),
-                'value'  => static::format_conflict_items_label( $maintenance_mode ),
-                'status' => empty( $maintenance_mode ) ? '' : 'warning',
-            ),
-            array(
-                'label' => esc_html__( 'Drop-ins / object cache', 'mainwp' ),
-                'value' => static::format_conflict_items_label( $dropins ),
-            ),
+                array(
+                    'label' => esc_html__( 'Caching / performance plugins', 'mainwp' ),
+                    'value' => static::format_conflict_items_label( $caching_plugins ),
+                ),
+                array(
+                    'label' => esc_html__( 'Security / access-control plugins', 'mainwp' ),
+                    'value' => static::format_conflict_items_label( $security_plugins ),
+                ),
+                array(
+                    'label'  => esc_html__( 'Maintenance mode indicators', 'mainwp' ),
+                    'value'  => static::format_conflict_items_label( $maintenance_mode ),
+                    'status' => empty( $maintenance_mode ) ? '' : 'warning',
+                ),
+                array(
+                    'label' => esc_html__( 'Drop-ins / object cache', 'mainwp' ),
+                    'value' => static::format_conflict_items_label( $dropins ),
+                ),
             ),
             array(
                 'Caching / performance plugins',
@@ -2208,6 +2203,189 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
             )
         );
     }
+
+
+    /**
+     * Get database rows.
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    public static function get_database_report_rows() { // phpcs:ignore -- NOSONAR - complex function.
+
+        $db_info = MainWP_Database_Schema_Checker::get_database_info();
+
+        $database_size = isset( $db_info['database_size'] ) ? $db_info['database_size'] : array();
+
+        $data_size  = isset( $database_size['data'] ) ? $database_size['data'] : 0;
+        $index_size = isset( $database_size['index'] ) ? $database_size['index'] : 0;
+
+        $db_privileges_info = MainWP_Database_Schema_Checker::get_database_privileges();
+
+        $db_privileges = ! empty( $db_privileges_info['database_grants'] ) && is_array( $db_privileges_info['database_grants'] ) ? implode( ', ', $db_privileges_info['database_grants'] ) . '.' : '';
+
+        $db_privileges_status = 'pass';
+        if ( ! empty( $db_privileges_info['database_missing_privileges'] ) && is_array( $db_privileges_info['database_missing_privileges'] ) ) {
+            $db_privileges       .= ' ' . esc_html__( 'Missing database privileges:', 'mainwp' ) . ' ' . implode( ', ', $db_privileges_info['database_missing_privileges'] );
+            $db_privileges_status = 'error';
+        }
+
+        $db_rows_info = array(
+            array(
+                'label' => esc_html__( 'MainWP database version', 'mainwp' ),
+                'value' => $db_info['mainwp_database_version'],
+            ),
+            array(
+                'label' => esc_html__( 'Database prefix', 'mainwp' ),
+                'value' => $db_info['database_prefix'],
+            ),
+            array(
+                'label' => esc_html__( 'Total Database Size', 'mainwp' ),
+                'value' => esc_html( sprintf( __( '%sMB', 'mainwp' ), $data_size + $index_size ) ),
+            ),
+            array(
+                'label' => esc_html__( 'Database Data Size', 'mainwp' ),
+                'value' => esc_html( sprintf( __( '%sMB', 'mainwp' ), $data_size ) ),
+            ),
+            array(
+                'label' => esc_html__( 'Database Index Size', 'mainwp' ),
+                'value' => esc_html( sprintf( __( '%sMB', 'mainwp' ), $index_size ) ),
+            ),
+            array(
+                'status' => $db_privileges_status,
+                'label'  => esc_html__( 'Database privileges', 'mainwp' ),
+                'value'  => $db_privileges,
+            ),
+        );
+
+        $db_rows         = array();
+        $db_rows_missing = array();
+
+        if ( isset( $db_info['database_tables'] ) && is_array( $db_info['database_tables'] ) ) {
+
+            $missing_db_tables = MainWP_Database_Schema_Checker::detect_missing_tables( $db_info['database_tables'] );
+
+            if ( is_array( $missing_db_tables ) ) {
+                foreach ( array( 'core', 'extensions' ) as $type ) {
+                    $miss_tables = isset( $missing_db_tables[ $type ] ) ? $missing_db_tables[ $type ] : array();
+                    if ( ! empty( $miss_tables ) && is_array( $miss_tables ) ) {
+                        if ( 'core' === $type ) {
+                            foreach ( $miss_tables  as $tb_name ) {
+                                $db_rows_missing[] = array(
+                                    'label'  => $tb_name,
+                                    'value'  => esc_html__( 'Missing core table', 'mainwp' ),
+                                    'status' => 'error',
+                                );
+                            }
+                        } else {
+                            foreach ( $miss_tables  as $ext_slug => $miss_ext_tables ) {
+                                $title = MainWP_Database_Schema_Checker::get_loaded_extension_title( $ext_slug );
+                                foreach ( $miss_ext_tables  as $tb_name ) {
+                                    $db_rows_missing[] = array(
+                                        'label'  => $tb_name,
+                                        'value'  => sprintf( esc_html__( 'Missing extension table:  %1s', 'mainwp' ), $title ),
+                                        'status' => 'error',
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            foreach ( array( 'core', 'other' ) as $type ) {
+                $type_tables = isset( $db_info['database_tables'][ $type ] ) ? $db_info['database_tables'][ $type ] : array();
+                if ( is_array( $type_tables ) ) {
+                    foreach ( $type_tables  as $tb_name => $info ) {
+
+                        if ( empty( $info ) ) {
+                            continue; // Missing table, so skip column detection.
+                        }
+
+                        $status = 'pass';
+
+                        $detect_cols_issues = array();
+
+                        /**
+                         *  Filter to disable detection of missing table columns. Useful for slow hosts.
+                         *
+                         * @since 6.1.3.
+                         */
+                        if ( ! apply_filters( 'mainwp_disable_detect_table_columns_issues', false ) ) {
+                            $detect_cols_issues = MainWP_Database_Schema_Checker::detect_table_columns_issues( $tb_name, $type );
+                        }
+
+                        $missing_cols = is_array( $detect_cols_issues ) && isset( $detect_cols_issues['missing_columns'] ) ? $detect_cols_issues['missing_columns'] : array();
+                        $invalid_cols = is_array( $detect_cols_issues ) && isset( $detect_cols_issues['invalid_columns'] ) ? $detect_cols_issues['invalid_columns'] : array();
+
+                        $issues_cols_info = array();
+
+                        if ( ! empty( $missing_cols ) && is_array( $missing_cols ) ) {
+                            $issues_cols_info[] = sprintf( esc_html__( 'Missing columns: %1s;', 'mainwp' ), implode( ', ', $missing_cols ) );
+                            $status             = 'error';
+                        }
+
+                        if ( ! empty( $invalid_cols ) && is_array( $invalid_cols ) && isset( $invalid_cols[0]['column'] ) ) {
+
+                            $issues_string = implode(
+                                '; ',
+                                array_map(
+                                    static function ( $issue ) {
+                                            return sprintf(
+                                                'column: "%s" - expected: "%s" - actual: "%s"',
+                                                $issue['column'],
+                                                $issue['expected'],
+                                                $issue['actual']
+                                            );
+                                    },
+                                    $invalid_cols
+                                )
+                            );
+
+                            $issues_cols_info[] = sprintf(
+                                esc_html__( 'Incorrect column definitions found: %s;', 'mainwp' ),
+                                $issues_string
+                            );
+
+                            if ( 'pass' === $status ) {
+                                $status = 'warning'; // warning - incorrect column definition.
+                            }
+                        }
+
+                        $tbl_info = '';
+                        if ( is_array( $info ) && isset( $info['data'] ) ) {
+                            $tbl_info = sprintf( __( 'Data: %sMB + Index: %sMB + Engine %s', 'mainwp' ), $info['data'], $info['index'], $info['engine'] );
+                        }
+
+                        $db_rows[] = array(
+                            'label'  => esc_html( $tb_name ),
+                            'value'  => esc_html(
+                                $tbl_info . ( ! empty( $issues_cols_info ) ? ' (' . implode( '; ', $issues_cols_info ) . ') ' : '' ),
+                            ),
+                            'status' => $status,
+                        );
+
+                    }
+                }
+            }
+
+            MainWP_Database_Schema_Checker::prepare_db_and_tables_issues( $missing_db_tables );
+        }
+
+        return self::add_export_labels_to_rows(
+            array_merge( $db_rows_info, $db_rows_missing, $db_rows ),
+            array(
+                'Database',
+                'Database privileges',
+                'MainWP database version',
+                'Database prefix',
+                'Total Database Size',
+                'Database Data Size',
+                'Database Index Size',
+                'Missing core table',
+            )
+        );
+    }
+
 
     /**
      * Format boolean label.
@@ -2778,7 +2956,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
      * @return string
      */
     private static function get_primary_backup_method_label() {
-        $primary_backup = get_option( 'mainwp_primaryBackup' );
+        $primary_backup  = get_option( 'mainwp_primaryBackup' );
         $primary_methods = apply_filters_deprecated( 'mainwp-getprimarybackup-methods', array( array() ), '4.0.7.2', 'mainwp_getprimarybackup_methods' ); // NOSONAR - not IP.
         $primary_methods = apply_filters( 'mainwp_getprimarybackup_methods', $primary_methods );
 

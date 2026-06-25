@@ -446,4 +446,163 @@ class MainWP_Backup_Restore_Decryption_Test extends \WP_UnitTestCase {
 		$this->assertNotNull( $outcome['error'] );
 		$this->assertStringContainsString( 'key is unavailable', (string) $outcome['error'] );
 	}
+
+	/**
+	 * A whole-file object whose sealed bytes were tampered fails the restore
+	 * decrypt guard rather than staging corrupt data. Flipping a byte of the
+	 * GCM-sealed unit breaks authentication, so open() throws,
+	 * maybe_decrypt_file returns false, and staging deletes the file and
+	 * surfaces the decrypt error. The seal/open primitive has its own tamper
+	 * test; this characterizes the guard across the real stage_from_remote
+	 * path. It must pass against current code - a pass here means a tampered
+	 * cloud object cannot restore.
+	 *
+	 * @return void
+	 */
+	public function test_tampered_whole_file_object_fails_restore() {
+		$this->arm();
+
+		$base    = $this->dir . '/dest';
+		$dest_id = MainWP_Backup_Storage_Destinations::instance()->add_destination(
+			array(
+				'provider' => 'local',
+				'name'     => 'tamper whole',
+				'settings' => array( 'base_path' => $base ),
+			)
+		);
+
+		$src = $this->dir . '/src';
+		mkdir( $src );
+		$small = 'a small database dump';
+		file_put_contents( $src . '/db.sql.gz', $small );
+
+		$snapshot_id = $this->record(
+			4,
+			array(
+				array(
+					'file' => 'db.sql.gz',
+					'size' => strlen( $small ),
+					'role' => 'db',
+					'path' => $src . '/db.sql.gz',
+				),
+			)
+		);
+		MainWP_Backup_Upload_Job_Store::instance()->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+
+		// Prove the stored object is actually sealed before tampering: a
+		// tampered *plaintext* object would trip the sha256 integrity guard
+		// instead of the decrypt guard and green this test for the wrong
+		// reason. Sealed size is plaintext + the fixed GCM overhead.
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+		$this->assertTrue( MainWP_Backup_Encryption::meta_is_encrypted( $snapshot->encryption ) );
+		$object = $base . '/4/' . $snapshot_id . '/files/db.sql.gz';
+		$this->assertSame( strlen( $small ) + MainWP_Backup_Archive_Cipher::OVERHEAD, filesize( $object ) );
+
+		// Flip the first byte (the GCM nonce); any single-byte change to a
+		// sealed unit fails authentication. XOR guarantees it differs.
+		$sealed     = file_get_contents( $object );
+		$sealed[0]  = chr( ord( $sealed[0] ) ^ 0xFF );
+		file_put_contents( $object, $sealed );
+
+		$this->driver->remote_base = $base;
+		$plan                      = array(
+			array(
+				'role'            => 'db',
+				'file'            => 'db.sql.gz',
+				'size'            => strlen( $small ),
+				'sha256'          => '',
+				'snapshot_id'     => $snapshot_id,
+				'source'          => 'remote',
+				'local_path'      => '',
+				'remote_key'      => '4/' . $snapshot_id . '/files/db.sql.gz',
+				'expected_sha256' => hash( 'sha256', $small ),
+				'adopt_only'      => false,
+			),
+		);
+
+		$outcome = $this->driver->stage_artifacts( 888001, $plan, microtime( true ) + 60 );
+		$this->assertFalse( $outcome['done'] );
+		$this->assertStringContainsString( 'could not be decrypted', (string) $outcome['error'] );
+		// The decrypt guard deletes the staged file rather than leaving
+		// corrupt bytes behind.
+		$this->assertFileDoesNotExist( $this->driver->staging_dir( 888001 ) . 'db.sql.gz' );
+	}
+
+	/**
+	 * A tampered chunk object fails the chunked restore decrypt guard. Each
+	 * sealed chunk is decrypted before its content hash is checked, so
+	 * flipping a byte of one chunk breaks authentication first and surfaces
+	 * the decrypt error - the reassembled artifact is never staged. This
+	 * characterizes the guard across the real stage_from_remote_chunked path
+	 * and must pass against current code.
+	 *
+	 * @return void
+	 */
+	public function test_tampered_chunk_object_fails_restore() {
+		$this->arm();
+
+		$base    = $this->dir . '/dest';
+		$dest_id = MainWP_Backup_Storage_Destinations::instance()->add_destination(
+			array(
+				'provider' => 'local',
+				'name'     => 'tamper chunk',
+				'settings' => array( 'base_path' => $base ),
+			)
+		);
+
+		$src = $this->dir . '/src';
+		mkdir( $src );
+		// Position-unique so the 1024-byte chunk filter yields several
+		// distinct sealed chunks (no two dedupe to one object).
+		$big = $this->position_unique( 'big', 3000 );
+		file_put_contents( $src . '/big.tar.gz', $big );
+
+		$snapshot_id = $this->record(
+			4,
+			array(
+				array(
+					'file' => 'big.tar.gz',
+					'size' => 3000,
+					'role' => 'part',
+					'path' => $src . '/big.tar.gz',
+				),
+			)
+		);
+		MainWP_Backup_Upload_Job_Store::instance()->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+
+		// Prove the artifact was both chunked and sealed before tampering.
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+		$this->assertTrue( MainWP_Backup_Encryption::meta_is_encrypted( $snapshot->encryption ) );
+		$chunks = glob( $base . '/4/' . $snapshot_id . '/chunks/*.bin' );
+		$this->assertGreaterThanOrEqual( 2, count( (array) $chunks ) );
+
+		// Flip the first byte of one sealed chunk; never touch manifest.json.
+		$victim     = $chunks[0];
+		$sealed     = file_get_contents( $victim );
+		$sealed[0]  = chr( ord( $sealed[0] ) ^ 0xFF );
+		file_put_contents( $victim, $sealed );
+
+		$this->driver->remote_base = $base;
+		// No 'chunks' key, so fetch_manifest runs and reads the real manifest.
+		$plan = array(
+			array(
+				'role'            => 'part',
+				'file'            => 'big.tar.gz',
+				'size'            => 3000,
+				'sha256'          => '',
+				'snapshot_id'     => $snapshot_id,
+				'source'          => 'remote_chunked',
+				'local_path'      => '',
+				'remote_key'      => '',
+				'expected_sha256' => hash( 'sha256', $big ),
+				'adopt_only'      => false,
+			),
+		);
+
+		$outcome = $this->driver->stage_artifacts( 888001, $plan, microtime( true ) + 60 );
+		$this->assertFalse( $outcome['done'] );
+		$this->assertStringContainsString( 'could not be decrypted', (string) $outcome['error'] );
+	}
 }

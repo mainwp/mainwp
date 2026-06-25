@@ -35,7 +35,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * @var string Current plugin version.
      */
-    public static $version = '6.1.8'; // NOSONAR.
+    public static $version = '7.0.0-nativebackups.1'; // NOSONAR. Throwaway test-channel version (kept above 6.x public so an update never reverts an on-branch tester); reset to the real line at release.
 
     /**
      * Private static variable to hold the single instance of the class.

@@ -517,6 +517,104 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * The mainwp_backup_restore_chunk_size filter sets the starting chunk
+	 * size for a fresh cursor: the first chunk crosses the wire at the
+	 * filtered size and the cursor carries it forward.
+	 */
+	public function test_chunk_size_filter_applies_to_fresh_cursor() {
+		// A 1 MiB override is within [CHUNK_MIN_BYTES, CHUNK_MAX_BYTES] and
+		// below the 3 MiB default, so it is observable as the first chunk.
+		$one_mib = 1024 * 1024;
+		$staged  = $this->dir . '/payload.zip';
+		file_put_contents( $staged, str_repeat( 'A', $one_mib + ( $one_mib / 2 ) ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+
+		$plan = array(
+			array(
+				'role'        => 'db',
+				'file'        => 'payload.zip',
+				'size'        => $one_mib + ( $one_mib / 2 ),
+				'sha256'      => hash_file( 'sha256', $staged ),
+				'staged_path' => $staged,
+				'adopt_only'  => false,
+			),
+		);
+
+		$filter = static function () use ( $one_mib ) {
+			return $one_mib;
+		};
+		add_filter( 'mainwp_backup_restore_chunk_size', $filter );
+		$cursor = array();
+		$result = $this->driver->transfer_artifacts( (object) array( 'id' => 1 ), 'task-1-x', $plan, $cursor, microtime( true ) + 60 );
+		remove_filter( 'mainwp_backup_restore_chunk_size', $filter );
+
+		$this->assertTrue( $result['done'] );
+		$this->assertSame( $one_mib, $cursor['chunk_bytes'] );
+		$this->assertSame( $one_mib, $this->driver->sent[0]['bytes'] );
+	}
+
+	/**
+	 * A filter value below the floor clamps up to CHUNK_MIN_BYTES so the
+	 * loop cannot stall on a too-small chunk.
+	 */
+	public function test_chunk_size_filter_clamps_to_floor() {
+		$staged = $this->dir . '/payload.zip';
+		file_put_contents( $staged, str_repeat( 'A', 64 ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+
+		$plan = array(
+			array(
+				'role'        => 'db',
+				'file'        => 'payload.zip',
+				'size'        => 64,
+				'sha256'      => hash_file( 'sha256', $staged ),
+				'staged_path' => $staged,
+				'adopt_only'  => false,
+			),
+		);
+
+		$filter = static function () {
+			return 1;
+		};
+		add_filter( 'mainwp_backup_restore_chunk_size', $filter );
+		$cursor = array();
+		$result = $this->driver->transfer_artifacts( (object) array( 'id' => 1 ), 'task-1-x', $plan, $cursor, microtime( true ) + 60 );
+		remove_filter( 'mainwp_backup_restore_chunk_size', $filter );
+
+		$this->assertTrue( $result['done'] );
+		$this->assertSame( MainWP_Backup_Restore_Transfer_Driver::CHUNK_MIN_BYTES, $cursor['chunk_bytes'] );
+	}
+
+	/**
+	 * A filter value above the ceiling clamps down to CHUNK_MAX_BYTES so a
+	 * stray value cannot exhaust memory or overrun the child request body.
+	 */
+	public function test_chunk_size_filter_clamps_to_ceiling() {
+		$staged = $this->dir . '/payload.zip';
+		file_put_contents( $staged, str_repeat( 'A', 64 ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+
+		$plan = array(
+			array(
+				'role'        => 'db',
+				'file'        => 'payload.zip',
+				'size'        => 64,
+				'sha256'      => hash_file( 'sha256', $staged ),
+				'staged_path' => $staged,
+				'adopt_only'  => false,
+			),
+		);
+
+		$filter = static function () {
+			return 1024 * 1024 * 1024;
+		};
+		add_filter( 'mainwp_backup_restore_chunk_size', $filter );
+		$cursor = array();
+		$result = $this->driver->transfer_artifacts( (object) array( 'id' => 1 ), 'task-1-x', $plan, $cursor, microtime( true ) + 60 );
+		remove_filter( 'mainwp_backup_restore_chunk_size', $filter );
+
+		$this->assertTrue( $result['done'] );
+		$this->assertSame( MainWP_Backup_Restore_Transfer_Driver::CHUNK_MAX_BYTES, $cursor['chunk_bytes'] );
+	}
+
+	/**
 	 * Adopt-only artifacts are skipped: nothing crosses the wire.
 	 */
 	public function test_adopt_only_skipped() {

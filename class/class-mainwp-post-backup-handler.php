@@ -44,6 +44,19 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
     }
 
     /**
+     * Foreground slice budget, in seconds, for a restore progress poll.
+     *
+     * Each open-tab poll drives one short restore slice so the run keeps
+     * moving without waiting for cron. It sits well under the cron slice
+     * budget so the AJAX request returns promptly rather than pinning a
+     * PHP-FPM worker; the cron backstop carries a closed tab. Tunable per
+     * dashboard via the mainwp_restore_foreground_budget filter.
+     *
+     * @var int
+     */
+    const RESTORE_FOREGROUND_BUDGET = 15;
+
+    /**
      * Init backups actions
      */
     public function init() {
@@ -277,7 +290,15 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
     }
 
     /**
-     * Report a restore job's progress.
+     * Drive and report a restore job's progress.
+     *
+     * Each poll drives one short restore slice so an open tab advances the
+     * run instead of waiting for cron; the cron backstop carries a closed
+     * tab between polls. The job lock serializes the slice against a
+     * concurrent cron run (a held lock makes the drive a no-op), and the
+     * driver advances the next acquirable job - on a dashboard with one
+     * active restore that is this one. The execute_backups capability was
+     * verified by secure_request before any work runs.
      */
     public function mainwp_restore_progress() {
         $this->secure_request( 'mainwp_restore_progress' );
@@ -291,6 +312,17 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
 
         if ( null === $this->authorize_restore_site( (int) $job->site_id ) ) {
             return;
+        }
+
+        $budget = (int) apply_filters( 'mainwp_restore_foreground_budget', self::RESTORE_FOREGROUND_BUDGET );
+        if ( $budget >= 0 ) {
+            static::raise_backup_resource_limits();
+            MainWP_Backup_Restore_Orchestrator::instance()->process_pending_restore_jobs( $budget );
+            $job = MainWP_Backup_Restore_Job_Store::instance()->get_job( $job_id );
+            if ( null === $job ) {
+                wp_send_json( array( 'error' => esc_html__( 'Restore job not found.', 'mainwp' ) ) );
+                return;
+            }
         }
 
         $transfer = isset( $job->checkpoint['transfer'] ) ? (array) $job->checkpoint['transfer'] : array();

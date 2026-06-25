@@ -833,7 +833,7 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
             array(
                 'artifact_index' => 0,
                 'offset'         => 0,
-                'chunk_bytes'    => self::CHUNK_BYTES,
+                'chunk_bytes'    => $this->default_chunk_bytes(),
             ),
             $cursor
         );
@@ -904,6 +904,28 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
             'error'     => null,
             'retryable' => false,
         );
+    }
+
+    /**
+     * Starting chunk size for a fresh transfer cursor.
+     *
+     * The default is CHUNK_BYTES; the `mainwp_backup_restore_chunk_size`
+     * filter lets a site tune the dashboard-to-child chunk for its own
+     * request-body headroom, clamped to [CHUNK_MIN_BYTES, CHUNK_MAX_BYTES]
+     * so a stray value can neither stall the loop nor exhaust memory. A
+     * resumed or adaptively shrunk cursor keeps its own chunk_bytes; only
+     * a fresh cursor takes this default.
+     *
+     * Cloud pull, the fast path for large restores, is unavailable for
+     * encrypted artifacts because they decrypt on the dashboard first, so
+     * those backups travel the chunk transfer and this filter is how a
+     * site speeds them up.
+     *
+     * @return int Clamped starting chunk size in bytes.
+     */
+    private function default_chunk_bytes(): int {
+        $bytes = (int) apply_filters( 'mainwp_backup_restore_chunk_size', self::CHUNK_BYTES );
+        return max( self::CHUNK_MIN_BYTES, min( self::CHUNK_MAX_BYTES, $bytes ) );
     }
 
     /**

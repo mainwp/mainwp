@@ -35,4 +35,11 @@ interface MainWP_Backup_Chunk_Transfer_Sizes {
      * Smallest chunk size the adaptive shrink will try.
      */
     const CHUNK_MIN_BYTES = 262144;
+
+    /**
+     * Largest chunk size a size override is allowed to request. Caps a
+     * filtered value so a stray override cannot exhaust memory on the
+     * dashboard or overrun the child's request-body limit.
+     */
+    const CHUNK_MAX_BYTES = 67108864;
 }

@@ -317,7 +317,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         $budget = (int) apply_filters( 'mainwp_restore_foreground_budget', self::RESTORE_FOREGROUND_BUDGET );
         if ( $budget >= 0 ) {
             static::raise_backup_resource_limits();
-            MainWP_Backup_Restore_Orchestrator::instance()->process_pending_restore_jobs( $budget );
+            MainWP_Backup_Restore_Orchestrator::instance()->process_pending_restore_jobs( $budget, $job_id );
             $job = MainWP_Backup_Restore_Job_Store::instance()->get_job( $job_id );
             if ( null === $job ) {
                 wp_send_json( array( 'error' => esc_html__( 'Restore job not found.', 'mainwp' ) ) );

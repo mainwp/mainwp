@@ -387,14 +387,18 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * the job still mid-flight, a near-term continuation is scheduled so the
      * next poll does not wait for the periodic cron.
      *
-     * @param int $budget_seconds Slice budget.
+     * @param int      $budget_seconds Slice budget.
+     * @param int|null $only_job_id    Drive only this job (a foreground poll
+     *                                 advancing the restore it polls); null
+     *                                 drives the next runnable job of any site,
+     *                                 the cron behavior.
      */
-    public function process_pending_restore_jobs( int $budget_seconds = self::DEFAULT_BUDGET_SECONDS ): void {
+    public function process_pending_restore_jobs( int $budget_seconds = self::DEFAULT_BUDGET_SECONDS, ?int $only_job_id = null ): void {
         $deadline = microtime( true ) + $budget_seconds;
         $token    = 'restore-' . wp_generate_password( 12, false );
         $store    = MainWP_Backup_Restore_Job_Store::instance();
 
-        $job = $store->acquire_next_job( $token, $budget_seconds + 60 );
+        $job = $store->acquire_next_job( $token, $budget_seconds + 60, null, $only_job_id );
         if ( null === $job ) {
             return;
         }

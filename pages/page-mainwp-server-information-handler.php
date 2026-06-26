@@ -2310,7 +2310,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
                          *
                          * @since 6.1.3.
                          */
-                        if ( ! apply_filters( 'mainwp_disable_detect_table_columns_issues', false ) ) {
+                        if ( apply_filters( 'mainwp_detect_table_column_issues', true ) ) {
                             $detect_cols_issues = MainWP_Database_Schema_Checker::detect_table_columns_issues( $tb_name, $type );
                         }
 

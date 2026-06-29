@@ -17,7 +17,8 @@
             "MainWP\\Dashboard\\Tests\\": "tests/"
         },
         "classmap": [
-            "tests/abilities/"
+            "tests/abilities/",
+            "tests/integration/"
         ]
     },
     "config": {

@@ -23,12 +23,20 @@ export async function wpLogin(page: Page, baseUrl: string, user: string, pass: s
 
   await page.fill('#user_login', user);
   await page.fill('#user_pass', pass);
-  await page.click('#wp-submit');
+  // Submit via Enter rather than clicking #wp-submit: some login pages keep
+  // animating/shifting layout, so waiting for the button to be "stable" before a
+  // click can time out. Submitting the focused form avoids that wait entirely.
+  await page.locator('#user_pass').press('Enter');
 
-  // Wait for the redirect off wp-login, then confirm we are in wp-admin. The WP
-  // admin bar is hidden on MainWP's own screens, so assert the admin body is
-  // attached (present on every wp-admin page) rather than the toolbar.
-  await page.waitForURL((url) => !url.toString().includes('wp-login.php'), { timeout: 30_000 });
+  // Do NOT wait to leave wp-login.php. Some hosts (staging, reverse-proxied)
+  // bounce through `wp-login.php?redirect_to=...` after a successful auth before
+  // the cookie-driven redirect settles, so "URL no longer contains wp-login"
+  // never fires. Instead confirm the session by loading wp-admin directly: if
+  // auth failed, wp-admin redirects back to the login form and body.wp-admin is
+  // never attached. The admin bar is hidden on MainWP screens, so assert the
+  // admin body (present on every wp-admin page) rather than the toolbar.
+  await page.waitForTimeout(2_000);
+  await page.goto(`${baseUrl}/wp-admin/`, { waitUntil: 'domcontentloaded' });
   await expect(page.locator('body.wp-admin')).toBeAttached({ timeout: 20_000 });
 }
 

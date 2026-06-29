@@ -75,9 +75,59 @@ export class Dashboard {
     }).toPass({ timeout: timeoutMs, intervals: [2_000] });
   }
 
-  /** Row in any table whose text contains the given child host. */
-  siteRow(childUrl: string) {
-    const host = childUrl.replace(/^https?:\/\//, '');
-    return this.page.locator('tr', { hasText: host }).first();
+  /**
+   * Open Manage Sites, filter the (client-side DataTable) list to `childUrl`,
+   * and return that site's row. Always re-navigates so the row reflects the
+   * current server-rendered connection state (the status cell is PHP-rendered
+   * from the site's sync-error flag, so a stale DOM would lie).
+   */
+  async siteRow(childUrl: string) {
+    const host = childUrl.replace(/^https?:\/\//, '').replace(/\/+$/, '');
+    await this.gotoManageSites();
+    await this.page.waitForTimeout(1_500);
+    const search = this.page.locator('#dt-search-0');
+    if (await search.count()) {
+      // First label segment is a unique, safe search term for every test host.
+      await search.fill(host.split('.')[0]);
+      await this.page.waitForTimeout(2_000);
+    }
+    return this.page.locator(`tr[siteid][site-url*="${host}"]`).first();
+  }
+
+  /** Trigger a sync of a single connected site via its Manage Sites row. */
+  async syncSite(childUrl: string): Promise<void> {
+    const row = await this.siteRow(childUrl);
+    await row.locator('a.managesites_syncdata').first().click();
+  }
+
+  /**
+   * True when the dashboard shows the site Disconnected. The status cell renders
+   * `a.mainwp_site_reconnect` (and the row gains the `error` class) once the
+   * dashboard has recorded a sync error for the site.
+   */
+  async isSiteDisconnected(childUrl: string): Promise<boolean> {
+    const row = await this.siteRow(childUrl);
+    return (await row.locator('a.mainwp_site_reconnect').count()) > 0;
+  }
+
+  /** True when the site shows Connected (sync control present, no reconnect). */
+  async isSiteConnected(childUrl: string): Promise<boolean> {
+    const row = await this.siteRow(childUrl);
+    return (
+      (await row.locator('a.managesites_syncdata').count()) > 0 &&
+      (await row.locator('a.mainwp_site_reconnect').count()) === 0
+    );
+  }
+
+  /**
+   * Drive the dashboard's reconnect for a disconnected site. The handler posts
+   * `mainwp_reconnectwp` and force-reloads Manage Sites ~6s after success, so we
+   * wait that out before the caller re-reads the row.
+   */
+  async reconnectSite(childUrl: string): Promise<void> {
+    const row = await this.siteRow(childUrl);
+    await row.locator('a.mainwp_site_reconnect').first().click();
+    await this.page.waitForTimeout(9_000);
+    await this.page.waitForLoadState('domcontentloaded');
   }
 }

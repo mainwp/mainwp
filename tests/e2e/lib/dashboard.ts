@@ -130,4 +130,81 @@ export class Dashboard {
     await this.page.waitForTimeout(9_000);
     await this.page.waitForLoadState('domcontentloaded');
   }
+
+  /**
+   * Resolve the dashboard's numeric site id for a child by URL. The Manage Sites
+   * row carries it in the `siteid` attribute; it is how the rest of the dashboard
+   * (PluginsManage scope, per-site tabs) addresses a site, since the child only
+   * knows its own URL.
+   */
+  async siteId(childUrl: string): Promise<string | null> {
+    const row = await this.siteRow(childUrl);
+    return (await row.count()) ? row.getAttribute('siteid') : null;
+  }
+
+  /**
+   * Read a plugin's status for one site as the dashboard last recorded it.
+   *
+   * PluginsManage (`admin.php?page=PluginsManage`) renders from the dashboard's
+   * stored sync data, not a live child query — sync the site first so this
+   * reflects the current child state. The screen is search-driven: scope to the
+   * site via its `selected_sites[]` checkbox (keyed by site id), set the status
+   * filter to "installed" so both active and inactive plugins render, then submit.
+   * Rows are matched by `plugin-slug` (the rawurlencoded plugin file) plus
+   * `site-url`, and the status comes from the badge icon
+   * (`i.circle.green.icon` = Active, `i.circle.red.icon` = Inactive).
+   *
+   * @returns 'active' | 'inactive' | 'absent' (no matching row for that site).
+   */
+  async pluginStatusOnSite(childUrl: string, pluginFile: string): Promise<'active' | 'inactive' | 'absent'> {
+    const host = childUrl.replace(/^https?:\/\//, '').replace(/\/+$/, '');
+    const id = await this.siteId(childUrl);
+    if (!id) {
+      return 'absent';
+    }
+
+    await this.page.goto(`${ENV.dashUrl}/wp-admin/admin.php?page=PluginsManage`, {
+      waitUntil: 'domcontentloaded',
+    });
+    await this.page.waitForTimeout(1_500);
+
+    // Scope the result to this one site. The checkbox input is visually hidden by
+    // the Fomantic styling, so force the check; the submit handler reads the raw
+    // `selected_sites[]` values regardless of the styled wrapper.
+    await this.page
+      .locator(`input[name="selected_sites[]"][value="${id}"]`)
+      .check({ force: true });
+
+    // The status filter is a Fomantic dropdown over a real <select>; set the
+    // underlying value and fire change rather than driving the styled menu.
+    await this.page.evaluate(() => {
+      const sel = document.querySelector<HTMLSelectElement>('#mainwp_plugins_search_by_status');
+      if (sel) {
+        sel.value = 'installed';
+        sel.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    });
+
+    // Force the click: cloudways admin pages keep shifting layout, so waiting for
+    // the button to be "stable" times out. The handler is bound to the element, so
+    // a forced click still fires the search.
+    await this.page.locator('#mainwp-show-plugins').click({ force: true });
+    // Results render in place; wait for at least one row for this site to appear.
+    const slug = encodeURIComponent(pluginFile);
+    const rowSel = `div.mainwp-manage-plugin-item-website[site-url*="${host}"][plugin-slug="${slug}"]`;
+    const row = this.page.locator(rowSel);
+    try {
+      await row.first().waitFor({ state: 'attached', timeout: 15_000 });
+    } catch {
+      return 'absent';
+    }
+
+    if ((await row.locator('i.circle.green.icon').count()) > 0) {
+      return 'active';
+    }
+    if ((await row.locator('i.circle.red.icon').count()) > 0) {
+      return 'inactive';
+    }
+    return 'absent';
+  }
 }

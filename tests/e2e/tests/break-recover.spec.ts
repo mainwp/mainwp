@@ -120,16 +120,39 @@ test.describe('break / recover', () => {
     }
   });
 
-  test.fixme('dashboard reflects the child plugin change after sync', async ({ page }) => {
+  test('dashboard reflects the child plugin change after sync', async ({ page }) => {
     test.skip(!dashConfigured, 'Dashboard creds not set.');
-    // CONFIRM the assertion surface, then promote: deactivate ENV.togglePlugin on
-    // ENV.toggleChildUrl, dash.syncSite(child), then open PluginsManage
-    // (admin.php?page=PluginsManage), search that plugin scoped to the site, and
-    // assert its status label is Inactive (i.circle.red) — see page-mainwp-plugins.php
-    // line ~1410. Reactivate + sync and assert it flips to Active (i.circle.green).
-    // syncSite() and the row helpers in lib/dashboard.ts are already in place.
+    test.setTimeout(4 * 60_000); // two child toggles + two single-site syncs + PluginsManage reads.
+    const child = ENV.toggleChildUrl;
+    const plugin = ENV.togglePlugin;
     const dash = new Dashboard(page);
-    await dash.login();
-    expect(ENV.toggleChildUrl).toBeTruthy();
+
+    // Known starting state (active). 'absent' => the toggle plugin is not installed.
+    const start = await setPluginActive(page, child, plugin, true);
+    test.skip(start === 'absent', `Toggle plugin "${plugin}" is not installed on ${child}.`);
+
+    try {
+      // Deactivate on the child, sync, and the dashboard's stored data should report Inactive.
+      const off = await setPluginActive(page, child, plugin, false);
+      expect(off).not.toBe('absent');
+      await dash.login();
+      await dash.syncSite(child);
+      await page.waitForTimeout(8_000); // let the single-site sync land in stored data.
+      await expect
+        .poll(() => dash.pluginStatusOnSite(child, plugin), { timeout: 90_000, intervals: [5_000] })
+        .toBe('inactive');
+
+      // Reactivate, sync, and the dashboard should flip it back to Active.
+      await setPluginActive(page, child, plugin, true);
+      await dash.login();
+      await dash.syncSite(child);
+      await page.waitForTimeout(8_000);
+      await expect
+        .poll(() => dash.pluginStatusOnSite(child, plugin), { timeout: 90_000, intervals: [5_000] })
+        .toBe('active');
+    } finally {
+      // Always leave the plugin active on the child.
+      await setPluginActive(page, child, plugin, true);
+    }
   });
 });

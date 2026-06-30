@@ -53,7 +53,10 @@ test.describe('real path', () => {
     // Real native backup of the designated child, then restore that snapshot back
     // to it. runNativeBackup waits for "Backup complete."; restoreLatestSnapshot
     // drives the restore to its terminal state and throws unless it completed.
-    await dash.runNativeBackup(id!);
+    // Passing the child URL makes the backup self-recovering: a task left stuck by
+    // an interrupted prior run is cleared before retrying, so the suite stays
+    // usable by default without a hand-cleared child between runs.
+    await dash.runNativeBackup(id!, ENV.backupChildUrl);
     await dash.restoreLatestSnapshot(id!, ENV.backupChildUrl);
   });
 });

@@ -332,6 +332,26 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * With native backups enabled, the restore surface offers a "Cancel backup"
+	 * affordance wired to the native cancel endpoint, so a stuck backup that no
+	 * longer self-heals can be cleared from the dashboard.
+	 *
+	 * @return void
+	 */
+	public function test_cancel_backup_button_and_endpoint_present() {
+		update_option( 'mainwp_enableNativeBackups', 1 );
+
+		$output = $this->render_page();
+
+		$this->assertStringContainsString( 'mainwp-native-backup-cancel-btn', $output, 'The Cancel backup button must render under native backups.' );
+		$this->assertStringContainsString( 'mainwp_native_backup_cancel', $output, 'The cancel endpoint must be wired.' );
+		$this->assertStringContainsString( 'nativeBackupCancel', $output, 'The cancel nonce must be passed to the page.' );
+		$this->assertStringContainsString( 'function showCancelBackup', $output, 'The cancel toggle helper must be present.' );
+
+		delete_option( 'mainwp_enableNativeBackups' );
+	}
+
+	/**
 	 * A restore that failed but rolled the database back reassures the user
 	 * their data is safe, keyed off the child's rolled-back error code rather
 	 * than the raw error text.

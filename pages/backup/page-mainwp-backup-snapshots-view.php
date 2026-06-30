@@ -112,6 +112,9 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     <button type="button" class="ui green button<?php echo $site_id > 0 ? '' : ' disabled'; ?>" id="mainwp-native-backup-now-btn" <?php disabled( 0, $site_id ); ?>>
                         <i class="cloud upload alternate icon"></i><?php esc_html_e( 'Back up now', 'mainwp' ); ?>
                     </button>
+                    <button type="button" class="ui button" id="mainwp-native-backup-cancel-btn" style="display: none;">
+                        <i class="times icon"></i><?php esc_html_e( 'Cancel backup', 'mainwp' ); ?>
+                    </button>
                     <span id="mainwp-native-backup-now-status" class="mainwp-native-backup-now-status" style="margin-left: 1em; color: var(--mainwp-text-color, inherit);"></span>
                 </div>
                     <?php $backup_now_local_only = $site_id > 0 && empty( MainWP_DB_Backup::instance()->manual_backup_task_destinations( $site_id ) ); ?>
@@ -205,7 +208,8 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 cancel:   '<?php echo esc_js( wp_create_nonce( 'mainwp_restore_cancel' ) ); ?>',
                 rollback: '<?php echo esc_js( wp_create_nonce( 'mainwp_restore_rollback' ) ); ?>',
                 nativeBackupInitiate: '<?php echo esc_js( wp_create_nonce( 'mainwp_native_backup_initiate' ) ); ?>',
-                nativeBackupProgress: '<?php echo esc_js( wp_create_nonce( 'mainwp_native_backup_progress' ) ); ?>'
+                nativeBackupProgress: '<?php echo esc_js( wp_create_nonce( 'mainwp_native_backup_progress' ) ); ?>',
+                nativeBackupCancel: '<?php echo esc_js( wp_create_nonce( 'mainwp_native_backup_cancel' ) ); ?>'
             };
             var statusLabels = <?php echo wp_json_encode( $labels ); ?>;
             var currentSite = <?php echo (int) $site_id; ?>;
@@ -579,6 +583,12 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 $( '#mainwp-native-backup-now-btn' ).prop( 'disabled', false ).removeClass( 'disabled' );
             }
 
+            // Offer "Cancel backup" while a run is in flight, or after the child
+            // refuses a new backup because a prior task is still stuck on it.
+            function showCancelBackup( show ) {
+                $( '#mainwp-native-backup-cancel-btn' ).css( 'display', show ? '' : 'none' ).prop( 'disabled', false ).removeClass( 'disabled' );
+            }
+
             function pollBackup() {
                 $.post( ajaxurl, { action: 'mainwp_native_backup_progress', security: nonces.nativeBackupProgress, site_id: currentSite }, function ( data ) {
                     backupPollRetries = 0; // A response arrived: clear the transient-failure count.
@@ -592,6 +602,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         stopBackupTimers();
                         setBackupStatus( '<?php echo esc_js( esc_html__( 'Backup complete.', 'mainwp' ) ); ?>', false );
                         reenableBackupBtn();
+                        showCancelBackup( false );
                         loadSnapshots( currentSite );
                         return;
                     }
@@ -599,6 +610,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         stopBackupTimers();
                         setBackupStatus( data.error || '<?php echo esc_js( esc_html__( 'Backup failed.', 'mainwp' ) ); ?>', true );
                         reenableBackupBtn();
+                        showCancelBackup( false );
                         return;
                     }
 
@@ -650,6 +662,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     return;
                 }
                 $( this ).prop( 'disabled', true ).addClass( 'disabled' );
+                showCancelBackup( true );
                 stopBackupTimers();
                 backupStartTime = Date.now();
                 backupLastPhase = null;
@@ -672,6 +685,30 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     stopBackupTimers();
                     setBackupStatus( '<?php echo esc_js( esc_html__( 'Could not start the backup. Please try again.', 'mainwp' ) ); ?>', true );
                     reenableBackupBtn();
+                } );
+            } );
+
+            // Cancel/clear a stuck or unwanted backup. Tells the child to drive
+            // its active backup task terminal so a new backup is no longer blocked.
+            $( '#mainwp-native-backup-cancel-btn' ).on( 'click', function () {
+                if ( $( this ).prop( 'disabled' ) || ! ( currentSite > 0 ) ) {
+                    return;
+                }
+                $( this ).prop( 'disabled', true ).addClass( 'disabled' );
+                setBackupStatus( '<?php echo esc_js( esc_html__( 'Cancelling backup...', 'mainwp' ) ); ?>', false );
+                $.post( ajaxurl, { action: 'mainwp_native_backup_cancel', security: nonces.nativeBackupCancel, site_id: currentSite }, function ( response ) {
+                    if ( response.error ) {
+                        setBackupStatus( response.error, true );
+                        $( '#mainwp-native-backup-cancel-btn' ).prop( 'disabled', false ).removeClass( 'disabled' );
+                        return;
+                    }
+                    stopBackupTimers();
+                    setBackupStatus( '<?php echo esc_js( esc_html__( 'Backup cancelled.', 'mainwp' ) ); ?>', false );
+                    showCancelBackup( false );
+                    reenableBackupBtn();
+                }, 'json' ).fail( function () {
+                    setBackupStatus( '<?php echo esc_js( esc_html__( 'Could not cancel the backup. Please try again.', 'mainwp' ) ); ?>', true );
+                    $( '#mainwp-native-backup-cancel-btn' ).prop( 'disabled', false ).removeClass( 'disabled' );
                 } );
             } );
 

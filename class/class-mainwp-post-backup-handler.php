@@ -103,6 +103,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             $this->add_action( 'mainwp_restore_rollback', array( &$this, 'mainwp_restore_rollback' ) );
             $this->add_action( 'mainwp_native_backup_initiate', array( &$this, 'mainwp_native_backup_initiate' ) );
             $this->add_action( 'mainwp_native_backup_progress', array( &$this, 'mainwp_native_backup_progress' ) );
+            $this->add_action( 'mainwp_native_backup_cancel', array( &$this, 'mainwp_native_backup_cancel' ) );
         }
         // Intentionally not capability-gated: the backup-before-update check is
         // read-only and used by the updates flow, where a user without backup
@@ -561,6 +562,63 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             array(
                 'status' => 'failed',
                 'error'  => '' !== $errors ? static::humanize_backup_errors( $errors ) : esc_html__( 'The on-demand backup did not produce a snapshot.', 'mainwp' ),
+            )
+        );
+    }
+
+    /**
+     * Cancel a stuck or unwanted native backup on a child.
+     *
+     * An interrupted backup leaves a non-terminal task on the child that blocks
+     * every new backup, and on an idle child the watchdog cron may never fire to
+     * clear it. This is the Dashboard escape hatch: it tells the child to cancel
+     * its active backup (passing the known child task id, or letting the child
+     * resolve its single active backup when the Dashboard no longer holds the
+     * id), then stops treating the local manual run as in-flight so the UI
+     * reflects the cancel at once.
+     */
+    public function mainwp_native_backup_cancel() {
+        $this->secure_request( 'mainwp_native_backup_cancel' );
+        $site_id = isset( $_POST['site_id'] ) ? (int) $_POST['site_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by secure_request above.
+
+        $website = $this->authorize_restore_site( $site_id );
+        if ( null === $website ) {
+            return;
+        }
+
+        // Pass the child task id when the Dashboard still has it (precise), and
+        // fall back to the child resolving its single active backup otherwise.
+        $child_task_id = '';
+        $task          = MainWP_DB_Backup::instance()->get_manual_backup_task( $site_id );
+        if ( ! empty( $task ) ) {
+            $progress = MainWP_DB_Backup::instance()->get_backup_task_progress( (int) $task->id, $site_id );
+            if ( ! empty( $progress->child_backup_task_id ) ) {
+                $child_task_id = (string) $progress->child_backup_task_id;
+            }
+        }
+
+        try {
+            $information = MainWP_Connect::fetch_url_authed( $website, 'backup_task_cancel', array( 'task_id' => $child_task_id ), false, false, false );
+        } catch ( \Exception $e ) {
+            wp_send_json( array( 'error' => $e->getMessage() ) );
+            return;
+        }
+
+        if ( isset( $information['error'] ) ) {
+            wp_send_json( array( 'error' => is_string( $information['error'] ) ? $information['error'] : esc_html__( 'The child site could not cancel the backup.', 'mainwp' ) ) );
+            return;
+        }
+
+        // Close the local manual run so the next poll does not re-report it as
+        // running; the child task is already terminal.
+        if ( ! empty( $task ) ) {
+            MainWP_DB_Backup::instance()->update_backup_task_with_values( (int) $task->id, array( 'completed' => time() ) );
+        }
+
+        wp_send_json(
+            array(
+                'status' => 'cancelled',
+                'result' => isset( $information['result'] ) ? $information['result'] : 'ok',
             )
         );
     }

@@ -226,29 +226,74 @@ export class Dashboard {
    * status line ends at "Backup complete." and a restore-able snapshot then
    * appears in the catalog. The Back up now click is forced because cloudways
    * admin pages keep shifting layout (a stable click times out).
+   *
+   * When `childUrl` is given the run is self-recovering: a prior interrupted run
+   * can leave a backup task that never went terminal (on an idle child the
+   * watchdog cron never fires), which blocks every new backup with an
+   * "in progress" notice. On that branch this clears the stuck task once
+   * (clearStuckBackup) and retries, so the suite does not need a hand-cleared
+   * child between runs. If it still cannot start, it throws an actionable error.
    */
-  async runNativeBackup(siteId: string, timeoutMs = 20 * 60_000): Promise<void> {
+  async runNativeBackup(siteId: string, childUrl = '', timeoutMs = 20 * 60_000): Promise<void> {
     await this.openNativeBackups(siteId);
     await this.page.locator('#mainwp-native-backup-now-btn').click({ force: true });
     const status = this.page.locator('#mainwp-native-backup-now-status');
     const deadline = Date.now() + timeoutMs;
     let last = '';
+    let recovered = false;
     while (Date.now() < deadline) {
       await this.page.waitForTimeout(5_000);
       last = ((await status.textContent()) ?? '').trim();
       if (/complete/i.test(last)) {
         return;
       }
-      // Fail fast: a backup or restore already running rejects with a "try again"
-      // notice; do not wait out the whole timeout for a state that will not change.
+      // A backup or restore already running rejects with a "try again" notice.
       if (/in progress|try again|already/i.test(last)) {
-        throw new Error(`Backup did not start (another operation in progress): ${last}`);
+        // One self-recovery attempt: clear a stuck task left by a prior run,
+        // then re-trigger the backup. Without childUrl (or after recovery has
+        // already been tried) fail with an actionable message instead of
+        // waiting out the whole timeout for a state that will not change.
+        if (childUrl && !recovered) {
+          recovered = true;
+          await this.clearStuckBackup(siteId, childUrl);
+          await this.page.locator('#mainwp-native-backup-now-btn').click({ force: true });
+          continue;
+        }
+        throw new Error(
+          `Backup did not start (another operation in progress): ${last}. A prior ` +
+            `backup task is stuck on ${childUrl || 'the child'}; clear it from the ` +
+            `dashboard Snapshots page ("Cancel backup") or drive the child wp-cron, then re-run.`,
+        );
       }
       if (/fail|error/i.test(last)) {
         throw new Error(`Backup failed: ${last}`);
       }
     }
     throw new Error(`Backup did not complete within ${timeoutMs}ms; last status: ${last}`);
+  }
+
+  /**
+   * Clear a stuck backup task that blocks a new backup. Uses the product's own
+   * Cancel affordance first (it forces the child task terminal immediately), and
+   * then drives the child's WP-Cron a few times as a backstop so the backup
+   * watchdog can push any remaining stalled task terminal — the browser-only
+   * recovery on a testbed with no SSH. Best-effort; cron errors are ignored. The
+   * page is re-opened at the end so the caller's retry clicks a fresh button.
+   */
+  async clearStuckBackup(siteId: string, childUrl: string, cronHits = 4, spacingMs = 15_000): Promise<void> {
+    await this.openNativeBackups(siteId);
+    const cancel = this.page.locator('#mainwp-native-backup-cancel-btn');
+    if (await cancel.count()) {
+      await cancel.click({ force: true });
+      await this.page.waitForTimeout(5_000);
+    }
+    for (let i = 0; i < cronHits; i++) {
+      await this.page.request
+        .get(`${childUrl}/wp-cron.php?doing_wp_cron=1`, { timeout: 30_000 })
+        .catch(() => {});
+      await this.page.waitForTimeout(spacingMs);
+    }
+    await this.openNativeBackups(siteId);
   }
 
   /**

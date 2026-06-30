@@ -37,13 +37,23 @@ test.describe('real path', () => {
     await dash.waitForSyncComplete();
   });
 
-  test.fixme('native backup then restore on the designated child', async ({ page }) => {
+  test('native backup then restore on the designated child', async ({ page }) => {
     test.skip(!ENV.backupChildUrl, 'REMOTE_TEST_BACKUP_CHILD_URL not set.');
+    test.skip(
+      !ENV.runDestructive,
+      'Set REMOTE_TEST_RUN_DESTRUCTIVE=1 to run the destructive native backup/restore.',
+    );
     test.setTimeout(30 * 60_000); // real backup + restore can take many minutes.
     const dash = new Dashboard(page);
     await dash.login();
-    // CONFIRM: backup trigger + progress + restore controls for this build.
-    // 1) open the designated child, 2) start a native backup, 3) wait for completion,
-    // 4) start a restore, 5) assert the restore reaches "completed".
+
+    const id = await dash.siteId(ENV.backupChildUrl);
+    expect(id, `backup child ${ENV.backupChildUrl} is connected to the dashboard`).toBeTruthy();
+
+    // Real native backup of the designated child, then restore that snapshot back
+    // to it. runNativeBackup waits for "Backup complete."; restoreLatestSnapshot
+    // drives the restore to its terminal state and throws unless it completed.
+    await dash.runNativeBackup(id!);
+    await dash.restoreLatestSnapshot(id!, ENV.backupChildUrl);
   });
 });

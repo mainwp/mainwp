@@ -207,4 +207,107 @@ export class Dashboard {
     }
     return 'absent';
   }
+
+  /**
+   * Open the native Snapshots page scoped to one site. The `site_id` query selects
+   * the site, which enables the "Back up now" button and loads that site's
+   * restore catalog.
+   */
+  async openNativeBackups(siteId: string): Promise<void> {
+    await this.page.goto(
+      `${ENV.dashUrl}/wp-admin/admin.php?page=ManageBackupsSnapshots&site_id=${siteId}`,
+      { waitUntil: 'domcontentloaded' },
+    );
+    await this.page.waitForTimeout(2_000);
+  }
+
+  /**
+   * Trigger a native backup of the site and wait until it reports complete. The
+   * status line ends at "Backup complete." and a restore-able snapshot then
+   * appears in the catalog. The Back up now click is forced because cloudways
+   * admin pages keep shifting layout (a stable click times out).
+   */
+  async runNativeBackup(siteId: string, timeoutMs = 20 * 60_000): Promise<void> {
+    await this.openNativeBackups(siteId);
+    await this.page.locator('#mainwp-native-backup-now-btn').click({ force: true });
+    const status = this.page.locator('#mainwp-native-backup-now-status');
+    const deadline = Date.now() + timeoutMs;
+    let last = '';
+    while (Date.now() < deadline) {
+      await this.page.waitForTimeout(5_000);
+      last = ((await status.textContent()) ?? '').trim();
+      if (/complete/i.test(last)) {
+        return;
+      }
+      // Fail fast: a backup or restore already running rejects with a "try again"
+      // notice; do not wait out the whole timeout for a state that will not change.
+      if (/in progress|try again|already/i.test(last)) {
+        throw new Error(`Backup did not start (another operation in progress): ${last}`);
+      }
+      if (/fail|error/i.test(last)) {
+        throw new Error(`Backup failed: ${last}`);
+      }
+    }
+    throw new Error(`Backup did not complete within ${timeoutMs}ms; last status: ${last}`);
+  }
+
+  /**
+   * Restore the newest snapshot to the site and wait until it reports completed.
+   *
+   * DESTRUCTIVE: replaces the site's files and database with the snapshot. The
+   * pre-restore safety backup is turned off here to keep the run bounded — it is a
+   * rollback convenience, not part of the backup→restore round-trip under test.
+   *
+   * The restore's "Sending files" phase advances on WP-Cron — the dashboard pushes
+   * the archive and the child processes it — and neither spawns from the admin-ajax
+   * progress polls. So both wp-crons are nudged each tick; the child's cron in
+   * particular is what unblocks "Sending files". In production, real traffic or a
+   * system cron does this for free. Restore time scales with snapshot size (a
+   * ~50MB site completes in a few minutes; a several-hundred-MB site can exceed the
+   * default timeout), so point REMOTE_TEST_BACKUP_CHILD_URL at a small site.
+   */
+  async restoreLatestSnapshot(siteId: string, childUrl: string, timeoutMs = 25 * 60_000): Promise<void> {
+    await this.openNativeBackups(siteId);
+    const links = this.page.locator('a.mainwp-restore-snapshot');
+    await expect(links.first(), 'a restore-able snapshot is offered').toBeAttached();
+    // Restore the newest snapshot (highest id) rather than relying on table order.
+    const ids = await links.evaluateAll((els) =>
+      els.map((e) => parseInt(e.getAttribute('data-snapshot') ?? '0', 10)).filter((n) => n > 0),
+    );
+    const newest = Math.max(...ids);
+    const snapshot = this.page.locator(`a.mainwp-restore-snapshot[data-snapshot="${newest}"]`);
+    await snapshot.click({ force: true });
+    await this.page.locator('#mainwp-restore-modal').waitFor({ state: 'visible' });
+    await this.page.locator('#mainwp-restore-presnapshot').uncheck({ force: true });
+    await this.page.locator('#mainwp-restore-consent').check({ force: true });
+    await this.page.locator('#mainwp-restore-start-btn').click({ force: true });
+
+    const status = this.page.locator('#mainwp-restore-status-text');
+    const result = this.page.locator('#mainwp-restore-result-message');
+    const rollback = this.page.locator('#mainwp-restore-rollback-btn');
+    const deadline = Date.now() + timeoutMs;
+    let last = '';
+    while (Date.now() < deadline) {
+      // Drive both wp-crons each tick (see method doc): the dashboard cron pushes
+      // the archive and the child cron processes it. The child's cron is what
+      // unblocks "Sending files"; without it the restore stalls there.
+      await this.page.request
+        .get(`${ENV.dashUrl}/wp-cron.php?doing_wp_cron=1`, { timeout: 30_000 })
+        .catch(() => {});
+      await this.page.request
+        .get(`${childUrl}/wp-cron.php?doing_wp_cron=1`, { timeout: 30_000 })
+        .catch(() => {});
+      await this.page.waitForTimeout(5_000);
+      const sText = ((await status.textContent()) ?? '').trim();
+      const rText = (await result.isVisible()) ? ((await result.textContent()) ?? '').trim() : '';
+      last = `${sText} | ${rText}`;
+      if (/restored and responds normally/i.test(rText) || /restore completed/i.test(sText)) {
+        return;
+      }
+      if (await rollback.isVisible()) {
+        throw new Error(`Restore failed (rollback offered): ${last}`);
+      }
+    }
+    throw new Error(`Restore did not reach completed within ${timeoutMs}ms; last status: ${last}`);
+  }
 }

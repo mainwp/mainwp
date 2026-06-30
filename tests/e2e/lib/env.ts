@@ -37,6 +37,13 @@ export const ENV = {
   // (deactivate mainwp-child -> dashboard disconnected -> reconnect). Falls back
   // to the first configured child. Keep this OFF the data-bearing backup child.
   breakChildUrl: trimSlash(process.env.REMOTE_TEST_BREAK_CHILD_URL) || (childUrls[0] ?? ''),
+
+  // Opt-in for the destructive native backup/restore test. That test runs a real
+  // backup and then an irreversible restore on REMOTE_TEST_BACKUP_CHILD_URL, so it
+  // stays skipped unless this is explicitly enabled.
+  runDestructive: ['1', 'true', 'yes'].includes(
+    (process.env.REMOTE_TEST_RUN_DESTRUCTIVE ?? '').trim().toLowerCase(),
+  ),
 };
 
 /** Dashboard login is fully configured (URL + creds). */

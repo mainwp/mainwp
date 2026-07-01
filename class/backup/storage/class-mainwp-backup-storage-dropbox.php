@@ -71,6 +71,13 @@ class MainWP_Backup_Storage_Dropbox implements MainWP_Backup_Storage_Provider { 
     private $transport;
 
     /**
+     * Hosts whose SSRF re-check has already run this operation.
+     *
+     * @var array<string,bool>
+     */
+    private $ssrf_checked_hosts = array();
+
+    /**
      * Constructor.
      *
      * @param array         $settings  Provider settings: app_key, app_secret, refresh_token, base_path.
@@ -360,6 +367,8 @@ class MainWP_Backup_Storage_Dropbox implements MainWP_Backup_Storage_Provider { 
      * @throws \RuntimeException When the transport itself fails.
      */
     private function send( string $url, array $args ) {
+        $this->guard_outbound_host( $url );
+
         $response = call_user_func( $this->transport, $url, $args );
 
         if ( is_wp_error( $response ) ) {
@@ -367,6 +376,29 @@ class MainWP_Backup_Storage_Dropbox implements MainWP_Backup_Storage_Provider { 
         }
 
         return $response;
+    }
+
+    /**
+     * Re-check the request host right before connecting so a DNS rebind cannot
+     * redirect the transfer to a link-local / cloud-metadata address. Dropbox
+     * uses hardcoded public endpoints, so this is defense-in-depth; the result
+     * is cached per host for the operation's lifetime.
+     *
+     * @param string $url Request URL.
+     *
+     * @return void
+     *
+     * @throws \RuntimeException When the host resolves to a blocked address.
+     */
+    private function guard_outbound_host( string $url ): void {
+        $host = (string) wp_parse_url( $url, PHP_URL_HOST );
+        if ( '' === $host || isset( $this->ssrf_checked_hosts[ $host ] ) ) {
+            return;
+        }
+        if ( ! MainWP_Backup_Storage_Destinations::is_safe_host( $host ) ) {
+            throw new \RuntimeException( 'Storage destination host resolves to a link-local or cloud-metadata address: ' . esc_html( $host ), 0 );
+        }
+        $this->ssrf_checked_hosts[ $host ] = true;
     }
 
     /**

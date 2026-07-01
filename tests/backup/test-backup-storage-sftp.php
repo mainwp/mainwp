@@ -511,4 +511,19 @@ class MainWP_Backup_Storage_SFTP_Test extends \WP_UnitTestCase { // phpcs:ignore
 			$this->assertSame( 401, $e->getCode() );
 		}
 	}
+
+	/**
+	 * A host that resolves to a link-local / cloud-metadata address is blocked
+	 * before the phpseclib connection opens. A private/LAN SFTP host is a
+	 * supported self-hosted target and is not blocked.
+	 *
+	 * @return void
+	 */
+	public function test_default_connection_blocked_when_host_is_link_local() {
+		$provider = new MainWP_Backup_Storage_SFTP( array( 'host' => '169.254.169.254' ) );
+
+		$this->expectException( \RuntimeException::class );
+		$this->expectExceptionMessage( 'link-local or cloud-metadata' );
+		$provider->default_connection();
+	}
 }

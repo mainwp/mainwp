@@ -104,6 +104,14 @@ class MainWP_Backup_Storage_SFTP implements MainWP_Backup_Storage_Provider { // 
         $host = isset( $this->settings['host'] ) ? (string) $this->settings['host'] : '';
         $port = ! empty( $this->settings['port'] ) ? (int) $this->settings['port'] : 22;
 
+        // Re-check the host right before connecting so a DNS rebind cannot
+        // redirect the transfer to a link-local / cloud-metadata address. The
+        // connection is opened once per operation, so no per-request cache is
+        // needed here.
+        if ( '' !== $host && ! MainWP_Backup_Storage_Destinations::is_safe_host( $host ) ) {
+            throw new \RuntimeException( 'Storage destination host resolves to a link-local or cloud-metadata address: ' . esc_html( $host ), 0 );
+        }
+
         $sftp = new \phpseclib3\Net\SFTP( $host, $port, static::CONNECT_TIMEOUT );
 
         $username    = isset( $this->settings['username'] ) ? (string) $this->settings['username'] : '';

@@ -56,6 +56,14 @@ class MainWP_Backup_Storage_S3 implements MainWP_Backup_Storage_Provider, MainWP
     private $signer;
 
     /**
+     * Hosts whose SSRF re-check has already run this operation, so a chunked
+     * upload does not repeat the DNS lookup on every request.
+     *
+     * @var array<string,bool>
+     */
+    private $ssrf_checked_hosts = array();
+
+    /**
      * Constructor.
      *
      * @param array                        $settings  Provider settings: bucket, region, access_key, secret_key, endpoint, path_style.
@@ -290,6 +298,8 @@ class MainWP_Backup_Storage_S3 implements MainWP_Backup_Storage_Provider, MainWP
      * @throws \RuntimeException When the transport itself fails.
      */
     private function request( string $method, string $url, array $headers = array(), ?string $body = null, array $extra_args = array() ) {
+        $this->guard_outbound_host( $url );
+
         $payload_hash = hash( 'sha256', null === $body ? '' : $body );
 
         $signed = $this->signer->sign(
@@ -322,6 +332,29 @@ class MainWP_Backup_Storage_S3 implements MainWP_Backup_Storage_Provider, MainWP
         }
 
         return $response;
+    }
+
+    /**
+     * Re-check the request host right before connecting so a DNS rebind cannot
+     * redirect the transfer to a link-local / cloud-metadata address. The
+     * result is cached per host for the operation's lifetime, since a chunked
+     * upload hits the same host many times.
+     *
+     * @param string $url Request URL.
+     *
+     * @return void
+     *
+     * @throws \RuntimeException When the host resolves to a blocked address.
+     */
+    private function guard_outbound_host( string $url ): void {
+        $host = (string) wp_parse_url( $url, PHP_URL_HOST );
+        if ( '' === $host || isset( $this->ssrf_checked_hosts[ $host ] ) ) {
+            return;
+        }
+        if ( ! MainWP_Backup_Storage_Destinations::is_safe_host( $host ) ) {
+            throw new \RuntimeException( 'Storage destination host resolves to a link-local or cloud-metadata address: ' . esc_html( $host ), 0 );
+        }
+        $this->ssrf_checked_hosts[ $host ] = true;
     }
 
     /**

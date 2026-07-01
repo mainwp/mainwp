@@ -443,4 +443,31 @@ class MainWP_Backup_Storage_S3_Test extends \WP_UnitTestCase {
 		$this->assertFalse( $result['ok'] );
 		$this->assertStringContainsString( '403', $result['error'] );
 	}
+
+	/**
+	 * A request whose endpoint resolves to a link-local / cloud-metadata
+	 * address is blocked before the transport runs: this is the DNS-rebind
+	 * re-check. A private/loopback endpoint (self-hosted MinIO) is NOT blocked
+	 * (see test_path_style_custom_endpoint).
+	 *
+	 * @return void
+	 */
+	public function test_request_blocked_when_endpoint_is_link_local() {
+		$provider = $this->make_provider(
+			array( $this->response( 200 ) ),
+			array(
+				'endpoint'   => 'http://169.254.169.254',
+				'path_style' => 1,
+			)
+		);
+
+		try {
+			$provider->put_object( 'k.bin', 'x' );
+			$this->fail( 'A link-local endpoint must throw.' );
+		} catch ( \RuntimeException $e ) {
+			$this->assertStringContainsString( 'link-local or cloud-metadata', $e->getMessage() );
+		}
+
+		$this->assertCount( 0, $this->requests, 'The transport must not run for a blocked host.' );
+	}
 }

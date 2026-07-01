@@ -373,4 +373,64 @@ class MainWP_Backup_Storage_Destinations_Test extends \WP_UnitTestCase {
 		$this->assertFileExists( $this->key_file_path( $new_file_key ) );
 		$this->assertFileDoesNotExist( $this->key_file_path( $old_file_key ), 'The superseded key file must be retired.' );
 	}
+
+	/**
+	 * is_safe_host() blocks only the never-legitimate high-impact ranges:
+	 * IPv4 link-local 169.254.0.0/16 (the cloud-metadata endpoint) and IPv6
+	 * link-local fe80::/10. Public addresses pass.
+	 *
+	 * @return void
+	 */
+	public function test_is_safe_host_blocks_link_local_allows_public() {
+		$this->assertTrue( MainWP_Backup_Storage_Destinations::is_safe_host( '8.8.8.8' ), 'A public IPv4 is safe.' );
+		$this->assertTrue( MainWP_Backup_Storage_Destinations::is_safe_host( '2001:4860:4860::8888' ), 'A public IPv6 is safe.' );
+
+		$this->assertFalse( MainWP_Backup_Storage_Destinations::is_safe_host( '169.254.169.254' ), 'The cloud-metadata endpoint is blocked.' );
+		$this->assertFalse( MainWP_Backup_Storage_Destinations::is_safe_host( '169.254.1.1' ), 'IPv4 link-local is blocked.' );
+		$this->assertFalse( MainWP_Backup_Storage_Destinations::is_safe_host( 'fe80::1' ), 'IPv6 link-local is blocked.' );
+		$this->assertFalse( MainWP_Backup_Storage_Destinations::is_safe_host( '::ffff:169.254.169.254' ), 'IPv4-mapped metadata address is blocked.' );
+		$this->assertFalse( MainWP_Backup_Storage_Destinations::is_safe_host( 'fd00:ec2::254' ), 'The AWS IPv6 metadata endpoint is blocked.' );
+	}
+
+	/**
+	 * Loopback and RFC1918 are allowed: self-hosted storage (MinIO on
+	 * 127.0.0.1, a NAS on the LAN) is a supported configuration, so the SSRF
+	 * check must not break it.
+	 *
+	 * @return void
+	 */
+	public function test_is_safe_host_allows_loopback_and_rfc1918() {
+		$this->assertTrue( MainWP_Backup_Storage_Destinations::is_safe_host( '127.0.0.1' ), 'Loopback (self-hosted MinIO) is allowed.' );
+		$this->assertTrue( MainWP_Backup_Storage_Destinations::is_safe_host( '::1' ), 'IPv6 loopback is allowed.' );
+		$this->assertTrue( MainWP_Backup_Storage_Destinations::is_safe_host( '10.0.0.5' ), 'RFC1918 10/8 (LAN storage) is allowed.' );
+		$this->assertTrue( MainWP_Backup_Storage_Destinations::is_safe_host( '172.16.4.4' ), 'RFC1918 172.16/12 is allowed.' );
+		$this->assertTrue( MainWP_Backup_Storage_Destinations::is_safe_host( '192.168.1.50' ), 'RFC1918 192.168/16 is allowed.' );
+		$this->assertTrue( MainWP_Backup_Storage_Destinations::is_safe_host( 'fd12:3456:789a::1' ), 'A normal IPv6 ULA (self-hosted storage) is allowed.' );
+	}
+
+	/**
+	 * An unresolvable host fails open: a DNS blip is not evidence of a rebind,
+	 * and blocking on it would turn a transient failure into a permanent one.
+	 * An empty host is a no-op the transport handles.
+	 *
+	 * @return void
+	 */
+	public function test_is_safe_host_fails_open_on_unresolvable_and_empty() {
+		$this->assertTrue( MainWP_Backup_Storage_Destinations::is_safe_host( 'no-such-host.invalid' ), 'An unresolvable host fails open.' );
+		$this->assertTrue( MainWP_Backup_Storage_Destinations::is_safe_host( '' ), 'An empty host is a no-op.' );
+	}
+
+	/**
+	 * The mainwp_backup_skip_ssrf_check filter is an escape hatch for setups
+	 * that must reach an otherwise-blocked address.
+	 *
+	 * @return void
+	 */
+	public function test_is_safe_host_skip_filter_bypasses_block() {
+		add_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		$safe = MainWP_Backup_Storage_Destinations::is_safe_host( '169.254.169.254' );
+		remove_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+
+		$this->assertTrue( $safe, 'The skip filter allows an otherwise-blocked address.' );
+	}
 }

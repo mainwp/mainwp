@@ -352,4 +352,125 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
         $envelope = json_decode( substr( $stored, strlen( MainWP_Credential_Storage::ENVELOPE_PREFIX ) ), true );
         return is_array( $envelope ) && ! empty( $envelope['file_key'] ) ? (string) $envelope['file_key'] : '';
     }
+
+    /**
+     * Whether a storage destination host is safe to connect to right before a
+     * transfer. This re-checks the host at request time so a DNS rebind between
+     * config-save and use cannot silently redirect a backup to an internal
+     * service; it narrows the rebind window rather than pinning the IP.
+     *
+     * Scope is deliberately narrow: only the never-legitimate, high-impact
+     * ranges are blocked - IPv4 link-local 169.254.0.0/16 (which carries the
+     * AWS/GCP/Azure cloud-metadata endpoint 169.254.169.254) and IPv6
+     * link-local fe80::/10. Loopback and RFC1918 are ALLOWED, because
+     * self-hosted storage (MinIO on 127.0.0.1, a NAS on the LAN) is a supported
+     * configuration and blocking it would break legitimate backups. An
+     * unresolvable host fails open - a DNS blip is not evidence of a rebind.
+     *
+     * @param string $host Hostname or IP literal.
+     *
+     * @return bool True when safe to connect (or unresolvable), false when it
+     *              resolves to a link-local / cloud-metadata address.
+     */
+    public static function is_safe_host( string $host ): bool {
+        $host = trim( $host );
+        if ( '' === $host ) {
+            return true;
+        }
+
+        /**
+         * Filter: bypass the outbound SSRF host check for a destination that
+         * must reach an otherwise-blocked address.
+         *
+         * @param bool   $skip Whether to skip the check. Default false.
+         * @param string $host The host being checked.
+         */
+        if ( apply_filters( 'mainwp_backup_skip_ssrf_check', false, $host ) ) {
+            return true;
+        }
+
+        // An IP literal is validated directly: dns_get_record() on an IP
+        // returns nothing, which would otherwise fail open on a raw metadata IP.
+        if ( filter_var( $host, FILTER_VALIDATE_IP ) ) {
+            return ! self::is_blocked_ip( $host );
+        }
+
+        $ips = self::resolve_host_ips( $host );
+        if ( empty( $ips ) ) {
+            return true; // Unresolvable: fail open, let the real connection fail on its own.
+        }
+
+        foreach ( $ips as $ip ) {
+            if ( self::is_blocked_ip( $ip ) ) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Resolve a hostname to its IPv4 and IPv6 addresses.
+     *
+     * @param string $host Hostname.
+     *
+     * @return string[] Resolved IPs, empty when the host does not resolve.
+     */
+    private static function resolve_host_ips( string $host ): array {
+        $ips     = array();
+        $records = @dns_get_record( $host, DNS_A | DNS_AAAA ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- a resolution failure is handled by the caller (fail open).
+        if ( is_array( $records ) ) {
+            foreach ( $records as $record ) {
+                if ( ! empty( $record['ip'] ) ) {
+                    $ips[] = (string) $record['ip'];
+                } elseif ( ! empty( $record['ipv6'] ) ) {
+                    $ips[] = (string) $record['ipv6'];
+                }
+            }
+        }
+        return $ips;
+    }
+
+    /**
+     * Whether an IP is a never-legitimate, high-impact target that must be
+     * blocked even though other private ranges (loopback, RFC1918, IPv6 ULA)
+     * are allowed for self-hosted storage:
+     *  - IPv4 169.254.0.0/16 link-local, which carries the AWS/GCP/Azure
+     *    metadata endpoint 169.254.169.254 (and its IPv4-mapped IPv6 form),
+     *  - IPv6 fe80::/10 link-local,
+     *  - the AWS IPv6 metadata endpoint fd00:ec2::254 (a specific address in
+     *    ULA space, so the /128 is blocked without blocking all of fc00::/7).
+     *
+     * @param string $ip IP literal.
+     *
+     * @return bool
+     */
+    private static function is_blocked_ip( string $ip ): bool {
+        $packed = @inet_pton( $ip ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- a malformed literal is treated as not blocked.
+        if ( false === $packed ) {
+            return false;
+        }
+
+        $len = strlen( $packed );
+        if ( 4 === $len ) {
+            return 169 === ord( $packed[0] ) && 254 === ord( $packed[1] );
+        }
+
+        if ( 16 === $len ) {
+            // IPv6 link-local fe80::/10: first byte 0xFE, top two bits of the second byte are 10.
+            if ( 0xFE === ord( $packed[0] ) && 0x80 === ( ord( $packed[1] ) & 0xC0 ) ) {
+                return true;
+            }
+            // AWS IPv6 instance-metadata endpoint fd00:ec2::254.
+            if ( inet_pton( 'fd00:ec2::254' ) === $packed ) {
+                return true;
+            }
+            // IPv4-mapped IPv6 ::ffff:169.254.x.x.
+            if ( "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF" === substr( $packed, 0, 12 ) ) {
+                return 169 === ord( $packed[12] ) && 254 === ord( $packed[13] );
+            }
+        }
+
+        return false;
+    }
 }

@@ -192,11 +192,108 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
     }
 
     /**
+     * Convert a navigation href into a usable URL.
+     *
+     * @param string $href Navigation href.
+     *
+     * @return string Navigation URL.
+     */
+    private static function get_navigation_item_url( $href ) {
+        $href = trim( wp_specialchars_decode( (string) $href, ENT_QUOTES ) );
+
+        if ( empty( $href ) ) {
+            return '';
+        }
+
+        if ( preg_match( '/^https?:\/\//i', $href ) ) {
+            return $href;
+        }
+
+        return admin_url( ltrim( $href, '/' ) );
+    }
+
+    /**
+     * Get dynamic Info subpage items using the legacy left-menu normalization path.
+     *
+     * @return array<int, array<string, mixed>> Info navigation items.
+     */
+    private static function get_filtered_subpage_navigation_items() {
+        $menu_items = array();
+        $core_slugs = array();
+
+        foreach ( static::get_navigation_items( 'left_menu_core' ) as $item ) {
+            if ( empty( $item['show_in_left_menu'] ) ) {
+                continue;
+            }
+
+            $core_slugs[ $item['slug'] ] = true;
+            $menu_items[]                = array(
+                'title'      => $item['title'],
+                'parent_key' => $item['left_menu_parent'],
+                'href'       => $item['href'],
+                'slug'       => $item['slug'],
+                'right'      => '',
+            );
+        }
+
+        MainWP_Menu::init_subpages_left_menu( static::get_subpages(), $menu_items, 'ServerInformation', 'Server' );
+
+        $items = array();
+
+        foreach ( $menu_items as $menu_item ) {
+            if ( empty( $menu_item['slug'] ) || empty( $menu_item['title'] ) || empty( $menu_item['href'] ) ) {
+                continue;
+            }
+
+            if ( isset( $core_slugs[ $menu_item['slug'] ] ) ) {
+                continue;
+            }
+
+            if ( isset( $menu_item['item_slug'] ) ) {
+                if ( MainWP_Menu::is_disable_menu_item( 3, $menu_item['item_slug'] ) ) {
+                    continue;
+                }
+            } elseif ( MainWP_Menu::is_disable_menu_item( 3, $menu_item['slug'] ) ) {
+                continue;
+            }
+
+            $active_slug = 0 === strpos( $menu_item['slug'], 'Server' ) ? substr( $menu_item['slug'], strlen( 'Server' ) ) : $menu_item['slug'];
+
+            $item = array(
+                'slug'                  => $menu_item['slug'],
+                'title'                 => $menu_item['title'],
+                'href'                  => $menu_item['href'],
+                'active_keys'           => array( $active_slug, $menu_item['slug'] ),
+                'show_in_header_nav'    => false,
+                'show_in_subpages_menu' => true,
+                'show_in_left_menu'     => true,
+                'show_in_palette'       => true,
+                'left_menu_parent'      => isset( $menu_item['parent_key'] ) ? $menu_item['parent_key'] : 'ServerInformation',
+                'palette_titles'        => array( esc_html__( 'System Info', 'mainwp' ), $menu_item['title'] ),
+                'menu_hidden'           => false,
+            );
+
+            if ( isset( $menu_item['item_slug'] ) ) {
+                $item['item_slug'] = $menu_item['item_slug'];
+            }
+
+            if ( ! empty( $menu_item['before_title'] ) ) {
+                $item['before_title'] = $menu_item['before_title'];
+                $item['palette_titles'][1] = trim( wp_strip_all_tags( $menu_item['before_title'] ) . ' ' . $menu_item['title'] );
+            }
+
+            $items[] = $item;
+        }
+
+        return $items;
+    }
+
+    /**
      * Get the Info navigation items.
      *
      * @return array<int, array<string, mixed>> Info navigation items.
      */
-    public static function get_navigation_items() {
+    public static function get_navigation_items( $context = 'default' ) {
         $items = array();
 
         foreach ( static::get_core_pages() as $page ) {
@@ -215,15 +312,23 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             );
         }
 
+        if ( 'left_menu_core' === $context ) {
+            return $items;
+        }
+
+        if ( 'command_palette' === $context ) {
+            return array_merge( $items, static::get_filtered_subpage_navigation_items() );
+        }
+
         foreach ( static::get_subpages() as $subPage ) {
             if ( empty( $subPage['slug'] ) || MainWP_Menu::is_disable_menu_item( 3, 'Server' . $subPage['slug'] ) ) {
                 continue;
             }
 
-            $items[] = array(
+            $item = array(
                 'slug'                  => 'Server' . $subPage['slug'],
                 'title'                 => $subPage['title'],
-                'href'                  => 'admin.php?page=Server' . $subPage['slug'],
+                'href'                  => ! empty( $subPage['href'] ) ? $subPage['href'] : 'admin.php?page=Server' . $subPage['slug'],
                 'active_keys'           => array( $subPage['slug'], 'Server' . $subPage['slug'] ),
                 'show_in_header_nav'    => false,
                 'show_in_subpages_menu' => empty( $subPage['menu_hidden'] ),
@@ -233,6 +338,12 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 'palette_titles'        => array( esc_html__( 'System Info', 'mainwp' ), $subPage['title'] ),
                 'menu_hidden'           => ! empty( $subPage['menu_hidden'] ),
             );
+
+            if ( isset( $subPage['item_slug'] ) ) {
+                $item['item_slug'] = $subPage['item_slug'];
+            }
+
+            $items[] = $item;
         }
 
         return $items;
@@ -246,7 +357,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
     public static function get_command_palette_items() {
         $items = array();
 
-        foreach ( static::get_navigation_items() as $item ) {
+        foreach ( static::get_navigation_items( 'command_palette' ) as $item ) {
             if ( empty( $item['show_in_palette'] ) ) {
                 continue;
             }
@@ -308,7 +419,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                     <div class="mainwp_boxoutin"></div>
                     <?php foreach ( static::get_navigation_items() as $item ) { ?>
                         <?php if ( empty( $item['show_in_subpages_menu'] ) ) { continue; } ?>
-                        <a href="<?php echo esc_url( admin_url( $item['href'] ) ); ?>" class="mainwp-submenu"><?php echo esc_html( $item['title'] ); ?></a>
+                        <a href="<?php echo esc_url( static::get_navigation_item_url( $item['href'] ) ); ?>" class="mainwp-submenu"><?php echo esc_html( $item['title'] ); ?></a>
                     <?php } ?>
                 </div>
             </div>
@@ -338,36 +449,38 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             0
         );
 
-        /**
-         * MainWP active menu slugs array.
-         *
-         * @global object
-         */
-        global $_mainwp_menu_active_slugs;
+        $init_sub_subleftmenu = array();
 
-        foreach ( static::get_navigation_items() as $item ) {
-            if ( ! empty( $item['menu_hidden'] ) ) {
-                if ( ! is_array( $_mainwp_menu_active_slugs ) ) {
-                    $_mainwp_menu_active_slugs = array();
-                }
-                $_mainwp_menu_active_slugs[ $item['slug'] ] = 'ServerInformation';
-                continue;
-            }
-
+        foreach ( static::get_navigation_items( 'left_menu_core' ) as $item ) {
             if ( empty( $item['show_in_left_menu'] ) ) {
                 continue;
             }
 
-            MainWP_Menu::add_left_menu(
-                array(
-                    'title'      => $item['title'],
-                    'parent_key' => $item['left_menu_parent'],
-                    'href'       => $item['href'],
-                    'slug'       => $item['slug'],
-                    'right'      => '',
-                ),
-                2
+            $init_sub_subleftmenu[] = array(
+                'title'      => $item['title'],
+                'parent_key' => $item['left_menu_parent'],
+                'href'       => $item['href'],
+                'slug'       => $item['slug'],
+                'right'      => '',
             );
+        }
+
+        if ( empty( $subPages ) ) {
+            $subPages = static::get_subpages();
+        }
+
+        MainWP_Menu::init_subpages_left_menu( $subPages, $init_sub_subleftmenu, 'ServerInformation', 'Server' );
+
+        foreach ( $init_sub_subleftmenu as $item ) {
+            if ( isset( $item['item_slug'] ) ) {
+                if ( MainWP_Menu::is_disable_menu_item( 3, $item['item_slug'] ) ) {
+                    continue;
+                }
+            } elseif ( MainWP_Menu::is_disable_menu_item( 3, $item['slug'] ) ) {
+                continue;
+            }
+
+            MainWP_Menu::add_left_menu( $item, 2 );
         }
     }
 

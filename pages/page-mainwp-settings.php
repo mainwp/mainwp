@@ -184,6 +184,92 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
     }
 
     /**
+     * Convert a navigation href into a usable URL.
+     *
+     * @param string $href Navigation href.
+     *
+     * @return string Navigation URL.
+     */
+    private static function get_navigation_item_url( $href ) {
+        $href = trim( wp_specialchars_decode( (string) $href, ENT_QUOTES ) );
+
+        if ( empty( $href ) ) {
+            return '';
+        }
+
+        if ( preg_match( '/^https?:\/\//i', $href ) ) {
+            return $href;
+        }
+
+        return admin_url( ltrim( $href, '/' ) );
+    }
+
+    /**
+     * Get dynamic Settings subpage items using the legacy left-menu normalization path.
+     *
+     * @return array<int, array<string, mixed>> Settings navigation items.
+     */
+    private static function get_filtered_subpage_navigation_items() {
+        $menu_items = array();
+        $core_slugs = array();
+
+        foreach ( static::get_navigation_items( 'left_menu_core' ) as $item ) {
+            $core_slugs[ $item['slug'] ] = true;
+            $menu_items[]                = array(
+                'title'        => $item['title'],
+                'parent_key'   => 'Settings',
+                'href'         => $item['href'],
+                'slug'         => $item['slug'],
+                'right'        => '',
+                'before_title' => isset( $item['before_title'] ) ? $item['before_title'] : '',
+            );
+        }
+
+        MainWP_Menu::init_subpages_left_menu( static::get_subpages(), $menu_items, 'Settings', 'Settings' );
+
+        $items = array();
+
+        foreach ( $menu_items as $menu_item ) {
+            if ( empty( $menu_item['slug'] ) || empty( $menu_item['title'] ) || empty( $menu_item['href'] ) ) {
+                continue;
+            }
+
+            if ( isset( $core_slugs[ $menu_item['slug'] ] ) ) {
+                continue;
+            }
+
+            if ( isset( $menu_item['item_slug'] ) ) {
+                if ( MainWP_Menu::is_disable_menu_item( 3, $menu_item['item_slug'] ) ) {
+                    continue;
+                }
+            } elseif ( MainWP_Menu::is_disable_menu_item( 3, $menu_item['slug'] ) ) {
+                continue;
+            }
+
+            $active_slug = 0 === strpos( $menu_item['slug'], 'Settings' ) ? substr( $menu_item['slug'], strlen( 'Settings' ) ) : $menu_item['slug'];
+            $item        = array(
+                'slug'        => $menu_item['slug'],
+                'title'       => $menu_item['title'],
+                'href'        => $menu_item['href'],
+                'active_keys' => array( $active_slug, $menu_item['slug'] ),
+                'menu_hidden' => false,
+            );
+
+            if ( ! empty( $menu_item['before_title'] ) ) {
+                $item['before_title'] = $menu_item['before_title'];
+            }
+
+            if ( isset( $menu_item['item_slug'] ) ) {
+                $item['item_slug'] = $menu_item['item_slug'];
+            }
+
+            $items[] = $item;
+        }
+
+        return $items;
+    }
+
+    /**
      * Get the Settings navigation items.
      *
      * @return array<int, array<string, mixed>> Settings navigation items.
@@ -203,33 +289,41 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             );
         }
 
-        foreach ( static::get_subpages() as $subPage ) {
-            if ( empty( $subPage['slug'] ) || MainWP_Menu::is_disable_menu_item( 3, 'Settings' . $subPage['slug'] ) ) {
-                continue;
+        if ( 'command_palette' === $context ) {
+            $dynamic_items = static::get_filtered_subpage_navigation_items();
+        } else {
+            foreach ( static::get_subpages() as $subPage ) {
+                if ( empty( $subPage['slug'] ) || MainWP_Menu::is_disable_menu_item( 3, 'Settings' . $subPage['slug'] ) ) {
+                    continue;
+                }
+
+                $item = array(
+                    'slug'        => 'Settings' . $subPage['slug'],
+                    'title'       => $subPage['title'],
+                    'href'        => ! empty( $subPage['href'] ) ? $subPage['href'] : 'admin.php?page=Settings' . $subPage['slug'],
+                    'active_keys' => array( $subPage['slug'], 'Settings' . $subPage['slug'] ),
+                    'menu_hidden' => ! empty( $subPage['menu_hidden'] ),
+                );
+
+                if ( ! empty( $subPage['before_title'] ) ) {
+                    $item['before_title'] = $subPage['before_title'];
+                }
+
+                if ( isset( $subPage['class'] ) ) {
+                    $item['class'] = $subPage['class'];
+                }
+
+                if ( isset( $subPage['item_slug'] ) ) {
+                    $item['item_slug'] = $subPage['item_slug'];
+                }
+
+                $dynamic_items[] = $item;
             }
-
-            $item = array(
-                'slug'        => 'Settings' . $subPage['slug'],
-                'title'       => $subPage['title'],
-                'href'        => 'admin.php?page=Settings' . $subPage['slug'],
-                'active_keys' => array( $subPage['slug'], 'Settings' . $subPage['slug'] ),
-                'menu_hidden' => ! empty( $subPage['menu_hidden'] ),
-            );
-
-            if ( ! empty( $subPage['before_title'] ) ) {
-                $item['before_title'] = $subPage['before_title'];
-            }
-
-            if ( isset( $subPage['class'] ) ) {
-                $item['class'] = $subPage['class'];
-            }
-
-            $dynamic_items[] = $item;
         }
 
         $base_order = array( 'Settings', 'SettingsAdvanced', 'MonitoringSettings', 'SettingsEmail' );
 
-        if ( 'left_menu' === $context ) {
+        if ( in_array( $context, array( 'left_menu', 'left_menu_core' ), true ) ) {
             $base_order[] = 'MainWPTools';
             $base_order[] = 'CostTrackerSettings';
         } else {
@@ -242,9 +336,11 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             }
         }
 
-        $items = array_merge( $items, $dynamic_items );
+        if ( 'left_menu_core' !== $context ) {
+            $items = array_merge( $items, $dynamic_items );
+        }
 
-        if ( 'left_menu' !== $context && isset( $core_items['MainWPTools'] ) ) {
+        if ( ! in_array( $context, array( 'left_menu', 'left_menu_core' ), true ) && isset( $core_items['MainWPTools'] ) ) {
             $items[] = $core_items['MainWPTools'];
         }
 
@@ -259,7 +355,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
     public static function get_command_palette_items() {
         $items = array();
 
-        foreach ( static::get_navigation_items() as $item ) {
+        foreach ( static::get_navigation_items( 'command_palette' ) as $item ) {
             if ( ! empty( $item['menu_hidden'] ) ) {
                 continue;
             }
@@ -373,7 +469,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 <div class="mainwp_boxout">
                     <div class="mainwp_boxoutin"></div>
                     <?php foreach ( static::get_navigation_items() as $item ) { ?>
-                        <a href="<?php echo esc_url( admin_url( $item['href'] ) ); ?>" class="mainwp-submenu"><?php echo isset( $item['before_title'] ) ? $item['before_title'] . ' ' : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?><?php echo esc_html( $item['title'] ); ?></a>
+                        <a href="<?php echo esc_url( static::get_navigation_item_url( $item['href'] ) ); ?>" class="mainwp-submenu"><?php echo isset( $item['before_title'] ) ? $item['before_title'] . ' ' : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?><?php echo esc_html( $item['title'] ); ?></a>
                     <?php } ?>
                 </div>
             </div>
@@ -404,28 +500,35 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             0
         );
 
-        global $_mainwp_menu_active_slugs;
+        $init_sub_subleftmenu = array();
 
-        foreach ( static::get_navigation_items( 'left_menu' ) as $item ) {
-            if ( ! empty( $item['menu_hidden'] ) ) {
-                if ( ! is_array( $_mainwp_menu_active_slugs ) ) {
-                    $_mainwp_menu_active_slugs = array();
+        foreach ( static::get_navigation_items( 'left_menu_core' ) as $item ) {
+            $init_sub_subleftmenu[] = array(
+                'title'        => $item['title'],
+                'parent_key'   => 'Settings',
+                'href'         => $item['href'],
+                'slug'         => $item['slug'],
+                'right'        => '',
+                'before_title' => isset( $item['before_title'] ) ? $item['before_title'] : '',
+            );
+        }
+
+        if ( empty( $subPages ) ) {
+            $subPages = static::get_subpages();
+        }
+
+        MainWP_Menu::init_subpages_left_menu( $subPages, $init_sub_subleftmenu, 'Settings', 'Settings' );
+
+        foreach ( $init_sub_subleftmenu as $item ) {
+            if ( isset( $item['item_slug'] ) ) {
+                if ( MainWP_Menu::is_disable_menu_item( 3, $item['item_slug'] ) ) {
+                    continue;
                 }
-                $_mainwp_menu_active_slugs[ $item['slug'] ] = 'Settings';
+            } elseif ( MainWP_Menu::is_disable_menu_item( 3, $item['slug'] ) ) {
                 continue;
             }
 
-            MainWP_Menu::add_left_menu(
-                array(
-                    'title'        => $item['title'],
-                    'parent_key'   => 'Settings',
-                    'href'         => $item['href'],
-                    'slug'         => $item['slug'],
-                    'right'        => '',
-                    'before_title' => isset( $item['before_title'] ) ? $item['before_title'] : '',
-                ),
-                2
-            );
+            MainWP_Menu::add_left_menu( $item, 2 );
         }
     }
 

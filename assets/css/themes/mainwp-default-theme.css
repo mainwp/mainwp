@@ -1688,6 +1688,12 @@ body.mainwp-ui.mainwp-custom-theme,
   color: inherit !important;
 }
 
+.mainwp-ui.mainwp-custom-theme .components-modal__frame.commands-command-menu,
+.mainwp-ui.mainwp-custom-theme .commands-command-menu {
+  border-radius: var(--area-radius) !important;
+  overflow: hidden !important;
+}
+
 .mainwp-ui.mainwp-custom-theme #mainwp-top-header .ui.icon.button:not(.red, .green) {
   background: none !important;
   color: var(--mainwp-text) !important;

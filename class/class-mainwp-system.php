@@ -1319,7 +1319,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             $menu_slug = (string) $submenu_item[2];
             $menu_url  = '';
 
-            if ( preg_match( '/\.php($|\?)/', $menu_slug ) || wp_http_validate_url( $menu_slug ) ) {
+            if ( preg_match( '/\.php($|\?)/', $menu_slug ) || $this->is_command_palette_absolute_url( $menu_slug ) ) {
                 $menu_url = $menu_slug;
             } elseif ( ! empty( menu_page_url( $menu_slug, false ) ) ) {
                 $menu_url = wp_specialchars_decode( menu_page_url( $menu_slug, false ), ENT_QUOTES );
@@ -1486,7 +1486,8 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 $registered_pages,
                 $item['slug'],
                 $item['path_titles'],
-                array( 'mainwp settings' )
+                array( 'mainwp settings' ),
+                isset( $item['href'] ) ? $item['href'] : ''
             );
         }
 
@@ -1512,7 +1513,8 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 $registered_pages,
                 $item['slug'],
                 $item['path_titles'],
-                array( 'system info', 'server info' )
+                array( 'system info', 'server info' ),
+                isset( $item['href'] ) ? $item['href'] : ''
             );
         }
 
@@ -1526,10 +1528,11 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @param string                              $page_slug        Registered page slug.
      * @param array<int, string>                  $path_titles      Breadcrumb path labels.
      * @param array<int, string>                  $extra_keywords   Additional search keywords.
+     * @param string                              $href             Optional command href override.
      *
      * @return array<string, mixed>|null Command configuration.
      */
-    private function build_command_palette_registered_command( $registered_pages, $page_slug, $path_titles, $extra_keywords = array() ) {
+    private function build_command_palette_registered_command( $registered_pages, $page_slug, $path_titles, $extra_keywords = array(), $href = '' ) {
         if ( empty( $registered_pages[ $page_slug ]['url'] ) ) {
             return null;
         }
@@ -1558,11 +1561,16 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         }
 
         $label = sprintf( __( 'Go to: MainWP > %s', 'mainwp' ), implode( ' > ', $path_titles ) );
+        $url   = ! empty( $href ) ? $this->normalize_command_palette_url( $href, $page_slug ) : $registered_pages[ $page_slug ]['url'];
+
+        if ( empty( $url ) ) {
+            return null;
+        }
 
         return array(
             'name'        => 'mainwp_tab-' . $page_slug,
             'label'       => $label,
-            'url'         => $registered_pages[ $page_slug ]['url'],
+            'url'         => $url,
             'keywords'    => array_values( array_unique( array_filter( $keywords ) ) ),
             'searchLabel' => $label,
             '_depth'      => count( $path_titles ),
@@ -1746,6 +1754,17 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     }
 
     /**
+     * Check whether a command-palette URL is already absolute.
+     *
+     * @param string $url URL to check.
+     *
+     * @return bool True when the URL is an absolute HTTP(S) URL.
+     */
+    private function is_command_palette_absolute_url( $url ) {
+        return 1 === preg_match( '/^https?:\/\//i', trim( (string) $url ) );
+    }
+
+    /**
      * Normalize a MainWP menu href into a usable URL.
      *
      * @param string $href Menu href.
@@ -1758,14 +1777,14 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $slug = trim( (string) $slug );
 
         if ( empty( $href ) || '#' === $href || 0 === strpos( $href, 'javascript:' ) ) {
-            if ( empty( $slug ) || preg_match( '/\.php($|\?)/', $slug ) || wp_http_validate_url( $slug ) ) {
+            if ( empty( $slug ) || preg_match( '/\.php($|\?)/', $slug ) || $this->is_command_palette_absolute_url( $slug ) ) {
                 return '';
             }
 
             return admin_url( 'admin.php?page=' . $slug );
         }
 
-        if ( wp_http_validate_url( $href ) ) {
+        if ( $this->is_command_palette_absolute_url( $href ) ) {
             return $href;
         }
 

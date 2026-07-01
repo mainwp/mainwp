@@ -682,19 +682,6 @@ class MainWP_Database_Schema_Checker { // phpcs:ignore Generic.Classes.OpeningBr
 
 
     /**
-     * Add prefix to table.
-     *
-     * @param string $table Table name.
-     * @return string
-     */
-    protected static function add_db_table_prefix( $table ) {
-        global $wpdb;
-        return $wpdb->prefix . $table;
-    }
-
-
-
-    /**
      * Method get_core_db_schema_info().
      *
      * @return array Core schema info.

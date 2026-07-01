@@ -415,6 +415,17 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     <em class="mainwp-archive-format-note"><?php esc_html_e( 'For large sites, Tar GZip is the safer choice. It resumes across timeouts, while Zip restarts from the beginning whenever a slice runs out of time.', 'mainwp' ); ?></em>
                 </div>
             </div>
+            <?php $zip_override_style = 'zip' === $archiveFormat ? '' : 'style="display:none"'; ?>
+            <div class="ui grid field" id="mainwp-backup-zip-force-override-wrapper" <?php echo $zip_override_style; //phpcs:ignore -- static attribute. ?>>
+                <label class="six wide column middle aligned"><?php esc_html_e( 'Keep Zip for large sites', 'mainwp' ); ?></label>
+                <div class="ten wide column">
+                    <div class="ui toggle checkbox">
+                        <input type="checkbox" name="mainwp_zip_force_override" id="mainwp-backup-zip-force-override" value="1" <?php echo( isset( $task->zip_force_override ) && 1 === (int) $task->zip_force_override ? 'checked' : '' ); ?>>
+                        <label><?php esc_html_e( 'Keep Zip even when the site is large', 'mainwp' ); ?></label>
+                    </div>
+                    <em><?php esc_html_e( 'A large site on Zip is switched to Tar GZip so the backup can finish across timeouts. Enable this to keep Zip anyway.', 'mainwp' ); ?></em>
+                </div>
+            </div>
             <?php
             $style = isset( $task ) && 'db' === $task->type ? 'style="display: none;"' : '';
             ?>

@@ -256,6 +256,7 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * @param mixed $maximumFileDescriptorsAuto     Auto maximum file discriptors.
      * @param mixed $maximumFileDescriptors         Maximum file descriptors.
      * @param mixed $loadFilesBeforeZip             Load files before Zip.
+     * @param mixed $zip_force_override             Keep Zip over the large-site guardrail (1) instead of auto-switching to tar.gz (0).
      *
      * @return int|false The number of rows added, or false on error.
      *
@@ -281,7 +282,8 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         $maximumFileDescriptorsOverride,
         $maximumFileDescriptorsAuto,
         $maximumFileDescriptors,
-        $loadFilesBeforeZip
+        $loadFilesBeforeZip,
+        $zip_force_override = 0
     ) {
 
         // to fix null value.
@@ -317,6 +319,7 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
                 'maximumFileDescriptorsOverride' => $maximumFileDescriptorsOverride,
                 'maximumFileDescriptorsAuto'     => $maximumFileDescriptorsAuto,
                 'maximumFileDescriptors'         => $maximumFileDescriptors,
+                'zip_force_override'             => $zip_force_override,
             );
 
             if ( $this->wpdb->insert( $this->table_name( 'wp_backup' ), $values ) ) {
@@ -351,6 +354,7 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * @param mixed $maximumFileDescriptorsAuto Auto maximum file discriptors.
      * @param mixed $maximumFileDescriptors Maximum file descriptors.
      * @param mixed $loadFilesBeforeZip Load files before Zip.
+     * @param mixed $zip_force_override Keep Zip over the large-site guardrail (1) instead of auto-switching to tar.gz (0).
      *
      * @return int|false The number of rows updated, or false on error.
      *
@@ -376,7 +380,8 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         $maximumFileDescriptorsOverride,
         $maximumFileDescriptorsAuto,
         $maximumFileDescriptors,
-        $loadFilesBeforeZip
+        $loadFilesBeforeZip,
+        $zip_force_override = 0
     ) {
 
         if ( MainWP_Utility::ctype_digit( $userid ) && MainWP_Utility::ctype_digit( $id ) ) {
@@ -401,6 +406,7 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
                     'maximumFileDescriptorsOverride' => $maximumFileDescriptorsOverride,
                     'maximumFileDescriptorsAuto'     => $maximumFileDescriptorsAuto,
                     'maximumFileDescriptors'         => $maximumFileDescriptors,
+                    'zip_force_override'             => $zip_force_override,
                 ),
                 array( 'id' => $id )
             );

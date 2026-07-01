@@ -220,6 +220,11 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     )
                 );
 
+                // Negotiate the archive format before building the request so a
+                // large-site ZIP auto-switch reaches the child in $params['ext'].
+                $archive_ext = MainWP_Backup_Settings::get_current_archive_extension( $website, $pTask );
+                MainWP_Backup_Monitor::negotiate_backup_preflight( $website, $archive_ext, $pTask );
+
                 $params = array(
                     'type'                  => $type,
                     'exclude'               => $exclude,
@@ -227,15 +232,13 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     'excludecache'          => $excludecache,
                     'excludenonwp'          => $excludenonwp,
                     'excludezip'            => $excludezip,
-                    'ext'                   => MainWP_Backup_Settings::get_current_archive_extension( $website, $pTask ),
+                    'ext'                   => $archive_ext,
                     'file_descriptors_auto' => $maximumFileDescriptorsAuto,
                     'file_descriptors'      => $maximumFileDescriptors,
                     'loadFilesBeforeZip'    => $loadFilesBeforeZip,
                     'pid'                   => $pid,
                     'f'                     => $file,
                 );
-
-                MainWP_Backup_Monitor::negotiate_backup_preflight( $website, MainWP_Backup_Settings::get_current_archive_extension( $website, $pTask ), $pTask );
 
                 $use_spine = MainWP_Backup_Monitor::child_supports_task_spine( $website );
 
@@ -1362,6 +1365,10 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
         MainWP_Utility::end_session();
 
+        // Negotiate before building the request so a large-site ZIP auto-switch
+        // reaches the child in $params['ext'].
+        MainWP_Backup_Monitor::negotiate_backup_preflight( $website, $archiveFormat );
+
         $params = array(
             'type'                  => $pType,
             'exclude'               => $pExclude,
@@ -1378,8 +1385,6 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'pid'                   => $pid,
             'append'                => ( $append ? 1 : 0 ),
         );
-
-        MainWP_Backup_Monitor::negotiate_backup_preflight( $website, $archiveFormat );
 
         MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Requesting backup: ' . MainWP_Utility::value_to_string( $params ) );
 

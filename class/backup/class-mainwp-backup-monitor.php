@@ -187,18 +187,21 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      *
      * Stores the child backup directory hash in site metadata for later
      * operations (sensitive value: stored only, never rendered), blocks
-     * the backup when the child disk space is critically low, warns when ZIP
-     * is chosen for a large site, and logs advisory warnings for the rest of
-     * the report.
+     * the backup when the child disk space is critically low, switches ZIP to
+     * tar.gz on a large site (unless the task forces ZIP), and logs advisory
+     * warnings for the rest of the report.
      *
      * @param object      $website     Website object.
      * @param string      $archive_ext Requested archive extension (zip, tar.gz, tar.bz2, tar).
-     * @param object|null $task        Backup task, when known, so a ZIP large-site warning can be surfaced on it.
+     *                                  Passed by reference: switched to tar.gz when a large ZIP site
+     *                                  is auto-negotiated, so the caller sends the adjusted format.
+     * @param object|null $task        Backup task, when known, so the ZIP large-site outcome can be
+     *                                  surfaced on it and the zip_force_override flag honored.
      *
      * @return void
      * @throws MainWP_Exception When the child reports critically low disk space.
      */
-    public static function negotiate_backup_preflight( object &$website, string $archive_ext = '', ?object $task = null ): void { // phpcs:ignore -- NOSONAR - complex.
+    public static function negotiate_backup_preflight( object &$website, string &$archive_ext = '', ?object $task = null ): void { // phpcs:ignore -- NOSONAR - complex.
         try {
             $preflight = MainWP_Connect::fetch_with_retry( $website, 'backup_preflight', array() );
         } catch ( \Exception $e ) {
@@ -245,17 +248,29 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
         // ZIP archiving restarts from the beginning on each slice timeout, so a
         // large site can burn the resume budget and stall; tar.gz appends and
-        // resumes. Warn when ZIP is chosen for a site whose estimated backup
-        // size is over the guardrail threshold, and surface it on the task so
-        // the warning is visible before the run.
+        // resumes. Over the guardrail threshold, switch ZIP to tar.gz so the
+        // backup can actually finish, unless the task explicitly forces ZIP.
+        // Either way, surface the outcome on the task so it is visible before
+        // the run.
         if ( 'zip' === $archive_ext && isset( $preflight['estimated_bytes'] ) && is_numeric( $preflight['estimated_bytes'] ) ) {
             $zip_threshold = (int) apply_filters( 'mainwp_zip_guardrail_bytes', 2 * GB_IN_BYTES );
             if ( $zip_threshold > 0 && (int) $preflight['estimated_bytes'] > $zip_threshold ) {
-                $zip_warning = sprintf(
-                    /* translators: %s: estimated backup size */
-                    esc_html__( 'ZIP is not recommended for large sites (estimated %s): it restarts from the beginning on every timeout, while tar.gz resumes across timeouts.', 'mainwp' ),
-                    esc_html( size_format( (int) $preflight['estimated_bytes'] ) )
-                );
+                $estimate = esc_html( size_format( (int) $preflight['estimated_bytes'] ) );
+                $keep_zip = is_object( $task ) && 1 === (int) $task->zip_force_override;
+                if ( $keep_zip ) {
+                    $zip_warning = sprintf(
+                        /* translators: %s: estimated backup size */
+                        esc_html__( 'ZIP is not recommended for large sites (estimated %s): it restarts from the beginning on every timeout, while tar.gz resumes across timeouts.', 'mainwp' ),
+                        $estimate
+                    );
+                } else {
+                    $archive_ext = 'tar.gz';
+                    $zip_warning = sprintf(
+                        /* translators: %s: estimated backup size */
+                        esc_html__( 'ZIP was switched to tar.gz for this large site (estimated %s): ZIP restarts from the beginning on every timeout, while tar.gz resumes across timeouts. Enable "keep ZIP" on the backup task to override.', 'mainwp' ),
+                        $estimate
+                    );
+                }
                 do_action( 'mainwp_log_warning', $zip_warning );
                 if ( is_object( $task ) && ! empty( $task->id ) && MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id ) ) {
                     MainWP_DB_Backup::instance()->update_backup_errors( $task->id, $zip_warning . "\n" );

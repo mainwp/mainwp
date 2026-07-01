@@ -201,6 +201,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         $maximumFileDescriptorsAuto     = isset( $_POST['maximumFileDescriptorsAuto'] ) && 1 === (int) $_POST['maximumFileDescriptorsAuto'];
         $maximumFileDescriptors         = isset( $_POST['maximumFileDescriptors'] ) ? intval( $_POST['maximumFileDescriptors'] ) : 150;
         $loadFilesBeforeZip             = isset( $_POST['loadFilesBeforeZip'] ) ? 1 : 0;
+        $zipForceOverride               = ( isset( $_POST['zipForceOverride'] ) && 1 === (int) $_POST['zipForceOverride'] ) ? 1 : 0;
 
         $subfolder     = isset( $_POST['subfolder'] ) ? sanitize_text_field( wp_unslash( $_POST['subfolder'] ) ) : '';
         $filename      = isset( $_POST['filename'] ) ? sanitize_text_field( wp_unslash( $_POST['filename'] ) ) : '';
@@ -211,7 +212,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
 
         //phpcs:enable.Missing
 
-        if ( MainWP_DB_Backup::instance()->update_backup_task( $task->id, $current_user->ID, htmlentities( $name ), $schedule, $type, $excludedFolder, $sites, $groups, $subfolder, $filename, $excludebackup, $excludecache, $excludenonwp, $excludezip, $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip ) === false ) {
+        if ( MainWP_DB_Backup::instance()->update_backup_task( $task->id, $current_user->ID, htmlentities( $name ), $schedule, $type, $excludedFolder, $sites, $groups, $subfolder, $filename, $excludebackup, $excludecache, $excludenonwp, $excludezip, $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip, $zipForceOverride ) === false ) {
             die( wp_json_encode( array( 'error' => esc_html__( 'Could not save the backup task. Please check that all required fields are filled in and try again. If the issue persists, check your server error log.', 'mainwp' ) ) ) );
         } else {
             $destinations = isset( $_POST['destinations'] ) && is_array( $_POST['destinations'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['destinations'] ) ) : array(); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified.
@@ -278,6 +279,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         $maximumFileDescriptorsAuto     = isset( $_POST['maximumFileDescriptorsAuto'] ) && 1 === (int) $_POST['maximumFileDescriptorsAuto'];
         $maximumFileDescriptors         = isset( $_POST['maximumFileDescriptors'] ) ? intval( $_POST['maximumFileDescriptors'] ) : 150;
         $loadFilesBeforeZip             = isset( $_POST['loadFilesBeforeZip'] ) ? 1 : 0;
+        $zipForceOverride               = ( isset( $_POST['zipForceOverride'] ) && 1 === (int) $_POST['zipForceOverride'] ) ? 1 : 0;
 
         $subfolder     = isset( $_POST['subfolder'] ) ? sanitize_text_field( wp_unslash( $_POST['subfolder'] ) ) : '';
         $filename      = isset( $_POST['filename'] ) ? sanitize_text_field( wp_unslash( $_POST['filename'] ) ) : '';
@@ -287,7 +289,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         $excludezip    = isset( $_POST['excludezip'] ) ? sanitize_text_field( wp_unslash( $_POST['excludezip'] ) ) : '';
         //phpcs:enable
 
-        $task = MainWP_DB_Backup::instance()->add_backup_task( $current_user->ID, htmlentities( $name ), $schedule, $type, $excludedFolder, $sites, $groups, $subfolder, $filename, 0, $excludebackup, $excludecache, $excludenonwp, $excludezip, $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip );
+        $task = MainWP_DB_Backup::instance()->add_backup_task( $current_user->ID, htmlentities( $name ), $schedule, $type, $excludedFolder, $sites, $groups, $subfolder, $filename, 0, $excludebackup, $excludecache, $excludenonwp, $excludezip, $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip, $zipForceOverride );
 
         if ( ! $task ) {
             die( wp_json_encode( array( 'error' => esc_html__( 'Could not save the backup task. Please check that all required fields are filled in and try again. If the issue persists, check your server error log.', 'mainwp' ) ) ) );

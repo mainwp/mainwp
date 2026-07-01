@@ -98,7 +98,7 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 	 *
 	 * @return MainWP_Exception|null The exception raised, if any.
 	 */
-	private function run_backup_site( $site_id, $responses, $archive_format = 'zip' ) {
+	private function run_backup_site( $site_id, $responses, $archive_format = 'zip', $zip_force_override = 0 ) {
 		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
 		$task    = (object) array(
 			'id'                             => 1,
@@ -111,6 +111,7 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 			'excludezip'                     => 0,
 			'filename'                       => '',
 			'archiveFormat'                  => $archive_format,
+			'zip_force_override'             => $zip_force_override,
 			'loadFilesBeforeZip'             => 1,
 			'maximumFileDescriptorsOverride' => 0,
 			'maximumFileDescriptorsAuto'     => 1,
@@ -158,7 +159,7 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 	 *
 	 * @return array The warning messages logged.
 	 */
-	private function capture_backup_warnings( $site_id, $preflight, $archive_format ) {
+	private function capture_backup_warnings( $site_id, $preflight, $archive_format, $zip_force_override = 0 ) {
 		$warnings = array();
 		add_action(
 			'mainwp_log_warning',
@@ -173,24 +174,69 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 				'backup_preflight' => $preflight,
 				'backup'           => array( 'error' => 'stop here' ),
 			),
-			$archive_format
+			$archive_format,
+			$zip_force_override
 		);
 
 		return $warnings;
 	}
 
 	/**
-	 * Choosing ZIP for a site whose estimated backup size is over the
-	 * guardrail threshold warns before the backup runs. ZIP restarts from
-	 * zero on each slice timeout; tar.gz appends and resumes.
+	 * Capture the archive extension the dashboard actually sends the child in
+	 * the backup request, after preflight negotiation. This is what proves the
+	 * ZIP auto-switch reaches the wire, not just the logged warning.
+	 *
+	 * @param int    $site_id            Site ID.
+	 * @param array  $preflight          Preflight response.
+	 * @param string $archive_format     Task archive format.
+	 * @param int    $zip_force_override 1 to keep ZIP over the guardrail.
+	 *
+	 * @return string|null The ext param sent to the child, or null.
+	 */
+	private function captured_backup_ext( $site_id, $preflight, $archive_format, $zip_force_override = 0 ) {
+		$captured = array( 'ext' => null );
+
+		// Priority 5, 4 args: observe the negotiated params without
+		// short-circuiting, so mock_child_actions still supplies the responses.
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			function ( $result, $website, $what, $params ) use ( &$captured ) {
+				unset( $website );
+				if ( 'backup' === $what && isset( $params['ext'] ) ) {
+					$captured['ext'] = $params['ext'];
+				}
+				return $result;
+			},
+			5,
+			4
+		);
+
+		$this->run_backup_site(
+			$site_id,
+			array(
+				'backup_preflight' => $preflight,
+				'backup'           => array( 'error' => 'stop here' ),
+			),
+			$archive_format,
+			$zip_force_override
+		);
+
+		return $captured['ext'];
+	}
+
+	/**
+	 * Keeping ZIP on a large site (the user checked the override) still warns
+	 * before the backup runs. ZIP restarts from zero on each slice timeout;
+	 * tar.gz appends and resumes.
 	 *
 	 * @return void
 	 */
-	public function test_zip_on_large_site_warns() {
+	public function test_zip_on_large_site_warns_when_override_set() {
 		$warnings = $this->capture_backup_warnings(
 			$this->create_test_site(),
 			$this->preflight_response( array( 'estimated_bytes' => 3 * GB_IN_BYTES ) ),
-			'zip'
+			'zip',
+			1
 		);
 
 		$this->assertNotEmpty(
@@ -200,8 +246,92 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 					return false !== stripos( $message, 'ZIP is not recommended' );
 				}
 			),
-			'A ZIP large-site guardrail warning must be logged.'
+			'Keeping ZIP over the guardrail must still log the large-site warning.'
 		);
+	}
+
+	/**
+	 * With no override, a large ZIP site is auto-switched to tar.gz: the
+	 * extension the dashboard actually sends the child is tar.gz, not zip.
+	 *
+	 * @return void
+	 */
+	public function test_zip_auto_switched_to_targz_when_over_threshold() {
+		$ext = $this->captured_backup_ext(
+			$this->create_test_site(),
+			$this->preflight_response( array( 'estimated_bytes' => 3 * GB_IN_BYTES ) ),
+			'zip'
+		);
+
+		$this->assertSame( 'tar.gz', $ext, 'A large ZIP site with no override must be switched to tar.gz on the wire.' );
+	}
+
+	/**
+	 * With the override set, a large ZIP site stays on ZIP: the user made an
+	 * explicit choice, so the dashboard sends zip.
+	 *
+	 * @return void
+	 */
+	public function test_zip_force_override_honored_when_set() {
+		$ext = $this->captured_backup_ext(
+			$this->create_test_site(),
+			$this->preflight_response( array( 'estimated_bytes' => 3 * GB_IN_BYTES ) ),
+			'zip',
+			1
+		);
+
+		$this->assertSame( 'zip', $ext, 'The override must keep ZIP on the wire over the guardrail.' );
+	}
+
+	/**
+	 * A ZIP site under the threshold is not switched.
+	 *
+	 * @return void
+	 */
+	public function test_zip_auto_switch_not_triggered_when_under_threshold() {
+		$ext = $this->captured_backup_ext(
+			$this->create_test_site(),
+			$this->preflight_response( array( 'estimated_bytes' => 100 * MB_IN_BYTES ) ),
+			'zip'
+		);
+
+		$this->assertSame( 'zip', $ext, 'A small ZIP site must stay on ZIP.' );
+	}
+
+	/**
+	 * A tar.gz task over the threshold is untouched: the switch only applies
+	 * to ZIP.
+	 *
+	 * @return void
+	 */
+	public function test_zip_auto_switch_not_triggered_for_targz_format() {
+		$ext = $this->captured_backup_ext(
+			$this->create_test_site(),
+			$this->preflight_response( array( 'estimated_bytes' => 3 * GB_IN_BYTES ) ),
+			'tar.gz'
+		);
+
+		$this->assertSame( 'tar.gz', $ext, 'A tar.gz task must be left as tar.gz.' );
+	}
+
+	/**
+	 * A task-less negotiation (no $task passed, e.g. an ad-hoc path) must not
+	 * fatal on the missing override and must still auto-switch a large ZIP.
+	 *
+	 * @return void
+	 */
+	public function test_zip_auto_switch_with_null_task_does_not_fatal() {
+		$site_id = $this->create_test_site();
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+
+		$this->mock_child_actions(
+			array( 'backup_preflight' => $this->preflight_response( array( 'estimated_bytes' => 3 * GB_IN_BYTES ) ) )
+		);
+
+		$ext = 'zip';
+		MainWP_Backup_Monitor::negotiate_backup_preflight( $website, $ext, null );
+
+		$this->assertSame( 'tar.gz', $ext, 'A null-task negotiation must still auto-switch a large ZIP without fataling.' );
 	}
 
 	/**
@@ -268,7 +398,8 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 		$warnings = $this->capture_backup_warnings(
 			$this->create_test_site(),
 			$this->preflight_response( array( 'estimated_bytes' => 50 * MB_IN_BYTES ) ),
-			'zip'
+			'zip',
+			1
 		);
 
 		$this->assertNotEmpty(

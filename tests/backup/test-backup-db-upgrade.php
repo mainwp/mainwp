@@ -86,6 +86,9 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 				$wpdb->query( "ALTER TABLE {$task_table} ADD COLUMN {$column} {$definition}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
 			}
 		}
+		if ( ! $this->column_exists( $task_table, 'zip_force_override' ) ) {
+			$wpdb->query( "ALTER TABLE {$task_table} ADD COLUMN zip_force_override tinyint(1) NOT NULL DEFAULT 0" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
+		}
 		if ( ! $this->index_exists( $task_table, 'idx_next_run' ) ) {
 			$wpdb->query( "ALTER TABLE {$task_table} ADD INDEX idx_next_run (next_run)" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
 		}
@@ -668,6 +671,33 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		$this->assertTrue(
 			$this->column_exists( $table, 'max_chain_length' ),
 			'Upgrade must add max_chain_length to existing installs; the shipped db version needs a bump or dbDelta never runs.'
+		);
+	}
+
+	/**
+	 * An install whose stored db version predates the ZIP force-override flag
+	 * must receive the zip_force_override column when install() runs. The column
+	 * records whether the user opted to keep ZIP over the large-site guardrail
+	 * instead of the auto-switch to tar.gz.
+	 *
+	 * @return void
+	 */
+	public function test_upgrade_adds_zip_force_override_column_to_backup_task_table() {
+		global $wpdb;
+
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		$this->assertTrue( $this->column_exists( $table, 'zip_force_override' ), 'Precondition: fresh install has zip_force_override.' );
+
+		$wpdb->query( "ALTER TABLE {$table} DROP COLUMN zip_force_override" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture, identifiers cannot be prepared.
+		$this->assertFalse( $this->column_exists( $table, 'zip_force_override' ), 'Precondition: column dropped to simulate an older install.' );
+
+		update_site_option( 'mainwp_db_version', '9.0.2.15' );
+
+		MainWP_Install::instance()->install();
+
+		$this->assertTrue(
+			$this->column_exists( $table, 'zip_force_override' ),
+			'Upgrade must add zip_force_override to existing installs; the shipped db version needs a bump or dbDelta never runs.'
 		);
 	}
 

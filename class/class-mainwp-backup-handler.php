@@ -312,7 +312,9 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      */
     public static function negotiate_backup_preflight( &$website, $archive_ext = '' ) {
         _deprecated_function( __METHOD__, '6.2', 'MainWP_Backup_Monitor::negotiate_backup_preflight' );
-        MainWP_Backup_Monitor::negotiate_backup_preflight( $website, (string) $archive_ext );
+        // The target parameter is by-reference, so pass a variable, not the inline cast expression.
+        $archive_ext = (string) $archive_ext;
+        MainWP_Backup_Monitor::negotiate_backup_preflight( $website, $archive_ext );
     }
 
     /**

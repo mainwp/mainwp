@@ -11,6 +11,7 @@
 namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Backup_Task_Form;
+use MainWP\Dashboard\MainWP_DB_Backup;
 
 /**
  * Class MainWP_Backup_Task_Form_Test
@@ -350,5 +351,127 @@ class MainWP_Backup_Task_Form_Test extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'value="90"', $output );
 		$this->assertStringContainsString( 'value="500"', $output );
 		$this->assertStringNotContainsString( 'id="mainwp-backup-delete-cloud-copies" checked', $output );
+	}
+
+	/**
+	 * A Zip task shows the keep-Zip override field so the user can opt out of
+	 * the large-site auto-switch to tar.gz.
+	 *
+	 * @return void
+	 */
+	public function test_render_task_details_shows_zip_override_for_zip_format() {
+		ob_start();
+		MainWP_Backup_Task_Form::render_task_details( $this->make_task( array( 'archiveFormat' => 'zip' ) ), 'Tar GZip', 'zip', false, false );
+		$output = ob_get_clean();
+
+		$this->assertStringContainsString( 'mainwp-backup-zip-force-override', $output );
+		$this->assertMatchesRegularExpression(
+			'/id="mainwp-backup-zip-force-override-wrapper"\s*>/',
+			$output,
+			'The override field is visible for a Zip task.'
+		);
+	}
+
+	/**
+	 * A non-Zip task keeps the override field hidden; the JS toggle reveals it
+	 * when the format is switched to Zip.
+	 *
+	 * @return void
+	 */
+	public function test_render_task_details_hides_zip_override_for_non_zip_format() {
+		ob_start();
+		MainWP_Backup_Task_Form::render_task_details( null, 'Tar GZip', 'tar.gz', false, false );
+		$output = ob_get_clean();
+
+		$this->assertStringContainsString( 'mainwp-backup-zip-force-override', $output );
+		$this->assertMatchesRegularExpression(
+			'/id="mainwp-backup-zip-force-override-wrapper"\s+style="display:none"/',
+			$output,
+			'The override field stays hidden when the format is not Zip.'
+		);
+	}
+
+	/**
+	 * A task that already forces Zip renders the override checkbox checked.
+	 *
+	 * @return void
+	 */
+	public function test_render_task_details_checks_override_when_task_forces_zip() {
+		$task = $this->make_task(
+			array(
+				'archiveFormat'      => 'zip',
+				'zip_force_override' => 1,
+			)
+		);
+
+		ob_start();
+		MainWP_Backup_Task_Form::render_task_details( $task, 'Tar GZip', 'zip', false, false );
+		$output = ob_get_clean();
+
+		$this->assertMatchesRegularExpression(
+			'/id="mainwp-backup-zip-force-override"[^>]*checked/',
+			$output,
+			'A task with zip_force_override set renders the checkbox checked.'
+		);
+	}
+
+	/**
+	 * The override flag survives an add then load round-trip through the task
+	 * table, and update_backup_task can clear it back to 0.
+	 *
+	 * @return void
+	 */
+	public function test_zip_force_override_add_and_update_round_trip() {
+		$db   = MainWP_DB_Backup::instance();
+		$user = self::factory()->user->create( array( 'role' => 'administrator' ) );
+
+		$added = $db->add_backup_task(
+			$user,
+			'Round trip',
+			'daily',
+			'full',
+			'',
+			'',
+			'',
+			'',
+			'rt-backup',
+			0,
+			0,
+			0,
+			0,
+			0,
+			'zip',
+			0,
+			1,
+			150,
+			0,
+			1 // zip_force_override.
+		);
+		$this->assertNotFalse( $added );
+		$this->assertSame( 1, (int) $db->get_backup_task_by_id( $added->id )->zip_force_override );
+
+		$db->update_backup_task(
+			$added->id,
+			$user,
+			'Round trip',
+			'daily',
+			'full',
+			'',
+			'',
+			'',
+			'',
+			'rt-backup',
+			0,
+			0,
+			0,
+			0,
+			'zip',
+			0,
+			1,
+			150,
+			0,
+			0 // zip_force_override cleared.
+		);
+		$this->assertSame( 0, (int) $db->get_backup_task_by_id( $added->id )->zip_force_override );
 	}
 }

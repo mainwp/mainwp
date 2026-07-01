@@ -5008,6 +5008,10 @@ let mainwp_force_destroy_sessions_websites = [];
 
 jQuery(document).on('change', '#mainwp_archiveFormat', function () {
     let zipMethod = jQuery(this).val();
+
+    // The keep-Zip override only applies when Zip is the chosen format.
+    jQuery('#mainwp-backup-zip-force-override-wrapper').toggle(zipMethod === 'zip');
+
     zipMethod = zipMethod.replaceAll('.', '\\.'); // NOSONAR - escape is correct.
     jQuery('span.archive_info').hide();
     jQuery('span#info_' + zipMethod).show();

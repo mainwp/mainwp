@@ -13,9 +13,12 @@
 namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Backup_Executor;
+use MainWP\Dashboard\MainWP_Backup_Handler;
 use MainWP\Dashboard\MainWP_Backup_Monitor;
 use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_DB_Backup;
 use MainWP\Dashboard\MainWP_Exception;
+use MainWP\Dashboard\MainWP_Manage_Backups_Handler;
 
 /**
  * Class MainWP_Backup_Preflight_Test
@@ -873,6 +876,147 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 				}
 			),
 			'A warning about set_time_limit must be logged.'
+		);
+	}
+
+	/**
+	 * Run a real DB task against one site through the "Run now" per-site flow
+	 * (MainWP_Manage_Backups_Handler::backup), capturing the ext param the
+	 * dashboard sends the child.
+	 *
+	 * @param int $site_id            Site id.
+	 * @param int $zip_force_override 1 to keep ZIP over the guardrail.
+	 *
+	 * @return array{0:string|null,1:object} Captured ext and the task row after the run.
+	 */
+	private function run_site_flow_captured_ext( $site_id, $zip_force_override ) {
+		$user = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$task = MainWP_DB_Backup::instance()->add_backup_task(
+			$user,
+			'Run-site override test',
+			'daily',
+			'full',
+			'',
+			(string) $site_id,
+			'',
+			'',
+			'',
+			0,
+			0,
+			0,
+			0,
+			0,
+			'zip',
+			0,
+			1,
+			150,
+			0,
+			$zip_force_override
+		);
+		$this->assertNotFalse( $task, 'Precondition: the task row must insert.' );
+
+		$captured = array( 'ext' => null );
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			function ( $result, $website, $what, $params ) use ( &$captured ) {
+				unset( $website );
+				if ( 'backup' === $what && isset( $params['ext'] ) ) {
+					$captured['ext'] = $params['ext'];
+				}
+				return $result;
+			},
+			5,
+			4
+		);
+
+		$this->mock_child_actions(
+			array(
+				'backup_preflight' => $this->preflight_response( array( 'estimated_bytes' => 3 * GB_IN_BYTES ) ),
+				'backup'           => array( 'error' => 'stop here' ),
+			)
+		);
+
+		try {
+			MainWP_Manage_Backups_Handler::backup( $task->id, $site_id, 'uid-run-site' );
+		} catch ( MainWP_Exception $e ) {
+			// The mocked child stops the run after negotiation, as intended.
+		}
+
+		return array( $captured['ext'], MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id ) );
+	}
+
+	/**
+	 * The "Run now" per-site flow must honor the task's keep-ZIP override
+	 * exactly like the scheduled runner: the same task must not change
+	 * archive format depending on which button started it.
+	 *
+	 * @return void
+	 */
+	public function test_run_site_path_honors_zip_force_override() {
+		list( $ext, ) = $this->run_site_flow_captured_ext( $this->create_test_site(), 1 );
+
+		$this->assertSame( 'zip', $ext, 'The per-site run must keep ZIP when the task forces it.' );
+	}
+
+	/**
+	 * Without the override, the per-site run auto-switches a large ZIP site
+	 * and records the switch on the task's notices channel, so the change of
+	 * format is never silent.
+	 *
+	 * @return void
+	 */
+	public function test_run_site_path_switches_and_records_notice_without_override() {
+		list( $ext, $task ) = $this->run_site_flow_captured_ext( $this->create_test_site(), 0 );
+
+		$this->assertSame( 'tar.gz', $ext, 'The per-site run must auto-switch a large ZIP site.' );
+		$this->assertStringContainsString( 'switched to tar.gz', (string) $task->backup_notices, 'The switch must be recorded on the task, not applied silently.' );
+	}
+
+	/**
+	 * The deprecated MainWP_Backup_Handler shim takes the extension by value,
+	 * so its callers can never receive a negotiated format. It must therefore
+	 * negotiate warn-only: logging "was switched" while the legacy caller
+	 * keeps sending ZIP would make the log lie about what went on the wire.
+	 *
+	 * @return void
+	 */
+	public function test_deprecated_shim_negotiates_warn_only() {
+		$this->setExpectedDeprecated( 'MainWP\Dashboard\MainWP_Backup_Handler::negotiate_backup_preflight' );
+
+		$site_id = $this->create_test_site();
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+
+		$this->mock_child_actions(
+			array( 'backup_preflight' => $this->preflight_response( array( 'estimated_bytes' => 3 * GB_IN_BYTES ) ) )
+		);
+
+		$captured = array();
+		add_action(
+			'mainwp_log_warning',
+			function ( $message ) use ( &$captured ) {
+				$captured[] = $message;
+			}
+		);
+
+		MainWP_Backup_Handler::negotiate_backup_preflight( $website, 'zip' );
+
+		$this->assertEmpty(
+			array_filter(
+				$captured,
+				function ( $message ) {
+					return false !== stripos( $message, 'switched' );
+				}
+			),
+			'The shim must not log a switch its caller cannot receive.'
+		);
+		$this->assertNotEmpty(
+			array_filter(
+				$captured,
+				function ( $message ) {
+					return false !== stripos( $message, 'not recommended' );
+				}
+			),
+			'The shim still warns about ZIP on a large site.'
 		);
 	}
 }

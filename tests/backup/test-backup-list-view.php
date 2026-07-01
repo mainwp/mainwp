@@ -145,6 +145,35 @@ class MainWP_Backup_List_View_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Informational run notes (like the large-site ZIP auto-switch) render as
+	 * an info label in the details column, distinct from the red error label:
+	 * a successful run with a note must not look like a failed one.
+	 *
+	 * @return void
+	 */
+	public function test_column_details_shows_notices_as_info_not_errors() {
+		$view = new MainWP_Backup_List_View();
+		$item = $this->make_item(
+			array(
+				'last_run_manually' => 0,
+				'last_run'          => 100,
+				'completed'         => 200,
+				'completed_sites'   => '',
+				'the_sites'         => array(),
+				'backup_errors'     => '',
+				'backup_notices'    => 'ZIP was switched to tar.gz for this large site (estimated 3 GB).',
+			)
+		);
+
+		$output = $view->column_details( $item );
+
+		$this->assertStringContainsString( 'Last run notes', $output, 'Notices must surface in the details column.' );
+		$this->assertStringContainsString( 'switched to tar.gz', $output, 'The notice text must be available (tooltip).' );
+		$this->assertStringNotContainsString( 'Last run reported errors', $output, 'A notice-only run must not show the error label.' );
+		$this->assertStringNotContainsString( 'red label', $output, 'The notice label must not use the error styling.' );
+	}
+
+	/**
 	 * The singleton accessor returns the same list view instance.
 	 *
 	 * @return void

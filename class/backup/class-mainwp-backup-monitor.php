@@ -191,17 +191,21 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * tar.gz on a large site (unless the task forces ZIP), and logs advisory
      * warnings for the rest of the report.
      *
-     * @param object      $website     Website object.
-     * @param string      $archive_ext Requested archive extension (zip, tar.gz, tar.bz2, tar).
-     *                                  Passed by reference: switched to tar.gz when a large ZIP site
-     *                                  is auto-negotiated, so the caller sends the adjusted format.
-     * @param object|null $task        Backup task, when known, so the ZIP large-site outcome can be
-     *                                  surfaced on it and the zip_force_override flag honored.
+     * @param object      $website      Website object.
+     * @param string      $archive_ext  Requested archive extension (zip, tar.gz, tar.bz2, tar).
+     *                                   Passed by reference: switched to tar.gz when a large ZIP site
+     *                                   is auto-negotiated, so the caller sends the adjusted format.
+     * @param object|null $task         Backup task, when known, so the ZIP large-site outcome can be
+     *                                   surfaced on it and the zip_force_override flag honored.
+     * @param bool        $allow_switch Whether the caller can receive a negotiated format. A caller
+     *                                   that ignores the by-reference mutation (the deprecated shim)
+     *                                   passes false and gets the warn-only behavior, so the log
+     *                                   never claims a switch that did not reach the wire.
      *
      * @return void
      * @throws MainWP_Exception When the child reports critically low disk space.
      */
-    public static function negotiate_backup_preflight( object &$website, string &$archive_ext = '', ?object $task = null ): void { // phpcs:ignore -- NOSONAR - complex.
+    public static function negotiate_backup_preflight( object &$website, string &$archive_ext = '', ?object $task = null, bool $allow_switch = true ): void { // phpcs:ignore -- NOSONAR - complex.
         try {
             $preflight = MainWP_Connect::fetch_with_retry( $website, 'backup_preflight', array() );
         } catch ( \Exception $e ) {
@@ -256,7 +260,7 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             $zip_threshold = (int) apply_filters( 'mainwp_zip_guardrail_bytes', 2 * GB_IN_BYTES );
             if ( $zip_threshold > 0 && (int) $preflight['estimated_bytes'] > $zip_threshold ) {
                 $estimate = esc_html( size_format( (int) $preflight['estimated_bytes'] ) );
-                $keep_zip = is_object( $task ) && 1 === (int) $task->zip_force_override;
+                $keep_zip = ! $allow_switch || ( is_object( $task ) && 1 === (int) ( $task->zip_force_override ?? 0 ) );
                 if ( $keep_zip ) {
                     $zip_warning = sprintf(
                         /* translators: %s: estimated backup size */
@@ -267,13 +271,22 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                     $archive_ext = 'tar.gz';
                     $zip_warning = sprintf(
                         /* translators: %s: estimated backup size */
-                        esc_html__( 'ZIP was switched to tar.gz for this large site (estimated %s): ZIP restarts from the beginning on every timeout, while tar.gz resumes across timeouts. Enable "keep ZIP" on the backup task to override.', 'mainwp' ),
+                        esc_html__( 'ZIP was switched to tar.gz for this large site (estimated %s): ZIP restarts from the beginning on every timeout, while tar.gz resumes across timeouts.', 'mainwp' ),
                         $estimate
                     );
+                    // Only a visible scheduled task carries the settings form
+                    // with the override checkbox; the hidden on-demand task
+                    // must not advertise a control the user cannot reach.
+                    if ( is_object( $task ) && empty( $task->template ) ) {
+                        $zip_warning .= ' ' . esc_html__( 'Enable "keep ZIP" on the backup task to override.', 'mainwp' );
+                    }
                 }
                 do_action( 'mainwp_log_warning', $zip_warning );
+                // Advisory outcome, not a failure: record it on the notices
+                // channel so it never flips a successful run to "failed" in
+                // the poll, the failure email, or the task list.
                 if ( is_object( $task ) && ! empty( $task->id ) && MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id ) ) {
-                    MainWP_DB_Backup::instance()->update_backup_errors( $task->id, $zip_warning . "\n" );
+                    MainWP_DB_Backup::instance()->update_backup_notices( $task->id, $zip_warning . "\n" );
                 }
             }
         }

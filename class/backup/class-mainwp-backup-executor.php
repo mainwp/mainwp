@@ -1198,23 +1198,26 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      *
      * Backup Child Site.
      *
-     * @param mixed  $pSiteId                         Child Site ID.
-     * @param mixed  $pType                           full|db Typ of backup.
-     * @param mixed  $pSubfolder                      Sub folder to store backup.
-     * @param mixed  $pExclude                        Exclusion list.
-     * @param mixed  $excludebackup                   Exclude backup files.
-     * @param mixed  $excludecache                    Exclude cache files.
-     * @param mixed  $excludenonwp                    Exclude no WP Files.
-     * @param mixed  $excludezip                      Exclude Zip files.
-     * @param null   $pFilename                       Name of backup file.
-     * @param string $pFileNameUID                    File name unique ID.
-     * @param bool   $pArchiveFormat                  Archive format.
-     * @param bool   $pMaximumFileDescriptorsOverride Override maximum file descriptors.
-     * @param bool   $pMaximumFileDescriptorsAuto     Auto maximum file descriptors.
-     * @param bool   $pMaximumFileDescriptors         Maximum file descriptors.
-     * @param bool   $pLoadFilesBeforeZip             Load files before zip.
-     * @param bool   $pid                             Backup pid.
-     * @param bool   $append                          Append to backup.
+     * @param mixed       $pSiteId                         Child Site ID.
+     * @param mixed       $pType                           full|db Typ of backup.
+     * @param mixed       $pSubfolder                      Sub folder to store backup.
+     * @param mixed       $pExclude                        Exclusion list.
+     * @param mixed       $excludebackup                   Exclude backup files.
+     * @param mixed       $excludecache                    Exclude cache files.
+     * @param mixed       $excludenonwp                    Exclude no WP Files.
+     * @param mixed       $excludezip                      Exclude Zip files.
+     * @param null        $pFilename                       Name of backup file.
+     * @param string      $pFileNameUID                    File name unique ID.
+     * @param bool        $pArchiveFormat                  Archive format.
+     * @param bool        $pMaximumFileDescriptorsOverride Override maximum file descriptors.
+     * @param bool        $pMaximumFileDescriptorsAuto     Auto maximum file descriptors.
+     * @param bool        $pMaximumFileDescriptors         Maximum file descriptors.
+     * @param bool        $pLoadFilesBeforeZip             Load files before zip.
+     * @param bool        $pid                             Backup pid.
+     * @param bool        $append                          Append to backup.
+     * @param object|null $pTask                      Backup task driving this run, when one exists, so
+     *                                                preflight negotiation honors its zip_force_override
+     *                                                and records the outcome on it.
      *
      * @return mixed $backup_result
      * @throws MainWP_Exception Error message, including coded backup errors from the error code registry.
@@ -1251,7 +1254,8 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         $pMaximumFileDescriptors = false,
         $pLoadFilesBeforeZip = false,
         $pid = false,
-        $append = false
+        $append = false,
+        $pTask = null
     ) {
 
         if ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
@@ -1362,8 +1366,9 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         MainWP_Utility::end_session();
 
         // Negotiate before building the request so a large-site ZIP auto-switch
-        // reaches the child in $params['ext'].
-        MainWP_Backup_Monitor::negotiate_backup_preflight( $website, $archiveFormat );
+        // reaches the child in $params['ext']. The driving task, when one
+        // exists, carries the keep-ZIP override and receives the outcome note.
+        MainWP_Backup_Monitor::negotiate_backup_preflight( $website, $archiveFormat, $pTask );
 
         $params = array(
             'type'                  => $pType,

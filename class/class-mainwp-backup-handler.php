@@ -312,9 +312,12 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      */
     public static function negotiate_backup_preflight( &$website, $archive_ext = '' ) {
         _deprecated_function( __METHOD__, '6.2', 'MainWP_Backup_Monitor::negotiate_backup_preflight' );
-        // The target parameter is by-reference, so pass a variable, not the inline cast expression.
+        // The target parameter is by-reference, so pass a variable, not the
+        // inline cast expression. This shim takes the extension by value, so
+        // its caller can never receive a negotiated format: negotiate
+        // warn-only (allow_switch false) to keep the log truthful.
         $archive_ext = (string) $archive_ext;
-        MainWP_Backup_Monitor::negotiate_backup_preflight( $website, $archive_ext );
+        MainWP_Backup_Monitor::negotiate_backup_preflight( $website, $archive_ext, null, false );
     }
 
     /**

@@ -427,6 +427,18 @@ class MainWP_Backup_List_View { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     . '<i class="exclamation triangle icon"></i> ' . esc_html__( 'Last run reported errors', 'mainwp' ) . '</span>';
             }
         }
+
+        // Advisory run notes (like the large-site ZIP auto-switch) are
+        // informational: they get their own label so a successful run with a
+        // note never wears the error styling.
+        if ( ! empty( $item->backup_notices ) ) {
+            $notice_text = wp_strip_all_tags( MainWP_Backup_Error_Codes::sanitize_message( $item->backup_notices ) );
+            $notice_text = trim( preg_replace( '/\s+/', ' ', $notice_text ) );
+            if ( '' !== $notice_text ) {
+                $output .= '<br /><span class="ui small blue label" data-tooltip="' . esc_attr( $notice_text ) . '" data-position="top left" data-variation="wide inverted">'
+                    . '<i class="info circle icon"></i> ' . esc_html__( 'Last run notes', 'mainwp' ) . '</span>';
+            }
+        }
         return $output;
     }
 

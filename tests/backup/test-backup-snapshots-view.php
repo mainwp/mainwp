@@ -352,6 +352,42 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * The completed poll response can carry an informational notice (the
+	 * large-site ZIP auto-switch); the page must surface it with the success
+	 * status instead of dropping it.
+	 *
+	 * @return void
+	 */
+	public function test_backup_complete_status_surfaces_notice() {
+		update_option( 'mainwp_enableNativeBackups', 1 );
+
+		$output = $this->render_page();
+
+		$this->assertStringContainsString( 'data.notice', $output, 'The completed handler must read the notice off the poll response.' );
+
+		delete_option( 'mainwp_enableNativeBackups' );
+	}
+
+	/**
+	 * The Cancel affordance is only offered when the blocker is an active or
+	 * stuck backup: initiate errors of any other class (native disabled, a
+	 * restore in flight, transport failure) hide it again, so the one
+	 * destructive control never targets something the user did not start.
+	 *
+	 * @return void
+	 */
+	public function test_cancel_backup_hidden_after_unrelated_initiate_error() {
+		update_option( 'mainwp_enableNativeBackups', 1 );
+
+		$output = $this->render_page();
+
+		$this->assertStringContainsString( 'function cancelApplies', $output, 'The initiate error path must classify whether cancel applies.' );
+		$this->assertStringContainsString( 'showCancelBackup( cancelApplies(', $output, 'The initiate error path must scope the cancel button by error class.' );
+
+		delete_option( 'mainwp_enableNativeBackups' );
+	}
+
+	/**
 	 * A restore that failed but rolled the database back reassures the user
 	 * their data is safe, keyed off the child's rolled-back error code rather
 	 * than the raw error text.

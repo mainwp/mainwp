@@ -306,6 +306,7 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
                 'completed_sites'                => '',
                 'completed'                      => 0,
                 'backup_errors'                  => '',
+                'backup_notices'                 => '',
                 'subfolder'                      => MainWP_Utility::remove_preslash_spaces( $subfolder ),
                 'filename'                       => $filename,
                 'paused'                         => 0,
@@ -699,6 +700,41 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         }
 
         return false;
+    }
+
+    /**
+     * Method update_backup_notices()
+     *
+     * Append an informational run note to the task, or clear the channel
+     * with an empty string. Notices are advisory (the large-site ZIP
+     * auto-switch, a user cancel) and deliberately live apart from
+     * backup_errors, whose consumers treat any content as a failed run.
+     * A note already present is not appended again: a multi-site task
+     * negotiates per site and would otherwise repeat the same message.
+     *
+     * @param mixed  $id      Task ID.
+     * @param string $notices Note to append, or '' to clear.
+     *
+     * @return int|false The number of rows updated, or false on error.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
+     */
+    public function update_backup_notices( $id, $notices ) {
+        if ( ! MainWP_Utility::ctype_digit( $id ) ) {
+            return false;
+        }
+
+        if ( '' === $notices ) {
+            return $this->wpdb->update( $this->table_name( 'wp_backup' ), array( 'backup_notices' => '' ), array( 'id' => $id ) );
+        }
+
+        $task     = $this->get_backup_task_by_id( $id );
+        $existing = empty( $task ) ? '' : (string) $task->backup_notices;
+        if ( '' !== $existing && false !== strpos( $existing, $notices ) ) {
+            return 0;
+        }
+
+        return $this->wpdb->update( $this->table_name( 'wp_backup' ), array( 'backup_notices' => $existing . $notices ), array( 'id' => $id ) );
     }
 
     /**

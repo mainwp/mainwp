@@ -549,12 +549,18 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         $fresh  = null !== $latest && (int) $latest->created >= (int) $task->last_run;
 
         if ( '' === $errors && $fresh ) {
-            wp_send_json(
-                array(
-                    'status'      => 'completed',
-                    'snapshot_id' => (int) $latest->id,
-                )
+            $response = array(
+                'status'      => 'completed',
+                'snapshot_id' => (int) $latest->id,
             );
+            // Advisory run notes (like the large-site ZIP auto-switch) ride
+            // along so the page shows them with the success status instead of
+            // mistaking them for a failure.
+            $notices = $task ? (string) ( $task->backup_notices ?? '' ) : '';
+            if ( '' !== $notices ) {
+                $response['notice'] = static::humanize_backup_errors( $notices );
+            }
+            wp_send_json( $response );
             return;
         }
 
@@ -610,9 +616,17 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         }
 
         // Close the local manual run so the next poll does not re-report it as
-        // running; the child task is already terminal.
+        // running; the child task is already terminal. The cancelled note and
+        // log line are the diagnostic trace: without them a cancelled run is
+        // indistinguishable from an ordinary completion later.
+        MainWP_Logger::instance()->debug_for_website(
+            $website,
+            'backup',
+            'Backup cancelled from the dashboard (child task: ' . ( '' !== $child_task_id ? $child_task_id : 'auto-resolved' ) . ')'
+        );
         if ( ! empty( $task ) ) {
             MainWP_DB_Backup::instance()->update_backup_task_with_values( (int) $task->id, array( 'completed' => time() ) );
+            MainWP_DB_Backup::instance()->update_backup_notices( (int) $task->id, esc_html__( 'Backup cancelled from the dashboard.', 'mainwp' ) . "\n" );
         }
 
         wp_send_json(

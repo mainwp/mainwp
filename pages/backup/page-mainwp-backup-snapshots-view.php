@@ -589,6 +589,19 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 $( '#mainwp-native-backup-cancel-btn' ).css( 'display', show ? '' : 'none' ).prop( 'disabled', false ).removeClass( 'disabled' );
             }
 
+            // Cancel only applies when the blocker is an active or stuck backup
+            // (the child's "already running / try again" refusal). Any other
+            // initiate error - native backups disabled, a restore in flight, an
+            // authorization refusal - must hide the button, so the one
+            // destructive control never targets a run the user did not start.
+            function cancelApplies( message ) {
+                var msg = message || '';
+                if ( /restore/i.test( msg ) ) {
+                    return false; // A restore holds the slot; cancelling a backup does not apply.
+                }
+                return /in progress|try again|already/i.test( msg );
+            }
+
             function pollBackup() {
                 $.post( ajaxurl, { action: 'mainwp_native_backup_progress', security: nonces.nativeBackupProgress, site_id: currentSite }, function ( data ) {
                     backupPollRetries = 0; // A response arrived: clear the transient-failure count.
@@ -600,7 +613,14 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     }
                     if ( 'completed' === data.status ) {
                         stopBackupTimers();
-                        setBackupStatus( '<?php echo esc_js( esc_html__( 'Backup complete.', 'mainwp' ) ); ?>', false );
+                        // An advisory note (like the large-site ZIP auto-switch)
+                        // rides along with the success status; show it, never
+                        // dress it up as a failure.
+                        var completeMsg = '<?php echo esc_js( esc_html__( 'Backup complete.', 'mainwp' ) ); ?>';
+                        if ( data.notice ) {
+                            completeMsg += ' ' + data.notice;
+                        }
+                        setBackupStatus( completeMsg, false );
                         reenableBackupBtn();
                         showCancelBackup( false );
                         loadSnapshots( currentSite );
@@ -676,6 +696,9 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         stopBackupTimers();
                         setBackupStatus( response.error, true );
                         reenableBackupBtn();
+                        // Keep the Cancel affordance only when the blocker is an
+                        // active or stuck backup; hide it for every other error.
+                        showCancelBackup( cancelApplies( response.error ) );
                         return;
                     }
                     backupPollTimer = window.setTimeout( pollBackup, 1500 );
@@ -685,6 +708,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     stopBackupTimers();
                     setBackupStatus( '<?php echo esc_js( esc_html__( 'Could not start the backup. Please try again.', 'mainwp' ) ); ?>', true );
                     reenableBackupBtn();
+                    showCancelBackup( false );
                 } );
             } );
 

@@ -447,8 +447,10 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             // Start each run with a clean error slate so the Manage Backups list
             // reflects only the latest run, never a stale error from a past one.
             // Continue-loop ticks pass $updateRun = false, so per-site errors
-            // accumulated earlier in the same run are preserved.
+            // accumulated earlier in the same run are preserved. Notices follow
+            // the same lifecycle: they describe the latest run only.
             MainWP_DB_Backup::instance()->update_backup_errors( $task->id, '' );
+            MainWP_DB_Backup::instance()->update_backup_notices( $task->id, '' );
         }
 
         $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
@@ -599,24 +601,50 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
 
         if ( count( $completed_sites ) === count( $sites ) ) {
             MainWP_DB_Backup::instance()->update_backup_completed( $task->id );
-
-            if ( 1 === get_option( 'mainwp_notificationOnBackupFail' ) ) {
-                $email = MainWP_DB_Common::instance()->get_user_notification_email( $task->userid );
-                if ( '' !== $email ) {
-                    $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
-                    if ( '' !== $task->backup_errors ) {
-                        $errorOutput      = 'Errors occurred while executing task: <strong>' . esc_html( $task->name ) . '</strong><br /><br />' . wp_kses_post( MainWP_Backup_Error_Codes::sanitize_message( $task->backup_errors ) );
-                        $mail_title       = 'A scheduled backup had an Error - MainWP';
-                        $formated_content = MainWP_Format::format_email( $email, $errorOutput, $mail_title );
-                        wp_mail( $email, $mail_title, $formated_content, 'content-type: text/html' );
-
-                        MainWP_DB_Backup::instance()->update_backup_errors( $task->id, '' );
-                    }
-                }
-            }
+            static::maybe_send_backup_error_email( MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id ) );
         }
 
         return empty( $errorOutput );
+    }
+
+    /**
+     * Send the backup-failure notification for a finished run when real
+     * errors were recorded, then clear them so the next surface reads clean.
+     *
+     * Notices (backup_notices) never trigger this email: an informational
+     * note like the large-site ZIP auto-switch is not a failure. The option
+     * is cast before comparing because WordPress returns it as a string
+     * across requests - the old strict int comparison made this gate dead
+     * code on cron runs - and the default matches the settings screen (on).
+     *
+     * @param object|null $task Task row, freshly read.
+     *
+     * @return void
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_notification_email()
+     * @uses \MainWP\Dashboard\MainWP_DB_Backup::update_backup_errors()
+     * @uses \MainWP\Dashboard\MainWP_Format::format_email()
+     */
+    public static function maybe_send_backup_error_email( $task ) {
+        if ( empty( $task ) || '' === (string) $task->backup_errors ) {
+            return;
+        }
+
+        if ( 1 !== (int) get_option( 'mainwp_notificationOnBackupFail', 1 ) ) {
+            return;
+        }
+
+        $email = MainWP_DB_Common::instance()->get_user_notification_email( $task->userid );
+        if ( '' === $email ) {
+            return;
+        }
+
+        $errorOutput      = 'Errors occurred while executing task: <strong>' . esc_html( $task->name ) . '</strong><br /><br />' . wp_kses_post( MainWP_Backup_Error_Codes::sanitize_message( $task->backup_errors ) );
+        $mail_title       = 'A scheduled backup had an Error - MainWP';
+        $formated_content = MainWP_Format::format_email( $email, $errorOutput, $mail_title );
+        wp_mail( $email, $mail_title, $formated_content, 'content-type: text/html' );
+
+        MainWP_DB_Backup::instance()->update_backup_errors( $task->id, '' );
     }
 
     /**
@@ -659,7 +687,9 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             $archiveFormat                  = $backupTask->archiveFormat;
         }
 
-        return MainWP_Backup_Executor::backup( $pSiteId, $backupTask->type, $subfolder, $backupTask->exclude, $backupTask->excludebackup, $backupTask->excludecache, $backupTask->excludenonwp, $backupTask->excludezip, $backupTask->filename, $pFileNameUID, $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip );
+        // The task rides along so preflight negotiation honors its keep-ZIP
+        // override and records the outcome on it, the same as a scheduled run.
+        return MainWP_Backup_Executor::backup( $pSiteId, $backupTask->type, $subfolder, $backupTask->exclude, $backupTask->excludebackup, $backupTask->excludecache, $backupTask->excludenonwp, $backupTask->excludezip, $backupTask->filename, $pFileNameUID, $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip, false, false, $backupTask );
     }
 
     /**

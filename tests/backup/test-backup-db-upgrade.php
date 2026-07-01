@@ -89,6 +89,9 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		if ( ! $this->column_exists( $task_table, 'zip_force_override' ) ) {
 			$wpdb->query( "ALTER TABLE {$task_table} ADD COLUMN zip_force_override tinyint(1) NOT NULL DEFAULT 0" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
 		}
+		if ( ! $this->column_exists( $task_table, 'backup_notices' ) ) {
+			$wpdb->query( "ALTER TABLE {$task_table} ADD COLUMN backup_notices text NOT NULL" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
+		}
 		if ( ! $this->index_exists( $task_table, 'idx_next_run' ) ) {
 			$wpdb->query( "ALTER TABLE {$task_table} ADD INDEX idx_next_run (next_run)" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
 		}
@@ -698,6 +701,33 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		$this->assertTrue(
 			$this->column_exists( $table, 'zip_force_override' ),
 			'Upgrade must add zip_force_override to existing installs; the shipped db version needs a bump or dbDelta never runs.'
+		);
+	}
+
+	/**
+	 * An install whose stored db version predates the notices channel must
+	 * receive the backup_notices column when install() runs. The column keeps
+	 * informational run notes (like the large-site ZIP auto-switch) out of
+	 * backup_errors, which downstream consumers treat as failure state.
+	 *
+	 * @return void
+	 */
+	public function test_upgrade_adds_backup_notices_column_to_backup_task_table() {
+		global $wpdb;
+
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		$this->assertTrue( $this->column_exists( $table, 'backup_notices' ), 'Precondition: fresh install has backup_notices.' );
+
+		$wpdb->query( "ALTER TABLE {$table} DROP COLUMN backup_notices" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture, identifiers cannot be prepared.
+		$this->assertFalse( $this->column_exists( $table, 'backup_notices' ), 'Precondition: column dropped to simulate an older install.' );
+
+		update_site_option( 'mainwp_db_version', '9.0.2.16' );
+
+		MainWP_Install::instance()->install();
+
+		$this->assertTrue(
+			$this->column_exists( $table, 'backup_notices' ),
+			'Upgrade must add backup_notices to existing installs; the shipped db version needs a bump or dbDelta never runs.'
 		);
 	}
 

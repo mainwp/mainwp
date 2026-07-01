@@ -31,7 +31,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * @var string DB version info.
      */
-    protected $mainwp_db_version = '9.0.2.16'; // NOSONAR - no IP. Bumped so dbDelta adds wp_backup.zip_force_override for the large-site ZIP auto-switch override. Previous 9.0.2.15 bump added wp_backup_snapshot.test_restore_state/test_restore_at for the verified-restore (sandbox test-restore) result; 9.0.2.14 added wp_backup_snapshot.encryption for the per-snapshot archive-encryption metadata; 9.0.2.13 added wp_backup_snapshot.offsite_state/verified_at and wp_backup_upload_job.provider for the offsite-verified state machine.
+    protected $mainwp_db_version = '9.0.2.17'; // NOSONAR - no IP. Bumped so dbDelta adds wp_backup.backup_notices, the informational-notes channel that keeps run notes (like the large-site ZIP auto-switch) out of backup_errors. Previous 9.0.2.16 bump added wp_backup.zip_force_override for the large-site ZIP auto-switch override; 9.0.2.15 added wp_backup_snapshot.test_restore_state/test_restore_at for the verified-restore (sandbox test-restore) result; 9.0.2.14 added wp_backup_snapshot.encryption for the per-snapshot archive-encryption metadata.
 
     /**
      * Protected variable to hold the database option name.
@@ -377,6 +377,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
   delete_cloud_copies tinyint(1) NOT NULL DEFAULT 1,
   max_chain_length int(11) NOT NULL DEFAULT 0,
   zip_force_override tinyint(1) NOT NULL DEFAULT 0,
+  backup_notices text NOT NULL DEFAULT '',
   KEY idx_next_run (next_run)";
         if ( empty( $currentVersion ) ) {
             $tbl .= ',

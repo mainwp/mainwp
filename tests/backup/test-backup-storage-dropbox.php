@@ -578,4 +578,48 @@ class MainWP_Backup_Storage_Dropbox_Test extends \WP_UnitTestCase {
 
 		$this->assertSame( '/k.bin', json_decode( $this->requests[1]['args']['headers']['Dropbox-API-Arg'], true )['path'] );
 	}
+
+	/**
+	 * A request whose API host resolves to a link-local / cloud-metadata
+	 * address is blocked inside send() before the transport runs: this is
+	 * the DNS-rebind re-check on the wire path, the same wiring guarantee
+	 * the S3 and SFTP providers already prove in their tests. The subclass
+	 * only redirects the hardcoded API hosts; the send() path is the real one.
+	 *
+	 * @return void
+	 */
+	public function test_send_blocked_when_api_host_is_link_local() {
+		$queue     = array( $this->token_response() );
+		$transport = function ( $url, $args ) use ( &$queue ) {
+			$this->requests[] = array(
+				'url'  => $url,
+				'args' => $args,
+			);
+			return count( $queue ) > 1 ? array_shift( $queue ) : $queue[0];
+		};
+
+		$provider = new Link_Local_Host_Dropbox( $this->settings(), $transport );
+
+		try {
+			$provider->put_object( 'k.bin', 'x' );
+			$this->fail( 'A link-local API host must throw.' );
+		} catch ( \RuntimeException $e ) {
+			$this->assertStringContainsString( 'link-local or cloud-metadata', $e->getMessage() );
+		}
+
+		$this->assertCount( 0, $this->requests, 'The transport must not run for a blocked host.' );
+	}
 }
+
+// phpcs:disable Generic.Files.OneObjectStructurePerFile.MultipleFound -- test double for the wiring test above.
+/**
+ * Dropbox provider variant whose hardcoded API hosts point at a link-local
+ * address, so the SSRF guard wiring inside send() can be exercised without
+ * DNS. Only the host constants change; every request still flows through
+ * the real send() path.
+ */
+class Link_Local_Host_Dropbox extends MainWP_Backup_Storage_Dropbox {
+	const API_BASE     = 'http://169.254.169.254';
+	const CONTENT_BASE = 'http://169.254.169.254';
+}
+// phpcs:enable Generic.Files.OneObjectStructurePerFile.MultipleFound

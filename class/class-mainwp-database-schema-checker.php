@@ -652,6 +652,51 @@ class MainWP_Database_Schema_Checker { // phpcs:ignore Generic.Classes.OpeningBr
 
 
     /**
+     * Normalize a column default value.
+     *
+     * @param mixed $default_definition Default value.
+     *
+     * @return string|null
+     */
+    private static function normalize_default( $default_definition ) {
+
+        if ( null === $default_definition ) {
+            return null;
+        }
+
+        if ( self::is_sql_default_expression( $default_definition ) ) {
+            return strtoupper( trim( $default_definition ) );
+        }
+
+        if ( is_numeric( $default_definition ) ) {
+            return $default_definition;
+        }
+
+        return "'" . $default_definition . "'";
+    }
+
+    /**
+     * Check whether the default value is an SQL expression.
+     *
+     * @param string $default_definition Default value.
+     *
+     * @return bool
+     */
+    private static function is_sql_default_expression( $default_definition ) {
+
+        return in_array(
+            strtoupper( trim( $default_definition ) ),
+            array(
+                'CURRENT_TIMESTAMP',
+                'CURRENT_TIMESTAMP()',
+                'NOW()',
+            ),
+            true
+        );
+    }
+
+
+    /**
      * Method get_column_definition().
      *
      * @param array $column DB column values.
@@ -665,13 +710,12 @@ class MainWP_Database_Schema_Checker { // phpcs:ignore Generic.Classes.OpeningBr
             $definition .= ' NOT NULL';
         }
 
-        if ( null !== $column['Default'] ) {
-            if ( is_numeric( $column['Default'] ) ) {
-                $definition .= ' DEFAULT ' . $column['Default'];
-            } else {
-                $definition .= ' DEFAULT "' . $column['Default'] . '"';
-            }
+        $default = self::normalize_default( $column['Default'] );
+
+        if ( null !== $default ) {
+            $definition .= ' DEFAULT ' . $default;
         }
+
 
         if ( false !== stripos( $column['Extra'], 'auto_increment' ) ) {
             $definition .= ' AUTO_INCREMENT';

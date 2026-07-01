@@ -98,7 +98,7 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 	 *
 	 * @return MainWP_Exception|null The exception raised, if any.
 	 */
-	private function run_backup_site( $site_id, $responses, $archive_format = 'zip', $zip_force_override = 0 ) {
+	private function run_backup_site( $site_id, $responses, $archive_format = 'zip', $zip_force_override = 0, $filename = '' ) {
 		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
 		$task    = (object) array(
 			'id'                             => 1,
@@ -109,7 +109,7 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 			'excludecache'                   => 0,
 			'excludenonwp'                   => 0,
 			'excludezip'                     => 0,
-			'filename'                       => '',
+			'filename'                       => $filename,
 			'archiveFormat'                  => $archive_format,
 			'zip_force_override'             => $zip_force_override,
 			'loadFilesBeforeZip'             => 1,
@@ -222,6 +222,85 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 		);
 
 		return $captured['ext'];
+	}
+
+	/**
+	 * Capture the requested filename the dashboard sends the child in the
+	 * backup request, after preflight negotiation. The filename extension
+	 * must follow the negotiated format, not the pre-negotiation one.
+	 *
+	 * @param int    $site_id            Site ID.
+	 * @param array  $preflight          Preflight response.
+	 * @param string $archive_format     Task archive format.
+	 * @param int    $zip_force_override 1 to keep ZIP over the guardrail.
+	 *
+	 * @return string|null The f param sent to the child, or null.
+	 */
+	private function captured_backup_filename( $site_id, $preflight, $archive_format, $zip_force_override = 0 ) {
+		$captured = array( 'f' => null );
+
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			function ( $result, $website, $what, $params ) use ( &$captured ) {
+				unset( $website );
+				if ( 'backup' === $what && isset( $params['f'] ) ) {
+					$captured['f'] = $params['f'];
+				}
+				return $result;
+			},
+			5,
+			4
+		);
+
+		$this->run_backup_site(
+			$site_id,
+			array(
+				'backup_preflight' => $preflight,
+				'backup'           => array( 'error' => 'stop here' ),
+			),
+			$archive_format,
+			$zip_force_override,
+			'backup-%sitename%'
+		);
+
+		return $captured['f'];
+	}
+
+	/**
+	 * When the large-site guardrail switches ZIP to tar.gz, the requested
+	 * filename must carry the switched extension too. A stale .zip in the
+	 * name misleads any consumer that reads the format off the filename.
+	 *
+	 * @return void
+	 */
+	public function test_zip_auto_switch_renames_requested_file_to_targz() {
+		$file = $this->captured_backup_filename(
+			$this->create_test_site(),
+			$this->preflight_response( array( 'estimated_bytes' => 3 * GB_IN_BYTES ) ),
+			'zip'
+		);
+
+		$this->assertNotEmpty( $file, 'The filename template must reach the wire.' );
+		$this->assertStringEndsWith( '.tar.gz', $file, 'A switched backup must request a .tar.gz filename.' );
+		$this->assertStringNotContainsString( '.zip', $file, 'The pre-switch .zip must not survive anywhere in the filename.' );
+	}
+
+	/**
+	 * With the override keeping ZIP, the requested filename keeps its .zip
+	 * extension.
+	 *
+	 * @return void
+	 */
+	public function test_zip_force_override_keeps_zip_filename() {
+		$file = $this->captured_backup_filename(
+			$this->create_test_site(),
+			$this->preflight_response( array( 'estimated_bytes' => 3 * GB_IN_BYTES ) ),
+			'zip',
+			1
+		);
+
+		$this->assertNotEmpty( $file, 'The filename template must reach the wire.' );
+		$this->assertStringEndsWith( '.zip', $file, 'An override-kept ZIP must request a .zip filename.' );
 	}
 
 	/**

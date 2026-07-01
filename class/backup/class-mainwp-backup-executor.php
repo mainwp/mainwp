@@ -127,12 +127,6 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             $websiteCleanUrl
         );
 
-        if ( 'db' === $type ) {
-            $ext = '.sql.' . MainWP_Backup_Settings::get_current_archive_extension( $website, $pTask );
-        } else {
-            $ext = '.' . MainWP_Backup_Settings::get_current_archive_extension( $website, $pTask );
-        }
-
         $file = ( null === $pFilename ) ? '' : str_replace(
             array(
                 '%sitename%',
@@ -152,10 +146,6 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         );
         $file = str_replace( '%', '', $file );
         $file = MainWP_Backup_File_Manager::normalize_filename( $file );
-
-        if ( ! empty( $file ) ) {
-            $file .= $ext;
-        }
 
         if ( 'zip' === $pTask->archiveFormat ) {
             $loadFilesBeforeZip = (int) $pTask->loadFilesBeforeZip;
@@ -224,6 +214,12 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 // large-site ZIP auto-switch reaches the child in $params['ext'].
                 $archive_ext = MainWP_Backup_Settings::get_current_archive_extension( $website, $pTask );
                 MainWP_Backup_Monitor::negotiate_backup_preflight( $website, $archive_ext, $pTask );
+
+                // The requested filename takes its extension from the negotiated
+                // format, so an auto-switched backup is not named .zip.
+                if ( ! empty( $file ) ) {
+                    $file .= ( 'db' === $type ? '.sql.' : '.' ) . $archive_ext;
+                }
 
                 $params = array(
                     'type'                  => $type,

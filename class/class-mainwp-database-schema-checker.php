@@ -99,6 +99,14 @@ class MainWP_Database_Schema_Checker { // phpcs:ignore Generic.Classes.OpeningBr
             'mainwp_extensions_loaded_info',
             array()
         );
+
+        if ( ! empty( static::$cache_extensions_loaded_info ) && is_array( static::$cache_extensions_loaded_info ) ) {
+            foreach ( static::$cache_extensions_loaded_info as $ext_slug => $ext_info ) {
+                if ( ! empty( $ext_info['tables'] ) && is_array( $ext_info['tables'] ) ) {
+                    static::$cache_extensions_detected_issues[ $ext_slug ]['tables_db_info'] = array_fill_keys( $ext_info['tables'], false );
+                }
+            }
+        }
     }
 
     /**
@@ -317,14 +325,6 @@ class MainWP_Database_Schema_Checker { // phpcs:ignore Generic.Classes.OpeningBr
      */
     protected static function detect_missing_other_tables( $tables ) { // phpcs:ignore -- NOSONAR - complex function.
 
-        if ( ! empty( static::$cache_extensions_loaded_info ) && is_array( static::$cache_extensions_loaded_info ) ) {
-            foreach ( static::$cache_extensions_loaded_info as $ext_slug => $ext_info ) {
-                if ( ! empty( $ext_info['tables'] ) && is_array( $ext_info['tables'] ) ) {
-                    static::$cache_extensions_detected_issues[ $ext_slug ]['tables_db_info'] = array_fill_keys( $ext_info['tables'], false );
-                }
-            }
-        }
-
         if ( ! is_array( static::$cache_extensions_loaded_info ) ) {
             static::$cache_extensions_loaded_info = array();
         }
@@ -393,15 +393,31 @@ class MainWP_Database_Schema_Checker { // phpcs:ignore Generic.Classes.OpeningBr
             }
         }
 
-        if ( is_array( static::$cache_extensions_detected_issues ) && ! empty( static::$cache_extensions_detected_issues['found_missing_columns'] ) ) {
-            $found_count = array_sum(
-                array_map( 'count', static::$cache_extensions_detected_issues['found_missing_columns'] )
-            );
+        if ( is_array( static::$cache_extensions_detected_issues ) ) {
+            if ( ! empty( static::$cache_extensions_detected_issues['found_missing_columns'] ) ) {
+                $found_count = array_sum(
+                    array_map( 'count', static::$cache_extensions_detected_issues['found_missing_columns'] )
+                );
 
-            $db_issues_details .= sprintf(
-                ' <strong>' . esc_html__( 'Found %1$s missing columns in tables.', 'mainwp' ) . '</strong>',
-                $found_count
-            );
+                $db_issues_details .= sprintf(
+                    ' <strong>' . esc_html__( 'Found %1$s missing columns in tables.', 'mainwp' ) . '</strong>',
+                    $found_count
+                );
+            }
+
+            if ( ! empty( static::$cache_extensions_detected_issues['found_invalid_columns'] ) && is_array( static::$cache_extensions_detected_issues['found_invalid_columns'] ) ) {
+
+                $invalid_count = 0;
+
+                foreach ( static::$cache_extensions_detected_issues['found_invalid_columns'] as $invalid_cols ) {
+                    $invalid_count += count( $invalid_cols );
+                }
+
+                $db_issues_details .= sprintf(
+                    ' <strong>' . esc_html__( 'Found %1$s invalid columns definitions in tables.', 'mainwp' ) . '</strong>',
+                    $invalid_count
+                );
+            }
         }
 
         if ( ! empty( $db_issues_details ) ) {
@@ -683,38 +699,40 @@ class MainWP_Database_Schema_Checker { // phpcs:ignore Generic.Classes.OpeningBr
      */
     public static function get_core_tables() {
 
-        $core_tables = apply_filters(
-            'mainwp_database_core_tables',
-            array(
-                'mainwp_wp_clients',
-                'mainwp_wp_clients_fields',
-                'mainwp_wp_clients_field_values',
-                'mainwp_wp_clients_contacts',
-                'mainwp_wp_actions',
-                'mainwp_monitors',
-                'mainwp_monitor_heartbeat',
-                'mainwp_monitor_stat_hourly',
-                'mainwp_wp',
-                'mainwp_wp_sync',
-                'mainwp_wp_options',
-                'mainwp_wp_settings_backup',
-                'mainwp_users',
-                'mainwp_wp_status',
-                'mainwp_group',
-                'mainwp_wp_group',
-                'mainwp_lookup_item_objects',
-                'mainwp_wp_backup_progress',
-                'mainwp_wp_backup',
-                'mainwp_api_keys',
-                'mainwp_action_log',
-                'mainwp_request_log',
-                'mainwp_schedule_processes',
-                'mainwp_cost_tracker',
-                'mainwp_wp_logs',
-                'mainwp_wp_logs_meta',
-                'mainwp_wp_logs_meta_archive',
-            )
+        $core_tables = array(
+            'mainwp_wp_clients',
+            'mainwp_wp_clients_fields',
+            'mainwp_wp_clients_field_values',
+            'mainwp_wp_clients_contacts',
+            'mainwp_wp_actions',
+            'mainwp_monitors',
+            'mainwp_monitor_heartbeat',
+            'mainwp_monitor_stat_hourly',
+            'mainwp_wp',
+            'mainwp_wp_sync',
+            'mainwp_wp_options',
+            'mainwp_wp_settings_backup',
+            'mainwp_users',
+            'mainwp_wp_status',
+            'mainwp_group',
+            'mainwp_wp_group',
+            'mainwp_lookup_item_objects',
+            'mainwp_wp_backup_progress',
+            'mainwp_wp_backup',
+            'mainwp_api_keys',
+            'mainwp_action_log',
+            'mainwp_request_log',
+            'mainwp_schedule_processes',
+            'mainwp_cost_tracker',
         );
+
+        if ( ! defined( 'MAINWP_MODULE_LOG_ENABLED' ) || MAINWP_MODULE_LOG_ENABLED ) {
+            $core_tables[] = 'mainwp_wp_logs';
+            $core_tables[] = 'mainwp_wp_logs_meta';
+            $core_tables[] = 'mainwp_wp_logs_meta_archive';
+        }
+
+        $core_tables = apply_filters( 'mainwp_database_core_tables', $core_tables );
 
         return array_map( array( self::class, 'add_db_table_prefix' ), $core_tables );
     }

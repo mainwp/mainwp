@@ -2347,7 +2347,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
                             );
 
                             if ( 'pass' === $status ) {
-                                $status = 'warning'; // warning - incorrect column definition.
+                                $status = 'error'; // warning - incorrect column definition.
                             }
                         }
 

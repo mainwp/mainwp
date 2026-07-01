@@ -68,15 +68,42 @@ class MainWP_System_Monitor_Runner {
         );
     }
 
+    /**
+     * Run monitor.
+     *
+     * @return void
+     */
+    public static function run() {
+        self::execute();
+    }
+
+    /**
+     * Run monitor fallback.
+     *
+     * @return void
+     */
+    public static function run_fallback() {
+        self::execute( true );
+    }
+
+    /**
+     * Run monitor manually.
+     *
+     * @return void
+     */
+    public static function run_manual() {
+        self::execute( false, false );
+    }
 
     /**
      * Execute monitor.
      *
      * @param bool $fallback Fallback run.
+     * @param bool $scheduled Scheduled run.
      *
      * @return void
      */
-    public static function run( $fallback = false ) {
+    public static function execute( $fallback = false, $scheduled = true ) {
 
         if ( self::is_locked() ) {
             return;
@@ -96,7 +123,7 @@ class MainWP_System_Monitor_Runner {
 
             self::update_last_run();
 
-            if ( ! $fallback ) {
+            if ( ! $fallback && $scheduled ) {
                 self::update_last_cron_run();
             }
         } catch ( Exception $e ) {
@@ -128,7 +155,7 @@ class MainWP_System_Monitor_Runner {
             return;
         }
 
-        self::run( true );
+        self::run_fallback();
     }
 
     /**

@@ -47,15 +47,19 @@ class MainWP_System_Monitor_Issues {
 
         switch ( $code ) {
             case 'monitor_stale':
+                $human = human_time_diff(
+                    time() - $payload['delay'],
+                    time()
+                );
+
                 if ( $payload['wp_cron_disabled'] ) {
                     return sprintf(
-                        __( 'Scheduled cron events have not executed for %d minutes. WP-Cron is disabled, so verify that your external cron job is running correctly.', 'mainwp' ),
-                        $payload['delay']
+                        __( 'Scheduled cron has not run for %s. WP-Cron is disabled, so verify that your external cron job is running correctly.', 'mainwp' ),
                     );
                 }
                 return sprintf(
-                    __( 'Scheduled cron events have not executed for %d  minutes. Verify that WP-Cron is functioning correctly', 'mainwp' ),
-                    $payload['delay']
+                    __( 'Scheduled cron has not run for %s. Verify that WP-Cron is functioning correctly', 'mainwp' ),
+                    $human
                 );
 
             case 'monitor_fallback_used':

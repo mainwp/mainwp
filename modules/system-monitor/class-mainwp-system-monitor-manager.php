@@ -44,9 +44,9 @@ class MainWP_System_Monitor_Manager {
 
         $manager = new self();
 
-        $manager->register( new MainWP_System_Monitor_Cron( $context ) );
+        $manager->register( new MainWP_System_Monitor_Cron() );
 
-        $manager->execute();
+        $manager->execute( $context );
     }
 
     /**
@@ -64,13 +64,15 @@ class MainWP_System_Monitor_Manager {
     /**
      * Execute all registered monitors.
      *
+     * @param array $context Running context data.
+     *
      * @return void
      */
-    private function execute() {
+    private function execute( array $context = array() ) {
         foreach ( $this->monitors as $monitor ) {
             MainWP_System_Monitor_Storage::save_results(
                 $monitor->get_name(),
-                $monitor->run()
+                $monitor->run( $context )
             );
         }
     }

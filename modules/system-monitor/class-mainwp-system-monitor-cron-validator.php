@@ -19,8 +19,9 @@ class MainWP_System_Monitor_Cron_Validator {
     /**
      * Validator consts.
      */
-    const STALE_WARNING = 5 * MINUTE_IN_SECONDS;
-    const STALE_ERROR   = 15 * MINUTE_IN_SECONDS;
+    const STALE_WARNING          = 5 * MINUTE_IN_SECONDS;
+    const STALE_ERROR            = 15 * MINUTE_IN_SECONDS;
+    const FIRST_RUN_GRACE_PERIOD = 5 * MINUTE_IN_SECONDS;
 
     /**
      * Validate scan results.
@@ -35,8 +36,23 @@ class MainWP_System_Monitor_Cron_Validator {
         $issues = array();
 
         $last_cron_run = $scan['last_cron_run'] ?? 0;
+        $next_run      = (int) $scan['next_run'];
 
-        if ( $last_cron_run > 0 ) {
+        if ( 0 === $last_cron_run ) {
+            // The monitor has never executed via the scheduled hook.
+            if ( $next_run > 0 && time() > ( $next_run + self::FIRST_RUN_GRACE_PERIOD ) ) {
+
+                $issues[] = array(
+                    'check_name' => 'heartbeat',
+                    'entity'     => 'wp_cron',
+                    'code'       => MainWP_System_Monitor_Cron::ISSUE_MONITOR_STALE,
+                    'severity'   => 'warning',
+                    'data'       => array(
+                        'delay' => time() - $next_run,
+                    ),
+                );
+            }
+        } else {
 
             $delay = time() - $last_cron_run;
 

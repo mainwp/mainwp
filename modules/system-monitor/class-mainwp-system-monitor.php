@@ -150,7 +150,8 @@ class MainWP_System_Monitor {
         self::maybe_install();
         self::schedule_cron();
 
-        self::run(); // immediate baseline snapshot.
+        // Generate an initial baseline immediately.
+        MainWP_System_Monitor_Runner::run_manual();
     }
 
     /**

@@ -4188,4 +4188,49 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             do_action( 'mainwp_log_system_query', $params, $sql, $caller );
         }
     }
+
+    /**
+     * Method get_core_tables().
+     *
+     * Returns the list of core tables used by MainWP for validation data integrity and other purposes.
+     *
+     * @return array Core tables info
+     */
+    public function get_core_tables() {
+
+        $core_tables = array(
+            $this->table_name( 'wp_clients' ),
+            $this->table_name( 'wp_clients_fields' ),
+            $this->table_name( 'wp_clients_field_values' ),
+            $this->table_name( 'wp_clients_contacts' ),
+            $this->table_name( 'wp_actions' ),
+            $this->table_name( 'monitors' ),
+            $this->table_name( 'monitor_heartbeat' ),
+            $this->table_name( 'monitor_stat_hourly' ),
+            $this->table_name( 'wp' ),
+            $this->table_name( 'wp_sync' ),
+            $this->table_name( 'wp_options' ),
+            $this->table_name( 'wp_settings_backup' ),
+            $this->table_name( 'users' ),
+            $this->table_name( 'wp_status' ),
+            $this->table_name( 'group' ),
+            $this->table_name( 'wp_group' ),
+            $this->table_name( 'lookup_item_objects' ),
+            $this->table_name( 'wp_backup_progress' ),
+            $this->table_name( 'wp_backup' ),
+            $this->table_name( 'api_keys' ),
+            $this->table_name( 'action_log' ),
+            $this->table_name( 'request_log' ),
+            $this->table_name( 'schedule_processes' ),
+            $this->table_name( 'cost_tracker' ),
+        );
+
+        if ( ! defined( 'MAINWP_MODULE_LOG_ENABLED' ) || MAINWP_MODULE_LOG_ENABLED ) {
+            $core_tables[] = $this->table_name( 'wp_logs' );
+            $core_tables[] = $this->table_name( 'wp_logs_meta' );
+            $core_tables[] = $this->table_name( 'wp_logs_meta_archive' );
+        }
+
+        return apply_filters( 'mainwp_database_core_tables', $core_tables );
+    }
 }

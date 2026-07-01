@@ -138,7 +138,7 @@ class MainWP_Database_Schema_Checker { // phpcs:ignore Generic.Classes.OpeningBr
             );
 
             // WC Core tables to check existence of.
-            $core_tables = static::get_core_tables();
+            $core_tables = MainWP_DB::instance()->get_core_tables();
 
             $tables = array(
                 'core'  => array_fill_keys( $core_tables, false ),
@@ -692,50 +692,6 @@ class MainWP_Database_Schema_Checker { // phpcs:ignore Generic.Classes.OpeningBr
         return $wpdb->prefix . $table;
     }
 
-    /**
-     * Method get_core_tables().
-     *
-     * @return array Core tables info
-     */
-    public static function get_core_tables() {
-
-        $core_tables = array(
-            'mainwp_wp_clients',
-            'mainwp_wp_clients_fields',
-            'mainwp_wp_clients_field_values',
-            'mainwp_wp_clients_contacts',
-            'mainwp_wp_actions',
-            'mainwp_monitors',
-            'mainwp_monitor_heartbeat',
-            'mainwp_monitor_stat_hourly',
-            'mainwp_wp',
-            'mainwp_wp_sync',
-            'mainwp_wp_options',
-            'mainwp_wp_settings_backup',
-            'mainwp_users',
-            'mainwp_wp_status',
-            'mainwp_group',
-            'mainwp_wp_group',
-            'mainwp_lookup_item_objects',
-            'mainwp_wp_backup_progress',
-            'mainwp_wp_backup',
-            'mainwp_api_keys',
-            'mainwp_action_log',
-            'mainwp_request_log',
-            'mainwp_schedule_processes',
-            'mainwp_cost_tracker',
-        );
-
-        if ( ! defined( 'MAINWP_MODULE_LOG_ENABLED' ) || MAINWP_MODULE_LOG_ENABLED ) {
-            $core_tables[] = 'mainwp_wp_logs';
-            $core_tables[] = 'mainwp_wp_logs_meta';
-            $core_tables[] = 'mainwp_wp_logs_meta_archive';
-        }
-
-        $core_tables = apply_filters( 'mainwp_database_core_tables', $core_tables );
-
-        return array_map( array( self::class, 'add_db_table_prefix' ), $core_tables );
-    }
 
 
     /**

@@ -197,6 +197,10 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	public function tear_down() {
 		global $wpdb;
 		$wpdb->query( 'DELETE FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ) ); // phpcs:ignore WordPress.DB -- test cleanup.
+		if ( ! empty( $this->chain_snapshot_ids ) ) {
+			$ids = implode( ',', array_map( 'intval', $this->chain_snapshot_ids ) );
+			$wpdb->query( 'DELETE FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ) . " WHERE id IN ( {$ids} )" ); // phpcs:ignore WordPress.DB -- test cleanup.
+		}
 		foreach ( (array) glob( $this->dir . '/*' ) as $file ) {
 			unlink( $file );
 		}
@@ -330,6 +334,164 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$this->assertNotNull( $create );
 		$options = json_decode( $create['params']['options_json'], true );
 		$this->assertSame( 'files', $options['sub_type'] );
+	}
+
+	/**
+	 * Snapshot ids inserted by make_chain_snapshot, cleaned in tear_down.
+	 *
+	 * @var int[]
+	 */
+	private $chain_snapshot_ids = array();
+
+	/**
+	 * Insert a snapshot row with on-disk artifacts, chain-linkable.
+	 *
+	 * Artifact fixture files are namespaced per snapshot on disk (real runs
+	 * keep each snapshot in its own run dir) while the recorded archive
+	 * 'file' stays the bare basename - every increment in a real chain
+	 * repeats the same sidecar basenames.
+	 *
+	 * @param int|null $parent_id Parent snapshot id, or null for a base.
+	 * @param string   $type      Snapshot type.
+	 * @param array    $archives  Archive entries (file/role).
+	 *
+	 * @return int Snapshot id.
+	 */
+	private function make_chain_snapshot( $parent_id, $type, $archives ) {
+		global $wpdb;
+
+		$serial = count( $this->chain_snapshot_ids );
+		foreach ( $archives as &$archive ) {
+			$archive['path'] = $this->dir . '/snap' . $serial . '-' . $archive['file'];
+			file_put_contents( $archive['path'], 'artifact-bytes-' . $serial . '-' . $archive['file'] ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+			$archive['size'] = (int) filesize( $archive['path'] );
+		}
+		unset( $archive );
+
+		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
+			MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ),
+			array(
+				'task_id'       => 991,
+				'site_id'       => $this->site_id,
+				'type'          => $type,
+				'parent_id'     => $parent_id,
+				'created'       => time() + $serial,
+				'archives'      => wp_json_encode( $archives ),
+				'manifest_path' => '',
+				'status'        => 'complete',
+			)
+		);
+		$id                         = (int) $wpdb->insert_id;
+		$this->chain_snapshot_ids[] = $id;
+		return $id;
+	}
+
+	/**
+	 * Restoring the tip of an incremental chain ships the child the whole
+	 * chain in apply order: the base full first, each increment's
+	 * tombstones before its parts in chain order, and only the
+	 * chain-newest db dump, last. Staged names carry the s<snapshot_id>-
+	 * namespace so the increments' repeated sidecar basenames cannot
+	 * collide on the child.
+	 */
+	public function test_staging_ships_incremental_chain_plan_in_order() {
+		// Archives are recorded in the child's report order for an
+		// incremental run: manifest, tombstones, db, parts.
+		$base_id = $this->make_chain_snapshot(
+			null,
+			'full',
+			array(
+				array( 'file' => 'files.list', 'role' => 'manifest' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+				array( 'file' => 'full001.zip', 'role' => 'full' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+			)
+		);
+		$inc1_id = $this->make_chain_snapshot(
+			$base_id,
+			'incremental',
+			array(
+				array( 'file' => 'files.list', 'role' => 'manifest' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+				array( 'file' => 'tombstones.list', 'role' => 'tombstones' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+				array( 'file' => 'db.zip', 'role' => 'db' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+				array( 'file' => 'plugins.part001.zip', 'role' => 'part' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+				array( 'file' => 'uploads.part001.zip', 'role' => 'part' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+			)
+		);
+		$inc2_id = $this->make_chain_snapshot(
+			$inc1_id,
+			'incremental',
+			array(
+				array( 'file' => 'files.list', 'role' => 'manifest' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+				array( 'file' => 'tombstones.list', 'role' => 'tombstones' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+				array( 'file' => 'db.zip', 'role' => 'db' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+				array( 'file' => 'plugins.part001.zip', 'role' => 'part' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+			)
+		);
+
+		$this->responses['restore_task_create'] = array(
+			'task_id' => 'chain-restore-task',
+			'phase'   => 'queued',
+		);
+
+		$job_id = $this->orchestrator->initiate_restore( $this->site_id, $inc2_id );
+		$store  = MainWP_Backup_Restore_Job_Store::instance();
+		$job    = $store->get_job( $job_id );
+
+		$guard = 0;
+		while ( MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING !== $job->status && $guard < 5 ) {
+			$job = $this->tick( $job );
+			++$guard;
+		}
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING, $job->status );
+		$this->assertSame( 'chain-restore-task', $job->child_task_id );
+
+		$create = null;
+		foreach ( $this->calls as $call ) {
+			if ( 'restore_task_create' === $call['what'] ) {
+				$create = $call;
+			}
+		}
+		$this->assertNotNull( $create );
+
+		$options = json_decode( $create['params']['options_json'], true );
+		$this->assertSame( 'full', $options['sub_type'], 'A chain with file parts restores as a full.' );
+
+		$artifacts = json_decode( $create['params']['artifacts_json'], true );
+		$this->assertSame(
+			array(
+				array( 'full', 's' . $base_id . '-full001.zip' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact expectation.
+				array( 'tombstones', 's' . $inc1_id . '-tombstones.list' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact expectation.
+				array( 'part', 's' . $inc1_id . '-plugins.part001.zip' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact expectation.
+				array( 'part', 's' . $inc1_id . '-uploads.part001.zip' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact expectation.
+				array( 'tombstones', 's' . $inc2_id . '-tombstones.list' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact expectation.
+				array( 'part', 's' . $inc2_id . '-plugins.part001.zip' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact expectation.
+				array( 'db', 's' . $inc2_id . '-db.zip' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact expectation.
+			),
+			array_map(
+				function ( $artifact ) {
+					return array( $artifact['role'], $artifact['file'] );
+				},
+				$artifacts
+			),
+			'The chain must ship base-first, per-increment tombstones before parts, chain-newest db last.'
+		);
+
+		// Exactly one db entry survives: increment 1's dump must not ship.
+		$db_files = array();
+		foreach ( $artifacts as $artifact ) {
+			if ( 'db' === $artifact['role'] ) {
+				$db_files[] = $artifact['file'];
+			}
+		}
+		$this->assertSame( array( 's' . $inc2_id . '-db.zip' ), $db_files );
+
+		// Staged names are unique on the wire despite repeated basenames.
+		$names = array_column( $artifacts, 'file' );
+		$this->assertSame( $names, array_unique( $names ) );
+
+		// Every non-adopt artifact staged with a real hash of its bytes.
+		foreach ( $artifacts as $artifact ) {
+			$this->assertNotSame( '', $artifact['sha256'], $artifact['file'] . ' must carry a staging hash.' );
+		}
 	}
 
 	/**

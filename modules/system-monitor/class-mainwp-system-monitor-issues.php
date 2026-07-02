@@ -52,9 +52,10 @@ class MainWP_System_Monitor_Issues {
                     time()
                 );
 
-                if ( $payload['wp_cron_disabled'] ) {
+                if ( ! empty( $payload['wp_cron_disabled'] ) ) {
                     return sprintf(
                         __( 'Scheduled cron has not run for %s. WP-Cron is disabled, so verify that your external cron job is running correctly.', 'mainwp' ),
+                        $human
                     );
                 }
                 return sprintf(

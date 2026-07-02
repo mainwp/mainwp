@@ -48,7 +48,8 @@ class MainWP_System_Monitor_Cron_Validator {
                     'code'       => MainWP_System_Monitor_Cron::ISSUE_MONITOR_STALE,
                     'severity'   => 'warning',
                     'data'       => array(
-                        'delay' => time() - $next_run,
+                        'delay'            => time() - $next_run,
+                        'wp_cron_disabled' => ! empty( $scan['wp_cron_disabled'] ),
                     ),
                 );
             }

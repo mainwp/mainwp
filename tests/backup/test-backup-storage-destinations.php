@@ -421,6 +421,33 @@ class MainWP_Backup_Storage_Destinations_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * The mainwp_backup_resolved_host_ips filter is the deterministic seam
+	 * over name resolution: when resolution lands on a blocked address the
+	 * host is refused, and an empty result preserves the fail-open contract.
+	 *
+	 * @return void
+	 */
+	public function test_is_safe_host_uses_filtered_resolution_results() {
+		$seen_host = null;
+		$resolver  = function ( $ips, $host ) use ( &$seen_host ) {
+			$seen_host = $host;
+			return array( '169.254.169.254' );
+		};
+		add_filter( 'mainwp_backup_resolved_host_ips', $resolver, 10, 2 );
+		$blocked = MainWP_Backup_Storage_Destinations::is_safe_host( 'storage.example.test' );
+		remove_filter( 'mainwp_backup_resolved_host_ips', $resolver );
+
+		$this->assertFalse( $blocked, 'A host whose resolution lands on a blocked address is refused.' );
+		$this->assertSame( 'storage.example.test', $seen_host, 'The filter receives the host being resolved.' );
+
+		add_filter( 'mainwp_backup_resolved_host_ips', '__return_empty_array' );
+		$open = MainWP_Backup_Storage_Destinations::is_safe_host( 'storage.example.test' );
+		remove_filter( 'mainwp_backup_resolved_host_ips', '__return_empty_array' );
+
+		$this->assertTrue( $open, 'An empty resolution result preserves the fail-open contract.' );
+	}
+
+	/**
 	 * The mainwp_backup_skip_ssrf_check filter is an escape hatch for setups
 	 * that must reach an otherwise-blocked address.
 	 *

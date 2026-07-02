@@ -488,6 +488,10 @@ class MainWP_Backup_Storage_Dropbox_Test extends \WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_exchange_authorization_code_returns_refresh_token() {
+		// The exchange guard would resolve the real api.dropboxapi.com over
+		// live DNS; skip it so this test only exercises the exchange logic.
+		add_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+
 		$requests  = array();
 		$transport = function ( $url, $args ) use ( &$requests ) {
 			$requests[] = array(
@@ -527,6 +531,10 @@ class MainWP_Backup_Storage_Dropbox_Test extends \WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_exchange_authorization_code_reports_failure() {
+		// The exchange guard would resolve the real api.dropboxapi.com over
+		// live DNS; skip it so this test only exercises the exchange logic.
+		add_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+
 		$transport = function () {
 			return $this->response( 400, '{"error": "invalid_grant", "error_description": "code has expired"}' );
 		};
@@ -558,6 +566,28 @@ class MainWP_Backup_Storage_Dropbox_Test extends \WP_UnitTestCase {
 			}
 		);
 		$this->assertArrayHasKey( 'error', $transport_error );
+	}
+
+	/**
+	 * The config-time OAuth code exchange re-checks the API host before its
+	 * transport runs. This closes the one transport path that bypassed the
+	 * guarded send(): a link-local / cloud-metadata API host must yield an
+	 * error result without any request being made.
+	 *
+	 * @return void
+	 */
+	public function test_exchange_authorization_code_blocked_when_api_host_is_link_local() {
+		$called    = 0;
+		$transport = function () use ( &$called ) {
+			++$called;
+			return $this->response( 200, '{"refresh_token": "must-never-arrive"}' );
+		};
+
+		$result = Link_Local_Host_Dropbox::exchange_authorization_code( 'k', 's', 'c', 'https://dash.example/cb', $transport );
+
+		$this->assertArrayHasKey( 'error', $result );
+		$this->assertArrayNotHasKey( 'refresh_token', $result );
+		$this->assertSame( 0, $called, 'The transport must not run for a blocked host.' );
 	}
 
 	/**

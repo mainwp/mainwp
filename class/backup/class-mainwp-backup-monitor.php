@@ -219,7 +219,10 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             return;
         }
 
-        if ( isset( $preflight['disk_free'] ) && false !== $preflight['disk_free'] && is_numeric( $preflight['disk_free'] ) && (int) $preflight['disk_free'] < 50 * MB_IN_BYTES ) {
+        // Byte quantities compare as floats: a 32-bit (int) cast overflows on
+        // anything over ~2GB, which here would flip a healthy disk_free
+        // negative and falsely abort as disk-full.
+        if ( isset( $preflight['disk_free'] ) && false !== $preflight['disk_free'] && is_numeric( $preflight['disk_free'] ) && (float) $preflight['disk_free'] < 50 * MB_IN_BYTES ) {
             // phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- message parts are escaped above.
             throw new MainWP_Exception(
                 sprintf(
@@ -257,9 +260,14 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         // Either way, surface the outcome on the task so it is visible before
         // the run.
         if ( 'zip' === $archive_ext && isset( $preflight['estimated_bytes'] ) && is_numeric( $preflight['estimated_bytes'] ) ) {
-            $zip_threshold = (int) apply_filters( 'mainwp_zip_guardrail_bytes', 2 * GB_IN_BYTES );
-            if ( $zip_threshold > 0 && (int) $preflight['estimated_bytes'] > $zip_threshold ) {
-                $estimate = esc_html( size_format( (int) $preflight['estimated_bytes'] ) );
+            // Float casts, not (int): the 2GB default overflows a 32-bit int,
+            // which would zero the threshold and silently disable the
+            // guardrail. The size_format() argument may stay float too - zero
+            // is unreachable inside this block ($zip_threshold > 0 gates it),
+            // so size_format()'s strict int-zero case never bites here.
+            $zip_threshold = (float) apply_filters( 'mainwp_zip_guardrail_bytes', 2 * GB_IN_BYTES );
+            if ( $zip_threshold > 0 && (float) $preflight['estimated_bytes'] > $zip_threshold ) {
+                $estimate = esc_html( size_format( (float) $preflight['estimated_bytes'] ) );
                 $keep_zip = ! $allow_switch || ( is_object( $task ) && 1 === (int) ( $task->zip_force_override ?? 0 ) );
                 if ( $keep_zip ) {
                     $zip_warning = sprintf(

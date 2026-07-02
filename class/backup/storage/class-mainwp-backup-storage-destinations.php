@@ -412,6 +412,14 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
     /**
      * Resolve a hostname to its IPv4 and IPv6 addresses.
      *
+     * When the DNS query yields nothing, gethostbynamel() runs as a fallback:
+     * it goes through the system resolver (nsswitch), so it covers hosts that
+     * only exist in /etc/hosts and resolvers that answer an A query with a
+     * bare CNAME record. The fallback is IPv4-only - PHP has no hosts-file-aware
+     * AAAA lookup - so a hosts-file mapping to an IPv6 target (fe80::/10,
+     * fd00:ec2::254) still fails open; accepted, since writing /etc/hosts
+     * already requires control of the dashboard host itself.
+     *
      * @param string $host Hostname.
      *
      * @return string[] Resolved IPs, empty when the host does not resolve.
@@ -428,7 +436,22 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
                 }
             }
         }
-        return $ips;
+
+        if ( empty( $ips ) ) {
+            $fallback = @gethostbynamel( $host ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- a resolution failure is handled by the caller (fail open).
+            if ( is_array( $fallback ) ) {
+                $ips = array_map( 'strval', $fallback );
+            }
+        }
+
+        /**
+         * Filter: the resolved IPs for a storage destination host, before the
+         * SSRF block-list check runs against them.
+         *
+         * @param string[] $ips  Resolved IPs; empty means unresolvable (fail open).
+         * @param string   $host The host that was resolved.
+         */
+        return apply_filters( 'mainwp_backup_resolved_host_ips', $ips, $host );
     }
 
     /**

@@ -420,6 +420,14 @@ class MainWP_Backup_Storage_Dropbox implements MainWP_Backup_Storage_Provider { 
     public static function exchange_authorization_code( string $app_key, string $app_secret, string $code, string $redirect_uri, $transport = null ): array {
         $transport = is_callable( $transport ) ? $transport : array( static::class, 'default_transport' );
 
+        // The exchange is the one transport call that runs outside the guarded
+        // send() path (it is static and happens at config time, before any
+        // provider instance exists), so it re-checks the API host itself.
+        $api_host = (string) wp_parse_url( static::API_BASE, PHP_URL_HOST );
+        if ( '' !== $api_host && ! MainWP_Backup_Storage_Destinations::is_safe_host( $api_host ) ) {
+            return array( 'error' => esc_html__( 'The Dropbox API host resolves to a link-local or cloud-metadata address, so the connection was refused. Check the dashboard\'s DNS and try again.', 'mainwp' ) );
+        }
+
         $response = call_user_func(
             $transport,
             static::API_BASE . '/oauth2/token',

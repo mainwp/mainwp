@@ -496,6 +496,33 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * The guardrail compares byte quantities as floats, so a float threshold
+	 * from the filter and a string-numeric estimate from the child JSON still
+	 * switch the format on the wire. On 32-bit PHP the old (int) casts
+	 * overflowed on the 2GB default and silently disabled the guardrail; that
+	 * regression cannot execute on a 64-bit machine, so this locks the
+	 * float-safe handling by construction.
+	 *
+	 * @return void
+	 */
+	public function test_guardrail_compares_bytes_as_floats() {
+		add_filter(
+			'mainwp_zip_guardrail_bytes',
+			function () {
+				return 1.5 * MB_IN_BYTES; // Float threshold.
+			}
+		);
+
+		$ext = $this->captured_backup_ext(
+			$this->create_test_site(),
+			$this->preflight_response( array( 'estimated_bytes' => (string) ( 50 * MB_IN_BYTES ) ) ),
+			'zip'
+		);
+
+		$this->assertSame( 'tar.gz', $ext, 'A string-numeric estimate over a float threshold must still switch the wire format.' );
+	}
+
+	/**
 	 * An old child that does not report a size estimate gets no guardrail
 	 * warning and no fatal error.
 	 *
@@ -818,6 +845,30 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 
 		$this->assertNotNull( $exception );
 		$this->assertSame( 'mainwp_backup_disk_full', $exception->get_message_error_code() );
+	}
+
+	/**
+	 * A completely full child disk (0 bytes free) blocks the backup AND still
+	 * renders the free space in the error message: size_format() returns
+	 * false for a float zero (its zero case is a strict int check), so the
+	 * display cast must stay int even while the comparisons go float.
+	 *
+	 * @return void
+	 */
+	public function test_zero_disk_free_reports_zero_bytes_in_error() {
+		$site_id = $this->create_test_site();
+
+		$exception = $this->run_backup_site(
+			$site_id,
+			array(
+				'backup_preflight' => $this->preflight_response( array( 'disk_free' => 0 ) ),
+				'backup'           => array( 'error' => 'must not reach the backup action' ),
+			)
+		);
+
+		$this->assertNotNull( $exception );
+		$this->assertSame( 'mainwp_backup_disk_full', $exception->get_message_error_code() );
+		$this->assertStringContainsString( '0 B', $exception->getMessage(), 'The message must render the free space, not a blank.' );
 	}
 
 	/**

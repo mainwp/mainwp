@@ -247,6 +247,8 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 }
                 MainWP_Utility::update_option( MainWP_Backup_Encryption::ENABLED_OPTION, $enableEncryption );
 
+                MainWP_Utility::update_option( MainWP_Backup_Diagnostics::OPTION_ENABLED, ( isset( $_POST['mainwp_options_backupDiagnosticsEnabled'] ) && ! empty( $_POST['mainwp_options_backupDiagnosticsEnabled'] ) ) ? 1 : 0 );
+
                 return true;
             }
         }

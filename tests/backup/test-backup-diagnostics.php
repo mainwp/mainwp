@@ -1,0 +1,807 @@
+<?php
+/**
+ * MainWP Backup Diagnostics Tests
+ *
+ * Tests for the opt-in diagnostics recorder: JSONL event capture from
+ * the backup/restore pipeline seams, the hard off-switch, slot events,
+ * and the guarantee that a recorder failure never breaks a backup.
+ *
+ * @package MainWP\Dashboard\Tests
+ */
+
+namespace MainWP\Dashboard\Tests;
+
+use MainWP\Dashboard\MainWP_Backup_Diagnostics;
+use MainWP\Dashboard\MainWP_Backup_Executor;
+use MainWP\Dashboard\MainWP_Backup_Monitor;
+use MainWP\Dashboard\MainWP_Backup_Restore_Job_Store;
+use MainWP\Dashboard\MainWP_Backup_Restore_Orchestrator;
+use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_DB_Backup;
+use MainWP\Dashboard\MainWP_Exception;
+
+/**
+ * Class MainWP_Backup_Diagnostics_Test
+ */
+class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
+
+	/**
+	 * Scratch diagnostics directory for the test.
+	 *
+	 * @var string
+	 */
+	private $diag_dir;
+
+	/**
+	 * Set up: enable native backups and point the recorder at scratch.
+	 *
+	 * @return void
+	 */
+	public function setUp(): void {
+		parent::setUp();
+		update_option( 'mainwp_enableNativeBackups', 1 );
+
+		$this->diag_dir = sys_get_temp_dir() . '/mainwp-diag-test-' . uniqid();
+		mkdir( $this->diag_dir );
+		add_filter( 'mainwp_backup_diagnostics_dir', array( $this, 'filter_diag_dir' ) );
+	}
+
+	/**
+	 * Clean up scratch files, progress rows, and options.
+	 *
+	 * @return void
+	 */
+	public function tearDown(): void {
+		global $wpdb;
+		$wpdb->query( "DELETE FROM {$wpdb->prefix}mainwp_wp_backup_progress" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup.
+		$wpdb->query( "DELETE FROM {$wpdb->prefix}mainwp_wp_backup" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup.
+		$wpdb->query( 'DELETE FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ) ); // phpcs:ignore WordPress.DB -- test cleanup.
+		delete_option( 'mainwp_enableNativeBackups' );
+		delete_option( MainWP_Backup_Diagnostics::OPTION_ENABLED );
+		delete_transient( 'mainwp_backup_slots' );
+		unset( $_POST['security'], $_REQUEST['security'] );
+
+		if ( is_dir( $this->diag_dir ) ) {
+			foreach ( (array) glob( $this->diag_dir . '/*' ) as $file ) {
+				unlink( $file );
+			}
+			rmdir( $this->diag_dir );
+		}
+		parent::tearDown();
+	}
+
+	/**
+	 * Point the recorder at the scratch directory.
+	 *
+	 * @return string Scratch dir.
+	 */
+	public function filter_diag_dir() {
+		return $this->diag_dir;
+	}
+
+	/**
+	 * Enable the recorder and register its hooks.
+	 *
+	 * @return void
+	 */
+	private function enable_recorder() {
+		update_option( MainWP_Backup_Diagnostics::OPTION_ENABLED, '1' );
+		MainWP_Backup_Diagnostics::instance()->init();
+	}
+
+	/**
+	 * Decode every JSONL line in the scratch directory.
+	 *
+	 * @return array Decoded events.
+	 */
+	private function recorded_events() {
+		$events = array();
+		foreach ( (array) glob( $this->diag_dir . '/*.jsonl' ) as $file ) {
+			foreach ( array_filter( explode( "\n", (string) file_get_contents( $file ) ) ) as $line ) { // phpcs:ignore WordPress.WP.AlternativeFunctions -- test read.
+				$decoded = json_decode( $line, true );
+				$this->assertIsArray( $decoded, 'Every recorded line must be valid JSON: ' . $line );
+				$events[] = $decoded;
+			}
+		}
+		return $events;
+	}
+
+	/**
+	 * Build a backup task object for backup_site().
+	 *
+	 * @param int   $userid    Owner user id.
+	 * @param array $overrides Field overrides.
+	 *
+	 * @return object Task.
+	 */
+	private function make_task( $userid, $overrides = array() ) {
+		return (object) array_merge(
+			array(
+				'id'                             => 1,
+				'userid'                         => $userid,
+				'type'                           => 'full',
+				'exclude'                        => '',
+				'excludebackup'                  => 0,
+				'excludecache'                   => 0,
+				'excludenonwp'                   => 0,
+				'excludezip'                     => 0,
+				'filename'                       => '',
+				'archiveFormat'                  => 'tar.gz',
+				'zip_force_override'             => 0,
+				'loadFilesBeforeZip'             => 1,
+				'maximumFileDescriptorsOverride' => 0,
+				'maximumFileDescriptorsAuto'     => 1,
+				'maximumFileDescriptors'         => 150,
+				'last_run'                       => time() - 100,
+				'subfolder'                      => 'backups',
+			),
+			$overrides
+		);
+	}
+
+	/**
+	 * Mock per-action child responses.
+	 *
+	 * @param array $responses Map of action => response array.
+	 *
+	 * @return void
+	 */
+	private function mock_child_actions( $responses ) {
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			function ( $result, $website, $what ) use ( $responses ) {
+				unset( $website );
+				return isset( $responses[ $what ] ) ? $responses[ $what ] : $result;
+			},
+			10,
+			3
+		);
+	}
+
+	/**
+	 * A fired poll seam hook lands as one decodable JSONL event carrying
+	 * the full payload, the poll duration, and the run identity.
+	 *
+	 * @return void
+	 */
+	public function test_recorder_writes_jsonl_event_when_enabled() {
+		$this->enable_recorder();
+
+		$payload = array(
+			'task_id'   => 'bk123',
+			'phase'     => 'dumping_db',
+			'sub_state' => array( 'db_cursor' => array( 'table' => 'wp_posts' ) ),
+		);
+		do_action(
+			'mainwp_backup_diag_poll',
+			$payload,
+			0.123,
+			array(
+				'op'      => 'run',
+				'site_id' => 7,
+				'task_id' => 42,
+			)
+		);
+
+		$events = $this->recorded_events();
+		$this->assertCount( 1, $events );
+		$event = $events[0];
+
+		$this->assertSame( 'poll', $event['kind'] );
+		$this->assertSame( 7, $event['site_id'] );
+		$this->assertSame( 42, $event['task_id'] );
+		$this->assertSame( '42-7-bk123', $event['run_key'] );
+		$this->assertIsFloat( $event['ts'] );
+		$this->assertSame( 'dumping_db', $event['payload']['phase'] );
+		$this->assertSame( array( 'db_cursor' => array( 'table' => 'wp_posts' ) ), $event['payload']['sub_state'], 'The full sub_state must be recorded, not the flattened projection.' );
+		$this->assertSame( 0.123, $event['payload']['poll_duration_s'] );
+		$this->assertSame( 'run', $event['payload']['op'] );
+
+		$files = (array) glob( $this->diag_dir . '/*.jsonl' );
+		$this->assertCount( 1, $files );
+		$this->assertSame( '42-7-bk123.jsonl', basename( $files[0] ) );
+	}
+
+	/**
+	 * With the option off (the default) init() registers nothing and
+	 * firing the seams writes nothing: a literal zero-overhead off state.
+	 *
+	 * @return void
+	 */
+	public function test_recorder_registers_nothing_when_disabled() {
+		MainWP_Backup_Diagnostics::instance()->init();
+
+		foreach ( array(
+			'mainwp_backup_diag_poll',
+			'mainwp_backup_diag_restore_poll',
+			'mainwp_backup_diag_restore_transfer',
+			'mainwp_backup_diag_preflight',
+			'mainwp_backup_diag_slot',
+		) as $hook ) {
+			$this->assertFalse( has_action( $hook ), "No callback may register on {$hook} while disabled." );
+		}
+
+		do_action( 'mainwp_backup_diag_poll', array( 'phase' => 'dumping_db' ), 0.1, array( 'op' => 'run', 'site_id' => 1, 'task_id' => 1 ) );
+		do_action( 'mainwp_backup_diag_slot', 'acquired', 'tok', 1, 2 );
+
+		$this->assertSame( array(), (array) glob( $this->diag_dir . '/*.jsonl' ), 'A disabled recorder must write nothing.' );
+	}
+
+	/**
+	 * The task-create slice fires the poll seam with the create response
+	 * and a measured duration.
+	 *
+	 * @return void
+	 */
+	public function test_backup_create_seam_fires_with_response_and_duration() {
+		$captured = array();
+		add_action(
+			'mainwp_backup_diag_poll',
+			function ( $payload, $duration, $context ) use ( &$captured ) {
+				$captured[] = array(
+					'payload'  => $payload,
+					'duration' => $duration,
+					'context'  => $context,
+				);
+			},
+			10,
+			3
+		);
+
+		$site_id = $this->create_test_site();
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$task    = $this->make_task( $website->userid );
+
+		$this->mock_child_actions(
+			array(
+				'backup_preflight'   => array(
+					'disk_free'  => 10 * GB_IN_BYTES,
+					'task_spine' => 1,
+				),
+				'backup_task_create' => array(
+					'task_id' => 'bk-diag-create',
+					'phase'   => 'queued',
+				),
+			)
+		);
+
+		$result = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+		$this->assertFalse( $result, 'Precondition: a spine create slice queues and yields.' );
+
+		$creates = array_filter( $captured, fn( $event ) => 'create' === $event['context']['op'] );
+		$this->assertCount( 1, $creates );
+		$create = array_shift( $creates );
+		$this->assertSame( 'bk-diag-create', $create['payload']['task_id'] );
+		$this->assertSame( $site_id, $create['context']['site_id'] );
+		$this->assertSame( 1, $create['context']['task_id'] );
+		$this->assertIsFloat( $create['duration'] );
+		$this->assertGreaterThanOrEqual( 0, $create['duration'] );
+	}
+
+	/**
+	 * The backup_task_run poll fires the seam with the untouched full
+	 * child payload - sub_state and timing fields included - which the
+	 * progress projection otherwise discards.
+	 *
+	 * @return void
+	 */
+	public function test_backup_poll_seam_fires_with_full_payload() {
+		$captured = array();
+		add_action(
+			'mainwp_backup_diag_poll',
+			function ( $payload, $duration, $context ) use ( &$captured ) {
+				$captured[] = array(
+					'payload'  => $payload,
+					'duration' => $duration,
+					'context'  => $context,
+				);
+			},
+			10,
+			3
+		);
+
+		$site_id = $this->create_test_site();
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$task    = $this->make_task( $website->userid );
+
+		MainWP_DB_Backup::instance()->add_backup_task_progress( $task->id, $site_id, array() );
+		MainWP_DB_Backup::instance()->update_backup_task_progress(
+			$task->id,
+			$site_id,
+			array(
+				'dtsFetched'           => time(),
+				'child_backup_task_id' => 'bk-diag-run',
+				'attempts'             => 0,
+			)
+		);
+
+		$child_payload = array(
+			'task_id'          => 'bk-diag-run',
+			'phase'            => 'dumping_db',
+			'type'             => 'full',
+			'sub_state'        => array(
+				'db_cursor' => array(
+					'table' => 'wp_posts',
+					'index' => 3,
+				),
+			),
+			'started_at'       => '2026-07-02 10:00:00',
+			'last_progress_at' => '2026-07-02 10:05:00',
+			'resume_count'     => 2,
+			'progress'         => array(
+				'bytes_done'   => 1024,
+				'bytes_total'  => 4096,
+				'current_file' => 'wp_posts',
+			),
+		);
+		$this->mock_child_actions( array( 'backup_task_run' => $child_payload ) );
+
+		$result = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+		$this->assertFalse( $result, 'Precondition: a mid-flight poll yields for the next cycle.' );
+
+		$runs = array_filter( $captured, fn( $event ) => 'run' === $event['context']['op'] );
+		$this->assertCount( 1, $runs );
+		$run = array_shift( $runs );
+		$this->assertSame( $child_payload, $run['payload'], 'The seam must carry the untouched full child payload.' );
+		$this->assertSame( $site_id, $run['context']['site_id'] );
+		$this->assertIsFloat( $run['duration'] );
+	}
+
+	/**
+	 * Each restore_task_run poll in phase_running fires the restore seam,
+	 * including the non-terminal observations the orchestrator discards.
+	 *
+	 * @return void
+	 */
+	public function test_restore_poll_seam_fires_for_non_terminal_phase() {
+		$captured = array();
+		add_action(
+			'mainwp_backup_diag_restore_poll',
+			function ( $job_id, $site_id, $payload, $duration ) use ( &$captured ) {
+				$captured[] = array(
+					'job_id'   => $job_id,
+					'site_id'  => $site_id,
+					'payload'  => $payload,
+					'duration' => $duration,
+				);
+			},
+			10,
+			4
+		);
+
+		$site_id = $this->create_test_site();
+
+		$responses = array(
+			array(
+				'task_id'   => 'restore-diag-1',
+				'phase'     => 'restoring_files',
+				'sub_state' => array( 'progress' => array( 'bytes_done' => 512 ) ),
+			),
+			array(
+				'task_id'   => 'restore-diag-1',
+				'phase'     => 'completed',
+				'sub_state' => array( 'verification' => array( 'row_counts_ok' => true ) ),
+			),
+		);
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			function ( $result, $website, $what ) use ( &$responses ) {
+				unset( $website );
+				if ( 'restore_task_run' === $what ) {
+					return array_shift( $responses );
+				}
+				return $result;
+			},
+			10,
+			3
+		);
+
+		$store  = MainWP_Backup_Restore_Job_Store::instance();
+		$job_id = $store->create_job(
+			$site_id,
+			5,
+			array(
+				'restore_id' => 'diagrestore',
+				'sub_type'   => 'db',
+				'plan'       => array(),
+				'options'    => array(
+					'pre_snapshot'  => false,
+					'file_rollback' => false,
+				),
+				'transfer'   => array(),
+			)
+		);
+		$store->set_status( $job_id, MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, array( 'child_task_id' => 'restore-diag-1' ) );
+
+		MainWP_Backup_Restore_Orchestrator::instance()->run_job( $store->get_job( $job_id ), microtime( true ) + 30 );
+
+		$this->assertCount( 2, $captured, 'Every poll in the slice must fire the seam, non-terminal ones included.' );
+		$this->assertSame( 'restoring_files', $captured[0]['payload']['phase'] );
+		$this->assertSame( $job_id, $captured[0]['job_id'] );
+		$this->assertSame( $site_id, $captured[0]['site_id'] );
+		$this->assertIsFloat( $captured[0]['duration'] );
+		$this->assertSame( 'completed', $captured[1]['payload']['phase'] );
+	}
+
+	/**
+	 * A successful preflight negotiation fires the preflight seam with the
+	 * child's readiness report.
+	 *
+	 * @return void
+	 */
+	public function test_preflight_seam_fires_with_child_report() {
+		$captured = array();
+		add_action(
+			'mainwp_backup_diag_preflight',
+			function ( $site_id, $task_id, $preflight, $status ) use ( &$captured ) {
+				$captured[] = array(
+					'site_id'   => $site_id,
+					'task_id'   => $task_id,
+					'preflight' => $preflight,
+					'status'    => $status,
+				);
+			},
+			10,
+			4
+		);
+
+		$site_id = $this->create_test_site();
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+
+		$report = array(
+			'disk_free'       => 10 * GB_IN_BYTES,
+			'estimated_bytes' => 100 * MB_IN_BYTES,
+			'file_count'      => 1200,
+			'task_spine'      => 1,
+		);
+		$this->mock_child_actions( array( 'backup_preflight' => $report ) );
+
+		$ext = 'tar.gz';
+		MainWP_Backup_Monitor::negotiate_backup_preflight( $website, $ext, null );
+
+		$this->assertCount( 1, $captured );
+		$this->assertSame( $site_id, $captured[0]['site_id'] );
+		$this->assertSame( 'ok', $captured[0]['status'] );
+		$this->assertSame( $report, $captured[0]['preflight'], 'The seam must carry the untouched preflight report.' );
+	}
+
+	/**
+	 * Every restore chunk send fires the transfer seam with the outcome
+	 * classification, making adaptive chunk shrinking visible.
+	 *
+	 * @return void
+	 */
+	public function test_restore_transfer_seam_fires_per_chunk() {
+		$captured = array();
+		add_action(
+			'mainwp_backup_diag_restore_transfer',
+			function ( $child_task_id, $file, $cursor, $result, $chunk_len, $duration ) use ( &$captured ) {
+				$captured[] = array(
+					'child_task_id' => $child_task_id,
+					'file'          => $file,
+					'cursor'        => $cursor,
+					'result'        => $result,
+					'chunk_len'     => $chunk_len,
+					'duration'      => $duration,
+				);
+			},
+			10,
+			6
+		);
+
+		$site_id = $this->create_test_site();
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+
+		$staged = tempnam( sys_get_temp_dir(), 'mainwp-diag-chunk' );
+		file_put_contents( $staged, 'artifact-bytes' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+
+		$this->mock_child_actions(
+			array(
+				'restore_artifact_chunk' => array( 'bytes_received' => strlen( 'artifact-bytes' ) ),
+			)
+		);
+
+		$plan   = array(
+			array(
+				'role'        => 'db',
+				'file'        => 'db.zip',
+				'size'        => strlen( 'artifact-bytes' ),
+				'sha256'      => hash( 'sha256', 'artifact-bytes' ),
+				'staged_path' => $staged,
+				'adopt_only'  => false,
+			),
+		);
+		$cursor = array();
+
+		$outcome = \MainWP\Dashboard\MainWP_Backup_Restore_Transfer_Driver::instance()->transfer_artifacts( $website, 'restore-diag-2', $plan, $cursor, microtime( true ) + 30 );
+		unlink( $staged );
+
+		$this->assertTrue( $outcome['done'], 'Precondition: the single staged chunk transfers completely.' );
+		$this->assertCount( 1, $captured );
+		$this->assertSame( 'restore-diag-2', $captured[0]['child_task_id'] );
+		$this->assertSame( 'db.zip', $captured[0]['file'] );
+		$this->assertSame( 'ok', $captured[0]['result'] );
+		$this->assertSame( strlen( 'artifact-bytes' ), $captured[0]['chunk_len'] );
+		$this->assertIsFloat( $captured[0]['duration'] );
+	}
+
+	/**
+	 * Slot acquisition, refusal, and release each leave a diagnostics
+	 * event, so slot exhaustion is no longer traceless.
+	 *
+	 * @return void
+	 */
+	public function test_slot_events_fire_on_acquire_refuse_release() {
+		$this->enable_recorder();
+
+		$token   = MainWP_Backup_Monitor::acquire_backup_slot( 1 );
+		$refused = MainWP_Backup_Monitor::acquire_backup_slot( 1 );
+		MainWP_Backup_Monitor::release_backup_slot( $token );
+
+		$this->assertIsString( $token );
+		$this->assertFalse( $refused );
+
+		$events = array_values( array_filter( $this->recorded_events(), fn( $event ) => 'slot' === $event['kind'] ) );
+		$this->assertCount( 3, $events );
+
+		$this->assertSame( 'acquired', $events[0]['payload']['event'] );
+		$this->assertSame( 1, $events[0]['payload']['active'] );
+		$this->assertSame( 1, $events[0]['payload']['max_concurrent'] );
+
+		$this->assertSame( 'refused', $events[1]['payload']['event'] );
+		$this->assertSame( 1, $events[1]['payload']['active'] );
+
+		$this->assertSame( 'released', $events[2]['payload']['event'] );
+	}
+
+	/**
+	 * Terminal backup outcomes and backup-related log warnings are
+	 * recorded through the existing pipeline hooks; unrelated dashboard
+	 * log noise is not.
+	 *
+	 * @return void
+	 */
+	public function test_terminal_and_guardrail_events_recorded() {
+		$this->enable_recorder();
+
+		do_action( 'mainwp_native_backup_completed', 7, 'bk-diag-9', true, array( 'type' => 'full', 'file' => 'full.tar.gz', 'size' => 1024 ) );
+		do_action( 'mainwp_log_warning', 'Low disk space on dashboard server: 100 MB available. Large backups may fail.' );
+		do_action( 'mainwp_log_warning', 'Client email could not be sent.' );
+
+		$events = $this->recorded_events();
+
+		$terminals = array_values( array_filter( $events, fn( $event ) => 'terminal' === $event['kind'] ) );
+		$this->assertCount( 1, $terminals );
+		$this->assertSame( 7, $terminals[0]['site_id'] );
+		$this->assertTrue( $terminals[0]['payload']['success'] );
+		$this->assertSame( 'bk-diag-9', $terminals[0]['payload']['child_task_id'] );
+		$this->assertSame( 'full.tar.gz', $terminals[0]['payload']['meta']['file'] );
+
+		$guardrails = array_values( array_filter( $events, fn( $event ) => 'guardrail' === $event['kind'] ) );
+		$this->assertCount( 1, $guardrails, 'Only backup-related log messages may be recorded.' );
+		$this->assertStringContainsString( 'Low disk space', $guardrails[0]['payload']['message'] );
+	}
+
+	/**
+	 * The export bundle is a zip carrying the environment summary, the
+	 * bounded table dumps, and the raw event files.
+	 *
+	 * @return void
+	 */
+	public function test_export_bundle_contains_env_tables_and_events() {
+		if ( ! class_exists( \ZipArchive::class ) ) {
+			$this->markTestSkipped( 'ZipArchive is unavailable in this environment.' );
+		}
+
+		$this->enable_recorder();
+
+		$site_id = $this->create_test_site();
+		$user    = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$task    = MainWP_DB_Backup::instance()->add_backup_task( $user, 'Diagnostics export test task', 'daily', 'full', '', (string) $site_id, '', '', '', 0, 0, 0, 0, 0, 'tar.gz', 0, 1, 150, 0, 0 );
+		$this->assertNotFalse( $task, 'Precondition: the task row must insert.' );
+
+		MainWP_Backup_Diagnostics::instance()->record( '1-' . $site_id . '-bkx', 'poll', $site_id, 1, array( 'phase' => 'dumping_db' ) );
+
+		$bundle = MainWP_Backup_Diagnostics::instance()->export_bundle();
+		$this->assertNotSame( '', $bundle );
+		$this->assertFileExists( $bundle );
+		$this->assertStringEndsWith( '.zip', $bundle );
+
+		$zip = new \ZipArchive();
+		$this->assertTrue( $zip->open( $bundle ) );
+
+		$env = json_decode( (string) $zip->getFromName( 'env.json' ), true );
+		$this->assertIsArray( $env );
+		$this->assertSame( PHP_VERSION, $env['php_version'] );
+		$this->assertFalse( $env['truncated'] );
+
+		$tasks = json_decode( (string) $zip->getFromName( 'tasks.json' ), true );
+		$this->assertIsArray( $tasks );
+		$this->assertContains( 'Diagnostics export test task', array_column( $tasks, 'name' ) );
+
+		$events = (string) $zip->getFromName( 'events/1-' . $site_id . '-bkx.jsonl' );
+		$this->assertStringContainsString( 'dumping_db', $events );
+		$zip->close();
+	}
+
+	/**
+	 * With no recorded events there is nothing worth exporting.
+	 *
+	 * @return void
+	 */
+	public function test_export_bundle_returns_empty_without_events() {
+		$this->enable_recorder();
+		$this->assertSame( '', MainWP_Backup_Diagnostics::instance()->export_bundle() );
+	}
+
+	/**
+	 * Table dumps respect the row cap and flag the truncation, bounding
+	 * the bundle on a large fleet.
+	 *
+	 * @return void
+	 */
+	public function test_export_bundle_row_cap_truncates() {
+		if ( ! class_exists( \ZipArchive::class ) ) {
+			$this->markTestSkipped( 'ZipArchive is unavailable in this environment.' );
+		}
+
+		$this->enable_recorder();
+		add_filter(
+			'mainwp_backup_diagnostics_export_row_cap',
+			function () {
+				return 1;
+			}
+		);
+
+		$site_a = $this->create_test_site();
+		$site_b = $this->create_test_site();
+		MainWP_DB_Backup::instance()->add_backup_task_progress( 11, $site_a, array() );
+		MainWP_DB_Backup::instance()->add_backup_task_progress( 12, $site_b, array() );
+
+		MainWP_Backup_Diagnostics::instance()->record( 'capcheck', 'poll', $site_a, 11, array( 'phase' => 'queued' ) );
+
+		$bundle = MainWP_Backup_Diagnostics::instance()->export_bundle();
+		$this->assertNotSame( '', $bundle );
+
+		$zip = new \ZipArchive();
+		$this->assertTrue( $zip->open( $bundle ) );
+		$progress = json_decode( (string) $zip->getFromName( 'progress.json' ), true );
+		$env      = json_decode( (string) $zip->getFromName( 'env.json' ), true );
+		$zip->close();
+
+		$this->assertCount( 1, $progress, 'The row cap must bound every table dump.' );
+		$this->assertTrue( $env['truncated'], 'Capped output must be flagged as truncated.' );
+	}
+
+	/**
+	 * The retention prune removes files past the age limit and then
+	 * deletes oldest-first until the directory fits the size cap.
+	 *
+	 * @return void
+	 */
+	public function test_retention_prune_removes_old_and_oversized() {
+		$this->enable_recorder();
+
+		$old    = $this->diag_dir . '/ancient.jsonl';
+		$big_a  = $this->diag_dir . '/big-a.jsonl';
+		$big_b  = $this->diag_dir . '/big-b.jsonl';
+		$filler = str_repeat( 'x', 100 ) . "\n";
+		file_put_contents( $old, $filler ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+		file_put_contents( $big_a, $filler ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+		file_put_contents( $big_b, $filler ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+		touch( $old, time() - 20 * DAY_IN_SECONDS );
+		touch( $big_a, time() - 2 * HOUR_IN_SECONDS );
+		touch( $big_b, time() - 1 * HOUR_IN_SECONDS );
+
+		add_filter(
+			'mainwp_backup_diagnostics_cap_bytes',
+			function () {
+				return 150;
+			}
+		);
+
+		MainWP_Backup_Diagnostics::instance()->prune();
+
+		$this->assertFileDoesNotExist( $old, 'Files past the age limit must be pruned.' );
+		$this->assertFileDoesNotExist( $big_a, 'The oldest file must go first when the directory exceeds the size cap.' );
+		$this->assertFileExists( $big_b, 'The newest file must survive the size-cap prune.' );
+	}
+
+	/**
+	 * Invoke the export AJAX handler with a valid nonce and return the
+	 * decoded JSON response.
+	 *
+	 * @return array|null Decoded response.
+	 */
+	private function invoke_export_handler() {
+		$nonce                = wp_create_nonce( 'mainwp_backup_diagnostics_export' );
+		$_POST['security']    = $nonce;
+		$_REQUEST['security'] = $nonce;
+
+		$throw = static function () {
+			return static function () {
+				throw new \RuntimeException( 'wp_die' );
+			};
+		};
+		add_filter( 'wp_doing_ajax', '__return_true' );
+		add_filter( 'wp_die_ajax_handler', $throw );
+
+		$raw = '';
+		ob_start();
+		try {
+			\MainWP\Dashboard\MainWP_Post_Backup_Handler::instance()->mainwp_backup_diagnostics_export();
+		} catch ( \RuntimeException $e ) {
+			// wp_send_json terminated the request as designed.
+		} finally {
+			$raw = ob_get_clean();
+			remove_filter( 'wp_die_ajax_handler', $throw );
+			remove_filter( 'wp_doing_ajax', '__return_true' );
+		}
+
+		return json_decode( $raw, true );
+	}
+
+	/**
+	 * The export endpoint hands back a signed mwpdl download URL for the
+	 * built bundle, and refuses while diagnostics is disabled.
+	 *
+	 * @return void
+	 */
+	public function test_export_handler_returns_signed_download_url() {
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+
+		$response = $this->invoke_export_handler();
+		$this->assertIsArray( $response );
+		$this->assertArrayHasKey( 'error', $response, 'A disabled recorder must refuse the export.' );
+
+		$this->enable_recorder();
+		MainWP_Backup_Diagnostics::instance()->record( 'exporturl', 'poll', 1, 1, array( 'phase' => 'queued' ) );
+
+		// The bundle must land inside the mainwp uploads tree for the mwpdl
+		// download path to serve it, so the scratch-dir filter is lifted here.
+		remove_filter( 'mainwp_backup_diagnostics_dir', array( $this, 'filter_diag_dir' ) );
+		$real_dir = MainWP_Backup_Diagnostics::instance()->diagnostics_dir();
+		copy( $this->diag_dir . '/exporturl.jsonl', $real_dir . 'exporturl.jsonl' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+
+		$response = $this->invoke_export_handler();
+
+		foreach ( (array) glob( $real_dir . '*' ) as $file ) {
+			if ( is_file( $file ) && false === strpos( basename( $file ), '.htaccess' ) && 'index.php' !== basename( $file ) ) {
+				unlink( $file );
+			}
+		}
+
+		$this->assertIsArray( $response );
+		$this->assertArrayHasKey( 'url', $response );
+		$this->assertStringContainsString( 'mwpdl=', $response['url'] );
+		$this->assertStringContainsString( 'sig=', $response['url'] );
+	}
+
+	/**
+	 * A recorder that cannot write must swallow the failure: the seams
+	 * stay silent and the calling pipeline continues unharmed.
+	 *
+	 * @return void
+	 */
+	public function test_recorder_never_throws_on_write_failure() {
+		remove_filter( 'mainwp_backup_diagnostics_dir', array( $this, 'filter_diag_dir' ) );
+
+		// A path under a regular file can never be created or written.
+		$blocker = tempnam( sys_get_temp_dir(), 'mainwp-diag-block' );
+		add_filter(
+			'mainwp_backup_diagnostics_dir',
+			function () use ( $blocker ) {
+				return $blocker . '/nested';
+			}
+		);
+
+		$this->enable_recorder();
+
+		do_action( 'mainwp_backup_diag_poll', array( 'phase' => 'dumping_db' ), 0.1, array( 'op' => 'run', 'site_id' => 1, 'task_id' => 1 ) );
+		do_action( 'mainwp_backup_diag_slot', 'acquired', 'tok', 1, 2 );
+		do_action( 'mainwp_backup_diag_restore_poll', 1, 1, array( 'phase' => 'restoring_files' ), 0.1 );
+
+		unlink( $blocker );
+		$this->assertTrue( true, 'Reaching this line proves no recorder failure escaped into the pipeline.' );
+	}
+}

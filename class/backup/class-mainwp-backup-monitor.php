@@ -206,18 +206,36 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @throws MainWP_Exception When the child reports critically low disk space.
      */
     public static function negotiate_backup_preflight( object &$website, string &$archive_ext = '', ?object $task = null, bool $allow_switch = true ): void { // phpcs:ignore -- NOSONAR - complex.
+        $diag_task_id = is_object( $task ) && ! empty( $task->id ) ? (int) $task->id : 0;
+
         try {
             $preflight = MainWP_Connect::fetch_with_retry( $website, 'backup_preflight', array() );
         } catch ( \Exception $e ) {
             MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'Backup preflight unavailable: ' . $e->getMessage() );
+
+            /**
+             * Fires after a preflight negotiation with the child's readiness
+             * report, so the diagnostics recorder can capture it.
+             *
+             * @param int    $site_id   Child site id.
+             * @param int    $task_id   Backup task id, 0 when none drives the run.
+             * @param array  $preflight Child readiness report, empty when unavailable.
+             * @param string $status    ok|unavailable|unsupported.
+             */
+            do_action( 'mainwp_backup_diag_preflight', (int) $website->id, $diag_task_id, array(), 'unavailable' );
             return; // Capability unknown - proceed for backwards compatibility.
         }
 
         if ( ! is_array( $preflight ) || isset( $preflight['error'] ) ) {
             // Old child site without the preflight action - proceed without it.
             MainWP_Logger::instance()->info_for_website( $website, 'backup', 'Backup preflight not supported by the child site; proceeding without it.' );
+            /** This action is documented in class/backup/class-mainwp-backup-monitor.php */
+            do_action( 'mainwp_backup_diag_preflight', (int) $website->id, $diag_task_id, is_array( $preflight ) ? $preflight : array(), 'unsupported' );
             return;
         }
+
+        /** This action is documented in class/backup/class-mainwp-backup-monitor.php */
+        do_action( 'mainwp_backup_diag_preflight', (int) $website->id, $diag_task_id, $preflight, 'ok' );
 
         // Byte quantities compare as floats: a 32-bit (int) cast overflows on
         // anything over ~2GB, which here would flip a healthy disk_free
@@ -495,6 +513,18 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
         if ( count( $slots ) >= $max_concurrent ) {
             set_transient( $lock_key, $slots, 2 * HOUR_IN_SECONDS );
+
+            /**
+             * Fires on each concurrency slot decision, so slot exhaustion
+             * leaves a diagnostics trace instead of vanishing with the
+             * transient.
+             *
+             * @param string $event          acquired|refused|released.
+             * @param string $token          Slot token, '' on refusal.
+             * @param int    $active         Active slot count after the decision.
+             * @param int    $max_concurrent Configured slot limit.
+             */
+            do_action( 'mainwp_backup_diag_slot', 'refused', '', count( $slots ), $max_concurrent );
             return false;
         }
 
@@ -505,6 +535,9 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         );
 
         set_transient( $lock_key, $slots, 2 * HOUR_IN_SECONDS );
+
+        /** This action is documented in class/backup/class-mainwp-backup-monitor.php */
+        do_action( 'mainwp_backup_diag_slot', 'acquired', $token, count( $slots ), $max_concurrent );
 
         return $token;
     }
@@ -525,6 +558,9 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         if ( is_array( $slots ) && isset( $slots[ $token ] ) ) {
             unset( $slots[ $token ] );
             set_transient( $lock_key, $slots, 2 * HOUR_IN_SECONDS );
+
+            /** This action is documented in class/backup/class-mainwp-backup-monitor.php */
+            do_action( 'mainwp_backup_diag_slot', 'released', $token, count( $slots ), 0 );
         }
     }
 

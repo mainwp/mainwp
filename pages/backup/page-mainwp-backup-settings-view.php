@@ -148,6 +148,49 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
             </div>
         </div>
 
+        <?php $diagnosticsEnabled = MainWP_Backup_Diagnostics::is_enabled(); ?>
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="0">
+            <label class="six wide column middle aligned">
+            <?php
+            MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_backup_diagnostics_enabled', (int) $diagnosticsEnabled );
+            esc_html_e( 'Backup run diagnostics', 'mainwp' );
+            ?>
+            </label>
+            <div class="ten wide column">
+                <div class="ui toggle checkbox">
+                    <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_options_backupDiagnosticsEnabled" id="mainwp_options_backupDiagnosticsEnabled" <?php echo $diagnosticsEnabled ? 'checked="true"' : ''; ?>/>
+                </div>
+                <div class="ui small message" style="margin-top: 1em;">
+                    <?php esc_html_e( 'Records detailed timing and progress data for every backup and restore run, which helps pinpoint slowdowns and failures. The data stays on this dashboard until you export it and is trimmed automatically after two weeks.', 'mainwp' ); ?>
+                </div>
+                <?php if ( $diagnosticsEnabled ) : ?>
+                    <button type="button" class="ui basic button" id="mainwp-backup-diagnostics-export"><?php esc_html_e( 'Export diagnostics data', 'mainwp' ); ?></button>
+                    <span id="mainwp-backup-diagnostics-export-status"></span>
+                    <script type="text/javascript">
+                    jQuery( document ).on( 'click', '#mainwp-backup-diagnostics-export', function () {
+                        var btn = jQuery( this ), status = jQuery( '#mainwp-backup-diagnostics-export-status' );
+                        btn.addClass( 'loading disabled' );
+                        status.text( '' );
+                        jQuery.post( ajaxurl, {
+                            action: 'mainwp_backup_diagnostics_export',
+                            security: '<?php echo esc_js( wp_create_nonce( 'mainwp_backup_diagnostics_export' ) ); ?>'
+                        }, function ( response ) {
+                            btn.removeClass( 'loading disabled' );
+                            if ( response && response.url ) {
+                                window.location.href = response.url;
+                            } else {
+                                status.text( response && response.error ? response.error : '<?php echo esc_js( __( 'The export could not be built.', 'mainwp' ) ); ?>' );
+                            }
+                        }, 'json' ).fail( function () {
+                            btn.removeClass( 'loading disabled' );
+                            status.text( '<?php echo esc_js( __( 'The export could not be built.', 'mainwp' ) ); ?>' );
+                        } );
+                    } );
+                    </script>
+                <?php endif; ?>
+            </div>
+        </div>
+
         <?php
         $encryptionEnabled     = MainWP_Backup_Encryption::instance()->is_enabled_setting();
         $hasRecoveryPassphrase = ! empty( MainWP_Backup_Encryption::instance()->get_recovery_blob() );

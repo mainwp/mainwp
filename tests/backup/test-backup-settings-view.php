@@ -9,6 +9,7 @@
 
 namespace MainWP\Dashboard\Tests;
 
+use MainWP\Dashboard\MainWP_Backup_Diagnostics;
 use MainWP\Dashboard\MainWP_Backup_Settings_View;
 use MainWP\Dashboard\MainWP_Backup_Settings;
 use MainWP\Dashboard\MainWP_Backup_Encryption;
@@ -26,6 +27,8 @@ class MainWP_Backup_Settings_View_Test extends \WP_UnitTestCase {
 	 */
 	public function tear_down() {
 		delete_option( 'mainwp_on_demand_retention_count' );
+		delete_option( 'mainwp_enableNativeBackups' );
+		delete_option( MainWP_Backup_Diagnostics::OPTION_ENABLED );
 
 		$enc = MainWP_Backup_Encryption::instance();
 		MainWP_Keys_Manager::instance()->delete_key_file( $enc->kek_filename() );
@@ -189,6 +192,69 @@ class MainWP_Backup_Settings_View_Test extends \WP_UnitTestCase {
 		$this->assertSame( 3, MainWP_Backup_Settings::get_on_demand_retention_count() );
 
 		unset( $_POST['submit'], $_POST['wp_nonce'], $_POST['mainwp_options_onDemandRetentionCount'] );
+	}
+
+	/**
+	 * The global settings section renders the diagnostics toggle.
+	 *
+	 * @return void
+	 */
+	public function test_render_settings_outputs_diagnostics_toggle() {
+		update_option( 'mainwp_enableNativeBackups', 1 );
+
+		ob_start();
+		MainWP_Backup_Settings_View::render_settings();
+		$output = ob_get_clean();
+
+		$this->assertStringContainsString( 'mainwp_options_backupDiagnosticsEnabled', $output );
+	}
+
+	/**
+	 * The export button appears only while diagnostics is enabled: with
+	 * nothing being recorded there is nothing to export.
+	 *
+	 * @return void
+	 */
+	public function test_render_settings_outputs_export_button_only_when_enabled() {
+		update_option( 'mainwp_enableNativeBackups', 1 );
+
+		ob_start();
+		MainWP_Backup_Settings_View::render_settings();
+		$without = ob_get_clean();
+		$this->assertStringNotContainsString( 'mainwp-backup-diagnostics-export', $without );
+
+		update_option( MainWP_Backup_Diagnostics::OPTION_ENABLED, '1' );
+
+		ob_start();
+		MainWP_Backup_Settings_View::render_settings();
+		$with = ob_get_clean();
+		$this->assertStringContainsString( 'mainwp-backup-diagnostics-export', $with );
+		$this->assertStringContainsString( 'mainwp_backup_diagnostics_export', $with, 'The button must post the export AJAX action.' );
+	}
+
+	/**
+	 * Saving the settings form persists the diagnostics toggle both ways.
+	 *
+	 * @return void
+	 */
+	public function test_handle_settings_post_saves_diagnostics_toggle() {
+		$admin = $this->factory->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $admin );
+
+		$_POST['submit']   = '1';
+		$_POST['wp_nonce'] = wp_create_nonce( 'Settings' );
+		$_POST['mainwp_options_backupDiagnosticsEnabled'] = '1';
+
+		$this->assertTrue( MainWP_Backup_Settings::handle_settings_post() );
+		$this->assertTrue( MainWP_Backup_Diagnostics::is_enabled() );
+
+		unset( $_POST['mainwp_options_backupDiagnosticsEnabled'] );
+		$_POST['wp_nonce'] = wp_create_nonce( 'Settings' );
+
+		$this->assertTrue( MainWP_Backup_Settings::handle_settings_post() );
+		$this->assertFalse( MainWP_Backup_Diagnostics::is_enabled(), 'An absent checkbox must turn the recorder off.' );
+
+		unset( $_POST['submit'], $_POST['wp_nonce'] );
 	}
 
 	/**

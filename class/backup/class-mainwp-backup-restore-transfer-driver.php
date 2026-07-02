@@ -859,7 +859,22 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
             $raw  = (string) file_get_contents( $entry['staged_path'], false, null, $cursor['offset'], max( 1, min( $cursor['chunk_bytes'], $size - $cursor['offset'] ) ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- bounded read of the staged artifact.
             $last = $cursor['offset'] + strlen( $raw ) >= $size;
 
-            $outcome = $this->send_chunk( $website, $task_id, $entry, $cursor['offset'], $raw, $last );
+            $diag_start = microtime( true );
+            $outcome    = $this->send_chunk( $website, $task_id, $entry, $cursor['offset'], $raw, $last );
+
+            /**
+             * Fires after each restore transfer chunk send, so the
+             * diagnostics recorder can chart transfer throughput and the
+             * otherwise silent adaptive chunk-size shrinking.
+             *
+             * @param string $task_id   Child restore task id.
+             * @param string $file      Artifact file name.
+             * @param array  $cursor    Transfer cursor before the send.
+             * @param string $result    ok|realign|shrink|error.
+             * @param int    $chunk_len Bytes sent in this chunk.
+             * @param float  $duration  Send duration in seconds.
+             */
+            do_action( 'mainwp_backup_diag_restore_transfer', (string) $task_id, (string) $entry['file'], $cursor, (string) $outcome['result'], strlen( $raw ), microtime( true ) - $diag_start );
 
             if ( 'shrink' === $outcome['result'] ) {
                 if ( $cursor['chunk_bytes'] <= self::CHUNK_MIN_BYTES ) {

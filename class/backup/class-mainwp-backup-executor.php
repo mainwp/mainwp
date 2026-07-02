@@ -290,7 +290,28 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
                 MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Requesting backup' . ( $use_spine ? ' task' : '' ) . ': ' . MainWP_Utility::value_to_string( $params ) );
 
+                $diag_start  = microtime( true );
                 $information = MainWP_Connect::fetch_url_authed( $website, $use_spine ? 'backup_task_create' : 'backup', $params, false, false, false );
+
+                /**
+                 * Fires after each backup poll round trip with the full child
+                 * response, so the diagnostics recorder can capture what the
+                 * progress projection discards (sub_state, timing fields).
+                 *
+                 * @param array $payload  Full child response payload.
+                 * @param float $duration HTTP round-trip duration in seconds.
+                 * @param array $context  { op: create|run|status|pre_snapshot, site_id: int, task_id: int }.
+                 */
+                do_action(
+                    'mainwp_backup_diag_poll',
+                    is_array( $information ) ? $information : array(),
+                    microtime( true ) - $diag_start,
+                    array(
+                        'op'      => 'create',
+                        'site_id' => (int) $website->id,
+                        'task_id' => (int) $taskId,
+                    )
+                );
             } catch ( MainWP_Exception $e ) {
                 MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'ERROR: ' . $e->getMessage() . ' (' . $e->get_message_extra() . ')' );
                 $stop = microtime( true );
@@ -344,12 +365,27 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
             $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'fetchResult' => wp_json_encode( $information ) ) );
         } elseif ( empty( $backupTaskProgress->fetchResult ) && ! empty( $backupTaskProgress->child_backup_task_id ) ) {
-            $temp = false;
+            $temp       = false;
+            $diag_start = microtime( true );
             try {
                 $temp = MainWP_Connect::fetch_url_authed( $website, 'backup_task_run', array( 'task_id' => $backupTaskProgress->child_backup_task_id ), false, false, false );
             } catch ( \Exception $e ) {
                 // The failed run call consumes a retry attempt below instead of being ignored.
                 MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'Backup task run failed: ' . $e->getMessage() );
+            }
+
+            if ( is_array( $temp ) ) {
+                /** This action is documented in class/backup/class-mainwp-backup-executor.php */
+                do_action(
+                    'mainwp_backup_diag_poll',
+                    $temp,
+                    microtime( true ) - $diag_start,
+                    array(
+                        'op'      => 'run',
+                        'site_id' => (int) $website->id,
+                        'task_id' => (int) $taskId,
+                    )
+                );
             }
 
             if ( ! empty( $temp ) && 'incremental' === $type
@@ -1692,14 +1728,38 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         }
 
         if ( $budget_seconds <= 0 ) {
-            $payload = MainWP_Connect::fetch_url_authed( $website, 'backup_task_status', array( 'task_id' => $task_id ), false, false, false );
+            $diag_start = microtime( true );
+            $payload    = MainWP_Connect::fetch_url_authed( $website, 'backup_task_status', array( 'task_id' => $task_id ), false, false, false );
+            /** This action is documented in class/backup/class-mainwp-backup-executor.php */
+            do_action(
+                'mainwp_backup_diag_poll',
+                is_array( $payload ) ? $payload : array(),
+                microtime( true ) - $diag_start,
+                array(
+                    'op'      => 'status',
+                    'site_id' => (int) $site_id,
+                    'task_id' => 0,
+                )
+            );
             return static::map_task_status( $payload );
         }
 
         $deadline = time() + $budget_seconds;
         do {
-            $payload = MainWP_Connect::fetch_url_authed( $website, 'backup_task_run', array( 'task_id' => $task_id ), false, false, false );
-            $status  = static::map_task_status( $payload );
+            $diag_start = microtime( true );
+            $payload    = MainWP_Connect::fetch_url_authed( $website, 'backup_task_run', array( 'task_id' => $task_id ), false, false, false );
+            /** This action is documented in class/backup/class-mainwp-backup-executor.php */
+            do_action(
+                'mainwp_backup_diag_poll',
+                is_array( $payload ) ? $payload : array(),
+                microtime( true ) - $diag_start,
+                array(
+                    'op'      => 'run',
+                    'site_id' => (int) $site_id,
+                    'task_id' => 0,
+                )
+            );
+            $status = static::map_task_status( $payload );
         } while ( 'running' === $status['status'] && time() < $deadline );
 
         if ( 'completed' === $status['status'] && ! empty( $status['meta']['file'] ) ) {

@@ -283,6 +283,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             MainWP_Backup_Page::init();
             MainWP_Backup_Upload_Driver::instance()->init();
             MainWP_Backup_Retention_Scheduler::instance()->init();
+            MainWP_Backup_Diagnostics::instance()->init();
         }
         MainWP_Manage_Groups::init();
         MainWP_User::init();

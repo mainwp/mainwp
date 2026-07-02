@@ -104,6 +104,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             $this->add_action( 'mainwp_native_backup_initiate', array( &$this, 'mainwp_native_backup_initiate' ) );
             $this->add_action( 'mainwp_native_backup_progress', array( &$this, 'mainwp_native_backup_progress' ) );
             $this->add_action( 'mainwp_native_backup_cancel', array( &$this, 'mainwp_native_backup_cancel' ) );
+            $this->add_action( 'mainwp_backup_diagnostics_export', array( &$this, 'mainwp_backup_diagnostics_export' ) );
         }
         // Intentionally not capability-gated: the backup-before-update check is
         // read-only and used by the updates flow, where a user without backup
@@ -633,6 +634,35 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             array(
                 'status' => 'cancelled',
                 'result' => isset( $information['result'] ) ? $information['result'] : 'ok',
+            )
+        );
+    }
+
+    /**
+     * Build the diagnostics export bundle and hand back a signed download
+     * URL served by the existing chunked mwpdl path, so no new
+     * file-serving code is involved.
+     */
+    public function mainwp_backup_diagnostics_export() {
+        $this->secure_request( 'mainwp_backup_diagnostics_export' );
+
+        if ( ! MainWP_Backup_Diagnostics::is_enabled() ) {
+            wp_send_json( array( 'error' => esc_html__( 'Backup diagnostics is turned off. Enable it in the backup settings and run a backup first.', 'mainwp' ) ) );
+            return;
+        }
+
+        $bundle = MainWP_Backup_Diagnostics::instance()->export_bundle();
+        if ( '' === $bundle ) {
+            wp_send_json( array( 'error' => esc_html__( 'There is no diagnostics data to export yet. Run a backup or restore with diagnostics enabled first.', 'mainwp' ) ) );
+            return;
+        }
+
+        $mwp_dir = MainWP_System_Utility::get_mainwp_dir();
+        $mwp_dir = $mwp_dir[0];
+
+        wp_send_json(
+            array(
+                'url' => admin_url( '?sig=' . MainWP_System_Utility::get_download_sig( $bundle ) . '&mwpdl=' . rawurlencode( str_replace( $mwp_dir, '', $bundle ) ) ),
             )
         );
     }

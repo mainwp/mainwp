@@ -560,8 +560,22 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         $website = $this->website( $job );
 
         while ( microtime( true ) < $deadline ) {
-            $payload = MainWP_Connect::fetch_url_authed( $website, 'backup_task_run', array( 'task_id' => $job->pre_snapshot_task_id ), false, false, false );
-            $phase   = is_array( $payload ) && isset( $payload['phase'] ) ? (string) $payload['phase'] : '';
+            $diag_start = microtime( true );
+            $payload    = MainWP_Connect::fetch_url_authed( $website, 'backup_task_run', array( 'task_id' => $job->pre_snapshot_task_id ), false, false, false );
+
+            /** This action is documented in class/backup/class-mainwp-backup-executor.php */
+            do_action(
+                'mainwp_backup_diag_poll',
+                is_array( $payload ) ? $payload : array(),
+                microtime( true ) - $diag_start,
+                array(
+                    'op'      => 'pre_snapshot',
+                    'site_id' => (int) $job->site_id,
+                    'task_id' => 0,
+                )
+            );
+
+            $phase = is_array( $payload ) && isset( $payload['phase'] ) ? (string) $payload['phase'] : '';
 
             if ( 'completed' === $phase ) {
                 $artifacts = array();
@@ -747,7 +761,20 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         $website = $this->website( $job );
 
         while ( microtime( true ) < $deadline ) {
-            $payload = MainWP_Connect::fetch_url_authed( $website, 'restore_task_run', array( 'task_id' => $job->child_task_id ), false, false, false );
+            $diag_start = microtime( true );
+            $payload    = MainWP_Connect::fetch_url_authed( $website, 'restore_task_run', array( 'task_id' => $job->child_task_id ), false, false, false );
+
+            /**
+             * Fires after each restore poll round trip with the full child
+             * response, so the diagnostics recorder can capture the
+             * non-terminal observations this loop otherwise discards.
+             *
+             * @param int   $job_id   Restore job id.
+             * @param int   $site_id  Child site id.
+             * @param array $payload  Full child response payload.
+             * @param float $duration HTTP round-trip duration in seconds.
+             */
+            do_action( 'mainwp_backup_diag_restore_poll', (int) $job->id, (int) $job->site_id, is_array( $payload ) ? $payload : array(), microtime( true ) - $diag_start );
 
             // A terminal failed phase carries an error key too - phase wins.
             if ( ! is_array( $payload ) || ( ! isset( $payload['phase'] ) && isset( $payload['error'] ) ) ) {

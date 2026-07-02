@@ -314,6 +314,19 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             }
 
             if ( isset( $information['error'] ) && stristr( $information['error'], 'Another backup process is running' ) ) {
+                // The initiate slice, the progress poll, and the kicked
+                // continue cron can all drive this same run. When another of
+                // those drivers already registered this run's child task (or
+                // the legacy fetch result) on the shared progress row, the
+                // child's single-slot refusal is that driver at work, not a
+                // failure of this run: recording it would flip a succeeding
+                // backup to "failed" and fire the failure email. Yield like
+                // the queued-spine path and let the owning driver finish.
+                $current = MainWP_DB_Backup::instance()->get_backup_task_progress( $taskId, $website->id );
+                if ( $current && ( ! empty( $current->child_backup_task_id ) || ! empty( $current->fetchResult ) ) ) {
+                    MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Child refused a duplicate backup start for this run; yielding to the driver that holds the slot.' );
+                    return false;
+                }
                 throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
             }
 

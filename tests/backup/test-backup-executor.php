@@ -16,6 +16,7 @@ use MainWP\Dashboard\MainWP_Backup_File_Manager;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_DB_Backup;
 use MainWP\Dashboard\MainWP_Exception;
+use MainWP\Dashboard\MainWP_Manage_Backups_Handler;
 
 /**
  * Class MainWP_Backup_Executor_Test
@@ -1001,5 +1002,147 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 		} catch ( MainWP_Exception $e ) {
 			$this->assertStringContainsString( 'child unreachable during retry', $e->getMessage() );
 		}
+	}
+
+	/**
+	 * Mock the child wire like the real driver race: the preflight succeeds,
+	 * and by the time the child refuses the duplicate start, the concurrent
+	 * driver of the SAME run has already registered its child task id on the
+	 * shared progress row.
+	 *
+	 * @param int  $task_id  Task id whose progress row the other driver owns.
+	 * @param int  $site_id  Site id.
+	 * @param int  $refusals Incremented by reference when the refusal fires.
+	 * @param bool $register Whether the other driver registers the child task
+	 *                       id before the refusal returns (true = same-run
+	 *                       collision, false = a foreign backup holds the slot).
+	 *
+	 * @return void
+	 */
+	private function mock_already_running_race( $task_id, $site_id, &$refusals, $register = true ) {
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			function ( $result, $website, $what ) use ( $task_id, $site_id, &$refusals, $register ) {
+				unset( $website );
+				if ( 'backup_preflight' === $what ) {
+					return array( 'time_limit_ok' => true );
+				}
+				if ( 'backup' === $what ) {
+					++$refusals;
+					if ( $register ) {
+						MainWP_DB_Backup::instance()->update_backup_task_progress(
+							$task_id,
+							$site_id,
+							array( 'child_backup_task_id' => 'task-other-driver' )
+						);
+					}
+					return array( 'error' => 'Another backup process is running on this site.' );
+				}
+				return $result;
+			},
+			10,
+			3
+		);
+	}
+
+	/**
+	 * The initiate slice, the progress poll, and the kicked continue cron can
+	 * all drive the same run concurrently. When the child refuses a duplicate
+	 * start because another driver of THIS run already holds its single
+	 * backup slot, the refused driver must yield (return false, like the
+	 * queued-spine path) instead of throwing: the collision is the run
+	 * succeeding, not failing.
+	 *
+	 * @return void
+	 */
+	public function test_same_run_already_running_refusal_yields_to_owning_driver() {
+		list( $site_id, $task ) = $this->site_and_task();
+
+		$refusals = 0;
+		$this->mock_already_running_race( $task->id, $site_id, $refusals, true );
+
+		$result = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+
+		$this->assertSame( 1, $refusals, 'Precondition: the mocked child must refuse the duplicate start.' );
+		$this->assertFalse( $result, 'A same-run slot collision must yield (return false), not throw.' );
+	}
+
+	/**
+	 * A refusal from a genuinely foreign backup (no driver of this run has
+	 * registered a child task) still surfaces as ERR_ALREADY_RUNNING so the
+	 * operator sees the blocker and the Cancel escape hatch stays reachable.
+	 *
+	 * @return void
+	 */
+	public function test_foreign_already_running_refusal_still_throws() {
+		list( $site_id, $task ) = $this->site_and_task();
+
+		$refusals = 0;
+		$this->mock_already_running_race( $task->id, $site_id, $refusals, false );
+
+		try {
+			MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+			$this->fail( 'Expected the foreign already-running refusal to propagate.' );
+		} catch ( MainWP_Exception $e ) {
+			$this->assertSame( 1, $refusals, 'Precondition: the mocked child must refuse the start.' );
+			$this->assertSame( 'mainwp_backup_already_running', $e->get_message_error_code() );
+		}
+	}
+
+	/**
+	 * Through the full task runner, a same-run collision must leave no trace
+	 * that reads as failure: backup_errors stays empty, the failure email
+	 * never fires, and the run stays open so the owning driver can finish it.
+	 * Before the fix this exact path recorded the refusal, closed the run,
+	 * and emailed a failure for a backup that succeeded.
+	 *
+	 * @return void
+	 */
+	public function test_same_run_refusal_records_no_error_and_sends_no_failure_email() {
+		$site_id = $this->create_test_site();
+		$user    = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$task    = MainWP_DB_Backup::instance()->add_backup_task(
+			$user,
+			'Driver race test task',
+			'daily',
+			'full',
+			'',
+			(string) $site_id,
+			'',
+			'',
+			'',
+			0,
+			0,
+			0,
+			0,
+			0,
+			'zip',
+			0,
+			1,
+			150,
+			0,
+			0
+		);
+		$this->assertNotFalse( $task, 'Precondition: the task row must insert.' );
+
+		$mails = 0;
+		add_filter(
+			'pre_wp_mail',
+			function () use ( &$mails ) {
+				++$mails;
+				return true;
+			}
+		);
+
+		$refusals = 0;
+		$this->mock_already_running_race( (int) $task->id, $site_id, $refusals, true );
+
+		MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, true );
+
+		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$this->assertSame( 1, $refusals, 'Precondition: the run must reach the mocked child refusal.' );
+		$this->assertSame( '', (string) $task->backup_errors, 'A same-run collision must not be recorded as a run error.' );
+		$this->assertLessThan( (int) $task->last_run, (int) $task->completed, 'The run must stay open for the owning driver to finish it.' );
+		$this->assertSame( 0, $mails, 'A same-run collision must not fire the failure email.' );
 	}
 }

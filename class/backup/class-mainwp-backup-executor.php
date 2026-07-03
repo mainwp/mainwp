@@ -529,7 +529,16 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     $information['woo'] = $temp['woo'];
                 }
 
-                $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'fetchResult' => wp_json_encode( $information ) ) );
+                // Concurrent drivers can poll the same completed child task;
+                // the conditional claim makes exactly one of them the
+                // consumer. A losing driver yields without firing a second
+                // completion event and never enters the download phase
+                // against an artifact the winner is already consuming.
+                if ( ! MainWP_DB_Backup::instance()->claim_backup_fetch_result( $taskId, $website->id, wp_json_encode( $information ) ) ) {
+                    MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Another driver consumed this completed backup task; yielding.' );
+                    return false;
+                }
+                $backupTaskProgress = MainWP_DB_Backup::instance()->get_backup_task_progress( $taskId, $website->id );
 
                 /** This action is documented in class/backup/class-mainwp-backup-executor.php */
                 do_action(
@@ -784,15 +793,27 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING, 'download lock held for ' . basename( $localBackupFile ) ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
                     }
                     try {
-                        // MWP-1548: decrypt at the boundary so download_to_file sees plaintext credentials.
-                        $http_user_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_user );
-                        $http_pass_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_pass );
-                        MainWP_Backup_File_Manager::download_backup_artifact( $website, $information['db'], $localBackupFile, $information['size'], $http_user_plain, $http_pass_plain );
-                        MainWP_Backup_File_Manager::validate_backup_file( $localBackupFile, $information['size'] );
+                        try {
+                            // MWP-1548: decrypt at the boundary so download_to_file sees plaintext credentials.
+                            $http_user_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_user );
+                            $http_pass_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_pass );
+                            MainWP_Backup_File_Manager::download_backup_artifact( $website, $information['db'], $localBackupFile, $information['size'], $http_user_plain, $http_pass_plain );
+                            MainWP_Backup_File_Manager::validate_backup_file( $localBackupFile, $information['size'] );
+                        } catch ( \Exception $e ) {
+                            // A transient transfer failure leaves a fully
+                            // resumable row; it consumes a retry attempt and
+                            // yields instead of failing the site terminally.
+                            if ( 5 > $backupTaskProgress->attempts ) {
+                                MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'attempts' => $backupTaskProgress->attempts + 1 ) );
+                                MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'Backup download failed; the next cycle retries it: ' . $e->getMessage() );
+                                return false;
+                            }
+                            throw $e;
+                        }
+                        $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'downloadedDBComplete' => 1 ) );
                     } finally {
                         MainWP_Backup_File_Manager::release_download_lock( $localBackupFile );
                     }
-                    $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'downloadedDBComplete' => 1 ) );
                 }
             }
 
@@ -837,20 +858,45 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING, 'download lock held for ' . basename( $localBackupFile ) ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
                     }
                     try {
-                        // MWP-1548: decrypt at the boundary so download_to_file sees plaintext credentials.
-                        $http_user_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_user );
-                        $http_pass_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_pass );
-                        MainWP_Backup_File_Manager::download_backup_artifact( $website, $information['full'], $localBackupFile, $information['size'], $http_user_plain, $http_pass_plain );
-                        MainWP_Backup_File_Manager::validate_backup_file( $localBackupFile, $information['size'] );
+                        try {
+                            // MWP-1548: decrypt at the boundary so download_to_file sees plaintext credentials.
+                            $http_user_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_user );
+                            $http_pass_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_pass );
+                            MainWP_Backup_File_Manager::download_backup_artifact( $website, $information['full'], $localBackupFile, $information['size'], $http_user_plain, $http_pass_plain );
+                            MainWP_Backup_File_Manager::validate_backup_file( $localBackupFile, $information['size'] );
+                        } catch ( \Exception $e ) {
+                            // A transient transfer failure leaves a fully
+                            // resumable row; it consumes a retry attempt and
+                            // yields instead of failing the site terminally.
+                            if ( 5 > $backupTaskProgress->attempts ) {
+                                MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'attempts' => $backupTaskProgress->attempts + 1 ) );
+                                MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'Backup download failed; the next cycle retries it: ' . $e->getMessage() );
+                                return false;
+                            }
+                            throw $e;
+                        }
+
+                        // The complete flag lands before the remote delete
+                        // and inside the lock: a driver dying between the two
+                        // leaves a validated resumable download, and no other
+                        // driver can slip in after the remote artifact is
+                        // gone and destroy the local copy with a re-download.
+                        $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'downloadedFULLComplete' => 1 ) );
+
+                        try {
+                            MainWP_Connect::fetch_url_authed( $website, 'delete_backup', array( 'del' => $information['full'] ) );
+                        } catch ( \Exception $e ) {
+                            // Child-side litter, not a run failure: the
+                            // artifact is already validated locally.
+                            MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'Remote backup cleanup failed after a validated download: ' . $e->getMessage() );
+                        }
                     } finally {
                         MainWP_Backup_File_Manager::release_download_lock( $localBackupFile );
                     }
-                    MainWP_Connect::fetch_url_authed( $website, 'delete_backup', array( 'del' => $information['full'] ) );
-                    $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'downloadedFULLComplete' => 1 ) );
                 }
             }
 
-            static::record_downloaded_run_snapshot( $website, $pTask, $backupTaskProgress );
+            static::record_run_snapshot_locked( $website, $pTask, $backupTaskProgress, $localBackupFile );
 
             $unique = $pTask->last_run;
 
@@ -1140,6 +1186,40 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     }
 
     /**
+     * Record the run's snapshot under the artifact's download lock.
+     *
+     * The record phase shares the artifact with concurrent drivers the
+     * same way the transfer does: without the lock, a second driver's
+     * activity between this driver's flag write and the record could
+     * destroy the file and the record would silently vanish. A held lock
+     * yields to the holder - the handler treats it like any other
+     * same-run collision and a later cycle retries the record.
+     *
+     * @param object      $website   Website object.
+     * @param object      $pTask     Scheduled task.
+     * @param object      $progress  Progress row after the download phase.
+     * @param string|null $lock_file Downloaded artifact path keying the lock.
+     *
+     * @return void
+     * @throws MainWP_Exception When another process holds the artifact lock, or the record itself fails.
+     */
+    protected static function record_run_snapshot_locked( $website, $pTask, $progress, $lock_file ) { // phpcs:ignore Squiz.Commenting.FunctionCommentThrowTag.Missing -- registry factory throws are MainWP_Exception, documented above.
+        if ( empty( $lock_file ) ) {
+            static::record_downloaded_run_snapshot( $website, $pTask, $progress );
+            return;
+        }
+
+        if ( ! MainWP_Backup_File_Manager::acquire_download_lock( (string) $lock_file, (int) $website->id, (int) $pTask->id ) ) {
+            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING, 'record lock held for ' . basename( (string) $lock_file ) ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+        }
+        try {
+            static::record_downloaded_run_snapshot( $website, $pTask, $progress );
+        } finally {
+            MainWP_Backup_File_Manager::release_download_lock( (string) $lock_file );
+        }
+    }
+
+    /**
      * Record a completed full/db download run as a snapshot row, once per
      * run.
      *
@@ -1154,8 +1234,9 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @param object $progress Progress row carrying the downloaded paths.
      *
      * @return void
+     * @throws MainWP_Exception When every flagged-complete artifact vanished from disk before the record.
      */
-    protected static function record_downloaded_run_snapshot( $website, $pTask, $progress ) {
+    protected static function record_downloaded_run_snapshot( $website, $pTask, $progress ) { // phpcs:ignore Squiz.Commenting.FunctionCommentThrowTag.Missing -- registry factory throws are MainWP_Exception, documented above.
         if ( empty( $pTask->id ) ) {
             return;
         }
@@ -1185,7 +1266,10 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         }
 
         if ( empty( $archives ) ) {
-            return;
+            // Every flagged-complete artifact vanished from disk before the
+            // record: silently returning here would report a successful run
+            // with no snapshot. Surface it as the data loss it is.
+            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, 'no downloaded artifact found on disk at snapshot record time' ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         }
 
         $has_full = in_array( 'full', array_column( $archives, 'role' ), true );

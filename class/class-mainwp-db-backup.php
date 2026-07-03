@@ -770,6 +770,42 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
     }
 
     /**
+     * Method claim_backup_fetch_result()
+     *
+     * Land a completed child task's terminal projection on the progress
+     * row only when no other driver has landed one first. Concurrent
+     * drivers can poll the same completed child task; the conditional
+     * write makes exactly one of them the consumer, so the download and
+     * snapshot-record phase is never entered twice for one terminal. An
+     * unclaimed row holds either the column default or the entry reset's
+     * encoded empty array.
+     *
+     * @param mixed  $task_id           Task ID.
+     * @param mixed  $wp_id             Child site ID.
+     * @param string $fetch_result_json Encoded terminal projection.
+     *
+     * @return bool True when this driver's projection landed, false when another driver already claimed the terminal.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
+     */
+    public function claim_backup_fetch_result( $task_id, $wp_id, $fetch_result_json ) {
+        if ( ! MainWP_Utility::ctype_digit( $task_id ) || ! MainWP_Utility::ctype_digit( $wp_id ) ) {
+            return false;
+        }
+
+        $affected = $this->wpdb->query(
+            $this->wpdb->prepare(
+                'UPDATE ' . $this->table_name( 'wp_backup_progress' ) . " SET fetchResult = %s WHERE task_id = %d AND wp_id = %d AND ( fetchResult = '' OR fetchResult = '[]' )", // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table_name() returns the prefixed identifier.
+                $fetch_result_json,
+                $task_id,
+                $wp_id
+            )
+        );
+
+        return is_numeric( $affected ) && $affected > 0;
+    }
+
+    /**
      * Method  update_backup_errors()
      *
      * Update backup errors.

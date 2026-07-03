@@ -626,8 +626,9 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * A downloaded file that fails validation is reported and the download
-	 * is not marked complete.
+	 * A downloaded file that fails validation is never marked complete:
+	 * each rejection consumes a retry attempt and yields, and once the
+	 * budget is spent the validation failure surfaces terminally.
 	 *
 	 * @return void
 	 */
@@ -647,9 +648,17 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 			3
 		);
 
+		$result = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+		$this->assertFalse( $result, 'A rejected download must yield for retry while budget remains.' );
+
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+		$this->assertSame( 1, (int) $progress->attempts, 'The rejected download must consume a retry attempt.' );
+		$this->assertSame( 0, (int) $progress->downloadedFULLComplete, 'A failed validation must not mark the download complete.' );
+
+		MainWP_DB_Backup::instance()->update_backup_task_progress( $task->id, $site_id, array( 'attempts' => 5 ) );
 		try {
 			MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
-			$this->fail( 'Expected header validation to reject the error-page download.' );
+			$this->fail( 'Expected header validation to reject the error-page download once the retry budget is spent.' );
 		} catch ( MainWP_Exception $e ) {
 			$this->assertSame( 'mainwp_backup_header_invalid', $e->get_message_error_code() );
 		}
@@ -1541,5 +1550,324 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 
 		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
 		$this->assertSame( '', $progress->child_backup_task_id, 'The legacy result write must clear the marker.' );
+	}
+
+	/**
+	 * The fetchResult claim is a conditional write: it lands on an
+	 * unclaimed row (empty string or the entry reset's encoded empty
+	 * array) and refuses once any driver's terminal projection is there.
+	 *
+	 * @return void
+	 */
+	public function test_claim_backup_fetch_result_is_conditional() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$this->seed_progress( $task->id, $site_id, array( 'fetchResult' => wp_json_encode( array() ) ) );
+
+		$first = MainWP_DB_Backup::instance()->claim_backup_fetch_result( $task->id, $site_id, wp_json_encode( array( 'full' => 'a.tar.gz' ) ) );
+		$this->assertTrue( $first, 'An unclaimed row must accept the terminal projection.' );
+
+		$second = MainWP_DB_Backup::instance()->claim_backup_fetch_result( $task->id, $site_id, wp_json_encode( array( 'full' => 'b.tar.gz' ) ) );
+		$this->assertFalse( $second, 'A claimed row must refuse a second terminal projection.' );
+
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+		$this->assertSame( 'a.tar.gz', $progress->fetchResult['full'], 'The losing claim must not clobber the winning projection.' );
+	}
+
+	/**
+	 * Two drivers polling the same completed child task: the one whose
+	 * claim loses yields without firing a second completion event, so the
+	 * terminal is consumed exactly once and the loser never enters the
+	 * download phase against an artifact the winner is consuming.
+	 *
+	 * @return void
+	 */
+	public function test_terminal_claim_loser_yields_without_duplicate_completion_event() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$this->give_site_real_privkey( $site_id );
+		$this->seed_progress( $task->id, $site_id, array( 'child_backup_task_id' => 'bk-term-race' ) );
+
+		// The concurrent winner lands its projection while this driver's
+		// poll round trip is in flight - between the row read at entry and
+		// the write after the child reports completed.
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			function ( $result, $website, $what ) use ( $task, $site_id ) {
+				unset( $website );
+				if ( 'backup_task_run' === $what ) {
+					MainWP_DB_Backup::instance()->update_backup_task_progress(
+						$task->id,
+						$site_id,
+						array( 'fetchResult' => wp_json_encode( array( 'full' => 'winner.tar.gz', 'db' => false, 'size' => 4096 ) ) ) // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- compact test fixture.
+					);
+					return array(
+						'task_id' => 'bk-term-race',
+						'phase'   => 'completed',
+						'file'    => 'loser.tar.gz',
+						'size'    => 4096,
+					);
+				}
+				return $result;
+			},
+			10,
+			3
+		);
+
+		$completed_events = 0;
+		add_action(
+			'mainwp_native_backup_completed',
+			function () use ( &$completed_events ) {
+				++$completed_events;
+			}
+		);
+
+		$result = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+
+		$this->assertFalse( $result, 'The losing driver must yield, not proceed into the download phase.' );
+		$this->assertSame( 0, $completed_events, 'The losing driver must not fire a duplicate completion event.' );
+
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+		$this->assertSame( 'winner.tar.gz', $progress->fetchResult['full'], 'The winning projection must survive the race.' );
+	}
+
+	/**
+	 * A transient download failure consumes a retry attempt and yields
+	 * instead of failing the site terminally: the progress row is fully
+	 * resumable and the next driver cycle retries the transfer.
+	 *
+	 * @return void
+	 */
+	public function test_download_failure_yields_and_consumes_attempt() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$this->seed_download_ready_progress( $task->id, $site_id, 4096 );
+		$this->mock_child_action( 'delete_backup', array( 'result' => 'ok' ) );
+
+		$locked_file = null;
+		add_filter(
+			'mainwp_download_to_file_pre',
+			function ( $pre, $url, $file ) use ( &$locked_file ) {
+				unset( $pre, $url );
+				$locked_file = $file;
+				return true; // No file lands; validation reports the transfer failure.
+			},
+			10,
+			3
+		);
+
+		$result = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+
+		$this->assertFalse( $result, 'A first download failure must yield for retry, not fail the site.' );
+
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+		$this->assertSame( 1, (int) $progress->attempts, 'The failed transfer must consume one retry attempt.' );
+		$this->assertSame( 0, (int) $progress->downloadedFULLComplete, 'The transfer must stay incomplete for the retry.' );
+		$this->assertNotNull( $locked_file );
+		$this->assertFileDoesNotExist( $locked_file . '.downloading', 'The download lock must be released on the failure path.' );
+	}
+
+	/**
+	 * A download that keeps failing after the retry budget is spent is a
+	 * real terminal failure and propagates.
+	 *
+	 * @return void
+	 */
+	public function test_download_failure_with_exhausted_attempts_throws() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$this->seed_download_ready_progress( $task->id, $site_id, 4096 );
+		MainWP_DB_Backup::instance()->update_backup_task_progress( $task->id, $site_id, array( 'attempts' => 5 ) );
+		$this->mock_child_action( 'delete_backup', array( 'result' => 'ok' ) );
+
+		add_filter(
+			'mainwp_download_to_file_pre',
+			function ( $pre ) {
+				unset( $pre );
+				return true; // No file lands; validation reports the transfer failure.
+			}
+		);
+
+		$this->expectException( MainWP_Exception::class );
+		MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+	}
+
+	/**
+	 * The downloaded-complete flag is persisted before the remote artifact
+	 * is deleted, so a driver dying between the two leaves a resumable
+	 * validated download rather than a deleted remote with no local record.
+	 *
+	 * @return void
+	 */
+	public function test_download_complete_flag_persists_before_remote_delete() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$content                = 'PK' . "\x03\x04" . str_repeat( 'x', 4092 );
+		$this->seed_download_ready_progress( $task->id, $site_id, strlen( $content ) );
+
+		$flag_at_delete = null;
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			function ( $result, $website, $what ) use ( $task, $site_id, &$flag_at_delete ) {
+				unset( $website );
+				if ( 'delete_backup' === $what ) {
+					$progress       = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+					$flag_at_delete = $progress ? (int) $progress->downloadedFULLComplete : null;
+					return array( 'result' => 'ok' );
+				}
+				return $result;
+			},
+			10,
+			3
+		);
+
+		add_filter(
+			'mainwp_download_to_file_pre',
+			function ( $pre, $url, $file ) use ( $content ) {
+				unset( $pre, $url );
+				file_put_contents( $file, $content ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- test fixture.
+				return true;
+			},
+			10,
+			3
+		);
+
+		$result = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+
+		$this->assertNotFalse( $result );
+		$this->assertSame( 1, $flag_at_delete, 'The complete flag must already be persisted when the remote delete leaves.' );
+	}
+
+	/**
+	 * A failed remote cleanup after a validated download is child-side
+	 * litter, not a run failure: the snapshot still lands and the run
+	 * completes.
+	 *
+	 * @return void
+	 */
+	public function test_remote_delete_failure_still_records_snapshot() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$content                = 'PK' . "\x03\x04" . str_repeat( 'x', 4092 );
+		$this->seed_download_ready_progress( $task->id, $site_id, strlen( $content ) );
+		$this->mock_child_action( 'delete_backup', new MainWP_Exception( 'The child site is busy.' ) );
+
+		add_filter(
+			'mainwp_download_to_file_pre',
+			function ( $pre, $url, $file ) use ( $content ) {
+				unset( $pre, $url );
+				file_put_contents( $file, $content ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- test fixture.
+				return true;
+			},
+			10,
+			3
+		);
+
+		$result = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+
+		$this->assertNotFalse( $result, 'A failed remote cleanup must not fail a run whose artifact is validated locally.' );
+		$snapshot = \MainWP\Dashboard\MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, (int) $task->id );
+		$this->assertNotNull( $snapshot, 'The snapshot must be recorded despite the failed remote cleanup.' );
+	}
+
+	/**
+	 * The snapshot-record phase runs under the artifact's download lock:
+	 * a concurrent holder forces a yield, and the retry after release
+	 * records the snapshot.
+	 *
+	 * @return void
+	 */
+	public function test_record_phase_lock_contention_yields_then_records() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$content                = 'PK' . "\x03\x04" . str_repeat( 'x', 4092 );
+
+		$dir = trailingslashit( wp_upload_dir()['basedir'] ) . 'mainwp-test-record-lock/';
+		wp_mkdir_p( $dir );
+		$local = $dir . 'full-record-lock-test.tar.gz';
+		file_put_contents( $local, $content ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- test fixture.
+		MainWP_Backup_File_Manager::release_download_lock( $local ); // A prior aborted run may have left its lock behind.
+
+		$this->give_site_real_privkey( $site_id );
+		MainWP_DB_Backup::instance()->add_backup_task_progress( $task->id, $site_id, array() );
+		MainWP_DB_Backup::instance()->update_backup_task_progress(
+			$task->id,
+			$site_id,
+			array(
+				'dtsFetched'             => time(),
+				'pid'                    => 12345,
+				'removedFiles'           => 1,
+				'downloadedFULL'         => $local,
+				'downloadedFULLComplete' => 1,
+				'fetchResult'            => wp_json_encode(
+					array(
+						'full' => 'backup-file.tar.gz',
+						'db'   => false,
+						'size' => strlen( $content ),
+					)
+				),
+			)
+		);
+		$this->mock_child_action( 'delete_backup', array( 'result' => 'ok' ) );
+
+		$this->assertTrue( MainWP_Backup_File_Manager::acquire_download_lock( $local, 999, 999 ) );
+		try {
+			MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+			$this->fail( 'Expected an already-running yield while another process holds the artifact lock at record time.' );
+		} catch ( MainWP_Exception $e ) {
+			$this->assertSame( 'mainwp_backup_already_running', $e->get_message_error_code() );
+		}
+		$this->assertNull(
+			\MainWP\Dashboard\MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, (int) $task->id ),
+			'No snapshot may be recorded while the lock holder owns the artifact.'
+		);
+
+		MainWP_Backup_File_Manager::release_download_lock( $local );
+		$result = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+
+		$this->assertNotFalse( $result );
+		$snapshot = \MainWP\Dashboard\MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, (int) $task->id );
+		$this->assertNotNull( $snapshot, 'The retry after the lock is released must record the snapshot.' );
+	}
+
+	/**
+	 * A run whose flagged artifact vanished before the record lands is a
+	 * loud failure, never a silent success with no snapshot: the exact
+	 * shape of the lost-record race is surfaced instead of swallowed.
+	 *
+	 * @return void
+	 */
+	public function test_record_with_missing_artifact_is_loud() {
+		list( $site_id, $task ) = $this->site_and_task();
+
+		$dir = trailingslashit( wp_upload_dir()['basedir'] ) . 'mainwp-test-record-missing/';
+		wp_mkdir_p( $dir );
+
+		$this->give_site_real_privkey( $site_id );
+		MainWP_DB_Backup::instance()->add_backup_task_progress( $task->id, $site_id, array() );
+		MainWP_DB_Backup::instance()->update_backup_task_progress(
+			$task->id,
+			$site_id,
+			array(
+				'dtsFetched'             => time(),
+				'pid'                    => 12345,
+				'removedFiles'           => 1,
+				'downloadedFULL'         => $dir . 'full-vanished.tar.gz',
+				'downloadedFULLComplete' => 1,
+				'fetchResult'            => wp_json_encode(
+					array(
+						'full' => 'backup-file.tar.gz',
+						'db'   => false,
+						'size' => 4096,
+					)
+				),
+			)
+		);
+		$this->mock_child_action( 'delete_backup', array( 'result' => 'ok' ) );
+
+		try {
+			MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+			$this->fail( 'A flagged-complete run with no artifact on disk must fail loudly, not report success without a snapshot.' );
+		} catch ( MainWP_Exception $e ) {
+			$this->assertSame( 'mainwp_backup_file_corrupt', $e->get_message_error_code() );
+		}
+
+		$this->assertNull(
+			\MainWP\Dashboard\MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, (int) $task->id ),
+			'No snapshot may be fabricated for a vanished artifact.'
+		);
 	}
 }

@@ -217,13 +217,22 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                 'test_restore_at'    => isset( $entry['snapshot']->test_restore_at ) ? (int) $entry['snapshot']->test_restore_at : 0,
             );
         }
+        // The reload bootstrap: the server knows what is running for this
+        // site, so a freshly loaded page (or a site switch) resumes the
+        // progress views instead of looking hung while a restore or an
+        // on-demand backup carries on in the background.
+        $active_job  = MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $site_id );
+        $manual_task = MainWP_DB_Backup::instance()->get_manual_backup_task( $site_id );
+
         wp_send_json(
             array(
-                'snapshots'            => $rows,
-                'multisite'            => $multisite,
-                'site_has_woocommerce' => MainWP_Utility::site_has_woocommerce( (int) $website->id ),
-                'site_url'             => (string) $website->url,
-                'local_only'           => empty( MainWP_DB_Backup::instance()->manual_backup_task_destinations( $site_id ) ),
+                'snapshots'             => $rows,
+                'multisite'             => $multisite,
+                'site_has_woocommerce'  => MainWP_Utility::site_has_woocommerce( (int) $website->id ),
+                'site_url'              => (string) $website->url,
+                'local_only'            => empty( MainWP_DB_Backup::instance()->manual_backup_task_destinations( $site_id ) ),
+                'active_restore_job_id' => null !== $active_job ? (int) $active_job->id : 0,
+                'manual_backup_running' => ! empty( $manual_task ) && (int) $manual_task->completed < (int) $manual_task->last_run,
             )
         );
     }
@@ -353,6 +362,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                 'last_error'       => (string) $job->last_error,
                 'error_code'       => isset( $job->checkpoint['last_error_code'] ) ? (string) $job->checkpoint['last_error_code'] : '',
                 'attempt_count'    => (int) $job->attempt_count,
+                'next_retry_at'    => (int) $job->next_retry_at,
                 'artifact_index'   => isset( $transfer['artifact_index'] ) ? (int) $transfer['artifact_index'] : 0,
                 'artifact_total'   => count( $plan ),
                 'has_rollback'     => ! empty( $job->checkpoint['pre_snapshot_artifacts'] ),

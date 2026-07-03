@@ -354,6 +354,20 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         rows = '<tr><td colspan="7"><?php echo esc_js( esc_html__( 'No backups recorded for this site yet.', 'mainwp' ) ); ?></td></tr>';
                     }
                     $tbody.html( rows );
+
+                    // The reload bootstrap: resume what the server says is
+                    // running for this site. A restore mid-flight reopens the
+                    // progress panel and an open on-demand run resumes its
+                    // poll, so neither depends on the tab that started it.
+                    if ( response.active_restore_job_id && ! currentJob ) {
+                        if ( ! $( '#mainwp-restore-modal' ).modal( 'is active' ) ) {
+                            $( '#mainwp-restore-modal' ).modal( 'show' );
+                        }
+                        startJobFollow( response.active_restore_job_id );
+                    }
+                    if ( response.manual_backup_running && ! backupPollTimer ) {
+                        resumeBackupFollow();
+                    }
                 }, 'json' );
             }
 
@@ -396,6 +410,13 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     $bar.show().find( '.bar' ).css( 'width', pct + '%' );
                 }
 
+                var retryingAbout = '';
+                if ( 'failed_retryable' === data.status && data.next_retry_at ) {
+                    // A 40-minute backoff without a clock reads as hung; say
+                    // when the next attempt comes.
+                    retryingAbout = ' <?php echo esc_js( esc_html__( 'Retrying automatically about', 'mainwp' ) ); ?> ' + new Date( data.next_retry_at * 1000 ).toLocaleTimeString( [], { hour: '2-digit', minute: '2-digit' } ) + '.';
+                }
+
                 if ( terminal ) {
                     var $message = $( '#mainwp-restore-result-message' );
                     var rolledBack = 'mainwp_restore_rolled_back' === data.error_code;
@@ -426,7 +447,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     }
                     window.clearTimeout( pollTimer );
                 } else if ( data.last_error ) {
-                    $( '#mainwp-restore-result-message' ).removeClass( 'green' ).addClass( 'red' ).text( data.last_error ).show();
+                    $( '#mainwp-restore-result-message' ).removeClass( 'green' ).addClass( 'red' ).text( data.last_error + retryingAbout ).show();
                 } else {
                     $( '#mainwp-restore-result-message' ).hide();
                 }
@@ -601,6 +622,25 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     return false; // A restore holds the slot; cancelling a backup does not apply.
                 }
                 return /in progress|try again|already/i.test( msg );
+            }
+
+            // Resume following an on-demand run this tab did not start (a
+            // reload, or a site switch onto a site mid-backup). No `since`
+            // is available for a resumed view, so the poll judges the
+            // current run by its own last_run - exactly what a viewer who
+            // did not click wants to see.
+            function resumeBackupFollow() {
+                $( '#mainwp-native-backup-now-btn' ).prop( 'disabled', true ).addClass( 'disabled' );
+                showCancelBackup( true );
+                stopBackupTimers();
+                backupSinceTs = 0;
+                backupStartTime = Date.now();
+                backupLastPhase = null;
+                backupPhaseStartTime = null;
+                backupPhaseStartPercent = 0;
+                backupProgressCache = { label: '<?php echo esc_js( esc_html__( 'Backing up...', 'mainwp' ) ); ?>', percent: null, eta: '' };
+                backupElapsedTimer = window.setInterval( renderBackupStatus, 1000 );
+                backupPollTimer = window.setTimeout( pollBackup, 100 );
             }
 
             function pollBackup() {

@@ -1577,6 +1577,154 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
+	 * The snapshots-list response carries the reload bootstrap: the active
+	 * restore job id and whether an on-demand run is open, so a reloaded
+	 * page (or a site switch) resumes what the server knows is running
+	 * instead of looking hung.
+	 */
+	public function test_snapshots_list_response_includes_active_job_bootstrap() {
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+
+		$job     = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING, array( 'child_task_id' => 'task-9-restore' ) );
+		$website = MainWP_DB::instance()->get_website_by_id( $this->site_id );
+		$task    = \MainWP\Dashboard\MainWP_DB_Backup::instance()->ensure_manual_backup_task( $website );
+		\MainWP\Dashboard\MainWP_DB_Backup::instance()->update_backup_task_with_values(
+			(int) $task->id,
+			array(
+				'last_run'  => time() - 30,
+				'completed' => time() - 3600,
+			)
+		);
+
+		$nonce                = wp_create_nonce( 'mainwp_restore_snapshot_list' );
+		$_POST['security']    = $nonce;
+		$_REQUEST['security'] = $nonce;
+		$_POST['site_id']     = (string) $this->site_id;
+
+		try {
+			$response = $this->invoke_ajax_handler( 'mainwp_restore_snapshot_list' );
+		} finally {
+			unset( $_POST['security'], $_REQUEST['security'], $_POST['site_id'] );
+		}
+
+		$this->assertIsArray( $response );
+		$this->assertSame( (int) $job->id, (int) ( $response['active_restore_job_id'] ?? 0 ), 'The list response must hand a reloaded page its running restore.' );
+		$this->assertTrue( (bool) ( $response['manual_backup_running'] ?? false ), 'The list response must flag an open on-demand run.' );
+	}
+
+	/**
+	 * With nothing running, the bootstrap fields read empty.
+	 */
+	public function test_snapshots_list_response_bootstrap_empty_when_idle() {
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+
+		$nonce                = wp_create_nonce( 'mainwp_restore_snapshot_list' );
+		$_POST['security']    = $nonce;
+		$_REQUEST['security'] = $nonce;
+		$_POST['site_id']     = (string) $this->site_id;
+
+		try {
+			$response = $this->invoke_ajax_handler( 'mainwp_restore_snapshot_list' );
+		} finally {
+			unset( $_POST['security'], $_REQUEST['security'], $_POST['site_id'] );
+		}
+
+		$this->assertIsArray( $response );
+		$this->assertSame( 0, (int) ( $response['active_restore_job_id'] ?? -1 ) );
+		$this->assertFalse( (bool) ( $response['manual_backup_running'] ?? true ) );
+	}
+
+	/**
+	 * The progress response surfaces next_retry_at so a 40-minute backoff
+	 * reads as "retrying about HH:MM" instead of a silent red state.
+	 */
+	public function test_restore_progress_response_includes_next_retry_at() {
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+
+		$job      = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING, array( 'child_task_id' => 'task-9-restore' ) );
+		$retry_at = time() + 2400;
+		MainWP_Backup_Restore_Job_Store::instance()->fail_retryable( (int) $job->id, 'The connection dropped.', 2, $retry_at );
+
+		$skip_drive = static function () {
+			return -1;
+		};
+		add_filter( 'mainwp_restore_foreground_budget', $skip_drive );
+
+		$nonce                = wp_create_nonce( 'mainwp_restore_progress' );
+		$_POST['security']    = $nonce;
+		$_REQUEST['security'] = $nonce;
+		$_POST['job_id']      = (string) $job->id;
+
+		try {
+			$response = $this->invoke_ajax_handler( 'mainwp_restore_progress' );
+		} finally {
+			remove_filter( 'mainwp_restore_foreground_budget', $skip_drive );
+			unset( $_POST['security'], $_REQUEST['security'], $_POST['job_id'] );
+		}
+
+		$this->assertIsArray( $response );
+		$this->assertSame( 'failed_retryable', $response['status'] ?? '' );
+		$this->assertSame( $retry_at, (int) ( $response['next_retry_at'] ?? 0 ), 'The poll must surface when the backoff releases the job.' );
+	}
+
+	/**
+	 * A transport throw during the transfer stores a humanized last_error
+	 * instead of the raw HTTPERROR token, while the diagnostics seam keeps
+	 * the raw detail for the bundle.
+	 */
+	public function test_transfer_transport_error_stored_humanized() {
+		$captured = array();
+		add_action(
+			'mainwp_backup_diag_restore_transfer',
+			function ( $task_id, $file, $cursor, $result, $chunk_len, $duration, $error ) use ( &$captured ) {
+				unset( $task_id, $file, $cursor, $chunk_len, $duration );
+				$captured[] = array(
+					'result' => $result,
+					'error'  => $error,
+				);
+			},
+			10,
+			7
+		);
+
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			function ( $pre, $website, $what ) {
+				unset( $pre, $website );
+				if ( 'restore_artifact_chunk' === $what ) {
+					throw new MainWP_Exception( 'HTTPERROR', 'cURL error 7: connection refused' ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- test mock.
+				}
+				return null;
+			},
+			5,
+			3
+		);
+
+		$job = $this->make_job(
+			array(
+				'plan'     => $this->staged_plan_fixture(),
+				'transfer' => array(
+					'artifact_index' => 0,
+					'offset'         => 0,
+					'chunk_bytes'    => 262144,
+					'floor_fails'    => 2,
+				),
+			),
+			MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING,
+			array( 'child_task_id' => 'task-9-restore' )
+		);
+		$job = $this->tick( $job );
+
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE, $job->status );
+		$this->assertStringNotContainsString( 'HTTPERROR', (string) $job->last_error, 'The raw transport token must never reach the stored last_error.' );
+		$this->assertStringContainsString( 'could not be reached', (string) $job->last_error );
+
+		$this->assertNotEmpty( $captured );
+		$this->assertSame( 'shrink', $captured[0]['result'] );
+		$this->assertStringContainsString( 'cURL error 7', (string) $captured[0]['error'], 'Diagnostics must keep the raw transport detail.' );
+	}
+
+	/**
 	 * Newest job id for the test site (active or terminal).
 	 *
 	 * @return int

@@ -1004,6 +1004,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      */
     private function record_failure( object $job, string $error, bool $retryable, string $error_code = '' ): void {
         $store = MainWP_Backup_Restore_Job_Store::instance();
+        $error = $this->humanize_stored_error( $error );
 
         // The phase that failed may have checkpointed progress after this
         // row was read; a stale write here would erase that cursor.
@@ -1048,6 +1049,31 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
          * @param bool   $progress_reset Whether transfer progress reset the budget.
          */
         do_action( 'mainwp_backup_diag_restore_retry', (int) $job->id, (int) $job->site_id, $attempts, $error_code, $next_retry_at, $advanced );
+    }
+
+    /**
+     * Replace the connect layer's raw token messages with sentences a
+     * person can act on. Every stored last_error funnels through
+     * record_failure, so this is the single choke point - transfer
+     * failures reach it through send_chunk's catch and never touch the
+     * process_pending catch. Diagnostics events keep the raw detail; only
+     * the stored, user-facing message is rewritten.
+     *
+     * @param string $error Raw error text.
+     *
+     * @return string Humanized error text.
+     */
+    private function humanize_stored_error( string $error ): string {
+        if ( 0 === strpos( $error, 'HTTPERROR' ) ) {
+            return esc_html__( 'The site could not be reached during the restore. It may be down, overloaded, or briefly blocking dashboard requests; the restore retries automatically.', 'mainwp' );
+        }
+        if ( 0 === strpos( $error, 'NOMAINWP' ) ) {
+            return esc_html__( 'The MainWP Child plugin did not answer on the site. Check that the site loads and the MainWP Child plugin is active; the restore retries automatically.', 'mainwp' );
+        }
+        if ( 0 === strpos( $error, 'WPERROR' ) ) {
+            return esc_html__( 'The site returned an unexpected response during the restore; the restore retries automatically.', 'mainwp' );
+        }
+        return $error;
     }
 
     /**

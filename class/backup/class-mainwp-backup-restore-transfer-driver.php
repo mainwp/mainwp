@@ -1047,11 +1047,17 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
             );
         } catch ( \Throwable $e ) {
             // Transport failures on large bodies are how hosts with small
-            // request caps present; shrink before counting it a fault.
+            // request caps present; shrink before counting it a fault. The
+            // connect layer's real detail hides behind a token message
+            // (HTTPERROR + extra); carry both so diagnostics can tell a
+            // timeout from a reset from a proxy rejection.
+            $detail = $e instanceof MainWP_Exception && ! empty( $e->get_message_extra() )
+                ? $e->getMessage() . ' - ' . $e->get_message_extra()
+                : $e->getMessage();
             return array(
                 'result'         => 'shrink',
                 'bytes_received' => $offset,
-                'error'          => $e->getMessage(),
+                'error'          => $detail,
                 'retryable'      => true,
             );
         }

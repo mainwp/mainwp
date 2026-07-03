@@ -416,7 +416,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      * @uses  \MainWP\Dashboard\MainWP_Utility::get_nice_url()
      * @uses  \MainWP\Dashboard\MainWP_Utility::sanitize()
      */
-    public static function execute_backup_task( $task, $nrOfSites = 0, $updateRun = true ) { // phpcs:ignore -- NOSONAR - not quite complex function.
+    public static function execute_backup_task( $task, $nrOfSites = 0, $updateRun = true, $run_grace_seconds = 0 ) { // phpcs:ignore -- NOSONAR - not quite complex function.
 
         // Cap concurrent backup tasks; a refused task stays queued for the next cron cycle.
         $slot_token = MainWP_Backup_Monitor::acquire_backup_slot( MainWP_Backup_Settings::get_max_concurrent_backups() );
@@ -425,7 +425,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         }
 
         try {
-            return static::execute_backup_task_run( $task, $nrOfSites, $updateRun );
+            return static::execute_backup_task_run( $task, $nrOfSites, $updateRun, $run_grace_seconds );
         } finally {
             MainWP_Backup_Monitor::release_backup_slot( $slot_token );
         }
@@ -437,13 +437,35 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      * @param mixed   $task Task to perform.
      * @param integer $nrOfSites Number of Child Sites to perform the task on.
      * @param bool    $updateRun ture|false.
+     * @param integer $run_grace_seconds Settle window for opening the run; 0
+     *                                   (every scheduled caller) keeps the
+     *                                   unconditional bump.
      *
      * @return mixed $errorOutput.
      */
-    private static function execute_backup_task_run( $task, $nrOfSites = 0, $updateRun = true ) { // phpcs:ignore -- NOSONAR - not quite complex function.
+    private static function execute_backup_task_run( $task, $nrOfSites = 0, $updateRun = true, $run_grace_seconds = 0 ) { // phpcs:ignore -- NOSONAR - not quite complex function.
 
         if ( $updateRun ) {
-            MainWP_DB_Backup::instance()->update_backup_run( $task->id );
+            if ( ! MainWP_DB_Backup::instance()->claim_backup_run( $task->id, $run_grace_seconds ) ) {
+                // Another driver already owns this run, or it closed
+                // successfully within the settle window: yield without
+                // touching the row, recording an error, or reaching the
+                // child - the observed damage was exactly a second
+                // preflight and an orphan child task from here.
+
+                /**
+                 * Fires when a run (re)open is refused, so the diagnostics
+                 * recorder can capture the re-init trace the event stream
+                 * otherwise shows only as a second preflight.
+                 *
+                 * @param int    $task_id   Task id.
+                 * @param string $reason    Refusal reason.
+                 * @param int    $last_run  The run-open stamp the row kept.
+                 * @param int    $completed The close stamp the row kept.
+                 */
+                do_action( 'mainwp_backup_diag_run_reinit', (int) $task->id, 'claim_refused', (int) $task->last_run, (int) $task->completed );
+                return false;
+            }
             // Start each run with a clean error slate so the Manage Backups list
             // reflects only the latest run, never a stale error from a past one.
             // Continue-loop ticks pass $updateRun = false, so per-site errors

@@ -90,6 +90,7 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
         add_action( 'mainwp_backup_diag_restore_poll', array( $this, 'on_restore_poll' ), 10, 4 );
         add_action( 'mainwp_backup_diag_restore_transfer', array( $this, 'on_restore_transfer' ), 10, 7 );
         add_action( 'mainwp_backup_diag_restore_retry', array( $this, 'on_restore_retry' ), 10, 6 );
+        add_action( 'mainwp_backup_diag_run_reinit', array( $this, 'on_run_reinit' ), 10, 4 );
         add_action( 'mainwp_backup_diag_preflight', array( $this, 'on_preflight' ), 10, 4 );
         add_action( 'mainwp_backup_diag_slot', array( $this, 'on_slot' ), 10, 4 );
 
@@ -426,6 +427,36 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 )
             );
         } catch ( \Throwable $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement -- diagnostics must never break a restore.
+            return;
+        }
+    }
+
+    /**
+     * Record a refused run (re)open: the explicit trace of a duplicate
+     * initiate being absorbed, which earlier bundles showed only as a
+     * second preflight.
+     *
+     * @param int    $task_id   Task id.
+     * @param string $reason    Refusal reason.
+     * @param int    $last_run  The run-open stamp the row kept.
+     * @param int    $completed The close stamp the row kept.
+     *
+     * @return void
+     */
+    public function on_run_reinit( $task_id, $reason, $last_run, $completed ): void {
+        try {
+            $this->record(
+                '_global',
+                'run_reinit',
+                0,
+                (int) $task_id,
+                array(
+                    'reason'    => (string) $reason,
+                    'last_run'  => (int) $last_run,
+                    'completed' => (int) $completed,
+                )
+            );
+        } catch ( \Throwable $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement -- diagnostics must never break a backup.
             return;
         }
     }

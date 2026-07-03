@@ -49,7 +49,7 @@ class MainWP_Backup_Notices_Test extends MainWP_Abilities_Test_Case {
 		$wpdb->query( "DELETE FROM {$wpdb->prefix}mainwp_wp_backup_snapshot" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup.
 		delete_option( 'mainwp_enableNativeBackups' );
 		delete_option( 'mainwp_notificationOnBackupFail' );
-		unset( $_POST['security'], $_POST['site_id'], $_REQUEST['security'], $_REQUEST['site_id'] );
+		unset( $_POST['security'], $_POST['site_id'], $_POST['since'], $_REQUEST['security'], $_REQUEST['site_id'] );
 		parent::tearDown();
 	}
 
@@ -146,11 +146,16 @@ class MainWP_Backup_Notices_Test extends MainWP_Abilities_Test_Case {
 	 *
 	 * @return array|null Decoded response payload.
 	 */
-	private function poll_on_demand( $site_id ) {
+	private function poll_on_demand( $site_id, $since = 0 ) {
 		$nonce                = wp_create_nonce( 'mainwp_native_backup_progress' );
 		$_POST['security']    = $nonce;
 		$_REQUEST['security'] = $nonce;
 		$_POST['site_id']     = $site_id;
+		if ( $since > 0 ) {
+			$_POST['since'] = (string) $since;
+		} else {
+			unset( $_POST['since'] );
+		}
 
 		$throw = static function () {
 			return static function () {
@@ -173,6 +178,287 @@ class MainWP_Backup_Notices_Test extends MainWP_Abilities_Test_Case {
 		}
 
 		return json_decode( $raw, true );
+	}
+
+	/**
+	 * Seed the hidden manual task for a site into a given run state.
+	 *
+	 * @param int   $site_id Site id.
+	 * @param array $over    Field overrides.
+	 *
+	 * @return object Task row.
+	 */
+	private function manual_task_in_state( $site_id, array $over ) {
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$task    = MainWP_DB_Backup::instance()->ensure_manual_backup_task( $website );
+		$this->assertNotEmpty( $task, 'Precondition: the on-demand task must exist.' );
+		MainWP_DB_Backup::instance()->update_backup_task_with_values( (int) $task->id, $over );
+		return MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+	}
+
+	/**
+	 * The exact reported bug: a duplicate initiate bumped last_run after
+	 * the snapshot landed, and the freshness check keyed to last_run could
+	 * never pass. Keyed to the click's own timestamp, the poll reports the
+	 * completed backup that exists.
+	 *
+	 * @return void
+	 */
+	public function test_on_demand_poll_reports_completed_using_since_despite_later_reinit_bump() {
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$site_id = $this->create_test_site();
+		$click   = time() - 40;
+
+		$task = $this->manual_task_in_state(
+			$site_id,
+			array(
+				'last_run'  => $click,
+				'completed' => time() - 20,
+			)
+		);
+		MainWP_Backup_Snapshots::instance()->record_snapshot(
+			array(
+				'task_id' => (int) $task->id,
+				'site_id' => $site_id,
+				'type'    => 'full',
+			)
+		);
+
+		// The later re-init: last_run bumps past the snapshot, run closes again.
+		$this->manual_task_in_state(
+			$site_id,
+			array(
+				'last_run'  => time() + 10,
+				'completed' => time() + 20,
+			)
+		);
+
+		$response = $this->poll_on_demand( $site_id, $click );
+
+		$this->assertIsArray( $response );
+		$this->assertSame( 'completed', $response['status'] ?? null, 'The click that produced the snapshot must see completed, whatever a later re-init did to last_run.' );
+	}
+
+	/**
+	 * Without a since value (a tab running pre-fix JavaScript) the poll
+	 * keeps today's last_run comparison unchanged.
+	 *
+	 * @return void
+	 */
+	public function test_on_demand_poll_without_since_falls_back_to_last_run_backward_compat() {
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$site_id = $this->create_test_site();
+
+		$task = $this->manual_task_in_state(
+			$site_id,
+			array(
+				'last_run'  => time() - 40,
+				'completed' => time() - 20,
+			)
+		);
+		MainWP_Backup_Snapshots::instance()->record_snapshot(
+			array(
+				'task_id' => (int) $task->id,
+				'site_id' => $site_id,
+				'type'    => 'full',
+			)
+		);
+		$this->manual_task_in_state(
+			$site_id,
+			array(
+				'last_run'  => time() + 10,
+				'completed' => time() + 20,
+			)
+		);
+
+		$response = $this->poll_on_demand( $site_id );
+
+		$this->assertIsArray( $response );
+		$this->assertSame( 'failed', $response['status'] ?? null, 'Absent since, the last_run comparison stays exactly as before.' );
+	}
+
+	/**
+	 * A later run's recorded errors belong to that run: they must not fail
+	 * a click whose own snapshot exists.
+	 *
+	 * @return void
+	 */
+	public function test_on_demand_poll_ignores_error_from_later_reinit() {
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$site_id = $this->create_test_site();
+		$click   = time() - 40;
+
+		$task = $this->manual_task_in_state(
+			$site_id,
+			array(
+				'last_run'  => $click,
+				'completed' => time() - 20,
+			)
+		);
+		MainWP_Backup_Snapshots::instance()->record_snapshot(
+			array(
+				'task_id' => (int) $task->id,
+				'site_id' => $site_id,
+				'type'    => 'full',
+			)
+		);
+
+		// A later run starts past the snapshot and fails.
+		$this->manual_task_in_state(
+			$site_id,
+			array(
+				'last_run'  => time() + 10,
+				'completed' => time() + 20,
+			)
+		);
+		MainWP_DB_Backup::instance()->update_backup_errors( (int) $task->id, 'The later run failed on the child site.' );
+
+		$response = $this->poll_on_demand( $site_id, $click );
+
+		$this->assertIsArray( $response );
+		$this->assertSame( 'completed', $response['status'] ?? null, 'A later run\'s failure must not poison a click whose snapshot exists.' );
+	}
+
+	/**
+	 * A same-run destination failure (snapshot recorded, then errors in
+	 * that same run) still reports failed with its errors - the reorder
+	 * must not soften genuine partial failures.
+	 *
+	 * @return void
+	 */
+	public function test_on_demand_poll_still_reports_own_run_destination_failure() {
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$site_id = $this->create_test_site();
+		$click   = time() - 100;
+
+		$task = $this->manual_task_in_state(
+			$site_id,
+			array(
+				'last_run'  => $click,
+				'completed' => time(),
+			)
+		);
+		MainWP_DB_Backup::instance()->update_backup_errors( (int) $task->id, 'The offsite upload failed after the snapshot was recorded.' );
+		MainWP_Backup_Snapshots::instance()->record_snapshot(
+			array(
+				'task_id' => (int) $task->id,
+				'site_id' => $site_id,
+				'type'    => 'full',
+			)
+		);
+
+		$response = $this->poll_on_demand( $site_id, $click );
+
+		$this->assertIsArray( $response );
+		$this->assertSame( 'failed', $response['status'] ?? null, 'Errors from the run that produced the snapshot must still fail the poll.' );
+		$this->assertStringContainsString( 'offsite upload failed', (string) ( $response['error'] ?? '' ) );
+	}
+
+	/**
+	 * A run that failed before producing any snapshot surfaces its own
+	 * errors when polled with since - the no-snapshot attribution branch.
+	 *
+	 * @return void
+	 */
+	public function test_on_demand_poll_shows_own_errors_when_no_snapshot() {
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$site_id = $this->create_test_site();
+		$click   = time() - 60;
+
+		$task = $this->manual_task_in_state(
+			$site_id,
+			array(
+				'last_run'  => time() - 50,
+				'completed' => time(),
+			)
+		);
+		MainWP_DB_Backup::instance()->update_backup_errors( (int) $task->id, 'The database dump failed before any snapshot.' );
+
+		$response = $this->poll_on_demand( $site_id, $click );
+
+		$this->assertIsArray( $response );
+		$this->assertSame( 'failed', $response['status'] ?? null );
+		$this->assertStringContainsString( 'database dump failed', (string) ( $response['error'] ?? '' ), 'My own run\'s errors must surface, not the generic message.' );
+	}
+
+	/**
+	 * Invoke the on-demand initiate handler and return the decoded
+	 * response.
+	 *
+	 * @param int $site_id Site id.
+	 *
+	 * @return array|null Decoded response payload.
+	 */
+	private function initiate_on_demand( $site_id ) {
+		$nonce                = wp_create_nonce( 'mainwp_native_backup_initiate' );
+		$_POST['security']    = $nonce;
+		$_REQUEST['security'] = $nonce;
+		$_POST['site_id']     = $site_id;
+
+		$throw = static function () {
+			return static function () {
+				throw new \RuntimeException( 'wp_die' );
+			};
+		};
+		add_filter( 'wp_doing_ajax', '__return_true' );
+		add_filter( 'wp_die_ajax_handler', $throw );
+
+		$raw = '';
+		ob_start();
+		try {
+			MainWP_Post_Backup_Handler::instance()->mainwp_native_backup_initiate();
+		} catch ( \RuntimeException $e ) {
+			// wp_send_json terminated the request as designed.
+		} finally {
+			$raw = ob_get_clean();
+			remove_filter( 'wp_die_ajax_handler', $throw );
+			remove_filter( 'wp_doing_ajax', '__return_true' );
+		}
+
+		return json_decode( $raw, true );
+	}
+
+	/**
+	 * A duplicate initiate landing seconds after a successful close is
+	 * absorbed: no re-init, no second child task, and the response points
+	 * the poll at the run that produced the snapshot.
+	 *
+	 * @return void
+	 */
+	public function test_initiate_absorbs_duplicate_click_within_settle_window() {
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$site_id      = $this->create_test_site();
+		$old_last_run = time() - 30;
+
+		$this->manual_task_in_state(
+			$site_id,
+			array(
+				'last_run'  => $old_last_run,
+				'completed' => time() - 4,
+			)
+		);
+
+		$child_calls = array();
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			function ( $result, $website, $what ) use ( &$child_calls ) {
+				unset( $website );
+				$child_calls[] = $what;
+				return is_array( $result ) ? $result : array( 'result' => 'ok' );
+			},
+			10,
+			3
+		);
+
+		$response = $this->initiate_on_demand( $site_id );
+
+		$this->assertIsArray( $response );
+		$this->assertSame( 'queued', $response['status'] ?? null );
+		$this->assertSame( $old_last_run, (int) ( $response['started'] ?? 0 ), 'The absorbed duplicate must key its poll to the run that produced the snapshot, not to its own click.' );
+		$this->assertSame( array(), $child_calls, 'An absorbed duplicate must reach no child site.' );
+
+		$task = MainWP_DB_Backup::instance()->get_manual_backup_task( $site_id );
+		$this->assertSame( $old_last_run, (int) $task->last_run, 'An absorbed duplicate must not reopen the run.' );
 	}
 
 	/**

@@ -19,6 +19,7 @@ use MainWP\Dashboard\MainWP_Backup_Restore_Orchestrator;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_DB_Backup;
 use MainWP\Dashboard\MainWP_Exception;
+use MainWP\Dashboard\MainWP_Manage_Backups_Handler;
 
 /**
  * Class MainWP_Backup_Diagnostics_Test
@@ -646,6 +647,40 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( '', $events[0]['payload']['error_code'] );
 		$this->assertGreaterThan( time(), $events[0]['payload']['next_retry_at'] );
 		$this->assertFalse( $events[0]['payload']['progress_reset'] );
+	}
+
+	/**
+	 * A refused run claim leaves a run_reinit event: the trace the
+	 * 2026-07-02 bundle lacked, where a duplicate initiate reopened a
+	 * closed run and showed up only as a second preflight.
+	 *
+	 * @return void
+	 */
+	public function test_run_reinit_event_recorded() {
+		$this->enable_recorder();
+
+		$site_id = $this->create_test_site();
+		$user    = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$task    = MainWP_DB_Backup::instance()->add_backup_task( $user, 'Reinit diag test task', 'daily', 'full', '', (string) $site_id, '', '', '', 0, 0, 0, 0, 0, 'tar.gz', 0, 1, 150, 0, 0 );
+		$this->assertNotFalse( $task, 'Precondition: the task row must insert.' );
+		MainWP_DB_Backup::instance()->update_backup_task_with_values(
+			(int) $task->id,
+			array(
+				'last_run'  => time() - 30,
+				'completed' => time() - 4,
+			)
+		);
+		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+
+		$result = MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, true, 15 );
+		$this->assertFalse( $result, 'Precondition: the settle window refuses the claim.' );
+
+		$events = array_values( array_filter( $this->recorded_events(), fn( $event ) => 'run_reinit' === $event['kind'] ) );
+		$this->assertCount( 1, $events );
+		$this->assertSame( (int) $task->id, $events[0]['task_id'] );
+		$this->assertSame( 'claim_refused', $events[0]['payload']['reason'] );
+		$this->assertSame( (int) $task->last_run, $events[0]['payload']['last_run'] );
+		$this->assertSame( (int) $task->completed, $events[0]['payload']['completed'] );
 	}
 
 	/**

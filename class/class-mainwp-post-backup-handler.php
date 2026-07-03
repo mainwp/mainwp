@@ -476,22 +476,52 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             return;
         }
 
+        // A run that closed successfully seconds ago makes this initiate a
+        // duplicate of the click that just finished (a second tab, a repeat
+        // click landing as the run closed). Absorb it: point the poll at the
+        // run that produced the snapshot instead of reopening it, which would
+        // fire a second preflight, orphan a child task, and poison the
+        // original click's freshness check into a false failure.
+        $settle = MainWP_Backup_Settings::get_manual_run_settle_seconds();
+        if ( $settle > 0 && '' === (string) $task->backup_errors && (int) $task->completed > time() - $settle ) {
+            /** This action is documented in pages/page-mainwp-manage-backups-handler.php */
+            do_action( 'mainwp_backup_diag_run_reinit', (int) $task->id, 'settle_absorbed', (int) $task->last_run, (int) $task->completed );
+            wp_send_json(
+                array(
+                    'job_id'  => (int) $task->id,
+                    'started' => (int) $task->last_run,
+                    'status'  => 'queued',
+                )
+            );
+            return;
+        }
+
         // Kick the first step. updateRun = true resets completed_sites and
-        // stamps last_run, which both starts the run and makes it eligible
-        // for the cron_backups_continue backstop. A false return means no
-        // concurrency slot was free; the poll and the cron retry it.
+        // stamps last_run through a claim the settle window can refuse, which
+        // both starts the run and makes it eligible for the
+        // cron_backups_continue backstop. A false return means no concurrency
+        // slot was free (or a racing initiate won the claim); the poll and
+        // the cron retry it.
         $started  = time();
-        $had_slot = ( false !== MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, true ) );
+        $had_slot = ( false !== MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, true, $settle ) );
 
         // last_run is now stamped, so the task is eligible for a continue.
         // Kick one immediately so a tab-closed run finishes within seconds
         // instead of waiting for the 5-minute recurring backup cron.
         static::kick_backup_continuation();
 
+        // Re-read the row: a successful claim stamped last_run, and a racing
+        // initiate that won the claim stamped its own. Keying the response's
+        // started value to the row (when it advanced) makes the poll judge
+        // freshness against the run that actually owns this backup; a slot
+        // miss leaves the row untouched and keeps the click's own timestamp.
+        $task        = MainWP_DB_Backup::instance()->get_manual_backup_task( $site_id );
+        $started_out = null !== $task && (int) $task->last_run >= $started ? (int) $task->last_run : $started;
+
         wp_send_json(
             array(
                 'job_id'  => (int) $task->id,
-                'started' => $started,
+                'started' => $started_out,
                 'status'  => $had_slot ? 'running' : 'queued',
             )
         );
@@ -528,6 +558,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
     public function mainwp_native_backup_progress() {
         $this->secure_request( 'mainwp_native_backup_progress' );
         $site_id = isset( $_POST['site_id'] ) ? (int) $_POST['site_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by secure_request above.
+        $since   = isset( $_POST['since'] ) ? (int) $_POST['since'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by secure_request above.
 
         $website = $this->authorize_restore_site( $site_id );
         if ( null === $website ) {
@@ -560,13 +591,27 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             return;
         }
 
-        // The run is closed: success when a fresh snapshot landed without a
-        // recorded error, otherwise surface the recorded failure.
+        // The run is closed: success when a snapshot fresh for THIS poll's
+        // click landed, otherwise surface the recorded failure. The client
+        // sends the started value the initiate handed it as `since`, so a
+        // later re-init bumping last_run cannot poison the freshness check
+        // of the click that produced the snapshot; without it (a tab on
+        // older JavaScript) the comparison stays keyed to last_run.
         $errors = $task ? (string) $task->backup_errors : '';
         $latest = MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, (int) $task->id );
-        $fresh  = null !== $latest && (int) $latest->created >= (int) $task->last_run;
+        $cutoff = $since > 0 ? $since : (int) $task->last_run;
+        $fresh  = null !== $latest && (int) $latest->created >= $cutoff;
 
-        if ( '' === $errors && $fresh ) {
+        // backup_errors clears at every run open, so it only ever describes
+        // the run tied to the CURRENT last_run. With a snapshot, the errors
+        // belong to the snapshot's own run only while last_run has not moved
+        // past it; with none, they are this click's when the current run
+        // opened at or after the click.
+        $errors_own = null !== $latest
+            ? (int) $task->last_run <= (int) $latest->created
+            : ( 0 === $since || (int) $task->last_run >= $since );
+
+        if ( $fresh && ( '' === $errors || ! $errors_own ) ) {
             $response = array(
                 'status'      => 'completed',
                 'snapshot_id' => (int) $latest->id,
@@ -585,7 +630,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         wp_send_json(
             array(
                 'status' => 'failed',
-                'error'  => '' !== $errors ? static::humanize_backup_errors( $errors ) : esc_html__( 'The on-demand backup did not produce a snapshot.', 'mainwp' ),
+                'error'  => '' !== $errors && $errors_own ? static::humanize_backup_errors( $errors ) : esc_html__( 'The on-demand backup did not produce a snapshot.', 'mainwp' ),
             )
         );
     }

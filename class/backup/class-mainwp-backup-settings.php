@@ -171,6 +171,21 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     }
 
     /**
+     * Method get_manual_run_settle_seconds()
+     *
+     * How long after a successful close an on-demand run refuses to
+     * reopen. A duplicate initiate inside this window (a second tab, a
+     * repeat click landing as the run finishes) is absorbed instead of
+     * reopening the run and poisoning the freshness check of the click
+     * that produced the snapshot. Failure retries are never debounced.
+     *
+     * @return int Settle window in seconds (default 15, minimum 0).
+     */
+    public static function get_manual_run_settle_seconds(): int {
+        return max( 0, (int) get_option( 'mainwp_backup_manual_settle_seconds', 15 ) );
+    }
+
+    /**
      * Method handle_settings_post()
      *
      * Update Child Site Settings.

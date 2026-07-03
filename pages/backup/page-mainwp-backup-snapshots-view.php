@@ -224,6 +224,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             var backupPhaseStartTime = null;
             var backupPhaseStartPercent = 0;
             var backupPollRetries = 0;
+            var backupSinceTs = 0;
             var currentSiteUrl = '';
             var phaseOrder = [ 'pending', 'preflight', 'pre_snapshot', 'staging', 'transferring', 'running', 'verifying', 'completed' ];
 
@@ -603,7 +604,11 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             }
 
             function pollBackup() {
-                $.post( ajaxurl, { action: 'mainwp_native_backup_progress', security: nonces.nativeBackupProgress, site_id: currentSite }, function ( data ) {
+                // `since` is the started value the initiate response carried: the
+                // server judges snapshot freshness against this click's own run,
+                // so a later re-init bumping last_run cannot flip a completed
+                // backup into a false failure.
+                $.post( ajaxurl, { action: 'mainwp_native_backup_progress', security: nonces.nativeBackupProgress, site_id: currentSite, since: backupSinceTs }, function ( data ) {
                     backupPollRetries = 0; // A response arrived: clear the transient-failure count.
                     if ( data.error ) {
                         stopBackupTimers();
@@ -701,6 +706,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         showCancelBackup( cancelApplies( response.error ) );
                         return;
                     }
+                    backupSinceTs = response.started || 0;
                     backupPollTimer = window.setTimeout( pollBackup, 1500 );
                 }, 'json' ).fail( function () {
                     // The kickoff request never reached the handler, so nothing

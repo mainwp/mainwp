@@ -495,7 +495,13 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 poll();
             }
 
-            $( '#mainwp-restore-site-selector' ).dropdown().on( 'change', function () {
+            // Fomantic returns the wrapper div for a select it has already
+            // transformed (the admin theme's global init gets there first),
+            // so a change handler chained off .dropdown() binds to the div,
+            // where val() reads empty and the selection goes nowhere. Bind
+            // the handler to the select itself; Fomantic fires change on it.
+            $( '#mainwp-restore-site-selector' ).dropdown();
+            $( '#mainwp-restore-site-selector' ).on( 'change', function () {
                 var siteId = parseInt( $( this ).val(), 10 );
                 if ( siteId > 0 ) {
                     loadSnapshots( siteId );

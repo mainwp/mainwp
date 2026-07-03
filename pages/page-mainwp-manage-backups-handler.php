@@ -397,6 +397,9 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      * @param mixed   $task Task to perform.
      * @param integer $nrOfSites Number of Child Sites to perform the task on.
      * @param bool    $updateRun ture|false.
+     * @param integer $run_grace_seconds Settle window for opening the run; 0
+     *                                   (every scheduled caller) keeps the
+     *                                   unconditional bump.
      *
      * @return mixed $errorOutput.
      *

@@ -56,6 +56,32 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
     const PRESIGN_TTL_SECONDS = 3600;
 
     /**
+     * Consecutive floor-size transport failures tolerated per chunk
+     * before the transfer surfaces a retryable error. Below this, a
+     * dropped connection at the minimum chunk size resends the same
+     * chunk instead of burning a job attempt and its backoff.
+     *
+     * @var int
+     */
+    const FLOOR_FAILS_MAX = 3;
+
+    /**
+     * Pause before an in-slice floor retry, seconds.
+     *
+     * @var int
+     */
+    const FLOOR_RETRY_SLEEP_SECONDS = 5;
+
+    /**
+     * Consecutive ok chunks before a shrunk chunk size doubles back
+     * toward the default, so one bad minute early in a transfer costs
+     * minutes instead of dragging the whole run at the floor rate.
+     *
+     * @var int
+     */
+    const GROW_BACK_STREAK = 32;
+
+    /**
      * Whether a restore can skip staging and let the child pull its
      * artifacts straight from cloud storage.
      *
@@ -828,12 +854,14 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
      *
      * @return array { done: bool, error: string|null, retryable: bool }
      */
-    public function transfer_artifacts( object $website, string $task_id, array $plan, array &$cursor, float $deadline ): array { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- chunk loop with realign and adaptive sizing.
+    public function transfer_artifacts( object $website, string $task_id, array $plan, array &$cursor, float $deadline ): array { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- chunk loop with realign, adaptive sizing, and floor retries.
         $cursor = array_merge(
             array(
                 'artifact_index' => 0,
                 'offset'         => 0,
                 'chunk_bytes'    => $this->default_chunk_bytes(),
+                'floor_fails'    => 0,
+                'ok_streak'      => 0,
             ),
             $cursor
         );
@@ -867,31 +895,53 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
              * diagnostics recorder can chart transfer throughput and the
              * otherwise silent adaptive chunk-size shrinking.
              *
-             * @param string $task_id   Child restore task id.
-             * @param string $file      Artifact file name.
-             * @param array  $cursor    Transfer cursor before the send.
-             * @param string $result    ok|realign|shrink|error.
-             * @param int    $chunk_len Bytes sent in this chunk.
-             * @param float  $duration  Send duration in seconds.
+             * @param string      $task_id   Child restore task id.
+             * @param string      $file      Artifact file name.
+             * @param array       $cursor    Transfer cursor before the send.
+             * @param string      $result    ok|realign|shrink|error.
+             * @param int         $chunk_len Bytes sent in this chunk.
+             * @param float       $duration  Send duration in seconds.
+             * @param string|null $error     Transport/child error string, null on ok.
              */
-            do_action( 'mainwp_backup_diag_restore_transfer', (string) $task_id, (string) $entry['file'], $cursor, (string) $outcome['result'], strlen( $raw ), microtime( true ) - $diag_start );
+            do_action( 'mainwp_backup_diag_restore_transfer', (string) $task_id, (string) $entry['file'], $cursor, (string) $outcome['result'], strlen( $raw ), microtime( true ) - $diag_start, $outcome['error'] );
 
             if ( 'shrink' === $outcome['result'] ) {
+                $cursor['ok_streak'] = 0;
                 if ( $cursor['chunk_bytes'] <= self::CHUNK_MIN_BYTES ) {
+                    ++$cursor['floor_fails'];
+                    if ( $cursor['floor_fails'] >= self::FLOOR_FAILS_MAX ) {
+                        $cursor['floor_fails'] = 0;
+                        return array(
+                            'done'      => false,
+                            'error'     => $outcome['error'],
+                            'retryable' => true,
+                        );
+                    }
+                    // Ride through a one-off drop at the floor: pause and
+                    // resend the same chunk while the slice budget allows,
+                    // otherwise end the slice benignly - the streak is on
+                    // the cursor, so the next slice keeps counting and a
+                    // dead transport still escalates.
+                    if ( microtime( true ) + self::FLOOR_RETRY_SLEEP_SECONDS < $deadline ) {
+                        $this->floor_retry_sleep( self::FLOOR_RETRY_SLEEP_SECONDS );
+                        continue;
+                    }
                     return array(
                         'done'      => false,
-                        'error'     => $outcome['error'],
-                        'retryable' => true,
+                        'error'     => null,
+                        'retryable' => false,
                     );
                 }
                 $cursor['chunk_bytes'] = max( self::CHUNK_MIN_BYTES, (int) ( $cursor['chunk_bytes'] / 2 ) );
                 continue;
             }
             if ( 'realign' === $outcome['result'] ) {
-                $cursor['offset'] = $outcome['bytes_received'];
+                $cursor['ok_streak'] = 0;
+                $cursor['offset']    = $outcome['bytes_received'];
                 continue;
             }
             if ( 'error' === $outcome['result'] ) {
+                $cursor['ok_streak'] = 0;
                 return array(
                     'done'      => false,
                     'error'     => $outcome['error'],
@@ -907,7 +957,20 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
                     'retryable' => false,
                 );
             }
-            $cursor['offset'] = $outcome['bytes_received'];
+            $cursor['offset']      = $outcome['bytes_received'];
+            $cursor['floor_fails'] = 0;
+            ++$cursor['ok_streak'];
+            if ( $cursor['ok_streak'] >= self::GROW_BACK_STREAK ) {
+                $cursor['ok_streak'] = 0;
+                $default             = $this->default_chunk_bytes();
+                if ( $cursor['chunk_bytes'] < $default ) {
+                    // A clean streak earns the size back: double toward the
+                    // default so an early bad minute stops taxing the rest
+                    // of the transfer. A failure at the new size just
+                    // shrinks again - one probe send per streak, bounded.
+                    $cursor['chunk_bytes'] = min( $default, $cursor['chunk_bytes'] * 2 );
+                }
+            }
             if ( $last ) {
                 ++$cursor['artifact_index'];
                 $cursor['offset'] = 0;
@@ -919,6 +982,15 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
             'error'     => null,
             'retryable' => false,
         );
+    }
+
+    /**
+     * Pause before an in-slice floor retry (test seam).
+     *
+     * @param int $seconds Sleep duration.
+     */
+    protected function floor_retry_sleep( int $seconds ): void {
+        sleep( $seconds );
     }
 
     /**

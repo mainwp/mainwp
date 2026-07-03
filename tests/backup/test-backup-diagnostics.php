@@ -526,6 +526,129 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A transfer chunk that fails in transport records its error string on
+	 * the restore_transfer event, so a bundle can distinguish a timeout
+	 * from a reset from a proxy rejection.
+	 *
+	 * @return void
+	 */
+	public function test_restore_transfer_event_carries_error_string() {
+		$this->enable_recorder();
+
+		$site_id = $this->create_test_site();
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+
+		$staged = tempnam( sys_get_temp_dir(), 'mainwp-diag-err' );
+		file_put_contents( $staged, 'artifact-bytes' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+
+		$threw = false;
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			function ( $result, $website, $what ) use ( &$threw ) {
+				unset( $website );
+				if ( 'restore_artifact_chunk' !== $what ) {
+					return $result;
+				}
+				if ( ! $threw ) {
+					$threw = true;
+					throw new \RuntimeException( 'The connection died mid-send.' );
+				}
+				return array( 'bytes_received' => strlen( 'artifact-bytes' ) );
+			},
+			10,
+			3
+		);
+
+		$plan   = array(
+			array(
+				'role'        => 'db',
+				'file'        => 'db.zip',
+				'size'        => strlen( 'artifact-bytes' ),
+				'sha256'      => hash( 'sha256', 'artifact-bytes' ),
+				'staged_path' => $staged,
+				'adopt_only'  => false,
+			),
+		);
+		$cursor = array();
+
+		$outcome = \MainWP\Dashboard\MainWP_Backup_Restore_Transfer_Driver::instance()->transfer_artifacts( $website, 'restore-diag-err', $plan, $cursor, microtime( true ) + 30 );
+		unlink( $staged );
+
+		$this->assertTrue( $outcome['done'], 'Precondition: the transfer recovers after the single transport failure.' );
+
+		$events = array_values( array_filter( $this->recorded_events(), fn( $event ) => 'restore_transfer' === $event['kind'] ) );
+		$this->assertCount( 2, $events );
+		$this->assertSame( 'shrink', $events[0]['payload']['result'] );
+		$this->assertSame( 'The connection died mid-send.', $events[0]['payload']['error'], 'The transport error string must reach the event.' );
+		$this->assertSame( 'ok', $events[1]['payload']['result'] );
+		$this->assertSame( '', $events[1]['payload']['error'], 'A clean send carries no error string.' );
+	}
+
+	/**
+	 * A retryable restore failure records a restore_retry event carrying
+	 * the attempt number, the backoff target, and whether progress reset
+	 * the budget - the attempt boundaries a bundle otherwise has to infer
+	 * from stream gaps.
+	 *
+	 * @return void
+	 */
+	public function test_restore_retry_event_recorded_on_failed_retryable() {
+		$this->enable_recorder();
+
+		$site_id = $this->create_test_site();
+
+		$staged = tempnam( sys_get_temp_dir(), 'mainwp-diag-retry' );
+		file_put_contents( $staged, 'artifact-bytes' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+
+		$this->mock_child_actions(
+			array(
+				'restore_artifact_chunk' => array( 'error' => 'The site rejected the chunk.' ),
+			)
+		);
+
+		$store  = MainWP_Backup_Restore_Job_Store::instance();
+		$job_id = $store->create_job(
+			$site_id,
+			5,
+			array(
+				'restore_id' => 'diagretry',
+				'sub_type'   => 'db',
+				'plan'       => array(
+					array(
+						'role'        => 'db',
+						'file'        => 'db.zip',
+						'size'        => strlen( 'artifact-bytes' ),
+						'sha256'      => hash( 'sha256', 'artifact-bytes' ),
+						'staged_path' => $staged,
+						'adopt_only'  => false,
+					),
+				),
+				'options'    => array(
+					'pre_snapshot'  => false,
+					'file_rollback' => false,
+				),
+				'transfer'   => array(),
+			)
+		);
+		$store->set_status( $job_id, MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING, array( 'child_task_id' => 'restore-diag-3' ) );
+
+		MainWP_Backup_Restore_Orchestrator::instance()->run_job( $store->get_job( $job_id ), microtime( true ) + 30 );
+		unlink( $staged );
+
+		$job = $store->get_job( $job_id );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE, $job->status, 'Precondition: the rejected chunk fails the job retryably.' );
+
+		$events = array_values( array_filter( $this->recorded_events(), fn( $event ) => 'restore_retry' === $event['kind'] ) );
+		$this->assertCount( 1, $events );
+		$this->assertSame( $site_id, $events[0]['site_id'] );
+		$this->assertSame( 'restore-' . $job_id, $events[0]['run_key'] );
+		$this->assertSame( 1, $events[0]['payload']['attempt'] );
+		$this->assertSame( '', $events[0]['payload']['error_code'] );
+		$this->assertGreaterThan( time(), $events[0]['payload']['next_retry_at'] );
+		$this->assertFalse( $events[0]['payload']['progress_reset'] );
+	}
+
+	/**
 	 * Slot acquisition, refusal, and release each leave a diagnostics
 	 * event, so slot exhaustion is no longer traceless.
 	 *

@@ -847,6 +847,111 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
+	 * A plan whose artifact is already staged, for jobs entering the
+	 * transferring phase directly.
+	 *
+	 * @return array Plan.
+	 */
+	private function staged_plan_fixture() {
+		$artifact = $this->dir . '/staged-db.zip';
+		if ( ! file_exists( $artifact ) ) {
+			file_put_contents( $artifact, 'dump-bytes' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+		}
+		return array(
+			array(
+				'role'        => 'db',
+				'file'        => 'db.zip',
+				'size'        => 10,
+				'sha256'      => hash( 'sha256', 'dump-bytes' ),
+				'snapshot_id' => 5,
+				'source'      => 'local',
+				'local_path'  => $artifact,
+				'staged_path' => $artifact,
+				'remote_key'  => '',
+				'adopt_only'  => false,
+			),
+		);
+	}
+
+	/**
+	 * A retryable failure that follows real transfer progress resets the
+	 * attempt budget: MAX_ATTEMPTS bounds consecutive no-progress
+	 * failures, not the total hiccups a large transfer rides through.
+	 */
+	public function test_progress_since_last_failure_resets_attempt_budget() {
+		$this->responses['restore_artifact_chunk'] = array( 'error' => 'The connection to the site dropped.' );
+
+		$job   = $this->make_job(
+			array(
+				'plan'                  => $this->staged_plan_fixture(),
+				'transfer'              => array(
+					'artifact_index' => 0,
+					'offset'         => 5,
+					'chunk_bytes'    => 262144,
+				),
+				'last_failure_transfer' => array(
+					'artifact_index' => 0,
+					'offset'         => 0,
+				),
+			),
+			MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING,
+			array( 'child_task_id' => 'task-9-restore' )
+		);
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+		$store->fail_retryable( (int) $job->id, 'seed', 5, 0 );
+		$store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING );
+
+		$job = $this->tick( $job );
+
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE, $job->status );
+		$this->assertSame( 1, (int) $job->attempt_count, 'Progress since the last failure must reset the attempt budget.' );
+		$this->assertGreaterThan( time(), (int) $job->next_retry_at );
+		$this->assertLessThanOrEqual( time() + 310, (int) $job->next_retry_at, 'The reset budget must ride the attempt-1 delay.' );
+		$this->assertSame(
+			array(
+				'artifact_index' => 0,
+				'offset'         => 5,
+			),
+			$job->checkpoint['last_failure_transfer'],
+			'The failure must move the watermark to the current cursor.'
+		);
+	}
+
+	/**
+	 * A failure with no transfer progress since the previous one keeps
+	 * counting up the attempt budget, exactly as before.
+	 */
+	public function test_no_progress_failure_still_increments_attempts() {
+		$this->responses['restore_artifact_chunk'] = array( 'error' => 'The connection to the site dropped.' );
+
+		$job   = $this->make_job(
+			array(
+				'plan'                  => $this->staged_plan_fixture(),
+				'transfer'              => array(
+					'artifact_index' => 0,
+					'offset'         => 5,
+					'chunk_bytes'    => 262144,
+				),
+				'last_failure_transfer' => array(
+					'artifact_index' => 0,
+					'offset'         => 5,
+				),
+			),
+			MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING,
+			array( 'child_task_id' => 'task-9-restore' )
+		);
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+		$store->fail_retryable( (int) $job->id, 'seed', 5, 0 );
+		$store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING );
+
+		$job = $this->tick( $job );
+
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE, $job->status );
+		$this->assertSame( 6, (int) $job->attempt_count, 'A no-progress failure must keep counting.' );
+		$this->assertGreaterThan( time() + 9000, (int) $job->next_retry_at, 'Attempt 6 must ride its own backoff delay.' );
+	}
+
+	/**
 	 * The pre-snapshot phase records the safety backup's artifacts and
 	 * moves to staging.
 	 */

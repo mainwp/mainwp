@@ -39,6 +39,22 @@ class Testable_Restore_Transfer_Driver extends MainWP_Backup_Restore_Transfer_Dr
 	public $sent = array();
 
 	/**
+	 * Recorded floor-retry pauses, so tests stay instant.
+	 *
+	 * @var array
+	 */
+	public $sleeps = array();
+
+	/**
+	 * Record the pause instead of sleeping.
+	 *
+	 * @param int $seconds Sleep duration.
+	 */
+	protected function floor_retry_sleep( int $seconds ): void {
+		$this->sleeps[] = $seconds;
+	}
+
+	/**
 	 * Serve remote objects from the pinned base path via the real local
 	 * provider (bypasses destination row decryption).
 	 *
@@ -612,6 +628,153 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends \WP_UnitTestCase {
 
 		$this->assertTrue( $result['done'] );
 		$this->assertSame( MainWP_Backup_Restore_Transfer_Driver::CHUNK_MAX_BYTES, $cursor['chunk_bytes'] );
+	}
+
+	/**
+	 * Build a staged single-artifact plan of the given size.
+	 *
+	 * @param int $bytes Artifact size.
+	 *
+	 * @return array Plan.
+	 */
+	private function staged_plan( $bytes ) {
+		$staged = $this->dir . '/payload.zip';
+		file_put_contents( $staged, str_repeat( 'E', $bytes ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+
+		return array(
+			array(
+				'role'        => 'db',
+				'file'        => 'payload.zip',
+				'size'        => $bytes,
+				'sha256'      => hash_file( 'sha256', $staged ),
+				'staged_path' => $staged,
+				'adopt_only'  => false,
+			),
+		);
+	}
+
+	/**
+	 * At the chunk-size floor, a transport failure pauses and resends the
+	 * same chunk instead of failing the job; the third consecutive floor
+	 * failure surfaces as retryable.
+	 */
+	public function test_min_size_shrink_retries_in_slice_before_failing() {
+		$plan  = $this->staged_plan( 100 );
+		$fault = array(
+			'result'         => 'shrink',
+			'bytes_received' => 0,
+			'error'          => 'connection dropped',
+			'retryable'      => true,
+		);
+
+		$this->driver->chunk_script = array( $fault, $fault, $fault );
+
+		$cursor = array( 'chunk_bytes' => MainWP_Backup_Restore_Transfer_Driver::CHUNK_MIN_BYTES );
+		$result = $this->driver->transfer_artifacts( (object) array( 'id' => 1 ), 'task-1-x', $plan, $cursor, microtime( true ) + 60 );
+
+		$this->assertFalse( $result['done'] );
+		$this->assertSame( 'connection dropped', $result['error'] );
+		$this->assertTrue( $result['retryable'] );
+		$this->assertCount( 3, $this->driver->sent, 'The failing chunk must be retried twice before the failure surfaces.' );
+		$this->assertSame( array( 0, 0, 0 ), array_column( $this->driver->sent, 'offset' ), 'Every retry must resend the same offset.' );
+		$this->assertCount( 2, $this->driver->sleeps, 'Each in-slice retry must pause first.' );
+		$this->assertSame( 0, $cursor['floor_fails'], 'The surfaced failure must reset the floor streak for the next attempt.' );
+	}
+
+	/**
+	 * A floor failure followed by a clean send recovers in-slice: no error
+	 * ever surfaces and the streak clears.
+	 */
+	public function test_min_size_retry_recovers_without_job_failure() {
+		$plan  = $this->staged_plan( 100 );
+		$fault = array(
+			'result'         => 'shrink',
+			'bytes_received' => 0,
+			'error'          => 'connection dropped',
+			'retryable'      => true,
+		);
+
+		// Two faults, then the script empties and the default ok applies.
+		$this->driver->chunk_script = array( $fault, $fault );
+
+		$cursor = array( 'chunk_bytes' => MainWP_Backup_Restore_Transfer_Driver::CHUNK_MIN_BYTES );
+		$result = $this->driver->transfer_artifacts( (object) array( 'id' => 1 ), 'task-1-x', $plan, $cursor, microtime( true ) + 60 );
+
+		$this->assertTrue( $result['done'] );
+		$this->assertNull( $result['error'] );
+		$this->assertCount( 3, $this->driver->sent );
+		$this->assertCount( 2, $this->driver->sleeps );
+		$this->assertSame( 0, $cursor['floor_fails'] );
+	}
+
+	/**
+	 * A floor failure with no slice budget left for the pause ends the
+	 * slice benignly - no attempt burned - and keeps the streak so the
+	 * next slice continues counting.
+	 */
+	public function test_min_size_shrink_without_budget_ends_slice() {
+		$plan = $this->staged_plan( 100 );
+
+		$this->driver->chunk_script = array(
+			array(
+				'result'         => 'shrink',
+				'bytes_received' => 0,
+				'error'          => 'connection dropped',
+				'retryable'      => true,
+			),
+		);
+
+		$cursor = array( 'chunk_bytes' => MainWP_Backup_Restore_Transfer_Driver::CHUNK_MIN_BYTES );
+		$result = $this->driver->transfer_artifacts( (object) array( 'id' => 1 ), 'task-1-x', $plan, $cursor, microtime( true ) + 2 );
+
+		$this->assertFalse( $result['done'] );
+		$this->assertNull( $result['error'], 'A budgetless floor retry must end the slice, not surface a failure.' );
+		$this->assertCount( 1, $this->driver->sent );
+		$this->assertEmpty( $this->driver->sleeps, 'No pause fits a spent slice budget.' );
+		$this->assertSame( 1, $cursor['floor_fails'], 'The streak must persist so the next slice keeps counting.' );
+	}
+
+	/**
+	 * After a clean streak, a shrunk chunk size doubles back toward the
+	 * default instead of dragging one bad minute across the whole transfer.
+	 */
+	public function test_chunk_size_grows_back_after_clean_streak() {
+		$plan = $this->staged_plan( 32 * 300 + 600 );
+
+		$cursor = array( 'chunk_bytes' => 300 );
+		$result = $this->driver->transfer_artifacts( (object) array( 'id' => 1 ), 'task-1-x', $plan, $cursor, microtime( true ) + 60 );
+
+		$this->assertTrue( $result['done'] );
+		$this->assertCount( 33, $this->driver->sent );
+		$this->assertSame( 300, $this->driver->sent[31]['bytes'] );
+		$this->assertSame( 600, $this->driver->sent[32]['bytes'], 'The 33rd chunk must ride the doubled size.' );
+		$this->assertSame( 600, $cursor['chunk_bytes'] );
+	}
+
+	/**
+	 * Grow-back never exceeds the starting default: doubling clamps to
+	 * default_chunk_bytes(), filter override included.
+	 */
+	public function test_chunk_grow_back_caps_at_default() {
+		$floor = MainWP_Backup_Restore_Transfer_Driver::CHUNK_MIN_BYTES;
+		$plan  = $this->staged_plan( 32 * 200000 + 2 * $floor );
+
+		// A filter value of 1 clamps the default down to the floor, so the
+		// cap is observable without a hundred-megabyte fixture.
+		$filter = static function () {
+			return 1;
+		};
+		add_filter( 'mainwp_backup_restore_chunk_size', $filter );
+		$cursor = array( 'chunk_bytes' => 200000 );
+		$result = $this->driver->transfer_artifacts( (object) array( 'id' => 1 ), 'task-1-x', $plan, $cursor, microtime( true ) + 60 );
+		remove_filter( 'mainwp_backup_restore_chunk_size', $filter );
+
+		$this->assertTrue( $result['done'] );
+		$this->assertSame( $floor, $this->driver->sent[32]['bytes'], 'Doubling 200000 must clamp to the default, not reach 400000.' );
+		$this->assertSame( $floor, $cursor['chunk_bytes'] );
+		foreach ( $this->driver->sent as $send ) {
+			$this->assertLessThanOrEqual( $floor, $send['bytes'] );
+		}
 	}
 
 	/**

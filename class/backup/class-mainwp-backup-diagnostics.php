@@ -88,7 +88,8 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
         add_action( 'mainwp_backup_diag_poll', array( $this, 'on_poll' ), 10, 3 );
         add_action( 'mainwp_backup_diag_restore_poll', array( $this, 'on_restore_poll' ), 10, 4 );
-        add_action( 'mainwp_backup_diag_restore_transfer', array( $this, 'on_restore_transfer' ), 10, 6 );
+        add_action( 'mainwp_backup_diag_restore_transfer', array( $this, 'on_restore_transfer' ), 10, 7 );
+        add_action( 'mainwp_backup_diag_restore_retry', array( $this, 'on_restore_retry' ), 10, 6 );
         add_action( 'mainwp_backup_diag_preflight', array( $this, 'on_preflight' ), 10, 4 );
         add_action( 'mainwp_backup_diag_slot', array( $this, 'on_slot' ), 10, 4 );
 
@@ -365,16 +366,17 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * Record one restore transfer chunk send with its classified outcome,
      * making the silent adaptive chunk shrinking visible.
      *
-     * @param string $child_task_id Child restore task id.
-     * @param string $file          Artifact file name.
-     * @param array  $cursor        Transfer cursor before the send.
-     * @param string $result        ok|realign|shrink|error.
-     * @param int    $chunk_len     Bytes sent in this chunk.
-     * @param float  $duration      Send duration in seconds.
+     * @param string      $child_task_id Child restore task id.
+     * @param string      $file          Artifact file name.
+     * @param array       $cursor        Transfer cursor before the send.
+     * @param string      $result        ok|realign|shrink|error.
+     * @param int         $chunk_len     Bytes sent in this chunk.
+     * @param float       $duration      Send duration in seconds.
+     * @param string|null $error         Transport/child error string, null on ok.
      *
      * @return void
      */
-    public function on_restore_transfer( $child_task_id, $file, $cursor, $result, $chunk_len, $duration ): void {
+    public function on_restore_transfer( $child_task_id, $file, $cursor, $result, $chunk_len, $duration, $error = null ): void {
         try {
             $this->record(
                 'rtransfer-' . (string) $child_task_id,
@@ -388,6 +390,39 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
                     'result'          => (string) $result,
                     'chunk_len'       => (int) $chunk_len,
                     'send_duration_s' => (float) $duration,
+                    'error'           => is_string( $error ) && '' !== $error ? MainWP_Backup_Error_Codes::sanitize_message( $error ) : '',
+                )
+            );
+        } catch ( \Throwable $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement -- diagnostics must never break a restore.
+            return;
+        }
+    }
+
+    /**
+     * Record a retryable restore failure: the attempt boundary the event
+     * stream otherwise leaves to be inferred from gaps.
+     *
+     * @param int    $job_id         Restore job id.
+     * @param int    $site_id        Child site id.
+     * @param int    $attempt        Attempt count after this failure.
+     * @param string $error_code     Stable error code, '' when none.
+     * @param int    $next_retry_at  Epoch the backoff releases the job.
+     * @param bool   $progress_reset Whether transfer progress reset the budget.
+     *
+     * @return void
+     */
+    public function on_restore_retry( $job_id, $site_id, $attempt, $error_code, $next_retry_at, $progress_reset ): void {
+        try {
+            $this->record(
+                'restore-' . (int) $job_id,
+                'restore_retry',
+                (int) $site_id,
+                0,
+                array(
+                    'attempt'        => (int) $attempt,
+                    'error_code'     => (string) $error_code,
+                    'next_retry_at'  => (int) $next_retry_at,
+                    'progress_reset' => (bool) $progress_reset,
                 )
             );
         } catch ( \Throwable $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement -- diagnostics must never break a restore.

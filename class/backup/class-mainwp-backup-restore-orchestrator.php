@@ -945,8 +945,19 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * @param string $error_code Stable error code matching $error, or '' when none.
      */
     private function record_failure( object $job, string $error, bool $retryable, string $error_code = '' ): void {
-        $store    = MainWP_Backup_Restore_Job_Store::instance();
-        $attempts = (int) $job->attempt_count + 1;
+        $store = MainWP_Backup_Restore_Job_Store::instance();
+
+        // The phase that failed may have checkpointed progress after this
+        // row was read; a stale write here would erase that cursor.
+        $fresh      = $store->get_job( (int) $job->id );
+        $checkpoint = null !== $fresh ? $fresh->checkpoint : $job->checkpoint;
+
+        // A failure that follows real transfer progress starts a fresh
+        // attempt budget: MAX_ATTEMPTS bounds consecutive no-progress
+        // failures, not the total hiccups a large transfer on a flaky
+        // host rides through while still moving forward.
+        $advanced = $this->transfer_advanced_since_last_failure( $checkpoint );
+        $attempts = $advanced ? 1 : (int) $job->attempt_count + 1;
 
         if ( ! $retryable || MainWP_Backup_Backoff::attempts_exhausted( $attempts ) ) {
             $this->stamp_error_code( $job, $error_code );
@@ -954,19 +965,70 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             return;
         }
 
-        // The phase that failed may have checkpointed progress after this
-        // row was read; a stale write here would erase that cursor.
-        $fresh                       = $store->get_job( (int) $job->id );
-        $checkpoint                  = null !== $fresh ? $fresh->checkpoint : $job->checkpoint;
         $checkpoint['resume_status'] = MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE === $job->status && isset( $checkpoint['resume_status'] )
             ? (string) $checkpoint['resume_status']
             : (string) $job->status;
         // Keep the code in step with last_error so the progress poll can carry
         // a stable machine-readable code for support and AI diagnosis.
-        $checkpoint['last_error_code'] = $error_code;
+        $checkpoint['last_error_code']       = $error_code;
+        $checkpoint['last_failure_transfer'] = $this->transfer_position( $checkpoint );
         $store->save_checkpoint( (int) $job->id, $checkpoint );
 
-        $store->fail_retryable( (int) $job->id, $error, $attempts, time() + MainWP_Backup_Backoff::delay_for_attempt( $attempts ) );
+        $next_retry_at = time() + MainWP_Backup_Backoff::delay_for_attempt( $attempts );
+        $store->fail_retryable( (int) $job->id, $error, $attempts, $next_retry_at );
+
+        /**
+         * Fires after a restore failure is recorded as retryable, so the
+         * diagnostics recorder can capture attempt boundaries instead of
+         * leaving them to be inferred from stream gaps.
+         *
+         * @param int    $job_id         Restore job id.
+         * @param int    $site_id        Child site id.
+         * @param int    $attempts       Attempt count after this failure.
+         * @param string $error_code     Stable error code, '' when none.
+         * @param int    $next_retry_at  Epoch the backoff releases the job.
+         * @param bool   $progress_reset Whether transfer progress reset the budget.
+         */
+        do_action( 'mainwp_backup_diag_restore_retry', (int) $job->id, (int) $job->site_id, $attempts, $error_code, $next_retry_at, $advanced );
+    }
+
+    /**
+     * The transfer cursor's position as an (artifact_index, offset) pair.
+     *
+     * @param array $checkpoint Job checkpoint.
+     *
+     * @return array { artifact_index: int, offset: int }
+     */
+    private function transfer_position( array $checkpoint ): array {
+        $cursor = isset( $checkpoint['transfer'] ) ? (array) $checkpoint['transfer'] : array();
+        return array(
+            'artifact_index' => isset( $cursor['artifact_index'] ) ? (int) $cursor['artifact_index'] : 0,
+            'offset'         => isset( $cursor['offset'] ) ? (int) $cursor['offset'] : 0,
+        );
+    }
+
+    /**
+     * Whether the transfer cursor moved forward since the last recorded
+     * failure. Compared as an (artifact_index, offset) tuple because the
+     * offset resets to zero when the index advances. Phases that never
+     * touch the cursor leave it equal to the watermark, so they keep the
+     * plain counting behavior.
+     *
+     * @param array $checkpoint Job checkpoint.
+     *
+     * @return bool
+     */
+    private function transfer_advanced_since_last_failure( array $checkpoint ): bool {
+        if ( ! isset( $checkpoint['last_failure_transfer'] ) ) {
+            return false;
+        }
+        $mark        = (array) $checkpoint['last_failure_transfer'];
+        $mark_index  = isset( $mark['artifact_index'] ) ? (int) $mark['artifact_index'] : 0;
+        $mark_offset = isset( $mark['offset'] ) ? (int) $mark['offset'] : 0;
+        $now         = $this->transfer_position( $checkpoint );
+
+        return $now['artifact_index'] > $mark_index
+            || ( $now['artifact_index'] === $mark_index && $now['offset'] > $mark_offset );
     }
 
     /**

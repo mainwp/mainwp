@@ -106,6 +106,64 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
     }
 
     /**
+     * Whether a preserve-orders restore is certain to be refused by the
+     * child's apply-phase gate, answered at initiate time so the refusal
+     * costs a second instead of the whole transfer.
+     *
+     * Best effort with a hard no-false-refusals invariant. The two live
+     * option checks mirror the child gate exactly (absent options refuse
+     * the same way the gate would). The backup-content checks run only on
+     * unambiguous meta: a database-bearing single snapshot that carries
+     * woo_meta - an incremental chain's post-replay woocommerce_db_version
+     * depends on which dump in the chain last wrote the options table,
+     * which meta cannot answer. Any doubt (unreachable child, an older
+     * child without the callable, a malformed response, absent meta)
+     * defers to the apply-phase gate, which stays authoritative.
+     *
+     * @param object      $website  Website object.
+     * @param object|null $snapshot Leaf snapshot row being restored.
+     *
+     * @return string|null Error code to refuse with, or null to proceed.
+     */
+    public function woo_preserve_refusal( object $website, ?object $snapshot ): ?string {
+        try {
+            $preflight = MainWP_Connect::fetch_url_authed( $website, 'restore_preflight', array(), false, false, false );
+        } catch ( \Throwable $e ) {
+            return null; // Unreachable: the apply-phase gate backstops.
+        }
+        if ( ! is_array( $preflight ) || isset( $preflight['error'] ) || ! array_key_exists( 'woo_hpos_enabled', $preflight ) ) {
+            return null; // Older child or malformed response: defer.
+        }
+
+        if ( empty( $preflight['woo_hpos_enabled'] ) ) {
+            return MainWP_Backup_Error_Codes::ERR_RESTORE_WOO_LEGACY_ORDERS;
+        }
+        if ( ! empty( $preflight['woo_sync_enabled'] ) ) {
+            return MainWP_Backup_Error_Codes::ERR_RESTORE_WOO_SYNC_MODE;
+        }
+
+        if ( null === $snapshot || ! in_array( (string) $snapshot->type, array( 'full', 'db' ), true ) ) {
+            return null;
+        }
+        $meta = isset( $snapshot->woo_meta ) && is_array( $snapshot->woo_meta ) ? $snapshot->woo_meta : array();
+        if ( empty( $meta ) ) {
+            return null;
+        }
+
+        if ( empty( $meta['has_wc_orders'] ) ) {
+            return MainWP_Backup_Error_Codes::ERR_RESTORE_WOO_LEGACY_ORDERS;
+        }
+
+        $backup_ver = isset( $meta['woocommerce_db_version'] ) ? (string) $meta['woocommerce_db_version'] : '';
+        $live_ver   = isset( $preflight['woo_db_version'] ) ? (string) $preflight['woo_db_version'] : '';
+        if ( '' !== $backup_ver && '' !== $live_ver && $backup_ver !== $live_ver ) {
+            return MainWP_Backup_Error_Codes::ERR_RESTORE_WOO_VERSION_SKEW;
+        }
+
+        return null;
+    }
+
+    /**
      * Start a rollback restore from a completed pre-restore safety
      * backup: its artifacts are still on the child and adopt with zero
      * transfer.

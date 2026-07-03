@@ -447,6 +447,13 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 }
                 $information['size'] = isset( $temp['size'] ) ? $temp['size'] : 0;
 
+                // The child's Woo order-storage facts ride along so the
+                // snapshot record step can stamp them without another
+                // round trip. Absent on files-only runs and older children.
+                if ( isset( $temp['woo'] ) && is_array( $temp['woo'] ) ) {
+                    $information['woo'] = $temp['woo'];
+                }
+
                 $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'fetchResult' => wp_json_encode( $information ) ) );
 
                 /** This action is documented in class/backup/class-mainwp-backup-executor.php */
@@ -1093,8 +1100,22 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 'parent_id'     => null,
                 'archives'      => $archives,
                 'manifest_path' => '',
+                'woo_meta'      => static::woo_meta_from_progress( $progress ),
             )
         );
+    }
+
+    /**
+     * The Woo order-storage facts the completed run's fetchResult carries,
+     * or an empty array when the run recorded none.
+     *
+     * @param object $progress Progress row.
+     *
+     * @return array Woo facts.
+     */
+    protected static function woo_meta_from_progress( $progress ) {
+        $information = isset( $progress->fetchResult ) && is_array( $progress->fetchResult ) ? $progress->fetchResult : array();
+        return isset( $information['woo'] ) && is_array( $information['woo'] ) ? $information['woo'] : array();
     }
 
     /**
@@ -1199,6 +1220,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     'parent_id'     => $parent_id,
                     'archives'      => $archives,
                     'manifest_path' => $run_dir . 'files.list',
+                    'woo_meta'      => static::woo_meta_from_progress( $progress ),
                 )
             );
         } else {

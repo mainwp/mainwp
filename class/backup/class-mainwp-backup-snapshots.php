@@ -87,6 +87,10 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
      *     @type int|null $parent_id     Parent snapshot id, null for a base full.
      *     @type array    $archives      Downloaded artifact list: file, size, role per entry.
      *     @type string   $manifest_path Local path of the downloaded file manifest.
+     *     @type array    $woo_meta      Optional Woo order-storage facts the child
+     *                                   captured at dump time (has_wc_orders,
+     *                                   woocommerce_db_version), read by the restore
+     *                                   initiate handler's preserve-orders gate.
      * }
      *
      * @return int Snapshot id, 0 on failure.
@@ -115,6 +119,14 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
         if ( ! empty( $data['parent_id'] ) ) {
             $row['parent_id'] = (int) $data['parent_id'];
             $format[]         = '%d';
+        }
+
+        if ( ! empty( $data['woo_meta'] ) && is_array( $data['woo_meta'] ) ) {
+            $woo_meta = wp_json_encode( $data['woo_meta'] );
+            if ( false !== $woo_meta ) {
+                $row['woo_meta'] = $woo_meta;
+                $format[]        = '%s';
+            }
         }
 
         $inserted = $this->wpdb->insert( $this->table_name( 'wp_backup_snapshot' ), $row, $format );
@@ -597,6 +609,12 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
         // "this snapshot is plaintext" signal legacy rows carry implicitly.
         $encryption      = property_exists( $row, 'encryption' ) ? json_decode( (string) $row->encryption, true ) : null;
         $row->encryption = is_array( $encryption ) ? $encryption : array();
+
+        // Empty/absent woo_meta decodes to an empty array: files-only runs
+        // and backups from older children carry no Woo facts, and the
+        // preserve-orders initiate gate defers on an empty set.
+        $woo_meta      = property_exists( $row, 'woo_meta' ) ? json_decode( (string) $row->woo_meta, true ) : null;
+        $row->woo_meta = is_array( $woo_meta ) ? $woo_meta : array();
 
         return $row;
     }

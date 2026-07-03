@@ -124,6 +124,53 @@ class MainWP_Backup_Snapshots_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * The Woo order-storage facts a database-bearing backup captured at
+	 * dump time persist on the snapshot row and round-trip decoded, so the
+	 * restore initiate handler can judge a preserve-orders request without
+	 * touching the archive bytes.
+	 *
+	 * @return void
+	 */
+	public function test_record_snapshot_persists_woo_meta() {
+		$snapshots = MainWP_Backup_Snapshots::instance();
+
+		$id = $snapshots->record_snapshot(
+			array(
+				'task_id'       => 11,
+				'site_id'       => 22,
+				'type'          => 'full',
+				'parent_id'     => null,
+				'archives'      => array(),
+				'manifest_path' => '',
+				'woo_meta'      => array(
+					'has_wc_orders'          => true,
+					'woocommerce_db_version' => '9.4.0',
+				),
+			)
+		);
+		$this->assertGreaterThan( 0, $id );
+
+		$snapshot = $snapshots->get_snapshot_by_id( $id );
+		$this->assertIsArray( $snapshot->woo_meta );
+		$this->assertTrue( $snapshot->woo_meta['has_wc_orders'] );
+		$this->assertSame( '9.4.0', $snapshot->woo_meta['woocommerce_db_version'] );
+	}
+
+	/**
+	 * A snapshot recorded without Woo facts (files-only runs, older
+	 * children) decodes to an empty array, never null or a string.
+	 *
+	 * @return void
+	 */
+	public function test_snapshot_without_woo_meta_decodes_to_empty_array() {
+		$id       = $this->record();
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id );
+
+		$this->assertIsArray( $snapshot->woo_meta );
+		$this->assertSame( array(), $snapshot->woo_meta );
+	}
+
+	/**
 	 * The latest complete snapshot for a site and task is the newest row,
 	 * scoped to that site and task only.
 	 *

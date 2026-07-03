@@ -375,6 +375,37 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * An install whose stored db version predates the woo_meta column must
+	 * receive it when install() runs - it carries the Woo order-storage
+	 * facts a database-bearing backup captured at dump time, which the
+	 * restore initiate handler reads for the preserve-orders gate.
+	 * Re-running install() stays idempotent.
+	 *
+	 * @return void
+	 */
+	public function test_upgrade_adds_woo_meta_column_to_snapshot_table() {
+		global $wpdb;
+
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+		$this->assertTrue( $this->column_exists( $table, 'woo_meta' ), 'Precondition: fresh install has woo_meta.' );
+
+		$wpdb->query( "ALTER TABLE {$table} DROP COLUMN woo_meta" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture, identifiers cannot be prepared.
+		$this->assertFalse( $this->column_exists( $table, 'woo_meta' ), 'Precondition: column dropped to simulate an older install.' );
+
+		update_site_option( 'mainwp_db_version', '9.0.2.17' );
+		MainWP_Install::instance()->install();
+
+		$this->assertTrue(
+			$this->column_exists( $table, 'woo_meta' ),
+			'Upgrade must add woo_meta to existing installs; the shipped db version needs a bump or dbDelta never runs.'
+		);
+
+		update_site_option( 'mainwp_db_version', '9.0.2.17' );
+		MainWP_Install::instance()->install();
+		$this->assertTrue( $this->column_exists( $table, 'woo_meta' ), 'Re-running install must remain idempotent.' );
+	}
+
+	/**
 	 * An install whose stored db version predates the verified-restore columns
 	 * must receive them when install() runs: test_restore_state and
 	 * test_restore_at hold the sandbox test-restore outcome and the time it ran.

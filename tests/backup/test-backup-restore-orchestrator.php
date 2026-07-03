@@ -8,11 +8,14 @@
 
 namespace MainWP\Dashboard\Tests;
 
+use MainWP\Dashboard\MainWP_Backup_Error_Codes;
 use MainWP\Dashboard\MainWP_Backup_Restore_Job_Store;
 use MainWP\Dashboard\MainWP_Backup_Restore_Orchestrator;
 use MainWP\Dashboard\MainWP_Backup_Restore_Transfer_Driver;
+use MainWP\Dashboard\MainWP_Backup_Snapshots;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_Exception;
+use MainWP\Dashboard\MainWP_Post_Backup_Handler;
 
 /**
  * Transfer driver with the cloud-pull decision and manifest scripted.
@@ -1342,6 +1345,235 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$job = MainWP_Backup_Restore_Job_Store::instance()->get_job( $this->job_id_for_site() );
 		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_COMPLETED, $job->status );
 		$this->assertSame( 0, $this->orchestrator->continuation_count, 'A terminal job must not kick a continuation.' );
+	}
+
+	/**
+	 * A healthy-store preflight response.
+	 *
+	 * @param array $over Field overrides.
+	 *
+	 * @return array Preflight response.
+	 */
+	private function woo_preflight_response( $over = array() ) {
+		return array_merge(
+			array(
+				'woo_hpos_enabled' => true,
+				'woo_sync_enabled' => false,
+				'woo_db_version'   => '9.4.0',
+			),
+			$over
+		);
+	}
+
+	/**
+	 * A snapshot row for the refusal checks, optionally carrying woo_meta.
+	 *
+	 * @param string     $type     Snapshot type.
+	 * @param array|null $woo_meta Woo facts, or null for none.
+	 *
+	 * @return object Snapshot row.
+	 */
+	private function woo_snapshot( $type = 'full', $woo_meta = null ) {
+		global $wpdb;
+		$snapshot_id = $this->make_chain_snapshot( null, $type, array( array( 'file' => 'full001.zip', 'role' => 'full' ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+		if ( null !== $woo_meta ) {
+			$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
+				MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ),
+				array( 'woo_meta' => wp_json_encode( $woo_meta ) ),
+				array( 'id' => $snapshot_id )
+			);
+		}
+		return MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+	}
+
+	/**
+	 * A store still synchronizing orders to the posts table refuses a
+	 * preserve-orders restore at initiate time - the same verdict the
+	 * apply-phase gate would deliver after the whole transfer.
+	 */
+	public function test_woo_preserve_refusal_on_sync_mode_store() {
+		$this->responses['restore_preflight'] = $this->woo_preflight_response( array( 'woo_sync_enabled' => true ) );
+
+		$website = MainWP_DB::instance()->get_website_by_id( $this->site_id );
+		$refusal = $this->orchestrator->woo_preserve_refusal( $website, $this->woo_snapshot() );
+
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_RESTORE_WOO_SYNC_MODE, $refusal );
+	}
+
+	/**
+	 * A store not using HPOS as the authoritative order storage refuses.
+	 */
+	public function test_woo_preserve_refusal_on_non_hpos_store() {
+		$this->responses['restore_preflight'] = $this->woo_preflight_response( array( 'woo_hpos_enabled' => false ) );
+
+		$website = MainWP_DB::instance()->get_website_by_id( $this->site_id );
+		$refusal = $this->orchestrator->woo_preserve_refusal( $website, $this->woo_snapshot() );
+
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_RESTORE_WOO_LEGACY_ORDERS, $refusal );
+	}
+
+	/**
+	 * An unreachable child defers to the apply-phase gate - the initiate
+	 * check must never turn availability problems into refusals.
+	 */
+	public function test_woo_preserve_refusal_defers_when_child_unreachable() {
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			function ( $pre, $website, $what ) {
+				unset( $pre, $website );
+				if ( 'restore_preflight' === $what ) {
+					throw new MainWP_Exception( 'HTTPERROR', 'cURL error 7' ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- test mock.
+				}
+				return null;
+			},
+			5,
+			3
+		);
+
+		$website = MainWP_DB::instance()->get_website_by_id( $this->site_id );
+		$this->assertNull( $this->orchestrator->woo_preserve_refusal( $website, $this->woo_snapshot() ) );
+	}
+
+	/**
+	 * An older child without the preflight callable answers with an
+	 * error payload; the check defers rather than refusing.
+	 */
+	public function test_woo_preserve_refusal_defers_on_malformed_preflight() {
+		$this->responses['restore_preflight'] = array( 'error' => 'Required version has not been detected.' );
+
+		$website = MainWP_DB::instance()->get_website_by_id( $this->site_id );
+		$this->assertNull( $this->orchestrator->woo_preserve_refusal( $website, $this->woo_snapshot() ) );
+	}
+
+	/**
+	 * A healthy store with a snapshot that carries no woo_meta (an older
+	 * backup) passes the live checks and defers the backup-content ones.
+	 */
+	public function test_woo_preserve_refusal_defers_without_woo_meta() {
+		$this->responses['restore_preflight'] = $this->woo_preflight_response();
+
+		$website = MainWP_DB::instance()->get_website_by_id( $this->site_id );
+		$this->assertNull( $this->orchestrator->woo_preserve_refusal( $website, $this->woo_snapshot( 'full', null ) ) );
+	}
+
+	/**
+	 * Unambiguous meta on a full snapshot moves the version-skew check up
+	 * to initiate time.
+	 */
+	public function test_woo_preserve_refusal_on_version_skew_with_meta() {
+		$this->responses['restore_preflight'] = $this->woo_preflight_response( array( 'woo_db_version' => '9.5.0' ) );
+
+		$website  = MainWP_DB::instance()->get_website_by_id( $this->site_id );
+		$snapshot = $this->woo_snapshot(
+			'full',
+			array(
+				'has_wc_orders'          => true,
+				'woocommerce_db_version' => '9.4.0',
+			)
+		);
+
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_RESTORE_WOO_VERSION_SKEW, $this->orchestrator->woo_preserve_refusal( $website, $snapshot ) );
+	}
+
+	/**
+	 * A backup stamped as carrying no wc_orders table refuses: reverting
+	 * wp_posts would resurrect shop_order posts under the kept orders.
+	 */
+	public function test_woo_preserve_refusal_on_backup_without_wc_orders() {
+		$this->responses['restore_preflight'] = $this->woo_preflight_response();
+
+		$website  = MainWP_DB::instance()->get_website_by_id( $this->site_id );
+		$snapshot = $this->woo_snapshot(
+			'full',
+			array(
+				'has_wc_orders'          => false,
+				'woocommerce_db_version' => '9.4.0',
+			)
+		);
+
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_RESTORE_WOO_LEGACY_ORDERS, $this->orchestrator->woo_preserve_refusal( $website, $snapshot ) );
+	}
+
+	/**
+	 * An incremental leaf defers the backup-content checks even with meta:
+	 * the post-replay woocommerce_db_version depends on which dump in the
+	 * chain last wrote the options table, which meta cannot answer.
+	 */
+	public function test_woo_preserve_refusal_defers_for_incremental_leaf() {
+		$this->responses['restore_preflight'] = $this->woo_preflight_response( array( 'woo_db_version' => '9.5.0' ) );
+
+		$website  = MainWP_DB::instance()->get_website_by_id( $this->site_id );
+		$snapshot = $this->woo_snapshot(
+			'incremental',
+			array(
+				'has_wc_orders'          => true,
+				'woocommerce_db_version' => '9.4.0',
+			)
+		);
+
+		$this->assertNull( $this->orchestrator->woo_preserve_refusal( $website, $snapshot ) );
+	}
+
+	/**
+	 * Invoke a wp_send_json AJAX handler and return the decoded response.
+	 *
+	 * @param string $method Handler method name.
+	 *
+	 * @return array|null Decoded response.
+	 */
+	private function invoke_ajax_handler( $method ) {
+		$throw = static function () {
+			return static function () {
+				throw new \RuntimeException( 'wp_die' );
+			};
+		};
+		add_filter( 'wp_doing_ajax', '__return_true' );
+		add_filter( 'wp_die_ajax_handler', $throw );
+
+		$raw = '';
+		ob_start();
+		try {
+			MainWP_Post_Backup_Handler::instance()->{$method}();
+		} catch ( \RuntimeException $e ) {
+			unset( $e ); // wp_send_json terminated the request as designed.
+		} finally {
+			$raw = ob_get_clean();
+			remove_filter( 'wp_die_ajax_handler', $throw );
+			remove_filter( 'wp_doing_ajax', '__return_true' );
+		}
+
+		return json_decode( $raw, true );
+	}
+
+	/**
+	 * The initiate handler refuses a doomed preserve-orders restore with
+	 * the humanized gate message before any job row exists - no transfer,
+	 * no backoff, no waiting.
+	 */
+	public function test_initiate_refuses_preserve_orders_at_initiate() {
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$this->responses['restore_preflight'] = $this->woo_preflight_response( array( 'woo_sync_enabled' => true ) );
+
+		$snapshot = $this->woo_snapshot();
+
+		$nonce                        = wp_create_nonce( 'mainwp_restore_initiate' );
+		$_POST['security']            = $nonce;
+		$_REQUEST['security']         = $nonce;
+		$_POST['site_id']             = (string) $this->site_id;
+		$_POST['snapshot_id']         = (string) $snapshot->id;
+		$_POST['preserve_orders']     = '1';
+		$_POST['confirm_destructive'] = '1';
+
+		try {
+			$response = $this->invoke_ajax_handler( 'mainwp_restore_initiate' );
+		} finally {
+			unset( $_POST['security'], $_REQUEST['security'], $_POST['site_id'], $_POST['snapshot_id'], $_POST['preserve_orders'], $_POST['confirm_destructive'] );
+		}
+
+		$this->assertIsArray( $response );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_RESTORE_WOO_SYNC_MODE, $response['error_code'] );
+		$this->assertStringContainsString( 'orders', $response['error'] );
+		$this->assertNull( MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $this->site_id ), 'A refused initiate must create no job row.' );
 	}
 
 	/**

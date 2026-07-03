@@ -443,6 +443,104 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A spine task completing with the child's Woo order-storage facts
+	 * threads them into the persisted fetchResult, so the snapshot record
+	 * step can stamp them without another child round trip.
+	 *
+	 * @return void
+	 */
+	public function test_spine_completion_threads_woo_into_fetch_result() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$this->give_site_real_privkey( $site_id );
+		$this->seed_progress( $task->id, $site_id, array( 'child_backup_task_id' => 'bk-woo-1' ) );
+
+		$this->mock_child_action(
+			'backup_task_run',
+			array(
+				'task_id' => 'bk-woo-1',
+				'phase'   => 'completed',
+				'file'    => 'backup-woo.tar.gz',
+				'size'    => 4096,
+				'woo'     => array(
+					'has_wc_orders'          => true,
+					'woocommerce_db_version' => '9.4.0',
+				),
+			)
+		);
+
+		// The completion projection persists fetchResult before the download
+		// branch runs; the download itself fails on the missing file and that
+		// is fine - the threading is what this test pins.
+		try {
+			MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+		} catch ( \Throwable $e ) {
+			unset( $e );
+		}
+
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+		$this->assertIsArray( $progress->fetchResult );
+		$this->assertArrayHasKey( 'woo', $progress->fetchResult );
+		$this->assertTrue( $progress->fetchResult['woo']['has_wc_orders'] );
+		$this->assertSame( '9.4.0', $progress->fetchResult['woo']['woocommerce_db_version'] );
+	}
+
+	/**
+	 * A completed run whose fetchResult carries the child's Woo facts
+	 * records them on the snapshot row, where the restore initiate
+	 * handler reads them for the preserve-orders gate.
+	 *
+	 * @return void
+	 */
+	public function test_completed_run_snapshot_carries_woo_meta() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$content                = 'PK' . "\x03\x04" . str_repeat( 'x', 4092 );
+
+		$this->give_site_real_privkey( $site_id );
+		MainWP_DB_Backup::instance()->add_backup_task_progress( $task->id, $site_id, array() );
+		MainWP_DB_Backup::instance()->update_backup_task_progress(
+			$task->id,
+			$site_id,
+			array(
+				'dtsFetched'   => time(),
+				'pid'          => 12345,
+				'removedFiles' => 1,
+				'fetchResult'  => wp_json_encode(
+					array(
+						'full' => 'backup-file.zip',
+						'db'   => false,
+						'size' => strlen( $content ),
+						'woo'  => array(
+							'has_wc_orders'          => true,
+							'woocommerce_db_version' => '9.4.0',
+						),
+					)
+				),
+			)
+		);
+		$this->mock_child_action( 'delete_backup', array( 'result' => 'ok' ) );
+
+		add_filter(
+			'mainwp_download_to_file_pre',
+			function ( $pre, $url, $file ) use ( $content ) {
+				unset( $pre, $url );
+				file_put_contents( $file, $content ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- test fixture.
+				return true;
+			},
+			10,
+			3
+		);
+
+		$result = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+		$this->assertNotFalse( $result );
+
+		$snapshot = \MainWP\Dashboard\MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, (int) $task->id );
+		$this->assertNotNull( $snapshot );
+		$this->assertIsArray( $snapshot->woo_meta );
+		$this->assertTrue( $snapshot->woo_meta['has_wc_orders'] );
+		$this->assertSame( '9.4.0', $snapshot->woo_meta['woocommerce_db_version'] );
+	}
+
+	/**
 	 * The scheduled-task download sweep must skip archives recorded by
 	 * complete backup snapshots: snapshot retention owns their lifecycle.
 	 *

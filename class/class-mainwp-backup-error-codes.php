@@ -72,6 +72,13 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
     const ERR_RESTORE_ARTIFACT_MISSING = 'mainwp_restore_artifact_missing';
     const ERR_RESTORE_DB_PERMS         = 'mainwp_restore_db_perms';
 
+    // WooCommerce preserve-orders gate. The same codes the child's
+    // apply-phase gate emits, so an initiate-time refusal and a late
+    // refusal classify identically.
+    const ERR_RESTORE_WOO_LEGACY_ORDERS = 'mainwp_restore_woo_legacy_orders';
+    const ERR_RESTORE_WOO_SYNC_MODE     = 'mainwp_restore_woo_sync_mode';
+    const ERR_RESTORE_WOO_VERSION_SKEW  = 'mainwp_restore_woo_version_skew';
+
     // Incremental backups.
     const ERR_INCREMENTAL_BASE_MISSING = 'mainwp_backup_incremental_base_missing';
     const ERR_MANIFEST_TOO_LARGE       = 'mainwp_backup_manifest_too_large';
@@ -223,6 +230,9 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
             self::ERR_UNKNOWN_PHASE              => esc_html__( 'The backup reached a step the child site does not recognize. This usually means the MainWP Child plugin is older than the dashboard. Update the MainWP Child plugin on the site to the latest version, then run the backup again.', 'mainwp' ),
             self::ERR_RESTORE_ARTIFACT_MISSING   => esc_html__( 'A backup file this restore needs is no longer in offsite storage, so the restore was stopped before any changes were made. The cloud copy may have been removed by retention or deleted at the storage provider. Run a fresh backup for this site, then restore again.', 'mainwp' ),
             self::ERR_RESTORE_DB_PERMS           => esc_html__( 'The site database user is missing a permission the restore needs to swap tables, so the restore was stopped before any changes were made. Grant the database user the CREATE, DROP, and ALTER permissions, or ask your host, then try again.', 'mainwp' ),
+            self::ERR_RESTORE_WOO_LEGACY_ORDERS  => esc_html__( 'Keeping live orders needs both this store and the backup to use the WooCommerce High-Performance Order Storage tables, and one of them still uses the older post-based order storage. Run the restore again without the keep-orders option, or move the store to High-Performance Order Storage and use a backup taken afterwards.', 'mainwp' ),
+            self::ERR_RESTORE_WOO_SYNC_MODE      => esc_html__( 'Keeping live orders needs the WooCommerce High-Performance Order Storage tables to be the only source of orders, and this store still synchronizes orders to the older posts table. Turn off the WooCommerce orders-table synchronization setting, then run the restore again.', 'mainwp' ),
+            self::ERR_RESTORE_WOO_VERSION_SKEW   => esc_html__( 'Keeping live orders needs the store to run the same WooCommerce version as the backup, and the WooCommerce version changed since this backup was taken. Run the restore again without the keep-orders option, or use a backup from the current WooCommerce version.', 'mainwp' ),
             self::ERR_SUSPENDED_SITE             => esc_html__( 'This site is suspended in the dashboard, so backups are not run for it. Unsuspend the site to run backups.', 'mainwp' ),
             self::ERR_NO_PERMISSION              => esc_html__( 'You do not have permission to run backups. Ask the dashboard administrator to grant backup access to your user role.', 'mainwp' ),
             self::ERR_LEGACY_DISABLED            => esc_html__( 'Native backups are not enabled for this site. Go to Settings > Backups to enable the legacy backup feature.', 'mainwp' ),

@@ -267,6 +267,23 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         $preserve_orders = $preserve_orders && null !== $snapshot && 'files' !== (string) $snapshot->type;
         $woo_order_since = $preserve_orders ? (int) $snapshot->created : 0;
 
+        // A preserve-orders request the child's apply-phase gate is certain
+        // to refuse gets refused here, before any job, pre-snapshot, or
+        // transfer spends hours on it. Best effort: any doubt proceeds and
+        // the apply-phase gate stays the authoritative backstop.
+        if ( $preserve_orders ) {
+            $refusal = MainWP_Backup_Restore_Orchestrator::instance()->woo_preserve_refusal( $website, $snapshot );
+            if ( null !== $refusal ) {
+                wp_send_json(
+                    array(
+                        'error'      => MainWP_Backup_Error_Codes::message( $refusal ),
+                        'error_code' => $refusal,
+                    )
+                );
+                return;
+            }
+        }
+
         try {
             $job_id = MainWP_Backup_Restore_Orchestrator::instance()->initiate_restore(
                 $site_id,

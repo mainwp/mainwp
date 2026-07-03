@@ -720,6 +720,56 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
     }
 
     /**
+     * Method has_live_child_task_for_run()
+     *
+     * Whether any site under this task still carries a creating marker for
+     * the current run cycle - a create request to a child that has not
+     * resolved yet. Rows are scoped to dtsFetched at or after the task's
+     * last_run so leftovers from earlier runs never count, and a marker
+     * past its window reads as abandoned rather than live, so an orphaned
+     * marker can never hold the close hostage. Real child task ids never
+     * count either: a run that exhausted its retries must still close.
+     *
+     * @param mixed $id Task ID.
+     *
+     * @return bool True when a live create marker exists for the current cycle.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
+     * @uses \MainWP\Dashboard\MainWP_Backup_Executor::is_creating_marker()
+     */
+    public function has_live_child_task_for_run( $id ) {
+        if ( ! MainWP_Utility::ctype_digit( $id ) ) {
+            return false;
+        }
+
+        $task = $this->get_backup_task_by_id( $id );
+        if ( ! $task ) {
+            return false;
+        }
+
+        $rows = $this->wpdb->get_results(
+            $this->wpdb->prepare(
+                'SELECT child_backup_task_id, dtsFetched FROM ' . $this->table_name( 'wp_backup_progress' ) . ' WHERE task_id = %d AND dtsFetched >= %d', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table_name() returns the prefixed identifier.
+                $id,
+                (int) $task->last_run
+            )
+        );
+
+        if ( ! is_array( $rows ) ) {
+            return false;
+        }
+
+        foreach ( $rows as $row ) {
+            if ( MainWP_Backup_Executor::is_creating_marker( $row->child_backup_task_id )
+                && ( time() - (int) $row->dtsFetched ) < MainWP_Backup_Executor::CREATE_MARKER_TTL_SECONDS ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Method  update_backup_errors()
      *
      * Update backup errors.

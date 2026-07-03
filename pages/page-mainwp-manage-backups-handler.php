@@ -587,6 +587,22 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                     $errorEntries[] = 'Site: <strong>' . MainWP_Utility::get_nice_url( $website->url ) . '</strong><br />' . $tmpErrorOutput;
                 }
             } catch ( \Exception $e ) {
+                if ( $e instanceof MainWP_Exception
+                    && MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING === $e->get_message_error_code()
+                    && (int) $task->completed < (int) $task->last_run
+                ) {
+                    // Another driver of this same open run holds the child's
+                    // single backup slot right now - a create still resolving
+                    // or a download lock in use. The collision is the run
+                    // proceeding elsewhere, not this site failing, so it
+                    // yields like a false return from backup_site() and skips
+                    // the completion bookkeeping below. Recording it would
+                    // close the run mid-flight and email a failure for a
+                    // backup that goes on to succeed.
+                    MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Backup already running elsewhere in this run; yielding to the driver that holds the slot.' );
+                    continue;
+                }
+
                 if ( null === $errorOutput ) {
                     $errorOutput = '';
                 }
@@ -625,8 +641,17 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         }
 
         if ( count( $completed_sites ) === count( $sites ) ) {
-            MainWP_DB_Backup::instance()->update_backup_completed( $task->id );
-            static::maybe_send_backup_error_email( MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id ) );
+            if ( MainWP_DB_Backup::instance()->has_live_child_task_for_run( $task->id ) ) {
+                // A create request for this run has not resolved yet. Closing
+                // now would stamp the run finished while it is still in
+                // flight; the next continue pass that reaches this same
+                // all-sites check retries the close.
+                /** This action is documented in pages/page-mainwp-manage-backups-handler.php */
+                do_action( 'mainwp_backup_diag_run_reinit', (int) $task->id, 'close_refused_live_child', (int) $task->last_run, (int) $task->completed );
+            } else {
+                MainWP_DB_Backup::instance()->update_backup_completed( $task->id );
+                static::maybe_send_backup_error_email( MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id ) );
+            }
         }
 
         return empty( $errorOutput );

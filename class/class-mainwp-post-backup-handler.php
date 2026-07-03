@@ -667,11 +667,13 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
 
         // Pass the child task id when the Dashboard still has it (precise), and
         // fall back to the child resolving its single active backup otherwise.
+        // A creating marker is not a task id the child knows: a cancel inside
+        // the create window falls back to the child resolving it too.
         $child_task_id = '';
         $task          = MainWP_DB_Backup::instance()->get_manual_backup_task( $site_id );
         if ( ! empty( $task ) ) {
             $progress = MainWP_DB_Backup::instance()->get_backup_task_progress( (int) $task->id, $site_id );
-            if ( ! empty( $progress->child_backup_task_id ) ) {
+            if ( ! empty( $progress->child_backup_task_id ) && ! MainWP_Backup_Executor::is_creating_marker( $progress->child_backup_task_id ) ) {
                 $child_task_id = (string) $progress->child_backup_task_id;
             }
         }

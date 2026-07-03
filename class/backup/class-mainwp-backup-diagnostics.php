@@ -319,7 +319,7 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
      *
      * @param array $payload  Full child response payload.
      * @param float $duration HTTP round-trip duration in seconds.
-     * @param array $context  { op: create|run|status|pre_snapshot, site_id: int, task_id: int }.
+     * @param array $context  { op: create|run|status|pre_snapshot, site_id: int, task_id: int, run: int (create only) }.
      *
      * @return void
      */
@@ -330,8 +330,14 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
             $site_id = isset( $context['site_id'] ) ? (int) $context['site_id'] : 0;
             $task_id = isset( $context['task_id'] ) ? (int) $context['task_id'] : 0;
 
+            // A refused create returns no child task id, so without another
+            // scope every refusal for this task and site would share one
+            // file across every run that ever hit it. The run-open stamp
+            // scopes a create failure to its run the same way the child
+            // task id scopes a successful one.
             $child_task = isset( $payload['task_id'] ) && is_scalar( $payload['task_id'] ) ? (string) $payload['task_id'] : '';
-            $run_key    = $task_id . '-' . $site_id . ( '' !== $child_task ? '-' . $child_task : '' );
+            $run        = isset( $context['run'] ) ? (int) $context['run'] : 0;
+            $run_key    = $task_id . '-' . $site_id . ( '' !== $child_task ? '-' . $child_task : ( 0 !== $run ? '-' . $run : '' ) );
 
             $payload['poll_duration_s'] = (float) $duration;
             $payload['op']              = isset( $context['op'] ) ? (string) $context['op'] : '';

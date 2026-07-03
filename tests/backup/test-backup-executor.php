@@ -1243,4 +1243,303 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 		$this->assertLessThan( (int) $task->last_run, (int) $task->completed, 'The run must stay open for the owning driver to finish it.' );
 		$this->assertSame( 0, $mails, 'A same-run collision must not fire the failure email.' );
 	}
+
+	/**
+	 * When the child's refusal lands while no other driver has yet claimed
+	 * the shared row - the losing side of two drivers resetting the row in
+	 * the same instant - the executor still throws, but the site loop must
+	 * treat it as a yield while the run is open: the winning driver is mid
+	 * create, and terminal bookkeeping here closes its run under it. Before
+	 * the fix this recorded the error, closed the run mid-flight, and
+	 * emailed a failure for a backup that went on to succeed.
+	 *
+	 * @return void
+	 */
+	public function test_same_run_create_race_yields_through_full_handler() {
+		$site_id = $this->create_test_site();
+		$user    = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$task    = MainWP_DB_Backup::instance()->add_backup_task( $user, 'Create window race task', 'daily', 'full', '', (string) $site_id, '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0 );
+		$this->assertNotFalse( $task, 'Precondition: the task row must insert.' );
+
+		$mails = 0;
+		add_filter(
+			'pre_wp_mail',
+			function () use ( &$mails ) {
+				++$mails;
+				return true;
+			}
+		);
+
+		$refusals = 0;
+		$this->mock_already_running_race( (int) $task->id, $site_id, $refusals, false );
+
+		MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, true );
+
+		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$this->assertSame( 1, $refusals, 'Precondition: the run must reach the mocked child refusal.' );
+		$this->assertSame( '', (string) $task->backup_errors, 'A refusal against an open run must not be recorded as a run error.' );
+		$this->assertLessThan( (int) $task->last_run, (int) $task->completed, 'The run must stay open for the driver that holds the slot.' );
+		$this->assertSame( 0, $mails, 'A refusal against an open run must not fire the failure email.' );
+	}
+
+	/**
+	 * The all-sites-complete close must not stamp the run finished while a
+	 * creating marker for the current cycle is live on a progress row: a
+	 * create round trip is still in flight, and closing under it is the
+	 * mid-flight close this guard exists to prevent.
+	 *
+	 * @return void
+	 */
+	public function test_run_close_refused_while_creating_marker_live() {
+		$site_id = $this->create_test_site();
+		$user    = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$task    = MainWP_DB_Backup::instance()->add_backup_task( $user, 'Close guard task', 'daily', 'full', '', (string) $site_id, '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0 );
+		$this->assertNotFalse( $task, 'Precondition: the task row must insert.' );
+		MainWP_DB_Backup::instance()->update_backup_task_with_values( (int) $task->id, array( 'last_run' => time() - 100 ) );
+		MainWP_DB_Backup::instance()->update_completed_sites( $task->id, array( $site_id => true ) );
+		$this->seed_progress( (int) $task->id, $site_id, array( 'child_backup_task_id' => '__creating_livetoken0001' ) );
+
+		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, false );
+
+		$fresh = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$this->assertSame( 0, (int) $fresh->completed, 'The close must wait while a create for this cycle is in flight.' );
+	}
+
+	/**
+	 * A creating marker past its window no longer holds the close hostage:
+	 * whatever planted it died mid-request, and the guard healing itself is
+	 * what keeps an orphaned marker from wedging the run open forever.
+	 *
+	 * @return void
+	 */
+	public function test_run_close_proceeds_when_marker_stale() {
+		$site_id = $this->create_test_site();
+		$user    = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$task    = MainWP_DB_Backup::instance()->add_backup_task( $user, 'Close guard stale task', 'daily', 'full', '', (string) $site_id, '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0 );
+		$this->assertNotFalse( $task, 'Precondition: the task row must insert.' );
+		MainWP_DB_Backup::instance()->update_backup_task_with_values( (int) $task->id, array( 'last_run' => time() - 100 ) );
+		MainWP_DB_Backup::instance()->update_completed_sites( $task->id, array( $site_id => true ) );
+		$this->seed_progress(
+			(int) $task->id,
+			$site_id,
+			array(
+				'child_backup_task_id' => '__creating_staletoken001',
+				'dtsFetched'           => time() - 61,
+			)
+		);
+
+		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, false );
+
+		$fresh = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$this->assertGreaterThan( 0, (int) $fresh->completed, 'A stale marker must not block the close.' );
+	}
+
+	/**
+	 * Before the create request leaves for the child, the progress row must
+	 * already carry the creating marker: the row is what a concurrent driver
+	 * reads to decide whether this run's child slot is spoken for, and the
+	 * create round trip is seconds long on real hosting.
+	 *
+	 * @return void
+	 */
+	public function test_spine_create_marks_row_before_calling_child() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$this->mock_child_action( 'backup_preflight', array( 'task_spine' => 1 ) );
+
+		$row_at_create = null;
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			function ( $result, $website, $what ) use ( $task, $site_id, &$row_at_create ) {
+				unset( $website );
+				if ( 'backup_task_create' === $what ) {
+					$progress      = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+					$row_at_create = $progress ? (string) $progress->child_backup_task_id : null;
+					return array(
+						'task_id' => 'task-1749600000-abcdef',
+						'phase'   => 'queued',
+					);
+				}
+				return $result;
+			},
+			10,
+			3
+		);
+
+		$result = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+
+		$this->assertFalse( $result, 'Creating the task defers the work to the next cycle.' );
+		$this->assertStringStartsWith( '__creating_', (string) $row_at_create, 'The creating marker must be on the row before the create request goes out.' );
+
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+		$this->assertSame( 'task-1749600000-abcdef', $progress->child_backup_task_id, 'The real child task id must replace the marker once the create returns.' );
+	}
+
+	/**
+	 * A driver that finds a fresh creating marker on the row yields without
+	 * calling the child at all: another driver's create request for this run
+	 * is still in flight, and polling with the marker as a task id would ask
+	 * the child about a task that does not exist.
+	 *
+	 * @return void
+	 */
+	public function test_spine_racing_driver_yields_on_fresh_marker_without_polling_child() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$this->seed_progress( $task->id, $site_id, array( 'child_backup_task_id' => '__creating_testtoken0001' ) );
+		$this->mock_child_action(
+			'backup_task_run',
+			array(
+				'task_id' => '__creating_testtoken0001',
+				'phase'   => 'archiving_files',
+				'type'    => 'full',
+			)
+		);
+
+		$called = array();
+		$this->record_child_actions( $called );
+
+		$result = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+
+		$this->assertFalse( $result, 'A fresh creating marker defers to the in-flight create.' );
+		$this->assertSame( array(), $called, 'No child call may fire while another driver\'s create is in flight.' );
+	}
+
+	/**
+	 * A creating marker older than the in-flight window can only be a driver
+	 * that died mid-request. It must not wedge the site: the row resets so
+	 * the next cycle creates the task again from scratch.
+	 *
+	 * @return void
+	 */
+	public function test_spine_stale_marker_is_cleared_and_create_retried() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$this->seed_progress(
+			$task->id,
+			$site_id,
+			array(
+				'child_backup_task_id' => '__creating_testtoken0002',
+				'dtsFetched'           => time() - 61,
+			)
+		);
+		$this->mock_child_action(
+			'backup_task_run',
+			array(
+				'task_id' => '__creating_testtoken0002',
+				'phase'   => 'archiving_files',
+				'type'    => 'full',
+			)
+		);
+
+		$called = array();
+		$this->record_child_actions( $called );
+
+		$result = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+
+		$this->assertFalse( $result, 'Clearing the stale marker defers to the next cycle.' );
+		$this->assertSame( array(), $called, 'The stale marker is cleared without a child call.' );
+
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+		$this->assertSame( '', $progress->child_backup_task_id, 'The abandoned marker must be cleared.' );
+		$this->assertSame( 0, (int) $progress->dtsFetched, 'The row must reset so the next cycle re-enters the create branch.' );
+
+		$called = array();
+		$this->mock_child_action( 'backup_preflight', array( 'task_spine' => 1 ) );
+		$this->mock_child_action(
+			'backup_task_create',
+			array(
+				'task_id' => 'task-retry-1',
+				'phase'   => 'queued',
+			)
+		);
+
+		$result = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+
+		$this->assertFalse( $result, 'The retried create defers to the next cycle.' );
+		$this->assertContains( 'backup_task_create', $called, 'The next cycle must create the task again.' );
+
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+		$this->assertSame( 'task-retry-1', $progress->child_backup_task_id );
+	}
+
+	/**
+	 * A create that resolves without a task id throws, and the marker must
+	 * not stay behind on the row: the site is recorded as failed, so nothing
+	 * would ever clear it, and a leftover marker reads as an in-flight create
+	 * to every later guard.
+	 *
+	 * @return void
+	 */
+	public function test_spine_create_failure_without_task_id_clears_marker() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$this->mock_child_action( 'backup_preflight', array( 'task_spine' => 1 ) );
+
+		$row_at_create = null;
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			function ( $result, $website, $what ) use ( $task, $site_id, &$row_at_create ) {
+				unset( $website );
+				if ( 'backup_task_create' === $what ) {
+					$progress      = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+					$row_at_create = $progress ? (string) $progress->child_backup_task_id : null;
+					return array( 'phase' => 'queued' );
+				}
+				return $result;
+			},
+			10,
+			3
+		);
+
+		try {
+			MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+			$this->fail( 'Expected the missing task id to propagate.' );
+		} catch ( MainWP_Exception $e ) {
+			unset( $e );
+		}
+
+		$this->assertStringStartsWith( '__creating_', (string) $row_at_create, 'Precondition: the marker must be on the row during the create request.' );
+
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+		$this->assertSame( '', $progress->child_backup_task_id, 'A failed create must not leave the marker behind.' );
+	}
+
+	/**
+	 * The legacy path resolves its create round trip into fetchResult; the
+	 * marker's window ends there, so the same write must clear it. A marker
+	 * left behind would read as an in-flight create on every later cycle and
+	 * starve the legacy poll branch.
+	 *
+	 * @return void
+	 */
+	public function test_legacy_create_result_clears_marker() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$this->mock_child_action( 'backup_preflight', array( 'zip_support' => true ) );
+
+		$row_at_create = null;
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			function ( $result, $website, $what ) use ( $task, $site_id, &$row_at_create ) {
+				unset( $website );
+				if ( 'backup' === $what ) {
+					$progress      = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+					$row_at_create = $progress ? (string) $progress->child_backup_task_id : null;
+					return array( 'error' => 'Could not write backup data.' );
+				}
+				return $result;
+			},
+			10,
+			3
+		);
+
+		try {
+			MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+		} catch ( MainWP_Exception $e ) {
+			unset( $e );
+		}
+
+		$this->assertStringStartsWith( '__creating_', (string) $row_at_create, 'Precondition: the marker must be on the row during the legacy create request.' );
+
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+		$this->assertSame( '', $progress->child_backup_task_id, 'The legacy result write must clear the marker.' );
+	}
 }

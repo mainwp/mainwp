@@ -32,6 +32,27 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     const ADHOC_TASK_OPTION = 'adhoc_backup_task';
 
     /**
+     * Prefix written into child_backup_task_id while a create request to
+     * the child is in flight, so concurrent drivers of the same run see
+     * the slot is spoken for before the round trip returns. Real child
+     * task ids are child-minted opaque strings, so the prefix can never
+     * collide with one.
+     *
+     * @var string
+     */
+    const CREATING_MARKER_PREFIX = '__creating_';
+
+    /**
+     * How long a creating marker is honored before a driver treats it as
+     * abandoned. Comfortably above observed child create round trips
+     * while short enough that a crashed driver clears within one polling
+     * cycle instead of wedging the site.
+     *
+     * @var int
+     */
+    const CREATE_MARKER_TTL_SECONDS = 60;
+
+    /**
      * Method get_class_name()
      *
      * Get Class Name.
@@ -181,6 +202,13 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             try {
                 $pid = time();
 
+                // The marker claims the create window on the shared row before
+                // the round trip leaves: dtsFetched in the same write doubles
+                // as its age stamp, and the token is unique per driver so a
+                // later re-read can tell "my own untouched claim" from
+                // "another driver took the slot".
+                $creating_marker = self::CREATING_MARKER_PREFIX . wp_generate_password( 12, false );
+
                 if ( empty( $backupTaskProgress ) ) {
                     MainWP_DB_Backup::instance()->add_backup_task_progress( $taskId, $website->id, array() );
                 }
@@ -200,7 +228,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         'last_error'             => '',
                         'pid'                    => $pid,
                         'busy_since'             => 0,
-                        'child_backup_task_id'   => '',
+                        'child_backup_task_id'   => $creating_marker,
                         'child_phase'            => '',
                         'bytes_downloaded'       => 0,
                         'bytes_expected'         => 0,
@@ -300,7 +328,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                  *
                  * @param array $payload  Full child response payload.
                  * @param float $duration HTTP round-trip duration in seconds.
-                 * @param array $context  { op: create|run|status|pre_snapshot, site_id: int, task_id: int }.
+                 * @param array $context  { op: create|run|status|pre_snapshot, site_id: int, task_id: int, run: int (create only) }.
                  */
                 do_action(
                     'mainwp_backup_diag_poll',
@@ -310,6 +338,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         'op'      => 'create',
                         'site_id' => (int) $website->id,
                         'task_id' => (int) $taskId,
+                        'run'     => (int) $pTask->last_run,
                     )
                 );
             } catch ( MainWP_Exception $e ) {
@@ -331,6 +360,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     );
                 }
 
+                static::clear_creating_marker_if_mine( $taskId, (int) $website->id, $creating_marker );
                 throw $e;
             }
 
@@ -341,18 +371,31 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 // the legacy fetch result) on the shared progress row, the
                 // child's single-slot refusal is that driver at work, not a
                 // failure of this run: recording it would flip a succeeding
-                // backup to "failed" and fire the failure email. Yield like
-                // the queued-spine path and let the owning driver finish.
-                $current = MainWP_DB_Backup::instance()->get_backup_task_progress( $taskId, $website->id );
-                if ( $current && ( ! empty( $current->child_backup_task_id ) || ! empty( $current->fetchResult ) ) ) {
+                // backup to "failed" and fire the failure email. The row is
+                // re-read live: anything other than this driver's own
+                // untouched marker means another driver of this run claimed
+                // the slot, so yield like the queued-spine path and let the
+                // owning driver finish. Only a row still carrying this
+                // driver's own marker proves nothing else touched the run,
+                // making the refusal a genuinely foreign backup.
+                $current           = MainWP_DB_Backup::instance()->get_backup_task_progress( $taskId, $website->id );
+                $claimed_elsewhere = $current && (
+                    ( ! empty( $current->child_backup_task_id ) && $current->child_backup_task_id !== $creating_marker )
+                    || ! empty( $current->fetchResult )
+                );
+                if ( $claimed_elsewhere ) {
                     MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Child refused a duplicate backup start for this run; yielding to the driver that holds the slot.' );
+                    /** This action is documented in pages/page-mainwp-manage-backups-handler.php */
+                    do_action( 'mainwp_backup_diag_run_reinit', (int) $taskId, 'create_race_yield', (int) $pTask->last_run, isset( $pTask->completed ) ? (int) $pTask->completed : 0 );
                     return false;
                 }
+                static::clear_creating_marker_if_mine( $taskId, (int) $website->id, $creating_marker );
                 throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
             }
 
             if ( $use_spine && empty( $information['error'] ) ) {
                 if ( empty( $information['task_id'] ) || ! is_string( $information['task_id'] ) ) {
+                    static::clear_creating_marker_if_mine( $taskId, (int) $website->id, $creating_marker );
                     throw new MainWP_Exception( esc_html__( 'The child site did not return a backup task id. Sync the child site and try again.', 'mainwp' ) );
                 }
 
@@ -363,7 +406,39 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 return false;
             }
 
-            $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'fetchResult' => wp_json_encode( $information ) ) );
+            // The create round trip resolved into a fetch result, so the
+            // marker's window is over: clear it in the same write, or every
+            // later cycle would read it as a create still in flight.
+            $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress(
+                $taskId,
+                $website->id,
+                array(
+                    'fetchResult'          => wp_json_encode( $information ),
+                    'child_backup_task_id' => '',
+                )
+            );
+        } elseif ( static::is_creating_marker( $backupTaskProgress->child_backup_task_id ) ) {
+            if ( ( time() - (int) $backupTaskProgress->dtsFetched ) < self::CREATE_MARKER_TTL_SECONDS ) {
+                // Another driver's create request for this run has not
+                // returned yet; give it the round trip it needs instead of
+                // racing it with a second request.
+                return false;
+            }
+
+            // Nobody cleared this marker inside its window, which can only
+            // be a driver that died mid-request. Reset the row the same way
+            // an escalated incremental retry does, so the next cycle creates
+            // the task again from scratch.
+            MainWP_DB_Backup::instance()->update_backup_task_progress(
+                $taskId,
+                $website->id,
+                array(
+                    'dtsFetched'           => 0,
+                    'child_backup_task_id' => '',
+                )
+            );
+
+            return false;
         } elseif ( empty( $backupTaskProgress->fetchResult ) && ! empty( $backupTaskProgress->child_backup_task_id ) ) {
             $temp       = false;
             $diag_start = microtime( true );
@@ -791,6 +866,38 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         }
 
         return $backup_result;
+    }
+
+    /**
+     * Whether a child_backup_task_id value is a creating marker rather than
+     * a real child task id.
+     *
+     * @param mixed $value Stored child_backup_task_id value.
+     *
+     * @return bool True when the value is a creating marker.
+     */
+    public static function is_creating_marker( $value ): bool {
+        return is_string( $value ) && 0 === strpos( $value, self::CREATING_MARKER_PREFIX );
+    }
+
+    /**
+     * Clear this driver's own creating marker from the progress row.
+     *
+     * Compares the live row against the driver's unique token first, so a
+     * concurrent driver's claim (a real task id or its own marker) is never
+     * clobbered by a loser cleaning up after its refused create.
+     *
+     * @param int    $task_id Task ID.
+     * @param int    $site_id Site ID.
+     * @param string $marker  This driver's creating marker token.
+     *
+     * @return void
+     */
+    private static function clear_creating_marker_if_mine( $task_id, $site_id, $marker ) {
+        $current = MainWP_DB_Backup::instance()->get_backup_task_progress( $task_id, $site_id );
+        if ( $current && $current->child_backup_task_id === $marker ) {
+            MainWP_DB_Backup::instance()->update_backup_task_progress( $task_id, $site_id, array( 'child_backup_task_id' => '' ) );
+        }
     }
 
     /**

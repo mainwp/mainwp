@@ -684,6 +684,127 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A refused create carries no child task id, so its events used to
+	 * collapse into one shared task-site file across every run that ever
+	 * hit the refusal. The run-open stamp scopes a create failure to its
+	 * run the same way the child task id scopes a successful one.
+	 *
+	 * @return void
+	 */
+	public function test_diag_refused_create_gets_run_scoped_key() {
+		$this->enable_recorder();
+
+		$refusal = array( 'error' => 'Another backup process is running on this site.' );
+		do_action(
+			'mainwp_backup_diag_poll',
+			$refusal,
+			0.5,
+			array(
+				'op'      => 'create',
+				'site_id' => 7,
+				'task_id' => 42,
+				'run'     => 1111,
+			)
+		);
+		do_action(
+			'mainwp_backup_diag_poll',
+			$refusal,
+			0.5,
+			array(
+				'op'      => 'create',
+				'site_id' => 7,
+				'task_id' => 42,
+				'run'     => 2222,
+			)
+		);
+
+		$events = $this->recorded_events();
+		$this->assertCount( 2, $events );
+		$keys = array_column( $events, 'run_key' );
+		$this->assertContains( '42-7-1111', $keys, 'A refused create must land under its own run\'s key.' );
+		$this->assertContains( '42-7-2222', $keys, 'A later run\'s refusal must not share the earlier run\'s key.' );
+	}
+
+	/**
+	 * The losing driver of a create-window race leaves a run_reinit trace:
+	 * before this event the bundle showed nothing at the moment a racing
+	 * driver was absorbed, which is how a mid-flight run close went
+	 * undiagnosed until the guardrail evidence was pieced together by hand.
+	 *
+	 * @return void
+	 */
+	public function test_diag_create_race_yield_event_recorded() {
+		$this->enable_recorder();
+
+		$site_id = $this->create_test_site();
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$task    = $this->make_task( $website->userid );
+
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			function ( $result, $website, $what ) use ( $task, $site_id ) {
+				unset( $website );
+				if ( 'backup_preflight' === $what ) {
+					return array( 'time_limit_ok' => true );
+				}
+				if ( 'backup' === $what ) {
+					MainWP_DB_Backup::instance()->update_backup_task_progress(
+						(int) $task->id,
+						$site_id,
+						array( 'child_backup_task_id' => 'task-other-driver' )
+					);
+					return array( 'error' => 'Another backup process is running on this site.' );
+				}
+				return $result;
+			},
+			10,
+			3
+		);
+
+		$result = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+		$this->assertFalse( $result, 'Precondition: the losing driver must yield.' );
+
+		$events = array_values( array_filter( $this->recorded_events(), fn( $event ) => 'run_reinit' === $event['kind'] && 'create_race_yield' === $event['payload']['reason'] ) );
+		$this->assertCount( 1, $events );
+		$this->assertSame( (int) $task->id, $events[0]['task_id'] );
+		$this->assertSame( (int) $task->last_run, $events[0]['payload']['last_run'] );
+	}
+
+	/**
+	 * A close refused because a create for the current cycle is still in
+	 * flight leaves a run_reinit trace, so a bundle shows why a run's close
+	 * arrived later than its last site completion.
+	 *
+	 * @return void
+	 */
+	public function test_diag_close_refused_live_child_event_recorded() {
+		$this->enable_recorder();
+
+		$site_id = $this->create_test_site();
+		$user    = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$task    = MainWP_DB_Backup::instance()->add_backup_task( $user, 'Close refusal diag task', 'daily', 'full', '', (string) $site_id, '', '', '', 0, 0, 0, 0, 0, 'tar.gz', 0, 1, 150, 0, 0 );
+		$this->assertNotFalse( $task, 'Precondition: the task row must insert.' );
+		MainWP_DB_Backup::instance()->update_backup_task_with_values( (int) $task->id, array( 'last_run' => time() - 100 ) );
+		MainWP_DB_Backup::instance()->update_completed_sites( $task->id, array( $site_id => true ) );
+		MainWP_DB_Backup::instance()->add_backup_task_progress( (int) $task->id, $site_id, array() );
+		MainWP_DB_Backup::instance()->update_backup_task_progress(
+			(int) $task->id,
+			$site_id,
+			array(
+				'dtsFetched'           => time(),
+				'child_backup_task_id' => '__creating_diagtoken0001',
+			)
+		);
+
+		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, false );
+
+		$events = array_values( array_filter( $this->recorded_events(), fn( $event ) => 'run_reinit' === $event['kind'] && 'close_refused_live_child' === $event['payload']['reason'] ) );
+		$this->assertCount( 1, $events );
+		$this->assertSame( (int) $task->id, $events[0]['task_id'] );
+	}
+
+	/**
 	 * Slot acquisition, refusal, and release each leave a diagnostics
 	 * event, so slot exhaustion is no longer traceless.
 	 *

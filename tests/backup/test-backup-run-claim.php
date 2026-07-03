@@ -208,4 +208,61 @@ class MainWP_Backup_Run_Claim_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( $old_last_run, (int) $fresh->last_run );
 		$this->assertSame( '', (string) $fresh->backup_errors );
 	}
+
+	/**
+	 * The close guard sees exactly one thing: a live creating marker from
+	 * the current cycle. Real child task ids never block a close - a run
+	 * that exhausted its retries must still be able to close - and neither
+	 * do rows left over from earlier cycles or markers past their window.
+	 */
+	public function test_has_live_child_task_for_run() {
+		$task  = $this->task_in_state( array( 'last_run' => time() - 100 ) );
+		$wp_id = 990101;
+
+		MainWP_DB_Backup::instance()->add_backup_task_progress( (int) $task->id, $wp_id, array() );
+
+		// A fresh current-cycle marker is a create in flight.
+		MainWP_DB_Backup::instance()->update_backup_task_progress(
+			(int) $task->id,
+			$wp_id,
+			array(
+				'dtsFetched'           => time(),
+				'child_backup_task_id' => '__creating_claimtoken01',
+			)
+		);
+		$this->assertTrue( MainWP_DB_Backup::instance()->has_live_child_task_for_run( (int) $task->id ), 'A fresh current-cycle marker must read as a live create.' );
+
+		// A real, non-terminal child task id never blocks the close.
+		MainWP_DB_Backup::instance()->update_backup_task_progress(
+			(int) $task->id,
+			$wp_id,
+			array(
+				'child_backup_task_id' => 'task-real-1',
+				'child_phase'          => 'archiving_files',
+			)
+		);
+		$this->assertFalse( MainWP_DB_Backup::instance()->has_live_child_task_for_run( (int) $task->id ), 'A real child task id must never block the close.' );
+
+		// A marker stamped before this run opened belongs to an earlier cycle.
+		MainWP_DB_Backup::instance()->update_backup_task_progress(
+			(int) $task->id,
+			$wp_id,
+			array(
+				'dtsFetched'           => (int) $task->last_run - 50,
+				'child_backup_task_id' => '__creating_claimtoken02',
+			)
+		);
+		$this->assertFalse( MainWP_DB_Backup::instance()->has_live_child_task_for_run( (int) $task->id ), 'A previous-cycle marker must not block this run\'s close.' );
+
+		// A current-cycle marker past its window is abandoned, not live.
+		MainWP_DB_Backup::instance()->update_backup_task_progress(
+			(int) $task->id,
+			$wp_id,
+			array(
+				'dtsFetched'           => time() - 61,
+				'child_backup_task_id' => '__creating_claimtoken03',
+			)
+		);
+		$this->assertFalse( MainWP_DB_Backup::instance()->has_live_child_task_for_run( (int) $task->id ), 'A marker past its window must not block the close.' );
+	}
 }

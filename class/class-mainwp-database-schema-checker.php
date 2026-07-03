@@ -344,7 +344,7 @@ class MainWP_Database_Schema_Checker { // phpcs:ignore Generic.Classes.OpeningBr
      */
     protected static function detect_missing_extensions_tables( $table_name, $info ) { // phpcs:ignore -- NOSONAR - complex function.
 
-        if ( false === strpos( $table_name, '_mainwp_' ) ) {
+        if ( false === strpos( $table_name, 'mainwp_' ) ) {
             return;
         }
 
@@ -664,8 +664,10 @@ class MainWP_Database_Schema_Checker { // phpcs:ignore Generic.Classes.OpeningBr
             return null;
         }
 
-        if ( self::is_sql_default_expression( $default_definition ) ) {
-            return strtoupper( trim( $default_definition ) );
+        $normalized = strtoupper( trim( $default_definition ) );
+
+        if ( in_array( $normalized, array( 'CURRENT_TIMESTAMP', 'CURRENT_TIMESTAMP()' ), true ) ) {
+            return 'CURRENT_TIMESTAMP';
         }
 
         if ( is_numeric( $default_definition ) ) {
@@ -673,26 +675,6 @@ class MainWP_Database_Schema_Checker { // phpcs:ignore Generic.Classes.OpeningBr
         }
 
         return "'" . $default_definition . "'";
-    }
-
-    /**
-     * Check whether the default value is an SQL expression.
-     *
-     * @param string $default_definition Default value.
-     *
-     * @return bool
-     */
-    private static function is_sql_default_expression( $default_definition ) {
-
-        return in_array(
-            strtoupper( trim( $default_definition ) ),
-            array(
-                'CURRENT_TIMESTAMP',
-                'CURRENT_TIMESTAMP()',
-                'NOW()',
-            ),
-            true
-        );
     }
 
 
@@ -715,7 +697,6 @@ class MainWP_Database_Schema_Checker { // phpcs:ignore Generic.Classes.OpeningBr
         if ( null !== $default ) {
             $definition .= ' DEFAULT ' . $default;
         }
-
 
         if ( false !== stripos( $column['Extra'], 'auto_increment' ) ) {
             $definition .= ' AUTO_INCREMENT';

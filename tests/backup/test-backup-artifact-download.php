@@ -511,4 +511,161 @@ class MainWP_Backup_Artifact_Download_Test extends MainWP_Abilities_Test_Case {
 		$this->assertCount( 1, $calls, 'A non-token failure must not request a fresh token.' );
 		$this->assertCount( 1, $urls );
 	}
+
+	/**
+	 * A tokenless transfer that returns without landing a local file is a
+	 * failed download, not a success: the child can serve an empty response
+	 * while its artifact is not yet servable, and reporting that as a
+	 * downloaded backup poisons the resume state.
+	 *
+	 * @return void
+	 */
+	public function test_tokenless_download_with_no_local_file_throws_before_event() {
+		$website = $this->make_site( false );
+		$local   = $this->local_file();
+		$calls   = array();
+		$this->mock_token_callable( array( 'error' => 'must never be called' ), $calls );
+
+		add_filter(
+			'mainwp_download_to_file_pre',
+			function ( $pre ) {
+				unset( $pre );
+				return true; // The transfer layer returns without writing a file.
+			}
+		);
+
+		$events = array();
+		add_action(
+			'mainwp_backup_downloaded',
+			function ( $event ) use ( &$events ) {
+				$events[] = $event;
+			}
+		);
+
+		try {
+			MainWP_Backup_File_Manager::download_backup_artifact( $website, 'backup-ghost.zip', $local, false, null, null );
+			$this->fail( 'A transfer that landed no file must throw, not report success.' );
+		} catch ( MainWP_Exception $e ) {
+			$this->assertSame( MainWP_Backup_Error_Codes::ERR_DL_FILE_NOT_FOUND, $e->get_message_error_code() );
+		}
+		$this->assertCount( 0, $events, 'No download event may fire for a transfer that landed no file.' );
+	}
+
+	/**
+	 * A tokenless transfer that lands a zero-byte file is the child's
+	 * not-ready window, not a backup: the empty leftover is removed and the
+	 * failure surfaces as retryable instead of a vacuous success event.
+	 *
+	 * @return void
+	 */
+	public function test_tokenless_download_with_empty_file_throws_and_removes_leftover() {
+		$website = $this->make_site( false );
+		$local   = $this->local_file();
+		$calls   = array();
+		$urls    = array();
+		$this->mock_token_callable( array( 'error' => 'must never be called' ), $calls );
+		$this->mock_download( array( '' ), $urls );
+
+		$events = array();
+		add_action(
+			'mainwp_backup_downloaded',
+			function ( $event ) use ( &$events ) {
+				$events[] = $event;
+			}
+		);
+
+		try {
+			MainWP_Backup_File_Manager::download_backup_artifact( $website, 'backup-empty.zip', $local, false, null, null );
+			$this->fail( 'A zero-byte download must throw, not report success.' );
+		} catch ( MainWP_Exception $e ) {
+			$this->assertSame( MainWP_Backup_Error_Codes::ERR_DL_FILE_NOT_FOUND, $e->get_message_error_code() );
+		}
+		$this->assertCount( 0, $events, 'No download event may fire for a zero-byte file.' );
+		$this->assertFileDoesNotExist( $local, 'The empty leftover must be removed so the retry starts clean.' );
+	}
+
+	/**
+	 * The token path refuses a transfer that landed no file instead of
+	 * skipping the hash check and firing a hash-verified success event for
+	 * bytes that do not exist.
+	 *
+	 * @return void
+	 */
+	public function test_token_download_with_no_local_file_throws_instead_of_vacuous_event() {
+		$website = $this->make_site( true );
+		$local   = $this->local_file();
+		$calls   = array();
+		$this->mock_token_callable(
+			array(
+				'token' => str_repeat( 'c', 32 ),
+				'hash'  => hash( 'sha256', 'expected-bytes' ),
+				'size'  => 14,
+			),
+			$calls
+		);
+
+		add_filter(
+			'mainwp_download_to_file_pre',
+			function ( $pre ) {
+				unset( $pre );
+				return true; // The transfer layer returns without writing a file.
+			}
+		);
+
+		$events = array();
+		add_action(
+			'mainwp_backup_downloaded',
+			function ( $event ) use ( &$events ) {
+				$events[] = $event;
+			}
+		);
+
+		try {
+			MainWP_Backup_File_Manager::download_backup_artifact( $website, 'backup-token-ghost.zip', $local, false, null, null );
+			$this->fail( 'A transfer that landed no file must throw, not report a hash-verified success.' );
+		} catch ( MainWP_Exception $e ) {
+			$this->assertSame( MainWP_Backup_Error_Codes::ERR_DL_FILE_NOT_FOUND, $e->get_message_error_code() );
+		}
+		$this->assertCount( 0, $events, 'The vacuous hash-verified event for a missing file must not fire.' );
+	}
+
+	/**
+	 * The token path treats a zero-byte file as a failed transfer before
+	 * the hash comparison: the not-ready window surfaces under its own
+	 * code, not as a misleading hash mismatch.
+	 *
+	 * @return void
+	 */
+	public function test_token_download_with_empty_file_throws_before_hash_check() {
+		$website = $this->make_site( true );
+		$local   = $this->local_file();
+		$calls   = array();
+		$urls    = array();
+		$this->mock_token_callable(
+			array(
+				'token' => str_repeat( 'd', 32 ),
+				'hash'  => hash( 'sha256', 'expected-bytes' ),
+				'size'  => 14,
+			),
+			$calls
+		);
+		$this->mock_download( array( '' ), $urls );
+
+		$events = array();
+		add_action(
+			'mainwp_backup_downloaded',
+			function ( $event ) use ( &$events ) {
+				$events[] = $event;
+			}
+		);
+
+		try {
+			MainWP_Backup_File_Manager::download_backup_artifact( $website, 'backup-token-empty.zip', $local, false, null, null );
+			$this->fail( 'A zero-byte download must throw, not reach the hash comparison.' );
+		} catch ( MainWP_Exception $e ) {
+			$this->assertSame( MainWP_Backup_Error_Codes::ERR_DL_FILE_NOT_FOUND, $e->get_message_error_code() );
+		}
+		$this->assertCount( 0, $events );
+		$this->assertFileDoesNotExist( $local, 'The empty leftover must be removed so the retry starts clean.' );
+	}
 }

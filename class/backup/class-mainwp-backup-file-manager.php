@@ -184,6 +184,11 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
                     $http_user,
                     $http_pass
                 );
+                // Ordering: this check must run BEFORE the downloaded action
+                // fires - a child can serve an empty body while its artifact
+                // is not yet servable, and announcing that as a download
+                // poisons the resume state with a vacuous success.
+                static::assert_download_landed( $local_file );
                 static::fire_downloaded_action( $website, $local_file, false );
                 return;
             } catch ( MainWP_Exception $e ) {
@@ -221,6 +226,8 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
             }
         }
 
+        static::assert_download_landed( $local_file );
+
         if ( ! empty( $token_info['hash'] ) && file_exists( $local_file ) ) {
             $actual_hash = (string) hash_file( 'sha256', $local_file );
             if ( ! hash_equals( (string) $token_info['hash'], $actual_hash ) ) {
@@ -239,6 +246,33 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
         }
 
         static::fire_downloaded_action( $website, $local_file, true );
+    }
+
+    // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.Missing -- the registry factory throws MainWP_Exception.
+    /**
+     * Method assert_download_landed()
+     *
+     * Refuse a transfer that returned without landing a real local file.
+     * A child in its post-completion window can serve an empty 200 body
+     * for an artifact that is not yet servable; treating that as a
+     * downloaded backup produces a resume state with nothing behind it.
+     * A zero-byte leftover is removed so the retry starts clean.
+     *
+     * @param string $local_file Absolute local target path.
+     *
+     * @return void
+     * @throws MainWP_Exception When no local file landed or it is empty.
+     */
+    private static function assert_download_landed( string $local_file ): void {
+        // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.Missing
+        clearstatcache( true, $local_file );
+        if ( is_file( $local_file ) && filesize( $local_file ) > 0 ) {
+            return;
+        }
+        if ( file_exists( $local_file ) ) {
+            wp_delete_file( $local_file );
+        }
+        throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_DL_FILE_NOT_FOUND, 'the transfer returned no local file for ' . basename( $local_file ) ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
     }
 
     /**

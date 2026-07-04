@@ -91,6 +91,8 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
         add_action( 'mainwp_backup_diag_restore_transfer', array( $this, 'on_restore_transfer' ), 10, 7 );
         add_action( 'mainwp_backup_diag_restore_retry', array( $this, 'on_restore_retry' ), 10, 6 );
         add_action( 'mainwp_backup_diag_run_reinit', array( $this, 'on_run_reinit' ), 10, 4 );
+        add_action( 'mainwp_backup_diag_site_mark', array( $this, 'on_site_mark' ), 10, 4 );
+        add_action( 'mainwp_backup_diag_run_close', array( $this, 'on_run_close' ), 10, 4 );
         add_action( 'mainwp_backup_diag_preflight', array( $this, 'on_preflight' ), 10, 4 );
         add_action( 'mainwp_backup_diag_slot', array( $this, 'on_slot' ), 10, 4 );
 
@@ -460,6 +462,64 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
                     'reason'    => (string) $reason,
                     'last_run'  => (int) $last_run,
                     'completed' => (int) $completed,
+                )
+            );
+        } catch ( \Throwable $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement -- diagnostics must never break a backup.
+            return;
+        }
+    }
+
+    /**
+     * Record a site-fate decision from the run loop: a completed_sites
+     * write (success or terminal error, with the exception named) or a
+     * yield. Who marked a site, and why, was invisible before this event.
+     *
+     * @param int    $task_id Task id.
+     * @param int    $site_id Child site id.
+     * @param string $outcome success|error|yield_already_running|yield_resumable.
+     * @param string $detail  Exception class, code, and message for error marks.
+     *
+     * @return void
+     */
+    public function on_site_mark( $task_id, $site_id, $outcome, $detail ): void {
+        try {
+            $this->record(
+                '_global',
+                'site_mark',
+                (int) $site_id,
+                (int) $task_id,
+                array(
+                    'outcome' => (string) $outcome,
+                    'detail'  => (string) $detail,
+                )
+            );
+        } catch ( \Throwable $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement -- diagnostics must never break a backup.
+            return;
+        }
+    }
+
+    /**
+     * Record a run close with its trigger - the counterpart of site_mark
+     * at the run level, so a bundle shows which path stamped a run closed.
+     *
+     * @param int    $task_id     Task id.
+     * @param int    $last_run    The run-open stamp being closed.
+     * @param string $trigger     Close trigger.
+     * @param int    $sites_total Number of sites in the run.
+     *
+     * @return void
+     */
+    public function on_run_close( $task_id, $last_run, $trigger, $sites_total ): void {
+        try {
+            $this->record(
+                '_global',
+                'run_close',
+                0,
+                (int) $task_id,
+                array(
+                    'trigger'     => (string) $trigger,
+                    'last_run'    => (int) $last_run,
+                    'sites_total' => (int) $sites_total,
                 )
             );
         } catch ( \Throwable $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement -- diagnostics must never break a backup.

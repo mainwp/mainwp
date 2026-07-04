@@ -545,10 +545,21 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
 
         foreach ( $sites as $siteid ) {
             if ( isset( $completed_sites[ $siteid ] ) && ( true === $completed_sites[ $siteid ] ) ) {
-                continue;
+                // A completed-marked site whose validated artifact still
+                // lacks its snapshot is re-driven, not skipped: nothing
+                // else ever re-enters a marked site, so without this the
+                // pending record never finishes and the close guard could
+                // only delay the snapshot loss. The re-entry skips the
+                // download blocks via the complete flags and goes straight
+                // to the record; the check is TTL-bounded, so re-drives
+                // cannot loop past the pending window.
+                if ( 'record_pending' !== MainWP_DB_Backup::instance()->is_backup_site_resumable_for_run( $task, $siteid ) ) {
+                    continue;
+                }
             }
             $website = MainWP_DB::instance()->get_website_by_id( $siteid );
 
+            $_mark_detail = '';
             try {
                 $subfolder = str_replace( '%task%', MainWP_Utility::sanitize( $task->name ), $task->subfolder );
 
@@ -600,6 +611,55 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                     // close the run mid-flight and email a failure for a
                     // backup that goes on to succeed.
                     MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Backup already running elsewhere in this run; yielding to the driver that holds the slot.' );
+
+                    /**
+                     * Fires when the site loop decides a site's fate for the
+                     * run - marked complete or yielded - so the diagnostics
+                     * recorder can name the driver of every completed_sites
+                     * write. The close that lost a snapshot was untraceable
+                     * exactly because these decisions left no event.
+                     *
+                     * @param int    $task_id Task id.
+                     * @param int    $site_id Child site id.
+                     * @param string $outcome success|error|yield_already_running|yield_resumable.
+                     * @param string $detail  Exception class, code, and message for error marks.
+                     */
+                    do_action( 'mainwp_backup_diag_site_mark', (int) $task->id, (int) $siteid, 'yield_already_running', '' );
+                    continue;
+                }
+
+                $_mark_detail = get_class( $e );
+                if ( $e instanceof MainWP_Exception && '' !== (string) $e->get_message_error_code() ) {
+                    $_mark_detail .= ' [' . (string) $e->get_message_error_code() . ']';
+                }
+                $_mark_detail .= ': ' . substr( (string) $e->getMessage(), 0, 500 );
+
+                // The loop's task view can be seconds old, and that staleness
+                // is exactly the race window: decide the site's fate against
+                // a fresh row, not the one read before the child round trip.
+                $_fresh_task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+                if ( $_fresh_task ) {
+                    $task = $_fresh_task;
+                }
+
+                $_resumable = ( (int) $task->completed < (int) $task->last_run )
+                    ? MainWP_DB_Backup::instance()->is_backup_site_resumable_for_run( $task, $siteid )
+                    : false;
+                if ( false !== $_resumable ) {
+                    // The exception hit a site whose row the next cycle can
+                    // still finish - a claimed terminal mid-download, or a
+                    // validated artifact waiting on its snapshot record.
+                    // Marking it complete here is how a run closes mid-flight
+                    // and loses the snapshot. Mid-download yields burn one
+                    // retry attempt so a repeating throw exhausts the budget
+                    // and marks honestly; record-pending yields are bounded
+                    // by the artifact-age TTL instead.
+                    if ( 'mid_download' === $_resumable ) {
+                        MainWP_DB_Backup::instance()->consume_backup_attempt( $task->id, $siteid );
+                    }
+                    MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Backup exception against a still-resumable site; yielding for the retry (' . $_resumable . '): ' . $_mark_detail );
+                    /** This action is documented in pages/page-mainwp-manage-backups-handler.php */
+                    do_action( 'mainwp_backup_diag_site_mark', (int) $task->id, (int) $siteid, 'yield_resumable', $_mark_detail . ' (' . $_resumable . ')' );
                     continue;
                 }
 
@@ -628,6 +688,9 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                 $completed_sites = array();
             }
 
+            /** This action is documented in pages/page-mainwp-manage-backups-handler.php */
+            do_action( 'mainwp_backup_diag_site_mark', (int) $task->id, (int) $siteid, '' === $_mark_detail ? 'success' : 'error', $_mark_detail );
+
             $completed_sites[ $siteid ] = true;
             MainWP_DB_Backup::instance()->update_completed_sites( $task->id, $completed_sites );
 
@@ -648,8 +711,28 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                 // all-sites check retries the close.
                 /** This action is documented in pages/page-mainwp-manage-backups-handler.php */
                 do_action( 'mainwp_backup_diag_run_reinit', (int) $task->id, 'close_refused_live_child', (int) $task->last_run, (int) $task->completed );
+            } elseif ( MainWP_DB_Backup::instance()->has_pending_record_for_run( $task->id ) ) {
+                // A validated artifact is still waiting on its snapshot
+                // record. Closing now is the lost-snapshot race: the record
+                // lands seconds later with no open run to credit. The
+                // pending window is TTL-bounded, so a record that never
+                // finishes releases the close instead of wedging it.
+                /** This action is documented in pages/page-mainwp-manage-backups-handler.php */
+                do_action( 'mainwp_backup_diag_run_reinit', (int) $task->id, 'close_refused_pending_record', (int) $task->last_run, (int) $task->completed );
             } else {
                 MainWP_DB_Backup::instance()->update_backup_completed( $task->id );
+
+                /**
+                 * Fires when a run is stamped closed, naming the trigger, so
+                 * a bundle shows which path closed a run and when - the
+                 * counterpart of the site_mark event at the site level.
+                 *
+                 * @param int    $task_id     Task id.
+                 * @param int    $last_run    The run-open stamp being closed.
+                 * @param string $trigger     Close trigger.
+                 * @param int    $sites_total Number of sites in the run.
+                 */
+                do_action( 'mainwp_backup_diag_run_close', (int) $task->id, (int) $task->last_run, 'all_sites_complete', count( $sites ) );
                 static::maybe_send_backup_error_email( MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id ) );
             }
         }

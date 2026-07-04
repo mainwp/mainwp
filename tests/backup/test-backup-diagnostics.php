@@ -805,6 +805,88 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A site marked complete after a terminal exception leaves a site_mark
+	 * event naming the exception: the 01:24:26 close that lost a snapshot
+	 * was untraceable exactly because no event recorded who marked the
+	 * site or why.
+	 *
+	 * @return void
+	 */
+	public function test_diag_site_mark_error_event_names_the_exception() {
+		$this->enable_recorder();
+
+		$site_id = $this->create_test_site();
+		$user    = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$task    = MainWP_DB_Backup::instance()->add_backup_task( $user, 'Site mark diag task', 'daily', 'full', '', (string) $site_id, '', '', '', 0, 0, 0, 0, 0, 'tar.gz', 0, 1, 150, 0, 0 );
+		$this->assertNotFalse( $task, 'Precondition: the task row must insert.' );
+		MainWP_DB_Backup::instance()->update_backup_task_with_values(
+			(int) $task->id,
+			array(
+				'last_run'  => time() - 100,
+				'completed' => time() - 500,
+			)
+		);
+		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+
+		$this->mock_child_actions(
+			array(
+				'backup_preflight' => array( 'zip_support' => true ),
+				'backup'           => array( 'error' => 'Could not write backup data.' ),
+			)
+		);
+
+		MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, false );
+
+		$fresh = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$this->assertStringContainsString( (string) $site_id, (string) $fresh->completed_sites, 'Precondition: the terminal failure must mark the site.' );
+
+		$events = array_values( array_filter( $this->recorded_events(), fn( $event ) => 'site_mark' === $event['kind'] ) );
+		$this->assertCount( 1, $events );
+		$this->assertSame( (int) $task->id, $events[0]['task_id'] );
+		$this->assertSame( $site_id, $events[0]['site_id'] );
+		$this->assertSame( 'error', $events[0]['payload']['outcome'] );
+		$this->assertStringContainsString( 'MainWP_Exception', $events[0]['payload']['detail'], 'The mark event must name the exception class.' );
+		$this->assertStringContainsString( 'Could not write backup data', $events[0]['payload']['detail'], 'The mark event must carry the exception message.' );
+	}
+
+	/**
+	 * A run close leaves a run_close event naming its trigger: the close
+	 * path was invisible in every bundle, which is why the driver that
+	 * closed a run mid-record could not be identified.
+	 *
+	 * @return void
+	 */
+	public function test_diag_run_close_event_names_the_trigger() {
+		$this->enable_recorder();
+
+		$site_id = $this->create_test_site();
+		$user    = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$task    = MainWP_DB_Backup::instance()->add_backup_task( $user, 'Run close diag task', 'daily', 'full', '', (string) $site_id, '', '', '', 0, 0, 0, 0, 0, 'tar.gz', 0, 1, 150, 0, 0 );
+		$this->assertNotFalse( $task, 'Precondition: the task row must insert.' );
+		MainWP_DB_Backup::instance()->update_backup_task_with_values(
+			(int) $task->id,
+			array(
+				'last_run'  => time() - 100,
+				'completed' => time() - 500,
+			)
+		);
+		MainWP_DB_Backup::instance()->update_completed_sites( $task->id, array( $site_id => true ) );
+		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+
+		MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, false );
+
+		$fresh = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$this->assertGreaterThan( (int) $fresh->last_run, (int) $fresh->completed, 'Precondition: the all-sites-complete run must close.' );
+
+		$events = array_values( array_filter( $this->recorded_events(), fn( $event ) => 'run_close' === $event['kind'] ) );
+		$this->assertCount( 1, $events );
+		$this->assertSame( (int) $task->id, $events[0]['task_id'] );
+		$this->assertSame( 'all_sites_complete', $events[0]['payload']['trigger'] );
+		$this->assertSame( (int) $task->last_run, $events[0]['payload']['last_run'] );
+		$this->assertSame( 1, $events[0]['payload']['sites_total'] );
+	}
+
+	/**
 	 * Slot acquisition, refusal, and release each leave a diagnostics
 	 * event, so slot exhaustion is no longer traceless.
 	 *

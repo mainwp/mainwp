@@ -770,6 +770,200 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
     }
 
     /**
+     * How long a downloaded-but-unrecorded artifact counts as a live,
+     * resumable record-pending state, measured from the artifact's mtime.
+     * Anchoring on the artifact (not the run-open stamp) keeps the guard
+     * alive for sites that finish late in a long fleet run, while still
+     * bounding it so a permanently failing record can never wedge a close.
+     */
+    const RECORD_PENDING_TTL_SECONDS = 900;
+
+    /**
+     * Method is_backup_site_resumable_for_run()
+     *
+     * Whether a site's progress row is still resumable for the task's
+     * current open run - the site-loop catch consults this before marking
+     * a site complete on an exception, because a terminal-looking throw
+     * against a resumable row closes the run mid-flight and loses the
+     * snapshot the next cycle would have landed.
+     *
+     * Two resumable shapes, classified over the row's SET artifact paths
+     * so a mixed db+full state cannot misread:
+     * - mid_download: a claimed terminal projection (that does not itself
+     *   carry a child error - a stored error replays identically forever
+     *   and must mark), downloads not complete, retry budget not
+     *   exhausted. The caller consumes one attempt per yield so ANY
+     *   repeating throw exhausts the budget within the cap.
+     * - record_pending: downloads complete, every flagged artifact still
+     *   on disk, no snapshot for this run yet, and the newest artifact
+     *   younger than RECORD_PENDING_TTL_SECONDS. Not budget-consuming;
+     *   the TTL bounds it.
+     *
+     * @param object $task  Task row (fresh read; uses id and last_run).
+     * @param mixed  $wp_id Child site ID.
+     *
+     * @return string|false 'mid_download', 'record_pending', or false.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Backup_Snapshots::get_latest_complete()
+     */
+    public function is_backup_site_resumable_for_run( $task, $wp_id ) { // phpcs:ignore -- NOSONAR - complex state classification.
+        if ( empty( $task ) || empty( $task->id ) || ! MainWP_Utility::ctype_digit( $wp_id ) ) {
+            return false;
+        }
+
+        $progress = $this->get_backup_task_progress( (int) $task->id, (int) $wp_id );
+        if ( empty( $progress ) || (int) $progress->dtsFetched < (int) $task->last_run ) {
+            return false;
+        }
+
+        $set_paths = array();
+        if ( '' !== (string) $progress->downloadedDB ) {
+            $set_paths[] = array( (string) $progress->downloadedDB, ! empty( $progress->downloadedDBComplete ) );
+        }
+        if ( '' !== (string) $progress->downloadedFULL ) {
+            $set_paths[] = array( (string) $progress->downloadedFULL, ! empty( $progress->downloadedFULLComplete ) );
+        }
+
+        $downloads_complete = ! empty( $set_paths );
+        foreach ( $set_paths as $path ) {
+            if ( ! $path[1] ) {
+                $downloads_complete = false;
+                break;
+            }
+        }
+
+        if ( $downloads_complete ) {
+            return $this->classify_record_pending( $task, $progress, $set_paths );
+        }
+
+        $claimed = is_array( $progress->fetchResult ) && ! empty( $progress->fetchResult );
+        if ( $claimed && empty( $progress->fetchResult['error'] ) && (int) $progress->attempts < 5 ) {
+            return 'mid_download';
+        }
+
+        return false;
+    }
+
+    /**
+     * Method classify_record_pending()
+     *
+     * Whether a downloads-complete row is a live record-pending state:
+     * every flagged artifact on disk, no snapshot for the current run,
+     * newest artifact inside the TTL window.
+     *
+     * @param object $task      Task row.
+     * @param object $progress  Progress row.
+     * @param array  $set_paths Set artifact paths with their complete flags.
+     *
+     * @return string|false 'record_pending' or false.
+     */
+    private function classify_record_pending( $task, $progress, $set_paths ) {
+        $newest_mtime = 0;
+        foreach ( $set_paths as $path ) {
+            clearstatcache( true, $path[0] );
+            if ( ! is_file( $path[0] ) ) {
+                // A vanished artifact is the loud ERR_FILE_CORRUPT shape,
+                // not a resumable state: the honest failure must mark.
+                return false;
+            }
+            $mtime        = (int) filemtime( $path[0] );
+            $newest_mtime = $mtime > $newest_mtime ? $mtime : $newest_mtime;
+        }
+
+        $snapshot = MainWP_Backup_Snapshots::instance()->get_latest_complete( (int) $progress->wp_id, (int) $task->id );
+        if ( null !== $snapshot && (int) $snapshot->created >= (int) $task->last_run ) {
+            // The record already landed; nothing is pending.
+            return false;
+        }
+
+        if ( ( time() - $newest_mtime ) >= self::RECORD_PENDING_TTL_SECONDS ) {
+            // Past the window a failing record is a wedge, not a wait.
+            return false;
+        }
+
+        return 'record_pending';
+    }
+
+    /**
+     * Method has_pending_record_for_run()
+     *
+     * Whether any current-run progress row is a live record-pending
+     * state: a validated artifact on disk whose snapshot has not landed
+     * yet, inside the TTL window. The run close consults this alongside
+     * the live-create guard, because closing over a pending record is
+     * how a snapshot gets lost - the record that lands seconds later has
+     * no open run to credit. The scan reads progress rows, never
+     * completed_sites, so a site wrongly marked complete cannot blind it.
+     *
+     * @param mixed $id Task ID.
+     *
+     * @return bool True when a record-pending row exists for the current cycle.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
+     */
+    public function has_pending_record_for_run( $id ) {
+        if ( ! MainWP_Utility::ctype_digit( $id ) ) {
+            return false;
+        }
+
+        $task = $this->get_backup_task_by_id( $id );
+        if ( ! $task ) {
+            return false;
+        }
+
+        $rows = $this->wpdb->get_col(
+            $this->wpdb->prepare(
+                'SELECT wp_id FROM ' . $this->table_name( 'wp_backup_progress' ) . ' WHERE task_id = %d AND dtsFetched >= %d', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table_name() returns the prefixed identifier.
+                $id,
+                (int) $task->last_run
+            )
+        );
+
+        if ( ! is_array( $rows ) ) {
+            return false;
+        }
+
+        foreach ( $rows as $wp_id ) {
+            if ( 'record_pending' === $this->is_backup_site_resumable_for_run( $task, (int) $wp_id ) ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Method consume_backup_attempt()
+     *
+     * Burn one retry attempt on the progress row, SQL-side so racing
+     * drivers cannot double-count through a read-modify-write. The
+     * site-loop catch calls this on every mid-download resumable yield,
+     * which is what bounds a repeating exception to the retry cap.
+     *
+     * @param mixed $task_id Task ID.
+     * @param mixed $wp_id   Child site ID.
+     *
+     * @return bool Whether a row was updated.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
+     */
+    public function consume_backup_attempt( $task_id, $wp_id ) {
+        if ( ! MainWP_Utility::ctype_digit( $task_id ) || ! MainWP_Utility::ctype_digit( $wp_id ) ) {
+            return false;
+        }
+
+        $affected = $this->wpdb->query(
+            $this->wpdb->prepare(
+                'UPDATE ' . $this->table_name( 'wp_backup_progress' ) . ' SET attempts = attempts + 1 WHERE task_id = %d AND wp_id = %d', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table_name() returns the prefixed identifier.
+                $task_id,
+                $wp_id
+            )
+        );
+
+        return is_numeric( $affected ) && $affected > 0;
+    }
+
+    /**
      * Method claim_backup_fetch_result()
      *
      * Land a completed child task's terminal projection on the progress

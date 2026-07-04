@@ -693,7 +693,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 $maxBackups = 1;
             }
 
-            if ( 1 !== $backupTaskProgress->removedFiles ) {
+            if ( 1 !== (int) $backupTaskProgress->removedFiles && MainWP_DB_Backup::instance()->claim_backup_file_sweep( $taskId, $website->id ) ) {
                 $dbBackups   = array();
                 $fullBackups = array();
 
@@ -701,6 +701,18 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 // snapshot retention; the sweep neither counts nor deletes
                 // them.
                 $protected = MainWP_Backup_Snapshots::instance()->get_protected_paths_for_site( (int) $website->id );
+
+                // The current run's own downloaded artifacts are unrecorded
+                // until their snapshot lands, so the sweep must read them
+                // fresh and protect them: this caller's row view can predate
+                // another driver's download, and sweeping that file away is
+                // how a validated backup vanished before its record.
+                $own_row = MainWP_DB_Backup::instance()->get_backup_task_progress( $taskId, $website->id );
+                foreach ( array( $own_row->downloadedDB, $own_row->downloadedFULL ) as $own_path ) {
+                    if ( '' !== (string) $own_path ) {
+                        $protected[ MainWP_Backup_Snapshots::normalise_path( (string) $own_path ) ] = true;
+                    }
+                }
 
                 if ( $wp_filesystem->exists( $dir ) ) {
                     $dh = opendir( $dir );
@@ -741,7 +753,9 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         $wp_filesystem->delete( $fullBackup );
                     }
                 }
-                $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'removedFiles' => 1 ) );
+                // The claim already stamped removedFiles; the fresh row
+                // read for the protection set doubles as the view refresh.
+                $backupTaskProgress = $own_row;
             }
 
             $localBackupFile = null;
@@ -1185,6 +1199,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         }
     }
 
+    // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.Missing -- the registry factory throws MainWP_Exception, documented in the docblock.
     /**
      * Record the run's snapshot under the artifact's download lock.
      *
@@ -1203,7 +1218,8 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @return void
      * @throws MainWP_Exception When another process holds the artifact lock, or the record itself fails.
      */
-    protected static function record_run_snapshot_locked( $website, $pTask, $progress, $lock_file ) { // phpcs:ignore Squiz.Commenting.FunctionCommentThrowTag.Missing -- registry factory throws are MainWP_Exception, documented above.
+    protected static function record_run_snapshot_locked( $website, $pTask, $progress, $lock_file ) {
+        // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.Missing
         if ( empty( $lock_file ) ) {
             static::record_downloaded_run_snapshot( $website, $pTask, $progress );
             return;
@@ -1219,6 +1235,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         }
     }
 
+    // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.Missing -- the registry factory throws MainWP_Exception, documented in the docblock.
     /**
      * Record a completed full/db download run as a snapshot row, once per
      * run.
@@ -1236,7 +1253,8 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @return void
      * @throws MainWP_Exception When every flagged-complete artifact vanished from disk before the record.
      */
-    protected static function record_downloaded_run_snapshot( $website, $pTask, $progress ) { // phpcs:ignore Squiz.Commenting.FunctionCommentThrowTag.Missing -- registry factory throws are MainWP_Exception, documented above.
+    protected static function record_downloaded_run_snapshot( $website, $pTask, $progress ) {
+        // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.Missing
         if ( empty( $pTask->id ) ) {
             return;
         }

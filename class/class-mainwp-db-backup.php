@@ -933,6 +933,40 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
     }
 
     /**
+     * Method claim_backup_file_sweep()
+     *
+     * Claim the run's one local-file sweep, SQL-side. The sweep deletes
+     * unrecorded archives in the site dir, and the current run's own
+     * downloaded artifact is unrecorded until its snapshot lands - so a
+     * driver re-running the sweep off a stale in-memory removedFiles
+     * view deletes the winner's validated artifact and loses the backup.
+     * The conditional write makes the gate the row's truth, not the
+     * caller's memory: exactly one driver per run wins it.
+     *
+     * @param mixed $task_id Task ID.
+     * @param mixed $wp_id   Child site ID.
+     *
+     * @return bool True when this caller won the sweep.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
+     */
+    public function claim_backup_file_sweep( $task_id, $wp_id ) {
+        if ( ! MainWP_Utility::ctype_digit( $task_id ) || ! MainWP_Utility::ctype_digit( $wp_id ) ) {
+            return false;
+        }
+
+        $affected = $this->wpdb->query(
+            $this->wpdb->prepare(
+                'UPDATE ' . $this->table_name( 'wp_backup_progress' ) . ' SET removedFiles = 1 WHERE task_id = %d AND wp_id = %d AND removedFiles <> 1', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table_name() returns the prefixed identifier.
+                $task_id,
+                $wp_id
+            )
+        );
+
+        return is_numeric( $affected ) && $affected > 0;
+    }
+
+    /**
      * Method consume_backup_attempt()
      *
      * Burn one retry attempt on the progress row, SQL-side so racing

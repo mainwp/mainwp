@@ -626,6 +626,87 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * The local-file sweep must never delete the current run's own
+	 * downloaded artifact. A driver whose progress view predates the
+	 * winner's sweep re-ran the sweep late and deleted the freshly
+	 * validated archive before its snapshot recorded - the run then
+	 * closed with ERR_FILE_CORRUPT and the backup was lost (observed
+	 * live on 73: verified download, artifact gone at record time).
+	 *
+	 * @return void
+	 */
+	public function test_sweep_never_deletes_current_run_artifact() {
+		global $wpdb;
+
+		list( $site_id, $task ) = $this->site_and_task();
+		$content                = 'PK' . "\x03\x04" . str_repeat( 'x', 4092 );
+
+		$dir = \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_specific_dir( $site_id );
+		wp_mkdir_p( $dir );
+		$artifact = $dir . 'full-current-run.zip';
+		file_put_contents( $artifact, $content ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- test fixture.
+		$stale = $dir . 'full-old-run.zip';
+		file_put_contents( $stale, 'PK' . "\x03\x04" . str_repeat( 'o', 32 ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- test fixture.
+		touch( $stale, time() - 600 );
+
+		// The lagging-driver view persisted: sweep still due while the
+		// winner's validated artifact is already flagged complete.
+		$this->give_site_real_privkey( $site_id );
+		$this->seed_progress(
+			$task->id,
+			$site_id,
+			array(
+				'removedFiles'           => 0,
+				'fetchResult'            => wp_json_encode(
+					array(
+						'full' => 'backup-file.zip',
+						'db'   => false,
+						'size' => strlen( $content ),
+					)
+				),
+				'downloadedFULL'         => $artifact,
+				'downloadedFULLComplete' => 1,
+			)
+		);
+
+		update_option( 'mainwp_backupsOnServer', 1 );
+
+		try {
+			$result = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+			$this->assertNotFalse( $result, 'The run must complete: its artifact is on disk and flagged.' );
+
+			$this->assertFileExists( $artifact, 'The sweep must never delete the current run\'s own artifact.' );
+			$this->assertFileDoesNotExist( $stale, 'Old unrecorded archives must still be pruned.' );
+
+			$snapshot = \MainWP\Dashboard\MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, (int) $task->id );
+			$this->assertNotNull( $snapshot, 'The snapshot record must land on the surviving artifact.' );
+		} finally {
+			delete_option( 'mainwp_backupsOnServer' );
+			$snapshot_table = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+			$wpdb->query( $wpdb->prepare( "DELETE FROM {$snapshot_table} WHERE site_id = %d", $site_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
+			array_map( 'unlink', glob( $dir . '*' ) ?: array() ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test cleanup.
+		}
+	}
+
+	/**
+	 * The sweep gate is claimed SQL-side: exactly one driver of a run can
+	 * win it, so a driver holding a stale in-memory removedFiles view can
+	 * never re-run the sweep after the winner.
+	 *
+	 * @return void
+	 */
+	public function test_claim_backup_file_sweep_is_single_winner() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$this->seed_progress( $task->id, $site_id, array( 'removedFiles' => 0 ) );
+
+		$this->assertTrue( MainWP_DB_Backup::instance()->claim_backup_file_sweep( $task->id, $site_id ), 'The first claim must win.' );
+		$this->assertFalse( MainWP_DB_Backup::instance()->claim_backup_file_sweep( $task->id, $site_id ), 'A second claim must lose: the sweep already ran.' );
+
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+		$this->assertSame( 1, (int) $progress->removedFiles );
+	}
+
+	/**
 	 * A downloaded file that fails validation is never marked complete:
 	 * each rejection consumes a retry attempt and yields, and once the
 	 * budget is spent the validation failure surfaces terminally.

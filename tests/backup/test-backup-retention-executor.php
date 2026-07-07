@@ -463,6 +463,50 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A snapshot whose local artifact cannot be deleted must not be marked
+	 * pruned: metadata claiming the files are gone while they sit on disk
+	 * breaks retention accounting and hides a restorable snapshot. The
+	 * chain stops there, leaf first, so no pruned base orphans a kept leaf.
+	 *
+	 * @return void
+	 */
+	public function test_failed_local_delete_keeps_snapshot_restorable() {
+		list( $base, $base_dir ) = $this->make_snapshot_with_dir();
+		list( $inc, $inc_dir )   = $this->make_snapshot_with_dir(
+			array(
+				'type'      => 'incremental',
+				'parent_id' => $base,
+			)
+		);
+
+		// A read-only directory makes the leaf's artifact unlink fail.
+		chmod( $inc_dir, 0555 ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+
+		try {
+			$candidates = array(
+				array(
+					'snapshot_ids'   => array( $base, $inc ),
+					'reason'         => 'count',
+					'size_bytes'     => 200,
+					'newest_created' => time(),
+				),
+			);
+
+			$result = MainWP_Backup_Retention_Executor::instance()->run_prune( $candidates, $this->make_task( array( 'delete_cloud_copies' => 0 ) ), false );
+
+			$this->assertNotSame( array(), $result['errors'], 'The failed deletion must surface a diagnostic.' );
+			$this->assertSame( 0, $result['snapshots_pruned'], 'Nothing was actually removed, so nothing may count as pruned.' );
+
+			$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $inc )->status, 'The undeleted leaf must stay restorable.' );
+			$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $base )->status, 'The base must not be pruned under a kept leaf.' );
+			$this->assertFileExists( $inc_dir . '/artifact.tar', 'The artifact is still on disk.' );
+			$this->assertFileExists( $base_dir . '/artifact.tar', 'The base artifact must be untouched.' );
+		} finally {
+			chmod( $inc_dir, 0755 ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test cleanup.
+		}
+	}
+
+	/**
 	 * Legacy and db runs share one site directory rather than per-snapshot
 	 * dirs. Pruning one snapshot there deletes only its own artifact files;
 	 * sibling snapshots' files and the directory itself survive.

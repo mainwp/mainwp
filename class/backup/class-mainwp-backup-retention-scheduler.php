@@ -147,7 +147,23 @@ class MainWP_Backup_Retention_Scheduler { // phpcs:ignore Generic.Classes.Openin
             return;
         }
 
-        $this->run_retention_for_pair( $task, (int) $pair['site_id'], $budget_seconds, $now );
+        $report = $this->run_retention_for_pair( $task, (int) $pair['site_id'], $budget_seconds, $now );
+
+        if ( ! empty( $report['skipped'] ) ) {
+            // The budget expired with candidates left: put the pair back at
+            // the tail so the next continue tick finishes the cleanup
+            // instead of waiting for the daily sweep. Errors deliberately
+            // do not requeue - a permanent failure would churn every tick,
+            // and the daily sweep retries those anyway.
+            $queue = get_option( static::QUEUE_OPTION, array() );
+            if ( ! is_array( $queue ) ) {
+                $queue = array();
+            }
+            if ( ! isset( $queue[ $key ] ) ) {
+                $queue[ $key ] = $pair;
+                update_option( static::QUEUE_OPTION, $queue, false );
+            }
+        }
     }
 
     /**

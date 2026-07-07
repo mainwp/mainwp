@@ -385,7 +385,7 @@ class MainWP_Backup_Artifact_Download_Test extends MainWP_Abilities_Test_Case {
 	public function test_backup_download_file_uses_token_flow() {
 		$website = $this->make_site( true );
 		$upload  = wp_upload_dir();
-		$local   = $upload['basedir'] . '/mainwp-test-dl-' . wp_rand( 1000, 999999 ) . '/backup-file.tar.gz';
+		$local   = $upload['basedir'] . '/mainwp/test-dl-' . wp_rand( 1000, 999999 ) . '/backup-file.tar.gz';
 		$this->local_files[] = $local;
 		$content             = "\x1f\x8b\x08" . str_repeat( 'z', 64 );
 		$calls               = array();

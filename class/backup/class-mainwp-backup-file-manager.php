@@ -60,6 +60,13 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
      * @uses \MainWP\Dashboard\MainWP_Utility::end_session()
      */
     public static function backup_download_file( int $pSiteId, string $pType, string $pUrl, string $pFile ): bool {
+        if ( ! static::is_within_backup_root( $pFile ) ) {
+            // The local path round-trips through the browser between the
+            // create and download requests, so it is attacker-influenced:
+            // never create directories, sweep old archives, or write bytes
+            // outside the dashboard backup tree.
+            throw new MainWP_Exception( esc_html__( 'Invalid backup file location.', 'mainwp' ) );
+        }
         if ( ! MainWP_System_Utility::get_wp_file_system() ) {
             throw new MainWP_Exception( esc_html__( 'Could not initialize the WordPress filesystem to store the backup.', 'mainwp' ) );
         }
@@ -579,16 +586,50 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
      * @param string $pFile Backup file.
      *
      * @return int|false File size in bytes, or 0 outside the backup directory.
-     *
-     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_specific_dir()
      */
     public static function backup_get_file_size( string $pFile ): int|false {
-        $dir = MainWP_System_Utility::get_mainwp_specific_dir();
-
-        if ( stristr( $pFile, $dir ) && file_exists( $pFile ) ) {
+        if ( static::is_within_backup_root( $pFile ) && file_exists( $pFile ) ) {
             return filesize( $pFile );
         }
 
         return 0;
+    }
+
+    /**
+     * Whether a caller-supplied local path stays inside the dashboard
+     * backup tree (uploads/mainwp/).
+     *
+     * The path may not exist yet (it is a download destination), so this
+     * checks the normalized string: it must start with the backup root and
+     * carry no parent-directory segments. A substring match is not enough -
+     * the root can appear later in a hostile path, and a `..` after a valid
+     * root escapes it.
+     *
+     * @param string $path Candidate absolute path.
+     *
+     * @return bool True when the path is confined to the backup root.
+     *
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_dir()
+     */
+    public static function is_within_backup_root( string $path ): bool {
+        if ( '' === $path ) {
+            return false;
+        }
+
+        $dirs = MainWP_System_Utility::get_mainwp_dir();
+        $root = trailingslashit( wp_normalize_path( (string) $dirs[0] ) );
+        $norm = wp_normalize_path( $path );
+
+        if ( 0 !== strpos( $norm, $root ) ) {
+            return false;
+        }
+
+        foreach ( explode( '/', $norm ) as $segment ) {
+            if ( '..' === $segment ) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

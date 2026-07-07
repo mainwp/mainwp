@@ -145,6 +145,30 @@ class MainWP_Backup_Storage_Local_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Listing a prefix never descends into unrelated subtrees. The
+	 * unrelated tree here is unreadable: a walk that fails to prune would
+	 * throw trying to enter it.
+	 *
+	 * @return void
+	 */
+	public function test_list_objects_prunes_unrelated_directories() {
+		$provider = $this->make_provider();
+		$provider->put_object( '4/42/chunks/aa.bin', 'one' );
+		$provider->put_object( '9/90/other.bin', 'x' );
+
+		$unrelated = $this->temp_dirs[0] . '/9/90';
+		chmod( $unrelated, 0000 );
+
+		try {
+			$result = $provider->list_objects( '4/42/' );
+		} finally {
+			chmod( $unrelated, 0755 );
+		}
+
+		$this->assertSame( array( '4/42/chunks/aa.bin' ), array_column( $result['objects'], 'key' ) );
+	}
+
+	/**
 	 * Object writes are atomic: no tmp leftovers beside final objects.
 	 *
 	 * @return void

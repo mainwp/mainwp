@@ -136,6 +136,10 @@ class MainWP_Backup_Storage_Local implements MainWP_Backup_Storage_Provider { //
     /**
      * List objects under a prefix. Local listings are never paginated.
      *
+     * The walk prunes directories that cannot contain the prefix, so a
+     * per-snapshot listing never scans other sites' backup history under
+     * the same base path.
+     *
      * @param string      $prefix Key prefix filter.
      * @param string|null $token  Ignored.
      *
@@ -147,15 +151,26 @@ class MainWP_Backup_Storage_Local implements MainWP_Backup_Storage_Provider { //
         $objects = array();
 
         if ( is_dir( $this->base_path ) ) {
-            $iterator = new \RecursiveIteratorIterator(
-                new \RecursiveDirectoryIterator( $this->base_path, \FilesystemIterator::SKIP_DOTS )
+            $base_len = strlen( $this->base_path ) + 1;
+            $pruned   = new \RecursiveCallbackFilterIterator(
+                new \RecursiveDirectoryIterator( $this->base_path, \FilesystemIterator::SKIP_DOTS ),
+                static function ( $file ) use ( $prefix, $base_len ) {
+                    if ( '' === $prefix || ! $file->isDir() ) {
+                        return true;
+                    }
+                    // Descend only into ancestors of the prefix subtree or
+                    // directories inside it.
+                    $key = str_replace( DIRECTORY_SEPARATOR, '/', substr( $file->getPathname(), $base_len ) ) . '/';
+                    return 0 === strpos( $prefix, $key ) || 0 === strpos( $key, $prefix );
+                }
             );
+            $iterator = new \RecursiveIteratorIterator( $pruned );
 
             foreach ( $iterator as $file ) {
                 if ( ! $file->isFile() ) {
                     continue;
                 }
-                $key = str_replace( DIRECTORY_SEPARATOR, '/', substr( $file->getPathname(), strlen( $this->base_path ) + 1 ) );
+                $key = str_replace( DIRECTORY_SEPARATOR, '/', substr( $file->getPathname(), $base_len ) );
                 if ( '' !== $prefix && 0 !== strpos( $key, $prefix ) ) {
                     continue;
                 }

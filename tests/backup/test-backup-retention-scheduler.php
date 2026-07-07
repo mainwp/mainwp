@@ -189,6 +189,36 @@ class MainWP_Backup_Retention_Scheduler_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * A pair whose budget expires with candidates left goes back to the
+	 * queue tail, so the next continue tick finishes the cleanup instead
+	 * of leaving it to the daily sweep.
+	 *
+	 * @return void
+	 */
+	public function test_budget_skip_requeues_pair() {
+		$task_id = $this->insert_task( array( 'retention_count' => 1 ) );
+		$this->insert_snapshot_with_dir( $task_id, array( 'created' => time() - 300 ) );
+		$this->insert_snapshot_with_dir( $task_id, array( 'created' => time() - 200 ) );
+		$new = $this->insert_snapshot_with_dir( $task_id, array( 'created' => time() - 100 ) );
+
+		$scheduler = MainWP_Backup_Retention_Scheduler::instance();
+		$scheduler->on_snapshot_recorded( $new, $task_id, $this->site_id );
+
+		// A zero budget prunes the first candidate and skips the rest.
+		$scheduler->process_post_snapshot_queue( 0 );
+
+		$queue = get_option( MainWP_Backup_Retention_Scheduler::QUEUE_OPTION, array() );
+		$this->assertCount( 1, $queue, 'The partially processed pair must return to the queue.' );
+		$pair = array_values( $queue )[0];
+		$this->assertSame( $task_id, (int) $pair['task_id'] );
+		$this->assertSame( $this->site_id, (int) $pair['site_id'] );
+
+		// The next tick finishes and leaves the queue empty.
+		$scheduler->process_post_snapshot_queue();
+		$this->assertSame( array(), get_option( MainWP_Backup_Retention_Scheduler::QUEUE_OPTION, array() ), 'A completed pair must not requeue.' );
+	}
+
+	/**
 	 * The daily cron sweeps every task with a policy.
 	 *
 	 * @return void

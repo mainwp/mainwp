@@ -1,0 +1,263 @@
+<?php
+/**
+ * MainWP Legacy Backup AJAX Authorization Tests
+ *
+ * The legacy backup file endpoints (download, delete, size checks) act on a
+ * caller-supplied site id and local path. These tests pin the per-site
+ * authorization the newer restore endpoints already enforce, and the path
+ * bounds that keep a caller-supplied local path inside the dashboard backup
+ * tree.
+ *
+ * @package MainWP\Dashboard\Tests
+ */
+
+namespace MainWP\Dashboard\Tests;
+
+use MainWP\Dashboard\MainWP_Backup_File_Manager;
+use MainWP\Dashboard\MainWP_Post_Backup_Handler;
+use MainWP\Dashboard\MainWP_System_Utility;
+
+/**
+ * Class MainWP_Backup_Legacy_Ajax_Auth_Test
+ */
+class MainWP_Backup_Legacy_Ajax_Auth_Test extends MainWP_Abilities_Test_Case {
+
+	/**
+	 * Captured child calls: list of action names.
+	 *
+	 * @var string[]
+	 */
+	private $child_calls = array();
+
+	/**
+	 * Reset request state.
+	 *
+	 * @return void
+	 */
+	public function tearDown(): void {
+		unset( $_POST['security'], $_POST['site_id'], $_POST['siteId'], $_POST['type'], $_POST['url'], $_POST['local'], $_POST['file'], $_REQUEST['security'] );
+		parent::tearDown();
+	}
+
+	/**
+	 * Skip a denial test when another suite in this process defined one of
+	 * the constants that bypass capability checks by design (cron, WP-CLI,
+	 * REST): the deny filter never fires and the endpoint's plain die()
+	 * would kill the phpunit process.
+	 *
+	 * @return void
+	 */
+	private function skip_when_capabilities_bypassed() {
+		if ( ( defined( 'DOING_CRON' ) && DOING_CRON ) || ( defined( 'WP_CLI' ) && WP_CLI ) || ( defined( 'MAINWP_REST_API_DOING' ) && MAINWP_REST_API_DOING ) ) {
+			$this->markTestSkipped( 'Capability checks are bypassed by design under cron, WP-CLI, and REST constants; another suite defined one for this process.' );
+		}
+	}
+
+	/**
+	 * Deny the per-site capability for one site id via the capability
+	 * filter, simulating a Team Control site restriction.
+	 *
+	 * @param int $site_id Site id to deny.
+	 *
+	 * @return callable The filter, for later removal.
+	 */
+	private function deny_site( $site_id ) {
+		$deny = function ( $allowed, $cap_type, $cap ) use ( $site_id ) {
+			if ( 'site' === $cap_type && (int) $cap === (int) $site_id ) {
+				return false;
+			}
+			return $allowed;
+		};
+		add_filter( 'mainwp_currentusercan', $deny, 10, 3 );
+		return $deny;
+	}
+
+	/**
+	 * Record every child call so a denied request can prove none happened.
+	 *
+	 * @return void
+	 */
+	private function capture_child_calls() {
+		$this->child_calls = array();
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			function ( $result, $website, $what ) {
+				unset( $website );
+				$this->child_calls[] = $what;
+				return array( 'ok' => 1 );
+			},
+			10,
+			3
+		);
+	}
+
+	/**
+	 * Invoke a handler AJAX endpoint with the ajax-termination pattern and
+	 * return the decoded JSON payload.
+	 *
+	 * @param string $action Nonce action / endpoint name.
+	 * @param string $method Handler method to call.
+	 * @param array  $post   POST fields.
+	 *
+	 * @return array|null Decoded response payload.
+	 */
+	private function call_endpoint( $action, $method, array $post ) {
+		$nonce                = wp_create_nonce( $action );
+		$_POST['security']    = $nonce;
+		$_REQUEST['security'] = $nonce;
+		foreach ( $post as $key => $value ) {
+			$_POST[ $key ] = $value;
+		}
+
+		$throw = static function () {
+			return static function () {
+				throw new \RuntimeException( 'wp_die' );
+			};
+		};
+		add_filter( 'wp_doing_ajax', '__return_true' );
+		add_filter( 'wp_die_ajax_handler', $throw );
+		add_filter( 'wp_die_handler', $throw );
+
+		$raw = '';
+		ob_start();
+		try {
+			MainWP_Post_Backup_Handler::instance()->{$method}();
+		} catch ( \RuntimeException $e ) {
+			// The endpoint terminated the request as designed.
+		} finally {
+			$raw = ob_get_clean();
+			remove_filter( 'wp_die_handler', $throw );
+			remove_filter( 'wp_die_ajax_handler', $throw );
+			remove_filter( 'wp_doing_ajax', '__return_true' );
+		}
+
+		return json_decode( $raw, true );
+	}
+
+	/**
+	 * A backup-capable user restricted from a site cannot download its
+	 * backup files, and no directory is created for the requested target.
+	 *
+	 * @return void
+	 */
+	public function test_download_file_rejects_site_restricted_user() {
+		$this->skip_when_capabilities_bypassed();
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$site_id = $this->create_test_site();
+		$deny    = $this->deny_site( $site_id );
+
+		$dirs   = MainWP_System_Utility::get_mainwp_dir();
+		$target = $dirs[0] . 'denied-user-test/backup.zip';
+
+		$response = $this->call_endpoint(
+			'mainwp_backup_download_file',
+			'ajax_mainwp_backup_download_file',
+			array(
+				'site_id' => $site_id,
+				'type'    => 'full',
+				'url'     => 'http://127.0.0.1:1/never-fetched.zip',
+				'local'   => $target,
+			)
+		);
+		remove_filter( 'mainwp_currentusercan', $deny, 10 );
+
+		$this->assertIsArray( $response );
+		$this->assertArrayHasKey( 'error', $response, 'The denied request must produce an error payload.' );
+		$this->assertDirectoryDoesNotExist( dirname( $target ), 'A denied request must not create the download directory.' );
+	}
+
+	/**
+	 * A backup-capable user restricted from a site cannot delete its
+	 * child-side backup files: the request errors before any child call.
+	 *
+	 * @return void
+	 */
+	public function test_delete_file_rejects_site_restricted_user_without_child_call() {
+		$this->skip_when_capabilities_bypassed();
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$site_id = $this->create_test_site();
+		$this->capture_child_calls();
+		$deny = $this->deny_site( $site_id );
+
+		$response = $this->call_endpoint(
+			'mainwp_backup_delete_file',
+			'mainwp_backup_delete_file',
+			array(
+				'site_id' => $site_id,
+				'file'    => 'backup.zip',
+			)
+		);
+		remove_filter( 'mainwp_currentusercan', $deny, 10 );
+
+		$this->assertIsArray( $response );
+		$this->assertArrayHasKey( 'error', $response, 'The denied request must produce an error payload.' );
+		$this->assertNotContains( 'delete_backup', $this->child_calls, 'A denied request must never reach the child site.' );
+	}
+
+	/**
+	 * Even an authorized caller cannot point the download target outside
+	 * the dashboard backup tree: the sink throws before creating anything.
+	 * (Tested at the sink because the AJAX wrapper terminates with a plain
+	 * die() that would kill the test process.)
+	 *
+	 * @return void
+	 */
+	public function test_download_file_rejects_local_path_outside_backup_root() {
+		$site_id = $this->create_test_site();
+
+		$target = sys_get_temp_dir() . '/mainwp-escape-test/backup.zip';
+
+		$thrown = null;
+		try {
+			MainWP_Backup_File_Manager::backup_download_file( $site_id, 'full', 'http://127.0.0.1:1/never-fetched.zip', $target );
+		} catch ( \Exception $e ) {
+			$thrown = $e;
+		}
+
+		$this->assertNotNull( $thrown, 'An out-of-tree local path must be rejected.' );
+		$this->assertStringContainsString( 'Invalid backup file location', $thrown->getMessage() );
+		$this->assertDirectoryDoesNotExist( dirname( $target ), 'A rejected request must not create the escaped directory.' );
+	}
+
+	/**
+	 * The path-bound helper accepts the backup tree and rejects substring
+	 * lookalikes and traversal escapes.
+	 *
+	 * @return void
+	 */
+	public function test_is_within_backup_root_bounds() {
+		$dirs = MainWP_System_Utility::get_mainwp_dir();
+		$root = $dirs[0];
+
+		$this->assertTrue( MainWP_Backup_File_Manager::is_within_backup_root( $root . 'site/backup.zip' ) );
+		$this->assertFalse( MainWP_Backup_File_Manager::is_within_backup_root( '' ) );
+		$this->assertFalse( MainWP_Backup_File_Manager::is_within_backup_root( sys_get_temp_dir() . '/evil' . $root . 'backup.zip' ), 'The root appearing later in a hostile path must not qualify.' );
+		$this->assertFalse( MainWP_Backup_File_Manager::is_within_backup_root( $root . '../../wp-config.php' ), 'A traversal after a valid root must not escape it.' );
+	}
+
+	/**
+	 * The size probe refuses paths that escape the backup tree via
+	 * traversal, even when the file exists.
+	 *
+	 * @return void
+	 */
+	public function test_backup_get_file_size_refuses_traversal_escape() {
+		$dirs = MainWP_System_Utility::get_mainwp_dir();
+		$root = $dirs[0];
+
+		$upload  = wp_upload_dir();
+		$outside = trailingslashit( $upload['basedir'] ) . 'mainwp-escaped-probe.txt';
+		file_put_contents( $outside, 'outside' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+
+		try {
+			$this->assertSame( 0, MainWP_Backup_File_Manager::backup_get_file_size( $root . '../mainwp-escaped-probe.txt' ), 'A traversal path must never leak a size outside the tree.' );
+
+			$inside = $root . 'size-probe.txt';
+			file_put_contents( $inside, '12345' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+			$this->assertSame( 5, MainWP_Backup_File_Manager::backup_get_file_size( $inside ), 'A file inside the tree must report its size.' );
+			unlink( $inside ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test cleanup.
+		} finally {
+			unlink( $outside ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test cleanup.
+		}
+	}
+}

@@ -434,6 +434,48 @@ class MainWP_Backup_Storage_SFTP_Test extends \WP_UnitTestCase { // phpcs:ignore
 	}
 
 	/**
+	 * Listing a prefix never descends into unrelated subtrees: retention
+	 * over one snapshot must not scan every other site's backup history on
+	 * the destination.
+	 *
+	 * @return void
+	 */
+	public function test_list_objects_prunes_unrelated_directories() {
+		$connection = new class() extends Fake_SFTP_Connection {
+			/**
+			 * Directories rawlist() was asked for.
+			 *
+			 * @var string[]
+			 */
+			public $rawlist_calls = array();
+
+			/**
+			 * Record then delegate.
+			 *
+			 * @param string $dir Directory path.
+			 *
+			 * @return array|false
+			 */
+			public function rawlist( $dir ) {
+				$this->rawlist_calls[] = rtrim( $dir, '/' );
+				return parent::rawlist( $dir );
+			}
+		};
+		$provider   = $this->make_provider( $connection );
+
+		$provider->put_object( '4/42/chunks/aa.bin', 'aaa' );
+		$provider->put_object( '4/43/other.bin', 'zz' );
+		$provider->put_object( '5/50/far.bin', 'ff' );
+
+		$connection->rawlist_calls = array();
+		$result                    = $provider->list_objects( '4/42/' );
+
+		$this->assertSame( array( '4/42/chunks/aa.bin' ), array_column( $result['objects'], 'key' ) );
+		$this->assertNotContains( '/backups/4/43', $connection->rawlist_calls, 'An unrelated snapshot subtree must not be listed.' );
+		$this->assertNotContains( '/backups/5', $connection->rawlist_calls, 'An unrelated site subtree must not be listed.' );
+	}
+
+	/**
 	 * Listing under a base path that does not exist is empty, not an
 	 * error.
 	 *

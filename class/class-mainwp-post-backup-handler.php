@@ -144,9 +144,9 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
     }
 
     /**
-     * Verify the current user may manage restores for a child site.
+     * Verify the current user may manage backups for a child site.
      *
-     * The restore endpoints are gated by the `execute_backups` capability at
+     * The backup and restore endpoints are gated by capabilities at
      * registration, but that does not scope access to individual sites. Without
      * a per-site check, a user could act on any site by passing its id. Sends a
      * JSON error and returns null when access is denied.
@@ -967,6 +967,9 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             if ( ! $site_id ) {
                 throw new MainWP_Exception( 'Site ID not found. Please reload the page and try again.', 'mainwp' );
             }
+            if ( null === $this->authorize_restore_site( $site_id ) ) {
+                return;
+            }
 
             $ret = array( 'result' => MainWP_Backup_Executor::backup( $site_id, 'full', '', '', 1, 1, 1, 1 ) );
             wp_send_json( $ret );
@@ -1009,6 +1012,9 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         try {
             if ( ! $site_id ) {
                 throw new MainWP_Exception( 'Site ID not found. Please reload the page and try again.', 'mainwp' );
+            }
+            if ( null === $this->authorize_restore_site( $site_id ) ) {
+                return;
             }
 
             $excludedFolder = isset( $_POST['exclude'] ) ? trim( wp_unslash( $_POST['exclude'] ), "\n" ) : '';
@@ -1086,6 +1092,9 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             if ( ! $site_id ) {
                 throw new MainWP_Exception( 'Site ID not found. Please reload the page and try again.', 'mainwp' );
             }
+            if ( null === $this->authorize_restore_site( $site_id ) ) {
+                return;
+            }
             $pid       = isset( $_POST['pid'] ) ? intval( $_POST['pid'] ) : false;
             $type      = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
             $subfolder = isset( $_POST['subfolder'] ) ? sanitize_text_field( wp_unslash( $_POST['subfolder'] ) ) : '';
@@ -1115,6 +1124,9 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             if ( ! $site_id ) {
                 throw new MainWP_Exception( 'Site ID not found. Please reload the page and try again.', 'mainwp' );
             }
+            if ( null === $this->authorize_restore_site( $site_id ) ) {
+                return;
+            }
             $type  = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
             $url   = isset( $_POST['url'] ) ? sanitize_text_field( wp_unslash( $_POST['url'] ) ) : '';
             $local = isset( $_POST['local'] ) ? sanitize_text_field( wp_unslash( $_POST['local'] ) ) : '';
@@ -1143,9 +1155,11 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             if ( ! $site_id ) {
                 throw new MainWP_Exception( esc_html__( 'Site ID not found. Please reload the page and try again.', 'mainwp' ) );
             }
+            if ( null === $this->authorize_restore_site( $site_id ) ) {
+                return;
+            }
 
-            $site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : 0;
-            $file    = isset( $_POST['file'] ) ? sanitize_text_field( wp_unslash( $_POST['file'] ) ) : '';
+            $file = isset( $_POST['file'] ) ? sanitize_text_field( wp_unslash( $_POST['file'] ) ) : '';
 
             die( wp_json_encode( array( 'result' => MainWP_Backup_Executor::backup_delete_file( $site_id, $file ) ) ) );
         } catch ( MainWP_Exception $e ) {
@@ -1179,9 +1193,9 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             $fileNameUID = isset( $_POST['fileNameUID'] ) ? sanitize_text_field( wp_unslash( $_POST['fileNameUID'] ) ) : '';
             $type        = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
 
-            $website = MainWP_DB::instance()->get_website_by_id( $siteId );
-            if ( ! $website ) {
-                throw new MainWP_Exception( esc_html__( 'No site selected!', 'mainwp' ) );
+            $website = $this->authorize_restore_site( (int) $siteId );
+            if ( null === $website ) {
+                return;
             }
 
             MainWP_Utility::end_session();

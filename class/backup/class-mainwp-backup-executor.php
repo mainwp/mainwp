@@ -1188,6 +1188,11 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * Record a forced-full notice on the task and in the site log, so the
      * user learns why the run cost a full backup.
      *
+     * The note is advisory - the run succeeded as a full backup - so it
+     * goes to backup_notices. Anything in backup_errors reads as a failed
+     * run: the failure email, the on-demand poll and the scheduler's
+     * incomplete-run retry all key off it.
+     *
      * @param object $website Website object.
      * @param int    $taskId  Task id.
      * @param string $message Notice text.
@@ -1195,7 +1200,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     protected static function record_incremental_notice( $website, $taskId, $message ) {
         MainWP_Logger::instance()->warning_for_website( $website, 'backup', $message );
         if ( MainWP_DB_Backup::instance()->get_backup_task_by_id( $taskId ) ) {
-            MainWP_DB_Backup::instance()->update_backup_errors( $taskId, $message . "\n" );
+            MainWP_DB_Backup::instance()->update_backup_notices( $taskId, $message . "\n" );
         }
     }
 

@@ -93,7 +93,7 @@ class MainWP_Backup_Sweeper_Exemption_Test extends MainWP_Abilities_Test_Case {
 	 */
 	private function make_flat_dir() {
 		$upload = wp_upload_dir();
-		$dir    = trailingslashit( $upload['basedir'] ) . 'mainwp-test-sweep-' . uniqid();
+		$dir    = trailingslashit( $upload['basedir'] ) . 'mainwp/test-sweep-' . uniqid();
 		wp_mkdir_p( $dir );
 		$this->fixture_dirs[] = $dir;
 		return trailingslashit( $dir );

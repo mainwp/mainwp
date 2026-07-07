@@ -69,6 +69,7 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
      *                               whether remote objects are deleted too.
      * @param bool   $dry_run        Report without mutating.
      * @param int    $budget_seconds Work budget for this tick.
+     * @param int    $now            Unused clock override, kept for signature parity.
      *
      * @return array Result: pruned and skipped candidate counts,
      *               snapshots_pruned, errors, dry_run, candidates report.
@@ -127,6 +128,8 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
         $site_id        = 0;
         $child_task_ids = array();
 
+        $pruned_any = false;
+
         // Leaf first: if the prune is interrupted, the remaining prefix of
         // the chain is still a complete restorable unit.
         foreach ( array_reverse( array_map( 'intval', $candidate['snapshot_ids'] ) ) as $snapshot_id ) {
@@ -136,25 +139,36 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
             }
             $site_id = (int) $snapshot->site_id;
 
-            $child_task_id = $this->child_task_id_for( $snapshot );
-            if ( '' !== $child_task_id ) {
-                $child_task_ids[] = $child_task_id;
-            }
-
             if ( $delete_cloud_copies ) {
                 $this->enqueue_cloud_deletes( $snapshot, $store );
             }
 
             $store->purge_upload_jobs_for_snapshot( $snapshot_id );
 
-            $this->remove_local_dir( $snapshot, $result['errors'] );
+            if ( ! $this->remove_local_dir( $snapshot, $result['errors'] ) ) {
+                // The artifacts are still on disk, so the snapshot stays
+                // restorable and 'complete'; the next sweep retries. The
+                // chain stops here like any interruption - pruning its
+                // ancestors would orphan this kept leaf.
+                break;
+            }
+
+            $child_task_id = $this->child_task_id_for( $snapshot );
+            if ( '' !== $child_task_id ) {
+                $child_task_ids[] = $child_task_id;
+            }
 
             $snapshots->set_status( $snapshot_id, 'pruned' );
 
+            $pruned_any = true;
             ++$result['snapshots_pruned'];
         }
 
         $this->notify_child_prune( $site_id, $child_task_ids );
+
+        if ( ! $pruned_any ) {
+            return;
+        }
 
         /**
          * Fires after a restorable unit is pruned by retention.
@@ -183,8 +197,8 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
      * resumable walk; the delete driver's final prefix sweep catches
      * anything a partial upload left behind that no checkpoint mentions.
      *
-     * @param object                        $snapshot Snapshot row.
-     * @param MainWP_Backup_Upload_Job_Store $store   Job store.
+     * @param object                         $snapshot Snapshot row.
+     * @param MainWP_Backup_Upload_Job_Store $store    Job store.
      *
      * @return void
      */
@@ -310,12 +324,16 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
      * Paths outside uploads/mainwp are never touched, whatever the row
      * says.
      *
+     * A failed artifact deletion returns false so the caller keeps the
+     * snapshot's status honest; the directory sweep afterwards is
+     * best-effort and only records diagnostics.
+     *
      * @param object   $snapshot Snapshot row with decoded archives.
      * @param string[] $errors   Error accumulator, modified in place.
      *
-     * @return void
+     * @return bool True when every artifact this snapshot names is gone.
      */
-    private function remove_local_dir( object $snapshot, array &$errors ): void {
+    private function remove_local_dir( object $snapshot, array &$errors ): bool {
         $upload = wp_upload_dir();
         $root   = trailingslashit( $upload['basedir'] ) . 'mainwp/';
 
@@ -329,7 +347,8 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
             $paths[] = (string) $snapshot->manifest_path;
         }
 
-        $dirs = array();
+        $clean = true;
+        $dirs  = array();
         foreach ( $paths as $path ) {
             $dirs[ dirname( $path ) ] = true;
 
@@ -341,7 +360,14 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
                 $errors[] = 'Refused to remove a file outside the dashboard backup tree: ' . $path;
                 continue;
             }
-            unlink( $real ); // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- pruning the snapshot's own artifact.
+            if ( ! @unlink( $real ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink, WordPress.PHP.NoSilencedErrors.Discouraged -- pruning the snapshot's own artifact; a failure is reported through the return value.
+                $errors[] = 'Could not remove local backup file: ' . basename( $real ) . ' (snapshot ' . (int) $snapshot->id . ')';
+                $clean    = false;
+            }
+        }
+
+        if ( ! $clean ) {
+            return false;
         }
 
         foreach ( array_keys( $dirs ) as $dir ) {
@@ -360,14 +386,16 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
             }
 
             foreach ( glob( $real . DIRECTORY_SEPARATOR . '*' ) ?: array() as $file ) { // phpcs:ignore Universal.Operators.DisallowShortTernary.Found -- empty-glob guard.
-                if ( is_file( $file ) ) {
-                    unlink( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- pruning the snapshot dir.
+                if ( is_file( $file ) && ! @unlink( $file ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink, WordPress.PHP.NoSilencedErrors.Discouraged -- pruning the snapshot dir; leftovers are reported below.
+                    $errors[] = 'Could not remove leftover file in snapshot directory: ' . basename( $file );
                 }
             }
 
-            if ( ! rmdir( $real ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- pruning the snapshot dir.
+            if ( ! @rmdir( $real ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir, WordPress.PHP.NoSilencedErrors.Discouraged -- pruning the snapshot dir; a leftover directory is advisory once the artifacts are gone.
                 $errors[] = 'Could not remove snapshot directory: ' . $dir;
             }
         }
+
+        return true;
     }
 }

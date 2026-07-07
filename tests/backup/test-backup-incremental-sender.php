@@ -1029,4 +1029,98 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( '1', (string) $creates[1]['emit_manifest'] );
 		$this->assertArrayNotHasKey( 'parent_manifest_ref', $creates[1] );
 	}
+
+	/**
+	 * Create a real scheduled incremental task row so the notice recording
+	 * against the wp_backup row is observable, unlike the synthetic task
+	 * objects the other tests use.
+	 *
+	 * @param int $site_id Site id the task targets.
+	 *
+	 * @return object Task row.
+	 */
+	protected function create_real_task_row( $site_id ) {
+		$user = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$task = MainWP_DB_Backup::instance()->add_backup_task(
+			$user,
+			'Incremental sender test task',
+			'daily',
+			'incremental',
+			'',
+			(string) $site_id,
+			'',
+			'',
+			'',
+			0,
+			0,
+			0,
+			0,
+			0,
+			'zip',
+			0,
+			1,
+			150,
+			0,
+			0
+		);
+		$this->assertNotFalse( $task, 'Precondition: the task row must insert.' );
+		MainWP_DB_Backup::instance()->update_backup_task_with_values( (int) $task->id, array( 'last_run' => time() - 100 ) );
+		return MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+	}
+
+	/**
+	 * A fallback to full on a child without the incremental capability is a
+	 * successful backup with an advisory note: the note lands in
+	 * backup_notices and backup_errors stays empty, so the run never reads
+	 * as failed and never triggers the failure email.
+	 *
+	 * @return void
+	 */
+	public function test_capability_fallback_records_notice_not_error() {
+		$site_id = $this->create_test_site();
+		$task    = $this->create_real_task_row( $site_id );
+		$this->record_base_snapshot( $site_id, (int) $task->id );
+
+		$this->mock_child_actions(
+			array(
+				'backup_preflight'   => $this->preflight_response( array( 'incremental' => 0 ) ),
+				'backup_task_create' => array(
+					'task_id' => 'child-task-1',
+					'phase'   => 'queued',
+				),
+			)
+		);
+
+		$cycle = $this->run_cycle( $site_id, $task );
+		$this->assertNull( $cycle['exception'] );
+
+		$params = $this->last_call_params( 'backup_task_create' );
+		$this->assertSame( 'full', $params['type'], 'Precondition: the run fell back to a full backup.' );
+
+		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( (int) $task->id );
+		$this->assertSame( '', (string) $task->backup_errors, 'An advisory fallback note must not mark the run failed.' );
+		$this->assertStringContainsString( 'does not support incremental', (string) $task->backup_notices, 'The fallback reason must reach the notices channel.' );
+	}
+
+	/**
+	 * The notice recorder itself writes the advisory channel: every
+	 * fallback note it takes lands in backup_notices and leaves
+	 * backup_errors alone, since anything in backup_errors reads as a
+	 * failed run downstream.
+	 *
+	 * @return void
+	 */
+	public function test_record_incremental_notice_writes_notices_channel() {
+		$site_id = $this->create_test_site();
+		$task    = $this->create_real_task_row( $site_id );
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+
+		$method = new \ReflectionMethod( MainWP_Backup_Executor::class, 'record_incremental_notice' );
+		$method->setAccessible( true );
+		$method->invoke( null, $website, (int) $task->id, 'A full backup was created because incremental backup was unavailable for this site.' );
+
+		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( (int) $task->id );
+		$this->assertSame( '', (string) $task->backup_errors, 'The advisory note must not touch the failure channel.' );
+		$this->assertStringContainsString( 'incremental backup was unavailable', (string) $task->backup_notices, 'The advisory note must land in backup_notices.' );
+	}
 }

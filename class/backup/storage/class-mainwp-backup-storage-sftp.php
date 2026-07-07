@@ -350,7 +350,13 @@ class MainWP_Backup_Storage_SFTP implements MainWP_Backup_Storage_Provider { // 
             $type = (int) ( $attrs['type'] ?? 0 );
 
             if ( static::TYPE_DIRECTORY === $type ) {
-                $this->walk( $sftp, $dir . '/' . $name, $key, $prefix, $objects );
+                // Descend only into ancestors of the prefix subtree or
+                // directories inside it, so a per-snapshot listing never
+                // scans the destination's whole backup history.
+                $dir_key = $key . '/';
+                if ( '' === $prefix || 0 === strpos( $prefix, $dir_key ) || 0 === strpos( $dir_key, $prefix ) ) {
+                    $this->walk( $sftp, $dir . '/' . $name, $key, $prefix, $objects );
+                }
                 continue;
             }
 

@@ -457,13 +457,10 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         } else {
             $auto_updates_running = MainWP_Cron_Jobs_Auto_Updates::instance()->check_to_run_auto_updates();
             if ( $auto_updates_running ) {
-                MainWP_Logger::instance()->log_events( 'debug-updates-crons', 'Start run - auto updates' );
                 MainWP_Cron_Jobs_Auto_Updates::instance()->handle_cron_auto_updates();
                 return;
             }
         }
-
-        MainWP_Logger::instance()->log_events( 'debug-updates-crons', 'Start run - updates check' );
 
         $updatecheck_running = ( 'Y' === get_option( 'mainwp_updatescheck_is_running' ) ? true : false );
 

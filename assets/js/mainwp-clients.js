@@ -870,10 +870,6 @@ const mainwp_manageclient_import_client = function () { // NOSONAR
     errors.push(__('Please enter the client name.'));
   }
 
-  if (import_url == '') {
-    errors.push(__('Please enter the site URL.'));
-  }
-
   if (import_email == '') {
     errors.push(__('Please enter email of the client.'));
   }

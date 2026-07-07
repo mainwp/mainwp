@@ -137,6 +137,7 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
 
         // Check the uptime for the detected monitors.
         if ( count( $checkuptime_monitors ) ) {
+            MainWP_Utility::update_option( 'mainwp_uptime_lasttime_check', $local_time );
             MainWP_Uptime_Monitoring_Connect::instance()->check_monitors( $checkuptime_monitors, $global_settings );
         }
     }

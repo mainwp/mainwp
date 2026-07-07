@@ -1086,7 +1086,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             'Ping childs sites'           => array( 'mainwp_cron_last_ping', 'mainwp_cronpingchilds_action', esc_html__( 'Once daily', 'mainwp' ), 'daily' ),
         );
 
-        $cron_jobs['Child site uptime monitoring'] = array( 'mainwp_uptimecheck_auto_main_counter_lasttime_started', 'mainwp_cronuptimemonitoringcheck_action', esc_html__( 'Once every minute', 'mainwp' ), 'minutely' );
+        $cron_jobs['Child site uptime monitoring'] = array( 'mainwp_uptime_lasttime_check', 'mainwp_cronuptimemonitoringcheck_action', esc_html__( 'Once every minute', 'mainwp' ), 'minutely' );
 
         $disableHealthChecking = get_option( 'mainwp_disableSitesHealthMonitoring', 1 );  // disabled by default.
         if ( ! $disableHealthChecking ) {
@@ -1154,7 +1154,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                         } else {
                             $lasttime_run = get_option( $hook[0] );
                             if ( $lasttime_run ) {
-                                if ( 'mainwp_uptimecheck_auto_main_counter_lasttime_started' === $hook[0] ) {
+                                if ( 'mainwp_uptime_lasttime_check' === $hook[0] ) {
                                     $last_run = MainWP_Utility::format_timestamp( $lasttime_run );
                                 } else {
                                     $last_run = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $lasttime_run ) );

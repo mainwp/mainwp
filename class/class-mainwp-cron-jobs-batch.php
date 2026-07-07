@@ -349,7 +349,7 @@ class MainWP_Cron_Jobs_Batch { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             }
 
             // batch processing limits.
-            if ( $count_processed_now < $items_limit && ! empty( $coreToUpdate ) && empty( $updated_status['wp'] ) ) {
+            if ( $count_processed_now < $items_limit && ! empty( $coreToUpdate ) ) {
 
                 $info = $coreToUpdate;
 
@@ -361,6 +361,15 @@ class MainWP_Cron_Jobs_Batch { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
                 $updated_status['updates_processed']['wp'] = $info;
 
+                // Clear previous errors before processing.
+                if ( isset( $updated_status['wp']['error'] ) ) {
+                    unset( $updated_status['wp']['error'] );
+                }
+
+                if ( isset( $updated_status['wp']['lasttime_error'] ) ) {
+                    unset( $updated_status['wp']['lasttime_error'] );
+                }
+
                 if ( ! $ignored ) {
                     ++$count_processed_now;
                     MainWP_DB::instance()->update_website_option( $website, 'bulk_updates_info', wp_json_encode( $updated_status ) );
@@ -368,7 +377,8 @@ class MainWP_Cron_Jobs_Batch { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     try {
                         MainWP_Connect::fetch_url_authed( $website, 'upgrade' );
                     } catch ( \Exception $e ) {
-                        $updated_status['wp']['error'] = $e->getMessage();
+                        $updated_status['wp']['error']          = $e->getMessage();
+                        $updated_status['wp']['lasttime_error'] = time();
                         MainWP_DB::instance()->update_website_option( $website, 'bulk_updates_info', wp_json_encode( $updated_status ) );
                     }
                 }

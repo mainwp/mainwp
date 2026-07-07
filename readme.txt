@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 6.1.2
+Stable tag: 6.1.3
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -150,6 +150,13 @@ Please report security bugs found in the source code of the MainWP plugin throug
 11. Dashboard Insights
 
 == Changelog ==
+
+= 6.1.3 - 7-7-2026 =
+
+* Fixed: Improved core auto-update retry behavior by re-queuing failed updates when the last failure is older than 6 hours.
+* Updated: Improved uptime monitoring scheduling so the latest check time is saved more reliably before checks begin.
+* Updated: Server information displays to keep the “Last Run” value accurate for child site uptime monitoring.
+* Updated: Import clients process so it does not require associated child sites.
 
 = 6.1.2 - 6-23-2026 =
 

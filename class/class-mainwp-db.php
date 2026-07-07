@@ -475,6 +475,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             'wp.plugins',
             'wp.themes',
             'wp.offline_check_result', // 1 - online, -1 offline.
+            'wp.automatic_update',
         );
 
         $select = ' wp.*,wp_sync.* ';

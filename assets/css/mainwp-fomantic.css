@@ -239,7 +239,7 @@
 }
 
 .mainwp-ui.mainwp-ui:not(.mainwp-ui-setup) .ui.page.dimmer {
-    z-index: 1000 !important;
+    z-index: 1002 !important;
 }
 
 .mainwp-ui .ui.dimmer.active,

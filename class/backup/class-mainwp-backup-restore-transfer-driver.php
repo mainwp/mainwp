@@ -883,7 +883,7 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
      *                         { artifact_index, offset, chunk_bytes,
      *                         floor_fails, ok_streak, ceiling_bytes,
      *                         ceiling_soft, ceiling_streak_count,
-     *                         good_bytes }.
+     *                         ceiling_cleared_bytes, good_bytes }.
      * @param float  $deadline Slice deadline (epoch).
      *
      * @return array { done: bool, error: string|null, retryable: bool }
@@ -891,18 +891,19 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
     public function transfer_artifacts( object $website, string $task_id, array $plan, array &$cursor, float $deadline ): array { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- chunk loop with realign, adaptive sizing, and floor retries.
         $cursor = array_merge(
             array(
-                'artifact_index'       => 0,
-                'offset'               => 0,
-                'chunk_bytes'          => $this->default_chunk_bytes(),
-                'floor_fails'          => 0,
-                'ok_streak'            => 0,
+                'artifact_index'        => 0,
+                'offset'                => 0,
+                'chunk_bytes'           => $this->default_chunk_bytes(),
+                'floor_fails'           => 0,
+                'ok_streak'             => 0,
                 // A checkpoint written before the ceiling fields existed
                 // backfills here to "no ceiling learned": exactly today's
                 // doubling behavior until the first failure teaches one.
-                'ceiling_bytes'        => 0,
-                'ceiling_soft'         => false,
-                'ceiling_streak_count' => 0,
-                'good_bytes'           => 0,
+                'ceiling_bytes'         => 0,
+                'ceiling_soft'          => false,
+                'ceiling_streak_count'  => 0,
+                'ceiling_cleared_bytes' => 0,
+                'good_bytes'            => 0,
             ),
             $cursor
         );
@@ -993,9 +994,22 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
                 // proven yet, and for the equal-size case where the good
                 // size itself started failing (a revert there would resend
                 // the same failing size forever).
-                $cursor['chunk_bytes'] = ( $cursor['good_bytes'] > 0 && $cursor['good_bytes'] < $failed_bytes )
-                    ? (int) $cursor['good_bytes']
-                    : max( self::CHUNK_MIN_BYTES, (int) ( $failed_bytes / 2 ) );
+                if ( $cursor['good_bytes'] > 0 && $cursor['good_bytes'] < $failed_bytes ) {
+                    $cursor['chunk_bytes'] = (int) $cursor['good_bytes'];
+                } elseif ( $failed_bytes === (int) $cursor['ceiling_cleared_bytes'] && $failed_bytes - self::CEILING_CONVERGE_STEP_BYTES >= self::CHUNK_MIN_BYTES ) {
+                    // The boundary flapped: this exact size just cleared its
+                    // ceiling on a successful probe, so the cap sits right
+                    // here and a halve would spend a full bisection re-climb
+                    // rediscovering it. Step one converge step below instead.
+                    // The memory is consumed and good_bytes zeroed, so a
+                    // failure at the stepped-down size halves as before - the
+                    // flap earns exactly one probe, never a revert loop.
+                    $cursor['chunk_bytes']           = $failed_bytes - self::CEILING_CONVERGE_STEP_BYTES;
+                    $cursor['good_bytes']            = 0;
+                    $cursor['ceiling_cleared_bytes'] = 0;
+                } else {
+                    $cursor['chunk_bytes'] = max( self::CHUNK_MIN_BYTES, (int) ( $failed_bytes / 2 ) );
+                }
                 continue;
             }
             if ( 'realign' === $outcome['result'] ) {
@@ -1027,10 +1041,14 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
                 // A send at (or past) the recorded ceiling just worked -
                 // the heal reprobe landed, or a mid-run filter raised the
                 // size over it. Either way the cap is gone: forget it and
-                // let plain doubling own growth again.
-                $cursor['ceiling_bytes']        = 0;
-                $cursor['ceiling_soft']         = false;
-                $cursor['ceiling_streak_count'] = 0;
+                // let plain doubling own growth again. Remember the size
+                // that cleared, though: a flappy boundary fails this same
+                // size moments later, and that failure should step down
+                // one converge step instead of halving into a re-climb.
+                $cursor['ceiling_bytes']         = 0;
+                $cursor['ceiling_soft']          = false;
+                $cursor['ceiling_streak_count']  = 0;
+                $cursor['ceiling_cleared_bytes'] = (int) $cursor['chunk_bytes'];
             }
             ++$cursor['ok_streak'];
             if ( $cursor['ok_streak'] >= self::GROW_BACK_STREAK ) {

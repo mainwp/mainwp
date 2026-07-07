@@ -1071,6 +1071,89 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * A successful heal probe at the ceiling remembers the size it
+	 * cleared, so a boundary that flaps right back can be recognized.
+	 */
+	public function test_reprobe_success_remembers_cleared_size() {
+		$plan = $this->staged_plan( 32 * 300000 + 310000 );
+
+		$cursor = array(
+			'chunk_bytes'          => 300000,
+			'ceiling_bytes'        => 310000,
+			'ceiling_soft'         => true,
+			'ceiling_streak_count' => 1,
+			'good_bytes'           => 300000,
+		);
+		$result = $this->driver->transfer_artifacts( (object) array( 'id' => 1 ), 'task-1-x', $plan, $cursor, microtime( true ) + 60 );
+
+		$this->assertTrue( $result['done'] );
+		$this->assertSame( 0, $cursor['ceiling_bytes'], 'A successful probe at the ceiling clears it.' );
+		$this->assertSame( 310000, $cursor['ceiling_cleared_bytes'], 'The cleared size must be remembered for flap detection.' );
+	}
+
+	/**
+	 * A flap at the exact size a heal probe just cleared steps down one
+	 * converge step instead of halving - the boundary is known to sit
+	 * right there, so a full bisection re-climb would rediscover what
+	 * the cursor already learned (the job-14 production cycle).
+	 */
+	public function test_flap_at_cleared_size_steps_down_instead_of_halving() {
+		$plan = $this->staged_plan( 737280 );
+
+		$this->driver->chunk_script = array(
+			array(
+				'result'         => 'shrink',
+				'bytes_received' => 0,
+				'error'          => 'NOMAINWP - https://example.com/wp-admin/admin-ajax.php',
+				'retryable'      => true,
+			),
+		);
+
+		$cursor = array(
+			'chunk_bytes'           => 737280,
+			'good_bytes'            => 737280,
+			'ceiling_cleared_bytes' => 737280,
+		);
+		$result = $this->driver->transfer_artifacts( (object) array( 'id' => 1 ), 'task-1-x', $plan, $cursor, microtime( true ) + 60 );
+
+		$this->assertTrue( $result['done'] );
+		$this->assertSame( 720896, $this->driver->sent[1]['bytes'], 'The retry must ride one converge step below the flapped size, not half of it.' );
+		$this->assertSame( 737280, $cursor['ceiling_bytes'], 'The flapped size is re-taught as the ceiling.' );
+		$this->assertFalse( $cursor['ceiling_soft'], 'A NOMAINWP flap marks the re-taught ceiling hard.' );
+		$this->assertSame( 0, $cursor['ceiling_cleared_bytes'], 'The step-down consumes the cleared-size memory.' );
+	}
+
+	/**
+	 * The step-down spends exactly one probe: when the size one converge
+	 * step below the flapped boundary also fails, the halve safety takes
+	 * over unchanged - nothing is proven at that level anymore.
+	 */
+	public function test_second_failure_after_flap_step_down_halves() {
+		$plan  = $this->staged_plan( 737280 );
+		$fault = array(
+			'result'         => 'shrink',
+			'bytes_received' => 0,
+			'error'          => 'NOMAINWP - https://example.com/wp-admin/admin-ajax.php',
+			'retryable'      => true,
+		);
+
+		$this->driver->chunk_script = array( $fault, $fault );
+
+		$cursor = array(
+			'chunk_bytes'           => 737280,
+			'good_bytes'            => 737280,
+			'ceiling_cleared_bytes' => 737280,
+		);
+		$result = $this->driver->transfer_artifacts( (object) array( 'id' => 1 ), 'task-1-x', $plan, $cursor, microtime( true ) + 60 );
+
+		$this->assertTrue( $result['done'] );
+		$this->assertSame( 737280, $this->driver->sent[0]['bytes'] );
+		$this->assertSame( 720896, $this->driver->sent[1]['bytes'], 'The flap earns exactly one step-down probe.' );
+		$this->assertSame( 360448, $this->driver->sent[2]['bytes'], 'The failed step-down probe halves - the safety is intact.' );
+		$this->assertSame( 720896, $cursor['ceiling_bytes'], 'The second failure tightens the ceiling to its own size.' );
+	}
+
+	/**
 	 * A checkpoint written before the ceiling fields existed backfills
 	 * them on resume with no warnings and sane values.
 	 */
@@ -1090,6 +1173,7 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends \WP_UnitTestCase {
 		$this->assertSame( 0, $cursor['ceiling_bytes'] );
 		$this->assertFalse( $cursor['ceiling_soft'] );
 		$this->assertSame( 0, $cursor['ceiling_streak_count'] );
+		$this->assertSame( 0, $cursor['ceiling_cleared_bytes'] );
 		$this->assertSame( 300, $cursor['good_bytes'], 'good_bytes must track the size that worked.' );
 	}
 

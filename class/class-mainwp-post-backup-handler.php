@@ -357,18 +357,64 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         $plan     = isset( $job->checkpoint['plan'] ) ? (array) $job->checkpoint['plan'] : array();
 
         wp_send_json(
-            array(
-                'status'           => (string) $job->status,
-                'last_error'       => (string) $job->last_error,
-                'error_code'       => isset( $job->checkpoint['last_error_code'] ) ? (string) $job->checkpoint['last_error_code'] : '',
-                'attempt_count'    => (int) $job->attempt_count,
-                'next_retry_at'    => (int) $job->next_retry_at,
-                'artifact_index'   => isset( $transfer['artifact_index'] ) ? (int) $transfer['artifact_index'] : 0,
-                'artifact_total'   => count( $plan ),
-                'has_rollback'     => ! empty( $job->checkpoint['pre_snapshot_artifacts'] ),
-                'cancel_requested' => ! empty( $job->checkpoint['cancel_intent'] ),
-                'verification'     => isset( $job->checkpoint['verification'] ) ? $job->checkpoint['verification'] : array(),
+            array_merge(
+                array(
+                    'status'           => (string) $job->status,
+                    'last_error'       => (string) $job->last_error,
+                    'error_code'       => isset( $job->checkpoint['last_error_code'] ) ? (string) $job->checkpoint['last_error_code'] : '',
+                    'attempt_count'    => (int) $job->attempt_count,
+                    'next_retry_at'    => (int) $job->next_retry_at,
+                    'artifact_index'   => isset( $transfer['artifact_index'] ) ? (int) $transfer['artifact_index'] : 0,
+                    'artifact_total'   => count( $plan ),
+                    'has_rollback'     => ! empty( $job->checkpoint['pre_snapshot_artifacts'] ),
+                    'cancel_requested' => ! empty( $job->checkpoint['cancel_intent'] ),
+                    'verification'     => isset( $job->checkpoint['verification'] ) ? $job->checkpoint['verification'] : array(),
+                ),
+                $this->transfer_byte_progress( $plan, $transfer )
             )
+        );
+    }
+
+    /**
+     * Byte-level transfer progress for the poll payload.
+     *
+     * Completed artifacts count in full, the in-flight one counts its
+     * confirmed offset, adopt-only entries never cross the wire and stay
+     * out of both totals. Plans whose archive metadata predates sizes
+     * report nothing rather than a misleading 0/0, so the keys are only
+     * present when a real total is known.
+     *
+     * @param array $plan     Checkpoint plan entries.
+     * @param array $transfer Checkpoint transfer cursor.
+     *
+     * @return array Empty, or { bytes_transferred: int, bytes_total: int }.
+     */
+    private function transfer_byte_progress( array $plan, array $transfer ): array {
+        $index       = isset( $transfer['artifact_index'] ) ? (int) $transfer['artifact_index'] : 0;
+        $offset      = isset( $transfer['offset'] ) ? (int) $transfer['offset'] : 0;
+        $total       = 0;
+        $transferred = 0;
+
+        foreach ( array_values( $plan ) as $i => $entry ) {
+            if ( ! empty( $entry['adopt_only'] ) ) {
+                continue;
+            }
+            $size   = isset( $entry['size'] ) ? (int) $entry['size'] : 0;
+            $total += $size;
+            if ( $i < $index ) {
+                $transferred += $size;
+            } elseif ( $i === $index ) {
+                $transferred += min( $offset, $size );
+            }
+        }
+
+        if ( $total <= 0 ) {
+            return array();
+        }
+
+        return array(
+            'bytes_transferred' => $transferred,
+            'bytes_total'       => $total,
         );
     }
 

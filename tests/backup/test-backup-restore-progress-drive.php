@@ -144,6 +144,141 @@ class MainWP_Backup_Restore_Progress_Drive_Test extends MainWP_Abilities_Test_Ca
 	}
 
 	/**
+	 * Create a pending restore job with an explicit plan and transfer
+	 * cursor, for byte-progress assertions.
+	 *
+	 * @param string $restore_id Restore id marker.
+	 * @param array  $plan       Checkpoint plan entries.
+	 * @param array  $transfer   Checkpoint transfer cursor.
+	 *
+	 * @return int Job id.
+	 */
+	private function make_job_with_transfer( $restore_id, array $plan, array $transfer ) {
+		$site_id = $this->create_test_site();
+		return MainWP_Backup_Restore_Job_Store::instance()->create_job(
+			$site_id,
+			5,
+			array(
+				'restore_id' => $restore_id,
+				'sub_type'   => 'db',
+				'plan'       => $plan,
+				'options'    => array(
+					'pre_snapshot'  => false,
+					'file_rollback' => false,
+				),
+				'transfer'   => $transfer,
+			)
+		);
+	}
+
+	/**
+	 * The poll reports byte-level transfer progress: completed artifacts
+	 * count in full, the in-flight one counts its confirmed offset.
+	 */
+	public function test_progress_reports_byte_totals() {
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$job_id = $this->make_job_with_transfer(
+			'drivebytes1',
+			array(
+				array(
+					'role'       => 'db',
+					'file'       => 'a.zip',
+					'size'       => 1000,
+					'adopt_only' => false,
+				),
+				array(
+					'role'       => 'full',
+					'file'       => 'b.zip',
+					'size'       => 2000,
+					'adopt_only' => false,
+				),
+			),
+			array(
+				'artifact_index' => 1,
+				'offset'         => 500,
+			)
+		);
+
+		$minus_one = static function () {
+			return -1;
+		};
+		$response  = $this->poll_progress( $job_id, $minus_one );
+
+		$this->assertSame( 3000, $response['bytes_total'] );
+		$this->assertSame( 1500, $response['bytes_transferred'], 'Artifact 0 in full plus 500 confirmed bytes of artifact 1.' );
+	}
+
+	/**
+	 * Adopt-only artifacts never cross the wire, so they stay out of both
+	 * byte totals.
+	 */
+	public function test_progress_excludes_adopt_only_bytes() {
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$job_id = $this->make_job_with_transfer(
+			'drivebytes2',
+			array(
+				array(
+					'role'       => 'full',
+					'file'       => 'rollback.zip',
+					'size'       => 999999,
+					'adopt_only' => true,
+				),
+				array(
+					'role'       => 'db',
+					'file'       => 'a.zip',
+					'size'       => 1000,
+					'adopt_only' => false,
+				),
+			),
+			array(
+				'artifact_index' => 1,
+				'offset'         => 200,
+			)
+		);
+
+		$minus_one = static function () {
+			return -1;
+		};
+		$response  = $this->poll_progress( $job_id, $minus_one );
+
+		$this->assertSame( 1000, $response['bytes_total'] );
+		$this->assertSame( 200, $response['bytes_transferred'] );
+	}
+
+	/**
+	 * Legacy plans whose archive metadata predates sizes (size 0) omit
+	 * the byte keys entirely rather than reporting a misleading 0/0 -
+	 * and so does a job with no plan yet.
+	 */
+	public function test_progress_omits_bytes_without_sizes() {
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$minus_one = static function () {
+			return -1;
+		};
+
+		$legacy = $this->make_job_with_transfer(
+			'drivebytes3',
+			array(
+				array(
+					'role'       => 'db',
+					'file'       => 'old.zip',
+					'size'       => 0,
+					'adopt_only' => false,
+				),
+			),
+			array( 'artifact_index' => 0 )
+		);
+		$response = $this->poll_progress( $legacy, $minus_one );
+		$this->assertArrayNotHasKey( 'bytes_total', $response );
+		$this->assertArrayNotHasKey( 'bytes_transferred', $response );
+
+		list( , $planless ) = $this->make_pending_job( 'drivebytes4' );
+		$response           = $this->poll_progress( $planless, $minus_one );
+		$this->assertArrayNotHasKey( 'bytes_total', $response );
+		$this->assertArrayNotHasKey( 'bytes_transferred', $response );
+	}
+
+	/**
 	 * The poll drives only the job it polls, never another site's active
 	 * restore: a poll for job A advances A and leaves B untouched.
 	 */

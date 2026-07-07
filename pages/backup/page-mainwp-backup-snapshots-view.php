@@ -216,6 +216,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             var currentSnapshot = 0;
             var currentJob = 0;
             var pollTimer = null;
+            var restorePollRetries = 0;
             var backupPollTimer = null;
             var backupElapsedTimer = null;
             var backupStartTime = null;
@@ -381,6 +382,11 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 var label = statusLabels[ data.status ] || data.status;
                 if ( 'transferring' === data.status && data.artifact_total > 0 ) {
                     label += ' (' + ( data.artifact_index + 1 ) + '/' + data.artifact_total + ')';
+                    if ( data.bytes_total > 0 ) {
+                        // Byte-level progress: without it a multi-GB transfer
+                        // reads as hung for its whole 10+ minutes.
+                        label += ' (' + ( data.bytes_transferred / 1048576 ).toFixed( 1 ) + ' <?php echo esc_js( esc_html__( 'of', 'mainwp' ) ); ?> ' + ( data.bytes_total / 1048576 ).toFixed( 1 ) + ' MB)';
+                    }
                 }
 
                 var terminal = ( 'completed' === data.status || 'failed_permanent' === data.status || 'cancelled' === data.status );
@@ -478,17 +484,44 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
 
             function poll() {
                 $.post( ajaxurl, { action: 'mainwp_restore_progress', security: nonces.progress, job_id: currentJob }, function ( data ) {
+                    restorePollRetries = 0;
+                    // A security or job-lookup refusal arrives as HTTP 200
+                    // with an error body and no status field (the handler
+                    // never sends both). Without this guard the loop would
+                    // reschedule forever over a garbled label.
+                    if ( data && data.error && ! data.status ) {
+                        $( '#mainwp-restore-result-message' ).removeClass( 'green blue' ).addClass( 'red' ).text( data.error ).show();
+                        $( '#mainwp-restore-spinner' ).hide();
+                        window.clearTimeout( pollTimer );
+                        return;
+                    }
                     showProgress( data );
                     if ( [ 'completed', 'failed_permanent', 'cancelled' ].indexOf( data.status ) === -1 ) {
                         pollTimer = window.setTimeout( poll, 5000 );
                     } else if ( 'completed' === data.status ) {
                         loadSnapshots( currentSite );
                     }
-                }, 'json' );
+                }, 'json' ).fail( function () {
+                    // A transport error (lost connection, timeout, a 500)
+                    // skips the success callback. Each foreground poll also
+                    // drives a work slice, so a silently dead poller slows
+                    // the restore to the cron cadence - retry harder than
+                    // the backup poller before giving the tab up.
+                    restorePollRetries++;
+                    if ( restorePollRetries <= 5 ) {
+                        $( '#mainwp-restore-result-message' ).removeClass( 'green blue' ).addClass( 'red' ).text( '<?php echo esc_js( esc_html__( 'Lost the connection to the dashboard while following the restore. Retrying.', 'mainwp' ) ); ?>' ).show();
+                        pollTimer = window.setTimeout( poll, 3000 );
+                        return;
+                    }
+                    $( '#mainwp-restore-result-message' ).removeClass( 'green blue' ).addClass( 'red' ).text( '<?php echo esc_js( esc_html__( 'Lost the connection to the dashboard. The restore continues on the dashboard\'s schedule; reload this page to follow it again.', 'mainwp' ) ); ?>' ).show();
+                    $( '#mainwp-restore-spinner' ).hide();
+                    window.clearTimeout( pollTimer );
+                } );
             }
 
             function startJobFollow( jobId ) {
                 currentJob = jobId;
+                restorePollRetries = 0;
                 setPane( false );
                 $( '#mainwp-restore-result-message' ).hide();
                 $( '#mainwp-restore-maintenance-note' ).hide();

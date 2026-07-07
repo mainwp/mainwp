@@ -1237,9 +1237,16 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
      */
     public function mainwp_backup_getfilesize() {
         $this->secure_request( 'mainwp_backup_getfilesize' );
+        $site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification -- verified by secure_request above.
+        if ( null === $this->authorize_restore_site( $site_id ) ) {
+            return;
+        }
 
         try {
             $local = isset( $_POST['local'] ) ? sanitize_text_field( wp_unslash( $_POST['local'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+            if ( ! MainWP_Backup_File_Manager::is_within_site_backup_dir( $local, $site_id ) ) {
+                die( wp_json_encode( array( 'error' => esc_html__( 'Invalid backup file location.', 'mainwp' ) ) ) );
+            }
             die( wp_json_encode( array( 'result' => MainWP_Backup_File_Manager::backup_get_file_size( $local ) ) ) );
         } catch ( MainWP_Exception $e ) {
             $this->die_exception_error( $e );

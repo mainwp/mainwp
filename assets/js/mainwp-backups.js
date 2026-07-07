@@ -290,6 +290,7 @@ backup_download_file = function (pSiteId, type, url, file, regexfile, size, subf
         return function (pFunction) {
             let data = mainwp_secure_data({
                 action: 'mainwp_backup_getfilesize',
+                site_id: pSiteId,
                 local: file
             });
             jQuery.ajax({
@@ -859,6 +860,7 @@ let managebackups_backup_download_file = function (pSiteId, pSiteName, type, url
     let interVal = setInterval(function () {
         let data = mainwp_secure_data({
             action: 'mainwp_backup_getfilesize',
+            site_id: pSiteId,
             local: file
         });
         jQuery.post(ajaxurl, data, function (pSiteId) {
@@ -1622,6 +1624,7 @@ updatesoverview_backupnow_download_file = function (pSiteId, pSiteName, type, ur
     let interVal = setInterval(function () {
         let data = mainwp_secure_data({
             action: 'mainwp_backup_getfilesize',
+            site_id: pSiteId,
             local: file
         });
         jQuery.post(ajaxurl, data, function (pSiteId) {

@@ -599,12 +599,6 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
      * Whether a caller-supplied local path stays inside the dashboard
      * backup tree (uploads/mainwp/).
      *
-     * The path may not exist yet (it is a download destination), so this
-     * checks the normalized string: it must start with the backup root and
-     * carry no parent-directory segments. A substring match is not enough -
-     * the root can appear later in a hostile path, and a `..` after a valid
-     * root escapes it.
-     *
      * @param string $path Candidate absolute path.
      *
      * @return bool True when the path is confined to the backup root.
@@ -612,15 +606,58 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_dir()
      */
     public static function is_within_backup_root( string $path ): bool {
-        if ( '' === $path ) {
+        $dirs = MainWP_System_Utility::get_mainwp_dir();
+        return static::path_is_confined_to( $path, (string) $dirs[0] );
+    }
+
+    /**
+     * Whether a caller-supplied local path stays inside a specific site's
+     * backup directory (uploads/mainwp/{userid}/{site_id}/).
+     *
+     * The legacy filesize poll takes a browser-supplied path; confining it
+     * to the requesting site's own directory keeps a site-restricted user
+     * from probing another site's artifacts. The path is the same one the
+     * executor and monitor build with get_mainwp_specific_dir(), so an
+     * authorized poll of a real download target passes.
+     *
+     * @param string $path    Candidate absolute path.
+     * @param int    $site_id Site the path must belong to.
+     *
+     * @return bool True when the path is confined to that site's backup dir.
+     *
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_specific_dir()
+     */
+    public static function is_within_site_backup_dir( string $path, int $site_id ): bool {
+        if ( $site_id <= 0 ) {
+            return false;
+        }
+        $dir = MainWP_System_Utility::get_mainwp_specific_dir( (string) $site_id );
+        return static::path_is_confined_to( $path, $dir );
+    }
+
+    /**
+     * Whether a path is confined to a base directory.
+     *
+     * The path may not exist yet (it is a download destination), so this
+     * checks the normalized string: it must start with the base and carry
+     * no parent-directory segments. A substring match is not enough - the
+     * base can appear later in a hostile path, and a `..` after a valid
+     * base escapes it.
+     *
+     * @param string $path Candidate absolute path.
+     * @param string $base Directory the path must sit under.
+     *
+     * @return bool True when the path is confined to the base.
+     */
+    private static function path_is_confined_to( string $path, string $base ): bool {
+        if ( '' === $path || '' === $base ) {
             return false;
         }
 
-        $dirs = MainWP_System_Utility::get_mainwp_dir();
-        $root = trailingslashit( wp_normalize_path( (string) $dirs[0] ) );
+        $base = trailingslashit( wp_normalize_path( $base ) );
         $norm = wp_normalize_path( $path );
 
-        if ( 0 !== strpos( $norm, $root ) ) {
+        if ( 0 !== strpos( $norm, $base ) ) {
             return false;
         }
 

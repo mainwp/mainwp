@@ -30,13 +30,44 @@ class MainWP_Backup_Legacy_Ajax_Auth_Test extends MainWP_Abilities_Test_Case {
 	private $child_calls = array();
 
 	/**
-	 * Reset request state.
+	 * Per-site backup directories created as a side effect of
+	 * get_mainwp_specific_dir() during a test, removed in tearDown.
+	 *
+	 * @var string[]
+	 */
+	private $fixture_dirs = array();
+
+	/**
+	 * Reset request state and remove any per-site dir the containment
+	 * checks created (get_mainwp_specific_dir mkdir's on every call).
 	 *
 	 * @return void
 	 */
 	public function tearDown(): void {
 		unset( $_POST['security'], $_POST['site_id'], $_POST['siteId'], $_POST['type'], $_POST['url'], $_POST['local'], $_POST['file'], $_REQUEST['security'] );
+
+		foreach ( $this->fixture_dirs as $dir ) {
+			if ( is_dir( $dir ) ) {
+				array_map( 'unlink', glob( trailingslashit( $dir ) . '*' ) ?: array() ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test cleanup.
+				rmdir( $dir ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- test cleanup.
+			}
+		}
+		$this->fixture_dirs = array();
+
 		parent::tearDown();
+	}
+
+	/**
+	 * The per-site backup directory for a site, tracked for cleanup.
+	 *
+	 * @param int $site_id Site id.
+	 *
+	 * @return string Per-site dir with trailing slash.
+	 */
+	private function site_backup_dir( $site_id ) {
+		$dir                  = MainWP_System_Utility::get_mainwp_specific_dir( (string) $site_id );
+		$this->fixture_dirs[] = untrailingslashit( $dir );
+		return $dir;
 	}
 
 	/**
@@ -259,5 +290,54 @@ class MainWP_Backup_Legacy_Ajax_Auth_Test extends MainWP_Abilities_Test_Case {
 		} finally {
 			unlink( $outside ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test cleanup.
 		}
+	}
+
+	/**
+	 * A backup-capable but site-restricted user cannot probe file sizes for
+	 * a site they cannot manage: the request errors and leaks no size. This
+	 * is the concrete MainWP Team Control scenario - a sub-admin scoped away
+	 * from the site by the `mainwp_current_user_can('site', id)` gate.
+	 *
+	 * @return void
+	 */
+	public function test_getfilesize_rejects_site_restricted_user() {
+		$this->skip_when_capabilities_bypassed();
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$site_id = $this->create_test_site();
+		$deny    = $this->deny_site( $site_id );
+
+		$dir      = $this->site_backup_dir( $site_id );
+		$response = $this->call_endpoint(
+			'mainwp_backup_getfilesize',
+			'mainwp_backup_getfilesize',
+			array(
+				'site_id' => $site_id,
+				'local'   => $dir . 'full-backup.zip',
+			)
+		);
+		remove_filter( 'mainwp_currentusercan', $deny, 10 );
+
+		$this->assertIsArray( $response );
+		$this->assertArrayHasKey( 'error', $response, 'The denied request must produce an error payload.' );
+		$this->assertArrayNotHasKey( 'result', $response, 'A denied request must not leak a size.' );
+	}
+
+	/**
+	 * The per-site containment helper accepts the site's own backup dir and
+	 * rejects another site's dir, a traversal escape, and a zero site id.
+	 *
+	 * @return void
+	 */
+	public function test_is_within_site_backup_dir_bounds() {
+		$site_a = $this->create_test_site();
+		$site_b = $this->create_test_site();
+
+		$dir_a = $this->site_backup_dir( $site_a );
+		$dir_b = $this->site_backup_dir( $site_b );
+
+		$this->assertTrue( MainWP_Backup_File_Manager::is_within_site_backup_dir( $dir_a . 'full-backup.zip', $site_a ), 'A path in the site own dir must pass.' );
+		$this->assertFalse( MainWP_Backup_File_Manager::is_within_site_backup_dir( $dir_b . 'full-backup.zip', $site_a ), 'Another site dir must not pass for this site.' );
+		$this->assertFalse( MainWP_Backup_File_Manager::is_within_site_backup_dir( $dir_a . '../' . $site_b . '/full-backup.zip', $site_a ), 'A traversal into a sibling site must not escape.' );
+		$this->assertFalse( MainWP_Backup_File_Manager::is_within_site_backup_dir( $dir_a . 'full-backup.zip', 0 ), 'A zero site id must never confine.' );
 	}
 }

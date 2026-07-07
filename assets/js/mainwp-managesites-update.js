@@ -472,6 +472,7 @@ let managesites_backupnow_download_file = function (siteInfo, type, url, file, s
     let interVal = setInterval(function () {
         let data = mainwp_secure_data({
             action: 'mainwp_backup_getfilesize',
+            site_id: pSiteId,
             local: file
         });
         jQuery.post(ajaxurl, data, function (pSiteId) {

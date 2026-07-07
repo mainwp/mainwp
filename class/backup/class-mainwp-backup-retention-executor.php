@@ -139,19 +139,25 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
             }
             $site_id = (int) $snapshot->site_id;
 
+            if ( ! $this->remove_local_dir( $snapshot, $result['errors'] ) ) {
+                // The artifacts are still on disk, so the snapshot stays
+                // restorable and 'complete'; the next sweep retries. The
+                // chain stops here like any interruption - pruning its
+                // ancestors would orphan this kept leaf. Nothing offsite or
+                // in the upload metadata has been touched yet, so a kept
+                // snapshot keeps its cloud copies and its resumable record.
+                break;
+            }
+
+            // The local artifacts are gone, so it is now safe to run the
+            // irreversible offsite and metadata steps. enqueue_cloud_deletes
+            // reads the upload checkpoints that purge then removes, so the
+            // order between them must not swap.
             if ( $delete_cloud_copies ) {
                 $this->enqueue_cloud_deletes( $snapshot, $store );
             }
 
             $store->purge_upload_jobs_for_snapshot( $snapshot_id );
-
-            if ( ! $this->remove_local_dir( $snapshot, $result['errors'] ) ) {
-                // The artifacts are still on disk, so the snapshot stays
-                // restorable and 'complete'; the next sweep retries. The
-                // chain stops here like any interruption - pruning its
-                // ancestors would orphan this kept leaf.
-                break;
-            }
 
             $child_task_id = $this->child_task_id_for( $snapshot );
             if ( '' !== $child_task_id ) {

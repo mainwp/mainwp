@@ -507,6 +507,47 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * When the local delete fails and cloud copies are enabled, the offsite
+	 * objects and the upload metadata must be left intact: a snapshot kept
+	 * restorable must not have its offsite copies queued for deletion or its
+	 * upload-job rows purged. The irreversible offsite/metadata steps run
+	 * only after the local delete succeeds.
+	 *
+	 * @return void
+	 */
+	public function test_failed_local_delete_preserves_cloud_copies_and_upload_rows() {
+		list( $snapshot_id, $dir ) = $this->make_snapshot_with_dir();
+		$this->insert_upload_job( $snapshot_id, 77 );
+		$this->insert_upload_job( $snapshot_id, 88 );
+
+		// A read-only directory makes the artifact unlink fail.
+		chmod( $dir, 0555 ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+
+		try {
+			$candidates = array(
+				array(
+					'snapshot_ids'   => array( $snapshot_id ),
+					'reason'         => 'age',
+					'size_bytes'     => 100,
+					'newest_created' => time(),
+				),
+			);
+
+			$result = MainWP_Backup_Retention_Executor::instance()->run_prune( $candidates, $this->make_task( array( 'delete_cloud_copies' => 1 ) ), false );
+
+			$this->assertSame( 0, $result['snapshots_pruned'], 'A failed local delete prunes nothing.' );
+
+			$store = MainWP_Backup_Upload_Job_Store::instance();
+			$this->assertSame( array(), $store->get_jobs_for_snapshot( $snapshot_id, 'delete' ), 'No cloud delete may be queued for a snapshot kept restorable.' );
+			$this->assertCount( 2, $store->get_jobs_for_snapshot( $snapshot_id, 'upload' ), 'The upload metadata must survive so the next sweep can retry.' );
+
+			$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id )->status, 'The snapshot must stay restorable.' );
+		} finally {
+			chmod( $dir, 0755 ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test cleanup.
+		}
+	}
+
+	/**
 	 * Legacy and db runs share one site directory rather than per-snapshot
 	 * dirs. Pruning one snapshot there deletes only its own artifact files;
 	 * sibling snapshots' files and the directory itself survive.

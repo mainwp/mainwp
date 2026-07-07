@@ -73,13 +73,44 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
     const FLOOR_RETRY_SLEEP_SECONDS = 5;
 
     /**
-     * Consecutive ok chunks before a shrunk chunk size doubles back
+     * Consecutive ok chunks before a shrunk chunk size grows back
      * toward the default, so one bad minute early in a transfer costs
      * minutes instead of dragging the whole run at the floor rate.
+     * This cadence also drives the ceiling machinery below: with a
+     * known-bad size on record the streak bisects toward it instead of
+     * doubling, and converged streaks count toward a heal reprobe.
      *
      * @var int
      */
     const GROW_BACK_STREAK = 32;
+
+    /**
+     * Stop bisecting toward a known-bad ceiling once the remaining gap
+     * is this small. Probing forever for a few extra KB per chunk costs
+     * more in failed sends than the bandwidth it could ever earn.
+     *
+     * @var int
+     */
+    const CEILING_CONVERGE_STEP_BYTES = 16384;
+
+    /**
+     * Converged clean streaks before re-probing a SOFT ceiling - one
+     * set by a timeout/reset that may have been transient load, so it
+     * heals quickly instead of pinning the transfer small forever.
+     *
+     * @var int
+     */
+    const CEILING_REPROBE_STREAKS_SOFT = 2;
+
+    /**
+     * Converged clean streaks before re-probing a HARD ceiling - one
+     * set by a deterministic host rejection (NOMAINWP body cap,
+     * Imunify360 refusal). A proxy's request-size limit rarely changes
+     * mid-run, so these wait far longer between probes.
+     *
+     * @var int
+     */
+    const CEILING_REPROBE_STREAKS_HARD = 8;
 
     /**
      * Whether a restore can skip staging and let the child pull its
@@ -849,7 +880,10 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
      * @param string $task_id  Child restore task id.
      * @param array  $plan     Staged plan entries.
      * @param array  $cursor   Transfer cursor (by reference):
-     *                         { artifact_index, offset, chunk_bytes }.
+     *                         { artifact_index, offset, chunk_bytes,
+     *                         floor_fails, ok_streak, ceiling_bytes,
+     *                         ceiling_soft, ceiling_streak_count,
+     *                         good_bytes }.
      * @param float  $deadline Slice deadline (epoch).
      *
      * @return array { done: bool, error: string|null, retryable: bool }
@@ -857,11 +891,18 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
     public function transfer_artifacts( object $website, string $task_id, array $plan, array &$cursor, float $deadline ): array { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- chunk loop with realign, adaptive sizing, and floor retries.
         $cursor = array_merge(
             array(
-                'artifact_index' => 0,
-                'offset'         => 0,
-                'chunk_bytes'    => $this->default_chunk_bytes(),
-                'floor_fails'    => 0,
-                'ok_streak'      => 0,
+                'artifact_index'       => 0,
+                'offset'               => 0,
+                'chunk_bytes'          => $this->default_chunk_bytes(),
+                'floor_fails'          => 0,
+                'ok_streak'            => 0,
+                // A checkpoint written before the ceiling fields existed
+                // backfills here to "no ceiling learned": exactly today's
+                // doubling behavior until the first failure teaches one.
+                'ceiling_bytes'        => 0,
+                'ceiling_soft'         => false,
+                'ceiling_streak_count' => 0,
+                'good_bytes'           => 0,
             ),
             $cursor
         );
@@ -932,7 +973,29 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
                         'retryable' => false,
                     );
                 }
-                $cursor['chunk_bytes'] = max( self::CHUNK_MIN_BYTES, (int) ( $cursor['chunk_bytes'] / 2 ) );
+                // Non-floor failure: remember the size that failed so a
+                // later clean streak bisects toward it instead of blindly
+                // re-probing the exact same known-bad size forever (the
+                // production pattern: a ~1MB proxy body cap rejected every
+                // 768KB grow-back probe, 35 times in one transfer). Floor
+                // blips never reach here, so they cannot poison the ceiling
+                // down to the floor value. A failure above an already
+                // tighter ceiling teaches nothing new and keeps it.
+                $failed_bytes = (int) $cursor['chunk_bytes'];
+                if ( 0 === $cursor['ceiling_bytes'] || $failed_bytes <= $cursor['ceiling_bytes'] ) {
+                    $cursor['ceiling_bytes']        = $failed_bytes;
+                    $cursor['ceiling_soft']         = ! $this->is_deterministic_rejection( (string) $outcome['error'] );
+                    $cursor['ceiling_streak_count'] = 0;
+                }
+                // Recover to the last size that actually worked - halving a
+                // failed probe would erase the convergence progress every
+                // cycle. The halve survives for a fresh cursor with nothing
+                // proven yet, and for the equal-size case where the good
+                // size itself started failing (a revert there would resend
+                // the same failing size forever).
+                $cursor['chunk_bytes'] = ( $cursor['good_bytes'] > 0 && $cursor['good_bytes'] < $failed_bytes )
+                    ? (int) $cursor['good_bytes']
+                    : max( self::CHUNK_MIN_BYTES, (int) ( $failed_bytes / 2 ) );
                 continue;
             }
             if ( 'realign' === $outcome['result'] ) {
@@ -959,16 +1022,50 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
             }
             $cursor['offset']      = $outcome['bytes_received'];
             $cursor['floor_fails'] = 0;
+            $cursor['good_bytes']  = (int) $cursor['chunk_bytes'];
+            if ( $cursor['ceiling_bytes'] > 0 && $cursor['chunk_bytes'] >= $cursor['ceiling_bytes'] ) {
+                // A send at (or past) the recorded ceiling just worked -
+                // the heal reprobe landed, or a mid-run filter raised the
+                // size over it. Either way the cap is gone: forget it and
+                // let plain doubling own growth again.
+                $cursor['ceiling_bytes']        = 0;
+                $cursor['ceiling_soft']         = false;
+                $cursor['ceiling_streak_count'] = 0;
+            }
             ++$cursor['ok_streak'];
             if ( $cursor['ok_streak'] >= self::GROW_BACK_STREAK ) {
                 $cursor['ok_streak'] = 0;
                 $default             = $this->default_chunk_bytes();
                 if ( $cursor['chunk_bytes'] < $default ) {
-                    // A clean streak earns the size back: double toward the
-                    // default so an early bad minute stops taxing the rest
-                    // of the transfer. A failure at the new size just
-                    // shrinks again - one probe send per streak, bounded.
-                    $cursor['chunk_bytes'] = min( $default, $cursor['chunk_bytes'] * 2 );
+                    if ( 0 === $cursor['ceiling_bytes'] ) {
+                        // A clean streak earns the size back: double toward
+                        // the default so an early bad minute stops taxing
+                        // the rest of the transfer. A failure at the new
+                        // size just shrinks again - one probe send per
+                        // streak, bounded.
+                        $cursor['chunk_bytes'] = min( $default, $cursor['chunk_bytes'] * 2 );
+                    } else {
+                        $gap = $cursor['ceiling_bytes'] - $cursor['chunk_bytes'];
+                        if ( $gap > self::CEILING_CONVERGE_STEP_BYTES ) {
+                            // Bisect toward the known-bad size: each probe
+                            // either raises the proven floor or tightens
+                            // the ceiling, so this terminates in a handful
+                            // of streaks at the host's true cap.
+                            $cursor['chunk_bytes'] = min( $default, $cursor['chunk_bytes'] + intdiv( $gap, 2 ) );
+                        } else {
+                            // Converged. Hold the size and only rarely
+                            // spend one send re-testing the ceiling itself,
+                            // in case the cap was transient - soft ceilings
+                            // (timeouts) re-test sooner than hard ones
+                            // (deterministic host rejections).
+                            ++$cursor['ceiling_streak_count'];
+                            $reprobe_after = $cursor['ceiling_soft'] ? self::CEILING_REPROBE_STREAKS_SOFT : self::CEILING_REPROBE_STREAKS_HARD;
+                            if ( $cursor['ceiling_streak_count'] >= $reprobe_after ) {
+                                $cursor['ceiling_streak_count'] = 0;
+                                $cursor['chunk_bytes']          = min( $default, $cursor['ceiling_bytes'] );
+                            }
+                        }
+                    }
                 }
             }
             if ( $last ) {
@@ -1013,6 +1110,26 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
     private function default_chunk_bytes(): int {
         $bytes = (int) apply_filters( 'mainwp_backup_restore_chunk_size', self::CHUNK_BYTES );
         return max( self::CHUNK_MIN_BYTES, min( self::CHUNK_MAX_BYTES, $bytes ) );
+    }
+
+    /**
+     * Whether a shrink error string names a deterministic host-level
+     * rejection rather than a possibly transient transport fault.
+     *
+     * NOMAINWP is the connect layer's word for "the site answered with a
+     * non-plugin body" - for an oversized chunk that is the proxy/WAF
+     * rejection page served before WordPress boots. The Imunify360
+     * refusal is the same class with its own message. Everything else
+     * (HTTPERROR timeouts/resets, unknown throwables) stays "soft" on
+     * purpose: an unknown failure should heal quickly, not pin the
+     * transfer small for the rest of the run.
+     *
+     * @param string $error Shrink outcome error detail.
+     *
+     * @return bool True when the rejection is deterministic.
+     */
+    private function is_deterministic_rejection( string $error ): bool {
+        return 0 === strpos( $error, 'NOMAINWP' ) || false !== strpos( $error, 'Imunify360' );
     }
 
     /**

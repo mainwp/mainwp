@@ -493,6 +493,9 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends \WP_UnitTestCase {
 
 		$this->assertTrue( $result['done'] );
 		$this->assertSame( 1048576, $cursor['chunk_bytes'] );
+		$this->assertSame( 2097152, $cursor['ceiling_bytes'], 'The failed size must be remembered as the ceiling.' );
+		$this->assertTrue( $cursor['ceiling_soft'], 'An unclassified transport error must leave the ceiling soft.' );
+		$this->assertSame( 1048576, $cursor['good_bytes'], 'The recovering send must record the size that worked.' );
 	}
 
 	/**
@@ -679,6 +682,7 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends \WP_UnitTestCase {
 		$this->assertSame( array( 0, 0, 0 ), array_column( $this->driver->sent, 'offset' ), 'Every retry must resend the same offset.' );
 		$this->assertCount( 2, $this->driver->sleeps, 'Each in-slice retry must pause first.' );
 		$this->assertSame( 0, $cursor['floor_fails'], 'The surfaced failure must reset the floor streak for the next attempt.' );
+		$this->assertSame( 0, $cursor['ceiling_bytes'], 'A floor-level blip must not poison the ceiling to the floor value.' );
 	}
 
 	/**
@@ -749,6 +753,7 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends \WP_UnitTestCase {
 		$this->assertSame( 300, $this->driver->sent[31]['bytes'] );
 		$this->assertSame( 600, $this->driver->sent[32]['bytes'], 'The 33rd chunk must ride the doubled size.' );
 		$this->assertSame( 600, $cursor['chunk_bytes'] );
+		$this->assertSame( 0, $cursor['ceiling_bytes'], 'No failure ever happened, so no ceiling exists and plain doubling ran.' );
 	}
 
 	/**
@@ -772,9 +777,320 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends \WP_UnitTestCase {
 		$this->assertTrue( $result['done'] );
 		$this->assertSame( $floor, $this->driver->sent[32]['bytes'], 'Doubling 200000 must clamp to the default, not reach 400000.' );
 		$this->assertSame( $floor, $cursor['chunk_bytes'] );
+		$this->assertSame( 0, $cursor['ceiling_bytes'], 'No failure ever happened, so no ceiling exists and plain doubling ran.' );
 		foreach ( $this->driver->sent as $send ) {
 			$this->assertLessThanOrEqual( $floor, $send['bytes'] );
 		}
+	}
+
+	/**
+	 * A NOMAINWP rejection is a deterministic host body cap, not a blip:
+	 * the ceiling it sets is hard.
+	 */
+	public function test_nomainwp_shrink_sets_hard_ceiling() {
+		$plan = $this->staged_plan( 1000 );
+
+		$this->driver->chunk_script = array(
+			array(
+				'result'         => 'shrink',
+				'bytes_received' => 0,
+				'error'          => 'NOMAINWP - https://example.com/wp-admin/admin-ajax.php',
+				'retryable'      => true,
+			),
+		);
+
+		$cursor = array( 'chunk_bytes' => 786432 );
+		$result = $this->driver->transfer_artifacts( (object) array( 'id' => 1 ), 'task-1-x', $plan, $cursor, microtime( true ) + 60 );
+
+		$this->assertTrue( $result['done'] );
+		$this->assertSame( 786432, $cursor['ceiling_bytes'] );
+		$this->assertFalse( $cursor['ceiling_soft'], 'A NOMAINWP rejection must mark the ceiling hard.' );
+	}
+
+	/**
+	 * The Imunify360 refusal is the same deterministic host-rejection
+	 * class as NOMAINWP and must also mark the ceiling hard.
+	 */
+	public function test_imunify_shrink_sets_hard_ceiling() {
+		$plan = $this->staged_plan( 1000 );
+
+		$this->driver->chunk_script = array(
+			array(
+				'result'         => 'shrink',
+				'bytes_received' => 0,
+				'error'          => 'ERROR:Connection Failed. We suspect that Imunify360, a security layer added by your host, is causing this problem.',
+				'retryable'      => true,
+			),
+		);
+
+		$cursor = array( 'chunk_bytes' => 786432 );
+		$result = $this->driver->transfer_artifacts( (object) array( 'id' => 1 ), 'task-1-x', $plan, $cursor, microtime( true ) + 60 );
+
+		$this->assertTrue( $result['done'] );
+		$this->assertSame( 786432, $cursor['ceiling_bytes'] );
+		$this->assertFalse( $cursor['ceiling_soft'], 'An Imunify360 refusal must mark the ceiling hard.' );
+	}
+
+	/**
+	 * A failure above an already-known tighter ceiling must not weaken it,
+	 * and recovery goes back to the last size that worked.
+	 */
+	public function test_shrink_never_weakens_tighter_ceiling() {
+		$plan = $this->staged_plan( 1000 );
+
+		$this->driver->chunk_script = array(
+			array(
+				'result'         => 'shrink',
+				'bytes_received' => 0,
+				'error'          => 'HTTPERROR - connection reset',
+				'retryable'      => true,
+			),
+		);
+
+		$cursor = array(
+			'chunk_bytes'   => 917504,
+			'ceiling_bytes' => 524288,
+			'ceiling_soft'  => false,
+			'good_bytes'    => 393216,
+		);
+		$result = $this->driver->transfer_artifacts( (object) array( 'id' => 1 ), 'task-1-x', $plan, $cursor, microtime( true ) + 60 );
+
+		$this->assertTrue( $result['done'] );
+		$this->assertSame( 524288, $cursor['ceiling_bytes'], 'A larger failed size must not overwrite a tighter ceiling.' );
+		$this->assertFalse( $cursor['ceiling_soft'], 'The tighter ceiling keeps its own classification.' );
+		$this->assertSame( 393216, $cursor['chunk_bytes'], 'Recovery must ride the last known-good size.' );
+	}
+
+	/**
+	 * After a failed probe, the transfer reverts to the last known-good
+	 * size instead of halving away the convergence progress.
+	 */
+	public function test_shrink_reverts_to_last_known_good() {
+		$plan = $this->staged_plan( 1000 );
+
+		$this->driver->chunk_script = array(
+			array(
+				'result'         => 'shrink',
+				'bytes_received' => 0,
+				'error'          => 'NOMAINWP - https://example.com/wp-admin/admin-ajax.php',
+				'retryable'      => true,
+			),
+		);
+
+		$cursor = array(
+			'chunk_bytes' => 589824,
+			'good_bytes'  => 393216,
+		);
+		$result = $this->driver->transfer_artifacts( (object) array( 'id' => 1 ), 'task-1-x', $plan, $cursor, microtime( true ) + 60 );
+
+		$this->assertTrue( $result['done'] );
+		$this->assertSame( 589824, $cursor['ceiling_bytes'] );
+		$this->assertSame( 393216, $cursor['good_bytes'], 'good_bytes survives as the revert target and the retry size.' );
+	}
+
+	/**
+	 * When the known-good size itself starts failing, the shrink must
+	 * halve - a revert to the same failing size would resend it forever,
+	 * resurrecting the exact starvation bug this machinery fixes.
+	 */
+	public function test_shrink_at_good_size_halves_not_noop() {
+		$plan = $this->staged_plan( 1000 );
+
+		$this->driver->chunk_script = array(
+			array(
+				'result'         => 'shrink',
+				'bytes_received' => 0,
+				'error'          => 'NOMAINWP - https://example.com/wp-admin/admin-ajax.php',
+				'retryable'      => true,
+			),
+		);
+
+		$cursor = array(
+			'chunk_bytes' => 393216,
+			'good_bytes'  => 393216,
+		);
+		$result = $this->driver->transfer_artifacts( (object) array( 'id' => 1 ), 'task-1-x', $plan, $cursor, microtime( true ) + 60 );
+
+		$this->assertTrue( $result['done'] );
+		$this->assertSame( 393216, $cursor['ceiling_bytes'] );
+		$this->assertSame( 262144, $cursor['chunk_bytes'], 'The retry must ride the halved size, not resend the failing one.' );
+	}
+
+	/**
+	 * A transport that fails every send still escalates: from a converged
+	 * good-size state it walks down to the floor and surfaces the
+	 * FLOOR_FAILS_MAX retryable error. Revert-to-good can never ride a
+	 * dead transport forever.
+	 */
+	public function test_dead_transport_from_converged_state_escalates() {
+		$plan  = $this->staged_plan( 1000 );
+		$fault = array(
+			'result'         => 'shrink',
+			'bytes_received' => 0,
+			'error'          => 'HTTPERROR - timed out',
+			'retryable'      => true,
+		);
+
+		$this->driver->chunk_script = array( $fault, $fault, $fault, $fault );
+
+		$cursor = array(
+			'chunk_bytes'   => 458752,
+			'good_bytes'    => 458752,
+			'ceiling_bytes' => 524288,
+			'ceiling_soft'  => true,
+		);
+		$result = $this->driver->transfer_artifacts( (object) array( 'id' => 1 ), 'task-1-x', $plan, $cursor, microtime( true ) + 60 );
+
+		$this->assertFalse( $result['done'] );
+		$this->assertNotNull( $result['error'] );
+		$this->assertTrue( $result['retryable'] );
+		$this->assertCount( 4, $this->driver->sent, 'One non-floor halve plus three floor retries reach escalation.' );
+		$this->assertSame( 458752, $cursor['ceiling_bytes'], 'The equal-size failure tightens the ceiling to the failed size.' );
+	}
+
+	/**
+	 * With a ceiling known, a clean streak bisects toward it instead of
+	 * blindly doubling into the known-bad size - the production
+	 * starvation pattern this sprint fixes.
+	 */
+	public function test_ceiling_bisects_instead_of_doubling() {
+		$plan = $this->staged_plan( 32 * 393216 + 589824 );
+
+		$cursor = array(
+			'chunk_bytes'   => 393216,
+			'ceiling_bytes' => 786432,
+			'ceiling_soft'  => false,
+			'good_bytes'    => 393216,
+		);
+		$result = $this->driver->transfer_artifacts( (object) array( 'id' => 1 ), 'task-1-x', $plan, $cursor, microtime( true ) + 60 );
+
+		$this->assertTrue( $result['done'] );
+		$this->assertCount( 33, $this->driver->sent );
+		$this->assertSame( 589824, $this->driver->sent[32]['bytes'], 'The streak must probe the midpoint, never the known-bad ceiling.' );
+		$this->assertSame( 589824, $cursor['chunk_bytes'] );
+	}
+
+	/**
+	 * Once the gap to the ceiling is inside the convergence step, streaks
+	 * stop growing the chunk and start counting toward a heal reprobe.
+	 */
+	public function test_ceiling_convergence_stops_growth_and_counts() {
+		$plan = $this->staged_plan( 33 * 300000 );
+
+		$cursor = array(
+			'chunk_bytes'   => 300000,
+			'ceiling_bytes' => 310000,
+			'ceiling_soft'  => false,
+			'good_bytes'    => 300000,
+		);
+		$result = $this->driver->transfer_artifacts( (object) array( 'id' => 1 ), 'task-1-x', $plan, $cursor, microtime( true ) + 60 );
+
+		$this->assertTrue( $result['done'] );
+		$this->assertSame( 300000, $this->driver->sent[32]['bytes'], 'A converged transfer must hold its size.' );
+		$this->assertSame( 1, $cursor['ceiling_streak_count'], 'The converged streak must count toward a heal reprobe.' );
+		$this->assertSame( 310000, $cursor['ceiling_bytes'] );
+	}
+
+	/**
+	 * A soft ceiling reprobes quickly: the second converged streak sends
+	 * one probe at the ceiling, and its success clears the cap entirely.
+	 */
+	public function test_soft_ceiling_reprobe_success_clears_ceiling() {
+		$plan = $this->staged_plan( 32 * 300000 + 310000 );
+
+		$cursor = array(
+			'chunk_bytes'          => 300000,
+			'ceiling_bytes'        => 310000,
+			'ceiling_soft'         => true,
+			'ceiling_streak_count' => 1,
+			'good_bytes'           => 300000,
+		);
+		$result = $this->driver->transfer_artifacts( (object) array( 'id' => 1 ), 'task-1-x', $plan, $cursor, microtime( true ) + 60 );
+
+		$this->assertTrue( $result['done'] );
+		$this->assertSame( 310000, $this->driver->sent[32]['bytes'], 'The heal probe must ride the ceiling size.' );
+		$this->assertSame( 0, $cursor['ceiling_bytes'], 'A successful probe at the ceiling clears it.' );
+		$this->assertFalse( $cursor['ceiling_soft'] );
+		$this->assertSame( 0, $cursor['ceiling_streak_count'] );
+		$this->assertSame( 310000, $cursor['good_bytes'] );
+	}
+
+	/**
+	 * A hard ceiling waits far longer between reprobes than a soft one: a
+	 * count that would already fire the soft probe stays converged.
+	 */
+	public function test_hard_ceiling_waits_longer_before_reprobe() {
+		$plan = $this->staged_plan( 33 * 300000 );
+
+		$cursor = array(
+			'chunk_bytes'          => 300000,
+			'ceiling_bytes'        => 310000,
+			'ceiling_soft'         => false,
+			'ceiling_streak_count' => 1,
+			'good_bytes'           => 300000,
+		);
+		$result = $this->driver->transfer_artifacts( (object) array( 'id' => 1 ), 'task-1-x', $plan, $cursor, microtime( true ) + 60 );
+
+		$this->assertTrue( $result['done'] );
+		$this->assertSame( 300000, $this->driver->sent[32]['bytes'], 'A hard ceiling must not reprobe at the soft cadence.' );
+		$this->assertSame( 310000, $cursor['ceiling_bytes'] );
+		$this->assertSame( 2, $cursor['ceiling_streak_count'] );
+	}
+
+	/**
+	 * A failed heal probe reconfirms the ceiling, reclassifies it from
+	 * this failure's error, resets the reprobe clock, and reverts to the
+	 * known-good size.
+	 */
+	public function test_reprobe_failure_reconfirms_ceiling() {
+		$plan = $this->staged_plan( 600000 );
+
+		$this->driver->chunk_script = array(
+			array(
+				'result'         => 'shrink',
+				'bytes_received' => 0,
+				'error'          => 'NOMAINWP - https://example.com/wp-admin/admin-ajax.php',
+				'retryable'      => true,
+			),
+		);
+
+		$cursor = array(
+			'chunk_bytes'          => 310000,
+			'ceiling_bytes'        => 310000,
+			'ceiling_soft'         => true,
+			'ceiling_streak_count' => 0,
+			'good_bytes'           => 300000,
+		);
+		$result = $this->driver->transfer_artifacts( (object) array( 'id' => 1 ), 'task-1-x', $plan, $cursor, microtime( true ) + 60 );
+
+		$this->assertTrue( $result['done'] );
+		$this->assertSame( 310000, $cursor['ceiling_bytes'], 'The failed probe reconfirms the same ceiling.' );
+		$this->assertFalse( $cursor['ceiling_soft'], 'A NOMAINWP reconfirmation flips the ceiling hard.' );
+		$this->assertSame( 0, $cursor['ceiling_streak_count'] );
+		$this->assertSame( 300000, $this->driver->sent[1]['bytes'], 'The retry must revert to the known-good size.' );
+	}
+
+	/**
+	 * A checkpoint written before the ceiling fields existed backfills
+	 * them on resume with no warnings and sane values.
+	 */
+	public function test_legacy_cursor_backfills_ceiling_fields() {
+		$plan = $this->staged_plan( 900 );
+
+		$cursor = array(
+			'artifact_index' => 0,
+			'offset'         => 0,
+			'chunk_bytes'    => 300,
+			'floor_fails'    => 0,
+			'ok_streak'      => 0,
+		);
+		$result = $this->driver->transfer_artifacts( (object) array( 'id' => 1 ), 'task-1-x', $plan, $cursor, microtime( true ) + 60 );
+
+		$this->assertTrue( $result['done'] );
+		$this->assertSame( 0, $cursor['ceiling_bytes'] );
+		$this->assertFalse( $cursor['ceiling_soft'] );
+		$this->assertSame( 0, $cursor['ceiling_streak_count'] );
+		$this->assertSame( 300, $cursor['good_bytes'], 'good_bytes must track the size that worked.' );
 	}
 
 	/**

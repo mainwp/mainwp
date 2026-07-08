@@ -355,6 +355,34 @@ class MainWP_Backup_Legacy_Ajax_Auth_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A backup-capable but site-restricted user cannot poll another site's
+	 * scheduled backup task progress: the request errors and leaks no
+	 * progress payload.
+	 *
+	 * @return void
+	 */
+	public function test_backup_task_progress_rejects_site_restricted_user() {
+		$this->skip_when_capabilities_bypassed();
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$site_id = $this->create_test_site();
+		$deny    = $this->deny_site( $site_id );
+
+		$response = $this->call_endpoint(
+			'mainwp_backup_task_progress',
+			'mainwp_backup_task_progress',
+			array(
+				'task_id' => 1,
+				'site_id' => $site_id,
+			)
+		);
+		remove_filter( 'mainwp_currentusercan', $deny, 10 );
+
+		$this->assertIsArray( $response );
+		$this->assertArrayHasKey( 'error', $response, 'The denied request must produce an error payload.' );
+		$this->assertArrayNotHasKey( 'result', $response, 'A denied request must not leak progress data.' );
+	}
+
+	/**
 	 * The per-site containment helper accepts the site's own backup dir and
 	 * rejects another site's dir, a traversal escape, and a zero site id.
 	 *

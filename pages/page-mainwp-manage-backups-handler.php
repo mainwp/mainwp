@@ -781,7 +781,57 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
     }
 
     /**
+     * Resolve the site ids a backup task's own sites/groups columns cover.
+     *
+     * Shared by backup() and get_backup_task_sites() so both scope a
+     * caller-supplied or returned site strictly to what the task itself
+     * lists - group membership is resolved the same way a scheduled run
+     * would see it.
+     *
+     * @param object|null $backupTask Backup task row.
+     *
+     * @return int[] Site ids, deduplicated.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB::get_websites_by_group_id()
+     */
+    private static function resolve_task_site_ids( $backupTask ) {
+        if ( empty( $backupTask ) ) {
+            return array();
+        }
+
+        $sites = array();
+
+        if ( empty( $backupTask->groups ) ) {
+            if ( '' !== $backupTask->sites ) {
+                $sites = array_map( 'intval', explode( ',', $backupTask->sites ) );
+            }
+        } else {
+            $groups = explode( ',', $backupTask->groups );
+            foreach ( $groups as $groupid ) {
+                $group_sites = MainWP_DB::instance()->get_websites_by_group_id( $groupid );
+                foreach ( $group_sites as $group_site ) {
+                    $site_id = (int) $group_site->id;
+                    if ( in_array( $site_id, $sites, true ) ) {
+                        continue;
+                    }
+                    $sites[] = $site_id;
+                }
+            }
+        }
+
+        return $sites;
+    }
+
+    /**
      * Prepare Child Site to be backed up.
+     *
+     * Authorization is layered: task ownership (parity with the sibling
+     * remove/resume/pause handlers below - currently a no-op in production
+     * since MainWP_System::is_single_user() is hardcoded true, kept for
+     * parity and in case that ever changes), the caller-supplied site must
+     * actually belong to this task's own site/group scope, and the Team
+     * Control per-site capability, which is the gate that actually refuses
+     * a restricted user today.
      *
      * @param mixed $pTaskId      Task ID.
      * @param mixed $pSiteId      Child Site ID.
@@ -792,11 +842,28 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      * @throws MainWP_Exception Error message.
      *
      * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_task_by_id()
+     * @uses \MainWP\Dashboard\MainWP_Manage_Backups_Handler::can_edit_backuptask()
+     * @uses \MainWP\Dashboard\MainWP_Manage_Backups_Handler::resolve_task_site_ids()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
      * @uses \MainWP\Dashboard\MainWP_Backup_Executor::backup()
      * @uses  \MainWP\Dashboard\MainWP_Utility::sanitize()
      */
     public static function backup( $pTaskId, $pSiteId, $pFileNameUID ) {
         $backupTask = MainWP_DB_Backup::instance()->get_backup_task_by_id( $pTaskId );
+
+        if ( ! static::can_edit_backuptask( $backupTask ) ) {
+            throw new MainWP_Exception( esc_html__( 'Insufficient permissions. Is this task set by you?', 'mainwp' ) );
+        }
+
+        if ( ! in_array( (int) $pSiteId, static::resolve_task_site_ids( $backupTask ), true ) ) {
+            throw new MainWP_Exception( esc_html__( 'This site is not part of the requested backup task.', 'mainwp' ) );
+        }
+
+        $website = MainWP_DB::instance()->get_website_by_id( $pSiteId );
+        if ( ! MainWP_System_Utility::can_edit_website( $website ) || ! \mainwp_current_user_can( 'site', $pSiteId ) ) {
+            throw new MainWP_Exception( esc_html__( 'You are not allowed to manage backups for this site.', 'mainwp' ) );
+        }
 
         $subfolder = str_replace( '%task%', MainWP_Utility::sanitize( $backupTask->name ), $backupTask->subfolder );
 
@@ -828,39 +895,40 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
     /**
      * Get backup tasks and site ID.
      *
+     * Ownership-gated like the sibling task handlers (see backup()'s
+     * docblock for why that gate is currently a production no-op). The
+     * returned site list is additionally filtered through the Team Control
+     * per-site capability so a caller never sees data for a site their
+     * access has been scoped away from, even when they otherwise own the
+     * task.
+     *
      * @param mixed $pTaskId Task ID.
      *
      * @return array $allSites All Sites array.
      * $remoteDestinations Remote destinations array.
      *
+     * @throws MainWP_Exception Error message.
+     *
      * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_task_by_id()
+     * @uses \MainWP\Dashboard\MainWP_Manage_Backups_Handler::can_edit_backuptask()
+     * @uses \MainWP\Dashboard\MainWP_Manage_Backups_Handler::resolve_task_site_ids()
      * @uses \MainWP\Dashboard\MainWP_DB_Backup::update_backup_run_manually()
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
-     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_group_id()
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
      */
     public static function get_backup_task_sites( $pTaskId ) {
-        $sites      = array();
         $backupTask = MainWP_DB_Backup::instance()->get_backup_task_by_id( $pTaskId );
-        if ( empty( $backupTask->groups ) ) {
-            if ( '' !== $backupTask->sites ) {
-                $sites = explode( ',', $backupTask->sites );
-            }
-        } else {
-            $groups = explode( ',', $backupTask->groups );
-            foreach ( $groups as $groupid ) {
-                $group_sites = MainWP_DB::instance()->get_websites_by_group_id( $groupid );
-                foreach ( $group_sites as $group_site ) {
-                    if ( in_array( $group_site->id, $sites ) ) {
-                        continue;
-                    }
-                    $sites[] = $group_site->id;
-                }
-            }
+
+        if ( ! static::can_edit_backuptask( $backupTask ) ) {
+            throw new MainWP_Exception( esc_html__( 'Insufficient permissions. Is this task set by you?', 'mainwp' ) );
         }
 
         $allSites = array();
-        foreach ( $sites as $site ) {
-            $website    = MainWP_DB::instance()->get_website_by_id( $site );
+        foreach ( static::resolve_task_site_ids( $backupTask ) as $site ) {
+            $website = MainWP_DB::instance()->get_website_by_id( $site );
+            if ( empty( $website ) || ! MainWP_System_Utility::can_edit_website( $website ) || ! \mainwp_current_user_can( 'site', $site ) ) {
+                continue;
+            }
             $allSites[] = array(
                 'id'       => $website->id,
                 'name'     => $website->name,

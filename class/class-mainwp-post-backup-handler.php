@@ -869,6 +869,10 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             wp_send_json( array( 'error' => esc_html__( 'Invalid request. Please reload the page and try again.', 'mainwp' ) ) );
         }
 
+        if ( null === $this->authorize_restore_site( $site_id ) ) {
+            return;
+        }
+
         $row = MainWP_DB_Backup::instance()->get_backup_task_progress( $task_id, $site_id );
 
         wp_send_json( array( 'result' => static::build_task_progress_response( $row ) ) );
@@ -1416,14 +1420,21 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
      *
      * Get sites of backup task.
      *
+     * @throws MainWP_Exception On errors.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Exception
      * @uses \MainWP\Dashboard\MainWP_Manage_Backups_Handler::get_backup_task_sites()
      */
     public function mainwp_backuptask_get_sites() {
-        $this->secure_request( 'mainwp_backuptask_get_sites' );
+        try {
+            $this->secure_request( 'mainwp_backuptask_get_sites' );
 
-        $taskID = isset( $_POST['task_id'] ) ? intval( $_POST['task_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+            $taskID = isset( $_POST['task_id'] ) ? intval( $_POST['task_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
-        wp_send_json( array( 'result' => MainWP_Manage_Backups_Handler::get_backup_task_sites( $taskID ) ) );
+            wp_send_json( array( 'result' => MainWP_Manage_Backups_Handler::get_backup_task_sites( $taskID ) ) );
+        } catch ( MainWP_Exception $e ) {
+            $this->die_exception_error( $e );
+        }
     }
 
     /**

@@ -1,0 +1,135 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - 'experiment/native-backups**'
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  phpunit:
+    name: PHPUnit (PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['7.4', '8.0', '8.1', '8.2', '8.3', '8.4']
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      WP_TESTS_DIR: /tmp/wordpress-tests-lib
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP ${{ matrix.php }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mysqli, mbstring, intl, zip
+          coverage: none
+          tools: composer
+
+      - name: Install Subversion (required by bin/install-wp-tests.sh)
+        run: sudo apt-get update && sudo apt-get install -y subversion
+
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+      # composer.lock is gitignored, so each leg resolves dependencies fresh
+      # for its own PHP version; the cache key therefore hashes composer.json.
+      - name: Cache composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-php${{ matrix.php }}-composer-${{ hashFiles('composer.json') }}
+          restore-keys: |
+            ${{ runner.os }}-php${{ matrix.php }}-composer-
+
+      - name: Install Composer dependencies
+        run: composer install --no-progress --prefer-dist
+
+      # Parse-lints every plugin file at this leg's exact PHP version, so any
+      # syntax above the 7.4 floor (e.g. enums) fails here even in files no
+      # test loads.
+      - name: PHP syntax lint
+        run: |
+          find . -name '*.php' -not -path './vendor/*' -not -path './node_modules/*' -not -path './tests/e2e/*' -print0 \
+            | xargs -0 -n 50 -P 4 php -l > /dev/null
+
+      - name: Install WordPress test library
+        run: bash bin/install-wp-tests.sh wordpress_test root root 127.0.0.1:3306 latest
+
+      - name: Run PHPUnit - MainWP Dashboard Test Suite
+        run: ./vendor/bin/phpunit --testsuite="MainWP Dashboard Test Suite"
+
+      - name: Run PHPUnit - Abilities
+        run: ./vendor/bin/phpunit --testsuite=Abilities
+
+      - name: Run PHPUnit - Backup
+        run: ./vendor/bin/phpunit --testsuite=Backup
+
+  phpcs:
+    name: PHPCS
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 8.4
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, intl, zip
+          coverage: none
+          tools: composer
+
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-php8.4-composer-${{ hashFiles('composer.json') }}
+          restore-keys: |
+            ${{ runner.os }}-php8.4-composer-
+
+      - name: Install Composer dependencies
+        run: composer install --no-progress --prefer-dist
+
+      # Scoped to the native-backups surface, which is phpcs-clean today.
+      # The wider legacy codebase carries pre-existing violations; broaden
+      # this to the whole repo once that debt is paid down.
+      - name: Run PHPCS (native-backups surface)
+        run: >-
+          ./vendor/bin/phpcs --standard=phpcs.xml
+          class/backup/
+          pages/backup/
+          class/class-mainwp-post-backup-handler.php
+          class/class-mainwp-db-backup.php
+          pages/page-mainwp-manage-backups-handler.php
+          pages/page-mainwp-manage-backups.php
+          modules/logs/connectors/class-connector-backup.php
+          tests/backup/

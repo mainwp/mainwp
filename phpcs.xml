@@ -22,8 +22,11 @@
 
 	<!-- Configs -->
 	<config name="minimum_supported_wp_version" value="5.2" />
+	<config name="testVersion" value="7.4-" />
 
 	<!-- Rules -->
+	<rule ref="PHPCompatibility" />
+
 	<rule ref="WordPress">
 		<exclude name="WordPress.NamingConventions.ValidVariableName" />
 		<exclude name="WordPress.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition" />

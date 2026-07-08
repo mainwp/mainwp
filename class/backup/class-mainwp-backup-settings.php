@@ -118,7 +118,7 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         if ( $useGlobal ) {
             $archiveFormat = get_option( 'mainwp_archiveFormat' );
             if ( false === $archiveFormat ) {
-                $archiveFormat = MainWP_Archive_Format::TarGz->value;
+                $archiveFormat = MainWP_Archive_Format::TAR_GZ;
             }
         }
 

@@ -479,7 +479,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
                 static::record_child_progress( $taskId, (int) $website->id, $temp );
 
-                if ( MainWP_Backup_Task_Phase::Failed === $phase ) {
+                if ( MainWP_Backup_Task_Phase::FAILED === $phase ) {
                     // The child recorded why the task died; surface it as-is.
                     $message = isset( $temp['error'] ) && '' !== $temp['error']
                         ? MainWP_Backup_Error_Codes::sanitize_message( $temp['error'] )
@@ -499,7 +499,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     throw new MainWP_Exception( esc_html( $message ), null, isset( $temp['error_code'] ) ? $temp['error_code'] : '' ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
                 }
 
-                if ( MainWP_Backup_Task_Phase::Completed !== $phase ) {
+                if ( MainWP_Backup_Task_Phase::COMPLETED !== $phase ) {
                     return false; // The task is still working; the next cycle advances it again.
                 }
 
@@ -1929,7 +1929,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         // poll response falls back to the byte estimate rather than a
         // misleading file ratio.
         if ( isset( $fields['child_phase'] )
-            && MainWP_Backup_Task_Phase::ArchivingFiles->value === $fields['child_phase']
+            && MainWP_Backup_Task_Phase::ARCHIVING_FILES === $fields['child_phase']
             && ! isset( $progress['files_scanned'] )
             && ! isset( $progress['files_processed'] ) ) {
             $fields['files_processed'] = 0;
@@ -1999,7 +1999,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         } while ( 'running' === $status['status'] && time() < $deadline );
 
         if ( 'completed' === $status['status'] && ! empty( $status['meta']['file'] ) ) {
-            $type  = isset( $payload['type'] ) && MainWP_Backup_Type::Database->value === $payload['type'] ? 'db' : 'full';
+            $type  = isset( $payload['type'] ) && MainWP_Backup_Type::DATABASE === $payload['type'] ? 'db' : 'full';
             $local = static::build_local_backup_file( $website, $type, $status['meta']['file'] );
             MainWP_Backup_File_Manager::backup_download_file( $site_id, $type, $status['meta']['file'], $local );
             if ( 'full' === $type ) {
@@ -2140,9 +2140,9 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
         $phase  = MainWP_Backup_Task_Phase::tryFrom( (string) $payload['phase'] );
         $status = 'running';
-        if ( MainWP_Backup_Task_Phase::Completed === $phase ) {
+        if ( MainWP_Backup_Task_Phase::COMPLETED === $phase ) {
             $status = 'completed';
-        } elseif ( MainWP_Backup_Task_Phase::Failed === $phase ) {
+        } elseif ( MainWP_Backup_Task_Phase::FAILED === $phase ) {
             $status = 'failed';
         }
 
@@ -2174,7 +2174,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         $dir     = MainWP_System_Utility::get_mainwp_specific_dir( $website->id );
         $fm_date = MainWP_Utility::sanitize_file_name( MainWP_Utility::date( get_option( 'date_format' ) ) );
         $fm_time = MainWP_Utility::sanitize_file_name( MainWP_Utility::date( get_option( 'time_format' ) ) );
-        $prefix  = MainWP_Backup_Type::Database->value === $type ? 'db-' : 'full-';
+        $prefix  = MainWP_Backup_Type::DATABASE === $type ? 'db-' : 'full-';
 
         return MainWP_Backup_File_Manager::normalize_filename( $dir . $prefix . $clean_url . '-' . $fm_date . '-' . $fm_time . MainWP_Backup_File_Manager::get_real_extension( $remote_file ) );
     }

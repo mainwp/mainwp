@@ -893,16 +893,16 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         $phase = MainWP_Backup_Task_Phase::tryFrom( (string) $row->child_phase );
 
         $status = 'running';
-        if ( MainWP_Backup_Task_Phase::Completed === $phase ) {
+        if ( MainWP_Backup_Task_Phase::COMPLETED === $phase ) {
             $status = 'completed';
-        } elseif ( MainWP_Backup_Task_Phase::Failed === $phase ) {
+        } elseif ( MainWP_Backup_Task_Phase::FAILED === $phase ) {
             $status = 'failed';
         }
 
         if ( null !== $phase ) {
-            $label = $phase->label();
+            $label = MainWP_Backup_Task_Phase::label( $phase );
         } elseif ( '' === (string) $row->child_phase ) {
-            $label = MainWP_Backup_Task_Phase::Queued->label();
+            $label = MainWP_Backup_Task_Phase::label( MainWP_Backup_Task_Phase::QUEUED );
         } else {
             // A future phase from a newer child: still working, no known label.
             $label = __( 'Working', 'mainwp' );
@@ -920,8 +920,8 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         // compressed archive against the raw file total, a rough monotonic
         // estimate. This keeps a stale count from an earlier phase (e.g. the
         // dump's tables) out of the upload percent.
-        $file_ratio_phase = MainWP_Backup_Task_Phase::DumpingDb === $phase
-            || MainWP_Backup_Task_Phase::ArchivingFiles === $phase;
+        $file_ratio_phase = MainWP_Backup_Task_Phase::DUMPING_DB === $phase
+            || MainWP_Backup_Task_Phase::ARCHIVING_FILES === $phase;
 
         $percent = null;
         if ( $file_ratio_phase && $files_processed > 0 && $files_total > 0 ) {

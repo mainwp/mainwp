@@ -568,4 +568,31 @@ class MainWP_Backup_CLI_Restore_Test extends MainWP_Abilities_Test_Case {
 		$this->assertTrue( $result['ok'], 'Encrypted restore must complete; error: ' . $result['error'] );
 		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_COMPLETED, $result['status'] );
 	}
+
+	/**
+	 * drive_to_terminal() must scope the orchestrator slice to the job it was
+	 * asked to drive. Two sites each have a pending job; the target job (the
+	 * one created second, higher id) must be the one that reaches completed,
+	 * and the other site's job must be left untouched rather than advanced as
+	 * a side effect of an unscoped acquire.
+	 */
+	public function test_drive_to_terminal_advances_only_the_target_job() {
+		$snapshot_id_1 = $this->make_snapshot( 'full' );
+		$job_id_1      = $this->orchestrator->initiate_restore( $this->site_id, $snapshot_id_1, array( 'pre_snapshot' => false ) );
+
+		$site_id_2     = $this->create_test_site();
+		$snapshot_id_2 = $this->make_snapshot( 'full', array( 'site_id' => $site_id_2 ) );
+		$job_id_2      = $this->orchestrator->initiate_restore( $site_id_2, $snapshot_id_2, array( 'pre_snapshot' => false ) );
+
+		$this->use_cloud_pull_driver();
+		$this->script_completed_child();
+
+		$final = $this->runner()->drive_to_terminal( $job_id_2 );
+
+		$this->assertNotNull( $final );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_COMPLETED, $final->status );
+
+		$other = MainWP_Backup_Restore_Job_Store::instance()->get_job( $job_id_1 );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_PENDING, $other->status, "A different site's pending job must not advance as a side effect." );
+	}
 }

@@ -239,7 +239,7 @@ class MainWP_Backup_CLI_Restore_Runner {
                 $this->sleep_seconds( min( max( 0, (int) $job->next_retry_at - time() ), $this->max_retry_wait_seconds ) );
             }
 
-            $this->orchestrator->process_pending_restore_jobs( $this->budget_seconds );
+            $this->orchestrator->process_pending_restore_jobs( $this->budget_seconds, $job_id );
 
             $job = $this->store->get_job( $job_id );
             if ( null !== $job && null !== $progress ) {

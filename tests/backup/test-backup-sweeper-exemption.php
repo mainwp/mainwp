@@ -15,6 +15,7 @@ namespace MainWP\Dashboard\Tests;
 use MainWP\Dashboard\MainWP_Backup_File_Manager;
 use MainWP\Dashboard\MainWP_Backup_Snapshots;
 use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_System_Utility;
 
 /**
  * Class MainWP_Backup_Sweeper_Exemption_Test
@@ -87,15 +88,19 @@ class MainWP_Backup_Sweeper_Exemption_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * Create the flat download dir the sweep runs over.
+	 * Create the flat download dir the sweep runs over, inside the site's
+	 * own backup directory - the download sink confines its target there.
+	 *
+	 * @param int $site_id Site the dir belongs to.
 	 *
 	 * @return string Dir with trailing slash.
 	 */
-	private function make_flat_dir() {
-		$upload = wp_upload_dir();
-		$dir    = trailingslashit( $upload['basedir'] ) . 'mainwp/test-sweep-' . uniqid();
+	private function make_flat_dir( $site_id ) {
+		$site_dir = MainWP_System_Utility::get_mainwp_specific_dir( (string) $site_id );
+		$dir      = $site_dir . 'test-sweep-' . uniqid();
 		wp_mkdir_p( $dir );
 		$this->fixture_dirs[] = $dir;
+		$this->fixture_dirs[] = untrailingslashit( $site_dir );
 		return trailingslashit( $dir );
 	}
 
@@ -187,7 +192,7 @@ class MainWP_Backup_Sweeper_Exemption_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function test_sweeper_skips_snapshot_recorded_file_in_backup_download_file() {
 		$website = $this->make_site();
-		$dir     = $this->make_flat_dir();
+		$dir     = $this->make_flat_dir( (int) $website->id );
 
 		update_option( 'mainwp_backupsOnServer', 1 );
 
@@ -212,7 +217,7 @@ class MainWP_Backup_Sweeper_Exemption_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function test_sweeper_exempt_file_does_not_count_toward_max_backups() {
 		$website = $this->make_site();
-		$dir     = $this->make_flat_dir();
+		$dir     = $this->make_flat_dir( (int) $website->id );
 
 		update_option( 'mainwp_backupsOnServer', 2 );
 

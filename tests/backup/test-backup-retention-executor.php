@@ -548,6 +548,52 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A snapshot row whose artifact path points at a real file outside
+	 * uploads/mainwp is refused, and the refusal must count as an unclean
+	 * delete: the snapshot stays complete and none of the irreversible
+	 * offsite/metadata steps run. A migrated dashboard whose recorded
+	 * absolute paths still point at the old uploads tree hits exactly this.
+	 *
+	 * @return void
+	 */
+	public function test_outside_root_artifact_refusal_keeps_snapshot_complete() {
+		$outside = sys_get_temp_dir() . '/mainwp-retention-outside-' . uniqid() . '.tar';
+		file_put_contents( $outside, str_repeat( 'x', 50 ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+
+		list( $snapshot_id ) = $this->make_snapshot_with_dir(
+			array(
+				'archives' => wp_json_encode( array( array( 'file' => 'outside.tar', 'size' => 50, 'role' => 'full', 'path' => $outside ) ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+			)
+		);
+		$this->insert_upload_job( $snapshot_id, 77 );
+
+		try {
+			$candidates = array(
+				array(
+					'snapshot_ids'   => array( $snapshot_id ),
+					'reason'         => 'age',
+					'size_bytes'     => 50,
+					'newest_created' => time(),
+				),
+			);
+
+			$result = MainWP_Backup_Retention_Executor::instance()->run_prune( $candidates, $this->make_task( array( 'delete_cloud_copies' => 1 ) ), false );
+
+			$this->assertNotSame( array(), $result['errors'], 'The refusal must surface a diagnostic.' );
+			$this->assertSame( 0, $result['snapshots_pruned'], 'A refused artifact prunes nothing.' );
+
+			$store = MainWP_Backup_Upload_Job_Store::instance();
+			$this->assertSame( array(), $store->get_jobs_for_snapshot( $snapshot_id, 'delete' ), 'No cloud delete may be queued for a snapshot kept restorable.' );
+			$this->assertCount( 1, $store->get_jobs_for_snapshot( $snapshot_id, 'upload' ), 'The upload metadata must survive.' );
+
+			$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id )->status, 'The snapshot must stay complete while its named artifact exists.' );
+			$this->assertFileExists( $outside, 'The out-of-tree file must never be touched.' );
+		} finally {
+			unlink( $outside ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test cleanup.
+		}
+	}
+
+	/**
 	 * Legacy and db runs share one site directory rather than per-snapshot
 	 * dirs. Pruning one snapshot there deletes only its own artifact files;
 	 * sibling snapshots' files and the directory itself survive.

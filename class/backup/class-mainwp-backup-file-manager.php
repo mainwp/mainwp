@@ -60,11 +60,14 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
      * @uses \MainWP\Dashboard\MainWP_Utility::end_session()
      */
     public static function backup_download_file( int $pSiteId, string $pType, string $pUrl, string $pFile ): bool {
-        if ( ! static::is_within_backup_root( $pFile ) ) {
+        if ( ! static::is_within_site_backup_dir( $pFile, $pSiteId ) ) {
             // The local path round-trips through the browser between the
             // create and download requests, so it is attacker-influenced:
-            // never create directories, sweep old archives, or write bytes
-            // outside the dashboard backup tree.
+            // confine it to the requesting site's own backup directory so
+            // a tampered request can neither write bytes into nor sweep a
+            // sibling site's archive set. Internal callers build the path
+            // with get_mainwp_specific_dir() in the same request, so a
+            // legitimate target always passes.
             throw new MainWP_Exception( esc_html__( 'Invalid backup file location.', 'mainwp' ) );
         }
         if ( ! MainWP_System_Utility::get_wp_file_system() ) {
@@ -614,11 +617,12 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
      * Whether a caller-supplied local path stays inside a specific site's
      * backup directory (uploads/mainwp/{userid}/{site_id}/).
      *
-     * The legacy filesize poll takes a browser-supplied path; confining it
-     * to the requesting site's own directory keeps a site-restricted user
-     * from probing another site's artifacts. The path is the same one the
-     * executor and monitor build with get_mainwp_specific_dir(), so an
-     * authorized poll of a real download target passes.
+     * The legacy download and filesize endpoints take browser-supplied
+     * paths; confining them to the requesting site's own directory keeps
+     * a site-restricted user from probing or mutating another site's
+     * artifacts. The path is the same one the executor and monitor build
+     * with get_mainwp_specific_dir(), so an authorized request for a real
+     * download target passes.
      *
      * @param string $path    Candidate absolute path.
      * @param int    $site_id Site the path must belong to.

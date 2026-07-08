@@ -219,6 +219,47 @@ class MainWP_Backup_Retention_Scheduler_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * A retention pass whose executor reports errors must surface them in
+	 * the scheduled paths: the pair drain logs a warning carrying the task
+	 * and site ids, and the kept snapshot stays complete for the daily
+	 * retry. Both cron triggers flow through run_retention_for_pair(), so
+	 * the drain path stands in for the daily sweep too.
+	 *
+	 * @return void
+	 */
+	public function test_queue_drain_surfaces_retention_errors() {
+		$task_id = $this->insert_task( array( 'retention_count' => 1 ) );
+		$old     = $this->insert_snapshot_with_dir( $task_id, array( 'created' => time() - 200 ) );
+		$new     = $this->insert_snapshot_with_dir( $task_id, array( 'created' => time() - 100 ) );
+
+		$old_dir = $this->fixture_dirs[0];
+
+		$warnings = array();
+		$capture  = function ( $message ) use ( &$warnings ) {
+			$warnings[] = (string) $message;
+		};
+		add_action( 'mainwp_log_warning', $capture );
+
+		// A read-only directory makes the old snapshot's unlink fail.
+		chmod( $old_dir, 0555 ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+
+		try {
+			$scheduler = MainWP_Backup_Retention_Scheduler::instance();
+			$scheduler->on_snapshot_recorded( $new, $task_id, $this->site_id );
+			$scheduler->process_post_snapshot_queue();
+		} finally {
+			chmod( $old_dir, 0755 ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test cleanup.
+			remove_action( 'mainwp_log_warning', $capture );
+		}
+
+		$this->assertNotSame( array(), $warnings, 'A failed retention delete must log a warning in the scheduled path.' );
+		$this->assertStringContainsString( 'task ' . $task_id, $warnings[0] );
+		$this->assertStringContainsString( 'site ' . $this->site_id, $warnings[0] );
+		$this->assertStringContainsString( 'Could not remove local backup file', $warnings[0] );
+		$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $old )->status, 'The kept snapshot stays complete for the daily retry.' );
+	}
+
+	/**
 	 * The daily cron sweeps every task with a policy.
 	 *
 	 * @return void

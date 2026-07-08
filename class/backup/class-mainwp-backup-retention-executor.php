@@ -363,7 +363,12 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
                 continue;
             }
             if ( 0 !== strpos( $real, $root ) ) {
+                // The named artifact still exists, so the snapshot must not
+                // read as pruned and nothing irreversible (cloud deletes,
+                // upload-row purge) may run for it. Migrated dashboards
+                // whose rows still carry old-tree absolute paths land here.
                 $errors[] = 'Refused to remove a file outside the dashboard backup tree: ' . $path;
+                $clean    = false;
                 continue;
             }
             if ( ! @unlink( $real ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink, WordPress.PHP.NoSilencedErrors.Discouraged -- pruning the snapshot's own artifact; a failure is reported through the return value.

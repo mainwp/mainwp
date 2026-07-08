@@ -232,7 +232,17 @@ class MainWP_Backup_Retention_Scheduler { // phpcs:ignore Generic.Classes.Openin
          */
         $dry_run = (bool) apply_filters( 'mainwp_backup_retention_dry_run', false, (int) $task->id );
 
-        return MainWP_Backup_Retention_Executor::instance()->run_prune( $candidates, $task, $dry_run, $budget_seconds );
+        $report = MainWP_Backup_Retention_Executor::instance()->run_prune( $candidates, $task, $dry_run, $budget_seconds );
+
+        if ( ! empty( $report['errors'] ) ) {
+            // Both cron triggers (the post-snapshot drain and the daily
+            // sweep) run through here and otherwise drop the report, so a
+            // failed cleanup would leave no trace. The warning channel also
+            // lands in the backup diagnostics guardrail records.
+            do_action( 'mainwp_log_warning', 'Backup retention for task ' . (int) $task->id . ' on site ' . (int) $site_id . ' reported errors: ' . implode( ' | ', array_map( 'strval', (array) $report['errors'] ) ) );
+        }
+
+        return $report;
     }
 
     /**

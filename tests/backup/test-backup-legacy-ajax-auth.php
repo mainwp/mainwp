@@ -251,6 +251,38 @@ class MainWP_Backup_Legacy_Ajax_Auth_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * An authorized caller cannot point the download target into a sibling
+	 * site's backup directory either: the sink is site-scoped, so a
+	 * tampered `local` can neither write bytes into nor sweep another
+	 * site's archive set. (Tested at the sink because the AJAX wrapper
+	 * terminates with a plain die() that would kill the test process.)
+	 *
+	 * @return void
+	 */
+	public function test_download_file_rejects_sibling_site_local_path() {
+		$site_a = $this->create_test_site();
+		$site_b = $this->create_test_site();
+
+		$dir_b    = $this->site_backup_dir( $site_b );
+		$existing = $dir_b . 'full-existing-backup.tar.gz';
+		file_put_contents( $existing, 'sibling artifact' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+
+		$target = $dir_b . 'full-injected.tar.gz';
+
+		$thrown = null;
+		try {
+			MainWP_Backup_File_Manager::backup_download_file( $site_a, 'full', 'http://127.0.0.1:1/never-fetched.zip', $target );
+		} catch ( \Exception $e ) {
+			$thrown = $e;
+		}
+
+		$this->assertNotNull( $thrown, 'A sibling site download target must be rejected.' );
+		$this->assertStringContainsString( 'Invalid backup file location', $thrown->getMessage() );
+		$this->assertFileExists( $existing, 'The sibling site archive must not be swept.' );
+		$this->assertFileDoesNotExist( $target, 'No bytes may land in the sibling site directory.' );
+	}
+
+	/**
 	 * The path-bound helper accepts the backup tree and rejects substring
 	 * lookalikes and traversal escapes.
 	 *

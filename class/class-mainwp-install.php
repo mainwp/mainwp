@@ -84,8 +84,10 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             update_option( 'mainwp_run_quick_setup', 'yes' );
             MainWP_Utility::update_option( 'mainwp_enableNativeBackups', 0 );
         } elseif ( false === get_option( 'mainwp_enableNativeBackups' ) && false === get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
-            // An existing install that never wrote either flag predates the option entirely; keep the feature on for it.
-            MainWP_Utility::update_option( 'mainwp_enableNativeBackups', 1 );
+            // An existing install that never wrote either flag never used backups; default it off,
+            // matching a fresh install. A prior legacy-flag value still carries forward via the
+            // <9.0.2.6 migration below, which runs before this option is read again by callers.
+            MainWP_Utility::update_option( 'mainwp_enableNativeBackups', 0 );
         }
 
         if ( empty( $currentVersion ) || version_compare( $currentVersion, '8.8', '<' ) ) {

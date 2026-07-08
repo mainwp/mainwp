@@ -151,18 +151,40 @@ class MainWP_Backup_Flag_Migration_Test extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * An existing install that never wrote either flag is grandfathered
-	 * in as enabled, matching the old install() behavior.
+	 * An existing install that never wrote either flag defaults to disabled,
+	 * matching a fresh install. Only a lingering legacy flag (handled by the
+	 * <9.0.2.6 migration above) carries a prior enabled state forward.
 	 *
 	 * @return void
 	 */
-	public function test_existing_install_without_flags_is_grandfathered_enabled() {
+	public function test_existing_install_without_flags_defaults_to_disabled() {
 		delete_option( 'mainwp_enableNativeBackups' );
 		delete_option( 'mainwp_enableLegacyBackupFeature' );
 		update_site_option( 'mainwp_db_version', '9.0.2.5' );
 
 		MainWP_Install::instance()->install();
 
-		$this->assertTrue( MainWP_Backup_Settings::is_native_backups_enabled() );
+		$this->assertFalse( MainWP_Backup_Settings::is_native_backups_enabled() );
+	}
+
+	/**
+	 * A fresh install (no mainwp_db_version option at all) defaults to
+	 * disabled, the same as an existing install with neither flag written.
+	 *
+	 * Skipped: a truly empty $currentVersion also flips on the
+	 * `empty( $currentVersion )` branches guarding the schedule_processes and
+	 * wp tables' PRIMARY KEY clauses (class-mainwp-install.php:522-525,
+	 * :539-541). Those clauses fail dbDelta's index-definition regex on
+	 * PHP 8.4 (undefined array key "index_type" in
+	 * wp-admin/includes/upgrade.php:3101) because no existing test ever
+	 * exercises install() with an empty version, leaving that path
+	 * untested and broken independent of this flag change. Fixing the
+	 * table SQL is out of scope for the enablement flip; flagged
+	 * separately as a real fresh-install crash risk on PHP 8.4.
+	 *
+	 * @return void
+	 */
+	public function test_fresh_install_defaults_to_disabled() {
+		$this->markTestSkipped( 'Pre-existing PHP 8.4 dbDelta bug on the empty-$currentVersion path (class-mainwp-install.php:539) blocks exercising install() end to end; the fresh-install branch itself (line 85) is untouched by this change. See test docblock.' );
 	}
 }

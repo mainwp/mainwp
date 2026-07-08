@@ -470,4 +470,86 @@ class MainWP_Backup_Storage_S3_Test extends \WP_UnitTestCase {
 
 		$this->assertCount( 0, $this->requests, 'The transport must not run for a blocked host.' );
 	}
+
+	/**
+	 * A single 3xx with a Location header is followed exactly once: the
+	 * redirect target is re-guarded and re-signed as its own request.
+	 *
+	 * @return void
+	 */
+	public function test_request_follows_one_redirect_to_a_safe_host() {
+		$provider = $this->make_provider(
+			array(
+				$this->response( 301, '', array( 'location' => 'http://127.0.0.1:9000/other-bucket/k.bin' ) ),
+				$this->response( 200 ),
+			)
+		);
+
+		$this->assertTrue( $provider->put_object( 'k.bin', 'x' ) );
+
+		$this->assertCount( 2, $this->requests );
+		$this->assertSame( 'http://127.0.0.1:9000/other-bucket/k.bin', $this->requests[1]['url'] );
+		$this->assertStringStartsWith( 'AWS4-HMAC-SHA256', $this->requests[1]['args']['headers']['Authorization'] );
+	}
+
+	/**
+	 * A redirect Location that resolves to a link-local / cloud-metadata
+	 * address is refused before the follow-up request is dispatched.
+	 *
+	 * @return void
+	 */
+	public function test_request_refuses_redirect_to_unsafe_location() {
+		$provider = $this->make_provider(
+			array(
+				$this->response( 301, '', array( 'location' => 'http://169.254.169.254/latest/meta-data/' ) ),
+			)
+		);
+
+		try {
+			$provider->put_object( 'k.bin', 'x' );
+			$this->fail( 'A redirect to a link-local address must throw.' );
+		} catch ( \RuntimeException $e ) {
+			$this->assertStringContainsString( 'link-local or cloud-metadata', $e->getMessage() );
+		}
+
+		$this->assertCount( 1, $this->requests, 'The follow-up request must not run for a blocked redirect target.' );
+	}
+
+	/**
+	 * A second consecutive 3xx is not chased: at most one redirect hop is
+	 * followed, and the un-followed 3xx surfaces via expect_status.
+	 *
+	 * @return void
+	 */
+	public function test_request_follows_at_most_one_redirect_hop() {
+		$provider = $this->make_provider(
+			array(
+				$this->response( 301, '', array( 'location' => 'http://127.0.0.1:9000/hop-a' ) ),
+				$this->response( 301, '', array( 'location' => 'http://127.0.0.1:9000/hop-b' ) ),
+			)
+		);
+
+		try {
+			$provider->put_object( 'k.bin', 'x' );
+			$this->fail( 'A second consecutive redirect must not be chased.' );
+		} catch ( \RuntimeException $e ) {
+			$this->assertStringContainsString( 'returned HTTP 301', $e->getMessage() );
+		}
+
+		$this->assertCount( 2, $this->requests );
+	}
+
+	/**
+	 * The transport is told never to follow redirects on its own: every
+	 * hop is re-guarded and re-signed by the provider, not WP's HTTP layer.
+	 *
+	 * @return void
+	 */
+	public function test_request_disables_automatic_redirection() {
+		$provider = $this->make_provider( array( $this->response( 200 ) ) );
+
+		$provider->put_object( 'k.bin', 'x' );
+
+		$this->assertSame( 0, $this->requests[0]['args']['redirection'] );
+	}
 }

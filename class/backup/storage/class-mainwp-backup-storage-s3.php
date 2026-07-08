@@ -285,7 +285,17 @@ class MainWP_Backup_Storage_S3 implements MainWP_Backup_Storage_Provider, MainWP
     }
 
     /**
-     * Send a signed request through the transport.
+     * Send a signed request through the transport, following at most one
+     * redirect hop of its own accord.
+     *
+     * WP's HTTP layer is told never to follow redirects itself (see
+     * dispatch()): a 3xx response is instead followed here, one hop only,
+     * against a Location that is re-guarded and re-signed as its own
+     * request. This closes the gap where a compromised or malicious
+     * S3-compatible endpoint could 3xx a signed request onward to a
+     * link-local / cloud-metadata address without the SSRF guard ever
+     * seeing that target. A second consecutive 3xx is returned as-is and
+     * rejected by the caller's expect_status().
      *
      * @param string      $method     HTTP method.
      * @param string      $url        Request URL.
@@ -295,9 +305,37 @@ class MainWP_Backup_Storage_S3 implements MainWP_Backup_Storage_Provider, MainWP
      *
      * @return array Transport response.
      *
-     * @throws \RuntimeException When the transport itself fails.
+     * @throws \RuntimeException When the transport fails, or a redirect target is unsafe.
      */
     private function request( string $method, string $url, array $headers = array(), ?string $body = null, array $extra_args = array() ) {
+        $response = $this->dispatch( $method, $url, $headers, $body, $extra_args );
+
+        $code = $this->status( $response );
+        if ( $code >= 300 && $code < 400 ) {
+            $location = (string) wp_remote_retrieve_header( $response, 'location' );
+            if ( '' !== $location ) {
+                $redirect_url = \WP_Http::make_absolute_url( $location, $url );
+                $response     = $this->dispatch( $method, $redirect_url, $headers, $body, $extra_args );
+            }
+        }
+
+        return $response;
+    }
+
+    /**
+     * Guard, sign, and issue a single request through the transport.
+     *
+     * @param string      $method     HTTP method.
+     * @param string      $url        Request URL.
+     * @param array       $headers    Extra headers to sign and send.
+     * @param string|null $body       Request body.
+     * @param array       $extra_args Additional WP HTTP args (stream, filename).
+     *
+     * @return array Transport response.
+     *
+     * @throws \RuntimeException When the host is unsafe or the transport itself fails.
+     */
+    private function dispatch( string $method, string $url, array $headers, ?string $body, array $extra_args ) {
         $this->guard_outbound_host( $url );
 
         $payload_hash = hash( 'sha256', null === $body ? '' : $body );
@@ -314,9 +352,10 @@ class MainWP_Backup_Storage_S3 implements MainWP_Backup_Storage_Provider, MainWP
 
         $args = array_merge(
             array(
-                'method'  => $method,
-                'headers' => $signed,
-                'timeout' => 120,
+                'method'      => $method,
+                'headers'     => $signed,
+                'timeout'     => 120,
+                'redirection' => 0,
             ),
             $extra_args
         );

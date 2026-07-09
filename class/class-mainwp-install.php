@@ -31,7 +31,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * @var string DB version info.
      */
-    protected $mainwp_db_version = '9.0.2.19'; // NOSONAR - no IP. Bumped so dbDelta adds reclaim_count to wp_backup_upload_job and wp_backup_restore_job, the stale-lease-reclaim counter that lets acquire_next_job() route a job whose worker keeps dying mid-run to fail_permanent instead of reclaiming it forever. Previous 9.0.2.18 bump added wp_backup_snapshot.woo_meta, the Woo order-storage facts a database-bearing backup captured at dump time, read by the restore initiate handler's preserve-orders gate; 9.0.2.17 bump added wp_backup.backup_notices, the informational-notes channel that keeps run notes (like the large-site ZIP auto-switch) out of backup_errors; 9.0.2.16 added wp_backup.zip_force_override for the large-site ZIP auto-switch override; 9.0.2.15 added wp_backup_snapshot.test_restore_state/test_restore_at for the verified-restore (sandbox test-restore) result; 9.0.2.14 added wp_backup_snapshot.encryption for the per-snapshot archive-encryption metadata.
+    protected $mainwp_db_version = '9.0.2.20'; // NOSONAR - no IP. Bumped so pre_update_tables() drops the legacy unnamed UNIQUE (task_id) key from wp_backup_progress - a leftover of the <= 8.53 CREATE clause that capped the table at one per-site progress row per task, so the second add_backup_task_progress() insert on a multi-site run died on a duplicate key. Previous 9.0.2.19 bump added reclaim_count to wp_backup_upload_job and wp_backup_restore_job, the stale-lease-reclaim counter that lets acquire_next_job() route a job whose worker keeps dying mid-run to fail_permanent instead of reclaiming it forever. Previous 9.0.2.18 bump added wp_backup_snapshot.woo_meta, the Woo order-storage facts a database-bearing backup captured at dump time, read by the restore initiate handler's preserve-orders gate; 9.0.2.17 bump added wp_backup.backup_notices, the informational-notes channel that keeps run notes (like the large-site ZIP auto-switch) out of backup_errors; 9.0.2.16 added wp_backup.zip_force_override for the large-site ZIP auto-switch override; 9.0.2.15 added wp_backup_snapshot.test_restore_state/test_restore_at for the verified-restore (sandbox test-restore) result; 9.0.2.14 added wp_backup_snapshot.encryption for the per-snapshot archive-encryption metadata.
 
     /**
      * Protected variable to hold the database option name.
@@ -311,7 +311,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         $tbl  .= ') ' . $charset_collate . ';';
         $sql[] = $tbl;
 
-        $tbl = 'CREATE TABLE ' . $this->table_name( 'wp_backup_progress' ) . " (
+        $tbl   = 'CREATE TABLE ' . $this->table_name( 'wp_backup_progress' ) . " (
   task_id int(11) NOT NULL,
   wp_id int(11) NOT NULL,
   dtsFetched int(11) NOT NULL DEFAULT 0,
@@ -333,10 +333,6 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
   files_processed int(11) NOT NULL DEFAULT 0,
   files_total int(11) NOT NULL DEFAULT 0,
   KEY idx_task_id (task_id)";
-        if ( empty( $currentVersion ) || version_compare( $currentVersion, '8.53', '<=' ) ) {
-            $tbl .= ',
-            UNIQUE (task_id)';
-        }
         $tbl  .= ') ' . $charset_collate;
         $sql[] = $tbl;
 
@@ -811,6 +807,24 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
                 $old_key = $this->wpdb->get_results( "SHOW INDEX FROM {$upload_job_table} WHERE Key_name = 'uniq_snap_dest'" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL introspection; table name escaped via esc_sql.
                 if ( ! empty( $old_key ) ) {
                     $this->wpdb->query( "ALTER TABLE {$upload_job_table} DROP INDEX uniq_snap_dest" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL statement; table name escaped via esc_sql.
+                }
+            }
+        }
+
+        // Installs created while the <= 8.53 CREATE clause existed carry an
+        // unnamed UNIQUE (task_id) on the progress table, which caps it at one
+        // per-site progress row per task: the second add_backup_task_progress()
+        // insert dies on the duplicate key. dbDelta cannot DROP an index, so it
+        // goes here. MySQL names an unnamed UNIQUE after its first column, but
+        // scan by column to cover odd legacy names; the non-unique idx_task_id
+        // read-path key never matches and stays.
+        if ( version_compare( $currentVersion, '9.0.2.20', '<' ) ) { // NOSONAR - none IP.
+            $progress_table = esc_sql( $this->table_name( 'wp_backup_progress' ) );
+            $table_found    = $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $progress_table ) ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- table probe.
+            if ( ! empty( $table_found ) ) {
+                $unique_keys = $this->wpdb->get_results( "SHOW INDEX FROM {$progress_table} WHERE Column_name = 'task_id' AND Non_unique = 0" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL introspection; table name escaped via esc_sql.
+                foreach ( $unique_keys as $key_row ) {
+                    $this->wpdb->query( 'ALTER TABLE ' . $progress_table . ' DROP INDEX ' . esc_sql( $key_row->Key_name ) ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL statement; identifiers escaped via esc_sql.
                 }
             }
         }

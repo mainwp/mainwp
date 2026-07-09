@@ -13,6 +13,7 @@
 namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_DB_Backup;
 use MainWP\Dashboard\MainWP_Install;
 
 /**
@@ -150,6 +151,12 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 			if ( ! $this->column_exists( $table, $column ) ) {
 				$wpdb->query( "ALTER TABLE {$table} ADD COLUMN {$column} {$definition}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
 			}
+		}
+		if ( $this->index_exists( $table, 'task_id' ) ) {
+			$wpdb->query( "ALTER TABLE {$table} DROP INDEX task_id" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
+		}
+		if ( ! $this->index_exists( $table, 'idx_task_id' ) ) {
+			$wpdb->query( "ALTER TABLE {$table} ADD INDEX idx_task_id (task_id)" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
 		}
 
 		if ( false === $this->saved_db_version ) {
@@ -912,6 +919,57 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		update_site_option( 'mainwp_db_version', '9.0.2.18' );
 		MainWP_Install::instance()->install();
 		$this->assertTrue( $this->column_exists( $table, 'reclaim_count' ), 'Re-running install must remain idempotent.' );
+	}
+
+	/**
+	 * Installs upgraded from <= 8.53 carry a legacy unnamed UNIQUE (task_id)
+	 * key on the progress table, and dbDelta never drops indexes, so only one
+	 * per-site progress row could ever exist per task: the second
+	 * add_backup_task_progress() insert dies on the duplicate key. The upgrade
+	 * must drop the unique key (MySQL names an unnamed UNIQUE after its first
+	 * column, so it is Key_name task_id), keep the non-unique idx_task_id the
+	 * read path uses, and let one row per site insert cleanly. Re-running
+	 * install() stays idempotent.
+	 *
+	 * @return void
+	 */
+	public function test_upgrade_drops_legacy_unique_task_id_key_from_progress_table() {
+		global $wpdb;
+
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_progress' );
+		$this->assertTrue( $this->index_exists( $table, 'idx_task_id' ), 'Precondition: fresh install has idx_task_id.' );
+		$this->assertFalse( $this->index_exists( $table, 'task_id' ), 'Precondition: fresh install has no unique task_id key.' );
+
+		// A prior run's DDL can implicitly commit the fixture rows past the
+		// transaction rollback, and leftover duplicates would break ADD UNIQUE,
+		// so clear them first.
+		$wpdb->query( "DELETE FROM {$table} WHERE task_id = 888888" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture cleanup, identifiers cannot be prepared.
+
+		// Simulate the legacy shape the <= 8.53 CREATE clause produced.
+		$wpdb->query( "ALTER TABLE {$table} ADD UNIQUE ( task_id )" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture, identifiers cannot be prepared.
+		$this->assertTrue( $this->index_exists( $table, 'task_id' ), 'Precondition: legacy unique key added to simulate an upgraded install.' );
+
+		update_site_option( 'mainwp_db_version', '9.0.2.19' );
+
+		MainWP_Install::instance()->install();
+
+		$this->assertFalse(
+			$this->index_exists( $table, 'task_id' ),
+			'Upgrade must drop the legacy unique task_id key; a second per-site progress row for the same task is otherwise uninsertable.'
+		);
+		$this->assertTrue( $this->index_exists( $table, 'idx_task_id' ), 'Upgrade must keep the non-unique idx_task_id.' );
+
+		// One progress row per site for the same task must now insert cleanly.
+		$first  = MainWP_DB_Backup::instance()->add_backup_task_progress( 888888, 888801, array() );
+		$second = MainWP_DB_Backup::instance()->add_backup_task_progress( 888888, 888802, array() );
+		$this->assertNotNull( $first, 'The first per-site progress row must insert.' );
+		$this->assertNotNull( $second, 'The second per-site progress row for the same task must insert; the legacy unique key used to reject it.' );
+		$wpdb->query( "DELETE FROM {$table} WHERE task_id = 888888" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture cleanup, identifiers cannot be prepared.
+
+		update_site_option( 'mainwp_db_version', '9.0.2.19' );
+		MainWP_Install::instance()->install();
+		$this->assertFalse( $this->index_exists( $table, 'task_id' ), 'Re-running install must remain idempotent.' );
+		$this->assertTrue( $this->index_exists( $table, 'idx_task_id' ), 'Re-running install must keep idx_task_id.' );
 	}
 
 }

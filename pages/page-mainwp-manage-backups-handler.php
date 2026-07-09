@@ -1039,25 +1039,60 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      * Purges the task's restorable snapshots, cloud copies and upload
      * metadata before dropping the schedule row, so a deleted task never
      * leaves its backups orphaned and their storage leaking.
+     */
+    public static function remove_backup() {
+        $id = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : 0; //phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified by the AJAX router.
+        die( wp_json_encode( static::remove_backup_result( $id ) ) );
+    }
+
+    /**
+     * Authorize, purge, and drop a backup task, returning the AJAX payload.
+     *
+     * Split from remove_backup() so the authorization and purge-failure
+     * handling are testable without the die().
+     *
+     * @param int $id Task id.
+     *
+     * @return array Response payload: result | error | notask.
      *
      * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_task_by_id()
      * @uses \MainWP\Dashboard\MainWP_Backup_Retention_Executor::purge_snapshots_for_task()
      * @uses \MainWP\Dashboard\MainWP_DB_Backup::remove_backup_task()
      */
-    public static function remove_backup() {
-        if ( isset( $_POST['id'] ) ) { //phpcs:ignore WordPress.Security.NonceVerification.Missing
-            $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( intval( $_POST['id'] ) ); //phpcs:ignore WordPress.Security.NonceVerification.Missing
-            if ( static::can_edit_backuptask( $task ) ) {
-                $purge_result = MainWP_Backup_Retention_Executor::instance()->purge_snapshots_for_task( (int) $task->id, ! empty( $task->delete_cloud_copies ) );
-
-                /** This action is documented in class/class-mainwp-post-backup-handler.php */
-                do_action( 'mainwp_backup_task_snapshots_purged', (int) $task->id, $purge_result );
-
-                MainWP_DB_Backup::instance()->remove_backup_task( $task->id );
-                die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
-            }
+    public static function remove_backup_result( $id ) {
+        $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( (int) $id );
+        if ( ! static::can_edit_backuptask( $task ) ) {
+            return array( 'notask' => true );
         }
-        die( wp_json_encode( array( 'notask' => true ) ) );
+
+        // Deleting a task purges the snapshots and cloud copies of every
+        // site it covers - an irreversible cross-site action. can_edit_backuptask()
+        // above is a no-op under the default single-user mode, so gate this
+        // on the same per-site access the run/reset/list paths enforce; a
+        // Team-Control-restricted user must not be able to destroy the
+        // backups of a site outside their scope.
+        $scope_error = static::authorize_task_scope( $task->sites, $task->groups );
+        if ( '' !== $scope_error ) {
+            return array( 'error' => $scope_error );
+        }
+
+        $purge_result = MainWP_Backup_Retention_Executor::instance()->purge_snapshots_for_task( (int) $task->id, ! empty( $task->delete_cloud_copies ) );
+
+        // The purge deliberately keeps a snapshot when its artifact cannot be
+        // reached (recorded outside the uploads root, or an unlink refused).
+        // Dropping the task and its diagnostics anyway would orphan those
+        // artifacts with no owning task for retention to retry, erase the
+        // evidence, and still report success. Keep the task and its
+        // diagnostics; surface the failure so the operator can act.
+        if ( ! empty( $purge_result['errors'] ) ) {
+            return array( 'error' => esc_html__( 'Some of this task\'s backups could not be removed, so the task was kept. Check the backup diagnostics and try again.', 'mainwp' ) );
+        }
+
+        /** This action is documented in class/class-mainwp-post-backup-handler.php */
+        do_action( 'mainwp_backup_task_snapshots_purged', (int) $task->id, $purge_result );
+
+        MainWP_DB_Backup::instance()->remove_backup_task( $task->id );
+        return array( 'result' => 'SUCCESS' );
     }
 
     /**

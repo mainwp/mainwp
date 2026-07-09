@@ -434,23 +434,15 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @param null $dir Current MainWP directory.
      *
      * @return string $newdir
-     *
-     * @uses \MainWP\Dashboard\MainWP_System::is_single_user()
      */
     public static function get_mainwp_specific_dir( $dir = null ) { // phpcs:ignore -- NOSONAR - complex.
-        if ( MainWP_System::instance()->is_single_user() ) {
-            $userid = 0;
-        } else {
-
-            /**
-             * Current user global.
-             *
-             * @global string
-             */
-            global $current_user;
-
-            $userid = $current_user->ID;
-        }
+        // Pinned to the userid-0 root. Every existing install's private
+        // files (encryption keys under pk/, backup staging) live there
+        // because single-user mode was the only shipped mode; keying this
+        // off is_single_user() would let arming multi-user mode (the
+        // mainwp_is_single_user filter) silently reparent key storage to
+        // a per-user path and orphan the existing files.
+        $userid = 0;
 
         $hasWPFileSystem = static::get_wp_file_system();
 
@@ -511,24 +503,13 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @param mixed $dir MainWP Directory.
      *
      * @return string MainWP URL.
-     *
-     * @uses \MainWP\Dashboard\MainWP_System::is_single_user()
      */
     public static function get_mainwp_specific_url( $dir ) {
-        if ( MainWP_System::instance()->is_single_user() ) {
-            $userid = 0;
-        } else {
-
-            /**
-             * Current user global.
-             *
-             * @global string
-             */
-            global $current_user;
-
-            $userid = $current_user->ID;
-        }
-        $dirs = static::get_mainwp_dir();
+        // Pinned to the userid-0 root for the same reason as
+        // get_mainwp_specific_dir(): the private-files location must not
+        // move when multi-user mode is armed.
+        $userid = 0;
+        $dirs   = static::get_mainwp_dir();
 
         return $dirs[1] . $userid . '/' . $dir . '/';
     }

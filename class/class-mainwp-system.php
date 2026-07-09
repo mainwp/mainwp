@@ -2105,10 +2105,30 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * Check if single user environment.
      *
+     * Single-user has always been the only shipped mode: no released code
+     * computes this, and per-user access on multi-user installs is the Team
+     * Control extension's capability model (the mainwp_currentusercan and
+     * mainwp_currentuserallowedaccesssites filters), which ignores the row
+     * userid ownership layer entirely. The filter below arms that legacy
+     * ownership layer (can_edit_website(), userid-scoped site and group
+     * queries, per-user extension prefs) for installs that opt in; do not
+     * flip it on an install using Team Control, or the two models will
+     * contradict each other. The private-files root (encryption keys under
+     * pk/) is deliberately NOT keyed off this - see
+     * MainWP_System_Utility::get_mainwp_specific_dir().
+     *
      * @return boolean true|false.
      */
     public function is_single_user() {
-        return true;
+        /**
+         * Filter whether the Dashboard runs in single-user mode.
+         *
+         * Default true, matching every shipped release. Returning false
+         * arms the legacy per-user ownership gates dashboard-wide.
+         *
+         * @param bool $single_user Whether the Dashboard is single-user.
+         */
+        return (bool) apply_filters( 'mainwp_is_single_user', true );
     }
 
     /**

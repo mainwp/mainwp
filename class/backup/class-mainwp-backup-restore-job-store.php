@@ -35,6 +35,19 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
     const STATUS_CANCELLED        = 'cancelled';
 
     /**
+     * Expired-lease reclaims allowed before a job is routed to
+     * fail_permanent instead of being handed out again. A reclaim means
+     * the previous worker died mid-restore (a hard fatal, not a caught
+     * retryable failure), so attempt_count never bounds it. Three is
+     * deliberately tighter than the seven-attempt retryable budget in
+     * MainWP_Backup_Backoff: three straight worker deaths on the same
+     * row is strong evidence of a poison job rather than transient infra
+     * flakiness, and this ceiling exists precisely to stop that job from
+     * looping forever.
+     */
+    const RECLAIM_CEILING = 3;
+
+    /**
      * Singleton.
      *
      * @var MainWP_Backup_Restore_Job_Store|null
@@ -175,6 +188,13 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
         );
         $placeholders = implode( ',', array_fill( 0, count( $statuses ), '%s' ) );
 
+        // A job whose expired lease has already been reclaimed past the
+        // ceiling is killed here, before it can be handed out again. A
+        // scoped foreground poll (job_id given) only ever fail-permanents
+        // its own job, honoring the per-job scoping contract below; the
+        // unscoped background/CLI drainer sweeps every over-ceiling job.
+        $this->fail_jobs_over_reclaim_ceiling( $statuses, $placeholders, $now, $job_id );
+
         // Scope the claim to one job when an id is given (a foreground poll
         // advancing the job it polls), otherwise take the next runnable job.
         $id_clause = null === $job_id ? '' : ' AND id = %d';
@@ -187,9 +207,16 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
         // that already holds a live lease is skipped, so two rows for one
         // site never lock at once. The inner select is wrapped in a derived
         // table so MySQL does not reject reading the table it is updating.
+        // reclaim_count's CASE WHEN must read locked_by before locked_by is
+        // itself reassigned later in the same SET list: MySQL evaluates SET
+        // expressions left to right using each column's already-updated
+        // value, so the reclaim_count assignment comes first to see the
+        // pre-claim locked_by (non-empty only when a prior lease is being
+        // reclaimed, not on a fresh pickup or a post-fail_retryable backoff
+        // pickup, both of which leave locked_by empty).
         $claimed = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- the atomic claim gate; must hit the DB engine.
             $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- replacements and placeholders come from the same counted array.
-                'UPDATE ' . $this->table() . " SET locked_until = %d, locked_by = %s, updated = %d WHERE status IN ( {$placeholders} ) AND next_retry_at <= %d AND locked_until < %d AND site_id NOT IN ( SELECT site_id FROM ( SELECT site_id FROM " . $this->table() . " WHERE locked_until >= %d ) AS mainwp_locked_sites ){$id_clause} ORDER BY id ASC LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- placeholder list built from a counted array; table name from trusted helper.
+                'UPDATE ' . $this->table() . " SET reclaim_count = CASE WHEN locked_by <> '' THEN reclaim_count + 1 ELSE reclaim_count END, locked_until = %d, locked_by = %s, updated = %d WHERE status IN ( {$placeholders} ) AND next_retry_at <= %d AND locked_until < %d AND site_id NOT IN ( SELECT site_id FROM ( SELECT site_id FROM " . $this->table() . " WHERE locked_until >= %d ) AS mainwp_locked_sites ){$id_clause} ORDER BY id ASC LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- placeholder list built from a counted array; table name from trusted helper.
                 $binds
             )
         );
@@ -201,6 +228,48 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
             $this->wpdb->prepare( 'SELECT * FROM ' . $this->table() . ' WHERE locked_by = %s AND locked_until = %d LIMIT 1', $token, $now + $lease_seconds ) // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted helper.
         );
         return $this->decode_row( $row );
+    }
+
+    /**
+     * Permanently fail any job whose expired lease has been reclaimed at
+     * least RECLAIM_CEILING times, before a fresh claim attempt can
+     * reclaim it again. A job that keeps losing its worker to a hard
+     * fatal never reaches fail_retryable(), so attempt_count never bounds
+     * it; this is the check that stops the loop instead.
+     *
+     * When $job_id is given, the sweep is scoped to that job only - a
+     * foreground progress poll must never fail-permanent an unrelated
+     * restore for another site just because it polled its own job. The
+     * unscoped background/CLI drainer (job_id null) sweeps every
+     * over-ceiling job across the table.
+     *
+     * @param string[] $statuses     Runnable statuses.
+     * @param string   $placeholders Comma-joined %s placeholders matching $statuses.
+     * @param int      $now          Current time.
+     * @param int|null $job_id       Restrict the sweep to this job id, or null for every job.
+     *
+     * @return void
+     */
+    private function fail_jobs_over_reclaim_ceiling( array $statuses, string $placeholders, int $now, ?int $job_id = null ): void {
+        $id_clause = null === $job_id ? '' : ' AND id = %d';
+        $binds     = array_merge( $statuses, array( $now, static::RECLAIM_CEILING ) );
+        if ( null !== $job_id ) {
+            $binds[] = $job_id;
+        }
+
+        $ids = $this->wpdb->get_col( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- dedicated restore job table.
+            $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- replacements and placeholders come from the same counted array.
+                'SELECT id FROM ' . $this->table() . " WHERE status IN ( {$placeholders} ) AND locked_by <> '' AND locked_until < %d AND reclaim_count >= %d{$id_clause}", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- placeholder list built from a counted array; table name from trusted helper.
+                $binds
+            )
+        );
+
+        foreach ( $ids as $id ) {
+            $this->fail_permanent(
+                (int) $id,
+                sprintf( 'Reclaimed %d times without completing a phase; the worker keeps dying on this restore, so it is stopped instead of retried forever.', static::RECLAIM_CEILING )
+            );
+        }
     }
 
     /**

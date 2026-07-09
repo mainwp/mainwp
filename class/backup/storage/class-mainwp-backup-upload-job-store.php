@@ -29,6 +29,20 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
     const KIND_UPLOAD = 'upload';
     const KIND_DELETE = 'delete';
 
+    /**
+     * Expired-lease reclaims allowed before a job is routed to
+     * fail_permanent instead of being handed out again. A reclaim means
+     * the previous worker died mid-job (a hard fatal, not a caught
+     * retryable failure), so attempt_count never bounds it. Three is
+     * deliberately tighter than the seven-attempt retryable budget in
+     * MainWP_Backup_Backoff: three straight worker deaths on the same
+     * row is strong evidence of a poison job (bad payload, a
+     * deterministic fatal) rather than transient infra flakiness, and
+     * this ceiling exists precisely to stop that job from looping
+     * forever.
+     */
+    const RECLAIM_CEILING = 3;
+
     const STATUS_PENDING             = 'pending';
     const STATUS_CHUNKING            = 'chunking';
     const STATUS_UPLOADING           = 'uploading';
@@ -142,12 +156,23 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
             static::STATUS_FAILED_RETRYABLE,
         );
 
+        // A job whose expired lease has already been reclaimed past the
+        // ceiling is killed here, before it can be handed out again.
+        $this->fail_jobs_over_reclaim_ceiling( $kind, $runnable, $now );
+
         // Single-table UPDATE with ORDER BY + LIMIT is atomic under InnoDB
-        // row locking; only one caller wins the row.
+        // row locking; only one caller wins the row. reclaim_count's CASE
+        // WHEN must read locked_by before locked_by is itself reassigned
+        // later in the same SET list: MySQL evaluates SET expressions left
+        // to right using each column's already-updated value, so the
+        // reclaim_count assignment comes first to see the pre-claim
+        // locked_by (non-empty only when a prior lease is being reclaimed,
+        // not on a fresh pickup or a post-fail_retryable backoff pickup,
+        // both of which leave locked_by empty).
         $claimed = $this->wpdb->query(
             $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- the merged arrays supply all eleven replacements.
                 'UPDATE ' . $this->table_name( 'wp_backup_upload_job' ) .
-                ' SET locked_until = %d, locked_by = %s, updated = %d WHERE kind = %s AND status IN (%s, %s, %s, %s, %s) AND next_retry_at <= %d AND locked_until < %d ORDER BY id ASC LIMIT 1',
+                " SET reclaim_count = CASE WHEN locked_by <> '' THEN reclaim_count + 1 ELSE reclaim_count END, locked_until = %d, locked_by = %s, updated = %d WHERE kind = %s AND status IN (%s, %s, %s, %s, %s) AND next_retry_at <= %d AND locked_until < %d ORDER BY id ASC LIMIT 1",
                 array_merge(
                     array( $now + $lease_seconds, $token, $now, $kind ),
                     $runnable,
@@ -169,6 +194,36 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
         );
 
         return $this->decode_row( $row );
+    }
+
+    /**
+     * Permanently fail any job of this kind whose expired lease has been
+     * reclaimed at least RECLAIM_CEILING times, before a fresh claim
+     * attempt can reclaim it again. A job that keeps losing its worker to
+     * a hard fatal never reaches fail_retryable(), so attempt_count never
+     * bounds it; this is the check that stops the loop instead.
+     *
+     * @param string $kind     Job kind.
+     * @param array  $runnable Runnable statuses (fixed 5-element list).
+     * @param int    $now      Current time.
+     *
+     * @return void
+     */
+    private function fail_jobs_over_reclaim_ceiling( string $kind, array $runnable, int $now ): void {
+        $ids = $this->wpdb->get_col(
+            $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- the merged arrays supply all eight replacements.
+                'SELECT id FROM ' . $this->table_name( 'wp_backup_upload_job' ) .
+                " WHERE kind = %s AND status IN (%s, %s, %s, %s, %s) AND locked_by <> '' AND locked_until < %d AND reclaim_count >= %d",
+                array_merge( array( $kind ), $runnable, array( $now, static::RECLAIM_CEILING ) )
+            )
+        );
+
+        foreach ( $ids as $id ) {
+            $this->fail_permanent(
+                (int) $id,
+                sprintf( 'Reclaimed %d times without completing a phase; the worker keeps dying on this job, so it is stopped instead of retried forever.', static::RECLAIM_CEILING )
+            );
+        }
     }
 
     /**

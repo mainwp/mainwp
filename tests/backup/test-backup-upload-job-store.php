@@ -256,4 +256,84 @@ class MainWP_Backup_Upload_Job_Store_Test extends \WP_UnitTestCase {
 		$this->assertFalse( $store->fail_permanent( (int) $parked->id, 'late failure' ) );
 		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_CREDENTIALS_INVALID, $store->get_job( (int) $parked->id )->status );
 	}
+
+	/**
+	 * Reclaiming an expired lease counts the reclaim, but a worker that
+	 * dies mid-job before ever calling fail_retryable() never touches
+	 * attempt_count - that counter only bumps on a caught retryable
+	 * failure, never on the hard fatal a reclaim implies.
+	 *
+	 * @return void
+	 */
+	public function test_reclaim_increments_reclaim_count_not_attempt_count() {
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( 112, array( 7 ) );
+
+		$now = 1000000;
+		$job = $store->acquire_next_job( 'token-a', 300, $now );
+		$this->assertSame( 0, (int) $job->reclaim_count );
+
+		// The worker fatals mid-phase; its lease expires untouched.
+		$reclaimed = $store->acquire_next_job( 'token-b', 300, $now + 301 );
+		$this->assertNotNull( $reclaimed );
+		$this->assertSame( 1, (int) $reclaimed->reclaim_count, 'The expired-lease pickup must count as a reclaim.' );
+		$this->assertSame( 0, (int) $reclaimed->attempt_count, 'A reclaim is not a counted retry attempt.' );
+	}
+
+	/**
+	 * A normal retryable-after-backoff pickup - fail_retryable() clears
+	 * locked_by before the job becomes claimable again - must not be
+	 * mistaken for a reclaim; attempt_count already bounds that path.
+	 *
+	 * @return void
+	 */
+	public function test_backoff_pickup_after_fail_retryable_does_not_count_as_reclaim() {
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( 113, array( 7 ) );
+
+		$now = 1000000;
+		$job = $store->acquire_next_job( 'token-a', 300, $now );
+		$store->fail_retryable( (int) $job->id, 'network blip', $now + 600 );
+
+		$retried = $store->acquire_next_job( 'token-b', 300, $now + 600 );
+		$this->assertNotNull( $retried );
+		$this->assertSame( 0, (int) $retried->reclaim_count, 'A backed-off retry is not a lease reclaim.' );
+		$this->assertSame( 1, (int) $retried->attempt_count );
+	}
+
+	/**
+	 * A job that keeps killing its worker (reclaimed past the ceiling)
+	 * is routed to fail_permanent instead of being handed out again,
+	 * since a hard fatal never reaches fail_retryable to bound it via
+	 * attempt_count.
+	 *
+	 * @return void
+	 */
+	public function test_reclaim_ceiling_routes_job_to_fail_permanent() {
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( 114, array( 7 ) );
+
+		$now = 1000000;
+		$job = $store->acquire_next_job( 'token-0', 300, $now );
+		$job_id = (int) $job->id;
+
+		// Each reclaim simulates the worker fataling before it can call
+		// fail_retryable() or set_status(); the lease is simply left to
+		// expire.
+		for ( $i = 1; $i <= MainWP_Backup_Upload_Job_Store::RECLAIM_CEILING; $i++ ) {
+			$now      += 301;
+			$reclaimed = $store->acquire_next_job( "token-{$i}", 300, $now );
+			$this->assertNotNull( $reclaimed, "Reclaim {$i} must still be handed out below the ceiling." );
+			$this->assertSame( $job_id, (int) $reclaimed->id );
+			$this->assertSame( $i, (int) $reclaimed->reclaim_count );
+		}
+
+		// The next attempt would be reclaim ceiling + 1: the job must be
+		// routed to fail_permanent instead of handed out again.
+		$now += 301;
+		$this->assertNull( $store->acquire_next_job( 'token-final', 300, $now ), 'A job over the reclaim ceiling must not be acquired again.' );
+
+		$final = $store->get_job( $job_id );
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_PERMANENT, $final->status );
+	}
 }

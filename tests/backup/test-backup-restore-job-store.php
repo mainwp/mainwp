@@ -275,4 +275,113 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_COMPLETED, $job->status );
 		$this->assertSame( '', (string) $job->last_error );
 	}
+
+	/**
+	 * Reclaiming an expired lease counts the reclaim, but a worker that
+	 * dies mid-restore before ever calling fail_retryable() never touches
+	 * attempt_count - that counter only bumps on a caught retryable
+	 * failure, never on the hard fatal a reclaim implies.
+	 */
+	public function test_reclaim_increments_reclaim_count_not_attempt_count() {
+		$job_id = $this->store->create_job( 8801, 42, array() );
+
+		$now = 1000000;
+		$job = $this->store->acquire_next_job( 'token-a', 300, $now );
+		$this->assertSame( 0, (int) $job->reclaim_count );
+
+		// The worker fatals mid-phase; its lease expires untouched.
+		$reclaimed = $this->store->acquire_next_job( 'token-b', 300, $now + 301 );
+		$this->assertNotNull( $reclaimed );
+		$this->assertSame( $job_id, (int) $reclaimed->id );
+		$this->assertSame( 1, (int) $reclaimed->reclaim_count, 'The expired-lease pickup must count as a reclaim.' );
+		$this->assertSame( 0, (int) $reclaimed->attempt_count, 'A reclaim is not a counted retry attempt.' );
+	}
+
+	/**
+	 * A normal retryable-after-backoff pickup - fail_retryable() clears
+	 * locked_by before the job becomes claimable again - must not be
+	 * mistaken for a reclaim; attempt_count already bounds that path.
+	 */
+	public function test_backoff_pickup_after_fail_retryable_does_not_count_as_reclaim() {
+		$job_id = $this->store->create_job( 8801, 42, array() );
+		$this->store->fail_retryable( $job_id, 'flaky', 1, time() - 1 );
+
+		$retried = $this->store->acquire_next_job( 'token-a', 300 );
+		$this->assertNotNull( $retried );
+		$this->assertSame( 0, (int) $retried->reclaim_count, 'A backed-off retry is not a lease reclaim.' );
+		$this->assertSame( 1, (int) $retried->attempt_count );
+	}
+
+	/**
+	 * A restore that keeps killing its worker (reclaimed past the
+	 * ceiling) is routed to fail_permanent instead of being handed out
+	 * again, since a hard fatal never reaches fail_retryable to bound it
+	 * via attempt_count.
+	 */
+	public function test_reclaim_ceiling_routes_job_to_fail_permanent() {
+		$job_id = $this->store->create_job( 8801, 42, array() );
+
+		$now = 1000000;
+		$this->store->acquire_next_job( 'token-0', 300, $now );
+
+		for ( $i = 1; $i <= MainWP_Backup_Restore_Job_Store::RECLAIM_CEILING; $i++ ) {
+			$now      += 301;
+			$reclaimed = $this->store->acquire_next_job( "token-{$i}", 300, $now );
+			$this->assertNotNull( $reclaimed, "Reclaim {$i} must still be handed out below the ceiling." );
+			$this->assertSame( $job_id, (int) $reclaimed->id );
+			$this->assertSame( $i, (int) $reclaimed->reclaim_count );
+		}
+
+		$now += 301;
+		$this->assertNull( $this->store->acquire_next_job( 'token-final', 300, $now ), 'A job over the reclaim ceiling must not be acquired again.' );
+
+		$final = $this->store->get_job( $job_id );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT, $final->status );
+	}
+
+	/**
+	 * A foreground progress poll passes the job id it is advancing so it
+	 * only ever advances that restore (the acquire_next_job docblock's
+	 * own contract). The reclaim-ceiling sweep must honor that scoping:
+	 * polling job X must never fail-permanent an unrelated job Y sitting
+	 * over the ceiling for a different site. The unscoped background/CLI
+	 * drainer, which takes any runnable job, sweeps every over-ceiling
+	 * job as before.
+	 */
+	public function test_scoped_poll_does_not_reclaim_fail_a_different_over_ceiling_job() {
+		$job_x = $this->store->create_job( 8801, 42, array() );
+		$job_y = $this->store->create_job( 9901, 43, array() );
+
+		$now = 1000000;
+
+		// Drive job Y past the reclaim ceiling via repeated expired-lease
+		// reclaims, scoped to Y throughout so the setup never touches X.
+		$this->store->acquire_next_job( 'token-y0', 300, $now, $job_y );
+		for ( $i = 1; $i <= MainWP_Backup_Restore_Job_Store::RECLAIM_CEILING; $i++ ) {
+			$now       += 301;
+			$reclaimed = $this->store->acquire_next_job( "token-y{$i}", 300, $now, $job_y );
+			$this->assertNotNull( $reclaimed, "Reclaim {$i} of Y must still be handed out below the ceiling." );
+		}
+
+		// Y now sits at the ceiling with an expired lease - eligible for
+		// the sweep on the very next acquire call.
+		$now += 301;
+
+		// A scoped foreground poll for job X must not touch Y, even
+		// though Y is sitting over the ceiling.
+		$this->store->acquire_next_job( 'token-x-poll', 300, $now, $job_x );
+		$this->assertNotSame(
+			MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT,
+			$this->store->get_job( $job_y )->status,
+			'A job_id-scoped poll must never fail-permanent an unrelated job.'
+		);
+
+		// The unscoped background/CLI drainer sweeps every over-ceiling job.
+		$this->store->acquire_next_job( 'token-drain', 300, $now );
+		$this->assertSame(
+			MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT,
+			$this->store->get_job( $job_y )->status,
+			'The unscoped drainer must fail-permanent an over-ceiling job.'
+		);
+	}
 }

@@ -104,12 +104,20 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 			if ( ! $this->column_exists( $upload_job_table, 'provider' ) ) {
 				$wpdb->query( "ALTER TABLE {$upload_job_table} ADD COLUMN provider varchar(20) NOT NULL DEFAULT ''" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
 			}
+			if ( ! $this->column_exists( $upload_job_table, 'reclaim_count' ) ) {
+				$wpdb->query( "ALTER TABLE {$upload_job_table} ADD COLUMN reclaim_count int(11) NOT NULL DEFAULT 0" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
+			}
 			if ( ! $this->index_exists( $upload_job_table, 'uniq_snap_dest_kind' ) ) {
 				$wpdb->query( "ALTER TABLE {$upload_job_table} ADD UNIQUE KEY uniq_snap_dest_kind (snapshot_id, destination_id, kind)" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
 			}
 			if ( $this->index_exists( $upload_job_table, 'uniq_snap_dest' ) ) {
 				$wpdb->query( "ALTER TABLE {$upload_job_table} DROP INDEX uniq_snap_dest" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
 			}
+		}
+
+		$restore_job_table = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		if ( $this->table_exists( $restore_job_table ) && ! $this->column_exists( $restore_job_table, 'reclaim_count' ) ) {
+			$wpdb->query( "ALTER TABLE {$restore_job_table} ADD COLUMN reclaim_count int(11) NOT NULL DEFAULT 0" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
 		}
 
 		$snapshot_table = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
@@ -840,6 +848,70 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 			$this->index_columns( $table, 'uniq_snap_dest_kind' ),
 			'Upgrade must add the widened unique key.'
 		);
+	}
+
+	/**
+	 * An install whose stored db version predates the reclaim counter must
+	 * receive the reclaim_count column when install() runs. The column lets
+	 * acquire_next_job() stop reclaiming an expired-lease job forever - past
+	 * a ceiling it routes the job to fail_permanent instead. Re-running
+	 * install() stays idempotent.
+	 *
+	 * @return void
+	 */
+	public function test_upgrade_adds_reclaim_count_column_to_upload_job_table() {
+		global $wpdb;
+
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' );
+		$this->assertTrue( $this->column_exists( $table, 'reclaim_count' ), 'Precondition: fresh install has reclaim_count.' );
+
+		$wpdb->query( "ALTER TABLE {$table} DROP COLUMN reclaim_count" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture, identifiers cannot be prepared.
+		$this->assertFalse( $this->column_exists( $table, 'reclaim_count' ), 'Precondition: column dropped to simulate an older install.' );
+
+		update_site_option( 'mainwp_db_version', '9.0.2.18' );
+
+		MainWP_Install::instance()->install();
+
+		$this->assertTrue(
+			$this->column_exists( $table, 'reclaim_count' ),
+			'Upgrade must add reclaim_count to existing installs; the shipped db version needs a bump or dbDelta never runs.'
+		);
+
+		update_site_option( 'mainwp_db_version', '9.0.2.18' );
+		MainWP_Install::instance()->install();
+		$this->assertTrue( $this->column_exists( $table, 'reclaim_count' ), 'Re-running install must remain idempotent.' );
+	}
+
+	/**
+	 * The restore-job table's upgrade path was previously untested. An
+	 * install whose stored db version predates the reclaim counter must
+	 * receive the reclaim_count column when install() runs, mirroring the
+	 * upload-job table's coverage above. Re-running install() stays
+	 * idempotent.
+	 *
+	 * @return void
+	 */
+	public function test_upgrade_adds_reclaim_count_column_to_restore_job_table() {
+		global $wpdb;
+
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$this->assertTrue( $this->column_exists( $table, 'reclaim_count' ), 'Precondition: fresh install has reclaim_count.' );
+
+		$wpdb->query( "ALTER TABLE {$table} DROP COLUMN reclaim_count" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture, identifiers cannot be prepared.
+		$this->assertFalse( $this->column_exists( $table, 'reclaim_count' ), 'Precondition: column dropped to simulate an older install.' );
+
+		update_site_option( 'mainwp_db_version', '9.0.2.18' );
+
+		MainWP_Install::instance()->install();
+
+		$this->assertTrue(
+			$this->column_exists( $table, 'reclaim_count' ),
+			'Upgrade must add reclaim_count to existing installs; the shipped db version needs a bump or dbDelta never runs.'
+		);
+
+		update_site_option( 'mainwp_db_version', '9.0.2.18' );
+		MainWP_Install::instance()->install();
+		$this->assertTrue( $this->column_exists( $table, 'reclaim_count' ), 'Re-running install must remain idempotent.' );
 	}
 
 }

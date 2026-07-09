@@ -31,7 +31,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * @var string DB version info.
      */
-    protected $mainwp_db_version = '9.0.2.18'; // NOSONAR - no IP. Bumped so dbDelta adds wp_backup_snapshot.woo_meta, the Woo order-storage facts a database-bearing backup captured at dump time, read by the restore initiate handler's preserve-orders gate. Previous 9.0.2.17 bump added wp_backup.backup_notices, the informational-notes channel that keeps run notes (like the large-site ZIP auto-switch) out of backup_errors; 9.0.2.16 added wp_backup.zip_force_override for the large-site ZIP auto-switch override; 9.0.2.15 added wp_backup_snapshot.test_restore_state/test_restore_at for the verified-restore (sandbox test-restore) result; 9.0.2.14 added wp_backup_snapshot.encryption for the per-snapshot archive-encryption metadata.
+    protected $mainwp_db_version = '9.0.2.19'; // NOSONAR - no IP. Bumped so dbDelta adds reclaim_count to wp_backup_upload_job and wp_backup_restore_job, the stale-lease-reclaim counter that lets acquire_next_job() route a job whose worker keeps dying mid-run to fail_permanent instead of reclaiming it forever. Previous 9.0.2.18 bump added wp_backup_snapshot.woo_meta, the Woo order-storage facts a database-bearing backup captured at dump time, read by the restore initiate handler's preserve-orders gate; 9.0.2.17 bump added wp_backup.backup_notices, the informational-notes channel that keeps run notes (like the large-site ZIP auto-switch) out of backup_errors; 9.0.2.16 added wp_backup.zip_force_override for the large-site ZIP auto-switch override; 9.0.2.15 added wp_backup_snapshot.test_restore_state/test_restore_at for the verified-restore (sandbox test-restore) result; 9.0.2.14 added wp_backup_snapshot.encryption for the per-snapshot archive-encryption metadata.
 
     /**
      * Protected variable to hold the database option name.
@@ -439,6 +439,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
   provider varchar(20) NOT NULL DEFAULT '',
   status varchar(32) NOT NULL DEFAULT 'pending',
   attempt_count int(11) NOT NULL DEFAULT 0,
+  reclaim_count int(11) NOT NULL DEFAULT 0,
   next_retry_at int(11) NOT NULL DEFAULT 0,
   locked_until int(11) NOT NULL DEFAULT 0,
   locked_by varchar(64) NOT NULL DEFAULT '',
@@ -465,6 +466,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
   checkpoint longtext NOT NULL,
   last_error text NOT NULL DEFAULT '',
   attempt_count int(11) NOT NULL DEFAULT 0,
+  reclaim_count int(11) NOT NULL DEFAULT 0,
   next_retry_at int(11) NOT NULL DEFAULT 0,
   locked_until int(11) NOT NULL DEFAULT 0,
   locked_by varchar(64) NOT NULL DEFAULT '',

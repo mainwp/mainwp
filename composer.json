@@ -4,7 +4,7 @@
     "type": "wordpress-plugin",
     "license": "GPL-3.0-or-later",
     "require": {
-        "php": ">=7.4"
+        "php": ">=8.3"
     },
     "require-dev": {
         "dealerdirect/phpcodesniffer-composer-installer": "^1.0",

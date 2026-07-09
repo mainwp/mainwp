@@ -9,6 +9,7 @@
  * Plugin URI: https://mainwp.com/
  * Text Domain: mainwp
  * Version:  7.0.0-nativebackups.1
+ * Requires PHP: 8.3
  * License: GPLv3 or later
  * License URI: https://www.gnu.org/licenses/gpl-3.0.html
  *

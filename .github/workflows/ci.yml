@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php: ['7.4', '8.0', '8.1', '8.2', '8.3', '8.4']
+        php: ['8.3', '8.4']
 
     services:
       mysql:
@@ -69,8 +69,8 @@ jobs:
         run: composer install --no-progress --prefer-dist
 
       # Parse-lints every plugin file at this leg's exact PHP version, so any
-      # syntax above the 7.4 floor (e.g. enums) fails here even in files no
-      # test loads.
+      # syntax below the 8.3 floor (or a stray parse error) fails here even in
+      # files no test loads.
       - name: PHP syntax lint
         run: |
           find . -name '*.php' -not -path './vendor/*' -not -path './node_modules/*' -not -path './tests/e2e/*' -print0 \

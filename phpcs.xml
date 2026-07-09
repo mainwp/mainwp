@@ -22,7 +22,7 @@
 
 	<!-- Configs -->
 	<config name="minimum_supported_wp_version" value="5.2" />
-	<config name="testVersion" value="7.4-" />
+	<config name="testVersion" value="8.3-" />
 
 	<!-- Rules -->
 	<rule ref="PHPCompatibility" />

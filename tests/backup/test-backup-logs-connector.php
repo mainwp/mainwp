@@ -352,6 +352,36 @@ class MainWP_Backup_Logs_Connector_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * An upload failure with no site attribution (the snapshot record was
+	 * already gone) still logs as a dashboard-level entry with site 0.
+	 *
+	 * @return void
+	 */
+	public function test_upload_failed_event_without_site_still_logs() {
+		$captured  = array();
+		$connector = $this->capturing_connector( $captured );
+
+		$connector->callback_mainwp_backup_upload_failed(
+			array(
+				'site_id'          => 0,
+				'task_id'          => 0,
+				'snapshot_id'      => 7,
+				'destination_id'   => 3,
+				'destination_name' => '',
+				'provider'         => 'local',
+				'error'            => 'Snapshot record is gone.',
+			)
+		);
+
+		$this->assertCount( 1, $captured );
+		$this->assertSame( 0, $captured[0]['site_id'] );
+		$this->assertSame( 'upload_failed', $captured[0]['action'] );
+		$this->assertSame( 0, $captured[0]['state'] );
+		$this->assertArrayHasKey( 'extra_info', $captured[0]['args'] );
+		$this->assertStringContainsString( 'Snapshot record is gone.', $captured[0]['args']['extra_info'] );
+	}
+
+	/**
 	 * A malformed upload-failed event is ignored.
 	 *
 	 * @return void

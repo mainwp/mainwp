@@ -637,6 +637,151 @@ class MainWP_Backup_Upload_Driver_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * A job whose snapshot record vanished announces the terminal failure
+	 * so the activity log records it, with site unattributed and the
+	 * destination taken from the job row.
+	 *
+	 * @return void
+	 */
+	public function test_missing_snapshot_fires_upload_failed() {
+		list( $dest_id ) = $this->make_local_destination();
+		$snapshot_id     = $this->make_snapshot( $this->standard_files() );
+		$store           = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+
+		global $wpdb;
+		$wpdb->delete( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
+			MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ),
+			array( 'id' => $snapshot_id ),
+			array( '%d' )
+		);
+
+		$events = array();
+		add_action(
+			'mainwp_backup_upload_failed',
+			function ( $event ) use ( &$events ) {
+				$events[] = $event;
+			}
+		);
+
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+
+		$job = $store->get_jobs_for_snapshot( $snapshot_id )[0];
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
+		$this->assertCount( 1, $events );
+		$this->assertSame( 0, $events[0]['site_id'] );
+		$this->assertSame( $dest_id, $events[0]['destination_id'] );
+		$this->assertSame( 'local', $events[0]['provider'] );
+		$this->assertStringContainsString( 'Snapshot record is gone', $events[0]['error'] );
+	}
+
+	/**
+	 * A job whose destination row was deleted announces the terminal
+	 * failure with the destination id and provider preserved from the
+	 * job row.
+	 *
+	 * @return void
+	 */
+	public function test_deleted_destination_fires_upload_failed() {
+		list( $dest_id ) = $this->make_local_destination();
+		$snapshot_id     = $this->make_snapshot( $this->standard_files() );
+		$store           = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+
+		MainWP_Backup_Storage_Destinations::instance()->delete_destination( $dest_id );
+
+		$events = array();
+		add_action(
+			'mainwp_backup_upload_failed',
+			function ( $event ) use ( &$events ) {
+				$events[] = $event;
+			}
+		);
+
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+
+		$this->assertCount( 1, $events );
+		$this->assertSame( 4, $events[0]['site_id'] );
+		$this->assertSame( $dest_id, $events[0]['destination_id'] );
+		$this->assertSame( 'local', $events[0]['provider'] );
+		$this->assertStringContainsString( 'destination', strtolower( $events[0]['error'] ) );
+	}
+
+	/**
+	 * A destination whose stored credentials no longer decrypt announces
+	 * the terminal failure when its job parks credentials-invalid.
+	 *
+	 * @return void
+	 */
+	public function test_undecryptable_credentials_fire_upload_failed() {
+		list( $dest_id ) = $this->make_local_destination();
+		$snapshot_id     = $this->make_snapshot( $this->standard_files() );
+		$store           = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+
+		global $wpdb;
+		$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
+			MainWP_DB::instance()->get_table_name( 'wp_backup_storage' ),
+			array( 'settings' => 'not-a-credential-envelope' ),
+			array( 'id' => $dest_id )
+		);
+
+		$events = array();
+		add_action(
+			'mainwp_backup_upload_failed',
+			function ( $event ) use ( &$events ) {
+				$events[] = $event;
+			}
+		);
+
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+
+		$job = $store->get_jobs_for_snapshot( $snapshot_id )[0];
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_CREDENTIALS_INVALID, $job->status );
+		$this->assertCount( 1, $events );
+		$this->assertSame( 4, $events[0]['site_id'] );
+		$this->assertSame( $dest_id, $events[0]['destination_id'] );
+		$this->assertStringContainsString( 'credentials', strtolower( $events[0]['error'] ) );
+	}
+
+	/**
+	 * A destination whose provider slug no longer constructs announces
+	 * the terminal failure when provider construction throws.
+	 *
+	 * @return void
+	 */
+	public function test_unknown_provider_fires_upload_failed() {
+		list( $dest_id ) = $this->make_local_destination();
+		$snapshot_id     = $this->make_snapshot( $this->standard_files() );
+		$store           = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+
+		global $wpdb;
+		$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
+			MainWP_DB::instance()->get_table_name( 'wp_backup_storage' ),
+			array( 'provider' => 'bogus' ),
+			array( 'id' => $dest_id )
+		);
+
+		$events = array();
+		add_action(
+			'mainwp_backup_upload_failed',
+			function ( $event ) use ( &$events ) {
+				$events[] = $event;
+			}
+		);
+
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+
+		$job = $store->get_jobs_for_snapshot( $snapshot_id )[0];
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
+		$this->assertCount( 1, $events );
+		$this->assertSame( 4, $events[0]['site_id'] );
+		$this->assertSame( $dest_id, $events[0]['destination_id'] );
+		$this->assertStringContainsString( 'Unknown storage provider', $events[0]['error'] );
+	}
+
+	/**
 	 * Enqueue stamps each job with its destination's provider so the
 	 * offsite rollup can tell local from cloud even if the destination is
 	 * later deleted.

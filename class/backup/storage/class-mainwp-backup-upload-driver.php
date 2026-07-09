@@ -203,21 +203,27 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
 
         $snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( (int) $job->snapshot_id );
         if ( null === $snapshot ) {
-            $store->fail_permanent( (int) $job->id, 'Snapshot record is gone.' );
+            $error = 'Snapshot record is gone.';
+            $store->fail_permanent( (int) $job->id, $error );
             $this->cleanup_staging( $job );
+            $this->fire_upload_failed( $job, null, $error );
             return;
         }
 
         $destination = MainWP_Backup_Storage_Destinations::instance()->get_destination( (int) $job->destination_id );
         if ( null === $destination ) {
-            $store->fail_permanent( (int) $job->id, 'Storage destination was deleted.' );
+            $error = 'Storage destination was deleted.';
+            $store->fail_permanent( (int) $job->id, $error );
             $this->cleanup_staging( $job );
+            $this->fire_upload_failed( $job, null, $error );
             return;
         }
 
         if ( $destination->credentials_invalid ) {
-            $store->invalidate_credentials( (int) $job->id, 'Stored credentials no longer decrypt; re-enter them on the destination.' );
+            $error = 'Stored credentials no longer decrypt; re-enter them on the destination.';
+            $store->invalidate_credentials( (int) $job->id, $error );
             $this->cleanup_staging( $job );
+            $this->fire_upload_failed( $job, $destination, $error );
             return;
         }
 
@@ -226,6 +232,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
         } catch ( \RuntimeException $e ) {
             $store->fail_permanent( (int) $job->id, $e->getMessage() );
             $this->cleanup_staging( $job );
+            $this->fire_upload_failed( $job, $destination, $e->getMessage() );
             return;
         }
 
@@ -829,14 +836,17 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
      * permanently failed) so the activity log can record it. Never fired
      * for a retryable failure, which the backoff will attempt again.
      *
-     * @param object $job         Job row.
-     * @param object $destination Destination row.
-     * @param string $error       Error detail, already tagged with the
-     *                            provider's registry error code.
+     * A null destination (the row was deleted, or the snapshot vanished
+     * before the destination loaded) falls back to the id and provider
+     * denormalized onto the job row at enqueue time.
+     *
+     * @param object      $job         Job row.
+     * @param object|null $destination Destination row, when it still exists.
+     * @param string      $error       Error detail.
      *
      * @return void
      */
-    private function fire_upload_failed( object $job, object $destination, string $error ): void {
+    private function fire_upload_failed( object $job, ?object $destination, string $error ): void {
         $snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( (int) $job->snapshot_id );
 
         /**
@@ -852,9 +862,9 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
                 'site_id'          => null !== $snapshot ? (int) $snapshot->site_id : 0,
                 'task_id'          => null !== $snapshot ? (int) $snapshot->task_id : 0,
                 'snapshot_id'      => (int) $job->snapshot_id,
-                'destination_id'   => (int) $destination->id,
-                'destination_name' => (string) $destination->name,
-                'provider'         => (string) $destination->provider,
+                'destination_id'   => null !== $destination ? (int) $destination->id : (int) $job->destination_id,
+                'destination_name' => null !== $destination ? (string) $destination->name : '',
+                'provider'         => null !== $destination ? (string) $destination->provider : (string) $job->provider,
                 'error'            => $error,
             )
         );

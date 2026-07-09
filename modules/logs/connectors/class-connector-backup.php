@@ -249,7 +249,9 @@ class Connector_Backup extends Log_Connector {
      *                     destination_id, destination_name, provider, error.
      */
     public function callback_mainwp_backup_upload_failed( $event ) {
-        if ( ! is_array( $event ) || empty( $event['site_id'] ) || empty( $event['destination_id'] ) ) {
+        // No site guard: a failure whose snapshot record already vanished
+        // has no site to attribute and logs as a dashboard-level entry.
+        if ( ! is_array( $event ) || empty( $event['destination_id'] ) ) {
             return;
         }
 

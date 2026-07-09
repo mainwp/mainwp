@@ -22,6 +22,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
     /**
+     * New short term notice prefix.
+     */
+    const SHORT_TERM_NOTICE_OPTION_PREFIX = '_mainwp_temp_notice_';
+
+    /**
+     * New short term notice TTL.
+     */
+    const SHORT_TERM_NOTICE_TTL = MONTH_IN_SECONDS;
+
+
+    /**
      * Yoast SEO is enabled return true else return null.
      *
      * @static
@@ -863,6 +874,20 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     }
 
     /**
+     * Method delete_user_option()
+     *
+     * @param string $option_name Option name.
+     *
+     * @return void.
+     */
+    public static function delete_user_option( $option_name ) {
+        $user = wp_get_current_user();
+        if ( $user ) {
+            delete_user_option( $user->ID, $option_name );
+        }
+    }
+
+    /**
      * Method remove_preslash_spaces()
      *
      * Remove spaces before slashes.
@@ -1233,6 +1258,161 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             static::update_user_option( 'mainwp_flash_messages', $flash_messages );
         }
         return $content;
+    }
+
+    /**
+     * Method set_short_term_notice()
+     *
+     * Set new temporary notice.
+     *
+     * @param string $noti_key Notice key.
+     * @param int    $checked_at Notice checked at.
+     *
+     * @return void.
+     */
+    public static function set_short_term_notice( $noti_key, $checked_at ) {
+        $noti_handle_name = static::SHORT_TERM_NOTICE_OPTION_PREFIX . $noti_key;
+        static::update_option( $noti_handle_name, $checked_at );
+        static::delete_user_short_term_notice( $noti_key ); // Deleting the current user's short-term notice will make the new notice visible to the user again.
+    }
+
+
+    /**
+     * Method is_short_term_notice()
+     *
+     * Check whether the short-term notice is still active.
+     *
+     * @param string $noti_key Notice key.
+     *
+     * @return boolean true|false.
+     */
+    public static function is_short_term_notice( $noti_key ) {
+
+        $noti_handle_name = static::SHORT_TERM_NOTICE_OPTION_PREFIX . $noti_key;
+
+        $notice_time = get_option( $noti_handle_name );
+
+        if ( false === $notice_time ) {
+            return false;
+        }
+
+        if ( ! is_numeric( $notice_time ) ) {
+            delete_option( $noti_handle_name );
+        }
+
+        if ( time() - (int) $notice_time < self::SHORT_TERM_NOTICE_TTL ) {
+            $user = wp_get_current_user();
+            if ( $user && ! empty( $user->ID ) ) {
+                return 'dismissed' !== get_option( $noti_handle_name . '_user_' . $user->ID ); // The notice has not been dismissed by the user.
+            }
+            return true;
+        } else {
+            static::delete_user_short_term_notice( $noti_key );
+            delete_option( $noti_handle_name );
+        }
+        return false;
+    }
+
+
+    /**
+     * Method dismiss_short_term_monitor_notices()
+     *
+     * @param string $prefix Issue addition prefix.
+     *
+     * @return void.
+     */
+    public static function dismiss_short_term_monitor_notices( $prefix ) {
+        if ( empty( $prefix ) || ! is_string( $prefix ) ) {
+            return;
+        }
+        static::purge_expired_short_term_notices( true, $prefix );
+    }
+
+
+    /**
+     * Method purge_expired_short_term_notices()
+     *
+     * Set new temporary notice.
+     *
+     * @param bool   $forced Forced purge short term notices.
+     * @param string $prefix short term key prefix.
+     *
+     * @return void.
+     */
+    public static function purge_expired_short_term_notices( $forced = false, $prefix = '' ) {
+
+        $opt_prefix = self::SHORT_TERM_NOTICE_OPTION_PREFIX;
+
+        $timeout = time() - self::SHORT_TERM_NOTICE_TTL;
+
+        $db = MainWP_DB::instance()->get_wpdb_instance();
+
+        $sql = $db->prepare(
+            "
+            SELECT option_name
+            FROM {$db->options}
+            WHERE option_name LIKE %s
+            ",
+            $db->esc_like( $opt_prefix . (string) $prefix ) . '%',
+        );
+
+        if ( ! $forced ) {
+            $sql .= $db->prepare(
+                ' AND CAST(option_value AS UNSIGNED) <= %d ',
+                $timeout
+            );
+        }
+
+        $options = $db->get_col( $sql );
+
+        foreach ( $options as $option_name ) {
+            $noti_key = substr( $option_name, strlen( $opt_prefix ) );
+
+            delete_option( $option_name );
+
+            static::delete_user_short_term_notice( $noti_key );
+        }
+    }
+
+    /**
+     * Method dismiss_user_short_term_notice()
+     *
+     * Hide short term notice.
+     *
+     * @param string $noti_key Notice key.
+     *
+     * @return void.
+     */
+    public static function dismiss_user_short_term_notice( $noti_key ) {
+        $noti_handle_name = static::SHORT_TERM_NOTICE_OPTION_PREFIX . $noti_key;
+        $user             = wp_get_current_user();
+        if ( $user && ! empty( $user->ID ) ) {
+            static::update_option( $noti_handle_name . '_user_' . $user->ID, 'dismissed' );
+        }
+    }
+
+    /**
+     * Delete all user short-term notices for the specified notice key.
+     *
+     * @param string $noti_key Notice key.
+     *
+     * @return void
+     */
+    public static function delete_user_short_term_notice( $noti_key ) {
+
+        $noti_handle_name = static::SHORT_TERM_NOTICE_OPTION_PREFIX . $noti_key;
+
+        $db = MainWP_DB::instance()->get_wpdb_instance();
+
+        $db->query(
+            $db->prepare(
+                "
+                DELETE FROM {$db->options}
+                WHERE option_name LIKE %s
+                ",
+                $db->esc_like( $noti_handle_name . '_user_' ) . '%'
+            )
+        );
     }
 
     /**
@@ -2322,5 +2502,14 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     public static function get_decoded_array( $data ) {
         $decoded = ! empty( $data ) ? json_decode( $data, true ) : array();
         return is_array( $decoded ) ? $decoded : array();
+    }
+
+    /**
+     * Method get_use_cron()
+     *
+     * @return bool Whether use cron.
+     */
+    public static function get_use_cron() {
+        return ( get_option( 'mainwp_wp_cron' ) === false ) || ( (int) get_option( 'mainwp_wp_cron' ) === 1 ) ? 1 : 0;
     }
 }

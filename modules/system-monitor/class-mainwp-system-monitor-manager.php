@@ -23,7 +23,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Runs all registered monitors.
  */
-
 class MainWP_System_Monitor_Manager {
 
     /**
@@ -34,18 +33,26 @@ class MainWP_System_Monitor_Manager {
     private $monitors = array();
 
     /**
+     * Run monitors.
+     *
+     * @param array $context Running context data.
+     *
+     * @return void
+     */
+    public function run( array $context = array() ) {
+        $this->execute( $context );
+    }
+
+    /**
      * Run all monitors.
      *
      * @param array $context Running context data.
      *
      * @return void
      */
-    public static function run( array $context = array() ) {
-
+    public function register_and_execute( array $context = array() ) {
         $manager = new self();
-
         $manager->register( new MainWP_System_Monitor_Cron() );
-
         $manager->execute( $context );
     }
 
@@ -57,7 +64,6 @@ class MainWP_System_Monitor_Manager {
      * @return void
      */
     public function register( MainWP_System_Monitor_Interface $monitor ) {
-
         $this->monitors[] = $monitor;
     }
 
@@ -69,6 +75,9 @@ class MainWP_System_Monitor_Manager {
      * @return void
      */
     private function execute( array $context = array() ) {
+        if ( empty( $this->monitors ) || ! is_array( $this->monitors ) ) {
+            return;
+        }
         foreach ( $this->monitors as $monitor ) {
             MainWP_System_Monitor_Storage::save_results(
                 $monitor->get_name(),

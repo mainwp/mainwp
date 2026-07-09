@@ -539,6 +539,15 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
 
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $no_id = isset( $_POST['notice_id'] ) ? sanitize_text_field( wp_unslash( $_POST['notice_id'] ) ) : false;
+
+        if ( ! empty( $_POST['short_term'] ) ) {
+            $keys = explode( ';', $no_id );
+            foreach ( $keys as $key ) {
+                MainWP_Utility::dismiss_user_short_term_notice( $key );
+            }
+            die( 'dismissed' );
+        }
+
         if ( 'mail_failed' === $no_id ) {
             MainWP_Utility::update_option( 'mainwp_notice_wp_mail_failed', 'hide' );
             die( 'ok' );
@@ -1071,8 +1080,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
             exit;
         }
 
-        $client_id      = 0; // 0 general fields.
-        $deleted_count  = 0;
+        $client_id     = 0; // 0 general fields.
+        $deleted_count = 0;
         foreach ( $field_ids as $field_id ) {
             if ( MainWP_DB_Client::instance()->delete_client_field_by( 'field_id', $field_id, $client_id ) ) {
                 ++$deleted_count;

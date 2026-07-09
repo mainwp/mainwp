@@ -1082,7 +1082,7 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
             if ( $set_val ) {
                 update_user_option( $current_user->ID, 'mainwp_module_cost_tracker_filter_saved_segments', $saved_segments );
             } else {
-                $values = get_user_option( 'mainwp_module_cost_tracker_filter_saved_segments', array() );
+                $values = get_user_option( 'mainwp_module_cost_tracker_filter_saved_segments' );
                 if ( ! is_array( $values ) ) {
                     $values = array();
                 }

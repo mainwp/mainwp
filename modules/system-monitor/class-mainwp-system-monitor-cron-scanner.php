@@ -31,7 +31,7 @@ class MainWP_System_Monitor_Cron_Scanner {
             'current_time'     => time(),
             'last_cron_run'    => MainWP_System_Monitor_Runner::get_last_cron_run(),
             'next_run'         => wp_next_scheduled(
-                MainWP_System_Monitor_Runner::CRON_HOOK
+                MainWP_System_Monitor::CRON_HOOK
             ),
             'wp_cron_disabled' => defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON,
         );

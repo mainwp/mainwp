@@ -8,6 +8,7 @@
 namespace MainWP\Dashboard\SystemMonitor;
 
 use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_Utility;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -36,24 +37,23 @@ class MainWP_System_Monitor {
 
 
     /**
-     * Get monitor table name.
+     * Cron hook.
      *
-     * @param string $suffix Table suffix.
-     *
-     * @return string Table name.
+     * @var string
      */
-    public static function get_table_name( $suffix ) {
-        return MainWP_DB::instance()->get_table_name( $suffix );
-    }
+    const CRON_HOOK = 'mainwp_system_monitor_cron';
+
 
     /**
      * Init system.
      */
     public static function init() {
         add_action( 'init', array( self::class, 'maybe_install' ) );
-        add_action( 'init', array( self::class, 'schedule_cron' ) );
+        add_action( 'init', array( self::class, 'init_schedule_cron' ) );
         MainWP_System_Monitor_Runner::init();
         MainWP_System_Monitor_UI::init();
+
+        add_action( 'mainwp_after_save_advanced_settings', array( __CLASS__, 'hook_save_advanced_settings' ) );
     }
 
     /**
@@ -82,7 +82,7 @@ class MainWP_System_Monitor {
 
         global $wpdb;
 
-        $table = static::get_table_name( 'system_monitor' );
+        $table = MainWP_System_Monitor_Storage::get_table_name( 'system_monitor' );
 
         $charset_collate = $wpdb->get_charset_collate();
 
@@ -119,12 +119,39 @@ class MainWP_System_Monitor {
     /**
      * Ensure cron is scheduled.
      */
-    public static function schedule_cron() {
-        if ( ! wp_next_scheduled( MainWP_System_Monitor_Runner::CRON_HOOK ) ) {
-            wp_schedule_event( time(), 'minute', MainWP_System_Monitor_Runner::CRON_HOOK );
+    public static function init_schedule_cron() {
+
+        $useWPCron  = MainWP_Utility::get_use_cron();
+        $recurrence = 'minute';
+        $cron_hook  = self::CRON_HOOK;
+
+        $enabled_job = apply_filters( 'mainwp_is_enable_schedule_job', $useWPCron, $cron_hook, $recurrence );
+
+        $sched = wp_next_scheduled( $cron_hook );
+
+        if ( false === $sched ) {
+            if ( $useWPCron && $enabled_job ) {
+                wp_schedule_event( time(), $recurrence, $cron_hook );
+            }
+        } elseif ( ! $useWPCron || ! $enabled_job ) {
+            wp_unschedule_event( $sched, $cron_hook );
         }
     }
 
+
+    /**
+     * Method create manager.
+     */
+    public static function hook_save_advanced_settings() {
+        $use_wp_cron_results = MainWP_System_Monitor_Cron::scan_use_wp_cron_issue();
+        if ( ! empty( $use_wp_cron_results ) ) {
+            $monitor = new MainWP_System_Monitor_Cron();
+            MainWP_System_Monitor_Storage::save_results(
+                $monitor->get_name(),
+                $use_wp_cron_results
+            );
+        }
+    }
 
     /**
      * Method create manager.
@@ -148,7 +175,7 @@ class MainWP_System_Monitor {
     public static function activate() {
 
         self::maybe_install();
-        self::schedule_cron();
+        self::init_schedule_cron();
 
         // Generate an initial baseline immediately.
         MainWP_System_Monitor_Runner::run_manual();
@@ -158,7 +185,6 @@ class MainWP_System_Monitor {
      * Deactivation hook.
      */
     public static function deactivate() {
-
-        wp_clear_scheduled_hook( MainWP_System_Monitor_Runner::CRON_HOOK );
+        wp_clear_scheduled_hook( self::CRON_HOOK );
     }
 }

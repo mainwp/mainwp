@@ -307,6 +307,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         }
         MainWP_Unhooks_Helper::instance();
         MainWP_Cache_Warm_Helper::instance();
+        MainWP_System_Utility::instance();
     }
 
     /**
@@ -412,6 +413,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 'mainwp_process_uptime_notification_run_status',
                 'mainwp_warm_cache_pages_ttl',
                 'mainwp_module_log_settings_logs_selection_data',
+                'mainwp_system_monitor_use_wp_cron_saved',
             );
 
             $options = apply_filters( 'mainwp_init_load_all_options', $options );

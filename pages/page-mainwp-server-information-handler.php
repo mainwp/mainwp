@@ -1378,7 +1378,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
             $frequency_auto_update = 'daily';
         }
 
-        $show_widgets = get_user_option( 'mainwp_settings_show_widgets', array() );
+        $show_widgets = get_user_option( 'mainwp_settings_show_widgets' );
         if ( ! is_array( $show_widgets ) ) {
             $show_widgets = array();
         }

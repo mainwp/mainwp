@@ -531,7 +531,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                     $val = $body[ $key ];
                     $val = $this->cast_field_value( $val, $cast );
                     if ( 'mainwp_widgets' === $key ) {
-                        $show_widgets = get_user_option( 'mainwp_settings_show_widgets', array() );
+                        $show_widgets = get_user_option( 'mainwp_settings_show_widgets' );
                         $val          = array_replace( $show_widgets, (array) $val );
                     }
                     update_user_option( $user_id, $option_name, $val, true );
@@ -3399,7 +3399,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             );
         }
 
-        $existing = get_user_option( 'mainwp_settings_show_widgets', array() );
+        $existing = get_user_option( 'mainwp_settings_show_widgets' );
         if ( ! is_array( $existing ) ) {
             $existing = array();
         }
@@ -3439,7 +3439,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         // Sanitize field data.
         $values = array_map( 'sanitize_text_field', wp_unslash( $value ) );
 
-        $widgets = get_user_option( 'mainwp_settings_show_widgets', array() );
+        $widgets = get_user_option( 'mainwp_settings_show_widgets' );
         $allowed = array_keys( $widgets );
         $keys    = array_keys( $values );
 
@@ -4058,7 +4058,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
     protected function get_general_settings_data() {
         // Default Setting.
         $default_setting = MainWP_Settings_Indicator::get_defaults_value();
-        $show_widgets    = get_user_option( 'mainwp_settings_show_widgets', array() );
+        $show_widgets    = get_user_option( 'mainwp_settings_show_widgets' );
 
         // Map settings.
         $gmt_offset = (float) get_option( 'gmt_offset', 0 );

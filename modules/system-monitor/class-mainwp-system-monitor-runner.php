@@ -15,13 +15,6 @@ namespace MainWP\Dashboard\SystemMonitor;
 class MainWP_System_Monitor_Runner {
 
     /**
-     * Cron hook.
-     *
-     * @var string
-     */
-    const CRON_HOOK = 'mainwp_system_monitor_cron';
-
-    /**
      * Lock transient.
      *
      * @var string
@@ -57,7 +50,7 @@ class MainWP_System_Monitor_Runner {
     public static function init() {
 
         add_action(
-            self::CRON_HOOK,
+            MainWP_System_Monitor::CRON_HOOK,
             array( __CLASS__, 'run' )
         );
 
@@ -114,7 +107,6 @@ class MainWP_System_Monitor_Runner {
         try {
 
             $manager = MainWP_System_Monitor::create_manager();
-
             $manager->run(
                 array(
                     'fallback' => $fallback ? true : false,

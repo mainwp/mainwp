@@ -19,9 +19,10 @@ class MainWP_System_Monitor_Cron_Validator {
     /**
      * Validator consts.
      */
-    const STALE_WARNING          = 5 * MINUTE_IN_SECONDS;
-    const STALE_ERROR            = 15 * MINUTE_IN_SECONDS;
+    const STALE_WARNING          = 15 * MINUTE_IN_SECONDS;
+    const STALE_ERROR            = 60 * MINUTE_IN_SECONDS;
     const FIRST_RUN_GRACE_PERIOD = 5 * MINUTE_IN_SECONDS;
+
 
     /**
      * Validate scan results.
@@ -46,7 +47,7 @@ class MainWP_System_Monitor_Cron_Validator {
                     'check_name' => 'heartbeat',
                     'entity'     => 'wp_cron',
                     'code'       => MainWP_System_Monitor_Cron::ISSUE_MONITOR_STALE,
-                    'severity'   => 'warning',
+                    'severity'   => MainWP_System_Monitor_Issues::SEVERITY_WARNING,
                     'data'       => array(
                         'delay'            => time() - $next_run,
                         'wp_cron_disabled' => ! empty( $scan['wp_cron_disabled'] ),
@@ -76,7 +77,11 @@ class MainWP_System_Monitor_Cron_Validator {
                     'code'       => MainWP_System_Monitor_Cron::ISSUE_MONITOR_FALLBACK,
                     'check_name' => 'heartbeat',
                     'entity'     => 'wp_cron',
-                    'severity'   => 'warning',
+                    'severity'   => MainWP_System_Monitor_Issues::SEVERITY_WARNING,
+                    'data'       => array(
+                        'delay'            => $delay,
+                        'wp_cron_disabled' => ! empty( $scan['wp_cron_disabled'] ),
+                    ),
                 );
 
             }
@@ -95,11 +100,11 @@ class MainWP_System_Monitor_Cron_Validator {
     private function get_monitor_stale_severity( $delay ) {
 
         if ( $delay > self::STALE_ERROR ) {
-            return 'error';
+            return MainWP_System_Monitor_Issues::SEVERITY_ERROR;
         }
 
         if ( $delay > self::STALE_WARNING ) {
-            return 'warning';
+            return MainWP_System_Monitor_Issues::SEVERITY_WARNING;
         }
 
         return null;

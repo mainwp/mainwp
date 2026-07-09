@@ -45,6 +45,33 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         return static::$instance;
     }
 
+    /**
+     * Constructor.
+     *
+     * Run each time the class is called.
+     *
+     * @return void
+     */
+    public function __construct() {
+        add_action( 'admin_init', array( &$this, 'admin_init' ) );
+    }
+
+    /**
+     * Method admin_init().
+     *
+     * @return void
+     */
+    public function admin_init() {
+        $current_month = gmdate( 'Y-m' );
+        if ( get_option( 'mainwp_last_short_term_notice_purge' ) !== $current_month ) { // Run once per month.
+            MainWP_Utility::purge_expired_short_term_notices();
+            update_option(
+                'mainwp_last_short_term_notice_purge',
+                $current_month,
+                false
+            );
+        }
+    }
 
     /**
      * Method get_class_name()

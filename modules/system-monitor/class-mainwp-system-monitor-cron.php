@@ -7,6 +7,9 @@
 
 namespace MainWP\Dashboard\SystemMonitor;
 
+use MainWP\Dashboard\MainWP_Utility;
+
+
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
@@ -28,8 +31,9 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class MainWP_System_Monitor_Cron implements MainWP_System_Monitor_Interface {
 
-    const ISSUE_MONITOR_STALE    = 'monitor_stale';
-    const ISSUE_MONITOR_FALLBACK = 'monitor_fallback_used';
+    const ISSUE_MONITOR_STALE        = 'monitor_stale';
+    const ISSUE_MONITOR_FALLBACK     = 'monitor_fallback_used';
+    const ISSUE_USE_WP_CRON_DISABLED = 'use_wp_cron_disabled'; // MainWP setting.
 
     /**
      * Monitor name.
@@ -47,6 +51,46 @@ class MainWP_System_Monitor_Cron implements MainWP_System_Monitor_Interface {
     }
 
     /**
+     * Get whether cron is enabled.
+     */
+    public static function is_enabled() {
+        return MainWP_Utility::get_use_cron();
+    }
+
+    /**
+     * Method scan_use_wp_cron_issue().
+     *
+     * @return MainWP_System_Monitor_Result[]
+     */
+    public static function scan_use_wp_cron_issue() {
+        $use_wpcron = MainWP_Utility::get_use_cron();
+        $results    = array();
+        $saved      = get_option( 'mainwp_system_monitor_use_wp_cron_saved' );
+        if ( $use_wpcron !== $saved ) {
+            // if get_use_cron changes state.
+            if ( ! $use_wpcron ) {
+                $results[] = new MainWP_System_Monitor_Result(
+                    self::NAME, // monitor.
+                    'use_wp_cron', // check_name.
+                    'mainwp_wp_cron', // entity.
+                    self::ISSUE_USE_WP_CRON_DISABLED, // issue code.
+                    array(
+                        'wp_cron_disabled' => defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON,
+                    ),
+                    MainWP_System_Monitor_Issues::SEVERITY_INFO
+                );
+
+            } else {
+                MainWP_System_Monitor_Storage::delete_results( self::NAME, self::ISSUE_USE_WP_CRON_DISABLED ); // So the issue notice won't be displayed.
+            }
+            MainWP_Utility::update_option( 'mainwp_system_monitor_use_wp_cron_saved', $use_wpcron ); // prevemt insert multi use_wp_cron scan issue.
+        }
+
+        return $results;
+    }
+
+
+    /**
      * Execute the monitor.
      *
      * @param array $context Running context data.
@@ -54,6 +98,14 @@ class MainWP_System_Monitor_Cron implements MainWP_System_Monitor_Interface {
      * @return MainWP_System_Monitor_Result[]
      */
     public function run( array $context = array() ) {
+
+        $enabled = self::is_enabled();
+
+        $use_wp_cron_issue = static::scan_use_wp_cron_issue();
+
+        if ( ! $enabled ) {
+            return $use_wp_cron_issue; // do not scan other issues.
+        }
 
         $scanner = new MainWP_System_Monitor_Cron_Scanner();
 
@@ -80,7 +132,7 @@ class MainWP_System_Monitor_Cron implements MainWP_System_Monitor_Interface {
         foreach ( $issues as $issue ) {
 
             $results[] = new MainWP_System_Monitor_Result(
-                self::get_name(),
+                self::NAME,
                 $issue['check_name'] ?? 'heartbeat',
                 $issue['entity'] ?? 'wp_cron',
                 $issue['code'],

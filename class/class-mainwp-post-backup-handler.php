@@ -73,6 +73,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         if ( \mainwp_current_user_can( 'dashboard', 'pause_resume_backup_tasks' ) ) {
             $this->add_action( 'mainwp_pausebackup', array( &$this, 'mainwp_pausebackup' ) );
             $this->add_action( 'mainwp_resumebackup', array( &$this, 'mainwp_resumebackup' ) );
+            $this->add_action( 'mainwp_native_backup_task_reset', array( &$this, 'mainwp_native_backup_task_reset' ) );
         }
         if ( \mainwp_current_user_can( 'dashboard', 'run_backup_tasks' ) ) {
             $this->add_action( 'mainwp_backuptask_get_sites', array( &$this, 'mainwp_backuptask_get_sites' ) );
@@ -779,6 +780,82 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                 'result' => isset( $information['result'] ) ? $information['result'] : 'ok',
             )
         );
+    }
+
+    /**
+     * Reset a scheduled backup task's stuck "currently running" state.
+     *
+     * A crashed scheduled run never advances `completed` past `last_run`,
+     * so the list view would otherwise show CURRENTLY RUNNING forever with
+     * no way to clear it. This closes the local run record for the given
+     * task id once it is confirmed stale (elapsed past the same wall-clock
+     * threshold MainWP_Backup_Executor::STALL_THRESHOLD_SECONDS already
+     * applies to a per-site busy-since stall). Unlike
+     * mainwp_native_backup_cancel this never contacts a child: a scheduled
+     * task can span many sites, and driving a multi-site child-side cancel
+     * is deferred to a later phase. It is purely a dashboard bookkeeping
+     * reset so the next schedule (or a manual Run Now) is not blocked.
+     */
+    public function mainwp_native_backup_task_reset() {
+        $this->secure_request( 'mainwp_native_backup_task_reset' );
+        $task_id = isset( $_POST['task_id'] ) ? (int) $_POST['task_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by secure_request above.
+
+        $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
+        if ( empty( $task ) || ! MainWP_Manage_Backups_Handler::can_edit_backuptask( $task ) ) {
+            wp_send_json( array( 'error' => esc_html__( 'Insufficient permissions. Is this task set by you?', 'mainwp' ) ) );
+            return;
+        }
+
+        foreach ( $this->resolve_reset_task_site_ids( $task ) as $site_id ) {
+            if ( ! \mainwp_current_user_can( 'site', $site_id ) ) {
+                wp_send_json( array( 'error' => esc_html__( 'You are not allowed to manage backups for one or more sites in this task.', 'mainwp' ) ) );
+                return;
+            }
+        }
+
+        if ( (int) $task->completed >= (int) $task->last_run ) {
+            wp_send_json( array( 'error' => esc_html__( 'This task is not currently running.', 'mainwp' ) ) );
+            return;
+        }
+
+        $elapsed = time() - (int) $task->last_run;
+        if ( $elapsed <= MainWP_Backup_Executor::STALL_THRESHOLD_SECONDS ) {
+            wp_send_json( array( 'error' => esc_html__( 'This task is still within its normal run window and cannot be reset yet.', 'mainwp' ) ) );
+            return;
+        }
+
+        MainWP_DB_Backup::instance()->update_backup_task_with_values( (int) $task->id, array( 'completed' => time() ) );
+        MainWP_DB_Backup::instance()->update_backup_notices( (int) $task->id, esc_html__( 'Backup run reset from the dashboard after being flagged stale.', 'mainwp' ) . "\n" );
+
+        wp_send_json( array( 'status' => 'reset' ) );
+    }
+
+    /**
+     * Expand a backup task's sites and groups into a flat list of site ids,
+     * for the reset handler's per-site authorization loop. Mirrors the same
+     * expansion MainWP_Backup_List_View::display() and
+     * MainWP_Manage_Backups_Handler's own (private) resolve_task_site_ids()
+     * already perform.
+     *
+     * @param object $task Task row.
+     *
+     * @return int[] Site ids.
+     */
+    private function resolve_reset_task_site_ids( $task ) {
+        $sites = empty( $task->sites ) ? array() : array_map( 'intval', explode( ',', $task->sites ) );
+
+        if ( ! empty( $task->groups ) ) {
+            foreach ( explode( ',', $task->groups ) as $group_id ) {
+                foreach ( MainWP_DB::instance()->get_websites_by_group_id( $group_id ) as $website ) {
+                    $site_id = (int) $website->id;
+                    if ( ! in_array( $site_id, $sites, true ) ) {
+                        $sites[] = $site_id;
+                    }
+                }
+            }
+        }
+
+        return $sites;
     }
 
     /**

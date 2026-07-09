@@ -83,6 +83,7 @@ class MainWP_Backup_Ajax_Registration_Test extends \WP_UnitTestCase {
 			'mainwp_removebackup'              => 'delete_backup_tasks',
 			'mainwp_pausebackup'               => 'pause_resume_backup_tasks',
 			'mainwp_resumebackup'              => 'pause_resume_backup_tasks',
+			'mainwp_native_backup_task_reset'  => 'pause_resume_backup_tasks',
 			'mainwp_backuptask_get_sites'      => 'run_backup_tasks',
 			'mainwp_backuptask_run_site'       => 'run_backup_tasks',
 			'mainwp_backup_task_progress'      => 'run_backup_tasks',

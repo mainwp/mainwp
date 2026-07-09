@@ -1017,6 +1017,29 @@ managebackups_pause = function (element) {
 
     return false;
 };
+// Reset a scheduled task's stuck "currently running" state once the list
+// view has flagged it stale (elapsed past the executor's stall threshold).
+// Dashboard-side only: it never contacts a child, unlike the on-demand
+// mainwp_native_backup_cancel action.
+managebackups_reset_stale = function (element) {
+    let id = jQuery(element).attr('task_id');
+
+    mainwp_confirm(__('Reset this task\'s stuck run? Only do this if you are sure the scheduled backup crashed.'), function () {
+        let data = mainwp_secure_data({
+            action: 'mainwp_native_backup_task_reset',
+            task_id: id
+        });
+        jQuery.post(ajaxurl, data, function (response) {
+            if (response.error != undefined) {
+                setHtml('#mainwp_managebackups', response.error);
+                return;
+            }
+            location.reload();
+        }, 'json');
+    });
+
+    return false;
+};
 
 
 jQuery(document).on('click', '#updatesoverview-backup-ignore', function () {

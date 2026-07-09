@@ -404,7 +404,6 @@ class MainWP_Backup_List_View { // phpcs:ignore Generic.Classes.OpeningBraceSame
         $output .= '<strong>' . esc_html__( 'NEXT RUN: ', 'mainwp' ) . '</strong>' . ( empty( $item->last_run ) ? esc_html__( 'Any minute', 'mainwp' ) : MainWP_Utility::format_timestamp( ( 'daily' === $item->schedule ? ( 60 * 60 * 24 ) : ( 'weekly' === $item->schedule ? ( 60 * 60 * 24 * 7 ) : ( 60 * 60 * 24 * 30 ) ) ) + MainWP_Utility::get_timestamp( $item->last_run ) ) );
         $output .= '<strong>';
         if ( ! empty( $item->last_run ) && $item->completed < $item->last_run ) {
-            $output         .= '<br />' . esc_html__( 'CURRENTLY RUNNING: ', 'mainwp' ) . '</strong>';
             $completed_sites = $item->completed_sites;
             if ( '' !== $completed_sites ) {
                 $completed_sites = json_decode( $completed_sites, 1 );
@@ -412,7 +411,34 @@ class MainWP_Backup_List_View { // phpcs:ignore Generic.Classes.OpeningBraceSame
             if ( ! is_array( $completed_sites ) ) {
                 $completed_sites = array();
             }
-            $output .= count( $completed_sites ) . '/' . count( $item->the_sites );
+
+            // A crashed scheduled run never advances `completed` past
+            // `last_run`, so without this branch the row shows CURRENTLY
+            // RUNNING forever with no way to clear it. Once the elapsed
+            // time since last_run passes the same wall-clock threshold the
+            // executor already uses for its per-site busy-since stall
+            // check, flip to a stale state with the elapsed time and a
+            // task-scoped reset affordance instead.
+            $elapsed_seconds = time() - (int) $item->last_run;
+            $elapsed_label   = $this->format_elapsed_time( $elapsed_seconds );
+
+            if ( $elapsed_seconds > MainWP_Backup_Executor::STALL_THRESHOLD_SECONDS ) {
+                $output .= '<br />' . esc_html__( 'STALE: ', 'mainwp' ) . '</strong>'
+                    . sprintf(
+                        /* translators: %s: elapsed time since the run started, e.g. "3h 20m". */
+                        esc_html__( 'Running for %s — may be stuck.', 'mainwp' ),
+                        esc_html( $elapsed_label )
+                    )
+                    . ' <a href="#" class="mainwp-native-backup-task-reset" task_id="' . (int) $item->id . '" onClick="return managebackups_reset_stale(this);">' . esc_html__( 'Reset', 'mainwp' ) . '</a>';
+            } else {
+                $output .= '<br />' . esc_html__( 'CURRENTLY RUNNING: ', 'mainwp' ) . '</strong>'
+                    . count( $completed_sites ) . '/' . count( $item->the_sites )
+                    . ' (' . sprintf(
+                        /* translators: %s: elapsed time since the run started, e.g. "12m". */
+                        esc_html__( 'running for %s', 'mainwp' ),
+                        esc_html( $elapsed_label )
+                    ) . ')';
+            }
         }
 
         // Surface the last run's errors. They are stored on the task row but
@@ -440,6 +466,27 @@ class MainWP_Backup_List_View { // phpcs:ignore Generic.Classes.OpeningBraceSame
             }
         }
         return $output;
+    }
+
+    /**
+     * Format a duration for the details column: "3h 20m", "12m", or "45s".
+     *
+     * @param int $seconds Elapsed seconds.
+     *
+     * @return string Compact elapsed-time label.
+     */
+    private function format_elapsed_time( $seconds ) {
+        $seconds = max( 0, (int) $seconds );
+        $hours   = (int) floor( $seconds / HOUR_IN_SECONDS );
+        $minutes = (int) floor( ( $seconds % HOUR_IN_SECONDS ) / MINUTE_IN_SECONDS );
+
+        if ( $hours > 0 ) {
+            return sprintf( '%dh %dm', $hours, $minutes );
+        }
+        if ( $minutes > 0 ) {
+            return sprintf( '%dm', $minutes );
+        }
+        return sprintf( '%ds', $seconds );
     }
 
     /**

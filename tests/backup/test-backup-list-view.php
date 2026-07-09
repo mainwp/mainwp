@@ -174,6 +174,68 @@ class MainWP_Backup_List_View_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * A running row within the executor's stall threshold shows CURRENTLY
+	 * RUNNING with the elapsed time, not the stale state.
+	 *
+	 * @return void
+	 */
+	public function test_column_details_shows_running_within_threshold() {
+		$view = new MainWP_Backup_List_View();
+		$item = $this->make_item(
+			array(
+				'last_run_manually' => 0,
+				'last_run'          => time() - ( 10 * MINUTE_IN_SECONDS ),
+				'completed'         => time() - ( 20 * MINUTE_IN_SECONDS ),
+				'completed_sites'   => '',
+				'the_sites'         => array( 1, 2 ),
+				'backup_errors'     => '',
+				'backup_notices'    => '',
+			)
+		);
+
+		$output = $view->column_details( $item );
+
+		$this->assertStringContainsString( 'CURRENTLY RUNNING', $output, 'A run inside the stall threshold must still read as running.' );
+		$this->assertStringContainsString( '10m', $output, 'The elapsed time since last_run must be shown.' );
+		$this->assertStringNotContainsString( 'STALE', $output, 'A run inside the threshold must not be flagged stale.' );
+		$this->assertStringNotContainsString( 'mainwp-native-backup-task-reset', $output, 'The reset affordance must not appear for a non-stale run.' );
+	}
+
+	/**
+	 * A running row past the executor's stall threshold (the same
+	 * HOUR_IN_SECONDS-based threshold used for the per-site busy-since
+	 * check) flips to a stale state showing elapsed time and a
+	 * task-scoped reset affordance, instead of showing CURRENTLY RUNNING
+	 * forever for a crashed scheduled run.
+	 *
+	 * @return void
+	 */
+	public function test_column_details_flags_stale_run_past_threshold() {
+		$view = new MainWP_Backup_List_View();
+		$item = $this->make_item(
+			array(
+				'id'                => 42,
+				'last_run_manually' => 0,
+				'last_run'          => time() - ( 3 * HOUR_IN_SECONDS + 20 * MINUTE_IN_SECONDS ),
+				'completed'         => time() - ( 4 * HOUR_IN_SECONDS ),
+				'completed_sites'   => '',
+				'the_sites'         => array( 1, 2 ),
+				'backup_errors'     => '',
+				'backup_notices'    => '',
+			)
+		);
+
+		$output = $view->column_details( $item );
+
+		$this->assertStringContainsString( 'STALE', $output, 'A run past the stall threshold must be flagged stale.' );
+		$this->assertStringContainsString( '3h 20m', $output, 'The elapsed time since last_run must be shown.' );
+		$this->assertStringContainsString( 'may be stuck', $output );
+		$this->assertStringContainsString( 'mainwp-native-backup-task-reset', $output, 'The stale row must expose a reset affordance.' );
+		$this->assertStringContainsString( 'task_id="42"', $output, 'The reset affordance must be keyed to this task id.' );
+		$this->assertStringNotContainsString( 'CURRENTLY RUNNING', $output, 'A stale run must not also read as plain running.' );
+	}
+
+	/**
 	 * The singleton accessor returns the same list view instance.
 	 *
 	 * @return void

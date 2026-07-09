@@ -53,6 +53,18 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     const CREATE_MARKER_TTL_SECONDS = 60;
 
     /**
+     * Wall-clock threshold, in seconds, after which a still-running backup
+     * is treated as stalled rather than merely slow. Shared with the
+     * scheduled backup list view (MainWP_Backup_List_View::column_details())
+     * so a crashed scheduled run is flagged stale using the same threshold
+     * this class already applies to a per-site "busy" child response,
+     * instead of a second, independently-tuned constant.
+     *
+     * @var int
+     */
+    const STALL_THRESHOLD_SECONDS = HOUR_IN_SECONDS;
+
+    /**
      * Method get_class_name()
      *
      * Get Class Name.
@@ -620,7 +632,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'busy_since' => time() ) );
                         return false;
                     }
-                    if ( ( time() - $busy_since ) > HOUR_IN_SECONDS ) {
+                    if ( ( time() - $busy_since ) > self::STALL_THRESHOLD_SECONDS ) {
                         // phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- internal diagnostic context.
                         throw new MainWP_Exception(
                             esc_html__( 'The child site has reported the backup as busy for over an hour. The backup process likely stalled or was killed by the host. Check the child site error log and try again.', 'mainwp' ),

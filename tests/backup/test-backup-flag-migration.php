@@ -43,6 +43,7 @@ class MainWP_Backup_Flag_Migration_Test extends \WP_UnitTestCase {
 	public function tear_down() {
 		delete_option( 'mainwp_enableNativeBackups' );
 		delete_option( 'mainwp_enableLegacyBackupFeature' );
+		delete_option( 'mainwp_native_backups_defaulted_off_on_upgrade' );
 		if ( false === $this->saved_db_version ) {
 			delete_site_option( 'mainwp_db_version' );
 		} else {
@@ -165,6 +166,58 @@ class MainWP_Backup_Flag_Migration_Test extends \WP_UnitTestCase {
 		MainWP_Install::instance()->install();
 
 		$this->assertFalse( MainWP_Backup_Settings::is_native_backups_enabled() );
+	}
+
+	/**
+	 * The never-wrote-a-flag upgrade cohort gets a one-time notice marker
+	 * so the dashboard can tell them the feature was defaulted off.
+	 *
+	 * @return void
+	 */
+	public function test_existing_install_without_flags_sets_upgrade_notice_marker() {
+		delete_option( 'mainwp_enableNativeBackups' );
+		delete_option( 'mainwp_enableLegacyBackupFeature' );
+		update_site_option( 'mainwp_db_version', '9.0.2.5' );
+
+		MainWP_Install::instance()->install();
+
+		$this->assertSame( 1, (int) get_option( 'mainwp_native_backups_defaulted_off_on_upgrade' ) );
+	}
+
+	/**
+	 * An install that carried a real legacy flag through the rename is not
+	 * part of the defaulted-off cohort and gets no notice marker.
+	 *
+	 * @return void
+	 */
+	public function test_migration_with_legacy_flag_sets_no_upgrade_notice_marker() {
+		// A prior test's install() can commit mid-test via DDL, leaking the
+		// marker past the rollback; reset it here like the flags above.
+		delete_option( 'mainwp_native_backups_defaulted_off_on_upgrade' );
+		delete_option( 'mainwp_enableNativeBackups' );
+		update_option( 'mainwp_enableLegacyBackupFeature', 1 );
+		update_site_option( 'mainwp_db_version', '9.0.2.5' );
+
+		MainWP_Install::instance()->install();
+
+		$this->assertFalse( get_option( 'mainwp_native_backups_defaulted_off_on_upgrade' ) );
+	}
+
+	/**
+	 * An install with an explicit new-option value already made its choice
+	 * and gets no notice marker.
+	 *
+	 * @return void
+	 */
+	public function test_explicit_flag_sets_no_upgrade_notice_marker() {
+		delete_option( 'mainwp_native_backups_defaulted_off_on_upgrade' );
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		delete_option( 'mainwp_enableLegacyBackupFeature' );
+		update_site_option( 'mainwp_db_version', '9.0.2.5' );
+
+		MainWP_Install::instance()->install();
+
+		$this->assertFalse( get_option( 'mainwp_native_backups_defaulted_off_on_upgrade' ) );
 	}
 
 	/**

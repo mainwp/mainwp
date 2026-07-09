@@ -488,6 +488,32 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         static::check_rating_notice();
 
         static::render_browser_extensions_notice();
+
+        static::render_native_backups_default_off_notice();
+    }
+
+    /**
+     * Render the one-time notice for installs where the upgrade defaulted
+     * Native Backups off because no backup flag was ever written.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Utility::show_mainwp_message()
+     */
+    public static function render_native_backups_default_off_notice() {
+        if ( ! get_option( 'mainwp_native_backups_defaulted_off_on_upgrade' ) || ! MainWP_Utility::show_mainwp_message( 'notice', 'mainwp_native_backups_defaulted_off_on_upgrade' ) ) {
+            return;
+        }
+        ?>
+        <div class="ui info message">
+            <div class="header"><?php esc_html_e( 'Native Backups is available', 'mainwp' ); ?></div>
+            <div>
+                <?php
+                /* translators: 1: Opening anchor tag, 2: Closing anchor tag */
+                printf( esc_html__( 'This update added Native Backups to your MainWP Dashboard. The feature was left turned off because backups were not in use here before the update. Turn it on in %1$sMainWP → Settings%2$s to schedule backups for your child sites.', 'mainwp' ), '<a href="' . esc_url( admin_url( 'admin.php?page=Settings' ) ) . '">', '</a>' );
+                ?>
+            </div>
+            <i class="close icon mainwp-notice-dismiss" notice-id="mainwp_native_backups_defaulted_off_on_upgrade"></i>
+        </div>
+        <?php
     }
 
     /**

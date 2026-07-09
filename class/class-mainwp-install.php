@@ -88,6 +88,9 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             // matching a fresh install. A prior legacy-flag value still carries forward via the
             // <9.0.2.6 migration below, which runs before this option is read again by callers.
             MainWP_Utility::update_option( 'mainwp_enableNativeBackups', 0 );
+            // Mark the cohort so a one-time dismissible notice can say the
+            // feature exists and where to turn it on.
+            MainWP_Utility::update_option( 'mainwp_native_backups_defaulted_off_on_upgrade', 1 );
         }
 
         if ( empty( $currentVersion ) || version_compare( $currentVersion, '8.8', '<' ) ) {

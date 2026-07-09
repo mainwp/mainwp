@@ -32,7 +32,11 @@ use MainWP\Dashboard\MainWP_Manage_Backups_Handler;
 class MainWP_Backup_Run_Now_Concurrency_Test extends MainWP_Abilities_Test_Case {
 
 	/**
-	 * Clean the semaphore and options before each test.
+	 * Clean the semaphore and options before each test. The native-backups
+	 * flag must be cleared on the way IN, not just out: these tests rely on
+	 * the executor's disabled-feature throw, and an earlier test whose
+	 * install() call committed the flag mid-transaction (DDL) leaks a
+	 * durable enabled state past that test's rollback.
 	 *
 	 * @return void
 	 */
@@ -40,6 +44,7 @@ class MainWP_Backup_Run_Now_Concurrency_Test extends MainWP_Abilities_Test_Case 
 		parent::setUp();
 		delete_transient( 'mainwp_backup_slots' );
 		delete_option( 'mainwp_backup_max_concurrent' );
+		delete_option( 'mainwp_enableNativeBackups' );
 	}
 
 	/**

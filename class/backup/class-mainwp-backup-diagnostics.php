@@ -76,12 +76,17 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
     }
 
     /**
-     * Subscribe to the pipeline seams. Registers nothing when the
-     * setting is off, so a disabled recorder has literally zero hooks.
+     * Subscribe to the pipeline seams. Recording registers nothing when
+     * the setting is off, so a disabled recorder costs nothing on the hot
+     * path - but the task-delete purge stays registered regardless:
+     * cleanup is not recording, and files written while diagnostics was
+     * on must still leave with their task after it is switched off.
      *
      * @return void
      */
     public function init(): void {
+        add_action( 'mainwp_backup_task_snapshots_purged', array( $this, 'purge_task_files' ), 10, 1 );
+
         if ( ! static::is_enabled() ) {
             return;
         }
@@ -821,6 +826,40 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 $total -= $file['size'];
             }
         } catch ( \Throwable $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement -- diagnostics must never break a backup.
+            return;
+        }
+    }
+
+    /**
+     * Delete a deleted task's event files. Task-scoped run keys all start
+     * with "<task_id>-" (poll, preflight), so the glob is anchored on that
+     * prefix; the shared _global, terminal-*, and restore-* streams carry
+     * events for other tasks and stay. Runs off
+     * mainwp_backup_task_snapshots_purged, which both task-delete paths
+     * fire.
+     *
+     * @param int $task_id Deleted task id.
+     *
+     * @return void
+     */
+    public function purge_task_files( $task_id ): void {
+        try {
+            $task_id = (int) $task_id;
+            if ( $task_id <= 0 ) {
+                return;
+            }
+
+            $dir = $this->diagnostics_dir();
+            if ( '' === $dir || ! is_dir( $dir ) ) {
+                return;
+            }
+
+            foreach ( (array) glob( $dir . $task_id . '-*.jsonl' ) as $file ) {
+                if ( is_file( $file ) ) {
+                    wp_delete_file( $file );
+                }
+            }
+        } catch ( \Throwable $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement -- cleanup must never break the task delete.
             return;
         }
     }

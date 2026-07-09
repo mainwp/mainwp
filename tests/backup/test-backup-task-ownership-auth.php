@@ -236,6 +236,88 @@ class MainWP_Backup_Task_Ownership_Auth_Test extends MainWP_Abilities_Test_Case 
 	}
 
 	/**
+	 * The task create/update write path must refuse a sites list containing
+	 * a site the caller's Team Control access has been scoped away from -
+	 * once the row is stored, the scheduled cron runs it with no user
+	 * context to re-check against, so write time is the only gate.
+	 *
+	 * @return void
+	 */
+	public function test_task_scope_refuses_site_restricted_user() {
+		$this->skip_when_capabilities_bypassed();
+
+		$user = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $user );
+		$allowed = $this->create_test_site( array( 'userid' => $user ) );
+		$denied  = $this->create_test_site( array( 'userid' => $user ) );
+
+		$deny = $this->deny_site( $denied );
+		try {
+			$error = MainWP_Manage_Backups_Handler::authorize_task_scope( $allowed . ',' . $denied, '' );
+		} finally {
+			remove_filter( 'mainwp_currentusercan', $deny, 10 );
+		}
+
+		$this->assertNotSame( '', $error, 'A restricted site in the task sites list must refuse the write.' );
+	}
+
+	/**
+	 * A group is expanded at write time and refused when it contains a
+	 * restricted site: scheduling by group must not become the bypass for
+	 * the per-site check the direct sites list gets.
+	 *
+	 * @return void
+	 */
+	public function test_task_scope_refuses_group_containing_restricted_site() {
+		$this->skip_when_capabilities_bypassed();
+		global $wpdb;
+
+		$user = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $user );
+		$site_id  = $this->create_test_site( array( 'userid' => $user ) );
+		$group_id = 424242;
+		$wpdb->insert( $wpdb->prefix . 'mainwp_wp_group', array( 'wpid' => $site_id, 'groupid' => $group_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
+
+		$deny = $this->deny_site( $site_id );
+		try {
+			$error = MainWP_Manage_Backups_Handler::authorize_task_scope( '', (string) $group_id );
+		} finally {
+			remove_filter( 'mainwp_currentusercan', $deny, 10 );
+			$wpdb->delete( $wpdb->prefix . 'mainwp_wp_group', array( 'groupid' => $group_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test cleanup.
+		}
+
+		$this->assertNotSame( '', $error, 'A group containing a restricted site must refuse the write.' );
+	}
+
+	/**
+	 * A site id that does not exist must refuse the write rather than be
+	 * stored for the cron to chew on.
+	 *
+	 * @return void
+	 */
+	public function test_task_scope_refuses_unknown_site() {
+		$user = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $user );
+
+		$this->assertNotSame( '', MainWP_Manage_Backups_Handler::authorize_task_scope( '999999321', '' ), 'A nonexistent site id must refuse the write.' );
+	}
+
+	/**
+	 * The positive control: a caller with access to every listed site
+	 * passes the scope gate.
+	 *
+	 * @return void
+	 */
+	public function test_task_scope_allows_accessible_sites() {
+		$user = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $user );
+		$site_a = $this->create_test_site( array( 'userid' => $user ) );
+		$site_b = $this->create_test_site( array( 'userid' => $user ) );
+
+		$this->assertSame( '', MainWP_Manage_Backups_Handler::authorize_task_scope( $site_a . ',' . $site_b, '' ), 'Accessible sites must pass the scope gate.' );
+	}
+
+	/**
 	 * A caller cannot run a backup task against a site that is not part of
 	 * the task's own site/group scope, even in today's default single-user
 	 * mode - this gate is a plain membership check independent of

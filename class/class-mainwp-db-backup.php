@@ -169,7 +169,8 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
     /**
      * Method remove_backup_task()
      *
-     * Remove backup task.
+     * Remove backup task. The task's per-site progress rows leave with it -
+     * they key on the task id and are unreachable once the task row is gone.
      *
      * @param mixed $id Task ID.
      *
@@ -177,6 +178,7 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      */
     public function remove_backup_task( $id ) {
         $this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . esc_sql( $this->table_name( 'wp_backup' ) ) . ' WHERE id = %d', $id ) );
+        $this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . esc_sql( $this->table_name( 'wp_backup_progress' ) ) . ' WHERE task_id = %d', $id ) );
     }
 
     /**

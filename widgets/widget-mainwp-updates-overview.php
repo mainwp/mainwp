@@ -1404,7 +1404,15 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
         $output = array();
         if ( isset( $_POST['sites'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             foreach ( array_map( 'sanitize_text_field', wp_unslash( $_POST['sites'] ) ) as $siteId ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+                $siteId  = intval( $siteId );
                 $website = MainWP_DB::instance()->get_website_by_id( $siteId );
+                // The action behind this handler is registered without a
+                // dashboard capability gate, so this per-site check is the
+                // only thing keeping an arbitrary posted site id from
+                // answering with another site's backup-freshness status.
+                if ( empty( $website ) || ! MainWP_System_Utility::can_edit_website( $website ) || ! \mainwp_current_user_can( 'site', $siteId ) ) {
+                    continue;
+                }
                 if ( ( 0 === (int) $website->backup_before_upgrade ) || ( ( 2 === (int) $website->backup_before_upgrade ) && empty( $global_backup_before_upgrade ) ) ) {
                     continue;
                 }

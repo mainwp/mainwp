@@ -132,6 +132,54 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
     }
 
     /**
+     * Verify the current user may target every site a task's sites/groups
+     * selection covers, before the selection is stored. Write time is the
+     * only place this can gate: once the row exists, the scheduled cron
+     * executes it with no user context to re-check against, so an
+     * out-of-scope site id stored here would be backed up unchecked
+     * forever. Groups are expanded to their member sites the same way a
+     * scheduled run resolves them, so selecting a group is not a bypass
+     * for the per-site check the direct sites list gets. A site id that
+     * does not resolve to a website row is refused too.
+     *
+     * @param string $sites  Comma-separated site ids.
+     * @param string $groups Comma-separated group ids.
+     *
+     * @return string '' when authorized, an error message otherwise.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB::get_websites_by_group_id()
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
+     */
+    public static function authorize_task_scope( $sites, $groups ) {
+        $site_ids = array();
+
+        foreach ( explode( ',', (string) $sites ) as $site_id ) {
+            if ( (int) $site_id > 0 ) {
+                $site_ids[] = (int) $site_id;
+            }
+        }
+
+        foreach ( explode( ',', (string) $groups ) as $group_id ) {
+            if ( (int) $group_id <= 0 ) {
+                continue;
+            }
+            $group_sites = MainWP_DB::instance()->get_websites_by_group_id( (int) $group_id );
+            foreach ( (array) $group_sites as $group_site ) {
+                $site_ids[] = (int) $group_site->id;
+            }
+        }
+
+        foreach ( array_unique( $site_ids ) as $site_id ) {
+            $website = MainWP_DB::instance()->get_website_by_id( $site_id );
+            if ( empty( $website ) || ! MainWP_System_Utility::can_edit_website( $website ) || ! \mainwp_current_user_can( 'site', $site_id ) ) {
+                return esc_html__( 'You are not allowed to schedule backups for one or more of the selected sites.', 'mainwp' );
+            }
+        }
+
+        return '';
+    }
+
+    /**
      * Update backup task.
      *
      * @uses \MainWP\Dashboard\MainWP_DB_Backup::add_backup_task()
@@ -192,6 +240,11 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                 }
                 $groups .= $group;
             }
+        }
+
+        $scope_error = static::authorize_task_scope( $sites, $groups );
+        if ( '' !== $scope_error ) {
+            die( wp_json_encode( array( 'error' => $scope_error ) ) );
         }
 
         do_action( 'mainwp_update_backuptask', $task->id );
@@ -272,6 +325,11 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                 }
                 $groups .= $group;
             }
+        }
+
+        $scope_error = static::authorize_task_scope( $sites, $groups );
+        if ( '' !== $scope_error ) {
+            die( wp_json_encode( array( 'error' => $scope_error ) ) );
         }
 
         $archiveFormat                  = isset( $_POST['archiveFormat'] ) ? sanitize_text_field( wp_unslash( $_POST['archiveFormat'] ) ) : 'site';

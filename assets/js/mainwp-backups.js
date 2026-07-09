@@ -1019,8 +1019,9 @@ managebackups_pause = function (element) {
 };
 // Reset a scheduled task's stuck "currently running" state once the list
 // view has flagged it stale (elapsed past the executor's stall threshold).
-// Dashboard-side only: it never contacts a child, unlike the on-demand
-// mainwp_native_backup_cancel action.
+// The handler also cancels the run child-side on every site in the task;
+// a site whose cancel does not land falls back to the dashboard-only
+// bookkeeping close.
 managebackups_reset_stale = function (element) {
     let id = jQuery(element).attr('task_id');
 

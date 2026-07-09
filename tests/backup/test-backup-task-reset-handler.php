@@ -4,10 +4,11 @@
  *
  * Invocation-level tests for mainwp_native_backup_task_reset: the
  * dashboard-side escape hatch for a scheduled backup task whose run
- * crashed and never advanced `completed` past `last_run`. Unlike
- * mainwp_native_backup_cancel (site-scoped, contacts the child) this is
- * task-scoped and dashboard-only - a scheduled task can span many sites,
- * and driving a multi-site child-side cancel is deferred to a later phase.
+ * crashed and never advanced `completed` past `last_run`. The reset also
+ * drives a backup_task_cancel on every site in the task so the child-side
+ * run actually stops; a site that cannot cancel (unreachable, child error,
+ * or a live runner holding the lease) falls back to the dashboard-only
+ * bookkeeping close.
  *
  * @package MainWP\Dashboard\Tests
  */
@@ -21,6 +22,14 @@ use MainWP\Dashboard\MainWP_Post_Backup_Handler;
  * Class MainWP_Backup_Task_Reset_Handler_Test
  */
 class MainWP_Backup_Task_Reset_Handler_Test extends MainWP_Abilities_Test_Case {
+
+	/**
+	 * Child backup_task_cancel calls captured during invoke_reset, each
+	 * as array{site: int, params: array}.
+	 *
+	 * @var array
+	 */
+	private $child_calls = array();
 
 	/**
 	 * Set up: enable native backups.
@@ -39,6 +48,7 @@ class MainWP_Backup_Task_Reset_Handler_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function tearDown(): void {
 		global $wpdb;
+		$wpdb->query( "DELETE FROM {$wpdb->prefix}mainwp_wp_backup_progress" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup.
 		$wpdb->query( "DELETE FROM {$wpdb->prefix}mainwp_wp_backup" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup.
 		delete_option( 'mainwp_enableNativeBackups' );
 		unset( $_POST['security'], $_POST['task_id'], $_REQUEST['security'], $_REQUEST['task_id'] );
@@ -79,18 +89,19 @@ class MainWP_Backup_Task_Reset_Handler_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * Create a scheduled backup task over one site, with last_run/completed
-	 * seeded so the run looks like it started $elapsed_seconds ago and
-	 * never closed.
+	 * Create a scheduled backup task over one or more sites, with
+	 * last_run/completed seeded so the run looks like it started
+	 * $elapsed_seconds ago and never closed.
 	 *
-	 * @param int $site_id         Site id in the task's sites column.
-	 * @param int $elapsed_seconds Seconds since the run opened.
+	 * @param int|int[] $site_ids        Site id(s) for the task's sites column.
+	 * @param int       $elapsed_seconds Seconds since the run opened.
 	 *
 	 * @return object Task row.
 	 */
-	private function create_running_task( $site_id, $elapsed_seconds ) {
-		$user = get_current_user_id();
-		$task = MainWP_DB_Backup::instance()->add_backup_task( $user, 'Nightly', 'daily', 'full', '', (string) $site_id, '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0 );
+	private function create_running_task( $site_ids, $elapsed_seconds ) {
+		$sites = implode( ',', array_map( 'intval', (array) $site_ids ) );
+		$user  = get_current_user_id();
+		$task  = MainWP_DB_Backup::instance()->add_backup_task( $user, 'Nightly', 'daily', 'full', '', $sites, '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0 );
 		$this->assertNotFalse( $task, 'Precondition: the task row must insert.' );
 
 		MainWP_DB_Backup::instance()->update_backup_task_with_values(
@@ -106,13 +117,35 @@ class MainWP_Backup_Task_Reset_Handler_Test extends MainWP_Abilities_Test_Case {
 
 	/**
 	 * Invoke the reset handler with the ajax-termination pattern and return
-	 * the decoded JSON payload.
+	 * the decoded JSON payload. Child backup_task_cancel calls are mocked
+	 * through the mainwp_fetch_url_authed_pre short-circuit and captured
+	 * into $this->child_calls.
 	 *
-	 * @param int $task_id Task id to reset.
+	 * @param int        $task_id         Task id to reset.
+	 * @param array|null $child_responses Per-site child responses keyed by
+	 *                                    site id; a site with no entry (or
+	 *                                    null) answers {result: ok}.
 	 *
 	 * @return array|null Decoded response.
 	 */
-	private function invoke_reset( $task_id ) {
+	private function invoke_reset( $task_id, $child_responses = null ) {
+		$this->child_calls = array();
+		$capture           = function ( $result, $website, $what, $params ) use ( $child_responses ) {
+			if ( 'backup_task_cancel' !== $what ) {
+				return $result;
+			}
+			$site_id             = (int) $website->id;
+			$this->child_calls[] = array(
+				'site'   => $site_id,
+				'params' => $params,
+			);
+			if ( is_array( $child_responses ) && array_key_exists( $site_id, $child_responses ) ) {
+				return $child_responses[ $site_id ];
+			}
+			return array( 'result' => 'ok' );
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $capture, 10, 4 );
+
 		$nonce                = wp_create_nonce( 'mainwp_native_backup_task_reset' );
 		$_POST['security']    = $nonce;
 		$_REQUEST['security'] = $nonce;
@@ -134,6 +167,7 @@ class MainWP_Backup_Task_Reset_Handler_Test extends MainWP_Abilities_Test_Case {
 			// wp_send_json terminated the request as designed.
 		} finally {
 			$raw = ob_get_clean();
+			remove_filter( 'mainwp_fetch_url_authed_pre', $capture, 10 );
 			remove_filter( 'wp_die_ajax_handler', $throw );
 			remove_filter( 'wp_doing_ajax', '__return_true' );
 		}
@@ -214,28 +248,71 @@ class MainWP_Backup_Task_Reset_Handler_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * The reset never contacts a child site: a scheduled task can span
-	 * many sites and driving a multi-site child-side cancel is deferred,
-	 * so this is a dashboard-only bookkeeping reset.
+	 * The reset drives a backup_task_cancel on every site in the task,
+	 * passing the child task id the Dashboard still holds (from the task's
+	 * own progress row) and an empty id where the child must resolve its
+	 * single active backup itself.
 	 *
 	 * @return void
 	 */
-	public function test_reset_does_not_contact_the_child() {
+	public function test_reset_cancels_the_run_on_each_child_site() {
 		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
-		$site_id = $this->create_test_site();
-		$task    = $this->create_running_task( $site_id, 2 * HOUR_IN_SECONDS );
+		$site_a = $this->create_test_site();
+		$site_b = $this->create_test_site();
+		$task   = $this->create_running_task( array( $site_a, $site_b ), 2 * HOUR_IN_SECONDS );
 
-		$called = false;
-		$filter = function ( $result ) use ( &$called ) {
-			$called = true;
-			return $result;
-		};
-		add_filter( 'mainwp_fetch_url_authed_pre', $filter, 10, 1 );
+		MainWP_DB_Backup::instance()->add_backup_task_progress( (int) $task->id, $site_a, array() );
+		MainWP_DB_Backup::instance()->update_backup_task_progress( (int) $task->id, $site_a, array( 'child_backup_task_id' => 'child-task-a' ) );
 
-		$this->invoke_reset( $task->id );
+		$response = $this->invoke_reset( $task->id );
 
-		remove_filter( 'mainwp_fetch_url_authed_pre', $filter, 10 );
+		$this->assertIsArray( $response );
+		$this->assertSame( 'reset', $response['status'] ?? null );
+		$this->assertSame( 2, $response['cancelled'] ?? null );
+		$this->assertSame( 0, $response['uncancelled'] ?? null );
 
-		$this->assertFalse( $called, 'The dashboard-side reset must not contact the child (multi-site cancel is deferred).' );
+		$by_site = array();
+		foreach ( $this->child_calls as $call ) {
+			$by_site[ $call['site'] ] = $call['params'];
+		}
+		$this->assertCount( 2, $by_site, 'Every site in the task must receive one backup_task_cancel.' );
+		$this->assertSame( 'child-task-a', $by_site[ $site_a ]['task_id'] ?? null, 'A known child task id must be passed through.' );
+		$this->assertSame( '', $by_site[ $site_b ]['task_id'] ?? null, 'Without a progress row the child resolves its own active backup.' );
+
+		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$this->assertGreaterThanOrEqual( (int) $task->last_run, (int) $task->completed, 'The stuck run must be closed.' );
+	}
+
+	/**
+	 * A site whose child cannot cancel (unreachable, error, or a live
+	 * runner holding the lease) does not block the reset: the dashboard
+	 * bookkeeping close is the fallback, and the outcome is recorded on
+	 * the task so a partial stop is diagnosable.
+	 *
+	 * @return void
+	 */
+	public function test_reset_still_closes_task_when_children_cannot_cancel() {
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$site_a = $this->create_test_site();
+		$site_b = $this->create_test_site();
+		$site_c = $this->create_test_site();
+		$task   = $this->create_running_task( array( $site_a, $site_b, $site_c ), 2 * HOUR_IN_SECONDS );
+
+		$response = $this->invoke_reset(
+			$task->id,
+			array(
+				$site_a => array( 'error' => 'child exploded' ),
+				$site_b => array( 'result' => 'busy' ),
+			)
+		);
+
+		$this->assertIsArray( $response );
+		$this->assertSame( 'reset', $response['status'] ?? null );
+		$this->assertSame( 1, $response['cancelled'] ?? null );
+		$this->assertSame( 2, $response['uncancelled'] ?? null );
+
+		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$this->assertGreaterThanOrEqual( (int) $task->last_run, (int) $task->completed, 'The reset must still close the run.' );
+		$this->assertStringContainsString( 'could not be stopped', (string) $task->backup_notices, 'A partial stop must leave a diagnosable trace.' );
 	}
 }

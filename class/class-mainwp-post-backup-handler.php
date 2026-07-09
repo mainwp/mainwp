@@ -787,14 +787,15 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
      *
      * A crashed scheduled run never advances `completed` past `last_run`,
      * so the list view would otherwise show CURRENTLY RUNNING forever with
-     * no way to clear it. This closes the local run record for the given
-     * task id once it is confirmed stale (elapsed past the same wall-clock
-     * threshold MainWP_Backup_Executor::STALL_THRESHOLD_SECONDS already
-     * applies to a per-site busy-since stall). Unlike
-     * mainwp_native_backup_cancel this never contacts a child: a scheduled
-     * task can span many sites, and driving a multi-site child-side cancel
-     * is deferred to a later phase. It is purely a dashboard bookkeeping
-     * reset so the next schedule (or a manual Run Now) is not blocked.
+     * no way to clear it. Once the run is confirmed stale (elapsed past the
+     * same wall-clock threshold MainWP_Backup_Executor::STALL_THRESHOLD_SECONDS
+     * already applies to a per-site busy-since stall), this drives the same
+     * child-side backup_task_cancel mainwp_native_backup_cancel uses on
+     * every site in the task, then closes the local run record. A site
+     * whose cancel does not land (unreachable child, child error, or a
+     * live runner still holding the lease) is recorded on the task and the
+     * dashboard-only bookkeeping close remains the fallback, so the next
+     * schedule (or a manual Run Now) is never left blocked.
      */
     public function mainwp_native_backup_task_reset() {
         $this->secure_request( 'mainwp_native_backup_task_reset' );
@@ -806,7 +807,8 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             return;
         }
 
-        foreach ( $this->resolve_reset_task_site_ids( $task ) as $site_id ) {
+        $site_ids = $this->resolve_reset_task_site_ids( $task );
+        foreach ( $site_ids as $site_id ) {
             if ( ! \mainwp_current_user_can( 'site', $site_id ) ) {
                 wp_send_json( array( 'error' => esc_html__( 'You are not allowed to manage backups for one or more sites in this task.', 'mainwp' ) ) );
                 return;
@@ -824,10 +826,86 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             return;
         }
 
-        MainWP_DB_Backup::instance()->update_backup_task_with_values( (int) $task->id, array( 'completed' => time() ) );
-        MainWP_DB_Backup::instance()->update_backup_notices( (int) $task->id, esc_html__( 'Backup run reset from the dashboard after being flagged stale.', 'mainwp' ) . "\n" );
+        $cancelled   = 0;
+        $uncancelled = array();
+        foreach ( $site_ids as $site_id ) {
+            if ( $this->cancel_task_run_on_child( $task, (int) $site_id ) ) {
+                ++$cancelled;
+            } else {
+                $uncancelled[] = (int) $site_id;
+            }
+        }
 
-        wp_send_json( array( 'status' => 'reset' ) );
+        $note = esc_html__( 'Backup run reset from the dashboard after being flagged stale.', 'mainwp' );
+        if ( ! empty( $uncancelled ) ) {
+            $note .= ' ' . sprintf(
+                /* translators: %s: Comma-separated site ids. */
+                esc_html__( 'The run could not be stopped on the child for site(s) %s; their run record was cleared on the dashboard only.', 'mainwp' ),
+                implode( ', ', $uncancelled )
+            );
+        }
+
+        MainWP_DB_Backup::instance()->update_backup_task_with_values( (int) $task->id, array( 'completed' => time() ) );
+        MainWP_DB_Backup::instance()->update_backup_notices( (int) $task->id, $note . "\n" );
+
+        wp_send_json(
+            array(
+                'status'      => 'reset',
+                'cancelled'   => $cancelled,
+                'uncancelled' => count( $uncancelled ),
+            )
+        );
+    }
+
+    /**
+     * Tell one child in a task to cancel its running backup, as part of a
+     * task reset. Reuses the per-site cancel contract: the child task id
+     * from the task's own progress row when the Dashboard still holds one
+     * (a creating marker is not an id the child knows), an empty id
+     * otherwise so the child resolves its single active backup itself.
+     *
+     * @param object $task    Task row.
+     * @param int    $site_id Site id.
+     *
+     * @return bool True when the child confirmed the run is stopped (or had
+     *              nothing running); false when the cancel did not land and
+     *              the dashboard-only close is the fallback.
+     */
+    private function cancel_task_run_on_child( $task, $site_id ) {
+        $website = MainWP_DB::instance()->get_website_by_id( $site_id );
+        if ( empty( $website ) ) {
+            return false;
+        }
+
+        $child_task_id = '';
+        $progress      = MainWP_DB_Backup::instance()->get_backup_task_progress( (int) $task->id, $site_id );
+        if ( ! empty( $progress->child_backup_task_id ) && ! MainWP_Backup_Executor::is_creating_marker( $progress->child_backup_task_id ) ) {
+            $child_task_id = (string) $progress->child_backup_task_id;
+        }
+
+        try {
+            $information = MainWP_Connect::fetch_url_authed( $website, 'backup_task_cancel', array( 'task_id' => $child_task_id ), false, false, false );
+        } catch ( \Exception $e ) {
+            return false;
+        }
+
+        if ( isset( $information['error'] ) ) {
+            return false;
+        }
+
+        // A live runner still owns the lease mid-slice; the child refused
+        // rather than fight it, so no stop can be claimed for this site.
+        if ( isset( $information['result'] ) && 'busy' === $information['result'] ) {
+            return false;
+        }
+
+        MainWP_Logger::instance()->debug_for_website(
+            $website,
+            'backup',
+            'Backup cancelled on the child during a stale task reset (child task: ' . ( '' !== $child_task_id ? $child_task_id : 'auto-resolved' ) . ')'
+        );
+
+        return true;
     }
 
     /**

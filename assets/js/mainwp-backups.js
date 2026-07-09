@@ -926,7 +926,7 @@ managebackups_remove = function (element) {
                 }
 
                 if (error != '') {
-                    setHtml('#mainwp_managebackups', error);
+                    managebackups_show_message(error, 'red');
                 }
                 if (result != '') {
                     setHtml('#mainwp_managebackups_add_message', result);
@@ -963,7 +963,7 @@ managebackups_resume = function (element) {
             }
 
             if (error != '') {
-                setHtml('#mainwp_managebackups', error);
+                managebackups_show_message(error, 'red');
             }
             if (result != '') {
                 setHtml('#mainwp_managebackups_add_message', result);
@@ -1002,7 +1002,7 @@ managebackups_pause = function (element) {
             }
 
             if (error != '') {
-                setHtml('#mainwp_managebackups', error);
+                managebackups_show_message(error, 'red');
             }
             if (result != '') {
                 setHtml('#mainwp_managebackups_add_message', result);
@@ -1016,6 +1016,10 @@ managebackups_pause = function (element) {
     }(element, id), 'json');
 
     return false;
+};
+managebackups_show_message = function (text, color) {
+    jQuery('#mainwp_managebackups_add_message').removeClass('green yellow red').addClass(color);
+    setHtml('#mainwp_managebackups_add_message', text);
 };
 // Reset a scheduled task's stuck "currently running" state once the list
 // view has flagged it stale (elapsed past the executor's stall threshold).
@@ -1032,10 +1036,22 @@ managebackups_reset_stale = function (element) {
         });
         jQuery.post(ajaxurl, data, function (response) {
             if (response.error != undefined) {
-                setHtml('#mainwp_managebackups', response.error);
+                managebackups_show_message(response.error, 'red');
                 return;
             }
-            location.reload();
+            let cancelled = response.cancelled != undefined ? response.cancelled : 0;
+            let uncancelled = response.uncancelled != undefined ? response.uncancelled : 0;
+            if (uncancelled > 0) {
+                managebackups_show_message(__('Task reset. Cancelled %1 child backup run(s); %2 site(s) could not be stopped. See the task\'s Last run notes.', cancelled, uncancelled), 'yellow');
+                setTimeout(function () {
+                    location.reload();
+                }, 5000);
+            } else {
+                managebackups_show_message(__('Task reset. Cancelled %1 child backup run(s).', cancelled), 'green');
+                setTimeout(function () {
+                    location.reload();
+                }, 1500);
+            }
         }, 'json');
     });
 

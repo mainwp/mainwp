@@ -24,6 +24,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
     /**
+     * Whether the most recent handle_settings_post() call silently forced
+     * archive encryption off because no recovery passphrase (recovery
+     * blob) existed yet. Read by the settings save handler immediately
+     * after handle_settings_post() returns, in the same request, so it can
+     * carry the fact through the post-save redirect the same way the
+     * existing "message=saved" query flag does.
+     *
+     * @var bool
+     */
+    private static bool $encryption_forced_off = false;
+
+    /**
      * Method get_class_name()
      *
      * Get Class Name.
@@ -186,6 +198,18 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     }
 
     /**
+     * Method encryption_was_forced_off()
+     *
+     * Whether the most recent handle_settings_post() call silently forced
+     * archive encryption off because no recovery passphrase was set yet.
+     *
+     * @return bool True when encryption could not be armed on the last save.
+     */
+    public static function encryption_was_forced_off(): bool {
+        return self::$encryption_forced_off;
+    }
+
+    /**
      * Method handle_settings_post()
      *
      * Update Child Site Settings.
@@ -196,6 +220,7 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
      */
     public static function handle_settings_post(): bool {
+        self::$encryption_forced_off = false;
         if ( MainWP_System_Utility::is_admin() ) {
             if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'Settings' ) ) {
                 if ( isset( $_POST['mainwp_options_backupOnServer'] ) && 0 < $_POST['mainwp_options_backupOnServer'] ) {
@@ -258,7 +283,8 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 }
                 $enableEncryption = ( isset( $_POST['mainwp_options_enableBackupEncryption'] ) && ! empty( $_POST['mainwp_options_enableBackupEncryption'] ) ) ? 1 : 0;
                 if ( $enableEncryption && empty( $encryption->get_recovery_blob() ) ) {
-                    $enableEncryption = 0;
+                    $enableEncryption            = 0;
+                    self::$encryption_forced_off = true;
                 }
                 MainWP_Utility::update_option( MainWP_Backup_Encryption::ENABLED_OPTION, $enableEncryption );
 

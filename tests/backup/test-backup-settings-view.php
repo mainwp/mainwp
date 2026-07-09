@@ -77,6 +77,7 @@ class MainWP_Backup_Settings_View_Test extends \WP_UnitTestCase {
 		$this->assertNotEmpty( $enc->get_recovery_blob() );
 		$this->assertNotNull( $enc->load_kek() );
 		$this->assertTrue( $enc->is_armed() );
+		$this->assertFalse( MainWP_Backup_Settings::encryption_was_forced_off(), 'Encryption armed legitimately; the forced-off signal must not be set.' );
 
 		unset( $_POST['submit'], $_POST['wp_nonce'], $_POST['mainwp_options_enableBackupEncryption'], $_POST['mainwp_options_backupEncryptionPassphrase'] );
 	}
@@ -103,6 +104,31 @@ class MainWP_Backup_Settings_View_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * The toggle was submitted on but there is no recovery passphrase, so
+	 * the save silently forces encryption off. The save flow must record
+	 * that fact so the settings view can surface a warning next to the
+	 * green "saved" banner instead of leaving the user with no signal that
+	 * encryption is actually off.
+	 *
+	 * @return void
+	 */
+	public function test_handle_settings_post_reports_encryption_forced_off_signal() {
+		$admin = $this->factory->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $admin );
+
+		$_POST['submit']                                = '1';
+		$_POST['wp_nonce']                              = wp_create_nonce( 'Settings' );
+		$_POST['mainwp_options_enableBackupEncryption'] = '1';
+		// No recovery passphrase submitted and none set yet, so this is the force-off path.
+
+		MainWP_Backup_Settings::handle_settings_post();
+
+		$this->assertTrue( MainWP_Backup_Settings::encryption_was_forced_off(), 'The forced-off signal must be set when encryption cannot be armed.' );
+
+		unset( $_POST['submit'], $_POST['wp_nonce'], $_POST['mainwp_options_enableBackupEncryption'] );
+	}
+
+	/**
 	 * Turning encryption off leaves the key material in place so existing
 	 * encrypted snapshots can still be restored.
 	 *
@@ -119,13 +145,14 @@ class MainWP_Backup_Settings_View_Test extends \WP_UnitTestCase {
 
 		$_POST['submit']   = '1';
 		$_POST['wp_nonce'] = wp_create_nonce( 'Settings' );
-		// The encryption toggle is absent, which means off.
+		// The encryption toggle is absent, which means off - a legitimate user choice, not a forced one.
 
 		MainWP_Backup_Settings::handle_settings_post();
 
 		$this->assertFalse( $enc->is_enabled_setting(), 'The toggle is off.' );
 		$this->assertSame( $kek, $enc->load_kek(), 'Disabling must not delete the KEK.' );
 		$this->assertNotEmpty( $enc->get_recovery_blob(), 'Disabling must not delete the recovery blob.' );
+		$this->assertFalse( MainWP_Backup_Settings::encryption_was_forced_off(), 'The user chose to leave encryption off; nothing was forced.' );
 
 		unset( $_POST['submit'], $_POST['wp_nonce'] );
 	}

@@ -694,6 +694,11 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 if ( $updated ) {
                     $msg = '&message=saved';
                 }
+                if ( MainWP_Backup_Settings::encryption_was_forced_off() ) {
+                    // Settings were still saved (the green banner above still shows), but archive
+                    // encryption itself could not be armed - surface that on the next render.
+                    $msg .= '&backup_encryption_forced_off=1';
+                }
 
                 // Redirect to the correct page based on the nonce.
                 $url_page = 'admin.php?page=Settings' . $msg;

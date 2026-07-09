@@ -194,6 +194,9 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
         <?php
         $encryptionEnabled     = MainWP_Backup_Encryption::instance()->is_enabled_setting();
         $hasRecoveryPassphrase = ! empty( MainWP_Backup_Encryption::instance()->get_recovery_blob() );
+        // Read-only render flag carried through the settings-save redirect, same mechanism as the
+        // existing message=saved flag: it never gates anything, it only decides whether a warning shows.
+        $encryptionForcedOff = isset( $_GET['backup_encryption_forced_off'] ) && '1' === sanitize_text_field( wp_unslash( $_GET['backup_encryption_forced_off'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
         ?>
         <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="0">
             <label class="six wide column middle aligned">
@@ -209,6 +212,11 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
                 <div class="ui small message" style="margin-top: 1em;">
                     <?php esc_html_e( 'Encrypts each backup archive on the dashboard before it is uploaded to remote storage, so the provider only ever holds ciphertext. Applies to new backups; existing snapshots are unchanged. Set a recovery passphrase below before turning this on.', 'mainwp' ); ?>
                 </div>
+                <?php if ( $encryptionForcedOff ) : ?>
+                <div class="ui small red message" style="margin-top: 1em;">
+                    <?php esc_html_e( 'Encryption could not be enabled because no recovery passphrase is set. Set a recovery passphrase below, then save again.', 'mainwp' ); ?>
+                </div>
+                <?php endif; ?>
             </div>
         </div>
 

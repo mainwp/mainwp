@@ -112,6 +112,60 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
     }
 
     /**
+     * Purge every restorable unit a deleted task owns, across all of its
+     * sites. Task deletion is not the retention policy's prune-worthy
+     * subset - there is nothing left to keep, so every complete unit
+     * get_units_for_site_task() reports becomes its own candidate and
+     * runs through the same leaf-first prune_candidate() sequence
+     * retention uses: local removal, cloud deletes when requested, the
+     * upload-row purge, then the status flip.
+     *
+     * @param int  $task_id             Task id being deleted or removed.
+     * @param bool $delete_cloud_copies The task's delete_cloud_copies
+     *                                  column value; controls whether
+     *                                  remote objects are queued for
+     *                                  deletion too.
+     *
+     * @return array Result: pruned (unit) count, snapshots_pruned and errors.
+     */
+    public function purge_snapshots_for_task( int $task_id, bool $delete_cloud_copies ): array {
+        $task = (object) array(
+            'id'                  => $task_id,
+            'delete_cloud_copies' => $delete_cloud_copies,
+        );
+
+        $result = array(
+            'pruned'           => 0,
+            'snapshots_pruned' => 0,
+            'errors'           => array(),
+        );
+
+        $query = MainWP_Backup_Retention_Query::instance();
+
+        foreach ( $query->list_site_ids_for_task( $task_id ) as $site_id ) {
+            foreach ( $query->get_units_for_site_task( $site_id, $task_id ) as $unit ) {
+                $snapshot_ids = array_map( 'intval', array_column( $unit['snapshots'], 'id' ) );
+                // prune_candidate() reverses this list to walk leaf first;
+                // it must arrive base first (ascending id), the same
+                // ordering the policy's own candidates carry.
+                sort( $snapshot_ids, SORT_NUMERIC );
+
+                $candidate = array(
+                    'snapshot_ids' => $snapshot_ids,
+                    'reason'       => 'task_deleted',
+                    'size_bytes'   => (int) $unit['size_bytes'],
+                );
+
+                $this->prune_candidate( $candidate, $task, $result );
+
+                ++$result['pruned'];
+            }
+        }
+
+        return $result;
+    }
+
+    /**
      * Prune one candidate unit, leaf first.
      *
      * @param array  $candidate Candidate: snapshot_ids (base first), reason, size_bytes.

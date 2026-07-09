@@ -779,4 +779,145 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 
 		$this->assertSame( $live, (int) $latest->id, 'A pruned snapshot must not summarize the task upload state.' );
 	}
+
+	/**
+	 * Deleting a task purges every restorable unit it owns: unlike
+	 * retention's prune-worthy subset, task deletion has nothing left to
+	 * keep, so a whole chain flips to pruned and its local directories
+	 * come down.
+	 *
+	 * @return void
+	 */
+	public function test_purge_snapshots_for_task_prunes_full_chain_and_removes_dirs() {
+		list( $base, $base_dir ) = $this->make_snapshot_with_dir();
+		list( $inc, $inc_dir )   = $this->make_snapshot_with_dir(
+			array(
+				'type'      => 'incremental',
+				'parent_id' => $base,
+			)
+		);
+
+		$result = MainWP_Backup_Retention_Executor::instance()->purge_snapshots_for_task( $this->task_id, false );
+
+		$this->assertSame( array(), $result['errors'] );
+		$this->assertSame( 2, $result['snapshots_pruned'] );
+		$this->assertSame( 'pruned', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $base )->status );
+		$this->assertSame( 'pruned', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $inc )->status );
+		$this->assertDirectoryDoesNotExist( $base_dir );
+		$this->assertDirectoryDoesNotExist( $inc_dir );
+	}
+
+	/**
+	 * delete_cloud_copies = false purges local state and upload rows but
+	 * never enqueues a cloud delete job.
+	 *
+	 * @return void
+	 */
+	public function test_purge_snapshots_for_task_without_cloud_copies_skips_delete_jobs() {
+		list( $snapshot_id ) = $this->make_snapshot_with_dir();
+		$this->insert_upload_job( $snapshot_id, 77 );
+
+		MainWP_Backup_Retention_Executor::instance()->purge_snapshots_for_task( $this->task_id, false );
+
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$this->assertSame( array(), $store->get_jobs_for_snapshot( $snapshot_id, 'delete' ) );
+		$this->assertSame( array(), $store->get_jobs_for_snapshot( $snapshot_id, 'upload' ) );
+	}
+
+	/**
+	 * delete_cloud_copies = true enqueues one cloud delete job per
+	 * destination from the upload checkpoints, honoring the per-task
+	 * column value passed in by the caller.
+	 *
+	 * @return void
+	 */
+	public function test_purge_snapshots_for_task_with_cloud_copies_enqueues_delete_jobs() {
+		list( $snapshot_id ) = $this->make_snapshot_with_dir();
+		$this->insert_upload_job( $snapshot_id, 77 );
+		$this->insert_upload_job( $snapshot_id, 88 );
+
+		MainWP_Backup_Retention_Executor::instance()->purge_snapshots_for_task( $this->task_id, true );
+
+		$store       = MainWP_Backup_Upload_Job_Store::instance();
+		$delete_jobs = $store->get_jobs_for_snapshot( $snapshot_id, 'delete' );
+
+		$this->assertCount( 2, $delete_jobs, 'One delete job per destination.' );
+		$this->assertSame( array(), $store->get_jobs_for_snapshot( $snapshot_id, 'upload' ) );
+	}
+
+	/**
+	 * A task spanning two sites purges every site's units, not just the
+	 * first one found.
+	 *
+	 * @return void
+	 */
+	public function test_purge_snapshots_for_task_spans_two_sites() {
+		global $wpdb;
+
+		$second_site = $this->create_test_site();
+
+		list( $first_id, $first_dir ) = $this->make_snapshot_with_dir();
+
+		$upload = wp_upload_dir();
+		$dir    = trailingslashit( $upload['basedir'] ) . 'mainwp/snapshot-task-reten-second-' . uniqid();
+		wp_mkdir_p( $dir );
+		$this->fixture_dirs[] = $dir;
+		$path                 = $dir . '/artifact.tar';
+		file_put_contents( $path, str_repeat( 'x', 100 ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
+			$table,
+			array(
+				'task_id'       => $this->task_id,
+				'site_id'       => $second_site,
+				'type'          => 'full',
+				'created'       => time(),
+				'archives'      => wp_json_encode( array( array( 'file' => 'artifact.tar', 'size' => 100, 'role' => 'full', 'path' => $path ) ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+				'manifest_path' => $dir . '/files.list',
+				'status'        => 'complete',
+			)
+		);
+		$second_id = (int) $wpdb->insert_id;
+
+		$result = MainWP_Backup_Retention_Executor::instance()->purge_snapshots_for_task( $this->task_id, false );
+
+		$this->assertSame( 2, $result['snapshots_pruned'] );
+		$this->assertSame( 'pruned', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $first_id )->status );
+		$this->assertSame( 'pruned', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $second_id )->status );
+		$this->assertDirectoryDoesNotExist( $first_dir );
+		$this->assertDirectoryDoesNotExist( $dir );
+
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$table} WHERE site_id = %d", $second_site ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
+	}
+
+	/**
+	 * The #24 incident: a kept unit whose local file was already removed
+	 * out-of-band still reads 'complete' because get_units_for_site_task()
+	 * has no is_file() check. Purging its own task must still succeed
+	 * cleanly (a missing file is not an error), and must never disturb a
+	 * kept unit that belongs to a different task.
+	 *
+	 * @return void
+	 */
+	public function test_purge_snapshots_for_task_missing_file_unit_does_not_cascade() {
+		list( $intact_id, $intact_dir )   = $this->make_snapshot_with_dir();
+		list( $missing_id, $missing_dir ) = $this->make_snapshot_with_dir();
+
+		// Out-of-band deletion: the file is gone but the row still reads 'complete'.
+		unlink( $missing_dir . '/artifact.tar' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+
+		$other_task_id   = $this->task_id + 1;
+		list( $kept_id ) = $this->make_snapshot_with_dir( array( 'task_id' => $other_task_id ) );
+
+		$result = MainWP_Backup_Retention_Executor::instance()->purge_snapshots_for_task( $this->task_id, false );
+
+		$this->assertSame( array(), $result['errors'], 'A file already gone out-of-band is not an error.' );
+		$this->assertSame( 2, $result['snapshots_pruned'] );
+		$this->assertSame( 'pruned', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $intact_id )->status );
+		$this->assertSame( 'pruned', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $missing_id )->status );
+		$this->assertDirectoryDoesNotExist( $intact_dir );
+
+		$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $kept_id )->status, "An unrelated task's kept unit must not be touched." );
+	}
 }

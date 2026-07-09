@@ -978,13 +978,23 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
     /**
      * Remove Backup.
      *
+     * Purges the task's restorable snapshots, cloud copies and upload
+     * metadata before dropping the schedule row, so a deleted task never
+     * leaves its backups orphaned and their storage leaking.
+     *
      * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_task_by_id()
+     * @uses \MainWP\Dashboard\MainWP_Backup_Retention_Executor::purge_snapshots_for_task()
      * @uses \MainWP\Dashboard\MainWP_DB_Backup::remove_backup_task()
      */
     public static function remove_backup() {
         if ( isset( $_POST['id'] ) ) { //phpcs:ignore WordPress.Security.NonceVerification.Missing
             $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( intval( $_POST['id'] ) ); //phpcs:ignore WordPress.Security.NonceVerification.Missing
             if ( static::can_edit_backuptask( $task ) ) {
+                $purge_result = MainWP_Backup_Retention_Executor::instance()->purge_snapshots_for_task( (int) $task->id, ! empty( $task->delete_cloud_copies ) );
+
+                /** This action is documented in class/class-mainwp-post-backup-handler.php */
+                do_action( 'mainwp_backup_task_snapshots_purged', (int) $task->id, $purge_result );
+
                 MainWP_DB_Backup::instance()->remove_backup_task( $task->id );
                 die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
             }

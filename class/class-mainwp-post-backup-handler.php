@@ -124,7 +124,9 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
      * One manual wp_backup row (template = 1, schedule = 'manual') is created
      * per site the first time "Back up now" runs; without this it would
      * outlive the site. Hooked on mainwp_delete_site, which the manage-sites
-     * deletion path fires after the site row is gone.
+     * deletion path fires after the site row is gone. Its restorable
+     * snapshots, cloud copies and upload metadata are purged first so the
+     * task row and its backups leave together rather than orphaning them.
      *
      * @param object $site Deleted site object.
      *
@@ -137,6 +139,17 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
 
         $task = MainWP_DB_Backup::instance()->get_manual_backup_task( $site->id );
         if ( $task ) {
+            $purge_result = MainWP_Backup_Retention_Executor::instance()->purge_snapshots_for_task( (int) $task->id, ! empty( $task->delete_cloud_copies ) );
+
+            /**
+             * Fires after a deleted or removed task's restorable snapshots
+             * have been purged.
+             *
+             * @param int   $task_id Task id whose snapshots were purged.
+             * @param array $result  Purge result: pruned, snapshots_pruned, errors.
+             */
+            do_action( 'mainwp_backup_task_snapshots_purged', (int) $task->id, $purge_result );
+
             MainWP_DB_Backup::instance()->remove_backup_task( (int) $task->id );
         }
 

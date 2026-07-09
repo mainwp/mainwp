@@ -905,7 +905,7 @@ managebackups_remove = function (element) {
     let id = jQuery(element).attr('task_id');
     managebackups_init();
 
-    let msg = MainWP.I18n.t('Are you sure you want to delete this backup task?');
+    let msg = MainWP.I18n.t('Are you sure you want to delete this backup task? Its existing backups and cloud copies will be removed too.');
     mainwp_confirm(msg, function () {
         jQuery('#task-status-' + id).html(MainWP.I18n.t('Removing the task...'));
         let data = mainwp_secure_data({

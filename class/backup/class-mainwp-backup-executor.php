@@ -2018,6 +2018,27 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
              * @param array       $meta    Artifact and error details.
              */
             do_action( 'mainwp_native_backup_completed', $site_id, $task_id, 'completed' === $status['status'], $status['meta'] );
+
+            if ( 'failed' === $status['status'] ) {
+                /**
+                 * Fires when the dashboard observes a backup task reach a
+                 * terminal failed phase.
+                 *
+                 * The logs connector records the event.
+                 *
+                 * @param array $event Site, task, and error details.
+                 */
+                do_action(
+                    'mainwp_backup_failed',
+                    array(
+                        'site_id'    => (int) $site_id,
+                        'task_id'    => (string) $task_id,
+                        'error'      => isset( $status['meta']['error'] ) ? (string) $status['meta']['error'] : esc_html__( 'The backup task failed.', 'mainwp' ),
+                        'error_code' => isset( $status['meta']['error_code'] ) ? (string) $status['meta']['error_code'] : '',
+                    )
+                );
+            }
+
             MainWP_DB::instance()->update_website_option( $website, static::ADHOC_TASK_OPTION, '' );
         }
 

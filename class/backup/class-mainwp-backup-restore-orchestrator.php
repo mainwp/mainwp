@@ -1027,6 +1027,26 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         if ( ! $retryable || MainWP_Backup_Backoff::attempts_exhausted( $attempts ) ) {
             $this->stamp_error_code( $job, $error_code );
             $store->fail_permanent( (int) $job->id, $error );
+
+            /**
+             * Fires after a restore fails permanently (not retryable, or
+             * retries exhausted).
+             *
+             * The logs connector records the event.
+             *
+             * @param array $event Site, snapshot, job, and error details.
+             */
+            do_action(
+                'mainwp_backup_restore_failed',
+                array(
+                    'site_id'     => (int) $job->site_id,
+                    'snapshot_id' => (int) $job->snapshot_id,
+                    'job_id'      => (int) $job->id,
+                    'error'       => $error,
+                    'error_code'  => $error_code,
+                )
+            );
+
             return;
         }
 

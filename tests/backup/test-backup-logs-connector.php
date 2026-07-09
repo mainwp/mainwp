@@ -247,4 +247,181 @@ class MainWP_Backup_Logs_Connector_Test extends \WP_UnitTestCase {
 
 		$this->assertCount( 0, $captured );
 	}
+
+	/**
+	 * The connector observes the backup-run-failed action.
+	 *
+	 * @return void
+	 */
+	public function test_connector_observes_backup_failed_action() {
+		$captured  = array();
+		$connector = $this->capturing_connector( $captured );
+
+		$this->assertContains( 'mainwp_backup_failed', $connector->actions );
+		$this->assertArrayHasKey( 'failed', $connector->get_action_labels() );
+	}
+
+	/**
+	 * A backup run failure becomes a log entry with state 0 and the
+	 * error detail carried in extra_info.
+	 *
+	 * @return void
+	 */
+	public function test_backup_failed_event_is_logged() {
+		$captured  = array();
+		$connector = $this->capturing_connector( $captured );
+
+		$connector->callback_mainwp_backup_failed(
+			array(
+				'site_id'    => 42,
+				'task_id'    => 'task-abc',
+				'error'      => 'The child site did not respond.',
+				'error_code' => 'mainwp_backup_timeout',
+			)
+		);
+
+		$this->assertCount( 1, $captured );
+		$this->assertSame( 42, $captured[0]['site_id'] );
+		$this->assertSame( 'backup', $captured[0]['context'] );
+		$this->assertSame( 'failed', $captured[0]['action'] );
+		$this->assertSame( 0, $captured[0]['state'] );
+		$this->assertArrayHasKey( 'extra_info', $captured[0]['args'] );
+		$this->assertStringContainsString( 'The child site did not respond.', $captured[0]['args']['extra_info'] );
+	}
+
+	/**
+	 * A malformed backup-failed event is ignored.
+	 *
+	 * @return void
+	 */
+	public function test_malformed_backup_failed_event_is_ignored() {
+		$captured  = array();
+		$connector = $this->capturing_connector( $captured );
+
+		$connector->callback_mainwp_backup_failed( 'not-an-array' );
+		$connector->callback_mainwp_backup_failed( array() );
+		$connector->callback_mainwp_backup_failed( array( 'site_id' => 42 ) );
+
+		$this->assertCount( 0, $captured );
+	}
+
+	/**
+	 * The connector observes the upload-failed action.
+	 *
+	 * @return void
+	 */
+	public function test_connector_observes_upload_failed_action() {
+		$captured  = array();
+		$connector = $this->capturing_connector( $captured );
+
+		$this->assertContains( 'mainwp_backup_upload_failed', $connector->actions );
+		$this->assertArrayHasKey( 'upload_failed', $connector->get_action_labels() );
+	}
+
+	/**
+	 * An upload failure becomes a log entry with state 0 and the error
+	 * detail carried in extra_info.
+	 *
+	 * @return void
+	 */
+	public function test_upload_failed_event_is_logged() {
+		$captured  = array();
+		$connector = $this->capturing_connector( $captured );
+
+		$connector->callback_mainwp_backup_upload_failed(
+			array(
+				'site_id'          => 42,
+				'task_id'          => 9,
+				'snapshot_id'      => 7,
+				'destination_id'   => 3,
+				'destination_name' => 'Primary S3',
+				'provider'         => 's3',
+				'error'            => '[mainwp_backup_s3_failed] Access denied.',
+			)
+		);
+
+		$this->assertCount( 1, $captured );
+		$this->assertSame( 42, $captured[0]['site_id'] );
+		$this->assertSame( 'backup', $captured[0]['context'] );
+		$this->assertSame( 'upload_failed', $captured[0]['action'] );
+		$this->assertSame( 0, $captured[0]['state'] );
+		$this->assertSame( 'Primary S3', $captured[0]['args']['destination'] );
+		$this->assertSame( 7, $captured[0]['args']['snapshot_id'] );
+		$this->assertArrayHasKey( 'extra_info', $captured[0]['args'] );
+		$this->assertStringContainsString( 'Access denied.', $captured[0]['args']['extra_info'] );
+	}
+
+	/**
+	 * A malformed upload-failed event is ignored.
+	 *
+	 * @return void
+	 */
+	public function test_malformed_upload_failed_event_is_ignored() {
+		$captured  = array();
+		$connector = $this->capturing_connector( $captured );
+
+		$connector->callback_mainwp_backup_upload_failed( 'not-an-array' );
+		$connector->callback_mainwp_backup_upload_failed( array() );
+
+		$this->assertCount( 0, $captured );
+	}
+
+	/**
+	 * The connector observes the restore-failed action.
+	 *
+	 * @return void
+	 */
+	public function test_connector_observes_restore_failed_action() {
+		$captured  = array();
+		$connector = $this->capturing_connector( $captured );
+
+		$this->assertContains( 'mainwp_backup_restore_failed', $connector->actions );
+		$this->assertArrayHasKey( 'restore_failed', $connector->get_action_labels() );
+	}
+
+	/**
+	 * A restore failure becomes a log entry with state 0 and the error
+	 * detail carried in extra_info.
+	 *
+	 * @return void
+	 */
+	public function test_restore_failed_event_is_logged() {
+		$captured  = array();
+		$connector = $this->capturing_connector( $captured );
+
+		$connector->callback_mainwp_backup_restore_failed(
+			array(
+				'site_id'     => 42,
+				'snapshot_id' => 7,
+				'job_id'      => 5,
+				'error'       => 'The site did not respond after the restore.',
+				'error_code'  => 'mainwp_backup_child_unreachable',
+			)
+		);
+
+		$this->assertCount( 1, $captured );
+		$this->assertSame( 42, $captured[0]['site_id'] );
+		$this->assertSame( 'backup', $captured[0]['context'] );
+		$this->assertSame( 'restore_failed', $captured[0]['action'] );
+		$this->assertSame( 0, $captured[0]['state'] );
+		$this->assertSame( 7, $captured[0]['args']['snapshot_id'] );
+		$this->assertSame( 5, $captured[0]['args']['job_id'] );
+		$this->assertArrayHasKey( 'extra_info', $captured[0]['args'] );
+		$this->assertStringContainsString( 'The site did not respond after the restore.', $captured[0]['args']['extra_info'] );
+	}
+
+	/**
+	 * A malformed restore-failed event is ignored.
+	 *
+	 * @return void
+	 */
+	public function test_malformed_restore_failed_event_is_ignored() {
+		$captured  = array();
+		$connector = $this->capturing_connector( $captured );
+
+		$connector->callback_mainwp_backup_restore_failed( 'not-an-array' );
+		$connector->callback_mainwp_backup_restore_failed( array() );
+
+		$this->assertCount( 0, $captured );
+	}
 }

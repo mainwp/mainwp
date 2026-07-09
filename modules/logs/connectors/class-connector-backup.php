@@ -32,6 +32,9 @@ class Connector_Backup extends Log_Connector {
         'mainwp_backup_uploaded',
         'mainwp_backup_pruned',
         'mainwp_backup_restored',
+        'mainwp_backup_failed',
+        'mainwp_backup_upload_failed',
+        'mainwp_backup_restore_failed',
     );
 
     /**
@@ -50,10 +53,13 @@ class Connector_Backup extends Log_Connector {
      */
     public function get_action_labels() {
         return array(
-            'downloaded' => esc_html__( 'Downloaded', 'mainwp' ),
-            'uploaded'   => esc_html__( 'Uploaded', 'mainwp' ),
-            'pruned'     => esc_html__( 'Pruned', 'mainwp' ),
-            'restored'   => esc_html__( 'Restored', 'mainwp' ),
+            'downloaded'     => esc_html__( 'Downloaded', 'mainwp' ),
+            'uploaded'       => esc_html__( 'Uploaded', 'mainwp' ),
+            'pruned'         => esc_html__( 'Pruned', 'mainwp' ),
+            'restored'       => esc_html__( 'Restored', 'mainwp' ),
+            'failed'         => esc_html__( 'Failed', 'mainwp' ),
+            'upload_failed'  => esc_html__( 'Upload Failed', 'mainwp' ),
+            'restore_failed' => esc_html__( 'Restore Failed', 'mainwp' ),
         );
     }
 
@@ -195,6 +201,121 @@ class Connector_Backup extends Log_Connector {
             'backup',
             'restored',
             1
+        );
+    }
+
+    /**
+     * Log a backup run that failed to produce a snapshot.
+     *
+     * @action mainwp_backup_failed
+     *
+     * @param array $event Failure details: site_id, task_id, error, error_code.
+     */
+    public function callback_mainwp_backup_failed( $event ) {
+        if ( ! is_array( $event ) || empty( $event['site_id'] ) || empty( $event['error'] ) ) {
+            return;
+        }
+
+        // translators: %s: Error message.
+        $message = esc_html__( 'Backup run failed: %s', 'mainwp' );
+
+        $args = array(
+            'error'      => sanitize_text_field( $event['error'] ),
+            'task_id'    => isset( $event['task_id'] ) ? sanitize_text_field( (string) $event['task_id'] ) : '',
+            'error_code' => isset( $event['error_code'] ) ? sanitize_text_field( $event['error_code'] ) : '',
+        );
+
+        $info               = array(
+            'error' => $event['error'],
+        );
+        $args['extra_info'] = wp_json_encode( $info );
+
+        $this->log(
+            $message,
+            $args,
+            (int) $event['site_id'],
+            'backup',
+            'failed',
+            0
+        );
+    }
+
+    /**
+     * Log a snapshot upload that failed to reach a storage destination.
+     *
+     * @action mainwp_backup_upload_failed
+     *
+     * @param array $event Failure details: site_id, task_id, snapshot_id,
+     *                     destination_id, destination_name, provider, error.
+     */
+    public function callback_mainwp_backup_upload_failed( $event ) {
+        if ( ! is_array( $event ) || empty( $event['site_id'] ) || empty( $event['destination_id'] ) ) {
+            return;
+        }
+
+        // translators: %s: Storage destination name.
+        $message = esc_html__( 'Backup upload to storage destination failed: %s', 'mainwp' );
+
+        $args = array(
+            'destination'    => isset( $event['destination_name'] ) ? sanitize_text_field( $event['destination_name'] ) : '',
+            'destination_id' => (int) $event['destination_id'],
+            'snapshot_id'    => isset( $event['snapshot_id'] ) ? (int) $event['snapshot_id'] : 0,
+            'provider'       => isset( $event['provider'] ) ? sanitize_text_field( $event['provider'] ) : '',
+        );
+
+        if ( ! empty( $event['error'] ) ) {
+            $info               = array(
+                'error' => $event['error'],
+            );
+            $args['extra_info'] = wp_json_encode( $info );
+        }
+
+        $this->log(
+            $message,
+            $args,
+            (int) $event['site_id'],
+            'backup',
+            'upload_failed',
+            0
+        );
+    }
+
+    /**
+     * Log a restore that ended in a permanent failure.
+     *
+     * @action mainwp_backup_restore_failed
+     *
+     * @param array $event Failure details: site_id, snapshot_id, job_id,
+     *                     error, error_code.
+     */
+    public function callback_mainwp_backup_restore_failed( $event ) {
+        if ( ! is_array( $event ) || empty( $event['site_id'] ) ) {
+            return;
+        }
+
+        // translators: %s: Snapshot id.
+        $message = esc_html__( 'Restore from backup snapshot failed: %s', 'mainwp' );
+
+        $args = array(
+            'snapshot_id' => isset( $event['snapshot_id'] ) ? (int) $event['snapshot_id'] : 0,
+            'job_id'      => isset( $event['job_id'] ) ? (int) $event['job_id'] : 0,
+            'error_code'  => isset( $event['error_code'] ) ? sanitize_text_field( $event['error_code'] ) : '',
+        );
+
+        if ( ! empty( $event['error'] ) ) {
+            $info               = array(
+                'error' => $event['error'],
+            );
+            $args['extra_info'] = wp_json_encode( $info );
+        }
+
+        $this->log(
+            $message,
+            $args,
+            (int) $event['site_id'],
+            'backup',
+            'restore_failed',
+            0
         );
     }
 }

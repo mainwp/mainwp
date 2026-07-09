@@ -809,6 +809,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
         if ( 401 === $code || 403 === $code ) {
             $store->invalidate_credentials( (int) $job->id, $error );
             $this->cleanup_staging( $job );
+            $this->fire_upload_failed( $job, $destination, $error );
             return;
         }
 
@@ -816,10 +817,47 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
         if ( 410 === $code || MainWP_Backup_Backoff::attempts_exhausted( $attempts ) ) {
             $store->fail_permanent( (int) $job->id, $error );
             $this->cleanup_staging( $job );
+            $this->fire_upload_failed( $job, $destination, $error );
             return;
         }
 
         $store->fail_retryable( (int) $job->id, $error, $now + MainWP_Backup_Backoff::delay_for_attempt( $attempts ) );
+    }
+
+    /**
+     * Announce a terminal upload failure (credentials invalidated or
+     * permanently failed) so the activity log can record it. Never fired
+     * for a retryable failure, which the backoff will attempt again.
+     *
+     * @param object $job         Job row.
+     * @param object $destination Destination row.
+     * @param string $error       Error detail, already tagged with the
+     *                            provider's registry error code.
+     *
+     * @return void
+     */
+    private function fire_upload_failed( object $job, object $destination, string $error ): void {
+        $snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( (int) $job->snapshot_id );
+
+        /**
+         * Fires after a snapshot upload to a destination terminally fails.
+         *
+         * The logs connector records the event.
+         *
+         * @param array $event Site, task, snapshot, destination, and error details.
+         */
+        do_action(
+            'mainwp_backup_upload_failed',
+            array(
+                'site_id'          => null !== $snapshot ? (int) $snapshot->site_id : 0,
+                'task_id'          => null !== $snapshot ? (int) $snapshot->task_id : 0,
+                'snapshot_id'      => (int) $job->snapshot_id,
+                'destination_id'   => (int) $destination->id,
+                'destination_name' => (string) $destination->name,
+                'provider'         => (string) $destination->provider,
+                'error'            => $error,
+            )
+        );
     }
 
     /**

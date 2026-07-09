@@ -6,7 +6,6 @@ let backupDownloadRunning = false;
 let backupError = false;
 let backupCompleted = false;
 let backupContinueRetries = 0;
-let backupContinueRetriesUnique = [];
 
 jQuery(function () {
     jQuery('#backup_btnSubmit').on('click', function () {
@@ -386,218 +385,20 @@ backup_download_file = function (pSiteId, type, url, file, regexfile, size, subf
     });
 };
 
-let backupUploadRunning = [];
+// The client-driven remote-destination upload flow this function used to
+// gate on (action: mainwp_backup_upload_file) has no PHP handler on this
+// branch - server-side FTP/Dropbox/S3/GCS upload now happens inside the
+// backup executor itself, and no template renders #backup_destination_list,
+// so pRemoteDestinations is always empty here in practice. The dead branch
+// and its retry-fail sibling (backup_upload_file_retry_fail) are removed;
+// this always finishes the same way real backups already do today.
 backup_upload_file = function (pSiteId, pFile, pRegexFile, pSubfolder, pRemoteDestinations, pType, pSize) {
     let backsprocessContentEl = mainwpPopup('#managesite-backup-status-box').getContentEl();
-    if (pRemoteDestinations.length > 0) {
-        let remote_destination = pRemoteDestinations[0];
-        //upload..
-        let unique = Date.now();
-        appendToDiv(backsprocessContentEl, MainWP.I18n.t('Uploading to remote destination: %1 (%2)', remote_destination.title, remote_destination.type) + '<div id="managesite-upload-status-progress-' + unique + '"  class="ui green progress"><div class="bar"><div class="progress"></div></div></div>');
-
-        jQuery('#managesite-upload-status-progress-' + unique).progress({ value: 0, total: pSize });
-
-        let fnc = function (pUnique) {
-            return function (pFunction) {
-                let data2 = mainwp_secure_data({
-                    action: 'mainwp_backup_upload_getprogress',
-                    unique: pUnique
-                }, false);
-
-                jQuery.ajax({
-                    url: ajaxurl,
-                    data: data2,
-                    method: 'POST',
-                    success: function (pFunc) {
-                        return function (response) {
-                            if (backupUploadRunning[pUnique] && response.error) {
-                                setTimeout(function () {
-                                    pFunc(pFunc);
-                                }, 1000);
-                                return;
-                            }
-
-                            if (backupUploadRunning[pUnique]) {
-                                let progressBar = jQuery('#managesite-upload-status-progress-' + pUnique);
-                                if ((progressBar.length > 0) && (progressBar.progress('get value') < progressBar.progress('get total')) && (progressBar.progress('get value') < Number.parseInt(response.result))) {
-                                    progressBar.progress('set progress', response.result);
-                                }
-
-                                setTimeout(function () {
-                                    pFunc(pFunc);
-                                }, 1000);
-                            }
-                        }
-                    }(pFunction),
-                    error: function (pFunc) {
-                        return function () {
-                            if (backupUploadRunning[pUnique]) {
-                                setTimeout(function () {
-                                    pFunc(pFunc);
-                                }, 10000);
-                            }
-                        }
-                    }(pFunction),
-                    dataType: 'json'
-                });
-            }
-        }(unique);
-
-        setTimeout(function () {
-            fnc(fnc);
-        }, 1000);
-
-        backupUploadRunning[unique] = true;
-
-        let data = mainwp_secure_data({
-            action: 'mainwp_backup_upload_file',
-            file: pFile,
-            siteId: pSiteId,
-            regexfile: pRegexFile,
-            subfolder: pSubfolder,
-            type: pType,
-            remote_destination: remote_destination.id,
-            unique: unique
-        });
-
-        pRemoteDestinations.shift();
-        jQuery.ajax({
-            type: 'POST',
-            url: ajaxurl,
-            data: data,
-            success: function (pSiteId, pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSize, pData, pUnique, pRemoteDestId) {
-                return function (response) {
-                    if (!response || response.error || !response.result) {
-                        backup_upload_file_retry_fail(pData, pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, pRemoteDestId, response && response.error ? response.error : '');
-                    } else {
-                        backupUploadRunning[pUnique] = false;
-
-                        let progressBar = jQuery('#managesite-upload-status-progress-' + pUnique);
-                        progressBar.progress('set progress', pSize);
-
-                        let obj = response.result;
-                        if (obj.error) {
-                            backupError = true;
-                            appendToDiv(backsprocessContentEl, '<span class="mainwp-red">' + MainWP.I18n.t('Upload to %1 (%2) failed:', obj.title, obj.type) + ' ' + obj.error + '</span>');
-                        } else {
-                            appendToDiv(backsprocessContentEl, MainWP.I18n.t('Upload to %1 (%2) successful!', obj.title, obj.type));
-                        }
-
-                        backup_upload_file(pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize);
-                    }
-                }
-            }(pSiteId, pRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSize, data, unique, remote_destination.id),
-            error: function (pSiteId, pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSize, pData, pUnique, pRemoteDestId) {
-                return function () {
-                    backup_upload_file_retry_fail(pData, pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, pRemoteDestId);
-                }
-            }(pSiteId, pRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSize, data, unique, remote_destination.id),
-            dataType: 'json'
-        });
-    } else {
-        backupCompleted = true;
-        appendToDiv(backsprocessContentEl, MainWP.I18n.t('Backup completed!'));
-        jQuery('#managesite-backup-status-close').prop('value', 'Close');
-        // The archive list refreshes in place when the user closes the modal
-        // (see the init callback), so do not auto-close or reload the page.
-        return;
-    }
-};
-
-backup_upload_file_retry_fail = function (pData, pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, pRemoteDestId, responseError) {
-    let backsprocessContentEl = mainwpPopup('#managesite-backup-status-box').getContentEl();
-    //we've got the pid file!!!!
-    let data = mainwp_secure_data({
-        action: 'mainwp_backup_upload_checkstatus',
-        unique: pUnique,
-        remote_destination: pRemoteDestId
-    });
-
-    jQuery.ajax({
-        url: ajaxurl,
-        data: data,
-        method: 'POST',
-        success: function (response) {
-            if (response.status == 'done') {
-                backupUploadRunning[pUnique] = false;
-
-                let progressBar = jQuery('#managesite-upload-status-progress-' + pUnique);
-                progressBar.progress('set progress', pSize);
-
-                appendToDiv(backsprocessContentEl, MainWP.I18n.t('Upload to %1 (%2) successful!', response.info.title, response.info.type));
-
-                backup_upload_file(pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize);
-            } else if (response.status == 'stalled') {
-                if (backupContinueRetriesUnique[pUnique] == undefined) {
-                    backupContinueRetriesUnique[pUnique] = 1;
-                } else {
-                    backupContinueRetriesUnique[pUnique]++;
-                }
-
-                if (backupContinueRetriesUnique[pUnique] > 10) {
-                    if (responseError != undefined) {
-                        backupError = true;
-                        appendToDiv(backsprocessContentEl, '<span class="mainwp-red">' + MainWP.I18n.t('Upload to %1 (%2) failed:', response.info.title, response.info.type) + ' ' + responseError + '</span>');
-                    } else {
-                        appendToDiv(backsprocessContentEl, ' <span class="mainwp-red">ERROR: Upload timed out! <a href="http://docs.mainwp.com/backup-failed-php-ini-settings/">Please check this help document for more information and possible fixes</a></span>');
-                    }
-
-                    backup_upload_file(pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize);
-                } else {
-                    appendToDiv(backsprocessContentEl, ' Upload stalled, trying to resume from last position...');
-
-                    pData = mainwp_secure_data(pData); //Rescure
-
-                    jQuery.ajax({
-                        url: ajaxurl,
-                        data: pData,
-                        method: 'POST',
-                        success: function (pSiteId, pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSize, pData, pRemoteDestId) {
-                            return function (response) {
-                                if (response.error || !response.result) {
-                                    backup_upload_file_retry_fail(pData, pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, pRemoteDestId, response.error ? response.error : '');
-                                } else {
-                                    backupUploadRunning[pUnique] = false;
-
-                                    let progressBar = jQuery('#managesite-upload-status-progress-' + pUnique);
-                                    progressBar.progress('set progress', pSize);
-
-                                    let obj = response.result;
-                                    if (obj.error) {
-                                        backupError = true;
-                                        appendToDiv(backsprocessContentEl, '<span class="mainwp-red">' + MainWP.I18n.t('Upload to %1 (%2) failed:', obj.title, obj.type) + ' ' + obj.error + '</span>');
-                                    } else {
-                                        appendToDiv(backsprocessContentEl, MainWP.I18n.t('Upload to %1 (%2) successful!', obj.title, obj.type));
-                                    }
-
-                                    backup_upload_file(pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize);
-                                }
-                            }
-                        }(pSiteId, pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSize, pData, pRemoteDestId),
-                        error: function (pSiteId, pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSize, pData, pRemoteDestId) {
-                            return function () {
-                                backup_upload_file_retry_fail(pData, pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, pRemoteDestId);
-                            }
-                        }(pSiteId, pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSize, pData, pRemoteDestId),
-                        dataType: 'json'
-                    });
-                }
-            } else {
-                // busy or other.
-                //Try again in 5seconds
-                setTimeout(function () {
-                    backup_upload_file_retry_fail(pData, pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, pRemoteDestId, responseError);
-                }, 10000);
-            }
-        },
-        error: function () {
-            //Try again in 10seconds
-            setTimeout(function () {
-                backup_upload_file_retry_fail(pData, pSiteId, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, pRemoteDestId, responseError);
-            }, 10000);
-        },
-        dataType: 'json'
-    });
+    backupCompleted = true;
+    appendToDiv(backsprocessContentEl, MainWP.I18n.t('Backup completed!'));
+    jQuery('#managesite-backup-status-close').prop('value', 'Close');
+    // The archive list refreshes in place when the user closes the modal
+    // (see the init callback), so do not auto-close or reload the page.
 };
 
 
@@ -848,6 +649,11 @@ managebackups_run_next = function () {
                 backupCreateRunning = false;
                 clearInterval(pInterVal);
                 appendToDiv(backtaskContentEl, '[' + pSiteName + '] <span class="mainwp-red">' + __('ERROR') + ': ' + __('The backup request to the child site timed out. The site may be overloaded, or the host may be limiting long-running requests.') + ' <a href="https://mainwp.com/help/docs/mainwp-introduction/resolving-system-requirement-issues/">' + __('See this help document for possible fixes.') + '</a> (mainwp_backup_timeout)</span>'); // NOSONAR - noopener - open safe.
+                // A transport failure (not a JSON error response) must still
+                // advance the loop - otherwise one unreachable site silently
+                // stalls the rest of a multi-site Run Now.
+                manageBackupsTaskError = true;
+                managebackups_run_next();
             }
         }(interVal, siteName), dataType: 'json'
     });
@@ -916,217 +722,15 @@ let managebackups_backup_download_file = function (pSiteId, pSiteName, type, url
     }(file, regexfile, subfolder, remote_destinations, size, type, interVal, pSiteName, pSiteId, url), 'json');
 };
 
+// Same dead flow as backup_upload_file() above (action: mainwp_backup_upload_file
+// has no PHP handler on this branch, and pRemoteDestinations is always empty
+// here since nothing populates it for the manage-backups task path either).
+// The dead branch and its retry-fail sibling (managebackups_backup_upload_file_retry_fail)
+// are removed; this always finishes the run the same way it already does today.
 managebackups_backup_upload_file = function (pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pRemoteDestinations, pType, pSize) {
     let backtaskContentEl = mainwpPopup('#managebackups-task-status-box').getContentEl();
-    if (pRemoteDestinations.length > 0) {
-        let remote_destination = pRemoteDestinations[0];
-        //upload..
-        let unique = Date.now();
-        appendToDiv(backtaskContentEl, '[' + pSiteName + '] ' + MainWP.I18n.t('Uploading to selected remote destination: %1 (%2)', remote_destination.title, remote_destination.type) + '<div id="managesite-upload-status-progress-' + unique + '" class="ui green progress"><div class="bar"><div class="progress"></div></div></div>');
-
-        jQuery('#managesite-upload-status-progress-' + unique).progress({ value: 0, total: pSize });
-
-        let fnc = function (pUnique) {
-            return function (pFunction) {
-                let data2 = mainwp_secure_data({
-                    action: 'mainwp_backup_upload_getprogress',
-                    unique: pUnique
-                }, false);
-
-                jQuery.ajax({
-                    url: ajaxurl,
-                    data: data2,
-                    method: 'POST',
-                    success: function (pFunc) {
-                        return function (response) {
-                            if (backupUploadRunning[pUnique] && response.error) {
-                                setTimeout(function () {
-                                    pFunc(pFunc);
-                                }, 1000);
-                                return;
-                            }
-
-                            if (backupUploadRunning[pUnique]) {
-                                let progressBar = jQuery('#managesite-upload-status-progress-' + pUnique);
-                                if ((progressBar.length > 0) && (progressBar.progress('get value') < progressBar.progress('get total')) && (progressBar.progress('get value') < Number.parseInt(response.result))) {
-                                    progressBar.progress('set progress', response.result);
-                                }
-
-                                setTimeout(function () {
-                                    pFunc(pFunc);
-                                }, 1000);
-                            }
-                        }
-                    }(pFunction),
-                    error: function (pFunc) {
-                        return function () {
-                            if (backupUploadRunning[pUnique]) {
-                                setTimeout(function () {
-                                    pFunc(pFunc);
-                                }, 10000);
-                            }
-                        }
-                    }(pFunction),
-                    dataType: 'json'
-                });
-            }
-        }(unique);
-
-        setTimeout(function () {
-            fnc(fnc);
-        }, 1000);
-
-        backupUploadRunning[unique] = true;
-
-        let data = mainwp_secure_data({
-            action: 'mainwp_backup_upload_file',
-            file: pFile,
-            siteId: pSiteId,
-            regexfile: pRegexFile,
-            subfolder: pSubfolder,
-            type: pType,
-            remote_destination: remote_destination.id,
-            unique: unique
-        });
-
-        pRemoteDestinations.shift();
-        jQuery.ajax({
-            type: 'POST',
-            url: ajaxurl,
-            data: data,
-            success: function (pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, pData, pUnique, pRemoteDestId) {
-                return function (response) {
-                    if (!response || response.error || !response.result) {
-                        managebackups_backup_upload_file_retry_fail(pData, pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, pRemoteDestId, response.error ? response.error : '');
-                    } else {
-                        backupUploadRunning[pUnique] = false;
-
-                        let progressBar = jQuery('#managesite-upload-status-progress-' + pUnique);
-                        progressBar.progress('set progress', pSize);
-
-                        let obj = response.result;
-                        if (obj.error) {
-                            manageBackupsError = true;
-                            appendToDiv(backtaskContentEl, '<span class="mainwp-red">[' + pSiteName + '] ' + MainWP.I18n.t('Upload to %1 (%2) failed:', obj.title, obj.type) + ' ' + obj.error + '</span>');
-                        } else {
-                            appendToDiv(backtaskContentEl, '[' + pSiteName + '] ' + MainWP.I18n.t('Upload to %1 (%2) successful', obj.title, obj.type));
-                        }
-
-                        managebackups_backup_upload_file(pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize);
-                    }
-                }
-            }(pRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, data, unique, remote_destination.id),
-            error: function (pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, pData, pUnique, pRemoteDestId) {
-                return function () {
-                    managebackups_backup_upload_file_retry_fail(pData, pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, pRemoteDestId);
-                }
-            }(pRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, data, unique, remote_destination.id),
-            dataType: 'json'
-        });
-    } else {
-        appendToDiv(backtaskContentEl, '[' + pSiteName + '] ' + MainWP.I18n.t('Backup completed.'));
-        managebackups_run_next();
-    }
-};
-
-managebackups_backup_upload_file_retry_fail = function (pData, pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, pRemoteDestId, responseError) {
-    let backtaskContentEl = mainwpPopup('#managebackups-task-status-box').getContentEl();
-    //we've got the pid file!!!!
-    let data = mainwp_secure_data({
-        action: 'mainwp_backup_upload_checkstatus',
-        unique: pUnique,
-        remote_destination: pRemoteDestId
-    });
-
-    jQuery.ajax({
-        url: ajaxurl,
-        data: data,
-        method: 'POST',
-        success: function (response) {
-            if (response.status == 'done') {
-                backupUploadRunning[pUnique] = false;
-
-                let progressBar = jQuery('#managesite-upload-status-progress-' + pUnique);
-                progressBar.progress('set progress', pSize);
-
-                appendToDiv(backtaskContentEl, '[' + pSiteName + '] ' + MainWP.I18n.t('Upload to %1 (%2) successful', response.info.title, response.info.type));
-
-                managebackups_backup_upload_file(pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize);
-            } else if (response.status == 'busy') {
-                //Try again in 10seconds
-                setTimeout(function () {
-                    managebackups_backup_upload_file_retry_fail(pData, pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, pRemoteDestId, responseError);
-                }, 10000);
-            } else if (response.status == 'stalled') {
-                if (backupContinueRetriesUnique[pUnique] == undefined) {
-                    backupContinueRetriesUnique[pUnique] = 1;
-                } else {
-                    backupContinueRetriesUnique[pUnique]++;
-                }
-
-                if (backupContinueRetriesUnique[pUnique] > 10) {
-                    if (responseError != undefined) {
-                        manageBackupsError = true;
-                        appendToDiv(backtaskContentEl, '<span class="mainwp-red">[' + pSiteName + '] ' + MainWP.I18n.t('Upload to %1 (%2) failed:', response.info.title, response.info.type) + ' ' + responseError + '</span>');
-                    } else {
-                        appendToDiv(backtaskContentEl, ' <span class="mainwp-red">[' + pSiteName + '] ERROR: Upload timed out - <a href="http://docs.mainwp.com/backup-failed-php-ini-settings/">Please check this help document for more information and possible fixes</a></span>');
-                    }
-
-                    managebackups_backup_upload_file(pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize);
-                } else {
-                    appendToDiv(backtaskContentEl, ' [' + pSiteName + '] Upload stalled, trying to resume from last position.');
-
-                    pData = mainwp_secure_data(pData); //Rescure
-
-                    jQuery.ajax({
-                        url: ajaxurl,
-                        data: pData,
-                        method: 'POST',
-                        success: function (pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, pData, pUnique, pRemoteDestId) {
-                            return function (response) {
-                                if (response.error || !response.result) {
-                                    managebackups_backup_upload_file_retry_fail(pData, pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, pRemoteDestId, response.error ? response.error : '');
-                                } else {
-                                    backupUploadRunning[pUnique] = false;
-
-                                    let progressBar = jQuery('#managesite-upload-status-progress-' + pUnique);
-                                    progressBar.progress('set progress', pSize);
-
-                                    let obj = response.result;
-                                    if (obj.error) {
-                                        manageBackupsError = true;
-                                        appendToDiv(backtaskContentEl, '<span class="mainwp-red">[' + pSiteName + '] ' + MainWP.I18n.t('Upload to %1 (%2) failed:', obj.title, obj.type) + ' ' + obj.error + '</span>');
-                                    } else {
-                                        appendToDiv(backtaskContentEl, '[' + pSiteName + '] ' + MainWP.I18n.t('Upload to %1 (%2) successful', obj.title, obj.type));
-                                    }
-
-                                    managebackups_backup_upload_file(pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize);
-                                }
-                            }
-                        }(pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, pData, pUnique, pRemoteDestId),
-                        error: function (pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, pData, pUnique, pRemoteDestId) {
-                            return function () {
-                                managebackups_backup_upload_file_retry_fail(pData, pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, pRemoteDestId, responseError);
-                            }
-                        }(pNewRemoteDestinations, pFile, pRegexFile, pSubfolder, pType, pSiteName, pSiteId, pSize, pData, pUnique, pRemoteDestId),
-                        dataType: 'json'
-                    });
-                }
-            } else {
-                //Try again in 5seconds
-                setTimeout(function () {
-                    managebackups_backup_upload_file_retry_fail(pData, pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, pRemoteDestId, responseError);
-                }, 10000);
-            }
-        },
-        error: function () {
-            //Try again in 10seconds
-            setTimeout(function () {
-                managebackups_backup_upload_file_retry_fail(pData, pSiteId, pSiteName, pFile, pRegexFile, pSubfolder, pNewRemoteDestinations, pType, pSize, pUnique, pRemoteDestId, responseError);
-            }, 10000);
-        },
-        dataType: 'json'
-    });
+    appendToDiv(backtaskContentEl, '[' + pSiteName + '] ' + MainWP.I18n.t('Backup completed.'));
+    managebackups_run_next();
 };
 
 managebackups_init = function () {

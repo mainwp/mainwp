@@ -822,6 +822,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         return $sites;
     }
 
+    // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber -- all throws are MainWP_Exception.
     /**
      * Prepare Child Site to be backed up.
      *
@@ -831,7 +832,11 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      * parity and in case that ever changes), the caller-supplied site must
      * actually belong to this task's own site/group scope, and the Team
      * Control per-site capability, which is the gate that actually refuses
-     * a restricted user today.
+     * a restricted user today. Once authorized, the call is capped by the
+     * same dashboard-wide concurrency slot execute_backup_task() enforces
+     * for scheduled runs, so a Run Now click cannot stack past the
+     * configured limit; a full slot throws a coded exception instead of
+     * reaching the executor.
      *
      * @param mixed $pTaskId      Task ID.
      * @param mixed $pSiteId      Child Site ID.
@@ -846,10 +851,15 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      * @uses \MainWP\Dashboard\MainWP_Manage_Backups_Handler::resolve_task_site_ids()
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
      * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
+     * @uses \MainWP\Dashboard\MainWP_Backup_Monitor::acquire_backup_slot()
+     * @uses \MainWP\Dashboard\MainWP_Backup_Monitor::release_backup_slot()
+     * @uses \MainWP\Dashboard\MainWP_Backup_Settings::get_max_concurrent_backups()
+     * @uses \MainWP\Dashboard\MainWP_Backup_Error_Codes::exception()
      * @uses \MainWP\Dashboard\MainWP_Backup_Executor::backup()
      * @uses  \MainWP\Dashboard\MainWP_Utility::sanitize()
      */
     public static function backup( $pTaskId, $pSiteId, $pFileNameUID ) {
+        // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber
         $backupTask = MainWP_DB_Backup::instance()->get_backup_task_by_id( $pTaskId );
 
         if ( ! static::can_edit_backuptask( $backupTask ) ) {
@@ -887,9 +897,28 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             $archiveFormat                  = $backupTask->archiveFormat;
         }
 
-        // The task rides along so preflight negotiation honors its keep-ZIP
-        // override and records the outcome on it, the same as a scheduled run.
-        return MainWP_Backup_Executor::backup( $pSiteId, $backupTask->type, $subfolder, $backupTask->exclude, $backupTask->excludebackup, $backupTask->excludecache, $backupTask->excludenonwp, $backupTask->excludezip, $backupTask->filename, $pFileNameUID, $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip, false, false, $backupTask );
+        // Cap concurrent backup tasks the same way execute_backup_task() does
+        // for scheduled runs: a Run Now click cannot stack past the
+        // configured limit and starve the dashboard resources the cap
+        // protects. Unlike the scheduled path, a refused Run Now is reported
+        // to the caller with a coded exception - the AJAX handler already
+        // turns that into a clean JSON error the UI renders and advances
+        // past, rather than a silent no-op the user has no way to explain.
+        // claim_backup_run() deliberately does not apply here: that is
+        // scheduled-run dedup (one driver owns a given run), not the
+        // dashboard-wide concurrency cap this guard enforces.
+        $slot_token = MainWP_Backup_Monitor::acquire_backup_slot( MainWP_Backup_Settings::get_max_concurrent_backups() );
+        if ( false === $slot_token ) {
+            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_CONCURRENCY_LIMIT ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+        }
+
+        try {
+            // The task rides along so preflight negotiation honors its keep-ZIP
+            // override and records the outcome on it, the same as a scheduled run.
+            return MainWP_Backup_Executor::backup( $pSiteId, $backupTask->type, $subfolder, $backupTask->exclude, $backupTask->excludebackup, $backupTask->excludecache, $backupTask->excludenonwp, $backupTask->excludezip, $backupTask->filename, $pFileNameUID, $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip, false, false, $backupTask );
+        } finally {
+            MainWP_Backup_Monitor::release_backup_slot( $slot_token );
+        }
     }
 
     /**

@@ -8,6 +8,7 @@
 
 namespace MainWP\Dashboard\Tests;
 
+use MainWP\Dashboard\MainWP_Backup_Error_Codes;
 use MainWP\Dashboard\MainWP_Backup_Restore_Transfer_Driver;
 use MainWP\Dashboard\MainWP_Backup_Storage_Local;
 
@@ -46,12 +47,32 @@ class Testable_Restore_Transfer_Driver extends MainWP_Backup_Restore_Transfer_Dr
 	public $sleeps = array();
 
 	/**
+	 * Scripted free-space answer; null keeps the guard's default
+	 * "host does not support disk_free_space()" skip behavior.
+	 *
+	 * @var int|null
+	 */
+	public $fake_free_bytes = null;
+
+	/**
 	 * Record the pause instead of sleeping.
 	 *
 	 * @param int $seconds Sleep duration.
 	 */
 	protected function floor_retry_sleep( int $seconds ): void {
 		$this->sleeps[] = $seconds;
+	}
+
+	/**
+	 * Scripted free-space seam.
+	 *
+	 * @param string $dir Directory (ignored).
+	 *
+	 * @return int|null Scripted free bytes.
+	 */
+	protected function free_space_bytes( string $dir ): ?int {
+		unset( $dir );
+		return $this->fake_free_bytes;
 	}
 
 	/**
@@ -281,6 +302,39 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * A whole-file remote download refuses before touching the network
+	 * when the dashboard does not have enough free disk space to stage
+	 * it - no partial ".downloading" file is left behind.
+	 */
+	public function test_stage_remote_artifact_refuses_when_disk_full() {
+		$remote = $this->dir . '/remote';
+		mkdir( $remote . '/4/8/files', 0777, true );
+		file_put_contents( $remote . '/4/8/files/db.tar.gz', 'remote-bytes' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+		$this->driver->remote_base    = $remote;
+		$this->driver->fake_free_bytes = 5; // Less than the 12-byte entry size.
+
+		$plan = array(
+			array(
+				'role'        => 'db',
+				'file'        => 'db.tar.gz',
+				'size'        => 12,
+				'sha256'      => '',
+				'snapshot_id' => 8,
+				'source'      => 'remote',
+				'local_path'  => '',
+				'remote_key'  => '4/8/files/db.tar.gz',
+				'adopt_only'  => false,
+			),
+		);
+
+		$outcome = $this->driver->stage_artifacts( 777001, $plan, microtime( true ) + 60 );
+		$this->assertFalse( $outcome['done'] );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_RESTORE_DISK_FULL, $outcome['error_code'] );
+		$this->assertFileDoesNotExist( $this->driver->staging_dir( 777001 ) . 'db.tar.gz' );
+		$this->assertFileDoesNotExist( $this->driver->staging_dir( 777001 ) . 'db.tar.gz.downloading' );
+	}
+
+	/**
 	 * Build a chunked remote layout: manifest plus content-addressed
 	 * pieces under {site 0}/{snapshot 44}/.
 	 *
@@ -358,6 +412,60 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends \WP_UnitTestCase {
 		$this->assertTrue( $outcome['done'] );
 		$this->assertSame( $content, file_get_contents( $plan[0]['staged_path'] ) );
 		$this->assertSame( hash( 'sha256', $content ), $plan[0]['sha256'] );
+	}
+
+	/**
+	 * A fresh chunked reassembly (no bytes on disk yet) refuses before
+	 * downloading any chunk when free space is less than the artifact's
+	 * remaining size - no assembly file is left behind.
+	 */
+	public function test_stage_remote_chunked_refuses_when_disk_full_at_start() {
+		$content = str_repeat( 'chunky-data-', 50 );
+		$plan    = array( $this->make_chunked_remote( $content ) );
+		$this->driver->fake_free_bytes = 5; // Less than strlen( $content ).
+
+		$outcome = $this->driver->stage_artifacts( 777001, $plan, microtime( true ) + 60 );
+		$this->assertFalse( $outcome['done'] );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_RESTORE_DISK_FULL, $outcome['error_code'] );
+		$this->assertFileDoesNotExist( $this->driver->staging_dir( 777001 ) . 'big.zip.assembling' );
+	}
+
+	/**
+	 * Gotcha #14: the disk-full guard gates on actual on-disk reassembly
+	 * bytes, not on the presence of the 'reassembly' cursor key. Seeded the
+	 * way production seeds a resumed slice - a real partial ".assembling"
+	 * file on disk matching the cursor - a low free-space reading on the
+	 * resuming tick must not re-block it; only a fresh start (0 bytes on
+	 * disk) is guarded.
+	 */
+	public function test_stage_remote_chunked_disk_full_guard_skips_on_resume() {
+		$content = str_repeat( 'chunky-data-', 50 );
+		$plan    = array( $this->make_chunked_remote( $content ) );
+
+		$manifest    = json_decode( file_get_contents( $this->dir . '/remote/0/44/manifest.json' ), true ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+		$half        = (int) ( strlen( $content ) / 2 );
+		$first_piece = substr( $content, 0, $half );
+
+		// Seed the state a real first-slice yield would have left: the
+		// manifest already resolved and the first chunk already appended.
+		$plan[0]['chunks']      = $manifest['artifacts'][0]['chunks'];
+		$plan[0]['total_size']  = strlen( $content );
+		$plan[0]['chunk_prefix'] = '0/44/';
+		$plan[0]['reassembly']  = array(
+			'next'  => 1,
+			'bytes' => strlen( $first_piece ),
+		);
+
+		$staging = $this->driver->staging_dir( 777001 );
+		wp_mkdir_p( $staging );
+		file_put_contents( $staging . 'big.zip.assembling', $first_piece ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+
+		// Far below the remaining need if the guard mistakenly fired.
+		$this->driver->fake_free_bytes = 1;
+
+		$outcome = $this->driver->stage_artifacts( 777001, $plan, microtime( true ) + 60 );
+		$this->assertTrue( $outcome['done'], 'A resumed reassembly must not be re-blocked by the disk-full guard.' );
+		$this->assertSame( $content, file_get_contents( $plan[0]['staged_path'] ) );
 	}
 
 	/**

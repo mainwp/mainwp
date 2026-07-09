@@ -169,6 +169,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	 */
 	public function set_up() {
 		parent::set_up();
+		update_option( 'mainwp_enableNativeBackups', 1 );
 		$this->site_id      = $this->create_test_site();
 		$this->orchestrator = new Testable_Restore_Orchestrator();
 		$this->dir          = sys_get_temp_dir() . '/mainwp-orch-test-' . uniqid();
@@ -210,6 +211,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		if ( is_dir( $this->dir ) ) {
 			rmdir( $this->dir );
 		}
+		delete_option( 'mainwp_enableNativeBackups' );
 		parent::tear_down();
 	}
 
@@ -991,6 +993,24 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
+	 * With native backups disabled the restore kill switch refuses before
+	 * any website lookup or job row is created - mirrors the executor's
+	 * ERR_LEGACY_DISABLED gate on the backup-creation side.
+	 */
+	public function test_initiate_restore_refuses_when_native_backups_disabled() {
+		update_option( 'mainwp_enableNativeBackups', 0 );
+
+		try {
+			$this->orchestrator->initiate_restore( $this->site_id, 5 );
+			$this->fail( 'initiate_restore() must refuse while native backups are disabled.' );
+		} catch ( MainWP_Exception $e ) {
+			$this->assertSame( MainWP_Backup_Error_Codes::ERR_LEGACY_DISABLED, $e->get_message_error_code() );
+		}
+
+		$this->assertNull( MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $this->site_id ), 'A refused initiate must create no job row.' );
+	}
+
+	/**
 	 * A rollback job builds an adopt-only plan from the pre-restore
 	 * safety backup.
 	 */
@@ -1573,6 +1593,33 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$this->assertIsArray( $response );
 		$this->assertSame( MainWP_Backup_Error_Codes::ERR_RESTORE_WOO_SYNC_MODE, $response['error_code'] );
 		$this->assertStringContainsString( 'orders', $response['error'] );
+		$this->assertNull( MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $this->site_id ), 'A refused initiate must create no job row.' );
+	}
+
+	/**
+	 * With native backups disabled, the AJAX entry short-circuits right
+	 * after secure_request() with an error_code'd JSON response - no site
+	 * authorization, snapshot lookup, or job row, mirroring the direct
+	 * orchestrator refusal.
+	 */
+	public function test_initiate_refuses_when_native_backups_disabled() {
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		update_option( 'mainwp_enableNativeBackups', 0 );
+
+		$nonce                = wp_create_nonce( 'mainwp_restore_initiate' );
+		$_POST['security']    = $nonce;
+		$_REQUEST['security'] = $nonce;
+		$_POST['site_id']     = (string) $this->site_id;
+		$_POST['snapshot_id'] = '5';
+
+		try {
+			$response = $this->invoke_ajax_handler( 'mainwp_restore_initiate' );
+		} finally {
+			unset( $_POST['security'], $_REQUEST['security'], $_POST['site_id'], $_POST['snapshot_id'] );
+		}
+
+		$this->assertIsArray( $response );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_LEGACY_DISABLED, $response['error_code'] );
 		$this->assertNull( MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $this->site_id ), 'A refused initiate must create no job row.' );
 	}
 

@@ -29,9 +29,27 @@ use phpseclib3\Crypt\AES;
 defined( 'ABSPATH' ) || die();
 
 /**
+ * Thrown by MainWP_Backup_Archive_Cipher::open() when the sealed blob is
+ * shorter than the fixed framing overhead. Genuinely distinguishable from
+ * an authentication failure: this check runs before the key or tag is
+ * ever examined, so it is never a symptom of a wrong key.
+ */
+class MainWP_Backup_Cipher_Malformed_Exception extends \RuntimeException { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace, Generic.Files.OneObjectStructurePerFile.MultipleFound -- sibling exception for the cipher primitive below.
+}
+
+/**
+ * Thrown by MainWP_Backup_Archive_Cipher::open() when GCM authentication
+ * fails. Not distinguishable from a wrong key, a wrong AAD, or tampered
+ * ciphertext - all three fail the same tag check by design. Callers must
+ * never confidently blame the key for this one.
+ */
+class MainWP_Backup_Cipher_Auth_Exception extends \RuntimeException { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace, Generic.Files.OneObjectStructurePerFile.MultipleFound -- sibling exception for the cipher primitive below.
+}
+
+/**
  * Class MainWP_Backup_Archive_Cipher
  */
-class MainWP_Backup_Archive_Cipher { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
+class MainWP_Backup_Archive_Cipher { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace, Generic.Files.OneObjectStructurePerFile.MultipleFound -- two small sibling exceptions above.
 
     /**
      * GCM nonce length in bytes (96-bit, the NIST-recommended GCM nonce).
@@ -119,15 +137,20 @@ class MainWP_Backup_Archive_Cipher { // phpcs:ignore Generic.Classes.OpeningBrac
      *
      * @return string The recovered plaintext.
      *
-     * @throws \RuntimeException When the key is wrong, the AAD differs, the
-     *                           bytes were tampered, or the blob is truncated.
+     * @throws \RuntimeException                    When the key is not 32 bytes.
+     * @throws MainWP_Backup_Cipher_Malformed_Exception When the blob is shorter
+     *                           than the framing overhead - a truncation, not
+     *                           a key problem.
+     * @throws MainWP_Backup_Cipher_Auth_Exception When the key is wrong, the
+     *                           AAD differs, or the bytes were tampered -
+     *                           these three are indistinguishable here.
      */
     public static function open( $blob, $key, $aad ) {
         if ( ! is_string( $key ) || static::KEY_LEN !== strlen( $key ) ) {
             throw new \RuntimeException( esc_html( 'Archive cipher requires a 32-byte key.' ) );
         }
         if ( ! is_string( $blob ) || strlen( $blob ) < static::OVERHEAD ) {
-            throw new \RuntimeException( esc_html( 'Sealed unit is shorter than the framing overhead.' ) );
+            throw new MainWP_Backup_Cipher_Malformed_Exception( esc_html( 'Sealed unit is shorter than the framing overhead.' ) );
         }
 
         static::auto_load_files();
@@ -145,11 +168,11 @@ class MainWP_Backup_Archive_Cipher { // phpcs:ignore Generic.Classes.OpeningBrac
         try {
             $plaintext = $aes->decrypt( $ciphertext );
         } catch ( \Throwable $e ) {
-            throw new \RuntimeException( esc_html( 'Sealed unit failed authentication.' ) );
+            throw new MainWP_Backup_Cipher_Auth_Exception( esc_html( 'Sealed unit failed authentication.' ) );
         }
 
         if ( false === $plaintext ) {
-            throw new \RuntimeException( esc_html( 'Sealed unit failed authentication.' ) );
+            throw new MainWP_Backup_Cipher_Auth_Exception( esc_html( 'Sealed unit failed authentication.' ) );
         }
 
         return $plaintext;

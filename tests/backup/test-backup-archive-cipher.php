@@ -15,6 +15,8 @@
 namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Backup_Archive_Cipher;
+use MainWP\Dashboard\MainWP_Backup_Cipher_Auth_Exception;
+use MainWP\Dashboard\MainWP_Backup_Cipher_Malformed_Exception;
 
 /**
  * Class MainWP_Backup_Archive_Cipher_Test
@@ -73,32 +75,38 @@ class MainWP_Backup_Archive_Cipher_Test extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * Opening with the wrong key is rejected, not silently wrong.
+	 * Opening with the wrong key is rejected, not silently wrong - and
+	 * classifies as an auth failure (indistinguishable at this layer from a
+	 * wrong AAD or tampering), never as malformed/truncated.
 	 *
 	 * @return void
 	 */
 	public function test_open_with_wrong_key_throws() {
 		$blob = MainWP_Backup_Archive_Cipher::seal( 'secret', $this->key(), 'aad' );
 
-		$this->expectException( \RuntimeException::class );
+		$this->expectException( MainWP_Backup_Cipher_Auth_Exception::class );
 		MainWP_Backup_Archive_Cipher::open( $blob, str_repeat( "\x00", 32 ), 'aad' );
 	}
 
 	/**
 	 * Opening with a different AAD is rejected: a unit sealed for one
-	 * (snapshot, artifact, offset) cannot be replayed at another.
+	 * (snapshot, artifact, offset) cannot be replayed at another. Classifies
+	 * as an auth failure, same as a wrong key.
 	 *
 	 * @return void
 	 */
 	public function test_open_with_wrong_aad_throws() {
 		$blob = MainWP_Backup_Archive_Cipher::seal( 'secret', $this->key(), 'snapshot:1:artifact:a.gz:offset:0' );
 
-		$this->expectException( \RuntimeException::class );
+		$this->expectException( MainWP_Backup_Cipher_Auth_Exception::class );
 		MainWP_Backup_Archive_Cipher::open( $blob, $this->key(), 'snapshot:1:artifact:b.gz:offset:0' );
 	}
 
 	/**
-	 * A single flipped ciphertext byte fails authentication.
+	 * A single flipped ciphertext byte fails authentication - classifies as
+	 * an auth failure, same as a wrong key. By design this is the same
+	 * exception type as test_open_with_wrong_key_throws: tampering and a
+	 * wrong key are not distinguishable at the GCM layer.
 	 *
 	 * @return void
 	 */
@@ -106,18 +114,33 @@ class MainWP_Backup_Archive_Cipher_Test extends \WP_UnitTestCase {
 		$blob              = MainWP_Backup_Archive_Cipher::seal( 'authenticated bytes', $this->key(), 'aad' );
 		$blob[20]          = ( "\x00" === $blob[20] ) ? "\x01" : "\x00";
 
-		$this->expectException( \RuntimeException::class );
+		$this->expectException( MainWP_Backup_Cipher_Auth_Exception::class );
 		MainWP_Backup_Archive_Cipher::open( $blob, $this->key(), 'aad' );
 	}
 
 	/**
-	 * A blob shorter than the framing overhead is rejected.
+	 * A blob shorter than the framing overhead is rejected, and classifies
+	 * as malformed - genuinely distinguishable from an auth failure, since
+	 * the overhead check runs before any key/tag verification.
 	 *
 	 * @return void
 	 */
 	public function test_truncated_blob_throws() {
-		$this->expectException( \RuntimeException::class );
+		$this->expectException( MainWP_Backup_Cipher_Malformed_Exception::class );
 		MainWP_Backup_Archive_Cipher::open( 'short', $this->key(), 'aad' );
+	}
+
+	/**
+	 * The malformed and auth exception types are genuinely distinct classes
+	 * (neither extends the other), so a caller can catch each separately.
+	 *
+	 * @return void
+	 */
+	public function test_malformed_and_auth_exceptions_are_distinct_types() {
+		$this->assertFalse( is_a( MainWP_Backup_Cipher_Malformed_Exception::class, MainWP_Backup_Cipher_Auth_Exception::class, true ) );
+		$this->assertFalse( is_a( MainWP_Backup_Cipher_Auth_Exception::class, MainWP_Backup_Cipher_Malformed_Exception::class, true ) );
+		$this->assertTrue( is_subclass_of( MainWP_Backup_Cipher_Malformed_Exception::class, \RuntimeException::class ) );
+		$this->assertTrue( is_subclass_of( MainWP_Backup_Cipher_Auth_Exception::class, \RuntimeException::class ) );
 	}
 
 	/**

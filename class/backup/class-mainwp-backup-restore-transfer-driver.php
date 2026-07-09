@@ -410,8 +410,9 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
             $outcome = $this->stage_one( $staging, $plan[ $index ], $deadline );
             if ( 'error' === $outcome['state'] ) {
                 return array(
-                    'done'  => false,
-                    'error' => $outcome['error'],
+                    'done'       => false,
+                    'error'      => $outcome['error'],
+                    'error_code' => isset( $outcome['error_code'] ) ? $outcome['error_code'] : null,
                 );
             }
             if ( 'pending' === $outcome['state'] ) {
@@ -493,6 +494,19 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
         $temp  = $staging . $entry['file'] . '.downloading';
         $final = $staging . $entry['file'];
 
+        $free = $this->free_space_bytes( dirname( $temp ) );
+        if ( null !== $free && $free < (int) $entry['size'] ) {
+            return $this->stage_state(
+                'error',
+                sprintf(
+                    /* translators: %s: artifact file name. */
+                    __( 'Not enough free disk space on the dashboard to download this backup file: %s', 'mainwp' ),
+                    $entry['file']
+                ),
+                MainWP_Backup_Error_Codes::ERR_RESTORE_DISK_FULL
+            );
+        }
+
         if ( ! $provider->get_object( $entry['remote_key'], $temp ) ) {
             return $this->stage_state(
                 'error',
@@ -514,15 +528,21 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
         // 'file' - or AES-GCM authentication fails and a valid backup reads as
         // undecryptable.
         $sealed_name = ! empty( $entry['source_file'] ) ? (string) $entry['source_file'] : (string) $entry['file'];
-        if ( ! $this->maybe_decrypt_file( $final, $enc, 'snapshot:' . (int) $entry['snapshot_id'] . ':whole:' . $sealed_name ) ) {
+        $decrypted   = $this->maybe_decrypt_file( $final, $enc, 'snapshot:' . (int) $entry['snapshot_id'] . ':whole:' . $sealed_name );
+        if ( ! $decrypted['ok'] ) {
             wp_delete_file( $final );
+            $hedged = MainWP_Backup_Error_Codes::ERR_RESTORE_DECRYPT_CORRUPT === $decrypted['error_code']
+                ? __( 'The stored backup is truncated or corrupted; this is not a key problem.', 'mainwp' )
+                : __( 'The stored backup may be corrupted, or the encryption key may be wrong.', 'mainwp' );
             return $this->stage_state(
                 'error',
                 sprintf(
-                    /* translators: %s: artifact file name. */
-                    __( 'The backup file could not be decrypted: %s. The stored backup may be corrupted or the key is wrong.', 'mainwp' ),
-                    $entry['file']
-                )
+                    /* translators: 1: artifact file name, 2: corruption or hedged key/corruption reason. */
+                    __( 'The backup file could not be decrypted: %1$s. %2$s', 'mainwp' ),
+                    $entry['file'],
+                    $hedged
+                ),
+                $decrypted['error_code']
             );
         }
 
@@ -621,6 +641,26 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
             );
         }
 
+        // Checked only at a fresh start, not on every resumed slice: a
+        // reassembly already holding bytes on disk is proof the space for
+        // those bytes exists, and re-checking against the shrinking
+        // remaining need on every tick would be redundant.
+        if ( 0 === $on_disk ) {
+            $remaining = max( 0, (int) $entry['size'] - $on_disk );
+            $free      = $this->free_space_bytes( dirname( $assembly ) );
+            if ( null !== $free && $free < $remaining ) {
+                return $this->stage_state(
+                    'error',
+                    sprintf(
+                        /* translators: %s: artifact file name. */
+                        __( 'Not enough free disk space on the dashboard to download this backup file: %s', 'mainwp' ),
+                        $entry['file']
+                    ),
+                    MainWP_Backup_Error_Codes::ERR_RESTORE_DISK_FULL
+                );
+            }
+        }
+
         $prefix      = $entry['snapshot_id'] . '/';
         $chunk_count = count( $entry['chunks'] );
 
@@ -650,16 +690,22 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
             // Decrypt the piece before verifying and appending, so the content
             // hash and byte count are taken over the plaintext - the chunk hash
             // recorded at backup time is the plaintext hash.
-            if ( ! $this->maybe_decrypt_file( $piece, $enc, 'snapshot:' . (int) $entry['snapshot_id'] . ':chunk:' . $chunk['hash'] ) ) {
+            $decrypted = $this->maybe_decrypt_file( $piece, $enc, 'snapshot:' . (int) $entry['snapshot_id'] . ':chunk:' . $chunk['hash'] );
+            if ( ! $decrypted['ok'] ) {
                 wp_delete_file( $piece );
+                $hedged = MainWP_Backup_Error_Codes::ERR_RESTORE_DECRYPT_CORRUPT === $decrypted['error_code']
+                    ? __( 'The stored backup is truncated or corrupted; this is not a key problem.', 'mainwp' )
+                    : __( 'The stored backup may be corrupted, or the encryption key may be wrong.', 'mainwp' );
                 return $this->stage_state(
                     'error',
                     sprintf(
-                        /* translators: 1: artifact file name, 2: chunk hash. */
-                        __( 'A piece of the cloud copy could not be decrypted: %1$s (chunk %2$s). The stored backup may be corrupted or the key is wrong.', 'mainwp' ),
+                        /* translators: 1: artifact file name, 2: chunk hash, 3: corruption or hedged key/corruption reason. */
+                        __( 'A piece of the cloud copy could not be decrypted: %1$s (chunk %2$s). %3$s', 'mainwp' ),
                         $entry['file'],
-                        $chunk['hash']
-                    )
+                        $chunk['hash'],
+                        $hedged
+                    ),
+                    $decrypted['error_code']
                 );
             }
 
@@ -797,17 +843,39 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
     }
 
     /**
+     * Free disk space at a path, or null when the host disables the check
+     * (test seam).
+     *
+     * Best-effort: a host without disk_free_space() available never blocks
+     * a restore over it.
+     *
+     * @param string $dir Directory to check.
+     *
+     * @return int|null Free bytes, or null when unknown.
+     */
+    protected function free_space_bytes( string $dir ): ?int {
+        if ( ! function_exists( 'disk_free_space' ) ) {
+            return null;
+        }
+        $free = @disk_free_space( $dir ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- advisory best-effort check.
+        return false !== $free ? (int) $free : null;
+    }
+
+    /**
      * Build a stage-one state.
      *
-     * @param string      $state staged|pending|error.
-     * @param string|null $error Error text.
+     * @param string      $state      staged|pending|error.
+     * @param string|null $error      Error text.
+     * @param string|null $error_code Stable error code, when the caller
+     *                                needs to classify the failure.
      *
      * @return array State.
      */
-    private function stage_state( string $state, ?string $error = null ): array {
+    private function stage_state( string $state, ?string $error = null, ?string $error_code = null ): array {
         return array(
-            'state' => $state,
-            'error' => $error,
+            'state'      => $state,
+            'error'      => $error,
+            'error_code' => $error_code,
         );
     }
 
@@ -847,30 +915,55 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
 
     /**
      * Decrypt a downloaded object file in place when the context is encrypting;
-     * a pass-through for a plaintext context. Returns false when the bytes
-     * cannot be read or the seal fails to open, which the caller turns into a
-     * staging error rather than restoring garbage.
+     * a pass-through for a plaintext context. Distinguishes a truncated/malformed
+     * blob (never a key symptom) from a GCM authentication failure (a wrong key,
+     * a wrong AAD, and tampering are indistinguishable here, so that code stays
+     * hedged) - the caller turns either into a staging error rather than
+     * restoring garbage.
      *
      * @param string $path Local file holding the downloaded bytes.
      * @param array  $enc  Decryption context.
      * @param string $aad  The AAD the unit was sealed with.
      *
-     * @return bool
+     * @return array { ok: bool, error_code: string|null }
      */
-    private function maybe_decrypt_file( string $path, array $enc, string $aad ): bool {
+    private function maybe_decrypt_file( string $path, array $enc, string $aad ): array {
         if ( empty( $enc['encrypt'] ) ) {
-            return true;
+            return array(
+                'ok'         => true,
+                'error_code' => null,
+            );
         }
         $cipher = file_get_contents( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- local staged object read.
         if ( false === $cipher ) {
-            return false;
+            return array(
+                'ok'         => false,
+                'error_code' => MainWP_Backup_Error_Codes::ERR_RESTORE_DECRYPT_CORRUPT,
+            );
         }
         try {
             $plain = MainWP_Backup_Archive_Cipher::open( $cipher, $enc['dek'], $aad );
-        } catch ( \Throwable $e ) {
-            return false;
+        } catch ( MainWP_Backup_Cipher_Malformed_Exception $e ) {
+            return array(
+                'ok'         => false,
+                'error_code' => MainWP_Backup_Error_Codes::ERR_RESTORE_DECRYPT_CORRUPT,
+            );
+        } catch ( MainWP_Backup_Cipher_Auth_Exception $e ) {
+            return array(
+                'ok'         => false,
+                'error_code' => MainWP_Backup_Error_Codes::ERR_RESTORE_DECRYPT_KEY,
+            );
         }
-        return strlen( $plain ) === file_put_contents( $path, $plain ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- local staged plaintext write.
+        if ( strlen( $plain ) !== file_put_contents( $path, $plain ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions -- local staged plaintext write.
+            return array(
+                'ok'         => false,
+                'error_code' => MainWP_Backup_Error_Codes::ERR_RESTORE_DECRYPT_CORRUPT,
+            );
+        }
+        return array(
+            'ok'         => true,
+            'error_code' => null,
+        );
     }
 
     /**

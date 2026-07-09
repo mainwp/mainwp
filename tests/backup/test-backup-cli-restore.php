@@ -216,6 +216,7 @@ class MainWP_Backup_CLI_Restore_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function set_up() {
 		parent::set_up();
+		update_option( 'mainwp_enableNativeBackups', 1 );
 		$this->site_id      = $this->create_test_site();
 		$this->orchestrator = new CLI_Restore_Test_Orchestrator();
 		$this->dir          = sys_get_temp_dir() . '/mainwp-cli-restore-test-' . uniqid();
@@ -257,6 +258,7 @@ class MainWP_Backup_CLI_Restore_Test extends MainWP_Abilities_Test_Case {
 		MainWP_Keys_Manager::instance()->delete_key_file( $enc->kek_filename() );
 		delete_option( MainWP_Backup_Encryption::ENABLED_OPTION );
 		delete_option( MainWP_Backup_Encryption::RECOVERY_OPTION );
+		delete_option( 'mainwp_enableNativeBackups' );
 
 		parent::tear_down();
 	}

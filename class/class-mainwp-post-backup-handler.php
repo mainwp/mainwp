@@ -242,6 +242,16 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
      */
     public function mainwp_restore_initiate() {
         $this->secure_request( 'mainwp_restore_initiate' );
+
+        if ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
+            wp_send_json(
+                array(
+                    'error'      => MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_LEGACY_DISABLED ),
+                    'error_code' => MainWP_Backup_Error_Codes::ERR_LEGACY_DISABLED,
+                )
+            );
+            return;
+        }
         // phpcs:disable WordPress.Security.NonceVerification.Missing -- verified by secure_request above.
         $site_id             = isset( $_POST['site_id'] ) ? (int) $_POST['site_id'] : 0;
         $snapshot_id         = isset( $_POST['snapshot_id'] ) ? (int) $_POST['snapshot_id'] : 0;

@@ -17,6 +17,7 @@ namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Backup_Archive_Cipher;
 use MainWP\Dashboard\MainWP_Backup_Encryption;
+use MainWP\Dashboard\MainWP_Backup_Error_Codes;
 use MainWP\Dashboard\MainWP_Backup_Restore_Transfer_Driver;
 use MainWP\Dashboard\MainWP_Backup_Snapshots;
 use MainWP\Dashboard\MainWP_Backup_Storage_Destinations;
@@ -524,9 +525,55 @@ class MainWP_Backup_Restore_Decryption_Test extends \WP_UnitTestCase {
 		$outcome = $this->driver->stage_artifacts( 888001, $plan, microtime( true ) + 60 );
 		$this->assertFalse( $outcome['done'] );
 		$this->assertStringContainsString( 'could not be decrypted', (string) $outcome['error'] );
+		// A tampered full-length object fails GCM authentication, which is by
+		// design indistinguishable from a wrong key - the message must stay
+		// hedged, never confidently blaming the key.
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_RESTORE_DECRYPT_KEY, $outcome['error_code'] );
+		$this->assertStringContainsString( 'may be wrong', (string) $outcome['error'] );
 		// The decrypt guard deletes the staged file rather than leaving
 		// corrupt bytes behind.
 		$this->assertFileDoesNotExist( $this->driver->staging_dir( 888001 ) . 'db.sql.gz' );
+	}
+
+	/**
+	 * A sealed object truncated below the cipher's fixed framing overhead
+	 * (28 bytes) fails staging with the corruption code, never the
+	 * key-hedged one: unlike a full-length tamper or a wrong key, a
+	 * truncation is genuinely distinguishable and is never a symptom of a
+	 * wrong encryption key.
+	 *
+	 * @return void
+	 */
+	public function test_truncated_encrypted_object_reports_corruption_not_key() {
+		$this->arm();
+		$base = $this->dir . '/dest';
+
+		$a = $this->record( 4, array() );
+		mkdir( $base . '/4/' . $a . '/files', 0777, true );
+		// Below MainWP_Backup_Archive_Cipher::OVERHEAD (28 bytes).
+		file_put_contents( $base . '/4/' . $a . '/files/x.tar.gz', 'short' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+
+		$this->driver->remote_base = $base;
+		$plan                      = array(
+			array(
+				'role'            => 'db',
+				'file'            => 'x.tar.gz',
+				'size'            => 5,
+				'sha256'          => '',
+				'snapshot_id'     => $a,
+				'source'          => 'remote',
+				'local_path'      => '',
+				'remote_key'      => '4/' . $a . '/files/x.tar.gz',
+				'expected_sha256' => '',
+				'adopt_only'      => false,
+			),
+		);
+
+		$outcome = $this->driver->stage_artifacts( 888001, $plan, microtime( true ) + 60 );
+		$this->assertFalse( $outcome['done'] );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_RESTORE_DECRYPT_CORRUPT, $outcome['error_code'] );
+		$this->assertStringNotContainsString( 'may be wrong', (string) $outcome['error'], 'A truncation is not a key problem and must not hedge on the key.' );
+		$this->assertFileDoesNotExist( $this->driver->staging_dir( 888001 ) . 'x.tar.gz' );
 	}
 
 	/**
@@ -604,5 +651,7 @@ class MainWP_Backup_Restore_Decryption_Test extends \WP_UnitTestCase {
 		$outcome = $this->driver->stage_artifacts( 888001, $plan, microtime( true ) + 60 );
 		$this->assertFalse( $outcome['done'] );
 		$this->assertStringContainsString( 'could not be decrypted', (string) $outcome['error'] );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_RESTORE_DECRYPT_KEY, $outcome['error_code'] );
+		$this->assertStringContainsString( 'may be wrong', (string) $outcome['error'] );
 	}
 }

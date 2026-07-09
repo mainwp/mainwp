@@ -72,6 +72,11 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
     const ERR_RESTORE_ARTIFACT_MISSING = 'mainwp_restore_artifact_missing';
     const ERR_RESTORE_DB_PERMS         = 'mainwp_restore_db_perms';
 
+    // Restore staging.
+    const ERR_RESTORE_DISK_FULL       = 'mainwp_restore_disk_full';
+    const ERR_RESTORE_DECRYPT_CORRUPT = 'mainwp_restore_decrypt_corrupt';
+    const ERR_RESTORE_DECRYPT_KEY     = 'mainwp_restore_decrypt_key';
+
     // WooCommerce preserve-orders gate. The same codes the child's
     // apply-phase gate emits, so an initiate-time refusal and a late
     // refusal classify identically.
@@ -230,6 +235,9 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
             self::ERR_UNKNOWN_PHASE              => esc_html__( 'The backup reached a step the child site does not recognize. This usually means the MainWP Child plugin is older than the dashboard. Update the MainWP Child plugin on the site to the latest version, then run the backup again.', 'mainwp' ),
             self::ERR_RESTORE_ARTIFACT_MISSING   => esc_html__( 'A backup file this restore needs is no longer in offsite storage, so the restore was stopped before any changes were made. The cloud copy may have been removed by retention or deleted at the storage provider. Run a fresh backup for this site, then restore again.', 'mainwp' ),
             self::ERR_RESTORE_DB_PERMS           => esc_html__( 'The site database user is missing a permission the restore needs to swap tables, so the restore was stopped before any changes were made. Grant the database user the CREATE, DROP, and ALTER permissions, or ask your host, then try again.', 'mainwp' ),
+            self::ERR_RESTORE_DISK_FULL          => esc_html__( 'There is not enough free disk space on the dashboard to stage this backup file. Free up disk space on the dashboard server and try the restore again.', 'mainwp' ),
+            self::ERR_RESTORE_DECRYPT_CORRUPT    => esc_html__( 'The backup file is truncated and could not be decrypted. This is not a key problem; the stored file itself is incomplete or corrupted. Run a fresh backup for this site, then restore again.', 'mainwp' ),
+            self::ERR_RESTORE_DECRYPT_KEY        => esc_html__( 'The backup file could not be decrypted. The encryption key may be wrong, or the file is corrupted. Check the encryption key in Settings and try again.', 'mainwp' ),
             self::ERR_RESTORE_WOO_LEGACY_ORDERS  => esc_html__( 'Keeping live orders needs both this store and the backup to use the WooCommerce High-Performance Order Storage tables, and one of them still uses the older post-based order storage. Run the restore again without the keep-orders option, or move the store to High-Performance Order Storage and use a backup taken afterwards.', 'mainwp' ),
             self::ERR_RESTORE_WOO_SYNC_MODE      => esc_html__( 'Keeping live orders needs the WooCommerce High-Performance Order Storage tables to be the only source of orders, and this store still synchronizes orders to the older posts table. Turn off the WooCommerce orders-table synchronization setting, then run the restore again.', 'mainwp' ),
             self::ERR_RESTORE_WOO_VERSION_SKEW   => esc_html__( 'Keeping live orders needs the store to run the same WooCommerce version as the backup, and the WooCommerce version changed since this backup was taken. Run the restore again without the keep-orders option, or use a backup from the current WooCommerce version.', 'mainwp' ),

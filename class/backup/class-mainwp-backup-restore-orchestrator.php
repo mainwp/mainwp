@@ -53,6 +53,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         return static::$instance;
     }
 
+    // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber -- all throws are MainWP_Exception.
     /**
      * Create a restore job for a snapshot.
      *
@@ -65,6 +66,11 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * @return int Job id.
      */
     public function initiate_restore( int $site_id, int $snapshot_id, array $options = array() ): int {
+        // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber
+        if ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
+            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_LEGACY_DISABLED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+        }
+
         $website = MainWP_DB::instance()->get_website_by_id( $site_id );
         if ( empty( $website ) ) {
             throw new MainWP_Exception( esc_html__( 'Site not found.', 'mainwp' ) );

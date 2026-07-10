@@ -545,6 +545,15 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         if ( true !== $zip->open( $path ) ) {
             throw new MainWP_Exception( esc_html__( 'A backup archive could not be opened.', 'mainwp' ), 'zip open: ' . basename( $path ), self::ERR_APPLY );
         }
+
+        for ( $i = 0; $i < $zip->numFiles; $i++ ) {
+            $name = (string) $zip->getNameIndex( $i );
+            if ( $this->has_unsafe_entry_name( $name ) ) {
+                $zip->close();
+                throw new MainWP_Exception( esc_html__( 'A backup archive contains an unsafe file path and cannot be extracted.', 'mainwp' ), 'zip traversal entry: ' . $name, self::ERR_APPLY );
+            }
+        }
+
         $zip->extractTo( untrailingslashit( $this->temp_dir ) );
         $zip->close();
     }
@@ -564,11 +573,50 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         }
 
         try {
-            $phar = new \PharData( $path );
+            $phar     = new \PharData( $path );
+            $iterator = new \RecursiveIteratorIterator( $phar );
+            foreach ( $iterator as $file ) {
+                $name = $iterator->getSubPathname();
+                if ( $this->has_unsafe_entry_name( $name ) ) {
+                    throw new MainWP_Exception( esc_html__( 'A backup archive contains an unsafe file path and cannot be extracted.', 'mainwp' ), 'tar traversal entry: ' . $name, self::ERR_APPLY );
+                }
+            }
             $phar->extractTo( untrailingslashit( $this->temp_dir ), null, true );
         } catch ( \Throwable $e ) {
             throw new MainWP_Exception( esc_html__( 'A backup archive could not be extracted.', 'mainwp' ), 'tar extract: ' . $e->getMessage(), self::ERR_APPLY );
         }
+    }
+
+    /**
+     * Whether an archive entry name is unsafe to extract: a parent-directory
+     * traversal segment, an absolute path, or a stream wrapper. PHP's own
+     * ZipArchive/PharData extractors already neutralise these on 7.4+; this
+     * is a cheap defense-in-depth check at the name level, refusing the
+     * whole archive rather than silently skipping the entry.
+     *
+     * @param string $name Archive entry name.
+     *
+     * @return bool
+     */
+    private function has_unsafe_entry_name( string $name ): bool {
+        if ( '' === $name ) {
+            return false;
+        }
+        if ( false !== strpos( $name, '..' ) ) {
+            return true;
+        }
+        if ( false !== strpos( $name, '://' ) ) {
+            return true;
+        }
+        $normalized = str_replace( '\\', '/', $name );
+        if ( '/' === $normalized[0] ) {
+            return true;
+        }
+        // Windows drive letter (e.g. C:/...).
+        if ( 1 === preg_match( '#^[a-zA-Z]:#', $normalized ) ) {
+            return true;
+        }
+        return false;
     }
 
     /**

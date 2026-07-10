@@ -118,7 +118,10 @@ class MainWP_Backup_Retention_Scheduler_Test extends \WP_UnitTestCase {
 		global $wpdb;
 
 		$upload = wp_upload_dir();
-		$dir    = trailingslashit( $upload['basedir'] ) . 'mainwp/retention-sched-test-' . uniqid();
+		// Nested under the production mainwp/0/{site_id}/ layout: the
+		// retention executor confines deletions to the snapshot's own site
+		// subtree, so a fixture outside it would be refused.
+		$dir = trailingslashit( $upload['basedir'] ) . 'mainwp/0/' . $this->site_id . '/retention-sched-test-' . uniqid();
 		wp_mkdir_p( $dir );
 		$this->fixture_dirs[] = $dir;
 

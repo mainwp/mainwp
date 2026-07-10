@@ -381,8 +381,12 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
      * per-snapshot dir (snapshot-{child_task_id}) this snapshot owns
      * alone. Legacy and db runs share one site directory with other
      * snapshots' artifacts - those siblings and the directory stay.
-     * Paths outside uploads/mainwp are never touched, whatever the row
-     * says.
+     * Every native-backup writer (MainWP_System_Utility::get_mainwp_specific_dir())
+     * lands artifacts under mainwp/0/{site_id}/, so a deletion is confined
+     * to the snapshot's own site subtree, not merely the shared mainwp
+     * root - a row whose path was tampered with (or copied from another
+     * site's row) can otherwise reach across sites. Paths outside that
+     * subtree are never touched, whatever the row says.
      *
      * A failed artifact deletion returns false so the caller keeps the
      * snapshot's status honest; the directory sweep afterwards is
@@ -395,7 +399,7 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
      */
     private function remove_local_dir( object $snapshot, array &$errors ): bool {
         $upload = wp_upload_dir();
-        $root   = trailingslashit( $upload['basedir'] ) . 'mainwp/';
+        $root   = trailingslashit( $upload['basedir'] ) . 'mainwp/0/' . (int) $snapshot->site_id . '/';
 
         $paths = array();
         foreach ( (array) $snapshot->archives as $archive ) {
@@ -420,8 +424,9 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
                 // The named artifact still exists, so the snapshot must not
                 // read as pruned and nothing irreversible (cloud deletes,
                 // upload-row purge) may run for it. Migrated dashboards
-                // whose rows still carry old-tree absolute paths land here.
-                $errors[] = 'Refused to remove a file outside the dashboard backup tree: ' . $path;
+                // whose rows still carry old-tree absolute paths land here,
+                // and so does a row pointing at another site's subtree.
+                $errors[] = 'Refused to remove a file outside its site\'s backup tree: ' . $path;
                 $clean    = false;
                 continue;
             }
@@ -446,7 +451,7 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
             }
 
             if ( 0 !== strpos( trailingslashit( $real ), $root ) ) {
-                $errors[] = 'Refused to remove a directory outside the dashboard backup tree: ' . $dir;
+                $errors[] = 'Refused to remove a directory outside its site\'s backup tree: ' . $dir;
                 continue;
             }
 

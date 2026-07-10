@@ -99,8 +99,9 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 	private function make_snapshot_with_dir( array $fields = array() ) {
 		global $wpdb;
 
-		$upload = wp_upload_dir();
-		$dir    = trailingslashit( $upload['basedir'] ) . 'mainwp/snapshot-task-reten-' . uniqid();
+		$upload  = wp_upload_dir();
+		$site_id = isset( $fields['site_id'] ) ? (int) $fields['site_id'] : $this->site_id;
+		$dir     = trailingslashit( $upload['basedir'] ) . 'mainwp/0/' . $site_id . '/snapshot-task-reten-' . uniqid();
 		wp_mkdir_p( $dir );
 		$this->fixture_dirs[] = $dir;
 
@@ -594,6 +595,74 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A snapshot row whose artifact path resolves inside uploads/mainwp/ -
+	 * so it passes the old, root-only confinement - but under a different
+	 * site's subtree must be refused the same way an out-of-tree path is: a
+	 * tampered or copied row must never let one site's prune reach into
+	 * another site's backup files. The refused snapshot stays complete and
+	 * none of the irreversible offsite/metadata steps run.
+	 *
+	 * The positive control at the end confirms the tightened confinement
+	 * still lets a site prune its own subtree.
+	 *
+	 * @return void
+	 */
+	public function test_other_site_subtree_refusal_keeps_snapshot_complete() {
+		$upload     = wp_upload_dir();
+		$other_site = $this->site_id + 1;
+		$other_dir  = trailingslashit( $upload['basedir'] ) . 'mainwp/0/' . $other_site . '/snapshot-other-' . uniqid();
+		wp_mkdir_p( $other_dir );
+		$this->fixture_dirs[] = $other_dir;
+		$other_file           = $other_dir . '/artifact.tar';
+		file_put_contents( $other_file, str_repeat( 'x', 50 ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+
+		list( $snapshot_id ) = $this->make_snapshot_with_dir(
+			array(
+				'archives' => wp_json_encode( array( array( 'file' => 'artifact.tar', 'size' => 50, 'role' => 'full', 'path' => $other_file ) ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+			)
+		);
+		$this->insert_upload_job( $snapshot_id, 77 );
+
+		$candidates = array(
+			array(
+				'snapshot_ids'   => array( $snapshot_id ),
+				'reason'         => 'age',
+				'size_bytes'     => 50,
+				'newest_created' => time(),
+			),
+		);
+
+		$result = MainWP_Backup_Retention_Executor::instance()->run_prune( $candidates, $this->make_task( array( 'delete_cloud_copies' => 1 ) ), false );
+
+		$this->assertNotSame( array(), $result['errors'], 'The refusal must surface a diagnostic.' );
+		$this->assertSame( 0, $result['snapshots_pruned'], 'A refused artifact prunes nothing.' );
+
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$this->assertSame( array(), $store->get_jobs_for_snapshot( $snapshot_id, 'delete' ), 'No cloud delete may be queued for a snapshot kept restorable.' );
+		$this->assertCount( 1, $store->get_jobs_for_snapshot( $snapshot_id, 'upload' ), 'The upload metadata must survive.' );
+
+		$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id )->status, 'The snapshot must stay complete while its named artifact exists.' );
+		$this->assertFileExists( $other_file, "Another site's backup file must never be touched." );
+
+		// Positive control: this site's own subtree still prunes.
+		list( $own_id, $own_dir ) = $this->make_snapshot_with_dir();
+		$own_candidates           = array(
+			array(
+				'snapshot_ids'   => array( $own_id ),
+				'reason'         => 'age',
+				'size_bytes'     => 100,
+				'newest_created' => time(),
+			),
+		);
+
+		$own_result = MainWP_Backup_Retention_Executor::instance()->run_prune( $own_candidates, $this->make_task( array( 'delete_cloud_copies' => 0 ) ), false );
+
+		$this->assertSame( array(), $own_result['errors'] );
+		$this->assertSame( 'pruned', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $own_id )->status );
+		$this->assertDirectoryDoesNotExist( $own_dir );
+	}
+
+	/**
 	 * Legacy and db runs share one site directory rather than per-snapshot
 	 * dirs. Pruning one snapshot there deletes only its own artifact files;
 	 * sibling snapshots' files and the directory itself survive.
@@ -656,7 +725,7 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 
 		global $wpdb;
 		$upload = wp_upload_dir();
-		$dir    = trailingslashit( $upload['basedir'] ) . 'mainwp/snapshot-task-prunetest1';
+		$dir    = trailingslashit( $upload['basedir'] ) . 'mainwp/0/' . $site_id . '/snapshot-task-prunetest1';
 		wp_mkdir_p( $dir );
 		$this->fixture_dirs[] = $dir;
 		file_put_contents( $dir . '/artifact.tar', 'x' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
@@ -721,7 +790,7 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 
 		global $wpdb;
 		$upload = wp_upload_dir();
-		$dir    = trailingslashit( $upload['basedir'] ) . 'mainwp/snapshot-task-prunetest2';
+		$dir    = trailingslashit( $upload['basedir'] ) . 'mainwp/0/' . $site_id . '/snapshot-task-prunetest2';
 		wp_mkdir_p( $dir );
 		$this->fixture_dirs[] = $dir;
 		file_put_contents( $dir . '/artifact.tar', 'x' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
@@ -859,7 +928,7 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 		list( $first_id, $first_dir ) = $this->make_snapshot_with_dir();
 
 		$upload = wp_upload_dir();
-		$dir    = trailingslashit( $upload['basedir'] ) . 'mainwp/snapshot-task-reten-second-' . uniqid();
+		$dir    = trailingslashit( $upload['basedir'] ) . 'mainwp/0/' . $second_site . '/snapshot-task-reten-second-' . uniqid();
 		wp_mkdir_p( $dir );
 		$this->fixture_dirs[] = $dir;
 		$path                 = $dir . '/artifact.tar';

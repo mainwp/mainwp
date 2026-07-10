@@ -760,6 +760,8 @@ class MainWP_Backup_Storage_SFTP_Test extends \WP_UnitTestCase { // phpcs:ignore
 		$this->assertSame( 7, \MainWP\Dashboard\MainWP_Backup_Storage_Handler::pin_enforcement_id( 7, array( 'host' => 'SFTP.Example.com', 'port' => '22' ), $stored ), 'A case-different host is the same host.' );
 		$this->assertSame( 7, \MainWP\Dashboard\MainWP_Backup_Storage_Handler::pin_enforcement_id( 7, array( 'host' => 'sftp.example.com.', 'port' => '22' ), $stored ), 'A trailing-dot host is the same host.' );
 		$this->assertSame( 7, \MainWP\Dashboard\MainWP_Backup_Storage_Handler::pin_enforcement_id( 7, array( 'host' => 'sftp.example.com' ), $stored ), 'An omitted port defaults to 22 - still the same server.' );
+		// The provider derives its port with ! empty(), so "0" also dials 22.
+		$this->assertSame( 7, \MainWP\Dashboard\MainWP_Backup_Storage_Handler::pin_enforcement_id( 7, array( 'host' => 'sftp.example.com', 'port' => '0' ), $stored ), 'A "0" port dials 22 like the provider - still the same server.' );
 	}
 
 	/**

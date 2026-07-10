@@ -561,9 +561,14 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
         $norm_host = static function ( $host ) {
             return rtrim( strtolower( trim( (string) $host ) ), '.' );
         };
+        // Mirror the provider's own port derivation EXACTLY
+        // (class-mainwp-backup-storage-sftp.php default_connection):
+        // `! empty( $port ) ? (int) $port : 22`. empty() treats "0" (and "")
+        // as falsy, so both dial 22 - the normalizer must too, or a submitted
+        // "0" against a stored "22" would look like a different port and skip
+        // the pin while hitting the identical server.
         $norm_port = static function ( $port ) {
-            $port = trim( (string) $port );
-            return '' === $port ? 22 : (int) $port;
+            return empty( $port ) ? 22 : (int) $port;
         };
 
         $same_host = $norm_host( $new_settings['host'] ?? '' ) === $norm_host( $existing_settings['host'] ?? '' );

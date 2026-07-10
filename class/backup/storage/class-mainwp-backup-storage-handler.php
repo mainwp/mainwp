@@ -516,13 +516,44 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
             }
         }
 
+        $existing_settings = ( $id > 0 && isset( $existing ) && is_array( $existing->settings ) ) ? $existing->settings : array();
+
         return array(
             'id'         => $id,
             'provider'   => $provider,
             'name'       => $name,
             'is_default' => empty( $input['is_default'] ) ? 0 : 1,
             'settings'   => $settings,
+            // The destination id to run the connection test under, so an
+            // SFTP edit against an unchanged server enforces its learned
+            // host-key pin BEFORE credentials are sent (a re-save under
+            // interception would otherwise skip the pin and leak the
+            // password). Zero for a new destination or one whose target
+            // server changed - there the pin does not apply and TOFU
+            // re-learns on the new server's first real use.
+            'test_id'    => static::pin_enforcement_id( $id, $settings, $existing_settings ),
         );
+    }
+
+    /**
+     * The destination id a connection test should enforce the host-key pin
+     * under: the row id when editing a destination whose target server
+     * (host + port) is unchanged, zero otherwise (a new destination, or an
+     * edit that repoints at a different server).
+     *
+     * @param int   $id                Destination id (0 for a new destination).
+     * @param array $new_settings      The settings being tested.
+     * @param array $existing_settings The stored settings, empty for a new destination.
+     *
+     * @return int Destination id to enforce the pin under, or 0.
+     */
+    public static function pin_enforcement_id( int $id, array $new_settings, array $existing_settings ) {
+        if ( $id <= 0 || empty( $existing_settings ) ) {
+            return 0;
+        }
+        $same_host = (string) ( $new_settings['host'] ?? '' ) === (string) ( $existing_settings['host'] ?? '' );
+        $same_port = (string) ( $new_settings['port'] ?? '' ) === (string) ( $existing_settings['port'] ?? '' );
+        return ( $same_host && $same_port ) ? $id : 0;
     }
 
     /**
@@ -536,6 +567,7 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
         try {
             $provider = MainWP_Backup_Storage_Destinations::instance()->make_provider(
                 (object) array(
+                    'id'       => isset( $candidate['test_id'] ) ? (int) $candidate['test_id'] : 0,
                     'provider' => $candidate['provider'],
                     'settings' => $candidate['settings'],
                 )

@@ -193,10 +193,25 @@ class MainWP_Backup_Storage_SFTP implements MainWP_Backup_Storage_Provider { // 
         $known = is_array( $known ) ? $known : array();
 
         if ( ! isset( $known[ $destination_id ] ) ) {
-            // First use: trust and remember.
-            $known[ $destination_id ] = $offered;
-            update_option( static::HOSTKEYS_OPTION, $known, false );
-            return;
+            // First use: trust and remember. Re-read immediately before the
+            // write and merge, so a concurrent first-connect learning a
+            // different destination's pin is not clobbered by this one's
+            // whole-array overwrite. The write MUST land - a silently dropped
+            // pin would let the next connect re-learn (and trust) a key that
+            // could be an interceptor's, so a failure fails the handshake.
+            $fresh = get_option( static::HOSTKEYS_OPTION );
+            $fresh = is_array( $fresh ) ? $fresh : array();
+            if ( isset( $fresh[ $destination_id ] ) ) {
+                // A concurrent connection already learned this destination's
+                // pin; defer to it rather than racing a second value in.
+                $known = $fresh;
+            } else {
+                $fresh[ $destination_id ] = $offered;
+                if ( ! update_option( static::HOSTKEYS_OPTION, $fresh, false ) && get_option( static::HOSTKEYS_OPTION ) !== $fresh ) {
+                    throw new \RuntimeException( 'The SFTP host key could not be recorded for verification; refusing to continue without a trusted pin.', 0 );
+                }
+                return;
+            }
         }
 
         if ( ! hash_equals( static::normalize_fingerprint( (string) $known[ $destination_id ] ), static::normalize_fingerprint( $offered ) ) ) {

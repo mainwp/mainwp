@@ -726,4 +726,63 @@ class MainWP_Backup_Storage_SFTP_Test extends \WP_UnitTestCase { // phpcs:ignore
 			'The fingerprint must be the OpenSSH SHA256 form of the decoded blob.'
 		);
 	}
+
+	/**
+	 * F4: a connection test for an edit whose target server is unchanged
+	 * enforces the existing pin (its destination id), while a new
+	 * destination or one repointed at a different host/port does not (id 0),
+	 * so a legitimate host change can still re-learn via TOFU.
+	 *
+	 * @return void
+	 */
+	public function test_pin_enforcement_id_tracks_server_identity() {
+		$stored = array( 'host' => 'sftp.example.com', 'port' => '22', 'username' => 'u' );
+
+		$this->assertSame( 0, \MainWP\Dashboard\MainWP_Backup_Storage_Handler::pin_enforcement_id( 0, $stored, array() ), 'A new destination enforces no pin.' );
+		$this->assertSame( 7, \MainWP\Dashboard\MainWP_Backup_Storage_Handler::pin_enforcement_id( 7, $stored, $stored ), 'An edit against the same server enforces its pin.' );
+		$this->assertSame( 0, \MainWP\Dashboard\MainWP_Backup_Storage_Handler::pin_enforcement_id( 7, array( 'host' => 'other.example.com', 'port' => '22' ), $stored ), 'Repointing at a different host re-learns via TOFU.' );
+		$this->assertSame( 0, \MainWP\Dashboard\MainWP_Backup_Storage_Handler::pin_enforcement_id( 7, array( 'host' => 'sftp.example.com', 'port' => '2222' ), $stored ), 'A changed port re-learns via TOFU.' );
+	}
+
+	/**
+	 * F5: when the host-key pin cannot be recorded on first use, the
+	 * handshake is refused rather than proceeding unverified (which would let
+	 * the next connect trust whatever key it saw).
+	 *
+	 * @return void
+	 */
+	public function test_first_connect_refuses_when_pin_cannot_persist() {
+		delete_option( 'mainwp_backup_sftp_hostkeys' );
+
+		// Keep the option pinned at its current (empty) value so the learn
+		// write never persists, modeling a failed update_option.
+		add_filter( 'pre_update_option_mainwp_backup_sftp_hostkeys', array( $this, 'block_hostkey_write' ), 10, 2 );
+
+		$provider = new MainWP_Backup_Storage_SFTP(
+			array(
+				'host'           => 'sftp.example.com',
+				'destination_id' => 91,
+			)
+		);
+
+		try {
+			$this->expectException( \RuntimeException::class );
+			$provider->verify_host_key( $this->host_key_connection( $this->fake_host_key() ) );
+		} finally {
+			remove_filter( 'pre_update_option_mainwp_backup_sftp_hostkeys', array( $this, 'block_hostkey_write' ), 10 );
+			delete_option( 'mainwp_backup_sftp_hostkeys' );
+		}
+	}
+
+	/**
+	 * Filter that refuses the host-key option write by returning the old value.
+	 *
+	 * @param mixed $value     Proposed value.
+	 * @param mixed $old_value Current stored value.
+	 *
+	 * @return mixed The old value, so update_option persists nothing.
+	 */
+	public function block_hostkey_write( $value, $old_value ) {
+		return $old_value;
+	}
 }

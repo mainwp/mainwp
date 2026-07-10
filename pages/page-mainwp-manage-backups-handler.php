@@ -720,7 +720,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             $completed_sites = array();
         }
 
-        $sites = static::resolve_task_run_sites( $task );
+        $sites        = static::resolve_task_run_sites( $task );
         $errorOutput  = null;
         $errorEntries = array();
 
@@ -932,8 +932,12 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                 // finishes releases the close instead of wedging it.
                 /** This action is documented in pages/page-mainwp-manage-backups-handler.php */
                 do_action( 'mainwp_backup_diag_run_reinit', (int) $task->id, 'close_refused_pending_record', (int) $task->last_run, (int) $task->completed );
-            } else {
-                MainWP_DB_Backup::instance()->update_backup_completed( $task->id );
+            } elseif ( MainWP_DB_Backup::instance()->update_backup_completed( $task->id ) ) {
+                // Only the driver whose guarded close stamped the run owns
+                // the close side effects: with backup_errors persisting on
+                // the row for the on-demand poll to surface, this gate is
+                // what keeps a racing second closer from re-sending the
+                // failure email.
 
                 /**
                  * Fires when a run is stamped closed, naming the trigger, so
@@ -955,7 +959,13 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
 
     /**
      * Send the backup-failure notification for a finished run when real
-     * errors were recorded, then clear them so the next surface reads clean.
+     * errors were recorded. The errors stay on the row: the on-demand
+     * progress poll arrives after the close and must still read them, or
+     * a failed backup surfaces as the generic "did not produce a snapshot"
+     * (which is exactly how a child's disk-full message went missing).
+     * Duplicate emails are prevented by the caller - only the driver whose
+     * guarded update_backup_completed() closed the run sends - and the next
+     * run's claim resets the slate.
      *
      * Notices (backup_notices) never trigger this email: an informational
      * note like the large-site ZIP auto-switch is not a failure. The option
@@ -968,7 +978,6 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      * @return void
      *
      * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_notification_email()
-     * @uses \MainWP\Dashboard\MainWP_DB_Backup::update_backup_errors()
      * @uses \MainWP\Dashboard\MainWP_Format::format_email()
      */
     public static function maybe_send_backup_error_email( $task ) {
@@ -989,8 +998,6 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         $mail_title       = 'A scheduled backup had an Error - MainWP';
         $formated_content = MainWP_Format::format_email( $email, $errorOutput, $mail_title );
         wp_mail( $email, $mail_title, $formated_content, 'content-type: text/html' );
-
-        MainWP_DB_Backup::instance()->update_backup_errors( $task->id, '' );
     }
 
     /**

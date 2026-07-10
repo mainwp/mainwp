@@ -708,7 +708,7 @@ class MainWP_Backup_Notices_Test extends MainWP_Abilities_Test_Case {
 
 		$this->assertCount( 1, $sent, 'A run with real errors must send the failure email when notifications are on.' );
 		$this->assertStringContainsString( 'Error', (string) $sent[0]['subject'] );
-		$this->assertSame( '', (string) MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id )->backup_errors, 'The emailed errors are cleared, matching the previous contract.' );
+		$this->assertSame( 'Site: child. The database dump failed.', (string) MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id )->backup_errors, 'The on-demand poll surfaces the failure after close; the run-open reset is what keeps the next run clean, not the email.' );
 	}
 
 	/**
@@ -737,5 +737,135 @@ class MainWP_Backup_Notices_Test extends MainWP_Abilities_Test_Case {
 		MainWP_Manage_Backups_Handler::maybe_send_backup_error_email( MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id ) );
 
 		$this->assertCount( 0, $sent, 'A notice-only run must not trigger the failure email.' );
+	}
+
+	/**
+	 * A click whose initiate lost the concurrency-slot race never opened a
+	 * run: the row it finds on poll is a stale closed run from long before.
+	 * With every slot busy the retry the poll attempts cannot claim one
+	 * either, so the honest report is that the backup is still queued, not
+	 * that it failed - failing here would misreport the stale closed run as
+	 * this click's outcome.
+	 *
+	 * @return void
+	 */
+	public function test_on_demand_poll_reports_queued_when_click_never_opened_and_slots_busy() {
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$site_id = $this->create_test_site();
+
+		$this->manual_task_in_state(
+			$site_id,
+			array(
+				'last_run'      => time() - 3600,
+				'completed'     => time() - 3500,
+				'backup_errors' => '',
+			)
+		);
+
+		set_transient(
+			'mainwp_backup_slots',
+			array(
+				'tokaa' => array(
+					'started' => time() - 60,
+					'pid'     => 1,
+				),
+				'tokbb' => array(
+					'started' => time() - 60,
+					'pid'     => 1,
+				),
+			),
+			2 * HOUR_IN_SECONDS
+		);
+
+		try {
+			$since    = time() - 5;
+			$response = $this->poll_on_demand( $site_id, $since );
+		} finally {
+			delete_transient( 'mainwp_backup_slots' );
+		}
+
+		$this->assertIsArray( $response );
+		$this->assertSame( 'queued', $response['status'] ?? null, 'A dropped click with no free slot must report queued, never the stale closed run as failed.' );
+	}
+
+	/**
+	 * The same dropped-click shape, but with a slot free: the poll's retry
+	 * claim opens the run and drives the child instead of leaving the click
+	 * stranded on the stale closed run forever.
+	 *
+	 * @return void
+	 */
+	public function test_on_demand_poll_retries_claim_for_never_opened_click_when_slot_free() {
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$site_id = $this->create_test_site( array( 'url' => 'http://127.0.0.1:9' ) );
+
+		$this->manual_task_in_state(
+			$site_id,
+			array(
+				'last_run'      => time() - 3600,
+				'completed'     => time() - 3500,
+				'backup_errors' => '',
+			)
+		);
+
+		delete_transient( 'mainwp_backup_slots' );
+
+		try {
+			$since    = time() - 5;
+			$response = $this->poll_on_demand( $site_id, $since );
+		} finally {
+			delete_transient( 'mainwp_backup_slots' );
+		}
+
+		$task = MainWP_DB_Backup::instance()->get_manual_backup_task( $site_id );
+		$this->assertGreaterThanOrEqual( $since, (int) $task->last_run, 'A dropped click with a free slot must open the run for this poll, not leave last_run on the stale closed run.' );
+		$this->assertIsArray( $response );
+		$this->assertNotSame( 'queued', $response['status'] ?? null, 'A free slot must actually drive the retried run rather than reporting queued again.' );
+		if ( 'failed' === ( $response['status'] ?? null ) ) {
+			$this->assertStringNotContainsString( 'did not produce a snapshot', (string) ( $response['error'] ?? '' ), 'A failed retry must surface the real child error, not the generic no-snapshot message meant for an unopened run.' );
+		}
+	}
+
+	/**
+	 * The gp1 field failure: the site's only snapshot is an OLD one, the
+	 * current run recorded a real child error (disk full) and closed, and
+	 * the poll follows the click that opened that run. The stale snapshot
+	 * must not disown the current run's error - keying failure-surface
+	 * error ownership to the snapshot is exactly how a child's disk-full
+	 * message reached the page as the generic no-snapshot line.
+	 *
+	 * @return void
+	 */
+	public function test_on_demand_poll_surfaces_current_run_error_despite_stale_snapshot() {
+		global $wpdb;
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$site_id = $this->create_test_site();
+		$click   = time() - 30;
+
+		$task = $this->manual_task_in_state(
+			$site_id,
+			array(
+				'last_run'      => $click,
+				'completed'     => time() - 10,
+				'backup_errors' => 'Site: <strong>child</strong><br />Could not write backup data. The server may be out of disk space.',
+			)
+		);
+
+		// The site's only snapshot predates this run by days.
+		$snapshot_id = MainWP_Backup_Snapshots::instance()->record_snapshot(
+			array(
+				'task_id' => (int) $task->id,
+				'site_id' => $site_id,
+				'type'    => 'full',
+			)
+		);
+		$this->assertGreaterThan( 0, $snapshot_id, 'Precondition: the stale snapshot must record.' );
+		$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ), array( 'created' => $click - 10 * DAY_IN_SECONDS ), array( 'id' => (int) $snapshot_id ) ); // phpcs:ignore WordPress.DB -- test fixture adjust.
+
+		$response = $this->poll_on_demand( $site_id, $click );
+
+		$this->assertIsArray( $response );
+		$this->assertSame( 'failed', $response['status'] ?? null, 'A closed run with no fresh snapshot reports failed.' );
+		$this->assertStringContainsString( 'Could not write backup data', (string) ( $response['error'] ?? '' ), 'The current run\'s recorded child error must surface; the stale snapshot must not disown it.' );
 	}
 }

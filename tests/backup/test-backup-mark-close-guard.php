@@ -570,4 +570,79 @@ class MainWP_Backup_Mark_Close_Guard_Test extends MainWP_Abilities_Test_Case {
 		$fresh = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
 		$this->assertGreaterThan( (int) $fresh->last_run, (int) $fresh->completed, 'The run must close after the snapshot lands.' );
 	}
+
+	/**
+	 * update_backup_completed() closes an open run exactly once: the first
+	 * call against an open run wins and stamps completed forward, and an
+	 * immediate second call against the now-closed run reports it did not
+	 * win. This is the guard the close block leans on so a repeat close
+	 * cannot re-fire the failure email while backup_errors still holds the
+	 * run's real error for the on-demand poll.
+	 *
+	 * @return void
+	 */
+	public function test_update_backup_completed_reports_close_winner() {
+		list( , $task ) = $this->site_and_open_task(
+			array(
+				'last_run'  => time() - 30,
+				'completed' => time() - 60,
+			)
+		);
+
+		$first = MainWP_DB_Backup::instance()->update_backup_completed( $task->id );
+		$this->assertTrue( $first, 'The first call against an open run must win the close.' );
+
+		$closed = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$this->assertGreaterThanOrEqual( (int) $closed->last_run, (int) $closed->completed, 'A won close must stamp completed at or past last_run.' );
+
+		$second = MainWP_DB_Backup::instance()->update_backup_completed( $task->id );
+		$this->assertFalse( $second, 'A second call against an already-closed run must not report a win.' );
+	}
+
+	/**
+	 * The close path emails exactly once for a run with a real recorded
+	 * error even when a second driver reaches the close block after the
+	 * first has already closed it, and the errors stay on the row both
+	 * times: the winner-gated email must not depend on clearing
+	 * backup_errors, because the on-demand poll needs it to still be there.
+	 *
+	 * @return void
+	 */
+	public function test_close_path_emails_once_and_keeps_errors() {
+		list( $site_id, $task ) = $this->site_and_open_task(
+			array(
+				'last_run'  => time() - 30,
+				'completed' => time() - 60,
+			)
+		);
+		MainWP_DB_Backup::instance()->update_completed_sites( $task->id, array( $site_id => true ) );
+		MainWP_DB_Backup::instance()->update_backup_errors( (int) $task->id, 'Site: child. The database dump failed.' );
+		update_option( 'mainwp_notificationOnBackupFail', '1' );
+		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+
+		$sent = array();
+		add_filter(
+			'pre_wp_mail',
+			function ( $short_circuit, $atts ) use ( &$sent ) {
+				$sent[] = $atts;
+				return true;
+			},
+			10,
+			2
+		);
+
+		delete_transient( 'mainwp_backup_slots' );
+		MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, false );
+
+		$this->assertCount( 1, $sent, 'The site already marked complete reaches the close block with no child contact, and a run with real errors must email once.' );
+		$fresh = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$this->assertNotSame( '', (string) $fresh->backup_errors, 'The close must not clear backup_errors; the on-demand poll still needs to surface them.' );
+		$this->assertGreaterThanOrEqual( (int) $fresh->last_run, (int) $fresh->completed, 'The winning close must stamp completed at or past last_run.' );
+
+		$task_reread = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		delete_transient( 'mainwp_backup_slots' );
+		MainWP_Manage_Backups_Handler::execute_backup_task( $task_reread, 1, false );
+
+		$this->assertCount( 1, $sent, 'A second close attempt against an already-closed run must not win, and so must not re-email even though the errors persist.' );
+	}
 }

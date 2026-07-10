@@ -636,8 +636,9 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         // stamps last_run through a claim the settle window can refuse, which
         // both starts the run and makes it eligible for the
         // cron_backups_continue backstop. A false return means no concurrency
-        // slot was free (or a racing initiate won the claim); the poll and
-        // the cron retry it.
+        // slot was free (or a racing initiate won the claim); the progress
+        // poll retries the claim for a click whose run never opened - the
+        // cron cannot, it only drives runs that were stamped open.
         $started  = time();
         $had_slot = ( false !== MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, true, $settle ) );
 
@@ -714,6 +715,23 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         if ( (int) $task->completed < (int) $task->last_run ) {
             MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, false );
             $task = MainWP_DB_Backup::instance()->get_manual_backup_task( $site_id );
+        } elseif ( $since > (int) $task->last_run && $since <= time() ) {
+            // The click this poll follows never got its run opened: its
+            // initiate lost the concurrency-slot race and answered queued,
+            // and neither branch above nor the continue cron ever drives a
+            // run that was never stamped - the poll is that click's only
+            // driver, so the claim retries here. While the slot stays busy
+            // the response says queued; without this, the stale closed run
+            // below reads as this click's failure. The time() cap keeps a
+            // fabricated future `since` from re-claiming on every poll -
+            // a real one is the initiate's own server-side stamp.
+            $settle = MainWP_Backup_Settings::get_manual_run_settle_seconds();
+            MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, true, $settle );
+            $task = MainWP_DB_Backup::instance()->get_manual_backup_task( $site_id );
+            if ( $task && (int) $task->completed >= (int) $task->last_run && $since > (int) $task->last_run ) {
+                wp_send_json( array( 'status' => 'queued' ) );
+                return;
+            }
         }
 
         if ( $task && (int) $task->completed < (int) $task->last_run ) {
@@ -739,15 +757,24 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         $fresh  = null !== $latest && (int) $latest->created >= $cutoff;
 
         // backup_errors clears at every run open, so it only ever describes
-        // the run tied to the CURRENT last_run. With a snapshot, the errors
-        // belong to the snapshot's own run only while last_run has not moved
-        // past it; with none, they are this click's when the current run
-        // opened at or after the click.
-        $errors_own = null !== $latest
-            ? (int) $task->last_run <= (int) $latest->created
-            : ( 0 === $since || (int) $task->last_run >= $since );
+        // the run tied to the CURRENT last_run. The two surfaces below need
+        // different ownership questions answered from that fact:
+        //
+        // - The success gate asks whether the errors belong to the run that
+        //   produced the fresh snapshot: only while last_run has not moved
+        //   past the snapshot. A later run's failure must not poison the
+        //   click whose snapshot landed.
+        // - The failure surface asks whether the errors belong to THIS
+        //   click's run: they do once last_run caught up to the click's
+        //   since (or on older JavaScript that sends none). Keying this to
+        //   the snapshot instead silently disowned the current run's real
+        //   error whenever the site's only snapshot was an old one - a
+        //   child's disk-full message surfaced as the generic no-snapshot
+        //   line exactly because of that.
+        $errors_snapshot_run = null !== $latest && (int) $task->last_run <= (int) $latest->created;
+        $errors_click_own    = ( 0 === $since || (int) $task->last_run >= $since );
 
-        if ( $fresh && ( '' === $errors || ! $errors_own ) ) {
+        if ( $fresh && ( '' === $errors || ! $errors_snapshot_run ) ) {
             $response = array(
                 'status'      => 'completed',
                 'snapshot_id' => (int) $latest->id,
@@ -766,7 +793,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         wp_send_json(
             array(
                 'status' => 'failed',
-                'error'  => '' !== $errors && $errors_own ? static::humanize_backup_errors( $errors ) : esc_html__( 'The on-demand backup did not produce a snapshot.', 'mainwp' ),
+                'error'  => '' !== $errors && $errors_click_own ? static::humanize_backup_errors( $errors ) : esc_html__( 'The on-demand backup did not produce a snapshot.', 'mainwp' ),
             )
         );
     }

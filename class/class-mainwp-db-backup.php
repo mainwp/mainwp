@@ -705,20 +705,33 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
     /**
      * Method update_backup_completed()
      *
-     * Update backup completed()
+     * Close the open run by stamping completed, guarded so exactly one of
+     * several concurrent drivers reaching the close block wins. The winner
+     * owns the close side effects (the failure email); a repeat close of an
+     * already-closed run is a no-op, which is what lets backup_errors stay
+     * on the row for the on-demand poll to surface without the email firing
+     * again.
      *
      * @param mixed $id Task ID.
      *
-     * @return int|false The number of rows updated, or false on error.
+     * @return bool True when this call closed an open run.
      *
      * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      */
     public function update_backup_completed( $id ) {
-        if ( MainWP_Utility::ctype_digit( $id ) ) {
-            return $this->wpdb->update( $this->table_name( 'wp_backup' ), array( 'completed' => time() ), array( 'id' => $id ) );
+        if ( ! MainWP_Utility::ctype_digit( $id ) ) {
+            return false;
         }
 
-        return false;
+        $closed = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- the atomic close gate; must hit the DB engine.
+            $this->wpdb->prepare(
+                'UPDATE ' . $this->table_name( 'wp_backup' ) . ' SET completed = %d WHERE id = %d AND completed < last_run', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted helper.
+                time(),
+                $id
+            )
+        );
+
+        return 1 === (int) $closed;
     }
 
     /**

@@ -236,40 +236,70 @@ export class Dashboard {
    */
   async runNativeBackup(siteId: string, childUrl = '', timeoutMs = 20 * 60_000): Promise<void> {
     await this.openNativeBackups(siteId);
-    await this.page.locator('#mainwp-native-backup-now-btn').click({ force: true });
-    const status = this.page.locator('#mainwp-native-backup-now-status');
-    const deadline = Date.now() + timeoutMs;
-    let last = '';
-    let recovered = false;
-    while (Date.now() < deadline) {
-      await this.page.waitForTimeout(5_000);
-      last = ((await status.textContent()) ?? '').trim();
-      if (/complete/i.test(last)) {
-        return;
+
+    // Terminal state comes from the progress AJAX's own `status` field, not
+    // from pattern-matching the status line: a server failure message need
+    // not contain "fail" or "error" ("The on-demand backup did not produce a
+    // snapshot." matched neither and burned the whole budget re-reading an
+    // already-terminal status).
+    const ajaxState = { status: '', error: '' };
+    const onResponse = async (resp: import('@playwright/test').Response) => {
+      try {
+        if (!resp.url().includes('admin-ajax.php')) return;
+        const post = resp.request().postData() ?? '';
+        if (!post.includes('mainwp_native_backup_progress')) return;
+        const data = JSON.parse(await resp.text());
+        ajaxState.status = typeof data?.status === 'string' ? data.status : '';
+        ajaxState.error = typeof data?.error === 'string' ? data.error : '';
+      } catch {
+        // Non-JSON or detached response: the DOM heuristics below still apply.
       }
-      // A backup or restore already running rejects with a "try again" notice.
-      if (/in progress|try again|already/i.test(last)) {
-        // One self-recovery attempt: clear a stuck task left by a prior run,
-        // then re-trigger the backup. Without childUrl (or after recovery has
-        // already been tried) fail with an actionable message instead of
-        // waiting out the whole timeout for a state that will not change.
-        if (childUrl && !recovered) {
-          recovered = true;
-          await this.clearStuckBackup(siteId, childUrl);
-          await this.page.locator('#mainwp-native-backup-now-btn').click({ force: true });
-          continue;
+    };
+    this.page.on('response', onResponse);
+
+    try {
+      await this.page.locator('#mainwp-native-backup-now-btn').click({ force: true });
+      const status = this.page.locator('#mainwp-native-backup-now-status');
+      const deadline = Date.now() + timeoutMs;
+      let last = '';
+      let recovered = false;
+      while (Date.now() < deadline) {
+        await this.page.waitForTimeout(5_000);
+        last = ((await status.textContent()) ?? '').trim();
+        if (ajaxState.status === 'completed' || /complete/i.test(last)) {
+          return;
         }
-        throw new Error(
-          `Backup did not start (another operation in progress): ${last}. A prior ` +
-            `backup task is stuck on ${childUrl || 'the child'}; clear it from the ` +
-            `dashboard Snapshots page ("Cancel backup") or drive the child wp-cron, then re-run.`,
-        );
+        // A backup or restore already running rejects with a "try again" notice.
+        if (/in progress|try again|already/i.test(last)) {
+          // One self-recovery attempt: clear a stuck task left by a prior run,
+          // then re-trigger the backup. Without childUrl (or after recovery has
+          // already been tried) fail with an actionable message instead of
+          // waiting out the whole timeout for a state that will not change.
+          if (childUrl && !recovered) {
+            recovered = true;
+            ajaxState.status = '';
+            ajaxState.error = '';
+            await this.clearStuckBackup(siteId, childUrl);
+            await this.page.locator('#mainwp-native-backup-now-btn').click({ force: true });
+            continue;
+          }
+          throw new Error(
+            `Backup did not start (another operation in progress): ${last}. A prior ` +
+              `backup task is stuck on ${childUrl || 'the child'}; clear it from the ` +
+              `dashboard Snapshots page ("Cancel backup") or drive the child wp-cron, then re-run.`,
+          );
+        }
+        if (ajaxState.status === 'failed') {
+          throw new Error(`Backup failed: ${ajaxState.error || last}`);
+        }
+        if (/fail|error/i.test(last)) {
+          throw new Error(`Backup failed: ${last}`);
+        }
       }
-      if (/fail|error/i.test(last)) {
-        throw new Error(`Backup failed: ${last}`);
-      }
+      throw new Error(`Backup did not complete within ${timeoutMs}ms; last status: ${last}`);
+    } finally {
+      this.page.off('response', onResponse);
     }
-    throw new Error(`Backup did not complete within ${timeoutMs}ms; last status: ${last}`);
   }
 
   /**

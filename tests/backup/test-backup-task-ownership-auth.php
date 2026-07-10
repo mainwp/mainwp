@@ -108,19 +108,6 @@ class MainWP_Backup_Task_Ownership_Auth_Test extends MainWP_Abilities_Test_Case 
 	}
 
 	/**
-	 * Skip a denial test when another suite in this process defined one of
-	 * the constants that bypass capability checks by design (cron, WP-CLI,
-	 * REST): the deny filter never fires.
-	 *
-	 * @return void
-	 */
-	private function skip_when_capabilities_bypassed() {
-		if ( ( defined( 'DOING_CRON' ) && DOING_CRON ) || ( defined( 'WP_CLI' ) && WP_CLI ) || ( defined( 'MAINWP_REST_API_DOING' ) && MAINWP_REST_API_DOING ) ) {
-			$this->markTestSkipped( 'Capability checks are bypassed by design under cron, WP-CLI, and REST constants; another suite defined one for this process.' );
-		}
-	}
-
-	/**
 	 * Deny the per-site capability for one site id via the capability
 	 * filter, simulating a Team Control site restriction.
 	 *

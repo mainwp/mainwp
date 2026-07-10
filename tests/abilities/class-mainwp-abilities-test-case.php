@@ -489,6 +489,18 @@ abstract class MainWP_Abilities_Test_Case extends WP_UnitTestCase { //phpcs:igno
 	}
 
 	/**
+	 * Skip a denial test when another suite in this process defined one of
+	 * the constants that bypass capability checks by design.
+	 *
+	 * @return void
+	 */
+	protected function skip_when_capabilities_bypassed() {
+		if ( ( defined( 'DOING_CRON' ) && DOING_CRON ) || ( defined( 'WP_CLI' ) && WP_CLI ) || ( defined( 'MAINWP_REST_API_DOING' ) && MAINWP_REST_API_DOING ) ) {
+			$this->markTestSkipped( 'Capability checks are bypassed by design under cron, WP-CLI, and REST constants; another suite defined one for this process.' );
+		}
+	}
+
+	/**
 	 * Get a test site by ID.
 	 *
 	 * @param int $site_id Site ID.

@@ -1098,45 +1098,102 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
     /**
      * Resume Backup.
      *
-     * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_task_by_id()
-     * @uses \MainWP\Dashboard\MainWP_DB_Backup::update_backup_task_with_values()
+     * @uses \MainWP\Dashboard\MainWP_Manage_Backups_Handler::resume_backup_result()
      */
     public static function resume_backup() {
         $id = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : false; //phpcs:ignore WordPress.Security.NonceVerification.Missing
-        if ( $id ) {
-            $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $id );
-            if ( static::can_edit_backuptask( $task ) ) {
-                $values = array( 'paused' => 0 );
+        die( wp_json_encode( static::resume_backup_result( $id ) ) );
+    }
 
-                // A next_run stored before the pause may be stale; recompute
-                // so the task neither fires immediately nor skips a window.
-                if ( (int) $task->next_run > 0 ) {
-                    $calculator         = new MainWP_Backup_Schedule_Calculator( wp_timezone(), time() );
-                    $values['next_run'] = $calculator->compute_next_run( $task, empty( $task->last_run ) ? null : (int) $task->last_run );
-                }
-
-                MainWP_DB_Backup::instance()->update_backup_task_with_values( $task->id, $values );
-                die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
-            }
+    /**
+     * Authorize and resume a paused backup task, returning the AJAX payload.
+     *
+     * Split from resume_backup() so the authorization is testable without
+     * the die().
+     *
+     * @param int|false $id Task id.
+     *
+     * @return array Response payload: result | notask.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_task_by_id()
+     * @uses \MainWP\Dashboard\MainWP_DB_Backup::update_backup_task_with_values()
+     */
+    public static function resume_backup_result( $id ) {
+        if ( ! $id ) {
+            return array( 'notask' => true );
         }
-        die( wp_json_encode( array( 'notask' => true ) ) );
+
+        $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $id );
+        if ( ! static::can_edit_backuptask( $task ) ) {
+            return array( 'notask' => true );
+        }
+
+        // Resuming re-arms scheduled runs across every site the task covers.
+        // can_edit_backuptask() above is a no-op under the default
+        // single-user mode, so gate this on the same per-site access the
+        // run/reset/delete paths enforce.
+        $scope_error = static::authorize_task_scope( $task->sites, $task->groups );
+        if ( '' !== $scope_error ) {
+            return array( 'notask' => true );
+        }
+
+        $values = array( 'paused' => 0 );
+
+        // A next_run stored before the pause may be stale; recompute
+        // so the task neither fires immediately nor skips a window.
+        if ( (int) $task->next_run > 0 ) {
+            $calculator         = new MainWP_Backup_Schedule_Calculator( wp_timezone(), time() );
+            $values['next_run'] = $calculator->compute_next_run( $task, empty( $task->last_run ) ? null : (int) $task->last_run );
+        }
+
+        MainWP_DB_Backup::instance()->update_backup_task_with_values( $task->id, $values );
+        return array( 'result' => 'SUCCESS' );
     }
 
     /**
      * Pause Backup.
      *
-     * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_task_by_id()
-     * @uses \MainWP\Dashboard\MainWP_DB_Backup::update_backup_task_with_values()
+     * @uses \MainWP\Dashboard\MainWP_Manage_Backups_Handler::pause_backup_result()
      */
     public static function pause_backup() {
         $id = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : false; //phpcs:ignore WordPress.Security.NonceVerification.Missing
-        if ( $id ) {
-            $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $id );
-            if ( static::can_edit_backuptask( $task ) ) {
-                MainWP_DB_Backup::instance()->update_backup_task_with_values( $task->id, array( 'paused' => 1 ) );
-                die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
-            }
+        die( wp_json_encode( static::pause_backup_result( $id ) ) );
+    }
+
+    /**
+     * Authorize and pause a scheduled backup task, returning the AJAX
+     * payload.
+     *
+     * Split from pause_backup() so the authorization is testable without
+     * the die().
+     *
+     * @param int|false $id Task id.
+     *
+     * @return array Response payload: result | notask.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_task_by_id()
+     * @uses \MainWP\Dashboard\MainWP_DB_Backup::update_backup_task_with_values()
+     */
+    public static function pause_backup_result( $id ) {
+        if ( ! $id ) {
+            return array( 'notask' => true );
         }
-        die( wp_json_encode( array( 'notask' => true ) ) );
+
+        $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $id );
+        if ( ! static::can_edit_backuptask( $task ) ) {
+            return array( 'notask' => true );
+        }
+
+        // Pausing stops scheduled runs across every site the task covers.
+        // can_edit_backuptask() above is a no-op under the default
+        // single-user mode, so gate this on the same per-site access the
+        // run/reset/delete paths enforce.
+        $scope_error = static::authorize_task_scope( $task->sites, $task->groups );
+        if ( '' !== $scope_error ) {
+            return array( 'notask' => true );
+        }
+
+        MainWP_DB_Backup::instance()->update_backup_task_with_values( $task->id, array( 'paused' => 1 ) );
+        return array( 'result' => 'SUCCESS' );
     }
 }

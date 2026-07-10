@@ -151,6 +151,29 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
      */
     public static function authorize_task_scope( $sites, $groups ) {
+        foreach ( static::expand_task_site_ids( $sites, $groups ) as $site_id ) {
+            $website = MainWP_DB::instance()->get_website_by_id( $site_id );
+            if ( empty( $website ) || ! MainWP_System_Utility::can_edit_website( $website ) || ! \mainwp_current_user_can( 'site', $site_id ) ) {
+                return esc_html__( 'You are not allowed to schedule backups for one or more of the selected sites.', 'mainwp' );
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * Expand a task's sites/groups selection into one deduplicated site-id
+     * list - the same expansion authorize_task_scope() checks, so a
+     * snapshot stamped from it is by construction the authorized set.
+     *
+     * @param string $sites  Comma-separated site ids.
+     * @param string $groups Comma-separated group ids.
+     *
+     * @return int[] Site ids.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB::get_websites_by_group_id()
+     */
+    public static function expand_task_site_ids( $sites, $groups ) {
         $site_ids = array();
 
         foreach ( explode( ',', (string) $sites ) as $site_id ) {
@@ -169,14 +192,85 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             }
         }
 
-        foreach ( array_unique( $site_ids ) as $site_id ) {
-            $website = MainWP_DB::instance()->get_website_by_id( $site_id );
-            if ( empty( $website ) || ! MainWP_System_Utility::can_edit_website( $website ) || ! \mainwp_current_user_can( 'site', $site_id ) ) {
-                return esc_html__( 'You are not allowed to schedule backups for one or more of the selected sites.', 'mainwp' );
-            }
+        return array_values( array_unique( $site_ids ) );
+    }
+
+    /**
+     * Persist the authorized-site snapshot on the task row.
+     *
+     * Called on every save, after authorize_task_scope() passed, so the
+     * stored set is exactly what the saving user was allowed to target.
+     * The scheduled runner backs up only this set: cron runs with no user
+     * context (the allow-list layer early-returns under DOING_CRON), so a
+     * site that joins one of the task's groups later cannot be authorized
+     * there and stays out until an authorized re-save refreshes the
+     * snapshot.
+     *
+     * @param int    $task_id Task id.
+     * @param string $sites   Comma-separated site ids.
+     * @param string $groups  Comma-separated group ids.
+     *
+     * @return int[] The stamped site ids.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB_Backup::update_backup_task_with_values()
+     */
+    public static function stamp_task_scope_snapshot( $task_id, $sites, $groups ) {
+        $site_ids = static::expand_task_site_ids( $sites, $groups );
+        MainWP_DB_Backup::instance()->update_backup_task_with_values( $task_id, array( 'authorized_sites' => implode( ',', $site_ids ) ) );
+        return $site_ids;
+    }
+
+    /**
+     * Resolve the site ids a scheduled run may back up.
+     *
+     * Direct sites pass through: that list is fixed at save time and was
+     * authorized then. Group members are diffed against the authorized
+     * snapshot - a site added to a group after the save is skipped with a
+     * notice (update_backup_notices() refuses the exact message twice, so
+     * continuation ticks do not accumulate it) until a re-save refreshes
+     * the snapshot. A task saved before the snapshot column existed
+     * adopts its live expansion once, keeping its behavior at that
+     * instant, and is stamped so the gate is live from then on.
+     *
+     * @param object $task Task row.
+     *
+     * @return int[] Site ids to run.
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB_Backup::update_backup_notices()
+     */
+    public static function resolve_task_run_sites( $task ) {
+        // A run keeps the columns' either/or precedence: a task with groups
+        // runs its groups' members; only a groupless task runs the sites
+        // column (the pre-snapshot runner resolved selections the same way).
+        $expanded = static::expand_task_site_ids( empty( $task->groups ) ? $task->sites : '', $task->groups );
+
+        if ( ! isset( $task->authorized_sites ) || '' === (string) $task->authorized_sites ) {
+            // Pre-migration row: adopt the live expansion once and arm the gate.
+            MainWP_DB_Backup::instance()->update_backup_task_with_values( $task->id, array( 'authorized_sites' => implode( ',', $expanded ) ) );
+            return $expanded;
         }
 
-        return '';
+        $authorized = array_map( 'intval', explode( ',', (string) $task->authorized_sites ) );
+
+        $run_sites = array();
+        foreach ( $expanded as $site_id ) {
+            if ( in_array( $site_id, $authorized, true ) ) {
+                $run_sites[] = $site_id;
+                continue;
+            }
+            $website = MainWP_DB::instance()->get_website_by_id( $site_id );
+            $label   = empty( $website ) ? ( 'Site ' . $site_id ) : ( $website->name . ' (' . $website->url . ')' );
+            MainWP_DB_Backup::instance()->update_backup_notices(
+                $task->id,
+                sprintf(
+                    /* translators: %s: site name and url. */
+                    esc_html__( '%s was added to a selected group after this task was last saved and was skipped. Re-save the task to include it.', 'mainwp' ),
+                    $label
+                ) . '<br />'
+            );
+        }
+
+        return $run_sites;
     }
 
     /**
@@ -268,6 +362,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         if ( MainWP_DB_Backup::instance()->update_backup_task( $task->id, $current_user->ID, htmlentities( $name ), $schedule, $type, $excludedFolder, $sites, $groups, $subfolder, $filename, $excludebackup, $excludecache, $excludenonwp, $excludezip, $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip, $zipForceOverride ) === false ) {
             die( wp_json_encode( array( 'error' => esc_html__( 'Could not save the backup task. Please check that all required fields are filled in and try again. If the issue persists, check your server error log.', 'mainwp' ) ) ) );
         } else {
+            static::stamp_task_scope_snapshot( $task->id, $sites, $groups );
             $destinations = isset( $_POST['destinations'] ) && is_array( $_POST['destinations'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['destinations'] ) ) : array(); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified.
             MainWP_Backup_Storage_Handler::save_task_destinations( $task->id, $destinations );
             static::save_task_schedule_fields( $task->id );
@@ -352,6 +447,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         if ( ! $task ) {
             die( wp_json_encode( array( 'error' => esc_html__( 'Could not save the backup task. Please check that all required fields are filled in and try again. If the issue persists, check your server error log.', 'mainwp' ) ) ) );
         } else {
+            static::stamp_task_scope_snapshot( $task->id, $sites, $groups );
             $destinations = isset( $_POST['destinations'] ) && is_array( $_POST['destinations'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['destinations'] ) ) : array(); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified.
             MainWP_Backup_Storage_Handler::save_task_destinations( $task->id, $destinations );
             static::save_task_schedule_fields( $task->id );
@@ -548,24 +644,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             $completed_sites = array();
         }
 
-        $sites = array();
-
-        if ( empty( $task->groups ) ) {
-            if ( '' !== $task->sites ) {
-                $sites = explode( ',', $task->sites );
-            }
-        } else {
-            $groups = explode( ',', $task->groups );
-            foreach ( $groups as $groupid ) {
-                $group_sites = MainWP_DB::instance()->get_websites_by_group_id( $groupid );
-                foreach ( $group_sites as $group_site ) {
-                    if ( in_array( $group_site->id, $sites ) ) {
-                        continue;
-                    }
-                    $sites[] = $group_site->id;
-                }
-            }
-        }
+        $sites = static::resolve_task_run_sites( $task );
         $errorOutput  = null;
         $errorEntries = array();
 
@@ -857,27 +936,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             return array();
         }
 
-        $sites = array();
-
-        if ( empty( $backupTask->groups ) ) {
-            if ( '' !== $backupTask->sites ) {
-                $sites = array_map( 'intval', explode( ',', $backupTask->sites ) );
-            }
-        } else {
-            $groups = explode( ',', $backupTask->groups );
-            foreach ( $groups as $groupid ) {
-                $group_sites = MainWP_DB::instance()->get_websites_by_group_id( $groupid );
-                foreach ( $group_sites as $group_site ) {
-                    $site_id = (int) $group_site->id;
-                    if ( in_array( $site_id, $sites, true ) ) {
-                        continue;
-                    }
-                    $sites[] = $site_id;
-                }
-            }
-        }
-
-        return $sites;
+        return static::expand_task_site_ids( empty( $backupTask->groups ) ? $backupTask->sites : '', $backupTask->groups );
     }
 
     // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber -- all throws are MainWP_Exception.

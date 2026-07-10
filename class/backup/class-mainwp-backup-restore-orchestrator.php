@@ -784,7 +784,13 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                     return;
                 }
 
-                $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, array( 'child_task_id' => $created['task_id'] ), $this->lock_token );
+                if ( ! $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, array( 'child_task_id' => $created['task_id'] ), $this->lock_token ) ) {
+                    // The lease was lost in the window between creating the
+                    // child task and recording its id. Surface the orphaned
+                    // child task and stop; the reclaiming worker owns the job.
+                    do_action( 'mainwp_log_warning', sprintf( 'Restore job %d: the lease was lost after creating child restore task %s; it may need manual cleanup on the site.', (int) $job->id, $created['task_id'] ) );
+                    return;
+                }
                 $artifact_count = count( $pull_manifest['artifacts'] );
                 do_action(
                     'mainwp_log_info',
@@ -827,10 +833,14 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
 
         $created = $this->create_child_restore_task( $job, $checkpoint, $plan );
         if ( '' === $created['task_id'] ) {
-            return; // Failure already recorded.
+            return; // Failure recorded, or the lease was lost before creation.
         }
 
-        $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING, array( 'child_task_id' => $created['task_id'] ), $this->lock_token );
+        if ( ! $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING, array( 'child_task_id' => $created['task_id'] ), $this->lock_token ) ) {
+            // Lease lost between creating the child task and recording its id.
+            do_action( 'mainwp_log_warning', sprintf( 'Restore job %d: the lease was lost after creating child restore task %s; it may need manual cleanup on the site.', (int) $job->id, $created['task_id'] ) );
+            return;
+        }
     }
 
     /**
@@ -1027,6 +1037,20 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      *                 pull_rejected: bool }.
      */
     private function create_child_restore_task( object $job, array $checkpoint, array $plan, ?array $pull_manifest = null ): array {
+        // Re-check the lease immediately before this irreversible side effect.
+        // Staging can run long enough for the lease to expire and another lane
+        // to reclaim the job; without this a lease-lost worker would create a
+        // real child restore task the Dashboard job no longer owns (and would
+        // not record, since the fenced writes afterward are refused), leaving
+        // an orphaned runnable restore on the child. A lost lease returns no
+        // task id so the caller stops and the reclaiming worker drives instead.
+        if ( ! $this->lease_still_held( $job ) ) {
+            return array(
+                'task_id'       => '',
+                'pull_rejected' => false,
+            );
+        }
+
         $artifacts = array();
         foreach ( $plan as $entry ) {
             $artifacts[] = array(

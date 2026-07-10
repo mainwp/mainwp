@@ -428,6 +428,46 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * An already-expired lease cannot be renewed even by the token that held
+	 * it (F8): once the lease lapses the worker has lost it, so a slow holder
+	 * cannot rescue a job the reclaim-ceiling sweep is about to fail between
+	 * that sweep's SELECT and its terminal write.
+	 */
+	public function test_renew_refused_once_lease_expired() {
+		$job_id = $this->store->create_job( 8801, 42, array() );
+
+		$now = 1000000;
+		$this->store->acquire_next_job( 'token-a', 300, $now );
+
+		// The lease lapsed at now+300; a renewal past that point is refused.
+		$this->assertFalse( $this->store->renew_lease( $job_id, 'token-a', 300, $now + 301 ), 'An expired lease must not be renewable by its former holder.' );
+	}
+
+	/**
+	 * The reclaim-ceiling sweep is not defeated by a slow holder renewing
+	 * between the sweep's SELECT and its terminal write (F8): because the
+	 * expired lease cannot be renewed, the over-ceiling job is still failed.
+	 */
+	public function test_reclaim_ceiling_not_rescued_by_expired_renew() {
+		$job_id = $this->store->create_job( 8801, 42, array() );
+
+		$now = 1000000;
+		$this->store->acquire_next_job( 'token-0', 300, $now );
+		for ( $i = 1; $i <= MainWP_Backup_Restore_Job_Store::RECLAIM_CEILING; $i++ ) {
+			$now += 301;
+			$this->store->acquire_next_job( "token-{$i}", 300, $now );
+		}
+
+		// The job now sits over the ceiling with an expired lease. The last
+		// holder tries to renew before the next acquire sweeps it - and fails.
+		$now += 301;
+		$this->assertFalse( $this->store->renew_lease( $job_id, 'token-' . MainWP_Backup_Restore_Job_Store::RECLAIM_CEILING, 300, $now ), 'A renewal on the expired over-ceiling lease must be refused.' );
+
+		$this->assertNull( $this->store->acquire_next_job( 'token-sweep', 300, $now ), 'The over-ceiling job is not handed out.' );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT, $this->store->get_job( $job_id )->status, 'The sweep still permanently fails it.' );
+	}
+
+	/**
 	 * Once a lease is reclaimed, the previous worker's token no longer
 	 * writes: its checkpoint and status writes are refused, while the new
 	 * holder's fenced writes land.

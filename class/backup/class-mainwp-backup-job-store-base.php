@@ -104,6 +104,12 @@ abstract class MainWP_Backup_Job_Store_Base extends MainWP_DB_Base { // phpcs:ig
         if ( 1 === $updated ) {
             return true;
         }
+        if ( false === $updated ) {
+            // A query error (deadlock, lost connection) is not a lost lease
+            // and must never read as a persisted write - the caller has to
+            // know its checkpoint/status did not land.
+            return false;
+        }
 
         // Zero affected rows is ambiguous under MySQL: the fence refused the
         // write, or the values were already identical (a same-second

@@ -167,4 +167,35 @@ class MainWP_Backup_Scope_Launder_Guard_Test extends MainWP_Abilities_Test_Case 
 		$this->assertContains( (int) $authorized, $reset_sites, 'The authorized site is reset.' );
 		$this->assertNotContains( (int) $drifted, $reset_sites, 'A drift-excluded site must never be reset.' );
 	}
+
+	/**
+	 * F1 delete guard: a restricted user cannot delete a task that has
+	 * HISTORICAL snapshots for a site now outside its declared scope - the
+	 * purge would otherwise destroy backups for a site they cannot reach.
+	 * The task and its snapshots survive.
+	 */
+	public function test_delete_refused_when_historical_site_is_out_of_reach() {
+		$this->skip_when_capabilities_bypassed();
+		global $wpdb;
+
+		$in_scope = $this->create_test_site( array( 'userid' => 1 ) );
+		$victim   = $this->create_test_site( array( 'userid' => 1 ) );
+
+		// The task currently declares only the in-scope site, but it ran on
+		// the victim site earlier (a snapshot row records that history).
+		$task = MainWP_DB_Backup::instance()->add_backup_task( 1, 'history delete', 'daily', 'full', '', (string) $in_scope, '', '', '', 0, 0, 0, 0, 0, 'site', 0, 1, 150, 0, 0 );
+		$snap = $wpdb->prefix . 'mainwp_wp_backup_snapshot';
+		$wpdb->insert( $snap, array( 'task_id' => $task->id, 'site_id' => $victim, 'type' => 'full', 'created' => time(), 'archives' => wp_json_encode( array() ), 'manifest_path' => '', 'status' => 'complete' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- historical-run fixture.
+
+		$deny = $this->deny_site( $victim );
+		try {
+			$result = MainWP_Manage_Backups_Handler::remove_backup_result( $task->id );
+		} finally {
+			remove_filter( 'mainwp_currentusercan', $deny, 10 );
+			$wpdb->delete( $snap, array( 'task_id' => $task->id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- cleanup.
+		}
+
+		$this->assertArrayHasKey( 'error', $result, 'Deleting a task with an out-of-reach historical site must be refused.' );
+		$this->assertNotNull( MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id ), 'The refused task must survive.' );
+	}
 }

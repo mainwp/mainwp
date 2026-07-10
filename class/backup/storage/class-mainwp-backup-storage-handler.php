@@ -551,8 +551,23 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
         if ( $id <= 0 || empty( $existing_settings ) ) {
             return 0;
         }
-        $same_host = (string) ( $new_settings['host'] ?? '' ) === (string) ( $existing_settings['host'] ?? '' );
-        $same_port = (string) ( $new_settings['port'] ?? '' ) === (string) ( $existing_settings['port'] ?? '' );
+
+        // Compare the way the provider actually dials the server, not by raw
+        // string equality: the SFTP provider lowercases nothing but resolves
+        // the host via DNS (case- and trailing-dot-insensitive) and casts the
+        // port to int with a 22 default. A cosmetic difference ("022", " 22",
+        // "SFTP.Example.com.") targets the identical real server, so it must
+        // NOT drop pin enforcement and skip the host-key check.
+        $norm_host = static function ( $host ) {
+            return rtrim( strtolower( trim( (string) $host ) ), '.' );
+        };
+        $norm_port = static function ( $port ) {
+            $port = trim( (string) $port );
+            return '' === $port ? 22 : (int) $port;
+        };
+
+        $same_host = $norm_host( $new_settings['host'] ?? '' ) === $norm_host( $existing_settings['host'] ?? '' );
+        $same_port = $norm_port( $new_settings['port'] ?? '' ) === $norm_port( $existing_settings['port'] ?? '' );
         return ( $same_host && $same_port ) ? $id : 0;
     }
 

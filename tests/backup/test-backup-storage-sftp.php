@@ -745,6 +745,24 @@ class MainWP_Backup_Storage_SFTP_Test extends \WP_UnitTestCase { // phpcs:ignore
 	}
 
 	/**
+	 * A cosmetic-only host/port difference targets the identical real server
+	 * (the provider (int)-casts the port and resolves the host case- and
+	 * trailing-dot-insensitively), so it must STILL enforce the pin - a
+	 * formatting quirk cannot be used to skip the host-key check.
+	 *
+	 * @return void
+	 */
+	public function test_pin_enforcement_id_ignores_cosmetic_host_port_differences() {
+		$stored = array( 'host' => 'sftp.example.com', 'port' => '22' );
+
+		$this->assertSame( 7, \MainWP\Dashboard\MainWP_Backup_Storage_Handler::pin_enforcement_id( 7, array( 'host' => 'sftp.example.com', 'port' => '022' ), $stored ), 'A zero-padded port is the same port.' );
+		$this->assertSame( 7, \MainWP\Dashboard\MainWP_Backup_Storage_Handler::pin_enforcement_id( 7, array( 'host' => 'sftp.example.com', 'port' => ' 22' ), $stored ), 'A space-padded port is the same port.' );
+		$this->assertSame( 7, \MainWP\Dashboard\MainWP_Backup_Storage_Handler::pin_enforcement_id( 7, array( 'host' => 'SFTP.Example.com', 'port' => '22' ), $stored ), 'A case-different host is the same host.' );
+		$this->assertSame( 7, \MainWP\Dashboard\MainWP_Backup_Storage_Handler::pin_enforcement_id( 7, array( 'host' => 'sftp.example.com.', 'port' => '22' ), $stored ), 'A trailing-dot host is the same host.' );
+		$this->assertSame( 7, \MainWP\Dashboard\MainWP_Backup_Storage_Handler::pin_enforcement_id( 7, array( 'host' => 'sftp.example.com' ), $stored ), 'An omitted port defaults to 22 - still the same server.' );
+	}
+
+	/**
 	 * F5: when the host-key pin cannot be recorded on first use, the
 	 * handshake is refused rather than proceeding unverified (which would let
 	 * the next connect trust whatever key it saw).

@@ -1211,14 +1211,22 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             return array( 'error' => $scope_error );
         }
 
-        // Defense-in-depth for the re-scope-then-delete laundering path
-        // (the entry-point guard is authorize_task_update_scope): bound the
-        // purge to the task's authorized-site snapshot so a delete can only
-        // destroy backups for sites the current scope authorizes, never every
-        // site the task ever historically ran. A never-stamped legacy row
-        // (null snapshot) keeps the full-history purge.
-        $authorized   = static::authorized_snapshot_ids( $task );
-        $purge_result = MainWP_Backup_Retention_Executor::instance()->purge_snapshots_for_task( (int) $task->id, ! empty( $task->delete_cloud_copies ), $authorized );
+        // The purge walks the task's HISTORICAL sites (every site it ever ran
+        // on), which can be broader than its current sites/groups after a
+        // scope narrowing. Authorize that full set too, so a restricted user
+        // cannot delete a task to destroy backups for a site now outside its
+        // declared scope - and so the delete then safely purges the whole
+        // history (an authorized deleter leaves nothing orphaned). A task with
+        // no runs has no history and authorizes trivially.
+        $historical = MainWP_Backup_Retention_Query::instance()->list_site_ids_for_task( (int) $task->id );
+        if ( ! empty( $historical ) ) {
+            $history_error = static::authorize_task_scope( implode( ',', array_map( 'intval', $historical ) ), '' );
+            if ( '' !== $history_error ) {
+                return array( 'error' => $history_error );
+            }
+        }
+
+        $purge_result = MainWP_Backup_Retention_Executor::instance()->purge_snapshots_for_task( (int) $task->id, ! empty( $task->delete_cloud_copies ) );
 
         // The purge deliberately keeps a snapshot when its artifact cannot be
         // reached (recorded outside the uploads root, or an unlink refused).

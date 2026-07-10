@@ -779,7 +779,12 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                     // manifest: stage and stream into that same task.
                     $checkpoint['cloud_pull_tried'] = true;
                     $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
-                    $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_STAGING, array( 'child_task_id' => $created['task_id'] ), $this->lock_token );
+                    if ( ! $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_STAGING, array( 'child_task_id' => $created['task_id'] ), $this->lock_token ) ) {
+                        // Lease lost after the child task was created: its id
+                        // never landed, so surface the orphan and stop.
+                        do_action( 'mainwp_log_warning', sprintf( 'Restore job %d: the lease was lost after creating child restore task %s; it may need manual cleanup on the site.', (int) $job->id, $created['task_id'] ) );
+                        return;
+                    }
                     do_action( 'mainwp_log_warning', sprintf( 'Restore job %d: the site declined the direct cloud download; using the standard transfer.', (int) $job->id ) );
                     return;
                 }

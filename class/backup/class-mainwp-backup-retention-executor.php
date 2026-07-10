@@ -120,26 +120,22 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
      * retention uses: local removal, cloud deletes when requested, the
      * upload-row purge, then the status flip.
      *
-     * @param int        $task_id             Task id being deleted or removed.
-     * @param bool       $delete_cloud_copies The task's delete_cloud_copies
-     *                                        column value; controls whether
-     *                                        remote objects are queued for
-     *                                        deletion too.
-     * @param int[]|null $restrict_site_ids   When given, only these site ids
-     *                                        are purged; historical sites
-     *                                        outside the set are left intact
-     *                                        and reported under 'skipped'.
-     *                                        This bounds a user-triggered
-     *                                        delete to the caller's authorized
-     *                                        scope so a re-scoped task cannot
-     *                                        launder the purge across every
-     *                                        site it ever ran. null keeps the
-     *                                        full-history purge (the site
-     *                                        deletion cleanup path).
+     * The caller is responsible for authorizing the delete against the
+     * task's historical sites first (remove_backup_result does): the purge
+     * here is deliberately full-history so an authorized delete leaves
+     * nothing orphaned - snapshot rows and their artifacts for every site
+     * the task ever ran on are removed together, since retention only ever
+     * revisits sites through a live task row.
      *
-     * @return array Result: pruned (unit) count, snapshots_pruned, skipped and errors.
+     * @param int  $task_id             Task id being deleted or removed.
+     * @param bool $delete_cloud_copies The task's delete_cloud_copies
+     *                                  column value; controls whether
+     *                                  remote objects are queued for
+     *                                  deletion too.
+     *
+     * @return array Result: pruned (unit) count, snapshots_pruned and errors.
      */
-    public function purge_snapshots_for_task( int $task_id, bool $delete_cloud_copies, ?array $restrict_site_ids = null ): array {
+    public function purge_snapshots_for_task( int $task_id, bool $delete_cloud_copies ): array {
         $task = (object) array(
             'id'                  => $task_id,
             'delete_cloud_copies' => $delete_cloud_copies,
@@ -148,21 +144,12 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
         $result = array(
             'pruned'           => 0,
             'snapshots_pruned' => 0,
-            'skipped'          => 0,
             'errors'           => array(),
         );
 
-        $query   = MainWP_Backup_Retention_Query::instance();
-        $allowed = null === $restrict_site_ids ? null : array_map( 'intval', $restrict_site_ids );
+        $query = MainWP_Backup_Retention_Query::instance();
 
         foreach ( $query->list_site_ids_for_task( $task_id ) as $site_id ) {
-            if ( null !== $allowed && ! in_array( (int) $site_id, $allowed, true ) ) {
-                // A historical site the caller is not authorized to purge
-                // (e.g. left behind by a since-narrowed task scope); leave its
-                // artifacts intact rather than destroying out-of-scope backups.
-                ++$result['skipped'];
-                continue;
-            }
             foreach ( $query->get_units_for_site_task( $site_id, $task_id ) as $unit ) {
                 $snapshot_ids = array_map( 'intval', array_column( $unit['snapshots'], 'id' ) );
                 // prune_candidate() reverses this list to walk leaf first;

@@ -384,4 +384,107 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 			'The unscoped drainer must fail-permanent an over-ceiling job.'
 		);
 	}
+
+	/**
+	 * Lease renewal extends locked_until only for the token that holds the
+	 * lease; a competitor's renewal attempt changes nothing.
+	 */
+	public function test_renew_lease_extends_only_for_token_holder() {
+		$job_id = $this->store->create_job( 8801, 42, array() );
+
+		$now = 1000000;
+		$this->store->acquire_next_job( 'token-a', 300, $now );
+
+		$this->assertFalse( $this->store->renew_lease( $job_id, 'token-b', 300, $now + 100 ), 'A non-holder must not renew the lease.' );
+		$this->assertTrue( $this->store->renew_lease( $job_id, 'token-a', 300, $now + 100 ), 'The holder renews its own lease.' );
+
+		// Without the renewal the lease would have expired at now+300 and
+		// this claim would succeed; the renewal pushed it to now+400.
+		$this->assertNull( $this->store->acquire_next_job( 'token-b', 300, $now + 301 ), 'A renewed lease must not be reclaimable at the original expiry.' );
+		$this->assertNotNull( $this->store->acquire_next_job( 'token-b', 300, $now + 401 ), 'The renewed lease still expires normally.' );
+	}
+
+	/**
+	 * The concurrent-slow-worker scenario the fencing work exists for: a
+	 * live worker that keeps renewing is never reclaimed by a competing
+	 * lane and never drifts toward the reclaim ceiling, no matter how long
+	 * the restore runs.
+	 */
+	public function test_renewing_live_worker_never_reclaimed_or_ceilinged() {
+		$job_id = $this->store->create_job( 8801, 42, array() );
+
+		$now = 1000000;
+		$this->store->acquire_next_job( 'token-live', 300, $now );
+
+		for ( $i = 1; $i <= MainWP_Backup_Restore_Job_Store::RECLAIM_CEILING + 2; $i++ ) {
+			$now += 250;
+			$this->assertTrue( $this->store->renew_lease( $job_id, 'token-live', 300, $now ), "Renewal {$i} of the live lease must succeed." );
+			$this->assertNull( $this->store->acquire_next_job( "token-thief-{$i}", 300, $now ), 'A renewed live lease must never be reclaimed.' );
+		}
+
+		$job = $this->store->get_job( $job_id );
+		$this->assertSame( 0, (int) $job->reclaim_count, 'A renewing live worker accrues no reclaims.' );
+		$this->assertNotSame( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
+	}
+
+	/**
+	 * Once a lease is reclaimed, the previous worker's token no longer
+	 * writes: its checkpoint and status writes are refused, while the new
+	 * holder's fenced writes land.
+	 */
+	public function test_zombie_writes_refused_after_reclaim() {
+		$job_id = $this->store->create_job( 8801, 42, array( 'cursor' => 'initial' ) );
+
+		$now = 1000000;
+		$this->store->acquire_next_job( 'token-zombie', 300, $now );
+		$this->assertNotNull( $this->store->acquire_next_job( 'token-new', 300, $now + 301 ), 'The expired lease is reclaimed by a new worker.' );
+
+		$this->assertFalse( $this->store->save_checkpoint( $job_id, array( 'cursor' => 'zombie' ), 'token-zombie' ), 'A checkpoint fenced with a stale token must be refused.' );
+		$this->assertSame( 'initial', $this->store->get_job( $job_id )->checkpoint['cursor'], 'The refused checkpoint must not persist.' );
+
+		$this->assertFalse( $this->store->set_status( $job_id, MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, array(), 'token-zombie' ), 'A status write fenced with a stale token must be refused.' );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_PENDING, $this->store->get_job( $job_id )->status );
+
+		$this->assertTrue( $this->store->save_checkpoint( $job_id, array( 'cursor' => 'fresh' ), 'token-new' ), 'The live holder\'s fenced checkpoint lands.' );
+		$this->assertTrue( $this->store->set_status( $job_id, MainWP_Backup_Restore_Job_Store::STATUS_STAGING, array(), 'token-new' ), 'The live holder\'s fenced status write lands.' );
+		$this->assertSame( 'fresh', $this->store->get_job( $job_id )->checkpoint['cursor'] );
+	}
+
+	/**
+	 * A zombie worker must not terminally fail a job another worker now
+	 * owns: RECLAIM_CEILING exists for genuinely dead workers, not live
+	 * slow ones, and a stale-token fail_permanent would mark a healthy
+	 * restore failed mid-flight.
+	 */
+	public function test_zombie_cannot_terminally_fail_reclaimed_job() {
+		$job_id = $this->store->create_job( 8801, 42, array() );
+
+		$now = 1000000;
+		$this->store->acquire_next_job( 'token-zombie', 300, $now );
+		$this->assertNotNull( $this->store->acquire_next_job( 'token-new', 300, $now + 301 ) );
+
+		$this->assertFalse( $this->store->fail_permanent( $job_id, 'zombie verdict', 'token-zombie' ), 'A fenced terminal write with a stale token must be refused.' );
+		$this->assertFalse( $this->store->fail_retryable( $job_id, 'zombie retry', 1, $now + 400, 'token-zombie' ), 'A fenced retryable failure with a stale token must be refused.' );
+		$this->assertFalse( $this->store->complete_job( $job_id, 'token-zombie' ), 'A fenced completion with a stale token must be refused.' );
+
+		$job = $this->store->get_job( $job_id );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_PENDING, $job->status, 'The reclaimed job is untouched by the zombie.' );
+
+		$this->assertTrue( $this->store->complete_job( $job_id, 'token-new' ), 'The live holder\'s fenced terminal write lands.' );
+	}
+
+	/**
+	 * Tokenless writes keep working unchanged: the UI/CLI cancel path and
+	 * the reclaim-ceiling sweep legitimately hold no lease.
+	 */
+	public function test_tokenless_writes_bypass_fencing() {
+		$job_id = $this->store->create_job( 8801, 42, array() );
+
+		$now = 1000000;
+		$this->store->acquire_next_job( 'token-a', 300, $now );
+
+		$this->assertTrue( $this->store->save_checkpoint( $job_id, array( 'cursor' => 'unfenced' ) ), 'A tokenless checkpoint write is not fenced.' );
+		$this->assertTrue( $this->store->cancel_job( $job_id ), 'A tokenless cancel lands while another lane holds the lease.' );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED, $this->store->get_job( $job_id )->status );
+	}
 }

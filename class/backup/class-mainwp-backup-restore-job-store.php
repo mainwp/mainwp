@@ -273,27 +273,76 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
     }
 
     /**
+     * Renew a held lease, only for the token that holds it.
+     *
+     * A slow-but-alive worker calls this between long operations so its
+     * lease never expires under it; a worker whose lease was already
+     * reclaimed gets false and must stop its slice instead of writing
+     * over the new holder.
+     *
+     * @param int      $job_id        Job id.
+     * @param string   $token         The holder's lock token.
+     * @param int      $lease_seconds New lease duration from now.
+     * @param int|null $now           Clock override for tests.
+     *
+     * @return bool True when the token still holds the lease.
+     */
+    public function renew_lease( int $job_id, string $token, int $lease_seconds, ?int $now = null ): bool {
+        $now = null === $now ? time() : $now;
+
+        $renewed = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- dedicated restore job table.
+            $this->wpdb->prepare(
+                'UPDATE ' . $this->table() . ' SET locked_until = %d, updated = %d WHERE id = %d AND locked_by = %s', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted helper.
+                $now + $lease_seconds,
+                $now,
+                $job_id,
+                $token
+            )
+        );
+        if ( 1 === $renewed ) {
+            return true;
+        }
+
+        // Zero affected rows is ambiguous: a same-second renewal writes
+        // identical values, which MySQL reports as unaffected. Only a
+        // confirmed token mismatch means the lease was lost.
+        $holder = $this->wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- dedicated restore job table.
+            $this->wpdb->prepare( 'SELECT locked_by FROM ' . $this->table() . ' WHERE id = %d', $job_id ) // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted helper.
+        );
+        return $holder === $token;
+    }
+
+    /**
      * Persist the checkpoint.
      *
-     * @param int   $job_id     Job id.
-     * @param array $checkpoint Checkpoint.
+     * @param int         $job_id     Job id.
+     * @param array       $checkpoint Checkpoint.
+     * @param string|null $lock_token Fence the write on this lease token; null writes unfenced.
+     *
+     * @return bool True when the write landed; false when the fence
+     *              refused it because the lease was lost.
      */
-    public function save_checkpoint( int $job_id, array $checkpoint ): void {
-        $this->update_job(
+    public function save_checkpoint( int $job_id, array $checkpoint, ?string $lock_token = null ): bool {
+        return $this->update_job(
             $job_id,
             array( 'checkpoint' => wp_json_encode( $checkpoint ) ),
-            array( '%s' )
+            array( '%s' ),
+            $lock_token
         );
     }
 
     /**
      * Move a job to a status, optionally recording handles.
      *
-     * @param int    $job_id Job id.
-     * @param string $status New status.
-     * @param array  $extra  Extra columns (child_task_id, pre_snapshot_task_id).
+     * @param int         $job_id     Job id.
+     * @param string      $status     New status.
+     * @param array       $extra      Extra columns (child_task_id, pre_snapshot_task_id).
+     * @param string|null $lock_token Fence the write on this lease token; null writes unfenced.
+     *
+     * @return bool True when the write landed; false when the fence
+     *              refused it because the lease was lost.
      */
-    public function set_status( int $job_id, string $status, array $extra = array() ): void {
+    public function set_status( int $job_id, string $status, array $extra = array(), ?string $lock_token = null ): bool {
         $row = array_merge( array( 'status' => $status ), $extra );
         if ( ! in_array( $status, array( self::STATUS_FAILED_RETRYABLE, self::STATUS_FAILED_PERMANENT ), true ) && ! array_key_exists( 'last_error', $row ) ) {
             // A job moving forward has outlived its recorded failure;
@@ -302,7 +351,7 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
             $row['last_error'] = '';
         }
         $format = array_fill( 0, count( $row ), '%s' );
-        $this->update_job( $job_id, $row, $format );
+        return $this->update_job( $job_id, $row, $format, $lock_token );
     }
 
     /**
@@ -312,13 +361,17 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
      * the orchestrator owns the retry count and passes it in, while the
      * upload store increments attempt_count inside SQL.
      *
-     * @param int    $job_id        Job id.
-     * @param string $error         Error text.
-     * @param int    $attempt_count New attempt count.
-     * @param int    $next_retry_at Retry epoch.
+     * @param int         $job_id        Job id.
+     * @param string      $error         Error text.
+     * @param int         $attempt_count New attempt count.
+     * @param int         $next_retry_at Retry epoch.
+     * @param string|null $lock_token    Fence the write on this lease token; null writes unfenced.
+     *
+     * @return bool True when the write landed; false when the fence
+     *              refused it because the lease was lost.
      */
-    public function fail_retryable( int $job_id, string $error, int $attempt_count, int $next_retry_at ): void {
-        $this->update_job(
+    public function fail_retryable( int $job_id, string $error, int $attempt_count, int $next_retry_at, ?string $lock_token = null ): bool {
+        return $this->update_job(
             $job_id,
             array(
                 'status'        => self::STATUS_FAILED_RETRYABLE,
@@ -328,20 +381,23 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
                 'locked_until'  => 0,
                 'locked_by'     => '',
             ),
-            array( '%s', '%s', '%d', '%d', '%d', '%s' )
+            array( '%s', '%s', '%d', '%d', '%d', '%s' ),
+            $lock_token
         );
     }
 
     /**
      * Record a permanent failure.
      *
-     * @param int    $job_id Job id.
-     * @param string $error  Error text.
+     * @param int         $job_id     Job id.
+     * @param string      $error      Error text.
+     * @param string|null $lock_token Fence the transition on this lease token; null skips the fence.
      *
      * @return bool True when the job left an active status; false when it
-     *              was already terminal and the write was refused.
+     *              was already terminal (or the fence refused a stale
+     *              token) and the write was refused.
      */
-    public function fail_permanent( int $job_id, string $error ): bool {
+    public function fail_permanent( int $job_id, string $error, ?string $lock_token = null ): bool {
         return $this->terminal_update(
             $job_id,
             array(
@@ -349,19 +405,22 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
                 'last_error'   => $error,
                 'locked_until' => 0,
                 'locked_by'    => '',
-            )
+            ),
+            $lock_token
         );
     }
 
     /**
      * Complete a job.
      *
-     * @param int $job_id Job id.
+     * @param int         $job_id     Job id.
+     * @param string|null $lock_token Fence the transition on this lease token; null skips the fence.
      *
      * @return bool True when the job left an active status; false when it
-     *              was already terminal and the write was refused.
+     *              was already terminal (or the fence refused a stale
+     *              token) and the write was refused.
      */
-    public function complete_job( int $job_id ): bool {
+    public function complete_job( int $job_id, ?string $lock_token = null ): bool {
         return $this->terminal_update(
             $job_id,
             array(
@@ -369,26 +428,31 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
                 'last_error'   => '',
                 'locked_until' => 0,
                 'locked_by'    => '',
-            )
+            ),
+            $lock_token
         );
     }
 
     /**
      * Cancel a job.
      *
-     * @param int $job_id Job id.
+     * @param int         $job_id     Job id.
+     * @param string|null $lock_token Fence the transition on this lease token; null skips the
+     *                                fence (the UI/CLI cancel path legitimately holds no lease).
      *
      * @return bool True when the job left an active status; false when it
-     *              was already terminal and the write was refused.
+     *              was already terminal (or the fence refused a stale
+     *              token) and the write was refused.
      */
-    public function cancel_job( int $job_id ): bool {
+    public function cancel_job( int $job_id, ?string $lock_token = null ): bool {
         return $this->terminal_update(
             $job_id,
             array(
                 'status'       => self::STATUS_CANCELLED,
                 'locked_until' => 0,
                 'locked_by'    => '',
-            )
+            ),
+            $lock_token
         );
     }
 }

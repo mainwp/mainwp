@@ -67,23 +67,52 @@ abstract class MainWP_Backup_Job_Store_Base extends MainWP_DB_Base { // phpcs:ig
     /**
      * Update job columns by id, stamping updated.
      *
-     * @param int   $job_id Job id.
-     * @param array $row    Columns to set.
-     * @param array $format Column formats.
+     * When a lock token is given the write is fenced: it only lands while
+     * that token still holds the row's lease, so a worker whose lease was
+     * reclaimed can no longer overwrite the new holder's progress.
      *
-     * @return void
+     * @param int         $job_id     Job id.
+     * @param array       $row        Columns to set.
+     * @param array       $format     Column formats.
+     * @param string|null $lock_token Fence the write on this lease token; null writes unfenced.
+     *
+     * @return bool True when the write landed (or, fenced, when the token
+     *              still holds the lease); false when the lease was lost.
      */
-    protected function update_job( int $job_id, array $row, array $format ): void {
+    protected function update_job( int $job_id, array $row, array $format, ?string $lock_token = null ): bool {
         $row['updated'] = time();
         $format[]       = '%d';
 
-        $this->wpdb->update(
+        $where        = array( 'id' => $job_id );
+        $where_format = array( '%d' );
+        if ( null !== $lock_token ) {
+            $where['locked_by'] = $lock_token;
+            $where_format[]     = '%s';
+        }
+
+        $updated = $this->wpdb->update(
             $this->table(),
             $row,
-            array( 'id' => $job_id ),
+            $where,
             $format,
-            array( '%d' )
+            $where_format
         );
+
+        if ( null === $lock_token ) {
+            return false !== $updated;
+        }
+        if ( 1 === $updated ) {
+            return true;
+        }
+
+        // Zero affected rows is ambiguous under MySQL: the fence refused the
+        // write, or the values were already identical (a same-second
+        // idempotent checkpoint). Only a confirmed token mismatch is a lost
+        // lease.
+        $holder = $this->wpdb->get_var(
+            $this->wpdb->prepare( 'SELECT locked_by FROM ' . $this->table() . ' WHERE id = %d', $job_id )
+        );
+        return $holder === $lock_token;
     }
 
     /**
@@ -95,12 +124,19 @@ abstract class MainWP_Backup_Job_Store_Base extends MainWP_DB_Base { // phpcs:ig
      * Column names come from the stores' own terminal methods, never
      * from input.
      *
-     * @param int   $job_id Job id.
-     * @param array $row    Columns.
+     * When a lock token is given the transition is additionally fenced on
+     * the lease: a worker whose lease was reclaimed cannot terminally
+     * relabel a job another worker now owns. Tokenless callers (the UI
+     * cancel path, the reclaim-ceiling sweep) keep the plain
+     * first-terminal-writer-wins behavior.
+     *
+     * @param int         $job_id     Job id.
+     * @param array       $row        Columns.
+     * @param string|null $lock_token Fence the transition on this lease token; null skips the fence.
      *
      * @return bool True when exactly one active row was updated.
      */
-    protected function terminal_update( int $job_id, array $row ): bool {
+    protected function terminal_update( int $job_id, array $row, ?string $lock_token = null ): bool {
         $row['updated'] = time();
 
         $set    = array();
@@ -113,10 +149,17 @@ abstract class MainWP_Backup_Job_Store_Base extends MainWP_DB_Base { // phpcs:ig
         $statuses     = static::active_statuses();
         $placeholders = implode( ',', array_fill( 0, count( $statuses ), '%s' ) );
 
+        $fence = '';
+        $binds = array_merge( $values, array( $job_id ), $statuses );
+        if ( null !== $lock_token ) {
+            $fence   = ' AND locked_by = %s';
+            $binds[] = $lock_token;
+        }
+
         $changed = $this->wpdb->query(
             $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- replacements and placeholders come from the same counted arrays.
-                'UPDATE ' . $this->table() . ' SET ' . implode( ', ', $set ) . " WHERE id = %d AND status IN ( {$placeholders} )", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- SET columns are store-internal literals; placeholder list built from a counted array.
-                array_merge( $values, array( $job_id ), $statuses )
+                'UPDATE ' . $this->table() . ' SET ' . implode( ', ', $set ) . " WHERE id = %d AND status IN ( {$placeholders} ){$fence}", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- SET columns are store-internal literals; placeholder list built from a counted array.
+                $binds
             )
         );
 

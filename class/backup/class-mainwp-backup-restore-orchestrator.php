@@ -42,6 +42,23 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
     private static $instance = null;
 
     /**
+     * The lease token for the slice currently driven by
+     * process_pending_restore_jobs(), threaded into every job-store write
+     * so a worker whose lease was reclaimed is fenced out. Null outside a
+     * slice: direct run_job() callers hold no lease and write unfenced.
+     *
+     * @var string|null
+     */
+    private $lock_token = null;
+
+    /**
+     * The lease duration of the current slice, used by renewals.
+     *
+     * @var int
+     */
+    private $lease_seconds = 0;
+
+    /**
      * Get the singleton instance.
      *
      * @return MainWP_Backup_Restore_Orchestrator
@@ -410,14 +427,14 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             if ( null !== $fresh ) {
                 $checkpoint = $fresh->checkpoint;
                 unset( $checkpoint['cancel_intent'] );
-                $store->save_checkpoint( (int) $job->id, $checkpoint );
+                $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
             }
             return true;
         }
 
         // ok / already failed: the child confirmed - cancel the job.
         MainWP_Backup_Restore_Transfer_Driver::instance()->cleanup_staging( (int) $job->id );
-        $store->cancel_job( (int) $job->id );
+        $store->cancel_job( (int) $job->id, $this->lock_token );
         return false;
     }
 
@@ -468,8 +485,31 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         }
         $job_id = (int) $job->id;
 
+        $this->lock_token    = $token;
+        $this->lease_seconds = $budget_seconds + 60;
+
+        /**
+         * Filters the bound applied to child round trips during a restore
+         * slice, so a single hung request cannot outlive the slice's lease
+         * (the connect layer's own backstop is 20 hours).
+         *
+         * @param int $bound Timeout bound in seconds; defaults to the lease.
+         */
+        $request_bound = (int) apply_filters( 'mainwp_restore_child_request_timeout', $this->lease_seconds );
+        $cap_timeout   = function ( $timeout ) use ( $request_bound ) {
+            return min( (int) $timeout, max( 30, $request_bound ) );
+        };
+        add_filter( 'mainwp_fetch_url_site_timeout', $cap_timeout );
+
         try {
             while ( true ) {
+                // A slice that lost its lease (reclaimed after an expiry)
+                // stops driving: the new holder owns the job now, and every
+                // fenced write below would be refused anyway.
+                if ( ! $store->renew_lease( $job_id, $token, $this->lease_seconds ) ) {
+                    break;
+                }
+
                 $before = $job->status;
                 $this->run_job( $job, $deadline );
 
@@ -490,7 +530,10 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             $code = ( $e instanceof MainWP_Exception ) ? $e->get_message_error_code() : '';
             $this->record_failure( $job, MainWP_Backup_Error_Codes::sanitize_message( $e->getMessage() ), true, $code );
         } finally {
+            remove_filter( 'mainwp_fetch_url_site_timeout', $cap_timeout );
             $store->release_lock( $job_id, $token );
+            $this->lock_token    = null;
+            $this->lease_seconds = 0;
         }
 
         // Still mid-flight on a phase that polls the child: kick a near-term
@@ -504,6 +547,26 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         ) {
             $this->schedule_continuation();
         }
+    }
+
+    /**
+     * Renew the current slice's lease between long operations.
+     *
+     * Called inside the child poll loops so a slow-but-alive worker keeps
+     * its lease instead of drifting toward a reclaim. False means the
+     * lease was already reclaimed - the caller stops its phase; the new
+     * holder owns the job. Callers outside a leased slice (direct
+     * run_job() consumers) hold no token and always continue.
+     *
+     * @param object $job Job row.
+     *
+     * @return bool True when work on the job may continue.
+     */
+    private function lease_still_held( object $job ): bool {
+        if ( null === $this->lock_token ) {
+            return true;
+        }
+        return MainWP_Backup_Restore_Job_Store::instance()->renew_lease( (int) $job->id, $this->lock_token, $this->lease_seconds );
     }
 
     /**
@@ -569,7 +632,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
     private function phase_pending( object $job ): void {
         // Preflight runs first so a doomed restore (a vanished cloud artifact)
         // is stopped before the optional safety backup spends real work.
-        MainWP_Backup_Restore_Job_Store::instance()->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_PREFLIGHT );
+        MainWP_Backup_Restore_Job_Store::instance()->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_PREFLIGHT, array(), $this->lock_token );
     }
 
     /**
@@ -602,14 +665,14 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             $task_id = MainWP_Backup_Executor::trigger_backup( (int) $job->site_id, 'full' );
             if ( null === $task_id ) {
                 // Synchronous fallback children completed the backup inline.
-                $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_STAGING );
+                $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_STAGING, array(), $this->lock_token );
                 return;
             }
-            $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT, array( 'pre_snapshot_task_id' => $task_id ) );
+            $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT, array( 'pre_snapshot_task_id' => $task_id ), $this->lock_token );
             return;
         }
 
-        $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_STAGING );
+        $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_STAGING, array(), $this->lock_token );
     }
 
     /**
@@ -639,6 +702,12 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 )
             );
 
+            // The child round trip may have outlasted the lease; a worker
+            // that lost it stops here instead of writing over the new holder.
+            if ( ! $this->lease_still_held( $job ) ) {
+                return;
+            }
+
             $phase = is_array( $payload ) && isset( $payload['phase'] ) ? (string) $payload['phase'] : '';
 
             if ( 'completed' === $phase ) {
@@ -654,7 +723,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 }
                 $checkpoint                           = $job->checkpoint;
                 $checkpoint['pre_snapshot_artifacts'] = $artifacts;
-                $store->save_checkpoint( (int) $job->id, $checkpoint );
+                $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
 
                 // Release the ad-hoc handle: a completed safety backup left
                 // persisted would short-circuit the NEXT restore's
@@ -663,7 +732,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 // counts on for rollback.
                 MainWP_DB::instance()->update_website_option( $website, MainWP_Backup_Executor::ADHOC_TASK_OPTION, '' );
 
-                $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_STAGING );
+                $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_STAGING, array(), $this->lock_token );
                 return;
             }
             if ( 'failed' === $phase || '' === $phase ) {
@@ -698,7 +767,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             $pull_manifest = $driver->generate_pull_manifest( $plan );
             if ( null !== $pull_manifest ) {
                 $checkpoint['plan'] = $plan; // Expected hashes filled from the upload records.
-                $store->save_checkpoint( (int) $job->id, $checkpoint );
+                $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
 
                 $created = $this->create_child_restore_task( $job, $checkpoint, $plan, $pull_manifest );
                 if ( '' === $created['task_id'] ) {
@@ -709,13 +778,13 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                     // The child created the task but refused the
                     // manifest: stage and stream into that same task.
                     $checkpoint['cloud_pull_tried'] = true;
-                    $store->save_checkpoint( (int) $job->id, $checkpoint );
-                    $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_STAGING, array( 'child_task_id' => $created['task_id'] ) );
+                    $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
+                    $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_STAGING, array( 'child_task_id' => $created['task_id'] ), $this->lock_token );
                     do_action( 'mainwp_log_warning', sprintf( 'Restore job %d: the site declined the direct cloud download; using the standard transfer.', (int) $job->id ) );
                     return;
                 }
 
-                $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, array( 'child_task_id' => $created['task_id'] ) );
+                $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, array( 'child_task_id' => $created['task_id'] ), $this->lock_token );
                 $artifact_count = count( $pull_manifest['artifacts'] );
                 do_action(
                     'mainwp_log_info',
@@ -738,7 +807,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         if ( $needs_staging ) {
             $outcome            = MainWP_Backup_Restore_Transfer_Driver::instance()->stage_artifacts( (int) $job->id, $plan, $deadline );
             $checkpoint['plan'] = $plan;
-            $store->save_checkpoint( (int) $job->id, $checkpoint );
+            $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
 
             if ( null !== $outcome['error'] ) {
                 $this->record_failure( $job, (string) $outcome['error'], false, isset( $outcome['error_code'] ) ? (string) $outcome['error_code'] : '' );
@@ -752,7 +821,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         // A child task may already exist when a rejected pull manifest
         // routed this job back through staging.
         if ( ! empty( $job->child_task_id ) ) {
-            $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING );
+            $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING, array(), $this->lock_token );
             return;
         }
 
@@ -761,7 +830,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             return; // Failure already recorded.
         }
 
-        $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING, array( 'child_task_id' => $created['task_id'] ) );
+        $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING, array( 'child_task_id' => $created['task_id'] ), $this->lock_token );
     }
 
     /**
@@ -793,14 +862,14 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         );
 
         $checkpoint['transfer'] = $cursor;
-        $store->save_checkpoint( (int) $job->id, $checkpoint );
+        $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
 
         if ( null !== $outcome['error'] ) {
             $this->record_failure( $job, $outcome['error'], $outcome['retryable'] );
             return;
         }
         if ( $outcome['done'] ) {
-            $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_RUNNING );
+            $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, array(), $this->lock_token );
         }
     }
 
@@ -840,6 +909,12 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
              */
             do_action( 'mainwp_backup_diag_restore_poll', (int) $job->id, (int) $job->site_id, is_array( $payload ) ? $payload : array(), microtime( true ) - $diag_start );
 
+            // The child round trip may have outlasted the lease; a worker
+            // that lost it stops here instead of writing over the new holder.
+            if ( ! $this->lease_still_held( $job ) ) {
+                return;
+            }
+
             // A terminal failed phase carries an error key too - phase wins.
             if ( ! is_array( $payload ) || ( ! isset( $payload['phase'] ) && isset( $payload['error'] ) ) ) {
                 $message    = is_array( $payload ) && isset( $payload['error'] ) ? (string) $payload['error'] : esc_html__( 'The child site returned no restore status.', 'mainwp' );
@@ -858,8 +933,8 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 if ( isset( $payload['sub_state']['progress']['woo_preserve'] ) ) {
                     $checkpoint['verification']['woo_preserve'] = $payload['sub_state']['progress']['woo_preserve'];
                 }
-                $store->save_checkpoint( (int) $job->id, $checkpoint );
-                $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_VERIFYING );
+                $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
+                $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_VERIFYING, array(), $this->lock_token );
                 return;
             }
             if ( 'failed' === $phase ) {
@@ -874,8 +949,8 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                     $checkpoint                     = $job->checkpoint;
                     $checkpoint['cloud_pull_tried'] = true;
                     $checkpoint['transfer']         = array();
-                    $store->save_checkpoint( (int) $job->id, $checkpoint );
-                    $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_STAGING, array( 'child_task_id' => '' ) );
+                    $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
+                    $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_STAGING, array( 'child_task_id' => '' ), $this->lock_token );
                     do_action( 'mainwp_log_warning', sprintf( 'Restore job %d: the direct cloud download failed on the site; retrying with the standard transfer.', (int) $job->id ) );
                     return;
                 }
@@ -906,7 +981,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
 
         $checkpoint                                  = $job->checkpoint;
         $checkpoint['verification']['site_responds'] = $reachable;
-        $store->save_checkpoint( (int) $job->id, $checkpoint );
+        $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
 
         if ( ! $reachable ) {
             $this->record_failure( $job, esc_html__( 'The site did not respond after the restore. The restore completed on the child; check the site directly.', 'mainwp' ), true );
@@ -915,7 +990,11 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
 
         MainWP_Backup_Restore_Transfer_Driver::instance()->cleanup_staging( (int) $job->id );
         $this->prune_pre_snapshot( $job );
-        $store->complete_job( (int) $job->id );
+        if ( ! $store->complete_job( (int) $job->id, $this->lock_token ) ) {
+            // Already terminal, or this worker's lease was reclaimed - the
+            // completion (and its event below) belongs to the live holder.
+            return;
+        }
 
         /**
          * Fires after a restore completes and the site responds.
@@ -1026,7 +1105,12 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
 
         if ( ! $retryable || MainWP_Backup_Backoff::attempts_exhausted( $attempts ) ) {
             $this->stamp_error_code( $job, $error_code );
-            $store->fail_permanent( (int) $job->id, $error );
+            if ( ! $store->fail_permanent( (int) $job->id, $error, $this->lock_token ) ) {
+                // Already terminal, or this worker's lease was reclaimed -
+                // the verdict (and its event below) is not this worker's to
+                // record anymore.
+                return;
+            }
 
             /**
              * Fires after a restore fails permanently (not retryable, or
@@ -1057,10 +1141,14 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         // a stable machine-readable code for support and AI diagnosis.
         $checkpoint['last_error_code']       = $error_code;
         $checkpoint['last_failure_transfer'] = $this->transfer_position( $checkpoint );
-        $store->save_checkpoint( (int) $job->id, $checkpoint );
+        $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
 
         $next_retry_at = time() + MainWP_Backup_Backoff::delay_for_attempt( $attempts );
-        $store->fail_retryable( (int) $job->id, $error, $attempts, $next_retry_at );
+        if ( ! $store->fail_retryable( (int) $job->id, $error, $attempts, $next_retry_at, $this->lock_token ) ) {
+            // The lease was reclaimed; the live holder owns the retry
+            // bookkeeping, so the diag event below is not emitted here.
+            return;
+        }
 
         /**
          * Fires after a restore failure is recorded as retryable, so the
@@ -1156,7 +1244,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         $fresh                         = $store->get_job( (int) $job->id );
         $checkpoint                    = null !== $fresh ? $fresh->checkpoint : $job->checkpoint;
         $checkpoint['last_error_code'] = $error_code;
-        $store->save_checkpoint( (int) $job->id, $checkpoint );
+        $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
     }
 
     /**

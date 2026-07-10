@@ -91,8 +91,6 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             $this->add_action( 'mainwp_backup_download_file', array( &$this, 'ajax_mainwp_backup_download_file' ) );
             $this->add_action( 'mainwp_backup_delete_file', array( &$this, 'mainwp_backup_delete_file' ) );
             $this->add_action( 'mainwp_backup_getfilesize', array( &$this, 'mainwp_backup_getfilesize' ) );
-            $this->add_action( 'mainwp_backup_upload_getprogress', array( &$this, 'mainwp_backup_upload_getprogress' ) );
-            $this->add_action( 'mainwp_backup_upload_checkstatus', array( &$this, 'mainwp_backup_upload_checkstatus' ) );
             $this->add_action( 'mainwp_backup_refresh_archives', array( &$this, 'mainwp_backup_refresh_archives' ) );
         }
         // Page: ManageBackupsSnapshots (restore).
@@ -1430,95 +1428,6 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                 die( wp_json_encode( array( 'error' => esc_html__( 'Invalid backup file location.', 'mainwp' ) ) ) );
             }
             die( wp_json_encode( array( 'result' => MainWP_Backup_File_Manager::backup_get_file_size( $local ) ) ) );
-        } catch ( MainWP_Exception $e ) {
-            $this->die_exception_error( $e );
-        }
-    }
-
-    /**
-     * Method mainwp_backup_upload_checkstatus()
-     *
-     * Check upload status
-     *
-     * @throws MainWP_Exception On errors.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Exception
-     */
-    public function mainwp_backup_upload_checkstatus() {
-        $this->secure_request( 'mainwp_backup_upload_checkstatus' );
-
-        try {
-            $unique = isset( $_POST['unique'] ) ? sanitize_text_field( wp_unslash( $_POST['unique'] ) ) : false; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-            $array  = get_option( 'mainwp_upload_progress' );
-            $info   = apply_filters( 'mainwp_remote_destination_info', array(), ( isset( $_POST['remote_destination'] ) ? sanitize_text_field( wp_unslash( $_POST['remote_destination'] ) ) : '' ) ); // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-
-            if ( ! is_array( $array ) || empty( $unique ) || empty( $array[ $unique ] ) || empty( $array[ $unique ]['dts'] ) ) {
-                die(
-                    wp_json_encode(
-                        array(
-                            'status' => 'stalled',
-                            'info'   => $info,
-                        )
-                    )
-                );
-            } elseif ( isset( $array[ $unique ]['finished'] ) ) {
-                die(
-                    wp_json_encode(
-                        array(
-                            'status' => 'done',
-                            'info'   => $info,
-                        )
-                    )
-                );
-            } elseif ( isset( $array[ $unique ]['dts'] ) && intval( $array[ $unique ]['dts'] ) < ( time() - ( 2 * 60 ) ) ) {
-
-                // 2minutes.
-                    die(
-                        wp_json_encode(
-                            array(
-                                'status' => 'stalled',
-                                'info'   => $info,
-                            )
-                        )
-                    );
-            } else {
-                die(
-                    wp_json_encode(
-                        array(
-                            'status' => 'busy',
-                            'info'   => $info,
-                        )
-                    )
-                );
-            }
-        } catch ( MainWP_Exception $e ) {
-            $this->die_exception_error( $e );
-        }
-    }
-
-    /**
-     * Method mainwp_backup_upload_getprogress()
-     *
-     * Get progress status.
-     *
-     * @throws MainWP_Exception On finished or errors.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Exception
-     */
-    public function mainwp_backup_upload_getprogress() {
-        $this->secure_request( 'mainwp_backup_upload_getprogress' );
-
-        try {
-            $array  = get_option( 'mainwp_upload_progress' );
-            $unique = isset( $_POST['unique'] ) ? sanitize_text_field( wp_unslash( $_POST['unique'] ) ) : false; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-
-            if ( ! is_array( $array ) || ! isset( $array[ $unique ] ) ) {
-                die( wp_json_encode( array( 'result' => 0 ) ) );
-            } elseif ( isset( $array[ $unique ]['finished'] ) ) {
-                throw new MainWP_Exception( esc_html__( 'finished...', 'mainwp' ) );
-            } else {
-                wp_send_json( array( 'result' => ( isset( $array[ $unique ]['offset'] ) ? $array[ $unique ]['offset'] : $array[ $unique ] ) ) );
-            }
         } catch ( MainWP_Exception $e ) {
             $this->die_exception_error( $e );
         }

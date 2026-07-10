@@ -1845,7 +1845,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         if ( isset( $_GET['dashboard'] ) ) {
             $websiteid = intval( $_GET['dashboard'] );
 
-            $dashboardWebsite = MainWP_DB::instance()->get_website_by_id( $websiteid );
+            $dashboardWebsite = MainWP_DB::instance()->get_website_by_id_params( $websiteid, array( 'view_fields' => array( 'child_monitor_data' ) ) );
             if ( MainWP_System_Utility::can_edit_website( $dashboardWebsite ) ) {
                 static::render_dashboard( $dashboardWebsite );
 

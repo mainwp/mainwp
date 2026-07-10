@@ -36,6 +36,12 @@ class MainWP_System_Monitor_Cron implements MainWP_System_Monitor_Interface {
     const ISSUE_USE_WP_CRON_DISABLED = 'use_wp_cron_disabled'; // MainWP setting.
 
     /**
+     * Constant to support displaying child monitor issues.
+     */
+    const ISSUE_CHILD_MONITOR_STALE    = 'child_monitor_stale';
+    const ISSUE_CHILD_MONITOR_FALLBACK = 'child_monitor_fallback_used';
+
+    /**
      * Monitor name.
      */
     const NAME = 'cron';
@@ -142,5 +148,24 @@ class MainWP_System_Monitor_Cron implements MainWP_System_Monitor_Interface {
         }
 
         return $results;
+    }
+
+    /**
+     * Map a monitor issue code to the corresponding child monitor issue code.
+     *
+     * Used to display the appropriate issue message for a child site monitor issue.
+     *
+     * @param string $code Monitor issue code.
+     *
+     * @return string Corresponding child monitor issue code, or an empty string if no mapping exists.
+     */
+    public static function map_child_monitor_issue_code( $code ) {
+
+        $mapping = array(
+            static::ISSUE_MONITOR_STALE    => static::ISSUE_CHILD_MONITOR_STALE,
+            static::ISSUE_MONITOR_FALLBACK => static::ISSUE_CHILD_MONITOR_FALLBACK,
+        );
+
+        return isset( $mapping[ $code ] ) ? $mapping[ $code ] : '';
     }
 }

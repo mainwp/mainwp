@@ -80,6 +80,28 @@ class MainWP_System_Monitor_Issues {
                     'The MainWP "Use WP-Cron" setting is disabled. Ensure that an external cron job is configured to execute scheduled MainWP tasks.',
                     'mainwp'
                 );
+            case MainWP_System_Monitor_Cron::ISSUE_CHILD_MONITOR_STALE:
+                $delay = isset( $payload['delay'] ) ? (int) $payload['delay'] : 0;
+                $human = human_time_diff(
+                    time() - $delay,
+                    time()
+                );
+
+                if ( ! empty( $payload['wp_cron_disabled'] ) ) {
+                    return sprintf(
+                        __( 'The child site scheduled tasks have not run for %s. WP-Cron is disabled on the child site, so verify that its external cron job is running correctly.', 'mainwp' ),
+                        $human
+                    );
+                }
+                return sprintf(
+                    __( 'The child site scheduled tasks have not run for %s. Verify that WP-Cron is functioning correctly on the child site.', 'mainwp' ),
+                    $human
+                );
+            case MainWP_System_Monitor_Cron::ISSUE_CHILD_MONITOR_FALLBACK:
+                return __(
+                    'The scheduled System Monitor task on the child site was overdue, so it was executed during a page request. If this happens frequently, verify that WP-Cron or an external cron job is working correctly on the child site.',
+                    'mainwp'
+                );
             default:
                 // Nothing.
                 break;
@@ -162,19 +184,22 @@ class MainWP_System_Monitor_Issues {
                 'description' => __( 'MainWP scheduled tasks will not run unless they are triggered by an external cron job.', 'mainwp' ),
                 'help'        => 'customization/delayed-wp-cron',
             ),
+            MainWP_System_Monitor_Cron::ISSUE_CHILD_MONITOR_STALE => array(
+                'code'        => MainWP_System_Monitor_Cron::ISSUE_MONITOR_STALE,
+                'severity'    => self::SEVERITY_WARNING, // Default severity.
+                'title'       => __( 'Child site scheduled tasks have not run recently.', 'mainwp' ),
+                'description' => __( 'The System Monitor cron on the child site has not executed within the expected interval.', 'mainwp' ),
+                'help'        => 'customization/delayed-wp-cron',
+            ),
+            MainWP_System_Monitor_Cron::ISSUE_CHILD_MONITOR_FALLBACK => array(
+                'code'        => MainWP_System_Monitor_Cron::ISSUE_MONITOR_FALLBACK,
+                'severity'    => self::SEVERITY_WARNING,
+                'title'       => __( 'Child site System Monitor fallback execution was used.', 'mainwp' ),
+                'description' => __( 'The scheduled System Monitor task on the child site was executed during a page request because it did not run on schedule. Verify that WP-Cron or the external cron job on the child site is working correctly.', 'mainwp' ),
+                'help'        => 'customization/delayed-wp-cron',
+            ),
         );
 
         return $definitions[ $code ] ?? array();
-    }
-
-    /**
-     * Add a monitor issue.
-     *
-     * @param MainWP_System_Monitor_Result $result Monitor result.
-     *
-     * @return int Insert ID, or 0 on failure.
-     */
-    public static function add( MainWP_System_Monitor_Result $result ) {
-        return MainWP_System_Monitor_Storage::save_result( $result );
     }
 }

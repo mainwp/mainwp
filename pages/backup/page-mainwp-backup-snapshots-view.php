@@ -115,6 +115,9 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     <button type="button" class="ui button" id="mainwp-native-backup-cancel-btn" style="display: none;">
                         <i class="times icon"></i><?php esc_html_e( 'Cancel backup', 'mainwp' ); ?>
                     </button>
+                    <button type="button" class="ui basic button<?php echo $site_id > 0 ? '' : ' disabled'; ?>" id="mainwp-snapshots-cleanup-btn" <?php disabled( 0, $site_id ); ?>>
+                        <i class="broom icon"></i><?php esc_html_e( 'Clean up', 'mainwp' ); ?>
+                    </button>
                     <span id="mainwp-native-backup-now-status" class="mainwp-native-backup-now-status" style="margin-left: 1em; color: var(--mainwp-text-color, inherit);"></span>
                 </div>
                     <?php $backup_now_local_only = $site_id > 0 && empty( MainWP_DB_Backup::instance()->manual_backup_task_destinations( $site_id ) ); ?>
@@ -209,7 +212,8 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 rollback: '<?php echo esc_js( wp_create_nonce( 'mainwp_restore_rollback' ) ); ?>',
                 nativeBackupInitiate: '<?php echo esc_js( wp_create_nonce( 'mainwp_native_backup_initiate' ) ); ?>',
                 nativeBackupProgress: '<?php echo esc_js( wp_create_nonce( 'mainwp_native_backup_progress' ) ); ?>',
-                nativeBackupCancel: '<?php echo esc_js( wp_create_nonce( 'mainwp_native_backup_cancel' ) ); ?>'
+                nativeBackupCancel: '<?php echo esc_js( wp_create_nonce( 'mainwp_native_backup_cancel' ) ); ?>',
+                snapshotsCleanup: '<?php echo esc_js( wp_create_nonce( 'mainwp_snapshots_cleanup' ) ); ?>'
             };
             var statusLabels = <?php echo wp_json_encode( $labels ); ?>;
             var currentSite = <?php echo (int) $site_id; ?>;
@@ -317,6 +321,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 currentSite = siteId;
                 if ( siteId > 0 ) {
                     $( '#mainwp-native-backup-now-btn' ).prop( 'disabled', false ).removeClass( 'disabled' );
+                    $( '#mainwp-snapshots-cleanup-btn' ).prop( 'disabled', false ).removeClass( 'disabled' );
                 }
                 var $tbody = $( '#mainwp-restore-snapshots-table tbody' );
                 $tbody.html( '<tr><td colspan="6"><div class="ui active inline loader mini"></div></td></tr>' );
@@ -819,6 +824,40 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     setBackupStatus( '<?php echo esc_js( esc_html__( 'Could not cancel the backup. Please try again.', 'mainwp' ) ); ?>', true );
                     $( '#mainwp-native-backup-cancel-btn' ).prop( 'disabled', false ).removeClass( 'disabled' );
                 } );
+            } );
+
+            $( '#mainwp-snapshots-cleanup-btn' ).on( 'click', function () {
+                if ( ! ( currentSite > 0 ) ) {
+                    return;
+                }
+                var runCleanup = function () {
+                    $( '#mainwp-snapshots-cleanup-btn' ).prop( 'disabled', true ).addClass( 'disabled' );
+                    setBackupStatus( '<?php echo esc_js( esc_html__( 'Cleaning up backups...', 'mainwp' ) ); ?>', false );
+                    $.post( ajaxurl, { action: 'mainwp_snapshots_cleanup', security: nonces.snapshotsCleanup, site_id: currentSite }, function ( response ) {
+                        $( '#mainwp-snapshots-cleanup-btn' ).prop( 'disabled', false ).removeClass( 'disabled' );
+                        if ( ! response || response.error ) {
+                            setBackupStatus( ( response && response.error ) ? response.error : '<?php echo esc_js( esc_html__( 'Cleanup failed. Please try again.', 'mainwp' ) ); ?>', true );
+                            return;
+                        }
+                        var summary = '<?php echo esc_js( esc_html__( 'Cleanup finished: removed %1$s leftover folder(s), pruned %2$s old backup(s).', 'mainwp' ) ); ?>'
+                            .replace( '%1$s', String( parseInt( response.orphan_dirs_removed, 10 ) || 0 ) )
+                            .replace( '%2$s', String( parseInt( response.snapshots_pruned, 10 ) || 0 ) );
+                        if ( response.errors && response.errors.length ) {
+                            summary += ' <?php echo esc_js( esc_html__( 'Some items could not be removed.', 'mainwp' ) ); ?>';
+                        }
+                        setBackupStatus( summary, !! ( response.errors && response.errors.length ) );
+                        loadSnapshots( currentSite );
+                    }, 'json' ).fail( function () {
+                        $( '#mainwp-snapshots-cleanup-btn' ).prop( 'disabled', false ).removeClass( 'disabled' );
+                        setBackupStatus( '<?php echo esc_js( esc_html__( 'Cleanup failed. Please try again.', 'mainwp' ) ); ?>', true );
+                    } );
+                };
+                var confirmMsg = '<?php echo esc_js( esc_html__( 'Clean up this site\'s backups? Leftover files from interrupted backups are removed, and old on-demand backups beyond the retention count are pruned. Pruned backups can no longer be restored.', 'mainwp' ) ); ?>';
+                if ( 'function' === typeof mainwp_confirm ) {
+                    mainwp_confirm( confirmMsg, runCleanup );
+                } else if ( window.confirm( confirmMsg ) ) {
+                    runCleanup();
+                }
             } );
 
             if ( currentSite > 0 ) {

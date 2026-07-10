@@ -103,6 +103,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             $this->add_action( 'mainwp_native_backup_initiate', array( &$this, 'mainwp_native_backup_initiate' ) );
             $this->add_action( 'mainwp_native_backup_progress', array( &$this, 'mainwp_native_backup_progress' ) );
             $this->add_action( 'mainwp_native_backup_cancel', array( &$this, 'mainwp_native_backup_cancel' ) );
+            $this->add_action( 'mainwp_snapshots_cleanup', array( &$this, 'mainwp_snapshots_cleanup' ) );
             $this->add_action( 'mainwp_backup_diagnostics_export', array( &$this, 'mainwp_backup_diagnostics_export' ) );
         }
         // Intentionally not capability-gated: the backup-before-update check is
@@ -266,6 +267,42 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                 'local_only'            => empty( MainWP_DB_Backup::instance()->manual_backup_task_destinations( $site_id ) ),
                 'active_restore_job_id' => null !== $active_job ? (int) $active_job->id : 0,
                 'manual_backup_running' => ! empty( $manual_task ) && (int) $manual_task->completed < (int) $manual_task->last_run,
+            )
+        );
+    }
+
+    /**
+     * Clean up a site's backups: sweep orphaned snapshot directories left
+     * by interrupted runs, then prune the on-demand snapshots down to a
+     * keep-count.
+     *
+     * Runs the same guarded deletion sequence retention uses, but
+     * synchronously - a low-traffic dashboard whose WP-Cron rarely fires
+     * gets its disk back on click instead of waiting for the queue to
+     * drain. An explicit keep overrides the task's retention count for
+     * this run only; it is floored at 1 so a cleanup can never delete a
+     * site's last restorable backup.
+     */
+    public function mainwp_snapshots_cleanup() {
+        $this->secure_request( 'mainwp_snapshots_cleanup' );
+        $site_id = isset( $_POST['site_id'] ) ? (int) $_POST['site_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by secure_request above.
+
+        $website = $this->authorize_restore_site( $site_id );
+        if ( null === $website ) {
+            return;
+        }
+
+        $keep = isset( $_POST['keep'] ) && '' !== $_POST['keep'] ? max( 1, (int) $_POST['keep'] ) : null; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by secure_request above.
+
+        $result = MainWP_Backup_Retention_Executor::instance()->cleanup_site_backups( $site_id, $keep );
+
+        wp_send_json(
+            array(
+                'result'              => 'ok',
+                'orphan_dirs_removed' => (int) $result['orphan_dirs_removed'],
+                'units_pruned'        => (int) $result['pruned'],
+                'snapshots_pruned'    => (int) $result['snapshots_pruned'],
+                'errors'              => array_map( 'esc_html', (array) $result['errors'] ),
             )
         );
     }

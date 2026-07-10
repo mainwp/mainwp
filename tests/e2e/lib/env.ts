@@ -44,6 +44,11 @@ export const ENV = {
   runDestructive: ['1', 'true', 'yes'].includes(
     (process.env.REMOTE_TEST_RUN_DESTRUCTIVE ?? '').trim().toLowerCase(),
   ),
+
+  // Completed on-demand snapshots the post-suite cleanup keeps per test child.
+  // Floored at 1 server-side so a cleanup can never delete a site's last
+  // restorable backup.
+  keepSnapshots: Math.max(1, parseInt(process.env.REMOTE_TEST_KEEP_SNAPSHOTS ?? '2', 10) || 2),
 };
 
 /** Dashboard login is fully configured (URL + creds). */

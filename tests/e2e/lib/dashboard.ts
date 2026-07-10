@@ -297,6 +297,60 @@ export class Dashboard {
   }
 
   /**
+   * Clean up a site's backups on the server: sweep leftover files from
+   * interrupted runs, then prune old on-demand snapshots beyond `keep`.
+   *
+   * Drives the Snapshots page's `mainwp_snapshots_cleanup` endpoint directly
+   * from the page context (same session, same nonce the Clean up button uses)
+   * so the keep-count can be passed explicitly - the button itself has no keep
+   * input, it uses the task's retention setting. The nonce is read from the
+   * page source because the page keeps its nonces inside a script IIFE, not in
+   * DOM fields. A missing nonce means the deployed build predates the cleanup
+   * feature - deploy the current branch build first.
+   */
+  async cleanupSnapshots(
+    siteId: string,
+    keep: number,
+  ): Promise<{ orphanDirsRemoved: number; snapshotsPruned: number; errors: string[] }> {
+    await this.openNativeBackups(siteId);
+    const html = await this.page.content();
+    const nonceMatch = html.match(/snapshotsCleanup:\s*'([^']+)'/);
+    if (!nonceMatch) {
+      throw new Error(
+        'Cleanup nonce not found on the Snapshots page - the deployed dashboard build ' +
+          'predates the mainwp_snapshots_cleanup feature. Deploy the current branch build.',
+      );
+    }
+
+    const response = await this.page.evaluate(
+      async (args: { nonce: string; siteId: string; keep: number }) => {
+        const body = new URLSearchParams({
+          action: 'mainwp_snapshots_cleanup',
+          security: args.nonce,
+          site_id: args.siteId,
+          keep: String(args.keep),
+        });
+        const res = await fetch((window as unknown as { ajaxurl: string }).ajaxurl, {
+          method: 'POST',
+          credentials: 'same-origin',
+          body,
+        });
+        return res.json();
+      },
+      { nonce: nonceMatch[1], siteId, keep },
+    );
+
+    if (!response || response.error) {
+      throw new Error(`Cleanup failed for site ${siteId}: ${response?.error ?? 'no response'}`);
+    }
+    return {
+      orphanDirsRemoved: parseInt(response.orphan_dirs_removed, 10) || 0,
+      snapshotsPruned: parseInt(response.snapshots_pruned, 10) || 0,
+      errors: Array.isArray(response.errors) ? response.errors : [],
+    };
+  }
+
+  /**
    * Restore the newest snapshot to the site and wait until it reports completed.
    *
    * DESTRUCTIVE: replaces the site's files and database with the snapshot. The

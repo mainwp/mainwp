@@ -52,6 +52,16 @@ class MainWP_Backup_Storage_SFTP implements MainWP_Backup_Storage_Provider { // 
     const CONNECT_TIMEOUT = 30;
 
     /**
+     * Option holding the trust-on-first-use host-key fingerprints, keyed
+     * by destination id. Fingerprints are public values (hashes of the
+     * server's public key), so they live outside the encrypted settings
+     * envelope and survive without a re-encryption round trip.
+     *
+     * @var string
+     */
+    const HOSTKEYS_OPTION = 'mainwp_backup_sftp_hostkeys';
+
+    /**
      * Provider settings.
      *
      * @var array
@@ -114,6 +124,11 @@ class MainWP_Backup_Storage_SFTP implements MainWP_Backup_Storage_Provider { // 
 
         $sftp = new \phpseclib3\Net\SFTP( $host, $port, static::CONNECT_TIMEOUT );
 
+        // Verify the server's identity BEFORE any credential is offered: a
+        // mismatch must fail the handshake, not hand the password to an
+        // interceptor first.
+        $this->verify_host_key( $sftp );
+
         $username    = isset( $this->settings['username'] ) ? (string) $this->settings['username'] : '';
         $password    = isset( $this->settings['password'] ) ? (string) $this->settings['password'] : '';
         $private_key = isset( $this->settings['private_key'] ) ? (string) $this->settings['private_key'] : '';
@@ -133,6 +148,110 @@ class MainWP_Backup_Storage_SFTP implements MainWP_Backup_Storage_Provider { // 
         }
 
         return $sftp;
+    }
+
+    /**
+     * Verify the server's host key against the pinned or learned
+     * fingerprint, trust-on-first-use.
+     *
+     * A manual `host_fingerprint` setting is the authority when present.
+     * Otherwise the fingerprint learned on the destination's first
+     * successful handshake is required on every later connect; the first
+     * handshake of a saved destination stores it. A connection without a
+     * destination id (a probe before the row exists) verifies a manual
+     * pin but learns nothing.
+     *
+     * @param object $sftp Connection exposing getServerPublicHostKey().
+     *
+     * @throws \RuntimeException When the server key cannot be read, or the
+     *                           fingerprint does not match the pin (401 so
+     *                           the destination parks instead of retrying
+     *                           into a possible interception).
+     */
+    public function verify_host_key( $sftp ): void {
+        $server_key = $sftp->getServerPublicHostKey();
+        if ( ! is_string( $server_key ) || '' === $server_key ) {
+            throw new \RuntimeException( 'The SFTP server did not present a host key.', 0 );
+        }
+
+        $offered = static::fingerprint_host_key( $server_key );
+        $manual  = isset( $this->settings['host_fingerprint'] ) ? trim( (string) $this->settings['host_fingerprint'] ) : '';
+
+        if ( '' !== $manual ) {
+            if ( ! hash_equals( static::normalize_fingerprint( $manual ), static::normalize_fingerprint( $offered ) ) ) {
+                throw new \RuntimeException( esc_html( 'The SFTP server\'s host key does not match the pinned fingerprint. Pinned: ' . $manual . ' - offered: ' . $offered . '. If the server key was intentionally rotated, update the fingerprint in the destination settings.' ), 401 );
+            }
+            return;
+        }
+
+        $destination_id = isset( $this->settings['destination_id'] ) ? (int) $this->settings['destination_id'] : 0;
+        if ( $destination_id <= 0 ) {
+            return; // Nothing to pin against and nowhere to learn to.
+        }
+
+        $known = get_option( static::HOSTKEYS_OPTION );
+        $known = is_array( $known ) ? $known : array();
+
+        if ( ! isset( $known[ $destination_id ] ) ) {
+            // First use: trust and remember.
+            $known[ $destination_id ] = $offered;
+            update_option( static::HOSTKEYS_OPTION, $known, false );
+            return;
+        }
+
+        if ( ! hash_equals( static::normalize_fingerprint( (string) $known[ $destination_id ] ), static::normalize_fingerprint( $offered ) ) ) {
+            throw new \RuntimeException( esc_html( 'The SFTP server\'s host key changed. Known: ' . $known[ $destination_id ] . ' - offered: ' . $offered . '. This can mean the connection is being intercepted; if the server key was intentionally rotated, re-save the destination to trust the new key.' ), 401 );
+        }
+    }
+
+    /**
+     * The OpenSSH SHA256 fingerprint of a host key string, comparable
+     * with `ssh-keygen -lf` output: the base64 key blob is decoded and
+     * hashed, not the textual line.
+     *
+     * @param string $server_key Host key string (algorithm + base64 blob).
+     *
+     * @return string Fingerprint in SHA256:base64 form.
+     */
+    public static function fingerprint_host_key( string $server_key ): string {
+        $parts = explode( ' ', trim( $server_key ) );
+        $blob  = isset( $parts[1] ) ? base64_decode( $parts[1], true ) : false; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- decoding the SSH wire-format key blob, per RFC 4253.
+        if ( false === $blob || '' === $blob ) {
+            $blob = $server_key; // Unparseable key strings still fingerprint deterministically.
+        }
+        return 'SHA256:' . rtrim( base64_encode( hash( 'sha256', $blob, true ) ), '=' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- OpenSSH's own fingerprint encoding.
+    }
+
+    /**
+     * Normalize a fingerprint for comparison: optional SHA256: prefix and
+     * base64 padding are cosmetic.
+     *
+     * @param string $fingerprint Fingerprint.
+     *
+     * @return string
+     */
+    private static function normalize_fingerprint( string $fingerprint ): string {
+        $fingerprint = trim( $fingerprint );
+        if ( 0 === stripos( $fingerprint, 'SHA256:' ) ) {
+            $fingerprint = substr( $fingerprint, 7 );
+        }
+        return rtrim( $fingerprint, '=' );
+    }
+
+    /**
+     * Forget the learned host-key fingerprint for a destination - called
+     * when the destination is edited (the host may have changed; the next
+     * connect re-learns) or deleted.
+     *
+     * @param int $destination_id Destination id.
+     */
+    public static function forget_host_key( int $destination_id ): void {
+        $known = get_option( static::HOSTKEYS_OPTION );
+        if ( ! is_array( $known ) || ! isset( $known[ $destination_id ] ) ) {
+            return;
+        }
+        unset( $known[ $destination_id ] );
+        update_option( static::HOSTKEYS_OPTION, $known, false );
     }
 
     /**

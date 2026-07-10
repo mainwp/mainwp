@@ -307,6 +307,13 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                             <em><?php esc_html_e( 'An existing absolute path on the SFTP server. Backups store under it.', 'mainwp' ); ?></em>
                         </div>
                     </div>
+                    <div class="ui grid field">
+                        <label class="six wide column middle aligned"><?php esc_html_e( 'Host key fingerprint', 'mainwp' ); ?></label>
+                        <div class="ten wide column">
+                            <input type="text" id="mainwp-storage-sftp-host-fingerprint" value="" placeholder="SHA256:..."/>
+                            <em><?php esc_html_e( 'Optional. The server\'s SHA256 host key fingerprint (ssh-keygen -lf). When empty, the key seen on the first connection is trusted and pinned automatically.', 'mainwp' ); ?></em>
+                        </div>
+                    </div>
                 </div>
                 <div class="mainwp-storage-fields" data-provider="local" style="display:none">
                     <div class="ui grid field">
@@ -371,7 +378,8 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                         username: jQuery( '#mainwp-storage-sftp-username' ).val(),
                         password: jQuery( '#mainwp-storage-sftp-password' ).val(),
                         private_key: jQuery( '#mainwp-storage-sftp-private-key' ).val(),
-                        base_path: jQuery( '#mainwp-storage-sftp-base-path' ).val()
+                        base_path: jQuery( '#mainwp-storage-sftp-base-path' ).val(),
+                        host_fingerprint: jQuery( '#mainwp-storage-sftp-host-fingerprint' ).val()
                     };
                 }
                 return {
@@ -441,7 +449,7 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
 
             jQuery( '#mainwp-storage-reset' ).on( 'click', function () {
                 jQuery( '#mainwp-storage-id' ).val( 0 );
-                jQuery( '#mainwp-storage-name, #mainwp-storage-endpoint, #mainwp-storage-bucket, #mainwp-storage-region, #mainwp-storage-access-key, #mainwp-storage-secret-key, #mainwp-storage-sse, #mainwp-storage-base-path, #mainwp-storage-gcs-bucket, #mainwp-storage-gcs-access-key, #mainwp-storage-gcs-secret-key, #mainwp-storage-dropbox-app-key, #mainwp-storage-dropbox-app-secret, #mainwp-storage-dropbox-refresh-token, #mainwp-storage-dropbox-base-path, #mainwp-storage-sftp-host, #mainwp-storage-sftp-port, #mainwp-storage-sftp-username, #mainwp-storage-sftp-password, #mainwp-storage-sftp-private-key, #mainwp-storage-sftp-base-path' ).val( '' );
+                jQuery( '#mainwp-storage-name, #mainwp-storage-endpoint, #mainwp-storage-bucket, #mainwp-storage-region, #mainwp-storage-access-key, #mainwp-storage-secret-key, #mainwp-storage-sse, #mainwp-storage-base-path, #mainwp-storage-gcs-bucket, #mainwp-storage-gcs-access-key, #mainwp-storage-gcs-secret-key, #mainwp-storage-dropbox-app-key, #mainwp-storage-dropbox-app-secret, #mainwp-storage-dropbox-refresh-token, #mainwp-storage-dropbox-base-path, #mainwp-storage-sftp-host, #mainwp-storage-sftp-port, #mainwp-storage-sftp-username, #mainwp-storage-sftp-password, #mainwp-storage-sftp-private-key, #mainwp-storage-sftp-base-path, #mainwp-storage-sftp-host-fingerprint' ).val( '' );
                 jQuery( '#mainwp-storage-path-style, #mainwp-storage-is-default' ).prop( 'checked', false );
                 jQuery( '#mainwp-storage-form-title' ).text( '<?php echo esc_js( __( 'Add Storage Destination', 'mainwp' ) ); ?>' );
                 jQuery( this ).hide();
@@ -451,7 +459,7 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                 s3: { endpoint: '#mainwp-storage-endpoint', bucket: '#mainwp-storage-bucket', region: '#mainwp-storage-region', access_key: '#mainwp-storage-access-key', sse: '#mainwp-storage-sse' },
                 gcs: { bucket: '#mainwp-storage-gcs-bucket', access_key: '#mainwp-storage-gcs-access-key' },
                 dropbox: { app_key: '#mainwp-storage-dropbox-app-key', base_path: '#mainwp-storage-dropbox-base-path' },
-                sftp: { host: '#mainwp-storage-sftp-host', port: '#mainwp-storage-sftp-port', username: '#mainwp-storage-sftp-username', base_path: '#mainwp-storage-sftp-base-path' },
+                sftp: { host: '#mainwp-storage-sftp-host', port: '#mainwp-storage-sftp-port', username: '#mainwp-storage-sftp-username', base_path: '#mainwp-storage-sftp-base-path', host_fingerprint: '#mainwp-storage-sftp-host-fingerprint' },
                 local: { base_path: '#mainwp-storage-base-path' }
             };
 

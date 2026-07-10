@@ -160,6 +160,13 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
             MainWP_Keys_Manager::instance()->delete_key_file( $old_file_key );
         }
 
+        if ( false !== $updated && isset( $data['settings'] ) ) {
+            // Edited settings may point at a different server; drop the
+            // learned host-key pin so the next connect re-learns instead of
+            // refusing the legitimate new host.
+            MainWP_Backup_Storage_SFTP::forget_host_key( $id );
+        }
+
         return false !== $updated;
     }
 
@@ -177,6 +184,9 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
 
         if ( $deleted && '' !== $file_key ) {
             MainWP_Keys_Manager::instance()->delete_key_file( $file_key );
+        }
+        if ( $deleted ) {
+            MainWP_Backup_Storage_SFTP::forget_host_key( $id );
         }
 
         return $deleted;
@@ -236,6 +246,10 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
      */
     public function make_provider( object $row ): MainWP_Backup_Storage_Provider {
         $settings = isset( $row->settings ) && is_array( $row->settings ) ? $row->settings : array();
+
+        // The SFTP provider's trust-on-first-use host-key store is keyed by
+        // destination id; the settings envelope itself never carries one.
+        $settings['destination_id'] = isset( $row->id ) ? (int) $row->id : 0;
 
         switch ( (string) $row->provider ) {
             case 'local':

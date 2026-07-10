@@ -568,4 +568,162 @@ class MainWP_Backup_Storage_SFTP_Test extends \WP_UnitTestCase { // phpcs:ignore
 		$this->expectExceptionMessage( 'link-local or cloud-metadata' );
 		$provider->default_connection();
 	}
+
+	/**
+	 * A fake exposing only the host-key surface verify_host_key() reads.
+	 *
+	 * @param string $key Server public host key string (algo + base64 blob).
+	 *
+	 * @return object
+	 */
+	private function host_key_connection( $key ) {
+		return new class( $key ) { // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- test double.
+			/**
+			 * Key string.
+			 *
+			 * @var string
+			 */
+			private $key;
+
+			/**
+			 * Constructor.
+			 *
+			 * @param string $key Key string.
+			 */
+			public function __construct( $key ) {
+				$this->key = $key;
+			}
+
+			/**
+			 * The server's public host key.
+			 *
+			 * @return string
+			 */
+			public function getServerPublicHostKey() { // phpcs:ignore WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid -- phpseclib3 surface.
+				return $this->key;
+			}
+		};
+	}
+
+	/**
+	 * A deterministic fake host key (the base64 blob only needs to decode).
+	 *
+	 * @param string $seed Vary to model a different server key.
+	 *
+	 * @return string
+	 */
+	private function fake_host_key( $seed = 'a' ) {
+		return 'ssh-ed25519 ' . base64_encode( 'fake-host-key-blob-' . $seed );
+	}
+
+	/**
+	 * A manually pinned fingerprint that matches the server's key passes
+	 * verification.
+	 *
+	 * @return void
+	 */
+	public function test_manual_fingerprint_pin_accepts_matching_key() {
+		$key      = $this->fake_host_key();
+		$expected = MainWP_Backup_Storage_SFTP::fingerprint_host_key( $key );
+
+		$provider = new MainWP_Backup_Storage_SFTP(
+			array(
+				'host'             => 'sftp.example.com',
+				'host_fingerprint' => $expected,
+			)
+		);
+
+		$provider->verify_host_key( $this->host_key_connection( $key ) );
+		$this->assertTrue( true, 'A matching manual pin must not throw.' );
+	}
+
+	/**
+	 * A manually pinned fingerprint refuses a different server key, naming
+	 * both fingerprints so the admin can compare, and parks the destination
+	 * (401) instead of retrying into a possible interception.
+	 *
+	 * @return void
+	 */
+	public function test_manual_fingerprint_pin_refuses_mismatched_key() {
+		$pinned = MainWP_Backup_Storage_SFTP::fingerprint_host_key( $this->fake_host_key( 'expected' ) );
+
+		$provider = new MainWP_Backup_Storage_SFTP(
+			array(
+				'host'             => 'sftp.example.com',
+				'host_fingerprint' => $pinned,
+			)
+		);
+
+		try {
+			$provider->verify_host_key( $this->host_key_connection( $this->fake_host_key( 'attacker' ) ) );
+			$this->fail( 'A mismatched host key must throw.' );
+		} catch ( \RuntimeException $e ) {
+			$this->assertSame( 401, $e->getCode(), 'A host-key mismatch parks the destination instead of retrying.' );
+			$this->assertStringContainsString( $pinned, $e->getMessage(), 'The pinned fingerprint must be named.' );
+			$this->assertStringContainsString( MainWP_Backup_Storage_SFTP::fingerprint_host_key( $this->fake_host_key( 'attacker' ) ), $e->getMessage(), 'The offered fingerprint must be named.' );
+		}
+	}
+
+	/**
+	 * Trust-on-first-use: the first successful verification stores the
+	 * server's fingerprint for the destination, and a later connect from a
+	 * different key is refused.
+	 *
+	 * @return void
+	 */
+	public function test_first_connect_stores_fingerprint_and_refuses_change() {
+		delete_option( 'mainwp_backup_sftp_hostkeys' );
+		$key = $this->fake_host_key( 'original' );
+
+		$provider = new MainWP_Backup_Storage_SFTP(
+			array(
+				'host'           => 'sftp.example.com',
+				'destination_id' => 77,
+			)
+		);
+
+		try {
+			$provider->verify_host_key( $this->host_key_connection( $key ) );
+
+			$stored = get_option( 'mainwp_backup_sftp_hostkeys' );
+			$this->assertSame( MainWP_Backup_Storage_SFTP::fingerprint_host_key( $key ), isset( $stored[77] ) ? $stored[77] : null, 'The first connect must store the fingerprint.' );
+
+			$this->expectException( \RuntimeException::class );
+			$provider->verify_host_key( $this->host_key_connection( $this->fake_host_key( 'rotated' ) ) );
+		} finally {
+			delete_option( 'mainwp_backup_sftp_hostkeys' );
+		}
+	}
+
+	/**
+	 * Without a destination id (a bare connection test before the row
+	 * exists) nothing persists - TOFU only pins saved destinations.
+	 *
+	 * @return void
+	 */
+	public function test_no_destination_id_skips_tofu_persistence() {
+		delete_option( 'mainwp_backup_sftp_hostkeys' );
+
+		$provider = new MainWP_Backup_Storage_SFTP( array( 'host' => 'sftp.example.com' ) );
+		$provider->verify_host_key( $this->host_key_connection( $this->fake_host_key() ) );
+
+		$this->assertFalse( get_option( 'mainwp_backup_sftp_hostkeys' ), 'A connection without a saved destination must not persist a pin.' );
+	}
+
+	/**
+	 * The fingerprint hashes the decoded key blob (OpenSSH's SHA256 form,
+	 * comparable with ssh-keygen -lf output), not the textual key string.
+	 *
+	 * @return void
+	 */
+	public function test_fingerprint_hashes_decoded_blob_in_openssh_form() {
+		$blob = 'fake-host-key-blob-a';
+		$key  = 'ssh-ed25519 ' . base64_encode( $blob );
+
+		$this->assertSame(
+			'SHA256:' . rtrim( base64_encode( hash( 'sha256', $blob, true ) ), '=' ),
+			MainWP_Backup_Storage_SFTP::fingerprint_host_key( $key ),
+			'The fingerprint must be the OpenSSH SHA256 form of the decoded blob.'
+		);
+	}
 }

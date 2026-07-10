@@ -31,7 +31,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * @var string DB version info.
      */
-    protected $mainwp_db_version = '9.0.2.21'; // NOSONAR - no IP. Bumped to add wp_backup.authorized_sites, the site set that passed authorize_task_scope() at save time; the scheduled runner backs up only that set (cron has no user context to authorize a group's later additions against) and pre-migration rows backfill lazily on their first run. Previous 9.0.2.20 bump made pre_update_tables() drop the legacy unnamed UNIQUE (task_id) key from wp_backup_progress - a leftover of the <= 8.53 CREATE clause that capped the table at one per-site progress row per task, so the second add_backup_task_progress() insert on a multi-site run died on a duplicate key. Previous 9.0.2.19 bump added reclaim_count to wp_backup_upload_job and wp_backup_restore_job, the stale-lease-reclaim counter that lets acquire_next_job() route a job whose worker keeps dying mid-run to fail_permanent instead of reclaiming it forever. Previous 9.0.2.18 bump added wp_backup_snapshot.woo_meta, the Woo order-storage facts a database-bearing backup captured at dump time, read by the restore initiate handler's preserve-orders gate; 9.0.2.17 bump added wp_backup.backup_notices, the informational-notes channel that keeps run notes (like the large-site ZIP auto-switch) out of backup_errors; 9.0.2.16 added wp_backup.zip_force_override for the large-site ZIP auto-switch override; 9.0.2.15 added wp_backup_snapshot.test_restore_state/test_restore_at for the verified-restore (sandbox test-restore) result; 9.0.2.14 added wp_backup_snapshot.encryption for the per-snapshot archive-encryption metadata.
+    protected $mainwp_db_version = '9.0.2.22'; // NOSONAR - no IP. Bumped to make wp_backup.authorized_sites nullable: NULL is now the never-stamped sentinel (a pre-authorized_sites row, backfilled from live expansion on its first run), while a stamped empty string is authoritative and means the save authorized zero sites - so an empty-saved group can no longer be mistaken for a legacy row and lazily auto-authorize a member added later. Previous 9.0.2.21 added wp_backup.authorized_sites, the site set that passed authorize_task_scope() at save time; the scheduled runner backs up only that set (cron has no user context to authorize a group's later additions against). Previous 9.0.2.20 bump made pre_update_tables() drop the legacy unnamed UNIQUE (task_id) key from wp_backup_progress - a leftover of the <= 8.53 CREATE clause that capped the table at one per-site progress row per task, so the second add_backup_task_progress() insert on a multi-site run died on a duplicate key. Previous 9.0.2.19 bump added reclaim_count to wp_backup_upload_job and wp_backup_restore_job, the stale-lease-reclaim counter that lets acquire_next_job() route a job whose worker keeps dying mid-run to fail_permanent instead of reclaiming it forever. Previous 9.0.2.18 bump added wp_backup_snapshot.woo_meta, the Woo order-storage facts a database-bearing backup captured at dump time, read by the restore initiate handler's preserve-orders gate; 9.0.2.17 bump added wp_backup.backup_notices, the informational-notes channel that keeps run notes (like the large-site ZIP auto-switch) out of backup_errors; 9.0.2.16 added wp_backup.zip_force_override for the large-site ZIP auto-switch override; 9.0.2.15 added wp_backup_snapshot.test_restore_state/test_restore_at for the verified-restore (sandbox test-restore) result; 9.0.2.14 added wp_backup_snapshot.encryption for the per-snapshot archive-encryption metadata.
 
     /**
      * Protected variable to hold the database option name.
@@ -379,7 +379,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
   max_chain_length int(11) NOT NULL DEFAULT 0,
   zip_force_override tinyint(1) NOT NULL DEFAULT 0,
   backup_notices text NOT NULL DEFAULT '',
-  authorized_sites text NOT NULL DEFAULT '',
+  authorized_sites text NULL,
   KEY idx_next_run (next_run)";
         if ( empty( $currentVersion ) ) {
             $tbl .= ',
@@ -827,6 +827,22 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
                 foreach ( $unique_keys as $key_row ) {
                     $this->wpdb->query( 'ALTER TABLE ' . $progress_table . ' DROP INDEX ' . esc_sql( $key_row->Key_name ) ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL statement; identifiers escaped via esc_sql.
                 }
+            }
+        }
+
+        // Make wp_backup.authorized_sites nullable so NULL is the
+        // never-stamped sentinel. A dev install that added the column under
+        // 9.0.2.21 (NOT NULL DEFAULT '') is converted here, and its existing
+        // '' rows are reset to NULL so they are treated as never-stamped and
+        // backfill from their live expansion on the next run rather than
+        // reading as "authorized to zero sites". dbDelta does not reliably
+        // MODIFY an existing column, so it is done explicitly.
+        if ( version_compare( $currentVersion, '9.0.2.22', '<' ) ) { // NOSONAR - none IP.
+            $backup_table = esc_sql( $this->table_name( 'wp_backup' ) );
+            $has_column   = $this->wpdb->get_results( "SHOW COLUMNS FROM {$backup_table} LIKE 'authorized_sites'" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL introspection; table name escaped via esc_sql.
+            if ( ! empty( $has_column ) ) {
+                $this->wpdb->query( "ALTER TABLE {$backup_table} MODIFY COLUMN authorized_sites text NULL" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL statement; table name escaped via esc_sql.
+                $this->wpdb->query( "UPDATE {$backup_table} SET authorized_sites = NULL WHERE authorized_sites = ''" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery -- one-time reset of the pre-nullable default.
             }
         }
 

@@ -162,6 +162,31 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
     }
 
     /**
+     * Authorize a task edit against BOTH the pre-edit and the replacement
+     * scope. Authorizing only the new selection lets a caller who cannot
+     * reach a task's current sites re-scope it to sites they can reach and
+     * then delete it - the delete gate would see the laundered scope while
+     * the snapshot purge still enumerates the task's historical sites and
+     * destroys backups the caller was never allowed to touch. Requiring
+     * access to the current scope too closes that laundering path at the
+     * entry point.
+     *
+     * @param string $old_sites  The task's current comma-separated site ids.
+     * @param string $old_groups The task's current comma-separated group ids.
+     * @param string $new_sites  The replacement comma-separated site ids.
+     * @param string $new_groups The replacement comma-separated group ids.
+     *
+     * @return string '' when both scopes are authorized, an error message otherwise.
+     */
+    public static function authorize_task_update_scope( $old_sites, $old_groups, $new_sites, $new_groups ) {
+        $pre_edit = static::authorize_task_scope( $old_sites, $old_groups );
+        if ( '' !== $pre_edit ) {
+            return $pre_edit;
+        }
+        return static::authorize_task_scope( $new_sites, $new_groups );
+    }
+
+    /**
      * Expand a task's sites/groups selection into one deduplicated site-id
      * list - the same expansion authorize_task_scope() checks, so a
      * snapshot stamped from it is by construction the authorized set.
@@ -244,13 +269,19 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         // column (the pre-snapshot runner resolved selections the same way).
         $expanded = static::expand_task_site_ids( empty( $task->groups ) ? $task->sites : '', $task->groups );
 
-        if ( ! isset( $task->authorized_sites ) || '' === (string) $task->authorized_sites ) {
-            // Pre-migration row: adopt the live expansion once and arm the gate.
+        // NULL is the never-stamped sentinel: a row created before the
+        // authorized_sites column existed. It adopts its live expansion once
+        // (preserving its behavior at the upgrade instant) and arms the gate.
+        // A stamped empty string is authoritative - it means the save
+        // authorized zero sites, NOT "adopt whatever the group holds now" -
+        // so an empty-saved group can never lazily auto-authorize a member
+        // added later (that would reopen the very bypass this snapshot closes).
+        if ( ! isset( $task->authorized_sites ) || null === $task->authorized_sites ) {
             MainWP_DB_Backup::instance()->update_backup_task_with_values( $task->id, array( 'authorized_sites' => implode( ',', $expanded ) ) );
             return $expanded;
         }
 
-        $authorized = array_map( 'intval', explode( ',', (string) $task->authorized_sites ) );
+        $authorized = static::authorized_snapshot_ids( $task );
 
         $run_sites = array();
         foreach ( $expanded as $site_id ) {
@@ -271,6 +302,46 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         }
 
         return $run_sites;
+    }
+
+    /**
+     * The task's authorized-site snapshot as an int id list, or null when
+     * the row was never stamped (a pre-migration legacy row).
+     *
+     * @param object $task Task row.
+     *
+     * @return int[]|null Authorized site ids, or null for a never-stamped row.
+     */
+    public static function authorized_snapshot_ids( $task ) {
+        if ( ! isset( $task->authorized_sites ) || null === $task->authorized_sites ) {
+            return null;
+        }
+        return array_values( array_filter( array_map( 'intval', explode( ',', (string) $task->authorized_sites ) ) ) );
+    }
+
+    /**
+     * The sites a stale-reset may act on: the live expansion restricted to
+     * the authorized snapshot, with no side effects (no drift notice, no
+     * backfill). A site added to a task's group after the snapshot was saved
+     * is excluded, so reset never sends a cancel for a site the task does not
+     * actually run - which the child would otherwise resolve against that
+     * site's single active (possibly unrelated) backup.
+     *
+     * @param object $task Task row.
+     *
+     * @return int[] Site ids reset may act on.
+     */
+    public static function resolve_reset_task_site_ids( $task ) {
+        $expanded   = static::expand_task_site_ids( empty( $task->groups ) ? $task->sites : '', $task->groups );
+        $authorized = static::authorized_snapshot_ids( $task );
+
+        // A never-stamped legacy row has no snapshot to restrict against;
+        // reset acts on its full live expansion (its pre-migration behavior).
+        if ( null === $authorized ) {
+            return $expanded;
+        }
+
+        return array_values( array_intersect( $expanded, $authorized ) );
     }
 
     /**
@@ -336,7 +407,12 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             }
         }
 
-        $scope_error = static::authorize_task_scope( $sites, $groups );
+        // Authorize the pre-edit scope as well as the replacement: a caller
+        // who cannot reach the task's current sites must not be able to
+        // re-scope it to sites they can reach and then delete it to launder
+        // the per-site purge gate (the purge enumerates the task's historical
+        // sites, not just the current selection).
+        $scope_error = static::authorize_task_update_scope( $task->sites, $task->groups, $sites, $groups );
         if ( '' !== $scope_error ) {
             die( wp_json_encode( array( 'error' => $scope_error ) ) );
         }
@@ -1135,7 +1211,14 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             return array( 'error' => $scope_error );
         }
 
-        $purge_result = MainWP_Backup_Retention_Executor::instance()->purge_snapshots_for_task( (int) $task->id, ! empty( $task->delete_cloud_copies ) );
+        // Defense-in-depth for the re-scope-then-delete laundering path
+        // (the entry-point guard is authorize_task_update_scope): bound the
+        // purge to the task's authorized-site snapshot so a delete can only
+        // destroy backups for sites the current scope authorizes, never every
+        // site the task ever historically ran. A never-stamped legacy row
+        // (null snapshot) keeps the full-history purge.
+        $authorized   = static::authorized_snapshot_ids( $task );
+        $purge_result = MainWP_Backup_Retention_Executor::instance()->purge_snapshots_for_task( (int) $task->id, ! empty( $task->delete_cloud_copies ), $authorized );
 
         // The purge deliberately keeps a snapshot when its artifact cannot be
         // reached (recorded outside the uploads root, or an unlink refused).

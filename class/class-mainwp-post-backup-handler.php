@@ -129,7 +129,10 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
      *
      * @param object $site Deleted site object.
      *
-     * @return bool True when the cleanup ran, false on an empty site.
+     * @return bool True when the cleanup ran (no task existed, or the purge
+     *              succeeded and the task was removed); false on an empty
+     *              site, or when the purge failed and the task was kept for
+     *              retention to retry.
      */
     public function hook_delete_manual_backup_task( $site ) {
         if ( empty( $site ) || empty( $site->id ) ) {
@@ -137,20 +140,38 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         }
 
         $task = MainWP_DB_Backup::instance()->get_manual_backup_task( $site->id );
-        if ( $task ) {
-            $purge_result = MainWP_Backup_Retention_Executor::instance()->purge_snapshots_for_task( (int) $task->id, ! empty( $task->delete_cloud_copies ) );
-
-            /**
-             * Fires after a deleted or removed task's restorable snapshots
-             * have been purged.
-             *
-             * @param int   $task_id Task id whose snapshots were purged.
-             * @param array $result  Purge result: pruned, snapshots_pruned, errors.
-             */
-            do_action( 'mainwp_backup_task_snapshots_purged', (int) $task->id, $purge_result );
-
-            MainWP_DB_Backup::instance()->remove_backup_task( (int) $task->id );
+        if ( ! $task ) {
+            return true;
         }
+
+        $purge_result = MainWP_Backup_Retention_Executor::instance()->purge_snapshots_for_task( (int) $task->id, ! empty( $task->delete_cloud_copies ) );
+
+        // The purge deliberately keeps a snapshot when its artifact cannot be
+        // reached (recorded outside the uploads root, or an unlink refused).
+        // Dropping the task and its diagnostics anyway would orphan those
+        // artifacts with no owning task for retention to retry, erase the
+        // evidence, and still report the cleanup as done. Keep the task and
+        // its diagnostics; log the failure so a site-deletion orphan is at
+        // least recorded.
+        if ( ! empty( $purge_result['errors'] ) ) {
+            MainWP_Logger::instance()->debug_for_website(
+                $site,
+                'backup',
+                'Site deleted but its hidden backup task (id ' . (int) $task->id . ') could not be fully purged; keeping the task and its diagnostics.'
+            );
+            return false;
+        }
+
+        /**
+         * Fires after a deleted or removed task's restorable snapshots
+         * have been purged.
+         *
+         * @param int   $task_id Task id whose snapshots were purged.
+         * @param array $result  Purge result: pruned, snapshots_pruned, errors.
+         */
+        do_action( 'mainwp_backup_task_snapshots_purged', (int) $task->id, $purge_result );
+
+        MainWP_DB_Backup::instance()->remove_backup_task( (int) $task->id );
 
         return true;
     }
@@ -805,7 +826,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             return;
         }
 
-        $site_ids = $this->resolve_reset_task_site_ids( $task );
+        $site_ids = MainWP_Manage_Backups_Handler::resolve_reset_task_site_ids( $task );
         foreach ( $site_ids as $site_id ) {
             if ( ! \mainwp_current_user_can( 'site', $site_id ) ) {
                 wp_send_json( array( 'error' => esc_html__( 'You are not allowed to manage backups for one or more sites in this task.', 'mainwp' ) ) );
@@ -904,34 +925,6 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         );
 
         return true;
-    }
-
-    /**
-     * Expand a backup task's sites and groups into a flat list of site ids,
-     * for the reset handler's per-site authorization loop. Mirrors the same
-     * expansion MainWP_Backup_List_View::display() and
-     * MainWP_Manage_Backups_Handler's own (private) resolve_task_site_ids()
-     * already perform.
-     *
-     * @param object $task Task row.
-     *
-     * @return int[] Site ids.
-     */
-    private function resolve_reset_task_site_ids( $task ) {
-        $sites = empty( $task->sites ) ? array() : array_map( 'intval', explode( ',', $task->sites ) );
-
-        if ( ! empty( $task->groups ) ) {
-            foreach ( explode( ',', $task->groups ) as $group_id ) {
-                foreach ( MainWP_DB::instance()->get_websites_by_group_id( $group_id ) as $website ) {
-                    $site_id = (int) $website->id;
-                    if ( ! in_array( $site_id, $sites, true ) ) {
-                        $sites[] = $site_id;
-                    }
-                }
-            }
-        }
-
-        return $sites;
     }
 
     /**

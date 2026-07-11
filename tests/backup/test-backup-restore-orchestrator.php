@@ -1243,10 +1243,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			'mainwp_fetch_url_authed_pre',
 			function ( $pre, $website, $what ) use ( $job_id ) {
 				if ( 'restore_task_run' === $what ) {
-					$store                       = MainWP_Backup_Restore_Job_Store::instance();
-					$checkpoint                  = $store->get_job( $job_id )->checkpoint;
-					$checkpoint['cancel_intent'] = true;
-					$store->save_checkpoint( $job_id, $checkpoint );
+					MainWP_Backup_Restore_Job_Store::instance()->arm_cancel_intent( $job_id );
 				}
 				return $pre;
 			},

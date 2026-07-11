@@ -71,8 +71,8 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
      * @return int Destination id, 0 on failure.
      */
     public function add_destination( array $data ): int {
-        $encrypted = $this->encrypt_settings( isset( $data['settings'] ) && is_array( $data['settings'] ) ? $data['settings'] : array() );
-        if ( false === $encrypted ) {
+        $intent = $this->stage_settings_encryption( isset( $data['settings'] ) && is_array( $data['settings'] ) ? $data['settings'] : array() );
+        if ( false === $intent ) {
             return 0;
         }
 
@@ -86,7 +86,7 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
             array(
                 'provider'   => isset( $data['provider'] ) ? (string) $data['provider'] : '',
                 'name'       => isset( $data['name'] ) ? (string) $data['name'] : '',
-                'settings'   => $encrypted,
+                'settings'   => $intent['value'],
                 'is_default' => $is_default,
                 'created'    => time(),
                 'updated'    => time(),
@@ -94,7 +94,14 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
             array( '%s', '%s', '%s', '%d', '%d', '%d' )
         );
 
-        return $inserted ? (int) $this->wpdb->insert_id : 0;
+        if ( ! $inserted ) {
+            // The row never landed: delete the key file the staging
+            // minted instead of orphaning it.
+            MainWP_Credential_Storage::rollback_credential_intent( $intent );
+            return 0;
+        }
+
+        return (int) $this->wpdb->insert_id;
     }
 
     /**
@@ -117,13 +124,14 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
             }
         }
 
-        $old_file_key = '';
+        $old_file_key    = '';
+        $settings_intent = null;
         if ( isset( $data['settings'] ) && is_array( $data['settings'] ) ) {
-            $encrypted = $this->encrypt_settings( $data['settings'] );
-            if ( false === $encrypted ) {
+            $settings_intent = $this->stage_settings_encryption( $data['settings'] );
+            if ( false === $settings_intent ) {
                 return false;
             }
-            $row['settings'] = $encrypted;
+            $row['settings'] = $settings_intent['value'];
             $format[]        = '%s';
 
             $old_file_key = $this->stored_file_key( $id );
@@ -152,6 +160,13 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
             $format,
             array( '%d' )
         );
+
+        if ( false === $updated && null !== $settings_intent ) {
+            // The row update never landed: the stored envelope still
+            // references the old key file, so the freshly minted one is
+            // deleted instead of orphaned - and the old one survives.
+            MainWP_Credential_Storage::rollback_credential_intent( $settings_intent );
+        }
 
         if ( false !== $updated && '' !== $old_file_key && isset( $row['settings'] ) && $old_file_key !== $this->envelope_file_key( (string) $row['settings'] ) ) {
             // The re-encrypted settings sealed under a fresh key file;
@@ -272,18 +287,23 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
      *
      * @param array $settings Provider settings.
      *
-     * @return string|false Envelope, or false when encryption is unavailable.
+     * @return array|false Staged credential intent (value/retire_key/fresh_key),
+     *                     or false when encryption is unavailable. The caller
+     *                     persists the value, then settles the intent by
+     *                     outcome: rollback deletes the freshly minted key
+     *                     file when the write never landed.
      */
-    private function encrypt_settings( array $settings ) {
+    private function stage_settings_encryption( array $settings ) {
         $json = wp_json_encode( $settings );
         if ( false === $json ) {
             return false;
         }
-        $envelope = MainWP_Credential_Storage::encrypt_credential( $json, 'storage_destination' );
-        if ( ! is_string( $envelope ) || ! MainWP_Credential_Storage::is_credential_envelope( $envelope ) ) {
+        $intent = MainWP_Credential_Storage::stage_credential_encryption( $json, 'storage_destination' );
+        if ( false === $intent || ! is_string( $intent['value'] ) || ! MainWP_Credential_Storage::is_credential_envelope( $intent['value'] ) ) {
+            MainWP_Credential_Storage::rollback_credential_intent( $intent );
             return false;
         }
-        return $envelope;
+        return $intent;
     }
 
     /**

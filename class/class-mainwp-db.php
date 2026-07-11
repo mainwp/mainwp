@@ -3209,16 +3209,22 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         $isStaging         = isset( $params['isStaging'] ) ? $params['isStaging'] : 0;
 
         // MWP-1548: encrypt http_user / http_pass at rest. Empty / null
-        // values pass through unchanged (encrypt_credential is a no-op
-        // for those). A non-empty value that fails to encrypt produces
-        // false here, which we treat as a hard failure -- refuse to
-        // persist plaintext credentials when the encryption layer is
-        // unhealthy (missing keyfile, un-writable uploads dir).
-        $encrypted_http_user = MainWP_Credential_Storage::encrypt_credential( $http_user, 'http_user' );
-        $encrypted_http_pass = MainWP_Credential_Storage::encrypt_credential( $http_pass, 'http_pass' );
-        if ( false === $encrypted_http_user || false === $encrypted_http_pass ) {
+        // values pass through unchanged (staging is a no-op for those).
+        // A non-empty value that fails to encrypt produces false here,
+        // which we treat as a hard failure -- refuse to persist plaintext
+        // credentials when the encryption layer is unhealthy (missing
+        // keyfile, un-writable uploads dir). Staged, not committed: a
+        // create that never inserts deletes the keys it minted instead
+        // of orphaning them.
+        $user_intent = MainWP_Credential_Storage::stage_credential_encryption( $http_user, 'http_user' );
+        $pass_intent = MainWP_Credential_Storage::stage_credential_encryption( $http_pass, 'http_pass' );
+        if ( false === $user_intent || false === $pass_intent ) {
+            MainWP_Credential_Storage::rollback_credential_intent( $user_intent );
+            MainWP_Credential_Storage::rollback_credential_intent( $pass_intent );
             return false;
         }
+        $encrypted_http_user = $user_intent['value'];
+        $encrypted_http_pass = $pass_intent['value'];
 
         if ( MainWP_Utility::ctype_digit( $userid ) ) {
             if ( '/' !== substr( $url, - 1 ) ) {
@@ -3314,10 +3320,16 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                     );
                 }
                 MainWP_Manage_Sites_List_Table::invalidate_manage_sites_cache();
+                MainWP_Credential_Storage::commit_credential_intent( $user_intent );
+                MainWP_Credential_Storage::commit_credential_intent( $pass_intent );
                 return $websiteid;
             }
         }
 
+        // The insert never happened (bad user id or a failed write):
+        // delete the freshly minted key files instead of orphaning them.
+        MainWP_Credential_Storage::rollback_credential_intent( $user_intent );
+        MainWP_Credential_Storage::rollback_credential_intent( $pass_intent );
         return false;
     }
 

@@ -66,9 +66,7 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 		$stale = $this->store->get_job( $job_id )->checkpoint;
 
 		// The UI records the intent unfenced.
-		$armed                  = $this->store->get_job( $job_id )->checkpoint;
-		$armed['cancel_intent'] = true;
-		$this->assertTrue( $this->store->save_checkpoint( $job_id, $armed ) );
+		$this->assertTrue( $this->store->arm_cancel_intent( $job_id ) );
 
 		// A worker saves phase data from its stale pre-cancel copy.
 		$stale['transfer'] = array( 'cursor' => 3 );
@@ -86,15 +84,37 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 	public function test_save_checkpoint_explicit_clear_drops_cancel_intent() {
 		$job_id = $this->store->create_job( 8801, 42, array( 'restore_id' => 'cancelclear1' ) );
 
-		$armed                  = $this->store->get_job( $job_id )->checkpoint;
-		$armed['cancel_intent'] = true;
-		$this->store->save_checkpoint( $job_id, $armed );
+		$this->assertTrue( $this->store->arm_cancel_intent( $job_id ) );
 
 		$cleared = $this->store->get_job( $job_id )->checkpoint;
 		$this->assertTrue( $this->store->save_checkpoint( $job_id, $cleared, null, true ) );
 
 		$row = $this->store->get_job( $job_id );
 		$this->assertTrue( empty( $row->checkpoint['cancel_intent'] ), 'The explicit clear must drop the applied intent.' );
+	}
+
+	/**
+	 * Arming preserves every other checkpoint key (the swap injects the
+	 * flag into the current row, never overwrites it with an older copy)
+	 * and is idempotent; a missing job refuses.
+	 */
+	public function test_arm_cancel_intent_injects_without_clobbering() {
+		$job_id = $this->store->create_job( 8801, 42, array( 'restore_id' => 'cancelarm001' ) );
+
+		// A worker's newer checkpoint lands first.
+		$fresh             = $this->store->get_job( $job_id )->checkpoint;
+		$fresh['transfer'] = array( 'cursor' => 7 );
+		$this->store->save_checkpoint( $job_id, $fresh );
+
+		$this->assertTrue( $this->store->arm_cancel_intent( $job_id ) );
+		$this->assertTrue( $this->store->arm_cancel_intent( $job_id ), 'Arming an already-armed job is idempotent.' );
+
+		$row = $this->store->get_job( $job_id );
+		$this->assertTrue( ! empty( $row->checkpoint['cancel_intent'] ) );
+		$this->assertSame( 7, $row->checkpoint['transfer']['cursor'], 'Arming must not revert the worker\'s newer checkpoint.' );
+		$this->assertSame( 'cancelarm001', $row->checkpoint['restore_id'] );
+
+		$this->assertFalse( $this->store->arm_cancel_intent( 999999999 ), 'A missing job cannot be armed.' );
 	}
 
 	/**

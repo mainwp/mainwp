@@ -1046,6 +1046,52 @@ class Test_Site_Credential_Encryption extends \WP_UnitTestCase {
 		$this->assertContains( 'site_credential_http_pass_stubkey', $deleted, 'the fresh key must be cleaned up on rollback' );
 	}
 
+	public function test_add_website_failed_insert_rolls_back_fresh_keys(): void {
+		global $wpdb;
+
+		$deleted = array();
+		add_action(
+			'mainwp_delete_key_file',
+			function ( $file_key ) use ( &$deleted ) {
+				$deleted[] = $file_key;
+			}
+		);
+
+		$user_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
+
+		// Break only the site INSERT (its VALUES carry the envelopes, so
+		// the stub key names are the discriminator); staging has already
+		// minted fresh keys by the time it runs.
+		$break = function ( $query ) {
+			if ( false !== strpos( (string) $query, 'INSERT' ) && false !== strpos( (string) $query, 'site_credential_http_user_stubkey' ) ) {
+				return 'INSERT INTO nonexistent_mwp_add_table VALUES (1)';
+			}
+			return $query;
+		};
+		add_filter( 'query', $break );
+		$suppress = $wpdb->suppress_errors( true );
+
+		$site_id = \MainWP\Dashboard\MainWP_DB::instance()->add_website(
+			$user_id,
+			'Never Inserted',
+			'http://never-inserted-' . wp_generate_uuid4() . '.example/',
+			'admin',
+			base64_encode( 'pub-' . wp_generate_uuid4() ),
+			base64_encode( 'priv-' . wp_generate_uuid4() ),
+			array(
+				'http_user' => 'authuser',
+				'http_pass' => 'seed-pw',
+			)
+		);
+
+		$wpdb->suppress_errors( $suppress );
+		remove_filter( 'query', $break );
+
+		$this->assertFalse( $site_id );
+		$this->assertContains( 'site_credential_http_user_stubkey', $deleted, 'The fresh http_user key must be deleted when the insert never lands.' );
+		$this->assertContains( 'site_credential_http_pass_stubkey', $deleted, 'The fresh http_pass key must be deleted when the insert never lands.' );
+	}
+
 	public function test_update_website_null_credentials_leave_columns_untouched(): void {
 		global $wpdb;
 

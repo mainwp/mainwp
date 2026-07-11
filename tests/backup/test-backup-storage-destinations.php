@@ -375,6 +375,98 @@ class MainWP_Backup_Storage_Destinations_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * The key files currently in pk/, as a sorted list.
+	 *
+	 * @return string[]
+	 */
+	private function keys_dir_listing() {
+		$files = glob( MainWP_Keys_Manager::get_keys_dir() . '*' ) ?: array();
+		sort( $files );
+		return $files;
+	}
+
+	/**
+	 * A create whose INSERT fails must delete the key file its staging
+	 * minted instead of orphaning it in pk/.
+	 *
+	 * @return void
+	 */
+	public function test_failed_add_rolls_back_fresh_key_file() {
+		global $wpdb;
+		$store  = MainWP_Backup_Storage_Destinations::instance();
+		$before = $this->keys_dir_listing();
+
+		$break = function ( $query ) {
+			if ( false !== strpos( (string) $query, 'INSERT' ) && false !== strpos( (string) $query, 'wp_backup_storage' ) ) {
+				return 'INSERT INTO nonexistent_dest_table VALUES (1)';
+			}
+			return $query;
+		};
+		add_filter( 'query', $break );
+		$suppress = $wpdb->suppress_errors( true );
+
+		$id = $store->add_destination(
+			array(
+				'provider' => 's3',
+				'name'     => 'Never lands',
+				'settings' => $this->s3_settings(),
+			)
+		);
+
+		$wpdb->suppress_errors( $suppress );
+		remove_filter( 'query', $break );
+
+		$this->assertSame( 0, $id );
+		$this->assertSame( $before, $this->keys_dir_listing(), 'A failed insert must leave pk/ exactly as it was - no orphaned fresh key.' );
+	}
+
+	/**
+	 * An update whose row write fails must delete the freshly minted key
+	 * file and leave the stored envelope's key untouched, so the
+	 * destination stays decryptable.
+	 *
+	 * @return void
+	 */
+	public function test_failed_update_rolls_back_fresh_key_and_keeps_old() {
+		global $wpdb;
+		$store = MainWP_Backup_Storage_Destinations::instance();
+		$id    = $store->add_destination(
+			array(
+				'provider' => 's3',
+				'name'     => 'Sticky settings',
+				'settings' => $this->s3_settings(),
+			)
+		);
+
+		$old_file_key = $this->envelope_file_key( $this->raw_settings( $id ) );
+		$this->assertFileExists( $this->key_file_path( $old_file_key ) );
+		$before = $this->keys_dir_listing();
+
+		$break = function ( $query ) {
+			if ( false !== strpos( (string) $query, 'UPDATE' ) && false !== strpos( (string) $query, 'wp_backup_storage' ) ) {
+				return 'UPDATE nonexistent_dest_table SET broken = 1';
+			}
+			return $query;
+		};
+		add_filter( 'query', $break );
+		$suppress = $wpdb->suppress_errors( true );
+
+		$new_settings           = $this->s3_settings();
+		$new_settings['bucket'] = 'never-lands-bucket';
+		$updated                = $store->update_destination( $id, array( 'settings' => $new_settings ) );
+
+		$wpdb->suppress_errors( $suppress );
+		remove_filter( 'query', $break );
+
+		$this->assertFalse( $updated );
+		$this->assertSame( $before, $this->keys_dir_listing(), 'A failed update must leave pk/ exactly as it was - fresh key rolled back, old key kept.' );
+		$this->assertSame( $old_file_key, $this->envelope_file_key( $this->raw_settings( $id ) ), 'The stored envelope still references the surviving old key.' );
+
+		$row = $store->get_destination( $id );
+		$this->assertSame( 'example-bucket', $row->settings['bucket'], 'The stored settings must still decrypt after the failed update.' );
+	}
+
+	/**
 	 * is_safe_host() blocks only the never-legitimate high-impact ranges:
 	 * IPv4 link-local 169.254.0.0/16 (the cloud-metadata endpoint) and IPv6
 	 * link-local fe80::/10. Public addresses pass.

@@ -305,14 +305,27 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
     }
 
     /**
+     * The JSON fragment a stored cancel intent serializes to. The key is
+     * written only by this store's own arm/save paths and the value is
+     * only ever boolean true, so a substring match on the stored row is
+     * an exact intent probe - no JSON functions needed, which keeps the
+     * merge below portable across MySQL and MariaDB.
+     *
+     * @var string
+     */
+    const CANCEL_INTENT_FRAGMENT = '"cancel_intent":true';
+
+    /**
      * Persist the checkpoint.
      *
      * A cancel intent recorded on the row is sticky: the UI writes it
      * unfenced from outside the lease, so a worker saving phase data
-     * built from an older in-memory copy would silently erase it. Every
-     * save therefore re-reads the stored flag and carries it forward -
-     * only the explicit $clear_cancel_intent (the applied-cancel path)
-     * may drop it.
+     * built from an older in-memory copy would silently erase it. The
+     * carry-forward happens INSIDE the UPDATE - the statement itself
+     * picks the flag-carrying encoding when the stored row holds the
+     * intent - so there is no read-then-write window in which a cancel
+     * landing mid-save could still be lost. Only the explicit
+     * $clear_cancel_intent (the applied-cancel path) may drop it.
      *
      * @param int         $job_id              Job id.
      * @param array       $checkpoint          Checkpoint.
@@ -323,20 +336,101 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
      *              refused it because the lease was lost.
      */
     public function save_checkpoint( int $job_id, array $checkpoint, ?string $lock_token = null, bool $clear_cancel_intent = false ): bool {
+        unset( $checkpoint['cancel_intent'] );
         if ( $clear_cancel_intent ) {
-            unset( $checkpoint['cancel_intent'] );
-        } elseif ( empty( $checkpoint['cancel_intent'] ) ) {
-            $stored = $this->get_job( $job_id );
-            if ( null !== $stored && ! empty( $stored->checkpoint['cancel_intent'] ) ) {
-                $checkpoint['cancel_intent'] = true;
-            }
+            return $this->update_job(
+                $job_id,
+                array( 'checkpoint' => wp_json_encode( $checkpoint ) ),
+                array( '%s' ),
+                $lock_token
+            );
         }
-        return $this->update_job(
-            $job_id,
-            array( 'checkpoint' => wp_json_encode( $checkpoint ) ),
-            array( '%s' ),
-            $lock_token
+
+        $plain                       = (string) wp_json_encode( $checkpoint );
+        $checkpoint['cancel_intent'] = true;
+        $flagged                     = (string) wp_json_encode( $checkpoint );
+
+        $fence = '';
+        $binds = array( '%' . $this->wpdb->esc_like( self::CANCEL_INTENT_FRAGMENT ) . '%', $flagged, $plain, time(), $job_id );
+        if ( null !== $lock_token ) {
+            $fence   = ' AND locked_by = %s';
+            $binds[] = $lock_token;
+        }
+
+        $updated = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- dedicated restore job table.
+            $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- placeholder list and bind array grow together.
+                'UPDATE ' . $this->table() . " SET checkpoint = IF( checkpoint LIKE %s, %s, %s ), updated = %d WHERE id = %d{$fence}", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- the fence is a fixed SQL fragment; its value binds via placeholder.
+                $binds
+            )
         );
+
+        if ( null === $lock_token ) {
+            return false !== $updated;
+        }
+        if ( 1 === $updated ) {
+            return true;
+        }
+        if ( false === $updated ) {
+            return false;
+        }
+        // Zero affected rows is ambiguous under MySQL: the fence refused
+        // the write, or the values were already identical. Only a
+        // confirmed token mismatch is a lost lease (mirrors update_job).
+        $holder = $this->wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- dedicated restore job table.
+            $this->wpdb->prepare( 'SELECT locked_by FROM ' . $this->table() . ' WHERE id = %d', $job_id )
+        );
+        return $holder === $lock_token;
+    }
+
+    /**
+     * Atomically record a cancel intent on the stored checkpoint.
+     *
+     * The UI-cancel path holds no lease, and a full-checkpoint overwrite
+     * from its own read could revert a worker's newer checkpoint (racing
+     * fenced writes land between the read and the write). The intent is
+     * therefore injected with a bounded compare-and-swap: the UPDATE only
+     * lands while the checkpoint still matches the exact value read, and
+     * a miss re-reads and retries against the fresher row.
+     *
+     * @param int $job_id Job id.
+     *
+     * @return bool True when the intent is recorded on the row.
+     */
+    public function arm_cancel_intent( int $job_id ): bool {
+        for ( $attempt = 0; $attempt < 5; $attempt++ ) {
+            $row = $this->wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- dedicated restore job table.
+                $this->wpdb->prepare( 'SELECT checkpoint FROM ' . $this->table() . ' WHERE id = %d', $job_id )
+            );
+            if ( null === $row ) {
+                return false;
+            }
+
+            $stored  = (string) $row->checkpoint;
+            $decoded = json_decode( $stored, true );
+            if ( ! is_array( $decoded ) ) {
+                $decoded = array();
+            }
+            if ( ! empty( $decoded['cancel_intent'] ) ) {
+                return true; // Already armed.
+            }
+            $decoded['cancel_intent'] = true;
+
+            $swapped = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- compare-and-swap on the exact stored value.
+                $this->wpdb->prepare(
+                    'UPDATE ' . $this->table() . ' SET checkpoint = %s, updated = %d WHERE id = %d AND checkpoint = %s',
+                    wp_json_encode( $decoded ),
+                    time(),
+                    $job_id,
+                    $stored
+                )
+            );
+            if ( 1 === $swapped ) {
+                return true;
+            }
+            // A worker's fenced save landed between the read and the swap;
+            // retry against the fresher checkpoint.
+        }
+        return false;
     }
 
     /**

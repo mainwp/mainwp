@@ -379,13 +379,16 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * Record the cancel intent on the job's checkpoint for the cron
      * lane to apply between child slices.
      *
-     * The checkpoint is re-read fresh so an in-flight phase write is
-     * not clobbered. A job that left the running window meanwhile
-     * finished its restore and refuses, mirroring the synchronous path.
+     * The intent is armed with the store's compare-and-swap so this
+     * unleased request can never revert a worker's newer checkpoint by
+     * writing back a full copy of its own read. A job that left the
+     * running window meanwhile finished its restore and refuses,
+     * mirroring the synchronous path.
      *
      * @param int $job_id Job id.
      *
-     * @throws MainWP_Exception When the job finished meanwhile.
+     * @throws MainWP_Exception When the job finished meanwhile, or the
+     *                          intent could not be recorded.
      */
     private function record_cancel_intent( int $job_id ): void {
         $store = MainWP_Backup_Restore_Job_Store::instance();
@@ -399,9 +402,9 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             throw new MainWP_Exception( esc_html__( 'The restore already finished on the site and can no longer be cancelled.', 'mainwp' ) );
         }
 
-        $checkpoint                  = $fresh->checkpoint;
-        $checkpoint['cancel_intent'] = true;
-        $store->save_checkpoint( $job_id, $checkpoint );
+        if ( ! $store->arm_cancel_intent( $job_id ) ) {
+            throw new MainWP_Exception( esc_html__( 'The cancellation could not be recorded; try again.', 'mainwp' ) );
+        }
     }
 
     /**

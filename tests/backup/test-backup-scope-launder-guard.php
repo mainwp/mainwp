@@ -72,7 +72,13 @@ class MainWP_Backup_Scope_Launder_Guard_Test extends MainWP_Abilities_Test_Case 
 	 */
 	private function add_site_to_group( $site_id, $group_id ) {
 		global $wpdb;
-		$wpdb->insert( $wpdb->prefix . 'mainwp_wp_group', array( 'wpid' => $site_id, 'groupid' => $group_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
+		$wpdb->insert(
+			$wpdb->prefix . 'mainwp_wp_group',
+			array(
+				'wpid'    => $site_id,
+				'groupid' => $group_id,
+			)
+		); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
 		if ( ! in_array( $group_id, $this->group_ids, true ) ) {
 			$this->group_ids[] = $group_id;
 		}
@@ -85,9 +91,9 @@ class MainWP_Backup_Scope_Launder_Guard_Test extends MainWP_Abilities_Test_Case 
 	 */
 	public function test_update_refuses_when_pre_edit_scope_is_out_of_reach() {
 		$this->skip_when_capabilities_bypassed();
-		$victim   = $this->create_test_site( array( 'userid' => 1 ) );
-		$mine     = $this->create_test_site( array( 'userid' => 1 ) );
-		$task     = MainWP_DB_Backup::instance()->add_backup_task( 1, 'victim task', 'daily', 'full', '', (string) $victim, '', '', '', 0, 0, 0, 0, 0, 'site', 0, 1, 150, 0, 0 );
+		$victim = $this->create_test_site( array( 'userid' => 1 ) );
+		$mine   = $this->create_test_site( array( 'userid' => 1 ) );
+		$task   = MainWP_DB_Backup::instance()->add_backup_task( 1, 'victim task', 'daily', 'full', '', (string) $victim, '', '', '', 0, 0, 0, 0, 0, 'site', 0, 1, 150, 0, 0 );
 
 		$deny = $this->deny_site( $victim );
 		try {
@@ -161,7 +167,7 @@ class MainWP_Backup_Scope_Launder_Guard_Test extends MainWP_Abilities_Test_Case 
 		MainWP_Manage_Backups_Handler::stamp_task_scope_snapshot( $task->id, $task->sites, $task->groups );
 		$this->add_site_to_group( $drifted, 838383 );
 
-		$fresh = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$fresh       = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
 		$reset_sites = MainWP_Manage_Backups_Handler::resolve_reset_task_site_ids( $fresh );
 
 		$this->assertContains( (int) $authorized, $reset_sites, 'The authorized site is reset.' );
@@ -185,7 +191,18 @@ class MainWP_Backup_Scope_Launder_Guard_Test extends MainWP_Abilities_Test_Case 
 		// the victim site earlier (a snapshot row records that history).
 		$task = MainWP_DB_Backup::instance()->add_backup_task( 1, 'history delete', 'daily', 'full', '', (string) $in_scope, '', '', '', 0, 0, 0, 0, 0, 'site', 0, 1, 150, 0, 0 );
 		$snap = $wpdb->prefix . 'mainwp_wp_backup_snapshot';
-		$wpdb->insert( $snap, array( 'task_id' => $task->id, 'site_id' => $victim, 'type' => 'full', 'created' => time(), 'archives' => wp_json_encode( array() ), 'manifest_path' => '', 'status' => 'complete' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- historical-run fixture.
+		$wpdb->insert(
+			$snap,
+			array(
+				'task_id'       => $task->id,
+				'site_id'       => $victim,
+				'type'          => 'full',
+				'created'       => time(),
+				'archives'      => wp_json_encode( array() ),
+				'manifest_path' => '',
+				'status'        => 'complete',
+			)
+		); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- historical-run fixture.
 
 		$deny = $this->deny_site( $victim );
 		try {

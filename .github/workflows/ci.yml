@@ -121,7 +121,9 @@ jobs:
 
       # Scoped to the native-backups surface, which is phpcs-clean today.
       # The wider legacy codebase carries pre-existing violations; broaden
-      # this to the whole repo once that debt is paid down.
+      # this to the whole repo once that debt is paid down. Test suites run
+      # under their own ruleset below: phpcs.xml excludes */tests/*, which
+      # silently zeroes any tests/ path passed here.
       - name: Run PHPCS (native-backups surface)
         run: >-
           ./vendor/bin/phpcs --standard=phpcs.xml
@@ -132,4 +134,6 @@ jobs:
           pages/page-mainwp-manage-backups-handler.php
           pages/page-mainwp-manage-backups.php
           modules/logs/connectors/class-connector-backup.php
-          tests/backup/
+
+      - name: Run PHPCS (backup test suites)
+        run: ./vendor/bin/phpcs --standard=phpcs-tests.xml

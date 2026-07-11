@@ -28,7 +28,8 @@ use MainWP\Dashboard\MainWP_Keys_Manager;
  * Restore transfer driver that serves remote objects from a pinned base path,
  * mirroring the seam the decryption tests use.
  */
-class TestRestore_Remote_Transfer_Driver extends MainWP_Backup_Restore_Transfer_Driver { // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- test double.
+class TestRestore_Remote_Transfer_Driver extends MainWP_Backup_Restore_Transfer_Driver {
+ // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- test double.
 
 	/**
 	 * Base path the stub provider serves objects from.
@@ -56,7 +57,8 @@ class TestRestore_Remote_Transfer_Driver extends MainWP_Backup_Restore_Transfer_
  * Test-restore driver with the transfer driver pinned, so an encrypted
  * snapshot can be staged from a local stand-in for cloud storage.
  */
-class Testable_TestRestore_Driver extends MainWP_Backup_TestRestore_Driver { // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- test double above.
+class Testable_TestRestore_Driver extends MainWP_Backup_TestRestore_Driver {
+ // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- test double above.
 
 	/**
 	 * Pinned transfer driver, or null for the real one.
@@ -241,7 +243,7 @@ class MainWP_Backup_TestRestore_Driver_Test extends MainWP_Abilities_Test_Case {
 	 * @return int Snapshot id.
 	 */
 	private function record( $type, array $archives ) {
-		$id = MainWP_Backup_Snapshots::instance()->record_snapshot(
+		$id                   = MainWP_Backup_Snapshots::instance()->record_snapshot(
 			array(
 				'task_id'       => 0,
 				'site_id'       => $this->site_id,

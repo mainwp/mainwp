@@ -137,7 +137,12 @@ class MainWP_Backup_List_View_Test extends \WP_UnitTestCase {
 		$method = new \ReflectionMethod( MainWP_Backup_List_View::class, 'upload_state_label' );
 		$method->setAccessible( true );
 
-		$jobs = array( (object) array( 'status' => 'complete', 'last_error' => '' ) );
+		$jobs = array(
+			(object) array(
+				'status'     => 'complete',
+				'last_error' => '',
+			),
+		);
 
 		$this->assertStringContainsString( 'Offsite Verified', $method->invoke( $view, $jobs, (object) array( 'offsite_state' => 'verified' ) ) );
 		$this->assertStringContainsString( 'Uploaded', $method->invoke( $view, $jobs, (object) array( 'offsite_state' => '' ) ) );

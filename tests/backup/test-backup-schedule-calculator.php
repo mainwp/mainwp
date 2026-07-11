@@ -318,7 +318,7 @@ class MainWP_Backup_Schedule_Calculator_Test extends \WP_UnitTestCase {
 		$results = array();
 
 		foreach ( array( 'UTC', 'Asia/Karachi', 'America/Los_Angeles' ) as $tz ) {
-			$calculator      = new MainWP_Backup_Schedule_Calculator( new \DateTimeZone( $tz ), $now );
+			$calculator     = new MainWP_Backup_Schedule_Calculator( new \DateTimeZone( $tz ), $now );
 			$results[ $tz ] = $calculator->compute_next_run( $task, null );
 			$this->assertSame(
 				$this->local_ts( '2026-06-10 06:00:00', $tz ),

@@ -25,7 +25,8 @@ use MainWP\Dashboard\MainWP_System_Cron_Jobs;
  * Scheduler with the engine and the cron continuation stubbed, so selection,
  * claiming and continuation are observable without a real sandbox.
  */
-class Testable_TestRestore_Scheduler extends MainWP_Backup_TestRestore_Scheduler { // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- test double.
+class Testable_TestRestore_Scheduler extends MainWP_Backup_TestRestore_Scheduler {
+ // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- test double.
 
 	/**
 	 * Snapshot ids handed to the engine, in order.
@@ -232,8 +233,8 @@ class MainWP_Backup_TestRestore_Scheduler_Test extends MainWP_Abilities_Test_Cas
 		$site_a = $this->create_test_site();
 		$site_b = $this->create_test_site();
 
-		$a_old = $this->insert_snapshot( $site_a, $now - 300 );
-		$a_new = $this->insert_snapshot( $site_a, $now - 100 );
+		$a_old         = $this->insert_snapshot( $site_a, $now - 300 );
+		$a_new         = $this->insert_snapshot( $site_a, $now - 100 );
 		$b_recent_site = $this->insert_snapshot( $site_b, $now - 100, $now - 60 ); // tested a minute ago.
 
 		$candidates = MainWP_Backup_Snapshots::instance()->get_test_restore_candidates( 10, $now - MainWP_Backup_TestRestore_Scheduler::CADENCE_SECONDS );
@@ -386,7 +387,7 @@ class MainWP_Backup_TestRestore_Scheduler_Test extends MainWP_Abilities_Test_Cas
 	public function test_end_to_end_real_driver_records_pass() {
 		$dump = $this->write_db_dump( 'db.sql.gz', $this->sentinel_sql() );
 
-		$id = MainWP_Backup_Snapshots::instance()->record_snapshot(
+		$id                   = MainWP_Backup_Snapshots::instance()->record_snapshot(
 			array(
 				'task_id'       => 0,
 				'site_id'       => $this->create_test_site(),
@@ -449,7 +450,7 @@ class MainWP_Backup_TestRestore_Scheduler_Test extends MainWP_Abilities_Test_Cas
 	public function test_backups_continue_samples_on_empty_tasks_tick() {
 		$dump = $this->write_db_dump( 'db.sql.gz', $this->sentinel_sql() );
 
-		$id = MainWP_Backup_Snapshots::instance()->record_snapshot(
+		$id                   = MainWP_Backup_Snapshots::instance()->record_snapshot(
 			array(
 				'task_id'       => 0,
 				'site_id'       => $this->create_test_site(),

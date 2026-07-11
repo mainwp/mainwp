@@ -82,7 +82,7 @@ class MainWP_Backup_Checkbackups_Auth_Test extends MainWP_Abilities_Test_Case {
 		$allowed = $this->create_eligible_site( $user );
 		$denied  = $this->create_eligible_site( $user );
 
-		$deny            = $this->deny_site( $denied );
+		$deny           = $this->deny_site( $denied );
 		$_POST['sites'] = array( (string) $allowed, (string) $denied );
 		try {
 			$output = MainWP_Updates_Overview::check_backups();
@@ -108,7 +108,7 @@ class MainWP_Backup_Checkbackups_Auth_Test extends MainWP_Abilities_Test_Case {
 		wp_set_current_user( $user );
 
 		$_POST['sites'] = array( '999999321' );
-		$output          = MainWP_Updates_Overview::check_backups();
+		$output         = MainWP_Updates_Overview::check_backups();
 
 		if ( is_array( $output ) && isset( $output['sites'] ) ) {
 			$this->assertArrayNotHasKey( '999999321', $output['sites'], 'An unknown site id must produce no answer.' );

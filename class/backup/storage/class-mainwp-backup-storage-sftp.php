@@ -193,30 +193,101 @@ class MainWP_Backup_Storage_SFTP implements MainWP_Backup_Storage_Provider { // 
         $known = is_array( $known ) ? $known : array();
 
         if ( ! isset( $known[ $destination_id ] ) ) {
-            // First use: trust and remember. Re-read immediately before the
-            // write and merge, so a concurrent first-connect learning a
-            // different destination's pin is not clobbered by this one's
-            // whole-array overwrite. The write MUST land - a silently dropped
-            // pin would let the next connect re-learn (and trust) a key that
-            // could be an interceptor's, so a failure fails the handshake.
-            $fresh = get_option( static::HOSTKEYS_OPTION );
-            $fresh = is_array( $fresh ) ? $fresh : array();
-            if ( isset( $fresh[ $destination_id ] ) ) {
-                // A concurrent connection already learned this destination's
-                // pin; defer to it rather than racing a second value in.
-                $known = $fresh;
-            } else {
-                $fresh[ $destination_id ] = $offered;
-                if ( ! update_option( static::HOSTKEYS_OPTION, $fresh, false ) && get_option( static::HOSTKEYS_OPTION ) !== $fresh ) {
-                    throw new \RuntimeException( 'The SFTP host key could not be recorded for verification; refusing to continue without a trusted pin.', 0 );
-                }
-                return;
-            }
+            // First use: trust and remember - via a compare-and-swap on the
+            // stored row, so two simultaneous first connects (to the same or
+            // different destinations) cannot clobber each other's pins:
+            // whoever lands first decides trust, and the loser verifies
+            // against that pin below. The per-request options cache cannot
+            // see a concurrent process's write, so the CAS reads and writes
+            // the row directly. The write MUST land - a silently dropped pin
+            // would let the next connect re-learn (and trust) a key that
+            // could be an interceptor's, so persistent failure fails the
+            // handshake.
+            $known[ $destination_id ] = $this->record_first_use_pin( $destination_id, $offered );
         }
 
         if ( ! hash_equals( static::normalize_fingerprint( (string) $known[ $destination_id ] ), static::normalize_fingerprint( $offered ) ) ) {
             throw new \RuntimeException( esc_html( 'The SFTP server\'s host key changed. Known: ' . $known[ $destination_id ] . ' - offered: ' . $offered . '. This can mean the connection is being intercepted; if the server key was intentionally rotated, re-save the destination to trust the new key.' ), 401 );
         }
+    }
+
+    /**
+     * Record a first-use pin with compare-and-swap semantics, returning
+     * the authoritative pin for the destination: this connection's offered
+     * fingerprint when its write lands, or the pin a concurrent connection
+     * recorded first, which the caller then verifies against.
+     *
+     * @param int    $destination_id Destination id.
+     * @param string $offered        Offered fingerprint.
+     *
+     * @return string The authoritative pin for the destination.
+     *
+     * @throws \RuntimeException When the pin cannot be recorded.
+     */
+    private function record_first_use_pin( int $destination_id, string $offered ): string {
+        for ( $attempt = 0; $attempt < 3; $attempt++ ) {
+            $raw   = $this->hostkeys_raw_read();
+            $known = null !== $raw ? maybe_unserialize( $raw ) : array();
+            $known = is_array( $known ) ? $known : array();
+
+            if ( isset( $known[ $destination_id ] ) ) {
+                // A concurrent connection already decided this destination's
+                // trust; defer to it rather than racing a second value in.
+                return (string) $known[ $destination_id ];
+            }
+
+            $known[ $destination_id ] = $offered;
+            if ( $this->hostkeys_cas_write( $raw, maybe_serialize( $known ) ) ) {
+                return $offered;
+            }
+            // Lost the swap to another writer; re-read and retry.
+        }
+
+        throw new \RuntimeException( 'The SFTP host key could not be recorded for verification; refusing to continue without a trusted pin.', 0 );
+    }
+
+    /**
+     * Read the stored host-key option's raw row value, bypassing the
+     * per-request options cache a concurrent process's write is invisible
+     * to.
+     *
+     * @return string|null Raw serialized value, or null when no row exists.
+     */
+    protected function hostkeys_raw_read(): ?string {
+        global $wpdb;
+        $raw = $wpdb->get_var( $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", static::HOSTKEYS_OPTION ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- CAS read must see concurrent writers past the options cache.
+        return null === $raw ? null : (string) $raw;
+    }
+
+    /**
+     * One compare-and-swap write of the host-key option row (test seam):
+     * an atomic INSERT claims a missing row, a guarded UPDATE replaces
+     * exactly the value this connection read.
+     *
+     * @param string|null $expected_raw Raw value the row held at read time,
+     *                                  null when no row existed.
+     * @param string      $next_raw     Raw value to store.
+     *
+     * @return bool True when this writer's value landed.
+     */
+    protected function hostkeys_cas_write( ?string $expected_raw, string $next_raw ): bool {
+        global $wpdb;
+        if ( null === $expected_raw ) {
+            $claimed = $wpdb->query( $wpdb->prepare( "INSERT IGNORE INTO {$wpdb->options} ( option_name, option_value, autoload ) VALUES ( %s, %s, 'no' )", static::HOSTKEYS_OPTION, $next_raw ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- atomic first-writer claim; must hit the DB engine.
+        } else {
+            $claimed = $wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->options} SET option_value = %s WHERE option_name = %s AND option_value = %s", $next_raw, static::HOSTKEYS_OPTION, $expected_raw ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- the compare-and-swap; must hit the DB engine.
+        }
+
+        if ( 1 === (int) $claimed ) {
+            wp_cache_delete( static::HOSTKEYS_OPTION, 'options' );
+            wp_cache_delete( 'alloptions', 'options' );
+            // A get_option() that ran before the row existed cached the
+            // option as missing; without clearing that, later reads keep
+            // returning false past the direct-DB insert.
+            wp_cache_delete( 'notoptions', 'options' );
+            return true;
+        }
+        return false;
     }
 
     /**

@@ -758,19 +758,20 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
 
         // backup_errors clears at every run open, so it only ever describes
         // the run tied to the CURRENT last_run. The two surfaces below need
-        // different ownership questions answered from that fact:
+        // different ownership questions answered from that fact.
         //
-        // - The success gate asks whether the errors belong to the run that
-        //   produced the fresh snapshot: only while last_run has not moved
-        //   past the snapshot. A later run's failure must not poison the
-        //   click whose snapshot landed.
-        // - The failure surface asks whether the errors belong to THIS
-        //   click's run: they do once last_run caught up to the click's
-        //   since (or on older JavaScript that sends none). Keying this to
-        //   the snapshot instead silently disowned the current run's real
-        //   error whenever the site's only snapshot was an old one - a
-        //   child's disk-full message surfaced as the generic no-snapshot
-        //   line exactly because of that.
+        // The success gate asks whether the errors belong to the run that
+        // produced the fresh snapshot: only while last_run has not moved
+        // past the snapshot. A later run's failure must not poison the
+        // click whose snapshot landed.
+        //
+        // The failure surface asks whether the errors belong to THIS
+        // click's run: they do once last_run caught up to the click's
+        // since (or on older JavaScript that sends none). Keying this to
+        // the snapshot instead silently disowned the current run's real
+        // error whenever the site's only snapshot was an old one - a
+        // child's disk-full message surfaced as the generic no-snapshot
+        // line exactly because of that.
         $errors_snapshot_run = null !== $latest && (int) $task->last_run <= (int) $latest->created;
         $errors_click_own    = ( 0 === $since || (int) $task->last_run >= $since );
 

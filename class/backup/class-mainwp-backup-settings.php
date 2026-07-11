@@ -160,6 +160,37 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     }
 
     /**
+     * Method update_native_backups_option()
+     *
+     * Write the native-backups toggle and mirror it into the retired
+     * option name (see mirror_native_flag_for_rollback()).
+     *
+     * @param mixed $value Truthy to enable, falsy to disable.
+     */
+    public static function update_native_backups_option( $value ): void {
+        MainWP_Utility::update_option( 'mainwp_enableNativeBackups', (int) ! empty( $value ) );
+        static::mirror_native_flag_for_rollback();
+    }
+
+    /**
+     * Method mirror_native_flag_for_rollback()
+     *
+     * Keep the retired mainwp_enableLegacyBackupFeature option present,
+     * mirroring the effective native-backups value, for the supported
+     * rollback window. A pre-rename dashboard's install() recreates a
+     * MISSING legacy flag as enabled but preserves a present one, so a
+     * mirrored flag is what makes a rollback honor the user's choice
+     * instead of silently re-enabling legacy backups.
+     */
+    public static function mirror_native_flag_for_rollback(): void {
+        $value = get_option( 'mainwp_enableNativeBackups', null );
+        if ( null === $value || false === $value ) {
+            return; // Nothing to mirror before the rename migration has run.
+        }
+        MainWP_Utility::update_option( 'mainwp_enableLegacyBackupFeature', (int) ! empty( $value ) );
+    }
+
+    /**
      * Method get_max_concurrent_backups()
      *
      * Get the configured maximum number of concurrent backup tasks.
@@ -248,7 +279,7 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         MainWP_Utility::update_option( 'mainwp_notificationOnBackupStart', 0 );
                         MainWP_Utility::update_option( 'mainwp_chunkedBackupTasks', 0 );
                         if ( empty( $old_primaryBackup ) ) {
-                            MainWP_Utility::update_option( 'mainwp_enableNativeBackups', 0 );
+                            static::update_native_backups_option( 0 );
                             $updated_enableNativeBackups = true;
                         }
                     }
@@ -268,7 +299,7 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 }
 
                 if ( ! $updated_enableNativeBackups ) {
-                    MainWP_Utility::update_option( 'mainwp_enableNativeBackups', $enableNativeBackups );
+                    static::update_native_backups_option( $enableNativeBackups );
                 }
 
                 // Archive encryption. A non-empty passphrase creates or re-wraps

@@ -1502,10 +1502,11 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @uses \MainWP\Dashboard\MainWP_Backup_Restore_Orchestrator::process_pending_restore_jobs()
      */
     public function cron_restore_continue() {
-        if ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
-            return;
-        }
-
+        // Deliberately NOT gated on is_native_backups_enabled(): the toggle
+        // governs STARTING work, not abandoning destructive work in flight.
+        // A child site left mid-restore because the feature was switched off
+        // is a broken site; nonterminal restore jobs always run to a
+        // terminal state. New restores are refused at initiate_restore().
         ignore_user_abort( true );
         MainWP_System_Utility::set_time_limit( 0 );
 
@@ -1547,6 +1548,10 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
     public function cron_backups_continue() {
 
         if ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
+            // The toggle governs STARTING work, not abandoning destructive
+            // work in flight: a nonterminal restore job still runs to a
+            // terminal state so a child site is never left mid-restore.
+            MainWP_Backup_Restore_Orchestrator::instance()->process_pending_restore_jobs();
             return;
         }
 

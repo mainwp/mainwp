@@ -143,6 +143,7 @@ class MainWP_Backup_Notices_Test extends MainWP_Abilities_Test_Case {
 	 * restore progress tests.
 	 *
 	 * @param int $site_id Site to poll.
+	 * @param int $since   Click-time last_run baseline sent by the page.
 	 *
 	 * @return array|null Decoded response payload.
 	 */

@@ -222,10 +222,12 @@ export class Dashboard {
   }
 
   /**
-   * Trigger a native backup of the site and wait until it reports complete. The
-   * status line ends at "Backup complete." and a restore-able snapshot then
-   * appears in the catalog. The Back up now click is forced because cloudways
-   * admin pages keep shifting layout (a stable click times out).
+   * Trigger a native backup of the site and wait until the progress AJAX
+   * reports the explicit `completed` terminal status, returning the created
+   * snapshot's id (0 when the server predates the snapshot_id payload) so the
+   * restore step can target exactly the snapshot this run produced. The Back
+   * up now click is forced because cloudways admin pages keep shifting layout
+   * (a stable click times out).
    *
    * When `childUrl` is given the run is self-recovering: a prior interrupted run
    * can leave a backup task that never went terminal (on an idle child the
@@ -234,15 +236,16 @@ export class Dashboard {
    * (clearStuckBackup) and retries, so the suite does not need a hand-cleared
    * child between runs. If it still cannot start, it throws an actionable error.
    */
-  async runNativeBackup(siteId: string, childUrl = '', timeoutMs = 20 * 60_000): Promise<void> {
+  async runNativeBackup(siteId: string, childUrl = '', timeoutMs = 20 * 60_000): Promise<number> {
     await this.openNativeBackups(siteId);
 
     // Terminal state comes from the progress AJAX's own `status` field, not
-    // from pattern-matching the status line: a server failure message need
-    // not contain "fail" or "error" ("The on-demand backup did not produce a
-    // snapshot." matched neither and burned the whole budget re-reading an
-    // already-terminal status).
-    const ajaxState = { status: '', error: '' };
+    // from pattern-matching the status line: production failure strings
+    // contain "did not complete", which a naive /complete/i success match
+    // reads as success — and a false-passing backup would then feed a real
+    // destructive restore. The completed payload also carries the created
+    // snapshot's id, which the restore step targets explicitly.
+    const ajaxState = { status: '', error: '', snapshotId: 0 };
     const onResponse = async (resp: import('@playwright/test').Response) => {
       try {
         if (!resp.url().includes('admin-ajax.php')) return;
@@ -251,6 +254,8 @@ export class Dashboard {
         const data = JSON.parse(await resp.text());
         ajaxState.status = typeof data?.status === 'string' ? data.status : '';
         ajaxState.error = typeof data?.error === 'string' ? data.error : '';
+        const sid = parseInt(String(data?.snapshot_id ?? ''), 10);
+        if (sid > 0) ajaxState.snapshotId = sid;
       } catch {
         // Non-JSON or detached response: the DOM heuristics below still apply.
       }
@@ -266,8 +271,17 @@ export class Dashboard {
       while (Date.now() < deadline) {
         await this.page.waitForTimeout(5_000);
         last = ((await status.textContent()) ?? '').trim();
-        if (ajaxState.status === 'completed' || /complete/i.test(last)) {
-          return;
+        // Failure checks run FIRST, and success requires the explicit
+        // terminal status from the progress AJAX: a DOM /complete/i match
+        // also matches "did not complete" failure lines.
+        if (ajaxState.status === 'failed') {
+          throw new Error(`Backup failed: ${ajaxState.error || last}`);
+        }
+        if (/did not complete|fail|error/i.test(last)) {
+          throw new Error(`Backup failed: ${last}`);
+        }
+        if (ajaxState.status === 'completed') {
+          return ajaxState.snapshotId;
         }
         // A backup or restore already running rejects with a "try again" notice.
         if (/in progress|try again|already/i.test(last)) {
@@ -279,6 +293,7 @@ export class Dashboard {
             recovered = true;
             ajaxState.status = '';
             ajaxState.error = '';
+            ajaxState.snapshotId = 0;
             await this.clearStuckBackup(siteId, childUrl);
             await this.page.locator('#mainwp-native-backup-now-btn').click({ force: true });
             continue;
@@ -288,12 +303,6 @@ export class Dashboard {
               `backup task is stuck on ${childUrl || 'the child'}; clear it from the ` +
               `dashboard Snapshots page ("Cancel backup") or drive the child wp-cron, then re-run.`,
           );
-        }
-        if (ajaxState.status === 'failed') {
-          throw new Error(`Backup failed: ${ajaxState.error || last}`);
-        }
-        if (/fail|error/i.test(last)) {
-          throw new Error(`Backup failed: ${last}`);
         }
       }
       throw new Error(`Backup did not complete within ${timeoutMs}ms; last status: ${last}`);
@@ -395,16 +404,32 @@ export class Dashboard {
    * ~50MB site completes in a few minutes; a several-hundred-MB site can exceed the
    * default timeout), so point REMOTE_TEST_BACKUP_CHILD_URL at a small site.
    */
-  async restoreLatestSnapshot(siteId: string, childUrl: string, timeoutMs = 25 * 60_000): Promise<void> {
+  async restoreLatestSnapshot(
+    siteId: string,
+    childUrl: string,
+    snapshotId = 0,
+    timeoutMs = 25 * 60_000,
+  ): Promise<void> {
     await this.openNativeBackups(siteId);
     const links = this.page.locator('a.mainwp-restore-snapshot');
     await expect(links.first(), 'a restore-able snapshot is offered').toBeAttached();
-    // Restore the newest snapshot (highest id) rather than relying on table order.
-    const ids = await links.evaluateAll((els) =>
-      els.map((e) => parseInt(e.getAttribute('data-snapshot') ?? '0', 10)).filter((n) => n > 0),
-    );
-    const newest = Math.max(...ids);
-    const snapshot = this.page.locator(`a.mainwp-restore-snapshot[data-snapshot="${newest}"]`);
+    // Target the snapshot the backup step just created when its id is known;
+    // "newest id" is only the fallback for servers whose progress payload
+    // predates snapshot_id. Restoring a pre-existing snapshot would make a
+    // failed backup look like a passing round-trip.
+    let target = snapshotId;
+    if (target > 0) {
+      await expect(
+        this.page.locator(`a.mainwp-restore-snapshot[data-snapshot="${target}"]`),
+        `the snapshot this run created (#${target}) is offered for restore`,
+      ).toBeAttached();
+    } else {
+      const ids = await links.evaluateAll((els) =>
+        els.map((e) => parseInt(e.getAttribute('data-snapshot') ?? '0', 10)).filter((n) => n > 0),
+      );
+      target = Math.max(...ids);
+    }
+    const snapshot = this.page.locator(`a.mainwp-restore-snapshot[data-snapshot="${target}"]`);
     await snapshot.click({ force: true });
     await this.page.locator('#mainwp-restore-modal').waitFor({ state: 'visible' });
     await this.page.locator('#mainwp-restore-presnapshot').uncheck({ force: true });

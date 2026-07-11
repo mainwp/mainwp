@@ -24,7 +24,8 @@ use MainWP\Dashboard\MainWP_Backup_Storage_SFTP;
  * An in-memory SFTP connection covering the phpseclib3 surface the
  * provider uses.
  */
-class Fake_SFTP_Connection { // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- test double.
+class Fake_SFTP_Connection {
+ // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- test double.
 
 	/**
 	 * Files by absolute remote path.
@@ -153,7 +154,7 @@ class Fake_SFTP_Connection { // phpcs:ignore Generic.Files.OneObjectStructurePer
 			$parts = explode( '/', ltrim( $dir, '/' ) );
 			$path  = '';
 			foreach ( $parts as $part ) {
-				$path                .= '/' . $part;
+				$path               .= '/' . $part;
 				$this->dirs[ $path ] = true;
 			}
 			return true;
@@ -226,7 +227,8 @@ class Fake_SFTP_Connection { // phpcs:ignore Generic.Files.OneObjectStructurePer
 /**
  * Class MainWP_Backup_Storage_SFTP_Test
  */
-class MainWP_Backup_Storage_SFTP_Test extends \WP_UnitTestCase { // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- test double above.
+class MainWP_Backup_Storage_SFTP_Test extends \WP_UnitTestCase {
+ // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- test double above.
 
 	/**
 	 * Build a provider around a fake connection.
@@ -305,7 +307,7 @@ class MainWP_Backup_Storage_SFTP_Test extends \WP_UnitTestCase { // phpcs:ignore
 	 * @return void
 	 */
 	public function test_put_object_failure_throws() {
-		$failing = new class() extends Fake_SFTP_Connection {
+		$failing  = new class() extends Fake_SFTP_Connection {
 			/**
 			 * Fail every write.
 			 *
@@ -736,12 +738,38 @@ class MainWP_Backup_Storage_SFTP_Test extends \WP_UnitTestCase { // phpcs:ignore
 	 * @return void
 	 */
 	public function test_pin_enforcement_id_tracks_server_identity() {
-		$stored = array( 'host' => 'sftp.example.com', 'port' => '22', 'username' => 'u' );
+		$stored = array(
+			'host'     => 'sftp.example.com',
+			'port'     => '22',
+			'username' => 'u',
+		);
 
 		$this->assertSame( 0, \MainWP\Dashboard\MainWP_Backup_Storage_Handler::pin_enforcement_id( 0, $stored, array() ), 'A new destination enforces no pin.' );
 		$this->assertSame( 7, \MainWP\Dashboard\MainWP_Backup_Storage_Handler::pin_enforcement_id( 7, $stored, $stored ), 'An edit against the same server enforces its pin.' );
-		$this->assertSame( 0, \MainWP\Dashboard\MainWP_Backup_Storage_Handler::pin_enforcement_id( 7, array( 'host' => 'other.example.com', 'port' => '22' ), $stored ), 'Repointing at a different host re-learns via TOFU.' );
-		$this->assertSame( 0, \MainWP\Dashboard\MainWP_Backup_Storage_Handler::pin_enforcement_id( 7, array( 'host' => 'sftp.example.com', 'port' => '2222' ), $stored ), 'A changed port re-learns via TOFU.' );
+		$this->assertSame(
+			0,
+			\MainWP\Dashboard\MainWP_Backup_Storage_Handler::pin_enforcement_id(
+				7,
+				array(
+					'host' => 'other.example.com',
+					'port' => '22',
+				),
+				$stored
+			),
+			'Repointing at a different host re-learns via TOFU.'
+		);
+		$this->assertSame(
+			0,
+			\MainWP\Dashboard\MainWP_Backup_Storage_Handler::pin_enforcement_id(
+				7,
+				array(
+					'host' => 'sftp.example.com',
+					'port' => '2222',
+				),
+				$stored
+			),
+			'A changed port re-learns via TOFU.'
+		);
 	}
 
 	/**
@@ -753,15 +781,73 @@ class MainWP_Backup_Storage_SFTP_Test extends \WP_UnitTestCase { // phpcs:ignore
 	 * @return void
 	 */
 	public function test_pin_enforcement_id_ignores_cosmetic_host_port_differences() {
-		$stored = array( 'host' => 'sftp.example.com', 'port' => '22' );
+		$stored = array(
+			'host' => 'sftp.example.com',
+			'port' => '22',
+		);
 
-		$this->assertSame( 7, \MainWP\Dashboard\MainWP_Backup_Storage_Handler::pin_enforcement_id( 7, array( 'host' => 'sftp.example.com', 'port' => '022' ), $stored ), 'A zero-padded port is the same port.' );
-		$this->assertSame( 7, \MainWP\Dashboard\MainWP_Backup_Storage_Handler::pin_enforcement_id( 7, array( 'host' => 'sftp.example.com', 'port' => ' 22' ), $stored ), 'A space-padded port is the same port.' );
-		$this->assertSame( 7, \MainWP\Dashboard\MainWP_Backup_Storage_Handler::pin_enforcement_id( 7, array( 'host' => 'SFTP.Example.com', 'port' => '22' ), $stored ), 'A case-different host is the same host.' );
-		$this->assertSame( 7, \MainWP\Dashboard\MainWP_Backup_Storage_Handler::pin_enforcement_id( 7, array( 'host' => 'sftp.example.com.', 'port' => '22' ), $stored ), 'A trailing-dot host is the same host.' );
+		$this->assertSame(
+			7,
+			\MainWP\Dashboard\MainWP_Backup_Storage_Handler::pin_enforcement_id(
+				7,
+				array(
+					'host' => 'sftp.example.com',
+					'port' => '022',
+				),
+				$stored
+			),
+			'A zero-padded port is the same port.'
+		);
+		$this->assertSame(
+			7,
+			\MainWP\Dashboard\MainWP_Backup_Storage_Handler::pin_enforcement_id(
+				7,
+				array(
+					'host' => 'sftp.example.com',
+					'port' => ' 22',
+				),
+				$stored
+			),
+			'A space-padded port is the same port.'
+		);
+		$this->assertSame(
+			7,
+			\MainWP\Dashboard\MainWP_Backup_Storage_Handler::pin_enforcement_id(
+				7,
+				array(
+					'host' => 'SFTP.Example.com',
+					'port' => '22',
+				),
+				$stored
+			),
+			'A case-different host is the same host.'
+		);
+		$this->assertSame(
+			7,
+			\MainWP\Dashboard\MainWP_Backup_Storage_Handler::pin_enforcement_id(
+				7,
+				array(
+					'host' => 'sftp.example.com.',
+					'port' => '22',
+				),
+				$stored
+			),
+			'A trailing-dot host is the same host.'
+		);
 		$this->assertSame( 7, \MainWP\Dashboard\MainWP_Backup_Storage_Handler::pin_enforcement_id( 7, array( 'host' => 'sftp.example.com' ), $stored ), 'An omitted port defaults to 22 - still the same server.' );
 		// The provider derives its port with ! empty(), so "0" also dials 22.
-		$this->assertSame( 7, \MainWP\Dashboard\MainWP_Backup_Storage_Handler::pin_enforcement_id( 7, array( 'host' => 'sftp.example.com', 'port' => '0' ), $stored ), 'A "0" port dials 22 like the provider - still the same server.' );
+		$this->assertSame(
+			7,
+			\MainWP\Dashboard\MainWP_Backup_Storage_Handler::pin_enforcement_id(
+				7,
+				array(
+					'host' => 'sftp.example.com',
+					'port' => '0',
+				),
+				$stored
+			),
+			'A "0" port dials 22 like the provider - still the same server.'
+		);
 	}
 
 	/**
@@ -774,35 +860,127 @@ class MainWP_Backup_Storage_SFTP_Test extends \WP_UnitTestCase { // phpcs:ignore
 	public function test_first_connect_refuses_when_pin_cannot_persist() {
 		delete_option( 'mainwp_backup_sftp_hostkeys' );
 
-		// Keep the option pinned at its current (empty) value so the learn
-		// write never persists, modeling a failed update_option.
-		add_filter( 'pre_update_option_mainwp_backup_sftp_hostkeys', array( $this, 'block_hostkey_write' ), 10, 2 );
-
-		$provider = new MainWP_Backup_Storage_SFTP(
-			array(
-				'host'           => 'sftp.example.com',
-				'destination_id' => 91,
-			)
-		);
+		// A CAS write that never lands, modeling a dead or read-only DB.
+		$provider = new class( array(
+			'host'           => 'sftp.example.com',
+			'destination_id' => 91,
+		) ) extends MainWP_Backup_Storage_SFTP { // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- test double.
+			/**
+			 * Refuse every swap.
+			 *
+			 * @param string|null $expected_raw Expected raw value.
+			 * @param string      $next_raw     Next raw value.
+			 *
+			 * @return bool Always false.
+			 */
+			protected function hostkeys_cas_write( ?string $expected_raw, string $next_raw ): bool {
+				unset( $expected_raw, $next_raw );
+				return false;
+			}
+		};
 
 		try {
 			$this->expectException( \RuntimeException::class );
 			$provider->verify_host_key( $this->host_key_connection( $this->fake_host_key() ) );
 		} finally {
-			remove_filter( 'pre_update_option_mainwp_backup_sftp_hostkeys', array( $this, 'block_hostkey_write' ), 10 );
 			delete_option( 'mainwp_backup_sftp_hostkeys' );
 		}
 	}
 
 	/**
-	 * Filter that refuses the host-key option write by returning the old value.
+	 * Write the host-key option row the way a concurrent PHP process would:
+	 * straight into the DB, invisible to this request's options cache.
 	 *
-	 * @param mixed $value     Proposed value.
-	 * @param mixed $old_value Current stored value.
+	 * @param array $pins Destination id => fingerprint map.
 	 *
-	 * @return mixed The old value, so update_option persists nothing.
+	 * @return void
 	 */
-	public function block_hostkey_write( $value, $old_value ) {
-		return $old_value;
+	private function foreign_process_writes_hostkeys( array $pins ) {
+		global $wpdb;
+		$wpdb->query( $wpdb->prepare( "INSERT INTO {$wpdb->options} ( option_name, option_value, autoload ) VALUES ( %s, %s, 'no' ) ON DUPLICATE KEY UPDATE option_value = VALUES( option_value )", 'mainwp_backup_sftp_hostkeys', maybe_serialize( $pins ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- models a foreign process's write.
+	}
+
+	/**
+	 * Read the stored pins the same way, past the options cache.
+	 *
+	 * @return array Destination id => fingerprint map.
+	 */
+	private function read_hostkeys_from_db() {
+		global $wpdb;
+		$raw    = $wpdb->get_var( $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", 'mainwp_backup_sftp_hostkeys' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- assertion must see the real row.
+		$stored = maybe_unserialize( (string) $raw );
+		return is_array( $stored ) ? $stored : array();
+	}
+
+	/**
+	 * Two simultaneous first uses of the SAME destination cannot both win
+	 * trust: the loser must defer to the pin the concurrent connection
+	 * recorded and refuse its own differing key, instead of last-write-wins
+	 * deciding which server to trust.
+	 *
+	 * @return void
+	 */
+	public function test_first_use_defers_to_concurrent_pin_for_same_destination() {
+		delete_option( 'mainwp_backup_sftp_hostkeys' );
+		// Prime this request's options cache with "no pins" - the stale
+		// state the racing connection acts on.
+		get_option( 'mainwp_backup_sftp_hostkeys' );
+
+		$winner = MainWP_Backup_Storage_SFTP::fingerprint_host_key( $this->fake_host_key( 'winner' ) );
+		$this->foreign_process_writes_hostkeys( array( 77 => $winner ) );
+
+		$provider = new MainWP_Backup_Storage_SFTP(
+			array(
+				'host'           => 'sftp.example.com',
+				'destination_id' => 77,
+			)
+		);
+
+		try {
+			try {
+				$provider->verify_host_key( $this->host_key_connection( $this->fake_host_key( 'loser' ) ) );
+				$this->fail( 'The losing first use must defer to the concurrent pin and refuse its own key.' );
+			} catch ( \RuntimeException $e ) {
+				$this->assertSame( 401, $e->getCode(), 'Deferring to the concurrent pin parks the destination.' );
+			}
+
+			$stored = $this->read_hostkeys_from_db();
+			$this->assertSame( $winner, isset( $stored[77] ) ? $stored[77] : null, 'The concurrent pin must survive the race.' );
+		} finally {
+			delete_option( 'mainwp_backup_sftp_hostkeys' );
+		}
+	}
+
+	/**
+	 * A first use must not clobber a pin a concurrent process recorded for a
+	 * DIFFERENT destination: the stale options cache hides that write, so
+	 * only the CAS's direct read can preserve it.
+	 *
+	 * @return void
+	 */
+	public function test_first_use_preserves_concurrent_pin_for_other_destination() {
+		delete_option( 'mainwp_backup_sftp_hostkeys' );
+		get_option( 'mainwp_backup_sftp_hostkeys' );
+
+		$other = MainWP_Backup_Storage_SFTP::fingerprint_host_key( $this->fake_host_key( 'other-destination' ) );
+		$this->foreign_process_writes_hostkeys( array( 88 => $other ) );
+
+		$key      = $this->fake_host_key( 'original' );
+		$provider = new MainWP_Backup_Storage_SFTP(
+			array(
+				'host'           => 'sftp.example.com',
+				'destination_id' => 77,
+			)
+		);
+
+		try {
+			$provider->verify_host_key( $this->host_key_connection( $key ) );
+
+			$stored = $this->read_hostkeys_from_db();
+			$this->assertSame( MainWP_Backup_Storage_SFTP::fingerprint_host_key( $key ), isset( $stored[77] ) ? $stored[77] : null, 'The first use must record its own pin.' );
+			$this->assertSame( $other, isset( $stored[88] ) ? $stored[88] : null, 'The concurrent pin for the other destination must survive.' );
+		} finally {
+			delete_option( 'mainwp_backup_sftp_hostkeys' );
+		}
 	}
 }

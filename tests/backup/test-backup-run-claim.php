@@ -160,6 +160,49 @@ class MainWP_Backup_Run_Claim_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A failure retry claimed in the same second the previous run closed
+	 * must stamp last_run strictly after completed - otherwise the new
+	 * run's close gate (completed < last_run) can never fire and the run
+	 * wedges open forever.
+	 */
+	public function test_claim_after_same_second_failure_lands_after_close() {
+		$close = time() + 2; // The previous close, at/after the claim's own clock second.
+		$task  = $this->task_in_state(
+			array(
+				'last_run'      => $close,
+				'completed'     => $close,
+				'backup_errors' => 'Site: child. The database dump failed.',
+			)
+		);
+
+		$this->assertTrue( MainWP_DB_Backup::instance()->claim_backup_run( (int) $task->id, 15 ) );
+
+		$fresh = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$this->assertGreaterThan( (int) $fresh->completed, (int) $fresh->last_run, 'A reclaim must land strictly after the previous close.' );
+		$this->assertTrue( MainWP_DB_Backup::instance()->update_backup_completed( (int) $task->id ), 'The reopened run must be closable.' );
+	}
+
+	/**
+	 * The graceless cron bump gets the same guard: reopening a run whose
+	 * close landed in the same clock second still stamps last_run past
+	 * completed, keeping the close gate reachable.
+	 */
+	public function test_claim_grace_zero_same_second_lands_after_close() {
+		$close = time() + 2;
+		$task  = $this->task_in_state(
+			array(
+				'last_run'  => $close,
+				'completed' => $close,
+			)
+		);
+
+		$this->assertTrue( MainWP_DB_Backup::instance()->claim_backup_run( (int) $task->id, 0 ) );
+
+		$fresh = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$this->assertGreaterThan( (int) $fresh->completed, (int) $fresh->last_run, 'The cron-path bump must also land strictly after the previous close.' );
+	}
+
+	/**
 	 * A refused claim yields the whole execute path: no error recorded,
 	 * no failure email, and - the observed damage - no second preflight
 	 * or child task ever fires.

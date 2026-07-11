@@ -50,8 +50,8 @@ class MainWP_Backup_Artifact_Download_Test extends MainWP_Abilities_Test_Case {
 	 * @return string Path (file does not exist yet).
 	 */
 	private function local_file() {
-		$upload = wp_upload_dir();
-		$path   = $upload['basedir'] . '/mainwp-test-artifact-' . wp_rand( 1000, 999999 ) . '.bin';
+		$upload              = wp_upload_dir();
+		$path                = $upload['basedir'] . '/mainwp-test-artifact-' . wp_rand( 1000, 999999 ) . '.bin';
 		$this->local_files[] = $path;
 		return $path;
 	}
@@ -293,7 +293,13 @@ class MainWP_Backup_Artifact_Download_Test extends MainWP_Abilities_Test_Case {
 		$local   = $this->local_file();
 		$calls   = array();
 		$urls    = array();
-		$this->mock_token_callable( array( 'token' => '', 'hash' => '' ), $calls );
+		$this->mock_token_callable(
+			array(
+				'token' => '',
+				'hash'  => '',
+			),
+			$calls
+		);
 		$this->mock_download( array( 'never-downloaded' ), $urls );
 
 		$this->expectException( MainWP_Exception::class );
@@ -386,7 +392,7 @@ class MainWP_Backup_Artifact_Download_Test extends MainWP_Abilities_Test_Case {
 	public function test_backup_download_file_uses_token_flow() {
 		$website = $this->make_site( true );
 		// The sink confines its target to the site's own backup dir.
-		$local = MainWP_System_Utility::get_mainwp_specific_dir( (string) $website->id ) . 'test-dl-' . wp_rand( 1000, 999999 ) . '/backup-file.tar.gz';
+		$local               = MainWP_System_Utility::get_mainwp_specific_dir( (string) $website->id ) . 'test-dl-' . wp_rand( 1000, 999999 ) . '/backup-file.tar.gz';
 		$this->local_files[] = $local;
 		$content             = "\x1f\x8b\x08" . str_repeat( 'z', 64 );
 		$calls               = array();

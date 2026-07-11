@@ -187,14 +187,14 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 				'role' => 'full',
 			);
 		} else {
-			$this->remote_files['dbBackup-1.zip']       = $zip_bytes( 120 );
-			$this->remote_files['uploads.part001.zip']  = $zip_bytes( 200 );
-			$artifacts[]                                = array(
+			$this->remote_files['dbBackup-1.zip']      = $zip_bytes( 120 );
+			$this->remote_files['uploads.part001.zip'] = $zip_bytes( 200 );
+			$artifacts[]                               = array(
 				'file' => 'dbBackup-1.zip',
 				'size' => 120,
 				'role' => 'db',
 			);
-			$artifacts[]                                = array(
+			$artifacts[]                               = array(
 				'file' => 'uploads.part001.zip',
 				'size' => 200,
 				'role' => 'part',

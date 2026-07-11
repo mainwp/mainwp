@@ -709,13 +709,16 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
 
         // Rename the backups feature flag to mainwp_enableNativeBackups; reads fall back to the
         // old name until this has run (see MainWP_Backup_Settings::is_native_backups_enabled()).
+        // The old option is kept, mirroring the effective value, not deleted: a rollback to a
+        // pre-rename dashboard recreates a MISSING flag as enabled on install(), silently
+        // re-enabling legacy backups, while a present flag is preserved.
         if ( version_compare( $currentVersion, '9.0.2.6', '<' ) ) { // NOSONAR - no ip.
             $old_flag = get_option( 'mainwp_enableLegacyBackupFeature', false );
             if ( false !== $old_flag ) {
                 if ( false === get_option( 'mainwp_enableNativeBackups', false ) ) {
                     MainWP_Utility::update_option( 'mainwp_enableNativeBackups', (int) $old_flag );
                 }
-                delete_option( 'mainwp_enableLegacyBackupFeature' );
+                MainWP_Backup_Settings::mirror_native_flag_for_rollback();
             }
         }
 

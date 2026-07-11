@@ -78,20 +78,20 @@ class MainWP_Backup_Manual_Task_Test extends \WP_UnitTestCase {
 		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
 			$table,
 			array(
-				'userid'        => 1,
-				'name'          => 'Manual task test ' . uniqid(),
-				'schedule'      => 'daily',
-				'type'          => 'full',
-				'exclude'       => '',
-				'sites'         => $sites,
-				'groups'        => '',
-				'subfolder'     => '',
-				'filename'      => '',
+				'userid'          => 1,
+				'name'            => 'Manual task test ' . uniqid(),
+				'schedule'        => 'daily',
+				'type'            => 'full',
+				'exclude'         => '',
+				'sites'           => $sites,
+				'groups'          => '',
+				'subfolder'       => '',
+				'filename'        => '',
 				'completed_sites' => '',
-				'backup_errors' => '',
-				'archiveFormat' => 'site',
-				'template'      => 0,
-				'destinations'  => wp_json_encode( $destinations ),
+				'backup_errors'   => '',
+				'archiveFormat'   => 'site',
+				'template'        => 0,
+				'destinations'    => wp_json_encode( $destinations ),
 			)
 		);
 

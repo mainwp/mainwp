@@ -178,7 +178,12 @@ class MainWP_Backup_Snapshots_Test extends \WP_UnitTestCase {
 	 */
 	public function test_get_latest_complete_returns_newest_for_site_and_task() {
 		$older = $this->record();
-		$newer = $this->record( array( 'type' => 'incremental', 'parent_id' => $older ) );
+		$newer = $this->record(
+			array(
+				'type'      => 'incremental',
+				'parent_id' => $older,
+			)
+		);
 		$this->record( array( 'site_id' => 33 ) ); // Another site, must not match.
 		$this->record( array( 'task_id' => 44 ) ); // Another task, must not match.
 
@@ -206,8 +211,13 @@ class MainWP_Backup_Snapshots_Test extends \WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_get_latest_complete_ignores_pruned_rows() {
-		$base = $this->record();
-		$pruned = $this->record( array( 'type' => 'incremental', 'parent_id' => $base ) );
+		$base   = $this->record();
+		$pruned = $this->record(
+			array(
+				'type'      => 'incremental',
+				'parent_id' => $base,
+			)
+		);
 		MainWP_Backup_Snapshots::instance()->set_status( $pruned, 'pruned' );
 
 		$latest = MainWP_Backup_Snapshots::instance()->get_latest_complete( 22, 11 );
@@ -224,8 +234,18 @@ class MainWP_Backup_Snapshots_Test extends \WP_UnitTestCase {
 	 */
 	public function test_get_chain_returns_base_first() {
 		$base   = $this->record();
-		$first  = $this->record( array( 'type' => 'incremental', 'parent_id' => $base ) );
-		$second = $this->record( array( 'type' => 'incremental', 'parent_id' => $first ) );
+		$first  = $this->record(
+			array(
+				'type'      => 'incremental',
+				'parent_id' => $base,
+			)
+		);
+		$second = $this->record(
+			array(
+				'type'      => 'incremental',
+				'parent_id' => $first,
+			)
+		);
 
 		$chain = MainWP_Backup_Snapshots::instance()->get_chain( $second );
 
@@ -242,7 +262,12 @@ class MainWP_Backup_Snapshots_Test extends \WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_get_chain_stops_at_missing_parent() {
-		$leaf = $this->record( array( 'type' => 'incremental', 'parent_id' => 987654 ) );
+		$leaf = $this->record(
+			array(
+				'type'      => 'incremental',
+				'parent_id' => 987654,
+			)
+		);
 
 		$chain = MainWP_Backup_Snapshots::instance()->get_chain( $leaf );
 

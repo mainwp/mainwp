@@ -14,6 +14,7 @@
 
 namespace MainWP\Dashboard\Tests;
 
+use MainWP\Dashboard\MainWP_Backup_Restore_Orchestrator;
 use MainWP\Dashboard\MainWP_Post_Backup_Handler;
 use MainWP\Dashboard\MainWP_System_Cron_Jobs;
 
@@ -98,5 +99,55 @@ class MainWP_Backup_Now_Continuation_Test extends \WP_UnitTestCase {
 		$jobs = MainWP_System_Cron_Jobs::instance()->get_cron_jobs();
 
 		$this->assertArrayNotHasKey( 'mainwp_native_backup_continue_action', $jobs, 'The continuation trigger must stay single-event only.' );
+	}
+
+	/**
+	 * Disabling native backups must not strand a restore mid-flight: both
+	 * cron lanes still drive nonterminal restore jobs to a terminal state.
+	 * The toggle governs STARTING work (initiate_restore refuses), not
+	 * abandoning destructive work already running on a child site.
+	 *
+	 * @return void
+	 */
+	public function test_disabled_toggle_still_drives_restore_jobs_on_cron_lanes() {
+		delete_option( 'mainwp_enableNativeBackups' );
+		delete_option( 'mainwp_enableLegacyBackupFeature' );
+
+		$spy = new class() extends MainWP_Backup_Restore_Orchestrator {
+			/**
+			 * Drive-call count.
+			 *
+			 * @var int
+			 */
+			public $calls = 0;
+
+			/**
+			 * Record the drive instead of running jobs.
+			 *
+			 * @param int      $budget_seconds Slice budget.
+			 * @param int|null $only_job_id    Job filter.
+			 */
+			public function process_pending_restore_jobs( int $budget_seconds = self::DEFAULT_BUDGET_SECONDS, ?int $only_job_id = null ): void {
+				unset( $budget_seconds, $only_job_id );
+				++$this->calls;
+			}
+		};
+
+		$prop = new \ReflectionProperty( MainWP_Backup_Restore_Orchestrator::class, 'instance' );
+		$prop->setAccessible( true );
+		$saved = $prop->getValue();
+		$prop->setValue( null, $spy );
+
+		try {
+			MainWP_System_Cron_Jobs::instance()->cron_restore_continue();
+			$this->assertSame( 1, $spy->calls, 'The dedicated restore lane must run with the feature toggled off.' );
+
+			MainWP_System_Cron_Jobs::instance()->cron_backups_continue();
+			$this->assertSame( 2, $spy->calls, 'The periodic continuation lane must still finish restore jobs with the feature toggled off.' );
+		} finally {
+			$prop->setValue( null, $saved );
+			delete_option( 'mainwp_enableNativeBackups' );
+			delete_option( 'mainwp_enableLegacyBackupFeature' );
+		}
 	}
 }

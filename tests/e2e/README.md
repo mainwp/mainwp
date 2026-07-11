@@ -64,10 +64,14 @@ predates the feature.
 
 ## Safety model
 
-All target children are disposable. Even so, the only destructive test
-(`break-recover.spec.ts` → child plugin toggle) toggles a single non-critical
-plugin and restores it in a `finally` block. It is scoped to `REMOTE_TEST_CHILD_URLS`
-and never touches anything outside that list. Server-level breaks (500, expired
+All target children are disposable. Two tests are destructive. The
+backup/restore round-trip (`real-path.spec.ts`, gated behind
+`REMOTE_TEST_RUN_DESTRUCTIVE=1` and scoped to `REMOTE_TEST_BACKUP_CHILD_URL`)
+drives a real restore that replaces the designated child's files and database
+with the snapshot the run just created. The child plugin toggle
+(`break-recover.spec.ts`) toggles a single non-critical plugin and restores it
+in a `finally` block, scoped to `REMOTE_TEST_CHILD_URLS`. Neither touches
+anything outside its configured target. Server-level breaks (500, expired
 cert, host down) are out of scope here — they need host access the testbed does
 not grant.
 

@@ -59,7 +59,13 @@ class MainWP_Backup_Task_Scope_Snapshot_Test extends MainWP_Abilities_Test_Case 
 	 */
 	private function add_site_to_group( $site_id, $group_id ) {
 		global $wpdb;
-		$wpdb->insert( $wpdb->prefix . 'mainwp_wp_group', array( 'wpid' => $site_id, 'groupid' => $group_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
+		$wpdb->insert(
+			$wpdb->prefix . 'mainwp_wp_group',
+			array(
+				'wpid'    => $site_id,
+				'groupid' => $group_id,
+			)
+		); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
 		if ( ! in_array( $group_id, $this->group_ids, true ) ) {
 			$this->group_ids[] = $group_id;
 		}

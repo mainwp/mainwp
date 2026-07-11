@@ -387,7 +387,7 @@ class MainWP_Backup_Schedule_Cron_Test extends \WP_UnitTestCase {
 	public function test_timezone_change_recomputes_next_run() {
 		update_option( 'timezone_string', 'UTC' );
 
-		$id = $this->insert_task(
+		$id                            = $this->insert_task(
 			array(
 				'schedule'    => 'daily',
 				'time_of_day' => '06:00',

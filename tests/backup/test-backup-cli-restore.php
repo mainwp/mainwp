@@ -32,7 +32,8 @@ use MainWP\Dashboard\MainWP_Keys_Manager;
  * counted instead of scheduling real cron, and the transfer driver
  * overridable so a test can pin the cloud-pull decision.
  */
-class CLI_Restore_Test_Orchestrator extends MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- test double.
+class CLI_Restore_Test_Orchestrator extends MainWP_Backup_Restore_Orchestrator {
+ // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- test double.
 
 	/**
 	 * Scripted reachability.
@@ -88,7 +89,8 @@ class CLI_Restore_Test_Orchestrator extends MainWP_Backup_Restore_Orchestrator {
  * straight from the resolved plan, so a local-source job drains to
  * completed in one slice without chunk-transfer accounting.
  */
-class CLI_Cloud_Pull_Driver extends MainWP_Backup_Restore_Transfer_Driver { // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- test double.
+class CLI_Cloud_Pull_Driver extends MainWP_Backup_Restore_Transfer_Driver {
+ // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- test double.
 
 	/**
 	 * Whether the gate passes (the tried flag still wins).
@@ -140,7 +142,8 @@ class CLI_Cloud_Pull_Driver extends MainWP_Backup_Restore_Transfer_Driver { // p
  * path through the real local provider, so an encrypted snapshot stages and
  * decrypts dashboard-side exactly as it would against cloud storage.
  */
-class CLI_Decrypt_Test_Driver extends MainWP_Backup_Restore_Transfer_Driver { // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- test double.
+class CLI_Decrypt_Test_Driver extends MainWP_Backup_Restore_Transfer_Driver {
+ // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- test double.
 
 	/**
 	 * Base path the stub provider serves objects from.
@@ -545,11 +548,11 @@ class MainWP_Backup_CLI_Restore_Test extends MainWP_Abilities_Test_Case {
 		// the destination, exercising the dashboard-side staging decrypt.
 		unlink( $src . '/db.sql.gz' );
 
-		$driver              = new CLI_Decrypt_Test_Driver();
-		$driver->remote_base = $base;
+		$driver                     = new CLI_Decrypt_Test_Driver();
+		$driver->remote_base        = $base;
 		$this->orchestrator->driver = $driver;
 
-		$this->responses['restore_task_create']   = array(
+		$this->responses['restore_task_create']    = array(
 			'task_id' => 'task-cli-enc',
 			'phase'   => 'queued',
 		);

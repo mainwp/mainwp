@@ -222,7 +222,16 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 			$this->assertFalse( has_action( $hook ), "No callback may register on {$hook} while disabled." );
 		}
 
-		do_action( 'mainwp_backup_diag_poll', array( 'phase' => 'dumping_db' ), 0.1, array( 'op' => 'run', 'site_id' => 1, 'task_id' => 1 ) );
+		do_action(
+			'mainwp_backup_diag_poll',
+			array( 'phase' => 'dumping_db' ),
+			0.1,
+			array(
+				'op'      => 'run',
+				'site_id' => 1,
+				'task_id' => 1,
+			)
+		);
 		do_action( 'mainwp_backup_diag_slot', 'acquired', 'tok', 1, 2 );
 
 		$this->assertSame( array(), (array) glob( $this->diag_dir . '/*.jsonl' ), 'A disabled recorder must write nothing.' );
@@ -925,7 +934,17 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 	public function test_terminal_and_guardrail_events_recorded() {
 		$this->enable_recorder();
 
-		do_action( 'mainwp_native_backup_completed', 7, 'bk-diag-9', true, array( 'type' => 'full', 'file' => 'full.tar.gz', 'size' => 1024 ) );
+		do_action(
+			'mainwp_native_backup_completed',
+			7,
+			'bk-diag-9',
+			true,
+			array(
+				'type' => 'full',
+				'file' => 'full.tar.gz',
+				'size' => 1024,
+			)
+		);
 		do_action( 'mainwp_log_warning', 'Low disk space on dashboard server: 100 MB available. Large backups may fail.' );
 		do_action( 'mainwp_log_warning', 'Client email could not be sent.' );
 
@@ -1158,7 +1177,16 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 
 		$this->enable_recorder();
 
-		do_action( 'mainwp_backup_diag_poll', array( 'phase' => 'dumping_db' ), 0.1, array( 'op' => 'run', 'site_id' => 1, 'task_id' => 1 ) );
+		do_action(
+			'mainwp_backup_diag_poll',
+			array( 'phase' => 'dumping_db' ),
+			0.1,
+			array(
+				'op'      => 'run',
+				'site_id' => 1,
+				'task_id' => 1,
+			)
+		);
 		do_action( 'mainwp_backup_diag_slot', 'acquired', 'tok', 1, 2 );
 		do_action( 'mainwp_backup_diag_restore_poll', 1, 1, array( 'phase' => 'restoring_files' ), 0.1 );
 

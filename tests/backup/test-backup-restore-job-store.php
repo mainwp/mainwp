@@ -358,7 +358,7 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 		// reclaims, scoped to Y throughout so the setup never touches X.
 		$this->store->acquire_next_job( 'token-y0', 300, $now, $job_y );
 		for ( $i = 1; $i <= MainWP_Backup_Restore_Job_Store::RECLAIM_CEILING; $i++ ) {
-			$now       += 301;
+			$now      += 301;
 			$reclaimed = $this->store->acquire_next_job( "token-y{$i}", 300, $now, $job_y );
 			$this->assertNotNull( $reclaimed, "Reclaim {$i} of Y must still be handed out below the ceiling." );
 		}

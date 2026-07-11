@@ -915,7 +915,7 @@ class MainWP_Backup_Storage_Page_Test extends \WP_UnitTestCase {
 			)
 		);
 
-		$task               = (object) array(
+		$task = (object) array(
 			'name'          => 'T',
 			'type'          => 'full',
 			'schedule'      => 'daily',

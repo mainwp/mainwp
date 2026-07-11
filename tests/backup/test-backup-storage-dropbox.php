@@ -245,7 +245,15 @@ class MainWP_Backup_Storage_Dropbox_Test extends \WP_UnitTestCase {
 		$provider = $this->make_provider(
 			array(
 				$this->token_response(),
-				$this->response( 200, wp_json_encode( array( '.tag' => 'file', 'size' => 4194304 ) ) ),
+				$this->response(
+					200,
+					wp_json_encode(
+						array(
+							'.tag' => 'file',
+							'size' => 4194304,
+						)
+					)
+				),
 			)
 		);
 		$this->assertSame( array( 'size' => 4194304 ), $provider->head_object( 'k.bin' ) );
@@ -450,7 +458,15 @@ class MainWP_Backup_Storage_Dropbox_Test extends \WP_UnitTestCase {
 			array(
 				$this->token_response(),
 				$this->response( 200, '{}' ),
-				$this->response( 200, wp_json_encode( array( '.tag' => 'file', 'size' => 22 ) ) ),
+				$this->response(
+					200,
+					wp_json_encode(
+						array(
+							'.tag' => 'file',
+							'size' => 22,
+						)
+					)
+				),
 				$this->response( 200, '{}' ),
 			)
 		);

@@ -10,7 +10,10 @@ namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Backup_Error_Codes;
 use MainWP\Dashboard\MainWP_Backup_Restore_Transfer_Driver;
+use MainWP\Dashboard\MainWP_Backup_Snapshot_Catalog;
 use MainWP\Dashboard\MainWP_Backup_Storage_Local;
+use MainWP\Dashboard\MainWP_Backup_Upload_Job_Store;
+use MainWP\Dashboard\MainWP_DB;
 
 /**
  * Driver with the remote destination pinned to a local-provider stub.
@@ -141,6 +144,13 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends \WP_UnitTestCase {
 	private $driver;
 
 	/**
+	 * Snapshot rows created by the integration test, cleaned in tear_down.
+	 *
+	 * @var int[]
+	 */
+	private $snapshot_ids = array();
+
+	/**
 	 * Build scratch dirs.
 	 */
 	public function set_up() {
@@ -156,6 +166,15 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends \WP_UnitTestCase {
 	public function tear_down() {
 		$this->driver->cleanup_staging( 777001 );
 		$this->rrmdir( $this->dir );
+		if ( ! empty( $this->snapshot_ids ) ) {
+			global $wpdb;
+			$ids = implode( ',', array_map( 'intval', $this->snapshot_ids ) );
+			$wpdb->query( 'DELETE FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ) . " WHERE id IN ( {$ids} )" ); // phpcs:ignore WordPress.DB -- test cleanup.
+			foreach ( $this->snapshot_ids as $snapshot_id ) {
+				MainWP_Backup_Upload_Job_Store::instance()->purge_upload_jobs_for_snapshot( $snapshot_id );
+			}
+			$this->snapshot_ids = array();
+		}
 		parent::tear_down();
 	}
 
@@ -310,7 +329,7 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends \WP_UnitTestCase {
 		$remote = $this->dir . '/remote';
 		mkdir( $remote . '/4/8/files', 0777, true );
 		file_put_contents( $remote . '/4/8/files/db.tar.gz', 'remote-bytes' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
-		$this->driver->remote_base    = $remote;
+		$this->driver->remote_base     = $remote;
 		$this->driver->fake_free_bytes = 5; // Less than the 12-byte entry size.
 
 		$plan = array(
@@ -338,13 +357,16 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends \WP_UnitTestCase {
 	 * Build a chunked remote layout: manifest plus content-addressed
 	 * pieces under {site 0}/{snapshot 44}/.
 	 *
-	 * @param string $content Artifact content split into two chunks.
-	 * @param bool   $corrupt Whether to corrupt the second chunk's bytes.
-	 * @param string $algo    Chunk content-address algorithm.
+	 * @param string $content    Artifact content split into two chunks.
+	 * @param bool   $corrupt    Whether to corrupt the second chunk's bytes.
+	 * @param string $algo       Chunk content-address algorithm.
+	 * @param bool   $namespaced Build the plan entry the way the catalog
+	 *                           does: chain-namespaced 'file' plus the raw
+	 *                           'source_file' the manifest records.
 	 *
 	 * @return array Plan entry for the chunked artifact.
 	 */
-	private function make_chunked_remote( $content, $corrupt = false, $algo = 'sha256' ) {
+	private function make_chunked_remote( $content, $corrupt = false, $algo = 'sha256', $namespaced = false ) {
 		$remote = $this->dir . '/remote';
 		$half   = (int) ( strlen( $content ) / 2 );
 		$parts  = array( substr( $content, 0, $half ), substr( $content, $half ) );
@@ -380,7 +402,7 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends \WP_UnitTestCase {
 
 		$this->driver->remote_base = $remote;
 
-		return array(
+		$entry = array(
 			'role'        => 'full',
 			'file'        => 'big.zip',
 			'size'        => strlen( $content ),
@@ -391,6 +413,11 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends \WP_UnitTestCase {
 			'remote_key'  => '',
 			'adopt_only'  => false,
 		);
+		if ( $namespaced ) {
+			$entry['file']        = 's44-big.zip';
+			$entry['source_file'] = 'big.zip';
+		}
+		return $entry;
 	}
 
 	/**
@@ -415,13 +442,28 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * A production-shaped plan entry - chain-namespaced 'file' with the
+	 * raw archive name in 'source_file' - still finds its artifact in the
+	 * manifest, which records the snapshot's own archive names.
+	 */
+	public function test_stage_remote_chunked_matches_manifest_by_source_file() {
+		$content = str_repeat( 'chunky-data-', 50 );
+		$plan    = array( $this->make_chunked_remote( $content, false, 'sha256', true ) );
+
+		$outcome = $this->driver->stage_artifacts( 777001, $plan, microtime( true ) + 60 );
+		$this->assertTrue( $outcome['done'] );
+		$this->assertSame( $content, file_get_contents( $plan[0]['staged_path'] ) );
+		$this->assertStringEndsWith( 's44-big.zip', $plan[0]['staged_path'] );
+	}
+
+	/**
 	 * A fresh chunked reassembly (no bytes on disk yet) refuses before
 	 * downloading any chunk when free space is less than the artifact's
 	 * remaining size - no assembly file is left behind.
 	 */
 	public function test_stage_remote_chunked_refuses_when_disk_full_at_start() {
-		$content = str_repeat( 'chunky-data-', 50 );
-		$plan    = array( $this->make_chunked_remote( $content ) );
+		$content                       = str_repeat( 'chunky-data-', 50 );
+		$plan                          = array( $this->make_chunked_remote( $content ) );
 		$this->driver->fake_free_bytes = 5; // Less than strlen( $content ).
 
 		$outcome = $this->driver->stage_artifacts( 777001, $plan, microtime( true ) + 60 );
@@ -448,10 +490,10 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends \WP_UnitTestCase {
 
 		// Seed the state a real first-slice yield would have left: the
 		// manifest already resolved and the first chunk already appended.
-		$plan[0]['chunks']      = $manifest['artifacts'][0]['chunks'];
-		$plan[0]['total_size']  = strlen( $content );
+		$plan[0]['chunks']       = $manifest['artifacts'][0]['chunks'];
+		$plan[0]['total_size']   = strlen( $content );
 		$plan[0]['chunk_prefix'] = '0/44/';
-		$plan[0]['reassembly']  = array(
+		$plan[0]['reassembly']   = array(
 			'next'  => 1,
 			'bytes' => strlen( $first_piece ),
 		);
@@ -486,6 +528,73 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends \WP_UnitTestCase {
 
 		$this->assertNull( $outcome['error'] );
 		$this->assertTrue( $outcome['done'] );
+		$this->assertSame( $content, file_get_contents( $plan[0]['staged_path'] ) );
+	}
+
+	/**
+	 * Full remote-chunked path from real rows: a snapshot row plus its
+	 * completed upload job resolve through the catalog into a namespaced
+	 * plan, and that plan stages against the manifest the upload wrote.
+	 * Guards the manifest-name/plan-name contract the hand-built unit
+	 * fixtures cannot see.
+	 */
+	public function test_upload_catalog_stage_chunked_roundtrip() {
+		global $wpdb;
+		$content = str_repeat( 'integration-bytes-', 40 );
+
+		// A complete snapshot whose only artifact is gone locally.
+		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
+			MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ),
+			array(
+				'task_id'       => 991,
+				'site_id'       => 9901,
+				'type'          => 'full',
+				'parent_id'     => null,
+				'created'       => time(),
+				'archives'      => wp_json_encode( array( array( 'file' => 'big.zip', 'role' => 'full', 'path' => $this->dir . '/gone/big.zip', 'size' => strlen( $content ) ) ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+				'manifest_path' => '',
+				'status'        => 'complete',
+			)
+		);
+		$snapshot_id          = (int) $wpdb->insert_id;
+		$this->snapshot_ids[] = $snapshot_id;
+
+		// A completed chunked upload recorded the artifact under its raw name.
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( 7 ) );
+		$jobs = $store->get_jobs_for_snapshot( $snapshot_id );
+		$this->assertCount( 1, $jobs );
+		$job_id = (int) $jobs[0]->id;
+		$store->save_checkpoint( $job_id, array( 'artifacts' => array( array( 'file' => 'big.zip', 'mode' => 'chunked', 'sha256' => hash( 'sha256', $content ) ) ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+		$store->set_status( $job_id, MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE );
+
+		// The catalog resolves the chain into a chain-namespaced plan.
+		$resolved = MainWP_Backup_Snapshot_Catalog::instance()->resolve_restorable_chain( $snapshot_id, 9901 );
+		$this->assertTrue( $resolved['ok'], (string) $resolved['error'] );
+		$plan = $resolved['plan'];
+		$this->assertSame( 's' . $snapshot_id . '-big.zip', $plan[0]['file'] );
+		$this->assertSame( 'big.zip', $plan[0]['source_file'] );
+		$this->assertSame( 'remote_chunked', $plan[0]['source'] );
+
+		// The remote layout the upload produced: chunks + manifest under
+		// {site}/{snapshot}/, named by the snapshot's own archive names.
+		$remote = $this->dir . '/remote-int';
+		$prefix = $remote . '/9901/' . $snapshot_id;
+		mkdir( $prefix . '/chunks', 0777, true );
+		$half   = (int) ( strlen( $content ) / 2 );
+		$chunks = array();
+		$offset = 0;
+		foreach ( array( substr( $content, 0, $half ), substr( $content, $half ) ) as $piece ) {
+			$hash     = hash( 'sha256', $piece );
+			$chunks[] = array( 'hash' => $hash, 'algo' => 'sha256', 'offset' => $offset, 'length' => strlen( $piece ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+			file_put_contents( $prefix . '/chunks/' . $hash . '.bin', $piece ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+			$offset += strlen( $piece );
+		}
+		file_put_contents( $prefix . '/manifest.json', wp_json_encode( array( 'format' => 1, 'artifacts' => array( array( 'file' => 'big.zip', 'size' => strlen( $content ), 'chunks' => $chunks ) ) ) ) ); // phpcs:ignore
+		$this->driver->remote_base = $remote;
+
+		$outcome = $this->driver->stage_artifacts( 777001, $plan, microtime( true ) + 60 );
+		$this->assertTrue( $outcome['done'], (string) ( $outcome['error'] ?? '' ) );
 		$this->assertSame( $content, file_get_contents( $plan[0]['staged_path'] ) );
 	}
 

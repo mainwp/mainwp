@@ -465,7 +465,8 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
 
             jQuery( '.mainwp-storage-edit' ).on( 'click', function () {
                 let row = jQuery( this ).closest( 'tr' );
-                jQuery( '#mainwp-storage-id' ).val( row.data( 'destination-id' ) );
+                let requestedId = row.data( 'destination-id' );
+                jQuery( '#mainwp-storage-id' ).val( requestedId );
                 jQuery( '#mainwp-storage-name' ).val( row.data( 'name' ) );
                 jQuery( '#mainwp-storage-provider' ).val( row.data( 'provider' ) ).trigger( 'change' );
                 jQuery( '#mainwp-storage-form-title' ).text( '<?php echo esc_js( __( 'Edit Storage Destination', 'mainwp' ) ); ?>' );
@@ -473,8 +474,11 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
 
                 jQuery.post( ajaxurl, mainwp_secure_data( {
                     action: 'mainwp_storage_get',
-                    id: row.data( 'destination-id' )
+                    id: requestedId
                 } ), function ( response ) {
+                    if ( String( jQuery( '#mainwp-storage-id' ).val() ) !== String( requestedId ) ) {
+                        return; // A later Edit click owns the form; a stale response arriving out of order must not fill destination A's settings under destination B's id.
+                    }
                     if ( ! response || response.error ) {
                         return; // The form still works; settings just are not pre-filled.
                     }

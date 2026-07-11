@@ -101,12 +101,14 @@ class MainWP_Backup_Flag_Migration_Test extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * The upgrade routine copies the old flag to the new option and
-	 * removes the old one.
+	 * The upgrade routine copies the old flag to the new option and keeps
+	 * the old name present with the same effective value: a rollback to a
+	 * pre-rename dashboard recreates a MISSING flag as enabled on
+	 * install(), so deleting it would silently re-enable legacy backups.
 	 *
 	 * @return void
 	 */
-	public function test_migration_copies_and_deletes_old_option() {
+	public function test_migration_copies_and_mirrors_old_option() {
 		delete_option( 'mainwp_enableNativeBackups' );
 		update_option( 'mainwp_enableLegacyBackupFeature', 1 );
 		update_site_option( 'mainwp_db_version', '9.0.2.5' );
@@ -114,11 +116,12 @@ class MainWP_Backup_Flag_Migration_Test extends \WP_UnitTestCase {
 		MainWP_Install::instance()->install();
 
 		$this->assertSame( 1, (int) get_option( 'mainwp_enableNativeBackups' ), 'The enabled state must carry over to the new option.' );
-		$this->assertFalse( get_option( 'mainwp_enableLegacyBackupFeature' ), 'The old option must be deleted by the migration.' );
+		$this->assertSame( 1, (int) get_option( 'mainwp_enableLegacyBackupFeature' ), 'The old option must stay present, mirroring the effective value, for the rollback window.' );
 	}
 
 	/**
-	 * A disabled flag stays disabled through the rename.
+	 * A disabled flag stays disabled through the rename - including on the
+	 * mirrored old option, so a rollback stays disabled too.
 	 *
 	 * @return void
 	 */
@@ -131,12 +134,13 @@ class MainWP_Backup_Flag_Migration_Test extends \WP_UnitTestCase {
 
 		$this->assertSame( 0, (int) get_option( 'mainwp_enableNativeBackups' ) );
 		$this->assertFalse( MainWP_Backup_Settings::is_native_backups_enabled() );
-		$this->assertFalse( get_option( 'mainwp_enableLegacyBackupFeature' ) );
+		$this->assertNotFalse( get_option( 'mainwp_enableLegacyBackupFeature' ), 'The old option must stay present for the rollback window.' );
+		$this->assertSame( 0, (int) get_option( 'mainwp_enableLegacyBackupFeature' ) );
 	}
 
 	/**
 	 * Re-running the migration never overwrites an already-written new
-	 * option, but still clears a lingering old one.
+	 * option; a lingering old one is re-mirrored to the effective value.
 	 *
 	 * @return void
 	 */
@@ -148,7 +152,40 @@ class MainWP_Backup_Flag_Migration_Test extends \WP_UnitTestCase {
 		MainWP_Install::instance()->install();
 
 		$this->assertSame( 0, (int) get_option( 'mainwp_enableNativeBackups' ), 'An existing new option must win over a lingering old one.' );
-		$this->assertFalse( get_option( 'mainwp_enableLegacyBackupFeature' ) );
+		$this->assertSame( 0, (int) get_option( 'mainwp_enableLegacyBackupFeature' ), 'The lingering old option must be re-mirrored to the effective value.' );
+	}
+
+	/**
+	 * Every toggle write mirrors into the old option name, so the state a
+	 * rollback would resurrect always matches the user's last choice.
+	 *
+	 * @return void
+	 */
+	public function test_toggle_write_mirrors_old_option() {
+		update_option( 'mainwp_enableNativeBackups', 0 );
+
+		MainWP_Backup_Settings::update_native_backups_option( 1 );
+		$this->assertSame( 1, (int) get_option( 'mainwp_enableNativeBackups' ) );
+		$this->assertSame( 1, (int) get_option( 'mainwp_enableLegacyBackupFeature' ) );
+
+		MainWP_Backup_Settings::update_native_backups_option( 0 );
+		$this->assertSame( 0, (int) get_option( 'mainwp_enableNativeBackups' ) );
+		$this->assertSame( 0, (int) get_option( 'mainwp_enableLegacyBackupFeature' ) );
+	}
+
+	/**
+	 * Before the rename migration has run the mirror is a no-op: it must
+	 * never clobber a still-authoritative legacy flag with a default.
+	 *
+	 * @return void
+	 */
+	public function test_mirror_is_noop_before_migration() {
+		delete_option( 'mainwp_enableNativeBackups' );
+		update_option( 'mainwp_enableLegacyBackupFeature', 1 );
+
+		MainWP_Backup_Settings::mirror_native_flag_for_rollback();
+
+		$this->assertSame( 1, (int) get_option( 'mainwp_enableLegacyBackupFeature' ) );
 	}
 
 	/**

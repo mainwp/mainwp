@@ -1,0 +1,62 @@
+<?xml version="1.0"?>
+<ruleset name="WordPress Coding Standards - Tests">
+    <description>MainWP PHP_CodeSniffer ruleset for the PHPUnit suites. The main phpcs.xml excludes */tests/* wholesale, which silently zeroes any tests/ path passed on the CLI - this ruleset is what actually scans them.</description>
+
+    <file>tests/backup</file>
+
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+    <exclude-pattern>*/fixtures/*</exclude-pattern>
+
+    <arg value="sp" />
+    <arg name="extensions" value="php" />
+    <arg name="basepath" value="." />
+    <arg name="parallel" value="8" />
+
+    <config name="minimum_supported_wp_version" value="5.2" />
+    <config name="testVersion" value="8.3-" />
+
+    <rule ref="PHPCompatibility" />
+
+    <rule ref="WordPress">
+        <!-- Kept aligned with the main phpcs.xml exclusions. -->
+        <exclude name="WordPress.NamingConventions.ValidVariableName" />
+        <exclude name="WordPress.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition" />
+        <exclude name="WordPress.PHP.StrictInArray" />
+        <exclude name="WordPress.WP.I18n" />
+        <exclude name="WordPress.Files.FileName.InvalidClassFileName" />
+        <exclude name="WordPress.DB.DirectDatabaseQuery.NoCaching" />
+        <exclude name="WordPress.WP.CapitalPDangit.Misspelled" />
+        <exclude name="Universal.ControlStructures.DisallowAlternativeSyntax.FoundIfWithInlineHTML" />
+        <exclude name="Universal.ControlStructures.DisallowAlternativeSyntax.FoundForeachWithInlineHTML" />
+        <exclude name="Universal.ControlStructures.DisallowAlternativeSyntax.FoundIf" />
+        <exclude name="Universal.ControlStructures.IfElseDeclaration.NoNewLine" />
+        <exclude name="Universal.Classes.RequireFinalClass.NonFinalClassFound" />
+        <exclude name="Universal.Namespaces.EnforceCurlyBraceSyntax.Forbidden" />
+        <exclude name="Generic.Commenting.Todo" />
+        <exclude name="Generic.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition" />
+        <exclude name="Generic.CodeAnalysis.EmptyStatement.DetectedCatch" />
+
+        <!-- Test-specific relaxations. The suites indent WordPress-style
+             (tabs), unlike the space-indented plugin code, and their
+             fixtures do direct filesystem and DB work, spawn helper
+             processes, seed superglobals, and declare test doubles beside
+             the test class - all deliberate in a suite, all inline-ignore
+             noise if enforced. -->
+        <exclude name="Generic.WhiteSpace.DisallowTabIndent" />
+        <exclude name="WordPress.WP.AlternativeFunctions" />
+        <exclude name="WordPress.PHP.DiscouragedPHPFunctions" />
+        <exclude name="WordPress.PHP.NoSilencedErrors" />
+        <exclude name="WordPress.DB.PreparedSQL.NotPrepared" />
+        <exclude name="WordPress.DB.DirectDatabaseQuery" />
+        <exclude name="WordPress.Security.NonceVerification" />
+        <exclude name="WordPress.Security.EscapeOutput" />
+        <exclude name="Universal.Operators.DisallowShortTernary" />
+        <exclude name="Generic.Files.OneObjectStructurePerFile" />
+        <exclude name="Generic.Commenting.DocComment.ShortNotCapital" />
+        <exclude name="Generic.Commenting.DocComment.LongNotCapital" />
+    </rule>
+
+    <rule ref="WordPress.WP.CapitalPDangit">
+        <severity>0</severity>
+    </rule>
+</ruleset>

@@ -385,9 +385,15 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
             // The local artifacts are gone, so it is now safe to run the
             // irreversible offsite and metadata steps. enqueue_cloud_deletes
             // reads the upload checkpoints that purge then removes, so the
-            // order between them must not swap.
-            if ( $delete_cloud_copies ) {
-                $this->enqueue_cloud_deletes( $snapshot, $store );
+            // order between them must not swap - and a failed enqueue must
+            // stop BOTH: purging the upload rows destroys the only record
+            // of the remote keys, and marking the row pruned would end the
+            // retries, orphaning the cloud copy forever. The snapshot stays
+            // 'complete' with its upload metadata so the next sweep retries,
+            // and the chain stops here like any interruption.
+            if ( $delete_cloud_copies && ! $this->enqueue_cloud_deletes( $snapshot, $store ) ) {
+                $result['errors'][] = sprintf( 'Snapshot %d: a cloud delete job could not be queued; the prune will retry on the next sweep.', $snapshot_id );
+                break;
             }
 
             $store->purge_upload_jobs_for_snapshot( $snapshot_id );
@@ -439,10 +445,11 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
      * @param object                         $snapshot Snapshot row.
      * @param MainWP_Backup_Upload_Job_Store $store    Job store.
      *
-     * @return void
+     * @return bool True when every destination's delete job is queued.
      */
-    private function enqueue_cloud_deletes( object $snapshot, MainWP_Backup_Upload_Job_Store $store ): void {
-        $prefix = (int) $snapshot->site_id . '/' . (int) $snapshot->id . '/';
+    private function enqueue_cloud_deletes( object $snapshot, MainWP_Backup_Upload_Job_Store $store ): bool {
+        $prefix     = (int) $snapshot->site_id . '/' . (int) $snapshot->id . '/';
+        $all_queued = true;
 
         foreach ( $store->get_jobs_for_snapshot( (int) $snapshot->id, MainWP_Backup_Upload_Job_Store::KIND_UPLOAD ) as $upload_job ) {
             $keys = array();
@@ -462,7 +469,7 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
 
             $keys[] = $prefix . 'manifest.json';
 
-            $store->enqueue_delete_job(
+            $queued = $store->enqueue_delete_job(
                 (int) $snapshot->id,
                 (int) $upload_job->destination_id,
                 array(
@@ -480,7 +487,12 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
                     'swept'  => false,
                 )
             );
+            if ( ! $queued ) {
+                $all_queued = false;
+            }
         }
+
+        return $all_queued;
     }
 
     /**
@@ -579,6 +591,15 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
     private function remove_local_dir( object $snapshot, array &$errors ): bool {
         $upload = wp_upload_dir();
         $root   = trailingslashit( $upload['basedir'] ) . 'mainwp/0/' . (int) $snapshot->site_id . '/';
+
+        // Canonicalize like purge_orphaned_snapshot_dirs() does: the paths
+        // below are realpath()ed, so a symlinked uploads root would never
+        // prefix-match an un-canonicalized $root and every removal would be
+        // refused as outside the tree.
+        $real_root = realpath( $root );
+        if ( false !== $real_root ) {
+            $root = trailingslashit( $real_root );
+        }
 
         $paths = array();
         foreach ( (array) $snapshot->archives as $archive ) {

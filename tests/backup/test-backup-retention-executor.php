@@ -142,12 +142,12 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 		$checkpoint = array(
 			'artifacts'          => array(
 				array(
-					'path'   => '/tmp/big.tar',
-					'file'   => 'big.tar',
-					'role'   => 'full',
-					'size'   => 5000,
-					'mode'   => 'chunked',
-					'chunks' => array(
+					'path'          => '/tmp/big.tar',
+					'file'          => 'big.tar',
+					'role'          => 'full',
+					'size'          => 5000,
+					'mode'          => 'chunked',
+					'chunks'        => array(
 						array(
 							'hash'           => 'aaa111',
 							'algo'           => 'sha256',
@@ -275,6 +275,120 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A symlinked uploads root must not break retention: the artifact
+	 * paths are realpath()ed before the containment check, so the root
+	 * must be canonicalized the same way (as purge_orphaned_snapshot_dirs
+	 * already does) or every removal is refused as outside the tree and
+	 * nothing ever prunes.
+	 *
+	 * @return void
+	 */
+	public function test_prune_removes_dirs_under_symlinked_uploads_root() {
+		if ( ! function_exists( 'symlink' ) ) {
+			$this->markTestSkipped( 'symlink() unavailable on this platform.' );
+		}
+
+		$real = sys_get_temp_dir() . '/mainwp-reten-real-' . uniqid();
+		$link = sys_get_temp_dir() . '/mainwp-reten-link-' . uniqid();
+		mkdir( $real, 0777, true );
+		symlink( $real, $link );
+
+		$filter = function ( $dirs ) use ( $link ) {
+			$dirs['basedir'] = $link;
+			return $dirs;
+		};
+		add_filter( 'upload_dir', $filter );
+
+		try {
+			list( $snapshot_id, $dir ) = $this->make_snapshot_with_dir();
+
+			$candidates = array(
+				array(
+					'snapshot_ids'   => array( $snapshot_id ),
+					'reason'         => 'count',
+					'size_bytes'     => 100,
+					'newest_created' => time(),
+				),
+			);
+
+			$result = MainWP_Backup_Retention_Executor::instance()->run_prune( $candidates, $this->make_task( array( 'delete_cloud_copies' => 0 ) ), false );
+
+			$this->assertSame( array(), $result['errors'], 'A symlinked uploads root must not be refused as outside the backup tree.' );
+			$this->assertSame( 'pruned', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id )->status );
+			$this->assertDirectoryDoesNotExist( $dir );
+		} finally {
+			remove_filter( 'upload_dir', $filter );
+			if ( is_link( $link ) ) {
+				unlink( $link ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test cleanup.
+			}
+			if ( is_dir( $real ) ) {
+				$iterator = new \RecursiveIteratorIterator( new \RecursiveDirectoryIterator( $real, \FilesystemIterator::SKIP_DOTS ), \RecursiveIteratorIterator::CHILD_FIRST );
+				foreach ( $iterator as $left_over ) {
+					if ( $left_over->isDir() ) {
+						rmdir( $left_over->getPathname() ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test cleanup.
+					} else {
+						unlink( $left_over->getPathname() ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test cleanup.
+					}
+				}
+				rmdir( $real ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test cleanup.
+			}
+		}
+	}
+
+	/**
+	 * A snapshot whose cloud delete job cannot be queued must NOT be marked
+	 * pruned, and its upload rows (the only record of the remote keys) must
+	 * survive - otherwise the retries end and the cloud copy is orphaned
+	 * forever. The row stays 'complete' so the next sweep retries.
+	 *
+	 * @return void
+	 */
+	public function test_prune_holds_when_delete_enqueue_fails() {
+		list( $snapshot_id ) = $this->make_snapshot_with_dir();
+		$this->insert_upload_job( $snapshot_id, 77 );
+
+		$failing = new class() extends MainWP_Backup_Upload_Job_Store {
+			/**
+			 * Model a store whose delete-enqueue write fails.
+			 *
+			 * @param int   $snapshot_id    Snapshot id.
+			 * @param int   $destination_id Destination id.
+			 * @param array $checkpoint     Checkpoint.
+			 *
+			 * @return bool Always false.
+			 */
+			public function enqueue_delete_job( int $snapshot_id, int $destination_id, array $checkpoint ): bool {
+				unset( $snapshot_id, $destination_id, $checkpoint );
+				return false;
+			}
+		};
+		$prop    = new \ReflectionProperty( MainWP_Backup_Upload_Job_Store::class, 'instance' );
+		$prop->setAccessible( true );
+		$saved = $prop->getValue();
+		$prop->setValue( null, $failing );
+
+		$candidates = array(
+			array(
+				'snapshot_ids'   => array( $snapshot_id ),
+				'reason'         => 'age',
+				'size_bytes'     => 100,
+				'newest_created' => time(),
+			),
+		);
+
+		try {
+			$result = MainWP_Backup_Retention_Executor::instance()->run_prune( $candidates, $this->make_task(), false );
+		} finally {
+			$prop->setValue( null, $saved );
+		}
+
+		$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id )->status, 'A snapshot whose cloud delete could not be queued must stay retryable.' );
+		$this->assertCount( 1, MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $snapshot_id, 'upload' ), 'The upload metadata must survive a failed enqueue.' );
+		$this->assertSame( 0, $result['snapshots_pruned'] );
+		$this->assertNotEmpty( $result['errors'], 'The failed enqueue must be reported.' );
+	}
+
+	/**
 	 * Without delete_cloud_copies no delete jobs are enqueued, but upload
 	 * rows still purge.
 	 *
@@ -344,14 +458,14 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 	 * @return void
 	 */
 	public function test_pruned_action_fires_once_per_candidate() {
-		list( $base )          = $this->make_snapshot_with_dir();
-		list( $inc )           = $this->make_snapshot_with_dir(
+		list( $base )       = $this->make_snapshot_with_dir();
+		list( $inc )        = $this->make_snapshot_with_dir(
 			array(
 				'type'      => 'incremental',
 				'parent_id' => $base,
 			)
 		);
-		list( $standalone )    = $this->make_snapshot_with_dir();
+		list( $standalone ) = $this->make_snapshot_with_dir();
 
 		$events = array();
 		add_action(

@@ -616,7 +616,11 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
     /**
      * Method update_backup_run()
      *
-     * Update backup run.
+     * Update backup run. The new last_run lands strictly after the
+     * previous close: a reopen in the same clock second as that close
+     * would leave completed = last_run, and the close gate
+     * (completed < last_run) could never fire again - the run wedges
+     * open forever.
      *
      * @param mixed $id Task ID.
      *
@@ -626,14 +630,14 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      */
     public function update_backup_run( $id ) {
         if ( MainWP_Utility::ctype_digit( $id ) ) {
-            return $this->wpdb->update(
-                $this->table_name( 'wp_backup' ),
-                array(
-                    'last_run'        => time(),
-                    'last'            => time(),
-                    'completed_sites' => wp_json_encode( array() ),
-                ),
-                array( 'id' => $id )
+            $now = time();
+            return $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- the stamp must be computed against the row's own completed value.
+                $this->wpdb->prepare(
+                    'UPDATE ' . $this->table_name( 'wp_backup' ) . " SET last_run = GREATEST( %d, completed + 1 ), last = %d, completed_sites = '[]' WHERE id = %d", // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted helper.
+                    $now,
+                    $now,
+                    $id
+                )
             );
         }
 
@@ -651,7 +655,10 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * or when the previous run closed successfully within the window - a
      * duplicate initiate must not reopen the run that just finished and
      * poison its freshness check. A run that closed with errors may
-     * retry immediately; failure retries are never debounced.
+     * retry immediately; failure retries are never debounced. Either way
+     * the new last_run lands strictly after the previous close, so the
+     * close gate (completed < last_run) stays reachable even for a
+     * same-second retry.
      *
      * @param mixed $id            Task ID.
      * @param int   $grace_seconds Settle window in seconds; 0 bumps unconditionally.
@@ -672,7 +679,7 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         $now     = time();
         $claimed = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- the atomic claim gate; must hit the DB engine.
             $this->wpdb->prepare(
-                'UPDATE ' . $this->table_name( 'wp_backup' ) . " SET last_run = %d, last = %d, completed_sites = '[]' WHERE id = %d AND completed >= last_run AND ( completed < %d OR backup_errors <> '' )", // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted helper.
+                'UPDATE ' . $this->table_name( 'wp_backup' ) . " SET last_run = GREATEST( %d, completed + 1 ), last = %d, completed_sites = '[]' WHERE id = %d AND completed >= last_run AND ( completed < %d OR backup_errors <> '' )", // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted helper.
                 $now,
                 $now,
                 $id,

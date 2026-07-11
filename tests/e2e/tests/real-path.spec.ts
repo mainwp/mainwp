@@ -50,13 +50,14 @@ test.describe('real path', () => {
     const id = await dash.siteId(ENV.backupChildUrl);
     expect(id, `backup child ${ENV.backupChildUrl} is connected to the dashboard`).toBeTruthy();
 
-    // Real native backup of the designated child, then restore that snapshot back
-    // to it. runNativeBackup waits for "Backup complete."; restoreLatestSnapshot
-    // drives the restore to its terminal state and throws unless it completed.
-    // Passing the child URL makes the backup self-recovering: a task left stuck by
-    // an interrupted prior run is cleared before retrying, so the suite stays
-    // usable by default without a hand-cleared child between runs.
-    await dash.runNativeBackup(id!, ENV.backupChildUrl);
-    await dash.restoreLatestSnapshot(id!, ENV.backupChildUrl);
+    // Real native backup of the designated child, then restore THAT snapshot back
+    // to it: runNativeBackup returns the created snapshot's id from the explicit
+    // completed status, and restoreLatestSnapshot targets it, so a failed backup
+    // can never pass by restoring a pre-existing snapshot. Passing the child URL
+    // makes the backup self-recovering: a task left stuck by an interrupted prior
+    // run is cleared before retrying, so the suite stays usable by default
+    // without a hand-cleared child between runs.
+    const snapshotId = await dash.runNativeBackup(id!, ENV.backupChildUrl);
+    await dash.restoreLatestSnapshot(id!, ENV.backupChildUrl, snapshotId);
   });
 });

@@ -263,7 +263,13 @@ class MainWP_Backup_Task_Ownership_Auth_Test extends MainWP_Abilities_Test_Case 
 		wp_set_current_user( $user );
 		$site_id  = $this->create_test_site( array( 'userid' => $user ) );
 		$group_id = 424242;
-		$wpdb->insert( $wpdb->prefix . 'mainwp_wp_group', array( 'wpid' => $site_id, 'groupid' => $group_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
+		$wpdb->insert(
+			$wpdb->prefix . 'mainwp_wp_group',
+			array(
+				'wpid'    => $site_id,
+				'groupid' => $group_id,
+			)
+		); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
 
 		$deny = $this->deny_site( $site_id );
 		try {

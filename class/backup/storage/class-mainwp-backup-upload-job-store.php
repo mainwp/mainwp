@@ -276,7 +276,8 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
      * @param int   $destination_id Storage destination id.
      * @param array $checkpoint     Initial checkpoint: prefix, keys, cursor, swept.
      *
-     * @return bool Whether a row was inserted.
+     * @return bool True when the job is queued (inserted now or already
+     *              present); false only on a real write failure.
      */
     public function enqueue_delete_job( int $snapshot_id, int $destination_id, array $checkpoint ): bool {
         $result = $this->wpdb->query(
@@ -294,7 +295,26 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
             )
         );
 
-        return ! empty( $result );
+        if ( ! empty( $result ) ) {
+            return true;
+        }
+
+        // INSERT IGNORE reports 0 rows both for a duplicate (the job is
+        // already queued - success for an idempotent enqueue) and for a
+        // real failure. Only the latter may surface as false: retention
+        // holds a snapshot's prune on this answer, and treating an
+        // already-queued job as failure would wedge the prune, while
+        // treating a failed insert as success would orphan the cloud
+        // copy forever.
+        $existing = $this->wpdb->get_var(
+            $this->wpdb->prepare(
+                'SELECT id FROM ' . $this->table_name( 'wp_backup_upload_job' ) . ' WHERE snapshot_id = %d AND destination_id = %d AND kind = %s LIMIT 1', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted helper.
+                $snapshot_id,
+                $destination_id,
+                static::KIND_DELETE
+            )
+        );
+        return null !== $existing;
     }
 
     /**

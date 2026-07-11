@@ -429,12 +429,26 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
     }
 
     /**
+     * Lock tokens this process wrote, by lock path. Release checks the
+     * on-disk token against this map so a process whose lock was
+     * stale-replaced by another cannot delete the replacement.
+     *
+     * @var array<string,string>
+     */
+    private static $owned_download_locks = array();
+
+    /**
      * Method acquire_download_lock()
      *
      * Acquire the download lock for a backup file. The lock is a sidecar
      * file with a one hour TTL; a stale or corrupt lock is replaced. TTL
      * expiry alone covers crash recovery on every platform, so no process
      * checks are used.
+     *
+     * The create is exclusive (fopen 'x'), so two processes racing the
+     * same missing lock cannot both acquire: exactly one create wins and
+     * the loser re-reads the winner's live lock. A stale lock is deleted
+     * and the exclusive create retried, which again crowns one winner.
      *
      * @param string $local_file Absolute path of the download target.
      * @param int    $site_id    Child site ID.
@@ -445,8 +459,32 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
     public static function acquire_download_lock( string $local_file, int $site_id, int $task_id ): bool {
         $lock_file = $local_file . '.downloading';
 
-        if ( file_exists( $lock_file ) ) {
-            $data  = json_decode( (string) file_get_contents( $lock_file ), true ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local lock file.
+        for ( $attempt = 0; $attempt < 2; $attempt++ ) {
+            $handle = @fopen( $lock_file, 'x' ); // phpcs:ignore WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors -- exclusive create IS the lock; failure-to-create is the expected contended case.
+            if ( false !== $handle ) {
+                $token   = strtolower( wp_generate_password( 12, false ) );
+                $payload = (string) wp_json_encode(
+                    array(
+                        'started' => time(),
+                        'site_id' => $site_id,
+                        'task_id' => $task_id,
+                        'token'   => $token,
+                    )
+                );
+                $written = fwrite( $handle, $payload ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- paired with the exclusive fopen above.
+                fclose( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- paired with the exclusive fopen above.
+                if ( strlen( $payload ) !== $written ) {
+                    wp_delete_file( $lock_file );
+                    return false;
+                }
+                static::$owned_download_locks[ $lock_file ] = $token;
+                return true;
+            }
+
+            // The lock exists: a live one refuses this caller; a stale or
+            // corrupt one is deleted and the exclusive create retried, so
+            // only one of several racers wins the recreate.
+            $data  = json_decode( (string) @file_get_contents( $lock_file ), true ); // phpcs:ignore WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors -- local lock file; a racer may delete it between the fopen and this read.
             $stale = ! is_array( $data ) || ( time() - (int) ( isset( $data['started'] ) ? $data['started'] : 0 ) ) > HOUR_IN_SECONDS;
             if ( ! $stale ) {
                 return false;
@@ -454,21 +492,18 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
             wp_delete_file( $lock_file );
         }
 
-        $payload = wp_json_encode(
-            array(
-                'started' => time(),
-                'site_id' => $site_id,
-                'task_id' => $task_id,
-            )
-        );
-
-        return false !== file_put_contents( $lock_file, $payload ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- local lock file.
+        return false;
     }
 
     /**
      * Method release_download_lock()
      *
-     * Release the download lock for a backup file.
+     * Release the download lock for a backup file. A lock this process
+     * acquired is only deleted while it still carries this process's
+     * token: when another process stale-replaced it, deleting the file
+     * would release a lock someone else now holds. A caller that never
+     * acquired (an administrative clear) keeps the old unconditional
+     * delete.
      *
      * @param string $local_file Absolute path of the download target.
      *
@@ -476,9 +511,23 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
      */
     public static function release_download_lock( string $local_file ): void {
         $lock_file = $local_file . '.downloading';
-        if ( file_exists( $lock_file ) ) {
-            wp_delete_file( $lock_file );
+
+        if ( ! file_exists( $lock_file ) ) {
+            unset( static::$owned_download_locks[ $lock_file ] );
+            return;
         }
+
+        $owned = isset( static::$owned_download_locks[ $lock_file ] ) ? static::$owned_download_locks[ $lock_file ] : '';
+        if ( '' !== $owned ) {
+            $data       = json_decode( (string) file_get_contents( $lock_file ), true ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local lock file.
+            $lock_token = is_array( $data ) && isset( $data['token'] ) ? (string) $data['token'] : '';
+            unset( static::$owned_download_locks[ $lock_file ] );
+            if ( '' !== $lock_token && ! hash_equals( $lock_token, $owned ) ) {
+                return; // The lock on disk belongs to another process now.
+            }
+        }
+
+        wp_delete_file( $lock_file );
     }
 
     /**

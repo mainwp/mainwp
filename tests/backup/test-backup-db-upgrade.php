@@ -971,5 +971,4 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		$this->assertFalse( $this->index_exists( $table, 'task_id' ), 'Re-running install must remain idempotent.' );
 		$this->assertTrue( $this->index_exists( $table, 'idx_task_id' ), 'Re-running install must keep idx_task_id.' );
 	}
-
 }

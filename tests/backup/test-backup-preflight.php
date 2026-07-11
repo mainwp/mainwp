@@ -95,9 +95,11 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 	 * Run backup_site() with a mocked child, tolerating the expected
 	 * failure after the negotiation phase.
 	 *
-	 * @param int    $site_id        Site ID.
-	 * @param array  $responses      Child action responses.
-	 * @param string $archive_format Task archive format (zip, tar.gz, ...).
+	 * @param int    $site_id            Site ID.
+	 * @param array  $responses          Child action responses.
+	 * @param string $archive_format     Task archive format (zip, tar.gz, ...).
+	 * @param int    $zip_force_override Task zip-force override flag.
+	 * @param string $filename           Task filename template.
 	 *
 	 * @return MainWP_Exception|null The exception raised, if any.
 	 */
@@ -156,9 +158,10 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 	/**
 	 * Capture mainwp_log_warning messages fired during a backup run.
 	 *
-	 * @param int    $site_id        Site ID.
-	 * @param array  $preflight      Preflight response overrides.
-	 * @param string $archive_format Task archive format.
+	 * @param int    $site_id            Site ID.
+	 * @param array  $preflight          Preflight response overrides.
+	 * @param string $archive_format     Task archive format.
+	 * @param int    $zip_force_override Task zip-force override flag.
 	 *
 	 * @return array The warning messages logged.
 	 */

@@ -209,8 +209,8 @@ class MainWP_Backup_Settings_View_Test extends \WP_UnitTestCase {
 		$admin = $this->factory->user->create( array( 'role' => 'administrator' ) );
 		wp_set_current_user( $admin );
 
-		$_POST['submit']                              = '1';
-		$_POST['wp_nonce']                            = wp_create_nonce( 'Settings' );
+		$_POST['submit']                                = '1';
+		$_POST['wp_nonce']                              = wp_create_nonce( 'Settings' );
 		$_POST['mainwp_options_onDemandRetentionCount'] = '3';
 
 		$saved = MainWP_Backup_Settings::handle_settings_post();
@@ -268,8 +268,8 @@ class MainWP_Backup_Settings_View_Test extends \WP_UnitTestCase {
 		$admin = $this->factory->user->create( array( 'role' => 'administrator' ) );
 		wp_set_current_user( $admin );
 
-		$_POST['submit']   = '1';
-		$_POST['wp_nonce'] = wp_create_nonce( 'Settings' );
+		$_POST['submit']                                  = '1';
+		$_POST['wp_nonce']                                = wp_create_nonce( 'Settings' );
 		$_POST['mainwp_options_backupDiagnosticsEnabled'] = '1';
 
 		$this->assertTrue( MainWP_Backup_Settings::handle_settings_post() );

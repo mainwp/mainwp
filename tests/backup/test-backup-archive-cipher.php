@@ -111,8 +111,8 @@ class MainWP_Backup_Archive_Cipher_Test extends \WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_tampered_ciphertext_throws() {
-		$blob              = MainWP_Backup_Archive_Cipher::seal( 'authenticated bytes', $this->key(), 'aad' );
-		$blob[20]          = ( "\x00" === $blob[20] ) ? "\x01" : "\x00";
+		$blob     = MainWP_Backup_Archive_Cipher::seal( 'authenticated bytes', $this->key(), 'aad' );
+		$blob[20] = ( "\x00" === $blob[20] ) ? "\x01" : "\x00";
 
 		$this->expectException( MainWP_Backup_Cipher_Auth_Exception::class );
 		MainWP_Backup_Archive_Cipher::open( $blob, $this->key(), 'aad' );

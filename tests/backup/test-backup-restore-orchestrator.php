@@ -20,7 +20,8 @@ use MainWP\Dashboard\MainWP_Post_Backup_Handler;
 /**
  * Transfer driver with the cloud-pull decision and manifest scripted.
  */
-class Cloud_Pull_Stub_Transfer_Driver extends MainWP_Backup_Restore_Transfer_Driver { // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- test double.
+class Cloud_Pull_Stub_Transfer_Driver extends MainWP_Backup_Restore_Transfer_Driver {
+ // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- test double.
 
 	/**
 	 * Whether the gates pass (the tried flag still wins).
@@ -72,7 +73,8 @@ class Cloud_Pull_Stub_Transfer_Driver extends MainWP_Backup_Restore_Transfer_Dri
 /**
  * Orchestrator with the external reachability check pinned.
  */
-class Testable_Restore_Orchestrator extends MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- test double above.
+class Testable_Restore_Orchestrator extends MainWP_Backup_Restore_Orchestrator {
+ // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- test double above.
 
 	/**
 	 * Scripted reachability.
@@ -218,9 +220,9 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	/**
 	 * Create a job with a staged-ready local plan.
 	 *
-	 * @param array $checkpoint_over Checkpoint overrides.
+	 * @param array  $checkpoint_over Checkpoint overrides.
 	 * @param string $status         Initial status.
-	 * @param array $extra           Extra columns.
+	 * @param array  $extra           Extra columns.
 	 *
 	 * @return object Job row.
 	 */
@@ -706,7 +708,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			'task_id' => 'task-10-restore',
 			'phase'   => 'queued',
 		);
-		$job = $this->tick( $job );
+		$job                                    = $this->tick( $job );
 		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING, $job->status );
 		$this->assertSame( 'task-10-restore', $job->child_task_id );
 	}
@@ -740,13 +742,13 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			'phase'          => 'receiving',
 		);
 
-		$job = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_STAGING );
+		$job                                    = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_STAGING );
 		$this->responses['restore_task_create'] = array(
 			'task_id' => 'task-9-restore',
 			'phase'   => 'queued',
 		);
-		$job = $this->tick( $job ); // staging -> transferring.
-		$job = $this->tick( $job ); // transferring -> running.
+		$job                                    = $this->tick( $job ); // staging -> transferring.
+		$job                                    = $this->tick( $job ); // transferring -> running.
 
 		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, $job->status );
 
@@ -1317,7 +1319,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			'task_id' => 'task-9-restore',
 			'phase'   => 'queued',
 		);
-		$this->responses['restore_task_run'] = array(
+		$this->responses['restore_task_run']    = array(
 			'task_id'   => 'task-9-restore',
 			'phase'     => 'completed',
 			'sub_state' => array( 'verification' => array( 'row_counts_ok' => true ) ),

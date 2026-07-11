@@ -25,7 +25,14 @@ class MainWP_Download_Decision_Test extends \WP_UnitTestCase {
 	 */
 	public function test_parse_content_range_valid_range() {
 		$parsed = MainWP_Connect::parse_content_range_header( 'bytes 1024-2047/4096' );
-		$this->assertSame( array( 'start' => 1024, 'end' => 2047, 'total' => 4096 ), $parsed );
+		$this->assertSame(
+			array(
+				'start' => 1024,
+				'end'   => 2047,
+				'total' => 4096,
+			),
+			$parsed
+		);
 	}
 
 	/**
@@ -35,7 +42,14 @@ class MainWP_Download_Decision_Test extends \WP_UnitTestCase {
 	 */
 	public function test_parse_content_range_with_header_prefix() {
 		$parsed = MainWP_Connect::parse_content_range_header( 'Content-Range: bytes 0-99/100' );
-		$this->assertSame( array( 'start' => 0, 'end' => 99, 'total' => 100 ), $parsed );
+		$this->assertSame(
+			array(
+				'start' => 0,
+				'end'   => 99,
+				'total' => 100,
+			),
+			$parsed
+		);
 	}
 
 	/**
@@ -74,7 +88,11 @@ class MainWP_Download_Decision_Test extends \WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_fresh_206_returns_write_mode() {
-		$range = array( 'start' => 0, 'end' => 4095, 'total' => 4096 );
+		$range = array(
+			'start' => 0,
+			'end'   => 4095,
+			'total' => 4096,
+		);
 		$this->assertSame( 'w', MainWP_Connect::decide_download_mode( 206, 0, $range, 0, 4096 ) );
 	}
 
@@ -84,7 +102,11 @@ class MainWP_Download_Decision_Test extends \WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_resume_206_matching_start_returns_append_mode() {
-		$range = array( 'start' => 1024, 'end' => 4095, 'total' => 4096 );
+		$range = array(
+			'start' => 1024,
+			'end'   => 4095,
+			'total' => 4096,
+		);
 		$this->assertSame( 'a', MainWP_Connect::decide_download_mode( 206, 1024, $range, 1024, 4096 ) );
 	}
 
@@ -94,7 +116,11 @@ class MainWP_Download_Decision_Test extends \WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_resume_206_mismatched_start_throws() {
-		$range = array( 'start' => 0, 'end' => 4095, 'total' => 4096 );
+		$range = array(
+			'start' => 0,
+			'end'   => 4095,
+			'total' => 4096,
+		);
 		try {
 			MainWP_Connect::decide_download_mode( 206, 1024, $range, 1024, 4096 );
 			$this->fail( 'Expected exception for mismatched Content-Range start.' );

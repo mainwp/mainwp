@@ -161,8 +161,10 @@ class MainWP_Backup_Restore_Decryption_Test extends \WP_UnitTestCase {
 	private function position_unique( $name, $size ) {
 		$content = '';
 		$block   = 0;
-		while ( strlen( $content ) < $size ) {
+		$length  = 0;
+		while ( $length < $size ) {
 			$content .= md5( $name . '-' . $block, true );
+			$length  += 16; // Raw md5 appends 16 bytes.
 			++$block;
 		}
 		return substr( $content, 0, $size );
@@ -238,7 +240,7 @@ class MainWP_Backup_Restore_Decryption_Test extends \WP_UnitTestCase {
 		$this->driver->remote_base = $base;
 
 		// Whole-file artifact round-trips to the exact source bytes.
-		$whole = array(
+		$whole   = array(
 			array(
 				'role'            => 'db',
 				'file'            => 'db.sql.gz',
@@ -258,7 +260,7 @@ class MainWP_Backup_Restore_Decryption_Test extends \WP_UnitTestCase {
 		$this->assertSame( hash( 'sha256', $small ), $whole[0]['sha256'] );
 
 		// Chunked artifact reassembles, decrypts, and verifies its whole hash.
-		$chunked = array(
+		$chunked  = array(
 			array(
 				'role'            => 'part',
 				'file'            => 'big.tar.gz',
@@ -417,9 +419,9 @@ class MainWP_Backup_Restore_Decryption_Test extends \WP_UnitTestCase {
 		$enc  = $this->arm();
 		$base = $this->dir . '/dest';
 
-		$a     = $this->record( 4, array() );
-		$snap  = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $a );
-		$dek   = $enc->dek_from_meta( $snap->encryption, $a, $enc->load_kek() );
+		$a    = $this->record( 4, array() );
+		$snap = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $a );
+		$dek  = $enc->dek_from_meta( $snap->encryption, $a, $enc->load_kek() );
 		mkdir( $base . '/4/' . $a . '/files', 0777, true );
 		file_put_contents( $base . '/4/' . $a . '/files/x.tar.gz', MainWP_Backup_Archive_Cipher::seal( 'secret bytes', $dek, 'snapshot:' . $a . ':whole:x.tar.gz' ) );
 
@@ -502,8 +504,8 @@ class MainWP_Backup_Restore_Decryption_Test extends \WP_UnitTestCase {
 
 		// Flip the first byte (the GCM nonce); any single-byte change to a
 		// sealed unit fails authentication. XOR guarantees it differs.
-		$sealed     = file_get_contents( $object );
-		$sealed[0]  = chr( ord( $sealed[0] ) ^ 0xFF );
+		$sealed    = file_get_contents( $object );
+		$sealed[0] = chr( ord( $sealed[0] ) ^ 0xFF );
 		file_put_contents( $object, $sealed );
 
 		$this->driver->remote_base = $base;
@@ -626,9 +628,9 @@ class MainWP_Backup_Restore_Decryption_Test extends \WP_UnitTestCase {
 		$this->assertGreaterThanOrEqual( 2, count( (array) $chunks ) );
 
 		// Flip the first byte of one sealed chunk; never touch manifest.json.
-		$victim     = $chunks[0];
-		$sealed     = file_get_contents( $victim );
-		$sealed[0]  = chr( ord( $sealed[0] ) ^ 0xFF );
+		$victim    = $chunks[0];
+		$sealed    = file_get_contents( $victim );
+		$sealed[0] = chr( ord( $sealed[0] ) ^ 0xFF );
 		file_put_contents( $victim, $sealed );
 
 		$this->driver->remote_base = $base;

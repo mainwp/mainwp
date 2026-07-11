@@ -274,8 +274,14 @@ class MainWP_Backup_Snapshot_Catalog_Test extends MainWP_Abilities_Test_Case {
 	public function test_resolve_full_snapshot_plan_order() {
 		$id = $this->make_snapshot(
 			array(
-				array( 'file' => 'db.tar.gz', 'role' => 'db' ),
-				array( 'file' => 'full.tar.gz', 'role' => 'full' ),
+				array(
+					'file' => 'db.tar.gz',
+					'role' => 'db',
+				),
+				array(
+					'file' => 'full.tar.gz',
+					'role' => 'full',
+				),
 			)
 		);
 
@@ -300,15 +306,30 @@ class MainWP_Backup_Snapshot_Catalog_Test extends MainWP_Abilities_Test_Case {
 	public function test_resolve_incremental_chain_newest_db_wins() {
 		$base = $this->make_snapshot(
 			array(
-				array( 'file' => 'base-db.zip', 'role' => 'db' ),
-				array( 'file' => 'base-files.zip', 'role' => 'full' ),
+				array(
+					'file' => 'base-db.zip',
+					'role' => 'db',
+				),
+				array(
+					'file' => 'base-files.zip',
+					'role' => 'full',
+				),
 			)
 		);
 		$incr = $this->make_snapshot(
 			array(
-				array( 'file' => 'incr-db.zip', 'role' => 'db' ),
-				array( 'file' => 'plugins.part001.zip', 'role' => 'part' ),
-				array( 'file' => 'tombstones.list', 'role' => 'tombstones' ),
+				array(
+					'file' => 'incr-db.zip',
+					'role' => 'db',
+				),
+				array(
+					'file' => 'plugins.part001.zip',
+					'role' => 'part',
+				),
+				array(
+					'file' => 'tombstones.list',
+					'role' => 'tombstones',
+				),
 			),
 			array(
 				'type'      => 'incremental',

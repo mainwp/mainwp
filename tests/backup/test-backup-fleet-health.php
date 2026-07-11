@@ -106,7 +106,12 @@ class MainWP_Backup_Fleet_Health_Test extends \WP_UnitTestCase {
 	 */
 	public function test_get_latest_per_site_returns_newest_not_oldest() {
 		$this->record( array( 'site_id' => 22 ) );
-		$newer = $this->record( array( 'site_id' => 22, 'type' => 'incremental' ) );
+		$newer = $this->record(
+			array(
+				'site_id' => 22,
+				'type'    => 'incremental',
+			)
+		);
 
 		$map = MainWP_Backup_Snapshots::instance()->get_latest_per_site( array( 22 ) );
 
@@ -120,7 +125,12 @@ class MainWP_Backup_Fleet_Health_Test extends \WP_UnitTestCase {
 	 */
 	public function test_get_latest_per_site_excludes_pruned() {
 		$base   = $this->record( array( 'site_id' => 22 ) );
-		$pruned = $this->record( array( 'site_id' => 22, 'type' => 'incremental' ) );
+		$pruned = $this->record(
+			array(
+				'site_id' => 22,
+				'type'    => 'incremental',
+			)
+		);
 		MainWP_Backup_Snapshots::instance()->set_status( $pruned, 'pruned' );
 
 		$map = MainWP_Backup_Snapshots::instance()->get_latest_per_site( array( 22 ) );

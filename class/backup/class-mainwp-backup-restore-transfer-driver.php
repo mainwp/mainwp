@@ -812,8 +812,12 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
             return null;
         }
 
+        // The manifest records the snapshot's own archive names, but the
+        // plan's 'file' is the chain-namespaced staging name (s{id}-...).
+        // Match on the raw source_file, as the whole-file path above does.
+        $plan_name = ! empty( $entry['source_file'] ) ? (string) $entry['source_file'] : (string) $entry['file'];
         foreach ( (array) $decoded['artifacts'] as $artifact ) {
-            if ( isset( $artifact['file'] ) && $artifact['file'] === $entry['file'] && ! empty( $artifact['chunks'] ) ) {
+            if ( isset( $artifact['file'] ) && $artifact['file'] === $plan_name && ! empty( $artifact['chunks'] ) ) {
                 return array(
                     'chunks' => array_values( (array) $artifact['chunks'] ),
                     'size'   => isset( $artifact['size'] ) ? (int) $artifact['size'] : 0,

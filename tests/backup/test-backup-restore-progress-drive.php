@@ -130,7 +130,7 @@ class MainWP_Backup_Restore_Progress_Drive_Test extends MainWP_Abilities_Test_Ca
 		$minus_one = static function () {
 			return -1;
 		};
-		$response = $this->poll_progress( $job_id, $minus_one );
+		$response  = $this->poll_progress( $job_id, $minus_one );
 
 		$job = MainWP_Backup_Restore_Job_Store::instance()->get_job( $job_id );
 		$this->assertSame(
@@ -256,7 +256,7 @@ class MainWP_Backup_Restore_Progress_Drive_Test extends MainWP_Abilities_Test_Ca
 			return -1;
 		};
 
-		$legacy = $this->make_job_with_transfer(
+		$legacy   = $this->make_job_with_transfer(
 			'drivebytes3',
 			array(
 				array(

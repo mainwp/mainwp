@@ -17,7 +17,8 @@ use MainWP\Dashboard\MainWP_DB;
 /**
  * Transfer driver with the remote-artifact check scripted.
  */
-class Preflight_Stub_Transfer_Driver extends MainWP_Backup_Restore_Transfer_Driver { // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- test double.
+class Preflight_Stub_Transfer_Driver extends MainWP_Backup_Restore_Transfer_Driver {
+ // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- test double.
 
 	/**
 	 * Scripted artifact availability.
@@ -41,7 +42,8 @@ class Preflight_Stub_Transfer_Driver extends MainWP_Backup_Restore_Transfer_Driv
 /**
  * Orchestrator with the transfer driver pinned.
  */
-class Preflight_Test_Orchestrator extends MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- test double above.
+class Preflight_Test_Orchestrator extends MainWP_Backup_Restore_Orchestrator {
+ // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- test double above.
 
 	/**
 	 * Driver override.
@@ -126,7 +128,13 @@ class MainWP_Backup_Restore_Preflight_Test extends MainWP_Abilities_Test_Case {
 					'adopt_only'  => false,
 				),
 			),
-			'options'    => array_merge( array( 'pre_snapshot' => false, 'file_rollback' => false ), $options ),
+			'options'    => array_merge(
+				array(
+					'pre_snapshot'  => false,
+					'file_rollback' => false,
+				),
+				$options
+			),
 			'transfer'   => array(),
 		);
 

@@ -209,8 +209,10 @@ class MainWP_Backup_Upload_Driver_Test extends \WP_UnitTestCase {
 			// Position-unique content so no two chunks dedupe to one object.
 			$content = '';
 			$block   = 0;
-			while ( strlen( $content ) < $spec['size'] ) {
+			$length  = 0;
+			while ( $length < $spec['size'] ) {
 				$content .= md5( $name . '-' . $block, true );
+				$length  += 16; // Raw md5 appends 16 bytes.
 				++$block;
 			}
 			$content = substr( $content, 0, $spec['size'] );
@@ -511,7 +513,14 @@ class MainWP_Backup_Upload_Driver_Test extends \WP_UnitTestCase {
 			)
 		);
 
-		$snapshot_id = $this->make_snapshot( array( 'small.txt' => array( 'size' => 100, 'role' => 'db' ) ) );
+		$snapshot_id = $this->make_snapshot(
+			array(
+				'small.txt' => array(
+					'size' => 100,
+					'role' => 'db',
+				),
+			)
+		);
 		$store       = MainWP_Backup_Upload_Job_Store::instance();
 		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
 
@@ -555,7 +564,14 @@ class MainWP_Backup_Upload_Driver_Test extends \WP_UnitTestCase {
 			)
 		);
 
-		$snapshot_id = $this->make_snapshot( array( 'small.txt' => array( 'size' => 100, 'role' => 'db' ) ) );
+		$snapshot_id = $this->make_snapshot(
+			array(
+				'small.txt' => array(
+					'size' => 100,
+					'role' => 'db',
+				),
+			)
+		);
 		$store       = MainWP_Backup_Upload_Job_Store::instance();
 		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
 
@@ -595,7 +611,14 @@ class MainWP_Backup_Upload_Driver_Test extends \WP_UnitTestCase {
 			)
 		);
 
-		$snapshot_id = $this->make_snapshot( array( 'small.txt' => array( 'size' => 100, 'role' => 'db' ) ) );
+		$snapshot_id = $this->make_snapshot(
+			array(
+				'small.txt' => array(
+					'size' => 100,
+					'role' => 'db',
+				),
+			)
+		);
 		$store       = MainWP_Backup_Upload_Job_Store::instance();
 		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
 
@@ -789,11 +812,16 @@ class MainWP_Backup_Upload_Driver_Test extends \WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_enqueue_stamps_destination_provider() {
-		$s3_id = MainWP_Backup_Storage_Destinations::instance()->add_destination(
+		$s3_id            = MainWP_Backup_Storage_Destinations::instance()->add_destination(
 			array(
 				'provider' => 's3',
 				'name'     => 'Stamp test',
-				'settings' => array( 'bucket' => 'b', 'region' => 'us-east-1', 'access_key' => 'k', 'secret_key' => 's' ),
+				'settings' => array(
+					'bucket'     => 'b',
+					'region'     => 'us-east-1',
+					'access_key' => 'k',
+					'secret_key' => 's',
+				),
 			)
 		);
 		list( $local_id ) = $this->make_local_destination();
@@ -950,14 +978,26 @@ class MainWP_Backup_Upload_Driver_Test extends \WP_UnitTestCase {
 	 */
 	public function test_head_size_mismatch_keeps_job_retryable() {
 		MainWP_Backup_Upload_Driver::instance()->init();
-		$dest_id = MainWP_Backup_Storage_Destinations::instance()->add_destination(
+		$dest_id     = MainWP_Backup_Storage_Destinations::instance()->add_destination(
 			array(
 				'provider' => 's3',
 				'name'     => 'Torn writer',
-				'settings' => array( 'bucket' => 'b', 'region' => 'us-east-1', 'access_key' => 'k', 'secret_key' => 's' ),
+				'settings' => array(
+					'bucket'     => 'b',
+					'region'     => 'us-east-1',
+					'access_key' => 'k',
+					'secret_key' => 's',
+				),
 			)
 		);
-		$snapshot_id = $this->make_snapshot( array( 'small.txt' => array( 'size' => 100, 'role' => 'db' ) ) );
+		$snapshot_id = $this->make_snapshot(
+			array(
+				'small.txt' => array(
+					'size' => 100,
+					'role' => 'db',
+				),
+			)
+		);
 		MainWP_Backup_Upload_Job_Store::instance()->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
 
 		// PUTs succeed; every HEAD reports a size that never matches what
@@ -1064,7 +1104,16 @@ class MainWP_Backup_Upload_Driver_Test extends \WP_UnitTestCase {
 		$enc                     = $this->arm_encryption();
 		list( $dest_a, $base_a ) = $this->make_local_destination();
 		list( $dest_b, $base_b ) = $this->make_local_destination();
-		$snapshot_id             = $this->make_snapshot( array( 'small.txt' => array( 'size' => 100, 'role' => 'db' ) ), 0, 4 );
+		$snapshot_id             = $this->make_snapshot(
+			array(
+				'small.txt' => array(
+					'size' => 100,
+					'role' => 'db',
+				),
+			),
+			0,
+			4
+		);
 		MainWP_Backup_Upload_Job_Store::instance()->enqueue_for_snapshot( $snapshot_id, array( $dest_a, $dest_b ) );
 
 		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );

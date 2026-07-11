@@ -88,7 +88,16 @@ class MainWP_Download_Lock_Test extends \WP_UnitTestCase {
 	public function test_stale_lock_is_replaced() {
 		$file = $this->dir . 'backup.zip';
 		$lock = $file . '.downloading';
-		file_put_contents( $lock, wp_json_encode( array( 'started' => time() - 2 * HOUR_IN_SECONDS, 'site_id' => 42, 'task_id' => 7 ) ) );
+		file_put_contents(
+			$lock,
+			wp_json_encode(
+				array(
+					'started' => time() - 2 * HOUR_IN_SECONDS,
+					'site_id' => 42,
+					'task_id' => 7,
+				)
+			)
+		);
 
 		$this->assertTrue( MainWP_Backup_File_Manager::acquire_download_lock( $file, 42, 7 ) );
 
@@ -123,6 +132,64 @@ class MainWP_Download_Lock_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * A process whose lock was stale-replaced by another must not delete
+	 * the replacement on release: the on-disk token no longer matches the
+	 * one it wrote, so the release is a no-op and the new owner's lock
+	 * survives.
+	 *
+	 * @return void
+	 */
+	public function test_release_leaves_foreign_lock_alone() {
+		$file = $this->dir . 'backup.zip';
+		$lock = $file . '.downloading';
+
+		$this->assertTrue( MainWP_Backup_File_Manager::acquire_download_lock( $file, 42, 7 ) );
+
+		// Another process stale-replaced the lock with its own token.
+		$foreign = wp_json_encode(
+			array(
+				'started' => time(),
+				'site_id' => 43,
+				'task_id' => 8,
+				'token'   => 'foreign-owner-token',
+			)
+		);
+		file_put_contents( $lock, $foreign );
+
+		MainWP_Backup_File_Manager::release_download_lock( $file );
+
+		$this->assertFileExists( $lock, 'A release must not delete a lock another process now owns.' );
+		$data = json_decode( file_get_contents( $lock ), true );
+		$this->assertSame( 'foreign-owner-token', $data['token'], 'The foreign lock must survive untouched.' );
+
+		unlink( $lock );
+	}
+
+	/**
+	 * The acquire is an exclusive create: a lock file appearing between
+	 * the staleness check and the write is never silently overwritten. A
+	 * pre-existing live lock without a token (pre-upgrade format) still
+	 * refuses.
+	 *
+	 * @return void
+	 */
+	public function test_acquire_refuses_tokenless_live_lock() {
+		$file = $this->dir . 'backup.zip';
+		file_put_contents(
+			$file . '.downloading',
+			wp_json_encode(
+				array(
+					'started' => time(),
+					'site_id' => 1,
+					'task_id' => 1,
+				)
+			)
+		);
+
+		$this->assertFalse( MainWP_Backup_File_Manager::acquire_download_lock( $file, 42, 7 ) );
+	}
+
+	/**
 	 * Startup cleanup removes only stale lock files.
 	 *
 	 * @return void
@@ -130,8 +197,26 @@ class MainWP_Download_Lock_Test extends \WP_UnitTestCase {
 	public function test_cleanup_removes_only_stale_locks() {
 		$stale = $this->dir . 'old.zip.downloading';
 		$fresh = $this->dir . 'new.zip.downloading';
-		file_put_contents( $stale, wp_json_encode( array( 'started' => time() - 2 * HOUR_IN_SECONDS, 'site_id' => 1, 'task_id' => 1 ) ) );
-		file_put_contents( $fresh, wp_json_encode( array( 'started' => time(), 'site_id' => 2, 'task_id' => 2 ) ) );
+		file_put_contents(
+			$stale,
+			wp_json_encode(
+				array(
+					'started' => time() - 2 * HOUR_IN_SECONDS,
+					'site_id' => 1,
+					'task_id' => 1,
+				)
+			)
+		);
+		file_put_contents(
+			$fresh,
+			wp_json_encode(
+				array(
+					'started' => time(),
+					'site_id' => 2,
+					'task_id' => 2,
+				)
+			)
+		);
 
 		MainWP_Backup_File_Manager::cleanup_stale_download_locks( $this->dir );
 

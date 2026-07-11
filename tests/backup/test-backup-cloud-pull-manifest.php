@@ -22,7 +22,8 @@ use MainWP\Dashboard\MainWP_Keys_Manager;
  * A presignable provider stub with a scriptable scheme and support
  * flag.
  */
-class Presignable_Stub_Provider extends MainWP_Backup_Storage_Local implements MainWP_Backup_Presignable_Provider { // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- test double.
+class Presignable_Stub_Provider extends MainWP_Backup_Storage_Local implements MainWP_Backup_Presignable_Provider {
+ // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- test double.
 
 	/**
 	 * URL scheme the stub presigns with.
@@ -93,7 +94,8 @@ class Presignable_Stub_Provider extends MainWP_Backup_Storage_Local implements M
 /**
  * Transfer driver with the provider and upload records pinned.
  */
-class Pull_Manifest_Test_Driver extends MainWP_Backup_Restore_Transfer_Driver { // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- test double.
+class Pull_Manifest_Test_Driver extends MainWP_Backup_Restore_Transfer_Driver {
+ // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- test double.
 
 	/**
 	 * Pinned provider for every snapshot.
@@ -145,7 +147,8 @@ class Pull_Manifest_Test_Driver extends MainWP_Backup_Restore_Transfer_Driver { 
 /**
  * Class MainWP_Backup_Cloud_Pull_Manifest_Test
  */
-class MainWP_Backup_Cloud_Pull_Manifest_Test extends MainWP_Abilities_Test_Case { // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- test doubles above.
+class MainWP_Backup_Cloud_Pull_Manifest_Test extends MainWP_Abilities_Test_Case {
+ // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- test doubles above.
 
 	/**
 	 * Driver under test.
@@ -261,7 +264,14 @@ class MainWP_Backup_Cloud_Pull_Manifest_Test extends MainWP_Abilities_Test_Case 
 			'A plan with any non-remote artifact must stage instead.'
 		);
 
-		$adopt_only = array( $this->plan_entry( array( 'adopt_only' => true, 'source' => 'local' ) ) );
+		$adopt_only = array(
+			$this->plan_entry(
+				array(
+					'adopt_only' => true,
+					'source'     => 'local',
+				)
+			),
+		);
 		$this->assertFalse(
 			$this->driver->can_use_cloud_pull( $this->website(), $adopt_only, array() ),
 			'A plan with nothing to pull must stage instead.'
@@ -313,7 +323,7 @@ class MainWP_Backup_Cloud_Pull_Manifest_Test extends MainWP_Abilities_Test_Case 
 				),
 			),
 		);
-		$plan = array( $this->plan_entry( array( 'snapshot_id' => $snapshot_id ) ) );
+		$plan                         = array( $this->plan_entry( array( 'snapshot_id' => $snapshot_id ) ) );
 
 		$this->assertFalse(
 			$this->driver->can_use_cloud_pull( $this->website(), $plan, array() ),
@@ -467,7 +477,7 @@ class MainWP_Backup_Cloud_Pull_Manifest_Test extends MainWP_Abilities_Test_Case 
 			)
 		);
 
-		$dir   = get_temp_dir() . 'mainwp-pullsel-' . uniqid();
+		$dir = get_temp_dir() . 'mainwp-pullsel-' . uniqid();
 		mkdir( $dir );
 		$local = \MainWP\Dashboard\MainWP_Backup_Storage_Handler::save_destination(
 			array(

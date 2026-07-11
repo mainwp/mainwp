@@ -400,7 +400,7 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'restoreOutcomeMessages', $output, 'The outcome message map must be present.' );
 		$this->assertStringContainsString( 'mainwp_restore_rolled_back', $output, 'The rolled-back code must be handled.' );
 		$this->assertMatchesRegularExpression(
-			"/data\.error_code/s",
+			'/data\.error_code/s',
 			$output,
 			'The terminal branch must read the error code.'
 		);
@@ -447,7 +447,7 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 		$this->assertMatchesRegularExpression( "/'unavailable' === snap\.test_restore_state/s", $output, 'An unavailable snapshot must be handled.' );
 		$this->assertMatchesRegularExpression( "/ui mini green label[^']*check icon/s", $output, 'A pass must render a green checked label.' );
 		$this->assertStringContainsString( 'ui mini red label', $output, 'A fail must render a red label.' );
-		$this->assertMatchesRegularExpression( "/snap\.test_restore_at \* 1000/s", $output, 'A pass must show the test-restore date.' );
+		$this->assertMatchesRegularExpression( '/snap\.test_restore_at \* 1000/s', $output, 'A pass must show the test-restore date.' );
 	}
 
 	/**

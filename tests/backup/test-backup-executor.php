@@ -757,7 +757,7 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function test_download_phase_requests_token_when_child_supports_it() {
 		list( $site_id, $task ) = $this->site_and_task();
-		$content = 'PK' . "\x03\x04" . str_repeat( 'x', 4092 );
+		$content                = 'PK' . "\x03\x04" . str_repeat( 'x', 4092 );
 		$this->seed_download_ready_progress( $task->id, $site_id, strlen( $content ) );
 		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
 		MainWP_DB::instance()->update_website_option( $website, 'download_token_support', '1' );

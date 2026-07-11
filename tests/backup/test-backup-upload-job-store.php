@@ -51,6 +51,27 @@ class MainWP_Backup_Upload_Job_Store_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * An already-queued delete job reports success: retention holds a
+	 * snapshot's prune on this answer, and a duplicate misread as failure
+	 * would wedge the prune forever. Only a real write failure is false.
+	 *
+	 * @return void
+	 */
+	public function test_enqueue_delete_job_duplicate_reports_success() {
+		$store      = MainWP_Backup_Upload_Job_Store::instance();
+		$checkpoint = array(
+			'prefix' => '1/501/',
+			'keys'   => array(),
+			'cursor' => 0,
+			'swept'  => false,
+		);
+
+		$this->assertTrue( $store->enqueue_delete_job( 501, 7, $checkpoint ), 'The first enqueue inserts.' );
+		$this->assertTrue( $store->enqueue_delete_job( 501, 7, $checkpoint ), 'A duplicate enqueue is success, not failure.' );
+		$this->assertCount( 1, $store->get_jobs_for_snapshot( 501, MainWP_Backup_Upload_Job_Store::KIND_DELETE ), 'Still exactly one row.' );
+	}
+
+	/**
 	 * Acquiring locks the job; a concurrent acquirer gets nothing until
 	 * the lease expires.
 	 *
@@ -313,8 +334,8 @@ class MainWP_Backup_Upload_Job_Store_Test extends \WP_UnitTestCase {
 		$store = MainWP_Backup_Upload_Job_Store::instance();
 		$store->enqueue_for_snapshot( 114, array( 7 ) );
 
-		$now = 1000000;
-		$job = $store->acquire_next_job( 'token-0', 300, $now );
+		$now    = 1000000;
+		$job    = $store->acquire_next_job( 'token-0', 300, $now );
 		$job_id = (int) $job->id;
 
 		// Each reclaim simulates the worker fataling before it can call

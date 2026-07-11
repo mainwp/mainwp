@@ -55,6 +55,49 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * A cancel intent written from outside the lease (the UI's
+	 * unfenced busy-cancel write) is sticky - a later checkpoint save
+	 * built from a stale in-memory copy that lacks the flag must carry
+	 * it forward instead of silently erasing the acknowledged cancel.
+	 */
+	public function test_save_checkpoint_preserves_stored_cancel_intent() {
+		$job_id = $this->store->create_job( 8801, 42, array( 'restore_id' => 'cancelkeep01' ) );
+
+		$stale = $this->store->get_job( $job_id )->checkpoint;
+
+		// The UI records the intent unfenced.
+		$armed                  = $this->store->get_job( $job_id )->checkpoint;
+		$armed['cancel_intent'] = true;
+		$this->assertTrue( $this->store->save_checkpoint( $job_id, $armed ) );
+
+		// A worker saves phase data from its stale pre-cancel copy.
+		$stale['transfer'] = array( 'cursor' => 3 );
+		$this->assertTrue( $this->store->save_checkpoint( $job_id, $stale ) );
+
+		$row = $this->store->get_job( $job_id );
+		$this->assertTrue( ! empty( $row->checkpoint['cancel_intent'] ), 'The stale save must carry the stored cancel intent forward, not erase it.' );
+		$this->assertSame( 3, $row->checkpoint['transfer']['cursor'], 'The phase data itself still lands.' );
+	}
+
+	/**
+	 * Only the explicit clear flag (the applied-cancel path) may drop a
+	 * stored cancel intent.
+	 */
+	public function test_save_checkpoint_explicit_clear_drops_cancel_intent() {
+		$job_id = $this->store->create_job( 8801, 42, array( 'restore_id' => 'cancelclear1' ) );
+
+		$armed                  = $this->store->get_job( $job_id )->checkpoint;
+		$armed['cancel_intent'] = true;
+		$this->store->save_checkpoint( $job_id, $armed );
+
+		$cleared = $this->store->get_job( $job_id )->checkpoint;
+		$this->assertTrue( $this->store->save_checkpoint( $job_id, $cleared, null, true ) );
+
+		$row = $this->store->get_job( $job_id );
+		$this->assertTrue( empty( $row->checkpoint['cancel_intent'] ), 'The explicit clear must drop the applied intent.' );
+	}
+
+	/**
 	 * The claim is exclusive: a second token gets nothing while the
 	 * first holds the lock.
 	 */

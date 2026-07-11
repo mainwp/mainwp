@@ -479,89 +479,159 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     }
 
     /**
+     * Option-name prefix for the fixed slot rows of the DB semaphore.
+     * Slot N lives at "mainwp_backup_slot_N"; the fixed names 1..max are
+     * what caps concurrency - a slot is held by owning its row.
+     *
+     * @var string
+     */
+    const SLOT_OPTION_PREFIX = 'mainwp_backup_slot_';
+
+    /**
      * Method acquire_backup_slot()
      *
-     * Acquire a backup execution slot from the transient-based semaphore.
-     * Slots from crashed processes expire after two hours so a crash never
-     * blocks backups permanently.
+     * Acquire a backup execution slot from the DB semaphore. Each slot is
+     * one fixed-name wp_options row; the table's UNIQUE(option_name) key
+     * makes the INSERT the atomic acquisition - exactly one contender
+     * wins each slot, enforced by the database rather than a best-effort
+     * transient read-modify-write. Slots from crashed processes expire
+     * after two hours (reclaimed by compare-and-delete on the exact
+     * stored value, so racing reclaimers cannot double-free), and a
+     * crash never blocks backups permanently.
      *
-     * The transient read-modify-write is best effort: under an external
-     * object cache two requests can race within milliseconds of each other
-     * and briefly exceed the limit by one. That is acceptable here because
-     * the slot cap protects dashboard resources only; each child site
-     * enforces its own single-backup rule.
+     * All reads and writes go straight to the table: the options/
+     * notoptions caches never see these names, so an external object
+     * cache cannot serve a stale slot state.
      *
      * @param int $max_concurrent Maximum concurrent backup tasks (default 2).
      *
      * @return string|false Slot token on success, false when all slots are in use.
      */
     public static function acquire_backup_slot( int $max_concurrent = 2 ): string|false {
-        $lock_key = 'mainwp_backup_slots';
-        $slots    = get_transient( $lock_key );
-
-        if ( ! is_array( $slots ) ) {
-            $slots = array();
-        }
+        global $wpdb;
 
         $now   = time();
-        $slots = array_filter(
-            $slots,
-            function ( $slot ) use ( $now ) {
-                return is_array( $slot ) && isset( $slot['started'] ) && ( $now - (int) $slot['started'] ) < 2 * HOUR_IN_SECONDS;
-            }
+        $token = wp_generate_password( 12, false );
+        $value = (string) wp_json_encode(
+            array(
+                'token'   => $token,
+                'started' => $now,
+                'pid'     => getmypid(),
+            )
         );
 
-        if ( count( $slots ) >= $max_concurrent ) {
-            set_transient( $lock_key, $slots, 2 * HOUR_IN_SECONDS );
+        for ( $slot = 1; $slot <= $max_concurrent; $slot++ ) {
+            $name = self::SLOT_OPTION_PREFIX . $slot;
 
-            /**
-             * Fires on each concurrency slot decision, so slot exhaustion
-             * leaves a diagnostics trace instead of vanishing with the
-             * transient.
-             *
-             * @param string $event          acquired|refused|released.
-             * @param string $token          Slot token, '' on refusal.
-             * @param int    $active         Active slot count after the decision.
-             * @param int    $max_concurrent Configured slot limit.
-             */
-            do_action( 'mainwp_backup_diag_slot', 'refused', '', count( $slots ), $max_concurrent );
-            return false;
+            $held = $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- the semaphore must bypass the options caches.
+                $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", $name )
+            );
+            if ( null !== $held ) {
+                $data  = json_decode( (string) $held, true );
+                $stale = ! is_array( $data ) || ! isset( $data['started'] ) || ( $now - (int) $data['started'] ) >= 2 * HOUR_IN_SECONDS;
+                if ( ! $stale ) {
+                    continue; // Live holder; try the next slot.
+                }
+                // Reclaim by exact value: a contender that lost this DELETE
+                // race deletes nothing and then loses the INSERT race too.
+                $wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- compare-and-delete reclaim.
+                    $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name = %s AND option_value = %s", $name, (string) $held )
+                );
+            }
+
+            // UNIQUE(option_name) makes this the atomic claim: 1 row means
+            // this contender owns the slot, 0 means another one won it.
+            $claimed = $wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- the INSERT is the semaphore's atomic primitive.
+                $wpdb->prepare( "INSERT IGNORE INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')", $name, $value )
+            );
+            if ( 1 === $claimed ) {
+                /**
+                 * Fires on each concurrency slot decision, so slot exhaustion
+                 * leaves a diagnostics trace instead of vanishing with the
+                 * released row.
+                 *
+                 * @param string $event          acquired|refused|released.
+                 * @param string $token          Slot token, '' on refusal.
+                 * @param int    $active         Active slot count after the decision.
+                 * @param int    $max_concurrent Configured slot limit.
+                 */
+                do_action( 'mainwp_backup_diag_slot', 'acquired', $token, self::count_live_slots( $now ), $max_concurrent );
+                return $token;
+            }
         }
 
-        $token           = wp_generate_password( 12, false );
-        $slots[ $token ] = array(
-            'started' => $now,
-            'pid'     => getmypid(),
-        );
-
-        set_transient( $lock_key, $slots, 2 * HOUR_IN_SECONDS );
-
         /** This action is documented in class/backup/class-mainwp-backup-monitor.php */
-        do_action( 'mainwp_backup_diag_slot', 'acquired', $token, count( $slots ), $max_concurrent );
-
-        return $token;
+        do_action( 'mainwp_backup_diag_slot', 'refused', '', self::count_live_slots( $now ), $max_concurrent );
+        return false;
     }
 
     /**
      * Method release_backup_slot()
      *
-     * Release a backup execution slot.
+     * Release a backup execution slot: compare-and-delete the slot row
+     * the token owns. A token that no longer owns a row (its stale slot
+     * was reclaimed) deletes nothing.
      *
      * @param string $token Slot token from acquire_backup_slot().
      *
      * @return void
      */
     public static function release_backup_slot( string $token ): void {
-        $lock_key = 'mainwp_backup_slots';
-        $slots    = get_transient( $lock_key );
+        global $wpdb;
 
-        if ( is_array( $slots ) && isset( $slots[ $token ] ) ) {
-            unset( $slots[ $token ] );
-            set_transient( $lock_key, $slots, 2 * HOUR_IN_SECONDS );
-
-            /** This action is documented in class/backup/class-mainwp-backup-monitor.php */
-            do_action( 'mainwp_backup_diag_slot', 'released', $token, count( $slots ), 0 );
+        if ( '' === $token ) {
+            return;
         }
+
+        $rows = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- the semaphore must bypass the options caches.
+            $wpdb->prepare(
+                "SELECT option_name, option_value FROM {$wpdb->options} WHERE option_name LIKE %s",
+                $wpdb->esc_like( self::SLOT_OPTION_PREFIX ) . '%'
+            )
+        );
+
+        foreach ( (array) $rows as $row ) {
+            $data = json_decode( (string) $row->option_value, true );
+            if ( ! is_array( $data ) || ! isset( $data['token'] ) || $token !== $data['token'] ) {
+                continue;
+            }
+            $released = $wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- compare-and-delete release.
+                $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name = %s AND option_value = %s", $row->option_name, (string) $row->option_value )
+            );
+            if ( 1 === $released ) {
+                /** This action is documented in class/backup/class-mainwp-backup-monitor.php */
+                do_action( 'mainwp_backup_diag_slot', 'released', $token, self::count_live_slots( time() ), 0 );
+            }
+            return;
+        }
+    }
+
+    /**
+     * Count slot rows whose holder is still live (not expired), for the
+     * diagnostics trace.
+     *
+     * @param int $now Current time.
+     *
+     * @return int Live slot count.
+     */
+    private static function count_live_slots( int $now ): int {
+        global $wpdb;
+
+        $rows = $wpdb->get_col( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- the semaphore must bypass the options caches.
+            $wpdb->prepare(
+                "SELECT option_value FROM {$wpdb->options} WHERE option_name LIKE %s",
+                $wpdb->esc_like( self::SLOT_OPTION_PREFIX ) . '%'
+            )
+        );
+
+        $live = 0;
+        foreach ( (array) $rows as $value ) {
+            $data = json_decode( (string) $value, true );
+            if ( is_array( $data ) && isset( $data['started'] ) && ( $now - (int) $data['started'] ) < 2 * HOUR_IN_SECONDS ) {
+                ++$live;
+            }
+        }
+        return $live;
     }
 
     /**

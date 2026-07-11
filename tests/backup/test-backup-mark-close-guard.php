@@ -18,6 +18,7 @@
 namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Backup_File_Manager;
+use MainWP\Dashboard\MainWP_Backup_Monitor;
 use MainWP\Dashboard\MainWP_Backup_Snapshots;
 use MainWP\Dashboard\MainWP_DB_Backup;
 use MainWP\Dashboard\MainWP_Exception;
@@ -85,7 +86,18 @@ class MainWP_Backup_Mark_Close_Guard_Test extends MainWP_Abilities_Test_Case {
 			}
 		}
 		$this->local_files = array();
+		$this->purge_slot_rows();
 		parent::tearDown();
+	}
+
+	/**
+	 * Free every DB-semaphore slot row so an acquisition can succeed.
+	 *
+	 * @return void
+	 */
+	private function purge_slot_rows() {
+		global $wpdb;
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $wpdb->esc_like( MainWP_Backup_Monitor::SLOT_OPTION_PREFIX ) . '%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test cleanup of the DB semaphore.
 	}
 
 	/**
@@ -631,7 +643,7 @@ class MainWP_Backup_Mark_Close_Guard_Test extends MainWP_Abilities_Test_Case {
 			2
 		);
 
-		delete_transient( 'mainwp_backup_slots' );
+		$this->purge_slot_rows();
 		MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, false );
 
 		$this->assertCount( 1, $sent, 'The site already marked complete reaches the close block with no child contact, and a run with real errors must email once.' );
@@ -640,7 +652,7 @@ class MainWP_Backup_Mark_Close_Guard_Test extends MainWP_Abilities_Test_Case {
 		$this->assertGreaterThanOrEqual( (int) $fresh->last_run, (int) $fresh->completed, 'The winning close must stamp completed at or past last_run.' );
 
 		$task_reread = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
-		delete_transient( 'mainwp_backup_slots' );
+		$this->purge_slot_rows();
 		MainWP_Manage_Backups_Handler::execute_backup_task( $task_reread, 1, false );
 
 		$this->assertCount( 1, $sent, 'A second close attempt against an already-closed run must not win, and so must not re-email even though the errors persist.' );

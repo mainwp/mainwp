@@ -725,6 +725,15 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             // below reads as this click's failure. The time() cap keeps a
             // fabricated future `since` from re-claiming on every poll -
             // a real one is the initiate's own server-side stamp.
+            //
+            // This claim can OPEN a run, so it honors the same restore
+            // refusal as the initiate handler: a poll left over from a
+            // stale tab (or carrying another site's since after a switch)
+            // must not start a backup under a live restore.
+            if ( null !== MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $site_id ) ) {
+                wp_send_json( array( 'error' => esc_html__( 'A restore is in progress for this site. Try again once it finishes.', 'mainwp' ) ) );
+                return;
+            }
             $settle = MainWP_Backup_Settings::get_manual_run_settle_seconds();
             MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, true, $settle );
             $task = MainWP_DB_Backup::instance()->get_manual_backup_task( $site_id );

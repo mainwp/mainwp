@@ -59,7 +59,7 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 		$wpdb->query( 'DELETE FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ) ); // phpcs:ignore WordPress.DB -- test cleanup.
 		delete_option( 'mainwp_enableNativeBackups' );
 		delete_option( MainWP_Backup_Diagnostics::OPTION_ENABLED );
-		delete_transient( 'mainwp_backup_slots' );
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $wpdb->esc_like( MainWP_Backup_Monitor::SLOT_OPTION_PREFIX ) . '%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test cleanup of the DB semaphore.
 		unset( $_POST['security'], $_REQUEST['security'] );
 
 		if ( is_dir( $this->diag_dir ) ) {

@@ -42,7 +42,7 @@ class MainWP_Backup_Run_Now_Concurrency_Test extends MainWP_Abilities_Test_Case 
 	 */
 	public function setUp(): void {
 		parent::setUp();
-		delete_transient( 'mainwp_backup_slots' );
+		$this->purge_slot_rows();
 		delete_option( 'mainwp_backup_max_concurrent' );
 		delete_option( 'mainwp_enableNativeBackups' );
 	}
@@ -53,10 +53,32 @@ class MainWP_Backup_Run_Now_Concurrency_Test extends MainWP_Abilities_Test_Case 
 	 * @return void
 	 */
 	public function tearDown(): void {
-		delete_transient( 'mainwp_backup_slots' );
+		$this->purge_slot_rows();
 		delete_option( 'mainwp_backup_max_concurrent' );
 		delete_option( 'mainwp_enableNativeBackups' );
 		parent::tearDown();
+	}
+
+	/**
+	 * Remove every DB-semaphore slot row.
+	 *
+	 * @return void
+	 */
+	private function purge_slot_rows() {
+		global $wpdb;
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $wpdb->esc_like( MainWP_Backup_Monitor::SLOT_OPTION_PREFIX ) . '%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test cleanup of the DB semaphore.
+	}
+
+	/**
+	 * The DB semaphore's slot rows (raw option values).
+	 *
+	 * @return string[] Raw slot values.
+	 */
+	private function slot_rows(): array {
+		global $wpdb;
+		return (array) $wpdb->get_col( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- direct read of the DB semaphore.
+			$wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name LIKE %s", $wpdb->esc_like( MainWP_Backup_Monitor::SLOT_OPTION_PREFIX ) . '%' )
+		);
 	}
 
 	/**
@@ -121,7 +143,7 @@ class MainWP_Backup_Run_Now_Concurrency_Test extends MainWP_Abilities_Test_Case 
 		$site_id = $this->create_test_site( array( 'userid' => $user ) );
 		$task    = $this->create_task( $user, $site_id );
 
-		$this->assertFalse( get_transient( 'mainwp_backup_slots' ), 'Precondition: no slot should be held before the call.' );
+		$this->assertSame( array(), $this->slot_rows(), 'Precondition: no slot should be held before the call.' );
 
 		$thrown = null;
 		try {
@@ -133,7 +155,6 @@ class MainWP_Backup_Run_Now_Concurrency_Test extends MainWP_Abilities_Test_Case 
 		$this->assertInstanceOf( MainWP_Exception::class, $thrown, 'Precondition: native backups are left disabled so the executor throws quickly without touching the network.' );
 		$this->assertStringContainsString( 'Native backups are not enabled', $thrown->getMessage(), 'The call must reach the executor once a slot is available.' );
 
-		$slots = get_transient( 'mainwp_backup_slots' );
-		$this->assertTrue( false === $slots || empty( $slots ), 'The slot must be released even though the executor threw.' );
+		$this->assertSame( array(), $this->slot_rows(), 'The slot must be released even though the executor threw.' );
 	}
 }

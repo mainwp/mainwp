@@ -680,6 +680,372 @@ class Test_Site_Credential_Encryption extends \WP_UnitTestCase {
 		$this->assertSame( array(), $deleted );
 	}
 
+	// ---------------------------------------------------------------------
+	// Key retirement must not precede persistence. Staging carries the
+	// key work as an intent; commit fires it after a confirmed write and
+	// rollback deletes the freshly minted key instead.
+	// ---------------------------------------------------------------------
+
+	public function test_stage_credential_encryption_fires_no_deletes(): void {
+		$deleted = array();
+		add_action(
+			'mainwp_delete_key_file',
+			function ( $file_key ) use ( &$deleted ) {
+				$deleted[] = $file_key;
+			}
+		);
+
+		$old_envelope = self::ENVELOPE_PREFIX . wp_json_encode(
+			array(
+				'encrypted_val' => 'STUB:' . base64_encode( 'old-pw' ),
+				'file_key'      => 'site_credential_http_pass_stage_old',
+			)
+		);
+
+		$intent = \MainWP\Dashboard\MainWP_Credential_Storage::stage_credential_encryption( 'new-pw', 'http_pass', $old_envelope );
+
+		$this->assertIsArray( $intent );
+		$this->assertStringStartsWith( self::ENVELOPE_PREFIX, $intent['value'] );
+		$this->assertSame( 'site_credential_http_pass_stage_old', $intent['retire_key'] );
+		$this->assertSame( 'site_credential_http_pass_stubkey', $intent['fresh_key'] );
+		$this->assertSame( array(), $deleted, 'staging must not touch any key file' );
+	}
+
+	public function test_commit_intent_retires_superseded_key_only(): void {
+		$deleted = array();
+		add_action(
+			'mainwp_delete_key_file',
+			function ( $file_key ) use ( &$deleted ) {
+				$deleted[] = $file_key;
+			}
+		);
+
+		\MainWP\Dashboard\MainWP_Credential_Storage::commit_credential_intent(
+			array(
+				'value'      => 'irrelevant',
+				'retire_key' => 'old-key-to-retire',
+				'fresh_key'  => 'fresh-key-kept',
+			)
+		);
+
+		$this->assertSame( array( 'old-key-to-retire' ), $deleted );
+	}
+
+	public function test_rollback_intent_deletes_fresh_key_only(): void {
+		$deleted = array();
+		add_action(
+			'mainwp_delete_key_file',
+			function ( $file_key ) use ( &$deleted ) {
+				$deleted[] = $file_key;
+			}
+		);
+
+		\MainWP\Dashboard\MainWP_Credential_Storage::rollback_credential_intent(
+			array(
+				'value'      => 'irrelevant',
+				'retire_key' => 'old-key-kept',
+				'fresh_key'  => 'fresh-key-to-delete',
+			)
+		);
+
+		$this->assertSame( array( 'fresh-key-to-delete' ), $deleted );
+	}
+
+	public function test_stage_clear_carries_retire_key_and_no_fresh_key(): void {
+		$old_envelope = self::ENVELOPE_PREFIX . wp_json_encode(
+			array(
+				'encrypted_val' => 'STUB:' . base64_encode( 'old-pw' ),
+				'file_key'      => 'site_credential_http_pass_clear_stage',
+			)
+		);
+
+		$intent = \MainWP\Dashboard\MainWP_Credential_Storage::stage_credential_encryption( '', 'http_pass', $old_envelope );
+
+		$this->assertSame( '', $intent['value'] );
+		$this->assertSame( 'site_credential_http_pass_clear_stage', $intent['retire_key'] );
+		$this->assertNull( $intent['fresh_key'] );
+	}
+
+	public function test_stage_unchanged_plaintext_carries_no_keys(): void {
+		$old_envelope = self::ENVELOPE_PREFIX . wp_json_encode(
+			array(
+				'encrypted_val' => 'STUB:' . base64_encode( 'same-pw' ),
+				'file_key'      => 'site_credential_http_pass_same_stage',
+			)
+		);
+
+		$intent = \MainWP\Dashboard\MainWP_Credential_Storage::stage_credential_encryption( 'same-pw', 'http_pass', $old_envelope );
+
+		$this->assertSame( $old_envelope, $intent['value'] );
+		$this->assertNull( $intent['retire_key'] );
+		$this->assertNull( $intent['fresh_key'] );
+	}
+
+	/**
+	 * Seed BOTH credential columns with envelopes carrying known distinct
+	 * file keys, so multi-field write paths can be observed retiring or
+	 * preserving each one.
+	 *
+	 * @param string $user_key Key file id for the http_user envelope.
+	 * @param string $pass_key Key file id for the http_pass envelope.
+	 * @return int Site id.
+	 */
+	private function seed_site_with_both_envelopes( string $user_key, string $pass_key ): int {
+		global $wpdb;
+
+		$site_id = $this->seed_site_with_envelope( $pass_key );
+		$seeded  = self::ENVELOPE_PREFIX . wp_json_encode(
+			array(
+				'encrypted_val' => 'STUB:' . base64_encode( 'old-user' ),
+				'file_key'      => $user_key,
+			)
+		);
+		$wpdb->update(
+			\MainWP\Dashboard\MainWP_DB::instance()->get_table_name( 'wp' ),
+			array( 'http_user' => $seeded ),
+			array( 'id' => $site_id )
+		);
+
+		return $site_id;
+	}
+
+	public function test_update_website_values_failed_second_encryption_keeps_old_keys(): void {
+		global $wpdb;
+
+		$deleted = array();
+		add_action(
+			'mainwp_delete_key_file',
+			function ( $file_key ) use ( &$deleted ) {
+				$deleted[] = $file_key;
+			}
+		);
+
+		$site_id = $this->seed_site_with_both_envelopes(
+			'site_credential_http_user_m4_enc_fail',
+			'site_credential_http_pass_m4_enc_fail'
+		);
+
+		$table  = \MainWP\Dashboard\MainWP_DB::instance()->get_table_name( 'wp' );
+		$before = $wpdb->get_row( $wpdb->prepare( "SELECT http_user, http_pass FROM `{$table}` WHERE id = %d", $site_id ) );
+
+		// The http_user encryption succeeds (minting a fresh key), then the
+		// http_pass encryption fails: the write path must abort, keep both
+		// stored envelopes readable, and clean up only the fresh key.
+		$fail_pass = function ( $envelope, $value, $prefix ) {
+			return false !== strpos( (string) $prefix, 'http_pass' ) ? false : $envelope;
+		};
+		add_filter( 'mainwp_encrypt_key_value', $fail_pass, 11, 3 );
+
+		$result = \MainWP\Dashboard\MainWP_DB::instance()->update_website_values(
+			$site_id,
+			array(
+				'http_user' => 'new-user',
+				'http_pass' => 'new-pass',
+			)
+		);
+
+		remove_filter( 'mainwp_encrypt_key_value', $fail_pass, 11 );
+
+		$this->assertFalse( $result );
+
+		$row = $wpdb->get_row( $wpdb->prepare( "SELECT http_user, http_pass FROM `{$table}` WHERE id = %d", $site_id ) );
+		$this->assertSame( $before->http_user, $row->http_user, 'aborted write must leave the stored http_user envelope' );
+		$this->assertSame( $before->http_pass, $row->http_pass, 'aborted write must leave the stored http_pass envelope' );
+		$this->assertSame( 'old-user', \MainWP\Dashboard\MainWP_Credential_Storage::decrypt_credential( $row->http_user ) );
+
+		$this->assertNotContains( 'site_credential_http_user_m4_enc_fail', $deleted, 'stored http_user key must survive the abort' );
+		$this->assertNotContains( 'site_credential_http_pass_m4_enc_fail', $deleted, 'stored http_pass key must survive the abort' );
+		$this->assertContains( 'site_credential_http_user_stubkey', $deleted, 'the fresh key minted before the abort must be cleaned up' );
+	}
+
+	public function test_update_website_values_failed_db_update_keeps_old_key(): void {
+		global $wpdb;
+
+		$deleted = array();
+		add_action(
+			'mainwp_delete_key_file',
+			function ( $file_key ) use ( &$deleted ) {
+				$deleted[] = $file_key;
+			}
+		);
+
+		$site_id = $this->seed_site_with_envelope( 'site_credential_http_pass_m4_db_fail' );
+
+		// Break only the credential UPDATE: staging already happened by the
+		// time it runs, so a failure here is the retire-before-persist window.
+		$break = function ( $query ) {
+			if ( false !== strpos( (string) $query, 'UPDATE' ) && false !== strpos( (string) $query, 'http_pass' ) ) {
+				return 'UPDATE nonexistent_mwp_m4_table SET broken = 1';
+			}
+			return $query;
+		};
+		add_filter( 'query', $break );
+		$suppress = $wpdb->suppress_errors( true );
+
+		$result = \MainWP\Dashboard\MainWP_DB::instance()->update_website_values(
+			$site_id,
+			array( 'http_pass' => 'replacement-pw' )
+		);
+
+		$wpdb->suppress_errors( $suppress );
+		remove_filter( 'query', $break );
+
+		$this->assertFalse( $result );
+
+		$table = \MainWP\Dashboard\MainWP_DB::instance()->get_table_name( 'wp' );
+		$row   = $wpdb->get_row( $wpdb->prepare( "SELECT http_pass FROM `{$table}` WHERE id = %d", $site_id ) );
+		$this->assertSame( 'old-pw', \MainWP\Dashboard\MainWP_Credential_Storage::decrypt_credential( $row->http_pass ), 'the stored envelope must still decrypt after the failed write' );
+
+		$this->assertNotContains( 'site_credential_http_pass_m4_db_fail', $deleted, 'stored key must survive the failed write' );
+		$this->assertContains( 'site_credential_http_pass_stubkey', $deleted, 'the fresh key must be cleaned up on rollback' );
+	}
+
+	public function test_update_website_values_retires_old_key_only_after_new_envelope_persisted(): void {
+		global $wpdb;
+
+		$site_id = $this->seed_site_with_envelope( 'site_credential_http_pass_m4_ordering' );
+		$table   = \MainWP\Dashboard\MainWP_DB::instance()->get_table_name( 'wp' );
+
+		$stored_at_retire = array();
+		add_action(
+			'mainwp_delete_key_file',
+			function ( $file_key ) use ( &$stored_at_retire, $wpdb, $table, $site_id ) {
+				if ( 'site_credential_http_pass_m4_ordering' === $file_key ) {
+					$row                = $wpdb->get_row( $wpdb->prepare( "SELECT http_pass FROM `{$table}` WHERE id = %d", $site_id ) );
+					$stored_at_retire[] = \MainWP\Dashboard\MainWP_Credential_Storage::decrypt_credential( $row->http_pass );
+				}
+			}
+		);
+
+		$result = \MainWP\Dashboard\MainWP_DB::instance()->update_website_values(
+			$site_id,
+			array( 'http_pass' => 'replacement-pw' )
+		);
+
+		$this->assertNotFalse( $result );
+		$this->assertSame(
+			array( 'replacement-pw' ),
+			$stored_at_retire,
+			'when the old key retires, the row must already hold the replacement envelope'
+		);
+	}
+
+	public function test_rest_api_update_website_failed_db_update_keeps_old_key(): void {
+		global $wpdb;
+
+		$deleted = array();
+		add_action(
+			'mainwp_delete_key_file',
+			function ( $file_key ) use ( &$deleted ) {
+				$deleted[] = $file_key;
+			}
+		);
+
+		$site_id = $this->seed_site_with_envelope( 'site_credential_http_pass_m4_rest_db_fail' );
+
+		$break = function ( $query ) {
+			if ( false !== strpos( (string) $query, 'UPDATE' ) && false !== strpos( (string) $query, 'http_pass' ) ) {
+				return 'UPDATE nonexistent_mwp_m4_table SET broken = 1';
+			}
+			return $query;
+		};
+		add_filter( 'query', $break );
+		$suppress = $wpdb->suppress_errors( true );
+
+		$result = \MainWP\Dashboard\MainWP_DB_Common::instance()->rest_api_update_website(
+			$site_id,
+			array( 'http_pass' => 'replacement-pw' )
+		);
+
+		$wpdb->suppress_errors( $suppress );
+		remove_filter( 'query', $break );
+
+		$this->assertFalse( $result );
+
+		$table = \MainWP\Dashboard\MainWP_DB::instance()->get_table_name( 'wp' );
+		$row   = $wpdb->get_row( $wpdb->prepare( "SELECT http_pass FROM `{$table}` WHERE id = %d", $site_id ) );
+		$this->assertSame( 'old-pw', \MainWP\Dashboard\MainWP_Credential_Storage::decrypt_credential( $row->http_pass ) );
+
+		$this->assertNotContains( 'site_credential_http_pass_m4_rest_db_fail', $deleted );
+		$this->assertContains( 'site_credential_http_pass_stubkey', $deleted );
+	}
+
+	public function test_update_website_failed_db_update_keeps_old_key(): void {
+		global $wpdb;
+
+		$deleted = array();
+		add_action(
+			'mainwp_delete_key_file',
+			function ( $file_key ) use ( &$deleted ) {
+				$deleted[] = $file_key;
+			}
+		);
+
+		$user_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$site_id = \MainWP\Dashboard\MainWP_DB::instance()->add_website(
+			$user_id,
+			'Retire After Persist Test',
+			'http://retire-after-persist-' . wp_generate_uuid4() . '.example/',
+			'admin',
+			base64_encode( 'pub-' . wp_generate_uuid4() ),
+			base64_encode( 'priv-' . wp_generate_uuid4() ),
+			array(
+				'http_user' => 'authuser',
+				'http_pass' => 'seed-pw',
+			)
+		);
+		$this->assertNotFalse( $site_id );
+		wp_set_current_user( $user_id );
+
+		// Re-key the stored http_pass envelope so the retire decision is
+		// observable (the stub reuses one key per field otherwise).
+		$table  = \MainWP\Dashboard\MainWP_DB::instance()->get_table_name( 'wp' );
+		$seeded = self::ENVELOPE_PREFIX . wp_json_encode(
+			array(
+				'encrypted_val' => 'STUB:' . base64_encode( 'old-pw' ),
+				'file_key'      => 'site_credential_http_pass_m4_uw_db_fail',
+			)
+		);
+		$wpdb->update( $table, array( 'http_pass' => $seeded ), array( 'id' => $site_id ) );
+
+		$break = function ( $query ) {
+			if ( false !== strpos( (string) $query, 'UPDATE' ) && false !== strpos( (string) $query, 'http_pass' ) ) {
+				return 'UPDATE nonexistent_mwp_m4_table SET broken = 1';
+			}
+			return $query;
+		};
+		add_filter( 'query', $break );
+		$suppress = $wpdb->suppress_errors( true );
+
+		\MainWP\Dashboard\MainWP_DB::instance()->update_website(
+			$site_id,
+			'http://retire-after-persist-renamed.example/',
+			$user_id,
+			'Retire After Persist Renamed',
+			'admin',
+			array(),
+			array(),
+			'',
+			0,
+			0,
+			0,
+			1,
+			'global',
+			'',
+			null,
+			'replacement-pw'
+		);
+
+		$wpdb->suppress_errors( $suppress );
+		remove_filter( 'query', $break );
+
+		$row = $wpdb->get_row( $wpdb->prepare( "SELECT http_pass FROM `{$table}` WHERE id = %d", $site_id ) );
+		$this->assertSame( 'old-pw', \MainWP\Dashboard\MainWP_Credential_Storage::decrypt_credential( $row->http_pass ), 'the stored envelope must still decrypt after the failed write' );
+
+		$this->assertNotContains( 'site_credential_http_pass_m4_uw_db_fail', $deleted, 'stored key must survive the failed write' );
+		$this->assertContains( 'site_credential_http_pass_stubkey', $deleted, 'the fresh key must be cleaned up on rollback' );
+	}
+
 	public function test_update_website_null_credentials_leave_columns_untouched(): void {
 		global $wpdb;
 

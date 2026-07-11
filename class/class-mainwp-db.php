@@ -3384,19 +3384,25 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                     )
                 );
             }
-            if ( array_key_exists( 'http_user', $fields ) ) {
-                $encrypted = MainWP_Credential_Storage::encrypt_credential( $fields['http_user'], 'http_user', $prior ? $prior->http_user : null );
-                if ( false === $encrypted ) {
+            // Key files are staged, not retired inline: retirement fires
+            // only after the row update lands, and a failed update (or a
+            // failed second-field encryption) deletes the freshly minted
+            // keys instead - otherwise the row keeps an envelope whose
+            // key file is already gone and the credential is lost.
+            $cred_intents = array();
+            foreach ( array( 'http_user', 'http_pass' ) as $cred_field ) {
+                if ( ! array_key_exists( $cred_field, $fields ) ) {
+                    continue;
+                }
+                $intent = MainWP_Credential_Storage::stage_credential_encryption( $fields[ $cred_field ], $cred_field, $prior ? $prior->{$cred_field} : null );
+                if ( false === $intent ) {
+                    foreach ( $cred_intents as $staged ) {
+                        MainWP_Credential_Storage::rollback_credential_intent( $staged );
+                    }
                     return false;
                 }
-                $fields['http_user'] = $encrypted;
-            }
-            if ( array_key_exists( 'http_pass', $fields ) ) {
-                $encrypted = MainWP_Credential_Storage::encrypt_credential( $fields['http_pass'], 'http_pass', $prior ? $prior->http_pass : null );
-                if ( false === $encrypted ) {
-                    return false;
-                }
-                $fields['http_pass'] = $encrypted;
+                $fields[ $cred_field ] = $intent['value'];
+                $cred_intents[]        = $intent;
             }
             // Lock the data stream to prevent other processes from updating at the same time.
             $table_name = esc_sql( $this->table_name( 'wp' ) );
@@ -3406,7 +3412,16 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             );
             $this->wpdb->get_row( $sql );
 
-            return $this->wpdb->update( $this->table_name( 'wp' ), $fields, array( 'id' => $websiteid ) );
+            $updated = $this->wpdb->update( $this->table_name( 'wp' ), $fields, array( 'id' => $websiteid ) );
+            foreach ( $cred_intents as $staged ) {
+                if ( false === $updated ) {
+                    MainWP_Credential_Storage::rollback_credential_intent( $staged );
+                } else {
+                    MainWP_Credential_Storage::commit_credential_intent( $staged );
+                }
+            }
+
+            return $updated;
         }
 
         return false;
@@ -3490,12 +3505,19 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 // value that fails to encrypt aborts the update so we
                 // never overwrite an existing encrypted row with
                 // plaintext when the encryption layer is unhealthy.
-                $encrypted_http_user = MainWP_Credential_Storage::encrypt_credential( $http_user, 'http_user', $website->http_user );
-                $encrypted_http_pass = MainWP_Credential_Storage::encrypt_credential( $http_pass, 'http_pass', $website->http_pass );
-                if ( false === $encrypted_http_user || false === $encrypted_http_pass ) {
+                // Staged, not encrypted inline: the superseded key files
+                // retire only after the row update lands, and an aborted
+                // update deletes the freshly minted keys instead.
+                $user_intent = MainWP_Credential_Storage::stage_credential_encryption( $http_user, 'http_user', $website->http_user );
+                $pass_intent = MainWP_Credential_Storage::stage_credential_encryption( $http_pass, 'http_pass', $website->http_pass );
+                if ( false === $user_intent || false === $pass_intent ) {
+                    MainWP_Credential_Storage::rollback_credential_intent( $user_intent );
+                    MainWP_Credential_Storage::rollback_credential_intent( $pass_intent );
                     return false;
                 }
-                $update_values = array(
+                $encrypted_http_user = $user_intent['value'];
+                $encrypted_http_pass = $pass_intent['value'];
+                $update_values       = array(
                     'url'                   => $url,
                     'name'                  => wp_strip_all_tags( $name ),
                     'adminname'             => $siteadmin,
@@ -3518,11 +3540,21 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                     $update_values['http_pass'] = $encrypted_http_pass;
                 }
                 // update admin.
-                $this->wpdb->update(
+                $updated = $this->wpdb->update(
                     $this->table_name( 'wp' ),
                     $update_values,
                     array( 'id' => $websiteid )
                 );
+                // Settle the staged credential keys by outcome: a failed
+                // row update keeps the stored envelopes, so their key
+                // files must survive and the fresh ones go instead.
+                foreach ( array( $user_intent, $pass_intent ) as $staged ) {
+                    if ( false === $updated ) {
+                        MainWP_Credential_Storage::rollback_credential_intent( $staged );
+                    } else {
+                        MainWP_Credential_Storage::commit_credential_intent( $staged );
+                    }
+                }
                 $this->wpdb->update(
                     $this->table_name( 'wp_settings_backup' ),
                     array( 'archiveFormat' => $archiveFormat ),

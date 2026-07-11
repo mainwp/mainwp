@@ -14,6 +14,7 @@
 namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_Backup_Restore_Job_Store;
 use MainWP\Dashboard\MainWP_Backup_Retention_Executor;
 use MainWP\Dashboard\MainWP_Backup_Retention_Query;
 use MainWP\Dashboard\MainWP_Backup_Snapshots;
@@ -58,6 +59,9 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 
 		$job_table = MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' );
 		$wpdb->query( "DELETE FROM {$job_table} WHERE snapshot_id >= 0" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
+
+		$restore_table = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$restore_table} WHERE site_id = %d", $this->site_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
 
 		foreach ( $this->fixture_dirs as $dir ) {
 			if ( is_dir( $dir ) ) {
@@ -196,6 +200,97 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 				'updated'        => time(),
 			)
 		);
+	}
+
+	/**
+	 * A chain referenced by a nonterminal restore job is held: no
+	 * snapshot is flipped, no dir removed, no cloud delete enqueued. The
+	 * hold surfaces in errors so the sweep retries once the restore
+	 * settles, and the same candidate prunes normally afterwards.
+	 *
+	 * @return void
+	 */
+	public function test_prune_skips_chain_referenced_by_active_restore() {
+		list( $base, $base_dir ) = $this->make_snapshot_with_dir();
+		list( $inc, $inc_dir )   = $this->make_snapshot_with_dir(
+			array(
+				'type'      => 'incremental',
+				'parent_id' => $base,
+			)
+		);
+
+		// A restore paused before staging (any nonterminal status) that
+		// references the chain's leaf.
+		$job_id = MainWP_Backup_Restore_Job_Store::instance()->create_job(
+			$this->site_id,
+			$inc,
+			array( 'restore_id' => 'm5aholdtest1' )
+		);
+
+		$candidates = array(
+			array(
+				'snapshot_ids'   => array( $base, $inc ),
+				'reason'         => 'count',
+				'size_bytes'     => 200,
+				'newest_created' => time(),
+			),
+		);
+
+		$task   = $this->make_task( array( 'delete_cloud_copies' => 0 ) );
+		$result = MainWP_Backup_Retention_Executor::instance()->run_prune( $candidates, $task, false );
+
+		$this->assertSame( 0, $result['snapshots_pruned'], 'No snapshot may be pruned while a restore references the chain.' );
+		$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $base )->status );
+		$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $inc )->status );
+		$this->assertDirectoryExists( $base_dir );
+		$this->assertDirectoryExists( $inc_dir );
+		$this->assertNotEmpty( $result['errors'], 'The hold must surface so the operator sees why nothing was removed.' );
+		$this->assertStringContainsString( 'restore in progress', $result['errors'][0] );
+
+		// Once the restore settles terminal, the same candidate prunes.
+		MainWP_Backup_Restore_Job_Store::instance()->cancel_job( $job_id );
+
+		$result = MainWP_Backup_Retention_Executor::instance()->run_prune( $candidates, $task, false );
+
+		$this->assertSame( 2, $result['snapshots_pruned'], 'A settled restore must release the hold.' );
+		$this->assertSame( 'pruned', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $base )->status );
+		$this->assertSame( 'pruned', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $inc )->status );
+		$this->assertDirectoryDoesNotExist( $base_dir );
+		$this->assertDirectoryDoesNotExist( $inc_dir );
+	}
+
+	/**
+	 * A restore on a DIFFERENT chain holds nothing - the guard is a
+	 * membership check, not a site-wide freeze.
+	 *
+	 * @return void
+	 */
+	public function test_prune_proceeds_when_restore_references_other_chain() {
+		list( $held, $held_dir )     = $this->make_snapshot_with_dir();
+		list( $target, $target_dir ) = $this->make_snapshot_with_dir();
+
+		MainWP_Backup_Restore_Job_Store::instance()->create_job(
+			$this->site_id,
+			$held,
+			array( 'restore_id' => 'm5aother0001' )
+		);
+
+		$candidates = array(
+			array(
+				'snapshot_ids'   => array( $target ),
+				'reason'         => 'count',
+				'size_bytes'     => 100,
+				'newest_created' => time(),
+			),
+		);
+
+		$result = MainWP_Backup_Retention_Executor::instance()->run_prune( $candidates, $this->make_task( array( 'delete_cloud_copies' => 0 ) ), false );
+
+		$this->assertSame( 1, $result['snapshots_pruned'], 'An unrelated restore must not freeze the whole site.' );
+		$this->assertSame( 'pruned', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $target )->status );
+		$this->assertDirectoryDoesNotExist( $target_dir );
+		$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $held )->status );
+		$this->assertDirectoryExists( $held_dir );
 	}
 
 	/**

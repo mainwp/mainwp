@@ -46,6 +46,22 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
     private static $instance = null;
 
     /**
+     * The lease token held for the job being run, null outside a run.
+     * Every store write during the run is fenced on it, so a worker whose
+     * lease was reclaimed can no longer overwrite the new holder's state.
+     *
+     * @var string|null
+     */
+    private ?string $lock_token = null;
+
+    /**
+     * The lease duration renewals extend by, matching the acquisition.
+     *
+     * @var int
+     */
+    private int $lease_seconds = 300;
+
+    /**
      * Method instance()
      *
      * Create public static instance.
@@ -177,16 +193,40 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
         $store = MainWP_Backup_Upload_Job_Store::instance();
         $token = uniqid( 'upload_', true );
 
-        $job = $store->acquire_next_job( $token, max( 300, $budget_seconds + 60 ), $now );
+        $lease_seconds = max( 300, $budget_seconds + 60 );
+
+        $job = $store->acquire_next_job( $token, $lease_seconds, $now );
         if ( null === $job ) {
             return;
         }
 
+        $this->lock_token    = $token;
+        $this->lease_seconds = $lease_seconds;
         try {
             $this->run_job( $job, microtime( true ) + $budget_seconds, $now );
         } finally {
+            $this->lock_token = null;
             $store->release_lock( (int) $job->id, $token );
         }
+    }
+
+    /**
+     * Renew the run's lease between long provider round trips.
+     *
+     * False means the lease was already reclaimed: the caller stops its
+     * work instead of writing over the new holder. Every store write is
+     * fenced on the token anyway; this probe stops the wasted provider
+     * traffic (and duplicate uploads/deletes) as early as possible.
+     *
+     * @param object $job Job row.
+     *
+     * @return bool True when work on the job may continue.
+     */
+    private function lease_still_held( object $job ): bool {
+        if ( null === $this->lock_token ) {
+            return true;
+        }
+        return MainWP_Backup_Upload_Job_Store::instance()->renew_lease( (int) $job->id, $this->lock_token, $this->lease_seconds );
     }
 
     /**
@@ -204,35 +244,42 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
         $snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( (int) $job->snapshot_id );
         if ( null === $snapshot ) {
             $error = 'Snapshot record is gone.';
-            $store->fail_permanent( (int) $job->id, $error );
-            $this->cleanup_staging( $job );
-            $this->fire_upload_failed( $job, null, $error );
+            // Terminal writes are fenced and checked: a worker whose lease
+            // was reclaimed gets a refusal and must not clean staging or
+            // fire events for a job the new holder now owns.
+            if ( $store->fail_permanent( (int) $job->id, $error, $this->lock_token ) ) {
+                $this->cleanup_staging( $job );
+                $this->fire_upload_failed( $job, null, $error );
+            }
             return;
         }
 
         $destination = MainWP_Backup_Storage_Destinations::instance()->get_destination( (int) $job->destination_id );
         if ( null === $destination ) {
             $error = 'Storage destination was deleted.';
-            $store->fail_permanent( (int) $job->id, $error );
-            $this->cleanup_staging( $job );
-            $this->fire_upload_failed( $job, null, $error );
+            if ( $store->fail_permanent( (int) $job->id, $error, $this->lock_token ) ) {
+                $this->cleanup_staging( $job );
+                $this->fire_upload_failed( $job, null, $error );
+            }
             return;
         }
 
         if ( $destination->credentials_invalid ) {
             $error = 'Stored credentials no longer decrypt; re-enter them on the destination.';
-            $store->invalidate_credentials( (int) $job->id, $error );
-            $this->cleanup_staging( $job );
-            $this->fire_upload_failed( $job, $destination, $error );
+            if ( $store->invalidate_credentials( (int) $job->id, $error, $this->lock_token ) ) {
+                $this->cleanup_staging( $job );
+                $this->fire_upload_failed( $job, $destination, $error );
+            }
             return;
         }
 
         try {
             $provider = MainWP_Backup_Storage_Destinations::instance()->make_provider( $destination );
         } catch ( \RuntimeException $e ) {
-            $store->fail_permanent( (int) $job->id, $e->getMessage() );
-            $this->cleanup_staging( $job );
-            $this->fire_upload_failed( $job, $destination, $e->getMessage() );
+            if ( $store->fail_permanent( (int) $job->id, $e->getMessage(), $this->lock_token ) ) {
+                $this->cleanup_staging( $job );
+                $this->fire_upload_failed( $job, $destination, $e->getMessage() );
+            }
             return;
         }
 
@@ -240,7 +287,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
             $checkpoint = $job->checkpoint;
             if ( empty( $checkpoint['artifacts'] ) ) {
                 $checkpoint = $this->new_checkpoint( $snapshot );
-                $store->save_checkpoint( (int) $job->id, $checkpoint );
+                $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
             }
 
             // Resolve this snapshot's encryption once per tick. An armed
@@ -252,15 +299,15 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
 
             if ( MainWP_Backup_Upload_Job_Store::STATUS_PENDING === $status || MainWP_Backup_Upload_Job_Store::STATUS_FAILED_RETRYABLE === $status ) {
                 $status = MainWP_Backup_Upload_Job_Store::STATUS_CHUNKING;
-                $store->set_status( (int) $job->id, $status );
+                $store->set_status( (int) $job->id, $status, $this->lock_token );
             }
 
             if ( MainWP_Backup_Upload_Job_Store::STATUS_CHUNKING === $status ) {
                 if ( ! $this->phase_chunking( $job, $checkpoint, $deadline ) ) {
-                    return; // Deadline; the next tick resumes from the checkpoint.
+                    return; // Deadline or lost lease; the next tick (or the new holder) resumes from the checkpoint.
                 }
                 $status = MainWP_Backup_Upload_Job_Store::STATUS_UPLOADING;
-                $store->set_status( (int) $job->id, $status );
+                $store->set_status( (int) $job->id, $status, $this->lock_token );
             }
 
             if ( MainWP_Backup_Upload_Job_Store::STATUS_UPLOADING === $status ) {
@@ -268,17 +315,22 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
                     return;
                 }
                 $status = MainWP_Backup_Upload_Job_Store::STATUS_SUBMITTING;
-                $store->set_status( (int) $job->id, $status );
+                $store->set_status( (int) $job->id, $status, $this->lock_token );
             }
 
             if ( MainWP_Backup_Upload_Job_Store::STATUS_SUBMITTING === $status ) {
-                if ( microtime( true ) >= $deadline ) {
+                if ( microtime( true ) >= $deadline || ! $this->lease_still_held( $job ) ) {
                     return;
                 }
                 $this->phase_submitting( $job, $checkpoint, $snapshot, $provider, $enc );
             }
 
-            $store->complete_job( (int) $job->id );
+            if ( ! $store->complete_job( (int) $job->id, $this->lock_token ) ) {
+                // Already terminal, or this worker's lease was reclaimed -
+                // the completion (and its event below) belongs to the live
+                // holder, and the staging dir is now theirs to clean.
+                return;
+            }
             $this->cleanup_staging( $job );
 
             /**
@@ -374,7 +426,12 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
                 continue;
             }
             if ( microtime( true ) >= $deadline ) {
-                $store->save_checkpoint( (int) $job->id, $checkpoint );
+                $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
+                return false;
+            }
+            // Planning hashes multi-GB artifacts; renew so a slow-but-alive
+            // pass keeps its lease, and stop when it was already reclaimed.
+            if ( ! $this->lease_still_held( $job ) ) {
                 return false;
             }
 
@@ -389,10 +446,10 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
             unset( $chunk );
 
             $checkpoint['artifacts'][ $index ]['chunks'] = $chunks;
-            $store->save_checkpoint( (int) $job->id, $checkpoint );
+            $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
         }
 
-        $store->save_checkpoint( (int) $job->id, $checkpoint );
+        $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
         return true;
     }
 
@@ -424,7 +481,10 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
             // no matter how they travel.
             if ( empty( $artifact['sha256'] ) ) {
                 if ( microtime( true ) >= $deadline ) {
-                    $store->save_checkpoint( (int) $job->id, $checkpoint );
+                    $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
+                    return false;
+                }
+                if ( ! $this->lease_still_held( $job ) ) {
                     return false;
                 }
                 if ( ! is_file( $artifact['path'] ) ) {
@@ -433,17 +493,23 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
                 $hash                                        = hash_file( 'sha256', $artifact['path'] );
                 $artifact['sha256']                          = is_string( $hash ) ? $hash : '';
                 $checkpoint['artifacts'][ $index ]['sha256'] = $artifact['sha256'];
-                $store->save_checkpoint( (int) $job->id, $checkpoint );
+                $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
             }
 
             if ( 'whole' === $artifact['mode'] ) {
                 if ( microtime( true ) >= $deadline ) {
-                    $store->save_checkpoint( (int) $job->id, $checkpoint );
+                    $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
+                    return false;
+                }
+                // Renew across the blocking provider round trips (head,
+                // put, confirming head); a reclaimed lease stops the
+                // upload before it duplicates the new holder's work.
+                if ( ! $this->lease_still_held( $job ) ) {
                     return false;
                 }
                 $this->upload_whole_artifact( $artifact, $prefix, $provider, $enc );
                 $checkpoint['artifacts'][ $index ]['done'] = true;
-                $store->save_checkpoint( (int) $job->id, $checkpoint );
+                $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
                 continue;
             }
 
@@ -453,7 +519,10 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
             $total = count( $chunks );
             for ( $i = $cursor; $i < $total; $i++ ) {
                 if ( microtime( true ) >= $deadline ) {
-                    $store->save_checkpoint( (int) $job->id, $checkpoint );
+                    $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
+                    return false;
+                }
+                if ( ! $this->lease_still_held( $job ) ) {
                     return false;
                 }
 
@@ -461,11 +530,11 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
 
                 $checkpoint['artifacts'][ $index ]['chunks'][ $i ]['remote_present'] = true;
                 $checkpoint['artifacts'][ $index ]['chunks_cursor']                  = $i + 1;
-                $store->save_checkpoint( (int) $job->id, $checkpoint );
+                $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
             }
 
             $checkpoint['artifacts'][ $index ]['done'] = true;
-            $store->save_checkpoint( (int) $job->id, $checkpoint );
+            $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
         }
 
         return true;
@@ -553,7 +622,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
         }
 
         $checkpoint['manifest_submitted'] = true;
-        MainWP_Backup_Upload_Job_Store::instance()->save_checkpoint( (int) $job->id, $checkpoint );
+        MainWP_Backup_Upload_Job_Store::instance()->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
     }
 
     /**
@@ -813,22 +882,27 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
 
         $error = '[' . $this->error_code_for_provider( (string) $destination->provider ) . '] ' . $e->getMessage();
 
+        // Every outcome write is fenced and checked: a worker whose lease
+        // was reclaimed must not relabel the new holder's job, clean its
+        // staging, or announce a failure the live run may yet avoid.
         if ( 401 === $code || 403 === $code ) {
-            $store->invalidate_credentials( (int) $job->id, $error );
-            $this->cleanup_staging( $job );
-            $this->fire_upload_failed( $job, $destination, $error );
+            if ( $store->invalidate_credentials( (int) $job->id, $error, $this->lock_token ) ) {
+                $this->cleanup_staging( $job );
+                $this->fire_upload_failed( $job, $destination, $error );
+            }
             return;
         }
 
         $attempts = (int) $job->attempt_count + 1;
         if ( 410 === $code || MainWP_Backup_Backoff::attempts_exhausted( $attempts ) ) {
-            $store->fail_permanent( (int) $job->id, $error );
-            $this->cleanup_staging( $job );
-            $this->fire_upload_failed( $job, $destination, $error );
+            if ( $store->fail_permanent( (int) $job->id, $error, $this->lock_token ) ) {
+                $this->cleanup_staging( $job );
+                $this->fire_upload_failed( $job, $destination, $error );
+            }
             return;
         }
 
-        $store->fail_retryable( (int) $job->id, $error, $now + MainWP_Backup_Backoff::delay_for_attempt( $attempts ) );
+        $store->fail_retryable( (int) $job->id, $error, $now + MainWP_Backup_Backoff::delay_for_attempt( $attempts ), $this->lock_token );
     }
 
     /**

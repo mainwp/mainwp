@@ -311,6 +311,10 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
 
             function stopBackupTimers() {
                 window.clearTimeout( backupPollTimer );
+                // Null the handle too: the reload/switch resume in
+                // loadSnapshots is gated on `! backupPollTimer`, and a stale
+                // cleared id would block every later resume.
+                backupPollTimer = null;
                 if ( backupElapsedTimer ) {
                     window.clearInterval( backupElapsedTimer );
                     backupElapsedTimer = null;
@@ -542,6 +546,20 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             $( '#mainwp-restore-site-selector' ).on( 'change', function () {
                 var siteId = parseInt( $( this ).val(), 10 );
                 if ( siteId > 0 ) {
+                    if ( siteId !== currentSite ) {
+                        // The backup-now follow belongs to the site it
+                        // started on: stop its timers and drop its since
+                        // baseline so nothing pairs the new site's id with
+                        // the old click's state. loadSnapshots resumes the
+                        // new site's own run if one is in flight.
+                        stopBackupTimers();
+                        backupSinceTs = 0;
+                        backupProgressCache = null;
+                        backupStartTime = null;
+                        setBackupStatus( '', false );
+                        showCancelBackup( false );
+                        reenableBackupBtn();
+                    }
                     loadSnapshots( siteId );
                 }
             } );
@@ -684,15 +702,25 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 backupPhaseStartPercent = 0;
                 backupProgressCache = { label: '<?php echo esc_js( esc_html__( 'Backing up...', 'mainwp' ) ); ?>', percent: null, eta: '' };
                 backupElapsedTimer = window.setInterval( renderBackupStatus, 1000 );
-                backupPollTimer = window.setTimeout( pollBackup, 100 );
+                var siteId = currentSite;
+                backupPollTimer = window.setTimeout( function () { pollBackup( siteId, 0 ); }, 100 );
             }
 
-            function pollBackup() {
+            // The whole poll chain is keyed to the site and since captured
+            // when the follow started: a site switch mid-flight must not
+            // let a response for the old site repaint the new site's page,
+            // and must never pair the new site's id with the old click's
+            // since timestamp (the server would claim a run on the wrong
+            // site with it).
+            function pollBackup( siteId, sinceTs ) {
                 // `since` is the started value the initiate response carried: the
                 // server judges snapshot freshness against this click's own run,
                 // so a later re-init bumping last_run cannot flip a completed
                 // backup into a false failure.
-                $.post( ajaxurl, { action: 'mainwp_native_backup_progress', security: nonces.nativeBackupProgress, site_id: currentSite, since: backupSinceTs }, function ( data ) {
+                $.post( ajaxurl, { action: 'mainwp_native_backup_progress', security: nonces.nativeBackupProgress, site_id: siteId, since: sinceTs }, function ( data ) {
+                    if ( siteId !== currentSite ) {
+                        return; // The page moved to another site; this response is nobody's.
+                    }
                     backupPollRetries = 0; // A response arrived: clear the transient-failure count.
                     if ( data.error ) {
                         stopBackupTimers();
@@ -712,7 +740,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         setBackupStatus( completeMsg, false );
                         reenableBackupBtn();
                         showCancelBackup( false );
-                        loadSnapshots( currentSite );
+                        loadSnapshots( siteId );
                         return;
                     }
                     if ( 'failed' === data.status ) {
@@ -748,8 +776,11 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
 
                     backupProgressCache = { label: label, percent: pct, eta: eta };
                     renderBackupStatus();
-                    backupPollTimer = window.setTimeout( pollBackup, 5000 );
+                    backupPollTimer = window.setTimeout( function () { pollBackup( siteId, sinceTs ); }, 5000 );
                 }, 'json' ).fail( function () {
+                    if ( siteId !== currentSite ) {
+                        return; // A stale transport failure for a site no longer shown.
+                    }
                     // A transport error (lost connection, timeout, a 503 while the
                     // child is in maintenance) skips the success callback. Retry a
                     // few times so a blip does not abandon a running backup, then
@@ -757,7 +788,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     // the timer ticking and the button stuck.
                     backupPollRetries++;
                     if ( backupPollRetries <= 3 ) {
-                        backupPollTimer = window.setTimeout( pollBackup, 3000 );
+                        backupPollTimer = window.setTimeout( function () { pollBackup( siteId, sinceTs ); }, 3000 );
                         return;
                     }
                     stopBackupTimers();
@@ -770,6 +801,10 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 if ( $( this ).prop( 'disabled' ) || $( this ).hasClass( 'disabled' ) || ! ( currentSite > 0 ) ) {
                     return;
                 }
+                // Capture the target site now: every request and timer this
+                // click spawns is keyed to it, so a selection change can
+                // never redirect this run's follow-up at another site.
+                var siteId = currentSite;
                 $( this ).prop( 'disabled', true ).addClass( 'disabled' );
                 showCancelBackup( true );
                 stopBackupTimers();
@@ -780,7 +815,10 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 backupProgressCache = { label: '<?php echo esc_js( esc_html__( 'Starting backup...', 'mainwp' ) ); ?>', percent: null, eta: '' };
                 backupElapsedTimer = window.setInterval( renderBackupStatus, 1000 );
                 setBackupStatus( '<?php echo esc_js( esc_html__( 'Starting backup...', 'mainwp' ) ); ?>', false );
-                $.post( ajaxurl, { action: 'mainwp_native_backup_initiate', security: nonces.nativeBackupInitiate, site_id: currentSite }, function ( response ) {
+                $.post( ajaxurl, { action: 'mainwp_native_backup_initiate', security: nonces.nativeBackupInitiate, site_id: siteId }, function ( response ) {
+                    if ( siteId !== currentSite ) {
+                        return; // The page moved on; the run continues server-side.
+                    }
                     if ( response.error ) {
                         stopBackupTimers();
                         setBackupStatus( response.error, true );
@@ -790,9 +828,13 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         showCancelBackup( cancelApplies( response.error ) );
                         return;
                     }
-                    backupSinceTs = response.started || 0;
-                    backupPollTimer = window.setTimeout( pollBackup, 1500 );
+                    var sinceTs = response.started || 0;
+                    backupSinceTs = sinceTs;
+                    backupPollTimer = window.setTimeout( function () { pollBackup( siteId, sinceTs ); }, 1500 );
                 }, 'json' ).fail( function () {
+                    if ( siteId !== currentSite ) {
+                        return;
+                    }
                     // The kickoff request never reached the handler, so nothing
                     // started: stop the clock, report it, and re-enable the button.
                     stopBackupTimers();
@@ -808,9 +850,16 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 if ( $( this ).prop( 'disabled' ) || ! ( currentSite > 0 ) ) {
                     return;
                 }
+                // The cancel targets the site shown at click time; a
+                // selection change while the request is in flight must not
+                // let its response repaint another site's controls.
+                var siteId = currentSite;
                 $( this ).prop( 'disabled', true ).addClass( 'disabled' );
                 setBackupStatus( '<?php echo esc_js( esc_html__( 'Cancelling backup...', 'mainwp' ) ); ?>', false );
-                $.post( ajaxurl, { action: 'mainwp_native_backup_cancel', security: nonces.nativeBackupCancel, site_id: currentSite }, function ( response ) {
+                $.post( ajaxurl, { action: 'mainwp_native_backup_cancel', security: nonces.nativeBackupCancel, site_id: siteId }, function ( response ) {
+                    if ( siteId !== currentSite ) {
+                        return;
+                    }
                     if ( response.error ) {
                         setBackupStatus( response.error, true );
                         $( '#mainwp-native-backup-cancel-btn' ).prop( 'disabled', false ).removeClass( 'disabled' );
@@ -821,6 +870,9 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     showCancelBackup( false );
                     reenableBackupBtn();
                 }, 'json' ).fail( function () {
+                    if ( siteId !== currentSite ) {
+                        return;
+                    }
                     setBackupStatus( '<?php echo esc_js( esc_html__( 'Could not cancel the backup. Please try again.', 'mainwp' ) ); ?>', true );
                     $( '#mainwp-native-backup-cancel-btn' ).prop( 'disabled', false ).removeClass( 'disabled' );
                 } );

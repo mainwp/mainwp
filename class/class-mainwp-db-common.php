@@ -1072,10 +1072,15 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         // MWP-1548: encrypt http_user / http_pass at rest before they hit
         // the raw SQL UPDATE. Same fail-closed contract as the other write
         // paths in MainWP_DB. The stored row's value rides along so the
-        // superseded envelope's key file is retired. Credential fields are
-        // handled apart from $map_fields: an explicitly sent empty string
-        // clears the credential (and retires its key file), while an absent
-        // key leaves it unchanged.
+        // superseded envelope's key file is retired - but staged, not
+        // retired inline: retirement fires only after the UPDATE below
+        // lands, and an aborted update deletes the freshly minted keys
+        // instead, so a failed write never leaves the stored envelope
+        // pointing at a deleted key file. Credential fields are handled
+        // apart from $map_fields: an explicitly sent empty string clears
+        // the credential (and retires its key file), while an absent key
+        // leaves it unchanged.
+        $cred_intents = array();
         foreach ( array( 'http_user', 'http_pass' ) as $field ) {
             if ( ! array_key_exists( $field, $data ) ) {
                 continue;
@@ -1084,11 +1089,15 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             // key means "leave unchanged".
             $value        = null === $data[ $field ] ? '' : $data[ $field ];
             $old_envelope = isset( $website->{$field} ) ? $website->{$field} : null;
-            $encrypted    = MainWP_Credential_Storage::encrypt_credential( $value, $field, $old_envelope );
-            if ( false === $encrypted ) {
+            $intent       = MainWP_Credential_Storage::stage_credential_encryption( $value, $field, $old_envelope );
+            if ( false === $intent ) {
+                foreach ( $cred_intents as $staged ) {
+                    MainWP_Credential_Storage::rollback_credential_intent( $staged );
+                }
                 return false;
             }
-            $update_fields[ $field ] = $encrypted;
+            $update_fields[ $field ] = $intent['value'];
+            $cred_intents[]          = $intent;
         }
 
         foreach ( $map_fields as $field => $name ) {
@@ -1126,7 +1135,13 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
                 array( 'id' => $websiteid )
             );
             if ( false === $updated ) {
+                foreach ( $cred_intents as $staged ) {
+                    MainWP_Credential_Storage::rollback_credential_intent( $staged );
+                }
                 return false;
+            }
+            foreach ( $cred_intents as $staged ) {
+                MainWP_Credential_Storage::commit_credential_intent( $staged );
             }
             $success = true;
 

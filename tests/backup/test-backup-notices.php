@@ -15,6 +15,7 @@ namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Backup_Executor;
 use MainWP\Dashboard\MainWP_Backup_Monitor;
+use MainWP\Dashboard\MainWP_Backup_Restore_Job_Store;
 use MainWP\Dashboard\MainWP_Backup_Snapshots;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_DB_Backup;
@@ -47,6 +48,7 @@ class MainWP_Backup_Notices_Test extends MainWP_Abilities_Test_Case {
 		$wpdb->query( "DELETE FROM {$wpdb->prefix}mainwp_wp_backup_progress" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup.
 		$wpdb->query( "DELETE FROM {$wpdb->prefix}mainwp_wp_backup" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup.
 		$wpdb->query( "DELETE FROM {$wpdb->prefix}mainwp_wp_backup_snapshot" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup.
+		$wpdb->query( "DELETE FROM {$wpdb->prefix}mainwp_wp_backup_restore_job" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup.
 		delete_option( 'mainwp_enableNativeBackups' );
 		delete_option( 'mainwp_notificationOnBackupFail' );
 		unset( $_POST['security'], $_POST['site_id'], $_POST['since'], $_REQUEST['security'], $_REQUEST['site_id'] );
@@ -179,6 +181,16 @@ class MainWP_Backup_Notices_Test extends MainWP_Abilities_Test_Case {
 		}
 
 		return json_decode( $raw, true );
+	}
+
+	/**
+	 * Free every DB-semaphore slot row so an acquisition can succeed.
+	 *
+	 * @return void
+	 */
+	private function purge_slot_rows() {
+		global $wpdb;
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $wpdb->esc_like( MainWP_Backup_Monitor::SLOT_OPTION_PREFIX ) . '%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test cleanup of the DB semaphore.
 	}
 
 	/**
@@ -763,26 +775,18 @@ class MainWP_Backup_Notices_Test extends MainWP_Abilities_Test_Case {
 			)
 		);
 
-		set_transient(
-			'mainwp_backup_slots',
-			array(
-				'tokaa' => array(
-					'started' => time() - 60,
-					'pid'     => 1,
-				),
-				'tokbb' => array(
-					'started' => time() - 60,
-					'pid'     => 1,
-				),
-			),
-			2 * HOUR_IN_SECONDS
-		);
+		// Hold both default slots so the retry claim has no capacity.
+		$held_a = MainWP_Backup_Monitor::acquire_backup_slot( 2 );
+		$held_b = MainWP_Backup_Monitor::acquire_backup_slot( 2 );
+		$this->assertIsString( $held_a, 'Precondition: the first slot must be held.' );
+		$this->assertIsString( $held_b, 'Precondition: the second slot must be held.' );
 
 		try {
 			$since    = time() - 5;
 			$response = $this->poll_on_demand( $site_id, $since );
 		} finally {
-			delete_transient( 'mainwp_backup_slots' );
+			MainWP_Backup_Monitor::release_backup_slot( $held_a );
+			MainWP_Backup_Monitor::release_backup_slot( $held_b );
 		}
 
 		$this->assertIsArray( $response );
@@ -809,13 +813,13 @@ class MainWP_Backup_Notices_Test extends MainWP_Abilities_Test_Case {
 			)
 		);
 
-		delete_transient( 'mainwp_backup_slots' );
+		$this->purge_slot_rows();
 
 		try {
 			$since    = time() - 5;
 			$response = $this->poll_on_demand( $site_id, $since );
 		} finally {
-			delete_transient( 'mainwp_backup_slots' );
+			$this->purge_slot_rows();
 		}
 
 		$task = MainWP_DB_Backup::instance()->get_manual_backup_task( $site_id );
@@ -825,6 +829,57 @@ class MainWP_Backup_Notices_Test extends MainWP_Abilities_Test_Case {
 		if ( 'failed' === ( $response['status'] ?? null ) ) {
 			$this->assertStringNotContainsString( 'did not produce a snapshot', (string) ( $response['error'] ?? '' ), 'A failed retry must surface the real child error, not the generic no-snapshot message meant for an unopened run.' );
 		}
+	}
+
+	/**
+	 * The poll's retry claim can OPEN a run, so it must honor the same
+	 * active-restore refusal as the initiate handler. A stale tab's poll
+	 * (or one carrying another site's since after a switch) arriving while
+	 * a restore is in flight must refuse instead of starting a backup that
+	 * collides with the restore on the child.
+	 *
+	 * @return void
+	 */
+	public function test_on_demand_poll_claim_refused_while_restore_active() {
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$site_id = $this->create_test_site( array( 'url' => 'http://127.0.0.1:9' ) );
+
+		$task_before = $this->manual_task_in_state(
+			$site_id,
+			array(
+				'last_run'      => time() - 3600,
+				'completed'     => time() - 3500,
+				'backup_errors' => '',
+			)
+		);
+
+		MainWP_Backup_Restore_Job_Store::instance()->create_job(
+			$site_id,
+			5,
+			array(
+				'restore_id' => 'm8claim0001',
+				'sub_type'   => 'db',
+				'plan'       => array(),
+				'options'    => array(
+					'pre_snapshot'  => false,
+					'file_rollback' => false,
+				),
+				'transfer'   => array(),
+			)
+		);
+
+		// A free slot: without the guard, this exact shape opens the run
+		// (see the retries-claim test above).
+		$this->purge_slot_rows();
+
+		$since    = time() - 5;
+		$response = $this->poll_on_demand( $site_id, $since );
+
+		$task_after = MainWP_DB_Backup::instance()->get_manual_backup_task( $site_id );
+		$this->assertSame( (int) $task_before->last_run, (int) $task_after->last_run, 'The claim must not open a run while a restore is active for the site.' );
+		$this->assertIsArray( $response );
+		$this->assertArrayHasKey( 'error', $response, 'The poll must refuse with an error, not report the stale run.' );
+		$this->assertStringContainsString( 'restore is in progress', (string) $response['error'] );
 	}
 
 	/**

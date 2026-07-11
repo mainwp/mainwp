@@ -426,8 +426,10 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             $fresh = $store->get_job( (int) $job->id );
             if ( null !== $fresh ) {
                 $checkpoint = $fresh->checkpoint;
-                unset( $checkpoint['cancel_intent'] );
-                $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
+                // The explicit clear flag: every other save_checkpoint
+                // preserves a stored cancel_intent, so dropping the
+                // applied intent has to be spelled out.
+                $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token, true );
             }
             return true;
         }
@@ -909,6 +911,35 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         $website = $this->website( $job );
 
         while ( microtime( true ) < $deadline ) {
+            // A cancel recorded while the previous round trip was in
+            // flight must stop the restore before the child is driven
+            // again: re-read the row and apply the intent exactly as
+            // run_job's entry check does. Working from the fresh row also
+            // rebases this loop's checkpoint writes, so a slice that
+            // outlasted a cancel can no longer resurrect its stale copy.
+            $fresh         = $store->get_job( (int) $job->id );
+            $still_driving = array(
+                MainWP_Backup_Restore_Job_Store::STATUS_RUNNING,
+                // A retry-resume drives the child while the row still says
+                // failed_retryable; run_job mapped it here via resume_status.
+                MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE,
+            );
+            if ( null === $fresh || ! in_array( $fresh->status, $still_driving, true ) ) {
+                return; // Cancelled, completed, or advanced by another lane.
+            }
+            $job = $fresh;
+            if ( ! empty( $job->checkpoint['cancel_intent'] ) ) {
+                if ( ! $this->apply_cancel_intent( $job ) ) {
+                    return; // Cancelled, or the child is still busy.
+                }
+                // The child already completed its restore: the intent was
+                // cleared, and the next round trip reports completed.
+                $job = $store->get_job( (int) $job->id );
+                if ( null === $job ) {
+                    return;
+                }
+            }
+
             $diag_start = microtime( true );
             $payload    = MainWP_Connect::fetch_url_authed( $website, 'restore_task_run', array( 'task_id' => $job->child_task_id ), false, false, false );
 

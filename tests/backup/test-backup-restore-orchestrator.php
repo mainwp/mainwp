@@ -1209,6 +1209,65 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
+	 * A cancel recorded while a slice's child round trip was in
+	 * flight must stop the loop before the NEXT slice. The intent lands
+	 * during the first restore_task_run round trip (the UI's unfenced
+	 * busy-cancel write); without the per-slice re-read the loop would
+	 * drive the scripted second slice and complete the restore the user
+	 * already cancelled.
+	 */
+	public function test_mid_slice_cancel_stops_next_child_slice() {
+		$this->responses['restore_task_cancel'] = array(
+			'result' => 'ok',
+			'phase'  => 'failed',
+		);
+		$this->responses['restore_task_run']    = array(
+			array(
+				'task_id' => 'task-9-restore',
+				'phase'   => 'replaying_db',
+			),
+			array(
+				'task_id'   => 'task-9-restore',
+				'phase'     => 'completed',
+				'sub_state' => array( 'verification' => array( 'row_counts_ok' => true ) ),
+			),
+		);
+
+		$job    = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, array( 'child_task_id' => 'task-9-restore' ) );
+		$job_id = (int) $job->id;
+
+		// Record the intent the moment the first slice's round trip fires,
+		// mirroring a busy-cancel landing while the loop is on the wire.
+		// Priority 5 runs before the scripted responder at 10.
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			function ( $pre, $website, $what ) use ( $job_id ) {
+				if ( 'restore_task_run' === $what ) {
+					$store                       = MainWP_Backup_Restore_Job_Store::instance();
+					$checkpoint                  = $store->get_job( $job_id )->checkpoint;
+					$checkpoint['cancel_intent'] = true;
+					$store->save_checkpoint( $job_id, $checkpoint );
+				}
+				return $pre;
+			},
+			5,
+			3
+		);
+
+		$job = $this->tick( $job );
+
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED, $job->status, 'The mid-slice cancel must cancel the job, not let the loop complete the restore.' );
+
+		$run_calls = 0;
+		foreach ( $this->calls as $call ) {
+			if ( 'restore_task_run' === $call['what'] ) {
+				++$run_calls;
+			}
+		}
+		$this->assertSame( 1, $run_calls, 'No further child slice may be driven once the cancel landed.' );
+	}
+
+	/**
 	 * A child task that already completed cannot be cancelled - the
 	 * restore happened; the job is left for the normal completion path.
 	 */

@@ -1179,4 +1179,112 @@ class MainWP_Backup_Upload_Driver_Test extends \WP_UnitTestCase {
 		clearstatcache();
 		$this->assertSame( $past, filemtime( $intact ), 'An intact ciphertext chunk must be skipped, not rewritten.' );
 	}
+
+	/**
+	 * A lease lost mid-run - a second lane reclaims it between the
+	 * pre-upload presence check and the confirming write - stops the
+	 * zombie cold: its post-reclaim checkpoint and status writes are
+	 * fenced-refused, it never fires the uploaded event, and its own
+	 * finally-block release_lock() must not clear the new holder's lock.
+	 *
+	 * @return void
+	 */
+	public function test_lease_loss_mid_run_stops_writes_and_fires_no_events() {
+		$dest_id     = MainWP_Backup_Storage_Destinations::instance()->add_destination(
+			array(
+				'provider' => 's3',
+				'name'     => 'Lease loss target',
+				'settings' => array(
+					'bucket'     => 'b',
+					'region'     => 'us-east-1',
+					'access_key' => 'k',
+					'secret_key' => 's',
+				),
+			)
+		);
+		$snapshot_id = $this->make_snapshot(
+			array(
+				'small.txt' => array(
+					'size' => 100,
+					'role' => 'db',
+				),
+			)
+		);
+		$store       = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+		$job_id = (int) $store->get_jobs_for_snapshot( $snapshot_id )[0]->id;
+
+		global $wpdb;
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' );
+
+		// The first HEAD is the pre-upload presence check. It simulates a
+		// second lane winning the reclaim while this request is in flight:
+		// force-expire the lease, then win it under a second token, before
+		// answering "not present" so the run proceeds to upload as normal.
+		$reclaimed = false;
+		add_filter(
+			'pre_http_request',
+			function ( $pre, $args ) use ( &$reclaimed, $job_id, $store, $wpdb, $table ) {
+				$method = isset( $args['method'] ) ? strtoupper( $args['method'] ) : 'GET';
+				if ( 'HEAD' !== $method ) {
+					return array(
+						'headers'  => array(),
+						'body'     => '',
+						'response' => array(
+							'code'    => 200,
+							'message' => 'OK',
+						),
+					);
+				}
+
+				if ( ! $reclaimed ) {
+					$reclaimed = true;
+					$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture forcing lease expiry mid-run.
+						$table,
+						array( 'locked_until' => 1 ),
+						array( 'id' => $job_id )
+					);
+					$store->acquire_next_job( 'token-thief', 300, time() );
+					return array(
+						'headers'  => array(),
+						'body'     => '',
+						'response' => array(
+							'code'    => 404,
+							'message' => 'Not Found',
+						),
+					);
+				}
+
+				// The post-write confirming HEAD: report the exact size just
+				// written so the zombie's upload does not throw and the run
+				// proceeds to its natural fenced refusal instead.
+				return array(
+					'headers'  => array( 'content-length' => '100' ),
+					'body'     => '',
+					'response' => array(
+						'code'    => 200,
+						'message' => 'OK',
+					),
+				);
+			},
+			10,
+			2
+		);
+
+		$events = array();
+		add_action(
+			'mainwp_backup_uploaded',
+			function ( $event ) use ( &$events ) {
+				$events[] = $event;
+			}
+		);
+
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+
+		$job = $store->get_job( $job_id );
+		$this->assertSame( 'token-thief', $job->locked_by, "The zombie's own finally-block release must not clear the new holder's lock." );
+		$this->assertNotSame( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE, $job->status, 'The zombie must not complete a job it no longer owns.' );
+		$this->assertSame( array(), $events, 'No uploaded event may fire for a run whose lease was lost mid-flight.' );
+		$this->assertTrue( empty( $job->checkpoint['artifacts'][0]['done'] ), "The zombie's post-reclaim checkpoint write must not land." );
+	}
 }

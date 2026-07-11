@@ -162,6 +162,38 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
     }
 
     /**
+     * Does a nonterminal restore job reference any of these snapshots?
+     *
+     * Retention asks this before pruning a chain: deleting artifacts a
+     * mid-flight restore still stages from destroys its recovery source,
+     * so a chain any active job references is skipped for this sweep and
+     * revisited once the restore settles.
+     *
+     * @param int[] $snapshot_ids Snapshot ids forming one restorable unit.
+     *
+     * @return bool True when an active restore references one of them.
+     */
+    public function has_active_job_for_snapshots( array $snapshot_ids ): bool {
+        $snapshot_ids = array_values( array_filter( array_map( 'intval', $snapshot_ids ) ) );
+        if ( empty( $snapshot_ids ) ) {
+            return false;
+        }
+
+        $statuses         = self::active_statuses();
+        $status_holders   = implode( ',', array_fill( 0, count( $statuses ), '%s' ) );
+        $snapshot_holders = implode( ',', array_fill( 0, count( $snapshot_ids ), '%d' ) );
+
+        $found = $this->wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- dedicated restore job table.
+            $this->wpdb->prepare(
+                'SELECT id FROM ' . $this->table() . " WHERE snapshot_id IN ( {$snapshot_holders} ) AND status IN ( {$status_holders} ) LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- placeholder lists built from counted arrays.
+                array_merge( $snapshot_ids, $statuses )
+            )
+        );
+
+        return null !== $found;
+    }
+
+    /**
      * Atomically acquire the next runnable job.
      *
      * @param string   $token         Lock token.
@@ -273,69 +305,32 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
     }
 
     /**
-     * Renew a held lease, only for the token that holds it.
-     *
-     * A slow-but-alive worker calls this between long operations so its
-     * lease never expires under it; a worker whose lease was already
-     * reclaimed gets false and must stop its slice instead of writing
-     * over the new holder.
-     *
-     * An ALREADY-EXPIRED lease cannot be renewed even when the token still
-     * matches (the `locked_until >= now` predicate): once the lease lapsed
-     * the worker has lost it, and letting it renew would let a slow holder
-     * rescue a job the reclaim-ceiling sweep is about to permanently fail
-     * between that sweep's SELECT and its terminal write.
-     *
-     * @param int      $job_id        Job id.
-     * @param string   $token         The holder's lock token.
-     * @param int      $lease_seconds New lease duration from now.
-     * @param int|null $now           Clock override for tests.
-     *
-     * @return bool True when the token still holds a still-live lease.
-     */
-    public function renew_lease( int $job_id, string $token, int $lease_seconds, ?int $now = null ): bool {
-        $now = null === $now ? time() : $now;
-
-        $renewed = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- dedicated restore job table.
-            $this->wpdb->prepare(
-                'UPDATE ' . $this->table() . ' SET locked_until = %d, updated = %d WHERE id = %d AND locked_by = %s AND locked_until >= %d', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted helper.
-                $now + $lease_seconds,
-                $now,
-                $job_id,
-                $token,
-                $now
-            )
-        );
-        if ( 1 === $renewed ) {
-            return true;
-        }
-        if ( false === $renewed ) {
-            // A query error is not a successful renewal - the lease was not
-            // extended, so the caller must treat it as lost, not held.
-            return false;
-        }
-
-        // Zero affected rows is ambiguous: a same-second renewal writes
-        // identical values, which MySQL reports as unaffected. Only a still
-        // live lease the token still holds counts as renewed - an expired or
-        // reclaimed lease is lost.
-        $row = $this->wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- dedicated restore job table.
-            $this->wpdb->prepare( 'SELECT locked_by, locked_until FROM ' . $this->table() . ' WHERE id = %d', $job_id ) // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted helper.
-        );
-        return null !== $row && $row->locked_by === $token && (int) $row->locked_until >= $now;
-    }
-
-    /**
      * Persist the checkpoint.
      *
-     * @param int         $job_id     Job id.
-     * @param array       $checkpoint Checkpoint.
-     * @param string|null $lock_token Fence the write on this lease token; null writes unfenced.
+     * A cancel intent recorded on the row is sticky: the UI writes it
+     * unfenced from outside the lease, so a worker saving phase data
+     * built from an older in-memory copy would silently erase it. Every
+     * save therefore re-reads the stored flag and carries it forward -
+     * only the explicit $clear_cancel_intent (the applied-cancel path)
+     * may drop it.
+     *
+     * @param int         $job_id              Job id.
+     * @param array       $checkpoint          Checkpoint.
+     * @param string|null $lock_token          Fence the write on this lease token; null writes unfenced.
+     * @param bool        $clear_cancel_intent Drop a stored cancel_intent instead of preserving it.
      *
      * @return bool True when the write landed; false when the fence
      *              refused it because the lease was lost.
      */
-    public function save_checkpoint( int $job_id, array $checkpoint, ?string $lock_token = null ): bool {
+    public function save_checkpoint( int $job_id, array $checkpoint, ?string $lock_token = null, bool $clear_cancel_intent = false ): bool {
+        if ( $clear_cancel_intent ) {
+            unset( $checkpoint['cancel_intent'] );
+        } elseif ( empty( $checkpoint['cancel_intent'] ) ) {
+            $stored = $this->get_job( $job_id );
+            if ( null !== $stored && ! empty( $stored->checkpoint['cancel_intent'] ) ) {
+                $checkpoint['cancel_intent'] = true;
+            }
+        }
         return $this->update_job(
             $job_id,
             array( 'checkpoint' => wp_json_encode( $checkpoint ) ),

@@ -47,6 +47,22 @@ class MainWP_Backup_Cloud_Delete_Driver { // phpcs:ignore Generic.Classes.Openin
     private static $instance = null;
 
     /**
+     * The lease token held for the job being run, null outside a run.
+     * Every store write during the run is fenced on it, so a worker whose
+     * lease was reclaimed can no longer overwrite the new holder's state.
+     *
+     * @var string|null
+     */
+    private ?string $lock_token = null;
+
+    /**
+     * The lease duration renewals extend by, matching the acquisition.
+     *
+     * @var int
+     */
+    private int $lease_seconds = 300;
+
+    /**
      * Method instance()
      *
      * Create public static instance.
@@ -75,16 +91,38 @@ class MainWP_Backup_Cloud_Delete_Driver { // phpcs:ignore Generic.Classes.Openin
         $store = MainWP_Backup_Upload_Job_Store::instance();
         $token = uniqid( 'delete_', true );
 
-        $job = $store->acquire_next_job( $token, max( 300, $budget_seconds + 60 ), $now, MainWP_Backup_Upload_Job_Store::KIND_DELETE );
+        $lease_seconds = max( 300, $budget_seconds + 60 );
+
+        $job = $store->acquire_next_job( $token, $lease_seconds, $now, MainWP_Backup_Upload_Job_Store::KIND_DELETE );
         if ( null === $job ) {
             return;
         }
 
+        $this->lock_token    = $token;
+        $this->lease_seconds = $lease_seconds;
         try {
             $this->run_job( $job, microtime( true ) + $budget_seconds, $now );
         } finally {
+            $this->lock_token = null;
             $store->release_lock( (int) $job->id, $token );
         }
+    }
+
+    /**
+     * Renew the run's lease between provider round trips.
+     *
+     * False means the lease was already reclaimed: the caller stops its
+     * work instead of re-deleting keys the new holder is walking.
+     *
+     * @param object $job Job row.
+     *
+     * @return bool True when work on the job may continue.
+     */
+    private function lease_still_held( object $job ): bool {
+        if ( null === $this->lock_token ) {
+            return true;
+        }
+        return MainWP_Backup_Upload_Job_Store::instance()->renew_lease( (int) $job->id, $this->lock_token, $this->lease_seconds );
     }
 
     /**
@@ -103,19 +141,19 @@ class MainWP_Backup_Cloud_Delete_Driver { // phpcs:ignore Generic.Classes.Openin
 
         $destination = MainWP_Backup_Storage_Destinations::instance()->get_destination( (int) $job->destination_id );
         if ( null === $destination ) {
-            $store->fail_permanent( (int) $job->id, 'Storage destination was deleted; its objects are unreachable.' );
+            $store->fail_permanent( (int) $job->id, 'Storage destination was deleted; its objects are unreachable.', $this->lock_token );
             return;
         }
 
         if ( $destination->credentials_invalid ) {
-            $store->invalidate_credentials( (int) $job->id, 'Stored credentials no longer decrypt; re-enter them on the destination.' );
+            $store->invalidate_credentials( (int) $job->id, 'Stored credentials no longer decrypt; re-enter them on the destination.', $this->lock_token );
             return;
         }
 
         try {
             $provider = MainWP_Backup_Storage_Destinations::instance()->make_provider( $destination );
         } catch ( \RuntimeException $e ) {
-            $store->fail_permanent( (int) $job->id, $e->getMessage() );
+            $store->fail_permanent( (int) $job->id, $e->getMessage(), $this->lock_token );
             return;
         }
 
@@ -127,7 +165,12 @@ class MainWP_Backup_Cloud_Delete_Driver { // phpcs:ignore Generic.Classes.Openin
             $total = count( $keys );
             for ( $i = $cursor; $i < $total; $i++ ) {
                 if ( microtime( true ) >= $deadline ) {
-                    $store->save_checkpoint( (int) $job->id, $checkpoint );
+                    $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
+                    return;
+                }
+                // Renew across the blocking provider delete; a reclaimed
+                // lease stops the walk instead of racing the new holder.
+                if ( ! $this->lease_still_held( $job ) ) {
                     return;
                 }
 
@@ -137,18 +180,18 @@ class MainWP_Backup_Cloud_Delete_Driver { // phpcs:ignore Generic.Classes.Openin
 
                 $checkpoint['keys'][ $i ]['deleted'] = true;
                 $checkpoint['cursor']                = $i + 1;
-                $store->save_checkpoint( (int) $job->id, $checkpoint );
+                $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
             }
 
             if ( empty( $checkpoint['swept'] ) ) {
                 if ( ! $this->sweep_prefix( $job, $checkpoint, $provider, $deadline ) ) {
-                    return; // Deadline; the sweep restarts next tick - deletes are idempotent.
+                    return; // Deadline or lost lease; the sweep restarts next tick - deletes are idempotent.
                 }
                 $checkpoint['swept'] = true;
-                $store->save_checkpoint( (int) $job->id, $checkpoint );
+                $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
             }
 
-            $store->complete_job( (int) $job->id );
+            $store->complete_job( (int) $job->id, $this->lock_token );
         } catch ( \Throwable $e ) {
             $this->handle_failure( $job, $destination, $e, $now );
         }
@@ -170,8 +213,6 @@ class MainWP_Backup_Cloud_Delete_Driver { // phpcs:ignore Generic.Classes.Openin
      * @return bool True when the sweep finished; false on deadline.
      */
     private function sweep_prefix( object $job, array $checkpoint, MainWP_Backup_Storage_Provider $provider, float $deadline ): bool {
-        unset( $job );
-
         $prefix = isset( $checkpoint['prefix'] ) ? (string) $checkpoint['prefix'] : '';
         if ( '' === $prefix ) {
             return true; // No prefix recorded; the key walk covered everything known.
@@ -179,7 +220,7 @@ class MainWP_Backup_Cloud_Delete_Driver { // phpcs:ignore Generic.Classes.Openin
 
         $token = null;
         do {
-            if ( microtime( true ) >= $deadline ) {
+            if ( microtime( true ) >= $deadline || ! $this->lease_still_held( $job ) ) {
                 return false;
             }
 
@@ -215,18 +256,20 @@ class MainWP_Backup_Cloud_Delete_Driver { // phpcs:ignore Generic.Classes.Openin
 
         $error = '[' . $this->error_code_for_provider( (string) $destination->provider ) . '] ' . $e->getMessage();
 
+        // Fenced like every other write in the run: a reclaimed worker's
+        // failure belongs to a run the new holder may yet complete.
         if ( 401 === $code || 403 === $code ) {
-            $store->invalidate_credentials( (int) $job->id, $error );
+            $store->invalidate_credentials( (int) $job->id, $error, $this->lock_token );
             return;
         }
 
         $attempts = (int) $job->attempt_count + 1;
         if ( MainWP_Backup_Backoff::attempts_exhausted( $attempts ) ) {
-            $store->fail_permanent( (int) $job->id, $error );
+            $store->fail_permanent( (int) $job->id, $error, $this->lock_token );
             return;
         }
 
-        $store->fail_retryable( (int) $job->id, $error, $now + MainWP_Backup_Backoff::delay_for_attempt( $attempts ) );
+        $store->fail_retryable( (int) $job->id, $error, $now + MainWP_Backup_Backoff::delay_for_attempt( $attempts ), $this->lock_token );
     }
 
     /**

@@ -65,6 +65,58 @@ abstract class MainWP_Backup_Job_Store_Base extends MainWP_DB_Base { // phpcs:ig
     }
 
     /**
+     * Renew a still-live lease for its holder, extending it from now.
+     *
+     * The renewal doubles as the lease-loss probe: a worker whose lease was
+     * reclaimed gets false and must stop its slice instead of writing
+     * over the new holder.
+     *
+     * An ALREADY-EXPIRED lease cannot be renewed even when the token still
+     * matches (the `locked_until >= now` predicate): once the lease lapsed
+     * the worker has lost it, and letting it renew would let a slow holder
+     * rescue a job the reclaim-ceiling sweep is about to permanently fail
+     * between that sweep's SELECT and its terminal write.
+     *
+     * @param int      $job_id        Job id.
+     * @param string   $token         The holder's lock token.
+     * @param int      $lease_seconds New lease duration from now.
+     * @param int|null $now           Clock override for tests.
+     *
+     * @return bool True when the token still holds a still-live lease.
+     */
+    public function renew_lease( int $job_id, string $token, int $lease_seconds, ?int $now = null ): bool {
+        $now = null === $now ? time() : $now;
+
+        $renewed = $this->wpdb->query(
+            $this->wpdb->prepare(
+                'UPDATE ' . $this->table() . ' SET locked_until = %d, updated = %d WHERE id = %d AND locked_by = %s AND locked_until >= %d',
+                $now + $lease_seconds,
+                $now,
+                $job_id,
+                $token,
+                $now
+            )
+        );
+        if ( 1 === $renewed ) {
+            return true;
+        }
+        if ( false === $renewed ) {
+            // A query error is not a successful renewal - the lease was not
+            // extended, so the caller must treat it as lost, not held.
+            return false;
+        }
+
+        // Zero affected rows is ambiguous: a same-second renewal writes
+        // identical values, which MySQL reports as unaffected. Only a still
+        // live lease the token still holds counts as renewed - an expired or
+        // reclaimed lease is lost.
+        $row = $this->wpdb->get_row(
+            $this->wpdb->prepare( 'SELECT locked_by, locked_until FROM ' . $this->table() . ' WHERE id = %d', $job_id )
+        );
+        return null !== $row && $row->locked_by === $token && (int) $row->locked_until >= $now;
+    }
+
+    /**
      * Update job columns by id, stamping updated.
      *
      * When a lock token is given the write is fenced: it only lands while

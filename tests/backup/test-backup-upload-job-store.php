@@ -13,6 +13,7 @@
 namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Backup_Upload_Job_Store;
+use MainWP\Dashboard\MainWP_DB;
 
 /**
  * Class MainWP_Backup_Upload_Job_Store_Test
@@ -356,5 +357,187 @@ class MainWP_Backup_Upload_Job_Store_Test extends \WP_UnitTestCase {
 
 		$final = $store->get_job( $job_id );
 		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_PERMANENT, $final->status );
+	}
+
+	/**
+	 * Lease renewal extends locked_until only for the token that holds the
+	 * lease; a competitor's renewal attempt changes nothing.
+	 *
+	 * @return void
+	 */
+	public function test_renew_lease_extends_only_for_token_holder() {
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( 115, array( 7 ) );
+
+		$now = 1000000;
+		$job = $store->acquire_next_job( 'token-a', 300, $now );
+
+		$this->assertFalse( $store->renew_lease( (int) $job->id, 'token-b', 300, $now + 100 ), 'A non-holder must not renew the lease.' );
+		$this->assertTrue( $store->renew_lease( (int) $job->id, 'token-a', 300, $now + 100 ), 'The holder renews its own lease.' );
+
+		// Without the renewal the lease would have expired at now+300 and
+		// this claim would succeed; the renewal pushed it to now+400.
+		$this->assertNull( $store->acquire_next_job( 'token-b', 300, $now + 301 ), 'A renewed lease must not be reclaimable at the original expiry.' );
+		$this->assertNotNull( $store->acquire_next_job( 'token-b', 300, $now + 401 ), 'The renewed lease still expires normally.' );
+	}
+
+	/**
+	 * An already-expired lease cannot be renewed even by the token that
+	 * held it: once the lease lapses the worker has lost it.
+	 *
+	 * @return void
+	 */
+	public function test_renew_lease_refuses_expired_lease() {
+		global $wpdb;
+
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( 116, array( 7 ) );
+
+		$now = 1000000;
+		$job = $store->acquire_next_job( 'token-a', 300, $now );
+
+		$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture forcing lease expiry.
+			MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' ),
+			array( 'locked_until' => 1 ),
+			array( 'id' => (int) $job->id )
+		);
+
+		$this->assertFalse( $store->renew_lease( (int) $job->id, 'token-a', 300, $now + 100 ), 'An expired lease must not be renewable by its former holder.' );
+	}
+
+	/**
+	 * Once a lease is reclaimed, the previous worker's token no longer
+	 * writes: its checkpoint and status writes are refused, while the new
+	 * holder's fenced writes land.
+	 *
+	 * @return void
+	 */
+	public function test_zombie_checkpoint_and_status_writes_refused_after_reclaim() {
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( 117, array( 7 ) );
+
+		$now    = 1000000;
+		$job    = $store->acquire_next_job( 'token-zombie', 300, $now );
+		$job_id = (int) $job->id;
+
+		$reclaimed = $store->acquire_next_job( 'token-new', 300, $now + 301 );
+		$this->assertNotNull( $reclaimed, 'The expired lease is reclaimed by a new worker.' );
+		$this->assertSame( 'token-new', $store->get_job( $job_id )->locked_by );
+
+		$checkpoint = array( 'artifact_cursor' => 3 );
+		$this->assertFalse( $store->save_checkpoint( $job_id, $checkpoint, 'token-zombie' ), 'A checkpoint fenced with a stale token must be refused.' );
+		$this->assertSame( array(), $store->get_job( $job_id )->checkpoint, 'The refused checkpoint must not persist.' );
+
+		$this->assertFalse( $store->set_status( $job_id, MainWP_Backup_Upload_Job_Store::STATUS_UPLOADING, 'token-zombie' ), 'A status write fenced with a stale token must be refused.' );
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_PENDING, $store->get_job( $job_id )->status );
+
+		$this->assertTrue( $store->save_checkpoint( $job_id, $checkpoint, 'token-new' ), 'The live holder\'s fenced checkpoint lands.' );
+		$this->assertTrue( $store->set_status( $job_id, MainWP_Backup_Upload_Job_Store::STATUS_UPLOADING, 'token-new' ), 'The live holder\'s fenced status write lands.' );
+		$this->assertSame( 3, $store->get_job( $job_id )->checkpoint['artifact_cursor'] );
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_UPLOADING, $store->get_job( $job_id )->status );
+	}
+
+	/**
+	 * A zombie worker must not terminally relabel a job another worker now
+	 * owns: complete_job, fail_permanent, invalidate_credentials, and
+	 * fail_retryable are all refused when fenced with a stale token.
+	 *
+	 * @return void
+	 */
+	public function test_zombie_cannot_terminally_relabel_reclaimed_job() {
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( 118, array( 7 ) );
+
+		$now    = 1000000;
+		$job    = $store->acquire_next_job( 'token-zombie', 300, $now );
+		$job_id = (int) $job->id;
+
+		$this->assertNotNull( $store->acquire_next_job( 'token-new', 300, $now + 301 ), 'The expired lease is reclaimed by a new worker.' );
+
+		$this->assertFalse( $store->complete_job( $job_id, 'token-zombie' ), 'A fenced completion with a stale token must be refused.' );
+		$this->assertFalse( $store->fail_permanent( $job_id, 'zombie verdict', 'token-zombie' ), 'A fenced terminal write with a stale token must be refused.' );
+		$this->assertFalse( $store->invalidate_credentials( $job_id, 'zombie invalid', 'token-zombie' ), 'A fenced credentials-invalid write with a stale token must be refused.' );
+		$this->assertFalse( $store->fail_retryable( $job_id, 'zombie retry', $now + 400, 'token-zombie' ), 'A fenced retryable failure with a stale token must be refused.' );
+
+		$job_after = $store->get_job( $job_id );
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_PENDING, $job_after->status, 'The reclaimed job is untouched by the zombie.' );
+		$this->assertSame( 0, (int) $job_after->attempt_count, 'The refused fail_retryable must not bump attempt_count.' );
+
+		$this->assertTrue( $store->complete_job( $job_id, 'token-new' ), 'The live holder\'s fenced terminal write lands.' );
+	}
+
+	/**
+	 * A fenced terminal write refused by a stale token must not fire the
+	 * settled event - that announcement belongs to the write that actually
+	 * lands.
+	 *
+	 * @return void
+	 */
+	public function test_fenced_terminal_refusal_fires_no_settled_event() {
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( 119, array( 7 ) );
+
+		$now    = 1000000;
+		$job    = $store->acquire_next_job( 'token-zombie', 300, $now );
+		$job_id = (int) $job->id;
+		$this->assertNotNull( $store->acquire_next_job( 'token-new', 300, $now + 301 ) );
+
+		$settled = array();
+		add_action(
+			'mainwp_backup_upload_job_settled',
+			function ( $snapshot_id ) use ( &$settled ) {
+				$settled[] = $snapshot_id;
+			}
+		);
+
+		$this->assertFalse( $store->complete_job( $job_id, 'token-zombie' ) );
+		$this->assertSame( array(), $settled, 'A refused fenced completion must not fire the settled event.' );
+
+		$this->assertTrue( $store->complete_job( $job_id, 'token-new' ) );
+		$this->assertSame( array( 119 ), $settled, 'The completion that actually lands fires the settled event once.' );
+	}
+
+	/**
+	 * Tokenless writes keep working unchanged: the legacy/UI
+	 * first-terminal-writer-wins semantics are preserved even while
+	 * another lane holds the lease.
+	 *
+	 * @return void
+	 */
+	public function test_tokenless_writes_bypass_fencing() {
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( 120, array( 7 ) );
+
+		$now    = 1000000;
+		$job    = $store->acquire_next_job( 'token-a', 300, $now );
+		$job_id = (int) $job->id;
+		$this->assertNotNull( $store->acquire_next_job( 'token-b', 300, $now + 301 ), 'The expired lease is reclaimed by a new worker.' );
+
+		$this->assertTrue( $store->set_status( $job_id, MainWP_Backup_Upload_Job_Store::STATUS_UPLOADING ), 'A tokenless status write is not fenced.' );
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_UPLOADING, $store->get_job( $job_id )->status );
+	}
+
+	/**
+	 * The widened fail_retryable() signature with the token omitted
+	 * behaves exactly as before: a regression guard for the pre-fencing
+	 * callers.
+	 *
+	 * @return void
+	 */
+	public function test_fail_retryable_without_token_still_lands() {
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( 121, array( 7 ) );
+
+		$now = 1000000;
+		$job = $store->acquire_next_job( 'token-a', 300, $now );
+
+		$this->assertTrue( $store->fail_retryable( (int) $job->id, 'network blip', $now + 600 ) );
+
+		$stored = $store->get_job( (int) $job->id );
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_RETRYABLE, $stored->status );
+		$this->assertSame( 1, (int) $stored->attempt_count );
+		$this->assertSame( $now + 600, (int) $stored->next_retry_at );
+		$this->assertSame( 'network blip', $stored->last_error );
+		$this->assertSame( '', $stored->locked_by );
 	}
 }

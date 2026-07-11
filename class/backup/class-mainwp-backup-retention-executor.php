@@ -354,6 +354,19 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
      * @return void
      */
     private function prune_candidate( array $candidate, object $task, array &$result ): void {
+        // A restore mid-flight stages its artifacts from this chain: pruning
+        // any member destroys the recovery source, so the whole unit is held
+        // for this sweep and revisited once the restore settles. This also
+        // holds the task-delete purge - keeping a deleted task's unit
+        // alive beats stranding a running restore without its source.
+        if ( MainWP_Backup_Restore_Job_Store::instance()->has_active_job_for_snapshots( (array) $candidate['snapshot_ids'] ) ) {
+            $result['errors'][] = sprintf(
+                'Snapshots %s: a restore in progress references this backup; it is kept and the prune will retry on a later sweep.',
+                implode( ',', array_map( 'intval', (array) $candidate['snapshot_ids'] ) )
+            );
+            return;
+        }
+
         $snapshots           = MainWP_Backup_Snapshots::instance();
         $store               = MainWP_Backup_Upload_Job_Store::instance();
         $delete_cloud_copies = ! empty( $task->delete_cloud_copies );

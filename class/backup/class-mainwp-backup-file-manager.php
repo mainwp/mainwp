@@ -447,8 +447,10 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
      *
      * The create is exclusive (fopen 'x'), so two processes racing the
      * same missing lock cannot both acquire: exactly one create wins and
-     * the loser re-reads the winner's live lock. A stale lock is deleted
-     * and the exclusive create retried, which again crowns one winner.
+     * the loser re-reads the winner's live lock. Stale-lock removal goes
+     * through reclaim_stale_lock(), which re-validates staleness under a
+     * per-path mutex - a contender that observed the OLD stale lock can
+     * never delete the FRESH lock a concurrent winner just created.
      *
      * @param string $local_file Absolute path of the download target.
      * @param int    $site_id    Child site ID.
@@ -482,17 +484,74 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
             }
 
             // The lock exists: a live one refuses this caller; a stale or
-            // corrupt one is deleted and the exclusive create retried, so
-            // only one of several racers wins the recreate.
+            // corrupt one is reclaimed (re-validated and removed under the
+            // per-path mutex) and the exclusive create retried, so only
+            // one of several racers wins the recreate.
             $data  = json_decode( (string) @file_get_contents( $lock_file ), true ); // phpcs:ignore WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors -- local lock file; a racer may delete it between the fopen and this read.
             $stale = ! is_array( $data ) || ( time() - (int) ( isset( $data['started'] ) ? $data['started'] : 0 ) ) > HOUR_IN_SECONDS;
             if ( ! $stale ) {
                 return false;
             }
-            wp_delete_file( $lock_file );
+            if ( ! static::reclaim_stale_lock( $lock_file ) ) {
+                return false;
+            }
         }
 
         return false;
+    }
+
+    /**
+     * Method reclaim_stale_lock()
+     *
+     * Remove a lock file previously observed stale, safely: the whole
+     * re-validate-and-delete runs under an advisory flock on a per-path
+     * sidecar mutex, and the lock is re-read INSIDE the mutex. Without
+     * this, two contenders that both read the same stale lock race - the
+     * loser's pathname delete lands after the winner's fresh exclusive
+     * create and silently invalidates it, and both end up believing they
+     * own the artifact.
+     *
+     * The mutex file is never deleted: removing it while another process
+     * holds its descriptor would let a third contender open a NEW inode
+     * at the same path and bypass the serialization. It is zero bytes,
+     * only ever appears after a crash left a stale lock, and does not
+     * match the '*.downloading' cleanup glob.
+     *
+     * @param string $lock_file Lock file path.
+     *
+     * @return bool True when the stale lock is gone and the caller may
+     *              retry the exclusive create; false when the lock is
+     *              live again or another process is reclaiming it.
+     */
+    private static function reclaim_stale_lock( string $lock_file ): bool {
+        $mutex = @fopen( $lock_file . '.reclaim', 'c' ); // phpcs:ignore WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors -- flock target; creation failure degrades to refusing the reclaim.
+        if ( false === $mutex ) {
+            return false; // Cannot serialize the takeover; treat as contended.
+        }
+
+        try {
+            if ( ! flock( $mutex, LOCK_EX | LOCK_NB ) ) {
+                return false; // Another process is mid-reclaim; let it win.
+            }
+            try {
+                if ( ! file_exists( $lock_file ) ) {
+                    return true; // Already reclaimed; the exclusive create decides ownership.
+                }
+                // Re-read under the mutex: only the exact still-stale state
+                // may be deleted, never a fresh lock a winner just wrote.
+                $data  = json_decode( (string) @file_get_contents( $lock_file ), true ); // phpcs:ignore WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors -- local lock file.
+                $stale = ! is_array( $data ) || ( time() - (int) ( isset( $data['started'] ) ? $data['started'] : 0 ) ) > HOUR_IN_SECONDS;
+                if ( ! $stale ) {
+                    return false;
+                }
+                wp_delete_file( $lock_file );
+                return true;
+            } finally {
+                flock( $mutex, LOCK_UN );
+            }
+        } finally {
+            fclose( $mutex ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- paired with the fopen above.
+        }
     }
 
     /**
@@ -550,7 +609,10 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
             $data  = json_decode( (string) file_get_contents( $lock_file ), true ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local lock file.
             $stale = ! is_array( $data ) || ( time() - (int) ( isset( $data['started'] ) ? $data['started'] : 0 ) ) > HOUR_IN_SECONDS;
             if ( $stale ) {
-                wp_delete_file( $lock_file );
+                // Through the same serialized reclaim as acquire: a raw
+                // pathname delete here could land after a reclaimer's fresh
+                // exclusive create and silently invalidate its new lock.
+                static::reclaim_stale_lock( $lock_file );
             }
         }
     }

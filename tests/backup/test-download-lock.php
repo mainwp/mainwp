@@ -190,6 +190,80 @@ class MainWP_Download_Lock_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Invoke the private reclaim helper.
+	 *
+	 * @param string $lock_file Lock path.
+	 *
+	 * @return bool Reclaim outcome.
+	 */
+	private function reclaim( $lock_file ) {
+		$method = new \ReflectionMethod( MainWP_Backup_File_Manager::class, 'reclaim_stale_lock' );
+		$method->setAccessible( true );
+		return $method->invoke( null, $lock_file );
+	}
+
+	/**
+	 * The Codex-flagged invalidation: a contender that validated the OLD
+	 * stale lock must not be able to delete the FRESH lock a concurrent
+	 * winner created in the meantime. All deletes go through the reclaim,
+	 * which re-reads under the mutex - a fresh lock refuses the reclaim
+	 * and survives.
+	 *
+	 * @return void
+	 */
+	public function test_reclaim_refuses_fresh_lock_after_stale_observation() {
+		$lock = $this->dir . 'backup.zip.downloading';
+
+		// The contender observed this stale lock and decided to reclaim...
+		file_put_contents( $lock, wp_json_encode( array( 'started' => time() - 2 * HOUR_IN_SECONDS, 'site_id' => 1, 'task_id' => 1 ) ) );
+		// ...but before its delete lands, a concurrent winner reclaimed and
+		// wrote a fresh lock with its own token.
+		file_put_contents( $lock, wp_json_encode( array( 'started' => time(), 'site_id' => 2, 'task_id' => 2, 'token' => 'winner-token' ) ) );
+
+		$this->assertFalse( $this->reclaim( $lock ), 'A reclaim decided against stale state must refuse once the lock is fresh again.' );
+		$this->assertFileExists( $lock, 'The winner\'s fresh lock must survive the losing contender.' );
+		$data = json_decode( file_get_contents( $lock ), true );
+		$this->assertSame( 'winner-token', $data['token'] );
+	}
+
+	/**
+	 * A still-stale lock reclaims: the file is removed and the caller may
+	 * retry the exclusive create.
+	 *
+	 * @return void
+	 */
+	public function test_reclaim_removes_still_stale_lock() {
+		$lock = $this->dir . 'backup.zip.downloading';
+		file_put_contents( $lock, wp_json_encode( array( 'started' => time() - 2 * HOUR_IN_SECONDS, 'site_id' => 1, 'task_id' => 1 ) ) );
+
+		$this->assertTrue( $this->reclaim( $lock ) );
+		$this->assertFileDoesNotExist( $lock );
+	}
+
+	/**
+	 * While another process holds the reclaim mutex, a contender backs off
+	 * instead of racing the takeover.
+	 *
+	 * @return void
+	 */
+	public function test_reclaim_backs_off_while_mutex_held() {
+		$lock = $this->dir . 'backup.zip.downloading';
+		file_put_contents( $lock, wp_json_encode( array( 'started' => time() - 2 * HOUR_IN_SECONDS, 'site_id' => 1, 'task_id' => 1 ) ) );
+
+		// Model the concurrent reclaimer holding the per-path mutex.
+		$mutex = fopen( $lock . '.reclaim', 'c' );
+		flock( $mutex, LOCK_EX );
+
+		try {
+			$this->assertFalse( $this->reclaim( $lock ), 'A held mutex must refuse the takeover.' );
+			$this->assertFileExists( $lock, 'The lock must be untouched while another process reclaims.' );
+		} finally {
+			flock( $mutex, LOCK_UN );
+			fclose( $mutex );
+		}
+	}
+
+	/**
 	 * Startup cleanup removes only stale lock files.
 	 *
 	 * @return void

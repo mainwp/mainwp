@@ -1973,21 +1973,21 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
             if ( $full_data ) {
                 $sum_upgrades = 0;
-                if ( '' !== $obj_data->plugin_upgrades ) {
+                if ( ! empty( $obj_data->plugin_upgrades ) && is_string( $obj_data->plugin_upgrades ) ) {
                     $plugin_upgrades = json_decode( $obj_data->plugin_upgrades, true );
                     if ( is_array( $plugin_upgrades ) ) {
                         $sum_upgrades += count( $plugin_upgrades );
                     }
                 }
 
-                if ( '' !== $obj_data->theme_upgrades ) {
+                if ( ! empty( $obj_data->theme_upgrades ) && is_string( $obj_data->theme_upgrades ) ) {
                     $theme_upgrades = json_decode( $obj_data->theme_upgrades, true );
                     if ( is_array( $theme_upgrades ) ) {
                         $sum_upgrades += count( $theme_upgrades );
                     }
                 }
 
-                if ( '' !== $obj_data->wp_upgrades ) {
+                if ( ! empty( $obj_data->wp_upgrades ) && is_string( $obj_data->wp_upgrades ) ) {
                     $wp_upgrades = json_decode( $obj_data->wp_upgrades, true );
                     if ( is_array( $wp_upgrades ) ) {
                         $sum_upgrades += count( $wp_upgrades );

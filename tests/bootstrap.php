@@ -6,7 +6,7 @@
  */
 
 // Load Composer autoloader for test classes.
-require_once dirname( dirname( __FILE__ ) ) . '/vendor/autoload.php';
+require_once dirname( __DIR__ ) . '/vendor/autoload.php';
 
 $_tests_dir = getenv( 'WP_TESTS_DIR' );
 
@@ -68,7 +68,7 @@ tests_add_filter( 'mainwp_rest_api_v2_enabled', '__return_true', 99 );
  * Manually load the plugin being tested.
  */
 function _manually_load_plugin() {
-	require dirname( dirname( __FILE__ ) ) . '/mainwp.php';
+	require dirname( __DIR__ ) . '/mainwp.php';
 }
 tests_add_filter( 'muplugins_loaded', '_manually_load_plugin' );
 
@@ -91,6 +91,28 @@ function _mainwp_install_tables() {
 }
 _mainwp_install_tables();
 
+/**
+ * Purge stale MainWP rows a previous phpunit process left behind.
+ *
+ * The per-test transaction rollback cannot protect against a test that runs
+ * DDL (dbDelta, ALTER TABLE): the implicit commit makes every row inserted
+ * before it durable, and the tear_down deletes that follow are themselves
+ * rolled back. Those durable rows then persist across processes - install()
+ * seeds no rows and every suite passes from empty tables, so any row present
+ * here is a leak from an earlier run (a single stale site broke seven
+ * Abilities tests by inflating site counts and resolving empty-input
+ * lookups). Deleting here runs once per process, before any transaction, so
+ * the cleanup itself is durable.
+ */
+function _mainwp_purge_stale_rows() {
+	global $wpdb;
+	$tables = $wpdb->get_col( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $wpdb->prefix . 'mainwp_' ) . '%' ) );
+	foreach ( $tables as $table ) {
+		$wpdb->query( "DELETE FROM `{$table}`" ); // phpcs:ignore WordPress.DB -- table name from SHOW TABLES, test-DB cleanup.
+	}
+}
+_mainwp_purge_stale_rows();
+
 // Load custom test case base classes.
-require_once dirname( __FILE__ ) . '/abilities/class-mainwp-abilities-test-case.php';
-require_once dirname( __FILE__ ) . '/backup/class-mainwp-backup-test-case.php';
+require_once __DIR__ . '/abilities/class-mainwp-abilities-test-case.php';
+require_once __DIR__ . '/backup/class-mainwp-backup-test-case.php';

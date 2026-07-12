@@ -137,14 +137,18 @@ class MainWP_Backup_Scope_Launder_Guard_Test extends MainWP_Abilities_Test_Case 
 	 */
 	public function test_pre_migration_row_backfills_once() {
 		global $wpdb;
+		// Establish the post-9.0.2.22 nullable schema FIRST (a persistent test
+		// DB may predate it). The ALTER's implicit commit must land before any
+		// fixture insert: run after them, it makes the site/group/task rows
+		// durable past this test's rollback and the leaked site breaks every
+		// later empty-DB assertion in the Abilities suite.
+		$wpdb->query( 'ALTER TABLE ' . $wpdb->prefix . 'mainwp_wp_backup MODIFY COLUMN authorized_sites text NULL' ); // phpcs:ignore WordPress.DB -- align the test DB with the migration.
 		$site = $this->create_test_site( array( 'userid' => 1 ) );
 		$this->add_site_to_group( $site, 828282 );
 		wp_set_current_user( 1 );
 		$task = MainWP_DB_Backup::instance()->add_backup_task( 1, 'legacy row', 'daily', 'full', '', '', '828282', '', '', 0, 0, 0, 0, 0, 'site', 0, 1, 150, 0, 0 );
-		// Establish the post-9.0.2.22 nullable schema (a persistent test DB may
-		// predate it), then force the never-stamped sentinel (NULL) a genuine
+		// Force the never-stamped sentinel (NULL) a genuine
 		// pre-authorized_sites row carries.
-		$wpdb->query( 'ALTER TABLE ' . $wpdb->prefix . 'mainwp_wp_backup MODIFY COLUMN authorized_sites text NULL' ); // phpcs:ignore WordPress.DB -- align the test DB with the migration.
 		$wpdb->query( $wpdb->prepare( 'UPDATE ' . $wpdb->prefix . 'mainwp_wp_backup SET authorized_sites = NULL WHERE id = %d', $task->id ) ); // phpcs:ignore WordPress.DB -- test forces the pre-migration state.
 
 		$fresh    = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );

@@ -259,22 +259,30 @@ class MainWP_Backup_Flag_Migration_Test extends \WP_UnitTestCase {
 
 	/**
 	 * A fresh install (no mainwp_db_version option at all) defaults to
-	 * disabled, the same as an existing install with neither flag written.
+	 * disabled, the same as an existing install with neither flag written,
+	 * and is not part of the defaulted-off-on-upgrade notice cohort.
 	 *
-	 * Skipped: a truly empty $currentVersion also flips on the
-	 * `empty( $currentVersion )` branches guarding the schedule_processes and
-	 * wp tables' PRIMARY KEY clauses (class-mainwp-install.php:522-525,
-	 * :539-541). Those clauses fail dbDelta's index-definition regex on
-	 * PHP 8.4 (undefined array key "index_type" in
-	 * wp-admin/includes/upgrade.php:3101) because no existing test ever
-	 * exercises install() with an empty version, leaving that path
-	 * untested and broken independent of this flag change. Fixing the
-	 * table SQL is out of scope for the enablement flip; flagged
-	 * separately as a real fresh-install crash risk on PHP 8.4.
+	 * Runs install() end to end with an empty $currentVersion: every
+	 * version-gated index clause fires here against already-existing
+	 * tables, so this test also guards dbDelta's index parsing on that
+	 * path. The crash that once forced a skip ("undefined array key
+	 * index_type" on PHP 8.4) came from the legacy unnamed UNIQUE
+	 * (task_id) clause on the progress table, removed at db 9.0.2.20 -
+	 * dbDelta trims field lines, so the PRIMARY KEY fragments the old
+	 * skip note blamed were never the offender.
 	 *
 	 * @return void
 	 */
 	public function test_fresh_install_defaults_to_disabled() {
-		$this->markTestSkipped( 'Pre-existing PHP 8.4 dbDelta bug on the empty-$currentVersion path (class-mainwp-install.php:539) blocks exercising install() end to end; the fresh-install branch itself (line 85) is untouched by this change. See test docblock.' );
+		delete_option( 'mainwp_native_backups_defaulted_off_on_upgrade' );
+		delete_option( 'mainwp_enableNativeBackups' );
+		delete_option( 'mainwp_enableLegacyBackupFeature' );
+		delete_site_option( 'mainwp_db_version' );
+
+		MainWP_Install::instance()->install();
+
+		$this->assertNotFalse( get_option( 'mainwp_enableNativeBackups' ), 'Fresh install must write the flag explicitly, not leave it unset.' );
+		$this->assertSame( 0, (int) get_option( 'mainwp_enableNativeBackups' ) );
+		$this->assertFalse( get_option( 'mainwp_native_backups_defaulted_off_on_upgrade' ), 'Fresh installs are not the upgraded cohort and get no notice marker.' );
 	}
 }

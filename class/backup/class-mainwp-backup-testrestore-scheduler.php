@@ -134,11 +134,15 @@ class MainWP_Backup_TestRestore_Scheduler { // phpcs:ignore Generic.Classes.Open
                 continue; // Another tick already claimed it.
             }
 
-            $result = $this->verify( $snapshot_id );
-            if ( isset( $result['error_code'] ) && MainWP_Backup_TestRestore_Driver::ERR_UNRESOLVABLE === $result['error_code'] ) {
-                // The driver reports an unresolvable chain without recording it;
-                // stamp a neutral result so the row surfaces "couldn't test"
-                // and the claim's backoff is not overwritten back to never-tested.
+            $result = $this->verify( $snapshot_id, $deadline );
+            if ( isset( $result['error_code'] )
+                && in_array( $result['error_code'], array( MainWP_Backup_TestRestore_Driver::ERR_UNRESOLVABLE, MainWP_Backup_TestRestore_Driver::ERR_DEADLINE_EXCEEDED ), true ) ) {
+                // The driver reports an unresolvable chain, or a tick budget that
+                // ran out before the sandbox could apply the plan, without
+                // recording either: stamp a neutral result so the row surfaces
+                // "couldn't test" rather than "fail" - the claim already backed
+                // this snapshot off for the cadence window, so there is no
+                // sooner retry to preserve either way.
                 $snapshots->set_test_restore_result( $snapshot_id, self::STATE_UNAVAILABLE, $now );
             }
 
@@ -201,12 +205,13 @@ class MainWP_Backup_TestRestore_Scheduler { // phpcs:ignore Generic.Classes.Open
      * Hand a snapshot to the Stage-1 engine. A seam so tests can drive
      * selection, claiming and continuation without a real sandbox.
      *
-     * @param int $snapshot_id Snapshot id.
+     * @param int   $snapshot_id Snapshot id.
+     * @param float $deadline    Absolute microtime(true) deadline for this tick's budget.
      *
      * @return array Driver result.
      */
-    protected function verify( int $snapshot_id ): array {
-        return MainWP_Backup_TestRestore_Driver::instance()->verify_snapshot( $snapshot_id );
+    protected function verify( int $snapshot_id, float $deadline ): array {
+        return MainWP_Backup_TestRestore_Driver::instance()->verify_snapshot( $snapshot_id, array( 'deadline' => $deadline ) );
     }
 
     /**

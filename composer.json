@@ -27,5 +27,18 @@
             "dealerdirect/phpcodesniffer-composer-installer": true
         },
         "sort-packages": true
+    },
+    "scripts": {
+        "test": [
+            "@test:dashboard",
+            "@test:abilities",
+            "@test:backup"
+        ],
+        "test:dashboard": "phpunit --testsuite=\"MainWP Dashboard Test Suite\"",
+        "test:abilities": "phpunit --testsuite=Abilities",
+        "test:backup": "phpunit --testsuite=Backup"
+    },
+    "scripts-descriptions": {
+        "test": "Run the three phpunit testsuites as separate processes, the same shape CI uses. A single-process aggregate run (bare vendor/bin/phpunit) lets constants like DOING_CRON defined by one suite leak into another and silently bypass capability-denial tests. Requires WP_TESTS_DIR in the environment."
     }
 }

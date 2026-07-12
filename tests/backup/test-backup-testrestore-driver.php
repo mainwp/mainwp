@@ -388,6 +388,108 @@ class MainWP_Backup_TestRestore_Driver_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A dump whose decompressed size exceeds the configured cap is refused
+	 * before it is loaded into memory: the run records unsupported (an
+	 * environment limitation, not a bad backup), and the scratch resources
+	 * are gone afterward same as any other run.
+	 *
+	 * @return void
+	 */
+	public function test_oversized_dump_refuses_and_records_unsupported() {
+		$cap = static function () {
+			return 10; // Below the tiny sentinel fixture's decompressed size.
+		};
+		add_filter( 'mainwp_testrestore_max_sql_dump_bytes', $cap );
+
+		$dump        = $this->write_db_dump( 'db.sql.gz', $this->sentinel_sql() );
+		$snapshot_id = $this->record(
+			'db',
+			array(
+				array(
+					'file' => 'db.sql.gz',
+					'size' => filesize( $dump ),
+					'role' => 'db',
+					'path' => $dump,
+				),
+			)
+		);
+
+		$result = MainWP_Backup_TestRestore_Driver::instance()->verify_snapshot( $snapshot_id );
+
+		remove_filter( 'mainwp_testrestore_max_sql_dump_bytes', $cap );
+
+		$this->assertSame( 'unsupported', $result['state'], 'A dump over the cap must record unsupported, not fail.' );
+		$this->assertSame( MainWP_Backup_TestRestore_Driver::ERR_DUMP_TOO_LARGE, $result['error_code'] );
+
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+		$this->assertSame( 'unsupported', (string) $snapshot->test_restore_state, 'The unsupported result must be recorded on the snapshot.' );
+
+		$this->assertFalse( $this->db_exists( $result['sandbox']['db_name'] ), 'The scratch database must not linger after a refusal.' );
+		$this->assertDirectoryDoesNotExist( $result['sandbox']['temp_dir'], 'The sandbox temp dir must not linger after a refusal.' );
+	}
+
+	/**
+	 * A deadline that has already passed by the time staging finishes stops
+	 * the run before the sandbox applies the plan: no terminal state is
+	 * recorded, so the caller's own backoff (not a mislabeled fail) is what
+	 * lands on the snapshot.
+	 *
+	 * @return void
+	 */
+	public function test_deadline_expired_after_staging_returns_non_terminal_outcome() {
+		$dump        = $this->write_db_dump( 'db.sql.gz', $this->sentinel_sql() );
+		$snapshot_id = $this->record(
+			'db',
+			array(
+				array(
+					'file' => 'db.sql.gz',
+					'size' => filesize( $dump ),
+					'role' => 'db',
+					'path' => $dump,
+				),
+			)
+		);
+
+		$result = MainWP_Backup_TestRestore_Driver::instance()->verify_snapshot( $snapshot_id, array( 'deadline' => microtime( true ) - 1 ) );
+
+		$this->assertSame( MainWP_Backup_TestRestore_Driver::ERR_DEADLINE_EXCEEDED, $result['error_code'], 'An already-expired deadline must report the deadline-exceeded error code.' );
+
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+		$this->assertSame( '', (string) $snapshot->test_restore_state, 'A deadline miss must not record a terminal state; the caller stamps its own backoff.' );
+
+		$this->assertFalse( $this->db_exists( $result['sandbox']['db_name'] ), 'The scratch database must not linger after a deadline miss.' );
+		$this->assertDirectoryDoesNotExist( $result['sandbox']['temp_dir'], 'The sandbox temp dir must not linger after a deadline miss.' );
+	}
+
+	/**
+	 * A generous deadline does not regress the happy path: staging and the
+	 * sandbox apply both have ample budget and the run still passes.
+	 *
+	 * @return void
+	 */
+	public function test_verify_with_generous_deadline_still_passes() {
+		$dump        = $this->write_db_dump( 'db.sql.gz', $this->sentinel_sql() );
+		$snapshot_id = $this->record(
+			'db',
+			array(
+				array(
+					'file' => 'db.sql.gz',
+					'size' => filesize( $dump ),
+					'role' => 'db',
+					'path' => $dump,
+				),
+			)
+		);
+
+		$result = MainWP_Backup_TestRestore_Driver::instance()->verify_snapshot( $snapshot_id, array( 'deadline' => microtime( true ) + 300 ) );
+
+		$this->assertSame( 'pass', $result['state'], 'A generous deadline must not regress the happy path: ' . (string) $result['error'] );
+
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+		$this->assertSame( 'pass', (string) $snapshot->test_restore_state, 'The pass result must still be recorded with a deadline opt supplied.' );
+	}
+
+	/**
 	 * The sandbox is fully torn down on both a passing and a failing run: no
 	 * scratch database and no temp dir linger either way.
 	 *

@@ -32,6 +32,12 @@
             <directory suffix=".php">tests/backup</directory>
             <exclude>tests/backup/class-mainwp-backup-test-case.php</exclude>
             <exclude>tests/backup/fixtures</exclude>
+            <!-- Runs last (excluded from the scan, re-added below): its REST requests
+                 authenticate through the real API-key path, which defines
+                 MAINWP_REST_API_DOING for the rest of the process and would silently
+                 skip every capability-denial test that runs after it. -->
+            <exclude>tests/backup/test-backup-settings-controller.php</exclude>
+            <file>tests/backup/test-backup-settings-controller.php</file>
         </testsuite>
     </testsuites>
 

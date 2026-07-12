@@ -19,6 +19,8 @@ use MainWP\Dashboard\MainWP_Post_Backup_Handler;
  */
 class MainWP_Backup_Ajax_Registration_Test extends \WP_UnitTestCase {
 
+	use MainWP_Capability_Bypass_Guard;
+
 	/**
 	 * Collect the wp_ajax_* hook names with callbacks owned by
 	 * MainWP_Post_Backup_Handler, mapped to their callback method names.
@@ -138,9 +140,7 @@ class MainWP_Backup_Ajax_Registration_Test extends \WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_denied_capability_blocks_action_registration() {
-		if ( ( defined( 'DOING_CRON' ) && DOING_CRON ) || ( defined( 'WP_CLI' ) && WP_CLI ) || ( defined( 'MAINWP_REST_API_DOING' ) && MAINWP_REST_API_DOING ) ) {
-			$this->markTestSkipped( 'Capability checks are bypassed by design under cron, WP-CLI, and REST constants; another suite defined one for this process.' );
-		}
+		$this->skip_when_capabilities_bypassed();
 
 		$leaks = array();
 		foreach ( $this->get_capability_gated_actions() as $action => $cap ) {

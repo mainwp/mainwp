@@ -10,6 +10,7 @@ namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Backup_Snapshot_Catalog;
 use MainWP\Dashboard\MainWP_Backup_Snapshots;
+use MainWP\Dashboard\MainWP_Backup_Upload_Job_Store;
 use MainWP\Dashboard\MainWP_DB;
 
 /**
@@ -405,5 +406,85 @@ class MainWP_Backup_Snapshot_Catalog_Test extends MainWP_Abilities_Test_Case {
 		$resolved = MainWP_Backup_Snapshot_Catalog::instance()->resolve_restorable_chain( $id );
 		$this->assertTrue( $resolved['ok'] );
 		$this->assertSame( 'db', $resolved['sub_type'] );
+	}
+
+	/**
+	 * Mark a snapshot's upload job complete with the given artifact records.
+	 *
+	 * @param int   $snapshot_id    Snapshot id.
+	 * @param int   $destination_id Destination id.
+	 * @param array $artifacts      Artifact records for the checkpoint.
+	 *
+	 * @return void
+	 */
+	private function complete_upload( $snapshot_id, $destination_id, $artifacts ) {
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $destination_id ) );
+		foreach ( $store->get_jobs_for_snapshot( $snapshot_id ) as $job ) {
+			if ( (int) $job->destination_id !== $destination_id ) {
+				continue;
+			}
+			$store->save_checkpoint( (int) $job->id, array( 'artifacts' => $artifacts ) );
+			$store->complete_job( (int) $job->id );
+		}
+	}
+
+	/**
+	 * Every completed upload of an artifact survives into the plan entry
+	 * as a failover candidate, in job order, with the first copy still
+	 * the primary source resolution. One corrupt or unavailable
+	 * destination must not be able to defeat a restore that another
+	 * healthy replica could serve.
+	 */
+	public function test_plan_entry_retains_all_completed_upload_candidates() {
+		$id = $this->make_snapshot(
+			array(
+				array(
+					'file'    => 'full.tar.gz',
+					'role'    => 'full',
+					'missing' => true,
+				),
+			)
+		);
+
+		$this->complete_upload(
+			$id,
+			71,
+			array(
+				array(
+					'file'   => 'full.tar.gz',
+					'mode'   => 'whole',
+					'sha256' => 'aaa111',
+				),
+			)
+		);
+		$this->complete_upload(
+			$id,
+			72,
+			array(
+				array(
+					'file'   => 'full.tar.gz',
+					'mode'   => 'chunked',
+					'sha256' => 'bbb222',
+				),
+			)
+		);
+
+		$resolved = MainWP_Backup_Snapshot_Catalog::instance()->resolve_restorable_chain( $id );
+		$this->assertTrue( $resolved['ok'] );
+
+		$entry = $resolved['plan'][0];
+		$this->assertSame( 'remote', $entry['source'], 'The first completed upload stays the primary source.' );
+		$this->assertSame( '9901/' . $id . '/files/full.tar.gz', $entry['remote_key'] );
+		$this->assertSame( 'aaa111', $entry['expected_sha256'] );
+
+		$this->assertArrayHasKey( 'remote_candidates', $entry );
+		$this->assertCount( 2, $entry['remote_candidates'], 'Every completed destination is a candidate.' );
+		$this->assertSame( 71, $entry['remote_candidates'][0]['destination_id'] );
+		$this->assertFalse( $entry['remote_candidates'][0]['chunked'] );
+		$this->assertSame( 'aaa111', $entry['remote_candidates'][0]['sha256'] );
+		$this->assertSame( 72, $entry['remote_candidates'][1]['destination_id'] );
+		$this->assertTrue( $entry['remote_candidates'][1]['chunked'] );
+		$this->assertSame( 'bbb222', $entry['remote_candidates'][1]['sha256'] );
 	}
 }

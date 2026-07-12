@@ -58,6 +58,20 @@ class Testable_Restore_Transfer_Driver extends MainWP_Backup_Restore_Transfer_Dr
 	public $fake_free_bytes = null;
 
 	/**
+	 * Per-destination base paths the candidate failover resolves against.
+	 *
+	 * @var array<int,string>
+	 */
+	public $destination_bases = array();
+
+	/**
+	 * Destination ids the failover loop tried, in order.
+	 *
+	 * @var int[]
+	 */
+	public $resolved_destinations = array();
+
+	/**
 	 * Record the pause instead of sleeping.
 	 *
 	 * @param int $seconds Sleep duration.
@@ -91,6 +105,21 @@ class Testable_Restore_Transfer_Driver extends MainWP_Backup_Restore_Transfer_Dr
 			return null;
 		}
 		return new MainWP_Backup_Storage_Local( array( 'base_path' => $this->remote_base ) );
+	}
+
+	/**
+	 * Serve each candidate destination from its own pinned base path.
+	 *
+	 * @param int $destination_id Destination id.
+	 *
+	 * @return \MainWP\Dashboard\MainWP_Backup_Storage_Provider|null Provider.
+	 */
+	protected function provider_for_destination( int $destination_id ): ?\MainWP\Dashboard\MainWP_Backup_Storage_Provider {
+		$this->resolved_destinations[] = $destination_id;
+		if ( ! isset( $this->destination_bases[ $destination_id ] ) ) {
+			return null;
+		}
+		return new MainWP_Backup_Storage_Local( array( 'base_path' => $this->destination_bases[ $destination_id ] ) );
 	}
 
 	/**
@@ -1413,5 +1442,409 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends \WP_UnitTestCase {
 
 		$this->assertTrue( $result['done'] );
 		$this->assertEmpty( $this->driver->sent );
+	}
+
+	/**
+	 * A failover candidate record.
+	 *
+	 * @param int    $dest_id Destination id.
+	 * @param bool   $chunked Chunked mode.
+	 * @param string $sha     Backup-time sha256.
+	 *
+	 * @return array Candidate.
+	 */
+	private function candidate( $dest_id, $chunked = false, $sha = '' ) {
+		return array(
+			'key'            => '4/8/files/db.tar.gz',
+			'chunked'        => $chunked,
+			'destination_id' => $dest_id,
+			'sha256'         => $sha,
+		);
+	}
+
+	/**
+	 * A remote plan entry carrying failover candidates.
+	 *
+	 * @param array  $candidates Candidates in order.
+	 * @param string $source     Primary source classification.
+	 *
+	 * @return array Plan entry.
+	 */
+	private function remote_entry( array $candidates, $source = 'remote' ) {
+		return array(
+			'role'              => 'db',
+			'file'              => 'db.tar.gz',
+			'source_file'       => 'db.tar.gz',
+			'size'              => 12,
+			'sha256'            => '',
+			'expected_sha256'   => isset( $candidates[0]['sha256'] ) ? $candidates[0]['sha256'] : '',
+			'snapshot_id'       => 8,
+			'source'            => $source,
+			'local_path'        => '',
+			'remote_key'        => '4/8/files/db.tar.gz',
+			'remote_candidates' => $candidates,
+			'adopt_only'        => false,
+		);
+	}
+
+	/**
+	 * Write a whole-file object under a destination base.
+	 *
+	 * @param string $base  Destination base dir.
+	 * @param string $bytes Object content.
+	 */
+	private function put_object( $base, $bytes ) {
+		if ( ! is_dir( $base . '/4/8/files' ) ) {
+			mkdir( $base . '/4/8/files', 0777, true );
+		}
+		file_put_contents( $base . '/4/8/files/db.tar.gz', $bytes ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+	}
+
+	/**
+	 * The object missing at the primary destination stages from the second
+	 * completed replica instead of failing the restore.
+	 */
+	public function test_stage_fails_over_when_primary_object_missing() {
+		$base_a = $this->dir . '/dest-a';
+		$base_b = $this->dir . '/dest-b';
+		mkdir( $base_a );
+		$this->put_object( $base_b, 'replica-two-bytes' );
+
+		$this->driver->destination_bases = array(
+			21 => $base_a,
+			22 => $base_b,
+		);
+
+		$plan = array(
+			$this->remote_entry(
+				array(
+					$this->candidate( 21, false, hash( 'sha256', 'replica-two-bytes' ) ),
+					$this->candidate( 22, false, hash( 'sha256', 'replica-two-bytes' ) ),
+				)
+			),
+		);
+
+		$outcome = $this->driver->stage_artifacts( 777001, $plan, microtime( true ) + 60 );
+		$this->assertTrue( $outcome['done'] );
+		$this->assertSame( hash( 'sha256', 'replica-two-bytes' ), $plan[0]['sha256'] );
+		$this->assertSame( array( 21, 22 ), $this->driver->resolved_destinations );
+	}
+
+	/**
+	 * With every replica healthy the first candidate serves the download:
+	 * failover is deterministic, not a scan.
+	 */
+	public function test_stage_prefers_first_healthy_destination() {
+		$base_a = $this->dir . '/dest-a';
+		$base_b = $this->dir . '/dest-b';
+		$this->put_object( $base_a, 'replica-one' );
+		$this->put_object( $base_b, 'replica-two' );
+
+		$this->driver->destination_bases = array(
+			21 => $base_a,
+			22 => $base_b,
+		);
+
+		$plan = array(
+			$this->remote_entry(
+				array(
+					$this->candidate( 21, false, hash( 'sha256', 'replica-one' ) ),
+					$this->candidate( 22, false, hash( 'sha256', 'replica-two' ) ),
+				)
+			),
+		);
+
+		$outcome = $this->driver->stage_artifacts( 777001, $plan, microtime( true ) + 60 );
+		$this->assertTrue( $outcome['done'] );
+		$this->assertSame( hash( 'sha256', 'replica-one' ), $plan[0]['sha256'] );
+		$this->assertSame( array( 21 ), $this->driver->resolved_destinations );
+	}
+
+	/**
+	 * A corrupt object at the primary (integrity hash mismatch) fails over
+	 * to the healthy replica instead of failing the restore.
+	 */
+	public function test_stage_fails_over_on_corrupt_primary_object() {
+		$base_a = $this->dir . '/dest-a';
+		$base_b = $this->dir . '/dest-b';
+		$this->put_object( $base_a, 'evil-bytes!!' );
+		$this->put_object( $base_b, 'good-bytes!!' );
+
+		$this->driver->destination_bases = array(
+			21 => $base_a,
+			22 => $base_b,
+		);
+
+		$good_sha = hash( 'sha256', 'good-bytes!!' );
+		$plan     = array(
+			$this->remote_entry(
+				array(
+					$this->candidate( 21, false, $good_sha ),
+					$this->candidate( 22, false, $good_sha ),
+				)
+			),
+		);
+
+		$outcome = $this->driver->stage_artifacts( 777001, $plan, microtime( true ) + 60 );
+		$this->assertTrue( $outcome['done'] );
+		$this->assertSame( $good_sha, $plan[0]['sha256'] );
+		$this->assertSame( array( 21, 22 ), $this->driver->resolved_destinations );
+	}
+
+	/**
+	 * A chunked primary whose manifest is gone fails over to a whole-file
+	 * replica at another destination; the candidate's own mode drives the
+	 * staging routine, not the entry's primary classification.
+	 */
+	public function test_chunked_candidate_fails_over_to_whole_replica() {
+		$base_a = $this->dir . '/dest-a';
+		$base_b = $this->dir . '/dest-b';
+		mkdir( $base_a );
+		$this->put_object( $base_b, 'whole-replica' );
+
+		$this->driver->destination_bases = array(
+			21 => $base_a,
+			22 => $base_b,
+		);
+
+		$plan = array(
+			$this->remote_entry(
+				array(
+					$this->candidate( 21, true, '' ),
+					$this->candidate( 22, false, hash( 'sha256', 'whole-replica' ) ),
+				),
+				'remote_chunked'
+			),
+		);
+
+		$outcome = $this->driver->stage_artifacts( 777001, $plan, microtime( true ) + 60 );
+		$this->assertTrue( $outcome['done'] );
+		$this->assertSame( hash( 'sha256', 'whole-replica' ), $plan[0]['sha256'] );
+		$this->assertSame( array( 21, 22 ), $this->driver->resolved_destinations );
+	}
+
+	/**
+	 * Disk exhaustion is host-side: no other destination can fix it, so the
+	 * failover loop stops instead of retrying every replica into the same
+	 * full disk.
+	 */
+	public function test_disk_full_stops_failover() {
+		$base_a = $this->dir . '/dest-a';
+		$base_b = $this->dir . '/dest-b';
+		$this->put_object( $base_a, 'replica-one' );
+		$this->put_object( $base_b, 'replica-two' );
+
+		$this->driver->destination_bases = array(
+			21 => $base_a,
+			22 => $base_b,
+		);
+		$this->driver->fake_free_bytes   = 1;
+
+		$plan = array(
+			$this->remote_entry(
+				array(
+					$this->candidate( 21, false, hash( 'sha256', 'replica-one' ) ),
+					$this->candidate( 22, false, hash( 'sha256', 'replica-two' ) ),
+				)
+			),
+		);
+
+		$outcome = $this->driver->stage_artifacts( 777001, $plan, microtime( true ) + 60 );
+		$this->assertFalse( $outcome['done'] );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_RESTORE_DISK_FULL, $outcome['error_code'] );
+		$this->assertSame( array( 21 ), $this->driver->resolved_destinations );
+	}
+
+	/**
+	 * Every candidate failing leaves the last error as the outcome, the
+	 * same hard failure a single destination produced before failover.
+	 */
+	public function test_all_candidates_failing_reports_error() {
+		$base_a = $this->dir . '/dest-a';
+		$base_b = $this->dir . '/dest-b';
+		mkdir( $base_a );
+		mkdir( $base_b );
+
+		$this->driver->destination_bases = array(
+			21 => $base_a,
+			22 => $base_b,
+		);
+
+		$plan = array(
+			$this->remote_entry(
+				array(
+					$this->candidate( 21, false, '' ),
+					$this->candidate( 22, false, '' ),
+				)
+			),
+		);
+
+		$outcome = $this->driver->stage_artifacts( 777001, $plan, microtime( true ) + 60 );
+		$this->assertFalse( $outcome['done'] );
+		$this->assertNotNull( $outcome['error'] );
+		$this->assertSame( array( 21, 22 ), $this->driver->resolved_destinations );
+	}
+}
+
+/**
+ * Provider double answering head_object from a script.
+ */
+class Head_Scripted_Provider {
+ // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- test double.
+
+	/**
+	 * Scripted answer: false (confirmed missing), 'throw' (transient
+	 * error), anything else reads as present.
+	 *
+	 * @var mixed
+	 */
+	private $answer;
+
+	/**
+	 * Pin the answer.
+	 *
+	 * @param mixed $answer Scripted answer.
+	 */
+	public function __construct( $answer ) {
+		$this->answer = $answer;
+	}
+
+	/**
+	 * Scripted HEAD.
+	 *
+	 * @param string $key Object key.
+	 *
+	 * @return mixed Scripted result.
+	 *
+	 * @throws \RuntimeException When scripted to.
+	 */
+	public function head_object( string $key ) {
+		unset( $key );
+		if ( 'throw' === $this->answer ) {
+			throw new \RuntimeException( 'transient head failure' );
+		}
+		return $this->answer;
+	}
+}
+
+/**
+ * Driver with the presignable candidate enumeration scripted.
+ */
+class Preflight_Candidates_Driver extends MainWP_Backup_Restore_Transfer_Driver {
+ // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- test double.
+
+	/**
+	 * Scripted uploads.
+	 *
+	 * @var array
+	 */
+	public $uploads = array();
+
+	/**
+	 * Scripted enumeration.
+	 *
+	 * @param int $snapshot_id Snapshot id.
+	 *
+	 * @return array Uploads.
+	 */
+	protected function presignable_uploads_for_snapshot( int $snapshot_id ): array {
+		unset( $snapshot_id );
+		return $this->uploads;
+	}
+
+	/**
+	 * Fixed prefix; no snapshot row needed.
+	 *
+	 * @param int $snapshot_id Snapshot id.
+	 *
+	 * @return string Prefix.
+	 */
+	protected function snapshot_prefix( int $snapshot_id ): string {
+		return '4/' . $snapshot_id . '/';
+	}
+}
+
+/**
+ * Class MainWP_Backup_Restore_Preflight_Failover_Test
+ */
+class MainWP_Backup_Restore_Preflight_Failover_Test extends \WP_UnitTestCase {
+ // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- doubles above.
+
+	/**
+	 * A remote plan the preflight checks.
+	 *
+	 * @return array Plan.
+	 */
+	private function remote_plan() {
+		return array(
+			array(
+				'role'        => 'db',
+				'file'        => 's8-db.tar.gz',
+				'source_file' => 'db.tar.gz',
+				'snapshot_id' => 8,
+				'source'      => 'remote',
+				'adopt_only'  => false,
+			),
+		);
+	}
+
+	/**
+	 * An artifact confirmed missing at the first destination but present at
+	 * a second replica must not block the restore.
+	 */
+	public function test_preflight_passes_when_replica_present_elsewhere() {
+		$driver          = new Preflight_Candidates_Driver();
+		$driver->uploads = array(
+			array(
+				'provider'  => new Head_Scripted_Provider( false ),
+				'artifacts' => array(),
+			),
+			array(
+				'provider'  => new Head_Scripted_Provider( array( 'size' => 12 ) ),
+				'artifacts' => array(),
+			),
+		);
+
+		$this->assertTrue( $driver->remote_artifacts_present( $this->remote_plan() ) );
+	}
+
+	/**
+	 * Only an artifact confirmed missing at EVERY presignable destination
+	 * blocks the restore.
+	 */
+	public function test_preflight_blocks_when_all_replicas_confirmed_missing() {
+		$driver          = new Preflight_Candidates_Driver();
+		$driver->uploads = array(
+			array(
+				'provider'  => new Head_Scripted_Provider( false ),
+				'artifacts' => array(),
+			),
+			array(
+				'provider'  => new Head_Scripted_Provider( false ),
+				'artifacts' => array(),
+			),
+		);
+
+		$this->assertFalse( $driver->remote_artifacts_present( $this->remote_plan() ) );
+	}
+
+	/**
+	 * A transient HEAD error at any replica defers to staging rather than
+	 * false-blocking: absence was not confirmed everywhere.
+	 */
+	public function test_preflight_transient_error_never_blocks() {
+		$driver          = new Preflight_Candidates_Driver();
+		$driver->uploads = array(
+			array(
+				'provider'  => new Head_Scripted_Provider( false ),
+				'artifacts' => array(),
+			),
+			array(
+				'provider'  => new Head_Scripted_Provider( 'throw' ),
+				'artifacts' => array(),
+			),
+		);
+
+		$this->assertTrue( $driver->remote_artifacts_present( $this->remote_plan() ) );
 	}
 }

@@ -18,6 +18,8 @@ use MainWP\Dashboard\MainWP_DB_Backup;
  */
 class MainWP_Backup_Task_Form_Test extends \WP_UnitTestCase {
 
+	use MainWP_Capability_Bypass_Guard;
+
 	/**
 	 * Build a minimal backup task row object for the details form.
 	 *
@@ -51,9 +53,7 @@ class MainWP_Backup_Task_Form_Test extends \WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_render_new_denied_without_capability() {
-		if ( ( defined( 'DOING_CRON' ) && DOING_CRON ) || ( defined( 'WP_CLI' ) && WP_CLI ) || ( defined( 'MAINWP_REST_API_DOING' ) && MAINWP_REST_API_DOING ) ) {
-			$this->markTestSkipped( 'Capability checks are bypassed by design under cron, WP-CLI, and REST constants; another suite defined one for this process.' );
-		}
+		$this->skip_when_capabilities_bypassed();
 
 		$deny = static function ( $allowed, $cap_type, $cap ) {
 			return 'add_backup_tasks' === $cap ? false : $allowed;

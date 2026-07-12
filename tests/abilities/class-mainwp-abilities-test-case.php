@@ -57,7 +57,46 @@ use MainWP\Dashboard\MainWP_DB_Client;
  *
  * Provides helper methods for creating test fixtures and mocking MainWP behavior.
  */
+/**
+ * Skip guard for capability-denial tests.
+ *
+ * `mainwp_current_user_have_right()` returns true unconditionally while
+ * DOING_CRON, WP_CLI, or MAINWP_REST_API_DOING is defined, and a constant
+ * defined by any earlier test lives for the whole phpunit process. Denial
+ * tests use this guard so a single-process aggregate run (bare
+ * `vendor/bin/phpunit` with no --testsuite) skips them loudly instead of
+ * failing confusingly; the per-suite invocations CI and `composer test`
+ * use never define these constants, so nothing skips there. A trait so
+ * test classes outside MainWP_Abilities_Test_Case share the one
+ * implementation.
+ */
+trait MainWP_Capability_Bypass_Guard { // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- shared guard beside the base case, both loaded from the bootstrap.
+
+	/**
+	 * Whether a bypass constant is defined for this process.
+	 *
+	 * @return bool
+	 */
+	protected function capabilities_bypassed() {
+		return ( defined( 'DOING_CRON' ) && DOING_CRON ) || ( defined( 'WP_CLI' ) && WP_CLI ) || ( defined( 'MAINWP_REST_API_DOING' ) && MAINWP_REST_API_DOING );
+	}
+
+	/**
+	 * Skip a denial test when another suite in this process defined one of
+	 * the constants that bypass capability checks by design.
+	 *
+	 * @return void
+	 */
+	protected function skip_when_capabilities_bypassed() {
+		if ( $this->capabilities_bypassed() ) {
+			$this->markTestSkipped( 'Capability checks are bypassed by design under cron, WP-CLI, and REST constants; another suite defined one for this process.' );
+		}
+	}
+}
+
 abstract class MainWP_Abilities_Test_Case extends WP_UnitTestCase { //phpcs:ignore -- NOSONAR - multi methods.
+
+	use MainWP_Capability_Bypass_Guard;
 
 	/**
 	 * Track created sync job IDs for cleanup.
@@ -485,18 +524,6 @@ abstract class MainWP_Abilities_Test_Case extends WP_UnitTestCase { //phpcs:igno
 	protected function skip_if_no_abilities_api(): void {
 		if ( ! function_exists( 'wp_get_ability' ) ) {
 			$this->markTestSkipped( 'Abilities API not available.' );
-		}
-	}
-
-	/**
-	 * Skip a denial test when another suite in this process defined one of
-	 * the constants that bypass capability checks by design.
-	 *
-	 * @return void
-	 */
-	protected function skip_when_capabilities_bypassed() {
-		if ( ( defined( 'DOING_CRON' ) && DOING_CRON ) || ( defined( 'WP_CLI' ) && WP_CLI ) || ( defined( 'MAINWP_REST_API_DOING' ) && MAINWP_REST_API_DOING ) ) {
-			$this->markTestSkipped( 'Capability checks are bypassed by design under cron, WP-CLI, and REST constants; another suite defined one for this process.' );
 		}
 	}
 

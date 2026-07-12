@@ -277,6 +277,24 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
      *                      artifacts: array<string,array> } or null.
      */
     protected function presignable_upload_for_snapshot( int $snapshot_id ): ?array {
+        $uploads = $this->presignable_uploads_for_snapshot( $snapshot_id );
+        return empty( $uploads ) ? null : $uploads[0];
+    }
+
+    /**
+     * Every PRESIGNABLE completed upload of a snapshot, in job order
+     * (test seam).
+     *
+     * The preflight consults all of them: an artifact is only treated as
+     * lost when every presignable replica confirms it gone.
+     *
+     * @param int $snapshot_id Snapshot id.
+     *
+     * @return array[] Each { provider: MainWP_Backup_Presignable_Provider,
+     *                        artifacts: array<string,array> }.
+     */
+    protected function presignable_uploads_for_snapshot( int $snapshot_id ): array {
+        $uploads = array();
         foreach ( MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $snapshot_id ) as $job ) {
             if ( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE !== $job->status || ! is_array( $job->checkpoint ) || empty( $job->checkpoint['artifacts'] ) ) {
                 continue;
@@ -302,12 +320,12 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
                 }
             }
 
-            return array(
+            $uploads[] = array(
                 'provider'  => $provider,
                 'artifacts' => $by_file,
             );
         }
-        return null;
+        return $uploads;
     }
 
     /**
@@ -328,15 +346,17 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
      * still present in offsite storage.
      *
      * The restore preflight calls this before any transfer or destructive
-     * work. It HEAD-confirms each whole-file remote artifact and returns
-     * false the moment one is gone, so the orchestrator can stop with a
-     * clear reason. It never false-blocks: local and chunked artifacts, an
-     * unresolvable provider, or a transient HEAD error all defer to staging,
-     * which verifies bytes as it streams them.
+     * work. It HEAD-confirms each whole-file remote artifact against every
+     * presignable replica and returns false only when the artifact is
+     * confirmed gone from all of them, so the orchestrator can stop with a
+     * clear reason while a healthy second replica never false-blocks. It
+     * never false-blocks on uncertainty either: local and chunked
+     * artifacts, an unresolvable provider, or a transient HEAD error all
+     * defer to staging, which verifies bytes as it streams them.
      *
      * @param array $plan Restore plan entries.
      *
-     * @return bool False only when a remote artifact is confirmed missing.
+     * @return bool False only when a remote artifact is confirmed missing everywhere.
      */
     public function remote_artifacts_present( array $plan ): bool {
         foreach ( $plan as $entry ) {
@@ -345,8 +365,8 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
             }
 
             $snapshot_id = (int) $entry['snapshot_id'];
-            $upload      = $this->presignable_upload_for_snapshot( $snapshot_id );
-            if ( null === $upload || ! method_exists( $upload['provider'], 'head_object' ) ) {
+            $uploads     = $this->presignable_uploads_for_snapshot( $snapshot_id );
+            if ( empty( $uploads ) ) {
                 continue;
             }
 
@@ -355,12 +375,25 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
                 continue;
             }
 
-            try {
-                if ( false === $upload['provider']->head_object( $this->snapshot_prefix( $snapshot_id ) . 'files/' . $source_file ) ) {
-                    return false;
+            $key       = $this->snapshot_prefix( $snapshot_id ) . 'files/' . $source_file;
+            $confirmed = true;
+            foreach ( $uploads as $upload ) {
+                if ( ! method_exists( $upload['provider'], 'head_object' ) ) {
+                    $confirmed = false; // Absence cannot be confirmed here.
+                    break;
                 }
-            } catch ( \Throwable $e ) {
-                continue; // A transient HEAD error must not false-block a restore.
+                try {
+                    if ( false !== $upload['provider']->head_object( $key ) ) {
+                        $confirmed = false; // Present at this replica.
+                        break;
+                    }
+                } catch ( \Throwable $e ) {
+                    $confirmed = false; // A transient HEAD error must not false-block a restore.
+                    break;
+                }
+            }
+            if ( $confirmed ) {
+                return false;
             }
         }
 
@@ -447,12 +480,8 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
             return $this->stage_state( 'staged' );
         }
 
-        if ( 'remote' === $entry['source'] ) {
-            return $this->stage_from_remote( $staging, $entry );
-        }
-
-        if ( 'remote_chunked' === $entry['source'] ) {
-            return $this->stage_from_remote_chunked( $staging, $entry, $deadline );
+        if ( 'remote' === $entry['source'] || 'remote_chunked' === $entry['source'] ) {
+            return $this->stage_from_candidates( $staging, $entry, $deadline );
         }
 
         return $this->stage_state(
@@ -466,15 +495,120 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
     }
 
     /**
-     * Download a whole-file remote artifact into staging.
+     * Stage a remote artifact, failing over across every destination
+     * holding a completed copy.
      *
-     * @param string $staging Staging dir.
-     * @param array  $entry   Plan entry (by reference).
+     * Candidates are tried in the plan's recorded order (upload-job
+     * order), so failover is deterministic. Each candidate's own mode
+     * picks the staging routine - one destination can hold a whole file
+     * while another holds chunks. Disk exhaustion stops the loop: it is
+     * host-side and no replica can fix it.
+     *
+     * @param string $staging  Staging dir.
+     * @param array  $entry    Plan entry (by reference).
+     * @param float  $deadline Slice deadline (epoch).
      *
      * @return array Stage state.
      */
-    protected function stage_from_remote( string $staging, array &$entry ): array {
-        $provider = $this->provider_for_snapshot( (int) $entry['snapshot_id'] );
+    private function stage_from_candidates( string $staging, array &$entry, float $deadline ): array {
+        $candidates = isset( $entry['remote_candidates'] ) ? array_values( (array) $entry['remote_candidates'] ) : array();
+
+        // Plans persisted before candidates existed carry none; they keep
+        // the original single-provider resolution.
+        if ( empty( $candidates ) ) {
+            return 'remote_chunked' === $entry['source']
+                ? $this->stage_from_remote_chunked( $staging, $entry, $deadline )
+                : $this->stage_from_remote( $staging, $entry );
+        }
+
+        $total = count( $candidates );
+        $start = isset( $entry['candidate_index'] ) ? min( max( 0, (int) $entry['candidate_index'] ), $total - 1 ) : 0;
+        $last  = null;
+
+        for ( $i = $start; $i < $total; $i++ ) {
+            $candidate = (array) $candidates[ $i ];
+            $provider  = $this->provider_for_destination( isset( $candidate['destination_id'] ) ? (int) $candidate['destination_id'] : 0 );
+            if ( null === $provider ) {
+                continue; // Destination deleted or unbuildable; another replica may still serve.
+            }
+
+            // The entry describes the candidate being tried, so the staging
+            // routines and any persisted resume state stay self-consistent.
+            $entry['candidate_index'] = $i;
+            if ( isset( $candidate['key'] ) && '' !== (string) $candidate['key'] ) {
+                $entry['remote_key'] = (string) $candidate['key'];
+            }
+            $entry['expected_sha256'] = isset( $candidate['sha256'] ) ? (string) $candidate['sha256'] : '';
+
+            $outcome = ! empty( $candidate['chunked'] )
+                ? $this->stage_from_remote_chunked( $staging, $entry, $deadline, $provider )
+                : $this->stage_from_remote( $staging, $entry, $provider );
+
+            if ( 'staged' === $outcome['state'] ) {
+                unset( $entry['candidate_index'] );
+                return $outcome;
+            }
+            if ( 'pending' === $outcome['state'] ) {
+                // The next tick resumes this same candidate; its reassembly
+                // cursor is only valid against this destination's objects.
+                return $outcome;
+            }
+
+            if ( isset( $outcome['error_code'] ) && MainWP_Backup_Error_Codes::ERR_RESTORE_DISK_FULL === $outcome['error_code'] ) {
+                return $outcome;
+            }
+
+            // Clear this candidate's resume state before trying the next.
+            unset( $entry['reassembly'], $entry['chunks'], $entry['chunk_prefix'] );
+            $last = $outcome;
+        }
+
+        unset( $entry['candidate_index'] );
+        if ( null !== $last ) {
+            return $last;
+        }
+        // No candidate destination resolved at all. Defer to the legacy
+        // snapshot-level resolution: it scans the same jobs, so production
+        // fails identically, and callers that override that seam keep
+        // working.
+        return 'remote_chunked' === $entry['source']
+            ? $this->stage_from_remote_chunked( $staging, $entry, $deadline )
+            : $this->stage_from_remote( $staging, $entry );
+    }
+
+    /**
+     * Resolve a provider for one destination (test seam).
+     *
+     * @param int $destination_id Destination id.
+     *
+     * @return MainWP_Backup_Storage_Provider|null Provider or null.
+     */
+    protected function provider_for_destination( int $destination_id ): ?MainWP_Backup_Storage_Provider {
+        if ( $destination_id <= 0 ) {
+            return null;
+        }
+        $destination = MainWP_Backup_Storage_Destinations::instance()->get_destination( $destination_id );
+        if ( null === $destination ) {
+            return null;
+        }
+        try {
+            return MainWP_Backup_Storage_Destinations::instance()->make_provider( $destination );
+        } catch ( \Throwable $e ) {
+            return null;
+        }
+    }
+
+    /**
+     * Download a whole-file remote artifact into staging.
+     *
+     * @param string                              $staging  Staging dir.
+     * @param array                               $entry    Plan entry (by reference).
+     * @param MainWP_Backup_Storage_Provider|null $provider Candidate provider; null resolves the snapshot's first destination.
+     *
+     * @return array Stage state.
+     */
+    protected function stage_from_remote( string $staging, array &$entry, ?MainWP_Backup_Storage_Provider $provider = null ): array {
+        $provider = null !== $provider ? $provider : $this->provider_for_snapshot( (int) $entry['snapshot_id'] );
         if ( null === $provider ) {
             return $this->stage_state( 'error', __( 'No storage destination holds a copy of this backup.', 'mainwp' ) );
         }
@@ -581,14 +715,15 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
      * chunk. The finished file must match the manifest's recorded size
      * before it is promoted and hashed.
      *
-     * @param string $staging  Staging dir.
-     * @param array  $entry    Plan entry (by reference).
-     * @param float  $deadline Slice deadline (epoch).
+     * @param string                              $staging  Staging dir.
+     * @param array                               $entry    Plan entry (by reference).
+     * @param float                               $deadline Slice deadline (epoch).
+     * @param MainWP_Backup_Storage_Provider|null $provider Candidate provider; null resolves the snapshot's first destination.
      *
      * @return array Stage state.
      */
-    protected function stage_from_remote_chunked( string $staging, array &$entry, float $deadline ): array { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- resumable verify-then-append loop.
-        $provider = $this->provider_for_snapshot( (int) $entry['snapshot_id'] );
+    protected function stage_from_remote_chunked( string $staging, array &$entry, float $deadline, ?MainWP_Backup_Storage_Provider $provider = null ): array { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- resumable verify-then-append loop.
+        $provider = null !== $provider ? $provider : $this->provider_for_snapshot( (int) $entry['snapshot_id'] );
         if ( null === $provider ) {
             return $this->stage_state( 'error', __( 'No storage destination holds a copy of this backup.', 'mainwp' ) );
         }

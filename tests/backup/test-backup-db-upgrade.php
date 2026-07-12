@@ -971,4 +971,77 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		$this->assertFalse( $this->index_exists( $table, 'task_id' ), 'Re-running install must remain idempotent.' );
 		$this->assertTrue( $this->index_exists( $table, 'idx_task_id' ), 'Re-running install must keep idx_task_id.' );
 	}
+
+	/**
+	 * A true fresh installation - no plugin tables and no stored
+	 * mainwp_db_version - must create the complete schema in one install()
+	 * run: every plugin table, the version-gated primary keys, the backup
+	 * indexes dbDelta cannot express, the shipped db version stamp, and the
+	 * fresh-install options. The empty-$currentVersion path used to crash
+	 * dbDelta's index parser on PHP 8.4 via the legacy unnamed UNIQUE
+	 * (task_id) clause (removed at db 9.0.2.20), and nothing asserted on
+	 * this path before, so a fresh-install regression only surfaced on real
+	 * new sites.
+	 *
+	 * @return void
+	 */
+	public function test_fresh_install_creates_complete_schema() {
+		global $wpdb;
+
+		$like   = $wpdb->esc_like( $wpdb->prefix . 'mainwp_' ) . '%';
+		$before = $wpdb->get_col( $wpdb->prepare( 'SHOW TABLES LIKE %s', $like ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test probe.
+		$this->assertNotEmpty( $before, 'Precondition: the installed schema is visible.' );
+
+		// These tables are created by module boot (cost tracker, logs,
+		// child changes), not by MainWP_Install::install(); a real fresh
+		// site gets them from plugin load. Leave them standing so the
+		// set-equality below scopes to the tables install() owns.
+		$module_owned = array(
+			$wpdb->prefix . 'mainwp_child_changes_meta',
+			$wpdb->prefix . 'mainwp_cost_tracker',
+			$wpdb->prefix . 'mainwp_wp_logs_meta',
+			$wpdb->prefix . 'mainwp_wp_logs_meta_archive',
+		);
+		$owned        = array_values( array_diff( $before, $module_owned ) );
+
+		$this->with_real_tables(
+			function () use ( $wpdb, $owned, $like ) {
+				foreach ( $owned as $table ) {
+					$wpdb->query( "DROP TABLE IF EXISTS {$table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.SchemaChange -- fresh-install fixture, identifiers cannot be prepared.
+				}
+				delete_site_option( 'mainwp_db_version' );
+				delete_option( 'mainwp_enableNativeBackups' );
+
+				MainWP_Install::instance()->install();
+
+				$after = $wpdb->get_col( $wpdb->prepare( 'SHOW TABLES LIKE %s', $like ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test probe.
+				$this->assertSame( array(), array_values( array_diff( $owned, $after ) ), 'Fresh install must create every plugin table the installer owns.' );
+			}
+		);
+
+		// The version-gated PRIMARY KEY clauses only fire on this path.
+		$this->assertTrue( $this->index_exists( MainWP_DB::instance()->get_table_name( 'wp' ), 'PRIMARY' ), 'Fresh install must create the wp table primary key.' );
+		$this->assertTrue( $this->index_exists( MainWP_DB::instance()->get_table_name( 'schedule_processes' ), 'PRIMARY' ), 'Fresh install must create the schedule_processes primary key.' );
+
+		// Backup indexes added outside dbDelta must exist on a fresh install too.
+		$task_table = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		$this->assertTrue( $this->index_exists( $task_table, 'idx_next_run' ), 'Fresh install must create idx_next_run.' );
+		$progress_table = MainWP_DB::instance()->get_table_name( 'wp_backup_progress' );
+		$this->assertTrue( $this->index_exists( $progress_table, 'idx_task_id' ), 'Fresh install must create idx_task_id.' );
+		$this->assertFalse( $this->index_exists( $progress_table, 'task_id' ), 'Fresh install must not recreate the legacy unique task_id key.' );
+		$upload_job_table = MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' );
+		$this->assertTrue( $this->index_exists( $upload_job_table, 'uniq_snap_dest_kind' ), 'Fresh install must create the kind-widened upload-job unique key.' );
+
+		$property = new \ReflectionProperty( MainWP_Install::class, 'mainwp_db_version' );
+		$property->setAccessible( true );
+		$this->assertSame(
+			$property->getValue( MainWP_Install::instance() ),
+			get_site_option( 'mainwp_db_version' ),
+			'Fresh install must stamp the shipped db version.'
+		);
+
+		$this->assertSame( 'yes', get_option( 'mainwp_run_quick_setup' ), 'Fresh install must queue the quick-setup wizard.' );
+		$this->assertNotFalse( get_option( 'mainwp_enableNativeBackups' ), 'Fresh install must write the native-backups flag explicitly.' );
+		$this->assertSame( 0, (int) get_option( 'mainwp_enableNativeBackups' ), 'Fresh install must default native backups to disabled.' );
+	}
 }

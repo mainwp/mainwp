@@ -373,8 +373,10 @@ class MainWP_Backup_Cleanup_Test extends MainWP_Abilities_Test_Case {
 		$this->assertTrue( $this->cleanup_handler_registered(), 'registered for execute_backups' );
 		$this->assertTrue( method_exists( MainWP_Post_Backup_Handler::instance(), $action ) );
 
-		if ( ( defined( 'DOING_CRON' ) && DOING_CRON ) || ( defined( 'WP_CLI' ) && WP_CLI ) || ( defined( 'MAINWP_REST_API_DOING' ) && MAINWP_REST_API_DOING ) ) {
-			return; // Capability checks are bypassed by design under these constants.
+		if ( $this->capabilities_bypassed() ) {
+			// Not a skip: the registration assertions above already ran and
+			// should count; only the denial half is bypassed by design here.
+			return;
 		}
 
 		unset( $wp_filter[ 'wp_ajax_' . $action ] );

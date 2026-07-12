@@ -51,6 +51,27 @@ class Decrypt_Test_Driver extends MainWP_Backup_Restore_Transfer_Driver {
 		}
 		return new MainWP_Backup_Storage_Local( array( 'base_path' => $this->remote_base ) );
 	}
+
+	/**
+	 * Per-destination base paths for candidate failover tests.
+	 *
+	 * @var array<int,string>
+	 */
+	public $destination_bases = array();
+
+	/**
+	 * Serve each candidate destination from its own pinned base path.
+	 *
+	 * @param int $destination_id Destination id.
+	 *
+	 * @return \MainWP\Dashboard\MainWP_Backup_Storage_Provider|null
+	 */
+	protected function provider_for_destination( int $destination_id ): ?\MainWP\Dashboard\MainWP_Backup_Storage_Provider {
+		if ( ! isset( $this->destination_bases[ $destination_id ] ) ) {
+			return null;
+		}
+		return new MainWP_Backup_Storage_Local( array( 'base_path' => $this->destination_bases[ $destination_id ] ) );
+	}
 }
 
 /**
@@ -655,5 +676,75 @@ class MainWP_Backup_Restore_Decryption_Test extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'could not be decrypted', (string) $outcome['error'] );
 		$this->assertSame( MainWP_Backup_Error_Codes::ERR_RESTORE_DECRYPT_KEY, $outcome['error_code'] );
 		$this->assertStringContainsString( 'may be wrong', (string) $outcome['error'] );
+	}
+
+	/**
+	 * An encrypted whole-file object tampered at the primary destination
+	 * fails GCM authentication there and stages from the intact sealed
+	 * replica at the second destination: decrypt failures are
+	 * destination-specific, so they fail over like any other corrupt copy.
+	 *
+	 * @return void
+	 */
+	public function test_encrypted_restore_fails_over_to_intact_replica() {
+		$enc = $this->arm();
+
+		$snapshot_id = $this->record( 4, array() );
+		$snap        = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+		$dek         = $enc->dek_from_meta( $snap->encryption, $snapshot_id, $enc->load_kek() );
+
+		$plain  = 'a small database dump worth restoring';
+		$sealed = MainWP_Backup_Archive_Cipher::seal( $plain, $dek, 'snapshot:' . $snapshot_id . ':whole:db.sql.gz' );
+
+		$base_a = $this->dir . '/dest-a';
+		$base_b = $this->dir . '/dest-b';
+		mkdir( $base_a . '/4/' . $snapshot_id . '/files', 0777, true );
+		mkdir( $base_b . '/4/' . $snapshot_id . '/files', 0777, true );
+
+		$tampered    = $sealed;
+		$tampered[0] = chr( ord( $tampered[0] ) ^ 0xFF );
+		file_put_contents( $base_a . '/4/' . $snapshot_id . '/files/db.sql.gz', $tampered ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+		file_put_contents( $base_b . '/4/' . $snapshot_id . '/files/db.sql.gz', $sealed ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+
+		$this->driver->destination_bases = array(
+			31 => $base_a,
+			32 => $base_b,
+		);
+
+		$key  = '4/' . $snapshot_id . '/files/db.sql.gz';
+		$plan = array(
+			array(
+				'role'              => 'db',
+				'file'              => 'db.sql.gz',
+				'source_file'       => 'db.sql.gz',
+				'size'              => strlen( $plain ),
+				'sha256'            => '',
+				'expected_sha256'   => hash( 'sha256', $plain ),
+				'snapshot_id'       => $snapshot_id,
+				'source'            => 'remote',
+				'local_path'        => '',
+				'remote_key'        => $key,
+				'remote_candidates' => array(
+					array(
+						'key'            => $key,
+						'chunked'        => false,
+						'destination_id' => 31,
+						'sha256'         => hash( 'sha256', $plain ),
+					),
+					array(
+						'key'            => $key,
+						'chunked'        => false,
+						'destination_id' => 32,
+						'sha256'         => hash( 'sha256', $plain ),
+					),
+				),
+				'adopt_only'        => false,
+			),
+		);
+
+		$outcome = $this->driver->stage_artifacts( 888001, $plan, microtime( true ) + 60 );
+		$this->assertTrue( $outcome['done'] );
+		$this->assertSame( hash( 'sha256', $plain ), $plan[0]['sha256'] );
+		$this->assertSame( $plain, file_get_contents( $plan[0]['staged_path'] ) );
 	}
 }

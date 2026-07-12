@@ -255,33 +255,40 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
         $source          = 'unavailable';
         $remote_key      = '';
         $expected_sha256 = '';
+        $candidates      = array();
         if ( $has_local ) {
             $source = 'local';
         } elseif ( isset( $remote[ $file ] ) ) {
             $source          = $remote[ $file ]['chunked'] ? 'remote_chunked' : 'remote';
             $remote_key      = $remote[ $file ]['key'];
             $expected_sha256 = isset( $remote[ $file ]['sha256'] ) ? (string) $remote[ $file ]['sha256'] : '';
+            $candidates      = isset( $remote[ $file ]['candidates'] ) ? (array) $remote[ $file ]['candidates'] : array();
         }
 
         return array(
-            'role'            => (string) $archive['role'],
+            'role'              => (string) $archive['role'],
             // The wire/staging name is namespaced by snapshot: every
             // increment in a chain carries the same sidecar basenames
             // (tombstones.list, partNNN), and colliding names would
             // silently lose all but the first copy.
-            'file'            => 's' . (int) $snapshot->id . '-' . $file,
-            'source_file'     => $file,
-            'size'            => isset( $archive['size'] ) ? (int) $archive['size'] : 0,
-            'sha256'          => '',
+            'file'              => 's' . (int) $snapshot->id . '-' . $file,
+            'source_file'       => $file,
+            'size'              => isset( $archive['size'] ) ? (int) $archive['size'] : 0,
+            'sha256'            => '',
             // Trusted backup-time hash for a remote artifact, empty when the
             // upload predates artifact hashing. The staging fallback verifies
             // a downloaded object against this when present.
-            'expected_sha256' => $expected_sha256,
-            'snapshot_id'     => (int) $snapshot->id,
-            'source'          => $source,
-            'local_path'      => $has_local ? $local_path : '',
-            'remote_key'      => $remote_key,
-            'adopt_only'      => false,
+            'expected_sha256'   => $expected_sha256,
+            'snapshot_id'       => (int) $snapshot->id,
+            'source'            => $source,
+            'local_path'        => $has_local ? $local_path : '',
+            'remote_key'        => $remote_key,
+            // Every destination holding a completed copy, in job order.
+            // Staging tries them in sequence, so a corrupt or missing
+            // object at the primary fails over instead of failing the
+            // restore.
+            'remote_candidates' => $candidates,
+            'adopt_only'        => false,
         );
     }
 
@@ -295,7 +302,7 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
      *
      * @param object $snapshot Snapshot row.
      *
-     * @return array<string,array{key:string,chunked:bool,destination_id:int}> By basename.
+     * @return array<string,array{key:string,chunked:bool,destination_id:int,sha256:string,candidates:array[]}> By basename.
      */
     private function remote_artifact_index( object $snapshot ): array {
         $index = array();
@@ -307,11 +314,11 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
             }
             $artifacts = isset( $job->checkpoint['artifacts'] ) ? (array) $job->checkpoint['artifacts'] : array();
             foreach ( $artifacts as $artifact ) {
-                if ( empty( $artifact['file'] ) || isset( $index[ $artifact['file'] ] ) ) {
+                if ( empty( $artifact['file'] ) ) {
                     continue;
                 }
-                $chunked                    = isset( $artifact['mode'] ) && 'chunked' === $artifact['mode'];
-                $index[ $artifact['file'] ] = array(
+                $chunked   = isset( $artifact['mode'] ) && 'chunked' === $artifact['mode'];
+                $candidate = array(
                     'key'            => $snapshot->site_id . '/' . $snapshot->id . '/files/' . $artifact['file'],
                     'chunked'        => $chunked,
                     'destination_id' => (int) $job->destination_id,
@@ -320,6 +327,19 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
                     // cloud object instead of trusting whatever bytes arrive.
                     'sha256'         => isset( $artifact['sha256'] ) ? (string) $artifact['sha256'] : '',
                 );
+
+                // Every completed destination is retained as a failover
+                // candidate, in job order; the first stays the primary the
+                // top-level fields describe, so one corrupt or unavailable
+                // destination cannot defeat a restore another replica could
+                // serve.
+                if ( isset( $index[ $artifact['file'] ] ) ) {
+                    $index[ $artifact['file'] ]['candidates'][] = $candidate;
+                    continue;
+                }
+                $primary                    = $candidate;
+                $primary['candidates']      = array( $candidate );
+                $index[ $artifact['file'] ] = $primary;
             }
         }
 

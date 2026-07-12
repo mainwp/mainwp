@@ -36,6 +36,13 @@ class Testable_TestRestore_Scheduler extends MainWP_Backup_TestRestore_Scheduler
 	public $verified = array();
 
 	/**
+	 * Deadlines handed to the engine alongside each snapshot id, in order.
+	 *
+	 * @var float[]
+	 */
+	public $deadlines = array();
+
+	/**
 	 * Continuation kicks counted instead of scheduling real cron.
 	 *
 	 * @var int
@@ -62,12 +69,14 @@ class Testable_TestRestore_Scheduler extends MainWP_Backup_TestRestore_Scheduler
 	/**
 	 * Record and stub.
 	 *
-	 * @param int $snapshot_id Snapshot id.
+	 * @param int   $snapshot_id Snapshot id.
+	 * @param float $deadline    Absolute microtime(true) deadline for this tick's budget.
 	 *
 	 * @return array
 	 */
-	protected function verify( int $snapshot_id ): array {
-		$this->verified[] = $snapshot_id;
+	protected function verify( int $snapshot_id, float $deadline ): array {
+		$this->verified[]  = $snapshot_id;
+		$this->deadlines[] = $deadline;
 		return $this->verify_result;
 	}
 
@@ -326,6 +335,53 @@ class MainWP_Backup_TestRestore_Scheduler_Test extends MainWP_Abilities_Test_Cas
 
 		$scheduler->process_pending_jobs( 120, $now );
 		$this->assertCount( 1, $scheduler->verified, 'An unavailable snapshot must not be re-selected next tick.' );
+	}
+
+	/**
+	 * The seam receives an absolute deadline derived from the tick's own
+	 * budget, so a slow verify cannot run past the slice this tick owns.
+	 *
+	 * @return void
+	 */
+	public function test_verify_receives_a_deadline_consistent_with_the_tick_budget() {
+		$now = time();
+		$this->insert_snapshot( $this->create_test_site(), $now - 100 );
+
+		$scheduler = new Testable_TestRestore_Scheduler();
+		$before    = microtime( true );
+		$scheduler->process_pending_jobs( 120, $now );
+		$after = microtime( true );
+
+		$this->assertCount( 1, $scheduler->deadlines, 'The seam must receive exactly one deadline for the one snapshot sampled.' );
+		$deadline = $scheduler->deadlines[0];
+		$this->assertGreaterThanOrEqual( $before + 120, $deadline, 'The deadline must reflect the full tick budget measured from before the call.' );
+		$this->assertLessThanOrEqual( $after + 120, $deadline, 'The deadline must not exceed the tick budget measured after the call.' );
+	}
+
+	/**
+	 * A deadline miss inside the engine is recorded as unavailable (not a
+	 * fail) and backed off so it does not loop within the same tick.
+	 *
+	 * @return void
+	 */
+	public function test_deadline_exceeded_records_unavailable_and_backs_off() {
+		$now = time();
+		$id  = $this->insert_snapshot( $this->create_test_site(), $now - 100 );
+
+		$scheduler                = new Testable_TestRestore_Scheduler();
+		$scheduler->verify_result = array(
+			'state'      => 'fail',
+			'error_code' => MainWP_Backup_TestRestore_Driver::ERR_DEADLINE_EXCEEDED,
+		);
+
+		$scheduler->process_pending_jobs( 120, $now );
+
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id );
+		$this->assertSame( MainWP_Backup_TestRestore_Scheduler::STATE_UNAVAILABLE, (string) $snapshot->test_restore_state, 'A deadline miss records as unavailable, not fail.' );
+		$this->assertGreaterThan( 0, (int) $snapshot->test_restore_at, 'The deadline-missed run still stamps a backoff time so it does not loop within the tick.' );
+
+		$scheduler->process_pending_jobs( 120, $now );
+		$this->assertCount( 1, $scheduler->verified, 'A deadline-missed snapshot must not be re-selected within the same tick window.' );
 	}
 
 	/**

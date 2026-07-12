@@ -51,6 +51,22 @@ class MainWP_Backup_TestRestore_Driver { // phpcs:ignore Generic.Classes.Opening
     const ERR_UNRESOLVABLE = 'mainwp_testrestore_unresolvable';
 
     /**
+     * Error code returned when the caller's deadline passes between staging
+     * finishing and the sandbox applying the plan. A budget problem, not a
+     * reconstitution failure, so verify_snapshot() reports it without
+     * recording a result; the scheduler stamps its own backoff instead,
+     * mirroring ERR_UNRESOLVABLE.
+     */
+    const ERR_DEADLINE_EXCEEDED = 'mainwp_testrestore_deadline_exceeded';
+
+    /**
+     * Error code returned when a staged SQL dump's decompressed size exceeds
+     * the configured cap. An environment limitation (the dump would not fit
+     * in memory to import), not a reconstitution failure.
+     */
+    const ERR_DUMP_TOO_LARGE = 'mainwp_testrestore_dump_too_large';
+
+    /**
      * Staging-job-id namespace for test-restores, kept far above real restore
      * job ids so their staging directories never collide.
      */
@@ -84,16 +100,22 @@ class MainWP_Backup_TestRestore_Driver { // phpcs:ignore Generic.Classes.Opening
      * Test-restore one snapshot into a sandbox and record the outcome.
      *
      * @param int   $snapshot_id Snapshot to verify.
-     * @param array $opts        { sentinel: { path: string, sha256: string } }
-     *                           Optional sentinel-file assertion.
+     * @param array $opts        { sentinel: { path: string, sha256: string },
+     *                           deadline: float } Optional sentinel-file
+     *                           assertion and absolute microtime(true)
+     *                           deadline from a caller's own budget (e.g. the
+     *                           sampler's tick). Absent, staging keeps its own
+     *                           DEFAULT_STAGE_BUDGET_SECONDS and no mid-flight
+     *                           deadline is enforced.
      *
      * @return array { snapshot_id: int, state: pass|fail|unsupported,
      *                 checks: array[], error: string|null, error_code: string,
      *                 sandbox: { db_name: string, temp_dir: string } }
      */
     public function verify_snapshot( int $snapshot_id, array $opts = array() ): array {
-        $sandbox = $this->make_sandbox();
-        $result  = array(
+        $caller_deadline = isset( $opts['deadline'] ) ? (float) $opts['deadline'] : null;
+        $sandbox         = $this->make_sandbox();
+        $result          = array(
             'snapshot_id' => $snapshot_id,
             'state'       => self::STATE_FAIL,
             'checks'      => array(),
@@ -119,12 +141,24 @@ class MainWP_Backup_TestRestore_Driver { // phpcs:ignore Generic.Classes.Opening
         $staging_id = self::STAGING_NAMESPACE + $snapshot_id;
         $transfer   = $this->transfer_driver();
 
+        $own_deadline   = microtime( true ) + (float) self::DEFAULT_STAGE_BUDGET_SECONDS;
+        $stage_deadline = null !== $caller_deadline ? min( $caller_deadline, $own_deadline ) : $own_deadline;
+
         try {
-            $outcome = $transfer->stage_artifacts( $staging_id, $plan, microtime( true ) + (float) self::DEFAULT_STAGE_BUDGET_SECONDS );
+            $outcome = $transfer->stage_artifacts( $staging_id, $plan, $stage_deadline );
             if ( empty( $outcome['done'] ) ) {
                 $result['state']      = self::STATE_FAIL;
                 $result['error']      = ! empty( $outcome['error'] ) ? (string) $outcome['error'] : esc_html__( 'The backup could not be staged for a test-restore.', 'mainwp' );
                 $result['error_code'] = isset( $outcome['error_code'] ) ? (string) $outcome['error_code'] : 'mainwp_testrestore_staging_failed';
+            } elseif ( null !== $caller_deadline && microtime( true ) >= $caller_deadline ) {
+                // Staging alone consumed the caller's whole budget. Bringing up
+                // a sandbox and applying the plan now would overrun the tick
+                // that owns this run, so bail before touching the sandbox and
+                // let the caller re-sample this snapshot on a later tick
+                // rather than mislabel a budget miss as a reconstitution result.
+                $result['error']      = esc_html__( 'The test-restore budget expired before the sandbox could apply the plan.', 'mainwp' );
+                $result['error_code'] = self::ERR_DEADLINE_EXCEEDED;
+                return $result;
             } else {
                 $sandbox->bring_up();
                 $applied = $this->apply_plan( $sandbox, $plan );
@@ -146,7 +180,8 @@ class MainWP_Backup_TestRestore_Driver { // phpcs:ignore Generic.Classes.Opening
             }
         } catch ( MainWP_Exception $e ) {
             $code                 = (string) $e->get_message_error_code();
-            $result['state']      = MainWP_Backup_TestRestore_Sandbox::ERR_UNSUPPORTED === $code ? self::STATE_UNSUPPORTED : self::STATE_FAIL;
+            $unsupported          = in_array( $code, array( MainWP_Backup_TestRestore_Sandbox::ERR_UNSUPPORTED, self::ERR_DUMP_TOO_LARGE ), true );
+            $result['state']      = $unsupported ? self::STATE_UNSUPPORTED : self::STATE_FAIL;
             $result['error']      = $e->getMessage();
             $result['error_code'] = $code;
         } catch ( \Throwable $e ) {
@@ -194,6 +229,7 @@ class MainWP_Backup_TestRestore_Driver { // phpcs:ignore Generic.Classes.Opening
             $sandbox->extract_files( $path );
         }
         if ( '' !== $db_path ) {
+            $this->guard_dump_size( $db_path );
             $sandbox->import_database( $db_path );
         }
 
@@ -201,6 +237,56 @@ class MainWP_Backup_TestRestore_Driver { // phpcs:ignore Generic.Classes.Opening
             'db'    => '' !== $db_path,
             'files' => ! empty( $file_paths ),
         );
+    }
+
+    /**
+     * Refuse a staged SQL dump before import_database() does its whole-buffer
+     * read, when the dump's decompressed size exceeds the configured cap.
+     * import_database() buffers the entire decompressed dump in memory to
+     * replay it, so the size that matters is the decompressed size: for a
+     * .gz dump that is read from the gzip footer's ISIZE field rather than
+     * the (much smaller) on-disk footprint, since decompressing the whole
+     * file just to measure it would defeat the point of this guard.
+     *
+     * @param string $dump_path Staged dump artifact.
+     *
+     * @throws MainWP_Exception When the dump exceeds the configured cap.
+     *
+     * @return void
+     */
+    private function guard_dump_size( string $dump_path ): void {
+        $size = (int) filesize( $dump_path );
+
+        if ( MainWP_Utility::ends_with( $dump_path, '.gz' ) ) {
+            $handle = fopen( $dump_path, 'rb' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- local staged artifact; only its 4-byte trailer is read here, not the whole file.
+            if ( false !== $handle ) {
+                if ( 0 === fseek( $handle, -4, SEEK_END ) ) {
+                    $trailer = fread( $handle, 4 ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fread -- reading the gzip ISIZE trailer, not the whole file.
+                    if ( false !== $trailer && 4 === strlen( $trailer ) ) {
+                        $isize = unpack( 'V', $trailer )[1];
+                        $size  = max( $size, $isize );
+                    }
+                }
+                fclose( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- closing the handle opened above.
+            }
+        }
+
+        $default_cap = max( 64 * MB_IN_BYTES, (int) ( 0.25 * wp_convert_hr_to_bytes( ini_get( 'memory_limit' ) ) ) );
+
+        /**
+         * Filter the largest decompressed SQL dump size a test-restore will
+         * load into memory before refusing it as environment-unsupported.
+         *
+         * @param int    $default_cap Default cap in bytes: the larger of 64MB
+         *                            and a quarter of the PHP memory_limit.
+         * @param string $dump_path   Staged dump artifact path.
+         */
+        $cap = (int) apply_filters( 'mainwp_testrestore_max_sql_dump_bytes', $default_cap, $dump_path );
+
+        if ( $size > $cap ) {
+            // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- debug detail and error code are for logging and matching, never echoed.
+            throw new MainWP_Exception( esc_html__( 'The backup database dump is too large for the sandbox to test-restore.', 'mainwp' ), 'dump too large: ' . $size . ' > ' . $cap, self::ERR_DUMP_TOO_LARGE );
+        }
     }
 
     /**

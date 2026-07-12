@@ -215,10 +215,29 @@ class MainWP_Download_Lock_Test extends \WP_UnitTestCase {
 		$lock = $this->dir . 'backup.zip.downloading';
 
 		// The contender observed this stale lock and decided to reclaim...
-		file_put_contents( $lock, wp_json_encode( array( 'started' => time() - 2 * HOUR_IN_SECONDS, 'site_id' => 1, 'task_id' => 1 ) ) );
+		file_put_contents(
+			$lock,
+			wp_json_encode(
+				array(
+					'started' => time() - 2 * HOUR_IN_SECONDS,
+					'site_id' => 1,
+					'task_id' => 1,
+				)
+			)
+		);
 		// ...but before its delete lands, a concurrent winner reclaimed and
 		// wrote a fresh lock with its own token.
-		file_put_contents( $lock, wp_json_encode( array( 'started' => time(), 'site_id' => 2, 'task_id' => 2, 'token' => 'winner-token' ) ) );
+		file_put_contents(
+			$lock,
+			wp_json_encode(
+				array(
+					'started' => time(),
+					'site_id' => 2,
+					'task_id' => 2,
+					'token'   => 'winner-token',
+				)
+			)
+		);
 
 		$this->assertFalse( $this->reclaim( $lock ), 'A reclaim decided against stale state must refuse once the lock is fresh again.' );
 		$this->assertFileExists( $lock, 'The winner\'s fresh lock must survive the losing contender.' );
@@ -234,7 +253,16 @@ class MainWP_Download_Lock_Test extends \WP_UnitTestCase {
 	 */
 	public function test_reclaim_removes_still_stale_lock() {
 		$lock = $this->dir . 'backup.zip.downloading';
-		file_put_contents( $lock, wp_json_encode( array( 'started' => time() - 2 * HOUR_IN_SECONDS, 'site_id' => 1, 'task_id' => 1 ) ) );
+		file_put_contents(
+			$lock,
+			wp_json_encode(
+				array(
+					'started' => time() - 2 * HOUR_IN_SECONDS,
+					'site_id' => 1,
+					'task_id' => 1,
+				)
+			)
+		);
 
 		$this->assertTrue( $this->reclaim( $lock ) );
 		$this->assertFileDoesNotExist( $lock );
@@ -248,7 +276,16 @@ class MainWP_Download_Lock_Test extends \WP_UnitTestCase {
 	 */
 	public function test_reclaim_backs_off_while_mutex_held() {
 		$lock = $this->dir . 'backup.zip.downloading';
-		file_put_contents( $lock, wp_json_encode( array( 'started' => time() - 2 * HOUR_IN_SECONDS, 'site_id' => 1, 'task_id' => 1 ) ) );
+		file_put_contents(
+			$lock,
+			wp_json_encode(
+				array(
+					'started' => time() - 2 * HOUR_IN_SECONDS,
+					'site_id' => 1,
+					'task_id' => 1,
+				)
+			)
+		);
 
 		// Model the concurrent reclaimer holding the per-path mutex.
 		$mutex = fopen( $lock . '.reclaim', 'c' );

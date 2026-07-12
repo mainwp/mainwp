@@ -520,6 +520,19 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             )
         );
 
+        // A live holder in a slot above a just-lowered maximum still occupies
+        // capacity, but the fixed-name loop below only visits slots 1..max and
+        // would never see it. Count every live holder first and refuse while
+        // the total is already at or over the limit, so reducing the concurrency
+        // setting mid-flight cannot admit work past the new cap: the above-limit
+        // rows drain on release, then new claims resume.
+        $live = self::count_live_slots( $now );
+        if ( $live >= $max_concurrent ) {
+            /** This action is documented in class/backup/class-mainwp-backup-monitor.php */
+            do_action( 'mainwp_backup_diag_slot', 'refused', '', $live, $max_concurrent );
+            return false;
+        }
+
         for ( $slot = 1; $slot <= $max_concurrent; $slot++ ) {
             $name = self::SLOT_OPTION_PREFIX . $slot;
 

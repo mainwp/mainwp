@@ -146,9 +146,20 @@ class MainWP_Backup_TestRestore_Driver { // phpcs:ignore Generic.Classes.Opening
 
         try {
             $outcome = $transfer->stage_artifacts( $staging_id, $plan, $stage_deadline );
-            if ( empty( $outcome['done'] ) ) {
+            if ( empty( $outcome['done'] ) && empty( $outcome['error'] ) ) {
+                // Staging did not finish, but reported no error: it ran out of
+                // budget mid-flight (a deadline hit between artifacts, or a
+                // chunked reassembly still in progress). That is a neutral
+                // "not finished this tick", not a reconstitution failure, so
+                // report it as a deadline miss the scheduler re-samples later
+                // and return before recording a fail against a healthy
+                // snapshot - same as the post-staging budget path below.
+                $result['error']      = esc_html__( 'The test-restore budget expired before the backup could be staged.', 'mainwp' );
+                $result['error_code'] = self::ERR_DEADLINE_EXCEEDED;
+                return $result;
+            } elseif ( empty( $outcome['done'] ) ) {
                 $result['state']      = self::STATE_FAIL;
-                $result['error']      = ! empty( $outcome['error'] ) ? (string) $outcome['error'] : esc_html__( 'The backup could not be staged for a test-restore.', 'mainwp' );
+                $result['error']      = (string) $outcome['error'];
                 $result['error_code'] = isset( $outcome['error_code'] ) ? (string) $outcome['error_code'] : 'mainwp_testrestore_staging_failed';
             } elseif ( null !== $caller_deadline && microtime( true ) >= $caller_deadline ) {
                 // Staging alone consumed the caller's whole budget. Bringing up

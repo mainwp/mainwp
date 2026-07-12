@@ -82,12 +82,19 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
 
         if ( empty( $currentVersion ) ) {
             update_option( 'mainwp_run_quick_setup', 'yes' );
-            MainWP_Utility::update_option( 'mainwp_enableNativeBackups', 0 );
+            // Route the default-off write through the settings helper so it also
+            // mirrors mainwp_enableLegacyBackupFeature=0. A bare native write
+            // would leave the legacy flag absent, and a rollback to a pre-rename
+            // dashboard recreates a MISSING flag as enabled, silently starting
+            // legacy backups the user never turned on.
+            MainWP_Backup_Settings::update_native_backups_option( 0 );
         } elseif ( false === get_option( 'mainwp_enableNativeBackups' ) && false === get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
             // An existing install that never wrote either flag never used backups; default it off,
             // matching a fresh install. A prior legacy-flag value still carries forward via the
             // <9.0.2.6 migration below, which runs before this option is read again by callers.
-            MainWP_Utility::update_option( 'mainwp_enableNativeBackups', 0 );
+            // Mirror the legacy flag here too (via the helper), for the same
+            // rollback-window reason as the fresh-install branch above.
+            MainWP_Backup_Settings::update_native_backups_option( 0 );
             // Mark the cohort so a one-time dismissible notice can say the
             // feature exists and where to turn it on.
             MainWP_Utility::update_option( 'mainwp_native_backups_defaulted_off_on_upgrade', 1 );

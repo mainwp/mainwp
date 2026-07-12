@@ -54,6 +54,32 @@ class TestRestore_Remote_Transfer_Driver extends MainWP_Backup_Restore_Transfer_
 }
 
 /**
+ * Transfer driver whose staging never finishes within budget: it returns
+ * the neutral not-done outcome (done=false, error=null) the real driver
+ * produces at a mid-flight deadline or a pending chunk reassembly, so the
+ * caller's handling of an unfinished-but-not-failed staging can be exercised.
+ */
+class TestRestore_Incomplete_Staging_Driver extends MainWP_Backup_Restore_Transfer_Driver {
+ // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- test double.
+
+	/**
+	 * Never finish staging, and report no error (a budget miss, not a failure).
+	 *
+	 * @param int   $job_id   Staging job id.
+	 * @param array $plan     Plan entries (by reference).
+	 * @param float $deadline Slice deadline.
+	 *
+	 * @return array
+	 */
+	public function stage_artifacts( int $job_id, array &$plan, float $deadline ): array {
+		return array(
+			'done'  => false,
+			'error' => null,
+		);
+	}
+}
+
+/**
  * Test-restore driver with the transfer driver pinned, so an encrypted
  * snapshot can be staged from a local stand-in for cloud storage.
  */
@@ -459,6 +485,44 @@ class MainWP_Backup_TestRestore_Driver_Test extends MainWP_Abilities_Test_Case {
 
 		$this->assertFalse( $this->db_exists( $result['sandbox']['db_name'] ), 'The scratch database must not linger after a deadline miss.' );
 		$this->assertDirectoryDoesNotExist( $result['sandbox']['temp_dir'], 'The sandbox temp dir must not linger after a deadline miss.' );
+	}
+
+	/**
+	 * Staging that runs out of budget mid-flight returns a neutral not-done
+	 * outcome (done=false, no error), not a failure. The driver must report a
+	 * deadline miss the scheduler re-samples later, never a failed test-restore
+	 * recorded against a healthy snapshot.
+	 *
+	 * @return void
+	 */
+	public function test_incomplete_staging_reports_deadline_not_failure() {
+		$dump        = $this->write_db_dump( 'db.sql.gz', $this->sentinel_sql() );
+		$snapshot_id = $this->record(
+			'db',
+			array(
+				array(
+					'file' => 'db.sql.gz',
+					'size' => filesize( $dump ),
+					'role' => 'db',
+					'path' => $dump,
+				),
+			)
+		);
+
+		$driver         = new Testable_TestRestore_Driver();
+		$driver->driver = new TestRestore_Incomplete_Staging_Driver();
+
+		$result = $driver->verify_snapshot( $snapshot_id );
+
+		// The scheduler keys off the deadline-exceeded code (which it treats as
+		// unavailable, not failed) and re-samples later; the mislabeled
+		// staging-failed code and a recorded fail on a healthy snapshot are the
+		// regression this guards against.
+		$this->assertSame( MainWP_Backup_TestRestore_Driver::ERR_DEADLINE_EXCEEDED, $result['error_code'], 'Staging that ran out of budget must report the deadline-exceeded code, not a staging failure.' );
+		$this->assertNotSame( 'mainwp_testrestore_staging_failed', $result['error_code'], 'A budget miss must not be mislabeled as a staging failure.' );
+
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+		$this->assertSame( '', (string) $snapshot->test_restore_state, 'A staging budget miss must not record a terminal state on a healthy snapshot.' );
 	}
 
 	/**

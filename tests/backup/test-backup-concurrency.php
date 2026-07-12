@@ -177,4 +177,35 @@ class MainWP_Backup_Concurrency_Test extends \WP_UnitTestCase {
 		$this->assertIsString( MainWP_Backup_Monitor::acquire_backup_slot( $max ) );
 		$this->assertFalse( MainWP_Backup_Monitor::acquire_backup_slot( $max ) );
 	}
+
+	/**
+	 * Lowering the concurrency limit while more jobs than the new maximum
+	 * are live must not admit new work: live holders in slots above the new
+	 * cap still occupy capacity, so acquisition is refused until enough of
+	 * them drain to bring the total live count below the limit.
+	 *
+	 * @return void
+	 */
+	public function test_lowering_limit_below_live_holders_refuses_until_they_drain() {
+		// Five live holders exist from when the limit was five.
+		for ( $slot = 1; $slot <= 5; $slot++ ) {
+			$this->seed_slot_row( $slot, 'live-' . $slot, time() - 60 );
+		}
+
+		// The limit is now two: five live holders exceed it, so no new work.
+		$this->assertFalse( MainWP_Backup_Monitor::acquire_backup_slot( 2 ), 'Five live holders above the reduced cap must block new work.' );
+
+		// Drain slots 1 and 2; slots 3, 4, 5 remain live (three > two).
+		MainWP_Backup_Monitor::release_backup_slot( 'live-1' );
+		MainWP_Backup_Monitor::release_backup_slot( 'live-2' );
+		$this->assertFalse( MainWP_Backup_Monitor::acquire_backup_slot( 2 ), 'Three live holders still exceed the cap of two.' );
+
+		// Drain slot 3; slots 4, 5 remain live (two == cap), still refused.
+		MainWP_Backup_Monitor::release_backup_slot( 'live-3' );
+		$this->assertFalse( MainWP_Backup_Monitor::acquire_backup_slot( 2 ), 'Two live holders at the cap must refuse.' );
+
+		// Drain slot 4; one live holder remains, below the cap: admit again.
+		MainWP_Backup_Monitor::release_backup_slot( 'live-4' );
+		$this->assertIsString( MainWP_Backup_Monitor::acquire_backup_slot( 2 ), 'Below the cap, new work is admitted again.' );
+	}
 }

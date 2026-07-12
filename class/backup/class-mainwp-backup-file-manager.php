@@ -581,8 +581,12 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
             $data       = json_decode( (string) file_get_contents( $lock_file ), true ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local lock file.
             $lock_token = is_array( $data ) && isset( $data['token'] ) ? (string) $data['token'] : '';
             unset( static::$owned_download_locks[ $lock_file ] );
-            if ( '' !== $lock_token && ! hash_equals( $lock_token, $owned ) ) {
-                return; // The lock on disk belongs to another process now.
+            if ( ! hash_equals( $lock_token, $owned ) ) {
+                // The token on disk is not ours: another process stale-replaced
+                // the lock, or a reclaimer exclusive-created the replacement and
+                // has not written its token yet (empty/unparseable on disk).
+                // Deleting either would free a lock this process no longer owns.
+                return;
             }
         }
 

@@ -166,6 +166,32 @@ class MainWP_Download_Lock_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * A reclaimer that exclusive-created its replacement lock but has not
+	 * yet written its JSON token leaves the file briefly empty. A stale
+	 * prior owner releasing in that window must not delete the reclaimer's
+	 * fresh lock: an empty or unparseable on-disk token is not this
+	 * process's token, so the release is a no-op.
+	 *
+	 * @return void
+	 */
+	public function test_release_leaves_untokened_replacement_lock_alone() {
+		$file = $this->dir . 'backup.zip';
+		$lock = $file . '.downloading';
+
+		$this->assertTrue( MainWP_Backup_File_Manager::acquire_download_lock( $file, 42, 7 ) );
+
+		// A concurrent reclaimer exclusive-created the replacement lock but
+		// has not written its token yet: the file is empty on disk.
+		file_put_contents( $lock, '' );
+
+		MainWP_Backup_File_Manager::release_download_lock( $file );
+
+		$this->assertFileExists( $lock, 'A release must not delete a reclaimer\'s fresh, not-yet-tokened lock.' );
+
+		unlink( $lock );
+	}
+
+	/**
 	 * The acquire is an exclusive create: a lock file appearing between
 	 * the staleness check and the write is never silently overwritten. A
 	 * pre-existing live lock without a token (pre-upgrade format) still

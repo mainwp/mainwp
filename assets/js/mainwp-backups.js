@@ -1093,10 +1093,24 @@ mainwp_updatesoverview_checkBackups = function (sitesToUpdate, siteNames) {
 
     updatesoverviewShowBusyTimeout = setTimeout(updatesoverviewShowBusyFunction, 300);
 
+    // A suspended site is skipped later in the upgrade loop, so it must never
+    // enter the native-backup preflight: the executor rejects it
+    // (ERR_SUSPENDED_SITE) and the user hits a needless "backup required"/error
+    // detour before the loop skips the site anyway. The updates-overview page
+    // carries an is-suspended flag on a hidden element per pending site; drop
+    // those from the set the check runs over. The caller keeps its full list
+    // for its own progress and suspended-status display.
+    let sitesToCheck = [];
+    for (let id of sitesToUpdate) {
+        if (jQuery('[site_id="' + id + '"][is-suspended="1"]').length > 0)
+            continue;
+        sitesToCheck.push(id);
+    }
+
     //Step 2: Check if backups are ok.
     let data = mainwp_secure_data({
         action: 'mainwp_checkbackups',
-        sites: sitesToUpdate
+        sites: sitesToCheck
     });
 
     jQuery.ajax({

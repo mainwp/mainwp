@@ -1287,4 +1287,110 @@ class MainWP_Backup_Upload_Driver_Test extends \WP_UnitTestCase {
 		$this->assertSame( array(), $events, 'No uploaded event may fire for a run whose lease was lost mid-flight.' );
 		$this->assertTrue( empty( $job->checkpoint['artifacts'][0]['done'] ), "The zombie's post-reclaim checkpoint write must not land." );
 	}
+
+	/**
+	 * A transient DB error on the initial artifact-index checkpoint must park
+	 * the job for the next tick, never complete it over an empty checkpoint.
+	 *
+	 * The index built at process_one_job's first save is what a later restore
+	 * reads to locate the offsite artifacts. If that write is silently ignored
+	 * the job can still reach COMPLETE with an empty persisted checkpoint, and
+	 * the "offsite-verified" snapshot becomes unrestorable once retention
+	 * prunes the local copy.
+	 *
+	 * @return void
+	 */
+	public function test_initial_checkpoint_save_failure_parks_job() {
+		list( $dest_id ) = $this->make_local_destination();
+		$snapshot_id     = $this->make_snapshot( $this->standard_files() );
+
+		$failing = new class() extends MainWP_Backup_Upload_Job_Store {
+			/**
+			 * Fail the first checkpoint write (the artifact index), then behave.
+			 *
+			 * @var int
+			 */
+			public $calls = 0;
+
+			/**
+			 * Model a transient DB error on the initial index checkpoint.
+			 *
+			 * @param int         $job_id     Job id.
+			 * @param array       $checkpoint Checkpoint data.
+			 * @param string|null $lock_token Lease token.
+			 *
+			 * @return bool
+			 */
+			public function save_checkpoint( int $job_id, array $checkpoint, ?string $lock_token = null ): bool {
+				++$this->calls;
+				if ( 1 === $this->calls ) {
+					return false;
+				}
+				return parent::save_checkpoint( $job_id, $checkpoint, $lock_token );
+			}
+		};
+
+		$prop = new \ReflectionProperty( MainWP_Backup_Upload_Job_Store::class, 'instance' );
+		$prop->setAccessible( true );
+		$saved = $prop->getValue();
+		$prop->setValue( null, $failing );
+
+		try {
+			MainWP_Backup_Upload_Job_Store::instance()->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+			$job = MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $snapshot_id )[0];
+		} finally {
+			$prop->setValue( null, $saved );
+		}
+
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_PENDING, $job->status, 'A failed initial index save must leave the job pending for the next tick, not complete it.' );
+		$this->assertEmpty( $job->checkpoint['artifacts'] ?? array(), 'The unpersisted checkpoint must stay empty; the job must not have completed over it.' );
+	}
+
+	/**
+	 * A transient DB error on the terminal manifest checkpoint must not let the
+	 * job reach COMPLETE over an unpersisted terminal state. The remote
+	 * manifest re-PUT on the next tick is idempotent by construction, so the
+	 * job resumes and completes only once its checkpoint has actually landed.
+	 *
+	 * @return void
+	 */
+	public function test_manifest_checkpoint_save_failure_does_not_complete_job() {
+		list( $dest_id ) = $this->make_local_destination();
+		$snapshot_id     = $this->make_snapshot( $this->standard_files() );
+
+		$failing = new class() extends MainWP_Backup_Upload_Job_Store {
+			/**
+			 * Fail only the terminal manifest_submitted checkpoint write.
+			 *
+			 * @param int         $job_id     Job id.
+			 * @param array       $checkpoint Checkpoint data.
+			 * @param string|null $lock_token Lease token.
+			 *
+			 * @return bool
+			 */
+			public function save_checkpoint( int $job_id, array $checkpoint, ?string $lock_token = null ): bool {
+				if ( ! empty( $checkpoint['manifest_submitted'] ) ) {
+					return false;
+				}
+				return parent::save_checkpoint( $job_id, $checkpoint, $lock_token );
+			}
+		};
+
+		$prop = new \ReflectionProperty( MainWP_Backup_Upload_Job_Store::class, 'instance' );
+		$prop->setAccessible( true );
+		$saved = $prop->getValue();
+		$prop->setValue( null, $failing );
+
+		try {
+			MainWP_Backup_Upload_Job_Store::instance()->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+			$job = MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $snapshot_id )[0];
+		} finally {
+			$prop->setValue( null, $saved );
+		}
+
+		$this->assertNotSame( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE, $job->status, 'A failed terminal manifest checkpoint must not complete the job.' );
+		$this->assertNotEmpty( $job->checkpoint['artifacts'], 'The artifact index persisted earlier must survive; only the terminal write failed.' );
+	}
 }

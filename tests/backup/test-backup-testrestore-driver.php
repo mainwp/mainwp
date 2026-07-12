@@ -21,6 +21,7 @@ use MainWP\Dashboard\MainWP_Backup_Snapshots;
 use MainWP\Dashboard\MainWP_Backup_Storage_Destinations;
 use MainWP\Dashboard\MainWP_Backup_Storage_Local;
 use MainWP\Dashboard\MainWP_Backup_TestRestore_Driver;
+use MainWP\Dashboard\MainWP_Backup_TestRestore_Sandbox;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_Keys_Manager;
 
@@ -247,6 +248,68 @@ class MainWP_Backup_TestRestore_Driver_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A large but highly compressible SQL body: the sentinel plus a run of
+	 * identical comment lines. It compresses to a few KB yet decompresses to
+	 * about a megabyte, so a cap set between the two proves the guard measures
+	 * the decompressed size, not the on-disk footprint.
+	 *
+	 * @return string
+	 */
+	private function inflated_sql() {
+		return $this->sentinel_sql()
+			. str_repeat( "-- filler comment line kept identical so it compresses to almost nothing\n", 15000 );
+	}
+
+	/**
+	 * Write a bzip2-compressed SQL dump fixture and return its path.
+	 *
+	 * @param string $name Basename (e.g. db.sql.bz2).
+	 * @param string $sql  SQL body.
+	 *
+	 * @return string Absolute path.
+	 */
+	private function write_bz2_dump( $name, $sql ) {
+		$path = $this->dir . '/' . $name;
+		file_put_contents( $path, bzcompress( $sql ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+		return $path;
+	}
+
+	/**
+	 * Write a zip carrying a single db.sql member and return the zip path.
+	 *
+	 * @param string $name Basename (e.g. db.sql.zip).
+	 * @param string $sql  SQL body.
+	 *
+	 * @return string Absolute path.
+	 */
+	private function write_zip_dump( $name, $sql ) {
+		$path = $this->dir . '/' . $name;
+		$zip  = new \ZipArchive();
+		$zip->open( $path, \ZipArchive::CREATE | \ZipArchive::OVERWRITE );
+		$zip->addFromString( 'db.sql', $sql );
+		$zip->close();
+		return $path;
+	}
+
+	/**
+	 * Write a gzipped tar carrying a single db.sql member and return its path.
+	 *
+	 * @param string $name Basename (e.g. db.sql.tar.gz).
+	 * @param string $sql  SQL body.
+	 *
+	 * @return string Absolute path.
+	 */
+	private function write_tar_dump( $name, $sql ) {
+		$tar  = $this->dir . '/' . preg_replace( '/\.gz$/', '', $name );
+		$phar = new \PharData( $tar );
+		$phar->addFromString( 'db.sql', $sql );
+		$phar->compress( \Phar::GZ );
+		unset( $phar );
+		\Phar::unlinkArchive( $tar );
+		return $this->dir . '/' . $name;
+	}
+
+	/**
 	 * A sentinel SQL body that creates a table with two rows.
 	 *
 	 * @return string
@@ -452,6 +515,103 @@ class MainWP_Backup_TestRestore_Driver_Test extends MainWP_Abilities_Test_Case {
 
 		$this->assertFalse( $this->db_exists( $result['sandbox']['db_name'] ), 'The scratch database must not linger after a refusal.' );
 		$this->assertDirectoryDoesNotExist( $result['sandbox']['temp_dir'], 'The sandbox temp dir must not linger after a refusal.' );
+	}
+
+	/**
+	 * The cap covers every compressed format the sandbox reads, not just gzip.
+	 * A bzip2, zip, or tar dump whose compressed footprint sits under the cap
+	 * but whose decompressed body sits over it must still be refused before
+	 * import_database() buffers it, or the cap is trivially bypassable.
+	 *
+	 * @dataProvider oversized_compressed_dump_provider
+	 *
+	 * @param string $writer Fixture writer method name.
+	 * @param string $name   Dump basename with its real extension.
+	 *
+	 * @return void
+	 */
+	public function test_oversized_compressed_dump_refuses_by_decompressed_size( $writer, $name ) {
+		// The window that discriminates decompressed-size measurement from the
+		// on-disk footprint: well above the few-KB compressed fixture, well
+		// below its ~1MB decompressed body.
+		$cap = static function () {
+			return 256 * 1024;
+		};
+		add_filter( 'mainwp_testrestore_max_sql_dump_bytes', $cap );
+
+		$dump = $this->{$writer}( $name, $this->inflated_sql() );
+		$this->assertLessThan( 256 * 1024, filesize( $dump ), 'The compressed fixture must sit under the cap, so only the decompressed size can trip it.' );
+
+		$snapshot_id = $this->record(
+			'db',
+			array(
+				array(
+					'file' => $name,
+					'size' => filesize( $dump ),
+					'role' => 'db',
+					'path' => $dump,
+				),
+			)
+		);
+
+		$result = MainWP_Backup_TestRestore_Driver::instance()->verify_snapshot( $snapshot_id );
+
+		remove_filter( 'mainwp_testrestore_max_sql_dump_bytes', $cap );
+
+		$this->assertSame( 'unsupported', $result['state'], $name . ' over the cap must record unsupported, not import.' );
+		$this->assertSame( MainWP_Backup_TestRestore_Driver::ERR_DUMP_TOO_LARGE, $result['error_code'] );
+		$this->assertFalse( $this->db_exists( $result['sandbox']['db_name'] ), 'The scratch database must not linger after a refusal.' );
+	}
+
+	/**
+	 * Fixtures for the compressed-format cap: writer method and basename whose
+	 * real extension routes it down each of read_sql_dump's decode paths.
+	 *
+	 * @return array[]
+	 */
+	public function oversized_compressed_dump_provider() {
+		return array(
+			'bzip2' => array( 'write_bz2_dump', 'db.sql.bz2' ),
+			'zip'   => array( 'write_zip_dump', 'db.sql.zip' ),
+			'tar'   => array( 'write_tar_dump', 'db.sql.tar.gz' ),
+		);
+	}
+
+	/**
+	 * The gzip decompressed-size measurement reads the true body size from the
+	 * ISIZE footer, not the much smaller compressed footprint: a few-KB gzip of
+	 * a ~1MB body must measure the ~1MB, so the cap sees what import_database()
+	 * would actually buffer.
+	 *
+	 * @return void
+	 */
+	public function test_gzip_decompressed_size_reads_true_body_from_isize() {
+		$sql  = $this->inflated_sql();
+		$path = $this->dir . '/body.sql.gz';
+		file_put_contents( $path, gzencode( $sql ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+
+		$this->assertLessThan( strlen( $sql ), filesize( $path ), 'The fixture must compress well, so the on-disk size is not the body size.' );
+
+		$size = ( new MainWP_Backup_TestRestore_Sandbox() )->decompressed_sql_dump_bytes( $path, PHP_INT_MAX );
+
+		$this->assertSame( strlen( $sql ), $size, 'The ISIZE footer must report the true decompressed body size.' );
+	}
+
+	/**
+	 * A gzip whose compressed footprint already exceeds the cap is refused on
+	 * that alone, without trusting the ISIZE footer: for a multi-GB dump the
+	 * 32-bit ISIZE has wrapped and would read too small.
+	 *
+	 * @return void
+	 */
+	public function test_gzip_compressed_over_ceiling_reads_as_over_ceiling() {
+		$path = $this->dir . '/dense.sql.gz';
+		file_put_contents( $path, gzencode( $this->sentinel_sql() ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+
+		$ceiling = 4; // Below even the compressed footprint.
+		$size    = ( new MainWP_Backup_TestRestore_Sandbox() )->decompressed_sql_dump_bytes( $path, $ceiling );
+
+		$this->assertGreaterThan( $ceiling, $size, 'A gzip already larger than the ceiling must read as over it.' );
 	}
 
 	/**

@@ -240,7 +240,7 @@ class MainWP_Backup_TestRestore_Driver { // phpcs:ignore Generic.Classes.Opening
             $sandbox->extract_files( $path );
         }
         if ( '' !== $db_path ) {
-            $this->guard_dump_size( $db_path );
+            $this->guard_dump_size( $sandbox, $db_path );
             $sandbox->import_database( $db_path );
         }
 
@@ -254,34 +254,20 @@ class MainWP_Backup_TestRestore_Driver { // phpcs:ignore Generic.Classes.Opening
      * Refuse a staged SQL dump before import_database() does its whole-buffer
      * read, when the dump's decompressed size exceeds the configured cap.
      * import_database() buffers the entire decompressed dump in memory to
-     * replay it, so the size that matters is the decompressed size: for a
-     * .gz dump that is read from the gzip footer's ISIZE field rather than
-     * the (much smaller) on-disk footprint, since decompressing the whole
-     * file just to measure it would defeat the point of this guard.
+     * replay it, so the size that matters is the decompressed size, measured
+     * per format the sandbox can read (gzip ISIZE, zip/tar member headers, a
+     * ceiling-bounded bzip2 stream) rather than the much smaller compressed
+     * footprint. The measurement never buffers the whole dump, so the guard
+     * itself cannot cause the OOM it exists to prevent.
      *
-     * @param string $dump_path Staged dump artifact.
+     * @param MainWP_Backup_TestRestore_Sandbox $sandbox   Sandbox that will read the dump.
+     * @param string                            $dump_path Staged dump artifact.
      *
      * @throws MainWP_Exception When the dump exceeds the configured cap.
      *
      * @return void
      */
-    private function guard_dump_size( string $dump_path ): void {
-        $size = (int) filesize( $dump_path );
-
-        if ( MainWP_Utility::ends_with( $dump_path, '.gz' ) ) {
-            $handle = fopen( $dump_path, 'rb' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- local staged artifact; only its 4-byte trailer is read here, not the whole file.
-            if ( false !== $handle ) {
-                if ( 0 === fseek( $handle, -4, SEEK_END ) ) {
-                    $trailer = fread( $handle, 4 ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fread -- reading the gzip ISIZE trailer, not the whole file.
-                    if ( false !== $trailer && 4 === strlen( $trailer ) ) {
-                        $isize = unpack( 'V', $trailer )[1];
-                        $size  = max( $size, $isize );
-                    }
-                }
-                fclose( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- closing the handle opened above.
-            }
-        }
-
+    private function guard_dump_size( MainWP_Backup_TestRestore_Sandbox $sandbox, string $dump_path ): void {
         $default_cap = max( 64 * MB_IN_BYTES, (int) ( 0.25 * wp_convert_hr_to_bytes( ini_get( 'memory_limit' ) ) ) );
 
         /**
@@ -293,6 +279,8 @@ class MainWP_Backup_TestRestore_Driver { // phpcs:ignore Generic.Classes.Opening
          * @param string $dump_path   Staged dump artifact path.
          */
         $cap = (int) apply_filters( 'mainwp_testrestore_max_sql_dump_bytes', $default_cap, $dump_path );
+
+        $size = $sandbox->decompressed_sql_dump_bytes( $dump_path, $cap );
 
         if ( $size > $cap ) {
             // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- debug detail and error code are for logging and matching, never echoed.

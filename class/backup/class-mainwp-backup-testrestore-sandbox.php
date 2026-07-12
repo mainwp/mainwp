@@ -431,6 +431,194 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
     }
 
     /**
+     * Measure the decompressed byte size of the SQL body read_sql_dump() would
+     * load into memory, without buffering the whole dump. import_database()
+     * replays the entire decompressed dump from a single in-memory string, so
+     * the size that matters for the memory cap is the decompressed size, per
+     * format:
+     *
+     * - .sql   : the file itself (already plain).
+     * - .gz    : the gzip footer's ISIZE. A dump over 4 GB wraps the 32-bit
+     *            ISIZE, and a value below the compressed size means the footer
+     *            cannot be trusted; both are reported as over the ceiling.
+     * - .bz2   : bzip2 has no size field, so the stream is decompressed in
+     *            bounded chunks and counted, stopping the moment the running
+     *            total passes the ceiling (never the whole body at once).
+     * - zip    : the central directory's uncompressed-size field (no decode).
+     * - tar    : the member header's size field (no decode).
+     *
+     * A format whose extension is missing here reports zero; read_sql_dump()
+     * then raises ERR_UNSUPPORTED before import_database() ever runs.
+     *
+     * @param string $path    Staged dump artifact.
+     * @param int    $ceiling Size above which the caller will refuse the dump;
+     *                        streaming formats stop counting once past it.
+     *
+     * @return int Decompressed size in bytes, or a value above $ceiling when it
+     *             cannot be trusted or streaming stopped early.
+     */
+    public function decompressed_sql_dump_bytes( string $path, int $ceiling ): int {
+        $ext = MainWP_Backup_File_Manager::get_real_extension( $path );
+
+        if ( '.sql' === $ext ) {
+            return (int) filesize( $path );
+        }
+        if ( '.gz' === $ext ) {
+            return $this->gzip_decompressed_size( $path, $ceiling );
+        }
+        if ( '.bz2' === $ext ) {
+            return $this->bz2_decompressed_size( $path, $ceiling );
+        }
+        if ( '.zip' === $ext || '.sql.zip' === $ext ) {
+            return $this->archive_member_size_zip( $path, '.sql' );
+        }
+        return $this->archive_member_size_tar( $path, '.sql' );
+    }
+
+    /**
+     * Read a lone gzip file's decompressed size from its ISIZE footer.
+     *
+     * The 32-bit ISIZE only wraps once the decompressed body reaches 4 GB, so
+     * for the sizes this cap actually protects against it is trustworthy. Two
+     * cases refuse without trusting it: a gzip whose own compressed footprint
+     * already exceeds the cap (the decompressed body cannot be smaller in any
+     * way that matters), and a gzip at or past 4 GB, whose ISIZE has certainly
+     * wrapped and would read far too small. Note the compressed footprint is a
+     * legitimate lower bound only near these boundaries: for a tiny dump the
+     * ~18-byte gzip overhead makes the compressed size exceed the decompressed
+     * body, which is normal and must not read as a wrap.
+     *
+     * @param string $path    Gzip path.
+     * @param int    $ceiling Refusal ceiling.
+     *
+     * @return int Decompressed size, or a value above $ceiling when the gzip is
+     *             already over the cap or large enough that ISIZE cannot be
+     *             trusted.
+     */
+    private function gzip_decompressed_size( string $path, int $ceiling ): int {
+        $compressed = (int) filesize( $path );
+
+        // A gzip whose compressed bytes already exceed the cap, or one at/past
+        // 4 GB (wrapped ISIZE), is refused without trusting the trailer.
+        if ( $compressed > $ceiling || $compressed >= 4294967296 ) {
+            return $ceiling + 1;
+        }
+
+        $handle = fopen( $path, 'rb' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- local staged artifact; only its 4-byte trailer is read here, not the whole file.
+        if ( false === $handle ) {
+            return $compressed;
+        }
+
+        $isize = null;
+        if ( 0 === fseek( $handle, -4, SEEK_END ) ) {
+            $trailer = fread( $handle, 4 ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fread -- reading the gzip ISIZE trailer, not the whole file.
+            if ( false !== $trailer && 4 === strlen( $trailer ) ) {
+                $isize = unpack( 'V', $trailer )[1];
+            }
+        }
+        fclose( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- closing the handle opened above.
+
+        if ( null === $isize ) {
+            return $compressed;
+        }
+        return max( $compressed, $isize );
+    }
+
+    /**
+     * Count a bzip2 stream's decompressed size in bounded chunks, stopping the
+     * moment the running total passes the ceiling.
+     *
+     * @param string $path    Bzip2 path.
+     * @param int    $ceiling Refusal ceiling; counting stops once past it.
+     *
+     * @return int Decompressed bytes counted, or zero when bzip2 is unavailable
+     *             (read_sql_dump then raises ERR_UNSUPPORTED before import).
+     */
+    private function bz2_decompressed_size( string $path, int $ceiling ): int {
+        if ( ! function_exists( 'bzopen' ) ) {
+            return 0;
+        }
+        $bz = bzopen( $path, 'r' );
+        if ( ! is_resource( $bz ) ) {
+            return 0;
+        }
+
+        $total = 0;
+        while ( true ) {
+            $chunk = bzread( $bz, 1048576 );
+            if ( false === $chunk || '' === $chunk ) {
+                break;
+            }
+            $total += strlen( $chunk );
+            if ( $total > $ceiling ) {
+                break;
+            }
+        }
+        bzclose( $bz );
+        return $total;
+    }
+
+    /**
+     * Read the uncompressed size of the first matching zip member from the
+     * central directory, without decompressing it.
+     *
+     * @param string $path   Zip path.
+     * @param string $suffix Member suffix to match (e.g. '.sql').
+     *
+     * @return int Uncompressed size, or zero when unreadable (read_sql_dump
+     *             surfaces the real error at import time).
+     */
+    private function archive_member_size_zip( string $path, string $suffix ): int {
+        if ( ! class_exists( '\ZipArchive' ) ) {
+            return 0;
+        }
+        $zip = new \ZipArchive();
+        if ( true !== $zip->open( $path ) ) {
+            return 0;
+        }
+
+        $size = 0;
+        for ( $i = 0; $i < $zip->numFiles; $i++ ) {
+            $name = (string) $zip->getNameIndex( $i );
+            if ( MainWP_Utility::ends_with( $name, $suffix ) ) {
+                $stat = $zip->statIndex( $i );
+                $size = ( is_array( $stat ) && isset( $stat['size'] ) ) ? (int) $stat['size'] : 0;
+                break;
+            }
+        }
+        $zip->close();
+        return $size;
+    }
+
+    /**
+     * Read the uncompressed size of the first matching tar member from its
+     * header, without decompressing the archive body.
+     *
+     * @param string $path   Tar path (tar/tar.gz/tar.bz2).
+     * @param string $suffix Member suffix to match (e.g. '.sql').
+     *
+     * @return int Member size, or zero when unreadable (read_sql_dump surfaces
+     *             the real error at import time).
+     */
+    private function archive_member_size_tar( string $path, string $suffix ): int {
+        if ( ! class_exists( '\PharData' ) ) {
+            return 0;
+        }
+        try {
+            $phar     = new \PharData( $path );
+            $iterator = new \RecursiveIteratorIterator( $phar );
+            foreach ( $iterator as $file ) {
+                if ( MainWP_Utility::ends_with( $file->getFilename(), $suffix ) ) {
+                    return (int) $file->getSize();
+                }
+            }
+        } catch ( \Throwable $e ) {
+            return 0;
+        }
+        return 0;
+    }
+
+    /**
      * Decompress a lone gzip or bzip2 file into memory.
      *
      * @param string $path Path.

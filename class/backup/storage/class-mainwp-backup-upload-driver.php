@@ -287,7 +287,14 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
             $checkpoint = $job->checkpoint;
             if ( empty( $checkpoint['artifacts'] ) ) {
                 $checkpoint = $this->new_checkpoint( $snapshot );
-                $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
+                if ( ! $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token ) ) {
+                    // The artifact index is what a later restore reads to locate
+                    // the offsite copies. A refused fenced write - transient DB
+                    // error or a lost lease - means it did not land, so park and
+                    // let the next tick rebuild it rather than upload and complete
+                    // over an empty checkpoint the restore cannot use.
+                    return;
+                }
             }
 
             // Resolve this snapshot's encryption once per tick. An armed
@@ -322,7 +329,14 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
                 if ( microtime( true ) >= $deadline || ! $this->lease_still_held( $job ) ) {
                     return;
                 }
-                $this->phase_submitting( $job, $checkpoint, $snapshot, $provider, $enc );
+                if ( ! $this->phase_submitting( $job, $checkpoint, $snapshot, $provider, $enc ) ) {
+                    // The manifest is at the destination, but its checkpoint did
+                    // not persist. Do not complete over an unpersisted terminal
+                    // state; the manifest re-PUT next tick is idempotent by
+                    // construction, so the job resumes and completes once the
+                    // checkpoint has actually landed.
+                    return;
+                }
             }
 
             if ( ! $store->complete_job( (int) $job->id, $this->lock_token ) ) {
@@ -550,9 +564,11 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
      * @param MainWP_Backup_Storage_Provider $provider   Destination provider.
      * @param array                          $enc        Encryption context for the snapshot.
      *
-     * @return void
+     * @return bool True when the terminal checkpoint landed; false when the
+     *              fenced write was refused (transient DB error or lost lease)
+     *              and the job must not complete this tick.
      */
-    private function phase_submitting( object $job, array &$checkpoint, object $snapshot, MainWP_Backup_Storage_Provider $provider, array $enc ): void {
+    private function phase_submitting( object $job, array &$checkpoint, object $snapshot, MainWP_Backup_Storage_Provider $provider, array $enc ): bool {
         $artifacts = array();
         foreach ( $checkpoint['artifacts'] as $artifact ) {
             $entry = array(
@@ -622,7 +638,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
         }
 
         $checkpoint['manifest_submitted'] = true;
-        MainWP_Backup_Upload_Job_Store::instance()->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
+        return MainWP_Backup_Upload_Job_Store::instance()->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
     }
 
     /**

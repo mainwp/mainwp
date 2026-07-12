@@ -43,6 +43,32 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     const CREATING_MARKER_PREFIX = '__creating_';
 
     /**
+     * Update-gate verdict: fresh evidence satisfies the configured policy;
+     * updates may proceed.
+     *
+     * @var string
+     */
+    const UPDATE_GATE_PASS = 'pass';
+
+    /**
+     * Update-gate verdict: fresh protection exists but has not verifiably
+     * reached offsite storage while the policy requires it. Updates defer,
+     * and no new fallback backup should be triggered - re-running it could
+     * never improve provenance.
+     *
+     * @var string
+     */
+    const UPDATE_GATE_PENDING_OFFSITE = 'pending_offsite';
+
+    /**
+     * Update-gate verdict: no fresh backup evidence at all; the fallback
+     * backup may be triggered.
+     *
+     * @var string
+     */
+    const UPDATE_GATE_MISSING = 'missing';
+
+    /**
      * How long a creating marker is honored before a driver treats it as
      * abandoned. Comfortably above observed child create round trips
      * while short enough that a crashed driver clears within one polling
@@ -2136,6 +2162,52 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         }
 
         return false;
+    }
+
+    /**
+     * Method evaluate_update_backup_gate()
+     *
+     * The one provenance-aware answer to "may updates proceed on this
+     * site's backup evidence?", shared by the automatic-update cron gate
+     * and the interactive pre-update check so the two can never disagree.
+     *
+     * Without the offsite requirement, any fresh evidence satisfies the
+     * gate: a native snapshot or a legacy archive in the site's backup
+     * directory (which also counts third-party backups). With it, only a
+     * fresh native snapshot the upload lane verified offsite passes;
+     * other fresh evidence - an unverified snapshot, or a bare local
+     * archive with no provenance at all - reads as PENDING_OFFSITE:
+     * protection exists but has not verifiably left the dashboard, so
+     * updates defer and, critically, no new fallback backup should be
+     * triggered - re-running it could never improve provenance. Because
+     * the newest db-bearing snapshot alone decides freshness (see
+     * has_recent_native_backup()), a fresh unverified snapshot shadows an
+     * older verified one; that conservative reading also lands on
+     * PENDING_OFFSITE. MISSING - no fresh evidence at all - is the only
+     * verdict on which creating a fallback backup makes sense.
+     *
+     * @param int       $site_id         Child site ID.
+     * @param int       $max_age_days    Freshness window in days.
+     * @param bool|null $require_offsite Offsite requirement; null reads the
+     *                                   mainwp_backup_before_upgrade_require_offsite option.
+     *
+     * @return string One of the UPDATE_GATE_* verdicts.
+     */
+    public static function evaluate_update_backup_gate( int $site_id, int $max_age_days, ?bool $require_offsite = null ): string {
+        if ( null === $require_offsite ) {
+            $require_offsite = (bool) get_option( 'mainwp_backup_before_upgrade_require_offsite', 0 );
+        }
+
+        if ( $require_offsite && static::has_recent_native_backup( $site_id, $max_age_days, true ) ) {
+            return static::UPDATE_GATE_PASS;
+        }
+
+        if ( static::has_recent_native_backup( $site_id, $max_age_days )
+            || static::has_recent_backup( $site_id, $max_age_days ) ) {
+            return $require_offsite ? static::UPDATE_GATE_PENDING_OFFSITE : static::UPDATE_GATE_PASS;
+        }
+
+        return static::UPDATE_GATE_MISSING;
     }
 
     /**

@@ -489,7 +489,7 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
                 set_transient( $lock_key, 1, 10 );
                 $task = $this->get_manual_backup_task( $site_id );
                 if ( empty( $task ) ) {
-                    $this->add_backup_task(
+                    $created = $this->add_backup_task(
                         (int) $website->userid,
                         'On-demand backup',
                         'manual',
@@ -510,6 +510,13 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
                         150,               // maximumFileDescriptors.
                         0                  // loadFilesBeforeZip.
                     );
+                    if ( ! empty( $created ) ) {
+                        // Stamp the authorized-site snapshot at create so
+                        // the row never reads as a pre-migration legacy
+                        // task: its single site is by construction what
+                        // the authorized on-demand caller requested.
+                        $this->update_backup_task_with_values( (int) $created->id, array( 'authorized_sites' => (string) $site_id ) );
+                    }
                 }
                 delete_transient( $lock_key );
             }

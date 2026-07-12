@@ -345,6 +345,116 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
     }
 
     /**
+     * Resolve a user's live Team-Control-allowed site ids without relying
+     * on request context. mainwp_current_user_have_right() short-circuits
+     * to true under DOING_CRON/WP_CLI/REST, so a scheduled run cannot ask
+     * it anything; the allowed-sites filter itself has no such bypass and
+     * Team Control resolves it from the current user at call time, so a
+     * bounded current-user swap yields the owner's real scope from cron.
+     *
+     * @param int $user_id User id to resolve.
+     *
+     * @return int[]|null Allowed site ids when the user is restricted,
+     *                    null when unrestricted (no Team Control, or the
+     *                    extension grants full access). A nonexistent user
+     *                    resolves to an empty array: an ownerless task
+     *                    must not keep executing unrestricted forever.
+     */
+    public static function resolve_owner_allowed_site_ids( $user_id ) {
+        $user_id = (int) $user_id;
+        if ( $user_id <= 0 || false === get_user_by( 'id', $user_id ) ) {
+            return array();
+        }
+
+        $previous_user_id = get_current_user_id();
+        wp_set_current_user( $user_id );
+        try {
+            /** This filter is documented in class/class-mainwp-system.php */
+            $allowed = apply_filters( 'mainwp_currentuserallowedaccesssites', 'all' );
+        } finally {
+            wp_set_current_user( $previous_user_id );
+        }
+
+        // Only an explicit id list restricts; 'all' (or an unexpected
+        // shape) reads as unrestricted, matching how every other consumer
+        // of this filter treats its result.
+        if ( ! is_array( $allowed ) ) {
+            return null;
+        }
+
+        return array_values( array_map( 'intval', $allowed ) );
+    }
+
+    /**
+     * Decide whether a scheduled run must pause instead of executing,
+     * from the owner's live authorization. An unrestricted owner keeps
+     * every existing behavior, including the one-time NULL-sentinel
+     * backfill. A restricted owner pauses when the row was never stamped
+     * (the backfill would grant per-site authority no save ever verified)
+     * or when the stamped run set escapes their live scope - the task
+     * stays paused until an authorized re-save confirms its scope.
+     *
+     * @param object $task Task row.
+     *
+     * @return string|null Pause reason ('unstamped'|'narrowed'), or null
+     *                     when the run may proceed.
+     */
+    public static function resolve_task_scope_pause( $task ) {
+        $allowed = static::resolve_owner_allowed_site_ids( isset( $task->userid ) ? (int) $task->userid : 0 );
+        if ( null === $allowed ) {
+            return null;
+        }
+
+        $authorized = static::authorized_snapshot_ids( $task );
+        if ( null === $authorized ) {
+            return 'unstamped';
+        }
+
+        $expanded = static::expand_task_site_ids( empty( $task->groups ) ? $task->sites : '', $task->groups );
+        foreach ( array_intersect( $expanded, $authorized ) as $site_id ) {
+            if ( ! in_array( (int) $site_id, $allowed, true ) ) {
+                return 'narrowed';
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Pause a task whose owner's authorization no longer covers it. The
+     * notice deliberately names no sites: it may be read (or mailed by a
+     * future consumer) in contexts where enumerating sites the owner can
+     * no longer access would itself disclose them. update_backup_notices()
+     * refuses the exact message twice, so re-evaluated ticks (a resume
+     * without a re-save) do not accumulate it.
+     *
+     * @param object $task   Task row.
+     * @param string $reason Pause reason from resolve_task_scope_pause().
+     *
+     * @return void
+     */
+    public static function pause_task_for_rescope( $task, $reason ) {
+        MainWP_DB_Backup::instance()->update_backup_task_with_values( $task->id, array( 'paused' => 1 ) );
+        MainWP_DB_Backup::instance()->update_backup_notices(
+            $task->id,
+            esc_html__( 'This task was paused because its owner\'s site access changed or could not be confirmed. Re-save the task to confirm its scope, then resume it.', 'mainwp' ) . '<br />'
+        );
+
+        /**
+         * Fires when a scheduled run pauses a task instead of executing
+         * it, because the owner's live authorization no longer covers the
+         * task's stored scope.
+         *
+         * @param int    $task_id Task id.
+         * @param string $reason  'unstamped' (a pre-snapshot row whose
+         *                        backfill cannot be authorized) or
+         *                        'narrowed' (the stamped run set escapes
+         *                        the owner's live scope).
+         */
+        do_action( 'mainwp_backup_task_auto_paused', (int) $task->id, $reason );
+    }
+
+    /**
      * Update backup task.
      *
      * @uses \MainWP\Dashboard\MainWP_DB_Backup::add_backup_task()
@@ -650,6 +760,15 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      * @uses  \MainWP\Dashboard\MainWP_Utility::sanitize()
      */
     public static function execute_backup_task( $task, $nrOfSites = 0, $updateRun = true, $run_grace_seconds = 0 ) { // phpcs:ignore -- NOSONAR - not quite complex function.
+
+        // The owner's live authorization gates every scheduled entry
+        // (start and continuation lanes both land here) before a slot is
+        // held, a run is claimed, or a notification can fire.
+        $pause_reason = static::resolve_task_scope_pause( $task );
+        if ( null !== $pause_reason ) {
+            static::pause_task_for_rescope( $task, $pause_reason );
+            return false;
+        }
 
         // Cap concurrent backup tasks; a refused task stays queued for the next cron cycle.
         $slot_token = MainWP_Backup_Monitor::acquire_backup_slot( MainWP_Backup_Settings::get_max_concurrent_backups() );

@@ -1382,11 +1382,10 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
      *
      * @return mixed $output
      *
-     * @uses \MainWP\Dashboard\MainWP_Backup_File_Manager::is_archive()
+     * @uses \MainWP\Dashboard\MainWP_Backup_Executor::evaluate_update_backup_gate()
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_primary_backup()
-     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_specific_dir()
      */
     public static function check_backups() { // phpcs:ignore -- NOSONAR - complex.
         if ( empty( $_POST['sites'] ) || ! is_array( $_POST['sites'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- NOSONAR - verified before.
@@ -1434,25 +1433,12 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     }
                     $output['primary_backup'] = $backup_method;
                 } else {
-                    $dir = MainWP_System_Utility::get_mainwp_specific_dir( $siteId );
-                    // Check if backup ok.
-                    $lastBackup = - 1;
-                    if ( file_exists( $dir ) ) {
-                        $dh = opendir( $dir ); // NOSONAR.
-                        if ( $dh ) {
-                            while ( false !== ( $file = readdir( $dh ) ) ) {
-                                if ( '.' !== $file && '..' !== $file ) {
-                                    $theFile = $dir . $file;
-                                    if ( MainWP_Backup_File_Manager::is_archive( $file ) && ! MainWP_Backup_File_Manager::is_sql_archive( $file ) && ( filemtime( $theFile ) > $lastBackup ) ) {
-                                        $lastBackup = filemtime( $theFile );
-                                    }
-                                }
-                            }
-                            closedir( $dh );
-                        }
-                    }
-
-                    $output['sites'][ $siteId ] = ( $lastBackup < ( time() - ( $mainwp_backup_before_upgrade_days * 24 * 60 * 60 ) ) ? false : true );
+                    // The interactive pre-update answer comes from the same
+                    // provenance-aware evaluator the automatic-update cron
+                    // gate uses (native snapshots, the legacy archive scan,
+                    // and the offsite requirement), so a policy the cron
+                    // would enforce can no longer be waved through here.
+                    $output['sites'][ $siteId ] = MainWP_Backup_Executor::UPDATE_GATE_PASS === MainWP_Backup_Executor::evaluate_update_backup_gate( (int) $siteId, (int) $mainwp_backup_before_upgrade_days );
                 }
             }
         }

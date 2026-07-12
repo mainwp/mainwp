@@ -432,7 +432,12 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         }
 
         $max_age_days = (int) $max_age_days;
-        $has_recent   = MainWP_Backup_Executor::has_recent_native_backup( (int) $website->id, $max_age_days );
+
+        // The badge honors the same offsite requirement the update gates
+        // enforce, so it cannot show "ready" for a snapshot the automatic
+        // and interactive checks would refuse under a strict policy.
+        $require_offsite = (bool) get_option( 'mainwp_backup_before_upgrade_require_offsite', 0 );
+        $has_recent      = MainWP_Backup_Executor::has_recent_native_backup( (int) $website->id, $max_age_days, $require_offsite );
 
         if ( $has_recent ) {
             $tooltip = sprintf(

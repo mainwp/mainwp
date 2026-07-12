@@ -578,14 +578,15 @@ class MainWP_Backup_TestRestore_Driver_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * The gzip decompressed-size measurement reads the true body size from the
-	 * ISIZE footer, not the much smaller compressed footprint: a few-KB gzip of
-	 * a ~1MB body must measure the ~1MB, so the cap sees what import_database()
-	 * would actually buffer.
+	 * The gzip decompressed-size measurement counts the true body size from the
+	 * decompressed stream, not the much smaller compressed footprint and not the
+	 * 32-bit ISIZE trailer: a few-KB gzip of a ~1MB body must measure the ~1MB,
+	 * so the cap sees what import_database() would actually buffer. With the
+	 * ceiling out of reach the count runs to the end and equals the whole body.
 	 *
 	 * @return void
 	 */
-	public function test_gzip_decompressed_size_reads_true_body_from_isize() {
+	public function test_gzip_decompressed_size_reads_true_body_size() {
 		$sql  = $this->inflated_sql();
 		$path = $this->dir . '/body.sql.gz';
 		file_put_contents( $path, gzencode( $sql ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
@@ -594,7 +595,36 @@ class MainWP_Backup_TestRestore_Driver_Test extends MainWP_Abilities_Test_Case {
 
 		$size = ( new MainWP_Backup_TestRestore_Sandbox() )->decompressed_sql_dump_bytes( $path, PHP_INT_MAX );
 
-		$this->assertSame( strlen( $sql ), $size, 'The ISIZE footer must report the true decompressed body size.' );
+		$this->assertSame( strlen( $sql ), $size, 'Counting the decompressed stream must report the true body size.' );
+	}
+
+	/**
+	 * A highly compressible gzip whose decompressed body runs past the ceiling
+	 * is measured by counting the stream, not by trusting the 32-bit ISIZE
+	 * trailer. ISIZE wraps modulo 2^32 for bodies over 4 GB and would read far
+	 * too small, so a multi-gigabyte dump compressed to a few megabytes used to
+	 * slip under the cap and hit gzdecode() whole. Counting stops the moment the
+	 * running total passes the ceiling, so the full body is never buffered: the
+	 * measurement reads over the ceiling yet well under the whole decompressed
+	 * body, proving the count short-circuited instead of inflating everything.
+	 *
+	 * @return void
+	 */
+	public function test_gzip_over_ceiling_counts_stream_without_buffering_body() {
+		// A body far larger than one read chunk so an early stop is unambiguous:
+		// millions of identical lines compress to a few KB yet inflate to ~14MB.
+		$sql  = $this->sentinel_sql() . str_repeat( "-- identical filler line that compresses to almost nothing\n", 240000 );
+		$path = $this->dir . '/wrapped.sql.gz';
+		file_put_contents( $path, gzencode( $sql ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+
+		$ceiling = 256 * 1024;
+		$this->assertLessThan( $ceiling, filesize( $path ), 'The compressed fixture must sit under the ceiling, so only the counted body can trip it.' );
+		$this->assertGreaterThan( 4 * 1024 * 1024, strlen( $sql ), 'The body must exceed several read chunks so a short-circuited count is provably smaller than the whole body.' );
+
+		$size = ( new MainWP_Backup_TestRestore_Sandbox() )->decompressed_sql_dump_bytes( $path, $ceiling );
+
+		$this->assertGreaterThan( $ceiling, $size, 'A body over the ceiling must read as over it.' );
+		$this->assertLessThan( strlen( $sql ), $size, 'The count must stop past the ceiling without buffering the whole decompressed body.' );
 	}
 
 	/**

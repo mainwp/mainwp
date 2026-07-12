@@ -101,11 +101,15 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
                 'reason'       => (string) $candidate['reason'],
             );
 
-            if ( ! $dry_run ) {
-                $this->prune_candidate( $candidate, $task, $result );
+            if ( $dry_run ) {
+                // A preview counts every candidate it would attempt.
+                ++$result['pruned'];
+                continue;
             }
 
-            ++$result['pruned'];
+            if ( $this->prune_candidate( $candidate, $task, $result ) ) {
+                ++$result['pruned'];
+            }
         }
 
         return $result;
@@ -163,9 +167,9 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
                     'size_bytes'   => (int) $unit['size_bytes'],
                 );
 
-                $this->prune_candidate( $candidate, $task, $result );
-
-                ++$result['pruned'];
+                if ( $this->prune_candidate( $candidate, $task, $result ) ) {
+                    ++$result['pruned'];
+                }
             }
         }
 
@@ -330,7 +334,7 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
             $snapshot_ids = array_map( 'intval', array_column( $unit['snapshots'], 'id' ) );
             sort( $snapshot_ids, SORT_NUMERIC );
 
-            $this->prune_candidate(
+            $pruned = $this->prune_candidate(
                 array(
                     'snapshot_ids' => $snapshot_ids,
                     'reason'       => $reason,
@@ -340,7 +344,9 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
                 $result
             );
 
-            ++$result['pruned'];
+            if ( $pruned ) {
+                ++$result['pruned'];
+            }
         }
     }
 
@@ -351,9 +357,11 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
      * @param object $task      Task row.
      * @param array  $result    Result accumulator, modified in place.
      *
-     * @return void
+     * @return bool True when at least one snapshot in the unit was pruned;
+     *              false when the unit was held (active restore) or the first
+     *              leaf could not be removed, so nothing was deleted.
      */
-    private function prune_candidate( array $candidate, object $task, array &$result ): void {
+    private function prune_candidate( array $candidate, object $task, array &$result ): bool {
         // A restore mid-flight stages its artifacts from this chain: pruning
         // any member destroys the recovery source, so the whole unit is held
         // for this sweep and revisited once the restore settles. This also
@@ -364,7 +372,7 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
                 'Snapshots %s: a restore in progress references this backup; it is kept and the prune will retry on a later sweep.',
                 implode( ',', array_map( 'intval', (array) $candidate['snapshot_ids'] ) )
             );
-            return;
+            return false;
         }
 
         $snapshots           = MainWP_Backup_Snapshots::instance();
@@ -425,7 +433,7 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
         $this->notify_child_prune( $site_id, $child_task_ids );
 
         if ( ! $pruned_any ) {
-            return;
+            return false;
         }
 
         /**
@@ -447,6 +455,8 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
                 'size_bytes'   => isset( $candidate['size_bytes'] ) ? (int) $candidate['size_bytes'] : 0,
             )
         );
+
+        return true;
     }
 
     /**

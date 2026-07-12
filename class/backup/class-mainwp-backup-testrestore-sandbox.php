@@ -438,9 +438,12 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
      * format:
      *
      * - .sql   : the file itself (already plain).
-     * - .gz    : the gzip footer's ISIZE. A dump over 4 GB wraps the 32-bit
-     *            ISIZE, and a value below the compressed size means the footer
-     *            cannot be trusted; both are reported as over the ceiling.
+     * - .gz    : the stream is decompressed in bounded chunks and counted,
+     *            stopping the moment the running total passes the ceiling
+     *            (never the whole body at once). The 32-bit ISIZE trailer is
+     *            not trusted: it wraps modulo 2^32 for bodies over 4 GB and
+     *            would read far too small for the largest, most compressible
+     *            dumps this cap exists to refuse.
      * - .bz2   : bzip2 has no size field, so the stream is decompressed in
      *            bounded chunks and counted, stopping the moment the running
      *            total passes the ceiling (never the whole body at once).
@@ -476,52 +479,54 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
     }
 
     /**
-     * Read a lone gzip file's decompressed size from its ISIZE footer.
+     * Count a lone gzip file's decompressed size in bounded chunks, stopping
+     * the moment the running total passes the ceiling.
      *
-     * The 32-bit ISIZE only wraps once the decompressed body reaches 4 GB, so
-     * for the sizes this cap actually protects against it is trustworthy. Two
-     * cases refuse without trusting it: a gzip whose own compressed footprint
-     * already exceeds the cap (the decompressed body cannot be smaller in any
-     * way that matters), and a gzip at or past 4 GB, whose ISIZE has certainly
-     * wrapped and would read far too small. Note the compressed footprint is a
-     * legitimate lower bound only near these boundaries: for a tiny dump the
-     * ~18-byte gzip overhead makes the compressed size exceed the decompressed
-     * body, which is normal and must not read as a wrap.
+     * The 32-bit ISIZE trailer is deliberately not used: it wraps modulo 2^32
+     * once the decompressed body reaches 4 GB, so a highly compressible dump
+     * that inflates past 4 GB while its compressed footprint stays in the
+     * megabytes reports a small ISIZE and would slip under the cap - exactly
+     * the out-of-memory case the cap exists to refuse. Counting the stream is
+     * immune to that. A gzip whose compressed bytes already exceed the ceiling
+     * is refused up front, since read_sql_dump() loads the compressed file
+     * whole before gzdecode() and that alone busts the budget.
      *
      * @param string $path    Gzip path.
-     * @param int    $ceiling Refusal ceiling.
+     * @param int    $ceiling Refusal ceiling; counting stops once past it.
      *
-     * @return int Decompressed size, or a value above $ceiling when the gzip is
-     *             already over the cap or large enough that ISIZE cannot be
-     *             trusted.
+     * @return int Decompressed bytes counted, or a value above $ceiling when
+     *             the compressed footprint alone already exceeds it, or zero
+     *             when zlib is unavailable (read_sql_dump then raises
+     *             ERR_UNSUPPORTED before import).
      */
     private function gzip_decompressed_size( string $path, int $ceiling ): int {
-        $compressed = (int) filesize( $path );
-
-        // A gzip whose compressed bytes already exceed the cap, or one at/past
-        // 4 GB (wrapped ISIZE), is refused without trusting the trailer.
-        if ( $compressed > $ceiling || $compressed >= 4294967296 ) {
+        // Loading even the compressed bytes into memory (read_sql_dump does,
+        // before gzdecode) already busts the budget, so refuse on that alone.
+        if ( (int) filesize( $path ) > $ceiling ) {
             return $ceiling + 1;
         }
 
-        $handle = fopen( $path, 'rb' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- local staged artifact; only its 4-byte trailer is read here, not the whole file.
-        if ( false === $handle ) {
-            return $compressed;
+        if ( ! function_exists( 'gzopen' ) ) {
+            return 0;
+        }
+        $gz = gzopen( $path, 'rb' );
+        if ( false === $gz ) {
+            return 0;
         }
 
-        $isize = null;
-        if ( 0 === fseek( $handle, -4, SEEK_END ) ) {
-            $trailer = fread( $handle, 4 ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fread -- reading the gzip ISIZE trailer, not the whole file.
-            if ( false !== $trailer && 4 === strlen( $trailer ) ) {
-                $isize = unpack( 'V', $trailer )[1];
+        $total = 0;
+        while ( true ) {
+            $chunk = gzread( $gz, 1048576 );
+            if ( false === $chunk || '' === $chunk ) {
+                break;
+            }
+            $total += strlen( $chunk );
+            if ( $total > $ceiling ) {
+                break;
             }
         }
-        fclose( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- closing the handle opened above.
-
-        if ( null === $isize ) {
-            return $compressed;
-        }
-        return max( $compressed, $isize );
+        gzclose( $gz );
+        return $total;
     }
 
     /**

@@ -240,6 +240,7 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 		$result = MainWP_Backup_Retention_Executor::instance()->run_prune( $candidates, $task, false );
 
 		$this->assertSame( 0, $result['snapshots_pruned'], 'No snapshot may be pruned while a restore references the chain.' );
+		$this->assertSame( 0, $result['pruned'], 'A held unit must not count as pruned - units_pruned would otherwise report a removal that never happened.' );
 		$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $base )->status );
 		$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $inc )->status );
 		$this->assertDirectoryExists( $base_dir );
@@ -253,6 +254,7 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 		$result = MainWP_Backup_Retention_Executor::instance()->run_prune( $candidates, $task, false );
 
 		$this->assertSame( 2, $result['snapshots_pruned'], 'A settled restore must release the hold.' );
+		$this->assertSame( 1, $result['pruned'], 'The released unit now counts as pruned.' );
 		$this->assertSame( 'pruned', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $base )->status );
 		$this->assertSame( 'pruned', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $inc )->status );
 		$this->assertDirectoryDoesNotExist( $base_dir );

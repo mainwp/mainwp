@@ -988,24 +988,62 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 	public function test_fresh_install_creates_complete_schema() {
 		global $wpdb;
 
-		$like   = $wpdb->esc_like( $wpdb->prefix . 'mainwp_' ) . '%';
+		$like = $wpdb->esc_like( $wpdb->prefix . 'mainwp_' ) . '%';
+
+		// Scope the drop-and-recreate to the tables MainWP_Install::install()
+		// actually owns, named from the CREATE TABLE statements it runs.
+		// Deriving the set from an allowlist - not from every mainwp_-prefixed
+		// table present - is what keeps the test from dropping tables another
+		// module or plugin owns (the cost tracker, the logs meta tables, the
+		// Assistant tables, ...). Those are never recreated by install(), so an
+		// exclusion approach both destroys unrelated fixtures and fails the
+		// set-equality below whenever one happens to be present. A new
+		// install-owned table must be added here or it goes uncovered on the
+		// fresh-install path.
+		$install_owned = array_map(
+			static function ( $suffix ) {
+				return MainWP_DB::instance()->get_table_name( $suffix );
+			},
+			array(
+				'wp',
+				'wp_sync',
+				'wp_options',
+				'wp_settings_backup',
+				'users',
+				'wp_status',
+				'group',
+				'wp_group',
+				'lookup_item_objects',
+				'wp_backup_progress',
+				'wp_backup',
+				'wp_backup_snapshot',
+				'wp_backup_storage',
+				'wp_backup_upload_job',
+				'wp_backup_restore_job',
+				'api_keys',
+				'action_log',
+				'request_log',
+				'schedule_processes',
+			)
+		);
+
 		$before = $wpdb->get_col( $wpdb->prepare( 'SHOW TABLES LIKE %s', $like ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test probe.
 		$this->assertNotEmpty( $before, 'Precondition: the installed schema is visible.' );
 
-		// These tables are created by module boot (cost tracker, logs,
-		// child changes), not by MainWP_Install::install(); a real fresh
-		// site gets them from plugin load. Leave them standing so the
-		// set-equality below scopes to the tables install() owns.
-		$module_owned = array(
-			$wpdb->prefix . 'mainwp_child_changes_meta',
-			$wpdb->prefix . 'mainwp_cost_tracker',
-			$wpdb->prefix . 'mainwp_wp_logs_meta',
-			$wpdb->prefix . 'mainwp_wp_logs_meta_archive',
-		);
-		$owned        = array_values( array_diff( $before, $module_owned ) );
+		$owned = array_values( array_intersect( $before, $install_owned ) );
+		$this->assertNotEmpty( $owned, 'Precondition: the installer-owned tables are present to drop.' );
+
+		// An unrelated mainwp_-prefixed table stands in for a fixture another
+		// module leaves in the schema; the fresh-install cycle must leave it
+		// untouched rather than sweeping it up. It is created, asserted, and
+		// dropped inside with_real_tables so the harness's temporary-table
+		// rewrite does not turn it into an invisible TEMPORARY table.
+		$foreign = $wpdb->prefix . 'mainwp_fixture_external';
 
 		$this->with_real_tables(
-			function () use ( $wpdb, $owned, $like ) {
+			function () use ( $wpdb, $owned, $like, $foreign ) {
+				$wpdb->query( "CREATE TABLE IF NOT EXISTS {$foreign} ( id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT, PRIMARY KEY (id) )" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.SchemaChange -- fresh-install fixture, identifiers cannot be prepared.
+
 				foreach ( $owned as $table ) {
 					$wpdb->query( "DROP TABLE IF EXISTS {$table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.SchemaChange -- fresh-install fixture, identifiers cannot be prepared.
 				}
@@ -1016,6 +1054,9 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 
 				$after = $wpdb->get_col( $wpdb->prepare( 'SHOW TABLES LIKE %s', $like ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test probe.
 				$this->assertSame( array(), array_values( array_diff( $owned, $after ) ), 'Fresh install must create every plugin table the installer owns.' );
+				$this->assertContains( $foreign, $after, 'The fresh-install cycle must not drop a table it does not own.' );
+
+				$wpdb->query( "DROP TABLE IF EXISTS {$foreign}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.SchemaChange -- test fixture cleanup, identifiers cannot be prepared.
 			}
 		);
 

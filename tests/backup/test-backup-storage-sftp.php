@@ -983,4 +983,54 @@ class MainWP_Backup_Storage_SFTP_Test extends \WP_UnitTestCase {
 			delete_option( 'mainwp_backup_sftp_hostkeys' );
 		}
 	}
+
+	/**
+	 * Forgetting one destination's pin must not clobber a pin a concurrent
+	 * process recorded for a DIFFERENT destination between the removal's read
+	 * and its write. The stale options cache hides that write, so a plain
+	 * read-modify-write would rewrite the whole option from the stale view and
+	 * drop the concurrent pin - returning that destination to trust-on-first-
+	 * use. Only routing removal through the same CAS the pin writes use keeps
+	 * it.
+	 *
+	 * @return void
+	 */
+	public function test_forget_host_key_preserves_concurrent_pin_for_other_destination() {
+		delete_option( 'mainwp_backup_sftp_hostkeys' );
+
+		$keep = MainWP_Backup_Storage_SFTP::fingerprint_host_key( $this->fake_host_key( 'keep' ) );
+		$drop = MainWP_Backup_Storage_SFTP::fingerprint_host_key( $this->fake_host_key( 'drop' ) );
+		$this->foreign_process_writes_hostkeys(
+			array(
+				10 => $drop,
+				20 => $keep,
+			)
+		);
+
+		// Prime this request's options cache with the two-pin view - the stale
+		// state a read-modify-write removal would act on.
+		get_option( 'mainwp_backup_sftp_hostkeys' );
+
+		// A concurrent process records a third destination's pin after the
+		// cache primed; only a direct read sees it.
+		$concurrent = MainWP_Backup_Storage_SFTP::fingerprint_host_key( $this->fake_host_key( 'concurrent' ) );
+		$this->foreign_process_writes_hostkeys(
+			array(
+				10 => $drop,
+				20 => $keep,
+				30 => $concurrent,
+			)
+		);
+
+		try {
+			MainWP_Backup_Storage_SFTP::forget_host_key( 10 );
+
+			$stored = $this->read_hostkeys_from_db();
+			$this->assertArrayNotHasKey( 10, $stored, 'The forgotten destination pin must be gone.' );
+			$this->assertSame( $keep, isset( $stored[20] ) ? $stored[20] : null, 'An untouched pin must survive the removal.' );
+			$this->assertSame( $concurrent, isset( $stored[30] ) ? $stored[30] : null, 'A pin recorded concurrently after the stale cache read must survive the removal.' );
+		} finally {
+			delete_option( 'mainwp_backup_sftp_hostkeys' );
+		}
+	}
 }

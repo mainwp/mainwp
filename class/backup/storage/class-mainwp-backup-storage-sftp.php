@@ -332,12 +332,43 @@ class MainWP_Backup_Storage_SFTP implements MainWP_Backup_Storage_Provider { // 
      * @param int $destination_id Destination id.
      */
     public static function forget_host_key( int $destination_id ): void {
-        $known = get_option( static::HOSTKEYS_OPTION );
-        if ( ! is_array( $known ) || ! isset( $known[ $destination_id ] ) ) {
-            return;
+        ( new self( array() ) )->forget_host_key_cas( $destination_id );
+    }
+
+    /**
+     * Compare-and-swap removal of one destination's learned pin, routed
+     * through the same direct-read/guarded-write the pin writes use so a
+     * concurrent record_first_use_pin() for a different destination is not
+     * clobbered by a stale read-modify-write. Mirrors that method's retry
+     * loop: a lost swap re-reads and retries; a missing row or an already
+     * absent pin is a no-op. When every swap loses (a dead or read-only DB),
+     * the stale pin is left standing rather than force-written - the next
+     * connect then refuses on host-key-change and the user re-saves, the
+     * fail-closed direction.
+     *
+     * @param int $destination_id Destination id.
+     *
+     * @return void
+     */
+    private function forget_host_key_cas( int $destination_id ): void {
+        for ( $attempt = 0; $attempt < 3; $attempt++ ) {
+            $raw = $this->hostkeys_raw_read();
+            if ( null === $raw ) {
+                return; // No row: nothing to forget.
+            }
+
+            $known = maybe_unserialize( $raw );
+            $known = is_array( $known ) ? $known : array();
+            if ( ! isset( $known[ $destination_id ] ) ) {
+                return; // Pin already gone.
+            }
+
+            unset( $known[ $destination_id ] );
+            if ( $this->hostkeys_cas_write( $raw, maybe_serialize( $known ) ) ) {
+                return;
+            }
+            // Lost the swap to a concurrent writer; re-read and retry.
         }
-        unset( $known[ $destination_id ] );
-        update_option( static::HOSTKEYS_OPTION, $known, false );
     }
 
     /**

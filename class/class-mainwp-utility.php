@@ -1273,7 +1273,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     public static function set_short_term_notice( $noti_key, $checked_at ) {
         $noti_handle_name = static::SHORT_TERM_NOTICE_OPTION_PREFIX . $noti_key;
         static::update_option( $noti_handle_name, $checked_at );
-        static::delete_user_short_term_notice( $noti_key ); // Deleting the current user's short-term notice will make the new notice visible to the user again.
+        static::delete_user_short_term_notice( $noti_key, true ); // Deleting the current user's short-term notice will make the new notice visible to the user again.
     }
 
 
@@ -1395,23 +1395,34 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * Delete all user short-term notices for the specified notice key.
      *
      * @param string $noti_key Notice key.
+     * @param bool   $keep_same_notice_type Keep same previous.
      *
      * @return void
      */
-    public static function delete_user_short_term_notice( $noti_key ) {
+    public static function delete_user_short_term_notice( $noti_key, $keep_same_notice_type = false ) {
 
         $noti_handle_name = static::SHORT_TERM_NOTICE_OPTION_PREFIX . $noti_key;
 
         $db = MainWP_DB::instance()->get_wpdb_instance();
 
+        $sql = "
+            DELETE FROM {$db->options}
+            WHERE option_name LIKE %s
+        ";
+
+        $args = array(
+            $db->esc_like( static::SHORT_TERM_NOTICE_OPTION_PREFIX ) . '%',
+        );
+
+        if ( $keep_same_notice_type ) {
+            $sql   .= ' AND option_name NOT LIKE %s';
+            $args[] = $db->esc_like(
+                static::SHORT_TERM_NOTICE_OPTION_PREFIX . $noti_handle_name . '_user_'
+            ) . '%';
+        }
+
         $db->query(
-            $db->prepare(
-                "
-                DELETE FROM {$db->options}
-                WHERE option_name LIKE %s
-                ",
-                $db->esc_like( $noti_handle_name . '_user_' ) . '%'
-            )
+            $db->prepare( $sql, ...$args )
         );
     }
 

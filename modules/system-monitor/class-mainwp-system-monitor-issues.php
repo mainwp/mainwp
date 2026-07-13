@@ -168,7 +168,7 @@ class MainWP_System_Monitor_Issues {
                 'severity'    => self::SEVERITY_WARNING, // default severity.
                 'title'       => __( 'Scheduled tasks have not run recently.', 'mainwp' ),
                 'description' => __( 'The System Monitor cron has not executed within the expected interval.', 'mainwp' ),
-                'help'        => 'customization/delayed-wp-cron',
+                'help'        => 'customization/manage-wp-cron-on-low-traffic-mainwp-dashboard',
             ),
             MainWP_System_Monitor_Cron::ISSUE_MONITOR_FALLBACK => array(
                 'code'        => MainWP_System_Monitor_Cron::ISSUE_MONITOR_FALLBACK,

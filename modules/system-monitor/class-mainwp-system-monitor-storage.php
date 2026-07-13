@@ -51,11 +51,12 @@ class MainWP_System_Monitor_Storage {
      */
     public static function save_results( $monitor, array $results ) {
 
+        // Delete issues from the previous scan.
+        self::delete_results( $monitor );
+
         if ( empty( $results ) ) {
             return 0;
         }
-
-        self::delete_results( $monitor );
 
         $count = 0;
 

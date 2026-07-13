@@ -72,7 +72,7 @@ class MainWP_System_Monitor_Cron implements MainWP_System_Monitor_Interface {
         $use_wpcron = MainWP_Utility::get_use_cron();
         $results    = array();
         $saved      = get_option( 'mainwp_system_monitor_use_wp_cron_saved' );
-        if ( $use_wpcron !== $saved ) {
+        if ( $use_wpcron !== (int) $saved ) {
             // if get_use_cron changes state.
             if ( ! $use_wpcron ) {
                 $results[] = new MainWP_System_Monitor_Result(

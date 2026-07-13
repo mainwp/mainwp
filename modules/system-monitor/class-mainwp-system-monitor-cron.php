@@ -72,7 +72,7 @@ class MainWP_System_Monitor_Cron implements MainWP_System_Monitor_Interface {
         $use_wpcron = MainWP_Utility::get_use_cron();
         $results    = array();
         $saved      = get_option( 'mainwp_system_monitor_use_wp_cron_saved' );
-        if ( $use_wpcron !== (int) $saved ) {
+        if ( $use_wpcron !== (int) $saved || false === $saved ) {
             // if get_use_cron changes state.
             if ( ! $use_wpcron ) {
                 $results[] = new MainWP_System_Monitor_Result(
@@ -88,6 +88,7 @@ class MainWP_System_Monitor_Cron implements MainWP_System_Monitor_Interface {
 
             } else {
                 MainWP_System_Monitor_Storage::delete_results( self::NAME, self::ISSUE_USE_WP_CRON_DISABLED ); // So the issue notice won't be displayed.
+                MainWP_Utility::dismiss_short_term_monitor_notices( self::NAME, self::ISSUE_USE_WP_CRON_DISABLED );
             }
             MainWP_Utility::update_option( 'mainwp_system_monitor_use_wp_cron_saved', $use_wpcron ); // prevemt insert multi use_wp_cron scan issue.
         }

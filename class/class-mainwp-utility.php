@@ -22,9 +22,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
     /**
-     * New short term notice prefix.
+     * Prefix for short-term notice options.
      */
     const SHORT_TERM_NOTICE_OPTION_PREFIX = '_mainwp_temp_notice_';
+
+
+    /**
+     * Prefix for per-user short-term notice options.
+     */
+    const USER_SHORT_TERM_NOTICE_OPTION_PREFIX = '_mainwp_user_temp_notice_';
+
 
     /**
      * New short term notice TTL.
@@ -1265,15 +1272,19 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      *
      * Set new temporary notice.
      *
+     * @param string $monitor Monitor.
      * @param string $noti_key Notice key.
      * @param int    $checked_at Notice checked at.
      *
      * @return void.
      */
-    public static function set_short_term_notice( $noti_key, $checked_at ) {
-        $noti_handle_name = static::SHORT_TERM_NOTICE_OPTION_PREFIX . $noti_key;
+    public static function set_short_term_notice( $monitor, $noti_key, $checked_at ) {
+        if ( empty( $monitor ) || empty( $noti_key ) ) {
+            return;
+        }
+        $noti_handle_name = static::SHORT_TERM_NOTICE_OPTION_PREFIX . $monitor . '_' . $noti_key;
+        static::delete_short_term_notice_options( $monitor, '', $noti_key );
         static::update_option( $noti_handle_name, $checked_at );
-        static::delete_user_short_term_notice( $noti_key, true ); // Deleting the current user's short-term notice will make the new notice visible to the user again.
     }
 
 
@@ -1282,13 +1293,18 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      *
      * Check whether the short-term notice is still active.
      *
+     * @param string $monitor Monitor name.
      * @param string $noti_key Notice key.
      *
      * @return boolean true|false.
      */
-    public static function is_short_term_notice( $noti_key ) {
+    public static function is_short_term_notice( $monitor, $noti_key ) {
 
-        $noti_handle_name = static::SHORT_TERM_NOTICE_OPTION_PREFIX . $noti_key;
+        if ( empty( $monitor ) || empty( $noti_key ) ) {
+            return false;
+        }
+
+        $noti_handle_name = static::SHORT_TERM_NOTICE_OPTION_PREFIX . $monitor . '_' . $noti_key;
 
         $notice_time = get_option( $noti_handle_name );
 
@@ -1301,13 +1317,12 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         }
 
         if ( time() - (int) $notice_time < self::SHORT_TERM_NOTICE_TTL ) {
-            $user = wp_get_current_user();
-            if ( $user && ! empty( $user->ID ) ) {
-                return 'dismissed' !== get_option( $noti_handle_name . '_user_' . $user->ID ); // The notice has not been dismissed by the user.
+            if ( static::is_short_term_dismissed_notice( $monitor, $noti_key ) ) {
+                return false;
             }
             return true;
         } else {
-            static::delete_user_short_term_notice( $noti_key );
+            static::delete_short_term_notice_options( $monitor, $noti_key );
             delete_option( $noti_handle_name );
         }
         return false;
@@ -1315,17 +1330,40 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
 
     /**
+     * Method is_short_term_dismissed_notice()
+     *
+     * Check whether the short-term notice is user dismissed.
+     *
+     * @param string $monitor Monitor.
+     * @param string $noti_key Notice key.
+     *
+     * @return boolean true|false.
+     */
+    public static function is_short_term_dismissed_notice( $monitor, $noti_key ) {
+        if ( empty( $monitor ) || empty( $noti_key ) ) {
+            return false;
+        }
+        $user_noti_handle = static::USER_SHORT_TERM_NOTICE_OPTION_PREFIX . $monitor . '_' . $noti_key;
+        $user             = wp_get_current_user();
+        if ( $user && ! empty( $user->ID ) ) {
+            return 'dismissed' === get_option( $user_noti_handle . '_user_' . $user->ID );
+        }
+        return false;
+    }
+
+    /**
      * Method dismiss_short_term_monitor_notices()
      *
-     * @param string $prefix Issue addition prefix.
+     * @param string $monitor Monitor.
+     * @param string $issue_code Issue code optional.
      *
      * @return void.
      */
-    public static function dismiss_short_term_monitor_notices( $prefix ) {
-        if ( empty( $prefix ) || ! is_string( $prefix ) ) {
+    public static function dismiss_short_term_monitor_notices( $monitor, $issue_code = '' ) {
+        if ( empty( $monitor ) ) {
             return;
         }
-        static::purge_expired_short_term_notices( true, $prefix );
+        static::purge_expired_short_term_notices( $monitor, $issue_code, true );
     }
 
 
@@ -1334,14 +1372,24 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      *
      * Set new temporary notice.
      *
+     * @param string $monitor Monitor.
+     * @param string $issue_code Short term key prefix.
      * @param bool   $forced Forced purge short term notices.
-     * @param string $prefix short term key prefix.
      *
      * @return void.
      */
-    public static function purge_expired_short_term_notices( $forced = false, $prefix = '' ) {
+    public static function purge_expired_short_term_notices( $monitor = '', $issue_code = '', $forced = false ) {
 
         $opt_prefix = self::SHORT_TERM_NOTICE_OPTION_PREFIX;
+
+        $prefix = '';
+
+        if ( ! empty( $monitor ) ) {
+            $prefix = $monitor . '_';
+            if ( ! empty( $issue_code ) ) {
+                $prefix .= $issue_code;
+            }
+        }
 
         $timeout = time() - self::SHORT_TERM_NOTICE_TTL;
 
@@ -1366,11 +1414,21 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $options = $db->get_col( $sql );
 
         foreach ( $options as $option_name ) {
-            $noti_key = substr( $option_name, strlen( $opt_prefix ) );
-
+            $monitor_noti_key = substr( $option_name, strlen( $opt_prefix ) );
             delete_option( $option_name );
 
-            static::delete_user_short_term_notice( $noti_key );
+            $sql_del = "
+                DELETE FROM {$db->options}
+                WHERE option_name LIKE %s
+            ";
+
+            $args = array(
+                $db->esc_like( static::USER_SHORT_TERM_NOTICE_OPTION_PREFIX . $monitor_noti_key ) . '%',
+            );
+
+            $db->query(
+                $db->prepare( $sql_del, ...$args )
+            );
         }
     }
 
@@ -1379,12 +1437,12 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      *
      * Hide short term notice.
      *
-     * @param string $noti_key Notice key.
+     * @param string $monitor_noti_key Notice key.
      *
      * @return void.
      */
-    public static function dismiss_user_short_term_notice( $noti_key ) {
-        $noti_handle_name = static::SHORT_TERM_NOTICE_OPTION_PREFIX . $noti_key;
+    public static function dismiss_user_short_term_notice( $monitor_noti_key ) {
+        $noti_handle_name = static::USER_SHORT_TERM_NOTICE_OPTION_PREFIX . $monitor_noti_key;
         $user             = wp_get_current_user();
         if ( $user && ! empty( $user->ID ) ) {
             static::update_option( $noti_handle_name . '_user_' . $user->ID, 'dismissed' );
@@ -1392,16 +1450,22 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     }
 
     /**
-     * Delete all user short-term notices for the specified notice key.
+     * Delete user short-term notice options for the specified monitor.
      *
-     * @param string $noti_key Notice key.
-     * @param bool   $keep_same_notice_type Keep same previous.
+     * Optionally preserves the dismissed state for the current notice.
+     *
+     * @param string $monitor            Monitor name.
+     * @param string $delete_notice_key  Notice key to delete. Leave empty to delete
+     *                                   all notice options for the monitor.
+     * @param string $current_notice_key Current notice key to preserve.
      *
      * @return void
      */
-    public static function delete_user_short_term_notice( $noti_key, $keep_same_notice_type = false ) {
+    public static function delete_short_term_notice_options( $monitor, $delete_notice_key = '', $current_notice_key = '' ) {
 
-        $noti_handle_name = static::SHORT_TERM_NOTICE_OPTION_PREFIX . $noti_key;
+        if ( empty( $monitor ) ) {
+            return;
+        }
 
         $db = MainWP_DB::instance()->get_wpdb_instance();
 
@@ -1411,13 +1475,16 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         ";
 
         $args = array(
-            $db->esc_like( static::SHORT_TERM_NOTICE_OPTION_PREFIX ) . '%',
+            $db->esc_like(
+                static::USER_SHORT_TERM_NOTICE_OPTION_PREFIX . $monitor . '_' . (string) $delete_notice_key
+            ) . '%',
         );
 
-        if ( $keep_same_notice_type ) {
+        // Preserve the user's dismissed state for the current notice.
+        if ( '' !== $current_notice_key ) {
             $sql   .= ' AND option_name NOT LIKE %s';
             $args[] = $db->esc_like(
-                static::SHORT_TERM_NOTICE_OPTION_PREFIX . $noti_handle_name . '_user_'
+                static::USER_SHORT_TERM_NOTICE_OPTION_PREFIX . $monitor . '_' . $current_notice_key . '_user_'
             ) . '%';
         }
 

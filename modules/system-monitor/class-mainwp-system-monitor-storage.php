@@ -55,6 +55,7 @@ class MainWP_System_Monitor_Storage {
         self::delete_results( $monitor );
 
         if ( empty( $results ) ) {
+            MainWP_Utility::dismiss_short_term_monitor_notices( $monitor );
             return 0;
         }
 
@@ -70,6 +71,7 @@ class MainWP_System_Monitor_Storage {
             }
         }
 
+        MainWP_Utility::dismiss_short_term_monitor_notices( $monitor );
         return $count;
     }
 
@@ -112,11 +114,10 @@ class MainWP_System_Monitor_Storage {
         $insert_id = (int) static::get_db()->insert_id;
         if ( $insert_id ) {
             $key = static::get_notice_key(
-                $monitor,
                 $result->get_issue_code(),
                 $result->get_entity()
             );
-            MainWP_Utility::set_short_term_notice( $key, $checked_at );
+            MainWP_Utility::set_short_term_notice( $monitor, $key, $checked_at );
         }
         return $insert_id;
     }
@@ -125,15 +126,14 @@ class MainWP_System_Monitor_Storage {
     /**
      * Generate a notice key.
      *
-     * @param string $monitor Monitor name.
      * @param string $code    Issue code.
      * @param string $entity  Issue entity.
      *
      * @return string Notice key.
      */
-    public static function get_notice_key( $monitor, $code, $entity ) {
+    public static function get_notice_key( $code, $entity ) {
         return sanitize_key(
-            $monitor . '_' . $code . '_' . $entity
+            $code . '_' . $entity
         );
     }
 
@@ -216,11 +216,5 @@ class MainWP_System_Monitor_Storage {
             $where,
             $where_format
         );
-
-        $prefix = $monitor;
-        if ( ! empty( $issue_code ) ) {
-            $prefix .= '_' . $issue_code; // match with get_notice_key().
-        }
-        MainWP_Utility::dismiss_short_term_monitor_notices( $prefix );
     }
 }

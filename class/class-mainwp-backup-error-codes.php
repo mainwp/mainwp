@@ -98,6 +98,8 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
     const ERR_NO_PERMISSION   = 'mainwp_backup_no_permission';
     const ERR_LEGACY_DISABLED = 'mainwp_backup_legacy_disabled';
 
+    const ERR_CHILD_UPDATE_REQUIRED = 'mainwp_backup_child_update_required';
+
     // Upload.
     const ERR_FTP_FAILED     = 'mainwp_backup_ftp_failed';
     const ERR_DROPBOX_FAILED = 'mainwp_backup_dropbox_failed';
@@ -246,6 +248,7 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
             self::ERR_SUSPENDED_SITE             => esc_html__( 'This site is suspended in the dashboard, so backups are not run for it. Unsuspend the site to run backups.', 'mainwp' ),
             self::ERR_NO_PERMISSION              => esc_html__( 'You do not have permission to run backups. Ask the dashboard administrator to grant backup access to your user role.', 'mainwp' ),
             self::ERR_LEGACY_DISABLED            => esc_html__( 'Native backups are not enabled for this site. Go to Settings > Backups to enable the legacy backup feature.', 'mainwp' ),
+            self::ERR_CHILD_UPDATE_REQUIRED      => esc_html__( 'The MainWP Child plugin on this site is too old to run backups. Update MainWP Child on the site, then sync it to run backups again.', 'mainwp' ),
             self::ERR_FTP_FAILED                 => esc_html__( 'Could not upload the backup to the FTP server. Check the FTP credentials and that the server is reachable, then try again.', 'mainwp' ),
             self::ERR_DROPBOX_FAILED             => esc_html__( 'Could not upload the backup to Dropbox. Check the Dropbox connection settings and available storage space, then try again.', 'mainwp' ),
             self::ERR_S3_FAILED                  => esc_html__( 'Could not upload the backup to Amazon S3. Check the S3 credentials, bucket name, and permissions, then try again.', 'mainwp' ),

@@ -67,6 +67,7 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 				'bz2_support'     => true,
 				'time_limit_ok'   => true,
 				'backup_dir_hash' => 'abc123def456gh78',
+				'task_spine'      => 1,
 			),
 			$overrides
 		);
@@ -125,6 +126,9 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 			'subfolder'                      => 'backups',
 		);
 
+		if ( isset( $responses['backup'] ) && ! isset( $responses['backup_task_create'] ) ) {
+			$responses['backup_task_create'] = $responses['backup'];
+		}
 		$this->mock_child_actions( $responses );
 
 		try {
@@ -208,7 +212,7 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 			'mainwp_fetch_url_authed_pre',
 			function ( $result, $website, $what, $params ) use ( &$captured ) {
 				unset( $website );
-				if ( 'backup' === $what && isset( $params['ext'] ) ) {
+				if ( 'backup_task_create' === $what && isset( $params['ext'] ) ) {
 					$captured['ext'] = $params['ext'];
 				}
 				return $result;
@@ -249,7 +253,7 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 			'mainwp_fetch_url_authed_pre',
 			function ( $result, $website, $what, $params ) use ( &$captured ) {
 				unset( $website );
-				if ( 'backup' === $what && isset( $params['f'] ) ) {
+				if ( 'backup_task_create' === $what && isset( $params['f'] ) ) {
 					$captured['f'] = $params['f'];
 				}
 				return $result;
@@ -875,11 +879,11 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * An old child without the preflight action does not block backups.
+	 * An old child without the preflight action is refused by the task-spine gate.
 	 *
 	 * @return void
 	 */
-	public function test_preflight_error_response_proceeds_with_backup() {
+	public function test_preflight_error_response_requires_child_update() {
 		$site_id = $this->create_test_site();
 
 		$exception = $this->run_backup_site(
@@ -894,7 +898,7 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 		);
 
 		$this->assertNotNull( $exception );
-		$this->assertStringContainsString( 'reached the backup action', $exception->getMessage(), 'The backup request must still happen when preflight is unsupported.' );
+		$this->assertSame( 'mainwp_backup_child_update_required', $exception->get_message_error_code() );
 	}
 
 	/**

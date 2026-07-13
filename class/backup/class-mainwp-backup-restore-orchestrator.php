@@ -668,11 +668,6 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
 
         if ( ! empty( $job->checkpoint['options']['pre_snapshot'] ) ) {
             $task_id = MainWP_Backup_Executor::trigger_backup( (int) $job->site_id, 'full' );
-            if ( null === $task_id ) {
-                // Synchronous fallback children completed the backup inline.
-                $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_STAGING, array(), $this->lock_token );
-                return;
-            }
             $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT, array( 'pre_snapshot_task_id' => $task_id ), $this->lock_token );
             return;
         }

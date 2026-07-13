@@ -20,6 +20,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
     /**
+     * Site option holding a child cancel the child refused, owed to a later pass.
+     *
+     * @var string
+     */
+    const PENDING_CANCEL_OPTION = 'backup_pending_child_cancel';
+
+    /**
+     * How many passes may retry a refused child cancel before giving up.
+     *
+     * @var int
+     */
+    const PENDING_CANCEL_MAX_ATTEMPTS = 10;
+
+    /**
      * Instance variable.
      *
      * @var null $instance.
@@ -891,6 +905,12 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             }
             $website = MainWP_DB::instance()->get_website_by_id( $siteid );
 
+            // An earlier terminal mark can leave a cancel the child refused
+            // while a runner held the lease. That task is still active on the
+            // child and refuses this site's next create, so land the owed
+            // cancel before asking for a new backup.
+            static::flush_pending_child_cancel( $website );
+
             $_mark_detail = '';
             try {
                 $subfolder = str_replace( '%task%', MainWP_Utility::sanitize( $task->name ), $task->subfolder );
@@ -1111,14 +1131,8 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         $child_terminal = MainWP_Backup_Task_Phase::COMPLETED === $child_phase || MainWP_Backup_Task_Phase::FAILED === $child_phase;
         if ( ! $child_terminal && ! MainWP_Backup_Executor::is_creating_marker( $child_task_id ) ) {
             $website = MainWP_DB::instance()->get_website_by_id( (int) $site_id );
-            if ( ! empty( $website ) ) {
-                try {
-                    MainWP_Connect::fetch_url_authed( $website, 'backup_task_cancel', array( 'task_id' => $child_task_id ), false, false, false );
-                    MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Backup cancelled on the child after a terminal failure mark (child task: ' . $child_task_id . ')' );
-                } catch ( \Exception $e ) {
-                    // Best effort: an unreachable child must not block the dashboard-side cleanup.
-                    MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Child cancel after a terminal failure mark did not land: ' . $e->getMessage() );
-                }
+            if ( ! empty( $website ) && ! static::send_child_task_cancel( $website, $child_task_id ) ) {
+                static::record_pending_child_cancel( $website, $child_task_id );
             }
         }
 
@@ -1130,6 +1144,111 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                 'child_phase'          => MainWP_Backup_Task_Phase::FAILED,
             )
         );
+    }
+
+    /**
+     * Ask the child to cancel a named backup task, and report whether the
+     * task is actually gone.
+     *
+     * A child whose runner holds the task's lease answers a cancel with a
+     * plain busy result, not an error: the task stays ACTIVE and keeps
+     * refusing every backup on the site. Treating that response as success
+     * is what let an abandoned task outlive the terminal mark, so busy - and
+     * an unreachable child - report failure and earn a retry. Every other
+     * answer means the child no longer holds the task (cancelled, already
+     * terminal, nothing active, or an id the child cannot find), which is
+     * all the caller needs.
+     *
+     * @param object $website       Website row.
+     * @param string $child_task_id Child task id to cancel.
+     *
+     * @return bool True when the child no longer holds the task.
+     */
+    protected static function send_child_task_cancel( $website, $child_task_id ) {
+        try {
+            $information = MainWP_Connect::fetch_url_authed( $website, 'backup_task_cancel', array( 'task_id' => $child_task_id ), false, false, false );
+        } catch ( \Exception $e ) {
+            MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Child cancel did not land: ' . $e->getMessage() );
+            return false;
+        }
+
+        if ( is_array( $information ) && isset( $information['result'] ) && 'busy' === $information['result'] ) {
+            MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'The child refused the cancel as busy (child task: ' . $child_task_id . '); a later pass retries it.' );
+            return false;
+        }
+
+        MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Backup cancelled on the child (child task: ' . $child_task_id . ')' );
+        return true;
+    }
+
+    /**
+     * Remember a cancel the child refused, so a later pass can land it.
+     *
+     * The progress row is cleared by the terminal mark itself, so it cannot
+     * carry the owed cancel: the site option is what survives to the next
+     * pass.
+     *
+     * @param object $website       Website row.
+     * @param string $child_task_id Child task id still active on the child.
+     *
+     * @return void
+     */
+    protected static function record_pending_child_cancel( $website, $child_task_id ) {
+        MainWP_DB::instance()->update_website_option(
+            $website,
+            static::PENDING_CANCEL_OPTION,
+            wp_json_encode(
+                array(
+                    'task_id'  => (string) $child_task_id,
+                    'attempts' => 0,
+                )
+            )
+        );
+    }
+
+    /**
+     * Retry a cancel the child refused, before this site is backed up again.
+     *
+     * An abandoned child task refuses the next create on the site, so the
+     * owed cancel is landed at the top of the site's next run rather than
+     * left for the child's wall clock. The retry is capped: the child's own
+     * queued reclaim and wall-clock deadline are the backstop, and an
+     * unbounded retry would outlive the task it names.
+     *
+     * @param object $website Website row.
+     *
+     * @return void
+     */
+    public static function flush_pending_child_cancel( $website ) {
+        if ( empty( $website ) ) {
+            return;
+        }
+
+        $raw = MainWP_DB::instance()->get_website_option( $website, static::PENDING_CANCEL_OPTION );
+        if ( empty( $raw ) ) {
+            return;
+        }
+
+        $pending = json_decode( (string) $raw, true );
+        if ( ! is_array( $pending ) || empty( $pending['task_id'] ) ) {
+            MainWP_DB::instance()->update_website_option( $website, static::PENDING_CANCEL_OPTION, '' );
+            return;
+        }
+
+        if ( static::send_child_task_cancel( $website, (string) $pending['task_id'] ) ) {
+            MainWP_DB::instance()->update_website_option( $website, static::PENDING_CANCEL_OPTION, '' );
+            return;
+        }
+
+        $attempts = (int) $pending['attempts'] + 1;
+        if ( $attempts >= static::PENDING_CANCEL_MAX_ATTEMPTS ) {
+            MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'Gave up cancelling an abandoned child backup task after ' . $attempts . ' attempts (child task: ' . $pending['task_id'] . ')' );
+            MainWP_DB::instance()->update_website_option( $website, static::PENDING_CANCEL_OPTION, '' );
+            return;
+        }
+
+        $pending['attempts'] = $attempts;
+        MainWP_DB::instance()->update_website_option( $website, static::PENDING_CANCEL_OPTION, wp_json_encode( $pending ) );
     }
 
     /**

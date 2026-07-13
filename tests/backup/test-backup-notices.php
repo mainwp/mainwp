@@ -75,6 +75,7 @@ class MainWP_Backup_Notices_Test extends MainWP_Abilities_Test_Case {
 				'bz2_support'     => true,
 				'time_limit_ok'   => true,
 				'backup_dir_hash' => 'abc123def456gh78',
+				'task_spine'      => 1,
 			),
 			$overrides
 		);
@@ -487,8 +488,8 @@ class MainWP_Backup_Notices_Test extends MainWP_Abilities_Test_Case {
 
 		$this->mock_child_actions(
 			array(
-				'backup_preflight' => $this->preflight_response( array( 'estimated_bytes' => 3 * GB_IN_BYTES ) ),
-				'backup'           => array( 'error' => 'stop here' ),
+				'backup_preflight'   => $this->preflight_response( array( 'estimated_bytes' => 3 * GB_IN_BYTES ) ),
+				'backup_task_create' => array( 'error' => 'stop here' ),
 			)
 		);
 

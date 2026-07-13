@@ -209,44 +209,34 @@ class MainWP_Backup_Executor_Contract_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * A child without the task machine falls back to the synchronous
-	 * legacy backup, downloads the artifact, fires the completion hook,
-	 * and returns null.
+	 * A child without the task machine is refused with a coded update error
+	 * instead of running the synchronous legacy backup.
 	 *
 	 * @return void
 	 */
-	public function test_trigger_backup_legacy_child_falls_back_blocking() {
+	public function test_trigger_backup_without_spine_throws_child_update_required() {
 		$site_id = $this->create_test_site();
-		$this->give_site_real_privkey( $site_id );
 		$this->mock_child_action( 'backup_preflight', array( 'zip_support' => true ) );
 		$this->mock_child_action(
 			'backup',
 			array(
-				'full' => 'backup-1749600000.tar.gz',
-				'db'   => false,
-				'size' => 66,
+				'error'      => 'Could not write backup data.',
+				'error_code' => 'mainwp_backup_disk_full',
 			)
 		);
-		$this->stub_download_with_valid_gzip();
 
-		$events = array();
-		$this->record_completion_hook( $events );
+		$called = array();
+		$this->record_child_actions( $called );
 
-		$ob_level = ob_get_level();
-		ob_start();
 		try {
-			$task_id = MainWP_Backup_Executor::trigger_backup( $site_id, 'full' );
-		} finally {
-			while ( ob_get_level() > $ob_level ) {
-				ob_end_clean();
-			}
+			MainWP_Backup_Executor::trigger_backup( $site_id, 'full' );
+			$this->fail( 'Expected a child-update-required exception.' );
+		} catch ( MainWP_Exception $e ) {
+			$this->assertSame( 'mainwp_backup_child_update_required', $e->get_message_error_code() );
 		}
 
-		$this->assertNull( $task_id, 'The synchronous fallback completes without a task handle.' );
-		$this->assertCount( 1, $events );
-		$this->assertTrue( $events[0]['success'] );
-		$this->assertSame( $site_id, (int) $events[0]['site_id'] );
-		$this->assertFileExists( $events[0]['meta']['local'] );
+		$this->assertNotContains( 'backup', $called, 'The ad-hoc task flow must not invoke the legacy backup engine.' );
+		$this->assertNotContains( 'backup_task_create', $called );
 	}
 
 	/**

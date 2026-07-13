@@ -17,6 +17,7 @@ use MainWP\Dashboard\MainWP_Backup_Monitor;
 use MainWP\Dashboard\MainWP_Backup_Restore_Job_Store;
 use MainWP\Dashboard\MainWP_Backup_Restore_Orchestrator;
 use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_Backup_Error_Codes;
 use MainWP\Dashboard\MainWP_DB_Backup;
 use MainWP\Dashboard\MainWP_Exception;
 use MainWP\Dashboard\MainWP_Manage_Backups_Handler;
@@ -754,15 +755,21 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 			function ( $result, $website, $what ) use ( $task, $site_id ) {
 				unset( $website );
 				if ( 'backup_preflight' === $what ) {
-					return array( 'time_limit_ok' => true );
+					return array(
+						'time_limit_ok' => true,
+						'task_spine'    => 1,
+					);
 				}
-				if ( 'backup' === $what ) {
+				if ( 'backup_task_create' === $what ) {
 					MainWP_DB_Backup::instance()->update_backup_task_progress(
 						(int) $task->id,
 						$site_id,
 						array( 'child_backup_task_id' => 'task-other-driver' )
 					);
-					return array( 'error' => 'Another backup process is running on this site.' );
+					return array(
+						'error'      => 'Another backup process is running on this site.',
+						'error_code' => MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING,
+					);
 				}
 				return $result;
 			},
@@ -839,8 +846,11 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 
 		$this->mock_child_actions(
 			array(
-				'backup_preflight' => array( 'zip_support' => true ),
-				'backup'           => array( 'error' => 'Could not write backup data.' ),
+				'backup_preflight'   => array(
+					'zip_support' => true,
+					'task_spine'  => 1,
+				),
+				'backup_task_create' => array( 'error' => 'Could not write backup data.' ),
 			)
 		);
 

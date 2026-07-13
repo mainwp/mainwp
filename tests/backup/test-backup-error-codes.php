@@ -139,6 +139,21 @@ class MainWP_Backup_Error_Codes_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * The child-update gate has a registered terminal code and its signed-off copy.
+	 *
+	 * @return void
+	 */
+	public function test_child_update_required_code_is_registered_with_signed_off_message() {
+		$this->assertSame( 'mainwp_backup_child_update_required', MainWP_Backup_Error_Codes::ERR_CHILD_UPDATE_REQUIRED );
+		$this->assertContains( MainWP_Backup_Error_Codes::ERR_CHILD_UPDATE_REQUIRED, MainWP_Backup_Error_Codes::get_registered_codes() );
+		$this->assertSame(
+			'The MainWP Child plugin on this site is too old to run backups. Update MainWP Child on the site, then sync it to run backups again.',
+			MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_CHILD_UPDATE_REQUIRED )
+		);
+		$this->assertSame( 'error', MainWP_Backup_Error_Codes::severity( MainWP_Backup_Error_Codes::ERR_CHILD_UPDATE_REQUIRED ) );
+	}
+
+	/**
 	 * The incremental backup codes are registered: the child reports a
 	 * missing or unusable parent manifest (the dashboard reruns the site as
 	 * a full backup) and an oversized manifest push.

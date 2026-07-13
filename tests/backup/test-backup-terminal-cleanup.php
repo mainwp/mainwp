@@ -21,6 +21,7 @@ namespace MainWP\Dashboard\Tests;
 use MainWP\Dashboard\MainWP_Backup_Error_Codes;
 use MainWP\Dashboard\MainWP_Backup_Executor;
 use MainWP\Dashboard\MainWP_Backup_Monitor;
+use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_DB_Backup;
 use MainWP\Dashboard\MainWP_Manage_Backups_Handler;
 use MainWP\Dashboard\MainWP_Post_Backup_Handler;
@@ -39,6 +40,15 @@ class MainWP_Backup_Terminal_Cleanup_Test extends MainWP_Abilities_Test_Case {
 	private $cancel_calls = array();
 
 	/**
+	 * What the stubbed child answers a backup_task_cancel with. Defaults to
+	 * a landed cancel; a test that needs a lease-holding child overrides it
+	 * with the child's real busy shape.
+	 *
+	 * @var array
+	 */
+	private $cancel_response = array( 'result' => 'ok' );
+
+	/**
 	 * Set up: enable native backups and capture child cancel calls.
 	 *
 	 * @return void
@@ -47,14 +57,15 @@ class MainWP_Backup_Terminal_Cleanup_Test extends MainWP_Abilities_Test_Case {
 		parent::setUp();
 		update_option( 'mainwp_enableNativeBackups', 1 );
 
-		$this->cancel_calls = array();
+		$this->cancel_calls    = array();
+		$this->cancel_response = array( 'result' => 'ok' );
 		add_filter(
 			'mainwp_fetch_url_authed_pre',
 			function ( $result, $website, $what, $params ) {
 				unset( $website );
 				if ( 'backup_task_cancel' === $what ) {
 					$this->cancel_calls[] = is_array( $params ) ? $params : array();
-					return array( 'result' => 'ok' );
+					return $this->cancel_response;
 				}
 				return $result;
 			},
@@ -356,5 +367,105 @@ class MainWP_Backup_Terminal_Cleanup_Test extends MainWP_Abilities_Test_Case {
 		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
 		$this->assertSame( '', (string) $progress->child_backup_task_id, 'The row must be cleared even when the child is unreachable.' );
 		$this->assertSame( 'failed', (string) $progress->child_phase, 'The terminal stamp must not depend on the child answering.' );
+	}
+
+	/**
+	 * Read the cancel this site still owes the child.
+	 *
+	 * @param int $site_id Site ID.
+	 *
+	 * @return array Decoded pending-cancel record, or an empty array.
+	 */
+	private function pending_cancel( $site_id ) {
+		$website = MainWP_DB::instance()->get_website_by_id( (int) $site_id );
+		$raw     = MainWP_DB::instance()->get_website_option( $website, MainWP_Manage_Backups_Handler::PENDING_CANCEL_OPTION );
+		$decoded = json_decode( (string) $raw, true );
+		return is_array( $decoded ) ? $decoded : array();
+	}
+
+	/**
+	 * A child whose runner holds the task lease refuses the cancel as busy -
+	 * a plain result, not an error. The terminal mark must not read that as
+	 * a landed cancel: the task is still ACTIVE on the child and refuses the
+	 * site's next backup, so the cancel is owed to a later pass.
+	 *
+	 * @return void
+	 */
+	public function test_busy_cancel_refusal_is_recorded_as_owed() {
+		list( $site_id, $task ) = $this->site_and_open_task();
+		$this->seed_exhausted_throwing_row( (int) $task->id, $site_id, 'task-leased-1' );
+		$this->cancel_response = array(
+			'result' => 'busy',
+			'phase'  => 'archiving',
+		);
+
+		MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, false );
+
+		$this->assertCount( 1, $this->cancel_calls, 'The terminal mark must still attempt the cancel once.' );
+
+		$pending = $this->pending_cancel( $site_id );
+		$this->assertSame( 'task-leased-1', $pending['task_id'] ?? null, 'A busy refusal must leave the precise child task id owed to a later pass.' );
+		$this->assertSame( 0, (int) ( $pending['attempts'] ?? -1 ), 'The owed cancel starts with a clean retry count.' );
+
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+		$this->assertSame( '', (string) $progress->child_backup_task_id, 'The row clear must stay immediate: only the child-side cancel gains persistence.' );
+		$this->assertSame( 'failed', (string) $progress->child_phase, 'The terminal stamp must not wait on the child taking the cancel.' );
+	}
+
+	/**
+	 * The next run over the site lands the owed cancel BEFORE it asks for a
+	 * new backup - which is the whole point: an abandoned task refuses the
+	 * create, so it has to be cleared first.
+	 *
+	 * @return void
+	 */
+	public function test_next_run_lands_the_owed_cancel_before_creating() {
+		list( $site_id, $task ) = $this->site_and_open_task();
+		$website                = MainWP_DB::instance()->get_website_by_id( (int) $site_id );
+		MainWP_DB::instance()->update_website_option(
+			$website,
+			MainWP_Manage_Backups_Handler::PENDING_CANCEL_OPTION,
+			wp_json_encode(
+				array(
+					'task_id'  => 'task-abandoned-9',
+					'attempts' => 0,
+				)
+			)
+		);
+		$this->seed_exhausted_throwing_row( (int) $task->id, $site_id, 'task-current-1' );
+
+		MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, false );
+
+		$this->assertNotEmpty( $this->cancel_calls, 'The run must talk to the child about the abandoned task.' );
+		$this->assertSame( 'task-abandoned-9', $this->cancel_calls[0]['task_id'] ?? null, 'The owed cancel must be retried first, before this run touches the site.' );
+		$this->assertSame( array(), $this->pending_cancel( $site_id ), 'A cancel the child takes must stop being owed.' );
+	}
+
+	/**
+	 * The retry is bounded. The child has its own queued reclaim and wall
+	 * clock; a cancel that never lands must not be retried forever against a
+	 * task id that has long since expired.
+	 *
+	 * @return void
+	 */
+	public function test_owed_cancel_gives_up_at_the_cap() {
+		list( $site_id ) = $this->site_and_open_task();
+		$website         = MainWP_DB::instance()->get_website_by_id( (int) $site_id );
+		MainWP_DB::instance()->update_website_option(
+			$website,
+			MainWP_Manage_Backups_Handler::PENDING_CANCEL_OPTION,
+			wp_json_encode(
+				array(
+					'task_id'  => 'task-stuck-7',
+					'attempts' => MainWP_Manage_Backups_Handler::PENDING_CANCEL_MAX_ATTEMPTS - 1,
+				)
+			)
+		);
+		$this->cancel_response = array( 'result' => 'busy' );
+
+		MainWP_Manage_Backups_Handler::flush_pending_child_cancel( $website );
+
+		$this->assertCount( 1, $this->cancel_calls, 'The final attempt still goes out.' );
+		$this->assertSame( array(), $this->pending_cancel( $site_id ), 'At the cap the owed cancel is dropped instead of retried forever.' );
 	}
 }

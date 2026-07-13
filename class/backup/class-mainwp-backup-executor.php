@@ -296,6 +296,9 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 // large-site ZIP auto-switch reaches the child in $params['ext'].
                 $archive_ext = MainWP_Backup_Settings::get_current_archive_extension( $website, $pTask );
                 MainWP_Backup_Monitor::negotiate_backup_preflight( $website, $archive_ext, $pTask );
+                if ( ! MainWP_Backup_Monitor::child_supports_task_spine( $website ) ) {
+                    throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_CHILD_UPDATE_REQUIRED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+                }
 
                 // The requested filename takes its extension from the negotiated
                 // format, so an auto-switched backup is not named .zip.
@@ -318,10 +321,8 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     'f'                     => $file,
                 );
 
-                $use_spine = MainWP_Backup_Monitor::child_supports_task_spine( $website );
-
                 if ( 'incremental' === $type ) {
-                    $send           = static::resolve_incremental_send( $website, $pTask, $use_spine, $backupTaskProgress );
+                    $send           = static::resolve_incremental_send( $website, $pTask, $backupTaskProgress );
                     $params['type'] = $send['type'];
                     foreach ( $send['params'] as $send_key => $send_value ) {
                         $params[ $send_key ] = $send_value;
@@ -351,29 +352,27 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                             unset( $params['parent_snapshot_id'] );
                         }
                     }
-                    if ( $use_spine ) {
-                        // Remember what this run attempted, so a child-reported
-                        // missing base escalates plain -> push -> full instead
-                        // of retrying the same send forever.
-                        MainWP_DB_Backup::instance()->update_backup_task_progress(
-                            $taskId,
-                            $website->id,
-                            array(
-                                'last_error' => wp_json_encode(
-                                    array(
-                                        'incremental_sent' => $send['mode'],
-                                        'run'              => (int) $pTask->last_run,
-                                    )
-                                ),
-                            )
-                        );
-                    }
+                    // Remember what this run attempted, so a child-reported
+                    // missing base escalates plain -> push -> full instead
+                    // of retrying the same send forever.
+                    MainWP_DB_Backup::instance()->update_backup_task_progress(
+                        $taskId,
+                        $website->id,
+                        array(
+                            'last_error' => wp_json_encode(
+                                array(
+                                    'incremental_sent' => $send['mode'],
+                                    'run'              => (int) $pTask->last_run,
+                                )
+                            ),
+                        )
+                    );
                 }
 
-                MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Requesting backup' . ( $use_spine ? ' task' : '' ) . ': ' . MainWP_Utility::value_to_string( $params ) );
+                MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Requesting backup task: ' . MainWP_Utility::value_to_string( $params ) );
 
                 $diag_start  = microtime( true );
-                $information = MainWP_Connect::fetch_url_authed( $website, $use_spine ? 'backup_task_create' : 'backup', $params, false, false, false );
+                $information = MainWP_Connect::fetch_url_authed( $website, 'backup_task_create', $params, false, false, false );
 
                 /**
                  * Fires after each backup poll round trip with the full child
@@ -418,13 +417,10 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 throw $e;
             }
 
-            // A native child refuses a duplicate start with a coded error; a
-            // legacy child sends only the message string, whose wording also
-            // differs from the native one - so the code is the primary key
-            // and the substring only covers children that predate it.
+            // A task-spine child refuses a duplicate start with a coded error;
+            // classify only that stable code so wording cannot change behavior.
             $refused_already_running = isset( $information['error'] ) && (
-                ( isset( $information['error_code'] ) && MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING === $information['error_code'] )
-                || ( is_string( $information['error'] ) && stristr( $information['error'], 'Another backup process is running' ) )
+                isset( $information['error_code'] ) && MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING === $information['error_code']
             );
 
             if ( $refused_already_running ) {
@@ -469,7 +465,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING, self::EXTRA_FOREIGN_ALREADY_RUNNING ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
             }
 
-            if ( $use_spine && empty( $information['error'] ) ) {
+            if ( empty( $information['error'] ) ) {
                 if ( empty( $information['task_id'] ) || ! is_string( $information['task_id'] ) ) {
                     static::clear_creating_marker_if_mine( $taskId, (int) $website->id, $creating_marker );
                     throw new MainWP_Exception( esc_html__( 'The child site did not return a backup task id. Sync the child site and try again.', 'mainwp' ) );
@@ -625,8 +621,8 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 $information = array();
                 if ( 'incremental' === $type ) {
                     // Incremental tasks complete with a role-tagged artifact
-                    // list; the legacy single-file keys stay false so the
-                    // legacy download section never claims the run.
+                    // list; the shared single-file download block must not
+                    // claim the run.
                     $information['full']      = false;
                     $information['db']        = false;
                     $information['artifacts'] = isset( $temp['artifacts'] ) && is_array( $temp['artifacts'] ) ? $temp['artifacts'] : array();
@@ -674,97 +670,6 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             } elseif ( 5 > $backupTaskProgress->attempts ) {
                 $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'attempts' => $backupTaskProgress->attempts + 1 ) );
                 return false;
-            } else {
-                throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_RETRY_EXHAUSTED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
-            }
-        } elseif ( empty( $backupTaskProgress->fetchResult ) ) {
-            $temp = false;
-            try {
-                $temp = MainWP_Connect::fetch_url_authed( $website, 'backup_checkpid', array( 'pid' => $backupTaskProgress->pid ) );
-            } catch ( \Exception $e ) {
-                // The failed status check consumes a retry attempt below instead of being ignored.
-                MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'Backup status check failed: ' . $e->getMessage() );
-            }
-
-            if ( ! empty( $temp ) ) {
-                if ( 'stalled' === $temp['status'] ) {
-                    if ( 5 > $backupTaskProgress->attempts ) {
-                        $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'attempts' => $backupTaskProgress->attempts + 1 ) );
-
-                        // A failed retry propagates to the caller instead of being silently dropped.
-                        $information = MainWP_Connect::fetch_url_authed(
-                            $website,
-                            'backup',
-                            array(
-                                'type'                  => $type,
-                                'exclude'               => $exclude,
-                                'excludebackup'         => $excludebackup,
-                                'excludecache'          => $excludecache,
-                                'excludenonwp'          => $excludenonwp,
-                                'excludezip'            => $excludezip,
-                                'ext'                   => MainWP_Backup_Settings::get_current_archive_extension( $website, $pTask ),
-                                'file_descriptors_auto' => $maximumFileDescriptorsAuto,
-                                'file_descriptors'      => $maximumFileDescriptors,
-                                'loadFilesBeforeZip'    => $loadFilesBeforeZip,
-                                'pid'                   => $backupTaskProgress->pid,
-                                'append'                => '1',
-                                'f'                     => $temp['file'],
-                            ),
-                            false,
-                            false,
-                            false
-                        );
-
-                        if ( isset( $information['error'] ) && stristr( $information['error'], 'Another backup process is running' ) ) {
-                            MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'attempts' => ( $backupTaskProgress->attempts - 1 ) ) );
-
-                            return false;
-                        }
-
-                        $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'fetchResult' => wp_json_encode( $information ) ) );
-                    } else {
-                        throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_RETRY_EXHAUSTED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
-                    }
-                } elseif ( 'invalid' === $temp['status'] ) {
-                    $error = json_decode( $backupTaskProgress->last_error );
-
-                    if ( ! is_array( $error ) ) {
-                        throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_STALLED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
-                    } else {
-                        throw new MainWP_Exception( $error['message'], $error['extra'] ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-                    }
-                } elseif ( 'busy' === $temp['status'] ) {
-                    $busy_since = isset( $backupTaskProgress->busy_since ) ? (int) $backupTaskProgress->busy_since : 0;
-                    if ( empty( $busy_since ) ) {
-                        MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'busy_since' => time() ) );
-                        return false;
-                    }
-                    if ( ( time() - $busy_since ) > self::STALL_THRESHOLD_SECONDS ) {
-                        // phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- internal diagnostic context.
-                        throw new MainWP_Exception(
-                            esc_html__( 'The child site has reported the backup as busy for over an hour. The backup process likely stalled or was killed by the host. Check the child site error log and try again.', 'mainwp' ),
-                            'busy since ' . gmdate( 'Y-m-d H:i:s', $busy_since ) . ' UTC',
-                            MainWP_Backup_Error_Codes::ERR_STALLED
-                        );
-                        // phpcs:enable WordPress.Security.EscapeOutput.ExceptionNotEscaped
-                    }
-                    return false;
-                } elseif ( 'done' === $temp['status'] ) {
-                    $information = array();
-                    if ( 'full' === $type || 'files' === $type ) {
-                        $information['full'] = $temp['file'];
-                        $information['db']   = false;
-                    } else {
-                        $information['full'] = false;
-                        $information['db']   = $temp['file'];
-                    }
-
-                    $information['size'] = $temp['size'];
-
-                    $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'fetchResult' => wp_json_encode( $information ) ) );
-                }
-            } elseif ( 5 > $backupTaskProgress->attempts ) {
-                    $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'attempts' => $backupTaskProgress->attempts + 1 ) );
             } else {
                 throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_RETRY_EXHAUSTED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
             }
@@ -1084,11 +989,10 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * AND zero dtsFetched, the same reset an abandoned stale marker gets, so
      * the next cycle re-attempts the create. Clearing only the marker leaves
      * dtsFetched fresh and the marker write's empty fetchResult in place,
-     * which routes the next cycle into the legacy pid status branch - the
-     * child answers 'invalid' for the bogus pid and a spine run dies with
-     * ERR_STALLED instead of retrying the create until the hold clears or
-     * the surface window elapses. foreign_refused_since is deliberately not
-     * touched: it is the persistence clock across these resets.
+     * which skips the create branch on the next cycle instead of retrying the
+     * create until the hold clears or the surface window elapses.
+     * foreign_refused_since is deliberately not touched: it is the persistence
+     * clock across these resets.
      *
      * @param int    $task_id Task id.
      * @param int    $site_id Site id.
@@ -1122,17 +1026,16 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      *
      * @param object $website   Website object.
      * @param object $pTask     Scheduled task.
-     * @param bool   $use_spine Whether the child runs the task machine.
      * @param mixed  $progress  Pre-reset progress row (carries the sent marker).
      *
      * @return array { type: string, mode: string, params: array, notice: string }
      */
-    protected static function resolve_incremental_send( $website, $pTask, $use_spine, $progress ) {
-        if ( ! $use_spine || ! MainWP_Backup_Monitor::child_supports_incremental( $website ) ) {
+    protected static function resolve_incremental_send( $website, $pTask, $progress ) {
+        if ( ! MainWP_Backup_Monitor::child_supports_incremental( $website ) ) {
             return array(
                 'type'   => 'full',
                 'mode'   => 'full',
-                'params' => $use_spine ? array( 'emit_manifest' => '1' ) : array(),
+                'params' => array( 'emit_manifest' => '1' ),
                 'notice' => esc_html__( 'The child site does not support incremental backups, so a full backup was run instead. Update the MainWP Child plugin on the site to enable incremental backups.', 'mainwp' ),
             );
         }
@@ -1911,17 +1814,16 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * with get_backup_task_status(). Children running the resumable task
      * machine get an ad-hoc task created; the handle is persisted in the
      * adhoc_backup_task website option so a later call resumes the same
-     * task instead of colliding with it. Children without the machine run
-     * the synchronous legacy path to completion (artifact downloaded, the
-     * completion hook fired) and the call returns null.
+     * task instead of colliding with it. Children without the machine are
+     * refused with a coded update-required error.
      *
      * @param int    $site_id Child site ID.
      * @param string $type    full|db Type of backup.
      *
-     * @return string|null Task handle for resumable children, null when the synchronous fallback already completed.
+     * @return string Task handle for resumable children.
      * @throws MainWP_Exception When the backup cannot be started.
      */
-    public static function trigger_backup( int $site_id, string $type = 'full' ): ?string {
+    public static function trigger_backup( int $site_id, string $type = 'full' ): string {
         // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber
         if ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_LEGACY_DISABLED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
@@ -1944,22 +1846,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         MainWP_Backup_Monitor::negotiate_backup_preflight( $website, $archive_ext );
 
         if ( ! MainWP_Backup_Monitor::child_supports_task_spine( $website ) ) {
-            // Children without the task machine run the synchronous path to completion.
-            $result = static::backup( $site_id, $type, '', '', 0, 0, 0, 0 );
-            MainWP_Backup_File_Manager::backup_download_file( $site_id, $type, $result['url'], $result['local'] );
-
-            /** This action is documented in class/backup/class-mainwp-backup-executor.php */
-            do_action(
-                'mainwp_native_backup_completed',
-                $site_id,
-                null,
-                true,
-                array(
-                    'type'  => $type,
-                    'local' => $result['local'],
-                )
-            );
-            return null;
+            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_CHILD_UPDATE_REQUIRED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         }
 
         $persisted = static::read_adhoc_task( $website );

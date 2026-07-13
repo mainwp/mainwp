@@ -2,9 +2,8 @@
 /**
  * MainWP Backup Handler Tests
  *
- * Tests for backup_site() retry/state handling: the attempts counter,
- * busy-status timeout, silent failure paths, and child error code
- * propagation.
+ * Tests for backup_site() retry/state handling, silent failure paths,
+ * task-spine lifecycle, and child error code propagation.
  *
  * @package MainWP\Dashboard\Tests
  */
@@ -159,7 +158,7 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 	/**
 	 * Mock a child response for a specific action.
 	 *
-	 * @param string $action   Action name (e.g. 'backup_checkpid').
+	 * @param string $action   Action name (e.g. 'backup_task_run').
 	 * @param mixed  $response Response array, or a MainWP_Exception to throw.
 	 *
 	 * @return void
@@ -217,129 +216,15 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * The attempts counter actually increments in the database when the
-	 * child status check returns nothing.
-	 *
-	 * @return void
-	 */
-	public function test_attempts_counter_increments_in_database() {
-		list( $site_id, $task ) = $this->site_and_task();
-		$this->seed_progress( $task->id, $site_id );
-		$this->mock_child_action( 'backup_checkpid', array() );
-
-		try {
-			MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
-		} catch ( MainWP_Exception $e ) {
-			unset( $e ); // The empty fetch result is reported separately; only the counter matters here.
-		}
-
-		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
-		$this->assertSame( 1, (int) $progress->attempts, 'A failed status check must consume one retry attempt.' );
-	}
-
-	/**
-	 * A failed child status check (exception) is not swallowed silently:
-	 * it consumes a retry attempt.
-	 *
-	 * @return void
-	 */
-	public function test_checkpid_exception_consumes_attempt() {
-		list( $site_id, $task ) = $this->site_and_task();
-		$this->seed_progress( $task->id, $site_id );
-		$this->mock_child_action( 'backup_checkpid', new MainWP_Exception( 'connection failed' ) );
-
-		try {
-			MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
-		} catch ( MainWP_Exception $e ) {
-			unset( $e ); // The empty fetch result is reported separately; only the counter matters here.
-		}
-
-		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
-		$this->assertSame( 1, (int) $progress->attempts, 'A failed status check must consume one retry attempt.' );
-	}
-
-	/**
-	 * Exhausted attempts surface the retry-exhausted error code.
-	 *
-	 * @return void
-	 */
-	public function test_exhausted_attempts_throw_retry_exhausted() {
-		list( $site_id, $task ) = $this->site_and_task();
-		$this->seed_progress( $task->id, $site_id, array( 'attempts' => 5 ) );
-		$this->mock_child_action( 'backup_checkpid', array() );
-
-		try {
-			MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
-			$this->fail( 'Expected retry-exhausted exception.' );
-		} catch ( MainWP_Exception $e ) {
-			$this->assertSame( 'mainwp_backup_retry_exhausted', $e->get_message_error_code() );
-		}
-	}
-
-	/**
-	 * The first busy status records the busy start and defers.
-	 *
-	 * @return void
-	 */
-	public function test_busy_status_records_start_and_defers() {
-		list( $site_id, $task ) = $this->site_and_task();
-		$this->seed_progress( $task->id, $site_id );
-		$this->mock_child_action( 'backup_checkpid', array( 'status' => 'busy' ) );
-
-		$result = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
-
-		$this->assertFalse( $result, 'A fresh busy status defers to the next cycle.' );
-		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
-		$this->assertGreaterThan( 0, (int) $progress->busy_since, 'The busy start time must be recorded.' );
-	}
-
-	/**
-	 * A site busy for more than an hour stops deferring and reports a stall.
-	 *
-	 * @return void
-	 */
-	public function test_busy_status_over_one_hour_throws_stalled() {
-		list( $site_id, $task ) = $this->site_and_task();
-		$this->seed_progress( $task->id, $site_id, array( 'busy_since' => time() - 2 * HOUR_IN_SECONDS ) );
-		$this->mock_child_action( 'backup_checkpid', array( 'status' => 'busy' ) );
-
-		try {
-			MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
-			$this->fail( 'Expected stall exception after one hour of busy status.' );
-		} catch ( MainWP_Exception $e ) {
-			$this->assertSame( 'mainwp_backup_stalled', $e->get_message_error_code() );
-		}
-	}
-
-	/**
-	 * A raw "Another backup process is running" child error is classified into
-	 * the already-running branch: the first marker-less refusal starts the
-	 * persistence clock and yields while it is still ambiguous with a same-run
-	 * create race. It surfaces only once it outlives the create window - see
-	 * test_persistent_foreign_refusal_surfaces.
-	 *
-	 * @return void
-	 */
-	public function test_another_backup_running_classified_and_stamps() {
-		list( $site_id, $task ) = $this->site_and_task();
-		$this->mock_child_action( 'backup', array( 'error' => 'Another backup process is running on the child site.' ) );
-
-		$result   = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
-		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
-
-		$this->assertFalse( $result, 'The first already-running refusal must yield while its persistence is still ambiguous.' );
-		$this->assertGreaterThan( 0, (int) $progress->foreign_refused_since, 'The refusal must start the persistence clock.' );
-	}
-
-	/**
 	 * Child error responses carry their error code through to the exception.
 	 *
 	 * @return void
 	 */
 	public function test_child_error_code_propagates_to_exception() {
 		list( $site_id, $task ) = $this->site_and_task();
+		$this->mock_child_action( 'backup_preflight', array( 'task_spine' => 1 ) );
 		$this->mock_child_action(
-			'backup',
+			'backup_task_create',
 			array(
 				'error'      => 'Could not write backup data.',
 				'error_code' => 'mainwp_backup_disk_full',
@@ -876,7 +761,7 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 	 *
 	 * @return void
 	 */
-	public function test_spine_first_call_creates_task_and_defers() {
+	public function test_backup_site_on_spine_capable_site_creates_task_normally() {
 		list( $site_id, $task ) = $this->site_and_task();
 		$this->mock_child_action( 'backup_preflight', array( 'task_spine' => 1 ) );
 		$this->mock_child_action(
@@ -901,11 +786,42 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * A child without the task machine takes the legacy path untouched.
+	 * The task-spine gate reads the capability written by this cycle's
+	 * preflight, rather than refusing a current child whose stored option was
+	 * previously unset.
 	 *
 	 * @return void
 	 */
-	public function test_no_spine_support_takes_legacy_path() {
+	public function test_backup_site_uses_task_spine_flag_refreshed_by_preflight() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$website                = MainWP_DB::instance()->get_website_by_id( $site_id );
+
+		$this->assertEmpty( MainWP_DB::instance()->get_website_option( $website, 'task_spine_support' ), 'Precondition: the capability option is unset before the first backup.' );
+
+		$this->mock_child_action( 'backup_preflight', array( 'task_spine' => 1 ) );
+		$this->mock_child_action(
+			'backup_task_create',
+			array(
+				'task_id' => 'task-1749600000-refreshed',
+				'phase'   => 'queued',
+			)
+		);
+
+		$result = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+
+		$this->assertFalse( $result, 'A capability learned during preflight must allow task creation in the same cycle.' );
+		$this->assertSame( '1', (string) MainWP_DB::instance()->get_website_option( $website, 'task_spine_support' ) );
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+		$this->assertSame( 'task-1749600000-refreshed', $progress->child_backup_task_id );
+	}
+
+	/**
+	 * A child without the task machine is refused with a coded update error
+	 * and never reaches the legacy backup action.
+	 *
+	 * @return void
+	 */
+	public function test_no_spine_support_throws_child_update_required_without_legacy_backup() {
 		list( $site_id, $task ) = $this->site_and_task();
 		$this->mock_child_action( 'backup_preflight', array( 'zip_support' => true ) );
 		$this->mock_child_action(
@@ -921,13 +837,15 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 
 		try {
 			MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
-			$this->fail( 'Expected the legacy child error to propagate.' );
+			$this->fail( 'Expected a child-update-required exception.' );
 		} catch ( MainWP_Exception $e ) {
-			$this->assertSame( 'mainwp_backup_disk_full', $e->get_message_error_code() );
+			$this->assertSame( MainWP_Backup_Error_Codes::ERR_CHILD_UPDATE_REQUIRED, $e->get_message_error_code() );
 		}
 
-		$this->assertContains( 'backup', $called );
+		$this->assertNotContains( 'backup', $called, 'The scheduled flow must not invoke the legacy backup engine.' );
 		$this->assertNotContains( 'backup_task_create', $called );
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+		$this->assertSame( '', $progress->child_backup_task_id, 'The existing catch must clear this driver\'s create marker before rethrowing the coded exception.' );
 	}
 
 	/**
@@ -942,8 +860,8 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 		global $wpdb;
 		$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->prefix}mainwp_wp_backup_progress SET dtsFetched = %d WHERE task_id = %d", $task->last_run - 50, $task->id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture.
 
-		$this->mock_child_action( 'backup_preflight', array( 'zip_support' => true ) );
-		$this->mock_child_action( 'backup', array( 'error' => 'Could not write backup data.' ) );
+		$this->mock_child_action( 'backup_preflight', array( 'task_spine' => 1 ) );
+		$this->mock_child_action( 'backup_task_create', array( 'error' => 'Could not write backup data.' ) );
 
 		try {
 			MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
@@ -956,8 +874,8 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * An in-flight run with a child task id advances the task instead of
-	 * polling the legacy pid, and defers while the task is still working.
+	 * An in-flight run with a child task id advances the task and defers while
+	 * the task is still working.
 	 *
 	 * @return void
 	 */
@@ -991,7 +909,7 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 
 		$this->assertFalse( $result, 'A working task defers to the next cycle.' );
 		$this->assertSame( 'task-abc', $run_params['task_id'] );
-		$this->assertNotContains( 'backup_checkpid', $called, 'The resumable path must not poll the legacy pid.' );
+		$this->assertNotContains( 'backup_checkpid', $called, 'The task-spine path must not invoke the removed PID polling callable.' );
 	}
 
 	/**
@@ -1210,31 +1128,6 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * A failed retry of a stalled backup re-throws instead of returning false.
-	 *
-	 * @return void
-	 */
-	public function test_stalled_retry_failure_rethrows() {
-		list( $site_id, $task ) = $this->site_and_task();
-		$this->seed_progress( $task->id, $site_id );
-		$this->mock_child_action(
-			'backup_checkpid',
-			array(
-				'status' => 'stalled',
-				'file'   => 'backup-file.zip',
-			)
-		);
-		$this->mock_child_action( 'backup', new MainWP_Exception( 'child unreachable during retry' ) );
-
-		try {
-			MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
-			$this->fail( 'Expected the stalled-retry failure to propagate.' );
-		} catch ( MainWP_Exception $e ) {
-			$this->assertStringContainsString( 'child unreachable during retry', $e->getMessage() );
-		}
-	}
-
-	/**
 	 * Mock the child wire like the real driver race on the native spine
 	 * path: the preflight advertises the task machine, and by the time the
 	 * child refuses the duplicate create, the concurrent driver of the SAME
@@ -1325,12 +1218,10 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 
 	/**
 	 * The native child's real refusal, byte-exact from the 2026-07-13 live
-	 * diagnostics capture: the message differs from the legacy substring
-	 * ("already running on this site"), but the payload carries
-	 * error_code mainwp_backup_already_running. It must engage the same
-	 * foreign-refusal persistence gate as the legacy string - first refusal
-	 * stamps the clock and yields - instead of falling through to the
-	 * generic create-error throw.
+	 * diagnostics capture, carries error_code mainwp_backup_already_running.
+	 * The code must engage the foreign-refusal persistence gate - first refusal
+	 * stamps the clock and yields - instead of falling through to the generic
+	 * create-error throw.
 	 *
 	 * @return void
 	 */
@@ -1359,20 +1250,17 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 
 	/**
 	 * Live drill 2026-07-13: after the first refusal yielded, the next cycle
-	 * skipped the create branch (dtsFetched was still fresh), read the
-	 * marker write's empty fetchResult, and fell into the legacy pid status
-	 * branch - the child answered 'invalid' for the bogus pid and the run
-	 * died with ERR_STALLED. A refusal-yielded row must hand the create
-	 * window back so every following cycle re-attempts the create until the
-	 * hold clears or the surface window elapses.
+	 * skipped the create branch because dtsFetched was still fresh instead of
+	 * retrying the child task create. A refusal-yielded row must hand the create
+	 * window back so every following cycle re-attempts the create until the hold
+	 * clears or the surface window elapses.
 	 *
 	 * @return void
 	 */
 	public function test_repeated_refusal_within_window_yields_again_instead_of_stalling() {
 		list( $site_id, $task ) = $this->site_and_task();
-		$refusals = 0;
+		$refusals               = 0;
 		$this->mock_already_running_race( $task->id, $site_id, $refusals, false );
-		$this->mock_child_action( 'backup_checkpid', array( 'status' => 'invalid' ) );
 
 		$this->assertFalse( MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' ), 'Cycle 1 must yield on the first refusal.' );
 
@@ -1391,7 +1279,7 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function test_refusal_then_freed_slot_creates_task_next_cycle() {
 		list( $site_id, $task ) = $this->site_and_task();
-		$refuse = true;
+		$refuse                 = true;
 		add_filter(
 			'mainwp_fetch_url_authed_pre',
 			function ( $result, $website, $what ) use ( &$refuse ) {
@@ -1425,28 +1313,6 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
 		$this->assertSame( 'task-1749600001-freed1', $progress->child_backup_task_id, 'The freed slot must be claimed by a fresh create.' );
 		$this->assertSame( 0, (int) $progress->foreign_refused_since, 'A granted create must clear the persistence clock.' );
-	}
-
-	/**
-	 * A legacy child predates the coded refusal and sends only its own
-	 * message string on the legacy backup action. The substring arm of the
-	 * classifier must keep engaging the persistence gate for it.
-	 *
-	 * @return void
-	 */
-	public function test_legacy_string_refusal_still_classified() {
-		list( $site_id, $task ) = $this->site_and_task();
-		$this->mock_child_action( 'backup_preflight', array( 'time_limit_ok' => true ) );
-		$this->mock_child_action(
-			'backup',
-			array( 'error' => 'Another backup process is running. Please, try again later.' )
-		);
-
-		$result   = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
-		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
-
-		$this->assertFalse( $result, 'A legacy refusal without an error code must still yield.' );
-		$this->assertGreaterThan( 0, (int) $progress->foreign_refused_since, 'The legacy refusal must start the persistence clock.' );
 	}
 
 	/**
@@ -1855,46 +1721,6 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 
 		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
 		$this->assertSame( '', $progress->child_backup_task_id, 'A failed create must not leave the marker behind.' );
-	}
-
-	/**
-	 * The legacy path resolves its create round trip into fetchResult; the
-	 * marker's window ends there, so the same write must clear it. A marker
-	 * left behind would read as an in-flight create on every later cycle and
-	 * starve the legacy poll branch.
-	 *
-	 * @return void
-	 */
-	public function test_legacy_create_result_clears_marker() {
-		list( $site_id, $task ) = $this->site_and_task();
-		$this->mock_child_action( 'backup_preflight', array( 'zip_support' => true ) );
-
-		$row_at_create = null;
-		add_filter(
-			'mainwp_fetch_url_authed_pre',
-			function ( $result, $website, $what ) use ( $task, $site_id, &$row_at_create ) {
-				unset( $website );
-				if ( 'backup' === $what ) {
-					$progress      = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
-					$row_at_create = $progress ? (string) $progress->child_backup_task_id : null;
-					return array( 'error' => 'Could not write backup data.' );
-				}
-				return $result;
-			},
-			10,
-			3
-		);
-
-		try {
-			MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
-		} catch ( MainWP_Exception $e ) {
-			unset( $e );
-		}
-
-		$this->assertStringStartsWith( '__creating_', (string) $row_at_create, 'Precondition: the marker must be on the row during the legacy create request.' );
-
-		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
-		$this->assertSame( '', $progress->child_backup_task_id, 'The legacy result write must clear the marker.' );
 	}
 
 	/**

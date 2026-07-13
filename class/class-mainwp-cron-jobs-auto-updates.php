@@ -625,28 +625,18 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
 
                     try {
                         $task_id = MainWP_Backup_Executor::trigger_backup( $siteId, 'full' );
-                        if ( null === $task_id ) {
-                            // The synchronous fallback for children without
-                            // the task machine already completed; whether its
-                            // local artifact satisfies the configured policy
-                            // is the evaluator's call, not a given.
-                            $sitesCheckCompleted[ $siteId ] = MainWP_Backup_Executor::UPDATE_GATE_PASS === MainWP_Backup_Executor::evaluate_update_backup_gate( (int) $siteId, (int) $mainwp_backup_before_upgrade_days );
-                        } else {
-                            /**
-                             * Filters the wall-clock budget the pre-update backup may spend driving task slices in one cron pass.
-                             *
-                             * @param int $budget_seconds Budget in seconds (default 600).
-                             * @param int $siteId         Child site ID.
-                             */
-                            $budget = (int) apply_filters( 'mainwp_preupgrade_backup_budget_seconds', 10 * MINUTE_IN_SECONDS, $siteId );
-                            $status = MainWP_Backup_Executor::get_backup_task_status( $siteId, $task_id, $budget );
+                        /**
+                         * Filters the wall-clock budget the pre-update backup may spend driving task slices in one cron pass.
+                         *
+                         * @param int $budget_seconds Budget in seconds (default 600).
+                         * @param int $siteId         Child site ID.
+                         */
+                        $budget = (int) apply_filters( 'mainwp_preupgrade_backup_budget_seconds', 10 * MINUTE_IN_SECONDS, $siteId );
+                        $status = MainWP_Backup_Executor::get_backup_task_status( $siteId, $task_id, $budget );
 
-                            // An unfinished task stays persisted; the next pass resumes it and updates stay deferred until then.
-                            // A completed fallback still answers to the evaluator: its artifact is local, so under a strict
-                            // offsite policy completion alone defers updates rather than passing the gate.
-                            $sitesCheckCompleted[ $siteId ] = ( 'completed' === $status['status'] )
-                                && MainWP_Backup_Executor::UPDATE_GATE_PASS === MainWP_Backup_Executor::evaluate_update_backup_gate( (int) $siteId, (int) $mainwp_backup_before_upgrade_days );
-                        }
+                        // An unfinished task stays persisted; the next pass resumes it and updates stay deferred until then.
+                        $sitesCheckCompleted[ $siteId ] = ( 'completed' === $status['status'] )
+                            && MainWP_Backup_Executor::UPDATE_GATE_PASS === MainWP_Backup_Executor::evaluate_update_backup_gate( (int) $siteId, (int) $mainwp_backup_before_upgrade_days );
                         MainWP_Utility::update_option( 'mainwp_automaticUpdate_backupChecks', $sitesCheckCompleted );
                     } catch ( \Exception $e ) {
                         $sitesCheckCompleted[ $siteId ] = false;

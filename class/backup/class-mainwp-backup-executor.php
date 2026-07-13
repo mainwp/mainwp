@@ -418,7 +418,16 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 throw $e;
             }
 
-            if ( isset( $information['error'] ) && stristr( $information['error'], 'Another backup process is running' ) ) {
+            // A native child refuses a duplicate start with a coded error; a
+            // legacy child sends only the message string, whose wording also
+            // differs from the native one - so the code is the primary key
+            // and the substring only covers children that predate it.
+            $refused_already_running = isset( $information['error'] ) && (
+                ( isset( $information['error_code'] ) && MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING === $information['error_code'] )
+                || ( is_string( $information['error'] ) && stristr( $information['error'], 'Another backup process is running' ) )
+            );
+
+            if ( $refused_already_running ) {
                 // The initiate slice, progress poll, and continue cron can all
                 // drive this run. A live same-run claim yields immediately. A
                 // marker-less refusal is ambiguous with a create-window reset
@@ -445,14 +454,14 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
                 if ( 0 === $refused_since ) {
                     MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'foreign_refused_since' => time() ) );
-                    static::clear_creating_marker_if_mine( $taskId, (int) $website->id, $creating_marker );
+                    static::reset_create_window_if_mine( $taskId, (int) $website->id, $creating_marker );
                     /** This action is documented in pages/page-mainwp-manage-backups-handler.php */
                     do_action( 'mainwp_backup_diag_run_reinit', (int) $taskId, 'foreign_refusal_pending', (int) $pTask->last_run, isset( $pTask->completed ) ? (int) $pTask->completed : 0 );
                     return false;
                 }
 
                 if ( ( time() - $refused_since ) < self::FOREIGN_REFUSAL_SURFACE_SECONDS ) {
-                    static::clear_creating_marker_if_mine( $taskId, (int) $website->id, $creating_marker );
+                    static::reset_create_window_if_mine( $taskId, (int) $website->id, $creating_marker );
                     return false;
                 }
 
@@ -1032,6 +1041,37 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         $current = MainWP_DB_Backup::instance()->get_backup_task_progress( $task_id, $site_id );
         if ( $current && $current->child_backup_task_id === $marker ) {
             MainWP_DB_Backup::instance()->update_backup_task_progress( $task_id, $site_id, array( 'child_backup_task_id' => '' ) );
+        }
+    }
+
+    /**
+     * Hand the create window back after a yielded refusal: clear the marker
+     * AND zero dtsFetched, the same reset an abandoned stale marker gets, so
+     * the next cycle re-attempts the create. Clearing only the marker leaves
+     * dtsFetched fresh and the marker write's empty fetchResult in place,
+     * which routes the next cycle into the legacy pid status branch - the
+     * child answers 'invalid' for the bogus pid and a spine run dies with
+     * ERR_STALLED instead of retrying the create until the hold clears or
+     * the surface window elapses. foreign_refused_since is deliberately not
+     * touched: it is the persistence clock across these resets.
+     *
+     * @param int    $task_id Task id.
+     * @param int    $site_id Site id.
+     * @param string $marker  This driver's creating marker token.
+     *
+     * @return void
+     */
+    private static function reset_create_window_if_mine( $task_id, $site_id, $marker ) {
+        $current = MainWP_DB_Backup::instance()->get_backup_task_progress( $task_id, $site_id );
+        if ( $current && $current->child_backup_task_id === $marker ) {
+            MainWP_DB_Backup::instance()->update_backup_task_progress(
+                $task_id,
+                $site_id,
+                array(
+                    'dtsFetched'           => 0,
+                    'child_backup_task_id' => '',
+                )
+            );
         }
     }
 

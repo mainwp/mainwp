@@ -444,11 +444,11 @@ class MainWP_Backup_Terminal_Cleanup_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * Read the cancel this site still owes the child.
+	 * Read the cancels this site still owes the child.
 	 *
 	 * @param int $site_id Site ID.
 	 *
-	 * @return array Decoded pending-cancel record, or an empty array.
+	 * @return array Decoded pending-cancel map (child task id => attempts).
 	 */
 	private function pending_cancel( $site_id ) {
 		$website = MainWP_DB::instance()->get_website_by_id( (int) $site_id );
@@ -478,8 +478,8 @@ class MainWP_Backup_Terminal_Cleanup_Test extends MainWP_Abilities_Test_Case {
 		$this->assertCount( 1, $this->cancel_calls, 'The terminal mark must still attempt the cancel once.' );
 
 		$pending = $this->pending_cancel( $site_id );
-		$this->assertSame( 'task-leased-1', $pending['task_id'] ?? null, 'A busy refusal must leave the precise child task id owed to a later pass.' );
-		$this->assertSame( 0, (int) ( $pending['attempts'] ?? -1 ), 'The owed cancel starts with a clean retry count.' );
+		$this->assertArrayHasKey( 'task-leased-1', $pending, 'A busy refusal must leave the precise child task id owed to a later pass.' );
+		$this->assertSame( 0, (int) $pending['task-leased-1'], 'The owed cancel starts with a clean retry count.' );
 
 		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
 		$this->assertSame( '', (string) $progress->child_backup_task_id, 'The row clear must stay immediate: only the child-side cancel gains persistence.' );
@@ -513,6 +513,53 @@ class MainWP_Backup_Terminal_Cleanup_Test extends MainWP_Abilities_Test_Case {
 		$this->assertNotEmpty( $this->cancel_calls, 'The run must talk to the child about the abandoned task.' );
 		$this->assertSame( 'task-abandoned-9', $this->cancel_calls[0]['task_id'] ?? null, 'The owed cancel must be retried first, before this run touches the site.' );
 		$this->assertSame( array(), $this->pending_cancel( $site_id ), 'A cancel the child takes must stop being owed.' );
+	}
+
+	/**
+	 * A site can belong to more than one backup task, so two busy-refused
+	 * terminal marks close together must BOTH stay owed: the second record
+	 * merging into the map instead of overwriting it is what keeps the first
+	 * task's abandoned child task from being silently forgotten until the
+	 * child's own wall clock. The flush then lands every owed cancel, not
+	 * just the last one written.
+	 *
+	 * @return void
+	 */
+	public function test_two_tasks_on_one_site_both_keep_their_owed_cancels() {
+		list( $site_id, $task_a ) = $this->site_and_open_task();
+		$user                     = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$task_b                   = MainWP_DB_Backup::instance()->add_backup_task( $user, 'Second task same site', 'daily', 'full', '', (string) $site_id, '', '', '', 0, 0, 0, 0, 0, 'tar.gz', 0, 1, 150, 0, 0 );
+		$this->assertNotFalse( $task_b, 'Precondition: the second task row must insert.' );
+		MainWP_DB_Backup::instance()->update_backup_task_with_values(
+			(int) $task_b->id,
+			array(
+				'last_run'  => time() - 100,
+				'completed' => time() - 500,
+			)
+		);
+		$task_b = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_b->id );
+
+		$this->seed_exhausted_throwing_row( (int) $task_a->id, $site_id, 'task-child-a' );
+		$this->seed_exhausted_throwing_row( (int) $task_b->id, $site_id, 'task-child-b' );
+		$this->cancel_response = array( 'result' => 'busy' );
+
+		MainWP_Manage_Backups_Handler::execute_backup_task( $task_a, 1, false );
+		MainWP_Manage_Backups_Handler::execute_backup_task( $task_b, 1, false );
+
+		$pending = $this->pending_cancel( $site_id );
+		$this->assertArrayHasKey( 'task-child-a', $pending, 'The first task\'s owed cancel must survive the second terminal mark.' );
+		$this->assertArrayHasKey( 'task-child-b', $pending, 'The second task\'s owed cancel must be owed alongside the first, not instead of it.' );
+
+		// The child frees up: the next flush must land BOTH owed cancels.
+		$this->cancel_response = array( 'result' => 'ok' );
+		$this->cancel_calls    = array();
+		$website               = MainWP_DB::instance()->get_website_by_id( (int) $site_id );
+		MainWP_Manage_Backups_Handler::flush_pending_child_cancel( $website );
+
+		$sent = array_map( fn( $call ) => $call['task_id'] ?? '', $this->cancel_calls );
+		$this->assertContains( 'task-child-a', $sent, 'The flush must retry the first owed cancel.' );
+		$this->assertContains( 'task-child-b', $sent, 'The flush must retry the second owed cancel.' );
+		$this->assertSame( array(), $this->pending_cancel( $site_id ), 'Landed cancels must stop being owed.' );
 	}
 
 	/**

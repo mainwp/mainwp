@@ -1182,11 +1182,46 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
     }
 
     /**
+     * Read the cancels this site still owes the child.
+     *
+     * @param object $website Website row.
+     *
+     * @return array Map of child task id => attempts so far.
+     */
+    protected static function read_pending_child_cancels( $website ) {
+        $raw = MainWP_DB::instance()->get_website_option( $website, static::PENDING_CANCEL_OPTION );
+        if ( empty( $raw ) ) {
+            return array();
+        }
+
+        $decoded = json_decode( (string) $raw, true );
+        if ( ! is_array( $decoded ) ) {
+            return array();
+        }
+
+        // Earlier builds stored one { task_id, attempts } record; fold it in
+        // so an owed cancel recorded before an upgrade is not dropped.
+        if ( isset( $decoded['task_id'] ) ) {
+            return array( (string) $decoded['task_id'] => (int) ( $decoded['attempts'] ?? 0 ) );
+        }
+
+        $pending = array();
+        foreach ( $decoded as $child_task_id => $attempts ) {
+            if ( is_string( $child_task_id ) && '' !== $child_task_id ) {
+                $pending[ $child_task_id ] = (int) $attempts;
+            }
+        }
+        return $pending;
+    }
+
+    /**
      * Remember a cancel the child refused, so a later pass can land it.
      *
      * The progress row is cleared by the terminal mark itself, so it cannot
      * carry the owed cancel: the site option is what survives to the next
-     * pass.
+     * pass. The option keys owed cancels by child task id, because a site can
+     * belong to more than one backup task: two terminal marks close together
+     * must both stay owed, not have the later one overwrite the earlier.
      *
      * @param object $website       Website row.
      * @param string $child_task_id Child task id still active on the child.
@@ -1194,24 +1229,19 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      * @return void
      */
     protected static function record_pending_child_cancel( $website, $child_task_id ) {
-        MainWP_DB::instance()->update_website_option(
-            $website,
-            static::PENDING_CANCEL_OPTION,
-            wp_json_encode(
-                array(
-                    'task_id'  => (string) $child_task_id,
-                    'attempts' => 0,
-                )
-            )
-        );
+        $pending = static::read_pending_child_cancels( $website );
+        if ( ! isset( $pending[ (string) $child_task_id ] ) ) {
+            $pending[ (string) $child_task_id ] = 0;
+        }
+        MainWP_DB::instance()->update_website_option( $website, static::PENDING_CANCEL_OPTION, wp_json_encode( $pending ) );
     }
 
     /**
-     * Retry a cancel the child refused, before this site is backed up again.
+     * Retry every cancel the child refused, before this site is backed up again.
      *
      * An abandoned child task refuses the next create on the site, so the
-     * owed cancel is landed at the top of the site's next run rather than
-     * left for the child's wall clock. The retry is capped: the child's own
+     * owed cancels are landed at the top of the site's next run rather than
+     * left for the child's wall clock. Each retry is capped: the child's own
      * queued reclaim and wall-clock deadline are the backstop, and an
      * unbounded retry would outlive the task it names.
      *
@@ -1224,31 +1254,41 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             return;
         }
 
-        $raw = MainWP_DB::instance()->get_website_option( $website, static::PENDING_CANCEL_OPTION );
-        if ( empty( $raw ) ) {
+        $pending = static::read_pending_child_cancels( $website );
+        if ( empty( $pending ) ) {
             return;
         }
 
-        $pending = json_decode( (string) $raw, true );
-        if ( ! is_array( $pending ) || empty( $pending['task_id'] ) ) {
-            MainWP_DB::instance()->update_website_option( $website, static::PENDING_CANCEL_OPTION, '' );
-            return;
+        $landed = array();
+        $owed   = array();
+        foreach ( $pending as $child_task_id => $attempts ) {
+            if ( static::send_child_task_cancel( $website, (string) $child_task_id ) ) {
+                $landed[] = (string) $child_task_id;
+                continue;
+            }
+
+            $next = (int) $attempts + 1;
+            if ( $next >= static::PENDING_CANCEL_MAX_ATTEMPTS ) {
+                MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'Gave up cancelling an abandoned child backup task after ' . $next . ' attempts (child task: ' . $child_task_id . ')' );
+                $landed[] = (string) $child_task_id;
+                continue;
+            }
+
+            $owed[ (string) $child_task_id ] = $next;
         }
 
-        if ( static::send_child_task_cancel( $website, (string) $pending['task_id'] ) ) {
-            MainWP_DB::instance()->update_website_option( $website, static::PENDING_CANCEL_OPTION, '' );
-            return;
+        // Re-read before writing back: the sends above are child round trips,
+        // and a terminal mark can record a NEW owed cancel while they are in
+        // flight. Writing the stale copy would silently drop it.
+        $fresh = static::read_pending_child_cancels( $website );
+        foreach ( $landed as $child_task_id ) {
+            unset( $fresh[ $child_task_id ] );
+        }
+        foreach ( $owed as $child_task_id => $attempts ) {
+            $fresh[ $child_task_id ] = $attempts;
         }
 
-        $attempts = (int) $pending['attempts'] + 1;
-        if ( $attempts >= static::PENDING_CANCEL_MAX_ATTEMPTS ) {
-            MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'Gave up cancelling an abandoned child backup task after ' . $attempts . ' attempts (child task: ' . $pending['task_id'] . ')' );
-            MainWP_DB::instance()->update_website_option( $website, static::PENDING_CANCEL_OPTION, '' );
-            return;
-        }
-
-        $pending['attempts'] = $attempts;
-        MainWP_DB::instance()->update_website_option( $website, static::PENDING_CANCEL_OPTION, wp_json_encode( $pending ) );
+        MainWP_DB::instance()->update_website_option( $website, static::PENDING_CANCEL_OPTION, empty( $fresh ) ? '' : wp_json_encode( $fresh ) );
     }
 
     /**

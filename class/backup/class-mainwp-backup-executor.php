@@ -553,6 +553,34 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 return false; // Requeued: the next cycle re-creates the task with the escalated send.
             }
 
+            if ( ! empty( $temp ) && isset( $temp['error'] )
+                && isset( $temp['error_code'] ) && MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING === $temp['error_code'] ) {
+                // The slice runner hit the child's other backup lock (a
+                // legacy one-shot mid-run, usually short-lived). Failing the
+                // job on its first slice would abandon the created task on
+                // the child for its whole wall clock, so retry briefly on the
+                // create path's persistence clock; only a refusal that
+                // outlives the window surfaces as the foreign blocker it is -
+                // the FOREIGN extra keeps the site-loop catch from yielding
+                // it forever as a same-run collision.
+                $run_refused_since = ( (int) $backupTaskProgress->foreign_refused_since >= (int) $pTask->last_run )
+                    ? (int) $backupTaskProgress->foreign_refused_since
+                    : 0;
+
+                if ( 0 === $run_refused_since ) {
+                    MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'foreign_refused_since' => time() ) );
+                    /** This action is documented in pages/page-mainwp-manage-backups-handler.php */
+                    do_action( 'mainwp_backup_diag_run_reinit', (int) $taskId, 'run_refusal_pending', (int) $pTask->last_run, isset( $pTask->completed ) ? (int) $pTask->completed : 0 );
+                    return false;
+                }
+
+                if ( ( time() - $run_refused_since ) < self::FOREIGN_REFUSAL_SURFACE_SECONDS ) {
+                    return false;
+                }
+
+                throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING, self::EXTRA_FOREIGN_ALREADY_RUNNING ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+            }
+
             if ( ! empty( $temp ) && isset( $temp['error'] ) ) {
                 throw new MainWP_Exception( esc_html( MainWP_Backup_Error_Codes::sanitize_message( $temp['error'] ) ), null, isset( $temp['error_code'] ) ? $temp['error_code'] : '' ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             }
@@ -562,6 +590,13 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 $phase = MainWP_Backup_Task_Phase::tryFrom( (string) $temp['phase'] );
 
                 static::record_child_progress( $taskId, (int) $website->id, $temp );
+
+                if ( (int) $backupTaskProgress->foreign_refused_since > 0 ) {
+                    // The lock holder is gone and the slice ran: stop the
+                    // persistence clock so a later, unrelated refusal starts
+                    // its own window instead of inheriting this one's age.
+                    MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'foreign_refused_since' => 0 ) );
+                }
 
                 if ( MainWP_Backup_Task_Phase::FAILED === $phase ) {
                     // The child recorded why the task died; surface it as-is.

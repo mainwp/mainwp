@@ -145,6 +145,44 @@ class MainWP_Backup_Cancel_Handler_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A successful cancel clears the progress row's child task id and
+	 * phase, so the next progress poll projects idle instead of the
+	 * cancelled task's "running / Waiting to start" forever.
+	 *
+	 * @return void
+	 */
+	public function test_cancel_success_clears_progress_projection() {
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		list( $site_id, $task ) = $this->make_in_flight_run();
+		MainWP_DB_Backup::instance()->update_backup_task_progress( (int) $task->id, $site_id, array( 'child_phase' => 'dumping_db' ) );
+
+		$this->invoke_cancel( $site_id, array( 'result' => 'ok' ) );
+
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( (int) $task->id, $site_id );
+		$this->assertSame( '', (string) $progress->child_backup_task_id, 'A successful cancel must clear the child task id from the row.' );
+		$this->assertSame( '', (string) $progress->child_phase, 'A successful cancel must clear the phase so the row projects idle.' );
+
+		$response = MainWP_Post_Backup_Handler::build_task_progress_response( $progress );
+		$this->assertSame( 'idle', $response['status'], 'A cancelled run must project idle to the progress poll.' );
+	}
+
+	/**
+	 * A refused cancel leaves the progress row untouched: the child task
+	 * is still live, so the poll must keep reporting it.
+	 *
+	 * @return void
+	 */
+	public function test_cancel_child_error_keeps_progress_row() {
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		list( $site_id, $task ) = $this->make_in_flight_run();
+
+		$this->invoke_cancel( $site_id, array( 'error' => 'The backup is mid-slice; try again shortly.' ) );
+
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( (int) $task->id, $site_id );
+		$this->assertSame( 'child-task-123', (string) $progress->child_backup_task_id, 'A refused cancel must keep the live child task id on the row.' );
+	}
+
+	/**
 	 * A child-side refusal is surfaced verbatim and the local run stays open:
 	 * the child task was not cancelled, so the dashboard must not pretend the
 	 * run ended.

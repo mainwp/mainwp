@@ -1005,6 +1005,8 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                 $errorOutput   .= MainWP_Error_Helper::get_error_message( $e ) . '<br />';
                 $_error_output  = MainWP_Error_Helper::get_error_message( $e );
                 $errorEntries[] = 'Site: <strong>' . MainWP_Utility::get_nice_url( $website->url ) . '</strong><br />' . $_error_output;
+
+                static::close_child_task_after_terminal_mark( (int) $task->id, (int) $siteid );
             }
 
             $_backup_result = isset( $backupResult ) ? $backupResult : ( isset( $_error_output ) ? $_error_output : '' );
@@ -1077,6 +1079,57 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         }
 
         return empty( $errorOutput );
+    }
+
+    /**
+     * Close out the child side of a site that just took a terminal
+     * failure mark. A run that dies while its progress row still carries
+     * a real child task id leaves that task ACTIVE on the child until its
+     * wall-clock deadline (~48 minutes), refusing every backup on the
+     * site for the duration - so the mark fires a best-effort precise-id
+     * cancel. A creating marker is never cancelled: it is not an id the
+     * child knows, and an empty-id cancel would auto-resolve to whatever
+     * backup the child is running, possibly the foreign one this run just
+     * collided with. The row is cleared either way (the child task id
+     * dropped, the phase stamped terminal), because a phase-less row with
+     * a task id projects "running / Waiting to start" to the progress
+     * poll forever.
+     *
+     * @param int $task_id Task id.
+     * @param int $site_id Site id.
+     *
+     * @return void
+     */
+    public static function close_child_task_after_terminal_mark( $task_id, $site_id ) {
+        $progress = MainWP_DB_Backup::instance()->get_backup_task_progress( (int) $task_id, (int) $site_id );
+        if ( empty( $progress ) || '' === (string) $progress->child_backup_task_id ) {
+            return;
+        }
+
+        $child_task_id  = (string) $progress->child_backup_task_id;
+        $child_phase    = MainWP_Backup_Task_Phase::tryFrom( (string) $progress->child_phase );
+        $child_terminal = MainWP_Backup_Task_Phase::COMPLETED === $child_phase || MainWP_Backup_Task_Phase::FAILED === $child_phase;
+        if ( ! $child_terminal && ! MainWP_Backup_Executor::is_creating_marker( $child_task_id ) ) {
+            $website = MainWP_DB::instance()->get_website_by_id( (int) $site_id );
+            if ( ! empty( $website ) ) {
+                try {
+                    MainWP_Connect::fetch_url_authed( $website, 'backup_task_cancel', array( 'task_id' => $child_task_id ), false, false, false );
+                    MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Backup cancelled on the child after a terminal failure mark (child task: ' . $child_task_id . ')' );
+                } catch ( \Exception $e ) {
+                    // Best effort: an unreachable child must not block the dashboard-side cleanup.
+                    MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Child cancel after a terminal failure mark did not land: ' . $e->getMessage() );
+                }
+            }
+        }
+
+        MainWP_DB_Backup::instance()->update_backup_task_progress(
+            (int) $task_id,
+            (int) $site_id,
+            array(
+                'child_backup_task_id' => '',
+                'child_phase'          => MainWP_Backup_Task_Phase::FAILED,
+            )
+        );
     }
 
     /**

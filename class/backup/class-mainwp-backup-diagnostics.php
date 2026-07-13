@@ -629,9 +629,16 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
             if ( false === $handle ) {
                 return;
             }
-            @flock( $handle, LOCK_EX );
-            @fwrite( $handle, $line . "\n" );
-            @flock( $handle, LOCK_UN );
+            // The flush must happen INSIDE the lock: fwrite lands in PHP's
+            // stream buffer, and without the explicit fflush the real write()
+            // happens at fclose - after the unlock - so two contending
+            // processes interleave partial lines exactly when the events
+            // matter most. A failed lock skips the write for the same reason.
+            if ( @flock( $handle, LOCK_EX ) ) {
+                @fwrite( $handle, $line . "\n" );
+                @fflush( $handle );
+                @flock( $handle, LOCK_UN );
+            }
             @fclose( $handle );
             // phpcs:enable WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors.Discouraged
         } catch ( \Throwable $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement -- diagnostics must never break a backup.
@@ -741,6 +748,52 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
             }
             $sections[ $name ] = $rows;
         }
+
+        // Per-site provenance: the deployed child plugin version (sync data)
+        // and the negotiated backup capability flags. Confirming what a site
+        // actually runs required behavioral inference without these.
+        $flag_names = array(
+            'task_spine_support',
+            'download_token_support',
+            'incremental_support',
+            'manifest_chunk_support',
+            'restore_files_support',
+            'cloud_restore_pull_support',
+            'child_is_multisite',
+            'restore_multisite_support',
+        );
+
+        $wp_table      = MainWP_DB::instance()->get_table_name( 'wp' );
+        $sync_table    = MainWP_DB::instance()->get_table_name( 'wp_sync' );
+        $options_table = MainWP_DB::instance()->get_table_name( 'wp_options' );
+        $site_rows     = $wpdb->get_results( $wpdb->prepare( 'SELECT w.id, w.name, w.url, s.version FROM ' . $wp_table . ' w LEFT JOIN ' . $sync_table . ' s ON s.wpid = w.id LIMIT %d', $cap + 1 ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery -- bounded diagnostic dump of a known internal table.
+        $site_rows     = is_array( $site_rows ) ? $site_rows : array();
+        if ( count( $site_rows ) > $cap ) {
+            $site_rows = array_slice( $site_rows, 0, $cap );
+            $truncated = true;
+        }
+
+        $flags_by_site = array();
+        if ( ! empty( $site_rows ) ) {
+            $placeholders = implode( ',', array_fill( 0, count( $flag_names ), '%s' ) );
+            $option_rows  = $wpdb->get_results( $wpdb->prepare( 'SELECT wpid, name, value FROM ' . $options_table . ' WHERE name IN (' . $placeholders . ')', $flag_names ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.DirectDatabaseQuery -- the IN list is only %s placeholders; values are prepared.
+            foreach ( (array) $option_rows as $option_row ) {
+                $flags_by_site[ (int) $option_row['wpid'] ][ (string) $option_row['name'] ] = (string) $option_row['value'];
+            }
+        }
+
+        $sections['sites'] = array_map(
+            function ( $row ) use ( $flags_by_site ) {
+                return array(
+                    'id'            => (int) $row['id'],
+                    'name'          => (string) $row['name'],
+                    'url'           => (string) $row['url'],
+                    'child_version' => isset( $row['version'] ) ? (string) $row['version'] : '',
+                    'capabilities'  => isset( $flags_by_site[ (int) $row['id'] ] ) ? $flags_by_site[ (int) $row['id'] ] : array(),
+                );
+            },
+            $site_rows
+        );
 
         $disk_free = null;
         if ( function_exists( 'disk_free_space' ) ) {

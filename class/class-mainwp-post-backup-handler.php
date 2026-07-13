@@ -866,6 +866,16 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         if ( ! empty( $task ) ) {
             MainWP_DB_Backup::instance()->update_backup_task_with_values( (int) $task->id, array( 'completed' => time() ) );
             MainWP_DB_Backup::instance()->update_backup_notices( (int) $task->id, esc_html__( 'Backup cancelled from the dashboard.', 'mainwp' ) . "\n" );
+            // Drop the cancelled child task from the progress row, or the
+            // progress poll keeps projecting it as running / waiting forever.
+            MainWP_DB_Backup::instance()->update_backup_task_progress(
+                (int) $task->id,
+                $site_id,
+                array(
+                    'child_backup_task_id' => '',
+                    'child_phase'          => '',
+                )
+            );
         }
 
         wp_send_json(
@@ -998,6 +1008,19 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             'backup',
             'Backup cancelled on the child during a stale task reset (child task: ' . ( '' !== $child_task_id ? $child_task_id : 'auto-resolved' ) . ')'
         );
+
+        // Drop the cancelled child task from the progress row, or the
+        // progress poll keeps projecting it as running / waiting forever.
+        if ( ! empty( $progress ) ) {
+            MainWP_DB_Backup::instance()->update_backup_task_progress(
+                (int) $task->id,
+                (int) $site_id,
+                array(
+                    'child_backup_task_id' => '',
+                    'child_phase'          => '',
+                )
+            );
+        }
 
         return true;
     }

@@ -1005,6 +1005,52 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * The bundle names each site's deployed child plugin version and its
+	 * negotiated capability flags: confirming what a site actually runs
+	 * cost an hour of behavioral inference last round, and the sync data
+	 * already holds it.
+	 *
+	 * @return void
+	 */
+	public function test_export_bundle_sites_section_carries_child_version_and_capabilities() {
+		if ( ! class_exists( \ZipArchive::class ) ) {
+			$this->markTestSkipped( 'ZipArchive is unavailable in this environment.' );
+		}
+
+		$this->enable_recorder();
+
+		$site_id = $this->create_test_site();
+		MainWP_DB::instance()->update_website_sync_values( $site_id, array( 'version' => '6.1.9-test' ) );
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		MainWP_DB::instance()->update_website_option( $website, 'task_spine_support', '1' );
+		MainWP_DB::instance()->update_website_option( $website, 'download_token_support', '' );
+
+		MainWP_Backup_Diagnostics::instance()->record( 'sites-check', 'poll', $site_id, 1, array( 'phase' => 'queued' ) );
+
+		$bundle = MainWP_Backup_Diagnostics::instance()->export_bundle();
+		$this->assertNotSame( '', $bundle );
+
+		$zip = new \ZipArchive();
+		$this->assertTrue( $zip->open( $bundle ) );
+		$sites = json_decode( (string) $zip->getFromName( 'sites.json' ), true );
+		$zip->close();
+
+		$this->assertIsArray( $sites, 'The bundle must carry a sites section.' );
+		$rows = array_values(
+			array_filter(
+				$sites,
+				function ( $row ) use ( $site_id ) {
+					return isset( $row['id'] ) && (int) $row['id'] === $site_id;
+				}
+			)
+		);
+		$this->assertCount( 1, $rows, 'The test site must appear exactly once in the sites section.' );
+		$this->assertSame( '6.1.9-test', $rows[0]['child_version'], 'The deployed child plugin version must ride along per site.' );
+		$this->assertSame( '1', $rows[0]['capabilities']['task_spine_support'], 'A negotiated capability flag must be readable per site.' );
+		$this->assertArrayHasKey( 'download_token_support', $rows[0]['capabilities'], 'Cleared flags must still be listed so a downgrade is visible.' );
+	}
+
+	/**
 	 * With no recorded events there is nothing worth exporting.
 	 *
 	 * @return void

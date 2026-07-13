@@ -124,6 +124,80 @@ class MainWP_Backup_Terminal_Cleanup_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * One task spanning two sites, with an open run.
+	 *
+	 * @param int $site_a First site.
+	 * @param int $site_b Second site.
+	 *
+	 * @return object The task row.
+	 */
+	private function open_task_over( $site_a, $site_b ) {
+		$user = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$task = MainWP_DB_Backup::instance()->add_backup_task( $user, 'Gate multi-site task', 'daily', 'full', '', $site_a . ',' . $site_b, '', '', '', 0, 0, 0, 0, 0, 'tar.gz', 0, 1, 150, 0, 0 );
+		$this->assertNotFalse( $task, 'Precondition: the two-site task row must insert.' );
+		MainWP_DB_Backup::instance()->update_backup_task_with_values(
+			(int) $task->id,
+			array(
+				'last_run'  => time() - 100,
+				'completed' => time() - 500,
+			)
+		);
+		return MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+	}
+
+	/**
+	 * A site whose child is too old to run the task spine fails its own slice
+	 * and nothing more: the healthy site in the same task is still reached and
+	 * started, and the gated site is marked complete so the run can close.
+	 * Without that, one un-updated child would wedge every other site on the
+	 * task, which is the failure mode the gate must not introduce.
+	 *
+	 * @return void
+	 */
+	public function test_gated_site_does_not_wedge_the_other_site_in_the_task() {
+		$old_site     = $this->create_test_site();
+		$current_site = $this->create_test_site();
+		$task         = $this->open_task_over( $old_site, $current_site );
+
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			function ( $result, $website, $what ) use ( $old_site ) {
+				$is_old = (int) $website->id === (int) $old_site;
+				if ( 'backup_preflight' === $what ) {
+					return $is_old
+						? array(
+							'error'      => 'Required version has not been detected.',
+							'error_code' => MainWP_Backup_Monitor::CHILD_INCOMPATIBLE_CODE,
+						)
+						: array(
+							'task_spine'  => 1,
+							'zip_support' => true,
+						);
+				}
+				if ( 'backup_task_create' === $what ) {
+					// Only a spine-capable child may ever be asked to create.
+					return array( 'task_id' => 'task-current-site-1' );
+				}
+				return $result;
+			},
+			10,
+			3
+		);
+
+		MainWP_Manage_Backups_Handler::execute_backup_task( $task, 5, false );
+
+		$fresh = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$this->assertStringContainsString( (string) $old_site, (string) $fresh->completed_sites, 'The gated site must be marked complete so the run can close, not left pending forever.' );
+		$this->assertStringContainsString( 'too old to run backups', (string) $fresh->backup_errors, 'The task must carry the coded refusal for the old site.' );
+
+		$old_row = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $old_site );
+		$this->assertSame( '', (string) $old_row->child_backup_task_id, 'The gate throws before any child task exists, so the old site holds none.' );
+
+		$current_row = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $current_site );
+		$this->assertSame( 'task-current-site-1', (string) $current_row->child_backup_task_id, 'The healthy site must still be reached and started: one old child cannot wedge the task.' );
+	}
+
+	/**
 	 * Seed a current-run progress row.
 	 *
 	 * @param int   $task_id Task ID.

@@ -932,6 +932,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             } catch ( \Exception $e ) {
                 if ( $e instanceof MainWP_Exception
                     && MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING === $e->get_message_error_code()
+                    && MainWP_Backup_Executor::EXTRA_FOREIGN_ALREADY_RUNNING !== (string) $e->get_message_extra()
                     && (int) $task->completed < (int) $task->last_run
                 ) {
                     // Another driver of this same open run holds the child's
@@ -941,7 +942,9 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                     // yields like a false return from backup_site() and skips
                     // the completion bookkeeping below. Recording it would
                     // close the run mid-flight and email a failure for a
-                    // backup that goes on to succeed.
+                    // backup that goes on to succeed. A persistent foreign
+                    // refusal is intentionally not yielded here; it falls
+                    // through so the operator sees the real blocker.
                     MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Backup already running elsewhere in this run; yielding to the driver that holds the slot.' );
 
                     /**

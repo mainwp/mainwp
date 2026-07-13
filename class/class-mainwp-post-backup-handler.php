@@ -688,9 +688,10 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
     /**
      * Drive and report an on-demand native backup.
      *
-     * Each poll pushes the run one child round-trip (the child advances on
-     * its own; polling only checks phase) and reports running, completed, or
-     * failed. On completion the caller refreshes the snapshot list.
+     * Each poll drives one continuation step while the run is open (and claims
+     * a slot for a click whose run never opened), then reports running,
+     * completed, or failed. Completion is judged by snapshot freshness, not
+     * the child phase.
      */
     public function mainwp_native_backup_progress() {
         $this->secure_request( 'mainwp_native_backup_progress' );

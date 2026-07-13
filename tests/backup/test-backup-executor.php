@@ -12,11 +12,13 @@
 namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Backup_Executor;
+use MainWP\Dashboard\MainWP_Backup_Error_Codes;
 use MainWP\Dashboard\MainWP_Backup_File_Manager;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_DB_Backup;
 use MainWP\Dashboard\MainWP_Exception;
 use MainWP\Dashboard\MainWP_Manage_Backups_Handler;
+use MainWP\Dashboard\MainWP_Post_Backup_Handler;
 
 /**
  * Class MainWP_Backup_Executor_Test
@@ -114,6 +116,44 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 				$values
 			)
 		);
+	}
+
+	/**
+	 * Invoke the on-demand progress poll and return its decoded JSON payload.
+	 *
+	 * @param int $site_id Site to poll.
+	 * @param int $since   Click-time run stamp.
+	 *
+	 * @return array|null Decoded response.
+	 */
+	private function poll_on_demand( $site_id, $since ) {
+		$nonce                = wp_create_nonce( 'mainwp_native_backup_progress' );
+		$_POST['security']    = $nonce;
+		$_REQUEST['security'] = $nonce;
+		$_POST['site_id']     = $site_id;
+		$_POST['since']       = (string) $since;
+
+		$throw = static function () {
+			return static function () {
+				throw new \RuntimeException( 'wp_die' );
+			};
+		};
+		add_filter( 'wp_doing_ajax', '__return_true' );
+		add_filter( 'wp_die_ajax_handler', $throw );
+
+		$raw = '';
+		ob_start();
+		try {
+			MainWP_Post_Backup_Handler::instance()->mainwp_native_backup_progress();
+		} catch ( \RuntimeException $e ) {
+			unset( $e ); // wp_send_json terminated the request as designed.
+		} finally {
+			$raw = ob_get_clean();
+			remove_filter( 'wp_die_ajax_handler', $throw );
+			remove_filter( 'wp_doing_ajax', '__return_true' );
+		}
+
+		return json_decode( $raw, true );
 	}
 
 	/**
@@ -272,21 +312,23 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * An already-running child backup is reported with its error code
-	 * instead of silently deferring forever.
+	 * A raw "Another backup process is running" child error is classified into
+	 * the already-running branch: the first marker-less refusal starts the
+	 * persistence clock and yields while it is still ambiguous with a same-run
+	 * create race. It surfaces only once it outlives the create window - see
+	 * test_persistent_foreign_refusal_surfaces.
 	 *
 	 * @return void
 	 */
-	public function test_another_backup_running_throws_already_running() {
+	public function test_another_backup_running_classified_and_stamps() {
 		list( $site_id, $task ) = $this->site_and_task();
 		$this->mock_child_action( 'backup', array( 'error' => 'Another backup process is running on the child site.' ) );
 
-		try {
-			MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
-			$this->fail( 'Expected already-running exception.' );
-		} catch ( MainWP_Exception $e ) {
-			$this->assertSame( 'mainwp_backup_already_running', $e->get_message_error_code() );
-		}
+		$result   = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+
+		$this->assertFalse( $result, 'The first already-running refusal must yield while its persistence is still ambiguous.' );
+		$this->assertGreaterThan( 0, (int) $progress->foreign_refused_since, 'The refusal must start the persistence clock.' );
 	}
 
 	/**
@@ -1256,24 +1298,53 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * A refusal from a genuinely foreign backup (no driver of this run has
-	 * registered a child task) still surfaces as ERR_ALREADY_RUNNING so the
-	 * operator sees the blocker and the Cancel escape hatch stays reachable.
+	 * The first marker-less refusal is still ambiguous with a same-run create
+	 * race, so it starts the persistence clock and yields silently.
 	 *
 	 * @return void
 	 */
-	public function test_foreign_already_running_refusal_still_throws() {
+	public function test_first_foreign_refusal_stamps_and_yields() {
 		list( $site_id, $task ) = $this->site_and_task();
+
+		$refusals = 0;
+		$this->mock_already_running_race( $task->id, $site_id, $refusals, false );
+
+		$result   = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+
+		$this->assertSame( 1, $refusals, 'Precondition: the mocked child must refuse the start.' );
+		$this->assertFalse( $result, 'The first foreign refusal must yield while its persistence is still ambiguous.' );
+		$this->assertGreaterThan( 0, (int) $progress->foreign_refused_since, 'The first foreign refusal must start the persistence clock.' );
+	}
+
+	/**
+	 * A marker-less refusal that persists past the create window is genuinely
+	 * foreign and surfaces with the marker consumed by the site loop.
+	 *
+	 * @return void
+	 */
+	public function test_persistent_foreign_refusal_surfaces() {
+		$last_run               = time() - MainWP_Backup_Executor::FOREIGN_REFUSAL_SURFACE_SECONDS - 60;
+		list( $site_id, $task ) = $this->site_and_task( array( 'last_run' => $last_run ) );
+		$this->seed_progress(
+			$task->id,
+			$site_id,
+			array(
+				'dtsFetched'            => $last_run - 1,
+				'foreign_refused_since' => time() - MainWP_Backup_Executor::FOREIGN_REFUSAL_SURFACE_SECONDS - 30,
+			)
+		);
 
 		$refusals = 0;
 		$this->mock_already_running_race( $task->id, $site_id, $refusals, false );
 
 		try {
 			MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
-			$this->fail( 'Expected the foreign already-running refusal to propagate.' );
+			$this->fail( 'Expected the persistent foreign refusal to propagate.' );
 		} catch ( MainWP_Exception $e ) {
 			$this->assertSame( 1, $refusals, 'Precondition: the mocked child must refuse the start.' );
-			$this->assertSame( 'mainwp_backup_already_running', $e->get_message_error_code() );
+			$this->assertSame( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING, $e->get_message_error_code() );
+			$this->assertSame( MainWP_Backup_Executor::EXTRA_FOREIGN_ALREADY_RUNNING, $e->get_message_extra() );
 		}
 	}
 
@@ -1335,13 +1406,9 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * When the child's refusal lands while no other driver has yet claimed
-	 * the shared row - the losing side of two drivers resetting the row in
-	 * the same instant - the executor still throws, but the site loop must
-	 * treat it as a yield while the run is open: the winning driver is mid
-	 * create, and terminal bookkeeping here closes its run under it. Before
-	 * the fix this recorded the error, closed the run mid-flight, and
-	 * emailed a failure for a backup that went on to succeed.
+	 * When the child's refusal lands before another same-run driver claims the
+	 * shared row, the first refusal stamps and yields: the winning driver may
+	 * still be mid-create, so terminal bookkeeping must not close under it.
 	 *
 	 * @return void
 	 */
@@ -1365,11 +1432,76 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 
 		MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, true );
 
-		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$task     = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
 		$this->assertSame( 1, $refusals, 'Precondition: the run must reach the mocked child refusal.' );
 		$this->assertSame( '', (string) $task->backup_errors, 'A refusal against an open run must not be recorded as a run error.' );
 		$this->assertLessThan( (int) $task->last_run, (int) $task->completed, 'The run must stay open for the driver that holds the slot.' );
 		$this->assertSame( 0, $mails, 'A refusal against an open run must not fire the failure email.' );
+		$this->assertGreaterThan( 0, (int) $progress->foreign_refused_since, 'The ambiguous refusal must start the persistence clock.' );
+	}
+
+	/**
+	 * A persistent foreign refusal must pass through the site loop's normal
+	 * error-recording path instead of its same-run already-running yield.
+	 *
+	 * @return void
+	 */
+	public function test_persistent_foreign_refusal_records_error_through_full_handler() {
+		$site_id = $this->create_test_site();
+		$user    = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$task    = MainWP_DB_Backup::instance()->add_backup_task( $user, 'Persistent foreign refusal task', 'daily', 'full', '', (string) $site_id, '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0 );
+		$this->assertNotFalse( $task, 'Precondition: the task row must insert.' );
+		$last_run = time() - MainWP_Backup_Executor::FOREIGN_REFUSAL_SURFACE_SECONDS - 60;
+		MainWP_DB_Backup::instance()->update_backup_task_with_values( (int) $task->id, array( 'last_run' => $last_run ) );
+		$this->seed_progress(
+			(int) $task->id,
+			$site_id,
+			array(
+				'dtsFetched'            => $last_run - 1,
+				'foreign_refused_since' => time() - MainWP_Backup_Executor::FOREIGN_REFUSAL_SURFACE_SECONDS - 30,
+			)
+		);
+
+		$refusals = 0;
+		$this->mock_already_running_race( (int) $task->id, $site_id, $refusals, false );
+		MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, false );
+
+		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$this->assertSame( 1, $refusals, 'Precondition: the run must reach the mocked child refusal.' );
+		$this->assertNotSame( '', (string) $task->backup_errors, 'A persistent foreign refusal must be recorded as a run error.' );
+		$this->assertStringContainsString( MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING ), (string) $task->backup_errors );
+	}
+
+	/**
+	 * The on-demand poll must surface a recorded already-running refusal rather
+	 * than replacing it with the generic missing-snapshot failure.
+	 *
+	 * @return void
+	 */
+	public function test_poll_surfaces_recorded_foreign_already_running_error() {
+		$site_id = $this->create_test_site();
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		wp_set_current_user( $website->userid );
+		$task = MainWP_DB_Backup::instance()->ensure_manual_backup_task( $website );
+		$this->assertNotEmpty( $task, 'Precondition: the on-demand task must exist.' );
+
+		$last_run = time() - 10;
+		$message  = MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING );
+		MainWP_DB_Backup::instance()->update_backup_task_with_values(
+			(int) $task->id,
+			array(
+				'last_run'      => $last_run,
+				'completed'     => $last_run,
+				'backup_errors' => $message,
+			)
+		);
+
+		$response = $this->poll_on_demand( $site_id, $last_run );
+
+		$this->assertSame( 'failed', $response['status'] );
+		$this->assertSame( $message, $response['error'] );
+		$this->assertStringNotContainsString( 'did not produce a snapshot', $response['error'] );
 	}
 
 	/**

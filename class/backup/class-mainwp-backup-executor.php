@@ -79,6 +79,22 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     const CREATE_MARKER_TTL_SECONDS = 60;
 
     /**
+     * Marker attached to an ERR_ALREADY_RUNNING exception when the child's
+     * refusal is a genuinely foreign backup that has persisted past the create
+     * window, not a same-run driver mid-create. The site loop reads it to
+     * surface the collision instead of yielding.
+     */
+    const EXTRA_FOREIGN_ALREADY_RUNNING = 'foreign_backup';
+
+    /**
+     * How long a marker-less child already-running refusal must persist on a
+     * run's progress row before it surfaces as a foreign collision. Set above
+     * CREATE_MARKER_TTL_SECONDS so a same-run create-window reset race - which
+     * re-marks the row within milliseconds - never crosses it.
+     */
+    const FOREIGN_REFUSAL_SURFACE_SECONDS = 90;
+
+    /**
      * Wall-clock threshold, in seconds, after which a still-running backup
      * is treated as stalled rather than merely slow. Shared with the
      * scheduled backup list view (MainWP_Backup_List_View::column_details())
@@ -403,32 +419,45 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             }
 
             if ( isset( $information['error'] ) && stristr( $information['error'], 'Another backup process is running' ) ) {
-                // The initiate slice, the progress poll, and the kicked
-                // continue cron can all drive this same run. When another of
-                // those drivers already registered this run's child task (or
-                // the legacy fetch result) on the shared progress row, the
-                // child's single-slot refusal is that driver at work, not a
-                // failure of this run: recording it would flip a succeeding
-                // backup to "failed" and fire the failure email. The row is
-                // re-read live: anything other than this driver's own
-                // untouched marker means another driver of this run claimed
-                // the slot, so yield like the queued-spine path and let the
-                // owning driver finish. Only a row still carrying this
-                // driver's own marker proves nothing else touched the run,
-                // making the refusal a genuinely foreign backup.
+                // The initiate slice, progress poll, and continue cron can all
+                // drive this run. A live same-run claim yields immediately. A
+                // marker-less refusal is ambiguous with a create-window reset
+                // race, so persist its first occurrence on this run's row and
+                // surface it only after it outlives that window.
                 $current           = MainWP_DB_Backup::instance()->get_backup_task_progress( $taskId, $website->id );
                 $claimed_elsewhere = $current && (
                     ( ! empty( $current->child_backup_task_id ) && $current->child_backup_task_id !== $creating_marker )
                     || ! empty( $current->fetchResult )
                 );
                 if ( $claimed_elsewhere ) {
+                    if ( ! empty( $current->foreign_refused_since ) ) {
+                        MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'foreign_refused_since' => 0 ) );
+                    }
                     MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Child refused a duplicate backup start for this run; yielding to the driver that holds the slot.' );
                     /** This action is documented in pages/page-mainwp-manage-backups-handler.php */
                     do_action( 'mainwp_backup_diag_run_reinit', (int) $taskId, 'create_race_yield', (int) $pTask->last_run, isset( $pTask->completed ) ? (int) $pTask->completed : 0 );
                     return false;
                 }
+
+                $refused_since = ( $current && (int) $current->foreign_refused_since >= (int) $pTask->last_run )
+                    ? (int) $current->foreign_refused_since
+                    : 0;
+
+                if ( 0 === $refused_since ) {
+                    MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'foreign_refused_since' => time() ) );
+                    static::clear_creating_marker_if_mine( $taskId, (int) $website->id, $creating_marker );
+                    /** This action is documented in pages/page-mainwp-manage-backups-handler.php */
+                    do_action( 'mainwp_backup_diag_run_reinit', (int) $taskId, 'foreign_refusal_pending', (int) $pTask->last_run, isset( $pTask->completed ) ? (int) $pTask->completed : 0 );
+                    return false;
+                }
+
+                if ( ( time() - $refused_since ) < self::FOREIGN_REFUSAL_SURFACE_SECONDS ) {
+                    static::clear_creating_marker_if_mine( $taskId, (int) $website->id, $creating_marker );
+                    return false;
+                }
+
                 static::clear_creating_marker_if_mine( $taskId, (int) $website->id, $creating_marker );
-                throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+                throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING, self::EXTRA_FOREIGN_ALREADY_RUNNING ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
             }
 
             if ( $use_spine && empty( $information['error'] ) ) {
@@ -439,7 +468,14 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
                 // The task is queued on the child; each following cycle
                 // advances it one bounded slice.
-                MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'child_backup_task_id' => sanitize_text_field( $information['task_id'] ) ) );
+                MainWP_DB_Backup::instance()->update_backup_task_progress(
+                    $taskId,
+                    $website->id,
+                    array(
+                        'child_backup_task_id'  => sanitize_text_field( $information['task_id'] ),
+                        'foreign_refused_since' => 0,
+                    )
+                );
 
                 return false;
             }
@@ -451,8 +487,9 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 $taskId,
                 $website->id,
                 array(
-                    'fetchResult'          => wp_json_encode( $information ),
-                    'child_backup_task_id' => '',
+                    'fetchResult'           => wp_json_encode( $information ),
+                    'child_backup_task_id'  => '',
+                    'foreign_refused_since' => 0,
                 )
             );
         } elseif ( static::is_creating_marker( $backupTaskProgress->child_backup_task_id ) ) {

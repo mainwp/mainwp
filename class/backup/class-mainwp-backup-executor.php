@@ -1628,6 +1628,24 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_NO_PERMISSION ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         }
 
+        // This engine is the one remaining caller of the child's legacy backup
+        // action, and Run Now is what reaches it. A child too old for the task
+        // spine is refused here as well, so an un-updated site cannot be backed
+        // up from the UI either: gating only the scheduled path would leave a
+        // button on every task row that quietly runs the legacy engine.
+        //
+        // The capability has to be negotiated first, not read from the stored
+        // flag: a site that has never run a native backup has no flag yet, and
+        // a missing flag is indistinguishable from an unsupported one, so a
+        // healthy child would be refused on a brand-new task. Format switching
+        // is off - this is a capability refresh, not a format negotiation, and
+        // the legacy send resolves its own format below.
+        $spine_probe_ext = '';
+        MainWP_Backup_Monitor::negotiate_backup_preflight( $website, $spine_probe_ext, $pTask, false );
+        if ( ! MainWP_Backup_Monitor::child_supports_task_spine( $website ) ) {
+            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_CHILD_UPDATE_REQUIRED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+        }
+
         $websiteCleanUrl = $website->url;
         if ( '/' === substr( $websiteCleanUrl, - 1 ) ) {
             $websiteCleanUrl = substr( $websiteCleanUrl, 0, - 1 );

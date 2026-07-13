@@ -130,7 +130,10 @@ class MainWP_Backup_Exclude_Sanitization_Test extends MainWP_Abilities_Test_Case
 			function ( $result, $website, $what, $params ) use ( &$captured ) {
 				unset( $website );
 				if ( 'backup_preflight' === $what ) {
-					return array( 'error' => 'Unknown action' );
+					// The legacy engine refuses a child too old for the task
+					// spine, so this fixture must be current to reach the send
+					// whose exclude list it is here to inspect.
+					return array( 'task_spine' => 1 );
 				}
 				if ( 'backup' === $what ) {
 					$captured = $params['exclude'];

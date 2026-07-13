@@ -103,6 +103,9 @@ class MainWP_Backup_Adhoc_Type_Test extends MainWP_Abilities_Test_Case {
 			'bz2_support'     => true,
 			'time_limit_ok'   => true,
 			'backup_dir_hash' => 'abc123def456gh78',
+			// The legacy engine refuses a child too old for the task spine, so
+			// a fixture that wants to reach the legacy send must be current.
+			'task_spine'      => 1,
 		);
 	}
 

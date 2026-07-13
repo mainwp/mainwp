@@ -12,6 +12,7 @@
 
 namespace MainWP\Dashboard\Tests;
 
+use MainWP\Dashboard\MainWP_Backup_Error_Codes;
 use MainWP\Dashboard\MainWP_Backup_Executor;
 use MainWP\Dashboard\MainWP_Backup_Handler;
 use MainWP\Dashboard\MainWP_Backup_Monitor;
@@ -1076,6 +1077,66 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 			),
 			'The shim still warns about ZIP on a large site.'
 		);
+	}
+
+	/**
+	 * Run Now reaches the legacy engine, so the gate has to hold there too: a
+	 * child too old for the task spine must be refused from the UI as well, or
+	 * every backup task row keeps a button that quietly runs the legacy engine
+	 * against an un-updated site.
+	 *
+	 * @return void
+	 */
+	public function test_run_now_refuses_a_child_too_old_for_the_spine() {
+		$site_id = $this->create_test_site();
+
+		$this->mock_child_actions(
+			array(
+				'backup_preflight' => array(
+					'error'      => 'Required version has not been detected.',
+					'error_code' => MainWP_Backup_Monitor::CHILD_INCOMPATIBLE_CODE,
+				),
+				// The legacy engine would happily answer; the gate must fire first.
+				'backup'           => array( 'full' => 'backup-legacy.tar.gz', 'size' => 10 ),
+			)
+		);
+
+		try {
+			MainWP_Backup_Executor::backup( $site_id, 'full', '', '', 0, 0, 0, 0 );
+			$this->fail( 'Run Now must refuse a child too old for the task spine.' );
+		} catch ( MainWP_Exception $e ) {
+			$this->assertSame( MainWP_Backup_Error_Codes::ERR_CHILD_UPDATE_REQUIRED, $e->get_message_error_code(), 'The refusal must carry the coded update-required error, not a generic failure.' );
+		}
+	}
+
+	/**
+	 * The Run Now gate must negotiate the capability, not trust the stored flag:
+	 * a site that has never run a native backup carries no flag at all, and a
+	 * missing flag reads the same as an unsupported one. Reading it directly
+	 * would refuse a perfectly healthy child on its first ever Run Now.
+	 *
+	 * @return void
+	 */
+	public function test_run_now_allows_a_healthy_child_whose_flag_is_not_set_yet() {
+		$site_id = $this->create_test_site();
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$this->assertEmpty( MainWP_DB::instance()->get_website_option( $website, 'task_spine_support' ), 'Precondition: a fresh site has no capability flag yet.' );
+
+		$this->mock_child_actions(
+			array(
+				'backup_preflight' => $this->preflight_response( array( 'task_spine' => 1 ) ),
+				'backup'           => array( 'error' => 'stop here, past the gate' ),
+			)
+		);
+
+		try {
+			MainWP_Backup_Executor::backup( $site_id, 'full', '', '', 0, 0, 0, 0 );
+		} catch ( MainWP_Exception $e ) {
+			$this->assertNotSame( MainWP_Backup_Error_Codes::ERR_CHILD_UPDATE_REQUIRED, $e->get_message_error_code(), 'A healthy child must reach the legacy send, never the update-required gate.' );
+		}
+
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$this->assertSame( '1', (string) MainWP_DB::instance()->get_website_option( $website, 'task_spine_support' ), 'The gate negotiates the capability, so the flag is populated on the way through.' );
 	}
 
 	/**

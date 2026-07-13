@@ -1077,4 +1077,77 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 			'The shim still warns about ZIP on a large site.'
 		);
 	}
+
+	/**
+	 * Negotiate against a child that answers the preflight with its own
+	 * incompatible code, and report what the site still claims to support.
+	 *
+	 * @param int   $site_id Site ID.
+	 * @param array $error   The child's error response.
+	 *
+	 * @return string The stored task_spine_support value after negotiation.
+	 */
+	private function spine_flag_after_error_response( $site_id, array $error ) {
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		MainWP_DB::instance()->update_website_option( $website, 'task_spine_support', '1' );
+		MainWP_DB::instance()->update_website_option( $website, 'download_token_support', '1' );
+
+		$this->mock_child_actions( array( 'backup_preflight' => $error ) );
+
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$ext     = 'tar.gz';
+		MainWP_Backup_Monitor::negotiate_backup_preflight( $website, $ext );
+
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		return (string) MainWP_DB::instance()->get_website_option( $website, 'task_spine_support' );
+	}
+
+	/**
+	 * A site downgraded to a child too old to carry the preflight action at
+	 * all must stop claiming the task spine. The old child answers with its
+	 * own child_plugin_incompatible code, which is positive evidence of the
+	 * downgrade - without clearing the flag the site keeps a stale capability
+	 * forever and the backup gate waves through a child that cannot run the
+	 * task, which is the whole failure the gate exists to prevent.
+	 *
+	 * @return void
+	 */
+	public function test_incompatible_child_clears_the_negotiated_spine_flag() {
+		$site_id = $this->create_test_site();
+
+		$flag = $this->spine_flag_after_error_response(
+			$site_id,
+			array(
+				'error'      => 'Required version has not been detected. Please, make sure that you are using the latest version of the MainWP Child plugin on your site.',
+				'error_code' => MainWP_Backup_Monitor::CHILD_INCOMPATIBLE_CODE,
+			)
+		);
+
+		$this->assertSame( '', $flag, 'A downgraded child must lose the task-spine capability it can no longer serve.' );
+
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$this->assertSame( '', (string) MainWP_DB::instance()->get_website_option( $website, 'download_token_support' ), 'Every negotiated capability goes with the downgrade, not just the spine.' );
+		$this->assertFalse( MainWP_Backup_Monitor::child_supports_task_spine( $website ), 'The gate must now read the site as spine-less.' );
+	}
+
+	/**
+	 * Any other preflight error may be transient, so the last known
+	 * capabilities stand: one bad response must not strip a healthy child of
+	 * the spine and refuse its backups with "update the child".
+	 *
+	 * @return void
+	 */
+	public function test_other_preflight_error_preserves_the_spine_flag() {
+		$site_id = $this->create_test_site();
+
+		$flag = $this->spine_flag_after_error_response(
+			$site_id,
+			array( 'error' => 'Temporary failure reading the backup directory.' )
+		);
+
+		$this->assertSame( '1', $flag, 'A transient preflight error must not downgrade a healthy site.' );
+
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$this->assertTrue( MainWP_Backup_Monitor::child_supports_task_spine( $website ), 'The gate must still read the site as spine-capable.' );
+	}
 }

@@ -24,6 +24,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
     /**
+     * The error code a child returns for an action its build does not carry.
+     *
+     * It is the child's own "you are running an older MainWP Child" answer, so
+     * it positively identifies a build too old for the callable rather than a
+     * transient failure.
+     *
+     * @var string
+     */
+    const CHILD_INCOMPATIBLE_CODE = 'child_plugin_incompatible';
+
+    /**
      * Method get_class_name()
      *
      * Get Class Name.
@@ -228,6 +239,20 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
         if ( ! is_array( $preflight ) || isset( $preflight['error'] ) ) {
             // Old child site without the preflight action - proceed without it.
+            //
+            // A child that answers child_plugin_incompatible has positively
+            // reported that its build does not carry the callable at all. That
+            // is not the same as an unreachable child, so it is safe to read as
+            // a downgrade and clear the negotiated capabilities: otherwise a
+            // site that once ran a task-spine child keeps claiming the spine
+            // forever, and the backup gate waves through a child that cannot
+            // run the task. Any other error may be transient, so the last known
+            // capabilities stand rather than a single bad response stripping a
+            // healthy site.
+            if ( is_array( $preflight ) && isset( $preflight['error_code'] ) && self::CHILD_INCOMPATIBLE_CODE === $preflight['error_code'] ) {
+                static::record_negotiated_capabilities( $website, array() );
+            }
+
             MainWP_Logger::instance()->info_for_website( $website, 'backup', 'Backup preflight not supported by the child site; proceeding without it.' );
             /** This action is documented in class/backup/class-mainwp-backup-monitor.php */
             do_action( 'mainwp_backup_diag_preflight', (int) $website->id, $diag_task_id, is_array( $preflight ) ? $preflight : array(), 'unsupported' );
@@ -333,37 +358,38 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             }
         }
 
-        // Remember whether the child runs the resumable task machine; an
-        // empty value also clears the flag after a child downgrade.
-        MainWP_DB::instance()->update_website_option( $website, 'task_spine_support', empty( $preflight['task_spine'] ) ? '' : '1' );
+        static::record_negotiated_capabilities( $website, $preflight );
+    }
 
-        // Remember whether the child issues one-time download tokens; an
-        // empty value also clears the flag after a child downgrade.
-        MainWP_DB::instance()->update_website_option( $website, 'download_token_support', empty( $preflight['download_token'] ) ? '' : '1' );
+    /**
+     * Record the capability flags a child's preflight report advertises.
+     *
+     * An empty report clears every flag, which is exactly what a child
+     * downgrade looks like: the site stops claiming a capability it can no
+     * longer serve, so the backup gate refuses it instead of sending a task
+     * the child cannot understand.
+     *
+     * @param object $website   Website row.
+     * @param array  $preflight Child readiness report. Empty for a child whose
+     *                          build has no preflight action at all.
+     *
+     * @return void
+     */
+    protected static function record_negotiated_capabilities( object $website, array $preflight ): void {
+        $flags = array(
+            'task_spine_support'         => 'task_spine',
+            'download_token_support'     => 'download_token',
+            'incremental_support'        => 'incremental',
+            'manifest_chunk_support'     => 'manifest_chunk',
+            'restore_files_support'      => 'restore_files',
+            'cloud_restore_pull_support' => 'cloud_restore_pull',
+            'child_is_multisite'         => 'is_multisite',
+            'restore_multisite_support'  => 'restore_multisite',
+        );
 
-        // Remember whether the child can run incremental backups; an
-        // empty value also clears the flag after a child downgrade.
-        MainWP_DB::instance()->update_website_option( $website, 'incremental_support', empty( $preflight['incremental'] ) ? '' : '1' );
-
-        // Remember whether the child can stage a chunked parent manifest;
-        // an empty value also clears the flag after a child downgrade.
-        MainWP_DB::instance()->update_website_option( $website, 'manifest_chunk_support', empty( $preflight['manifest_chunk'] ) ? '' : '1' );
-
-        // Remember whether the child runs the files-only restore
-        // pipeline; an empty value also clears the flag after a child
-        // downgrade.
-        MainWP_DB::instance()->update_website_option( $website, 'restore_files_support', empty( $preflight['restore_files'] ) ? '' : '1' );
-
-        // Remember whether restores can pull artifacts straight from
-        // cloud storage via presigned URLs; an empty value also clears
-        // the flag after a child downgrade.
-        MainWP_DB::instance()->update_website_option( $website, 'cloud_restore_pull_support', empty( $preflight['cloud_restore_pull'] ) ? '' : '1' );
-
-        // Remember the install's multisite state and whether the child
-        // can restore a whole network; empty values also clear the
-        // flags after a downgrade or a network being dissolved.
-        MainWP_DB::instance()->update_website_option( $website, 'child_is_multisite', empty( $preflight['is_multisite'] ) ? '' : '1' );
-        MainWP_DB::instance()->update_website_option( $website, 'restore_multisite_support', empty( $preflight['restore_multisite'] ) ? '' : '1' );
+        foreach ( $flags as $option => $reported ) {
+            MainWP_DB::instance()->update_website_option( $website, $option, empty( $preflight[ $reported ] ) ? '' : '1' );
+        }
     }
 
     /**

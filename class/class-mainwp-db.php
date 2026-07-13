@@ -3545,6 +3545,62 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
     }
 
     /**
+     * Get recently-synced child sites whose stored url differs from the
+     * child-reported siteurl.
+     *
+     * The trailing slash must be normalized in SQL: stored urls always end
+     * with a slash while child-reported siteurl values never do, so a plain
+     * inequality would match nearly every site.
+     *
+     * @since 6.2
+     *
+     * @param int $days Freshness gate: only sites synced within this many days.
+     *
+     * @return array|object|null Rows with id, url, siteurl or null on failure.
+     */
+    public function get_websites_with_url_siteurl_mismatch( $days = 30 ) {
+        $wp_table      = esc_sql( $this->table_name( 'wp' ) );
+        $wp_sync_table = esc_sql( $this->table_name( 'wp_sync' ) );
+        $minimum_sync  = time() - intval( $days ) * DAY_IN_SECONDS;
+
+        return $this->wpdb->get_results( $this->wpdb->prepare( "SELECT wp.id, wp.url, wp.siteurl FROM {$wp_table} wp JOIN {$wp_sync_table} wp_sync ON wp.id = wp_sync.wpid WHERE wp.siteurl <> '' AND TRIM(TRAILING '/' FROM wp.url) <> TRIM(TRAILING '/' FROM wp.siteurl) AND wp_sync.dtsSync >= %d", $minimum_sync ), OBJECT ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names are esc_sql'd.
+    }
+
+    /**
+     * Get IDs of child sites that have a non-empty value for a website option.
+     *
+     * @since 6.2
+     *
+     * @param string $option_name Website option name.
+     * @param int    $limit       Maximum number of IDs to return.
+     *
+     * @return array Site IDs.
+     */
+    public function get_website_ids_with_nonempty_option( $option_name, $limit = 3 ) {
+        $options_table = esc_sql( $this->table_name( 'wp_options' ) );
+
+        return $this->wpdb->get_col( $this->wpdb->prepare( "SELECT wpid FROM {$options_table} WHERE name = %s AND value <> '' ORDER BY wpid ASC LIMIT %d", $option_name, max( 1, intval( $limit ) ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd.
+    }
+
+    /**
+     * Get one child site whose stored url exactly matches the given URL,
+     * excluding a site ID. Used as the duplicate guard before a URL correction.
+     *
+     * @since 6.2
+     *
+     * @param string $url        URL to match ( trailing slash enforced ).
+     * @param int    $exclude_id Site ID to exclude.
+     *
+     * @return object|null Matching row ( id, url ) or null.
+     */
+    public function get_website_by_exact_url_excluding_id( $url, $exclude_id ) {
+        $url      = rtrim( (string) $url, '/' );
+        $wp_table = esc_sql( $this->table_name( 'wp' ) );
+
+        return $this->wpdb->get_row( $this->wpdb->prepare( "SELECT id, url FROM {$wp_table} WHERE TRIM(TRAILING '/' FROM url) = %s AND id <> %d", $url, intval( $exclude_id ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd.
+    }
+
+    /**
      * Method get_websites_to_notice_health_threshold()
      *
      * Get websites to notice site health.

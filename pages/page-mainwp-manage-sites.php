@@ -2045,6 +2045,15 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
             MainWP_DB::instance()->update_website( $website->id, $url, $current_user->ID, $site_name, $site_admin, $groupids, $groupnames, $newPluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $verifycertificate, $archiveFormat, $uniqueId, $http_user, $http_pass, $ssl_version, $disableHealthChecking, $healthThreshold, $backup_method );
 
+            $url_locked = isset( $_POST['mainwp_managesites_edit_url_lock'] ) ? 1 : 0;
+            MainWP_Site_Url_Corrector::set_lock( $website, $url_locked );
+            if ( ! $url_locked && $url !== $website->url ) {
+                // Auto-set the lock only when the user actually CHANGED the URL to
+                // something diverging from the child-reported address; saving
+                // unrelated fields must not lock a mismatched site.
+                MainWP_Site_Url_Corrector::after_user_set_url( $website, $url );
+            }
+
             if ( \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) {
                 $new_client_id = isset( $_POST['mainwp_managesites_edit_client_id'] ) ? intval( $_POST['mainwp_managesites_edit_client_id'] ) : 0;
                 if ( $website->client_id !== $new_client_id ) {

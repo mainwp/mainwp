@@ -81,6 +81,9 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         add_action( 'mainwp_crondeactivatedlicensesalert_action', array( $this, 'cron_deactivated_licenses_alert' ) );
         add_action( 'mainwp_cronuptimemonitoringcheck_action', array( MainWP_Uptime_Monitoring_Schedule::instance(), 'cron_uptime_check' ) );
         add_action( 'mainwp_cron_perform_general_process', array( $this, 'cron_perform_general_process' ) );
+        // Site URL correction runs inside the regular-sequence dispatcher so it
+        // works under both WP cron and server cron ( cron/generalschedules.php ).
+        add_filter( 'mainwp_register_regular_sequence_process', array( MainWP_Site_Url_Corrector::class, 'hook_regular_sequence_process' ) );
 
         // API Setting tools.
         add_action( 'mainwp_cron_disconnect_batch', array( \MainWP_Rest_Settings_Controller::instance(), 'process_disconnect_batch' ) );

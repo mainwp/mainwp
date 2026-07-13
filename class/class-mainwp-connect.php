@@ -575,10 +575,14 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @param string $paramName Parameter name.
      * @param bool   $asArray true|false Default is false.
      * @param array  $other_params other params.
+     * @param string $custom_url Optional. Override the target base URL for browser-bound
+     *                           requests ( see MainWP_Site_Url_Corrector::browser_target_url() ).
+     *                           Default null keeps the stored URL — server-side callers
+     *                           ( backups, premium updates ) must not pass this.
      *
      * @return string $url
      */
-    public static function get_get_data_authed( $website, $paramValue, $paramName = 'where', $asArray = false, $other_params = array() ) { //phpcs:ignore -- NOSONAR - complex method.
+    public static function get_get_data_authed( $website, $paramValue, $paramName = 'where', $asArray = false, $other_params = array(), $custom_url = null ) { //phpcs:ignore -- NOSONAR - complex method.
         $params = array();
         if ( $website && '' !== $paramValue ) {
 
@@ -663,7 +667,11 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             return $params;
         }
 
-        $url  = ( isset( $website->url ) && '' !== $website->url ? $website->url : $website->siteurl );
+        if ( null !== $custom_url && '' !== $custom_url ) {
+            $url = $custom_url;
+        } else {
+            $url = ( isset( $website->url ) && '' !== $website->url ? $website->url : $website->siteurl );
+        }
         $url .= ( substr( $url, - 1 ) !== '/' ? '/' : '' );
         $url .= '?';
 

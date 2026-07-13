@@ -1119,6 +1119,12 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
                 return false;
             }
             $success = true;
+
+            if ( isset( $update_fields['url'] ) ) {
+                // A user-set URL ( REST API / WP-CLI ) that diverges from the
+                // child-reported address locks auto-correction for the site.
+                MainWP_Site_Url_Corrector::after_user_set_url( $website, $update_fields['url'] );
+            }
         }
 
         $groupids = array();

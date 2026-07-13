@@ -117,7 +117,7 @@ class MainWP_Site_Open { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
                     <div class="ui massive double text loader"><?php esc_html_e( 'Redirecting...', 'mainwp' ); ?></div>
                 </div>
                 <?php
-                    $url  = ( isset( $website->url ) && '' !== $website->url ? $website->url : $website->siteurl );
+                    $url  = MainWP_Site_Url_Corrector::browser_target_url( $website );
                     $url .= ( '/' !== substr( $url, - 1 ) ? '/' : '' );
                 ?>
                     <form method="POST" action="<?php echo esc_url( $url ); ?>" id="redirectForm"> <?php // phpcs:ignore -- NOSONAR - dublicate id ok. ?>
@@ -184,7 +184,7 @@ class MainWP_Site_Open { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
         if ( MainWP_Demo_Handle::get_instance()->is_demo_website( $website ) ) {
             $action = $website->url . 'wp-admin.html';
         } else {
-            $action = MainWP_Connect::get_get_data_authed( $website, ( null === $location || '' === $location ) ? 'index.php' : $location, 'where', false, $params );
+            $action = MainWP_Connect::get_get_data_authed( $website, ( null === $location || '' === $location ) ? 'index.php' : $location, 'where', false, $params, MainWP_Site_Url_Corrector::browser_target_url( $website ) );
         }
         $open_download = ! empty( $params['filedl'] ) ? true : false;
         $close_window  = ! empty( $_GET['closeWindow'] ) ? true : false; //phpcs:ignore -- ok.
@@ -270,7 +270,7 @@ class MainWP_Site_Open { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
             </div>
             <?php
 
-            $url  = ( isset( $website->url ) && '' !== $website->url ? $website->url : $website->siteurl );
+            $url  = MainWP_Site_Url_Corrector::browser_target_url( $website );
             $url .= ( '/' !== substr( $url, - 1 ) ? '/' : '' );
 
             $postdata         = MainWP_Connect::get_get_data_authed( $website, $file, 'f', true );
@@ -318,7 +318,7 @@ class MainWP_Site_Open { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
             </div>
             <?php
 
-            $url  = ( isset( $website->url ) && '' !== $website->url ? $website->url : $website->siteurl );
+            $url  = MainWP_Site_Url_Corrector::browser_target_url( $website );
             $url .= ( '/' !== substr( $url, - 1 ) ? '/' : '' );
 
             $postdata                  = MainWP_Connect::get_get_data_authed( $website, 'index.php', 'where', true );

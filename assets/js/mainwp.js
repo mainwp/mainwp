@@ -2334,6 +2334,19 @@ jQuery(function () {
         mainwp_managesites_edit_test();
     });
 
+    // Use detected URL (Edit Site Page): set the protocol and www selectors to the child-reported address; no autosave.
+    jQuery(document).on('click', '#mainwp_managesites_edit_use_detected', function () {
+        let scheme = jQuery(this).attr('data-scheme');
+        let with_www = jQuery(this).attr('data-www');
+        if (scheme === 'http' || scheme === 'https') {
+            jQuery('#mainwp_managesites_edit_siteurl_protocol').dropdown('set selected', scheme);
+        }
+        if (with_www === 'www' || with_www === 'none-www') {
+            jQuery('#mainwp-edit-site-edit-url-www').dropdown('set selected', with_www);
+        }
+        return false;
+    });
+
     // Handle submit add multi website
     jQuery(document).on('click', '#mainwp_managesites_add_multi_site', function () {
         let error_messages = [];

@@ -1283,7 +1283,6 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             return;
         }
         $noti_handle_name = static::SHORT_TERM_NOTICE_OPTION_PREFIX . $monitor . '_' . $noti_key;
-        static::delete_short_term_notice_options( $monitor, '', $noti_key );
         static::update_option( $noti_handle_name, $checked_at );
     }
 
@@ -1322,7 +1321,6 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             }
             return true;
         } else {
-            static::delete_short_term_notice_options( $monitor, $noti_key );
             delete_option( $noti_handle_name );
         }
         return false;
@@ -1351,45 +1349,21 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         return false;
     }
 
-    /**
-     * Method dismiss_short_term_monitor_notices()
-     *
-     * @param string $monitor Monitor.
-     * @param string $issue_code Issue code optional.
-     *
-     * @return void.
-     */
-    public static function dismiss_short_term_monitor_notices( $monitor, $issue_code = '' ) {
-        if ( empty( $monitor ) ) {
-            return;
-        }
-        static::purge_expired_short_term_notices( $monitor, $issue_code, true );
-    }
-
 
     /**
-     * Method purge_expired_short_term_notices()
+     * Purge short-term notices.
      *
-     * Set new temporary notice.
+     * @param string $monitor                  Optional monitor name. When provided, only
+     *                                         notices for the specified monitor are purged.
+     * @param bool   $expired_only             Whether to purge only expired notices.
      *
-     * @param string $monitor Monitor.
-     * @param string $issue_code Short term key prefix.
-     * @param bool   $forced Forced purge short term notices.
-     *
-     * @return void.
+     * @return void
      */
-    public static function purge_expired_short_term_notices( $monitor = '', $issue_code = '', $forced = false ) {
+    public static function purge_short_term_notices( $monitor = '', $expired_only = true ) { // phpcs:ignore -- NOSONAR - complex.
 
         $opt_prefix = self::SHORT_TERM_NOTICE_OPTION_PREFIX;
 
-        $prefix = '';
-
-        if ( ! empty( $monitor ) ) {
-            $prefix = $monitor . '_';
-            if ( ! empty( $issue_code ) ) {
-                $prefix .= $issue_code;
-            }
-        }
+        $prefix = '' !== $monitor ? $monitor . '_' : '';
 
         $timeout = time() - self::SHORT_TERM_NOTICE_TTL;
 
@@ -1404,7 +1378,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $db->esc_like( $opt_prefix . (string) $prefix ) . '%',
         );
 
-        if ( ! $forced ) {
+        if ( $expired_only ) {
             $sql .= $db->prepare(
                 ' AND CAST(option_value AS UNSIGNED) <= %d ',
                 $timeout
@@ -1414,26 +1388,50 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $options = $db->get_col( $sql );
 
         foreach ( $options as $option_name ) {
-            $monitor_noti_key = substr( $option_name, strlen( $opt_prefix ) );
             delete_option( $option_name );
-
-            $sql_del = "
-                DELETE FROM {$db->options}
-                WHERE option_name LIKE %s
-            ";
-
-            $args = array(
-                $db->esc_like( static::USER_SHORT_TERM_NOTICE_OPTION_PREFIX . $monitor_noti_key ) . '%',
-            );
-
-            $db->query(
-                $db->prepare( $sql_del, ...$args )
-            );
         }
     }
 
+
     /**
-     * Method dismiss_user_short_term_notice()
+     * Purge short-term notices for a specific issue.
+     *
+     * @param string $monitor    Monitor name.
+     * @param string $issue_code Issue code.
+     *
+     * @return bool True if the operation completed, false if the input is invalid.
+     */
+    public static function delete_short_term_notices_for_issue( $monitor, $issue_code ) {
+
+        if ( empty( $monitor ) || empty( $issue_code ) ) {
+            return false;
+        }
+
+        $opt_prefix = self::SHORT_TERM_NOTICE_OPTION_PREFIX;
+        $prefix     = $monitor . '_' . $issue_code;
+
+        $db = MainWP_DB::instance()->get_wpdb_instance();
+
+        $sql = $db->prepare(
+            "
+        SELECT option_name
+        FROM {$db->options}
+        WHERE option_name LIKE %s
+        ",
+            $db->esc_like( $opt_prefix . $prefix ) . '%'
+        );
+
+        $options = $db->get_col( $sql );
+
+        foreach ( $options as $option_name ) {
+            delete_option( $option_name ); // Delete options and cache.
+        }
+
+        return true;
+    }
+
+    /**
+     * Method dismiss_short_term_notice()
      *
      * Hide short term notice.
      *
@@ -1441,7 +1439,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      *
      * @return void.
      */
-    public static function dismiss_user_short_term_notice( $monitor_noti_key ) {
+    public static function dismiss_short_term_notice( $monitor_noti_key ) {
         $noti_handle_name = static::USER_SHORT_TERM_NOTICE_OPTION_PREFIX . $monitor_noti_key;
         $user             = wp_get_current_user();
         if ( $user && ! empty( $user->ID ) ) {
@@ -1452,16 +1450,14 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     /**
      * Delete user short-term notice options for the specified monitor.
      *
-     * Optionally preserves the dismissed state for the current notice.
+     * Optionally preserves the dismissed state for the specified issue codes.
      *
-     * @param string $monitor            Monitor name.
-     * @param string $delete_notice_key  Notice key to delete. Leave empty to delete
-     *                                   all notice options for the monitor.
-     * @param string $current_notice_key Current notice key to preserve.
+     * @param string $monitor           Monitor name.
+     * @param array  $preserved_issues  Issue codes whose dismissed state should be preserved.
      *
      * @return void
      */
-    public static function delete_short_term_notice_options( $monitor, $delete_notice_key = '', $current_notice_key = '' ) {
+    public static function delete_short_term_notice_options( $monitor, $preserved_issues = array() ) {
 
         if ( empty( $monitor ) ) {
             return;
@@ -1476,16 +1472,18 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         $args = array(
             $db->esc_like(
-                static::USER_SHORT_TERM_NOTICE_OPTION_PREFIX . $monitor . '_' . (string) $delete_notice_key
+                static::USER_SHORT_TERM_NOTICE_OPTION_PREFIX . $monitor . '_'
             ) . '%',
         );
 
         // Preserve the user's dismissed state for the current notice.
-        if ( '' !== $current_notice_key ) {
-            $sql   .= ' AND option_name NOT LIKE %s';
-            $args[] = $db->esc_like(
-                static::USER_SHORT_TERM_NOTICE_OPTION_PREFIX . $monitor . '_' . $current_notice_key . '_user_'
-            ) . '%';
+        if ( ! empty( $preserved_issues ) && is_array( $preserved_issues ) ) {
+            foreach ( $preserved_issues as $new_key ) {
+                $sql   .= ' AND option_name NOT LIKE %s ';
+                $args[] = $db->esc_like(
+                    static::USER_SHORT_TERM_NOTICE_OPTION_PREFIX . $monitor . '_' . $new_key . '_user_'
+                ) . '%';
+            }
         }
 
         $db->query(

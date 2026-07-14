@@ -64,7 +64,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     public function admin_init() {
         $current_month = gmdate( 'Y-m' );
         if ( get_option( 'mainwp_last_short_term_notice_purge' ) !== $current_month ) { // Run once per month.
-            MainWP_Utility::purge_expired_short_term_notices();
+            MainWP_Utility::purge_short_term_notices();
             update_option(
                 'mainwp_last_short_term_notice_purge',
                 $current_month,

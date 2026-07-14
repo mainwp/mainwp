@@ -38,6 +38,9 @@ class MainWP_System_Monitor_UI {
      */
     public static function render_issues( $what = '', $current_siteid = false, $website = null ) { // phpcs:ignore -- NOSONAR - complex.
 
+        $monitor      = new MainWP_System_Monitor_Cron();
+        $monitor_name = $monitor->get_name();
+
         if ( 'dashboard' === $what && is_numeric( $current_siteid ) && ! empty( $current_siteid ) ) {
             $is_individual_overview = true;
             $monitor_data           = ! empty( $website ) && is_object( $website ) && ! empty( $website->child_monitor_data ) ? json_decode( $website->child_monitor_data, true ) : array();
@@ -46,7 +49,7 @@ class MainWP_System_Monitor_UI {
             }
             $issues = isset( $monitor_data['issues'] ) && is_array( $monitor_data['issues'] ) ? $monitor_data['issues'] : array();
         } else {
-            $issues                 = MainWP_System_Monitor_Storage::get_issues( 'cron', true );
+            $issues                 = MainWP_System_Monitor_Storage::get_issues( $monitor_name );
             $is_individual_overview = false;
         }
 
@@ -65,7 +68,7 @@ class MainWP_System_Monitor_UI {
                     $issue['entity']
                 );
                 if ( MainWP_Utility::is_short_term_notice( $issue['monitor'], $key ) ) {
-                    $new_issues[ $key ] = $issue;
+                    $new_issues[ $monitor_name . '_' . $key ] = $issue;
                 }
             }
         }

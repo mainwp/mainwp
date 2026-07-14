@@ -547,7 +547,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
 
             $keys = explode( ';', $no_id );
             foreach ( $keys as $key ) {
-                MainWP_Utility::dismiss_user_short_term_notice( $key );
+                MainWP_Utility::dismiss_short_term_notice( $key );
             }
             die( 'dismissed' );
         }

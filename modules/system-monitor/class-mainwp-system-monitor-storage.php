@@ -51,11 +51,7 @@ class MainWP_System_Monitor_Storage {
      */
     public static function save_results( $monitor, array $results ) {
 
-        // Delete issues from the previous scan.
-        self::delete_results( $monitor );
-
         if ( empty( $results ) ) {
-            MainWP_Utility::dismiss_short_term_monitor_notices( $monitor );
             return 0;
         }
 
@@ -65,13 +61,23 @@ class MainWP_System_Monitor_Storage {
             if ( ! $result instanceof MainWP_System_Monitor_Result ) {
                 continue;
             }
-            $insert_id = static::save_result( $result );
-            if ( $insert_id ) {
+            $insert_data = static::save_result( $result );
+            if ( $insert_data ) {
                 ++$count;
+                $key                     = static::get_notice_key( $insert_data['issue_code'], $insert_data['entity'] );
+                $new_issues_keys[ $key ] = $insert_data['checked_at'];
             }
         }
 
-        MainWP_Utility::dismiss_short_term_monitor_notices( $monitor );
+        $new_inserted_issues_keys = array_keys( $new_issues_keys );
+
+        foreach ( $new_issues_keys as $key => $checked_at ) {
+            MainWP_Utility::set_short_term_notice( $monitor, $key, $checked_at );
+        }
+
+        // Only delete notice options that are no longer applicable when new issues are saved.
+        MainWP_Utility::delete_short_term_notice_options( $monitor, $new_inserted_issues_keys );
+
         return $count;
     }
 
@@ -80,7 +86,7 @@ class MainWP_System_Monitor_Storage {
      *
      * @param MainWP_System_Monitor_Result $result Monitor result.
      *
-     * @return int Insert ID, or 0 on failure.
+     * @return array Insert Data, or false on failure.
      */
     public static function save_result( MainWP_System_Monitor_Result $result ) {
 
@@ -112,14 +118,16 @@ class MainWP_System_Monitor_Storage {
             )
         );
         $insert_id = (int) static::get_db()->insert_id;
+
         if ( $insert_id ) {
-            $key = static::get_notice_key(
-                $result->get_issue_code(),
-                $result->get_entity()
+            return array(
+                'monitor'    => $monitor,
+                'entity'     => $result->get_entity(),
+                'issue_code' => $result->get_issue_code(),
+                'checked_at' => $checked_at,
             );
-            MainWP_Utility::set_short_term_notice( $monitor, $key, $checked_at );
         }
-        return $insert_id;
+        return false;
     }
 
 
@@ -138,10 +146,48 @@ class MainWP_System_Monitor_Storage {
     }
 
     /**
+     * Count current monitor issues.
+     *
+     * @param string|null $monitor     Optional monitor name.
+     * @param bool        $not_fallback Whether to exclude fallback monitor issues.
+     *
+     * @return int Number of current issues.
+     */
+    public static function count_current_issues( $monitor = null, $not_fallback = false ) {
+
+        $table = static::get_table_name( 'system_monitor' );
+
+        $where = array();
+        $args  = array();
+
+        if ( ! empty( $monitor ) ) {
+            $where[] = 'monitor = %s';
+            $args[]  = $monitor;
+        }
+
+        if ( $not_fallback ) {
+            $where[] = 'issue_code <> %s';
+            $args[]  = MainWP_System_Monitor_Cron::ISSUE_MONITOR_FALLBACK;
+        }
+
+        $sql = "SELECT COUNT(*) FROM {$table}";
+
+        if ( ! empty( $where ) ) {
+            $sql .= ' WHERE ' . implode( ' AND ', $where );
+        }
+
+        if ( ! empty( $args ) ) {
+            $sql = static::get_db()->prepare( $sql, ...$args );
+        }
+
+        return (int) static::get_db()->get_var( $sql );
+    }
+
+    /**
      * Get monitor issues.
      *
-     * @param string|null $monitor Optional monitor name.
-     * @param bool        $not_fallback Whether included fallback monitor issues.
+     * @param string|null $monitor      Optional monitor name.
+     * @param bool        $not_fallback Whether to exclude fallback monitor issues.
      *
      * @return array
      */
@@ -149,35 +195,41 @@ class MainWP_System_Monitor_Storage {
 
         $table = static::get_table_name( 'system_monitor' );
 
-        $sql = "SELECT * FROM {$table}";
+        $where = array();
+        $args  = array();
 
         if ( ! empty( $monitor ) ) {
-            $sql .= static::get_db()->prepare(
-                ' WHERE monitor = %s',
-                $monitor
-            );
+            $where[] = 'monitor = %s';
+            $args[]  = $monitor;
         }
 
         if ( $not_fallback ) {
-            $sql .= static::get_db()->prepare(
-                ' AND issue_code <> %s ',
-                MainWP_System_Monitor_Cron::ISSUE_MONITOR_FALLBACK
-            );
+            $where[] = 'issue_code <> %s';
+            $args[]  = MainWP_System_Monitor_Cron::ISSUE_MONITOR_FALLBACK;
+        }
+
+        $sql = "SELECT * FROM {$table}";
+
+        if ( ! empty( $where ) ) {
+            $sql .= ' WHERE ' . implode( ' AND ', $where );
         }
 
         $sql .= ' ORDER BY severity DESC, checked_at DESC';
 
+        if ( ! empty( $args ) ) {
+            $sql = static::get_db()->prepare( $sql, ...$args );
+        }
+
         $results = static::get_db()->get_results( $sql, ARRAY_A );
 
-        foreach ( $results as &$result ) {
-            $result['payload'] = json_decode(
-                $result['payload'],
-                true
-            );
+        foreach ( $results as $i => $result ) {
+            $result['payload'] = json_decode( $result['payload'], true );
 
             if ( ! is_array( $result['payload'] ) ) {
                 $result['payload'] = array();
             }
+
+            $results[ $i ] = $result;
         }
 
         return $results;

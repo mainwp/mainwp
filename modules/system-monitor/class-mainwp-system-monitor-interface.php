@@ -26,7 +26,9 @@ interface MainWP_System_Monitor_Interface {
     /**
      * Execute the monitor.
      *
-     * @return MainWP_System_Monitor_Result[]
+     * @param array $context Optional execution context.
+     *
+     * @return MainWP_System_Monitor_Result[] Array of monitor results.
      */
-    public function run();
+    public function run( array $context = array() );
 }

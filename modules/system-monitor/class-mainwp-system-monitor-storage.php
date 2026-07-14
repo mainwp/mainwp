@@ -96,7 +96,7 @@ class MainWP_System_Monitor_Storage {
                 'check_name' => $result->get_check_name(),
                 'entity'     => $result->get_entity(),
                 'issue_code' => $result->get_issue_code(),
-                'severity'   => $result->get_severity(),
+                'severity'   => $result->get_severity() ? $result->get_severity() : 'info',
                 'payload'    => wp_json_encode( $result->get_payload() ),
                 'checked_at' => $checked_at,
             ),

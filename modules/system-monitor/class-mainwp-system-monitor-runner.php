@@ -7,6 +7,10 @@
 
 namespace MainWP\Dashboard\SystemMonitor;
 
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
 /**
  * Class MainWP_System_Monitor_Runner
  *

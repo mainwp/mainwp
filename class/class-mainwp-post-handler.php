@@ -541,6 +541,10 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
         $no_id = isset( $_POST['notice_id'] ) ? sanitize_text_field( wp_unslash( $_POST['notice_id'] ) ) : false;
 
         if ( ! empty( $_POST['short_term'] ) ) {
+            if ( empty( $no_id ) ) {
+                die( 'invalid' );
+            }
+
             $keys = explode( ';', $no_id );
             foreach ( $keys as $key ) {
                 MainWP_Utility::dismiss_user_short_term_notice( $key );

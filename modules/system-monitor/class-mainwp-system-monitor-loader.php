@@ -11,13 +11,16 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
+/**
+ * MainWP System Monitor Loader.
+ */
 class MainWP_System_Monitor_Loader {
 
 
     /**
      * Private static variable.
      *
-     * @var string registered Registered loader.
+     * @var bool bool Whether the autoloader has been registered.
      */
 
     private static $registered = false;

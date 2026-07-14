@@ -61,11 +61,10 @@ class MainWP_System_Monitor_UI {
         } else {
             foreach ( $issues as $issue ) {
                 $key = MainWP_System_Monitor_Storage::get_notice_key(
-                    $issue['monitor'],
                     $issue['issue_code'],
                     $issue['entity']
                 );
-                if ( MainWP_Utility::is_short_term_notice( $key ) ) {
+                if ( MainWP_Utility::is_short_term_notice( $issue['monitor'], $key ) ) {
                     $new_issues[ $key ] = $issue;
                 }
             }

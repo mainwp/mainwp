@@ -386,10 +386,17 @@ class Test_Site_Url_Corrector extends \WP_UnitTestCase {
 		};
 		add_action( 'mainwp_site_url_corrected', $hook, 10, 4 );
 
+		// A competing filter trying to RAISE the timeout must lose to the probe's clamp.
+		$raise_timeout = static function () {
+			return 20 * 60 * 60;
+		};
+		add_filter( 'mainwp_fetch_url_site_timeout', $raise_timeout, 100 );
+
 		try {
 			$this->drain_all();
 		} finally {
 			remove_action( 'mainwp_site_url_corrected', $hook, 10 );
+			remove_filter( 'mainwp_fetch_url_site_timeout', $raise_timeout, 100 );
 		}
 
 		// Verify probe targeted the candidate URL (trailing-slashed).

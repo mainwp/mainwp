@@ -796,10 +796,15 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
          * the URL-correction verify probe bound it much tighter.
          *
          * @param int $timeout Timeout in seconds. Default 72000 ( 20 hours ).
+         *                     Values below 1 are ignored ( 0 would disable the
+         *                     cURL timeout entirely ) and fall back to the default.
          *
          * @since 6.2
          */
         $timeout = (int) apply_filters( 'mainwp_fetch_url_site_timeout', 20 * 60 * 60 );
+        if ( $timeout <= 0 ) {
+            $timeout = 20 * 60 * 60;
+        }
 
         $disabled_functions = ini_get( 'disable_functions' );
         $handleToWebsite    = array();
@@ -1702,6 +1707,9 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         /** This filter is documented in class/class-mainwp-connect.php */
         $timeout = (int) apply_filters( 'mainwp_fetch_url_site_timeout', 20 * 60 * 60 );
+        if ( $timeout <= 0 ) {
+            $timeout = 20 * 60 * 60; // values below 1 would disable the cURL timeout entirely.
+        }
         curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout );
         MainWP_System_Utility::set_time_limit( $timeout );
 

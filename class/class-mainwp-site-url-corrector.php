@@ -672,10 +672,16 @@ class MainWP_Site_Url_Corrector { // phpcs:ignore Generic.Classes.OpeningBraceSa
         $probe      = clone $website;
         $probe->url = $candidate;
 
-        $bound_timeout = static function () {
-            return self::VERIFY_TIMEOUT;
+        // Hard ceiling for the probe: runs last ( PHP_INT_MAX ) and clamps, so
+        // other filter callbacks may shorten the probe but never extend it.
+        $bound_timeout = static function ( $timeout ) {
+            $timeout = (int) $timeout;
+            if ( $timeout <= 0 || $timeout > self::VERIFY_TIMEOUT ) {
+                return self::VERIFY_TIMEOUT;
+            }
+            return $timeout;
         };
-        add_filter( 'mainwp_fetch_url_site_timeout', $bound_timeout, 99 );
+        add_filter( 'mainwp_fetch_url_site_timeout', $bound_timeout, PHP_INT_MAX );
 
         try {
             $information = MainWP_Connect::fetch_url_authed( $probe, 'stats' );
@@ -684,7 +690,7 @@ class MainWP_Site_Url_Corrector { // phpcs:ignore Generic.Classes.OpeningBraceSa
         } catch ( \Exception $e ) {
             return false;
         } finally {
-            remove_filter( 'mainwp_fetch_url_site_timeout', $bound_timeout, 99 );
+            remove_filter( 'mainwp_fetch_url_site_timeout', $bound_timeout, PHP_INT_MAX );
         }
 
         return is_array( $information ) && ! isset( $information['error'] );

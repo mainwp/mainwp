@@ -34,6 +34,13 @@ class Test_Site_Url_Corrector extends \WP_UnitTestCase {
 	 */
 	protected $mock_fetch_result = array( 'ok' => 1 );
 
+	/**
+	 * The mainwp_fetch_url_site_timeout value observed during the mocked fetch.
+	 *
+	 * @var int|null
+	 */
+	protected $timeout_during_fetch = null;
+
 	public function setUp(): void {
 		parent::setUp();
 		$admin_id = $this->factory->user->create( array( 'role' => 'administrator' ) );
@@ -60,7 +67,8 @@ class Test_Site_Url_Corrector extends \WP_UnitTestCase {
 	 * @return mixed
 	 */
 	public function mock_fetch( $pre, $website, $what, $params ) {
-		$this->probe_urls[] = $website->url;
+		$this->probe_urls[]         = $website->url;
+		$this->timeout_during_fetch = (int) apply_filters( 'mainwp_fetch_url_site_timeout', 20 * 60 * 60 );
 		return $this->mock_fetch_result;
 	}
 
@@ -386,6 +394,11 @@ class Test_Site_Url_Corrector extends \WP_UnitTestCase {
 
 		// Verify probe targeted the candidate URL (trailing-slashed).
 		$this->assertContains( 'https://www.apply-test.com/', $this->probe_urls );
+
+		// The probe must run with the bounded timeout, and the bound must not
+		// leak outside the probe (other fetches keep the 20-hour default).
+		$this->assertSame( Corrector::VERIFY_TIMEOUT, $this->timeout_during_fetch );
+		$this->assertSame( 20 * 60 * 60, (int) apply_filters( 'mainwp_fetch_url_site_timeout', 20 * 60 * 60 ) );
 
 		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
 		$this->assertSame( 'https://www.apply-test.com/', $website->url );

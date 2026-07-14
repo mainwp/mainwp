@@ -126,6 +126,14 @@ class MainWP_Site_Url_Corrector { // phpcs:ignore Generic.Classes.OpeningBraceSa
     const HISTORY_MAX_ENTRIES = 20;
 
     /**
+     * Timeout ( seconds ) for the verify-before-apply probe. The shared fetch
+     * plumbing defaults to 20 hours ( sized for upgrades and backups ); a
+     * reachability probe running on the minutely queue drain must be bounded
+     * much tighter so a stalling host cannot park a cron worker.
+     */
+    const VERIFY_TIMEOUT = 120;
+
+    /**
      * Singleton instance.
      *
      * @var null|self
@@ -664,12 +672,19 @@ class MainWP_Site_Url_Corrector { // phpcs:ignore Generic.Classes.OpeningBraceSa
         $probe      = clone $website;
         $probe->url = $candidate;
 
+        $bound_timeout = static function () {
+            return self::VERIFY_TIMEOUT;
+        };
+        add_filter( 'mainwp_fetch_url_site_timeout', $bound_timeout, 99 );
+
         try {
             $information = MainWP_Connect::fetch_url_authed( $probe, 'stats' );
         } catch ( MainWP_Exception $e ) {
             return false;
         } catch ( \Exception $e ) {
             return false;
+        } finally {
+            remove_filter( 'mainwp_fetch_url_site_timeout', $bound_timeout, 99 );
         }
 
         return is_array( $information ) && ! isset( $information['error'] );

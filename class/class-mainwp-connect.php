@@ -787,7 +787,19 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
         $mh    = curl_multi_init();
 
-        $timeout = 20 * 60 * 60;
+        /**
+         * Filter: mainwp_fetch_url_site_timeout
+         *
+         * Filters the request timeout ( CURLOPT_TIMEOUT + PHP time limit ) used
+         * for child site requests. Defaults to 20 hours to accommodate the
+         * longest operations ( upgrades, backups ); short-lived callers such as
+         * the URL-correction verify probe bound it much tighter.
+         *
+         * @param int $timeout Timeout in seconds. Default 72000 ( 20 hours ).
+         *
+         * @since 6.2
+         */
+        $timeout = (int) apply_filters( 'mainwp_fetch_url_site_timeout', 20 * 60 * 60 );
 
         $disabled_functions = ini_get( 'disable_functions' );
         $handleToWebsite    = array();
@@ -1688,7 +1700,8 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             curl_setopt( $ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4 );
         }
 
-        $timeout = 20 * 60 * 60;
+        /** This filter is documented in class/class-mainwp-connect.php */
+        $timeout = (int) apply_filters( 'mainwp_fetch_url_site_timeout', 20 * 60 * 60 );
         curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout );
         MainWP_System_Utility::set_time_limit( $timeout );
 

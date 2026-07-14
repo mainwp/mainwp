@@ -464,7 +464,7 @@ class MainWP_Site_Url_Corrector { // phpcs:ignore Generic.Classes.OpeningBraceSa
             return;
         }
 
-        $auto_enabled = (int) get_option( self::OPTION_AUTO_ENABLED, 0 );
+        $auto_enabled = (int) get_option( self::OPTION_AUTO_ENABLED, 1 );
 
         foreach ( $rows as $row ) {
             $category = static::classify( $row->url, $row->siteurl );
@@ -525,7 +525,7 @@ class MainWP_Site_Url_Corrector { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * authed HTTP round-trip to the child site.
      */
     public function process_queue() {
-        if ( ! (int) get_option( self::OPTION_AUTO_ENABLED, 0 ) ) {
+        if ( ! (int) get_option( self::OPTION_AUTO_ENABLED, 1 ) ) {
             return;
         }
 

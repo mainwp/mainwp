@@ -1746,15 +1746,15 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                                 <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_optimize" id="mainwp_optimize" <?php echo 1 === (int) get_option( 'mainwp_optimize', 1 ) ? 'checked="true"' : ''; ?> /><label><?php esc_html_e( 'Default: Enabled', 'mainwp' ); ?></label>
                             </div>
                         </div>
-                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-miscellaneous" default-indi-value="0">
+                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-miscellaneous" default-indi-value="1">
                             <label class="six wide column middle aligned">
                             <?php
-                            MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_auto_correct_site_url', (int) get_option( 'mainwp_auto_correct_site_url', 0 ) );
+                            MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_auto_correct_site_url', (int) get_option( 'mainwp_auto_correct_site_url', 1 ) );
                             esc_html_e( 'Auto-correct site URLs', 'mainwp' );
                             ?>
                             </label>
                             <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, your MainWP Dashboard will automatically correct the stored site URL when the child site reports a different address. Only safe changes are applied (www variant and HTTP to HTTPS); the corrected URL is verified before saving, and sites with a locked URL are never changed.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                                <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_auto_correct_site_url" id="mainwp_auto_correct_site_url" <?php echo 1 === (int) get_option( 'mainwp_auto_correct_site_url', 0 ) ? 'checked="true"' : ''; ?> /><label><?php esc_html_e( 'Default: Disabled', 'mainwp' ); ?></label>
+                                <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_auto_correct_site_url" id="mainwp_auto_correct_site_url" <?php echo 1 === (int) get_option( 'mainwp_auto_correct_site_url', 1 ) ? 'checked="true"' : ''; ?> /><label><?php esc_html_e( 'Default: Enabled', 'mainwp' ); ?></label>
                             </div>
                         </div>
                         <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-miscellaneous" default-indi-value="10">

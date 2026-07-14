@@ -299,7 +299,7 @@ class Test_Site_Url_Corrector extends \WP_UnitTestCase {
 	public function test_sweep_queues_www_mismatch_in_auto_mode(): void {
 		$site_id = $this->create_site( 'https://queue-test.com/', 'https://www.queue-test.com' );
 
-		update_option( 'mainwp_auto_correct_site_url', 1 );
+		// Deliberately no option write: automatic correction is ON by default.
 		Corrector::instance()->cron_sweep();
 
 		$pending = MainWP_DB::instance()->get_website_option( $site_id, 'url_correct_pending', null, true );
@@ -308,9 +308,10 @@ class Test_Site_Url_Corrector extends \WP_UnitTestCase {
 		$this->assertSame( Corrector::CATEGORY_WWW_ONLY, $pending['category'] );
 	}
 
-	public function test_sweep_suggest_only_by_default(): void {
+	public function test_sweep_suggest_only_when_auto_disabled(): void {
 		$site_id = $this->create_site( 'https://suggest-test.com/', 'https://www.suggest-test.com' );
 
+		update_option( 'mainwp_auto_correct_site_url', 0 );
 		Corrector::instance()->cron_sweep();
 
 		$this->assertEmpty( MainWP_DB::instance()->get_website_option( $site_id, 'url_correct_pending', '' ) );
@@ -467,6 +468,8 @@ class Test_Site_Url_Corrector extends \WP_UnitTestCase {
 
 	public function test_queue_is_inert_when_auto_mode_disabled(): void {
 		$site_id = $this->create_site( 'http://inert-test.com/', 'https://inert-test.com' );
+
+		update_option( 'mainwp_auto_correct_site_url', 0 );
 
 		// Manually seed a pending entry, then run the drain with auto mode off.
 		MainWP_DB::instance()->update_website_option(
@@ -667,7 +670,8 @@ class Test_Site_Url_Corrector extends \WP_UnitTestCase {
 	public function test_run_scheduled_tasks_sweeps_at_most_daily(): void {
 		$site_id = $this->create_site( 'https://gate-test.com/', 'https://www.gate-test.com' );
 
-		// Suggest-only mode: the sweep journals a suggestion, the drain is inert.
+		// Suggest-only mode so the drain stays inert ( no fetch mock installed here ).
+		update_option( 'mainwp_auto_correct_site_url', 0 );
 		Corrector::instance()->run_scheduled_tasks();
 		$this->assertNotEmpty( MainWP_DB::instance()->get_website_option( $site_id, 'url_correct_suggest', '' ) );
 		$this->assertGreaterThan( 0, (int) get_option( 'mainwp_url_correct_last_sweep', 0 ) );

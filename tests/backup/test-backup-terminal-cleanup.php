@@ -563,6 +563,55 @@ class MainWP_Backup_Terminal_Cleanup_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * An error payload proves nothing about the task: the child may be mid
+	 * bootstrap failure, or the id may simply be one it already reclaimed,
+	 * and the not-found message is translatable so it cannot be matched.
+	 * Either way the cancel must stay owed - reading an error as "cancelled"
+	 * would drop the retry while the task may still be active, which is the
+	 * exact bug the busy check fixed, arriving through a different shape.
+	 *
+	 * @return void
+	 */
+	public function test_error_response_keeps_the_cancel_owed() {
+		list( $site_id ) = $this->site_and_open_task();
+		$website         = MainWP_DB::instance()->get_website_by_id( (int) $site_id );
+		MainWP_DB::instance()->update_website_option(
+			$website,
+			MainWP_Manage_Backups_Handler::PENDING_CANCEL_OPTION,
+			wp_json_encode( array( 'task-erroring-3' => 0 ) )
+		);
+		$this->cancel_response = array( 'error' => 'La tâche de sauvegarde est introuvable.' );
+
+		MainWP_Manage_Backups_Handler::flush_pending_child_cancel( $website );
+
+		$this->assertCount( 1, $this->cancel_calls, 'The flush must still attempt the cancel.' );
+		$pending = $this->pending_cancel( $site_id );
+		$this->assertSame( 1, (int) ( $pending['task-erroring-3'] ?? -1 ), 'An error answer must consume one attempt and stay owed, never read as landed.' );
+	}
+
+	/**
+	 * A response without an explicit result is equally unproven: only the
+	 * child saying something about the task counts as landed.
+	 *
+	 * @return void
+	 */
+	public function test_malformed_response_keeps_the_cancel_owed() {
+		list( $site_id ) = $this->site_and_open_task();
+		$website         = MainWP_DB::instance()->get_website_by_id( (int) $site_id );
+		MainWP_DB::instance()->update_website_option(
+			$website,
+			MainWP_Manage_Backups_Handler::PENDING_CANCEL_OPTION,
+			wp_json_encode( array( 'task-odd-4' => 0 ) )
+		);
+		$this->cancel_response = array( 'unexpected' => 'shape' );
+
+		MainWP_Manage_Backups_Handler::flush_pending_child_cancel( $website );
+
+		$pending = $this->pending_cancel( $site_id );
+		$this->assertSame( 1, (int) ( $pending['task-odd-4'] ?? -1 ), 'A shape without a result key must stay owed.' );
+	}
+
+	/**
 	 * The retry is bounded. The child has its own queued reclaim and wall
 	 * clock; a cancel that never lands must not be retried forever against a
 	 * task id that has long since expired.

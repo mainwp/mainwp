@@ -1154,10 +1154,16 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      * plain busy result, not an error: the task stays ACTIVE and keeps
      * refusing every backup on the site. Treating that response as success
      * is what let an abandoned task outlive the terminal mark, so busy - and
-     * an unreachable child - report failure and earn a retry. Every other
-     * answer means the child no longer holds the task (cancelled, already
-     * terminal, nothing active, or an id the child cannot find), which is
-     * all the caller needs.
+     * an unreachable child - report failure and earn a retry.
+     *
+     * Landed means the child answered about the task with an explicit
+     * non-busy result (cancelled, already terminal, nothing active). An error
+     * payload or a malformed response proves nothing about the task - the
+     * other cancel callers in this codebase read those as failures too - so
+     * it stays owed, and the bounded retry absorbs the case where the error
+     * was "task not found" (an id the child already reclaimed). That
+     * not-found message is translatable, so it can never be string-matched
+     * into a success.
      *
      * @param object $website       Website row.
      * @param string $child_task_id Child task id to cancel.
@@ -1172,7 +1178,12 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             return false;
         }
 
-        if ( is_array( $information ) && isset( $information['result'] ) && 'busy' === $information['result'] ) {
+        if ( ! is_array( $information ) || isset( $information['error'] ) || ! isset( $information['result'] ) ) {
+            MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Child cancel answered with an error or an unexpected shape (child task: ' . $child_task_id . '); a later pass retries it.' );
+            return false;
+        }
+
+        if ( 'busy' === $information['result'] ) {
             MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'The child refused the cancel as busy (child task: ' . $child_task_id . '); a later pass retries it.' );
             return false;
         }

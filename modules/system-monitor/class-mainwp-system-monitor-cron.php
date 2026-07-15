@@ -122,27 +122,7 @@ class MainWP_System_Monitor_Cron implements MainWP_System_Monitor_Interface {
 
         $results = $this->build_results( $issues );
 
-        $this->delete_current_issues();
-
         return $results;
-    }
-
-
-
-    /**
-     * Method delete_current_issues().
-     *
-     * @return int Count number.
-     */
-    private function delete_current_issues() {
-        $monitor       = $this->get_name();
-        $count_current = MainWP_System_Monitor_Storage::count_current_issues( $monitor );
-        if ( ! empty( $count_current ) ) {
-            // Delete issues from the previous scan here, so save_results() doesn't need to.
-            MainWP_System_Monitor_Storage::delete_results( $monitor );
-            MainWP_Utility::purge_short_term_notices( $monitor, false );
-        }
-        return $count_current;
     }
 
     /**

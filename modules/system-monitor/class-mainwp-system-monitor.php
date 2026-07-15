@@ -143,14 +143,7 @@ class MainWP_System_Monitor {
      * Method create manager.
      */
     public static function hook_save_advanced_settings() {
-        $use_wp_cron_results = MainWP_System_Monitor_Cron::scan_use_wp_cron_issue();
-        if ( ! empty( $use_wp_cron_results ) ) {
-            $monitor = new MainWP_System_Monitor_Cron();
-            MainWP_System_Monitor_Storage::save_results(
-                $monitor->get_name(),
-                $use_wp_cron_results
-            );
-        }
+        MainWP_System_Monitor_Runner::run_manual();
     }
 
     /**

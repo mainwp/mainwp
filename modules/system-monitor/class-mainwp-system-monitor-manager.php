@@ -43,18 +43,6 @@ class MainWP_System_Monitor_Manager {
         $this->execute( $context );
     }
 
-    /**
-     * Run all monitors.
-     *
-     * @param array $context Running context data.
-     *
-     * @return void
-     */
-    public function register_and_execute( array $context = array() ) {
-        $manager = new self();
-        $manager->register( new MainWP_System_Monitor_Cron() );
-        $manager->execute( $context );
-    }
 
     /**
      * Register a monitor.
@@ -79,9 +67,16 @@ class MainWP_System_Monitor_Manager {
             return;
         }
         foreach ( $this->monitors as $monitor ) {
+            $results = $monitor->run( $context );
+
+            // If results is false then do not run save_results().
+            if ( false === $results ) {
+                continue;
+            }
+
             MainWP_System_Monitor_Storage::save_results(
                 $monitor->get_name(),
-                $monitor->run( $context )
+                $results
             );
         }
     }

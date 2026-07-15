@@ -86,14 +86,12 @@ class MainWP_System_Monitor_Cron implements MainWP_System_Monitor_Interface {
                     MainWP_System_Monitor_Issues::SEVERITY_INFO
                 );
 
-            } else {
-                MainWP_System_Monitor_Storage::delete_results( self::NAME, self::ISSUE_USE_WP_CRON_DISABLED ); // So the issue notice won't be displayed.
-                MainWP_Utility::delete_short_term_notices_for_issue( self::NAME, self::ISSUE_USE_WP_CRON_DISABLED ); // Do not delete the user's dismissed option for this issue.
             }
             MainWP_Utility::update_option( 'mainwp_system_monitor_use_wp_cron_saved', $use_wpcron ); // prevent insert multi use_wp_cron scan issue.
+            return $results;
         }
 
-        return $results;
+        return false; // Returning false skips save_results().
     }
 
 
@@ -124,17 +122,27 @@ class MainWP_System_Monitor_Cron implements MainWP_System_Monitor_Interface {
 
         $results = $this->build_results( $issues );
 
-        $monitor = $this->get_name();
+        $this->delete_current_issues();
 
+        return $results;
+    }
+
+
+
+    /**
+     * Method delete_current_issues().
+     *
+     * @return int Count number.
+     */
+    private function delete_current_issues() {
+        $monitor       = $this->get_name();
         $count_current = MainWP_System_Monitor_Storage::count_current_issues( $monitor );
-
         if ( ! empty( $count_current ) ) {
             // Delete issues from the previous scan here, so save_results() doesn't need to.
             MainWP_System_Monitor_Storage::delete_results( $monitor );
             MainWP_Utility::purge_short_term_notices( $monitor, false );
         }
-
-        return $results;
+        return $count_current;
     }
 
     /**

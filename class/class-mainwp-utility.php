@@ -1452,8 +1452,8 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      *
      * Optionally preserves the dismissed state for the specified issue codes.
      *
-     * @param string $monitor           Monitor name.
-     * @param array  $preserved_issues  Issue codes whose dismissed state should be preserved.
+     * @param string $monitor          Monitor name.
+     * @param array  $preserved_issues Issue codes whose dismissed state should be preserved.
      *
      * @return void
      */
@@ -1466,7 +1466,8 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $db = MainWP_DB::instance()->get_wpdb_instance();
 
         $sql = "
-            DELETE FROM {$db->options}
+            SELECT option_name
+            FROM {$db->options}
             WHERE option_name LIKE %s
         ";
 
@@ -1476,19 +1477,27 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             ) . '%',
         );
 
-        // Preserve the user's dismissed state for the current notice.
+        // Preserve the user's dismissed state for the specified issues.
         if ( ! empty( $preserved_issues ) && is_array( $preserved_issues ) ) {
-            foreach ( $preserved_issues as $new_key ) {
-                $sql   .= ' AND option_name NOT LIKE %s ';
+            foreach ( $preserved_issues as $issue_code ) {
+                $sql   .= ' AND option_name NOT LIKE %s';
                 $args[] = $db->esc_like(
-                    static::USER_SHORT_TERM_NOTICE_OPTION_PREFIX . $monitor . '_' . $new_key . '_user_'
+                    static::USER_SHORT_TERM_NOTICE_OPTION_PREFIX . $monitor . '_' . $issue_code . '_user_'
                 ) . '%';
             }
         }
 
-        $db->query(
+        $option_names = $db->get_col(
             $db->prepare( $sql, ...$args )
         );
+
+        if ( empty( $option_names ) ) {
+            return;
+        }
+
+        foreach ( $option_names as $option_name ) {
+            delete_option( $option_name );
+        }
     }
 
     /**

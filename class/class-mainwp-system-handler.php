@@ -33,7 +33,7 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     /**
      * Private variable to hold the upgrade version info.
      *
-     * @var null Version info.
+     * @var \stdClass|null Version info.
      */
     private $upgradeVersionInfo = null;
 

@@ -1024,16 +1024,165 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @uses \MainWP\Dashboard\MainWP_API_Handler::check_exts_upgrade()
      * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
      */
-    private function check_upgrade() {
-        $result = MainWP_API_Handler::check_exts_upgrade();
+    private function check_upgrade() { // phpcs:ignore -- NOSONAR - validates and preserves per-extension update state.
+        $expected_extensions = $this->get_expected_extension_updates();
+        $has_full_scope      = $this->has_full_extension_update_scope( $expected_extensions );
+
         if ( null === $this->upgradeVersionInfo ) {
             $this->upgradeVersionInfo = new \stdClass();
         }
+
         $this->upgradeVersionInfo->updated = time();
-        if ( ! empty( $result ) ) {
-            $this->upgradeVersionInfo->result = $result;
+
+        if ( empty( $expected_extensions ) ) {
+            if ( $has_full_scope ) {
+                $this->clear_extension_update_failure();
+            }
+            MainWP_Utility::update_option( 'mainwp_upgradeVersionInfo', $this->upgradeVersionInfo );
+            return $has_full_scope;
         }
+
+        $result          = MainWP_API_Handler::check_exts_upgrade();
+        $previous_result = property_exists( $this->upgradeVersionInfo, 'result' ) && is_array( $this->upgradeVersionInfo->result ) ? $this->upgradeVersionInfo->result : array();
+        $fresh_result    = array();
+        $failed          = ! is_array( $result );
+
+        foreach ( $expected_extensions as $api_slug => $installed_version ) {
+            $fresh = is_array( $result ) && isset( $result[ $api_slug ] ) ? $result[ $api_slug ] : null;
+            if ( $this->is_usable_extension_update_result( $fresh, $api_slug, $installed_version ) ) {
+                $fresh_result[ $api_slug ] = $fresh;
+            } else {
+                $failed = true;
+            }
+        }
+
+        if ( ! $failed ) {
+            $this->upgradeVersionInfo->result = $has_full_scope ? $fresh_result : array_merge( $previous_result, $fresh_result );
+        }
+
+        if ( $has_full_scope ) {
+            if ( $failed ) {
+                $this->record_extension_update_failure();
+            } else {
+                $this->clear_extension_update_failure();
+            }
+        }
+
         MainWP_Utility::update_option( 'mainwp_upgradeVersionInfo', $this->upgradeVersionInfo );
+        return ! $failed;
+    }
+
+    /**
+     * Get Add-ons expected in an update-check response.
+     *
+     * @return array API slugs keyed to installed versions.
+     */
+    private function get_expected_extension_updates() {
+        $expected = array();
+
+        foreach ( MainWP_Extensions_Handler::get_extensions() as $extension ) {
+            if ( ! isset( $extension['activated_key'] ) || 'Activated' !== $extension['activated_key'] || empty( $extension['api'] ) ) {
+                continue;
+            }
+
+            $expected[ $extension['api'] ] = isset( $extension['version'] ) ? (string) $extension['version'] : '';
+        }
+
+        return $expected;
+    }
+
+    /**
+     * Check whether visible Add-ons cover the shared update cache.
+     *
+     * @param array $expected Visible Add-ons expected in the response.
+     *
+     * @return bool Whether this request covers every activated Add-on.
+     */
+    private function has_full_extension_update_scope( $expected ) {
+        $all_expected = array();
+
+        foreach ( get_option( 'mainwp_extensions', array() ) as $extension ) {
+            if ( isset( $extension['activated_key'], $extension['api'] ) && 'Activated' === $extension['activated_key'] && '' !== $extension['api'] ) {
+                $all_expected[] = $extension['api'];
+            }
+        }
+
+        $visible = array_keys( $expected );
+        sort( $all_expected );
+        sort( $visible );
+
+        return $all_expected === $visible;
+    }
+
+    /**
+     * Check whether an Add-on update result is safe to persist.
+     *
+     * @param mixed  $result            Update result.
+     * @param string $api_slug          Expected API slug.
+     * @param string $installed_version Installed Add-on version.
+     *
+     * @return bool Whether the result is usable.
+     */
+    private function is_usable_extension_update_result( $result, $api_slug, $installed_version ) {
+        if ( ! is_object( $result ) || ! isset( $result->slug ) || $api_slug !== $result->slug || ! property_exists( $result, 'new_version' ) || ! is_string( $result->new_version ) ) {
+            return false;
+        }
+
+        $new_version = trim( $result->new_version );
+        if ( '' === $new_version || ( property_exists( $result, 'error' ) && ! empty( $result->error ) ) ) {
+            return false;
+        }
+
+        if ( version_compare( $new_version, $installed_version, '>' ) ) {
+            return property_exists( $result, 'package' ) && is_string( $result->package ) && '' !== trim( $result->package );
+        }
+
+        return true;
+    }
+
+    /**
+     * Record a failed Add-on update-check attempt.
+     */
+    private function record_extension_update_failure() {
+        $failure_count = property_exists( $this->upgradeVersionInfo, 'extension_update_failure_count' ) ? (int) $this->upgradeVersionInfo->extension_update_failure_count : 0;
+
+        if ( $failure_count < 1 || ! property_exists( $this->upgradeVersionInfo, 'extension_update_failure_episode' ) || empty( $this->upgradeVersionInfo->extension_update_failure_episode ) ) {
+            $this->upgradeVersionInfo->extension_update_failure_episode = wp_generate_uuid4();
+        }
+
+        $this->upgradeVersionInfo->extension_update_failure_count = $failure_count + 1;
+    }
+
+    /**
+     * Clear Add-on update-check failure state after a complete response.
+     */
+    private function clear_extension_update_failure() {
+        unset( $this->upgradeVersionInfo->extension_update_failure_count, $this->upgradeVersionInfo->extension_update_failure_episode );
+    }
+
+    /**
+     * Get the active repeated-failure notice ID.
+     *
+     * @return string Notice ID, or an empty string before the second consecutive failure.
+     */
+    public function get_extension_update_failure_notice_id() {
+        if ( ! $this->has_full_extension_update_scope( $this->get_expected_extension_updates() ) || ! is_object( $this->upgradeVersionInfo ) || ! property_exists( $this->upgradeVersionInfo, 'extension_update_failure_count' ) || 2 > (int) $this->upgradeVersionInfo->extension_update_failure_count || ! property_exists( $this->upgradeVersionInfo, 'extension_update_failure_episode' ) ) {
+            return '';
+        }
+
+        $episode = sanitize_key( $this->upgradeVersionInfo->extension_update_failure_episode );
+        return '' !== $episode ? 'mainwp-extension-update-check-failure-' . $episode : '';
+    }
+
+    /**
+     * Retry the Add-on update check and refresh WordPress update data.
+     *
+     * @return bool Whether every expected Add-on returned a usable result.
+     */
+    public function retry_extension_update_check() {
+        $success = $this->check_upgrade();
+        delete_site_transient( 'update_plugins' );
+        return $success;
     }
 
     /**

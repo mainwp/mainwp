@@ -458,6 +458,8 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
 
         static::mainwp_tmpfile_check();
 
+        static::render_extension_update_failure_notice();
+
         static::render_notice_config_warning();
 
         static::render_notice_multi_sites();
@@ -479,7 +481,44 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         static::check_rating_notice();
 
         static::render_browser_extensions_notice();
+    }
 
+    /**
+     * Render the repeated Add-on update-check failure notice.
+     */
+    public static function render_extension_update_failure_notice() {
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_extensions' ) ) {
+            return;
+        }
+
+        $notice_id = MainWP_System_Handler::instance()->get_extension_update_failure_notice_id();
+        if ( '' === $notice_id ) {
+            return;
+        }
+
+        $is_extensions_page = isset( $_GET['page'] ) && 'Extensions' === sanitize_text_field( wp_unslash( $_GET['page'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        if ( ! $is_extensions_page && ! MainWP_Utility::show_mainwp_message( 'notice', $notice_id ) ) {
+            return;
+        }
+        ?>
+        <div class="ui yellow message mainwp-extension-update-failure-notice" style="margin-bottom:0;">
+            <div class="header"><?php esc_html_e( 'Unable to check for Add-on updates', 'mainwp' ); ?></div>
+            <?php if ( $is_extensions_page ) : ?>
+                <p><?php esc_html_e( 'MainWP is unable to check one or more Add-ons for updates. Retry the check below.', 'mainwp' ); ?></p>
+                <button
+                    type="button"
+                    id="mainwp-extension-update-check-retry"
+                    class="ui mini yellow button"
+                    data-failed-text="<?php esc_attr_e( 'The update check is still failing. Make sure your MainWP Dashboard can connect to mainwp.com, then try again.', 'mainwp' ); ?>"
+                ><?php esc_html_e( 'Retry update checks', 'mainwp' ); ?></button>
+                <span id="mainwp-extension-update-check-retry-status" class="ui small red text" aria-live="polite"></span>
+            <?php else : ?>
+                <p><?php esc_html_e( 'MainWP is unable to check one or more Add-ons for updates. Open the Add-ons page to retry the check.', 'mainwp' ); ?></p>
+                <a class="ui mini yellow button" href="<?php echo esc_url( admin_url( 'admin.php?page=Extensions' ) ); ?>"><?php esc_html_e( 'Review Add-ons', 'mainwp' ); ?></a>
+                <i class="close icon mainwp-notice-dismiss" notice-id="<?php echo esc_attr( $notice_id ); ?>"></i>
+            <?php endif; ?>
+        </div>
+        <?php
     }
 
     /**

@@ -1317,8 +1317,9 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             do_action( 'mainwp_after_header', $websites );
             $after_header_content = ob_get_clean();
             if ( ! empty( trim( $after_header_content ) ) ) {
+                $admin_notices_style = false !== strpos( $after_header_content, 'mainwp-extension-update-failure-notice' ) ? 'padding-bottom:0 !important;' : '';
                 ?>
-                <div class="ui padded segment" id="mainwp-admin-notices-segment">
+                <div class="ui padded segment" id="mainwp-admin-notices-segment" style="<?php echo esc_attr( $admin_notices_style ); ?>">
                     <?php echo $after_header_content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
                 </div>
                 <?php

@@ -163,9 +163,12 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
 
         if ( 'widget-overview' === $this->table_id_prefix ) {
             unset( $columns['log_site_name'] );
-            if ( ! empty( $_GET['dashboard'] ) ) { //phpcs:ignore -- ok, individual widget.
-                unset( $columns['icon'] );
-            }
+            unset( $columns['icon'] );
+            unset( $columns['user_id'] );
+            unset( $columns['action'] );
+            unset( $columns['source'] );
+            unset( $columns['col_action'] );
+            unset( $columns['cb'] );
         }
 
         return $columns;
@@ -875,6 +878,18 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
 
         $recent_number = isset( $_REQUEST['recent_number'] ) ? intval( $_REQUEST['recent_number'] ) : 0;
 
+        $now = time();
+
+        // Get last 24 hours items.
+        if ( 'widget-overview' === $this->table_id_prefix ) {
+            if ( empty( $filter_dtsstart ) && empty( $filter_dtsstop ) ) {
+                $filter_dtsstart = $now - DAY_IN_SECONDS;
+                $filter_dtsstop  = $now;
+            }
+            $perPage = 25;
+        }
+        error_log( $this->table_id_prefix . '===========table_id_prefix' );
+
         // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
         $args = array(
@@ -967,9 +982,9 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
         }
 
         if ( 'manage-events' === $this->table_id_prefix ) {
-        ?>
+            ?>
         <div class="ui padded segment">
-        <?php
+            <?php
         }
         ?>
             <div id="mainwp-module-log-records-table-container" style="opacity:0;">
@@ -981,9 +996,9 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             </div>
         <?php
         if ( 'manage-events' === $this->table_id_prefix ) {
-        ?>
+            ?>
         </div>
-        <?php
+            <?php
         }
         ?>
         <div id="mainwp-loading-sites">
@@ -1006,14 +1021,19 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             'responsive'    => 'true',
             'fixedColumns'  => '',
             'searchDelay'   => 350,
+            'numbers'       => 7,
         );
 
         // Fix for widget state save overview table.
         if ( 'widget-overview' === $this->table_id_prefix ) {
-            $table_features['stateSave'] = 'false';
+            $table_features['stateSave']  = 'false';
+            $table_features['searching']  = 'false';
+            $table_features['pagingType'] = 'simple';
+            $table_features['info']       = 'false';
+            $table_features['numbers']    = 3;
         }
 
-    ?>
+        ?>
 
     <script type="text/javascript">
             var responsive = <?php echo esc_js( $table_features['responsive'] ); ?>;
@@ -1111,6 +1131,13 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                                     return json.data;
                                 }
                             },
+                            "layout": {
+                                "bottomEnd": {
+                                    "paging": {
+                                        "numbers": <?php echo intval( $table_features['numbers'] ); ?>
+                                    }
+                                }
+                            },
                             "responsive": responsive,
                             "searching" : <?php echo esc_js( $table_features['searching'] ); ?>,
                             "paging" : <?php echo esc_js( $table_features['paging'] ); ?>,
@@ -1129,6 +1156,15 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                             "columns": <?php echo wp_json_encode( $this->get_columns_init() ); ?>,
                             "language": {
                                 "emptyTable": "<?php esc_html_e( 'No events found.', 'mainwp' ); ?>"
+                                <?php
+                                if ( 'widget-overview' === $this->table_id_prefix ) {
+                                    ?>
+                                    ,"paginate": {
+                                        "next": 'More'
+                                    }
+                                    <?php
+                                }
+                                ?>
                             },
                             "drawCallback": function( settings ) {
                                 this.api().tables().body().to$().attr( 'id', 'mainwp-module-log-records-body-table' );

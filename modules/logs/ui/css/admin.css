@@ -21,6 +21,11 @@
     width: 100% !important;
 }
 
+#mainwp-module-log-records-table-container .dt-paging-button.previous {
+    display: none !important;
+}
+
+
 @media only screen and (min-width: 1370px) {
     #widget-recent_events .mainwp-scrolly-overflow {
         height: calc(100% - 120px) !important;

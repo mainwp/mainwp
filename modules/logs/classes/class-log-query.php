@@ -366,6 +366,9 @@ class Log_Query {
             MainWP_DB::instance()->log_system_query( $args, $recent_query, $this );
         }
 
+        error_log(print_r($args, true ));
+        error_log( $query );
+
         if ( ! $count_only ) {
             MainWP_DB::instance()->log_system_query( $args, $query, $this );
         }

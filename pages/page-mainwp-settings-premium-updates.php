@@ -114,7 +114,7 @@ class MainWP_Settings_Premium_Updates { // phpcs:ignore Generic.Classes.OpeningB
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Enable premium update compatibility', 'mainwp' ); ?></label>
                         <div class="ten wide column ui toggle checkbox">
                             <input type="checkbox" name="mainwp_premium_updates_enabled" id="mainwp_premium_updates_enabled" <?php echo $enabled ? 'checked="true"' : ''; ?> />
-                            <label for="mainwp_premium_updates_enabled"><?php esc_html_e( 'One switch for the whole feature: detecting premium updates and installing them. Runs only on sites where a listed product is installed; existing filter snippets keep working alongside it.', 'mainwp' ); ?></label>
+                            <label for="mainwp_premium_updates_enabled"></label>
                         </div>
                     </div>
 
@@ -134,8 +134,8 @@ class MainWP_Settings_Premium_Updates { // phpcs:ignore Generic.Classes.OpeningB
                     <div class="ui hidden divider"></div>
 
                     <h3 class="ui dividing header">
-                        <?php esc_html_e( 'Custom identifiers', 'mainwp' ); ?>
-                        <div class="sub header"><?php esc_html_e( 'For premium products not on the built-in list, or for theme folders that were renamed. Custom entries get the same treatment as built-in ones.', 'mainwp' ); ?></div>
+                        <?php esc_html_e( 'Add custom slugs', 'mainwp' ); ?>
+                        <div class="sub header"><?php esc_html_e( 'For premium products not on the built-in list, or for theme folders that were renamed. Added slugs get the same treatment as built-in ones.', 'mainwp' ); ?></div>
                     </h3>
 
                     <table class="ui unstackable table" id="mainwp-premium-updates-custom-table">

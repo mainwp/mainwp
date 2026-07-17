@@ -21,7 +21,7 @@
     width: 100% !important;
 }
 
-#mainwp-module-log-records-table-container .dt-paging-button.previous {
+#mainwp-widget-site-actions #mainwp-module-log-records-table-container .dt-paging-button.previous {
     display: none !important;
 }
 

@@ -869,6 +869,11 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
 
          // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $perPage = isset( $_REQUEST['length'] ) ? intval( $_REQUEST['length'] ) : false;
+
+        if ( 'widget-overview' === $this->table_id_prefix && ( false === $perPage || -1 === (int) $perPage ) ) {
+            $perPage = 25;
+        }
+
         if ( -1 === (int) $perPage || empty( $perPage ) ) {
             $perPage = 9999999;
         }
@@ -886,7 +891,9 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                 $filter_dtsstart = $now - DAY_IN_SECONDS;
                 $filter_dtsstop  = $now;
             }
-            $perPage = 25;
+        } else {
+            $filter_dtsstart = ! empty( $filter_dtsstart ) ? strtotime( $filter_dtsstart . ' 00:00:00' ) : '';
+            $filter_dtsstop  = ! empty( $filter_dtsstop ) ? strtotime( $filter_dtsstop . ' 23:59:59' ) : '';
         }
 
         // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -900,8 +907,8 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             'groups_ids'            => $array_groups_ids,
             'client_ids'            => $array_clients_ids,
             'usersfilter_sites_ids' => $array_usersfilter_sites_ids, // format: userid-siteid, siteid = 0 => dashboard user.
-            'timestart'             => ! empty( $filter_dtsstart ) ? strtotime( $filter_dtsstart . ' 00:00:00' ) : '',
-            'timestop'              => ! empty( $filter_dtsstop ) ? strtotime( $filter_dtsstop . ' 23:59:59' ) : '',
+            'timestart'             => $filter_dtsstart,
+            'timestop'              => $filter_dtsstop,
             'dismiss'               => 0,
             'view'                  => 'events_list',
             'wpid'                  => ! empty( $insights_filters['wpid'] ) ? $insights_filters['wpid'] : 0, // int or array of site ids.
@@ -918,7 +925,14 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
         $args['records_per_page'] = $perPage;
         $args['dev_log_query']    = 0; // 1 for dev logs.
 
-        $args['with_all_logs_meta'] = 1; // so it will enable optimize_with_meta too.
+        if ( 'widget-overview' === $this->table_id_prefix ) {
+            $args['optimize']           = 1;
+            $args['optimize_with_meta'] = 1;
+            $args['not_count']          = true;
+            $args['optimize_has_more']  = true;
+        } else {
+            $args['with_all_logs_meta'] = 1; // so it will enable optimize_with_meta too.
+        }
 
         $this->items       = $this->manager->db->get_records( $args );
         $this->total_items = $this->manager->db->get_found_records_count(); // get this value for recent events request only.
@@ -1159,7 +1173,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                                 if ( 'widget-overview' === $this->table_id_prefix ) {
                                     ?>
                                     ,"paginate": {
-                                        "next": 'More'
+                                        "next": '<?php echo esc_js( __( 'More', 'mainwp' ) ); ?>'
                                     }
                                     <?php
                                 }

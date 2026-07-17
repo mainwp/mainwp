@@ -888,7 +888,6 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             }
             $perPage = 25;
         }
-        error_log( $this->table_id_prefix . '===========table_id_prefix' );
 
         // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 

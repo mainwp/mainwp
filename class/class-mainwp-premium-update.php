@@ -190,7 +190,7 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @return mixed $request_update
      */
     public static function maybe_request_premium_updates( $website, $what, $params ) { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
-        static::$last_request_response = null;
+        self::$last_request_response = null;
 
         $request_update = false;
         if ( 'stats' === $what || ( 'upgradeplugintheme' === $what && isset( $params['type'] ) ) ) {
@@ -506,7 +506,7 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         } else {
             return null;
         }
-        static::$last_request_response = static::redirect_request_site( $website, $where_url );
+        self::$last_request_response = static::redirect_request_site( $website, $where_url );
         return true;
     }
 
@@ -529,7 +529,7 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         if ( ! preg_match( '/<mainwp>(.*)<\/mainwp>/', $body, $results ) ) {
             return null;
         }
-        $information = json_decode( base64_decode( $results[1] ), true ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for backwards compatibility.
+        $information = MainWP_System_Utility::get_child_response( base64_decode( $results[1] ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for backwards compatibility.
         return is_array( $information ) ? $information : null;
     }
 
@@ -543,10 +543,10 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @return array|null
      */
     public static function get_last_parsed_response() {
-        if ( null === static::$last_request_response || is_wp_error( static::$last_request_response ) ) {
+        if ( null === self::$last_request_response || is_wp_error( self::$last_request_response ) ) {
             return null;
         }
-        return static::parse_mainwp_envelope( wp_remote_retrieve_body( static::$last_request_response ) );
+        return static::parse_mainwp_envelope( wp_remote_retrieve_body( self::$last_request_response ) );
     }
 
     /**

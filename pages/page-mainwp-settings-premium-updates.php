@@ -35,7 +35,7 @@ class MainWP_Settings_Premium_Updates { // phpcs:ignore Generic.Classes.OpeningB
      *
      * Get Class Name.
      *
-     * @return object
+     * @return string
      */
     public static function get_class_name() {
         return __CLASS__;
@@ -81,7 +81,7 @@ class MainWP_Settings_Premium_Updates { // phpcs:ignore Generic.Classes.OpeningB
 
         MainWP_Premium_Update_Registry::save_custom_entries( array_values( $custom ) );
 
-        delete_transient( static::SCAN_TRANSIENT );
+        delete_transient( static::SCAN_TRANSIENT . '_' . get_current_user_id() );
 
         return true;
     }
@@ -90,6 +90,11 @@ class MainWP_Settings_Premium_Updates { // phpcs:ignore Generic.Classes.OpeningB
      * Render the Premium Updates settings page.
      */
     public static function render() { // phpcs:ignore -- NOSONAR - complex render method.
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'manage dashboard settings', 'mainwp' ) );
+            return;
+        }
+
         $updated = static::handle_settings_post();
 
         MainWP_Settings::render_header( 'PremiumUpdates' );
@@ -178,7 +183,7 @@ class MainWP_Settings_Premium_Updates { // phpcs:ignore Generic.Classes.OpeningB
                         </div>
                         <div class="field">
                             <label for="premium_updates_new_id"><?php esc_html_e( 'Identifier', 'mainwp' ); ?></label>
-                            <input type="text" name="premium_updates_new_id" id="premium_updates_new_id" placeholder="<?php esc_attr_e( 'plugin-folder/main-file.php or theme folder name (case matters)', 'mainwp' ); ?>" value="" />
+                            <input type="text" name="premium_updates_new_id" id="premium_updates_new_id" placeholder="<?php esc_attr_e( 'plugin-folder/main-file.php or theme folder name (case-insensitive)', 'mainwp' ); ?>" value="" />
                         </div>
                     </div>
 
@@ -268,7 +273,8 @@ class MainWP_Settings_Premium_Updates { // phpcs:ignore Generic.Classes.OpeningB
      * @return array[] Rows: name, identifier, type, sites, inactive, products.
      */
     public static function get_detected_products() { // phpcs:ignore -- NOSONAR - complex.
-        $cached = get_transient( static::SCAN_TRANSIENT );
+        $cache_key = static::SCAN_TRANSIENT . '_' . get_current_user_id();
+        $cached    = get_transient( $cache_key );
         if ( is_array( $cached ) ) {
             return $cached;
         }
@@ -314,8 +320,8 @@ class MainWP_Settings_Premium_Updates { // phpcs:ignore Generic.Classes.OpeningB
                 if ( ! is_array( $items ) || empty( $items ) ) {
                     continue;
                 }
-                $site_matched  = false;
-                $site_inactive = false;
+                $site_matched          = false;
+                $site_has_active_match = false;
                 foreach ( $items as $info ) {
                     if ( ! isset( $info['slug'] ) || ! is_string( $info['slug'] ) ) {
                         continue;
@@ -331,11 +337,11 @@ class MainWP_Settings_Premium_Updates { // phpcs:ignore Generic.Classes.OpeningB
                     $trackers[ $index ]['slugs'][ strtolower( $info['slug'] ) ] = true;
 
                     if ( 'theme' === $tracker['type'] ) {
-                        if ( empty( $info['active'] ) && empty( $info['parent_active'] ) ) {
-                            $site_inactive = true;
+                        if ( ! empty( $info['active'] ) || ! empty( $info['parent_active'] ) ) {
+                            $site_has_active_match = true;
                         }
-                    } elseif ( isset( $info['active'] ) && empty( $info['active'] ) ) {
-                        $site_inactive = true;
+                    } elseif ( ! isset( $info['active'] ) || ! empty( $info['active'] ) ) {
+                        $site_has_active_match = true;
                     }
 
                     if ( empty( $trackers[ $index ]['reported_name'] ) && ! empty( $info['name'] ) && 'exact' === $tracker['match'] ) {
@@ -344,7 +350,7 @@ class MainWP_Settings_Premium_Updates { // phpcs:ignore Generic.Classes.OpeningB
                 }
                 if ( $site_matched ) {
                     ++$trackers[ $index ]['sites'];
-                    if ( $site_inactive ) {
+                    if ( ! $site_has_active_match ) {
                         ++$trackers[ $index ]['inactive'];
                     }
                 }
@@ -364,7 +370,7 @@ class MainWP_Settings_Premium_Updates { // phpcs:ignore Generic.Classes.OpeningB
             );
         }
 
-        set_transient( static::SCAN_TRANSIENT, $rows, 10 * MINUTE_IN_SECONDS );
+        set_transient( $cache_key, $rows, 10 * MINUTE_IN_SECONDS );
 
         return $rows;
     }

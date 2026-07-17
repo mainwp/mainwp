@@ -227,6 +227,20 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             );
         }
 
+        if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PremiumUpdates' ) ) {
+            add_submenu_page(
+                'mainwp_tab',
+                __( 'Premium Updates', 'mainwp' ),
+                ' <div class="mainwp-hidden">' . esc_html__( 'Premium Updates', 'mainwp' ) . '</div>',
+                'read',
+                'PremiumUpdates',
+                array(
+                    MainWP_Settings_Premium_Updates::get_class_name(),
+                    'render',
+                )
+            );
+        }
+
         /**
          * Settings Subpages
          *
@@ -267,6 +281,9 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                     <?php } ?>
                     <?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'SettingsEmail' ) ) { ?>
                         <a href="<?php echo esc_url( admin_url( 'admin.php?page=SettingsEmail' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Email Settings', 'mainwp' ); ?></a>
+                    <?php } ?>
+                    <?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PremiumUpdates' ) ) { ?>
+                        <a href="<?php echo esc_url( admin_url( 'admin.php?page=PremiumUpdates' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Premium Updates', 'mainwp' ); ?></a>
                     <?php } ?>
                     <?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'CostTrackerSettings' ) ) { ?>
                         <a href="<?php echo esc_url( admin_url( 'admin.php?page=CostTrackerSettings' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Cost Tracker Settings', 'mainwp' ); ?></a>
@@ -345,6 +362,13 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 'right'      => '',
             ),
             array(
+                'title'      => esc_html__( 'Premium Updates', 'mainwp' ),
+                'parent_key' => 'Settings',
+                'href'       => 'admin.php?page=PremiumUpdates',
+                'slug'       => 'PremiumUpdates',
+                'right'      => '',
+            ),
+            array(
                 'title'      => esc_html__( 'Tools', 'mainwp' ),
                 'parent_key' => 'Settings',
                 'href'       => 'admin.php?page=MainWPTools',
@@ -416,6 +440,14 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 'title'  => esc_html__( 'Email Settings', 'mainwp' ),
                 'href'   => 'admin.php?page=SettingsEmail',
                 'active' => ( 'Emails' === $shownPage ) ? true : false,
+            );
+        }
+
+        if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PremiumUpdates' ) ) {
+            $renderItems[] = array(
+                'title'  => esc_html__( 'Premium Updates', 'mainwp' ),
+                'href'   => 'admin.php?page=PremiumUpdates',
+                'active' => ( 'PremiumUpdates' === $shownPage ) ? true : false,
             );
         }
 

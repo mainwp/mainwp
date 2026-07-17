@@ -1324,8 +1324,16 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
              */
             do_action( 'mainwp_fetch_url_authed', $website, $information, $what, $params, $others );
         } else {
-            $slug                    = $params['list'];
-            $information['upgrades'] = array( $slug => 1 );
+            $slug = $params['list'];
+            // MWP-1660: the premium request route's response carries the child's real
+            // result envelope; report it through the existing paths when available.
+            // On timeout or an unparsable response, keep the previous optimistic
+            // behavior; the next sync corrects it.
+            $information = MainWP_Premium_Update::get_last_parsed_response();
+            if ( ! is_array( $information ) ) {
+                $information             = array();
+                $information['upgrades'] = array( $slug => 1 );
+            }
         }
 
         if ( is_array( $information ) && isset( $information['sync'] ) && ! empty( $information['sync'] ) ) {

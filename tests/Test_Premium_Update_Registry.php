@@ -7,6 +7,7 @@
 
 use MainWP\Dashboard\MainWP_Premium_Update;
 use MainWP\Dashboard\MainWP_Premium_Update_Registry;
+use MainWP\Dashboard\MainWP_Settings_Premium_Updates;
 
 /**
  * Class Test_Premium_Update_Registry
@@ -275,6 +276,101 @@ class Test_Premium_Update_Registry extends WP_UnitTestCase {
             )
         );
         $this->assertTrue( MainWP_Premium_Update::check_request_update_premium( 'my-premium/my-premium.php', 'plugin' ) );
+    }
+
+    /**
+     * Identifier suggestions normalize synced inventory formats, aggregate site
+     * counts, and exclude products which are already supported or custom-added.
+     */
+    public function test_identifier_suggestions_from_synced_inventories() {
+        MainWP_Premium_Update_Registry::save_custom_entries(
+            array(
+                array(
+                    'type' => 'plugin',
+                    'id'   => 'custom-pro/custom.php',
+                ),
+            )
+        );
+
+        $suggestions = MainWP_Settings_Premium_Updates::get_identifier_suggestions(
+            array(
+                array(
+                    'id'     => 11,
+                    'plugin' => array(
+                        array(
+                            'slug' => 'gravityforms/gravityforms.php',
+                            'name' => 'Gravity Forms',
+                        ),
+                        array(
+                            'slug' => 'gravityforms/gravityforms.php',
+                            'name' => 'Duplicate on the same site',
+                        ),
+                        array(
+                            'slug' => 'divi-builder/divi-builder.php',
+                            'name' => 'Divi Builder',
+                        ),
+                        array(
+                            'slug' => 'yith-woocommerce-wishlist-premium/init.php',
+                            'name' => 'YITH Wishlist Premium',
+                        ),
+                        array(
+                            'slug' => 'bad slug/plugin.php',
+                            'name' => 'Invalid identifier',
+                        ),
+                        'missing-slug' => 'not-an-array',
+                    ),
+                    'theme'  => array(
+                        array(
+                            'slug' => 'shared-product',
+                            'name' => 'Shared Theme',
+                        ),
+                        array(
+                            'slug' => 'premium-theme',
+                        ),
+                    ),
+                ),
+                array(
+                    'id'     => 12,
+                    'plugin' => array(
+                        'GRAVITYFORMS/GRAVITYFORMS.PHP' => array(
+                            'Name' => 'Gravity Forms Pro',
+                        ),
+                        'shared-product' => array(
+                            'slug' => 'wrong/nested-slug.php',
+                            'Name' => 'Shared Plugin',
+                        ),
+                        'custom-pro/custom.php' => array(
+                            'Name' => 'Already Custom',
+                        ),
+                    ),
+                    'theme'  => array(
+                        'premium-theme' => array(
+                            'title' => 'Premium Theme',
+                        ),
+                        'Divi' => array(
+                            'name' => 'Divi',
+                        ),
+                    ),
+                ),
+            )
+        );
+
+        $indexed = array();
+        foreach ( $suggestions as $suggestion ) {
+            $indexed[ $suggestion['type'] . '|' . strtolower( $suggestion['identifier'] ) ] = $suggestion;
+        }
+
+        $this->assertCount( 4, $indexed );
+        $this->assertSame( 2, $indexed['plugin|gravityforms/gravityforms.php']['sites'], 'Case variants aggregate and duplicate rows count once per site.' );
+        $this->assertSame( 'Gravity Forms', $indexed['plugin|gravityforms/gravityforms.php']['name'] );
+        $this->assertSame( 'Premium Theme', $indexed['theme|premium-theme']['name'], 'A later display name replaces an identifier fallback.' );
+        $this->assertSame( 2, $indexed['theme|premium-theme']['sites'] );
+        $this->assertArrayHasKey( 'plugin|shared-product', $indexed, 'Associative inventory keys take precedence over nested slugs.' );
+        $this->assertArrayHasKey( 'theme|shared-product', $indexed, 'The same identifier remains distinct across product types.' );
+        $this->assertArrayNotHasKey( 'plugin|divi-builder/divi-builder.php', $indexed );
+        $this->assertArrayNotHasKey( 'plugin|yith-woocommerce-wishlist-premium/init.php', $indexed );
+        $this->assertArrayNotHasKey( 'plugin|custom-pro/custom.php', $indexed );
+        $this->assertArrayNotHasKey( 'plugin|wrong/nested-slug.php', $indexed );
     }
 
     /**

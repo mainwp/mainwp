@@ -168,8 +168,25 @@ class MainWP_Settings_Premium_Updates { // phpcs:ignore Generic.Classes.OpeningB
 
         MainWP_Settings::render_header( 'PremiumUpdates' );
 
-        $custom       = MainWP_Premium_Update_Registry::get_custom_entries();
-        $scan         = static::get_detected_products();
+        $custom             = MainWP_Premium_Update_Registry::get_custom_entries();
+        $scan               = static::get_detected_products();
+        $suggestions        = static::get_identifier_suggestions();
+        $suggestion_sources = array(
+            'plugin' => array(),
+            'theme'  => array(),
+        );
+        foreach ( $suggestions as $suggestion ) {
+            $suggestion_sources[ $suggestion['type'] ][] = array(
+                'title'       => $suggestion['name'],
+                'identifier'  => $suggestion['identifier'],
+                'description' => sprintf(
+                    /* translators: 1: Plugin or theme identifier, 2: Number of child sites. */
+                    _n( '%1$s - installed on %2$d site', '%1$s - installed on %2$d sites', $suggestion['sites'], 'mainwp' ),
+                    $suggestion['identifier'],
+                    $suggestion['sites']
+                ),
+            );
+        }
         $add_error    = is_array( $notice ) && 'error' === $notice['type'] && 'add_custom' === $notice['action'];
         $notice_class = is_array( $notice ) && 'error' === $notice['type'] ? 'red' : 'green';
         $new_type     = $add_error && isset( $_POST['premium_updates_new_type'] ) && 'theme' === sanitize_key( wp_unslash( $_POST['premium_updates_new_type'] ) ) ? 'theme' : 'plugin'; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- repopulating sanitized form input.
@@ -202,7 +219,7 @@ class MainWP_Settings_Premium_Updates { // phpcs:ignore Generic.Classes.OpeningB
                         <form method="POST" action="<?php echo esc_url( admin_url( 'admin.php?page=PremiumUpdates' ) ); ?>">
                             <?php wp_nonce_field( 'PremiumUpdatesCustomAdd', 'premium_updates_add_nonce' ); ?>
                             <input type="hidden" name="premium_updates_action" value="add_custom" />
-                            <div class="fields">
+                            <div class="fields" id="mainwp-premium-updates-identifier-fields">
                                 <div class="six wide field">
                                     <label for="premium_updates_new_type"><?php esc_html_e( 'Type', 'mainwp' ); ?></label>
                                     <select name="premium_updates_new_type" id="premium_updates_new_type" class="ui dropdown">
@@ -214,13 +231,21 @@ class MainWP_Settings_Premium_Updates { // phpcs:ignore Generic.Classes.OpeningB
                                     <label for="premium_updates_new_id"><?php esc_html_e( 'Identifier', 'mainwp' ); ?> <span class="ui small red text"><?php esc_html_e( '(Required)', 'mainwp' ); ?></span></label>
                                     <div class="fields">
                                         <div class="thirteen wide field">
-                                            <input type="text" name="premium_updates_new_id" id="premium_updates_new_id" placeholder="<?php esc_attr_e( 'plugin-folder/main-file.php or theme folder name (case-insensitive)', 'mainwp' ); ?>" value="<?php echo esc_attr( $new_id ); ?>" pattern="[A-Za-z0-9._/-]+" required />
+                                            <div class="ui fluid search" id="mainwp-premium-updates-identifier-search">
+                                                <input type="text" name="premium_updates_new_id" id="premium_updates_new_id" placeholder="<?php echo esc_attr( 'theme' === $new_type ? __( 'Search installed themes or enter the theme folder', 'mainwp' ) : __( 'Search installed plugins or enter plugin-folder/main-file.php', 'mainwp' ) ); ?>" data-plugin-placeholder="<?php esc_attr_e( 'Search installed plugins or enter plugin-folder/main-file.php', 'mainwp' ); ?>" data-theme-placeholder="<?php esc_attr_e( 'Search installed themes or enter the theme folder', 'mainwp' ); ?>" value="<?php echo esc_attr( $new_id ); ?>" pattern="[A-Za-z0-9._/-]+" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="mainwp-premium-updates-identifier-results" aria-describedby="mainwp-premium-updates-identifier-help" autocomplete="off" required />
+                                                <div class="results" id="mainwp-premium-updates-identifier-results" role="listbox" aria-label="<?php esc_attr_e( 'Identifier suggestions', 'mainwp' ); ?>"></div>
+                                            </div>
                                         </div>
                                         <div class="three wide field">
                                             <button type="submit" class="ui fluid basic green button" id="mainwp-premium-updates-add-custom"><i class="plus icon"></i><?php esc_html_e( 'Add New', 'mainwp' ); ?></button>
                                         </div>
                                     </div>
                                 </div>
+                            </div>
+                            <div class="ui small text" id="mainwp-premium-updates-identifier-help">
+                                <div><?php esc_html_e( 'Sync your child sites first so MainWP Dashboard has the latest installed plugin and theme data.', 'mainwp' ); ?></div>
+                                <div><?php esc_html_e( 'Start typing to search all detected products. Results also include non-premium plugins and themes, so ignore those and select only the premium product you want to add.', 'mainwp' ); ?></div>
+                                <div><?php esc_html_e( 'You can also enter an identifier manually. Plugin identifiers look like plugin-folder/main-file.php; theme identifiers are the installed theme folder.', 'mainwp' ); ?></div>
                             </div>
                         </form>
 
@@ -290,6 +315,115 @@ class MainWP_Settings_Premium_Updates { // phpcs:ignore Generic.Classes.OpeningB
 
             <script type="text/javascript">
                 jQuery( function( $ ) {
+                    const identifierSources = <?php echo wp_json_encode( $suggestion_sources, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- safely encoded JSON for an inline script. ?>;
+                    const identifierSearch = $( '#mainwp-premium-updates-identifier-search' );
+                    const identifierInput = $( '#premium_updates_new_id' );
+                    const typeInput = $( '#premium_updates_new_type' );
+                    const identifierResults = $( '#mainwp-premium-updates-identifier-results' );
+
+                    if ( identifierSearch.length && identifierInput.length && typeInput.length && identifierResults.length && 'function' === typeof $.fn.search ) {
+                        const getIdentifierSource = function() {
+                            const type = 'theme' === typeInput.val() ? 'theme' : 'plugin';
+                            return identifierSources[ type ] || [];
+                        };
+                        const syncActiveIdentifierResult = function() {
+                            const activeResult = identifierResults.find( '.result.active' ).first();
+                            identifierResults.find( '.result' ).attr( 'aria-selected', 'false' );
+                            if ( activeResult.length ) {
+                                activeResult.attr( 'aria-selected', 'true' );
+                                identifierInput.attr( 'aria-activedescendant', activeResult.attr( 'id' ) );
+                            } else {
+                                identifierInput.removeAttr( 'aria-activedescendant' );
+                            }
+                        };
+                        const prepareIdentifierResults = function() {
+                            identifierResults.find( '.result' ).each( function( index ) {
+                                $( this ).attr( {
+                                    id: 'mainwp-premium-updates-identifier-option-' + index,
+                                    role: 'option',
+                                    'aria-selected': 'false'
+                                } );
+                            } );
+                            syncActiveIdentifierResult();
+                        };
+                        let identifierSearchTimer = null;
+
+                        identifierSearch.search( {
+                            source: getIdentifierSource(),
+                            selector: {
+                                prompt: '#premium_updates_new_id'
+                            },
+                            searchFields: [ 'title', 'identifier' ],
+                            fullTextSearch: 'exact',
+                            minCharacters: 2,
+                            maxResults: 12,
+                            cache: false,
+                            automatic: false,
+                            duration: 0,
+                            searchOnFocus: false,
+                            showNoResults: false,
+                            preserveHTML: false,
+                            onSelect: function( result ) {
+                                window.clearTimeout( identifierSearchTimer );
+                                identifierInput.attr( 'aria-expanded', 'false' ).removeAttr( 'aria-activedescendant' );
+                                if ( ! result || ! result.identifier ) {
+                                    return false;
+                                }
+                                identifierInput.val( result.identifier ).trigger( 'change' );
+                                identifierSearch.search( 'hide results' );
+                                return false;
+                            },
+                            onResultsAdd: function( html ) {
+                                identifierInput.removeAttr( 'aria-activedescendant' );
+                                if ( html ) {
+                                    window.setTimeout( prepareIdentifierResults, 0 );
+                                }
+                            },
+                            onResultsOpen: function() {
+                                identifierInput.attr( 'aria-expanded', 'true' );
+                            },
+                            onResultsClose: function() {
+                                identifierInput.attr( 'aria-expanded', 'false' ).removeAttr( 'aria-activedescendant' );
+                            }
+                        } );
+
+                        // Bind directly instead of relying on delegated form input events.
+                        identifierInput.on( 'input.mainwpPremiumUpdatesIdentifierSearch', function() {
+                            window.clearTimeout( identifierSearchTimer );
+                            identifierInput.removeAttr( 'aria-activedescendant' );
+                            if ( identifierInput.val().length < 2 ) {
+                                identifierSearch.search( 'hide results' );
+                                return;
+                            }
+                            identifierSearchTimer = window.setTimeout( function() {
+                                if ( document.activeElement !== identifierInput[0] ) {
+                                    return;
+                                }
+                                identifierSearch.search( 'query' );
+                            }, 100 );
+                        } );
+                        identifierInput.on( 'blur.mainwpPremiumUpdatesIdentifierSearch', function() {
+                            window.clearTimeout( identifierSearchTimer );
+                        } );
+                        identifierInput.on( 'keydown.mainwpPremiumUpdatesIdentifierSearch', function( event ) {
+                            if ( 38 === event.which || 40 === event.which ) {
+                                window.setTimeout( syncActiveIdentifierResult, 0 );
+                            }
+                        } );
+
+                        typeInput.on( 'change', function() {
+                            const type = 'theme' === typeInput.val() ? 'theme' : 'plugin';
+                            window.clearTimeout( identifierSearchTimer );
+                            identifierInput
+                                .val( '' )
+                                .attr( 'placeholder', identifierInput.attr( 'data-' + type + '-placeholder' ) )
+                                .trigger( 'change' );
+                            identifierSearch.search( 'setting', 'source', getIdentifierSource() );
+                            identifierSearch.search( 'clear cache' );
+                            identifierSearch.search( 'hide results' );
+                        } );
+                    }
+
                     $( '.mainwp-premium-updates-remove' ).on( 'click', function() {
                         const form = this.form;
                         if ( ! form ) {
@@ -373,6 +507,175 @@ class MainWP_Settings_Premium_Updates { // phpcs:ignore Generic.Classes.OpeningB
     }
 
     /**
+     * Build selectable custom-identifier suggestions from synced inventories.
+     *
+     * Built-in and already-custom identifiers are excluded. Passing inventories
+     * is intended for focused tests; normal page rendering reads accessible child
+     * sites from the Dashboard database.
+     *
+     * @param array|null $site_inventories Optional site inventories. Each item contains id, plugin, and theme keys.
+     *
+     * @return array[] Rows: name, identifier, type, sites.
+     */
+    public static function get_identifier_suggestions( $site_inventories = null ) { // phpcs:ignore -- NOSONAR - inventory normalization and aggregation.
+        $catalog = array();
+        $rules   = static::get_identifier_exclusion_rules();
+        if ( null === $site_inventories ) {
+            $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
+            while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) { // phpcs:ignore Generic.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition -- iterating DB result.
+                $inventories = array(
+                    'plugin' => ! empty( $website->plugins ) ? json_decode( $website->plugins, true ) : array(),
+                    'theme'  => ! empty( $website->themes ) ? json_decode( $website->themes, true ) : array(),
+                );
+                static::collect_identifier_suggestions( $catalog, $inventories, (string) $website->id, $rules );
+            }
+            MainWP_DB::free_result( $websites );
+        } else {
+            if ( ! is_array( $site_inventories ) ) {
+                return array();
+            }
+            foreach ( $site_inventories as $index => $inventories ) {
+                if ( ! is_array( $inventories ) ) {
+                    continue;
+                }
+                $site_id = isset( $inventories['id'] ) ? (string) $inventories['id'] : 'site-' . $index;
+                static::collect_identifier_suggestions( $catalog, $inventories, $site_id, $rules );
+            }
+        }
+
+        $rows = array();
+        foreach ( $catalog as $item ) {
+            $rows[] = array(
+                'name'       => $item['name'],
+                'identifier' => $item['identifier'],
+                'type'       => $item['type'],
+                'sites'      => count( $item['site_ids'] ),
+            );
+        }
+        usort(
+            $rows,
+            function ( $a, $b ) {
+                $name_comparison = strcasecmp( $a['name'], $b['name'] );
+                if ( 0 !== $name_comparison ) {
+                    return $name_comparison;
+                }
+                $type_comparison = strcmp( $a['type'], $b['type'] );
+                return 0 !== $type_comparison ? $type_comparison : strcasecmp( $a['identifier'], $b['identifier'] );
+            }
+        );
+
+        return $rows;
+    }
+
+    /**
+     * Get identifiers which should not be offered as new custom entries.
+     *
+     * @return array Rules grouped by product type and match style.
+     */
+    private static function get_identifier_exclusion_rules() {
+        $rules = array(
+            'plugin' => array(
+                'exact'    => array(),
+                'prefixes' => array(),
+            ),
+            'theme'  => array(
+                'exact'    => array(),
+                'prefixes' => array(),
+            ),
+        );
+
+        foreach ( MainWP_Premium_Update_Registry::get_entries() as $entry ) {
+            if ( empty( $entry['id'] ) || ! isset( $rules[ $entry['type'] ] ) ) {
+                continue;
+            }
+            if ( 'prefix' === $entry['match'] ) {
+                $rules[ $entry['type'] ]['prefixes'][] = strtolower( $entry['id'] );
+            } else {
+                $rules[ $entry['type'] ]['exact'][ strtolower( $entry['id'] ) ] = true;
+            }
+        }
+        foreach ( MainWP_Premium_Update_Registry::get_custom_entries() as $entry ) {
+            if ( ! empty( $entry['id'] ) && isset( $rules[ $entry['type'] ] ) ) {
+                $rules[ $entry['type'] ]['exact'][ strtolower( $entry['id'] ) ] = true;
+            }
+        }
+
+        return $rules;
+    }
+
+    /**
+     * Merge one site's inventory into the identifier suggestion catalog.
+     *
+     * @param array  $catalog     Suggestion catalog, updated by reference.
+     * @param array  $inventories Plugin and theme inventories for one child site.
+     * @param string $site_id     Stable site identifier used for deduplication.
+     * @param array  $rules       Built-in and custom exclusion rules.
+     */
+    private static function collect_identifier_suggestions( &$catalog, $inventories, $site_id, $rules ) { // phpcs:ignore -- NOSONAR - inventory normalization.
+        foreach ( array( 'plugin', 'theme' ) as $type ) {
+            $items = isset( $inventories[ $type ] ) && is_array( $inventories[ $type ] ) ? $inventories[ $type ] : array();
+            foreach ( $items as $inventory_key => $info ) {
+                if ( ! is_array( $info ) ) {
+                    continue;
+                }
+
+                $identifier = is_string( $inventory_key ) && '' !== $inventory_key ? $inventory_key : ( isset( $info['slug'] ) && is_string( $info['slug'] ) ? $info['slug'] : '' );
+                $identifier = trim( $identifier );
+                if ( '' === $identifier || ! preg_match( '/^[A-Za-z0-9\-_.\/]+$/', $identifier ) ) {
+                    continue;
+                }
+                $normalized_identifier = strtolower( $identifier );
+                if ( isset( $rules[ $type ]['exact'][ $normalized_identifier ] ) || static::identifier_matches_prefix( $normalized_identifier, $rules[ $type ]['prefixes'] ) ) {
+                    continue;
+                }
+
+                $name = '';
+                foreach ( array( 'name', 'Name', 'title' ) as $name_key ) {
+                    if ( isset( $info[ $name_key ] ) && is_scalar( $info[ $name_key ] ) ) {
+                        $name = sanitize_text_field( wp_strip_all_tags( (string) $info[ $name_key ] ) );
+                        if ( '' !== $name ) {
+                            break;
+                        }
+                    }
+                }
+                if ( '' === $name ) {
+                    $name = $identifier;
+                }
+
+                $catalog_key = $type . '|' . $normalized_identifier;
+                if ( ! isset( $catalog[ $catalog_key ] ) ) {
+                    $catalog[ $catalog_key ] = array(
+                        'name'       => $name,
+                        'identifier' => $identifier,
+                        'type'       => $type,
+                        'site_ids'   => array(),
+                    );
+                } elseif ( 0 === strcasecmp( $catalog[ $catalog_key ]['name'], $catalog[ $catalog_key ]['identifier'] ) && 0 !== strcasecmp( $name, $identifier ) ) {
+                    $catalog[ $catalog_key ]['name'] = $name;
+                }
+                $catalog[ $catalog_key ]['site_ids'][ $site_id ] = true;
+            }
+        }
+    }
+
+    /**
+     * Check an already-normalized identifier against normalized prefixes.
+     *
+     * @param string   $identifier Lowercase identifier.
+     * @param string[] $prefixes   Lowercase prefixes.
+     *
+     * @return bool
+     */
+    private static function identifier_matches_prefix( $identifier, $prefixes ) {
+        foreach ( $prefixes as $prefix ) {
+            if ( '' !== $prefix && 0 === strncmp( $identifier, $prefix, strlen( $prefix ) ) ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Scan synced site inventories for registry-matched products.
      *
      * Aggregates per registry entry (and per custom identifier): site count,
@@ -425,7 +728,7 @@ class MainWP_Settings_Premium_Updates { // phpcs:ignore Generic.Classes.OpeningB
                 'theme'  => ! empty( $website->themes ) ? json_decode( $website->themes, true ) : array(),
             );
             foreach ( $trackers as $index => $tracker ) {
-                $items = $inventories[ $tracker['type'] ];
+                $items = isset( $inventories[ $tracker['type'] ] ) ? $inventories[ $tracker['type'] ] : array();
                 if ( ! is_array( $items ) || empty( $items ) ) {
                     continue;
                 }

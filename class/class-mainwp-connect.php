@@ -977,8 +977,10 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         }
 
         if ( empty( $disabled_functions ) || ( false === stristr( $disabled_functions, 'curl_multi_exec' ) ) ) {
-            $lastRun = 0;
+            $lastRun     = 0;
+            $retry_added = false;
             do {
+                $retry_added = false;
                 if ( 20 < time() - $lastRun ) {
                     MainWP_System_Utility::set_time_limit( $timeout );
                     $lastRun = time();
@@ -997,6 +999,10 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                         curl_setopt( $info['handle'], CURLOPT_FRESH_CONNECT, true );
                         curl_setopt( $info['handle'], CURLOPT_FORBID_REUSE, true );
                         curl_multi_add_handle( $mh, $info['handle'] );
+                        do {
+                            $mrc = curl_multi_exec( $mh, $running );
+                        } while ( CURLM_CALL_MULTI_PERFORM === $mrc );
+                        $retry_added = true;
                         unset( $requestUrls[ $rid ] );
                         continue; // libcurl updates $running automatically.
                     }
@@ -1026,7 +1032,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     unset( $info['handle'] );
                 }
                 usleep( 10000 );
-            } while ( $running > 0 );
+            } while ( $running > 0 || $retry_added );
 
             if ( static::is_valid_curl_handle( $mh ) ) {
                 curl_multi_close( $mh );

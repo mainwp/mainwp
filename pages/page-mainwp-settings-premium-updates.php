@@ -3,8 +3,8 @@
  * MainWP Premium Updates Settings page.
  *
  * Settings subpage for the built-in premium plugin & theme update
- * compatibility (MWP-1660): master switch, license notice, read-only
- * overview of detected products, and custom identifiers.
+ * compatibility (MWP-1660): license notice, custom identifiers, and a
+ * read-only overview of detected products.
  *
  * @package MainWP/Dashboard
  */
@@ -42,29 +42,15 @@ class MainWP_Settings_Premium_Updates { // phpcs:ignore Generic.Classes.OpeningB
     }
 
     /**
-     * Handle settings and custom-identifier form submissions.
+     * Handle custom-identifier form submissions.
      *
      * @return array|false Notice data on submission, false otherwise.
      */
     public static function handle_settings_post() { // phpcs:ignore -- NOSONAR - complex.
         $action = isset( $_POST['premium_updates_action'] ) ? sanitize_key( wp_unslash( $_POST['premium_updates_action'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
-        if ( '' === $action && isset( $_POST['submit'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- backwards-compatible settings submission.
-            $action = 'save_settings';
-        }
 
         if ( '' === $action || ! MainWP_System_Utility::is_admin() ) {
             return false;
-        }
-
-        if ( 'save_settings' === $action ) {
-            if ( ! isset( $_POST['wp_nonce'] ) || ! wp_verify_nonce( sanitize_key( wp_unslash( $_POST['wp_nonce'] ) ), 'PremiumUpdatesSettings' ) ) {
-                return static::get_post_notice( 'error', __( 'The security check failed. Please reload the page and try again.', 'mainwp' ) );
-            }
-
-            MainWP_Utility::update_option( MainWP_Premium_Update_Registry::OPTION_ENABLED, isset( $_POST['mainwp_premium_updates_enabled'] ) ? 1 : 0 );
-            delete_transient( static::SCAN_TRANSIENT . '_' . get_current_user_id() );
-
-            return static::get_post_notice( 'success', __( 'Settings have been saved.', 'mainwp' ) );
         }
 
         if ( 'add_custom' === $action ) {
@@ -182,80 +168,63 @@ class MainWP_Settings_Premium_Updates { // phpcs:ignore Generic.Classes.OpeningB
 
         MainWP_Settings::render_header( 'PremiumUpdates' );
 
-        $enabled        = MainWP_Premium_Update_Registry::is_enabled();
-        $custom         = MainWP_Premium_Update_Registry::get_custom_entries();
-        $scan           = static::get_detected_products();
-        $open_add_modal = is_array( $notice ) && 'error' === $notice['type'] && 'add_custom' === $notice['action'];
-        $notice_class   = is_array( $notice ) && 'error' === $notice['type'] ? 'red' : 'green';
-        $new_type       = $open_add_modal && isset( $_POST['premium_updates_new_type'] ) && 'theme' === sanitize_key( wp_unslash( $_POST['premium_updates_new_type'] ) ) ? 'theme' : 'plugin'; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- repopulating sanitized modal input.
-        $new_id         = $open_add_modal && isset( $_POST['premium_updates_new_id'] ) ? trim( sanitize_text_field( wp_unslash( $_POST['premium_updates_new_id'] ) ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- repopulating sanitized modal input.
+        $custom       = MainWP_Premium_Update_Registry::get_custom_entries();
+        $scan         = static::get_detected_products();
+        $add_error    = is_array( $notice ) && 'error' === $notice['type'] && 'add_custom' === $notice['action'];
+        $notice_class = is_array( $notice ) && 'error' === $notice['type'] ? 'red' : 'green';
+        $new_type     = $add_error && isset( $_POST['premium_updates_new_type'] ) && 'theme' === sanitize_key( wp_unslash( $_POST['premium_updates_new_type'] ) ) ? 'theme' : 'plugin'; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- repopulating sanitized form input.
+        $new_id       = $add_error && isset( $_POST['premium_updates_new_id'] ) ? trim( sanitize_text_field( wp_unslash( $_POST['premium_updates_new_id'] ) ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- repopulating sanitized form input.
         ?>
-        <div id="mainwp-premium-updates-settings" class="ui segment">
-            <?php if ( is_array( $notice ) && ! $open_add_modal ) : ?>
+        <div id="mainwp-premium-updates-settings" class="ui padded segment">
+            <?php if ( is_array( $notice ) && ! $add_error ) : ?>
                 <div class="ui <?php echo esc_attr( $notice_class ); ?> message"><i class="close icon"></i><?php echo esc_html( $notice['message'] ); ?></div>
             <?php endif; ?>
+            <div class="ui info message">
+                <div class="header"><?php esc_html_e( 'Premium products usually need an active license on each child site.', 'mainwp' ); ?></div>
+                <p><?php esc_html_e( 'MainWP detects and starts these updates, but vendors only deliver the update download to sites where the product license, account connection, or registration is active. If a premium update appears but fails to install, check the product licensing on that child site first.', 'mainwp' ); ?></p>
+            </div>
+
+            <div class="ui hidden divider"></div>
+
             <div class="ui form">
-                <div class="ui basic accordion mainwp-blank-accordion mainwp-sidebar-accordion" id="mainwp-premium-updates-general-accordion">
-                    <h2 class="ui dividing header active title">
-                        <i class="right dropdown icon"></i>
-                        <?php esc_html_e( 'Premium Updates', 'mainwp' ); ?>
-                        <div class="sub header"><?php esc_html_e( 'Built-in update compatibility for premium plugins and themes. MainWP performs an extra wp-admin check on child sites that have these products installed, so their updates show up and install like any other.', 'mainwp' ); ?></div>
-                    </h2>
-                    <div class="content active">
-                        <form method="POST" action="<?php echo esc_url( admin_url( 'admin.php?page=PremiumUpdates' ) ); ?>">
-                            <?php wp_nonce_field( 'PremiumUpdatesSettings', 'wp_nonce' ); ?>
-                            <input type="hidden" name="premium_updates_action" value="save_settings" />
-                            <div class="ui grid field">
-                                <label class="six wide column middle aligned" for="mainwp_premium_updates_enabled"><?php esc_html_e( 'Enable premium update compatibility', 'mainwp' ); ?></label>
-                                <div class="ten wide column ui toggle checkbox">
-                                    <input type="checkbox" name="mainwp_premium_updates_enabled" id="mainwp_premium_updates_enabled" <?php echo $enabled ? 'checked="true"' : ''; ?> />
-                                    <label for="mainwp_premium_updates_enabled"></label>
-                                </div>
-                            </div>
-
-                            <div class="ui info message">
-                                <div class="header"><?php esc_html_e( 'Premium products usually need an active license on each child site.', 'mainwp' ); ?></div>
-                                <p><?php esc_html_e( 'MainWP detects and starts these updates, but vendors only deliver the update download to sites where the product license, account connection, or registration is active. If a premium update appears but fails to install, check the product licensing on that child site first.', 'mainwp' ); ?></p>
-                            </div>
-
-                            <div class="ui divider"></div>
-                            <input type="submit" name="submit" id="submit" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>" />
-                        </form>
-                    </div>
-                </div>
-
-                <div class="ui basic accordion mainwp-blank-accordion mainwp-sidebar-accordion" id="mainwp-premium-updates-plugins-accordion">
-                    <h2 class="ui dividing header title">
-                        <i class="right dropdown icon"></i>
-                        <?php esc_html_e( 'Detected Plugins', 'mainwp' ); ?>
-                        <div class="sub header"><?php esc_html_e( 'Read-only overview of supported premium plugins found across your child sites. Use Ignore Updates to stop tracking individual updates.', 'mainwp' ); ?></div>
-                    </h2>
-                    <div class="content">
-                        <?php static::render_detected_table( 'plugin', $scan ); ?>
-                    </div>
-                </div>
-
-                <div class="ui basic accordion mainwp-blank-accordion mainwp-sidebar-accordion" id="mainwp-premium-updates-themes-accordion">
-                    <h2 class="ui dividing header title">
-                        <i class="right dropdown icon"></i>
-                        <?php esc_html_e( 'Detected Themes', 'mainwp' ); ?>
-                        <div class="sub header"><?php esc_html_e( 'Read-only overview of supported premium themes found across your child sites. Use Ignore Updates to stop tracking individual updates.', 'mainwp' ); ?></div>
-                    </h2>
-                    <div class="content">
-                        <?php static::render_detected_table( 'theme', $scan ); ?>
-                    </div>
-                </div>
 
                 <div class="ui basic accordion mainwp-blank-accordion mainwp-sidebar-accordion" id="mainwp-premium-updates-custom-accordion">
-                    <h2 class="ui dividing header title">
+                    <h2 class="ui dividing header active title">
                         <i class="right dropdown icon"></i>
                         <?php esc_html_e( 'Custom Identifiers', 'mainwp' ); ?>
                         <div class="sub header"><?php esc_html_e( 'For premium products not on the built-in list, or for theme folders that were renamed. Added identifiers get the same treatment as built-in ones.', 'mainwp' ); ?></div>
                     </h2>
-                    <div class="content">
-                        <div class="ui right aligned basic segment">
-                            <button type="button" class="ui mini green basic button" id="mainwp-premium-updates-add-custom"><i class="plus icon"></i><?php esc_html_e( 'Add New', 'mainwp' ); ?></button>
-                        </div>
+                    <div class="content active">
+                        <?php if ( $add_error ) : ?>
+                            <div class="ui red message"><?php echo esc_html( $notice['message'] ); ?></div>
+                        <?php endif; ?>
+
+                        <form method="POST" action="<?php echo esc_url( admin_url( 'admin.php?page=PremiumUpdates' ) ); ?>">
+                            <?php wp_nonce_field( 'PremiumUpdatesCustomAdd', 'premium_updates_add_nonce' ); ?>
+                            <input type="hidden" name="premium_updates_action" value="add_custom" />
+                            <div class="fields">
+                                <div class="six wide field">
+                                    <label for="premium_updates_new_type"><?php esc_html_e( 'Type', 'mainwp' ); ?></label>
+                                    <select name="premium_updates_new_type" id="premium_updates_new_type" class="ui dropdown">
+                                        <option value="plugin" <?php selected( $new_type, 'plugin' ); ?>><?php esc_html_e( 'Plugin', 'mainwp' ); ?></option>
+                                        <option value="theme" <?php selected( $new_type, 'theme' ); ?>><?php esc_html_e( 'Theme', 'mainwp' ); ?></option>
+                                    </select>
+                                </div>
+                                <div class="ten wide field">
+                                    <label for="premium_updates_new_id"><?php esc_html_e( 'Identifier', 'mainwp' ); ?> <span class="ui small red text"><?php esc_html_e( '(Required)', 'mainwp' ); ?></span></label>
+                                    <div class="fields">
+                                        <div class="thirteen wide field">
+                                            <input type="text" name="premium_updates_new_id" id="premium_updates_new_id" placeholder="<?php esc_attr_e( 'plugin-folder/main-file.php or theme folder name (case-insensitive)', 'mainwp' ); ?>" value="<?php echo esc_attr( $new_id ); ?>" pattern="[A-Za-z0-9._/-]+" required />
+                                        </div>
+                                        <div class="three wide field">
+                                            <button type="submit" class="ui fluid basic green button" id="mainwp-premium-updates-add-custom"><i class="plus icon"></i><?php esc_html_e( 'Add New', 'mainwp' ); ?></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+
+                        <div class="ui hidden divider"></div>
 
                         <table class="ui unstackable table" id="mainwp-premium-updates-custom-table">
                             <thead>
@@ -291,66 +260,46 @@ class MainWP_Settings_Premium_Updates { // phpcs:ignore Generic.Classes.OpeningB
                         </table>
                     </div>
                 </div>
-            </div>
 
-            <div class="ui small modal" id="mainwp-premium-updates-add-custom-modal">
-                <i class="close icon"></i>
-                <div class="header"><?php esc_html_e( 'Add Custom Identifier', 'mainwp' ); ?></div>
-                <form method="POST" action="<?php echo esc_url( admin_url( 'admin.php?page=PremiumUpdates' ) ); ?>" class="content ui mini form" id="mainwp-premium-updates-add-custom-form">
-                    <?php wp_nonce_field( 'PremiumUpdatesCustomAdd', 'premium_updates_add_nonce' ); ?>
-                    <input type="hidden" name="premium_updates_action" value="add_custom" />
-                    <?php if ( $open_add_modal ) : ?>
-                        <div class="ui red message"><?php echo esc_html( $notice['message'] ); ?></div>
-                    <?php endif; ?>
-                    <div class="field">
-                        <label for="premium_updates_new_type"><?php esc_html_e( 'Type', 'mainwp' ); ?></label>
-                        <select name="premium_updates_new_type" id="premium_updates_new_type" class="ui dropdown">
-                            <option value="plugin" <?php selected( $new_type, 'plugin' ); ?>><?php esc_html_e( 'Plugin', 'mainwp' ); ?></option>
-                            <option value="theme" <?php selected( $new_type, 'theme' ); ?>><?php esc_html_e( 'Theme', 'mainwp' ); ?></option>
-                        </select>
+                <div class="ui hidden divider"></div>
+
+                <div class="ui basic accordion mainwp-blank-accordion mainwp-sidebar-accordion" id="mainwp-premium-updates-plugins-accordion">
+                    <h2 class="ui dividing header title">
+                        <i class="right dropdown icon"></i>
+                        <?php esc_html_e( 'Detected Plugins', 'mainwp' ); ?>
+                        <div class="sub header"><?php esc_html_e( 'Read-only overview of supported premium plugins found across your child sites. Use Ignore Updates to stop tracking individual updates.', 'mainwp' ); ?></div>
+                    </h2>
+                    <div class="content">
+                        <?php static::render_detected_table( 'plugin', $scan ); ?>
                     </div>
-                    <div class="field">
-                        <label for="premium_updates_new_id"><?php esc_html_e( 'Identifier', 'mainwp' ); ?> <span class="ui small red text"><?php esc_html_e( '(Required)', 'mainwp' ); ?></span></label>
-                        <input type="text" name="premium_updates_new_id" id="premium_updates_new_id" placeholder="<?php esc_attr_e( 'plugin-folder/main-file.php or theme folder name (case-insensitive)', 'mainwp' ); ?>" value="<?php echo esc_attr( $new_id ); ?>" pattern="[A-Za-z0-9._/-]+" required />
+                </div>
+
+                <div class="ui hidden divider"></div>
+
+                <div class="ui basic accordion mainwp-blank-accordion mainwp-sidebar-accordion" id="mainwp-premium-updates-themes-accordion">
+                    <h2 class="ui dividing header title">
+                        <i class="right dropdown icon"></i>
+                        <?php esc_html_e( 'Detected Themes', 'mainwp' ); ?>
+                        <div class="sub header"><?php esc_html_e( 'Read-only overview of supported premium themes found across your child sites. Use Ignore Updates to stop tracking individual updates.', 'mainwp' ); ?></div>
+                    </h2>
+                    <div class="content">
+                        <?php static::render_detected_table( 'theme', $scan ); ?>
                     </div>
-                </form>
-                <div class="actions">
-                    <button type="button" class="ui button" id="mainwp-premium-updates-add-custom-cancel"><?php esc_html_e( 'Cancel', 'mainwp' ); ?></button>
-                    <button type="submit" form="mainwp-premium-updates-add-custom-form" class="ui green button"><?php esc_html_e( 'Create', 'mainwp' ); ?></button>
                 </div>
             </div>
 
             <script type="text/javascript">
                 jQuery( function( $ ) {
-                    const addModal = $( '#mainwp-premium-updates-add-custom-modal' );
-                    const addForm = document.getElementById( 'mainwp-premium-updates-add-custom-form' );
-
-                    if ( ! addModal.length || ! addForm ) {
-                        return;
-                    }
-
-                    $( '#mainwp-premium-updates-add-custom' ).on( 'click', function() {
-                        addForm.reset();
-                        addModal.find( '.ui.dropdown' ).dropdown( 'set selected', 'plugin' );
-                        addModal.find( '.ui.red.message' ).remove();
-                        addModal.modal( { closable: false } ).modal( 'show' );
-                    } );
-
-                    $( '#mainwp-premium-updates-add-custom-cancel' ).on( 'click', function() {
-                        addModal.modal( 'hide' );
-                    } );
-
                     $( '.mainwp-premium-updates-remove' ).on( 'click', function() {
                         const form = this.form;
+                        if ( ! form ) {
+                            return false;
+                        }
                         mainwp_confirm( $( this ).attr( 'data-confirm' ), function() {
                             form.submit();
                         } );
                         return false;
                     } );
-
-                    <?php if ( $open_add_modal ) : ?>
-                        addModal.modal( { closable: false } ).modal( 'show' );
-                    <?php endif; ?>
                 } );
             </script>
         </div>

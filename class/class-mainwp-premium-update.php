@@ -62,10 +62,6 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             return false;
         }
 
-        if ( ! MainWP_Premium_Update_Registry::is_enabled() ) {
-            return static::legacy_check_premium_updates( $updates, $type );
-        }
-
         if ( 'plugin' === $type ) {
 
             $premiums = MainWP_Premium_Update_Registry::get_filter_defaults( 'plugin', 'detect' );
@@ -126,51 +122,6 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                         continue;
                     }
                     if ( MainWP_Premium_Update_Registry::slug_matches( $info['slug'], is_array( $premiums ) ? $premiums : array(), $prefixes ) ) {
-                        return true;
-                    }
-                }
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Pre-registry detection behavior, used verbatim when the registry kill switch is off.
-     *
-     * @param array $updates Array of installed items reported by the child site.
-     * @param mixed $type Type of update.
-     *
-     * @return boolean true|false.
-     */
-    private static function legacy_check_premium_updates( $updates, $type ) { // phpcs:ignore -- NOSONAR - complex.
-        if ( 'plugin' === $type ) {
-
-            $premiums = MainWP_Premium_Update_Registry::get_legacy_detect_plugins();
-
-            /** This filter is documented in class/class-mainwp-premium-update.php */
-            $premiums = apply_filters( 'mainwp_detect_premiums_updates', $premiums );
-
-            /** This filter is documented in class/class-mainwp-premium-update.php */
-            $premiums = apply_filters( 'mainwp_detect_premium_plugins_update', $premiums );
-
-            if ( is_array( $premiums ) && ! empty( $premiums ) ) {
-                foreach ( $updates as $info ) {
-                    if ( isset( $info['slug'] ) && ( in_array( $info['slug'], $premiums ) || false !== strpos( $info['slug'], 'yith-' ) ) ) {
-                        return true;
-                    }
-                }
-            }
-        } elseif ( 'theme' === $type ) {
-
-            $premiums = array();
-
-            /** This filter is documented in class/class-mainwp-premium-update.php */
-            $premiums = apply_filters( 'mainwp_detect_premium_themes_update', $premiums );
-
-            if ( is_array( $premiums ) && ! empty( $premiums ) ) {
-                foreach ( $updates as $info ) {
-                    if ( isset( $info['slug'] ) && in_array( $info['slug'], $premiums ) ) {
                         return true;
                     }
                 }
@@ -259,10 +210,6 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             return false;
         }
 
-        if ( ! MainWP_Premium_Update_Registry::is_enabled() ) {
-            return static::legacy_check_request_update_premium( $updates, $type );
-        }
-
         if ( 'plugin' === $type ) {
 
             $update_premiums = MainWP_Premium_Update_Registry::get_filter_defaults( 'plugin', 'request' );
@@ -301,46 +248,6 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             foreach ( $updates as $slug ) {
                 if ( ! empty( $slug ) && MainWP_Premium_Update_Registry::slug_matches( $slug, is_array( $update_premiums ) ? $update_premiums : array(), $prefixes ) ) {
                     return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Pre-registry request-route behavior, used verbatim when the registry kill switch is off.
-     *
-     * @param array  $updates Exploded list of updates.
-     * @param string $type Type of update. plugin|theme.
-     *
-     * @return bool true|false.
-     */
-    private static function legacy_check_request_update_premium( $updates, $type ) { // phpcs:ignore -- NOSONAR - complex.
-        if ( 'plugin' === $type ) {
-
-            $update_premiums = MainWP_Premium_Update_Registry::get_legacy_request_plugins();
-
-            /** This filter is documented in class/class-mainwp-premium-update.php */
-            $update_premiums = apply_filters( 'mainwp_request_update_premium_plugins', $update_premiums );
-
-            if ( is_array( $update_premiums ) && ! empty( $update_premiums ) ) {
-                foreach ( $updates as $slug ) {
-                    if ( ! empty( $slug ) && in_array( $slug, $update_premiums ) ) {
-                        return true;
-                    }
-                }
-            }
-        } elseif ( 'theme' === $type ) {
-
-            $update_premiums = array();
-
-            /** This filter is documented in class/class-mainwp-premium-update.php */
-            $update_premiums = apply_filters( 'mainwp_request_update_premium_themes', $update_premiums );
-            if ( is_array( $update_premiums ) && ! empty( $update_premiums ) ) {
-                foreach ( $updates as $slug ) {
-                    if ( ! empty( $slug ) && in_array( $slug, $update_premiums ) ) {
-                        return true;
-                    }
                 }
             }
         }

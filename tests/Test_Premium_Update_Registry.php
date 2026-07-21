@@ -18,21 +18,11 @@ class Test_Premium_Update_Registry extends WP_UnitTestCase {
      */
     public function set_up() {
         parent::set_up();
-        delete_option( MainWP_Premium_Update_Registry::OPTION_ENABLED );
         delete_option( MainWP_Premium_Update_Registry::OPTION_CUSTOM );
         remove_all_filters( 'mainwp_detect_premium_plugins_update' );
         remove_all_filters( 'mainwp_detect_premium_themes_update' );
         remove_all_filters( 'mainwp_request_update_premium_plugins' );
         remove_all_filters( 'mainwp_request_update_premium_themes' );
-    }
-
-    /**
-     * Registry defaults to enabled.
-     */
-    public function test_registry_enabled_by_default() {
-        $this->assertTrue( MainWP_Premium_Update_Registry::is_enabled() );
-        update_option( MainWP_Premium_Update_Registry::OPTION_ENABLED, 0 );
-        $this->assertFalse( MainWP_Premium_Update_Registry::is_enabled() );
     }
 
     /**
@@ -238,47 +228,6 @@ class Test_Premium_Update_Registry extends WP_UnitTestCase {
         // The premium request route only ever handles a single item.
         $this->assertFalse( MainWP_Premium_Update::check_request_update_premium( 'Divi,Extra', 'theme' ) );
         $this->assertFalse( MainWP_Premium_Update::check_request_update_premium( 'yith-a-premium/init.php,yith-b-premium/init.php', 'plugin' ) );
-    }
-
-    /**
-     * Kill switch reverts to the exact pre-registry behavior.
-     */
-    public function test_kill_switch_reverts_to_legacy_behavior() {
-        update_option( MainWP_Premium_Update_Registry::OPTION_ENABLED, 0 );
-
-        // Registry-added theme entries are inert.
-        $this->assertFalse(
-            MainWP_Premium_Update::check_premium_updates(
-                array(
-                    array(
-                        'slug'   => 'Divi',
-                        'active' => 1,
-                    ),
-                ),
-                'theme'
-            )
-        );
-
-        // The historical substring hack still detects YITH plugins.
-        $this->assertTrue(
-            MainWP_Premium_Update::check_premium_updates(
-                array( array( 'slug' => 'yith-woocommerce-wishlist-premium/init.php' ) ),
-                'plugin'
-            )
-        );
-
-        // The legacy hardcoded list applies verbatim, including entries the registry removed.
-        $this->assertTrue(
-            MainWP_Premium_Update::check_premium_updates(
-                array( array( 'slug' => 'elementor-extras/elementor-extras.php' ) ),
-                'plugin'
-            )
-        );
-
-        // Legacy request list still contains only the single YITH entry.
-        $this->assertTrue( MainWP_Premium_Update::check_request_update_premium( 'yith-woocommerce-request-a-quote-premium/init.php', 'plugin' ) );
-        $this->assertFalse( MainWP_Premium_Update::check_request_update_premium( 'yith-woocommerce-gift-cards-premium/init.php', 'plugin' ) );
-        $this->assertFalse( MainWP_Premium_Update::check_request_update_premium( 'Divi', 'theme' ) );
     }
 
     /**

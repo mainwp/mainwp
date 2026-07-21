@@ -672,7 +672,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                 </div>
                 <?php } ?>
                 <button onclick="mainwp_manage_sites_filter()" class="ui mini green basic button"><i class="filter icon"></i><?php esc_html_e( 'Filter', 'mainwp' ); ?></button>
-                <button onclick="mainwp_manage_sites_reset_filters(this)" id="mainwp_manage_sites_reset_filters" class="ui mini button" <?php echo $default_filter ? 'disabled="disabled"' : ''; ?>><i class="times icon"></i><?php esc_html_e( 'Reset', 'mainwp' ); ?></button>
+                <button onclick="mainwp_manage_sites_reset_filters(this)" id="mainwp_manage_sites_reset_filters" class="ui mini button" reset-filters="0" <?php echo $default_filter ? 'disabled="disabled"' : ''; ?>><i class="times icon"></i><?php esc_html_e( 'Reset', 'mainwp' ); ?></button>
             </div>
 
             <?php MainWP_Manage_Sites_Filter_Segment::get_instance()->render_filters_segment(); ?>
@@ -1105,6 +1105,10 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
         $params['view']          = 'manage_site';
         $params['dev_log_query'] = 0;
 
+        if ( ! empty( $_POST['reset_sites_filters'] ) ) { // phpcs:ignore -- NOSONAR - ok.
+            self::invalidate_manage_sites_cache();
+        }
+
         $cache_group = MainWP_Cache_Helper::CGR_SITES;
 
         $cache_key = MainWP_Cache_Helper::get_cache_key( 'sites_ids', $cache_group, $params );
@@ -1476,6 +1480,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                                             group_logic: jQuery("#mainwp-filter-sites-group-logic").dropdown("get value"),
                                             client: jQuery("#mainwp-filter-clients").length ? jQuery("#mainwp-filter-clients").dropdown("get value") : '',
                                             isnot: jQuery("#mainwp_is_not_site").dropdown("get value"),
+                                            reset_sites_filters: jQuery("#mainwp_manage_sites_reset_filters").attr('reset-filters')
                                         } )
                                     );
                                 },
@@ -1668,7 +1673,9 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                             jQuery( "#mainwp-filter-sites-status" ).dropdown('set selected', 'all');
                             jQuery("#mainwp_is_not_site").dropdown('set selected', '');
                             jQuery(resetObj).attr('disabled','disabled');
+                            jQuery(resetObj).attr('reset-filters',1);
                             $manage_sites_table.ajax.reload();
+                            jQuery(resetObj).attr('reset-filters',0);
                         } catch(err) {
                             // to fix js error.
                         }

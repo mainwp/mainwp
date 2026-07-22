@@ -6,7 +6,9 @@
  */
 
 use MainWP\Dashboard\MainWP_Connection_Diagnostics;
+use MainWP\Dashboard\MainWP_Credential_Render;
 use MainWP\Dashboard\MainWP_Exception;
+use MainWP\Dashboard\MainWP_Post_Site_Handler;
 
 /**
  * Tests the closed connection diagnosis contract without making network calls.
@@ -111,6 +113,29 @@ class Test_Connection_Diagnostics extends \WP_UnitTestCase {
         $this->assertSame( 'cloudflare', $diagnosis['provider'] );
     }
 
+    /** Provider attribution requires a known globally routable peer. */
+    public function test_provider_detection_requires_a_non_empty_peer() {
+        $diagnosis = MainWP_Connection_Diagnostics::diagnose(
+            array(
+                'phase'               => 'child_endpoint',
+                'curl_errno'          => 0,
+                'http_status'         => 403,
+                'peer_ip'             => '',
+                'bounded_body_sample' => '<html>wsidchk</html>',
+                'header_blocks'       => array(
+                    array(
+                        'headers' => array(
+                            'cf-mitigated' => array( 'challenge' ),
+                        ),
+                    ),
+                ),
+            )
+        );
+
+        $this->assertSame( 'request_blocked', $diagnosis['diagnosis_id'] );
+        $this->assertArrayNotHasKey( 'provider', $diagnosis );
+    }
+
     /** A proxy peer is not sufficient evidence that origin response bytes are public. */
     public function test_proxy_requests_skip_provider_body_detection() {
         $diagnosis = MainWP_Connection_Diagnostics::diagnose(
@@ -200,6 +225,60 @@ class Test_Connection_Diagnostics extends \WP_UnitTestCase {
         $this->assertSame( 'child_did_not_respond', $export['diagnosis']['diagnosis_id'] );
     }
 
+    /** Current Child's strict error-only frame proves it handled an unconnected probe. */
+    public function test_unconnected_error_only_frame_proves_child_responded() {
+        $method = new ReflectionMethod( MainWP_Connection_Diagnostics::class, 'classify_request_result' );
+        if ( PHP_VERSION_ID < 80100 ) {
+            $method->setAccessible( true );
+        }
+        $result = array(
+            'body'        => '<mainwp>' . base64_encode( wp_json_encode( array( 'error' => 'Authentication failed.' ) ) ) . '</mainwp>',
+            'observation' => array(
+                'phase'               => 'child_endpoint',
+                'mode'                => 'probe',
+                'curl_errno'          => 0,
+                'http_status'         => 200,
+                'header_blocks'       => array(),
+                'bounded_body_sample' => '',
+            ),
+        );
+
+        $export = $method->invoke( null, $result, array( 'mode' => 'probe', 'authentication_expected' => false ) );
+        $this->assertSame( 'success', $export['diagnosis']['verdict'] );
+        $this->assertSame( 'child_responded', $export['diagnosis']['diagnosis_id'] );
+    }
+
+    /** Arbitrary or augmented framed JSON never proves an unconnected Child response. */
+    public function test_unconnected_arbitrary_frames_are_not_successful() {
+        $method = new ReflectionMethod( MainWP_Connection_Diagnostics::class, 'classify_request_result' );
+        if ( PHP_VERSION_ID < 80100 ) {
+            $method->setAccessible( true );
+        }
+        $result = array(
+            'body'        => '',
+            'observation' => array(
+                'phase'               => 'child_endpoint',
+                'mode'                => 'probe',
+                'curl_errno'          => 0,
+                'http_status'         => 200,
+                'header_blocks'       => array(),
+                'bounded_body_sample' => '',
+            ),
+        );
+        $frames = array(
+            array(),
+            array( 'foo' => 'bar' ),
+            array( 'error' => '' ),
+            array( 'error' => 'Authentication failed.', 'foo' => 'bar' ),
+        );
+
+        foreach ( $frames as $frame ) {
+            $result['body'] = '<mainwp>' . base64_encode( wp_json_encode( $frame ) ) . '</mainwp>';
+            $export         = $method->invoke( null, $result, array( 'mode' => 'probe', 'authentication_expected' => false ) );
+            $this->assertSame( 'child_did_not_respond', $export['diagnosis']['diagnosis_id'] );
+        }
+    }
+
     /** PARSE_ERROR3/4 are authenticated Child errors even without free-form text. */
     public function test_authenticated_parse_error_code_is_a_failure_without_error_text() {
         $method = new ReflectionMethod( MainWP_Connection_Diagnostics::class, 'classify_request_result' );
@@ -269,6 +348,86 @@ class Test_Connection_Diagnostics extends \WP_UnitTestCase {
         $this->assertFalse( MainWP_Connection_Diagnostics::is_same_origin( 'https://example.test/', 'http://example.test/' ) );
         $this->assertFalse( MainWP_Connection_Diagnostics::is_same_origin( 'https://example.test/', 'https://other.test/' ) );
         $this->assertFalse( MainWP_Connection_Diagnostics::is_same_origin( 'https://example.test/', 'https://example.test:444/' ) );
+    }
+
+    /** Whitespace-bearing or malformed URL origins are rejected locally. */
+    public function test_invalid_site_urls_are_rejected_before_request() {
+        $this->assertTrue( MainWP_Connection_Diagnostics::is_valid_site_url( 'http://child1.local/wordpress/' ) );
+        $this->assertFalse( MainWP_Connection_Diagnostics::is_valid_site_url( 'http://bad host/' ) );
+        $this->assertFalse( MainWP_Connection_Diagnostics::is_valid_site_url( "http://example.test/\npath" ) );
+        $this->assertFalse( MainWP_Connection_Diagnostics::is_valid_site_url( 'ftp://example.test/' ) );
+
+        $result = MainWP_Connection_Diagnostics::run_probe( 'http://bad host/', '', array() );
+        $this->assertSame( 'not_tested', $result['diagnosis']['verdict'] );
+        $this->assertSame( 'dashboard_invalid_url', $result['diagnosis']['diagnosis_id'] );
+        $this->assertSame( 0, $result['support']['http_status'] );
+    }
+
+    /** Millisecond deadlines are rounded down and never gain an extra second. */
+    public function test_deadline_budget_never_rounds_up() {
+        $method = new ReflectionMethod( MainWP_Connection_Diagnostics::class, 'remaining_timeout_milliseconds' );
+        if ( PHP_VERSION_ID < 80100 ) {
+            $method->setAccessible( true );
+        }
+
+        $this->assertSame( 24999, $method->invoke( null, 124.9999, 100.0 ) );
+        $this->assertSame( 1, $method->invoke( null, 100.0019, 100.0 ) );
+        $this->assertSame( 0, $method->invoke( null, 99.0, 100.0 ) );
+    }
+
+    /** Cross-origin diagnostics bypass request-header filters and saved site context. */
+    public function test_cross_origin_headers_are_isolated_from_filters() {
+        $method = new ReflectionMethod( MainWP_Connection_Diagnostics::class, 'request_headers' );
+        if ( PHP_VERSION_ID < 80100 ) {
+            $method->setAccessible( true );
+        }
+        $calls  = 0;
+        $filter = static function ( $headers ) use ( &$calls ) {
+            ++$calls;
+            $headers['X-MWP-Saved-Secret'] = 'must-not-cross-origin';
+            return $headers;
+        };
+        add_filter( 'mainwp_connect_http_request_headers', $filter );
+
+        try {
+            $unconnected = $method->invoke( null, 'function=connection_check', null, false );
+            $this->assertSame( 0, $calls );
+            $this->assertStringNotContainsString( 'X-MWP-Saved-Secret', implode( "\n", $unconnected ) );
+
+            $isolated = $method->invoke( null, 'function=connection_check', (object) array( 'id' => 24 ), false );
+            $this->assertSame( 0, $calls );
+            $this->assertStringNotContainsString( 'X-MWP-Saved-Secret', implode( "\n", $isolated ) );
+
+            $contextual = $method->invoke( null, 'function=connection_check', (object) array( 'id' => 24 ), true );
+            $this->assertSame( 1, $calls );
+            $this->assertStringContainsString( 'X-MWP-Saved-Secret', implode( "\n", $contextual ) );
+        } finally {
+            remove_filter( 'mainwp_connect_http_request_headers', $filter );
+        }
+    }
+
+    /** Cross-origin drafts never reuse saved Basic credentials or the password sentinel. */
+    public function test_cross_origin_drafts_do_not_reuse_saved_http_credentials() {
+        $method = new ReflectionMethod( MainWP_Post_Site_Handler::class, 'resolve_test_http_credentials' );
+        if ( PHP_VERSION_ID < 80100 ) {
+            $method->setAccessible( true );
+        }
+        $website = (object) array(
+            'http_user' => 'saved-user',
+            'http_pass' => 'saved-pass',
+        );
+
+        $unchanged = $method->invoke( null, $website, false, 'saved-user', MainWP_Credential_Render::SENTINEL );
+        $this->assertSame( array( 'user' => '', 'pass' => '' ), $unchanged );
+
+        $password_only = $method->invoke( null, $website, false, 'saved-user', 'new-pass' );
+        $this->assertSame( array( 'user' => '', 'pass' => 'new-pass' ), $password_only );
+
+        $new_pair = $method->invoke( null, $website, false, 'new-user', 'new-pass' );
+        $this->assertSame( array( 'user' => 'new-user', 'pass' => 'new-pass' ), $new_pair );
+
+        $same_origin = $method->invoke( null, $website, true, 'saved-user', MainWP_Credential_Render::SENTINEL );
+        $this->assertSame( array( 'user' => 'saved-user', 'pass' => 'saved-pass' ), $same_origin );
     }
 
     /** Only endpoint-shaped responses may use the same-origin compatibility fallback. */

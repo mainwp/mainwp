@@ -147,6 +147,40 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button,
     right: 20px;
 }
 
+.mainwp-ui .mainwp-connection-url-input.ui.input {
+    min-width: 0;
+    width: 100%;
+}
+
+.mainwp-ui .mainwp-connection-url-input.ui.input > input {
+    min-width: 0;
+}
+
+.mainwp-ui .mainwp-connection-diagnostic-zone > ul.ui.list li::before,
+.mainwp-ui .mainwp-connection-diagnostic-zone > ol.ui.list li::before {
+    color: inherit !important;
+}
+
+#mainwp-test-connection-modal > .close:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+}
+
+@media only screen and (max-width: 767px) {
+    .mainwp-ui .mainwp-connection-diagnostic-zone > .ui.buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        width: 100%;
+    }
+
+    .mainwp-ui .mainwp-connection-diagnostic-zone > .ui.buttons > .button {
+        border-radius: 0.28571429rem !important;
+        margin: 0 !important;
+        width: 100% !important;
+    }
+}
+
 /* Content Wrap */
 
 .mainwp-content-wrap {

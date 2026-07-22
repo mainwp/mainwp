@@ -460,68 +460,129 @@ let mainwpConnectionDiagnosticRequest = null;
 let mainwpConnectionDiagnosticGeneration = 0;
 
 let mainwp_copy_connection_diagnostic = function (support, button) {
-    if (!support || typeof support !== 'object') {
-        return;
+    let copyButton = button ? jQuery(button) : jQuery();
+    let copyToken = {};
+    if (copyButton.length) {
+        copyButton.data('mainwp-copy-token', copyToken);
     }
-    let text = JSON.stringify(support, null, 2);
-    let copied = function () {
-        if (button) {
-            jQuery(button).text(__('Copied'));
-            setTimeout(function () {
-                jQuery(button).text(__('Copy diagnostic details'));
-            }, 1500);
+    let setButtonStatus = function (label) {
+        if (copyButton.length && copyButton.data('mainwp-copy-token') === copyToken) {
+            clearTimeout(copyButton.data('mainwp-copy-status-timer'));
+            copyButton.text(label);
+            copyButton.data('mainwp-copy-status-timer', setTimeout(function () {
+                if (copyButton.data('mainwp-copy-token') === copyToken) {
+                    copyButton.text(__('Copy diagnostic details'));
+                    copyButton.removeData('mainwp-copy-status-timer mainwp-copy-token');
+                }
+            }, 1500));
         }
+    };
+    let copied = function () {
+        setButtonStatus(__('Copied'));
     };
     let copyFailed = function () {
-        if (button) {
-            jQuery(button).text(__('Copy failed'));
-            setTimeout(function () {
-                jQuery(button).text(__('Copy diagnostic details'));
-            }, 1500);
-        }
+        setButtonStatus(__('Copy failed'));
     };
+    let isCopyCurrent = function () {
+        return !copyButton.length || copyButton.data('mainwp-copy-token') === copyToken;
+    };
+
+    if (!support || typeof support !== 'object') {
+        copyFailed();
+        return;
+    }
+
+    let text;
+    try {
+        text = JSON.stringify(support, null, 2);
+    } catch (error) {
+        copyFailed();
+        return;
+    }
+
+    if (typeof text !== 'string') {
+        copyFailed();
+        return;
+    }
+
     let fallback = function () {
-        if (typeof ClipboardJS !== 'undefined' && typeof ClipboardJS.copy === 'function') {
-            if (ClipboardJS.copy(text)) {
+        if (!isCopyCurrent()) {
+            return;
+        }
+        try {
+            if (typeof ClipboardJS !== 'undefined' && typeof ClipboardJS.copy === 'function' && ClipboardJS.copy(text)) {
+                copied();
+                return;
+            }
+        } catch (error) {
+            // Continue to the browser copy fallback.
+        }
+
+        let textarea = null;
+        try {
+            textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.setAttribute('readonly', 'readonly');
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            if (document.execCommand('copy')) {
                 copied();
             } else {
                 copyFailed();
             }
-            return;
-        }
-        let textarea = document.createElement('textarea');
-        textarea.value = text;
-        textarea.setAttribute('readonly', 'readonly');
-        textarea.style.position = 'fixed';
-        textarea.style.opacity = '0';
-        document.body.appendChild(textarea);
-        textarea.select();
-        let didCopy = document.execCommand('copy');
-        textarea.remove();
-        if (didCopy) {
-            copied();
-        } else {
+        } catch (error) {
             copyFailed();
+        } finally {
+            try {
+                if (textarea && textarea.parentNode) {
+                    textarea.parentNode.removeChild(textarea);
+                }
+            } catch (error) {
+                copyFailed();
+            }
         }
     };
-    if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(text).then(copied).catch(fallback);
+
+    try {
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function' && window.isSecureContext) {
+            Promise.resolve(navigator.clipboard.writeText(text)).then(copied).catch(fallback);
+            return;
+        }
+    } catch (error) {
+        fallback();
         return;
     }
     fallback();
 };
 
-globalThis.mainwp_prepare_connection_diagnostic_modal = function (retry) {
-    if (mainwpConnectionDiagnosticRequest && mainwpConnectionDiagnosticRequest.readyState !== 4) {
-        mainwpConnectionDiagnosticRequest.abort();
-    }
-    mainwpConnectionDiagnosticRequest = null;
+let mainwp_cancel_connection_diagnostic_request = function () {
+    let request = mainwpConnectionDiagnosticRequest;
     mainwpConnectionDiagnosticGeneration++;
+    mainwpConnectionDiagnosticRequest = null;
+    if (request && request.readyState !== 4) {
+        request.abort();
+    }
+};
+
+globalThis.mainwp_prepare_connection_diagnostic_modal = function (retry) {
+    mainwp_cancel_connection_diagnostic_request();
     mainwpConnectionDiagnosticRetry = typeof retry === 'function' ? retry : null;
     let modal = jQuery('#mainwp-test-connection-modal');
-    modal.modal('setting', 'closable', false).modal('show');
-    modal.find('.dimmer').show();
+    modal
+        .modal('setting', 'closable', true)
+        .modal('setting', 'onHide', function () {
+            mainwp_cancel_connection_diagnostic_request();
+        })
+        .modal('show');
+    modal.children('.content').css('position', 'relative');
+    modal.children('.content').attr('aria-busy', 'true');
+    modal.find('.dimmer').css('pointer-events', 'none').show();
     modal.find('#mainwp-test-connection-result').empty().hide().removeData('mainwp-diagnostic-support');
+    let copyButton = modal.find('[data-mainwp-diagnostic-action="copy"]');
+    clearTimeout(copyButton.data('mainwp-copy-status-timer'));
+    copyButton.removeData('mainwp-copy-status-timer mainwp-copy-token').text(__('Copy diagnostic details'));
     modal.find('[data-mainwp-diagnostic-action="test-again"], [data-mainwp-diagnostic-action="copy"]').prop('disabled', true);
 };
 
@@ -613,9 +674,10 @@ globalThis.mainwp_render_connection_diagnostic = function (container, payload, o
     let modal = target.closest('#mainwp-test-connection-modal');
     if (modal.length) {
         modal.find('.dimmer').hide();
+        modal.children('.content').attr('aria-busy', 'false');
         modal.find('[data-mainwp-diagnostic-action="test-again"], [data-mainwp-diagnostic-action="copy"]').prop('disabled', false);
     } else if (options.actions !== false) {
-        let actions = jQuery('<div>').addClass('ui small buttons');
+        let actions = jQuery('<div>').addClass('ui small stackable buttons');
         let retry = jQuery('<button>').attr('type', 'button').addClass('ui basic button').text(__('Test again'));
         retry.on('click', function () {
             if (typeof options.retry === 'function') {
@@ -661,13 +723,15 @@ jQuery(document).on('click', '#mainwp-test-connection-modal [data-mainwp-diagnos
     }
 });
 
-jQuery(document).on('click', '#mainwp-test-connection-modal > .close.icon, #mainwp-test-connection-modal [data-mainwp-diagnostic-action="close"]', function () {
-    if (mainwpConnectionDiagnosticRequest && mainwpConnectionDiagnosticRequest.readyState !== 4) {
-        mainwpConnectionDiagnosticRequest.abort();
-    }
-    mainwpConnectionDiagnosticRequest = null;
-    mainwpConnectionDiagnosticGeneration++;
+jQuery(document).on('click', '#mainwp-test-connection-modal [data-mainwp-diagnostic-action="close"]', function () {
     jQuery('#mainwp-test-connection-modal').modal('hide');
+});
+
+jQuery(document).on('keydown', '#mainwp-test-connection-modal > .close.icon', function (event) {
+    if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        jQuery('#mainwp-test-connection-modal').modal('hide');
+    }
 });
 
 function shake_element(select) {
@@ -1806,10 +1870,12 @@ let mainwp_site_overview_reconnect = function (pElement) {
                     closable: false
                 }).modal('show');
                 jQuery('#mainwp_managesites_add_wpadmin').val(pElement.attr('adminuser'));
-                jQuery(document).on('click', '#mainwp-popup-reconnect-site-btn', function () {
-                    mainwp_reconnect_with_pw(pElement.attr('siteid'));
-                    return false;
-                });
+                jQuery(document)
+                    .off('click.mainwpReconnectCredentials', '#mainwp-popup-reconnect-site-btn')
+                    .on('click.mainwpReconnectCredentials', '#mainwp-popup-reconnect-site-btn', function () {
+                        mainwp_reconnect_with_pw(pElement.attr('siteid'));
+                        return false;
+                    });
             } else if (response.success) {
                 mainwp_set_message_zone('#mainwp-message-zone');
                 mainwp_forceReload();

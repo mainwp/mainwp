@@ -1262,11 +1262,11 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     return false;
                 } );
                 jQuery( '#mainwp-sites-sidebar-menu' ).accordion();
-				jQuery( '#mainwp-sites-sidebar-menu' ).on( 'click', '.mainwp-site-menu-item', function ( e ) {
-					if ( ! jQuery( e.target ).closest( '.content' ).length && ! jQuery( e.target ).closest( '.title' ).length ) {
-						jQuery( this ).find( '.title' ).first().trigger( 'click' );
-					}
-				} );
+                jQuery( '#mainwp-sites-sidebar-menu' ).on( 'click', '.mainwp-site-menu-item', function ( e ) {
+                    if ( ! jQuery( e.target ).closest( '.content' ).length && ! jQuery( e.target ).closest( '.title' ).length ) {
+                        jQuery( this ).find( '.title' ).first().trigger( 'click' );
+                    }
+                } );
 
                 <?php if ( ! $fix_dom_issue_for_wp_editor ) { ?>
 
@@ -1864,7 +1864,17 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                         }
 
                         ?>
-                        <a class="<?php echo esc_attr( $class ); ?> item" style="<?php echo esc_attr( $style ); ?>" href="<?php echo esc_url( $item['href'] ); ?>" <?php if ( ! empty( $target ) ) : ?>target="<?php echo esc_attr( $target ); ?>"<?php endif; ?> <?php if ( ! empty( $rel ) ) : ?>rel="<?php echo esc_attr( $rel ); ?>"<?php endif; ?>>
+                        <a
+                            class="<?php echo esc_attr( $class ); ?> item"
+                            style="<?php echo esc_attr( $style ); ?>"
+                            href="<?php echo esc_url( $item['href'] ); ?>"
+                            <?php if ( ! empty( $target ) ) : ?>
+                            target="<?php echo esc_attr( $target ); ?>"
+                            <?php endif; ?>
+                            <?php if ( ! empty( $rel ) ) : ?>
+                            rel="<?php echo esc_attr( $rel ); ?>"
+                            <?php endif; ?>
+                        >
                         <?php echo isset( $item['before_title'] ) ? $item['before_title'] : ''; ?> <?php echo esc_html( $item['title'] ); ?> <?php echo isset( $item['after_title'] ) ? $item['after_title'] : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?>
                         </a>
                         <?php
@@ -3287,7 +3297,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             <i class="close icon"></i>
             <div class="header"><?php esc_html_e( 'Reconnect Site', 'mainwp' ); ?></div>
             <div class="content">
-                    <div class="ui message" id="mainwp-message-zone-reconnect" style="display:none;"></div>
+                    <div class="ui message mainwp-connection-diagnostic-zone" id="mainwp-message-zone-reconnect" role="status" aria-live="polite" style="display:none;"></div>
                     <div class="ui grid field" >
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Administrator username', 'mainwp' ); ?></label>
                         <div class="ui ten wide fluid column" data-tooltip="<?php esc_attr_e( 'Enter the website Administrator username.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
@@ -3324,14 +3334,14 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
      */
     public static function render_modal_connection_test() {
         ?>
-        <div class="ui modal" id="mainwp-test-connection-modal">
-            <i class="close icon"></i>
-            <div class="header"><?php esc_html_e( 'Connection Test', 'mainwp' ); ?></div>
-            <div class="content">
-                <div class="ui active dimmer">
+        <div class="ui modal" id="mainwp-test-connection-modal" role="dialog" aria-modal="true" aria-labelledby="mainwp-test-connection-modal-title">
+            <i class="close icon" role="button" tabindex="0" aria-label="<?php esc_attr_e( 'Close', 'mainwp' ); ?>"></i>
+            <div class="header" id="mainwp-test-connection-modal-title"><?php esc_html_e( 'Connection Test', 'mainwp' ); ?></div>
+            <div class="content" aria-busy="true">
+                <div class="ui active dimmer" role="status" aria-live="polite">
                     <div class="ui text loader"><?php esc_html_e( 'Testing connection...', 'mainwp' ); ?></div>
                 </div>
-                <div id="mainwp-test-connection-result" class="ui segment" role="status" aria-live="polite" style="display:none;"></div>
+                <div id="mainwp-test-connection-result" class="ui segment mainwp-connection-diagnostic-zone" role="status" aria-live="polite" style="display:none;"></div>
             </div>
             <div class="actions">
                 <button type="button" class="ui basic button" data-mainwp-diagnostic-action="test-again"><?php esc_html_e( 'Test again', 'mainwp' ); ?></button>

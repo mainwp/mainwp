@@ -904,7 +904,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             <?php
             MainWP_Client_Handler::show_notice_existed_contact_emails();
             ?>
-            <div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
+            <div id="mainwp-message-zone" class="ui message mainwp-connection-diagnostic-zone" role="status" aria-live="polite" style="display:none;"></div>
             <?php if ( $updated ) { ?>
             <div class="ui message green"><i class="close icon"></i> <?php esc_html_e( 'Child site settings saved successfully.', 'mainwp' ); ?></div>
             <?php } ?>
@@ -2288,7 +2288,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 );
 
                 if ( isset( $information['error'] ) && '' !== $information['error'] ) {
-                    $error = MainWP_Utility::esc_content( $information['error'] );
+                    $error                           = MainWP_Utility::esc_content( $information['error'] );
                     $output['connection_diagnostic'] = MainWP_Connection_Diagnostics::from_child_response( $information, 'handshake' );
                     unset( $output['fetch_data'], $output['error_message'], $output['child_error_code'] );
                     if ( is_array( $output ) ) {
@@ -2464,7 +2464,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         self::maybe_fetch_initial_site_favicon( $id, $params );
                     }
                 } else {
-                    $error = sprintf( esc_html__( 'Undefined error occurred. Please try again. For additional help, contact the MainWP Support.', 'mainwp' ), '<a href="https://docs.mainwp.com/troubleshooting/potential-issues" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe.
+                    $error                           = sprintf( esc_html__( 'Undefined error occurred. Please try again. For additional help, contact the MainWP Support.', 'mainwp' ), '<a href="https://docs.mainwp.com/troubleshooting/potential-issues" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe.
                     $output['connection_diagnostic'] = MainWP_Connection_Diagnostics::from_child_response( array( 'error' => 'unexpected_registration_response' ), 'handshake' );
                     unset( $output['fetch_data'], $output['error_message'], $output['child_error_code'] );
                 }

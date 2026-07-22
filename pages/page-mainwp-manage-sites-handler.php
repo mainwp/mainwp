@@ -49,8 +49,8 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
             die( wp_json_encode( array( 'error' => esc_html__( 'Invalid URL! Please enter valid URL to the Site URL field.', 'mainwp' ) ) ) );
         }
 
-        $website    = MainWP_DB::instance()->get_websites_by_url( $url );
-        $ret        = array();
+        $website = MainWP_DB::instance()->get_websites_by_url( $url );
+        $ret     = array();
 
         if ( MainWP_System_Utility::can_edit_website( $website ) ) {
             $ret['response'] = esc_html__( 'ERROR Site is already connected to your MainWP Dashboard.', 'mainwp' );
@@ -62,7 +62,7 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
             $http_pass      = isset( $_POST['http_pass'] ) ? wp_unslash( $_POST['http_pass'] ) : '';
             $admin          = isset( $_POST['admin'] ) ? sanitize_text_field( wp_unslash( $_POST['admin'] ) ) : '';
 
-            $diagnostic = MainWP_Connection_Diagnostics::test_unconnected(
+            $diagnostic                   = MainWP_Connection_Diagnostics::test_unconnected(
                 $url,
                 $admin,
                 array(
@@ -158,12 +158,12 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
                 throw new MainWP_Exception( esc_html__( 'Site could not be connected. Please check the Status page and be sure that all system requirments pass.', 'mainwp' ) );
             }
         } catch ( \Exception $e ) {
-            $msg     = $e->getMessage();
-            $arr_msg = MainWP_Utility::parse_html_error_message( $msg );
+            $msg        = $e->getMessage();
+            $arr_msg    = MainWP_Utility::parse_html_error_message( $msg );
             $error_code = '';
 
             if ( $e instanceof MainWP_Exception ) {
-                $error_code = $e->get_message_error_code();
+                $error_code      = $e->get_message_error_code();
                 $connection_diag = $e->get_diagnosis();
                 if ( ! $structured && 'reconnect_failed' === $error_code ) {
                     die( $error_code ); // phpcs:ignore WordPress.Security.EscapeOutput
@@ -245,7 +245,7 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
         if ( '' !== $error ) {
             if ( ! empty( $output['connection_diagnostic'] ) ) {
                 $ret['connection_diagnostic'] = $output['connection_diagnostic'];
-                $ret['response']               = 'ERROR ' . $output['connection_diagnostic']['presentation']['title'];
+                $ret['response']              = 'ERROR ' . $output['connection_diagnostic']['presentation']['title'];
             } else {
                 $ret['response'] = 'ERROR ' . $error;
             }

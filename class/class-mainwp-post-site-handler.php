@@ -256,7 +256,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
         $url         = isset( $_POST['url'] ) ? urldecode( sanitize_text_field( wp_unslash( $_POST['url'] ) ) ) : ( $website ? $website->url : '' );
         $same_origin = $website && MainWP_Connection_Diagnostics::is_same_origin( $website->url, $url );
         $info        = wp_parse_url( $url );
-        $invalid     = ! is_array( $info ) || empty( $info['scheme'] ) || empty( $info['host'] ) || ! in_array( strtolower( $info['scheme'] ), array( 'http', 'https' ), true ) || false !== strpos( $url, '?=' );
+        $invalid     = ! MainWP_Connection_Diagnostics::is_valid_site_url( $url ) || false !== strpos( $url, '?=' );
 
         $blocked_ports = apply_filters( 'mainwp_connect_sites_not_allow_ports', array( 21, 22 ), $url );
         if ( ! is_array( $blocked_ports ) ) {
@@ -286,16 +286,11 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
         $force_ipv4     = 1 === $ipv4_setting || ( 2 === $ipv4_setting && 1 === (int) get_option( 'mainwp_forceUseIPv4', 0 ) );
         $ssl_version    = isset( $_POST['ssl_version'] ) ? intval( $_POST['ssl_version'] ) : ( $website ? (int) $website->ssl_version : 0 );
 
-        $http_user = isset( $_POST['http_user'] ) ? sanitize_text_field( wp_unslash( $_POST['http_user'] ) ) : ( $website && $same_origin ? MainWP_Credential_Storage::decrypt_credential( $website->http_user ) : '' );
-        if ( isset( $_POST['http_pass'] ) ) {
-            $submitted_http_pass = wp_unslash( $_POST['http_pass'] );
-            $http_pass = $website && $same_origin && MainWP_Credential_Render::is_sentinel( $submitted_http_pass ) ? MainWP_Credential_Storage::decrypt_credential( $website->http_pass ) : $submitted_http_pass;
-            if ( $website && ! $same_origin && MainWP_Credential_Render::is_sentinel( $submitted_http_pass ) ) {
-                $http_pass = '';
-            }
-        } else {
-            $http_pass = $website && $same_origin ? MainWP_Credential_Storage::decrypt_credential( $website->http_pass ) : '';
-        }
+        $submitted_http_user = isset( $_POST['http_user'] ) ? sanitize_text_field( wp_unslash( $_POST['http_user'] ) ) : null;
+        $submitted_http_pass = isset( $_POST['http_pass'] ) ? wp_unslash( $_POST['http_pass'] ) : null;
+        $http_credentials    = self::resolve_test_http_credentials( $website, $same_origin, $submitted_http_user, $submitted_http_pass );
+        $http_user           = $http_credentials['user'];
+        $http_pass           = $http_credentials['pass'];
 
         $settings = array(
             'url'                    => $url,
@@ -306,7 +301,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
             'http_pass'              => $http_pass,
             'allow_fallback'         => true,
             // Site-specific filters may carry saved transport data, so apply them only to the saved origin.
-            'transport_site_context' => ! $website || $same_origin,
+            'transport_site_context' => (bool) ( $website && $same_origin ),
         );
 
         if ( $website ) {
@@ -325,6 +320,49 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
             $response['sitename'] = esc_html( $website->name );
         }
         wp_send_json( $response );
+    }
+
+    /**
+     * Resolve draft HTTP Basic credentials without forwarding saved values cross-origin.
+     *
+     * A saved username is rendered in plaintext and the saved password as a sentinel.
+     * Neither unchanged value may be reused when the draft URL changes origin. A newly
+     * entered username and password can still be tested together on the draft origin.
+     *
+     * @param object|null $website            Saved website row.
+     * @param bool        $same_origin        Whether the draft URL matches the saved origin.
+     * @param string|null $submitted_http_user Submitted HTTP Basic username, or null when absent.
+     * @param string|null $submitted_http_pass Submitted HTTP Basic password, or null when absent.
+     *
+     * @return array Resolved user and pass values.
+     */
+    private static function resolve_test_http_credentials( $website, $same_origin, $submitted_http_user, $submitted_http_pass ) {
+        if ( ! is_object( $website ) ) {
+            return array(
+                'user' => is_string( $submitted_http_user ) ? $submitted_http_user : '',
+                'pass' => is_string( $submitted_http_pass ) ? $submitted_http_pass : '',
+            );
+        }
+
+        $saved_http_user = MainWP_Credential_Storage::decrypt_credential( $website->http_user );
+        if ( $same_origin ) {
+            $http_user = is_string( $submitted_http_user ) ? $submitted_http_user : $saved_http_user;
+            $http_pass = is_string( $submitted_http_pass ) ? $submitted_http_pass : MainWP_Credential_Storage::decrypt_credential( $website->http_pass );
+            if ( MainWP_Credential_Render::is_sentinel( $http_pass ) ) {
+                $http_pass = MainWP_Credential_Storage::decrypt_credential( $website->http_pass );
+            }
+            return array(
+                'user' => $http_user,
+                'pass' => $http_pass,
+            );
+        }
+
+        $http_user = is_string( $submitted_http_user ) && $submitted_http_user !== $saved_http_user ? $submitted_http_user : '';
+        $http_pass = is_string( $submitted_http_pass ) && ! MainWP_Credential_Render::is_sentinel( $submitted_http_pass ) ? $submitted_http_pass : '';
+        return array(
+            'user' => $http_user,
+            'pass' => $http_pass,
+        );
     }
 
     /**

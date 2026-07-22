@@ -43,6 +43,13 @@ class MainWP_Exception extends \Exception { // phpcs:ignore Generic.Classes.Open
     protected $data;
 
     /**
+     * Closed, safe connection diagnosis attached to this exception.
+     *
+     * @var array|null
+     */
+    protected $diagnosis;
+
+    /**
      * MainWP_Exception constructor.
      *
      * Grab Exception Message upon creation of the object.
@@ -93,5 +100,23 @@ class MainWP_Exception extends \Exception { // phpcs:ignore Generic.Classes.Open
      */
     public function get_data() {
         return $this->data;
+    }
+
+    /**
+     * Attach a safe connection diagnosis without changing legacy exception data.
+     *
+     * @param array $diagnosis Closed diagnosis export.
+     */
+    public function set_diagnosis( $diagnosis ) {
+        $this->diagnosis = is_array( $diagnosis ) ? $diagnosis : null;
+    }
+
+    /**
+     * Get the attached safe connection diagnosis.
+     *
+     * @return array|null
+     */
+    public function get_diagnosis() {
+        return $this->diagnosis;
     }
 }

@@ -710,6 +710,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                             <div class="ui red message" id="mainwp-error-zone" style="display:none"></div>
                             <div class="ui green message" id="mainwp-success-zone" style="display:none"></div>
                             <div class="ui info message" id="mainwp-info-zone" style="display:none"></div>
+                            <div class="ui message" id="mainwp-message-zone" role="status" aria-live="polite" style="display:none"></div>
 
                             <div class="ui top attached equal width tabular massive menu menu-connect-first-site">
                                 <a class="item active" data-tab="single-site"><i class="plus grey icon"></i> <?php esc_html_e( 'Connect a Single Site', 'mainwp' ); ?></a>

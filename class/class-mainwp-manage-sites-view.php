@@ -1943,6 +1943,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             $success    = false;
             $_error     = '';
             $error_code = '';
+            $diagnosis  = null;
             try {
                 if ( $sync_first ) {
                     $success = MainWP_Sync::sync_site( $website, true );
@@ -2057,10 +2058,14 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     }
                 }
             } catch ( MainWP_Exception $e ) {
+                $diagnosis = $e->get_diagnosis();
                 if ( 'HTTPERROR' === $e->getMessage() ) {
                     $_error = 'HTTP error' . ( null !== $e->get_message_extra() ? ' - ' . $e->get_message_extra() : '' );
                 } elseif ( 'NOMAINWP' === $e->getMessage() ) {
                     $_error = MainWP_Error_Helper::get_error_not_detected_connect(); // phpcs:ignore WordPress.Security.EscapeOutput
+                } else {
+                    $_error     = $e->getMessage();
+                    $error_code = $e->get_message_error_code();
                 }
             }
 
@@ -2078,7 +2083,11 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             }
 
             if ( ! empty( $_error ) ) {
-                throw new MainWP_Exception( $_error, '', $error_code ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+                $exception = new MainWP_Exception( $_error, '', $error_code ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+                if ( is_array( $diagnosis ) ) {
+                    $exception->set_diagnosis( $diagnosis );
+                }
+                throw $exception;
             }
         } else {
             throw new MainWP_Exception( esc_html__( 'This operation is not allowed!', 'mainwp' ) );
@@ -2291,6 +2300,8 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
                 if ( isset( $information['error'] ) && '' !== $information['error'] ) {
                     $error = MainWP_Utility::esc_content( $information['error'] );
+                    $output['connection_diagnostic'] = MainWP_Connection_Diagnostics::from_child_response( $information, 'handshake' );
+                    unset( $output['fetch_data'] );
                     if ( is_array( $output ) ) {
                         if ( ! empty( $output['error_category'] ) ) {
                             $error_category = $output['error_category'];
@@ -2465,6 +2476,8 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     }
                 } else {
                     $error = sprintf( esc_html__( 'Undefined error occurred. Please try again. For additional help, contact the MainWP Support.', 'mainwp' ), '<a href="https://docs.mainwp.com/troubleshooting/potential-issues" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe.
+                    $output['connection_diagnostic'] = MainWP_Connection_Diagnostics::from_child_response( array( 'error' => 'unexpected_registration_response' ), 'handshake' );
+                    unset( $output['fetch_data'] );
                 }
             } catch ( MainWP_Exception $e ) {
                 if ( 'HTTPERROR' === $e->getMessage() ) {
@@ -2474,6 +2487,23 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 } else {
                     $error = $e->getMessage();
                 }
+                $output['connection_diagnostic'] = $e->get_diagnosis();
+                if ( empty( $output['connection_diagnostic'] ) ) {
+                    $output['connection_diagnostic'] = MainWP_Connection_Diagnostics::test_unconnected(
+                        $params['url'],
+                        $params['wpadmin'],
+                        array(
+                            'verify_certificate' => $verifyCertificate,
+                            'ssl_version'        => $sslVersion,
+                            'force_use_ipv4'     => $force_use_ipv4,
+                            'http_user'          => $http_user,
+                            'http_pass'          => $http_pass,
+                            'allow_fallback'     => true,
+                        )
+                    );
+                }
+                $output['connection_diagnostic'] = MainWP_Connection_Diagnostics::mark_connection_action_failed( $output['connection_diagnostic'] );
+                unset( $output['fetch_data'] );
             }
         }
 

@@ -55,56 +55,35 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
         if ( MainWP_System_Utility::can_edit_website( $website ) ) {
             $ret['response'] = esc_html__( 'ERROR Site is already connected to your MainWP Dashboard.', 'mainwp' );
         } else {
-            try {
+            $verify_cert    = empty( $_POST['verify_certificate'] ) ? false : intval( $_POST['verify_certificate'] );
+            $ssl_version    = empty( $_POST['ssl_version'] ) ? 0 : intval( $_POST['ssl_version'] );
+            $force_use_ipv4 = apply_filters( 'mainwp_manage_sites_force_use_ipv4', null, $url );
+            $http_user      = isset( $_POST['http_user'] ) ? sanitize_text_field( wp_unslash( $_POST['http_user'] ) ) : '';
+            $http_pass      = isset( $_POST['http_pass'] ) ? wp_unslash( $_POST['http_pass'] ) : '';
+            $admin          = isset( $_POST['admin'] ) ? sanitize_text_field( wp_unslash( $_POST['admin'] ) ) : '';
 
-                $cur_id = MainWP_System_Utility::get_current_wpid();
-                if ( empty( $cur_id ) && is_object( $website ) && isset( $website->id ) ) {
-                    MainWP_System_Utility::set_current_wpid( $website->id );
-                }
+            $diagnostic = MainWP_Connection_Diagnostics::test_unconnected(
+                $url,
+                $admin,
+                array(
+                    'verify_certificate' => $verify_cert,
+                    'ssl_version'        => $ssl_version,
+                    'force_use_ipv4'     => $force_use_ipv4,
+                    'http_user'          => $http_user,
+                    'http_pass'          => $http_pass,
+                    'allow_fallback'     => true,
+                )
+            );
+            $ret['connection_diagnostic'] = $diagnostic;
 
-                MainWP_Logger::instance()->log_execution_sync( 'init', '', $website );
-
-
-                $verify_cert    = empty( $_POST['verify_certificate'] ) ? false : intval( $_POST['verify_certificate'] );
-                $ssl_version    = empty( $_POST['ssl_version'] ) ? 0 : intval( $_POST['ssl_version'] );
-                $force_use_ipv4 = apply_filters( 'mainwp_manage_sites_force_use_ipv4', null, $url );
-                $http_user      = ( isset( $_POST['http_user'] ) ? sanitize_text_field( wp_unslash( $_POST['http_user'] ) ) : '' );
-                $http_pass      = ( isset( $_POST['http_pass'] ) ? wp_unslash( $_POST['http_pass'] ) : '' );
-                $admin          = ( isset( $_POST['admin'] ) ? sanitize_text_field( wp_unslash( $_POST['admin'] ) ) : '' );
-
-                $output = array();
-
-                $visit_track_id = MainWP_Execution_Helper::execute_call_track( 'start_point', $website );
-
-                $information = MainWP_Connect::fetch_url_not_authed(
-                    $url,
-                    $admin,
-                    'stats',
-                    null,
-                    false,
-                    $verify_cert,
-                    $http_user,
-                    $http_pass,
-                    $ssl_version,
-                    array(
-                        'force_use_ipv4' => $force_use_ipv4,
-                    ),
-                    $output
-                ); // Fetch the stats with the given admin name.
-
-                MainWP_Execution_Helper::execute_call_track( 'end_point', $website, $visit_track_id, 'visit site' );
-
-                if ( isset( $information['wpversion'] ) ) {
-                    $ret['response'] = 'OK';
-                } elseif ( isset( $information['error'] ) ) {
-                    $ret['response'] = 'ERROR ' . MainWP_Utility::esc_content( $information['error'] );
-                } else {
-                    $ret['response']  = 'ERROR';
-                    $ret['resp_data'] = isset( $output['fetch_data'] ) ? $output['fetch_data'] : '';
-                }
-            } catch ( MainWP_Exception $e ) {
-                $ret['response']  = $e->getMessage();
-                $ret['resp_data'] = $e->get_data();
+            if ( 'mainwp_child_responded' === $diagnostic['diagnosis']['category'] ) {
+                $ret['response'] = 'OK';
+            } elseif ( in_array( $diagnostic['diagnosis']['category'], array( 'dns_failure', 'connection_timeout', 'tls_failure' ), true ) || 'transport_request_failed' === $diagnostic['diagnosis']['diagnosis_id'] ) {
+                $ret['response'] = 'HTTPERROR';
+            } elseif ( 'mainwp_child_did_not_respond' === $diagnostic['diagnosis']['category'] || 'unexpected_response' === $diagnostic['diagnosis']['category'] ) {
+                $ret['response'] = 'NOMAINWP';
+            } else {
+                $ret['response'] = 'ERROR ' . $diagnostic['presentation']['title'];
             }
         }
         $ret['check_me'] = ( isset( $_POST['check_me'] ) ? intval( $_POST['check_me'] ) : null );
@@ -154,7 +133,10 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
      * @uses  \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      */
     public static function reconnect_site() { //phpcs:ignore -- NOSONAR - complexity.
-        $siteId = isset( $_POST['siteid'] ) ? intval( $_POST['siteid'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+        $siteId          = isset( $_POST['siteid'] ) ? intval( $_POST['siteid'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+        $structured      = isset( $_POST['response_format'] ) && 'json' === sanitize_key( wp_unslash( $_POST['response_format'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+        $website         = null;
+        $connection_diag = null;
 
         try {
             if ( MainWP_Utility::ctype_digit( $siteId ) ) {
@@ -168,19 +150,54 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
                     $sync_first         = false; // reconnect use user's passwd so do not sync first.
                 }
 
-                MainWP_Manage_Sites_View::m_reconnect_site( $website, $sync_first, $params );
+                $success = MainWP_Manage_Sites_View::m_reconnect_site( $website, $sync_first, $params );
+                if ( ! $success ) {
+                    throw new MainWP_Exception( esc_html__( 'Site could not be reconnected.', 'mainwp' ), '', 'reconnect_failed' );
+                }
             } else {
                 throw new MainWP_Exception( esc_html__( 'Site could not be connected. Please check the Status page and be sure that all system requirments pass.', 'mainwp' ) );
             }
         } catch ( \Exception $e ) {
             $msg     = $e->getMessage();
             $arr_msg = MainWP_Utility::parse_html_error_message( $msg );
+            $error_code = '';
 
             if ( $e instanceof MainWP_Exception ) {
                 $error_code = $e->get_message_error_code();
-                if ( 'reconnect_failed' === $error_code ) {
+                $connection_diag = $e->get_diagnosis();
+                if ( ! $structured && 'reconnect_failed' === $error_code ) {
                     die( $error_code ); // phpcs:ignore WordPress.Security.EscapeOutput
                 }
+            }
+
+            if ( $structured ) {
+                if ( empty( $connection_diag ) && is_object( $website ) ) {
+                    $verify_certificate = 1 === (int) $website->verify_certificate || ( 2 === (int) $website->verify_certificate && 1 === (int) get_option( 'mainwp_sslVerifyCertificate', 1 ) );
+                    $force_use_ipv4     = 1 === (int) $website->force_use_ipv4 || ( 2 === (int) $website->force_use_ipv4 && 1 === (int) get_option( 'mainwp_forceUseIPv4', 0 ) );
+                    $connection_diag    = MainWP_Connection_Diagnostics::test_connected(
+                        $website,
+                        array(
+                            'url'                => $website->url,
+                            'verify_certificate' => $verify_certificate,
+                            'ssl_version'        => (int) $website->ssl_version,
+                            'force_use_ipv4'     => $force_use_ipv4,
+                            'http_user'          => MainWP_Credential_Storage::decrypt_credential( $website->http_user ),
+                            'http_pass'          => MainWP_Credential_Storage::decrypt_credential( $website->http_pass ),
+                            'allow_fallback'     => true,
+                        )
+                    );
+                }
+                if ( is_array( $connection_diag ) ) {
+                    $connection_diag = MainWP_Connection_Diagnostics::mark_connection_action_failed( $connection_diag );
+                }
+                wp_send_json(
+                    array(
+                        'success'               => false,
+                        'code'                  => ! empty( $error_code ) ? $error_code : 'reconnect_error',
+                        'message'               => is_array( $arr_msg ) ? wp_json_encode( $arr_msg ) : $msg,
+                        'connection_diagnostic' => $connection_diag,
+                    )
+                );
             }
 
             if ( is_array( $arr_msg ) ) {
@@ -189,7 +206,17 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
             die( 'ERROR ' . $msg ); // phpcs:ignore WordPress.Security.EscapeOutput
         }
 
-        die( esc_html__( 'Site has been reconnected successfully!', 'mainwp' ) );
+        $success_message = esc_html__( 'Site has been reconnected successfully!', 'mainwp' );
+        if ( $structured ) {
+            wp_send_json(
+                array(
+                    'success' => true,
+                    'code'    => 'reconnected',
+                    'message' => $success_message,
+                )
+            );
+        }
+        die( $success_message ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped above; legacy response contract.
     }
 
 
@@ -217,12 +244,15 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
         $ret['add_me'] = ( isset( $_POST['add_me'] ) ? intval( $_POST['add_me'] ) : null );
         if ( '' !== $error ) {
             $ret['response'] = 'ERROR ' . $error;
+            if ( ! empty( $output['connection_diagnostic'] ) ) {
+                $ret['connection_diagnostic'] = $output['connection_diagnostic'];
+            }
             die( wp_json_encode( $ret ) );
         }
         $ret['response'] = $message;
         $ret['siteid']   = $site_id;
 
-        if ( isset( $output['fetch_data'] ) ) {
+        if ( isset( $output['fetch_data'] ) && empty( $output['connection_diagnostic'] ) ) {
             $ret['resp_data'] = $output['fetch_data'];
         }
         // phpcs:enable

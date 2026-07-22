@@ -70,6 +70,7 @@ jQuery(function () {
 
   jQuery(document).on('click', '#mainwp_managesites_add', function () {
     mainwp_setup_managesites_add();
+    return false;
   });
 
   jQuery(document).on('change', '#mainwp_managesites_add_wpurl', function () {
@@ -157,7 +158,7 @@ let mainwp_setup_managesites_add = function () {
     });
 
     jQuery.post(ajaxurl, data, function (res_things) {
-      let response = res_things.response;
+      let response = res_things.response || 'ERROR';
       response = response.trim();
 
       let url = jQuery('#mainwp_managesites_add_wpurl_protocol').val() + '://' + jQuery('#mainwp_managesites_add_wpurl').val().trim();
@@ -166,6 +167,13 @@ let mainwp_setup_managesites_add = function () {
       }
 
       url = url.replace(/"/g, '&quot;');
+
+      if (res_things.connection_diagnostic && response !== 'OK') {
+        mainwp_set_message_zone('#mainwp-message-zone', '', '', true);
+        mainwp_render_connection_diagnostic('#mainwp-message-zone', res_things, { retry: mainwp_setup_managesites_add });
+        jQuery('#mainwp_managesites_add').prop('disabled', false);
+        return;
+      }
 
       if (response == 'HTTPERROR') {
         errors.push('This site can not be reached! Please use the Test Connection feature and see if the positive response will be returned. For additional help, please review <a href="https://docs.mainwp.com/">MainWP Knowledgebase</a>, and if you still have issues, please let us know in the <a href="https://community.mainwp.com/c/community-support/5">MainWP Community</a>.'); // NOSONAR - noopener - open safe.
@@ -228,7 +236,9 @@ let mainwp_setup_managesites_add = function () {
           jQuery('#mainwp-info-zone').hide();
 
           if (response.substring(0, 5) == 'ERROR') {
-            mainwp_set_message_zone('#mainwp-message-zone', response.substring(6), 'red');
+            if (!mainwp_render_connection_diagnostic('#mainwp-message-zone', res_things, { retry: mainwp_setup_managesites_add })) {
+              mainwp_set_message_zone('#mainwp-message-zone', response.substring(6), 'red');
+            }
           } else {
             //Message the WP was added
             mainwp_set_message_zone('#mainwp-message-zone', response, 'green');
@@ -256,13 +266,21 @@ let mainwp_setup_managesites_add = function () {
           }
 
           jQuery('#mainwp_managesites_add').prop("disabled", false);
-        }, 'json');
+        }, 'json').fail(function () {
+          mainwp_set_message_zone('#mainwp-message-zone', '', '', true);
+          mainwp_render_connection_request_failure('#mainwp-message-zone');
+          jQuery('#mainwp_managesites_add').prop('disabled', false);
+        });
       }
       if (errors.length > 0) {
         mainwp_set_message_zone('#mainwp-message-zone', errors.join('<br />'), 'red');
         jQuery('#mainwp_managesites_add').prop("disabled", false);
       }
-    }, 'json');
+    }, 'json').fail(function () {
+      mainwp_set_message_zone('#mainwp-message-zone', '', '', true);
+      mainwp_render_connection_request_failure('#mainwp-message-zone');
+      jQuery('#mainwp_managesites_add').prop('disabled', false);
+    });
   }
 };
 

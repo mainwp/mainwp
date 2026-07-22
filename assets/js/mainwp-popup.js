@@ -44,7 +44,8 @@
                 hideProgress: false,
                 statusText: '',
                 contentMsg: '',
-                clearListItems:false,
+                initVisibleContentMsg: false,
+                clearListItems: false,
                 hideStatusText: false,
                 doCloseCallback: null,
                 init: function (data) {
@@ -54,11 +55,15 @@
                         this.actionsCloseCallback = data.callback;
                         delete data.callback;
                     }
+                    // default init values.
                     let defaultVal = {
                         totalSites: 0,
                         progressMax: 0,
                         progressInit: 0,
-                        statusText: 'synced'
+                        statusText: 'synced',
+                        initVisibleContentMsg: false,
+                        hideProgress: false,
+                        clearListItems: false
                     };
                     this.doCloseCallback = true; // default is yes.
                     $.extend(this, defaultVal, data);
@@ -69,7 +74,7 @@
                     this.render();
                     this.bindEvents();
 
-                    if(this.clearListItems){
+                    if (this.clearListItems) {
                         this.clearList();
                     }
 
@@ -123,10 +128,11 @@
                         this.$progress.show();
                     }
 
-                    if (!this.contentMsg) {
-                        this.$contentMsg.html('').hide();
-                    } else {
+                    if (this.initVisibleContentMsg && this.contentMsg) {
                         this.$contentMsg.html(this.contentMsg).show();
+                    } else {
+                        this.contentMsg = ''; // clear caching msg.
+                        this.$contentMsg.html('').hide();
                     }
 
                     this.$overlayElementId

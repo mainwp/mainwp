@@ -673,7 +673,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                 return compact( 'total_translation_upgrades', 'all_translations_updates' );
             case 'all':
             default:
-                return compact( 'total_wp_upgrades', 'total_plugin_upgrades', 'total_translation_upgrades', 'total_theme_upgrades', 'all_wp_updates', 'all_plugins_updates', 'all_themes_updates', 'all_translations_updates', 'total_upgrades' );
+                return compact( 'total_wp_upgrades', 'total_plugin_upgrades', 'total_translation_upgrades', 'total_theme_upgrades', 'all_wp_updates', 'all_plugins_updates', 'all_themes_updates', 'all_translations_updates' );
         }
     }
 

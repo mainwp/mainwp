@@ -168,7 +168,7 @@ let updatesoverview_update_popup_init = function (data) {
     data = data || {};
     let settings = {
         allowMultiple: true,
-        statusText:  __('updated'),
+        statusText: __('updated'),
         callback: function () {
             mainwpVars.bulkTaskRunning = false;
             mainwp_forceReload();
@@ -1788,12 +1788,10 @@ const updatesoverview_global_prepare_data_upgrade_all = function (which, onPrepa
 
     let initData = {
         title: __('Updating All'),
-        callback: null,
-        hideProgress:true,
+        initVisibleContentMsg:true,
         contentMsg: __('Preparing update data, please wait...'),
-        clearListItems: true
     };
-    updatesoverview_update_popup_init(initData);
+    mainwpPopup('#mainwp-prepare-data-modal').init(initData);
 
     let data = mainwp_secure_data({
         action: 'mainwp_overview_prepare_upgradeall',
@@ -1813,6 +1811,9 @@ const updatesoverview_global_prepare_data_upgrade_all = function (which, onPrepa
         },
         error: function (xhr, status, error) {
             console.error('Failed to prepare update data:', error);
+            setTimeout(function () {
+                mainwp_forceReload();
+            }, 2000);
         }
     });
 }
@@ -1833,8 +1834,6 @@ const updatesoverview_global_run_upgrade_all = function (which) { // NOSONAR - C
     let sitesTranslationSlugs = {};
     let siteNames = {};
     let suspendedWebsites = [];
-
-    mainwpPopup('#mainwp-sync-sites-modal').clearList();
 
     let sitesCount = 0;
     let foundChildren;
@@ -1948,6 +1947,7 @@ const updatesoverview_global_run_upgrade_all = function (which) { // NOSONAR - C
     }
 
     let _callback = function () { // NOSONAR - Complexity.
+        mainwpPopup('#mainwp-sync-sites-modal').clearList();
         //Build form
         for (let siteId of sitesToUpdate) {
             let whatToUpgrade = '';
@@ -2035,9 +2035,6 @@ let updatesoverview_global_upgrade_all_after_backup = function (pSitesCount, pSi
         let initData = {
             title: __('Updating All'),
             progressMax: pSitesCount,
-            hideProgress:false,
-            clearListItems: false, // This needs to be false.
-            contentMsg: '' // To clear the conent message.
         };
         updatesoverview_update_popup_init(initData);
 

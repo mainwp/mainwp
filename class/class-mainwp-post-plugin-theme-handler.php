@@ -557,7 +557,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
 
         $update_type = isset( $_POST['which'] ) ? sanitize_text_field( wp_unslash( $_POST['which'] ) ) : ''; // phpcs:ignore --NOSONAR - none verified.
 
-        if ( ! in_array( $update_type, array( 'all', 'plugin', 'theme', 'translation' ), true ) ) {
+        if ( ! in_array( $update_type, array( 'all', 'plugin', 'theme', 'translation', 'wp' ), true ) ) {
             ?>
             <div class="ui yellow message"><i class="close icon"></i> <?php esc_html_e( 'Invalid update type. Please try again.', 'mainwp' ); ?></div>
             <?php
@@ -566,7 +566,8 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
 
         if ( 'translation' === $update_type ) {
             $update_type = 'trans'; // compatible.
-
+        } elseif ( 'wp' === $update_type ) {
+            $update_type = 'core'; // compatible.
         }
 
         $data = MainWP_Updates_Overview::prepare_update_data( $update_type );

@@ -1807,6 +1807,10 @@ const updatesoverview_global_prepare_data_upgrade_all = function (which, onPrepa
             if (response && typeof onPrepared === 'function') {
                 jQuery('#mainwp_prepare_global_update_all_container').html(response);
                 onPrepared();
+            } else {
+                setTimeout(function () {
+                    mainwp_forceReload();
+                }, 2000);
             }
         },
         error: function (xhr, status, error) {

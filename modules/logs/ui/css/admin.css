@@ -21,9 +21,9 @@
     width: 100% !important;
 }
 
-#mainwp-widget-site-actions #mainwp-module-log-records-table-container .dt-paging-button.previous {
+/* #mainwp-widget-site-actions #mainwp-module-log-records-table-container .dt-paging-button.previous {
     display: none !important;
-}
+} */
 
 
 @media only screen and (min-width: 1370px) {

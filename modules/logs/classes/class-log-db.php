@@ -45,6 +45,15 @@ class Log_DB extends MainWP_DB {
      */
     protected $logs_wp_options;
 
+
+    /**
+     * Hold logs extra data.
+     *
+     * @var int
+     */
+    protected $logs_extra_data;
+
+
     /**
      * Constructor.
      *
@@ -194,6 +203,7 @@ class Log_DB extends MainWP_DB {
         $result                    = (array) $this->driver->get_records( $args );
         $this->found_records_count = isset( $result['count'] ) ? $result['count'] : 0;
         $this->logs_wp_options     = isset( $result['sites_opts'] ) && is_array( $result['sites_opts'] ) ? $result['sites_opts'] : array();
+        $this->logs_extra_data     = isset( $result['extra_data'] ) && is_array( $result['extra_data'] ) ? $result['extra_data'] : array();
 
         return empty( $result['items'] ) ? array() : $result['items'];
     }
@@ -225,6 +235,15 @@ class Log_DB extends MainWP_DB {
      */
     public function get_logs_sites_opts() {
         return $this->logs_wp_options;
+    }
+
+    /**
+     * Return the number of records found in last request
+     *
+     * @return int
+     */
+    public function get_logs_extra_data() {
+        return $this->logs_extra_data;
     }
 
     /**

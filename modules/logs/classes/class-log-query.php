@@ -215,7 +215,7 @@ class Log_Query {
         $per_page = absint( $args['records_per_page'] );
 
         if ( $per_page > 0 ) {
-            $per_page_more = $optimize_has_more ? $per_page + 1 : $per_page;
+            $per_page_more = $optimize_has_more ? $per_page + 1 : $per_page; // Fetch one extra record to determine whether to show the "More" button.
             $limits        = "LIMIT {$start}, {$per_page_more}";
         }
 
@@ -493,6 +493,7 @@ class Log_Query {
         $results = array(
             'items'      => $items,
             'sites_opts' => $sites_opts,
+            'extra_data' => array(),
         );
 
         if ( ! $not_count ) {
@@ -507,7 +508,8 @@ class Log_Query {
         }
 
         if ( $optimize_has_more ) {
-            $results['count'] = $count_har_more; // Fetch one extra record to determine whether to show the "More" button.
+            $results['count']                  = $count_har_more;
+            $results['extra_data']['has_more'] = $count_har_more > $per_page ? true : false;
         }
 
         return $results;

@@ -74,6 +74,13 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
     public $total_items;
 
     /**
+     * Public variable to hold extra data.
+     *
+     * @var integer
+     */
+    public $items_extra_data;
+
+    /**
      * Protected variable to hold columns headers
      *
      * @var array
@@ -146,13 +153,13 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
     public function get_default_columns() {
         $columns = array(
             'cb'         => '<input type="checkbox" />',
-            'created'    => esc_html__( 'Date', 'mainwp' ),
+            'created'    => esc_html__( 'Time', 'mainwp' ),
             'user_id'    => esc_html__( 'User', 'mainwp' ),
             'action'     => esc_html__( 'Action', 'mainwp' ),
             'log_object' => esc_html__( 'Object', 'mainwp' ),
-            'icon'       => '',
-            'name'       => esc_html__( 'Website', 'mainwp' ),
             'event'      => esc_html__( 'Event', 'mainwp' ),
+            'icon'       => '',
+            'name'       => esc_html__( 'Site', 'mainwp' ),
             'source'     => esc_html__( 'Source', 'mainwp' ),
             'col_action' => '',
         );
@@ -934,9 +941,10 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             $args['with_all_logs_meta'] = 1; // so it will enable optimize_with_meta too.
         }
 
-        $this->items       = $this->manager->db->get_records( $args );
-        $this->total_items = $this->manager->db->get_found_records_count(); // get this value for recent events request only.
-        $this->sites_opts  = $this->manager->db->get_logs_sites_opts();
+        $this->items            = $this->manager->db->get_records( $args );
+        $this->total_items      = $this->manager->db->get_found_records_count(); // get this value for recent events request only.
+        $this->sites_opts       = $this->manager->db->get_logs_sites_opts();
+        $this->items_extra_data = $this->manager->db->get_logs_extra_data();
 
         $this->items_prev = array();
         if ( $with_prev_data && ! empty( $args['timestart'] ) && ! empty( $args['timestop'] ) && $args['timestart'] < $args['timestop'] ) {
@@ -978,6 +986,13 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
 
         // @since version 5.5.
         $pages_length = apply_filters( 'mainwp_site_changes_table_pages_length', $pages_length, $this->table_id_prefix );
+
+        if ( 'widget-overview' === $this->table_id_prefix ) {
+            $pages_length   = array(
+                25 => '25',
+            );
+            $sites_per_page = 25;
+        }
 
         $pagelength_val   = implode( ',', array_keys( $pages_length ) );
         $pagelength_title = implode( ',', array_values( $pages_length ) );
@@ -1066,6 +1081,12 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                     }
 
                     try {
+
+                        const nextButton = document.createElement('a');
+                        nextButton.href = '#';
+                        nextButton.className = 'ui tiny basic button';
+                        nextButton.innerHTML = '<?php echo esc_js( __( 'More', 'mainwp' ) ); ?>';
+
                         //jQuery( '#mainwp-sites-table-loader' ).hide();
                         $module_log_table = jQuery( manage_tbl_id ).on( 'processing.dt', function ( e, settings, processing ) {
                             jQuery( '#mainwp-loading-sites' ).css( 'display', processing ? 'block' : 'none' );
@@ -1141,18 +1162,42 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                                         json.data[i].created_sort = json.rowsInfo[i].created;
                                         json.data[i].state_sort = json.rowsInfo[i].state;
                                     }
+
+                                    <?php if ( 'widget-overview' === $this->table_id_prefix ) { ?>
+                                        if (json?.has_more) {
+                                            nextButton.classList.remove('disabled');
+                                            nextButton.removeAttribute('aria-disabled');
+                                            nextButton.removeAttribute('tabindex');
+                                            nextButton.setAttribute('href', '#');
+                                        } else {
+                                            nextButton.classList.add('disabled');
+                                            nextButton.setAttribute('aria-disabled', 'true');
+                                            nextButton.setAttribute('tabindex', '-1');
+                                            nextButton.removeAttribute('href');
+                                        }
+                                    <?php } ?>
                                     return json.data;
                                 }
                             },
                             "layout": {
-                                "bottomEnd": {
-                                    "paging": {
-                                        "numbers": <?php echo intval( $table_features['numbers'] ); ?>
+                                <?php
+                                if ( 'widget-overview' === $this->table_id_prefix ) {
+                                    ?>
+                                    "bottomEnd": nextButton
+                                    <?php
+                                } else {
+                                    ?>
+                                    "bottomEnd": {
+                                        "paging": {
+                                            "numbers": <?php echo intval( $table_features['numbers'] ); ?>
+                                        }
                                     }
+                                    <?php
                                 }
+                                ?>
                             },
-                            "responsive": responsive,
-                            "searching" : <?php echo esc_js( $table_features['searching'] ); ?>,
+                            'responsive': responsive,
+                            'searching' : <?php echo esc_js( $table_features['searching'] ); ?>,
                             "paging" : <?php echo esc_js( $table_features['paging'] ); ?>,
                             "pagingType" : "<?php echo esc_js( $table_features['pagingType'] ); ?>",
                             "info" : <?php echo esc_js( $table_features['info'] ); ?>,
@@ -1168,16 +1213,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                             "columnDefs": <?php echo wp_json_encode( $this->get_columns_defines() ); ?>,
                             "columns": <?php echo wp_json_encode( $this->get_columns_init() ); ?>,
                             "language": {
-                                "emptyTable": "<?php esc_html_e( 'No events found.', 'mainwp' ); ?>"
-                                <?php
-                                if ( 'widget-overview' === $this->table_id_prefix ) {
-                                    ?>
-                                    ,"paginate": {
-                                        "next": '<?php echo esc_js( __( 'More', 'mainwp' ) ); ?>'
-                                    }
-                                    <?php
-                                }
-                                ?>
+                                "emptyTable": "<?php echo 'widget-overview' === $this->table_id_prefix ? esc_html__( 'No matching activity was found in the last 24 hours', 'mainwp' ) : esc_html__( 'No events found.', 'mainwp' ); ?>"
                             },
                             "drawCallback": function( settings ) {
                                 this.api().tables().body().to$().attr( 'id', 'mainwp-module-log-records-body-table' );
@@ -1250,6 +1286,17 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                                 }
                             });
                         }
+
+
+                        nextButton.addEventListener('click', function (e) {
+                            e.preventDefault();
+
+                            if (nextButton.classList.contains('disabled')) {
+                                return;
+                            }
+                            $module_log_table.page('next').draw('page');
+                        });
+
                     } catch(err) {
                         // to fix js error.
                         console.log(err);
@@ -1475,6 +1522,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             'recordsTotal'    => $this->total_items,
             'recordsFiltered' => $this->total_items,
             'rowsInfo'        => $info_rows,
+            'has_more'        => is_array( $this->items_extra_data ) && ! empty( $this->items_extra_data['has_more'] ) ? true : false,
         );
     }
 }

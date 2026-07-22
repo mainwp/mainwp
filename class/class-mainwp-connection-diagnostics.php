@@ -72,8 +72,9 @@ class MainWP_Connection_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBra
             return self::configuration_result( 'missing_site' );
         }
 
-        $postdata = MainWP_Connect::get_post_data_authed( $website, 'connection_check' );
-        $parsed   = array();
+        $use_site_context = ! isset( $settings['transport_site_context'] ) || $settings['transport_site_context'];
+        $postdata         = $use_site_context ? MainWP_Connect::get_post_data_authed( $website, 'connection_check' ) : self::minimal_connected_postdata( $website );
+        $parsed           = array();
         parse_str( (string) $postdata, $parsed );
         if ( empty( $postdata ) || empty( $parsed['mainwpsignature'] ) ) {
             return self::configuration_result( 'signing_failed' );
@@ -84,6 +85,48 @@ class MainWP_Connection_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBra
         $settings['website']                 = $website;
 
         return self::run_probe( isset( $settings['url'] ) ? $settings['url'] : $website->url, $postdata, $settings );
+    }
+
+    /**
+     * Build an authenticated probe without invoking site-specific request filters.
+     *
+     * Draft cross-origin tests must not forward extension-provided headers or POST fields
+     * that were configured for the saved site.
+     *
+     * @param object $website Saved website row.
+     *
+     * @return string|null Minimal signed request body.
+     */
+    private static function minimal_connected_postdata( &$website ) {
+        $function  = 'connection_check';
+        $nonce     = wp_rand( 0, 9999 );
+        $signature = '';
+        $data      = array(
+            'user'      => $website->adminname,
+            'function'  => $function,
+            'nonce'     => $nonce,
+            'mainwpver' => MainWP_System::$version,
+        );
+
+        if ( MainWP_Connect_Lib::is_use_fallback_sec_lib( $website ) ) {
+            $signed            = MainWP_Connect_Lib::connect_sign( $function . $nonce, $signature, base64_decode( $website->privkey ), $website->id ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- MainWP key storage format.
+            $data['verifylib'] = 1;
+        } elseif ( function_exists( 'openssl_verify' ) ) {
+            $algorithm = MainWP_System_Utility::get_connect_sign_algorithm( $website );
+            $signed    = MainWP_Connect::connect_sign( $function . $nonce, $signature, base64_decode( $website->privkey ), $algorithm, $website->id ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- MainWP key storage format.
+            if ( false !== $algorithm ) {
+                $data['sign_algo'] = $algorithm;
+            }
+        } else {
+            return null;
+        }
+
+        if ( empty( $signed ) || empty( $signature ) ) {
+            return null;
+        }
+
+        $data['mainwpsignature'] = base64_encode( $signature ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- MainWP wire format.
+        return http_build_query( $data, '', '&' );
     }
 
     /**
@@ -118,11 +161,14 @@ class MainWP_Connection_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBra
                 $fallback                         = self::mark_fallback_success( $fallback );
                 $fallback['primary_diagnosis_id'] = $primary['diagnosis']['diagnosis_id'];
                 $fallback['attempts']             = $attempts;
+                $fallback['support']['primary_diagnosis_id'] = $primary['diagnosis']['diagnosis_id'];
+                $fallback['support']['attempts']              = $attempts;
                 return $fallback;
             }
         }
 
-        $primary['attempts'] = $attempts;
+        $primary['attempts']            = $attempts;
+        $primary['support']['attempts'] = $attempts;
         return $primary;
     }
 
@@ -136,14 +182,16 @@ class MainWP_Connection_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBra
      * @return array Safe exported diagnosis.
      */
     public static function from_child_response( $information, $phase = 'handshake', $auth_expected = false ) {
+        $error_code  = isset( $information['error_code'] ) ? sanitize_key( $information['error_code'] ) : '';
+        $child_error = ! empty( $information['error'] ) || in_array( $error_code, array( 'parse_error3', 'parse_error4' ), true );
         $observation = array(
             'phase'                   => sanitize_key( $phase ),
             'mode'                    => 'connection',
             'child_frame'             => true,
-            'child_error'             => ! empty( $information['error'] ),
-            'child_error_code'        => isset( $information['error_code'] ) ? sanitize_key( $information['error_code'] ) : '',
+            'child_error'             => $child_error,
+            'child_error_code'        => $error_code,
             'authentication_expected' => (bool) $auth_expected,
-            'authentication_confirmed' => $auth_expected && ( empty( $information['error'] ) || 'child_plugin_incompatible' === ( $information['error_code'] ?? '' ) ),
+            'authentication_confirmed' => $auth_expected && ! in_array( $error_code, array( 'parse_error1', 'parse_error2' ), true ),
             'http_status'             => 200,
             'curl_errno'              => 0,
         );
@@ -187,12 +235,13 @@ class MainWP_Connection_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBra
     /** Parse a raw request result, classify it, then discard the raw observation. */
     private static function classify_request_result( $result, $settings ) {
         $observation = isset( $result['observation'] ) && is_array( $result['observation'] ) ? $result['observation'] : array();
+        $observation['authentication_expected'] = ! empty( $settings['authentication_expected'] );
         $body        = isset( $result['body'] ) && is_string( $result['body'] ) ? $result['body'] : '';
         $frame       = self::parse_child_frame( $body );
+        $frame_code  = is_array( $frame ) && isset( $frame['error_code'] ) ? sanitize_key( $frame['error_code'] ) : '';
 
         $valid_probe_frame = is_array( $frame ) && ! empty( $frame );
         if ( $valid_probe_frame && 'probe' === ( $settings['mode'] ?? '' ) ) {
-            $frame_code = isset( $frame['error_code'] ) ? sanitize_key( $frame['error_code'] ) : '';
             if ( empty( $settings['authentication_expected'] ) ) {
                 $valid_probe_frame = 'parse_error1' === $frame_code;
             } else {
@@ -202,7 +251,7 @@ class MainWP_Connection_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBra
 
         if ( $valid_probe_frame ) {
             $observation['child_frame']      = true;
-            $observation['child_error']      = ! empty( $frame['error'] );
+            $observation['child_error']      = ! empty( $frame['error'] ) || in_array( $frame_code, array( 'parse_error3', 'parse_error4' ), true );
             $observation['child_error_code'] = isset( $frame['error_code'] ) ? sanitize_key( $frame['error_code'] ) : '';
 
             if ( ! empty( $settings['authentication_expected'] ) ) {
@@ -256,6 +305,35 @@ class MainWP_Connection_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBra
         }
         $path = isset( $parts['path'] ) ? $parts['path'] : '';
         return strtolower( $parts['scheme'] ) . '://' . $authority . $path;
+    }
+
+    /**
+     * Determine whether two URLs have the same scheme, host, and effective port.
+     *
+     * @param string $first_url  First URL.
+     * @param string $second_url Second URL.
+     *
+     * @return bool Whether the URLs have the same origin.
+     */
+    public static function is_same_origin( $first_url, $second_url ) {
+        $first  = wp_parse_url( (string) $first_url );
+        $second = wp_parse_url( (string) $second_url );
+        if ( ! is_array( $first ) || ! is_array( $second ) || empty( $first['scheme'] ) || empty( $second['scheme'] ) || empty( $first['host'] ) || empty( $second['host'] ) ) {
+            return false;
+        }
+
+        $first_scheme  = strtolower( $first['scheme'] );
+        $second_scheme = strtolower( $second['scheme'] );
+        if ( ! in_array( $first_scheme, array( 'http', 'https' ), true ) || ! in_array( $second_scheme, array( 'http', 'https' ), true ) ) {
+            return false;
+        }
+
+        $first_host  = strtolower( trim( $first['host'], '[]' ) );
+        $second_host = strtolower( trim( $second['host'], '[]' ) );
+        $first_port  = isset( $first['port'] ) ? (int) $first['port'] : ( 'https' === $first_scheme ? 443 : 80 );
+        $second_port = isset( $second['port'] ) ? (int) $second['port'] : ( 'https' === $second_scheme ? 443 : 80 );
+
+        return $first_scheme === $second_scheme && $first_host === $second_host && $first_port === $second_port;
     }
 
     /** Reduce an exported attempt to machine-safe fields. */
@@ -401,6 +479,9 @@ class MainWP_Connection_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBra
             'Expect'           => MainWP_Connect::get_expect_header( $postdata ),
         );
         $website = isset( $settings['website'] ) && is_object( $settings['website'] ) ? $settings['website'] : null;
+        if ( isset( $settings['transport_site_context'] ) && ! $settings['transport_site_context'] ) {
+            $website = null;
+        }
         $headers = apply_filters( 'mainwp_connect_http_request_headers', $headers, $website );
         if ( class_exists( '\WpOrg\Requests\Requests' ) ) {
             $headers = \WpOrg\Requests\Requests::flatten( $headers );
@@ -581,6 +662,7 @@ class MainWP_Connection_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBra
     public static function export( $diagnosis, $observation = array(), $context = array() ) {
         $presentation = self::presentation( $diagnosis, $observation );
         $support      = array(
+            'verdict'             => $diagnosis['verdict'],
             'diagnosis_id'        => $diagnosis['diagnosis_id'],
             'category'            => $diagnosis['category'],
             'provider'            => isset( $diagnosis['provider'] ) ? $diagnosis['provider'] : null,
@@ -622,6 +704,7 @@ class MainWP_Connection_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBra
         );
         $export['presentation']              = self::presentation( $export['diagnosis'], $observation );
         $export['support']['diagnosis_id']   = 'child_responded_via_fallback';
+        $export['support']['verdict']        = 'warning';
         $export['support']['facts']          = $export['diagnosis']['facts'];
         return $export;
     }
@@ -641,6 +724,7 @@ class MainWP_Connection_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBra
         );
         $export['presentation']            = self::presentation( $export['diagnosis'], $observation );
         $export['support']['diagnosis_id'] = 'connection_action_failed';
+        $export['support']['verdict']      = 'failure';
         $export['support']['category']     = 'mainwp_child_responded';
         $export['support']['facts']        = $export['diagnosis']['facts'];
         return $export;
@@ -1000,21 +1084,25 @@ class MainWP_Connection_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBra
             return null;
         }
 
+        $headers      = self::final_headers( $observation );
+        $cf_mitigated = self::header_contains( $headers, 'cf-mitigated', 'challenge' );
+        if ( $cf_mitigated ) {
+            return 'cloudflare';
+        }
+
         $body = isset( $observation['bounded_body_sample'] ) ? $observation['bounded_body_sample'] : '';
         if ( ! self::is_safe_text( $body ) ) {
             return null;
         }
         $body_lower = strtolower( $body );
-        $headers    = self::final_headers( $observation );
 
         if ( false !== strpos( $body_lower, 'wsidchk' ) ) {
             return 'imunify360';
         }
 
-        $cf_mitigated = self::header_contains( $headers, 'cf-mitigated', 'challenge' );
-        $cf_ray       = isset( $headers['cf-ray'] );
-        $cf_body      = false !== strpos( $body_lower, 'challenge-platform' ) || false !== strpos( $body_lower, 'cf-chl-' ) || false !== strpos( $body_lower, 'attention required! | cloudflare' );
-        if ( $cf_mitigated || ( $cf_ray && $cf_body ) ) {
+        $cf_ray  = isset( $headers['cf-ray'] );
+        $cf_body = false !== strpos( $body_lower, 'challenge-platform' ) || false !== strpos( $body_lower, 'cf-chl-' ) || false !== strpos( $body_lower, 'attention required! | cloudflare' );
+        if ( $cf_ray && $cf_body ) {
             return 'cloudflare';
         }
 

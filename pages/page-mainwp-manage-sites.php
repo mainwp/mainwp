@@ -708,26 +708,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 </form>
             </div>
 
-            <div class="ui modal" id="mainwp-test-connection-modal">
-                <i class="close icon"></i>
-                <div class="header"><?php esc_html_e( 'Connection Test', 'mainwp' ); ?></div>
-                <div class="content">
-                    <div class="ui active dimmer">
-                        <div class="ui double text loader"><?php esc_html_e( 'Testing...', 'mainwp' ); ?></div>
-                    </div>
-                    <div id="mainwp-test-connection-result" class="ui segment" style="display:none">
-                        <h2 class="ui center aligned icon header">
-                            <i class=" icon"></i>
-                            <div class="content">
-                                <span></span>
-                                <div class="sub header"></div>
-                            </div>
-                        </h2>
-                    </div>
-                </div>
-                <div class="actions">
-                </div>
-            </div>
+            <?php MainWP_UI::render_modal_connection_test(); ?>
 
             <script type="text/javascript">
                 jQuery( document ).ready( function () {

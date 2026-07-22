@@ -193,8 +193,8 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
                 wp_send_json(
                     array(
                         'success'               => false,
-                        'code'                  => ! empty( $error_code ) ? $error_code : 'reconnect_error',
-                        'message'               => is_array( $arr_msg ) ? wp_json_encode( $arr_msg ) : $msg,
+                        'code'                  => 'reconnect_failed' === $error_code ? 'reconnect_failed' : 'reconnect_error',
+                        'message'               => esc_html__( 'Site could not be reconnected.', 'mainwp' ),
                         'connection_diagnostic' => $connection_diag,
                     )
                 );
@@ -243,9 +243,11 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
 
         $ret['add_me'] = ( isset( $_POST['add_me'] ) ? intval( $_POST['add_me'] ) : null );
         if ( '' !== $error ) {
-            $ret['response'] = 'ERROR ' . $error;
             if ( ! empty( $output['connection_diagnostic'] ) ) {
                 $ret['connection_diagnostic'] = $output['connection_diagnostic'];
+                $ret['response']               = 'ERROR ' . $output['connection_diagnostic']['presentation']['title'];
+            } else {
+                $ret['response'] = 'ERROR ' . $error;
             }
             die( wp_json_encode( $ret ) );
         }

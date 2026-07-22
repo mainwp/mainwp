@@ -88,6 +88,29 @@ class Test_Connection_Diagnostics extends \WP_UnitTestCase {
         $this->assertArrayNotHasKey( 'provider', $diagnosis );
     }
 
+    /** The explicit Cloudflare mitigation header is sufficient without a text body. */
+    public function test_cloudflare_mitigation_header_works_without_body() {
+        $diagnosis = MainWP_Connection_Diagnostics::diagnose(
+            array(
+                'phase'               => 'child_endpoint',
+                'curl_errno'          => 0,
+                'http_status'         => 403,
+                'peer_ip'             => '8.8.8.8',
+                'bounded_body_sample' => '',
+                'header_blocks'       => array(
+                    array(
+                        'headers' => array(
+                            'cf-mitigated' => array( 'challenge' ),
+                        ),
+                    ),
+                ),
+            )
+        );
+
+        $this->assertSame( 'cloudflare_request_blocked', $diagnosis['diagnosis_id'] );
+        $this->assertSame( 'cloudflare', $diagnosis['provider'] );
+    }
+
     /** A proxy peer is not sufficient evidence that origin response bytes are public. */
     public function test_proxy_requests_skip_provider_body_detection() {
         $diagnosis = MainWP_Connection_Diagnostics::diagnose(
@@ -177,6 +200,29 @@ class Test_Connection_Diagnostics extends \WP_UnitTestCase {
         $this->assertSame( 'child_did_not_respond', $export['diagnosis']['diagnosis_id'] );
     }
 
+    /** PARSE_ERROR3/4 are authenticated Child errors even without free-form text. */
+    public function test_authenticated_parse_error_code_is_a_failure_without_error_text() {
+        $method = new ReflectionMethod( MainWP_Connection_Diagnostics::class, 'classify_request_result' );
+        if ( PHP_VERSION_ID < 80100 ) {
+            $method->setAccessible( true );
+        }
+        $result = array(
+            'body'        => '<mainwp>' . base64_encode( wp_json_encode( array( 'error_code' => 'PARSE_ERROR3' ) ) ) . '</mainwp>',
+            'observation' => array(
+                'phase'               => 'child_endpoint',
+                'mode'                => 'probe',
+                'curl_errno'          => 0,
+                'http_status'         => 200,
+                'header_blocks'       => array(),
+                'bounded_body_sample' => '',
+            ),
+        );
+
+        $export = $method->invoke( null, $result, array( 'mode' => 'probe', 'authentication_expected' => true ) );
+        $this->assertSame( 'failure', $export['diagnosis']['verdict'] );
+        $this->assertSame( 'mainwp_child_error', $export['diagnosis']['diagnosis_id'] );
+    }
+
     /** Public output contains no raw observation values. */
     public function test_export_does_not_leak_raw_observation() {
         $sentinel = 'MWP-RAW-SENTINEL';
@@ -198,6 +244,7 @@ class Test_Connection_Diagnostics extends \WP_UnitTestCase {
         $json   = wp_json_encode( $export );
 
         $this->assertStringNotContainsString( $sentinel, $json );
+        $this->assertSame( 'failure', $export['support']['verdict'] );
         $this->assertSame( 6, $export['support']['curl_errno'] );
         $this->assertSame( 'dns_resolution_failed', $export['support']['diagnosis_id'] );
     }
@@ -213,6 +260,15 @@ class Test_Connection_Diagnostics extends \WP_UnitTestCase {
             'https://example.test/wordpress/wp-admin/admin-ajax.php',
             $method->invoke( null, 'https://example.test/wordpress/?ignored=yes#fragment' )
         );
+    }
+
+    /** Saved transport context may be reused only for the exact saved origin. */
+    public function test_same_origin_comparison_is_strict() {
+        $this->assertTrue( MainWP_Connection_Diagnostics::is_same_origin( 'https://EXAMPLE.test/path', 'https://example.test:443/other' ) );
+        $this->assertTrue( MainWP_Connection_Diagnostics::is_same_origin( 'http://[::1]/path', 'http://[::1]:80/other' ) );
+        $this->assertFalse( MainWP_Connection_Diagnostics::is_same_origin( 'https://example.test/', 'http://example.test/' ) );
+        $this->assertFalse( MainWP_Connection_Diagnostics::is_same_origin( 'https://example.test/', 'https://other.test/' ) );
+        $this->assertFalse( MainWP_Connection_Diagnostics::is_same_origin( 'https://example.test/', 'https://example.test:444/' ) );
     }
 
     /** Only endpoint-shaped responses may use the same-origin compatibility fallback. */

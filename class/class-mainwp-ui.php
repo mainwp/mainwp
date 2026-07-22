@@ -3318,6 +3318,32 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
     }
 
     /**
+     * Render the shared connection diagnosis modal.
+     *
+     * @return void
+     */
+    public static function render_modal_connection_test() {
+        ?>
+        <div class="ui modal" id="mainwp-test-connection-modal">
+            <i class="close icon"></i>
+            <div class="header"><?php esc_html_e( 'Connection Test', 'mainwp' ); ?></div>
+            <div class="content">
+                <div class="ui active dimmer">
+                    <div class="ui text loader"><?php esc_html_e( 'Testing connection...', 'mainwp' ); ?></div>
+                </div>
+                <div id="mainwp-test-connection-result" class="ui segment" role="status" aria-live="polite" style="display:none;"></div>
+            </div>
+            <div class="actions">
+                <button type="button" class="ui basic button" data-mainwp-diagnostic-action="test-again"><?php esc_html_e( 'Test again', 'mainwp' ); ?></button>
+                <button type="button" class="ui basic button" data-mainwp-diagnostic-action="copy"><?php esc_html_e( 'Copy diagnostic details', 'mainwp' ); ?></button>
+                <a class="ui basic button" data-mainwp-diagnostic-action="learn-more" href="<?php echo esc_url( MainWP_Connection_Diagnostics::DOCS_URL ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Learn more', 'mainwp' ); ?></a>
+                <button type="button" class="ui green button" data-mainwp-diagnostic-action="close"><?php esc_html_e( 'Close', 'mainwp' ); ?></button>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
      * Method get_default_icons().
      *
      * @return array icons.

@@ -243,106 +243,88 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
      *
      * Test if Child Site can be reached.
      *
-     * @uses \MainWP\Dashboard\MainWP_Connect::try_visit()
+     * @uses \MainWP\Dashboard\MainWP_Connection_Diagnostics::test_connected()
+     * @uses \MainWP\Dashboard\MainWP_Connection_Diagnostics::test_unconnected()
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
-     * @uses  \MainWP\Dashboard\MainWP_Utility::remove_http_prefix()
      */
-    public function mainwp_testwp() { // phpcs:ignore -- NOSONAR - complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public function mainwp_testwp() { // phpcs:ignore -- NOSONAR - validates draft and saved connection settings together.
         $this->secure_request( 'mainwp_testwp' );
 
-        $url               = null;
-        $name              = null;
-        $http_user         = null;
-        $http_pass         = null;
-        $verifyCertificate = 1;
-        $sslVersion        = 0;
-
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-        if ( isset( $_POST['url'] ) ) {
-            $url = sanitize_text_field( wp_unslash( $_POST['url'] ) );
-            $url = urldecode( $url );
+        $site_id     = isset( $_POST['siteid'] ) ? intval( $_POST['siteid'] ) : 0;
+        $website     = $site_id > 0 ? MainWP_DB::instance()->get_website_by_id( $site_id ) : null;
+        $url         = isset( $_POST['url'] ) ? urldecode( sanitize_text_field( wp_unslash( $_POST['url'] ) ) ) : ( $website ? $website->url : '' );
+        $same_origin = $website && MainWP_Connection_Diagnostics::is_same_origin( $website->url, $url );
+        $info        = wp_parse_url( $url );
+        $invalid     = ! is_array( $info ) || empty( $info['scheme'] ) || empty( $info['host'] ) || ! in_array( strtolower( $info['scheme'] ), array( 'http', 'https' ), true ) || false !== strpos( $url, '?=' );
 
-            $invalid = false;
-            $info    = wp_parse_url( $url );
+        $blocked_ports = apply_filters( 'mainwp_connect_sites_not_allow_ports', array( 21, 22 ), $url );
+        if ( ! is_array( $blocked_ports ) ) {
+            $blocked_ports = array( 21, 22 );
+        }
+        if ( ! empty( $info['port'] ) && in_array( (int) $info['port'], $blocked_ports, true ) ) {
+            $invalid = true;
+        }
+        if ( ! empty( $info['port'] ) && ! in_array( (int) $info['port'], array( 80, 443 ), true ) ) {
+            $allowed_ports = apply_filters( 'mainwp_connect_sites_allow_ports', array(), $url );
+            $invalid       = ! is_array( $allowed_ports ) || ! in_array( (int) $info['port'], $allowed_ports, true );
+        }
 
-            $def_not_allow   = array( 21, 22 ); // not allow ports 21, 22.
-            $not_allow_ports = apply_filters( 'mainwp_connect_sites_not_allow_ports', $def_not_allow, $url );
+        if ( $invalid ) {
+            wp_send_json(
+                array(
+                    'success'               => false,
+                    'error'                 => esc_html__( 'Invalid URL.', 'mainwp' ),
+                    'connection_diagnostic' => MainWP_Connection_Diagnostics::not_tested( 'invalid_url' ),
+                )
+            );
+        }
 
-            if ( ! is_array( $not_allow_ports ) ) {
-                $not_allow_ports = $def_not_allow;
+        $verify_setting = isset( $_POST['test_verify_cert'] ) ? intval( $_POST['test_verify_cert'] ) : ( $website ? (int) $website->verify_certificate : 1 );
+        $verify_cert    = 1 === $verify_setting || ( 2 === $verify_setting && 1 === (int) get_option( 'mainwp_sslVerifyCertificate', 1 ) );
+        $ipv4_setting   = isset( $_POST['force_use_ipv4'] ) ? intval( $_POST['force_use_ipv4'] ) : ( $website ? (int) $website->force_use_ipv4 : apply_filters( 'mainwp_manage_sites_force_use_ipv4', false, $url ) );
+        $force_ipv4     = 1 === $ipv4_setting || ( 2 === $ipv4_setting && 1 === (int) get_option( 'mainwp_forceUseIPv4', 0 ) );
+        $ssl_version    = isset( $_POST['ssl_version'] ) ? intval( $_POST['ssl_version'] ) : ( $website ? (int) $website->ssl_version : 0 );
+
+        $http_user = isset( $_POST['http_user'] ) ? sanitize_text_field( wp_unslash( $_POST['http_user'] ) ) : ( $website && $same_origin ? MainWP_Credential_Storage::decrypt_credential( $website->http_user ) : '' );
+        if ( isset( $_POST['http_pass'] ) ) {
+            $submitted_http_pass = wp_unslash( $_POST['http_pass'] );
+            $http_pass = $website && $same_origin && MainWP_Credential_Render::is_sentinel( $submitted_http_pass ) ? MainWP_Credential_Storage::decrypt_credential( $website->http_pass ) : $submitted_http_pass;
+            if ( $website && ! $same_origin && MainWP_Credential_Render::is_sentinel( $submitted_http_pass ) ) {
+                $http_pass = '';
             }
+        } else {
+            $http_pass = $website && $same_origin ? MainWP_Credential_Storage::decrypt_credential( $website->http_pass ) : '';
+        }
 
-            if ( is_array( $info ) && ! empty( $info['port'] ) && ( in_array( intval( $info['port'] ), $not_allow_ports, true ) ) ) {
-                $invalid = true;
-            }
+        $settings = array(
+            'url'                    => $url,
+            'verify_certificate'     => $verify_cert,
+            'ssl_version'            => $ssl_version,
+            'force_use_ipv4'         => $force_ipv4,
+            'http_user'              => $http_user,
+            'http_pass'              => $http_pass,
+            'allow_fallback'         => true,
+            // Site-specific filters may carry saved transport data, so apply them only to the saved origin.
+            'transport_site_context' => ! $website || $same_origin,
+        );
 
-            $temp_url = MainWP_Utility::remove_http_prefix( $url, true );
-
-            if ( $invalid || false !== strpos( $url, '?=' ) ) {
-                die( wp_json_encode( array( 'error' => esc_html__( 'Invalid URL.', 'mainwp' ) ) ) );
-            }
-
-            if ( strpos( $temp_url, ':' ) ) {
-                $invalid     = true;
-                $allow_ports = apply_filters( 'mainwp_connect_sites_allow_ports', array(), $url );
-                if ( ! empty( $allow_ports ) && is_array( $allow_ports ) && is_array( $info ) && ! empty( $info['port'] ) && ( in_array( intval( $info['port'] ), $allow_ports, true ) ) ) {
-                    $invalid = false;
-                }
-                if ( $invalid ) {
-                    die( wp_json_encode( array( 'error' => esc_html__( 'Invalid URL.', 'mainwp' ) ) ) );
-                }
-            }
-
-            $verifyCertificate = isset( $_POST['test_verify_cert'] ) ? intval( $_POST['test_verify_cert'] ) : 1;
-            $forceUseIPv4      = apply_filters( 'mainwp_manage_sites_force_use_ipv4', false, $url );
-            $sslVersion        = isset( $_POST['ssl_version'] ) ? intval( $_POST['ssl_version'] ) : 0;
-            $http_user         = isset( $_POST['http_user'] ) ? sanitize_text_field( wp_unslash( $_POST['http_user'] ) ) : '';
-            $http_pass         = isset( $_POST['http_pass'] ) ? wp_unslash( $_POST['http_pass'] ) : '';
-
-        } elseif ( isset( $_POST['siteid'] ) ) {
-            $website = MainWP_DB::instance()->get_website_by_id( intval( $_POST['siteid'] ) );
-            if ( $website ) {
-                $url               = $website->url;
-                $name              = $website->name;
-                $verifyCertificate = (int) $website->verify_certificate;
-                $forceUseIPv4      = $website->force_use_ipv4;
-                $sslVersion        = $website->ssl_version;
-                // MWP-1548: decrypt at the boundary so the reconnect /
-                // try_visit call below uses plaintext credentials.
-                $http_user = MainWP_Credential_Storage::decrypt_credential( $website->http_user );
-                $http_pass = MainWP_Credential_Storage::decrypt_credential( $website->http_pass );
-            }
+        if ( $website ) {
+            $diagnostic = MainWP_Connection_Diagnostics::test_connected( $website, $settings );
+        } else {
+            $admin      = isset( $_POST['admin'] ) ? sanitize_text_field( wp_unslash( $_POST['admin'] ) ) : '';
+            $diagnostic = MainWP_Connection_Diagnostics::test_unconnected( $url, $admin, $settings );
         }
         // phpcs:enable
 
-        $ssl_verifyhost = false;
-
-        if ( 1 === $verifyCertificate ) {
-            $ssl_verifyhost = true;
-        } elseif ( 2 === $verifyCertificate ) {
-            if ( ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 === (int) get_option( 'mainwp_sslVerifyCertificate' ) ) ) {
-                $ssl_verifyhost = true;
-            }
+        $response = array(
+            'success'               => 'success' === $diagnostic['diagnosis']['verdict'],
+            'connection_diagnostic' => $diagnostic,
+        );
+        if ( $website ) {
+            $response['sitename'] = esc_html( $website->name );
         }
-
-        $rslt = MainWP_Connect::try_visit( $url, $ssl_verifyhost, $http_user, $http_pass, $sslVersion, $forceUseIPv4 );
-
-        if ( isset( $rslt['error'] ) && ( '' !== $rslt['error'] ) && ( 'wp-admin/' !== substr( $url, - 9 ) ) ) {
-            if ( substr( $url, - 1 ) !== '/' ) {
-                $url .= '/';
-            }
-            $url    .= 'wp-admin/';
-            $newrslt = MainWP_Connect::try_visit( $url, $ssl_verifyhost, $http_user, $http_pass, $sslVersion, $forceUseIPv4 );
-            if ( isset( $newrslt['error'] ) && ( '' !== $rslt['error'] ) ) {
-                $rslt = $newrslt;
-            }
-        }
-
-        if ( null !== $name ) {
-            $rslt['sitename'] = esc_html( $name );
-        }
-
-        wp_send_json( $rslt );
+        wp_send_json( $response );
     }
 
     /**

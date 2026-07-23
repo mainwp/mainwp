@@ -97,28 +97,53 @@ let mainwp_get_remove_calback = function (side_id) {
             id: side_id
         });
 
-        jQuery.post(ajaxurl, data, function (response) {
+        jQuery.post(ajaxurl, data, function(response) {
+            if (response?.error) {
+                let message = __('An unexpected error occurred. Please try again.', 'mainwp');
 
-            let error = false;
-
-            if (response.error != undefined) {
-                error = response.error;
-            } else if (response.result == 'SUCCESS') {
-                feedback('mainwp-message-zone', __('The site has been removed and the MainWP Child plugin has been disabled. You will be redirected to the Sites page right away.', 'mainwp'), 'green');
-            } else if (response.result == 'NOSITE') {
-                feedback('mainwp-message-zone', __('Site could not be removed. Please reload the page and try again.', 'mainwp'), 'red');
-                error = true;
-            } else {
-                feedback('mainwp-message-zone', __('The site has been removed. Please make sure that the MainWP Child plugin has been deactivated properly. You will be redirected to the Sites page right away.', 'mainwp'), 'green');
+                if (typeof response.error === 'string') {
+                    message = response.error;
+                }
+                feedback('mainwp-message-zone', message, 'red');
+                return;
             }
 
-            if (!error) {
-                setTimeout(function () {
-                    mainwp_forceReload('admin.php?page=managesites');
-                }, 3000);
+            switch (response?.result) {
+                case 'SUCCESS':
+                    feedback(
+                        'mainwp-message-zone',
+                        __('The site has been removed and the MainWP Child plugin has been disabled. You will be redirected to the Sites page right away.', 'mainwp'),
+                        'green'
+                    );
+                    break;
+
+                case 'NOSITE':
+                    feedback(
+                        'mainwp-message-zone',
+                        __('Site could not be removed. Please reload the page and try again.', 'mainwp'),
+                        'red'
+                    );
+                    return;
+
+                default:
+                    feedback(
+                        'mainwp-message-zone',
+                        __('The site has been removed. Please make sure that the MainWP Child plugin has been deactivated properly. You will be redirected to the Sites page right away.', 'mainwp'),
+                        'green'
+                    );
             }
 
-        }, 'json');
+            setTimeout(function() {
+                mainwp_forceReload('admin.php?page=managesites');
+            }, 3000);
+
+        }, 'json').fail(function() {
+            feedback(
+                'mainwp-message-zone',
+                __('An unexpected error occurred. Please try again.', 'mainwp'),
+                'red'
+            );
+        });
     }
 
 }

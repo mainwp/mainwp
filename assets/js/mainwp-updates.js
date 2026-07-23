@@ -1788,7 +1788,7 @@ const updatesoverview_global_prepare_data_upgrade_all = function (which, onPrepa
 
     let initData = {
         title: __('Updating All'),
-        initVisibleContentMsg:true,
+        initVisibleContentMsg: true,
         contentMsg: __('Preparing update data, please wait...'),
     };
     mainwpPopup('#mainwp-prepare-data-modal').init(initData);
@@ -2001,13 +2001,17 @@ const updatesoverview_global_run_upgrade_all = function (which) { // NOSONAR - C
         updatesoverviewContinueAfterBackup = updatesoverview_global_upgrade_all_after_backup(sitesCount, sitesToUpdate, sitesToUpgrade, sitesPluginSlugs, sitesThemeSlugs, sitesTranslationSlugs, suspendedWebsites);
         return mainwp_updatesoverview_checkBackups(sitesToUpdate, siteNames);
     } // end _callback()
-
-    updatesoverview_global_upgrade_all_start(which, siteNames, _callback);
+    if (Object.keys(siteNames).length === 0) {
+        mainwpVars.bulkTaskRunning = false;
+        mainwpPopup('#mainwp-prepare-data-modal').getContentMsgEl().html('<div class="ui yellow message">' + __('There are no updates available to process. Please try again.') + '</div>');
+    } else {
+        updatesoverview_global_upgrade_all_start(which, siteNames, _callback);
+    }
 };
 
 let updatesoverview_global_upgrade_all_start = function (which, siteNames, _callback) {
     // new confirm message
-    if (jQuery(siteNames).length > 0) {
+    if (Object.keys(siteNames).length) {
         let sitesList = [];
         jQuery.each(siteNames, function (index, value) {
             if (value) { // to fix

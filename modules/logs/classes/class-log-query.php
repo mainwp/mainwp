@@ -508,7 +508,7 @@ class Log_Query {
         }
 
         if ( $optimize_has_more ) {
-            $results['count']                  = $count_har_more;
+            $results['count']                  = $start + $count_har_more; // to fix offset issue for next loading.
             $results['extra_data']['has_more'] = $count_har_more > $per_page ? true : false;
         }
 

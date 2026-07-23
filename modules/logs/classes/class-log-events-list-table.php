@@ -151,18 +151,27 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
      * @return array Array of default column names.
      */
     public function get_default_columns() {
-        $columns = array(
-            'cb'         => '<input type="checkbox" />',
-            'created'    => esc_html__( 'Time', 'mainwp' ),
-            'user_id'    => esc_html__( 'User', 'mainwp' ),
-            'action'     => esc_html__( 'Action', 'mainwp' ),
-            'log_object' => esc_html__( 'Object', 'mainwp' ),
-            'event'      => esc_html__( 'Event', 'mainwp' ),
-            'icon'       => '',
-            'name'       => esc_html__( 'Site', 'mainwp' ),
-            'source'     => esc_html__( 'Source', 'mainwp' ),
-            'col_action' => '',
-        );
+        if ( 'widget-overview' === $this->table_id_prefix ) {
+            $columns = array(
+                'created'    => esc_html__( 'Time', 'mainwp' ),
+                'log_object' => esc_html__( 'Object', 'mainwp' ),
+                'event'      => esc_html__( 'Event', 'mainwp' ),
+                'name'       => esc_html__( 'Site', 'mainwp' ),
+            );
+        } else {
+            $columns = array(
+                'cb'         => '<input type="checkbox" />',
+                'created'    => esc_html__( 'Date', 'mainwp' ),
+                'user_id'    => esc_html__( 'User', 'mainwp' ),
+                'action'     => esc_html__( 'Action', 'mainwp' ),
+                'log_object' => esc_html__( 'Object', 'mainwp' ),
+                'icon'       => '',
+                'name'       => esc_html__( 'Website', 'mainwp' ),
+                'event'      => esc_html__( 'Event', 'mainwp' ),
+                'source'     => esc_html__( 'Source', 'mainwp' ),
+                'col_action' => '',
+            );
+        }
 
         if ( 'manage-events' !== $this->table_id_prefix ) {
             unset( $columns['source'] );
@@ -1054,11 +1063,11 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
 
         // Fix for widget state save overview table.
         if ( 'widget-overview' === $this->table_id_prefix ) {
-            $table_features['stateSave']  = 'false';
-            $table_features['searching']  = 'false';
-            $table_features['pagingType'] = 'simple';
-            $table_features['info']       = 'false';
-            $table_features['numbers']    = 3;
+            $table_features['stateSave'] = 'false';
+            $table_features['searching'] = 'false';
+            $table_features['paging']    = 'false';
+            $table_features['info']      = 'false';
+            $table_features['numbers']   = 3;
         }
 
         ?>
@@ -1183,6 +1192,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                                 <?php
                                 if ( 'widget-overview' === $this->table_id_prefix ) {
                                     ?>
+                                    "topStart": null,
                                     "bottomEnd": nextButton
                                     <?php
                                 } else {
@@ -1213,7 +1223,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                             "columnDefs": <?php echo wp_json_encode( $this->get_columns_defines() ); ?>,
                             "columns": <?php echo wp_json_encode( $this->get_columns_init() ); ?>,
                             "language": {
-                                "emptyTable": "<?php echo 'widget-overview' === $this->table_id_prefix ? esc_html__( 'No matching activity was found in the last 24 hours', 'mainwp' ) : esc_html__( 'No events found.', 'mainwp' ); ?>"
+                                "emptyTable": "<?php echo 'widget-overview' === $this->table_id_prefix ? esc_html__( 'No matching activity was found in the last 24 hours.', 'mainwp' ) : esc_html__( 'No events found.', 'mainwp' ); ?>"
                             },
                             "drawCallback": function( settings ) {
                                 this.api().tables().body().to$().attr( 'id', 'mainwp-module-log-records-body-table' );
@@ -1302,15 +1312,20 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                         console.log(err);
                     }
 
-                    let $sitesChangesSelect = jQuery( '#widget-sites-changes-dropdown-selector' ).dropdown( {
-                        onChange: function( value ) {
-                            mainwp_ui_state_save('sites-changes-widget', value);
-                            if(widgetViewSource !== value ){
-                                widgetViewSource = value;
-                                $module_log_table.ajax.reload();
+                    // Delay dropdown initialization to prevent it from being overwritten.
+                    setTimeout(() => {
+                        jQuery( '#widget-sites-changes-dropdown-selector' ).dropdown( {
+                            onChange: function( value ) {
+                                mainwp_ui_state_save('sites-changes-widget', value);
+                                console.log('Sites changes selector onchange.');
+                                if(widgetViewSource !== value ){
+                                    widgetViewSource = value;
+                                    $module_log_table.ajax.reload();
+                                }
                             }
-                        }
-                    } ).dropdown("set selected", widgetViewSource);
+                        } ).dropdown("set selected", widgetViewSource);
+                    }, 1000);
+
 
                     mainwp_module_log_overview_content_filter = function() {
                         if(jQuery( '#mainwp-common-filter-segments-model-name').length && 'manage-events' === jQuery( '#mainwp-common-filter-segments-model-name').val() ){

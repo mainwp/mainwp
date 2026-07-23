@@ -1317,7 +1317,6 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                         jQuery( '#widget-sites-changes-dropdown-selector' ).dropdown( {
                             onChange: function( value ) {
                                 mainwp_ui_state_save('sites-changes-widget', value);
-                                console.log('Sites changes selector onchange.');
                                 if(widgetViewSource !== value ){
                                     widgetViewSource = value;
                                     $module_log_table.ajax.reload();

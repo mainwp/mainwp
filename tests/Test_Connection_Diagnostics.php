@@ -114,6 +114,100 @@ class Test_Connection_Diagnostics extends \WP_UnitTestCase {
         $this->assertSame( 'cloudflare', $diagnosis['provider'] );
     }
 
+    /** The SiteGround CAPTCHA header name is sufficient without a text body. */
+    public function test_siteground_header_name_is_high_confidence_provider_evidence() {
+        $sentinel    = 'MWP-SITEGROUND-RAW-SENTINEL';
+        $observation = array(
+            'phase'               => 'child_endpoint',
+            'curl_errno'          => 0,
+            'http_status'         => 202,
+            'peer_ip'             => '8.8.8.8',
+            'bounded_body_sample' => '',
+            'header_blocks'       => array(
+                array(
+                    'headers' => array(
+                        'sg-captcha' => array( $sentinel ),
+                    ),
+                ),
+            ),
+        );
+
+        $diagnosis = MainWP_Connection_Diagnostics::diagnose( $observation );
+        $export    = MainWP_Connection_Diagnostics::export( $diagnosis, $observation );
+
+        $this->assertSame( 'siteground_request_blocked', $diagnosis['diagnosis_id'] );
+        $this->assertSame( 'siteground', $diagnosis['provider'] );
+        $this->assertSame( 'request_blocked', $diagnosis['category'] );
+        $this->assertSame( 'high', $diagnosis['category_confidence'] );
+        $this->assertSame( 'high', $diagnosis['provider_confidence'] );
+        $this->assertSame( 'siteground', $export['support']['provider'] );
+        $this->assertSame( 'SiteGround appears to have challenged the MainWP request.', $export['presentation']['title'] );
+        $this->assertSame( 'The response contained a distinctive SiteGround CAPTCHA marker.', $export['presentation']['explanation'] );
+        $this->assertSame( array( 'Ask SiteGround Support to allow requests from your MainWP Dashboard, then test again.' ), $export['presentation']['steps'] );
+        $this->assertSame( array( 'state' => 'success', 'label' => 'Server response — HTTP 202' ), $export['presentation']['server'] );
+        $this->assertSame( array( 'state' => 'failure', 'label' => 'MainWP Child — Did not respond' ), $export['presentation']['child'] );
+        $this->assertContains( 'SiteGround CAPTCHA marker detected', $export['presentation']['facts'] );
+        $this->assertStringNotContainsString( $sentinel, wp_json_encode( $export ) );
+    }
+
+    /** Generic SiteGround-like response metadata and HTTP 202 are not attribution evidence. */
+    public function test_siteground_generic_metadata_is_not_provider_evidence() {
+        $diagnosis = MainWP_Connection_Diagnostics::diagnose(
+            array(
+                'phase'               => 'child_endpoint',
+                'curl_errno'          => 0,
+                'http_status'         => 202,
+                'peer_ip'             => '8.8.8.8',
+                'bounded_body_sample' => '<html>SiteGround CAPTCHA at /.well-known/sgcaptcha/</html>',
+                'header_blocks'       => array(
+                    array(
+                        'headers' => array(
+                            'x-robots-tag' => array( 'noindex' ),
+                            'cache-control' => array( 'no-store' ),
+                            'x-sg-cdn'      => array( '1' ),
+                        ),
+                    ),
+                ),
+            )
+        );
+
+        $this->assertSame( 'child_did_not_respond', $diagnosis['diagnosis_id'] );
+        $this->assertArrayNotHasKey( 'provider', $diagnosis );
+    }
+
+    /** SiteGround headers do not bypass direct globally routed peer requirements. */
+    public function test_siteground_header_requires_a_direct_global_peer() {
+        $observations = array(
+            array( 'peer_ip' => '' ),
+            array( 'peer_ip' => '127.0.0.1' ),
+            array( 'peer_ip' => '8.8.8.8', 'via_proxy' => true ),
+        );
+
+        foreach ( $observations as $context ) {
+            $diagnosis = MainWP_Connection_Diagnostics::diagnose(
+                array_merge(
+                    array(
+                        'phase'               => 'child_endpoint',
+                        'curl_errno'          => 0,
+                        'http_status'         => 202,
+                        'bounded_body_sample' => '',
+                        'header_blocks'       => array(
+                            array(
+                                'headers' => array(
+                                    'sg-captcha' => array( 'challenge' ),
+                                ),
+                            ),
+                        ),
+                    ),
+                    $context
+                )
+            );
+
+            $this->assertSame( 'child_did_not_respond', $diagnosis['diagnosis_id'] );
+            $this->assertArrayNotHasKey( 'provider', $diagnosis );
+        }
+    }
+
     /** Provider attribution requires a known globally routable peer. */
     public function test_provider_detection_requires_a_non_empty_peer() {
         $diagnosis = MainWP_Connection_Diagnostics::diagnose(

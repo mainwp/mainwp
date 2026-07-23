@@ -1060,6 +1060,11 @@ class MainWP_Connection_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBra
                 $explanation = esc_html__( 'The server returned HTTP 429 before MainWP communication could be verified.', 'mainwp' );
                 $steps       = array( esc_html__( 'Wait and try again, or ask the host to allow MainWP Dashboard requests.', 'mainwp' ) );
                 break;
+            case 'siteground_request_blocked':
+                $title       = esc_html__( 'SiteGround appears to have challenged the MainWP request.', 'mainwp' );
+                $explanation = esc_html__( 'The response contained a distinctive SiteGround CAPTCHA marker.', 'mainwp' );
+                $steps       = array( esc_html__( 'Ask SiteGround Support to allow requests from your MainWP Dashboard, then test again.', 'mainwp' ) );
+                break;
             case 'imunify360_request_blocked':
                 $title       = esc_html__( 'Imunify360 appears to have blocked the MainWP request.', 'mainwp' );
                 $explanation = esc_html__( 'The response contained a distinctive Imunify360 block marker.', 'mainwp' );
@@ -1169,6 +1174,9 @@ class MainWP_Connection_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBra
                 case 'http_auth_credentials_supplied':
                     $labels[] = esc_html__( 'HTTP authentication credentials supplied', 'mainwp' );
                     break;
+                case 'siteground_marker_detected':
+                    $labels[] = esc_html__( 'SiteGround CAPTCHA marker detected', 'mainwp' );
+                    break;
                 case 'imunify360_marker_detected':
                     $labels[] = esc_html__( 'Imunify360 block marker detected', 'mainwp' );
                     break;
@@ -1269,6 +1277,9 @@ class MainWP_Connection_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBra
         $cf_mitigated = self::header_contains( $headers, 'cf-mitigated', 'challenge' );
         if ( $cf_mitigated ) {
             return 'cloudflare';
+        }
+        if ( ! empty( $headers['sg-captcha'] ) ) {
+            return 'siteground';
         }
 
         $body = isset( $observation['bounded_body_sample'] ) ? $observation['bounded_body_sample'] : '';

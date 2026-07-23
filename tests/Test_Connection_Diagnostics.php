@@ -9,6 +9,7 @@ use MainWP\Dashboard\MainWP_Connection_Diagnostics;
 use MainWP\Dashboard\MainWP_Credential_Render;
 use MainWP\Dashboard\MainWP_Exception;
 use MainWP\Dashboard\MainWP_Post_Site_Handler;
+use MainWP\Dashboard\MainWP_UI;
 
 /**
  * Tests the closed connection diagnosis contract without making network calls.
@@ -373,6 +374,18 @@ class Test_Connection_Diagnostics extends \WP_UnitTestCase {
         $this->assertSame( 24999, $method->invoke( null, 124.9999, 100.0 ) );
         $this->assertSame( 1, $method->invoke( null, 100.0019, 100.0 ) );
         $this->assertSame( 0, $method->invoke( null, 99.0, 100.0 ) );
+    }
+
+    /** The browser watchdog includes a bounded margin around the transport deadline. */
+    public function test_connection_modal_exports_browser_request_timeout() {
+        ob_start();
+        MainWP_UI::render_modal_connection_test();
+        $html = ob_get_clean();
+
+        $this->assertStringContainsString(
+            'data-mainwp-diagnostic-request-timeout="' . ( ( MainWP_Connection_Diagnostics::DEFAULT_DEADLINE_SECONDS + 10 ) * 1000 ) . '"',
+            $html
+        );
     }
 
     /** Cross-origin diagnostics bypass request-header filters and saved site context. */

@@ -3334,7 +3334,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
      */
     public static function render_modal_connection_test() {
         ?>
-        <div class="ui modal" id="mainwp-test-connection-modal" role="dialog" aria-modal="true" aria-labelledby="mainwp-test-connection-modal-title">
+        <div class="ui modal" id="mainwp-test-connection-modal" role="dialog" aria-modal="true" aria-labelledby="mainwp-test-connection-modal-title" data-mainwp-diagnostic-request-timeout="<?php echo esc_attr( ( MainWP_Connection_Diagnostics::DEFAULT_DEADLINE_SECONDS + 10 ) * 1000 ); ?>">
             <i class="close icon" role="button" tabindex="0" aria-label="<?php esc_attr_e( 'Close', 'mainwp' ); ?>"></i>
             <div class="header" id="mainwp-test-connection-modal-title"><?php esc_html_e( 'Connection Test', 'mainwp' ); ?></div>
             <div class="content" aria-busy="true">

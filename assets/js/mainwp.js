@@ -455,6 +455,8 @@ let mainwp_render_reconnect_failure = function (container, response, retry) {
 };
 
 const mainwpConnectionDiagnosticsDocs = 'https://docs.mainwp.com/troubleshooting/potential-issues';
+// Allow admin-ajax queue/bootstrap time around the server-side probe budget.
+const mainwpConnectionDiagnosticRequestTimeout = Math.max(1000, Number(jQuery('#mainwp-test-connection-modal').attr('data-mainwp-diagnostic-request-timeout')) || 35000);
 let mainwpConnectionDiagnosticRetry = null;
 let mainwpConnectionDiagnosticRequest = null;
 let mainwpConnectionDiagnosticGeneration = 0;
@@ -588,7 +590,13 @@ globalThis.mainwp_prepare_connection_diagnostic_modal = function (retry) {
 
 let mainwp_request_connection_diagnostic = function (data) {
     let generation = mainwpConnectionDiagnosticGeneration;
-    let request = jQuery.post(ajaxurl, data, null, 'json');
+    let request = jQuery.ajax({
+        type: 'POST',
+        url: ajaxurl,
+        data: data,
+        dataType: 'json',
+        timeout: mainwpConnectionDiagnosticRequestTimeout
+    });
     mainwpConnectionDiagnosticRequest = request;
     request.done(function (response) {
         if (generation !== mainwpConnectionDiagnosticGeneration) {

@@ -181,11 +181,20 @@ class MainWP_Site_Open { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
      * @uses \MainWP\Dashboard\MainWP_Connect::get_get_data_authed()
      */
     private static function open_site( $website, $location, $params = array() ) {
-        if ( MainWP_Demo_Handle::get_instance()->is_demo_website( $website ) ) {
-            $action = $website->url . 'wp-admin.html';
-        } else {
-            $action = MainWP_Connect::get_get_data_authed( $website, ( null === $location || '' === $location ) ? 'index.php' : $location, 'where', false, $params );
+        if ( ! is_array( $params ) ) {
+            $params = array();
         }
+
+        $action_url = '';
+        if ( MainWP_Demo_Handle::get_instance()->is_demo_website( $website ) ) {
+            $action_url = $website->url . 'wp-admin.html';
+        } else {
+            if ( ! isset( $params['verify_signature'] ) ) {
+                $params['verify_signature'] = true; // enable for open site.
+            }
+            $action_url = MainWP_Connect::get_get_data_authed( $website, ( null === $location || '' === $location ) ? 'index.php' : $location, 'where', false, $params );
+        }
+
         $open_download = ! empty( $params['filedl'] ) ? true : false;
         $close_window  = ! empty( $_GET['closeWindow'] ) ? true : false; //phpcs:ignore -- ok.
 
@@ -196,7 +205,7 @@ class MainWP_Site_Open { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
          *
          * @since 5.5
          */
-        do_action( 'mainwp_site_go_to_wpadmin', $website, $location, $params );
+        do_action( 'mainwp_site_go_to_wpadmin', $website, $location, $params, $action_url, $post_params );
 
         ?>
         <div class="ui segment">
@@ -213,7 +222,7 @@ class MainWP_Site_Open { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
                 }
                 ?>
             </div>
-            <form method="POST" action="<?php echo $action; // phpcs:ignore WordPress.Security.EscapeOutput ?>" id="redirectForm">
+            <form method="POST" action="<?php echo $action_url; // phpcs:ignore WordPress.Security.EscapeOutput ?>" id="redirectForm">
                 <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
             </form>
         </div>

@@ -56,7 +56,7 @@ class MainWP_Security_Issues_Widget { // phpcs:ignore Generic.Classes.OpeningBra
                     array(
                         'select_wp_fields' => $wpsite_fields,
                         'others_fields'    => array(),
-                        'view'             => 'simple_view',
+                        'view'             => 'custom_view',
                     )
                 )
             );

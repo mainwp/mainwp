@@ -998,13 +998,18 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                         curl_setopt( $info['handle'], CURLOPT_URL, $requestUrls[ $rid ] );
                         curl_setopt( $info['handle'], CURLOPT_FRESH_CONNECT, true );
                         curl_setopt( $info['handle'], CURLOPT_FORBID_REUSE, true );
-                        curl_multi_add_handle( $mh, $info['handle'] );
-                        do {
+                        $add_retry = curl_multi_add_handle( $mh, $info['handle'] );
+                        if ( CURLM_OK === $add_retry ) {
                             $mrc = curl_multi_exec( $mh, $running );
-                        } while ( CURLM_CALL_MULTI_PERFORM === $mrc );
-                        $retry_added = true;
-                        unset( $requestUrls[ $rid ] );
-                        continue; // libcurl updates $running automatically.
+
+                            if ( CURLM_OK === $mrc ) {
+                                $retry_added = true;
+                                unset( $requestUrls[ $rid ] );
+                                continue; // libcurl updates $running automatically.
+                            }
+
+                            curl_multi_remove_handle( $mh, $info['handle'] );
+                        }
                     }
 
                     if ( ! $contains ) {

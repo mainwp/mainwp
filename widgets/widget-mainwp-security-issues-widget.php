@@ -55,6 +55,8 @@ class MainWP_Security_Issues_Widget { // phpcs:ignore Generic.Classes.OpeningBra
                 MainWP_DB::instance()->get_sql_websites_for_current_user_by_params(
                     array(
                         'select_wp_fields' => $wpsite_fields,
+                        'others_fields'    => array(),
+                        'view'             => 'simple_view',
                     )
                 )
             );

@@ -1768,23 +1768,23 @@ let updatesoverview_themes_upgrade_int = function (slug, websiteId, bulkMode, la
     return false;
 };
 
-const updatesoverview_global_upgrade_all = function (which) { // NOSONAR - Complexity.
+const updatesoverview_global_upgrade_all = function (which, current_siteid) { // NOSONAR - Complexity.
     if (mainwpVars.bulkTaskRunning) {
         return;
     }
-    updatesoverview_global_prepare_upgrade_all(which);
+    updatesoverview_global_prepare_upgrade_all(which, current_siteid);
 }
 
-const updatesoverview_global_prepare_upgrade_all = function (which) { // NOSONAR - Complexity.
+const updatesoverview_global_prepare_upgrade_all = function (which, current_siteid) { // NOSONAR - Complexity.
     if (mainwpVars.bulkTaskRunning) {
         return;
     }
     const onPrepared = () => updatesoverview_global_run_upgrade_all(which);
 
-    updatesoverview_global_prepare_data_upgrade_all(which, onPrepared);
+    updatesoverview_global_prepare_data_upgrade_all(which, onPrepared, current_siteid);
 }
 
-const updatesoverview_global_prepare_data_upgrade_all = function (which, onPrepared) {
+const updatesoverview_global_prepare_data_upgrade_all = function (which, onPrepared, current_siteid) {
 
     let initData = {
         title: __('Updating All'),
@@ -1796,6 +1796,7 @@ const updatesoverview_global_prepare_data_upgrade_all = function (which, onPrepa
     let data = mainwp_secure_data({
         action: 'mainwp_overview_prepare_upgradeall',
         which: which,
+        site_id: current_siteid
     });
 
     jQuery.ajax({

@@ -2951,8 +2951,8 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 COUNT(wp.id) AS total_sites,
                 SUM(CASE WHEN s.sync_errors = '' THEN 1 ELSE 0 END) AS connected_sites,
                 SUM(CASE WHEN s.sync_errors <> '' THEN 1 ELSE 0 END) AS disconnected_sites
-            FROM {$sites_table} wp
-            LEFT JOIN {$sync_table} s
+             FROM {$sites_table} wp
+             JOIN {$sync_table} s
                 ON s.wpid = wp.id " .
                 $this->get_sql_where_allow_access_sites( 'wp', $is_staging ),
             ARRAY_A

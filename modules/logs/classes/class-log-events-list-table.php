@@ -1065,7 +1065,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
         if ( 'widget-overview' === $this->table_id_prefix ) {
             $table_features['stateSave'] = 'false';
             $table_features['searching'] = 'false';
-            $table_features['paging']    = 'false';
+            $table_features['paging']    = 'true';
             $table_features['info']      = 'false';
             $table_features['numbers']   = 3;
         }

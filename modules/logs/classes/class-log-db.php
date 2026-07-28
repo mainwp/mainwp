@@ -51,7 +51,7 @@ class Log_DB extends MainWP_DB {
      *
      * @var int
      */
-    protected $logs_extra_data;
+    protected $logs_extra_data = array();
 
 
     /**

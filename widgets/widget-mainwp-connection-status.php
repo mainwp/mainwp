@@ -536,7 +536,7 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * Display table rows.
      */
     public function ajax_display_rows() {
-        MainWP_Post_Handler::instance()->check_security( 'mainwp_module_cost_tracker_filter_load_segments' );
+        MainWP_Post_Handler::instance()->check_security( 'mainwp_widgets_connections_status_details_display_rows' );
         $current_tab = isset( $_POST['current_tab'] ) ? sanitize_text_field( wp_unslash( $_POST['current_tab'] ) ) : ''; // phpcs:ignore -- NOSONAR - ok.
         $this->prepare_items( $current_tab );
         $output = $this->ajax_get_datatable_rows( $current_tab );

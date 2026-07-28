@@ -392,6 +392,10 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         "emptyTable": "<?php echo esc_html__( 'No sites found.', 'mainwp' ); ?>"
                     },
                     "drawCallback": function( settings ) {
+                        setTimeout(() => {
+                            jQuery( manage_tbl_id + ' .ui.dropdown').dropdown();
+                            mainwp_datatable_fix_menu_overflow(manage_tbl_id, -60, -30);
+                        }, 1000);
                     },
                     "initComplete": function( settings, json ) {
                     },

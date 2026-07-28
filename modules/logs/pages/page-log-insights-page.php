@@ -811,11 +811,14 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
     /**
      * Method load_sites_table()
      *
+     * @param string $tbl_id Table Id
+     * @param bool $optimize Whether optimize data query.
+     *
      * Load sites table.
      */
-    public function load_events_list_table() {
+    public function load_events_list_table( $tbl_id = '', $optimize = false ) {
         $manager                 = Log_Manager::instance();
-        $this->list_events_table = new Log_Events_List_Table( $manager );
+        $this->list_events_table = new Log_Events_List_Table( $manager, $tbl_id, $optimize );
     }
 
     /**
@@ -840,7 +843,7 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
      */
     public function ajax_events_overview_display_rows() { //phpcs:ignore -- NOSONAR -complex.
         MainWP_Post_Handler::instance()->check_security( 'mainwp_module_log_widget_events_overview_display_rows' );
-        $this->load_events_list_table();
+        $this->load_events_list_table( 'widget-overview', true );
 
         $insights_filters = array();
         //phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized

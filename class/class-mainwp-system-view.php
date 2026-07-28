@@ -1098,6 +1098,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                 <div class="label"></div>
             </div>
             <div class="scrolling content mainwp-modal-content">
+                <div class="sync-sites-content-massage"></div>
                 <div class="ui middle aligned divided list" id="sync-sites-status">
                     <?php
                     if ( is_array( $websites ) ) {
@@ -1138,6 +1139,14 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                     }
                     ?>
                 </div>
+            </div>
+        </div>
+
+        <div class="ui modal" id="mainwp-prepare-data-modal">
+            <i class="mainwp-modal-close close icon"></i>
+            <div class="header"><?php esc_html_e( 'Updating All', 'mainwp' ); ?></div>
+            <div class="scrolling content mainwp-modal-content">
+                <div class="sync-sites-content-massage"></div>
             </div>
         </div>
         <input type="hidden" id="sync_selected_site_ids" value="" />

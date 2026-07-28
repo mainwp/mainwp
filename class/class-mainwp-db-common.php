@@ -50,12 +50,14 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
     /**
      * Get the last sync status.
      *
+     * @param string $is_staging Wether query on staging sites.
+     *
      * @return array{
      *     sync_status: string|false,
      *     last_sync: int
      * }
      */
-    public function get_last_sync_status() {
+    public function get_last_sync_status( $is_staging = 'no' ) {
 
         $cutoff = time() - DAY_IN_SECONDS;
 
@@ -71,7 +73,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
 		FROM {$site_table} w
 		INNER JOIN {$sync_table} s ON s.wpid = w.id
 		WHERE s.sync_errors = ''
-		" . $this->get_sql_where_allow_access_sites( 'w' ),
+		" . $this->get_sql_where_allow_access_sites( 'w', $is_staging ),
             $cutoff
         );
 

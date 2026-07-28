@@ -23684,7 +23684,7 @@ msgstr "¿Cuál es la URL del sitio?"
 #: pages/page-mainwp-setup-wizard.php:737
 #: pages/page-mainwp-setup-wizard.php:962
 #: pages/page-mainwp-setup-wizard.php:965
-msgid "(Reqruired)"
+msgid "(Required)"
 msgstr "(Requerido)"
 
 #: pages/page-mainwp-setup-wizard.php:737
@@ -23753,7 +23753,7 @@ msgstr "¿Cuál es su nombre de usuario de administrador en ese sitio? "
 
 #: pages/page-mainwp-setup-wizard.php:774
 #: pages/page-mainwp-setup-wizard.php:780
-msgid "(Reqruired if enabled)"
+msgid "(Required if enabled)"
 msgstr "(Requerido si está habilitado)"
 
 #: pages/page-mainwp-setup-wizard.php:780

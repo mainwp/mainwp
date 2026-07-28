@@ -127,6 +127,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
         global $current_user;
 
         $current_wpid = MainWP_System_Utility::get_current_wpid();
+        $is_staging = 'no';
 
         if ( $current_wpid ) {
             $sql        = MainWP_DB::instance()->get_sql_website_by_id( $current_wpid, false, array( 'wp_upgrades', 'ignored_wp_upgrades', 'ignored_trans_updates', 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ) );
@@ -134,7 +135,6 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
         } else {
             $staging_enabled = is_plugin_active( 'mainwp-staging-extension/mainwp-staging-extension.php' ) || is_plugin_active( 'mainwp-timecapsule-extension/mainwp-timecapsule-extension.php' );
             // To support staging extension.
-            $is_staging = 'no';
             if ( $staging_enabled ) {
                 $staging_updates_view = MainWP_System_Utility::get_select_staging_view_sites();
                 if ( 'staging' === $staging_updates_view ) {
@@ -400,7 +400,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
         if ( ! $globalView ) {
             $last_dtsSync = $currentSite->dtsSync;
         } else {
-            $result       = MainWP_DB_Common::instance()->get_last_sync_status();
+            $result       = MainWP_DB_Common::instance()->get_last_sync_status( $is_staging );
             $sync_status  = $result['sync_status'];
             $last_sync    = $result['last_sync'];
             $last_dtsSync = $result['last_sync'];

@@ -310,7 +310,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         $selectgroups  = isset( $params['with_tags'] ) && $params['with_tags'] ? true : false;
         $orderBy       = isset( $params['orderby'] ) ? $params['orderby'] : 'wp.url';
         $offset        = isset( $params['offset'] ) ? intval( $params['offset'] ) : false;
-        $rowcount      = isset( $params['rowcount'] ) && $params['rowcount'] ? true : false;
+        $rowcount      = isset( $params['rowcount'] ) ? (int) $params['rowcount'] : false;
         $count_sql     = isset( $params['count_sql'] ) && $params['count_sql'] ? true : false;
         $extraWhere    = isset( $params['where'] ) ? $params['where'] : null; // NOTE: without 'AND' at begining and ending of 'where'.
         $for_manager   = isset( $params['for_manager'] ) && $params['for_manager'] ? true : false;
@@ -513,13 +513,14 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             $select_qry = 'SELECT ' . $select . $view_selects . ', GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ",") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.name SEPARATOR ",") as wpgroupids, GROUP_CONCAT(gr.color ORDER BY gr.name SEPARATOR ",") as wpgroups_colors ' .
             $select_clients;
 
-            $qry = ' FROM ' . $this->table_name( 'wp' ) . ' wp
+            $qry       = ' FROM ' . $this->table_name( 'wp' ) . ' wp
             LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgr ON wp.id = wpgr.wpid
             LEFT JOIN ' . $this->table_name( 'group' ) . ' gr ON wpgr.groupid = gr.id
             ' . $join_clients . '
             JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
             ' . $view_joins . '
-            WHERE 1 ' . $where . $connected_sql . '
+            WHERE 1 ' . $where . $connected_sql;
+            $group_qry = '
             GROUP BY wp.id, wp_sync.sync_id
             ORDER BY ' . $orderBy;
         } elseif ( ! empty( $specific_wp_fields ) ) { // Optimize select sites data.
@@ -535,7 +536,8 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             $select_qry = 'SELECT ' . $select . $view_selects;
             $qry        = ' FROM ' . $this->table_name( 'wp' ) . ' wp
             ' . $join_sync . ' ' . $view_joins . '
-            WHERE 1 ' . $where . $connected_sql . '
+            WHERE 1 ' . $where . $connected_sql;
+            $group_qry  = '
             GROUP BY ' . $group_by . '
             ORDER BY ' . $orderBy;
         } else {
@@ -544,7 +546,8 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             ' . $join_clients . '
             JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
             ' . $view_joins . '
-            WHERE 1 ' . $where . $connected_sql . '
+            WHERE 1 ' . $where . $connected_sql;
+            $group_qry  = '
             GROUP BY wp.id, wp_sync.sync_id
             ORDER BY ' . $orderBy;
         }
@@ -553,7 +556,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             return 'SELECT COUNT(DISTINCT wp.id) ' . $qry;
         }
 
-        $qry = $select_qry . $qry;
+        $qry = $select_qry . $qry . $group_qry;
 
         if ( ( false !== $offset ) && ( false !== $rowcount ) ) {
             $qry .= ' LIMIT ' . $offset . ', ' . $rowcount;

@@ -359,7 +359,7 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         "dataSrc": function ( json ) {
                             for ( let i=0, ien=json.data.length ; i < ien ; i++ ) {
                                 json.data[i].rowClass = json.rowsInfo[i].rowClass;
-                                json.data[i].log_id = json.rowsInfo[i].log_id;
+                                json.data[i].site_id = json.rowsInfo[i].site_id;
                             }
                             return json.data;
                         }
@@ -400,6 +400,7 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     "initComplete": function( settings, json ) {
                     },
                     rowCallback: function (row, data) {
+                        jQuery( row ).addClass(data.rowClass);
                     },
                     orderMulti: false,
                     searchDelay: <?php echo intval( $table_features['searchDelay'] ); ?>
@@ -489,14 +490,11 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
             'select_wp_fields'   => $wpsite_fields,
             'select_sync_fields' => $sync_fields,
             'status'             => $status,
-            'per_page'           => $perPage,
-            'page'               => 1,
-            'order'              => ( 'asc' === $req_order ) ? 'asc' : 'desc',
-            'orderby'            => 'wp.id',
+            'offset'             => $start,
+            'rowcount'           => $perPage,
+            'orderby'            => 'wp.id ' . ( 'asc' === $req_order ? 'asc' : 'desc' ),
             'view'               => 'custom_view',
             'others_fields'      => array(),
-            'start'              => $start,
-
         );
 
         $results = MainWP_DB::instance()->query(
@@ -538,6 +536,7 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * Display table rows.
      */
     public function ajax_display_rows() {
+        MainWP_Post_Handler::instance()->check_security( 'mainwp_module_cost_tracker_filter_load_segments' );
         $current_tab = isset( $_POST['current_tab'] ) ? sanitize_text_field( wp_unslash( $_POST['current_tab'] ) ) : ''; // phpcs:ignore -- NOSONAR - ok.
         $this->prepare_items( $current_tab );
         $output = $this->ajax_get_datatable_rows( $current_tab );

@@ -152,6 +152,18 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 <?php static::render_multi_status( $count_connected, $count_disconnected ); ?>
             </div>
         </div>
+
+        <?php
+        /**
+         * Action: mainwp_connection_status_widget_top
+         *
+         * Fires at the top of the Connection Status widget.
+         *
+         * @since 4.1
+         */
+        do_action( 'mainwp_connection_status_widget_top' );
+        ?>
+
         <div class="mainwp-scrolly-overflow" id="widget-connections-status-details">
             <?php
             foreach ( array( 'all-sites', 'connected', 'disconnected' ) as $tab ) {
@@ -202,30 +214,11 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
             };
 
             let mainwp_widgets_connections_status_tab_onchange = function( current_tab ){
-
                 if( ! ['all-sites', 'connected', 'disconnected'].includes(current_tab) || jQuery('#widget-connections-status-details div[data-tab=' + current_tab +'][loaded-data="loaded"]').length > 0 ){
                     return;
                 }
-
                 let current_page = jQuery('#widget-connections-status-details div[data-tab=' + current_tab + ']').attr('current-page');
-
-
                 mainwp_widgets_connections_status_get_table(current_tab).ajax.reload();
-
-                // let postVars = {
-                //     action: 'mainwp_widgets_connections_status_details_display_rows',
-                //     current_tab: current_tab,
-                //     page: current_page
-                // };
-                // jQuery.post(ajaxurl, mainwp_secure_data(postVars), function (response) {
-                //     if(response?.error){
-                //         jQuery('#widget-connections-status-details div[data-tab=' + current_tab + '] .widget-connections-status-details-table-list-container').html('<div class="ui message yellow" >' + response.error + '</div>');
-                //     } else if( response?.content){
-                //         jQuery('#widget-connections-status-details div[data-tab=' + current_tab + '] .widget-connections-status-details-table-list-container').html(response.content);
-                //     }
-                //     jQuery('#widget-connections-status-details div[data-tab=' + current_tab + ']').attr('loaded-data', 'loaded');
-                //     jQuery('#widget-connections-status-details div[data-tab=' + current_tab + '] .ui.dropdown').dropdown();
-                // }, 'json');
             }
 
             jQuery( document ).ready( function () {
@@ -251,14 +244,6 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
             } );
         </script>
         <?php
-        /**
-         * Action: mainwp_connection_status_widget_top
-         *
-         * Fires at the top of the Connection Status widget.
-         *
-         * @since 4.1
-         */
-        do_action( 'mainwp_connection_status_widget_top' );
     }
 
     /**
@@ -274,11 +259,11 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
             $hook_before = 'mainwp_connection_status_before_all_sites_list';
             $hook_after  = 'mainwp_connection_status_after_all_sites_list';
         } elseif ( 'connected' === $tab ) {
-            $hook_before = 'mainwp_connection_status_before_connected_list';
-            $hook_after  = 'mainwp_connection_status_after_connected_list';
+            $hook_before = 'mainwp_connection_status_before_connected_sites_list';
+            $hook_after  = 'mainwp_connection_status_after_connected_sites_list';
         } else {
-            $hook_before = 'mainwp_connection_status_before_disconnected_list';
-            $hook_after  = 'mainwp_connection_status_after_disconnected_list';
+            $hook_before = 'mainwp_connection_status_before_disconnected_sites_list';
+            $hook_after  = 'mainwp_connection_status_after_disconnected_sites_list';
         }
 
         ?>
@@ -339,6 +324,10 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
         <script type="text/javascript">
             let $widget_connections_status_table_<?php echo esc_js( str_replace( '-', '_', $tab ) ); ?> = null;
             jQuery( document ).ready( function ($) {
+                let responsive = true;
+                if( jQuery( window ).width() > 1140 ) {
+                    responsive = false;
+                }
                 let manage_tbl_id = '#<?php echo esc_js( $tbl_id ); ?>';
                 $widget_connections_status_table_<?php echo esc_js( str_replace( '-', '_', $tab ) ); ?> = jQuery( manage_tbl_id ).on( 'processing.dt', function ( e, settings, processing ) {
                     jQuery( '#mainwp-loading-sites' ).css( 'display', processing ? 'block' : 'none' );

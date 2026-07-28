@@ -41,7 +41,11 @@
                 totalSites: 0,
                 progressMax: 0, // length of process bar.
                 progressInit: 0, // init value of process bar.
+                hideProgress: false,
                 statusText: '',
+                contentMsg: '',
+                initVisibleContentMsg: false,
+                clearListItems: false,
                 hideStatusText: false,
                 doCloseCallback: null,
                 init: function (data) {
@@ -51,11 +55,15 @@
                         this.actionsCloseCallback = data.callback;
                         delete data.callback;
                     }
+                    // default init values.
                     let defaultVal = {
                         totalSites: 0,
                         progressMax: 0,
                         progressInit: 0,
-                        statusText: 'synced'
+                        statusText: 'synced',
+                        initVisibleContentMsg: false,
+                        hideProgress: false,
+                        clearListItems: false
                     };
                     this.doCloseCallback = true; // default is yes.
                     $.extend(this, defaultVal, data);
@@ -65,6 +73,11 @@
                     this.initProgress();
                     this.render();
                     this.bindEvents();
+
+                    if (this.clearListItems) {
+                        this.clearList();
+                    }
+
                 },
                 initWrapper: function (el) {  // may be call this very first to set custom wrapper.
                     this.overlayId = el;
@@ -89,15 +102,16 @@
                 initElements: function () {
                     if (!this.$overlayElementId) return;
 
-                    this.$header    = this.$overlayElementId.find('.header');
-                    this.$progress  = this.$overlayElementId.find('.mainwp-modal-progress');
-                    this.$label     = this.$progress.find('.label');
-                    this.$list      = this.$overlayElementId.find('#sync-sites-status');
-                    this.$actions   = this.$overlayElementId.find('.mainwp-modal-actions');
-                    this.$content   = this.$overlayElementId.find('.mainwp-modal-content');
-                    this.$wrap      = this.$overlayElementId.find('.mainwp-popup-wrap');
-                    this.$backdrop  = this.$overlayElementId.find('.mainwp-popup-backdrop');
-                    this.$closeBtn  = this.$overlayElementId.find('.mainwp-modal-close');
+                    this.$header = this.$overlayElementId.find('.header');
+                    this.$progress = this.$overlayElementId.find('.mainwp-modal-progress');
+                    this.$label = this.$progress.find('.label');
+                    this.$contentMsg = this.$overlayElementId.find('.sync-sites-content-massage');
+                    this.$list = this.$overlayElementId.find('#sync-sites-status');
+                    this.$actions = this.$overlayElementId.find('.mainwp-modal-actions');
+                    this.$content = this.$overlayElementId.find('.mainwp-modal-content');
+                    this.$wrap = this.$overlayElementId.find('.mainwp-popup-wrap');
+                    this.$backdrop = this.$overlayElementId.find('.mainwp-popup-backdrop');
+                    this.$closeBtn = this.$overlayElementId.find('.mainwp-modal-close');
                 },
                 render: function () {
                     if (!this.$overlayElementId) return;
@@ -108,7 +122,18 @@
                         this.$header.html(this.title);
                     }
 
-                    this.$progress.show();
+                    if (this.hideProgress) {
+                        this.$progress.hide();
+                    } else {
+                        this.$progress.show();
+                    }
+
+                    if (this.initVisibleContentMsg && this.contentMsg) {
+                        this.$contentMsg.html(this.contentMsg).show();
+                    } else {
+                        this.contentMsg = ''; // clear caching msg.
+                        this.$contentMsg.html('').hide();
+                    }
 
                     this.$overlayElementId
                         .modal({
@@ -148,6 +173,12 @@
                         // do call back when clicking on close button or clicking on dimmer.
                         typeof this.actionsCloseCallback === 'function' && this.actionsCloseCallback();
                     }
+                },
+                showProgress: function () {
+                    this.$progress.show();
+                },
+                getContentMsgEl: function () {
+                    return this.$contentMsg;
                 },
                 initProgressBatch: function () {
                     this._pendingCount = 0;
@@ -205,7 +236,7 @@
                     const $row = $('<div>', { class: 'item' });
 
                     const $right = $('<div>', { class: 'right floated content' });
-                    const $left  = $('<div>', { class: 'content' });
+                    const $left = $('<div>', { class: 'content' });
 
                     if (allowHtml) {
                         $right.html(right);

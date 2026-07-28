@@ -159,11 +159,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
         $total_plugins_outdate = 0;
         $total_themes_outdate  = 0;
 
-        $all_wp_updates           = array();
-        $all_plugins_updates      = array();
-        $all_themes_updates       = array();
-        $all_translations_updates = array();
-        $sites_ids                = array();
+        $sites_ids = array();
 
         $currentSite = null;
 
@@ -197,11 +193,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
             $total_plugins_outdate = isset( $cache_overview['total_plugins_outdate'] ) ? intval( $cache_overview['total_plugins_outdate'] ) : 0;
             $total_themes_outdate  = isset( $cache_overview['total_themes_outdate'] ) ? intval( $cache_overview['total_themes_outdate'] ) : 0;
 
-            $all_wp_updates           = isset( $cache_overview['all_wp_updates'] ) && is_array( $cache_overview['all_wp_updates'] ) ? $cache_overview['all_wp_updates'] : array();
-            $all_plugins_updates      = isset( $cache_overview['all_plugins_updates'] ) && is_array( $cache_overview['all_plugins_updates'] ) ? $cache_overview['all_plugins_updates'] : array();
-            $all_themes_updates       = isset( $cache_overview['all_themes_updates'] ) && is_array( $cache_overview['all_themes_updates'] ) ? $cache_overview['all_themes_updates'] : array();
-            $all_translations_updates = isset( $cache_overview['all_translations_updates'] ) && is_array( $cache_overview['all_translations_updates'] ) ? $cache_overview['all_translations_updates'] : array();
-            $sites_ids                = isset( $cache_overview['sites_ids'] ) && is_array( $cache_overview['sites_ids'] ) ? $cache_overview['sites_ids'] : array();
+            $sites_ids = isset( $cache_overview['sites_ids'] ) && is_array( $cache_overview['sites_ids'] ) ? $cache_overview['sites_ids'] : array();
         } else {
             $decodedDismissedPlugins = ! empty( $userExtension->dismissed_plugins ) ? json_decode( $userExtension->dismissed_plugins, true ) : array();
             $decodedDismissedThemes  = ! empty( $userExtension->dismissed_themes ) ? json_decode( $userExtension->dismissed_themes, true ) : array();
@@ -236,11 +228,6 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
                 if ( is_array( $wp_upgrades ) && ! empty( $wp_upgrades ) ) {
                     ++$total_wp_upgrades;
-                    $all_wp_updates[] = array(
-                        'id'           => $website->id,
-                        'name'         => $website->name,
-                        'is_suspended' => $website->suspended ? 1 : 0,
-                    );
                 }
 
                 $translation_upgrades = ! empty( $website->translation_upgrades ) ? json_decode( $website->translation_upgrades, true ) : array();
@@ -292,20 +279,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                 }
 
                 if ( is_array( $translation_upgrades ) ) {
-
                     $total_translation_upgrades += count( $translation_upgrades );
-
-                    if ( ! empty( $translation_upgrades ) ) {
-                        foreach ( $translation_upgrades as $trans_upgrade ) {
-                            $slug                       = $trans_upgrade['slug'];
-                            $all_translations_updates[] = array(
-                                'id'               => $website->id,
-                                'name'             => $website->name,
-                                'translation_slug' => rawurlencode( $slug ),
-                                'is_suspended'     => $website->suspended ? 1 : 0,
-                            );
-                        }
-                    }
                 }
 
                 if ( is_array( $plugin_upgrades ) ) {
@@ -322,17 +296,6 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     }
 
                     $total_plugin_upgrades += count( $plugin_upgrades );
-
-                    if ( ! empty( $plugin_upgrades ) ) {
-                        foreach ( $plugin_upgrades as $slug => $value ) {
-                            $all_plugins_updates[] = array(
-                                'id'           => $website->id,
-                                'name'         => $website->name,
-                                'plugin_slug'  => $slug,
-                                'is_suspended' => $website->suspended ? 1 : 0,
-                            );
-                        }
-                    }
                 }
 
                 if ( is_array( $theme_upgrades ) ) {
@@ -347,17 +310,6 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     }
 
                     $total_theme_upgrades += count( $theme_upgrades );
-
-                    if ( ! empty( $theme_upgrades ) ) {
-                        foreach ( $theme_upgrades as $slug => $value ) {
-                            $all_themes_updates[] = array(
-                                'id'           => $website->id,
-                                'name'         => $website->name,
-                                'theme_slug'   => $slug,
-                                'is_suspended' => $website->suspended ? 1 : 0,
-                            );
-                        }
-                    }
                 }
 
                 $pluginsIgnoredAbandoned_perSites = MainWP_DB::instance()->get_website_option( $website, 'plugins_outdate_dismissed' );
@@ -411,10 +363,6 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     'total_theme_upgrades',
                     'total_plugins_outdate',
                     'total_themes_outdate',
-                    'all_wp_updates',
-                    'all_plugins_updates',
-                    'all_themes_updates',
-                    'all_translations_updates',
                     'count_plugins',
                     'count_themes',
                     'sites_ids',
@@ -504,25 +452,231 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
             </div>
 
         </div>
+        <div id="mainwp_prepare_global_update_all_container" style="display: none"></div>
         <?php
 
-        static::render_global_update(
-            $user_can_update_wordpress,
-            $total_wp_upgrades,
-            $all_wp_updates,
-            $user_can_update_plugins,
-            $total_plugin_upgrades,
-            $all_plugins_updates,
-            $user_can_update_themes,
-            $total_theme_upgrades,
-            $all_themes_updates,
-            $mainwp_show_language_updates,
-            $user_can_update_translation,
-            $total_translation_upgrades,
-            $all_translations_updates
-        );
         static::render_bottom( $sites_ids, $globalView );
     }
+
+    /**
+     * Method prepare_update_data().
+     *
+     * @param string $update_type: Values all, core, plugin, theme, trans.
+     */
+    public static function prepare_update_data( $update_type ) { // phpcs:ignore -- NOSONAR - long function.
+
+        $process = array(
+            'core'   => in_array( $update_type, array( 'all', 'core' ), true ),
+            'plugin' => in_array( $update_type, array( 'all', 'plugin' ), true ),
+            'theme'  => in_array( $update_type, array( 'all', 'theme' ), true ),
+            'trans'  => in_array( $update_type, array( 'all', 'trans' ), true ),
+        );
+
+        $current_wpid = MainWP_System_Utility::get_current_wpid();
+
+        if ( $current_wpid ) {
+            $sql = MainWP_DB::instance()->get_sql_website_by_id( $current_wpid, false, array( 'wp_upgrades', 'ignored_wp_upgrades', 'ignored_trans_updates', 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ) );
+        } else {
+            $staging_enabled = is_plugin_active( 'mainwp-staging-extension/mainwp-staging-extension.php' ) || is_plugin_active( 'mainwp-timecapsule-extension/mainwp-timecapsule-extension.php' );
+            // To support staging extension.
+            $is_staging = 'no';
+            if ( $staging_enabled ) {
+                $staging_updates_view = MainWP_System_Utility::get_select_staging_view_sites();
+                if ( 'staging' === $staging_updates_view ) {
+                    $is_staging = 'yes';
+                }
+            }
+            // end support.
+
+            $sql = MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'wp_upgrades', 'ignored_wp_upgrades', 'ignored_trans_updates', 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ), $is_staging, array( 'connected' => 'yes' ) );
+        }
+
+        $userExtension = MainWP_DB_Common::instance()->get_user_extension();
+
+        $total_wp_upgrades          = 0;
+        $total_plugin_upgrades      = 0;
+        $total_translation_upgrades = 0;
+        $total_theme_upgrades       = 0;
+
+        $all_wp_updates           = array();
+        $all_plugins_updates      = array();
+        $all_themes_updates       = array();
+        $all_translations_updates = array();
+
+        $decodedIgnoredCores   = MainWP_Utility::get_decoded_array( $userExtension->ignored_wp_upgrades );
+        $decodedIgnoredPlugins = MainWP_Utility::get_decoded_array( $userExtension->ignored_plugins );
+        $decodedIgnoredThemes  = MainWP_Utility::get_decoded_array( $userExtension->ignored_themes );
+
+        $websites = MainWP_DB::instance()->query( $sql );
+        MainWP_DB::data_seek( $websites, 0 );
+        while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
+
+            $plugin_upgrades = array();
+            $theme_upgrades  = array();
+
+            if ( $process['core'] ) {
+
+                $wp_upgrades           = MainWP_Utility::get_decoded_array( $website->wp_upgrades );
+                $ignored_core_upgrades = MainWP_Utility::get_decoded_array( $website->ignored_wp_upgrades );
+
+                if (
+                    $website->is_ignoreCoreUpdates ||
+                    MainWP_Common_Functions::instance()->is_ignored_updates( $wp_upgrades, $ignored_core_upgrades, 'core' ) ||
+                    MainWP_Common_Functions::instance()->is_ignored_updates( $wp_upgrades, $decodedIgnoredCores, 'core' )
+                ) {
+                    $wp_upgrades = array();
+                }
+
+                if ( ! empty( $wp_upgrades ) ) {
+                    ++$total_wp_upgrades;
+
+                    $all_wp_updates[] = array(
+                        'id'           => $website->id,
+                        'name'         => $website->name,
+                        'is_suspended' => $website->suspended ? 1 : 0,
+                    );
+                }
+            }
+
+            if ( $process['trans'] ) {
+
+                $translation_upgrades = MainWP_Utility::get_decoded_array( $website->translation_upgrades );
+
+                if ( ! empty( $website->ignored_trans_updates ) ) {
+                    $translation_upgrades = array();
+                }
+
+                if ( is_array( $translation_upgrades ) ) {
+
+                    $total_translation_upgrades += count( $translation_upgrades );
+
+                    foreach ( $translation_upgrades as $trans_upgrade ) {
+                        $all_translations_updates[] = array(
+                            'id'               => $website->id,
+                            'name'             => $website->name,
+                            'translation_slug' => rawurlencode( $trans_upgrade['slug'] ),
+                            'is_suspended'     => $website->suspended ? 1 : 0,
+                        );
+                    }
+                }
+            }
+
+            $decodedPremiumUpgrades = array();
+
+            if ( $process['plugin'] || $process['theme'] ) {
+                $decodedPremiumUpgrades = MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' );
+                $decodedPremiumUpgrades = MainWP_Utility::get_decoded_array( $decodedPremiumUpgrades );
+            }
+
+            if ( $process['plugin'] ) {
+                $plugin_upgrades = MainWP_Utility::get_decoded_array( $website->plugin_upgrades );
+
+                if ( $website->is_ignorePluginUpdates ) {
+                    $plugin_upgrades = array();
+                }
+                if ( is_array( $decodedPremiumUpgrades ) ) {
+                    foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
+                        $premiumUpgrade['premium'] = true;
+                        if ( 'plugin' === $premiumUpgrade['type'] ) {
+                            if ( ! is_array( $plugin_upgrades ) ) {
+                                $plugin_upgrades = array();
+                            }
+                            if ( ! $website->is_ignorePluginUpdates ) {
+
+                                $premiumUpgrade = array_filter( $premiumUpgrade );
+                                if ( ! isset( $plugin_upgrades[ $crrSlug ] ) ) {
+                                    continue;
+                                }
+
+                                $plugin_upgrades[ $crrSlug ] = array_merge( $plugin_upgrades[ $crrSlug ], $premiumUpgrade );
+                            }
+                        }
+                    }
+                }
+            }
+
+            if ( $process['theme'] ) {
+                $theme_upgrades = MainWP_Utility::get_decoded_array( $website->theme_upgrades );
+                if ( $website->is_ignoreThemeUpdates ) {
+                    $theme_upgrades = array();
+                }
+
+                if ( is_array( $decodedPremiumUpgrades ) ) {
+                    foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
+                        $premiumUpgrade['premium'] = true;
+                        if ( 'theme' === $premiumUpgrade['type'] ) {
+                            if ( ! is_array( $theme_upgrades ) ) {
+                                $theme_upgrades = array();
+                            }
+                            if ( ! $website->is_ignoreThemeUpdates ) {
+                                $theme_upgrades[ $crrSlug ] = $premiumUpgrade;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if ( $process['plugin'] && is_array( $plugin_upgrades ) ) {
+                $ignored_plugins = MainWP_Utility::get_decoded_array( $website->ignored_plugins );
+                $plugin_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $plugin_upgrades, $ignored_plugins );
+
+                if ( is_array( $decodedIgnoredPlugins ) ) {
+                    $plugin_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $plugin_upgrades, $decodedIgnoredPlugins );
+
+                }
+
+                $total_plugin_upgrades += count( $plugin_upgrades );
+
+                if ( ! empty( $plugin_upgrades ) ) {
+                    foreach ( $plugin_upgrades as $slug => $value ) {
+                        $all_plugins_updates[] = array(
+                            'id'           => $website->id,
+                            'name'         => $website->name,
+                            'plugin_slug'  => $slug,
+                            'is_suspended' => $website->suspended ? 1 : 0,
+                        );
+                    }
+                }
+            }
+
+            if ( $process['theme'] && is_array( $theme_upgrades ) ) {
+                $ignored_themes = MainWP_Utility::get_decoded_array( $website->ignored_themes );
+                $theme_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $theme_upgrades, $ignored_themes );
+
+                if ( is_array( $decodedIgnoredThemes ) ) {
+                    $theme_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $theme_upgrades, $decodedIgnoredThemes );
+                }
+
+                $total_theme_upgrades += count( $theme_upgrades );
+
+                if ( ! empty( $theme_upgrades ) ) {
+                    foreach ( $theme_upgrades as $slug => $value ) {
+                        $all_themes_updates[] = array(
+                            'id'           => $website->id,
+                            'name'         => $website->name,
+                            'theme_slug'   => $slug,
+                            'is_suspended' => $website->suspended ? 1 : 0,
+                        );
+                    }
+                }
+            }
+        }
+
+        switch ( $update_type ) {
+            case 'core':
+                return compact( 'total_wp_upgrades', 'all_wp_updates' );
+            case 'plugin':
+                return compact( 'total_plugin_upgrades', 'all_plugins_updates' );
+            case 'theme':
+                return compact( 'total_theme_upgrades', 'all_themes_updates' );
+            case 'trans':
+                return compact( 'total_translation_upgrades', 'all_translations_updates' );
+            case 'all':
+            default:
+                return compact( 'total_wp_upgrades', 'total_plugin_upgrades', 'total_translation_upgrades', 'total_theme_upgrades', 'all_wp_updates', 'all_plugins_updates', 'all_themes_updates', 'all_translations_updates' );
+        }
+    }
+
 
     /**
      * Renders Updates Overview widget header.
@@ -1074,24 +1228,26 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
      *
      * Render global updates.
      *
-     * @param bool  $user_can_update_wordpress Permission to update WordPress.
-     * @param int   $total_wp_upgrades         Total WordPress update.
-     * @param array $all_wp_updates            All WordPress update list.
+     * @param string $update_type Update type.
+     * @param bool   $user_can_update_wordpress Permission to update WordPress.
+     * @param int    $total_wp_upgrades         Total WordPress update.
+     * @param array  $all_wp_updates            All WordPress update list.
      *
-     * @param bool  $user_can_update_plugins permission to update plugings.
-     * @param int   $total_plugin_upgrades total WordPress update.
-     * @param array $all_plugins_updates all WordPress update list.
+     * @param bool   $user_can_update_plugins permission to update plugings.
+     * @param int    $total_plugin_upgrades total WordPress update.
+     * @param array  $all_plugins_updates all WordPress update list.
      *
-     * @param bool  $user_can_update_themes permission to update themes.
-     * @param int   $total_theme_upgrades total themes update.
-     * @param mixed $all_themes_updates all themes update list.
+     * @param bool   $user_can_update_themes permission to update themes.
+     * @param int    $total_theme_upgrades total themes update.
+     * @param mixed  $all_themes_updates all themes update list.
      *
-     * @param mixed $mainwp_show_language_updates MainWP Language Updates.
-     * @param bool  $user_can_update_translation permission to update languages.
-     * @param int   $total_translation_upgrades total WordPress update.
-     * @param mixed $all_translations_updates all transations update list.
+     * @param mixed  $mainwp_show_language_updates MainWP Language Updates.
+     * @param bool   $user_can_update_translation permission to update languages.
+     * @param int    $total_translation_upgrades total WordPress update.
+     * @param mixed  $all_translations_updates all transations update list.
      */
     public static function render_global_update( // phpcs:ignore -- NOSONAR - complex.
+        $update_type,
         $user_can_update_wordpress,
         $total_wp_upgrades,
         $all_wp_updates,
@@ -1106,12 +1262,19 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
         $total_translation_upgrades,
         $all_translations_updates
     ) {
+
+        $process = array(
+            'core'   => in_array( $update_type, array( 'all', 'core' ), true ),
+            'plugin' => in_array( $update_type, array( 'all', 'plugin' ), true ),
+            'theme'  => in_array( $update_type, array( 'all', 'theme' ), true ),
+            'trans'  => in_array( $update_type, array( 'all', 'trans' ), true ),
+        );
+
         ?>
-        <div style="display: none">
 
             <div id="wp_upgrades">
                 <?php
-                if ( $user_can_update_wordpress && $total_wp_upgrades > 0 ) {
+                if ( $process['core'] && $user_can_update_wordpress && $total_wp_upgrades > 0 ) {
                     foreach ( $all_wp_updates as $item ) {
                         ?>
                         <div updated="0" site_id="<?php echo intval( $item['id'] ); ?>" site_name="<?php echo esc_attr( $item['name'] ); ?>" is-suspended="<?php echo ! empty( $item['is_suspended'] ) ? esc_attr( $item['is_suspended'] ) : ''; ?>"></div>
@@ -1123,7 +1286,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
             <div id="wp_plugin_upgrades">
                 <?php
-                if ( $user_can_update_plugins && $total_plugin_upgrades > 0 ) {
+                if ( $process['plugin'] && $user_can_update_plugins && $total_plugin_upgrades > 0 ) {
                     foreach ( $all_plugins_updates as $item ) {
                         ?>
                         <div updated="0" site_id="<?php echo intval( $item['id'] ); ?>" site_name="<?php echo esc_attr( $item['name'] ); ?>" plugin_slug="<?php echo esc_attr( $item['plugin_slug'] ); ?>" is-suspended="<?php echo ! empty( $item['is_suspended'] ) ? esc_attr( $item['is_suspended'] ) : ''; ?>"></div>
@@ -1135,7 +1298,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
             <div id="wp_theme_upgrades">
 
                 <?php
-                if ( $user_can_update_themes && $total_theme_upgrades > 0 ) {
+                if ( $process['theme'] && $user_can_update_themes && $total_theme_upgrades > 0 ) {
                     foreach ( $all_themes_updates as $item ) {
                         ?>
                         <div updated="0" site_id="<?php echo intval( $item['id'] ); ?>" site_name="<?php echo esc_attr( $item['name'] ); ?>" theme_slug="<?php echo esc_attr( $item['theme_slug'] ); ?>" is-suspended="<?php echo ! empty( $item['is_suspended'] ) ? esc_attr( $item['is_suspended'] ) : ''; ?>"></div>
@@ -1149,7 +1312,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
             <div id="wp_translation_upgrades">
 
                 <?php
-                if ( $user_can_update_translation && $total_translation_upgrades > 0 ) {
+                if ( $process['trans'] && $user_can_update_translation && $total_translation_upgrades > 0 ) {
                     foreach ( $all_translations_updates as $item ) {
                         ?>
                         <div updated="0" site_id="<?php echo intval( $item['id'] ); ?>" site_name="<?php echo esc_attr( $item['name'] ); ?>" translation_slug="<?php echo esc_attr( $item['translation_slug'] ); ?>" is-suspended="<?php echo ! empty( $item['is_suspended'] ) ? esc_attr( $item['is_suspended'] ) : ''; ?>"></div>
@@ -1159,7 +1322,6 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                 ?>
             </div>
             <?php endif; ?>
-        </div>
         <?php
     }
 

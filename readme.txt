@@ -5,9 +5,9 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 6.2
-Tested up to: 7.0
+Tested up to: 7.0.2
 Requires PHP: 7.4
-Stable tag: 6.1.4
+Stable tag: 6.1.5
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -150,6 +150,13 @@ Please report security bugs found in the source code of the MainWP plugin throug
 11. Dashboard Insights
 
 == Changelog ==
+
+= 6.1.5 - 7-28-2026 =
+
+* Fixed: Corrected misspelled "Required" indicators for the "Site URL," "Admin Username," "Security ID," "Client Name," and "Client Email" fields in the setup wizard.
+* Added: Added an additional connection retry when the expected site data is not returned on the first attempt, improving connection reliability.
+* Updated: Improved the loading performance of the "Network Activity" widget by limiting the overview to activity recorded within the last 24 hours.
+* Updated: Improved the loading performance of the "Updates Overview" widget by optimizing update queries, separating summary totals from detailed action data, and loading site and update details only when needed.
 
 = 6.1.4 - 7-21-2026 =
 

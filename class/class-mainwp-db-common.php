@@ -48,57 +48,58 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
     }
 
     /**
-     * Method get_last_sync_status()
+     * Get the last sync status.
      *
-     * Get last sync status.
+     * @param string $is_staging Wether query on staging sites.
      *
-     * @return string $return all_synced|not_synced|last_sync
+     * @return array{
+     *     sync_status: string|false,
+     *     last_sync: int
+     * }
      */
-    public function get_last_sync_status() {
-        $wpsite_fields = array( 'id' );
-        $sync_fields   = array( 'sync_errors', 'dtsSync' );
-        $websites      = $this->query(
-            $this->get_sql_websites_for_current_user_by_params(
-                array(
-                    'select_wp_fields'   => $wpsite_fields,
-                    'select_sync_fields' => $sync_fields,
-                )
-            )
+    public function get_last_sync_status( $is_staging = 'no' ) {
+
+        $cutoff = time() - DAY_IN_SECONDS;
+
+        $site_table = $this->table_name( 'wp' );
+        $sync_table = $this->table_name( 'wp_sync' );
+
+        $sql = $this->wpdb->prepare(
+            "
+		SELECT
+			COUNT(*) AS total_sites,
+			SUM(CASE WHEN s.dtsSync >= %d THEN 1 ELSE 0 END) AS synced_sites,
+			MAX(s.dtsSync) AS last_sync
+		FROM {$site_table} w
+		INNER JOIN {$sync_table} s ON s.wpid = w.id
+		WHERE s.sync_errors = ''
+		" . $this->get_sql_where_allow_access_sites( 'w', $is_staging ),
+            $cutoff
         );
+
+        $stats = $this->wpdb->get_row( $sql );
 
         $return = array(
             'sync_status' => false,
             'last_sync'   => 0,
         );
 
-        if ( ! $websites ) {
+        if ( empty( $stats ) || 0 === (int) $stats->total_sites ) {
             $return['sync_status'] = 'all_synced';
             return $return;
         }
 
-        $total_sites  = 0;
-        $synced_sites = 0;
-        $last_sync    = 0;
-        static::data_seek( $websites, 0 );
-        while ( $websites && ( $website      = static::fetch_object( $websites ) ) ) {
-            if ( empty( $website ) || '' !== $website->sync_errors ) {
-                continue;
-            }
-            ++$total_sites;
-            if ( 60 * 60 * 24 > time() - $website->dtsSync ) {
-                ++$synced_sites;
-            }
-            if ( $last_sync < $website->dtsSync ) {
-                $last_sync = $website->dtsSync;
-            }
-        }
+        $total_sites  = (int) $stats->total_sites;
+        $synced_sites = (int) $stats->synced_sites;
 
         if ( $total_sites === $synced_sites ) {
             $return['sync_status'] = 'all_synced';
         } elseif ( 0 === $synced_sites ) {
             $return['sync_status'] = 'not_synced';
         }
-        $return['last_sync'] = $last_sync;
+
+        $return['last_sync'] = (int) $stats->last_sync;
+
         return $return;
     }
 

@@ -77,7 +77,7 @@ class MainWP_Security_Issues { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         </div>
                     </td>
                     <td>
-                        <span id="wp_uptodate_fix" style="display: none"><a href="#"  onClick="updatesoverview_global_upgrade_all('wp'); return false;" class="ui mini green fluid button" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Click here to update the WordPress core on the site.', 'mainwp' ); ?>"><?php esc_html_e( 'Update WordPress', 'mainwp' ); ?></a></span>
+                        <span id="wp_uptodate_fix" style="display: none"><a href="#"  onClick="updatesoverview_global_upgrade_all('wp', <?php echo intval( $website->id ); ?>); return false;" class="ui mini green fluid button" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Click here to update the WordPress core on the site.', 'mainwp' ); ?>"><?php esc_html_e( 'Update WordPress', 'mainwp' ); ?></a></span>
                     </td>
                 </tr>
 

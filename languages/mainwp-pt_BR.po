@@ -23753,7 +23753,7 @@ msgstr "Qual é o URL do site? "
 #: pages/page-mainwp-setup-wizard.php:965
 #, fuzzy
 #| msgid "Required"
-msgid "(Reqruired)"
+msgid "(Required)"
 msgstr "Obrigatório"
 
 #: pages/page-mainwp-setup-wizard.php:737
@@ -23826,7 +23826,7 @@ msgstr "Qual é o seu nome de usuário de administrador nesse site? "
 #: pages/page-mainwp-setup-wizard.php:780
 #, fuzzy
 #| msgid "Required Fields"
-msgid "(Reqruired if enabled)"
+msgid "(Required if enabled)"
 msgstr "Campos Obrigatórios"
 
 #: pages/page-mainwp-setup-wizard.php:780

@@ -720,7 +720,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                 <div>
                                     <div class="ui hidden divider"></div>
                                     <div class="field">
-                                        <label for="mainwp_managesites_add_wpurl_protocol"><?php esc_html_e( 'What is the site URL?', 'mainwp' ); ?> <span class="ui red small text"><?php esc_html_e( '(Reqruired)', 'mainwp' ); ?></span></label>
+                                        <label for="mainwp_managesites_add_wpurl_protocol"><?php esc_html_e( 'What is the site URL?', 'mainwp' ); ?> <span class="ui red small text"><?php esc_html_e( '(Required)', 'mainwp' ); ?></span></label>
                                         <div class="ui left action input">
                                             <select class="ui compact selection dropdown" id="mainwp_managesites_add_wpurl_protocol" name="mainwp_managesites_add_wpurl_protocol" style="width:120px;padding:0px;">
                                                 <option value="https">https://</option>
@@ -731,7 +731,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                     </div>
                                     <div class="ui hidden divider"></div>
                                     <div class="field">
-                                        <label for="mainwp_managesites_add_wpadmin"><?php esc_html_e( 'What is your administrator username on that site? ', 'mainwp' ); ?> <span class="ui red small text"><?php esc_html_e( '(Reqruired)', 'mainwp' ); ?></label>
+                                        <label for="mainwp_managesites_add_wpadmin"><?php esc_html_e( 'What is your administrator username on that site? ', 'mainwp' ); ?> <span class="ui red small text"><?php esc_html_e( '(Required)', 'mainwp' ); ?></label>
                                         <input type="text" id="mainwp_managesites_add_wpadmin" name="mainwp_managesites_add_wpadmin" value="" />
                                     </div>
                                     <div class="ui hidden divider"></div>
@@ -774,7 +774,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                     </div>
                                     <div class="ui hidden divider"></div>
                                     <div class="field" id="mainwp-unique-security-id-field" style="display:none" >
-                                        <label for="mainwp_managesites_add_uniqueId"><?php esc_html_e( 'Did you generate unique security ID on the site? If yes, copy it here, if not, leave this field blank. ', 'mainwp' ); ?> <span class="ui red small text"><?php esc_html_e( '(Reqruired if enabled)', 'mainwp' ); ?></span></label>
+                                        <label for="mainwp_managesites_add_uniqueId"><?php esc_html_e( 'Did you generate unique security ID on the site? If yes, copy it here, if not, leave this field blank. ', 'mainwp' ); ?> <span class="ui red small text"><?php esc_html_e( '(Required if enabled)', 'mainwp' ); ?></span></label>
                                         <input type="text" id="mainwp_managesites_add_uniqueId" name="mainwp_managesites_add_uniqueId" value="" />
                                     </div>
                                     <div class="ui hidden divider"></div>
@@ -956,10 +956,10 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                         <span class="ui text small"><strong><?php esc_html_e( 'Client Site URL', 'mainwp' ); ?></strong> <span class="ui grey small text"><?php esc_html_e( '(Auto applied)', 'mainwp' ); ?></span></span>
                                     </div>
                                     <div class="five wide column">
-                                        <span class="ui text small"><strong><?php esc_html_e( 'Client Name', 'mainwp' ); ?></strong> <span class="ui red small text"><?php esc_html_e( '(Reqruired)', 'mainwp' ); ?></span></span>
+                                        <span class="ui text small"><strong><?php esc_html_e( 'Client Name', 'mainwp' ); ?></strong> <span class="ui red small text"><?php esc_html_e( '(Required)', 'mainwp' ); ?></span></span>
                                     </div>
                                     <div class="five wide column">
-                                        <span class="ui text small"><strong><?php esc_html_e( 'Client Email', 'mainwp' ); ?></strong> <span class="ui red small text"><?php esc_html_e( '(Reqruired)', 'mainwp' ); ?></span></span>
+                                        <span class="ui text small"><strong><?php esc_html_e( 'Client Email', 'mainwp' ); ?></strong> <span class="ui red small text"><?php esc_html_e( '(Required)', 'mainwp' ); ?></span></span>
                                     </div>
                                     <div class="one wide column">
                                         <span></span>

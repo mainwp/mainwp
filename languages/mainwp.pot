@@ -21965,7 +21965,7 @@ msgstr ""
 #: pages/page-mainwp-setup-wizard.php:737
 #: pages/page-mainwp-setup-wizard.php:962
 #: pages/page-mainwp-setup-wizard.php:965
-msgid "(Reqruired)"
+msgid "(Required)"
 msgstr ""
 
 #: pages/page-mainwp-setup-wizard.php:737
@@ -22026,7 +22026,7 @@ msgstr ""
 
 #: pages/page-mainwp-setup-wizard.php:774
 #: pages/page-mainwp-setup-wizard.php:780
-msgid "(Reqruired if enabled)"
+msgid "(Required if enabled)"
 msgstr ""
 
 #: pages/page-mainwp-setup-wizard.php:780

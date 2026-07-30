@@ -1485,7 +1485,7 @@ class MainWP_Monitoring_Sites_List_Table extends MainWP_Manage_Sites_List_Table 
                         ?>
                         <?php
                     elseif ( 'site_health' === $column_name ) :
-                        if ( ! $disabled ) :
+                        if ( ! $this->site_health_disabled ) :
                             ?>
                         <span><a class="open_newwindow_wpadmin" href="<?php MainWP_Site_Open::get_open_site_admin_link( $website['id'], true ); ?>&location=<?php echo esc_attr( base64_encode( 'site-health.php' ) ); // phpcs:ignore -- base64_encode used for http encoding compatible. ?>" target="_blank"><span class="ui <?php echo esc_html( $h_color ); ?> empty circular label"></span></a> <?php echo esc_html( $h_text ); ?></span>
                             <?php

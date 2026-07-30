@@ -1149,6 +1149,8 @@
   color: var(--mainwp-base-background) !important;
 }
 
+.mainwp-help-popup p { color: #ffffff }
+
 /* Placeholder */
 
 .mainwp-ui.mainwp-custom-theme .mainwp-no-results-placeholder {

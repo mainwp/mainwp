@@ -126,7 +126,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                         if ( isset( $act_info['activated_key'] ) ) {
                             $act_info['activated_key'] = 'Deactivated';
                         }
-                        MainWP_Api_Manager::instance()->set_activation_info( $ext['api'], $act_info );
+                        MainWP_Api_Manager::instance()->set_activation_info( $ext['api'], $act_info, true );
                     }
                     $new_extensions[] = $ext;
                 }
@@ -1857,6 +1857,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                     </form>
                 </div>
             </div>
+            <?php static::render_disable_installed_plugins_sync_modal(); ?>
             <script>
             jQuery(document).ready(function() {
                 const maximumRequests = <?php echo ! empty( get_option( 'mainwp_maximumRequests' ) ) ? esc_js( get_option( 'mainwp_maximumRequests' ) ) : 4; ?>;
@@ -2059,6 +2060,59 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 </ul>
             </div>
         </div>
+        <?php
+    }
+
+    /**
+     * Render the Installed plugins sync warning modal.
+     *
+     * @since 6.1.3
+     *
+     * @return void
+     */
+    public static function render_disable_installed_plugins_sync_modal() {
+        ?>
+        <div class="ui small modal" id="mainwp-disable-installed-plugins-sync-modal">
+            <div class="header"><?php esc_html_e( 'Disable Installed Plugins Sync?', 'mainwp' ); ?></div>
+            <div class="content">
+                <div class="ui yellow message">
+                    <div class="header"><?php esc_html_e( 'MainWP Add-ons may not work as expected', 'mainwp' ); ?></div>
+                    <p><?php esc_html_e( 'Some MainWP Add-ons need the installed plugins data to detect required plugins on your Child Sites. If you disable this option, those Add-ons may not work as expected.', 'mainwp' ); ?></p>
+                </div>
+            </div>
+            <div class="actions">
+                <div class="ui basic cancel button"><?php esc_html_e( 'Cancel', 'mainwp' ); ?></div>
+                <div class="ui green approve button"><?php esc_html_e( 'I understand', 'mainwp' ); ?></div>
+            </div>
+        </div>
+        <script type="text/javascript">
+        jQuery( document ).ready( function () {
+            const installedPluginsCheckbox = jQuery( '#mainwp_select_sync_plugins' );
+            const warningModal = jQuery( '#mainwp-disable-installed-plugins-sync-modal' );
+            let disableConfirmed = false;
+
+            installedPluginsCheckbox.on( 'change', function () {
+                if ( installedPluginsCheckbox.is( ':checked' ) ) {
+                    disableConfirmed = false;
+                    return;
+                }
+
+                if ( disableConfirmed ) {
+                    return;
+                }
+
+                warningModal.modal( {
+                    closable: false,
+                    onApprove: function () {
+                        disableConfirmed = true;
+                    },
+                    onDeny: function () {
+                        installedPluginsCheckbox.prop( 'checked', true ).trigger( 'change' );
+                    }
+                } ).modal( 'show' );
+            } );
+        } );
+        </script>
         <?php
     }
 

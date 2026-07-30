@@ -35,7 +35,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * @var string Current plugin version.
      */
-    public static $version = '6.1.3'; // NOSONAR.
+    public static $version = '6.1.5'; // NOSONAR.
 
     /**
      * Private static variable to hold the single instance of the class.
@@ -413,7 +413,8 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 'mainwp_process_uptime_notification_run_status',
                 'mainwp_warm_cache_pages_ttl',
                 'mainwp_module_log_settings_logs_selection_data',
-                'mainwp_system_monitor_use_wp_cron_saved',
+                'mainwp_master_api_key_updated_time',
+                'mainwp_purchased_extension_stable_data',
             );
 
             $options = apply_filters( 'mainwp_init_load_all_options', $options );

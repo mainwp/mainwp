@@ -2317,6 +2317,23 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 'integration_owner_pp' => 'https://adsanityplugin.com/privacy-policy/',
                 'desc'                 => 'See AdSanity ad performance across your whole MainWP fleet from one dashboard, and catch expiring ads before your advertisers do.',
             ),
+            'site-lockdown-security-for-mainwp'       => array(
+                'type'                 => 'org',
+                'model'                => 'integration',
+                'product_id'           => 'site-lockdown-security-for-mainwp',
+                'slug'                 => 'site-lockdown-security-for-mainwp/mainwp-site-lockdown-security.php',
+                'title'                => 'Site Lockdown Security for MainWP',
+                'link'                 => 'https://wordpress.org/plugins/site-lockdown-security-for-mainwp/',
+                'changelog_url'        => 'https://wordpress.org/plugins/site-lockdown-security-for-mainwp/#developers',
+                'url'                  => 'https://wordpress.org/plugins/site-lockdown-security-for-mainwp/',
+                'group'                => array( 'security' ),
+                'privacy'              => 2,
+                'integration'          => 'Site Lockdown Security',
+                'integration_url'      => 'https://wordpress.org/plugins/folder-auditor/',
+                'integration_owner'    => 'WP Fix It LLC',
+                'integration_owner_pp' => 'https://www.wpfixit.com/privacy-policy/',
+                'desc'                 => 'Manage Site Lockdown Security across your MainWP child sites with fast lock-status visibility, bulk sync tools, and one-click lock actions.',
+            ),
         );
 
         $list = array();

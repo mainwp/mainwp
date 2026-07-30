@@ -262,8 +262,13 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         $ip     = false;
         $target = false;
 
+        // Ask only for the record types read below. dns_get_record() defaults to DNS_ANY, which
+        // most resolvers now refuse or answer with a stub (RFC 8482), so it buys retries and
+        // timeouts instead of answers. Names that exist only in the hosts file are not resolved
+        // here at all -- dns_get_record() never reads the hosts file -- they fall through to the
+        // gethostbynamel() call below.
         $found     = false;
-        $dnsRecord = @dns_get_record( $host ); //phpcs:ignore --ok.
+        $dnsRecord = @dns_get_record( $host, DNS_A | DNS_AAAA | DNS_CNAME ); //phpcs:ignore --ok.
 
         if ( false !== $dnsRecord && is_array( $dnsRecord ) ) {
             if ( ! isset( $dnsRecord['ip'] ) ) {

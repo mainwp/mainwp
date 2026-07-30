@@ -281,6 +281,13 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button,
     border-bottom: 1px solid #dadada;
 }
 
+@media screen and (min-width: 768px) {
+    .mainwp-ui.mainwp-custom-theme.mainwp-default-theme:not(.mainwp-individual-site-view) #mainwp-admin-notices-segment.mainwp-extension-update-failure-notice-segment ~ .mainwp-sub-header,
+    .mainwp-ui.mainwp-custom-theme.mainwp-default-dark-theme:not(.mainwp-individual-site-view) #mainwp-admin-notices-segment.mainwp-extension-update-failure-notice-segment ~ .mainwp-sub-header {
+        margin-top: 2em !important;
+    }
+}
+
 .mainwp-sub-header #mainwp-sites-bulk-actions-menu.ui.selection.dropdown,
 .mainwp-ui #mainwp-manage-plugins #mainwp-plugins-bulk-actions-wapper .ui.dropdown,
 .mainwp-ui #mainwp-manage-themes #mainwp-themes-bulk-actions-wapper .ui.dropdown {

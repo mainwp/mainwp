@@ -446,9 +446,8 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     array(
                         'base_function' => $what,
                         'nonce'         => $data['nonce'],
-                        'request_id'    => wp_generate_uuid4(),
                         'expires'       => $ts + 60,
-                        'timestamp'     => $ts,
+                        'user'          => $website->adminname,
                     )
                 );
 
@@ -484,6 +483,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
             $data['mainwpsignature'] = ! empty( $signature ) ? base64_encode( $signature ) : ''; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
             $data['data_signature']  = $data_sign;
+            $data['request_id']      = wp_generate_uuid4();
 
             /** This filter is documented in ../widgets/widget-mainwp-recent-posts.php */
             $recent_number = apply_filters( 'mainwp_recent_posts_pages_number', 5 );
@@ -550,11 +550,10 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 $ts        = time();
                 $data_sign = wp_json_encode(
                     array(
-                        'base_function' => $what,
+                        'base_function' => $compat_what,
                         'nonce'         => $data['nonce'],
-                        'request_id'    => wp_generate_uuid4(),
                         'expires'       => $ts + 60,
-                        'timestamp'     => $ts,
+                        'user'          => $website->adminname,
                     )
                 );
 
@@ -599,6 +598,8 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             }
 
             $data['mainwpsignature'] = ! empty( $signature ) ? base64_encode( $signature ) : ''; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+            $data['data_signature']  = $data_sign;
+            $data['request_id']      = wp_generate_uuid4();
 
             return http_build_query( $data, '', '&' );
         }
@@ -634,10 +635,10 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 $data_sign = wp_json_encode(
                     array(
                         'base_function' => $paramValue,
+                        'where'         => rawurlencode( $paramName ),
                         'nonce'         => $nonce,
-                        'request_id'    => wp_generate_uuid4(),
                         'expires'       => $ts + 60,
-                        'timestamp'     => $ts,
+                        'user'          => $website->adminname,
                     )
                 );
 
@@ -672,6 +673,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 'nonce'           => $nonce,
                 $paramName        => rawurlencode( $paramValue ),
                 'data_signature'  => $data_sign,
+                'request_id'      => wp_generate_uuid4(),
             );
 
             if ( is_array( $other_params ) ) {
@@ -1842,12 +1844,16 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         MainWP_Logger::instance()->log_execution_time( 'fetch_url_site :: [url=' . $url . ']' );
 
         $thr_error = null;
-
+        $what      = '';
         if ( isset( $others['function'] ) ) {
             $what = $others['function'];
             if ( in_array( $what, array( 'installplugintheme', 'upgradeplugintheme', 'upgradetranslation', 'upgrade', 'stats', 'renew', 'reconnect' ), true ) ) {
                 MainWP_Cache_Helper::invalidate_cache_group( MainWP_Cache_Helper::CGR_UPDATES );
                 MainWP_Cache_Warm_Helper::invalidate_pages_by_site_actions( $what );
+            }
+
+            if ( 'process_premium_updates' === $what ) {
+                MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'function: [process_premium_updates] response data: [' . MainWP_Utility::value_to_string( $data, 1 ) . ']' );
             }
         }
 
@@ -1874,12 +1880,18 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             if ( ! empty( $error_code ) ) {
                 $output['child_error_code'] = $error_code;
             }
+
+            if ( 'process_premium_updates' === $what ) {
+                MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'function: [process_premium_updates] decoded data: [' . MainWP_Utility::value_to_string( $information, 1 ) . ']' );
+            }
+
             return $information;
         } elseif ( 200 === (int) $http_status && ! empty( $err ) ) {
             $thr_error                = new MainWP_Exception( 'HTTPERROR', $err ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             $output['error_category'] = 'http_error';
             $output['error_code']     = 'http_request_failed';
             $output['error_message']  = $err;
+            MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', '[' . $url . '] error [' . $err . ']' ); //phpcs:ignore -- ok.
         } elseif ( $raw_response ) {
             MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'Response: [RAW]' );
             return $data;

@@ -205,7 +205,9 @@ class MainWP_Site_Open { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
          *
          * @since 5.5
          */
-        do_action( 'mainwp_site_go_to_wpadmin', $website, $location, $params, $action_url, $post_params );
+        do_action( 'mainwp_site_go_to_wpadmin', $website, $location, $params, $action_url );
+
+        MainWP_Logger::instance()->debug_for_website( $website, 'open site', 'action [' . $action_url . ']' );
 
         ?>
         <div class="ui segment">

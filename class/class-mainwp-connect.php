@@ -1853,7 +1853,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             }
 
             if ( 'process_premium_updates' === $what ) {
-                MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'function: [process_premium_updates] response data: [' . MainWP_Utility::value_to_string( $data, 1 ) . ']' );
+                MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'function: [process_premium_updates] response data: [' . MainWP_Utility::value_to_string( $data ) . ']' );
             }
         }
 
@@ -1882,7 +1882,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             }
 
             if ( 'process_premium_updates' === $what ) {
-                MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'function: [process_premium_updates] decoded data: [' . MainWP_Utility::value_to_string( $information, 1 ) . ']' );
+                MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'function: [process_premium_updates] decoded data: [' . MainWP_Utility::value_to_string( $information ) . ']' );
             }
 
             return $information;

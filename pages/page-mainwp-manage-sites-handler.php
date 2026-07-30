@@ -78,7 +78,7 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
 
             if ( 'mainwp_child_responded' === $diagnostic['diagnosis']['category'] ) {
                 $ret['response'] = 'OK';
-            } elseif ( in_array( $diagnostic['diagnosis']['category'], array( 'dns_failure', 'connection_timeout', 'tls_failure' ), true ) || 'transport_request_failed' === $diagnostic['diagnosis']['diagnosis_id'] ) {
+            } elseif ( in_array( $diagnostic['diagnosis']['category'], array( 'dns_failure', 'connection_failure', 'connection_timeout', 'tls_failure' ), true ) || 'transport_request_failed' === $diagnostic['diagnosis']['diagnosis_id'] ) {
                 $ret['response'] = 'HTTPERROR';
             } elseif ( 'mainwp_child_did_not_respond' === $diagnostic['diagnosis']['category'] || 'unexpected_response' === $diagnostic['diagnosis']['category'] ) {
                 $ret['response'] = 'NOMAINWP';

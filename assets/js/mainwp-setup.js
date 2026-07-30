@@ -139,10 +139,6 @@ let mainwp_setup_managesites_add = function () {
   mainwp_set_message_zone('#mainwp-message-zone');
   let errors = [];
 
-  if (jQuery('#mainwp_managesites_add_wpname').val().trim() == '') {
-    errors.push('Please enter a title for the website.');
-  }
-
   if (jQuery('#mainwp_managesites_add_wpurl').val().trim() == '') {
     errors.push('Please enter a valid URL for the site.');
   } else {
@@ -175,6 +171,8 @@ let mainwp_setup_managesites_add = function () {
     }
 
     let name = jQuery('#mainwp_managesites_add_wpname').val().trim();
+    name = '' === name ? url : name;
+    jQuery('#mainwp_managesites_add_wpname').val(name);
     name = name.replace(/"/g, '&quot;');
 
     let data = mainwp_setup_secure_data({
@@ -219,7 +217,8 @@ let mainwp_setup_managesites_add = function () {
           }
         }
       } else if (response == 'OK') {
-        let name = jQuery('#mainwp_managesites_add_wpname').val();
+        let name = jQuery('#mainwp_managesites_add_wpname').val().trim();
+        name = '' === name ? url : name;
         name = name.replace(/"/g, '&quot;');
         let group_ids = '';
         let data = mainwp_setup_secure_data({

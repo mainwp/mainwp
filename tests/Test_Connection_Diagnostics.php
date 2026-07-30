@@ -50,6 +50,22 @@ class Test_Connection_Diagnostics extends \WP_UnitTestCase {
         $this->assertArrayNotHasKey( 'provider', $diagnosis );
     }
 
+    /** A refused connection has an actionable diagnosis instead of the generic fallback. */
+    public function test_connection_refused_has_specific_presentation() {
+        $observation = array(
+            'phase'         => 'child_endpoint',
+            'curl_errno'    => 7,
+            'http_status'   => 0,
+            'header_blocks' => array(),
+        );
+        $export = MainWP_Connection_Diagnostics::export( MainWP_Connection_Diagnostics::diagnose( $observation ), $observation );
+
+        $this->assertSame( 'connection_failed', $export['diagnosis']['diagnosis_id'] );
+        $this->assertSame( 'connection_failure', $export['diagnosis']['category'] );
+        $this->assertSame( 'The Dashboard could not connect to the site.', $export['presentation']['title'] );
+        $this->assertSame( 'MainWP Child — Not tested', $export['presentation']['child']['label'] );
+    }
+
     /** Distinctive provider evidence wins over the generic HTTP classifier. */
     public function test_provider_marker_precedes_generic_http_block() {
         $diagnosis = MainWP_Connection_Diagnostics::diagnose(
@@ -443,6 +459,26 @@ class Test_Connection_Diagnostics extends \WP_UnitTestCase {
         $this->assertFalse( MainWP_Connection_Diagnostics::is_same_origin( 'https://example.test/', 'http://example.test/' ) );
         $this->assertFalse( MainWP_Connection_Diagnostics::is_same_origin( 'https://example.test/', 'https://other.test/' ) );
         $this->assertFalse( MainWP_Connection_Diagnostics::is_same_origin( 'https://example.test/', 'https://example.test:444/' ) );
+    }
+
+    /** Authenticated connected probes reject a cross-origin target before signing or transport. */
+    public function test_connected_probe_rejects_cross_origin_target_before_signing() {
+        $website = (object) array(
+            'id'        => 24,
+            'url'       => 'http://child.example/',
+            'adminname' => 'saved-child-admin',
+            'privkey'   => '',
+        );
+
+        $cross_origin = MainWP_Connection_Diagnostics::test_connected(
+            $website,
+            array( 'url' => 'https://child.example/' )
+        );
+
+        $this->assertSame( 'not_tested', $cross_origin['diagnosis']['verdict'] );
+        $this->assertSame( 'dashboard_configuration_error', $cross_origin['diagnosis']['diagnosis_id'] );
+        $this->assertSame( 0, $cross_origin['support']['http_status'] );
+        $this->assertSame( 0, $cross_origin['support']['curl_errno'] );
     }
 
     /** Whitespace-bearing or malformed URL origins are rejected locally. */

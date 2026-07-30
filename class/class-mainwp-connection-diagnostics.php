@@ -75,9 +75,13 @@ class MainWP_Connection_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBra
             return self::configuration_result( 'missing_site' );
         }
 
-        $use_site_context = ! isset( $settings['transport_site_context'] ) || $settings['transport_site_context'];
-        $postdata         = $use_site_context ? MainWP_Connect::get_post_data_authed( $website, 'connection_check' ) : self::minimal_connected_postdata( $website );
-        $parsed           = array();
+        $url = isset( $settings['url'] ) ? $settings['url'] : $website->url;
+        if ( ! self::is_same_origin( $website->url, $url ) ) {
+            return self::configuration_result( 'cross_origin_target' );
+        }
+
+        $postdata = MainWP_Connect::get_post_data_authed( $website, 'connection_check' );
+        $parsed   = array();
         parse_str( (string) $postdata, $parsed );
         if ( empty( $postdata ) || empty( $parsed['mainwpsignature'] ) ) {
             return self::configuration_result( 'signing_failed' );
@@ -86,50 +90,9 @@ class MainWP_Connection_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBra
         $settings['mode']                    = 'probe';
         $settings['authentication_expected'] = true;
         $settings['website']                 = $website;
+        $settings['transport_site_context']  = true;
 
-        return self::run_probe( isset( $settings['url'] ) ? $settings['url'] : $website->url, $postdata, $settings );
-    }
-
-    /**
-     * Build an authenticated probe without invoking site-specific request filters.
-     *
-     * Draft cross-origin tests must not forward extension-provided headers or POST fields
-     * that were configured for the saved site.
-     *
-     * @param object $website Saved website row.
-     *
-     * @return string|null Minimal signed request body.
-     */
-    private static function minimal_connected_postdata( &$website ) {
-        $function  = 'connection_check';
-        $nonce     = wp_rand( 0, 9999 );
-        $signature = '';
-        $data      = array(
-            'user'      => $website->adminname,
-            'function'  => $function,
-            'nonce'     => $nonce,
-            'mainwpver' => MainWP_System::$version,
-        );
-
-        if ( MainWP_Connect_Lib::is_use_fallback_sec_lib( $website ) ) {
-            $signed            = MainWP_Connect_Lib::connect_sign( $function . $nonce, $signature, base64_decode( $website->privkey ), $website->id ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- MainWP key storage format.
-            $data['verifylib'] = 1;
-        } elseif ( function_exists( 'openssl_verify' ) ) {
-            $algorithm = MainWP_System_Utility::get_connect_sign_algorithm( $website );
-            $signed    = MainWP_Connect::connect_sign( $function . $nonce, $signature, base64_decode( $website->privkey ), $algorithm, $website->id ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- MainWP key storage format.
-            if ( false !== $algorithm ) {
-                $data['sign_algo'] = $algorithm;
-            }
-        } else {
-            return null;
-        }
-
-        if ( empty( $signed ) || empty( $signature ) ) {
-            return null;
-        }
-
-        $data['mainwpsignature'] = base64_encode( $signature ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- MainWP wire format.
-        return http_build_query( $data, '', '&' );
+        return self::run_probe( $url, $postdata, $settings );
     }
 
     /**
@@ -717,6 +680,9 @@ class MainWP_Connection_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBra
             if ( in_array( $curl_errno, array( 5, 6 ), true ) ) {
                 return self::make_diagnosis( 'failure', 'dns_resolution_failed', 'dns_failure', 'high', $phase, $facts );
             }
+            if ( 7 === $curl_errno ) {
+                return self::make_diagnosis( 'failure', 'connection_failed', 'connection_failure', 'high', $phase, $facts );
+            }
             if ( 28 === $curl_errno ) {
                 return self::make_diagnosis( 'failure', 'connection_timed_out', 'connection_timeout', 'high', $phase, $facts );
             }
@@ -1030,6 +996,11 @@ class MainWP_Connection_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBra
                 $explanation = esc_html__( 'The Dashboard could not find an address for the entered site hostname.', 'mainwp' );
                 $steps       = array( esc_html__( 'Check the site URL and its DNS records.', 'mainwp' ) );
                 break;
+            case 'connection_failed':
+                $title       = esc_html__( 'The Dashboard could not connect to the site.', 'mainwp' );
+                $explanation = esc_html__( 'The Dashboard could not open a connection to the site before MainWP communication could be verified.', 'mainwp' );
+                $steps       = array( esc_html__( 'Confirm the site is online and that its web server, port, and firewall allow requests from the Dashboard.', 'mainwp' ) );
+                break;
             case 'connection_timed_out':
                 $title       = esc_html__( 'The connection request timed out.', 'mainwp' );
                 $explanation = esc_html__( 'The site did not complete the request within the connection test time limit.', 'mainwp' );
@@ -1245,7 +1216,7 @@ class MainWP_Connection_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBra
                 'label' => esc_html__( 'MainWP Child — Responded with an error', 'mainwp' ),
             );
         }
-        if ( in_array( $diagnosis['category'], array( 'dashboard_configuration', 'dns_failure', 'connection_timeout', 'tls_failure' ), true ) ) {
+        if ( in_array( $diagnosis['category'], array( 'dashboard_configuration', 'dns_failure', 'connection_failure', 'connection_timeout', 'tls_failure' ), true ) ) {
             return array(
                 'state' => 'not_tested',
                 'label' => esc_html__( 'MainWP Child — Not tested', 'mainwp' ),

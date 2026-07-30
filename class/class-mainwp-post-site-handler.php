@@ -304,10 +304,11 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
             'transport_site_context' => (bool) ( $website && $same_origin ),
         );
 
-        if ( $website ) {
+        if ( $website && $same_origin ) {
             $diagnostic = MainWP_Connection_Diagnostics::test_connected( $website, $settings );
         } else {
-            $admin      = isset( $_POST['admin'] ) ? sanitize_text_field( wp_unslash( $_POST['admin'] ) ) : '';
+            // A draft origin must never receive identity or authenticators saved for a connected Child.
+            $admin      = $website ? '' : ( isset( $_POST['admin'] ) ? sanitize_text_field( wp_unslash( $_POST['admin'] ) ) : '' );
             $diagnostic = MainWP_Connection_Diagnostics::test_unconnected( $url, $admin, $settings );
         }
         // phpcs:enable

@@ -580,10 +580,14 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @param string $paramName Parameter name.
      * @param bool   $asArray true|false Default is false.
      * @param array  $other_params other params.
+     * @param string $custom_url Optional. Override the target base URL for browser-bound
+     *                           requests ( see MainWP_Site_Url_Corrector::browser_target_url() ).
+     *                           Default null keeps the stored URL — server-side callers
+     *                           ( backups, premium updates ) must not pass this.
      *
      * @return string $url
      */
-    public static function get_get_data_authed( $website, $paramValue, $paramName = 'where', $asArray = false, $other_params = array() ) { //phpcs:ignore -- NOSONAR - complex method.
+    public static function get_get_data_authed( $website, $paramValue, $paramName = 'where', $asArray = false, $other_params = array(), $custom_url = null ) { //phpcs:ignore -- NOSONAR - complex method.
         $params = array();
         if ( $website && '' !== $paramValue ) {
 
@@ -668,7 +672,11 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             return $params;
         }
 
-        $url  = ( isset( $website->url ) && '' !== $website->url ? $website->url : $website->siteurl );
+        if ( null !== $custom_url && '' !== $custom_url ) {
+            $url = $custom_url;
+        } else {
+            $url = ( isset( $website->url ) && '' !== $website->url ? $website->url : $website->siteurl );
+        }
         $url .= ( substr( $url, - 1 ) !== '/' ? '/' : '' );
         $url .= '?';
 
@@ -784,7 +792,24 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
         $mh    = curl_multi_init();
 
-        $timeout = 20 * 60 * 60;
+        /**
+         * Filter: mainwp_fetch_url_site_timeout
+         *
+         * Filters the request timeout ( CURLOPT_TIMEOUT + PHP time limit ) used
+         * for child site requests. Defaults to 20 hours to accommodate the
+         * longest operations ( upgrades, backups ); short-lived callers such as
+         * the URL-correction verify probe bound it much tighter.
+         *
+         * @param int $timeout Timeout in seconds. Default 72000 ( 20 hours ).
+         *                     Values below 1 are ignored ( 0 would disable the
+         *                     cURL timeout entirely ) and fall back to the default.
+         *
+         * @since 6.2
+         */
+        $timeout = (int) apply_filters( 'mainwp_fetch_url_site_timeout', 20 * 60 * 60 );
+        if ( $timeout <= 0 ) {
+            $timeout = 20 * 60 * 60;
+        }
 
         $disabled_functions = ini_get( 'disable_functions' );
         $handleToWebsite    = array();
@@ -1696,7 +1721,11 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             curl_setopt( $ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4 );
         }
 
-        $timeout = 20 * 60 * 60;
+        /** This filter is documented in class/class-mainwp-connect.php */
+        $timeout = (int) apply_filters( 'mainwp_fetch_url_site_timeout', 20 * 60 * 60 );
+        if ( $timeout <= 0 ) {
+            $timeout = 20 * 60 * 60; // values below 1 would disable the cURL timeout entirely.
+        }
         curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout );
         MainWP_System_Utility::set_time_limit( $timeout );
 

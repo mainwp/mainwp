@@ -1569,6 +1569,10 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
 
         if ( ! empty( $update_data ) ) {
             MainWP_DB::instance()->update_website_values( $site->id, $update_data );
+            if ( isset( $update_data['url'] ) ) {
+                // A user-set URL that diverges from the child-reported address locks auto-correction.
+                MainWP_Site_Url_Corrector::after_user_set_url( $site, $update_data['url'] );
+            }
         }
 
         if ( isset( $input['tag_ids'] ) && is_array( $input['tag_ids'] ) ) {

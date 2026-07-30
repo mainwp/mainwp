@@ -325,6 +325,39 @@ class MainWP_Notification { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
 
     /**
+     * Start notification for auto update info.
+     *
+     * @param array $admin_email_settings Admin email settings.
+     * @param array $params Parameters for the notification.
+     *
+     * @return void
+     */
+    public static function start_notification_auto_updates_info( $admin_email_settings, $params = array() ) {
+
+        $email        = isset( $admin_email_settings['recipients'] ) ? $admin_email_settings['recipients'] : '';
+        $subject      = isset( $admin_email_settings['subject'] ) ? $admin_email_settings['subject'] : '';
+        $plain_text   = isset( $params['plain_text'] ) ? $params['plain_text'] : false;
+        $mail_content = isset( $params['mail_content'] ) ? $params['mail_content'] : '';
+
+        if ( $plain_text ) {
+            $content_type = "Content-Type: text/plain; charset=\"utf-8\"\r\n";
+        } else {
+            $content_type = "Content-Type: text/html; charset=\"utf-8\"\r\n";
+        }
+
+        if ( ! empty( $email ) && ! empty( $mail_content ) ) {
+            MainWP_Logger::instance()->log_events( 'auto-updates', 'Auto updates notification :: send mail' );
+            static::send_wp_mail(
+                $email,
+                $subject,
+                $mail_content,
+                $content_type
+            );
+        }
+    }
+
+
+    /**
      * Method send_wp_mail().
      *
      * Send email via wp_mail().

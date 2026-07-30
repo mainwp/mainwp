@@ -155,8 +155,9 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      *
      * @param object $website Child site object.
      * @param array  $information Upgrade information.
+     * @param bool   $is_auto_update Whether the update is automatic.
      */
-    public static function activity_log_upgrade( $website, $information ) {
+    public static function activity_log_upgrade( $website, $information, $is_auto_update = false ) { // phpcs:ignore -- NOSONAR - complex.
         // Implementation for logging upgrade activities.
         $error   = '';
         $success = false;
@@ -183,6 +184,11 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'success'     => $success ? 1 : 0,
             'error'       => $error,
         );
+
+        if ( $is_auto_update ) {
+            MainWP_Updates_Report_Manager::save_update_info( $website, $output_array, 'core' );
+        }
+
         $actions_handler = mainwp_get_actions_handler_instance();
         if ( is_object( $actions_handler ) ) {
             $actions_handler->do_action_mainwp_install_actions( $website, 'updated', $output_array, 'core' );

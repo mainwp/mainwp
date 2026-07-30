@@ -22,6 +22,24 @@ if ( ! defined( 'ABSPATH' ) ) {
 class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
     /**
+     * Prefix for short-term notice options.
+     */
+    const SHORT_TERM_NOTICE_OPTION_PREFIX = '_mainwp_temp_notice_';
+
+
+    /**
+     * Prefix for per-user short-term notice options.
+     */
+    const USER_SHORT_TERM_NOTICE_OPTION_PREFIX = '_mainwp_user_temp_notice_';
+
+
+    /**
+     * New short term notice TTL.
+     */
+    const SHORT_TERM_NOTICE_TTL = MONTH_IN_SECONDS;
+
+
+    /**
      * Yoast SEO is enabled return true else return null.
      *
      * @static
@@ -863,6 +881,20 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     }
 
     /**
+     * Method delete_user_option()
+     *
+     * @param string $option_name Option name.
+     *
+     * @return void.
+     */
+    public static function delete_user_option( $option_name ) {
+        $user = wp_get_current_user();
+        if ( $user ) {
+            delete_user_option( $user->ID, $option_name );
+        }
+    }
+
+    /**
      * Method remove_preslash_spaces()
      *
      * Remove spaces before slashes.
@@ -1233,6 +1265,239 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             static::update_user_option( 'mainwp_flash_messages', $flash_messages );
         }
         return $content;
+    }
+
+    /**
+     * Method set_short_term_notice()
+     *
+     * Set new temporary notice.
+     *
+     * @param string $monitor Monitor.
+     * @param string $noti_key Notice key.
+     * @param int    $checked_at Notice checked at.
+     *
+     * @return void.
+     */
+    public static function set_short_term_notice( $monitor, $noti_key, $checked_at ) {
+        if ( empty( $monitor ) || empty( $noti_key ) ) {
+            return;
+        }
+        $noti_handle_name = static::SHORT_TERM_NOTICE_OPTION_PREFIX . $monitor . '_' . $noti_key;
+        static::update_option( $noti_handle_name, $checked_at );
+    }
+
+
+    /**
+     * Method is_short_term_notice()
+     *
+     * Check whether the short-term notice is still active.
+     *
+     * @param string $monitor Monitor name.
+     * @param string $noti_key Notice key.
+     *
+     * @return boolean true|false.
+     */
+    public static function is_short_term_notice( $monitor, $noti_key ) {
+
+        if ( empty( $monitor ) || empty( $noti_key ) ) {
+            return false;
+        }
+
+        $noti_handle_name = static::SHORT_TERM_NOTICE_OPTION_PREFIX . $monitor . '_' . $noti_key;
+
+        $notice_time = get_option( $noti_handle_name );
+
+        if ( false === $notice_time ) {
+            return false;
+        }
+
+        if ( ! is_numeric( $notice_time ) ) {
+            delete_option( $noti_handle_name );
+        }
+
+        if ( time() - (int) $notice_time < self::SHORT_TERM_NOTICE_TTL ) {
+            if ( static::is_short_term_dismissed_notice( $monitor, $noti_key ) ) {
+                return false;
+            }
+            return true;
+        } else {
+            delete_option( $noti_handle_name );
+        }
+        return false;
+    }
+
+
+    /**
+     * Method is_short_term_dismissed_notice()
+     *
+     * Check whether the short-term notice is user dismissed.
+     *
+     * @param string $monitor Monitor.
+     * @param string $noti_key Notice key.
+     *
+     * @return boolean true|false.
+     */
+    public static function is_short_term_dismissed_notice( $monitor, $noti_key ) {
+        if ( empty( $monitor ) || empty( $noti_key ) ) {
+            return false;
+        }
+        $user_noti_handle = static::USER_SHORT_TERM_NOTICE_OPTION_PREFIX . $monitor . '_' . $noti_key;
+        $user             = wp_get_current_user();
+        if ( $user && ! empty( $user->ID ) ) {
+            return 'dismissed' === get_option( $user_noti_handle . '_user_' . $user->ID );
+        }
+        return false;
+    }
+
+
+    /**
+     * Purge short-term notices.
+     *
+     * @param string $monitor                  Optional monitor name. When provided, only
+     *                                         notices for the specified monitor are purged.
+     * @param bool   $expired_only             Whether to purge only expired notices.
+     *
+     * @return void
+     */
+    public static function purge_short_term_notices( $monitor = '', $expired_only = true ) { // phpcs:ignore -- NOSONAR - complex.
+
+        $opt_prefix = self::SHORT_TERM_NOTICE_OPTION_PREFIX;
+
+        $prefix = '' !== $monitor ? $monitor . '_' : '';
+
+        $timeout = time() - self::SHORT_TERM_NOTICE_TTL;
+
+        $db = MainWP_DB::instance()->get_wpdb_instance();
+
+        $sql = $db->prepare(
+            "
+            SELECT option_name
+            FROM {$db->options}
+            WHERE option_name LIKE %s
+            ",
+            $db->esc_like( $opt_prefix . (string) $prefix ) . '%',
+        );
+
+        if ( $expired_only ) {
+            $sql .= $db->prepare(
+                ' AND CAST(option_value AS UNSIGNED) <= %d ',
+                $timeout
+            );
+        }
+
+        $options = $db->get_col( $sql );
+
+        foreach ( $options as $option_name ) {
+            delete_option( $option_name );
+        }
+    }
+
+
+    /**
+     * Purge short-term notices for a specific issue.
+     *
+     * @param string $monitor    Monitor name.
+     * @param string $issue_code Issue code.
+     *
+     * @return bool True if the operation completed, false if the input is invalid.
+     */
+    public static function delete_short_term_notices_for_issue( $monitor, $issue_code ) {
+
+        if ( empty( $monitor ) || empty( $issue_code ) ) {
+            return false;
+        }
+
+        $opt_prefix = self::SHORT_TERM_NOTICE_OPTION_PREFIX;
+        $prefix     = $monitor . '_' . $issue_code;
+
+        $db = MainWP_DB::instance()->get_wpdb_instance();
+
+        $sql = $db->prepare(
+            "
+        SELECT option_name
+        FROM {$db->options}
+        WHERE option_name LIKE %s
+        ",
+            $db->esc_like( $opt_prefix . $prefix ) . '%'
+        );
+
+        $options = $db->get_col( $sql );
+
+        foreach ( $options as $option_name ) {
+            delete_option( $option_name ); // Delete options and cache.
+        }
+
+        return true;
+    }
+
+    /**
+     * Method dismiss_short_term_notice()
+     *
+     * Hide short term notice.
+     *
+     * @param string $monitor_noti_key Notice key.
+     *
+     * @return void.
+     */
+    public static function dismiss_short_term_notice( $monitor_noti_key ) {
+        $noti_handle_name = static::USER_SHORT_TERM_NOTICE_OPTION_PREFIX . $monitor_noti_key;
+        $user             = wp_get_current_user();
+        if ( $user && ! empty( $user->ID ) ) {
+            static::update_option( $noti_handle_name . '_user_' . $user->ID, 'dismissed' );
+        }
+    }
+
+    /**
+     * Delete user short-term notice options for the specified monitor.
+     *
+     * Optionally preserves the dismissed state for the specified issue codes.
+     *
+     * @param string $monitor          Monitor name.
+     * @param array  $preserved_issues Issue codes whose dismissed state should be preserved.
+     *
+     * @return void
+     */
+    public static function delete_short_term_notice_options( $monitor, $preserved_issues = array() ) {
+
+        if ( empty( $monitor ) ) {
+            return;
+        }
+
+        $db = MainWP_DB::instance()->get_wpdb_instance();
+
+        $sql = "
+            SELECT option_name
+            FROM {$db->options}
+            WHERE option_name LIKE %s
+        ";
+
+        $args = array(
+            $db->esc_like(
+                static::USER_SHORT_TERM_NOTICE_OPTION_PREFIX . $monitor . '_'
+            ) . '%',
+        );
+
+        // Preserve the user's dismissed state for the specified issues.
+        if ( ! empty( $preserved_issues ) && is_array( $preserved_issues ) ) {
+            foreach ( $preserved_issues as $issue_code ) {
+                $sql   .= ' AND option_name NOT LIKE %s';
+                $args[] = $db->esc_like(
+                    static::USER_SHORT_TERM_NOTICE_OPTION_PREFIX . $monitor . '_' . $issue_code . '_user_'
+                ) . '%';
+            }
+        }
+
+        $option_names = $db->get_col(
+            $db->prepare( $sql, ...$args )
+        );
+
+        if ( empty( $option_names ) ) {
+            return;
+        }
+
+        foreach ( $option_names as $option_name ) {
+            delete_option( $option_name );
+        }
     }
 
     /**
@@ -2322,5 +2587,14 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     public static function get_decoded_array( $data ) {
         $decoded = ! empty( $data ) ? json_decode( $data, true ) : array();
         return is_array( $decoded ) ? $decoded : array();
+    }
+
+    /**
+     * Method get_use_cron()
+     *
+     * @return bool Whether use cron.
+     */
+    public static function get_use_cron() {
+        return ( get_option( 'mainwp_wp_cron' ) === false ) || ( (int) get_option( 'mainwp_wp_cron' ) === 1 ) ? 1 : 0;
     }
 }

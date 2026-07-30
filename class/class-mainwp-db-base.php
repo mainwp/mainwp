@@ -108,6 +108,15 @@ class MainWP_DB_Base { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     }
 
     /**
+     * Method get_wpdb_instance()
+     *
+     * @return object wpdb.
+     */
+    public function get_wpdb_instance() {
+        return $this->wpdb;
+    }
+
+    /**
      * Method get_my_sql_version()
      *
      * Get MySQL Version.

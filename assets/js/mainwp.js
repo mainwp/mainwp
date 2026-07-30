@@ -4134,11 +4134,16 @@ jQuery(document).on('click', '.mainwp-notice-hide', function () {
 // Hide after installtion notices (PHP version, Trust MainWP Child, Multisite Warning and OpenSSL warning)
 jQuery(document).on('click', '.mainwp-notice-dismiss', function () {
     let notice_id = jQuery(this).attr('notice-id');
+    let shortterm = jQuery(this).attr('shortterm-notice');
+
     jQuery(this).closest('.ui.message').fadeOut("slow");
     let data = {
         action: 'mainwp_notice_status_update'
     };
     data['notice_id'] = notice_id;
+    if(shortterm === '1'){
+        data['short_term'] = 1;
+    }
     jQuery.post(ajaxurl, mainwp_secure_data(data), function () { });
     return false;
 });

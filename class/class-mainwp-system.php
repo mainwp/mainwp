@@ -307,6 +307,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         }
         MainWP_Unhooks_Helper::instance();
         MainWP_Cache_Warm_Helper::instance();
+        MainWP_System_Utility::instance();
     }
 
     /**

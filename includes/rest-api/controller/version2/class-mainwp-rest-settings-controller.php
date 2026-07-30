@@ -531,7 +531,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                     $val = $body[ $key ];
                     $val = $this->cast_field_value( $val, $cast );
                     if ( 'mainwp_widgets' === $key ) {
-                        $show_widgets = get_user_option( 'mainwp_settings_show_widgets', array() );
+                        $show_widgets = get_user_option( 'mainwp_settings_show_widgets' );
                         $val          = array_replace( $show_widgets, (array) $val );
                     }
                     update_user_option( $user_id, $option_name, $val, true );
@@ -753,8 +753,8 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             $updated_settings['up_status_codes'] = implode( ',', $body['mainwp_uptime_monitoring_up_status_codes'] );
         }
         if ( isset( $body['mainwp_uptime_monitoring_interval'] ) ) {
-            $interval_values   = MainWP_Uptime_Monitoring_Edit::get_interval_values( false );
-            $interval = array_search( $body['mainwp_uptime_monitoring_interval'], $interval_values, true );
+            $interval_values              = MainWP_Uptime_Monitoring_Edit::get_interval_values( false );
+            $interval                     = array_search( $body['mainwp_uptime_monitoring_interval'], $interval_values, true );
             $updated_settings['interval'] = $interval;
         }
         if ( isset( $body['mainwp_uptime_monitoring_keyword'] ) ) {
@@ -764,8 +764,8 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             $updated_settings['method'] = $body['mainwp_uptime_monitoring_method'];
         }
         if ( isset( $body['mainwp_uptime_monitoring_timeout'] ) ) {
-            $timeout_values   = MainWP_Uptime_Monitoring_Edit::get_timeout_values( false );
-            $timeout = array_search( $body['mainwp_uptime_monitoring_timeout'], $timeout_values, true );
+            $timeout_values              = MainWP_Uptime_Monitoring_Edit::get_timeout_values( false );
+            $timeout                     = array_search( $body['mainwp_uptime_monitoring_timeout'], $timeout_values, true );
             $updated_settings['timeout'] = $timeout;
         }
         if ( isset( $body['mainwp_uptime_monitoring_type'] ) ) {
@@ -3399,7 +3399,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             );
         }
 
-        $existing = get_user_option( 'mainwp_settings_show_widgets', array() );
+        $existing = get_user_option( 'mainwp_settings_show_widgets' );
         if ( ! is_array( $existing ) ) {
             $existing = array();
         }
@@ -3439,7 +3439,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         // Sanitize field data.
         $values = array_map( 'sanitize_text_field', wp_unslash( $value ) );
 
-        $widgets = get_user_option( 'mainwp_settings_show_widgets', array() );
+        $widgets = get_user_option( 'mainwp_settings_show_widgets' );
         $allowed = array_keys( $widgets );
         $keys    = array_keys( $values );
 
@@ -4058,7 +4058,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
     protected function get_general_settings_data() {
         // Default Setting.
         $default_setting = MainWP_Settings_Indicator::get_defaults_value();
-        $show_widgets    = get_user_option( 'mainwp_settings_show_widgets', array() );
+        $show_widgets    = get_user_option( 'mainwp_settings_show_widgets' );
+
+        if ( ! is_array( $show_widgets ) ) {
+            $show_widgets = array();
+        }
 
         // Map settings.
         $gmt_offset = (float) get_option( 'gmt_offset', 0 );
@@ -4182,14 +4186,14 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         $monitoring_settings = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
 
         // Get interval values.
-        $interval_values   = MainWP_Uptime_Monitoring_Edit::get_interval_values( false );
-        $interval = $monitoring_settings['interval'] ?? 60;
-        $interval          = isset( $interval_values[ $interval ] ) ? $interval_values[ $interval ] : $interval_values[60];
+        $interval_values = MainWP_Uptime_Monitoring_Edit::get_interval_values( false );
+        $interval        = $monitoring_settings['interval'] ?? 60;
+        $interval        = isset( $interval_values[ $interval ] ) ? $interval_values[ $interval ] : $interval_values[60];
 
         // Get timeout values.
-        $timeout_values   = MainWP_Uptime_Monitoring_Edit::get_timeout_values( false );
-        $timeout = $monitoring_settings['timeout'] ?? 60;
-        $timeout          = isset( $timeout_values[ $timeout ] ) ? $timeout_values[ $timeout ] : $timeout_values[60];
+        $timeout_values = MainWP_Uptime_Monitoring_Edit::get_timeout_values( false );
+        $timeout        = $monitoring_settings['timeout'] ?? 60;
+        $timeout        = isset( $timeout_values[ $timeout ] ) ? $timeout_values[ $timeout ] : $timeout_values[60];
 
         return array(
             'mainwp_uptime_monitoring_active'          => (int) $monitoring_settings['active'] ?? 0,

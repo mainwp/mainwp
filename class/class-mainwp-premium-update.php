@@ -352,6 +352,8 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      *
      * Redirect to requested Site.
      *
+     * Deprecated, see function handle_premium_update_actions().
+     *
      * @param mixed $website Child Site.
      * @param mixed $where_url page to redirerct to.
      *
@@ -406,6 +408,33 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         static::log_request_outcome( $website, $where_url, $response );
 
         return $response;
+    }
+
+
+    /**
+     * Method handle_premium_update_actions()
+     *
+     * Redirect to requested Site.
+     *
+     * @since 6.2
+     *
+     * @param mixed $website Child Site.
+     * @param array $params Other params.
+     *
+     * @return mixed null|array information.
+     */
+    public static function handle_premium_update_actions( $website, $params = array() ) {
+        if ( ! is_array( $params ) ) {
+            return null;
+        }
+        MainWP_Logger::instance()->debug( 'Request premium update :: [siteid=' . $website->id . '] :: [type=' . $params['premium_type'] . '] :: [perform=' . $params['premium_perform'] . ']' );
+        $result = null;
+        try {
+            $result = MainWP_Connect::fetch_url_authed( $website, 'process_premium_updates', $params, false, false, true, null, true );
+        } catch ( \Exception $e ) {
+            // Just ignore.
+        }
+        return $result;
     }
 
     /**
@@ -499,14 +528,15 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @return mixed null|true.
      */
     public static function request_premiums_update( $website, $type, $list_items ) {
-        if ( 'plugin' === $type ) {
-            $where_url = 'plugins.php?_request_update_premiums_type=plugin&list=' . $list_items;
-        } elseif ( 'theme' === $type ) {
-            $where_url = 'update-core.php?_request_update_premiums_type=theme&list=' . $list_items;
-        } else {
+        if ( ! in_array( $type, array( 'plugin', 'theme' ) ) ) {
             return null;
         }
-        self::$last_request_response = static::redirect_request_site( $website, $where_url );
+        $params = array(
+            'premium_type'    => $type,
+            'premium_perform' => 'premium_update',
+            'list'            => $list_items,
+        );
+        static::handle_premium_update_actions( $website, $params );
         return true;
     }
 
@@ -560,13 +590,14 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @return mixed false|static::redirect_request_site()
      */
     public static function try_to_detect_premiums_update( $website, $type ) {
-        if ( 'plugin' === $type ) {
-            $where_url = 'plugins.php?_detect_plugins_updates=yes';
-        } elseif ( 'theme' === $type ) {
-            $where_url = 'update-core.php?_detect_themes_updates=yes';
-        } else {
-            return false;
+
+        if ( ! in_array( $type, array( 'plugin', 'theme' ), true ) ) {
+            return null;
         }
-        static::redirect_request_site( $website, $where_url );
+        $params = array(
+            'premium_type'    => $type,
+            'premium_perform' => 'detect_update',
+        );
+        static::handle_premium_update_actions( $website, $params );
     }
 }

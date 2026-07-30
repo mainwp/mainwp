@@ -740,6 +740,9 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $replacement[1] = 'alt_user=xxxxxx&';
         $patterns[2]    = '/\&server=([^\&]+)\&/';
         $replacement[2] = '&server=xxxxxx&';
+        $patterns[3]    = '/\&data_signature=([^\&]+)\&/';
+        $patterns[3]    = '/(^|[?&])data_signature=[^&]*/';
+        $replacement[3] = '$1data_signature=xxxxxx';
         $data           = preg_replace( $patterns, $replacement, $data );
         return $data;
     }

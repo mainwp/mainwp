@@ -1230,6 +1230,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                             <a class="item" href="admin.php?page=SettingsAdvanced"><?php esc_html_e( 'Advanced Settings', 'mainwp' ); ?></a>
                             <a class="item" href="admin.php?page=MonitoringSettings"><?php esc_html_e( 'Monitoring Settings', 'mainwp' ); ?></a>
                             <a class="item" href="admin.php?page=SettingsEmail"><?php esc_html_e( 'Email Settings', 'mainwp' ); ?></a>
+                            <a class="item" href="admin.php?page=PremiumUpdates"><?php esc_html_e( 'Premium Updates', 'mainwp' ); ?></a>
                             <a class="item" href="admin.php?page=MainWPTools"><?php esc_html_e( 'Tools', 'mainwp' ); ?></a>
                         </div>
                     </div>

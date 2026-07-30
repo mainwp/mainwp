@@ -168,6 +168,14 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 'callback'    => array( static::get_class_name(), 'render_email_settings' ),
                 'active_keys' => array( 'Emails', 'SettingsEmail' ),
             ),
+            array(
+                'slug'        => 'PremiumUpdates',
+                'page_title'  => __( 'Premium Updates', 'mainwp' ),
+                'menu_title'  => ' <div class="mainwp-hidden">' . esc_html__( 'Premium Updates', 'mainwp' ) . '</div>',
+                'nav_title'   => esc_html__( 'Premium Updates', 'mainwp' ),
+                'callback'    => array( MainWP_Settings_Premium_Updates::get_class_name(), 'render' ),
+                'active_keys' => array( 'Premium', 'PremiumUpdates' ),
+            ),
         );
 
         $visible_pages = array();
@@ -321,7 +329,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             }
         }
 
-        $base_order = array( 'Settings', 'SettingsAdvanced', 'MonitoringSettings', 'SettingsEmail' );
+        $base_order = array( 'Settings', 'SettingsAdvanced', 'MonitoringSettings', 'SettingsEmail', 'PremiumUpdates' );
 
         if ( in_array( $context, array( 'left_menu', 'left_menu_core' ), true ) ) {
             $base_order[] = 'MainWPTools';

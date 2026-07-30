@@ -226,6 +226,52 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button,
     float: none !important;
 }
 
+#mainwp-header-command-palette-actions {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 10px;
+    padding-right: 10px;
+    border-right: 1px solid rgba(255, 255, 255, 0.25);
+    vertical-align: middle;
+}
+
+#mainwp-command-palette-trigger {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    min-height: 0;
+    height: auto;
+    margin: 0 !important;
+    padding: 0.78571429em 14px !important;
+    background: transparent !important;
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    border-radius: 999px !important;
+    box-shadow: none !important;
+    color: inherit !important;
+    line-height: 1.28571429em !important;
+    vertical-align: middle;
+}
+
+#mainwp-command-palette-trigger:hover,
+#mainwp-command-palette-trigger:focus {
+    background: rgba(255, 255, 255, 0.06) !important;
+    opacity: 1;
+}
+
+#mainwp-command-palette-trigger kbd {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    color: inherit;
+    font-family: inherit;
+    font-size: 0.92857143rem;
+    font-weight: 600;
+    line-height: 1;
+    display: inline-block;
+    vertical-align: middle;
+}
+
 /* Sub-Header */
 
 .mainwp-sub-header,

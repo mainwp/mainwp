@@ -443,7 +443,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 );
 
                 if ( ! empty( $subPage['before_title'] ) ) {
-                    $item['before_title'] = $subPage['before_title'];
+                    $_item['before_title'] = $subPage['before_title'];
                 }
 
                 // To support check right to open menu for sometime.

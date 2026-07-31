@@ -3897,12 +3897,6 @@ jQuery.fn.exists = function () {
     return (this.length !== 0);
 };
 
-// Deprecated. Remove in a future release.
-if ( typeof globalThis.__ !== 'function' ) {
-    globalThis.__ = function ( text ) {
-        return MainWP.I18n.t( text );
-    };
-}
 
 globalThis.MainWP = globalThis.MainWP || {};
 globalThis.MainWP.I18n = globalThis.MainWP.I18n || {};
@@ -3935,6 +3929,13 @@ MainWP.I18n.t = function ( text, ...args ) {
         return args[ argIdx ] !== undefined ? args[ argIdx ] : match;
     } );
 };
+
+// Deprecated. Remove in a future release.
+if ( typeof globalThis.__ !== 'function' ) {
+    globalThis.__ = function ( text, ...args ) {
+        return globalThis.MainWP.I18n.t( text, ...args );
+    };
+}
 
 globalThis.mainwp_secure_data = function (data, includeDts) {
     if (data['action'] == undefined)

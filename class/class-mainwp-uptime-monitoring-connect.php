@@ -812,7 +812,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         }
 
         if ( empty( $http_code ) ) {
-            $status = static::PENDING;
+            $status = static::DOWN; // Set the status to DOWN.
         }
 
         $mo_url = static::get_apply_monitor_url( $monitor );

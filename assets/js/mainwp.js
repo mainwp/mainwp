@@ -3897,21 +3897,11 @@ jQuery.fn.exists = function () {
     return (this.length !== 0);
 };
 
-
-function __(text, _var1, _var2, _var3) {
-    if (text == undefined || text == '')
-        return text;
-    let strippedText = text.replaceAll(/\W/g, '_');
-
-    if (strippedText == '')
-        return text.replace('%1', _var1).replace('%2', _var2).replace('%3', _var3);
-
-    if (mainwpTranslations == undefined)
-        return text.replace('%1', _var1).replace('%2', _var2).replace('%3', _var3);
-    if (mainwpTranslations[strippedText] == undefined)
-        return text.replace('%1', _var1).replace('%2', _var2).replace('%3', _var3);
-
-    return mainwpTranslations[strippedText].replace('%1', _var1).replace('%2', _var2).replace('%3', _var3);
+// Deprecated. Remove in a future release.
+if ( typeof globalThis.__ !== 'function' ) {
+    globalThis.__ = function ( text ) {
+        return MainWP.I18n.t( text );
+    };
 }
 
 globalThis.MainWP = globalThis.MainWP || {};

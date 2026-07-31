@@ -64,7 +64,7 @@ jQuery(function ($) {
 
     jQuery(document).on('click', '.subscription_menu_item_delete', function () {
         let objDel = jQuery(this);
-        mainwp_confirm(__('Are you sure?'), function () {
+        mainwp_confirm(MainWP.I18n.t('Are you sure?'), function () {
             mainwp_module_cost_tracker_delete_start_specific(objDel, '', false);
         }, false, false, true);
     })
@@ -100,7 +100,7 @@ jQuery(function ($) {
         let parent = jQuery(this).closest('tr');
         let id = jQuery(parent).attr('item-id');
         let note = jQuery('#sub-notes-' + id + '-note').html();
-        jQuery('#mainwp-notes-subs-html').html(note == '' ? __('No saved notes. Click the Edit button to edit site notes.') : note);
+        jQuery('#mainwp-notes-subs-html').html(note == '' ? MainWP.I18n.t('No saved notes. Click the Edit button to edit site notes.') : note);
         jQuery('#mainwp-notes-subs-note').val(note);
         jQuery('#mainwp-notes-subs-subid').val(id);
         mainwp_module_cost_tracker_notes_show();
@@ -163,19 +163,19 @@ let mainwp_module_cost_tracker_notes_save = function () {
         note: newnote,
     });
 
-    jQuery('#mainwp-notes-subs-status').html('<i class="notched circle loading icon"></i> ' + __('Saving note. Please wait...')).show();
+    jQuery('#mainwp-notes-subs-status').html('<i class="notched circle loading icon"></i> ' + MainWP.I18n.t('Saving note. Please wait...')).show();
 
     jQuery.post(ajaxurl, data, function (response) {
         if (response.error != undefined) {
             jQuery('#mainwp-notes-subs-status').html(response.error).addClass('red');
         } else if (response.result == 'SUCCESS') {
-            jQuery('#mainwp-notes-subs-status').html(__('Note saved successfully.')).addClass('green');
+            jQuery('#mainwp-notes-subs-status').html(MainWP.I18n.t('Note saved successfully.')).addClass('green');
             if (jQuery('#mainwp-notes-subs-' + normalid + '-note').length > 0) {
                 jQuery('#mainwp-notes-subs-' + normalid + '-note').html(response?.esc_note_content??'');
             }
             jQuery('#mainwp-notes-subs-html').html(response?.esc_note_content??'');
         } else {
-            jQuery('#mainwp-notes-subs-status').html(__('Undefined error occured while saving your note!')).addClass('red');
+            jQuery('#mainwp-notes-subs-status').html(MainWP.I18n.t('Undefined error occured while saving your note!')).addClass('red');
         }
     }, 'json');
 

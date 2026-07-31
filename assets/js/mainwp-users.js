@@ -92,7 +92,7 @@ jQuery(function () {
         };
 
         if (action == 'delete') {
-            let msg = __('You are about to delete %1 user(s). Are you sure you want to proceed?', userCountSent);
+            let msg = MainWP.I18n.t('You are about to delete %1 user(s). Are you sure you want to proceed?', userCountSent);
             mainwp_confirm(msg, _callback);
             return;
         }
@@ -107,7 +107,7 @@ jQuery(function () {
         userCountSent = tmp.length;
 
         if (userCountSent == 0) {
-            errors.push(__('Please search and select users.'));
+            errors.push(MainWP.I18n.t('Please search and select users.'));
         }
 
         if (errors.length > 0) {
@@ -258,21 +258,21 @@ let mainwp_fetch_users = function () {
             selected_sites.push(jQuery(this).val());
         });
         if (selected_sites.length == 0) {
-            errors.push(__('Please select at least one website or group or clients.'));
+            errors.push(MainWP.I18n.t('Please select at least one website or group or clients.'));
         }
     } else if (jQuery('input[name="select_by"]').val() == 'client') {
         jQuery("input[name='selected_clients[]']:checked").each(function () {
             selected_clients.push(jQuery(this).val());
         });
         if (selected_clients.length == 0) {
-            errors.push(__('Please select at least one website or group or clients.'));
+            errors.push(MainWP.I18n.t('Please select at least one website or group or clients.'));
         }
     } else {
         jQuery("input[name='selected_groups[]']:checked").each(function () {
             selected_groups.push(jQuery(this).val());
         });
         if (selected_groups.length == 0) {
-            errors.push(__('Please select at least one website or group or clients.'));
+            errors.push(MainWP.I18n.t('Please select at least one website or group or clients.'));
         }
     }
 
@@ -373,8 +373,8 @@ jQuery(function () {
     jQuery('#import_user_btn_import').on('click', function () {
         if (import_user_stop_by_user) {
             import_user_stop_by_user = false;
-            jQuery('#import_user_import_logging .log').append(__('Continue import.') + "\n");
-            jQuery('#import_user_btn_import').val(__('Pause'));
+            jQuery('#import_user_import_logging .log').append(MainWP.I18n.t('Continue import.') + "\n");
+            jQuery('#import_user_btn_import').val(MainWP.I18n.t('Pause'));
             jQuery('#MainWPBulkUploadUserLoading').show();
             if (import_user_count_create_fails > 0) {
                 jQuery('#import_user_btn_save_csv').attr("style", 'display:inline-block;'); //Enable
@@ -383,7 +383,7 @@ jQuery(function () {
         } else {
             import_user_stop_by_user = true;
             jQuery('#import_user_import_logging .log').append(_('Paused import by user.') + "\n");
-            jQuery('#import_user_btn_import').val(__('Continue'));
+            jQuery('#import_user_btn_import').val(MainWP.I18n.t('Continue'));
             jQuery('#MainWPBulkUploadUserLoading').hide();
             if (import_user_count_create_fails > 0) {
                 jQuery('#import_user_btn_save_csv').attr("style", 'display:inline-block;'); //Enable
@@ -410,7 +410,7 @@ jQuery(function () {
 
 globalThis.mainwp_bulkupload_users = function () {
     if (jQuery('#import_user_file_bulkupload').val() == '') {
-        feedback('mainwp-message-zone', __('Please enter CSV file for upload.'), 'yellow');
+        feedback('mainwp-message-zone', MainWP.I18n.t('Please enter CSV file for upload.'), 'yellow');
         jQuery('#import_user_file_bulkupload').parent().parent().addClass('form-invalid');
     } else {
         jQuery('#createuser').submit();
@@ -440,7 +440,7 @@ let mainwp_import_users_next = function () {
         decoded_data = JSON.parse(import_data);
     } catch {
         decoded_data = false;
-        errors.push(__('Invalid import data.'));
+        errors.push(MainWP.I18n.t('Invalid import data.'));
     }
 
     if (decoded_data) {
@@ -495,27 +495,27 @@ let mainwp_import_users_valid_data = function (decoded_data) { // NOSONAR  - com
     val_data.select_by = '';
 
     if (val_data.user_login == '') {
-        errors.push(__('Please enter a username.'));
+        errors.push(MainWP.I18n.t('Please enter a username.'));
     }
 
     if (val_data.email == '') {
-        errors.push(__('Please enter an email.'));
+        errors.push(MainWP.I18n.t('Please enter an email.'));
     }
 
     if (val_data.pass1 == '') {
-        errors.push(__('Please enter a password.'));
+        errors.push(MainWP.I18n.t('Please enter a password.'));
     }
 
     let allowed_roles = ['subscriber', 'administrator', 'editor', 'author', 'contributor'];
     if (jQuery.inArray(val_data.role, allowed_roles) == -1) {
-        errors.push(__('Please select a data role.'));
+        errors.push(MainWP.I18n.t('Please select a data role.'));
     }
 
     if (val_data.select_sites == '') {
 
         let selected_groups = val_data.select_groups.split(';');
         if (selected_groups.length == 0) {
-            errors.push(__('Please select websites or groups to add a user.'));
+            errors.push(MainWP.I18n.t('Please select websites or groups to add a user.'));
         } else {
             val_data.select_groups = selected_groups;
             val_data.select_by = 'group';
@@ -523,7 +523,7 @@ let mainwp_import_users_valid_data = function (decoded_data) { // NOSONAR  - com
     } else {
         let selected_sites = val_data.select_sites.split(';');
         if (selected_sites.length == 0) {
-            errors.push(__('Please select websites or groups to add a user.'));
+            errors.push(MainWP.I18n.t('Please select websites or groups to add a user.'));
         } else {
             val_data.select_sites = selected_sites;
             val_data.select_by = 'site';
@@ -562,7 +562,7 @@ let mainwp_import_users_response = function (response_data) {
 let mainwp_import_users_finished = function () {
     jQuery('#import_user_btn_import').val('Finished').attr('disabled', 'true');
     jQuery('#MainWPBulkUploadUserLoading').hide();
-    jQuery('#import_user_import_logging .log').append('\n' + __('Number of users to import: %1 Created users: %2 Failed: %3', import_user_total_import, import_user_count_created_users, import_user_count_create_fails) + '\n');
+    jQuery('#import_user_import_logging .log').append('\n' + MainWP.I18n.t('Number of users to import: %1 Created users: %2 Failed: %3', import_user_total_import, import_user_count_created_users, import_user_count_create_fails) + '\n');
     if (import_user_count_create_fails > 0) {
         jQuery('#import_user_btn_save_csv').attr("style", 'display:inline-block;'); //Enable
     }

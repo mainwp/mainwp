@@ -110,9 +110,9 @@ let mainwp_api_backups_do_backups_specific = function (pObj, bulk, selector) {
                 err_msg = rsp['0'].message;
             }
         } else if (response?.success) {
-            succ_msg = __('Successfull');
+            succ_msg = MainWP.I18n.t('Successfull');
         } else if (response?.error) { // Check for cPanel error..
-            err_msg = __(response.error);
+            err_msg = MainWP.I18n.t(response.error);
         } else {
             err_msg = _('Undefined error.');
         }

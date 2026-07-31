@@ -238,6 +238,8 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
                             jQuery( '#widget-connect-status-dropdown-selector' ).closest( '.mainwp-widget' ).find( 'div.ui.tab' ).removeClass( 'active');
                             jQuery( '#widget-connect-status-dropdown-selector' ).closest( '.mainwp-widget' ).find( 'div[data-tab="' + val + '"]' ).addClass( 'active' );
                             mainwp_widgets_connections_status_tab_onchange( val );
+                        } else {
+                            jQuery( '#widget-connect-status-dropdown-selector' ).closest( '.mainwp-widget' ).find( 'div.ui.tab' ).removeClass( 'active'); // to fix display Loadding... issue.
                         }
                     }
                 }, 1000);

@@ -2466,6 +2466,7 @@ let mainwp_managesites_edit_test = function () {
         ssl_version: jQuery('#mainwp_managesites_edit_ssl_version').val(),
         force_use_ipv4: jQuery('#mainwp_managesites_edit_forceuseipv4').val(),
         http_user: jQuery('#mainwp_managesites_edit_http_user').val(),
+        http_user_dirty: jQuery('#mainwp_managesites_edit_http_user').data('mainwp-http-user-dirty') ? 1 : 0,
         http_pass: jQuery('#mainwp_managesites_edit_http_pass').val()
     });
 
@@ -2549,6 +2550,11 @@ jQuery(function () {
     // Trigger Connection Test (Edit Site Page)
     jQuery(document).on('click', '#mainwp_managesites_edit_test', function () {
         mainwp_managesites_edit_test();
+    });
+
+    // Preserve an explicitly re-entered HTTP username when testing a changed origin.
+    jQuery(document).on('input', '#mainwp_managesites_edit_http_user', function () {
+        jQuery(this).data('mainwp-http-user-dirty', true);
     });
 
     // Use detected URL (Edit Site Page): set the protocol and www selectors to the child-reported address; no autosave.

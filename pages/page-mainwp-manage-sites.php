@@ -1845,10 +1845,12 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
         if ( ( isset( $_GET['action'] ) && 'add_submonitor' === $_GET['action'] ) || ! empty( $_GET['sub_monitor_id'] ) ) {
             $websiteid = isset( $_GET['monitor_wpid'] ) ? intval( $_GET['monitor_wpid'] ) : 0;
-            $website   = MainWP_DB::instance()->get_website_by_id( $websiteid );
-            // Show modal.
-            static::render_monitor_site( $website );
-            return;
+            $website   = 0 < $websiteid ? MainWP_DB::instance()->get_website_by_id( $websiteid ) : null;
+            if ( MainWP_Manage_Sites_Handler::can_access_site( $website, $websiteid ) ) {
+                // Show modal.
+                static::render_monitor_site( $website );
+                return;
+            }
         }
 
         if ( ! empty( $_GET['emailsettingsid'] ) ) {

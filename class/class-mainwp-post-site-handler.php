@@ -250,27 +250,32 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
     public function mainwp_testwp() { // phpcs:ignore -- NOSONAR - validates draft and saved connection settings together.
         $this->secure_request( 'mainwp_testwp' );
 
+        if ( ! \mainwp_current_user_can( 'dashboard', 'test_connection' ) ) {
+            wp_send_json(
+                array(
+                    'success' => false,
+                    'error'   => \mainwp_do_not_have_permissions( esc_html__( 'test connections', 'mainwp' ), false ),
+                )
+            );
+        }
+
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-        $site_id     = isset( $_POST['siteid'] ) ? intval( $_POST['siteid'] ) : 0;
-        $website     = $site_id > 0 ? MainWP_DB::instance()->get_website_by_id( $site_id ) : null;
+        $site_id = isset( $_POST['siteid'] ) ? intval( $_POST['siteid'] ) : 0;
+        $website = self::get_connection_test_website( $site_id );
+        if ( $site_id > 0 && ! is_object( $website ) ) {
+            wp_send_json(
+                array(
+                    'success'               => false,
+                    'error'                 => esc_html__( 'Site not found.', 'mainwp' ),
+                    'connection_diagnostic' => MainWP_Connection_Diagnostics::not_tested( 'missing_site' ),
+                )
+            );
+        }
+
         $url         = isset( $_POST['url'] ) ? urldecode( sanitize_text_field( wp_unslash( $_POST['url'] ) ) ) : ( $website ? $website->url : '' );
         $same_origin = $website && MainWP_Connection_Diagnostics::is_same_origin( $website->url, $url );
-        $info        = wp_parse_url( $url );
-        $invalid     = ! MainWP_Connection_Diagnostics::is_valid_site_url( $url ) || false !== strpos( $url, '?=' );
 
-        $blocked_ports = apply_filters( 'mainwp_connect_sites_not_allow_ports', array( 21, 22 ), $url );
-        if ( ! is_array( $blocked_ports ) ) {
-            $blocked_ports = array( 21, 22 );
-        }
-        if ( ! empty( $info['port'] ) && in_array( (int) $info['port'], $blocked_ports, true ) ) {
-            $invalid = true;
-        }
-        if ( ! empty( $info['port'] ) && ! in_array( (int) $info['port'], array( 80, 443 ), true ) ) {
-            $allowed_ports = apply_filters( 'mainwp_connect_sites_allow_ports', array(), $url );
-            $invalid       = ! is_array( $allowed_ports ) || ! in_array( (int) $info['port'], $allowed_ports, true );
-        }
-
-        if ( $invalid ) {
+        if ( self::is_invalid_connection_test_url( $url ) ) {
             wp_send_json(
                 array(
                     'success'               => false,
@@ -288,7 +293,8 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
 
         $submitted_http_user = isset( $_POST['http_user'] ) ? sanitize_text_field( wp_unslash( $_POST['http_user'] ) ) : null;
         $submitted_http_pass = isset( $_POST['http_pass'] ) ? wp_unslash( $_POST['http_pass'] ) : null;
-        $http_credentials    = self::resolve_test_http_credentials( $website, $same_origin, $submitted_http_user, $submitted_http_pass );
+        $http_user_dirty     = isset( $_POST['http_user_dirty'] ) && 1 === intval( $_POST['http_user_dirty'] );
+        $http_credentials    = self::resolve_test_http_credentials( $website, $same_origin, $submitted_http_user, $submitted_http_pass, $http_user_dirty );
         $http_user           = $http_credentials['user'];
         $http_pass           = $http_credentials['pass'];
 
@@ -324,6 +330,54 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
     }
 
     /**
+     * Get a saved site only when the current user may test that site.
+     *
+     * The unavailable result deliberately does not distinguish an unknown site ID
+     * from an inaccessible one. A zero ID represents the Add Site test flow.
+     *
+     * @param int $site_id Saved site ID, or zero for an unsaved site.
+     *
+     * @return object|null|false Saved website, null for an unsaved site, or false when unavailable.
+     */
+    private static function get_connection_test_website( $site_id ) {
+        if ( $site_id < 1 ) {
+            return null;
+        }
+        if ( ! \mainwp_current_user_can( 'site', $site_id ) ) {
+            return false;
+        }
+
+        $website = MainWP_DB::instance()->get_website_by_id( $site_id );
+        return is_object( $website ) ? $website : false;
+    }
+
+    /**
+     * Determine whether a connection-test URL is locally rejected.
+     *
+     * @param string $url Candidate site URL.
+     *
+     * @return bool True when the URL or port is invalid.
+     */
+    private static function is_invalid_connection_test_url( $url ) {
+        $info    = wp_parse_url( $url );
+        $invalid = ! MainWP_Connection_Diagnostics::is_valid_site_url( $url ) || false !== strpos( $url, '?=' );
+
+        $blocked_ports = apply_filters( 'mainwp_connect_sites_not_allow_ports', array( 21, 22 ), $url );
+        if ( ! is_array( $blocked_ports ) ) {
+            $blocked_ports = array( 21, 22 );
+        }
+        if ( ! empty( $info['port'] ) && in_array( (int) $info['port'], $blocked_ports, true ) ) {
+            $invalid = true;
+        }
+        if ( ! empty( $info['port'] ) && ! in_array( (int) $info['port'], array( 80, 443 ), true ) ) {
+            $allowed_ports = apply_filters( 'mainwp_connect_sites_allow_ports', array(), $url );
+            $invalid       = $invalid || ! is_array( $allowed_ports ) || ! in_array( (int) $info['port'], $allowed_ports, true );
+        }
+
+        return $invalid;
+    }
+
+    /**
      * Resolve draft HTTP Basic credentials without forwarding saved values cross-origin.
      *
      * A saved username is rendered in plaintext and the saved password as a sentinel.
@@ -334,10 +388,11 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
      * @param bool        $same_origin        Whether the draft URL matches the saved origin.
      * @param string|null $submitted_http_user Submitted HTTP Basic username, or null when absent.
      * @param string|null $submitted_http_pass Submitted HTTP Basic password, or null when absent.
+     * @param bool        $http_user_dirty     Whether the operator explicitly edited the username field.
      *
      * @return array Resolved user and pass values.
      */
-    private static function resolve_test_http_credentials( $website, $same_origin, $submitted_http_user, $submitted_http_pass ) {
+    private static function resolve_test_http_credentials( $website, $same_origin, $submitted_http_user, $submitted_http_pass, $http_user_dirty = false ) {
         if ( ! is_object( $website ) ) {
             return array(
                 'user' => is_string( $submitted_http_user ) ? $submitted_http_user : '',
@@ -358,7 +413,7 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
             );
         }
 
-        $http_user = is_string( $submitted_http_user ) && $submitted_http_user !== $saved_http_user ? $submitted_http_user : '';
+        $http_user = is_string( $submitted_http_user ) && ( $http_user_dirty || $submitted_http_user !== $saved_http_user ) ? $submitted_http_user : '';
         $http_pass = is_string( $submitted_http_pass ) && ! MainWP_Credential_Render::is_sentinel( $submitted_http_pass ) ? $submitted_http_pass : '';
         return array(
             'user' => $http_user,

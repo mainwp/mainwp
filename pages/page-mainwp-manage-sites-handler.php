@@ -29,13 +29,30 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
     }
 
     /**
+     * Determine whether the current user can access a resolved site.
+     *
+     * @param mixed $website Resolved website object.
+     * @param int   $site_id Requested website ID.
+     *
+     * @return bool True when the object matches the requested site and is accessible.
+     */
+    public static function can_access_site( $website, $site_id ) {
+        $site_id = (int) $site_id;
+
+        return 0 < $site_id
+            && is_object( $website )
+            && isset( $website->id )
+            && $site_id === (int) $website->id
+            && \mainwp_current_user_can( 'site', $site_id );
+    }
+
+    /**
      * Method check_site()
      *
      * Check to add site.
      *
      * @return mixed send json encode data
      *
-     * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
      * @uses  \MainWP\Dashboard\MainWP_Utility::esc_content()
      */
     public static function check_site() { // phpcs:ignore -- NOSONAR - complex.
@@ -49,10 +66,10 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
             die( wp_json_encode( array( 'error' => esc_html__( 'Invalid URL! Please enter valid URL to the Site URL field.', 'mainwp' ) ) ) );
         }
 
-        $website = MainWP_DB::instance()->get_websites_by_url( $url );
-        $ret     = array();
+        $websites = MainWP_DB::instance()->get_websites_by_url( $url );
+        $ret      = array();
 
-        if ( MainWP_System_Utility::can_edit_website( $website ) ) {
+        if ( ! empty( $websites ) ) {
             $ret['response'] = esc_html__( 'ERROR Site is already connected to your MainWP Dashboard.', 'mainwp' );
         } else {
             $verify_cert    = empty( $_POST['verify_certificate'] ) ? false : intval( $_POST['verify_certificate'] );
@@ -141,6 +158,10 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
         try {
             if ( MainWP_Utility::ctype_digit( $siteId ) ) {
                 $website = MainWP_DB::instance()->get_website_by_id( $siteId );
+                if ( ! static::can_access_site( $website, $siteId ) ) {
+                    $website = null;
+                    throw new MainWP_Exception( esc_html__( 'This operation is not allowed!', 'mainwp' ) );
+                }
 
                 $params     = array();
                 $sync_first = true;
@@ -171,7 +192,7 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
             }
 
             if ( $structured ) {
-                if ( empty( $connection_diag ) && is_object( $website ) ) {
+                if ( empty( $connection_diag ) && static::can_access_site( $website, $siteId ) ) {
                     $verify_certificate = 1 === (int) $website->verify_certificate || ( 2 === (int) $website->verify_certificate && 1 === (int) get_option( 'mainwp_sslVerifyCertificate', 1 ) );
                     $force_use_ipv4     = 1 === (int) $website->force_use_ipv4 || ( 2 === (int) $website->force_use_ipv4 && 1 === (int) get_option( 'mainwp_forceUseIPv4', 0 ) );
                     $connection_diag    = MainWP_Connection_Diagnostics::test_connected(

@@ -166,6 +166,101 @@ class Test_Connection_Diagnostics extends \WP_UnitTestCase {
         $this->assertStringNotContainsString( $sentinel, wp_json_encode( $export ) );
     }
 
+    /** Oversized irrelevant headers cannot hide later detector signals or response blocks. */
+    public function test_header_capture_preserves_later_detector_signals() {
+        $capture = new ReflectionMethod( MainWP_Connection_Diagnostics::class, 'capture_header_line' );
+        if ( PHP_VERSION_ID < 80100 ) {
+            $capture->setAccessible( true );
+        }
+
+        $blocks        = array();
+        $current_block = -1;
+        $lines         = array(
+            "HTTP/1.1 100 Continue\r\n",
+            'X-Irrelevant: ' . str_repeat( 'x', MainWP_Connection_Diagnostics::HEADER_SAMPLE_LIMIT * 2 ) . "\r\n",
+            "CF-Mitigated: challenge\r\n",
+            "HTTP/1.1 403 Forbidden\r\n",
+            'X-Another-Irrelevant: ' . str_repeat( 'y', MainWP_Connection_Diagnostics::HEADER_SAMPLE_LIMIT * 2 ) . "\r\n",
+            "WWW-Authenticate: Basic realm=\"MainWP\"\r\n",
+            "X-Cache: HIT\r\n",
+            "SG-Captcha: challenge\r\n",
+        );
+
+        foreach ( $lines as $line ) {
+            $arguments = array( &$blocks, &$current_block, $line );
+            $this->assertSame( strlen( $line ), $capture->invokeArgs( null, $arguments ) );
+        }
+
+        $this->assertCount( 2, $blocks );
+        $this->assertArrayNotHasKey( 'x-irrelevant', $blocks[0]['headers'] );
+        $this->assertSame( array( 'challenge' ), $blocks[0]['headers']['cf-mitigated'] );
+        $this->assertArrayNotHasKey( 'x-another-irrelevant', $blocks[1]['headers'] );
+        $this->assertSame( array( 'Basic realm="MainWP"' ), $blocks[1]['headers']['www-authenticate'] );
+        $this->assertSame( array( 'HIT' ), $blocks[1]['headers']['x-cache'] );
+        $this->assertSame( array( 'challenge' ), $blocks[1]['headers']['sg-captcha'] );
+        $this->assertLessThan( MainWP_Connection_Diagnostics::HEADER_SAMPLE_LIMIT, strlen( wp_json_encode( $blocks ) ) );
+
+        $observation = array(
+            'phase'               => 'child_endpoint',
+            'curl_errno'          => 0,
+            'http_status'         => 403,
+            'peer_ip'             => '8.8.8.8',
+            'bounded_body_sample' => '',
+            'header_blocks'       => $blocks,
+        );
+        $diagnosis   = MainWP_Connection_Diagnostics::diagnose( $observation );
+
+        $this->assertSame( 'siteground_request_blocked', $diagnosis['diagnosis_id'] );
+
+        $has_basic_auth = new ReflectionMethod( MainWP_Connection_Diagnostics::class, 'has_basic_auth_challenge' );
+        $has_cache_hit  = new ReflectionMethod( MainWP_Connection_Diagnostics::class, 'has_cache_hit_signal' );
+        if ( PHP_VERSION_ID < 80100 ) {
+            $has_basic_auth->setAccessible( true );
+            $has_cache_hit->setAccessible( true );
+        }
+        $this->assertTrue( $has_basic_auth->invoke( null, $observation ) );
+        $this->assertTrue( $has_cache_hit->invoke( null, $observation ) );
+    }
+
+    /** Header capture keeps the newest blocks and remains below its retained-data limit. */
+    public function test_header_capture_is_bounded_and_keeps_final_block() {
+        $capture = new ReflectionMethod( MainWP_Connection_Diagnostics::class, 'capture_header_line' );
+        if ( PHP_VERSION_ID < 80100 ) {
+            $capture->setAccessible( true );
+        }
+
+        $blocks        = array();
+        $current_block = -1;
+        $large_value   = str_repeat( 'v', MainWP_Connection_Diagnostics::HEADER_VALUE_LIMIT * 2 );
+        $block_count   = MainWP_Connection_Diagnostics::HEADER_BLOCK_LIMIT + 2;
+
+        for ( $block = 0; $block < $block_count; ++$block ) {
+            $status    = "HTTP/1.1 20{$block} Test\r\n";
+            $arguments = array( &$blocks, &$current_block, $status );
+            $capture->invokeArgs( null, $arguments );
+
+            foreach ( MainWP_Connection_Diagnostics::DETECTOR_RESPONSE_HEADERS as $name ) {
+                for ( $value_index = 0; $value_index < MainWP_Connection_Diagnostics::HEADER_VALUES_PER_NAME + 1; ++$value_index ) {
+                    $line      = $name . ': ' . $large_value . "\r\n";
+                    $arguments = array( &$blocks, &$current_block, $line );
+                    $capture->invokeArgs( null, $arguments );
+                }
+            }
+        }
+
+        $this->assertCount( MainWP_Connection_Diagnostics::HEADER_BLOCK_LIMIT, $blocks );
+        $this->assertSame( 'HTTP/1.1 20' . ( $block_count - 1 ) . ' Test', $blocks[ MainWP_Connection_Diagnostics::HEADER_BLOCK_LIMIT - 1 ]['status_line'] );
+        foreach ( $blocks as $block ) {
+            foreach ( $block['headers'] as $values ) {
+                $this->assertCount( MainWP_Connection_Diagnostics::HEADER_VALUES_PER_NAME, $values );
+                foreach ( $values as $value ) {
+                    $this->assertLessThanOrEqual( MainWP_Connection_Diagnostics::HEADER_VALUE_LIMIT, strlen( $value ) );
+                }
+            }
+        }
+        $this->assertLessThan( MainWP_Connection_Diagnostics::HEADER_SAMPLE_LIMIT, strlen( wp_json_encode( $blocks ) ) );
+    }
+
     /** Generic SiteGround-like response metadata and HTTP 202 are not attribution evidence. */
     public function test_siteground_generic_metadata_is_not_provider_evidence() {
         $diagnosis = MainWP_Connection_Diagnostics::diagnose(
@@ -494,6 +589,67 @@ class Test_Connection_Diagnostics extends \WP_UnitTestCase {
         $this->assertSame( 0, $result['support']['http_status'] );
     }
 
+    /** Local configuration results include attempts in the copied support bundle. */
+    public function test_not_tested_support_bundle_contains_attempts() {
+        $result = MainWP_Connection_Diagnostics::not_tested( 'invalid_url' );
+
+        $this->assertArrayHasKey( 'attempts', $result );
+        $this->assertArrayHasKey( 'attempts', $result['support'] );
+        $this->assertSame( $result['attempts'], $result['support']['attempts'] );
+        $this->assertSame( 'request_preparation', $result['support']['attempts'][0]['phase'] );
+    }
+
+    /** TLS verification resolves explicit, site, global, and safe draft defaults. */
+    public function test_tls_verification_setting_matrix() {
+        $method = new ReflectionMethod( MainWP_Connection_Diagnostics::class, 'resolve_verify_certificate' );
+        if ( PHP_VERSION_ID < 80100 ) {
+            $method->setAccessible( true );
+        }
+
+        $missing_option = '__mainwp_missing_ssl_verify_option__';
+        $previous       = get_option( 'mainwp_sslVerifyCertificate', $missing_option );
+
+        try {
+            update_option( 'mainwp_sslVerifyCertificate', 0 );
+            $this->assertTrue( $method->invoke( null, array() ) );
+            $this->assertFalse( $method->invoke( null, array( 'verify_certificate' => 0 ) ) );
+            $this->assertTrue( $method->invoke( null, array( 'verify_certificate' => 1 ) ) );
+            $this->assertFalse( $method->invoke( null, array( 'verify_certificate' => 2 ) ) );
+            $this->assertFalse( $method->invoke( null, array( 'verify_certificate' => false ) ) );
+            $this->assertTrue( $method->invoke( null, array( 'verify_certificate' => true ) ) );
+            $this->assertTrue( $method->invoke( null, array( 'verify_certificate' => null ) ) );
+            $this->assertTrue( $method->invoke( null, array( 'verify_certificate' => 'invalid' ) ) );
+            $this->assertFalse( $method->invoke( null, array( 'website' => (object) array( 'verify_certificate' => 0 ) ) ) );
+            $this->assertTrue( $method->invoke( null, array( 'website' => (object) array( 'verify_certificate' => 1 ) ) ) );
+            $this->assertFalse( $method->invoke( null, array( 'website' => (object) array( 'verify_certificate' => 2 ) ) ) );
+            $this->assertTrue( $method->invoke( null, array( 'website' => (object) array() ) ) );
+
+            $global_false = static function () {
+                return false;
+            };
+            add_filter( 'option_mainwp_sslVerifyCertificate', $global_false );
+            try {
+                $this->assertFalse( $method->invoke( null, array( 'verify_certificate' => 2 ) ) );
+            } finally {
+                remove_filter( 'option_mainwp_sslVerifyCertificate', $global_false );
+            }
+
+            update_option( 'mainwp_sslVerifyCertificate', 1 );
+            $this->assertTrue( $method->invoke( null, array( 'verify_certificate' => 2 ) ) );
+            $this->assertTrue( $method->invoke( null, array( 'website' => (object) array( 'verify_certificate' => 2 ) ) ) );
+            $this->assertTrue( $method->invoke( null, array( 'website' => (object) array() ) ) );
+
+            delete_option( 'mainwp_sslVerifyCertificate' );
+            $this->assertTrue( $method->invoke( null, array( 'verify_certificate' => 2 ) ) );
+        } finally {
+            if ( $missing_option === $previous ) {
+                delete_option( 'mainwp_sslVerifyCertificate' );
+            } else {
+                update_option( 'mainwp_sslVerifyCertificate', $previous );
+            }
+        }
+    }
+
     /** Millisecond deadlines are rounded down and never gain an extra second. */
     public function test_deadline_budget_never_rounds_up() {
         $method = new ReflectionMethod( MainWP_Connection_Diagnostics::class, 'remaining_timeout_milliseconds' );
@@ -597,10 +753,16 @@ class Test_Connection_Diagnostics extends \WP_UnitTestCase {
         $password_only = $method->invoke( null, $website, false, 'saved-user', 'new-pass' );
         $this->assertSame( array( 'user' => '', 'pass' => 'new-pass' ), $password_only );
 
+        $reentered_pair = $method->invoke( null, $website, false, 'saved-user', 'new-pass', true );
+        $this->assertSame( array( 'user' => 'saved-user', 'pass' => 'new-pass' ), $reentered_pair );
+
+        $reentered_with_sentinel = $method->invoke( null, $website, false, 'saved-user', MainWP_Credential_Render::SENTINEL, true );
+        $this->assertSame( array( 'user' => 'saved-user', 'pass' => '' ), $reentered_with_sentinel );
+
         $new_pair = $method->invoke( null, $website, false, 'new-user', 'new-pass' );
         $this->assertSame( array( 'user' => 'new-user', 'pass' => 'new-pass' ), $new_pair );
 
-        $same_origin = $method->invoke( null, $website, true, 'saved-user', MainWP_Credential_Render::SENTINEL );
+        $same_origin = $method->invoke( null, $website, true, 'saved-user', MainWP_Credential_Render::SENTINEL, true );
         $this->assertSame( array( 'user' => 'saved-user', 'pass' => 'saved-pass' ), $same_origin );
     }
 

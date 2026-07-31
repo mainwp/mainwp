@@ -23,6 +23,32 @@ class MainWP_Connection_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBra
     /** Maximum response header bytes retained for detector analysis. */
     const HEADER_SAMPLE_LIMIT = 32768;
 
+    /** Maximum number of response header blocks retained, keeping the newest blocks. */
+    const HEADER_BLOCK_LIMIT = 6;
+
+    /** Maximum retained status-line bytes per response header block. */
+    const HEADER_STATUS_LINE_LIMIT = 128;
+
+    /** Maximum retained bytes per detector-relevant response header value. */
+    const HEADER_VALUE_LIMIT = 240;
+
+    /** Maximum retained values for each detector-relevant response header. */
+    const HEADER_VALUES_PER_NAME = 2;
+
+    /** Response headers used by provider, authentication, and cache detection. */
+    const DETECTOR_RESPONSE_HEADERS = array(
+        'cf-mitigated',
+        'sg-captcha',
+        'cf-ray',
+        'x-sucuri-id',
+        'www-authenticate',
+        'x-cache',
+        'x-cache-status',
+        'x-litespeed-cache',
+        'cf-cache-status',
+        'age',
+    );
+
     /** Interactive connection diagnostics must complete inside this budget. */
     const DEFAULT_DEADLINE_SECONDS = 25;
 
@@ -195,13 +221,13 @@ class MainWP_Connection_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBra
         } else {
             $diagnosis_id = 'dashboard_configuration_error';
         }
-        $observation        = array(
+        $observation                   = array(
             'phase'               => 'request_preparation',
             'configuration_error' => sanitize_key( $reason ),
             'http_status'         => 0,
             'curl_errno'          => 0,
         );
-        $diagnosis          = self::make_diagnosis(
+        $diagnosis                     = self::make_diagnosis(
             'not_tested',
             $diagnosis_id,
             'dashboard_configuration',
@@ -209,8 +235,9 @@ class MainWP_Connection_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBra
             'request_preparation',
             array( array( 'id' => 'request_not_sent' ) )
         );
-        $export             = self::export( $diagnosis, $observation );
-        $export['attempts'] = array( self::attempt_summary( $export ) );
+        $export                        = self::export( $diagnosis, $observation );
+        $export['attempts']            = array( self::attempt_summary( $export ) );
+        $export['support']['attempts'] = $export['attempts'];
         return $export;
     }
 
@@ -460,7 +487,6 @@ class MainWP_Connection_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBra
 
         $body           = '';
         $header_blocks  = array();
-        $header_bytes   = 0;
         $current_block  = -1;
         $body_truncated = false;
         // Direct cURL is required for bounded streaming callbacks and closed raw observations.
@@ -492,29 +518,8 @@ class MainWP_Connection_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBra
         curl_setopt(
             $ch,
             CURLOPT_HEADERFUNCTION,
-            static function ( $handle, $line ) use ( &$header_blocks, &$header_bytes, &$current_block ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundBeforeLastUsed -- cURL callback signature.
-                $length = strlen( $line );
-                if ( $header_bytes >= self::HEADER_SAMPLE_LIMIT || $length > self::HEADER_SAMPLE_LIMIT - $header_bytes ) {
-                    $header_bytes = self::HEADER_SAMPLE_LIMIT;
-                    return $length;
-                }
-                $header_bytes += $length;
-                $trimmed       = trim( $line );
-                if ( 0 === stripos( $trimmed, 'HTTP/' ) ) {
-                    $header_blocks[] = array(
-                        'status_line' => $trimmed,
-                        'headers'     => array(),
-                    );
-                    $current_block   = count( $header_blocks ) - 1;
-                } elseif ( '' !== $trimmed && $current_block >= 0 && false !== strpos( $trimmed, ':' ) ) {
-                    list( $name, $value ) = explode( ':', $trimmed, 2 );
-                    $name                 = strtolower( trim( $name ) );
-                    if ( ! isset( $header_blocks[ $current_block ]['headers'][ $name ] ) ) {
-                        $header_blocks[ $current_block ]['headers'][ $name ] = array();
-                    }
-                    $header_blocks[ $current_block ]['headers'][ $name ][] = trim( $value );
-                }
-                return $length;
+            static function ( $handle, $line ) use ( &$header_blocks, &$current_block ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundBeforeLastUsed -- cURL callback signature.
+                return self::capture_header_line( $header_blocks, $current_block, $line );
             }
         );
 
@@ -546,7 +551,7 @@ class MainWP_Connection_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBra
             curl_setopt( $ch, CURLOPT_USERPWD, $settings['http_user'] . ':' . stripslashes( $settings['http_pass'] ) );
         }
 
-        $verify_certificate = ! empty( $settings['verify_certificate'] );
+        $verify_certificate = self::resolve_verify_certificate( $settings );
         curl_setopt( $ch, CURLOPT_SSL_VERIFYHOST, $verify_certificate ? 2 : 0 );
         curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, $verify_certificate );
         curl_setopt( $ch, CURLOPT_SSLVERSION, isset( $settings['ssl_version'] ) ? (int) $settings['ssl_version'] : 0 );
@@ -592,6 +597,95 @@ class MainWP_Connection_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBra
             'body'        => $body,
             'observation' => $observation,
         );
+    }
+
+    /**
+     * Retain only bounded response metadata used by the diagnostic classifiers.
+     *
+     * Irrelevant or oversized headers never consume detector capacity. The newest
+     * header blocks and values are retained so an interim response cannot hide the
+     * final response. The per-field limits keep retained string data below
+     * HEADER_SAMPLE_LIMIT without a shared budget that an early line can exhaust.
+     *
+     * @param array  $header_blocks Retained response header blocks.
+     * @param int    $current_block Current response header block index.
+     * @param string $line          Raw cURL response header line.
+     *
+     * @return int Raw line length required by the cURL callback contract.
+     */
+    private static function capture_header_line( &$header_blocks, &$current_block, $line ) {
+        $length = strlen( $line );
+
+        if ( 0 === stripos( $line, 'HTTP/' ) ) {
+            $header_blocks[] = array(
+                'status_line' => trim( substr( $line, 0, self::HEADER_STATUS_LINE_LIMIT ) ),
+                'headers'     => array(),
+            );
+            if ( count( $header_blocks ) > self::HEADER_BLOCK_LIMIT ) {
+                array_shift( $header_blocks );
+            }
+            $current_block = count( $header_blocks ) - 1;
+            return $length;
+        }
+
+        if ( $current_block < 0 ) {
+            return $length;
+        }
+
+        $separator = strpos( $line, ':' );
+        if ( false === $separator || $separator > 64 ) {
+            return $length;
+        }
+
+        $name = strtolower( trim( substr( $line, 0, $separator ) ) );
+        if ( ! in_array( $name, self::DETECTOR_RESPONSE_HEADERS, true ) ) {
+            return $length;
+        }
+
+        $value = trim( substr( $line, $separator + 1, self::HEADER_VALUE_LIMIT ) );
+        if ( ! isset( $header_blocks[ $current_block ]['headers'][ $name ] ) ) {
+            $header_blocks[ $current_block ]['headers'][ $name ] = array();
+        }
+        if ( count( $header_blocks[ $current_block ]['headers'][ $name ] ) >= self::HEADER_VALUES_PER_NAME ) {
+            array_shift( $header_blocks[ $current_block ]['headers'][ $name ] );
+        }
+        $header_blocks[ $current_block ]['headers'][ $name ][] = $value;
+
+        return $length;
+    }
+
+    /**
+     * Resolve the effective TLS certificate verification setting.
+     *
+     * Explicit 0/1 settings are honored, while 2 follows the Dashboard setting.
+     * Connected probes inherit the saved site setting when no draft value is
+     * supplied. Unconnected probes default to verification enabled.
+     *
+     * @param array $settings Diagnostic transport settings.
+     *
+     * @return bool Whether cURL must verify the peer certificate and host.
+     */
+    private static function resolve_verify_certificate( $settings ) {
+        if ( array_key_exists( 'verify_certificate', $settings ) ) {
+            $verify_setting = $settings['verify_certificate'];
+        } elseif ( isset( $settings['website'] ) && is_object( $settings['website'] ) && property_exists( $settings['website'], 'verify_certificate' ) ) {
+            $verify_setting = $settings['website']->verify_certificate;
+        } else {
+            return true;
+        }
+
+        if ( true === $verify_setting || 1 === $verify_setting || '1' === $verify_setting ) {
+            return true;
+        }
+        if ( 2 === $verify_setting || '2' === $verify_setting ) {
+            $global_setting = get_option( 'mainwp_sslVerifyCertificate', 1 );
+            return 1 === (int) $global_setting;
+        }
+        if ( false === $verify_setting || 0 === $verify_setting || '0' === $verify_setting ) {
+            return false;
+        }
+
+        return true;
     }
 
     /**

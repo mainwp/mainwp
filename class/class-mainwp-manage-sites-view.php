@@ -2487,7 +2487,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         self::maybe_fetch_initial_site_favicon( $id, $params );
                     }
                 } else {
-                    $error                           = sprintf( esc_html__( 'Undefined error occurred. Please try again. For additional help, contact the MainWP Support.', 'mainwp' ), '<a href="https://docs.mainwp.com/troubleshooting/potential-issues" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe.
+                    $error                           = esc_html__( 'Undefined error occurred. Please try again. For additional help, contact MainWP Support.', 'mainwp' );
                     $output['connection_diagnostic'] = MainWP_Connection_Diagnostics::from_child_response( array( 'error' => 'unexpected_registration_response' ), 'handshake' );
                     unset( $output['fetch_data'], $output['error_message'], $output['child_error_code'] );
                 }

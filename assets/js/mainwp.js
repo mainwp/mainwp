@@ -446,9 +446,9 @@ globalThis.mainwp_get_reconnect_error = function (response, siteId) { // NOSONAR
     }
 }
 
-let mainwp_render_reconnect_failure = function (container, response, retry) {
+let mainwp_render_reconnect_failure = function (container, response) {
     mainwp_set_message_zone(container, '', '', true);
-    if (mainwp_render_connection_diagnostic(container, response, { retry: retry })) {
+    if (mainwp_render_connection_diagnostic(container, response)) {
         return;
     }
     jQuery(container).empty().text(response?.message || __('Reconnect failed.')).addClass('red').show();
@@ -457,7 +457,6 @@ let mainwp_render_reconnect_failure = function (container, response, retry) {
 const mainwpConnectionDiagnosticsDocs = 'https://docs.mainwp.com/troubleshooting/potential-issues';
 // Allow admin-ajax queue/bootstrap time around the server-side probe budget.
 const mainwpConnectionDiagnosticRequestTimeout = Math.max(1000, Number(jQuery('#mainwp-test-connection-modal').attr('data-mainwp-diagnostic-request-timeout')) || 35000);
-let mainwpConnectionDiagnosticRetry = null;
 let mainwpConnectionDiagnosticRequest = null;
 let mainwpConnectionDiagnosticGeneration = 0;
 
@@ -568,9 +567,8 @@ let mainwp_cancel_connection_diagnostic_request = function () {
     }
 };
 
-globalThis.mainwp_prepare_connection_diagnostic_modal = function (retry) {
+globalThis.mainwp_prepare_connection_diagnostic_modal = function () {
     mainwp_cancel_connection_diagnostic_request();
-    mainwpConnectionDiagnosticRetry = typeof retry === 'function' ? retry : null;
     let modal = jQuery('#mainwp-test-connection-modal');
     modal
         .modal('setting', 'closable', true)
@@ -585,7 +583,7 @@ globalThis.mainwp_prepare_connection_diagnostic_modal = function (retry) {
     let copyButton = modal.find('[data-mainwp-diagnostic-action="copy"]');
     clearTimeout(copyButton.data('mainwp-copy-status-timer'));
     copyButton.removeData('mainwp-copy-status-timer mainwp-copy-token').text(__('Copy diagnostic details'));
-    modal.find('[data-mainwp-diagnostic-action="test-again"], [data-mainwp-diagnostic-action="copy"]').prop('disabled', true);
+    modal.find('[data-mainwp-diagnostic-action="copy"]').prop('disabled', true);
 };
 
 let mainwp_request_connection_diagnostic = function (data) {
@@ -683,21 +681,15 @@ globalThis.mainwp_render_connection_diagnostic = function (container, payload, o
     if (modal.length) {
         modal.find('.dimmer').hide();
         modal.children('.content').attr('aria-busy', 'false');
-        modal.find('[data-mainwp-diagnostic-action="test-again"], [data-mainwp-diagnostic-action="copy"]').prop('disabled', false);
+        modal.find('[data-mainwp-diagnostic-action="copy"]').prop('disabled', false);
     } else if (options.actions !== false) {
         let actions = jQuery('<div>').addClass('ui small stackable buttons');
-        let retry = jQuery('<button>').attr('type', 'button').addClass('ui basic button').text(__('Test again'));
-        retry.on('click', function () {
-            if (typeof options.retry === 'function') {
-                options.retry();
-            }
-        });
         let copy = jQuery('<button>').attr('type', 'button').addClass('ui basic button').text(__('Copy diagnostic details'));
         copy.on('click', function () {
             mainwp_copy_connection_diagnostic(result.support || {}, this);
         });
         let docs = jQuery('<a>').addClass('ui basic button').attr({ href: mainwpConnectionDiagnosticsDocs, target: '_blank', rel: 'noopener noreferrer' }).text(__('Learn more'));
-        actions.append(retry, copy, docs);
+        actions.append(copy, docs);
         target.append(actions);
     }
 
@@ -723,16 +715,6 @@ globalThis.mainwp_render_connection_request_failure = function (container) {
 jQuery(document).on('click', '#mainwp-test-connection-modal [data-mainwp-diagnostic-action="copy"]', function () {
     let support = jQuery('#mainwp-test-connection-result').data('mainwp-diagnostic-support');
     mainwp_copy_connection_diagnostic(support, this);
-});
-
-jQuery(document).on('click', '#mainwp-test-connection-modal [data-mainwp-diagnostic-action="test-again"]', function () {
-    if (typeof mainwpConnectionDiagnosticRetry === 'function') {
-        mainwpConnectionDiagnosticRetry();
-    }
-});
-
-jQuery(document).on('click', '#mainwp-test-connection-modal [data-mainwp-diagnostic-action="close"]', function () {
-    jQuery('#mainwp-test-connection-modal').modal('hide');
 });
 
 jQuery(document).on('keydown', '#mainwp-test-connection-modal > .close.icon', function (event) {
@@ -1888,9 +1870,7 @@ let mainwp_site_overview_reconnect = function (pElement) {
                 mainwp_set_message_zone('#mainwp-message-zone');
                 mainwp_forceReload();
             } else {
-                mainwp_render_reconnect_failure('#mainwp-message-zone', response, function () {
-                    mainwp_site_overview_reconnect(pElement);
-                });
+                mainwp_render_reconnect_failure('#mainwp-message-zone', response);
             }
     }, 'json').fail(function () {
         mainwp_render_connection_request_failure('#mainwp-message-zone');
@@ -1928,9 +1908,7 @@ let mainwp_reconnect_with_pw = function (siteid) {
             mainwp_set_message_zone('#mainwp-message-zone-reconnect', response.message, 'green');
             mainwp_forceReload();
         } else {
-            mainwp_render_reconnect_failure('#mainwp-message-zone-reconnect', response, function () {
-                mainwp_reconnect_with_pw(siteid);
-            });
+            mainwp_render_reconnect_failure('#mainwp-message-zone-reconnect', response);
         }
     }, 'json').fail(function () {
         mainwp_render_connection_request_failure('#mainwp-message-zone-reconnect');
@@ -1943,9 +1921,20 @@ let mainwp_managesites_reconnect = function (pElement) {
     let wrapElement = jQuery('.mainwp-manage-wpsites-table tr').filter(function () {
         return String(jQuery(this).attr('siteid')) === String(siteid);
     }).first();
-    if (wrapElement.length) {
-        wrapElement.html('<td colspan="999"><i class="notched circle loading icon"></i> ' + 'Trying to reconnect. Please wait...' + '</td>');
+    if (!wrapElement.length || wrapElement.data('mainwp-reconnect-in-flight')) {
+        return;
     }
+    wrapElement.data('mainwp-reconnect-in-flight', true);
+    // Detach instead of serializing so initialized controls and live checkbox state survive a failed request.
+    let tableRowFocusTarget = wrapElement.find(':focus');
+    let tableRowContents = wrapElement.children().detach();
+    let restoreTableRow = function () {
+        wrapElement.empty().append(tableRowContents).removeData('mainwp-reconnect-in-flight').show();
+        if (tableRowFocusTarget.length) {
+            tableRowFocusTarget.trigger('focus');
+        }
+    };
+    wrapElement.append('<td colspan="999"><i class="notched circle loading icon"></i> ' + 'Trying to reconnect. Please wait...' + '</td>');
     let data = mainwp_secure_data({
         action: 'mainwp_reconnectwp',
         siteid: siteid,
@@ -1953,24 +1942,43 @@ let mainwp_managesites_reconnect = function (pElement) {
     });
 
     jQuery.post(ajaxurl, data, function (response) {
-            wrapElement.hide();
             if (response.success) {
+                wrapElement.removeData('mainwp-reconnect-in-flight').hide();
                 feedback('mainwp-message-zone', response.message, 'green');
                 setTimeout(function () {
                     mainwp_forceReload();
                 }, 6000);
             } else {
-                mainwp_render_reconnect_failure('#mainwp-message-zone', response, function () {
-                    mainwp_managesites_reconnect(siteid);
-                });
+                restoreTableRow();
+                mainwp_render_reconnect_failure('#mainwp-message-zone', response);
             }
     }, 'json').fail(function () {
+        restoreTableRow();
         mainwp_render_connection_request_failure('#mainwp-message-zone');
     });
 };
 
 let mainwp_managesites_cards_reconnect = function (element) {
-    element.html('<i class="notched loading circle icon"></i> Reconnecting...');
+    if (element.data('mainwp-reconnect-in-flight')) {
+        return;
+    }
+    element.data('mainwp-reconnect-in-flight', true);
+    let cardAriaDisabled = element.attr('aria-disabled');
+    let cardActionContents = element.contents().detach();
+    let resetCardActionState = function () {
+        element.removeData('mainwp-reconnect-in-flight').removeAttr('aria-busy');
+        if (typeof cardAriaDisabled === 'undefined') {
+            element.removeAttr('aria-disabled');
+        } else {
+            element.attr('aria-disabled', cardAriaDisabled);
+        }
+    };
+    let restoreCardAction = function () {
+        element.empty().append(cardActionContents);
+        resetCardActionState();
+        element.show();
+    };
+    element.attr({ 'aria-disabled': 'true', 'aria-busy': 'true' }).append('<i class="notched loading circle icon"></i> Reconnecting...');
     let siteid = element.attr('site-id');
     let data = mainwp_secure_data({
         action: 'mainwp_reconnectwp',
@@ -1979,18 +1987,19 @@ let mainwp_managesites_cards_reconnect = function (element) {
     });
 
     jQuery.post(ajaxurl, data, function (response) {
-            element.hide();
             if (response.success) {
+                resetCardActionState();
+                element.hide();
                 feedback('mainwp-message-zone', response.message, 'green');
                 setTimeout(function () {
                     mainwp_forceReload();
                 }, 6000);
             } else {
-                mainwp_render_reconnect_failure('#mainwp-message-zone', response, function () {
-                    mainwp_managesites_cards_reconnect(element);
-                });
+                restoreCardAction();
+                mainwp_render_reconnect_failure('#mainwp-message-zone', response);
             }
     }, 'json').fail(function () {
+        restoreCardAction();
         mainwp_render_connection_request_failure('#mainwp-message-zone');
     });
 };
@@ -2052,7 +2061,7 @@ let mainwp_managesites_add = function () {
 
         if (res_things.connection_diagnostic && response !== 'OK') {
             mainwp_set_message_zone('#mainwp-message-zone', '', '', true);
-            mainwp_render_connection_diagnostic('#mainwp-message-zone', res_things, { retry: mainwp_managesites_add });
+            mainwp_render_connection_diagnostic('#mainwp-message-zone', res_things);
             jQuery('#mainwp_managesites_add').prop('disabled', false);
             return;
         }
@@ -2125,7 +2134,7 @@ let mainwp_managesites_add = function () {
 
                 if (response.substring(0, 5) == 'ERROR') {
                     mainwp_set_message_zone('#mainwp-message-zone', '', '', true);
-                    if (!mainwp_render_connection_diagnostic('#mainwp-message-zone', res_things, { retry: mainwp_managesites_add })) {
+                    if (!mainwp_render_connection_diagnostic('#mainwp-message-zone', res_things)) {
                         feedback('mainwp-message-zone', response.substring(6) + (resp_data == '' ? '' : '<br>' + show_resp), 'red');
                     }
                 } else {
@@ -2412,7 +2421,7 @@ let mainwp_managesites_test = function () {
         return;
     }
 
-    mainwp_prepare_connection_diagnostic_modal(mainwp_managesites_test);
+    mainwp_prepare_connection_diagnostic_modal();
     let clean_url = jQuery('#mainwp_managesites_add_wpurl').val().trim();
     let protocol = jQuery('#mainwp_managesites_add_wpurl_protocol').val();
     let url = protocol + '://' + clean_url;
@@ -2447,7 +2456,7 @@ let mainwp_managesites_edit_test = function () {
         url += '/';
     }
 
-    mainwp_prepare_connection_diagnostic_modal(mainwp_managesites_edit_test);
+    mainwp_prepare_connection_diagnostic_modal();
 
     let data = mainwp_secure_data({
         action: 'mainwp_testwp',

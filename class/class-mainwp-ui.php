@@ -3344,10 +3344,8 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 <div id="mainwp-test-connection-result" class="ui segment mainwp-connection-diagnostic-zone" role="status" aria-live="polite" style="display:none;"></div>
             </div>
             <div class="actions">
-                <button type="button" class="ui basic button" data-mainwp-diagnostic-action="test-again"><?php esc_html_e( 'Test again', 'mainwp' ); ?></button>
                 <button type="button" class="ui basic button" data-mainwp-diagnostic-action="copy"><?php esc_html_e( 'Copy diagnostic details', 'mainwp' ); ?></button>
                 <a class="ui basic button" data-mainwp-diagnostic-action="learn-more" href="<?php echo esc_url( MainWP_Connection_Diagnostics::DOCS_URL ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Learn more', 'mainwp' ); ?></a>
-                <button type="button" class="ui green button" data-mainwp-diagnostic-action="close"><?php esc_html_e( 'Close', 'mainwp' ); ?></button>
             </div>
         </div>
         <?php

@@ -195,7 +195,7 @@ let mainwp_setup_managesites_add = function () {
 
       if (res_things.connection_diagnostic && response !== 'OK') {
         mainwp_set_message_zone('#mainwp-message-zone', '', '', true);
-        mainwp_render_connection_diagnostic('#mainwp-message-zone', res_things, { retry: mainwp_setup_managesites_add });
+        mainwp_render_connection_diagnostic('#mainwp-message-zone', res_things);
         mainwp_setup_set_connect_pending(false);
         return;
       }
@@ -260,7 +260,7 @@ let mainwp_setup_managesites_add = function () {
           jQuery('#mainwp-info-zone').hide();
 
           if (response.substring(0, 5) == 'ERROR') {
-            if (!mainwp_render_connection_diagnostic('#mainwp-message-zone', res_things, { retry: mainwp_setup_managesites_add })) {
+            if (!mainwp_render_connection_diagnostic('#mainwp-message-zone', res_things)) {
               mainwp_set_message_zone('#mainwp-message-zone', response.substring(6), 'red');
             }
             mainwp_setup_set_connect_pending(false);

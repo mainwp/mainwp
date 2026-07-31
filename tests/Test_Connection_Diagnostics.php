@@ -516,6 +516,37 @@ class Test_Connection_Diagnostics extends \WP_UnitTestCase {
             'data-mainwp-diagnostic-request-timeout="' . ( ( MainWP_Connection_Diagnostics::DEFAULT_DEADLINE_SECONDS + 10 ) * 1000 ) . '"',
             $html
         );
+        $this->assertStringContainsString( 'data-mainwp-diagnostic-action="copy"', $html );
+        $this->assertStringContainsString( 'data-mainwp-diagnostic-action="learn-more"', $html );
+        $this->assertStringNotContainsString( 'data-mainwp-diagnostic-action="test-again"', $html );
+        $this->assertStringNotContainsString( 'data-mainwp-diagnostic-action="close"', $html );
+        $this->assertStringContainsString( 'class="close icon" role="button" tabindex="0"', $html );
+        $this->assertStringContainsString( 'aria-label="Close"', $html );
+    }
+
+    /** Connection diagnostic scripts do not recreate removed retry or footer-close actions. */
+    public function test_connection_diagnostic_scripts_omit_removed_actions() {
+        $script = file_get_contents( MAINWP_PLUGIN_DIR . 'assets/js/mainwp.js' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Local test fixture.
+        $setup_script = file_get_contents( MAINWP_PLUGIN_DIR . 'assets/js/mainwp-setup.js' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Local test fixture.
+
+        $this->assertIsString( $script );
+        $this->assertIsString( $setup_script );
+        $this->assertStringNotContainsString( "text(__('Test again'))", $script );
+        $this->assertStringNotContainsString( 'mainwpConnectionDiagnosticRetry', $script );
+        $this->assertStringNotContainsString( 'data-mainwp-diagnostic-action="close"', $script );
+        $this->assertStringNotContainsString( '{ retry:', $setup_script );
+        $this->assertStringContainsString( 'let tableRowContents = wrapElement.children().detach();', $script );
+        $this->assertStringContainsString( "wrapElement.empty().append(tableRowContents).removeData('mainwp-reconnect-in-flight').show();", $script );
+        $this->assertStringContainsString( "let tableRowFocusTarget = wrapElement.find(':focus');", $script );
+        $this->assertStringContainsString( "tableRowFocusTarget.trigger('focus');", $script );
+        $this->assertSame( 2, substr_count( $script, 'restoreTableRow();' ) );
+        $this->assertStringNotContainsString( 'let tableRowHtml =', $script );
+        $this->assertStringContainsString( "if (element.data('mainwp-reconnect-in-flight'))", $script );
+        $this->assertStringContainsString( 'let cardActionContents = element.contents().detach();', $script );
+        $this->assertStringContainsString( 'element.empty().append(cardActionContents);', $script );
+        $this->assertStringContainsString( "element.removeData('mainwp-reconnect-in-flight').removeAttr('aria-busy');", $script );
+        $this->assertSame( 2, substr_count( $script, 'restoreCardAction();' ) );
+        $this->assertStringNotContainsString( 'let cardActionHtml =', $script );
     }
 
     /** Cross-origin diagnostics bypass request-header filters and saved site context. */

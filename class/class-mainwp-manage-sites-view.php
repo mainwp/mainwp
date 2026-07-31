@@ -950,6 +950,36 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         <input type="button" name="mainwp_managesites_edit_test" id="mainwp_managesites_edit_test" class="ui button basic green" value="<?php esc_attr_e( 'Test Connection', 'mainwp' ); ?>"/>
                     </div>
                 </div>
+                <?php
+                $reported_siteurl = isset( $website->siteurl ) ? $website->siteurl : '';
+                $url_mismatch_cat = MainWP_Site_Url_Corrector::classify( $website->url, $reported_siteurl );
+                $url_correct_lock = MainWP_Site_Url_Corrector::is_locked( $website );
+                if ( MainWP_Site_Url_Corrector::is_scheme_www_category( $url_mismatch_cat ) ) :
+                    $detected_scheme = wp_parse_url( $reported_siteurl, PHP_URL_SCHEME );
+                    $detected_host   = wp_parse_url( $reported_siteurl, PHP_URL_HOST );
+                    $detected_www    = is_string( $detected_host ) && 0 === stripos( $detected_host, 'www.' ) ? 'www' : 'none-www';
+                    ?>
+                <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-site-general">
+                    <label class="six wide column middle aligned"></label>
+                    <div class="ui six wide column middle aligned">
+                        <i class="yellow exclamation triangle icon"></i> <?php esc_html_e( 'The child site reports its address as:', 'mainwp' ); ?> <strong><?php echo esc_url( $reported_siteurl ); ?></strong>
+                    </div>
+                    <div class="ui four wide middle aligned column">
+                        <input type="button" id="mainwp_managesites_edit_use_detected" class="ui button basic" data-scheme="<?php echo esc_attr( $detected_scheme ); ?>" data-www="<?php echo esc_attr( $detected_www ); ?>" value="<?php esc_attr_e( 'Use detected', 'mainwp' ); ?>" data-tooltip="<?php esc_attr_e( 'Sets the protocol and www selectors above to match the address the child site reports. Review and click Save Settings to apply.', 'mainwp' ); ?>" data-inverted="" data-position="top right"/>
+                    </div>
+                </div>
+                <?php endif; ?>
+                <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-site-general" default-indi-value="0">
+                    <label class="six wide column middle aligned">
+                    <?php
+                    MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $url_correct_lock ? 1 : '' );
+                    esc_html_e( 'Lock site URL', 'mainwp' );
+                    ?>
+                    </label>
+                    <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, MainWP will never automatically correct or reroute this site URL. This lock is set automatically when you save a URL that differs from the address the child site reports.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                        <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_managesites_edit_url_lock" id="mainwp_managesites_edit_url_lock" <?php echo $url_correct_lock ? 'checked="true"' : ''; ?> /><label><?php esc_html_e( 'Default: Disabled', 'mainwp' ); ?></label>
+                    </div>
+                </div>
                 <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-edit-site-general">
                     <label class="six wide column middle aligned">
                     <?php
@@ -2123,10 +2153,12 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
     }
 
     /**
-     * Correct the entered URL when the only mismatch is the www prefix.
+     * Correct the entered URL against the child-reported address at
+     * registration time.
      *
-     * This intentionally preserves the user-selected scheme and only flips the
-     * leading www on or off to match what the child site reports.
+     * Delegates to MainWP_Site_Url_Corrector::correct_entered_url(): adopts
+     * the reported www variant and http -> https scheme upgrades, never
+     * downgrades https -> http and never crosses domains.
      *
      * @param string $entered_url Entered child site URL.
      * @param string $reported_url Child-reported site URL.
@@ -2138,32 +2170,23 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             return $entered_url;
         }
 
-        $entered_url  = trim( $entered_url );
-        $reported_url = trim( $reported_url );
+        $corrected = MainWP_Site_Url_Corrector::correct_entered_url( $entered_url, $reported_url );
 
-        $entered_compare  = strtolower( untrailingslashit( MainWP_Utility::remove_http_prefix( $entered_url, true ) ) );
-        $reported_compare = strtolower( untrailingslashit( MainWP_Utility::remove_http_prefix( $reported_url, true ) ) );
-
-        if ( empty( $entered_compare ) || empty( $reported_compare ) || $entered_compare === $reported_compare ) {
-            return $entered_url;
+        if ( $corrected !== $entered_url ) {
+            $entered_scheme   = wp_parse_url( trim( $entered_url ), PHP_URL_SCHEME );
+            $corrected_scheme = wp_parse_url( $corrected, PHP_URL_SCHEME );
+            if ( $entered_scheme !== $corrected_scheme ) {
+                // The registration handshake ran over the ENTERED scheme, so an
+                // adopted https upgrade is unverified; probe it before saving and
+                // fall back to a www-only correction when https does not answer.
+                $probe = MainWP_Connect::try_visit( $corrected, true );
+                if ( ! is_array( $probe ) || ! empty( $probe['error'] ) || 200 !== (int) $probe['httpCode'] ) {
+                    $corrected = MainWP_Site_Url_Corrector::correct_entered_url( $entered_url, $reported_url, false );
+                }
+            }
         }
 
-        $entered_no_www  = strtolower( untrailingslashit( MainWP_Utility::remove_http_www_prefix( $entered_url ) ) );
-        $reported_no_www = strtolower( untrailingslashit( MainWP_Utility::remove_http_www_prefix( $reported_url ) ) );
-
-        if ( empty( $entered_no_www ) || $entered_no_www !== $reported_no_www ) {
-            return $entered_url;
-        }
-
-        $entered_scheme = wp_parse_url( $entered_url, PHP_URL_SCHEME );
-        if ( empty( $entered_scheme ) ) {
-            return $entered_url;
-        }
-
-        $reported_no_scheme = strtolower( MainWP_Utility::remove_http_prefix( $reported_url, true ) );
-        $reported_has_www   = MainWP_Utility::starts_with( $reported_no_scheme, 'www.' );
-
-        return strtolower( $entered_scheme ) . '://' . ( $reported_has_www ? 'www.' : '' ) . MainWP_Utility::remove_http_www_prefix( $entered_url );
+        return $corrected;
     }
 
     /**

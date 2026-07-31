@@ -197,6 +197,7 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button,
 .mainwp-ui.mainwp_page_SettingsAdvanced .mainwp-content-wrap,
 .mainwp-ui.mainwp_page_MonitoringSettings .mainwp-content-wrap,
 .mainwp-ui.mainwp_page_SettingsEmail .mainwp-content-wrap,
+.mainwp-ui.mainwp_page_PremiumUpdates .mainwp-content-wrap,
 .mainwp-ui.mainwp_page_MainWPTools .mainwp-content-wrap,
 .mainwp-ui.mainwp_page_SettingsInsights .mainwp-content-wrap,
 .mainwp-ui.mainwp_page_SettingsApiBackups .mainwp-content-wrap,
@@ -260,6 +261,52 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button,
     float: none !important;
 }
 
+#mainwp-header-command-palette-actions {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 10px;
+    padding-right: 10px;
+    border-right: 1px solid rgba(255, 255, 255, 0.25);
+    vertical-align: middle;
+}
+
+#mainwp-command-palette-trigger {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    min-height: 0;
+    height: auto;
+    margin: 0 !important;
+    padding: 0.78571429em 14px !important;
+    background: transparent !important;
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    border-radius: 999px !important;
+    box-shadow: none !important;
+    color: inherit !important;
+    line-height: 1.28571429em !important;
+    vertical-align: middle;
+}
+
+#mainwp-command-palette-trigger:hover,
+#mainwp-command-palette-trigger:focus {
+    background: rgba(255, 255, 255, 0.06) !important;
+    opacity: 1;
+}
+
+#mainwp-command-palette-trigger kbd {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    color: inherit;
+    font-family: inherit;
+    font-size: 0.92857143rem;
+    font-weight: 600;
+    line-height: 1;
+    display: inline-block;
+    vertical-align: middle;
+}
+
 /* Sub-Header */
 
 .mainwp-sub-header,
@@ -267,6 +314,13 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button,
     padding: 1rem;
     background: #f9fafb;
     border-bottom: 1px solid #dadada;
+}
+
+@media screen and (min-width: 768px) {
+    .mainwp-ui.mainwp-custom-theme.mainwp-default-theme:not(.mainwp-individual-site-view) #mainwp-admin-notices-segment.mainwp-extension-update-failure-notice-segment ~ .mainwp-sub-header,
+    .mainwp-ui.mainwp-custom-theme.mainwp-default-dark-theme:not(.mainwp-individual-site-view) #mainwp-admin-notices-segment.mainwp-extension-update-failure-notice-segment ~ .mainwp-sub-header {
+        margin-top: 2em !important;
+    }
 }
 
 .mainwp-sub-header #mainwp-sites-bulk-actions-menu.ui.selection.dropdown,
@@ -570,6 +624,7 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button,
 .mainwp-ui.mainwp_page_SettingsAdvanced #mainwp-main-navigation-container,
 .mainwp-ui.mainwp_page_MonitoringSettings #mainwp-main-navigation-container,
 .mainwp-ui.mainwp_page_SettingsEmail #mainwp-main-navigation-container,
+.mainwp-ui.mainwp_page_PremiumUpdates #mainwp-main-navigation-container,
 .mainwp-ui.mainwp_page_MainWPTools #mainwp-main-navigation-container,
 .mainwp-ui.mainwp_page_SettingsInsights #mainwp-main-navigation-container,
 .mainwp-ui.mainwp_page_SettingsApiBackups #mainwp-main-navigation-container,
@@ -589,6 +644,7 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button,
 .mainwp-ui.mainwp_page_SettingsAdvanced #mainwp-second-level-navigation,
 .mainwp-ui.mainwp_page_MonitoringSettings #mainwp-second-level-navigation,
 .mainwp-ui.mainwp_page_SettingsEmail #mainwp-second-level-navigation,
+.mainwp-ui.mainwp_page_PremiumUpdates #mainwp-second-level-navigation,
 .mainwp-ui.mainwp_page_MainWPTools #mainwp-second-level-navigation,
 .mainwp-ui.mainwp_page_SettingsInsights #mainwp-second-level-navigation,
 .mainwp-ui.mainwp_page_SettingsApiBackups #mainwp-second-level-navigation,
@@ -607,6 +663,7 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button,
 .mainwp-ui.mainwp_page_SettingsAdvanced #mainwp-divider-handle,
 .mainwp-ui.mainwp_page_MonitoringSettings #mainwp-divider-handle,
 .mainwp-ui.mainwp_page_SettingsEmail #mainwp-divider-handle,
+.mainwp-ui.mainwp_page_PremiumUpdates #mainwp-divider-handle,
 .mainwp-ui.mainwp_page_MainWPTools #mainwp-divider-handle,
 .mainwp-ui.mainwp_page_SettingsInsights #mainwp-divider-handle,
 .mainwp-ui.mainwp_page_SettingsApiBackups #mainwp-divider-handle,
@@ -624,6 +681,7 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button,
 .mainwp-ui.mainwp_page_SettingsAdvanced #mainwp-divider-handle:hover,
 .mainwp-ui.mainwp_page_MonitoringSettings #mainwp-divider-handle:hover,
 .mainwp-ui.mainwp_page_SettingsEmail #mainwp-divider-handle:hover,
+.mainwp-ui.mainwp_page_PremiumUpdates #mainwp-divider-handle:hover,
 .mainwp-ui.mainwp_page_MainWPTools #mainwp-divider-handle:hover,
 .mainwp-ui.mainwp_page_SettingsInsights #mainwp-divider-handle:hover,
 .mainwp-ui.mainwp_page_SettingsApiBackups #mainwp-divider-handle:hover,

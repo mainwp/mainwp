@@ -665,6 +665,16 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             $done = true;
         }
 
+        $monitor_data = array();
+        if ( isset( $information['child_monitor_data'] ) && is_array( $information['child_monitor_data'] ) ) {
+            $monitor_data = $information['child_monitor_data'];
+            $done         = true;
+        }
+
+        if ( $done ) {
+            MainWP_DB::instance()->update_website_option( $pWebsite, 'child_monitor_data', wp_json_encode( $monitor_data ) );
+        }
+
         if ( ! $done ) {
             if ( isset( $information['wpversion'] ) ) {
                 $done = true;

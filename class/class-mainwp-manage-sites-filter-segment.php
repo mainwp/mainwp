@@ -252,7 +252,7 @@ class MainWP_Manage_Sites_Filter_Segment { // phpcs:ignore Generic.Classes.Openi
             if ( $set_val ) {
                 update_user_option( $current_user->ID, $field, $saved_segments );
             } else {
-                $values = get_user_option( $field, array() );
+                $values = get_user_option( $field ); // fix incorrect param.
                 if ( ! is_array( $values ) ) {
                     $values = array();
                 }

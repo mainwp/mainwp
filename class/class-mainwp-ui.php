@@ -1317,8 +1317,11 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             do_action( 'mainwp_after_header', $websites );
             $after_header_content = ob_get_clean();
             if ( ! empty( trim( $after_header_content ) ) ) {
+                $has_extension_update_failure_notice = false !== strpos( $after_header_content, 'mainwp-extension-update-failure-notice' );
+                $admin_notices_style                 = $has_extension_update_failure_notice ? 'padding-bottom:0 !important;' : '';
+                $admin_notices_class                 = $has_extension_update_failure_notice ? ' mainwp-extension-update-failure-notice-segment' : '';
                 ?>
-                <div class="ui padded segment" id="mainwp-admin-notices-segment">
+                <div class="ui padded segment<?php echo esc_attr( $admin_notices_class ); ?>" id="mainwp-admin-notices-segment" style="<?php echo esc_attr( $admin_notices_style ); ?>">
                     <?php echo $after_header_content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
                 </div>
                 <?php
@@ -1532,6 +1535,21 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         $current_user  = get_current_user_id();
         $custom_theme  = MainWP_Settings::get_instance()->get_current_user_theme();
         $screen        = get_current_screen();
+        $show_command_palette_trigger = wp_script_is( 'wp-core-commands', 'enqueued' );
+        $command_palette_shortcut     = '';
+        $command_palette_label        = '';
+
+        if ( $show_command_palette_trigger ) {
+            // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Used only to mirror WordPress core shortcut labels.
+            $is_apple_os = (bool) preg_match( '/Macintosh|Mac OS X|Mac_PowerPC/i', $_SERVER['HTTP_USER_AGENT'] ?? '' );
+
+            $command_palette_shortcut = $is_apple_os
+                ? _x( '⌘K', 'keyboard shortcut to open the command palette', 'mainwp' )
+                : _x( 'Ctrl+K', 'keyboard shortcut to open the command palette', 'mainwp' );
+
+            /* translators: %s: Keyboard shortcut label. */
+            $command_palette_label = sprintf( esc_attr__( 'Open command palette (%s)', 'mainwp' ), $command_palette_shortcut );
+        }
 
         if ( false === $custom_theme ) {
             $compat_theme = null;
@@ -1572,6 +1590,15 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             }
         }
         ob_start();
+        if ( $show_command_palette_trigger ) :
+            ?>
+            <span id="mainwp-header-command-palette-actions" class="mainwp-768-hide">
+                <a href="#" class="ui button hide-if-no-js" id="mainwp-command-palette-trigger" data-tooltip="<?php echo esc_attr( $command_palette_label ); ?>" data-inverted="" data-position="left center" aria-label="<?php echo esc_attr( $command_palette_label ); ?>" onclick='if ( window.wp && wp.data && wp.data.dispatch ) { wp.data.dispatch( "core/commands" ).open(); } return false;'>
+                    <kbd><?php echo esc_html( $command_palette_shortcut ); ?></kbd>
+                </a>
+            </span>
+            <?php
+        endif;
         if ( $website ) :
             ?>
             <?php if ( $id && $website && '' !== $website->sync_errors ) : ?>

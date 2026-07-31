@@ -75,6 +75,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
         $this->add_action( 'mainwp_updates_ignore_upgrades', array( &$this, 'ajax_ignore_core_updates' ) );
         $this->add_action( 'mainwp_updates_unignore_upgrades', array( &$this, 'ajax_unignore_core_updates' ) );
         $this->add_action( 'mainwp_updates_unignore_global_upgrades', array( &$this, 'ajax_unignore_global_upgrades' ) );
+        $this->add_action( 'mainwp_overview_prepare_upgradeall', array( &$this, 'ajax_prepare_upgradeall' ) );
 
         // Page: Themes.
         $this->add_action( 'mainwp_themes_search', array( &$this, 'mainwp_themes_search' ) );
@@ -545,6 +546,75 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
         }
     }
 
+
+    /**
+     * Method ajax_prepare_upgradeall()
+     *
+     * Prepare update all.
+     */
+    public function ajax_prepare_upgradeall() {
+        $this->secure_request( 'mainwp_overview_prepare_upgradeall' );
+
+        $update_type = isset( $_POST['which'] ) ? sanitize_text_field( wp_unslash( $_POST['which'] ) ) : ''; // phpcs:ignore --NOSONAR - none verified.
+        if ( ! in_array( $update_type, array( 'all', 'plugin', 'theme', 'translation', 'wp' ), true ) ) {
+            ?>
+            <div class="ui yellow message"><i class="close icon"></i> <?php esc_html_e( 'Invalid update type. Please try again.', 'mainwp' ); ?></div>
+            <?php
+            die();
+        }
+        $current_siteid = isset( $_POST['site_id'] ) ? intval(  $_POST['site_id'] ) : 0; // phpcs:ignore --NOSONAR - none verified.
+
+        if ( 'translation' === $update_type ) {
+            $update_type = 'trans'; // compatible.
+        } elseif ( 'wp' === $update_type ) {
+            $update_type = 'core'; // compatible.
+        }
+
+        $data = MainWP_Updates_Overview::prepare_update_data( $update_type, $current_siteid );
+
+        $data = wp_parse_args(
+            $data,
+            array(
+                'total_wp_upgrades'          => 0,
+                'all_wp_updates'             => array(),
+                'total_plugin_upgrades'      => 0,
+                'all_plugins_updates'        => array(),
+                'total_theme_upgrades'       => 0,
+                'all_themes_updates'         => array(),
+                'total_translation_upgrades' => 0,
+                'all_translations_updates'   => array(),
+            )
+        );
+
+        extract( $data ); // phpcs:ignore -- NOSONAR - well structure.
+
+        $user_can_update_translation = \mainwp_current_user_can( 'dashboard', 'update_translations' );
+        $user_can_update_wordpress   = \mainwp_current_user_can( 'dashboard', 'update_wordpress' );
+        $user_can_update_themes      = \mainwp_current_user_can( 'dashboard', 'update_themes' );
+        $user_can_update_plugins     = \mainwp_current_user_can( 'dashboard', 'update_plugins' );
+
+        $mainwp_show_language_updates = get_option( 'mainwp_show_language_updates', 1 );
+
+        MainWP_Updates_Overview::render_global_update(
+            $update_type,
+            $user_can_update_wordpress,
+            $total_wp_upgrades,
+            $all_wp_updates,
+            $user_can_update_plugins,
+            $total_plugin_upgrades,
+            $all_plugins_updates,
+            $user_can_update_themes,
+            $total_theme_upgrades,
+            $all_themes_updates,
+            $mainwp_show_language_updates,
+            $user_can_update_translation,
+            $total_translation_upgrades,
+            $all_translations_updates
+        );
+
+        die();
+    }
+
     /**
      * Method mainwp_upgrade_plugintheme()
      *
@@ -646,6 +716,19 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
                 }
                 if ( isset( $result['result_error'] ) ) {
                     $info['result_error'] = $result['result_error'];
+                }
+            }
+
+            // MWP-1660: append a generic licensing hint to failures of known premium
+            // products; vendors only deliver update packages to licensed installs.
+            $item_type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+            if ( ( 'plugin' === $item_type || 'theme' === $item_type ) && ! empty( $info['result_error'] ) && is_array( $info['result_error'] ) && MainWP_Premium_Update_Registry::is_enabled() ) {
+                $premium_ids      = MainWP_Premium_Update_Registry::get_filter_defaults( $item_type, 'detect' );
+                $premium_prefixes = MainWP_Premium_Update_Registry::get_prefixes( $item_type, 'detect' );
+                foreach ( $info['result_error'] as $err_slug => $err_msg ) {
+                    if ( is_string( $err_msg ) && MainWP_Premium_Update_Registry::slug_matches( urldecode( $err_slug ), $premium_ids, $premium_prefixes ) ) {
+                        $info['result_error'][ $err_slug ] = $err_msg . ' ' . esc_html__( 'Premium updates usually require an active license on the child site; check that first.', 'mainwp' );
+                    }
                 }
             }
 

@@ -1826,7 +1826,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         if ( isset( $_GET['dashboard'] ) ) {
             $websiteid = intval( $_GET['dashboard'] );
 
-            $dashboardWebsite = MainWP_DB::instance()->get_website_by_id( $websiteid );
+            $dashboardWebsite = MainWP_DB::instance()->get_website_by_id_params( $websiteid, array( 'view_fields' => array( 'child_monitor_data' ) ) );
             if ( MainWP_System_Utility::can_edit_website( $dashboardWebsite ) ) {
                 static::render_dashboard( $dashboardWebsite );
 
@@ -2025,6 +2025,15 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             $ssl_version       = isset( $_POST['mainwp_managesites_edit_ssl_version'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_ssl_version'] ) ) : '';
 
             MainWP_DB::instance()->update_website( $website->id, $url, $current_user->ID, $site_name, $site_admin, $groupids, $groupnames, $newPluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $verifycertificate, $archiveFormat, $uniqueId, $http_user, $http_pass, $ssl_version, $disableHealthChecking, $healthThreshold, $backup_method );
+
+            $url_locked = isset( $_POST['mainwp_managesites_edit_url_lock'] ) ? 1 : 0;
+            MainWP_Site_Url_Corrector::set_lock( $website, $url_locked );
+            if ( ! $url_locked && $url !== $website->url ) {
+                // Auto-set the lock only when the user actually CHANGED the URL to
+                // something diverging from the child-reported address; saving
+                // unrelated fields must not lock a mismatched site.
+                MainWP_Site_Url_Corrector::after_user_set_url( $website, $url );
+            }
 
             if ( \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) {
                 $new_client_id = isset( $_POST['mainwp_managesites_edit_client_id'] ) ? intval( $_POST['mainwp_managesites_edit_client_id'] ) : 0;

@@ -54,8 +54,10 @@ class Log_Query {
         $where      = '';
         $search_str = '';
 
-        $count_only = ! empty( $args['count_only'] ) ? true : false;
-        $not_count  = ! empty( $args['not_count'] ) ? true : false;
+        $count_only        = ! empty( $args['count_only'] ) ? true : false;
+        $not_count         = ! empty( $args['not_count'] ) ? true : false;
+        $optimize_has_more = ! empty( $args['optimize_has_more'] ) ? true : false;
+
         if ( ! empty( $args['search'] ) ) {
             $search_str = MainWP_DB::instance()->escape( $args['search'] );
             // for searching.
@@ -213,7 +215,8 @@ class Log_Query {
         $per_page = absint( $args['records_per_page'] );
 
         if ( $per_page > 0 ) {
-            $limits = "LIMIT {$start}, {$per_page}";
+            $per_page_more = $optimize_has_more ? $per_page + 1 : $per_page; // Fetch one extra record to determine whether to show the "More" button.
+            $limits        = "LIMIT {$start}, {$per_page_more}";
         }
 
         // Show the recent records first by default.
@@ -395,6 +398,14 @@ class Log_Query {
 
         $items = $wpdb->get_results( $query ); // phpcs:ignore -- ok.
 
+        $count_har_more = 0;
+        if ( $optimize_has_more ) {
+            $count_har_more = $items && is_array( $items ) ? count( $items ) : 0; // to support "More" button.
+            if ( $count_har_more > $per_page ) {
+                array_pop( $items ); // Do not show the last item.
+            }
+        }
+
         if ( ( ( $optimize_get_dt && $optimize_get_meta ) || $with_logs_meta ) && $items ) {
 
             $ids = array_map( 'absint', wp_list_pluck( $items, 'log_id' ) );
@@ -482,6 +493,7 @@ class Log_Query {
         $results = array(
             'items'      => $items,
             'sites_opts' => $sites_opts,
+            'extra_data' => array(),
         );
 
         if ( ! $not_count ) {
@@ -494,6 +506,12 @@ class Log_Query {
                 $results['count'] = $count;
             }
         }
+
+        if ( $optimize_has_more ) {
+            $results['count']                  = $start + $count_har_more; // to fix offset issue for next loading.
+            $results['extra_data']['has_more'] = $count_har_more > $per_page ? true : false;
+        }
+
         return $results;
     }
 

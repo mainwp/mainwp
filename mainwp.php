@@ -8,7 +8,7 @@
  * Author URI: https://mainwp.com
  * Plugin URI: https://mainwp.com/
  * Text Domain: mainwp
- * Version:  6.1.4
+ * Version:  6.1.5
  * License: GPLv3 or later
  * License URI: https://www.gnu.org/licenses/gpl-3.0.html
  *
@@ -152,6 +152,19 @@ require_once MAINWP_PLUGIN_DIR . 'includes' . DIRECTORY_SEPARATOR . 'abilities' 
 // Initialize Abilities API integration (does nothing if Abilities API not available).
 if ( class_exists( '\MainWP\Dashboard\MainWP_Abilities' ) ) {
     \MainWP\Dashboard\MainWP_Abilities::init();
+}
+
+if ( file_exists( MAINWP_PLUGIN_DIR . 'modules/system-monitor/bootstrap.php' ) ) {
+    define( 'MAINWP_SYSTEM_MONITOR_FILE', __FILE__ );
+    require_once MAINWP_PLUGIN_DIR . 'modules/system-monitor/bootstrap.php'; // NOSONAR - WP compatible.
+    register_activation_hook(
+        MAINWP_SYSTEM_MONITOR_FILE,
+        array( MainWP\Dashboard\SystemMonitor\MainWP_System_Monitor::class, 'activate' )
+    );
+    register_deactivation_hook(
+        MAINWP_SYSTEM_MONITOR_FILE,
+        array( MainWP\Dashboard\SystemMonitor\MainWP_System_Monitor::class, 'deactivate' )
+    );
 }
 
 // Detect if secupress_scanner is running.

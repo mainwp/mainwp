@@ -413,10 +413,11 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @param mixed $website Array of Child Site Info.
      * @param mixed $what What we are posting.
      * @param null  $params Post parameters.
+     * @param bool  $verify_signature Wether verify signature data.
      *
      * @return mixed null|http_build_query()
      */
-    public static function get_post_data_authed( &$website, $what, $params = null ) {  //phpcs:ignore -- NOSONAR - complex method.
+    public static function get_post_data_authed( &$website, $what, $params = null, $verify_signature = false ) {  //phpcs:ignore -- NOSONAR - complex method.
         if ( $website && '' !== $what ) {
             $data              = array();
             $data['user']      = $website->adminname;
@@ -424,7 +425,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $data['nonce']     = wp_rand( 0, 9999 );
             $data['mainwpver'] = MainWP_System::$version;
 
-            $params_filter = apply_filters( 'mainwp_pre_fetch_authed_data', false, $params, $what, $website );
+            $params_filter = apply_filters( 'mainwp_pre_fetch_authed_data', false, $params, $what, $website, $verify_signature );
             if ( is_array( $params_filter ) && ! empty( $params_filter ) ) {
                 $data = array_merge( $data, $params_filter );
             }
@@ -437,13 +438,29 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $sign_success = null;
             $use_seclib   = false;
 
-            $data = apply_filters( 'mainwp_get_post_data_authed', $data, $website, $what, $params );
+            $data = apply_filters( 'mainwp_get_post_data_authed', $data, $website, $what, $params, $verify_signature );
+
+            if ( $verify_signature ) {
+                $ts        = time();
+                $data_sign = wp_json_encode(
+                    array(
+                        'base_function' => $what,
+                        'nonce'         => $data['nonce'],
+                        'expires'       => $ts + 60,
+                        'user'          => $website->adminname,
+                    )
+                );
+
+            } else {
+                $data_sign = $what . $data['nonce']; // Legacy signature data.
+            }
+
             if ( MainWP_Connect_Lib::is_use_fallback_sec_lib( $website ) ) {
-                $sign_success = MainWP_Connect_Lib::connect_sign( $what . $data['nonce'], $signature, base64_decode( $website->privkey ), $website->id ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+                $sign_success = MainWP_Connect_Lib::connect_sign( $data_sign, $signature, base64_decode( $website->privkey ), $website->id ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
                 $use_seclib   = true;
             } elseif ( function_exists( 'openssl_verify' ) ) {
                 $alg          = MainWP_System_Utility::get_connect_sign_algorithm( $website );
-                $sign_success = static::connect_sign( $what . $data['nonce'], $signature, base64_decode( $website->privkey ), $alg, $website->id ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+                $sign_success = static::connect_sign( $data_sign, $signature, base64_decode( $website->privkey ), $alg, $website->id ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
                 if ( false !== $alg ) {
                     $data['sign_algo'] = $alg;
                 }
@@ -465,6 +482,8 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             }
 
             $data['mainwpsignature'] = ! empty( $signature ) ? base64_encode( $signature ) : ''; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+            $data['data_signature']  = $data_sign;
+            $data['request_id']      = wp_generate_uuid4();
 
             /** This filter is documented in ../widgets/widget-mainwp-recent-posts.php */
             $recent_number = apply_filters( 'mainwp_recent_posts_pages_number', 5 );
@@ -514,10 +533,11 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      *
      * @param mixed $website Array of Child Site Info.
      * @param mixed $what What we are posting.
+     * @param bool  $verify_signature Wether verify signature data.
      *
      * @return mixed null|http_build_query()
      */
-    private static function get_renew_post_data_authed( &$website, $what ) { // phpcs:ignore -- NOSONAR - complex.
+    private static function get_renew_post_data_authed( &$website, $what, $verify_signature = false ) { // phpcs:ignore -- NOSONAR - complex.
 
         if ( $website && '' !== $what ) {
             $compat_what      = 'disconnect'; // to compatible, renew will call disconnect.
@@ -526,21 +546,36 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $data['function'] = $compat_what;
             $data['nonce']    = wp_rand( 0, 9999 );
 
+            if ( $verify_signature ) {
+                $ts        = time();
+                $data_sign = wp_json_encode(
+                    array(
+                        'base_function' => $compat_what,
+                        'nonce'         => $data['nonce'],
+                        'expires'       => $ts + 60,
+                        'user'          => $website->adminname,
+                    )
+                );
+
+            } else {
+                $data_sign = $compat_what . $data['nonce']; // compatible format.
+            }
+
             $alg          = false;
             $sign_success = null;
             $use_seclib   = false;
 
             if ( MainWP_Connect_Lib::is_use_fallback_sec_lib( $website ) ) {
                 // to disconnect.
-                $sign_success = MainWP_Connect_Lib::connect_sign( $compat_what . $data['nonce'], $signature, base64_decode( $website->privkey ), $website->id ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+                $sign_success = MainWP_Connect_Lib::connect_sign( $data_sign, $signature, base64_decode( $website->privkey ), $website->id ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
                 $use_seclib   = true;
             } elseif ( function_exists( 'openssl_verify' ) ) {
                 $alg          = MainWP_System_Utility::get_connect_sign_algorithm( $website );
-                $sign_success = static::connect_sign( $compat_what . $data['nonce'], $signature, base64_decode( $website->privkey ), $alg, $website->id ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for keys encoding.
+                $sign_success = static::connect_sign( $data_sign, $signature, base64_decode( $website->privkey ), $alg, $website->id ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for keys encoding.
                 if ( empty( $sign_success ) ) { // error from openssl, openssl_sign().
                     $alg = defined( 'OPENSSL_ALGO_SHA1' ) ? OPENSSL_ALGO_SHA1 : false; // to set default SHA1, to disconnect.
                     MainWP_Logger::instance()->debug_for_website( $website, 'get_renew_post_data_authed', '[' . $website->url . '] :: [openssl_sign:failed] :: Set sign_algo=SHA1' );
-                    $sign_success = static::connect_sign( $compat_what . $data['nonce'], $signature, base64_decode( $website->privkey ), $alg, $website->id ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for keys encoding.
+                    $sign_success = static::connect_sign( $data_sign, $signature, base64_decode( $website->privkey ), $alg, $website->id ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for keys encoding.
                 }
 
                 if ( false !== $alg ) {
@@ -563,6 +598,8 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             }
 
             $data['mainwpsignature'] = ! empty( $signature ) ? base64_encode( $signature ) : ''; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+            $data['data_signature']  = $data_sign;
+            $data['request_id']      = wp_generate_uuid4();
 
             return http_build_query( $data, '', '&' );
         }
@@ -580,10 +617,14 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @param string $paramName Parameter name.
      * @param bool   $asArray true|false Default is false.
      * @param array  $other_params other params.
+     * @param string $custom_url Optional. Override the target base URL for browser-bound
+     *                           requests ( see MainWP_Site_Url_Corrector::browser_target_url() ).
+     *                           Default null keeps the stored URL — server-side callers
+     *                           ( backups, premium updates ) must not pass this.
      *
      * @return string $url
      */
-    public static function get_get_data_authed( $website, $paramValue, $paramName = 'where', $asArray = false, $other_params = array() ) { //phpcs:ignore -- NOSONAR - complex method.
+    public static function get_get_data_authed( $website, $paramValue, $paramName = 'where', $asArray = false, $other_params = array(), $custom_url = null ) { //phpcs:ignore -- NOSONAR - complex method.
         $params = array();
         if ( $website && '' !== $paramValue ) {
 
@@ -591,12 +632,30 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $alg          = false;
             $use_seclib   = false;
             $nonce        = wp_rand( 0, 9999 );
+
+            $verify_sign = is_array( $other_params ) && ! empty( $other_params['verify_signature'] );
+            if ( $verify_sign ) {
+                $ts        = time();
+                $data_sign = wp_json_encode(
+                    array(
+                        'base_function' => $paramValue,
+                        'where'         => rawurlencode( $paramName ),
+                        'nonce'         => $nonce,
+                        'expires'       => $ts + 60,
+                        'user'          => $website->adminname,
+                    )
+                );
+
+            } else {
+                $data_sign = $paramValue . $nonce; // compatible format.
+            }
+
             if ( MainWP_Connect_Lib::is_use_fallback_sec_lib( $website ) ) {
-                $sign_success = MainWP_Connect_Lib::connect_sign( $paramValue . $nonce, $signature, base64_decode( $website->privkey ), $website->id ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+                $sign_success = MainWP_Connect_Lib::connect_sign( $data_sign, $signature, base64_decode( $website->privkey ), $website->id ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
                 $use_seclib   = true;
             } elseif ( function_exists( 'openssl_verify' ) ) {
                 $alg          = MainWP_System_Utility::get_connect_sign_algorithm( $website );
-                $sign_success = static::connect_sign( $paramValue . $nonce, $signature, base64_decode( $website->privkey ), $alg, $website->id ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+                $sign_success = static::connect_sign( $data_sign, $signature, base64_decode( $website->privkey ), $alg, $website->id ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
             }
 
             $signature = ! empty( $signature ) ? base64_encode( $signature ) : ''; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
@@ -617,6 +676,8 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 'mainwpsignature' => rawurlencode( $signature ),
                 'nonce'           => $nonce,
                 $paramName        => rawurlencode( $paramValue ),
+                'data_signature'  => $data_sign,
+                'request_id'      => wp_generate_uuid4(),
             );
 
             if ( is_array( $other_params ) ) {
@@ -668,7 +729,13 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             return $params;
         }
 
-        $url  = ( isset( $website->url ) && '' !== $website->url ? $website->url : $website->siteurl );
+        $params['data_signature'] = rawurlencode( $data_sign );
+       
+        if ( null !== $custom_url && '' !== $custom_url ) {
+            $url = $custom_url;
+        } else {
+            $url = ( isset( $website->url ) && '' !== $website->url ? $website->url : $website->siteurl );
+        }
         $url .= ( substr( $url, - 1 ) !== '/' ? '/' : '' );
         $url .= '?';
 
@@ -784,7 +851,24 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
         $mh    = curl_multi_init();
 
-        $timeout = 20 * 60 * 60;
+        /**
+         * Filter: mainwp_fetch_url_site_timeout
+         *
+         * Filters the request timeout ( CURLOPT_TIMEOUT + PHP time limit ) used
+         * for child site requests. Defaults to 20 hours to accommodate the
+         * longest operations ( upgrades, backups ); short-lived callers such as
+         * the URL-correction verify probe bound it much tighter.
+         *
+         * @param int $timeout Timeout in seconds. Default 72000 ( 20 hours ).
+         *                     Values below 1 are ignored ( 0 would disable the
+         *                     cURL timeout entirely ) and fall back to the default.
+         *
+         * @since 6.2
+         */
+        $timeout = (int) apply_filters( 'mainwp_fetch_url_site_timeout', 20 * 60 * 60 );
+        if ( $timeout <= 0 ) {
+            $timeout = 20 * 60 * 60;
+        }
 
         $disabled_functions = ini_get( 'disable_functions' );
         $handleToWebsite    = array();
@@ -977,8 +1061,10 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         }
 
         if ( empty( $disabled_functions ) || ( false === stristr( $disabled_functions, 'curl_multi_exec' ) ) ) {
-            $lastRun = 0;
+            $lastRun     = 0;
+            $retry_added = false;
             do {
+                $retry_added = false;
                 if ( 20 < time() - $lastRun ) {
                     MainWP_System_Utility::set_time_limit( $timeout );
                     $lastRun = time();
@@ -996,9 +1082,18 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                         curl_setopt( $info['handle'], CURLOPT_URL, $requestUrls[ $rid ] );
                         curl_setopt( $info['handle'], CURLOPT_FRESH_CONNECT, true );
                         curl_setopt( $info['handle'], CURLOPT_FORBID_REUSE, true );
-                        curl_multi_add_handle( $mh, $info['handle'] );
-                        unset( $requestUrls[ $rid ] );
-                        continue; // libcurl updates $running automatically.
+                        $add_retry = curl_multi_add_handle( $mh, $info['handle'] );
+                        if ( CURLM_OK === $add_retry ) {
+                            $mrc = curl_multi_exec( $mh, $running );
+
+                            if ( CURLM_OK === $mrc ) {
+                                $retry_added = true;
+                                unset( $requestUrls[ $rid ] );
+                                continue; // libcurl updates $running automatically.
+                            }
+
+                            curl_multi_remove_handle( $mh, $info['handle'] );
+                        }
                     }
 
                     if ( ! $contains ) {
@@ -1026,7 +1121,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     unset( $info['handle'] );
                 }
                 usleep( 10000 );
-            } while ( $running > 0 );
+            } while ( $running > 0 || $retry_added );
 
             if ( static::is_valid_curl_handle( $mh ) ) {
                 curl_multi_close( $mh );
@@ -1189,6 +1284,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @param bool   $pForceFetch      Whether or not to force the fetch.
      * @param bool   $pRetryFailed     Whether or not to retry the fetch process.
      * @param null   $rawResponse      Raw response.
+     * @param bool   $verify_signature Wether verify signature data.
      *
      * @return mixed $information
      *
@@ -1203,7 +1299,8 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $checkConstraints = false,
         $pForceFetch = false,
         $pRetryFailed = true,
-        $rawResponse = null
+        $rawResponse = null,
+        $verify_signature = false
     ) {
         unset( $pForceFetch );
 
@@ -1240,7 +1337,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
          */
         $is_phpunit_env = defined( 'WP_TESTS_DOMAIN' ) || defined( 'PHPUNIT_COMPOSER_INSTALL' ) || ( defined( 'WP_TESTS_DIR' ) && WP_TESTS_DIR );
         if ( defined( 'MAINWP_TESTING_MODE' ) && MAINWP_TESTING_MODE && $is_phpunit_env ) {
-            $pre_result = apply_filters( 'mainwp_fetch_url_authed_pre', false, $website, $what, $params );
+            $pre_result = apply_filters( 'mainwp_fetch_url_authed_pre', false, $website, $what, $params, $verify_signature );
             if ( false !== $pre_result ) {
                 return $pre_result;
             }
@@ -1293,9 +1390,9 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         }
 
         if ( 'renew' === $what ) {
-            $postdata = static::get_renew_post_data_authed( $website, $what );
+            $postdata = static::get_renew_post_data_authed( $website, $what, $verify_signature );
         } else {
-            $postdata = static::get_post_data_authed( $website, $what, $params );
+            $postdata = static::get_post_data_authed( $website, $what, $params, $verify_signature );
 
         }
         $others['function'] = $what;
@@ -1329,8 +1426,16 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
              */
             do_action( 'mainwp_fetch_url_authed', $website, $information, $what, $params, $others );
         } else {
-            $slug                    = $params['list'];
-            $information['upgrades'] = array( $slug => 1 );
+            $slug = $params['list'];
+            // MWP-1660: the premium request route's response carries the child's real
+            // result envelope; report it through the existing paths when available.
+            // On timeout or an unparsable response, keep the previous optimistic
+            // behavior; the next sync corrects it.
+            $information = MainWP_Premium_Update::get_last_parsed_response();
+            if ( ! is_array( $information ) ) {
+                $information             = array();
+                $information['upgrades'] = array( $slug => 1 );
+            }
         }
 
         if ( is_array( $information ) && isset( $information['sync'] ) && ! empty( $information['sync'] ) ) {
@@ -1685,7 +1790,11 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             curl_setopt( $ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4 );
         }
 
-        $timeout = 20 * 60 * 60;
+        /** This filter is documented in class/class-mainwp-connect.php */
+        $timeout = (int) apply_filters( 'mainwp_fetch_url_site_timeout', 20 * 60 * 60 );
+        if ( $timeout <= 0 ) {
+            $timeout = 20 * 60 * 60; // values below 1 would disable the cURL timeout entirely.
+        }
         curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout );
         MainWP_System_Utility::set_time_limit( $timeout );
 
@@ -1772,12 +1881,16 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         MainWP_Logger::instance()->log_execution_time( 'fetch_url_site :: [url=' . $url . ']' );
 
         $thr_error = null;
-
+        $what      = '';
         if ( isset( $others['function'] ) ) {
             $what = $others['function'];
             if ( in_array( $what, array( 'installplugintheme', 'upgradeplugintheme', 'upgradetranslation', 'upgrade', 'stats', 'renew', 'reconnect' ), true ) ) {
                 MainWP_Cache_Helper::invalidate_cache_group( MainWP_Cache_Helper::CGR_UPDATES );
                 MainWP_Cache_Warm_Helper::invalidate_pages_by_site_actions( $what );
+            }
+
+            if ( 'process_premium_updates' === $what ) {
+                MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'function: [process_premium_updates] response data: [' . MainWP_Utility::value_to_string( $data ) . ']' );
             }
         }
 
@@ -1804,12 +1917,18 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             if ( ! empty( $error_code ) ) {
                 $output['child_error_code'] = $error_code;
             }
+
+            if ( 'process_premium_updates' === $what ) {
+                MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'function: [process_premium_updates] decoded data: [' . MainWP_Utility::value_to_string( $information ) . ']' );
+            }
+
             return $information;
         } elseif ( 200 === (int) $http_status && ! empty( $err ) ) {
             $thr_error                = new MainWP_Exception( 'HTTPERROR', $err ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             $output['error_category'] = 'http_error';
             $output['error_code']     = 'http_request_failed';
             $output['error_message']  = $err;
+            MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', '[' . $url . '] error [' . $err . ']' ); //phpcs:ignore -- ok.
         } elseif ( $raw_response ) {
             MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'Response: [RAW]' );
             return $data;

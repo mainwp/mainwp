@@ -2853,7 +2853,6 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         $map_fields = array(
             'database_size'  => 'dbsize',
             'http_status'    => 'http_response_code',
-            'health_score'   => 'health_value',
             'icon'           => 'cust_site_icon_info',
             'last_sync'      => 'dtsSync',
             'last_post_time' => 'last_post_gmt',
@@ -2864,6 +2863,16 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                 if ( in_array( $field1, $fields ) && property_exists( $item, $field2 ) ) {
                     $data[ $field1 ] = $item->{$field2};
                 }
+            }
+
+            if ( in_array( 'health_score', $fields, true ) ) {
+                // health_value is a sortable composite (score - critical * 100) that goes
+                // negative on critical issues; report the label v1 and WP-CLI derive from
+                // the stored Site Health issue counts, not the raw column.
+                $health_status        = MainWP_DB::instance()->get_website_option( $item->id, 'health_site_status' );
+                $health_status        = ! empty( $health_status ) ? json_decode( $health_status, true ) : array();
+                $hstatus              = MainWP_Utility::get_site_health( $health_status );
+                $data['health_score'] = ( 80 <= $hstatus['val'] && empty( $hstatus['critical'] ) ) ? 'Good' : 'Should be improved';
             }
         }
 

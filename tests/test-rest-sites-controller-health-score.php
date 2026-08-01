@@ -255,4 +255,52 @@ class MainWP_Rest_Sites_Controller_Health_Score_Test extends MainWP_Abilities_Te
 		$this->assertArrayHasKey( 'health_score', $data );
 		$this->assertSame( 'Good', $data['health_score'] );
 	}
+
+	/**
+	 * ?custom_fields=health_site_status must not surface the reserved internal
+	 * column. Projecting it onto the row for the fast-path makes property_exists()
+	 * true, so the custom_fields bypass could otherwise expose it; the
+	 * never-in-response reservation must strip it on every read path, including
+	 * when _fields is set (which skips the schema filter but not the strip).
+	 *
+	 * @return void
+	 */
+	public function test_custom_fields_cannot_surface_reserved_health_site_status() {
+		$site = $this->fetch_projected_site(
+			array(
+				'good'        => 20,
+				'recommended' => 0,
+				'critical'    => 0,
+			)
+		);
+
+		$this->assertNotNull( $site );
+		// The projection really put the value on the object, so this exercises the
+		// actual bypass rather than a trivially-absent field.
+		$this->assertTrue( property_exists( $site, 'health_site_status' ) );
+
+		$controller = new \MainWP_Rest_Sites_Controller();
+
+		// prepare_site_item_for_response_context() is the wrapper every read path
+		// uses; it runs strip_never_in_response_fields() last. It is protected.
+		$method = new \ReflectionMethod( $controller, 'prepare_site_item_for_response_context' );
+		$method->setAccessible( true );
+
+		foreach ( array( null, 'id,health_score' ) as $fields ) {
+			$request = new \WP_REST_Request( 'GET', '/mainwp/v2/sites' );
+			$request->set_param( 'custom_fields', 'health_site_status' );
+			if ( null !== $fields ) {
+				$request->set_param( '_fields', $fields );
+			}
+
+			$data = $method->invoke( $controller, $site, $request, 'view', array( 'health_site_status' ) );
+
+			$this->assertIsArray( $data );
+			$this->assertArrayNotHasKey(
+				'health_site_status',
+				$data,
+				'custom_fields must not surface the reserved internal column (_fields=' . var_export( $fields, true ) . ').'
+			);
+		}
+	}
 }

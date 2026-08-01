@@ -127,6 +127,9 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         'adminname',
         'securekey',
         'uniqueId',
+        // Projected onto the row for the health_score fast-path (not a schema field);
+        // reserve it so ?custom_fields=health_site_status cannot surface the raw value.
+        'health_site_status',
     );
 
     /**

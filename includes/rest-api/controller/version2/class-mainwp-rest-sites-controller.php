@@ -157,9 +157,10 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      * `filter_response_data_by_allowed_fields()` expands it again to all schema
      * fields with empty-string placeholders. This helper avoids that behavior.
      *
-     * @param object          $item    Site item.
-     * @param WP_REST_Request $request Request object.
-     * @param string          $context Response context.
+     * @param object          $item            Site item.
+     * @param WP_REST_Request $request         Request object.
+     * @param string          $context         Response context.
+     * @param array           $addition_fields Extra fields to include beyond the schema projection.
      *
      * @return array
      */
@@ -824,7 +825,6 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             // We re-fetch from DB using the IDs returned by the ability to apply REST-specific
             // options (with_tags, fields) that the ability schema does not support.
             // This ensures consistent response format between ability and legacy paths.
-            // See: .mwpdev/plans/abilities-api/phase-3-rest-integration-notes.md
             $normalized_items = array();
             if ( ! empty( $result['items'] ) ) {
                 // Get site IDs from ability results.
@@ -2545,10 +2545,10 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                 // strip_never_in_response_fields() in
                 // prepare_site_item_for_response_context(), which strips these
                 // fields from every site response regardless of context or
-                // _fields. (check_permissions() in the auth layer does not
+                // _fields. check_permissions() in the auth layer does not
                 // currently gate ?context=edit to actual edit-permission keys,
                 // and no caller forwards request context to the schema-filter
-                // step, so the schema label alone is not the effective guard.)
+                // step, so the schema label alone is not the effective guard.
                 'http_user'              => array(
                     'type'        => 'string',
                     'description' => __( 'HTTP user', 'mainwp' ),

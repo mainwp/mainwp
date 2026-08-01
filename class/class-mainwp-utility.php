@@ -1395,13 +1395,16 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      */
     public static function get_site_health( $issue_counts ) {
 
-        if ( empty( $issue_counts ) ) {
-            $issue_counts = array(
+        // Coerce non-array/empty/partial input to a full set of counts so a scalar
+        // (e.g. a JSON-decoded string) or a missing key never fatals or warns.
+        $issue_counts = array_merge(
+            array(
                 'good'        => 0,
                 'recommended' => 0,
                 'critical'    => 0,
-            );
-        }
+            ),
+            is_array( $issue_counts ) ? $issue_counts : array()
+        );
 
         $totalTests  = intval( $issue_counts['good'] ) + intval( $issue_counts['recommended'] ) + intval( $issue_counts['critical'] ) * 1.5;
         $failedTests = intval( $issue_counts['recommended'] ) * 0.5 + $issue_counts['critical'] * 1.5;

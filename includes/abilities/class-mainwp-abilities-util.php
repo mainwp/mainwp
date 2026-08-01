@@ -808,10 +808,10 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
         // composite (score - critical * 100) that goes negative when critical
         // issues exist; recompute the real 0-100 score from the stored Site
         // Health issue counts like the REST and UI surfaces do.
-        $health_score  = null;
-        $health_status = MainWP_DB::instance()->get_website_option( $site, 'health_site_status' );
-        $health_status = ! empty( $health_status ) ? json_decode( $health_status, true ) : array();
-        if ( is_array( $health_status ) && ! empty( $health_status ) ) {
+        $health_score = null;
+        // json_format=true returns a guaranteed array (scalars coerced to array()).
+        $health_status = MainWP_DB::instance()->get_website_option( $site, 'health_site_status', array(), true );
+        if ( ! empty( $health_status ) ) {
             $hstatus      = MainWP_Utility::get_site_health( $health_status );
             $health_score = (int) $hstatus['val'];
         }

@@ -702,7 +702,6 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             // We re-fetch from DB to apply REST-specific options (with_tags, fields) that
             // the ability schema does not support. This ensures consistent response format
             // between ability and legacy paths.
-            // See: .mwpdev/plans/abilities-api/phase-3-rest-integration-notes.md.
 
             $site_data = ! empty( $result ) && is_array( $result ) ? $result : array();
             $site_id   = isset( $site_data['id'] ) ? (int) $site_data['id'] : 0;
@@ -712,7 +711,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                     'full_data'    => true,
                     'selectgroups' => $with_tags,
                     'include'      => array( $site_id ),
-                    'extra_view'   => $custom_fields, // Pass custom fields to prepare_item_for_response() via params for abilities path since ability schema does not support fields parameter.
+                    'extra_view'   => array_merge( array( 'health_site_status' ), $custom_fields ), // Custom fields plus health_site_status, so prepare_item_for_response() reads the health data off the row instead of an extra per-site query.
                     'fields'       => $this->get_fields_for_response( $request ),
                 );
 
@@ -746,7 +745,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             'full_data'    => true,
             'selectgroups' => $with_tags,
             'include'      => array( $item->id ),
-            'extra_view'   => $custom_fields, // Pass custom fields to prepare_item_for_response() via params for abilities path since ability schema does not support fields parameter.
+            'extra_view'   => array_merge( array( 'health_site_status' ), $custom_fields ), // Custom fields plus health_site_status, so prepare_item_for_response() reads the health data off the row instead of an extra per-site query.
             'fields'       => $this->get_fields_for_response( $request ),
         );
 
@@ -837,7 +836,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                         'full_data'    => true,
                         'selectgroups' => true,
                         'include'      => $site_ids,
-                        'extra_view'   => $custom_fields, // Pass custom fields to prepare_item_for_response() via params for abilities path since ability schema does not support fields parameter.
+                        'extra_view'   => array_merge( array( 'health_site_status' ), $custom_fields ), // Custom fields plus health_site_status, so prepare_item_for_response() reads the health data off the row instead of an extra per-site query.
                         'fields'       => $this->get_fields_for_response( $request ),
                     );
 
@@ -868,6 +867,9 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         // Fallback: Legacy logic when Abilities API is not available.
         $args['selectgroups'] = isset( $request['with_tags'] ) ? mainwp_string_to_bool( $request['with_tags'] ) : true;
         $args['full_data']    = isset( $request['full_data'] ) ? mainwp_string_to_bool( $request['full_data'] ) : true;
+        // Fetch health_site_status onto the rows so prepare_item_for_response() reads
+        // the health data off the object instead of a per-site query.
+        $args['extra_view'] = array_merge( array( 'health_site_status' ), $custom_fields );
 
         // get data.
         $websites = MainWP_DB::instance()->get_websites_for_current_user( $args );
@@ -2869,8 +2871,10 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                 // health_value is a sortable composite (score - critical * 100) that goes
                 // negative on critical issues; report the label v1 and WP-CLI derive from
                 // the stored Site Health issue counts, not the raw column.
-                $health_status        = MainWP_DB::instance()->get_website_option( $item->id, 'health_site_status' );
-                $health_status        = ! empty( $health_status ) ? json_decode( $health_status, true ) : array();
+                // Passing the $item object (not $item->id) with json_format=true uses the
+                // property fast-path when health_site_status is already on the row, and
+                // guards scalars to array() so a malformed value cannot fatal.
+                $health_status        = MainWP_DB::instance()->get_website_option( $item, 'health_site_status', array(), true );
                 $hstatus              = MainWP_Utility::get_site_health( $health_status );
                 $data['health_score'] = ( 80 <= $hstatus['val'] && empty( $hstatus['critical'] ) ) ? 'Good' : 'Should be improved';
             }

@@ -39,8 +39,9 @@ class MainWP_Rest_Sites_Controller_Health_Score_Test extends MainWP_Abilities_Te
 	/**
 	 * Prepare a site through the v2 controller and return its health_score field.
 	 *
-	 * @param array|null $issue_counts        Site Health issue counts to store, or null for none.
-	 * @param int|null   $stored_health_value Raw health_value composite to store on the sync row.
+	 * @param array|string|null $issue_counts        Site Health issue counts to store (array is JSON-encoded,
+	 *                                                a string is stored raw to simulate a corrupted value), or null for none.
+	 * @param int|null          $stored_health_value Raw health_value composite to store on the sync row.
 	 * @return mixed The health_score value from the prepared response, or null if absent.
 	 */
 	private function prepare_health_score( $issue_counts, $stored_health_value = null ) {
@@ -50,7 +51,8 @@ class MainWP_Rest_Sites_Controller_Health_Score_Test extends MainWP_Abilities_Te
 
 		$site_id = $this->create_test_site();
 		if ( null !== $issue_counts ) {
-			$this->set_site_option( $site_id, 'health_site_status', wp_json_encode( $issue_counts ) );
+			$stored = is_string( $issue_counts ) ? $issue_counts : wp_json_encode( $issue_counts );
+			$this->set_site_option( $site_id, 'health_site_status', $stored );
 		}
 		if ( null !== $stored_health_value ) {
 			// Seed the raw composite column so a passing assertion proves the label is
@@ -112,5 +114,54 @@ class MainWP_Rest_Sites_Controller_Health_Score_Test extends MainWP_Abilities_Te
 		);
 
 		$this->assertSame( 'Good', $score );
+	}
+
+	/**
+	 * A corrupted, non-JSON health_site_status value must not fatal and should
+	 * fall back to "Good" (empty health data).
+	 *
+	 * @return void
+	 */
+	public function test_health_score_handles_malformed_scalar_value() {
+		$score = $this->prepare_health_score( 'not-valid-json' );
+
+		$this->assertSame( 'Good', $score );
+	}
+
+	/**
+	 * A site with no stored health data reports "Good".
+	 *
+	 * @return void
+	 */
+	public function test_health_score_defaults_to_good_when_absent() {
+		$score = $this->prepare_health_score( null );
+
+		$this->assertSame( 'Good', $score );
+	}
+
+	/**
+	 * MainWP_Utility::get_site_health() must tolerate a non-array (e.g. a decoded
+	 * JSON scalar) without a TypeError and treat it as empty health data.
+	 *
+	 * @return void
+	 */
+	public function test_get_site_health_tolerates_non_array_input() {
+		$result = \MainWP\Dashboard\MainWP_Utility::get_site_health( 'foo' );
+
+		$this->assertEquals( 100, $result['val'] );
+		$this->assertSame( 0, $result['critical'] );
+	}
+
+	/**
+	 * MainWP_Utility::get_site_health() must not warn on a partial array missing
+	 * some of the expected keys.
+	 *
+	 * @return void
+	 */
+	public function test_get_site_health_tolerates_partial_array() {
+		$result = \MainWP\Dashboard\MainWP_Utility::get_site_health( array( 'good' => 5 ) );
+
+		$this->assertEquals( 100, $result['val'] );
+		$this->assertSame( 0, $result['critical'] );
 	}
 }

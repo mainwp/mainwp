@@ -164,4 +164,95 @@ class MainWP_Rest_Sites_Controller_Health_Score_Test extends MainWP_Abilities_Te
 		$this->assertEquals( 100, $result['val'] );
 		$this->assertSame( 0, $result['critical'] );
 	}
+
+	/**
+	 * Fetch one test site through get_websites_for_current_user() using the same
+	 * projection the v2 read endpoints pass.
+	 *
+	 * @param array $issue_counts Site Health issue counts to store.
+	 * @return object The mapped site row object.
+	 */
+	private function fetch_projected_site( array $issue_counts ) {
+		$this->set_current_user_as_admin();
+
+		$site_id = $this->create_test_site();
+		$this->set_site_option( $site_id, 'health_site_status', wp_json_encode( $issue_counts ) );
+		// full_data list rows json_decode wp_upgrades; seed an empty value so the test
+		// does not trip an unrelated json_decode(null) deprecation on a fresh site.
+		$this->set_site_option( $site_id, 'wp_upgrades', '' );
+
+		// Mirror the read-path params: extra_view fetches the SQL column, fields
+		// keeps it through map_site().
+		$params = array(
+			'full_data'    => true,
+			'selectgroups' => true,
+			'include'      => array( $site_id ),
+			'extra_view'   => array( 'health_site_status' ),
+			'fields'       => array( 'health_site_status' ),
+		);
+
+		$websites = \MainWP\Dashboard\MainWP_DB::instance()->get_websites_for_current_user( $params );
+
+		return $websites ? current( $websites ) : null;
+	}
+
+	/**
+	 * The v2 read-path projection must keep health_site_status on the mapped row so
+	 * the get_website_option() object fast-path hits and no per-site option query runs.
+	 *
+	 * @return void
+	 */
+	public function test_list_query_projects_health_site_status_onto_row() {
+		$site = $this->fetch_projected_site(
+			array(
+				'good'        => 20,
+				'recommended' => 0,
+				'critical'    => 0,
+			)
+		);
+
+		$this->assertNotNull( $site );
+		// Before the fix, map_site() dropped health_site_status (it was only in
+		// extra_view, not fields), so prepare_item_for_response() fell back to a
+		// per-site option query on every list row. The property being present is
+		// what lets the get_website_option() object fast-path avoid that N+1.
+		$this->assertTrue(
+			property_exists( $site, 'health_site_status' ),
+			'health_site_status must survive map_site() so the object fast-path avoids the N+1 option query.'
+		);
+		$this->assertNotEmpty( $site->health_site_status, 'The projected column must carry the stored value.' );
+
+		// The object fast-path returns the stored value.
+		$health = \MainWP\Dashboard\MainWP_DB::instance()->get_website_option( $site, 'health_site_status', array(), true );
+		$this->assertSame( 20, (int) $health['good'] );
+	}
+
+	/**
+	 * The projected health_site_status column must never leak into the prepared
+	 * response, and health_score must still be reported.
+	 *
+	 * @return void
+	 */
+	public function test_prepared_response_does_not_leak_health_site_status() {
+		$site = $this->fetch_projected_site(
+			array(
+				'good'        => 20,
+				'recommended' => 0,
+				'critical'    => 0,
+			)
+		);
+
+		$this->assertNotNull( $site );
+
+		$controller = new \MainWP_Rest_Sites_Controller();
+		// No _fields: exercise the full schema projection so any leak would surface.
+		$request = new \WP_REST_Request( 'GET', '/mainwp/v2/sites' );
+
+		$data = $controller->prepare_item_for_response( $site, $request );
+
+		$this->assertIsArray( $data );
+		$this->assertArrayNotHasKey( 'health_site_status', $data, 'The projected column must not leak into the response.' );
+		$this->assertArrayHasKey( 'health_score', $data );
+		$this->assertSame( 'Good', $data['health_score'] );
+	}
 }

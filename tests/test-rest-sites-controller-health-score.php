@@ -166,6 +166,28 @@ class MainWP_Rest_Sites_Controller_Health_Score_Test extends MainWP_Abilities_Te
 	}
 
 	/**
+	 * MainWP_Utility::get_site_health() must normalize non-numeric and negative
+	 * counter values instead of fataling on the arithmetic, and return the
+	 * normalized (non-negative int) critical count.
+	 *
+	 * @return void
+	 */
+	public function test_get_site_health_normalizes_non_numeric_and_negative_counts() {
+		$result = \MainWP\Dashboard\MainWP_Utility::get_site_health(
+			array(
+				'good'        => '10',
+				'recommended' => 'foo',
+				'critical'    => -3,
+			)
+		);
+
+		$this->assertIsInt( $result['critical'] );
+		$this->assertSame( 0, $result['critical'], 'A negative critical count must normalize to 0.' );
+		// recommended 'foo' -> 0, critical -3 -> 0: no failed tests, so the score is 100.
+		$this->assertEquals( 100, $result['val'] );
+	}
+
+	/**
 	 * Fetch one test site through get_websites_for_current_user() using the same
 	 * projection the v2 read endpoints pass.
 	 *

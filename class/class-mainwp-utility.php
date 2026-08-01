@@ -1406,8 +1406,14 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             is_array( $issue_counts ) ? $issue_counts : array()
         );
 
-        $totalTests  = intval( $issue_counts['good'] ) + intval( $issue_counts['recommended'] ) + intval( $issue_counts['critical'] ) * 1.5;
-        $failedTests = intval( $issue_counts['recommended'] ) * 0.5 + $issue_counts['critical'] * 1.5;
+        // Normalize each counter to a non-negative integer before arithmetic so a
+        // non-numeric or negative stored value cannot fatal or skew the score.
+        $good        = max( 0, intval( $issue_counts['good'] ) );
+        $recommended = max( 0, intval( $issue_counts['recommended'] ) );
+        $critical    = max( 0, intval( $issue_counts['critical'] ) );
+
+        $totalTests  = $good + $recommended + $critical * 1.5;
+        $failedTests = $recommended * 0.5 + $critical * 1.5;
 
         if ( empty( $totalTests ) ) {
                 $val = 100;
@@ -1425,7 +1431,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         return array(
             'val'      => $val,
-            'critical' => $issue_counts['critical'],
+            'critical' => $critical,
         );
     }
 

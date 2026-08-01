@@ -1408,9 +1408,11 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         // Normalize each counter to a non-negative integer before arithmetic so a
         // non-numeric or negative stored value cannot fatal or skew the score.
-        $good        = max( 0, intval( $issue_counts['good'] ) );
-        $recommended = max( 0, intval( $issue_counts['recommended'] ) );
-        $critical    = max( 0, intval( $issue_counts['critical'] ) );
+        // is_numeric() first: intval() maps a non-empty array to 1, which would
+        // count a malformed nested value as a real issue.
+        $good        = is_numeric( $issue_counts['good'] ) ? max( 0, intval( $issue_counts['good'] ) ) : 0;
+        $recommended = is_numeric( $issue_counts['recommended'] ) ? max( 0, intval( $issue_counts['recommended'] ) ) : 0;
+        $critical    = is_numeric( $issue_counts['critical'] ) ? max( 0, intval( $issue_counts['critical'] ) ) : 0;
 
         $totalTests  = $good + $recommended + $critical * 1.5;
         $failedTests = $recommended * 0.5 + $critical * 1.5;

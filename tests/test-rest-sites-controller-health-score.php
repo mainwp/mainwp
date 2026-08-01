@@ -188,6 +188,26 @@ class MainWP_Rest_Sites_Controller_Health_Score_Test extends MainWP_Abilities_Te
 	}
 
 	/**
+	 * A nested-array counter must normalize to 0, not 1. intval() maps a
+	 * non-empty array to 1, which would count a malformed value as a real
+	 * critical issue and flip the label.
+	 *
+	 * @return void
+	 */
+	public function test_get_site_health_rejects_non_scalar_counts() {
+		$result = \MainWP\Dashboard\MainWP_Utility::get_site_health(
+			array(
+				'good'        => 10,
+				'recommended' => 0,
+				'critical'    => array( 'value' => 1 ),
+			)
+		);
+
+		$this->assertSame( 0, $result['critical'], 'A non-scalar critical count must normalize to 0, not intval() to 1.' );
+		$this->assertEquals( 100, $result['val'] );
+	}
+
+	/**
 	 * Fetch one test site through get_websites_for_current_user() using the same
 	 * projection the v2 read endpoints pass.
 	 *

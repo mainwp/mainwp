@@ -287,9 +287,9 @@ jQuery(function () {
                     }
 
                 } else if (response.error === undefined) {
-                    jQuery('#mainwp-notes-status').html('<i class="times red icon"></i> ' + MainWP.I18n.t('Undefined error occured while saving your note') + '.');
+                    jQuery('#mainwp-notes-status').html('<i class="times red icon"></i> ' + MainWP.I18n.t('Undefined error occurred while saving your note') + '.');
                 } else {
-                    jQuery('#mainwp-notes-status').html('<i class="times red icon"></i> ' + MainWP.I18n.t('Undefined error occured while saving your note') + ': ' + response.error);
+                    jQuery('#mainwp-notes-status').html('<i class="times red icon"></i> ' + MainWP.I18n.t('Undefined error occurred while saving your note') + ': ' + response.error);
                 }
             }
         }(slug), 'json');
@@ -344,9 +344,9 @@ jQuery(function () {
                         rowEl.find('.mainwp-edit-theme-note').html('<i class="sticky green note icon"></i>');
                     }
                 } else if (response.error === undefined) {
-                    jQuery('#mainwp-notes-status').html('<i class="times red icon"></i> ' + MainWP.I18n.t('Undefined error occured while saving your note!'));
+                    jQuery('#mainwp-notes-status').html('<i class="times red icon"></i> ' + MainWP.I18n.t('Undefined error occurred while saving your note!'));
                 } else {
-                    jQuery('#mainwp-notes-status').html('<i class="times red icon"></i> ' + MainWP.I18n.t('Undefined error occured while saving your note!') + ': ' + response.error);
+                    jQuery('#mainwp-notes-status').html('<i class="times red icon"></i> ' + MainWP.I18n.t('Undefined error occurred while saving your note!') + ': ' + response.error);
                 }
             }
         }(slug), 'json');
@@ -841,7 +841,7 @@ let manage_plugin_Action = function (elem, what) {
                 mainwp_fetch_plugins(true);
             }, 3000);
         } else {
-            jQuery(rowElement).html(start_row + '<span data-tooltip="Undefined error occured. Please try again." data-inverted="" data-position="left center"><i class="times red icon"></i></span>' + end_row);
+            jQuery(rowElement).html(start_row + '<span data-tooltip="Undefined error occurred. Please try again." data-inverted="" data-position="left center"><i class="times red icon"></i></span>' + end_row);
         }
     }, 'json');
 
@@ -996,7 +996,7 @@ let manages_themeAction = function (elem, what) {
                 mainwp_fetch_themes(true);
             }, 100);
         } else {
-            jQuery(rowElement).html(start_row + '<span data-tooltip="Undefined error occured. Please try again." data-inverted="" data-position="left center"><i class="times red icon"></i></span>' + end_row);
+            jQuery(rowElement).html(start_row + '<span data-tooltip="Undefined error occurred. Please try again." data-inverted="" data-position="left center"><i class="times red icon"></i></span>' + end_row);
         }
     }, 'json');
 

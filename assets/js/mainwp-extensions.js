@@ -867,14 +867,14 @@ let mainwp_extension_bulk_install_specific = function (pExtToInstall) {
                 }
 
                 if (response == '') {
-                    statusEl.html('<span data-tooltip="Undefined error occured. Please try again." data-inverted="" data-position="left center"><i class="times red icon"></i></span>');
+                    statusEl.html('<span data-tooltip="Undefined error occurred. Please try again." data-inverted="" data-position="left center"><i class="times red icon"></i></span>');
                 } else if (response.result == 'SUCCESS') {
                     statusEl.html('<span data-tooltip="' + response.output + '" data-inverted="" data-position="left center"><i class="check green icon"></i></span>');
                     jQuery('.mainwp-installing-extensions').append('<span class="extension-installed-success" slug="' + response.slug + '"></span>')
                 } else if (response.error) {
                     statusEl.html('<span data-tooltip="' + response.error + '" data-inverted="" data-position="left center"><i class="times red icon"></i></span>');
                 } else {
-                    statusEl.html('<span data-tooltip="Undefined error occured. Please try again." data-inverted="" data-position="left center"><i class="times red icon"></i></span>');
+                    statusEl.html('<span data-tooltip="Undefined error occurred. Please try again." data-inverted="" data-position="left center"><i class="times red icon"></i></span>');
                 }
 
                 mainwp_extension_bulk_install_next();

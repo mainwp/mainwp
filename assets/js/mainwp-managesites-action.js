@@ -240,7 +240,7 @@ let mainwp_managesites_bulk_reconnect_specific = function (pCheckedBox) {
     let msg = '', error = '';
     if (response.substring(0, 5) == 'ERROR') {
       if (response.length == 5) {
-        error = MainWP.I18n.t('Undefined error occured. Please try again.');
+        error = MainWP.I18n.t('Undefined error occurred. Please try again.');
         error = siteUrl + ' - ' + error;
       } else {
         error = response.substring(6);

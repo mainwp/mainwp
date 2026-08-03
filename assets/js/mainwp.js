@@ -3788,7 +3788,7 @@ let mainwp_notes_site_save = function () {
                 jQuery('#mainwp-notes-html').html(response?.esc_note_content ?? '');
             }
         } else {
-            jQuery('#mainwp-notes-status').html(MainWP.I18n.t('Undefined error occured while saving your note!')).addClass('red');
+            jQuery('#mainwp-notes-status').html(MainWP.I18n.t('Undefined error occurred while saving your note!')).addClass('red');
         }
     }, 'json');
 

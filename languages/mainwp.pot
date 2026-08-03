@@ -161,7 +161,7 @@ msgstr ""
 
 #: assets/js/mainwp-backups.js:1174 assets/js/mainwp-backups.js:1211
 #: assets/js/mainwp-backups.js:1250 pages/page-mainwp-page.php:1677
-msgid "An undefined error occured."
+msgid "An undefined error occurred."
 msgstr ""
 
 #: assets/js/mainwp-backups.js:1196
@@ -375,7 +375,7 @@ msgstr ""
 #: assets/js/mainwp-clients.js:762 assets/js/mainwp-plugins-themes.js:337
 #: assets/js/mainwp-plugins-themes.js:339 assets/js/mainwp.js:3628
 #: modules/cost-tracker/ui/js/cost-tracker.js:178
-msgid "Undefined error occured while saving your note!"
+msgid "Undefined error occurred while saving your note!"
 msgstr ""
 
 #: assets/js/mainwp-clients.js:855
@@ -538,7 +538,7 @@ msgid "You are about to suspend the selected sites?"
 msgstr ""
 
 #: assets/js/mainwp-managesites-action.js:243
-msgid "Undefined error occured. Please try again."
+msgid "Undefined error occurred. Please try again."
 msgstr ""
 
 #: assets/js/mainwp-managesites-action.js:302 assets/js/mainwp.js:2135
@@ -770,7 +770,7 @@ msgstr ""
 
 #: assets/js/mainwp-plugins-themes.js:290
 #: assets/js/mainwp-plugins-themes.js:292
-msgid "Undefined error occured while saving your note"
+msgid "Undefined error occurred while saving your note"
 msgstr ""
 
 #: assets/js/mainwp-plugins-themes.js:731
@@ -5966,7 +5966,7 @@ msgid "Settings have been updated."
 msgstr ""
 
 #: class/class-mainwp-system-view.php:62
-msgid "An error occured."
+msgid "An error occurred."
 msgstr ""
 
 #: class/class-mainwp-system-view.php:63
@@ -5982,7 +5982,7 @@ msgid "Your login is invalid."
 msgstr ""
 
 #: class/class-mainwp-system-view.php:66
-msgid "An error occured, please contact us."
+msgid "An error occurred, please contact us."
 msgstr ""
 
 #: class/class-mainwp-system-view.php:67
@@ -5994,7 +5994,7 @@ msgid "less"
 msgstr ""
 
 #: class/class-mainwp-system-view.php:69
-msgid "An error occured: "
+msgid "An error occurred: "
 msgstr ""
 
 #: class/class-mainwp-system-view.php:70
@@ -6141,7 +6141,7 @@ msgid "The task has been removed"
 msgstr ""
 
 #: class/class-mainwp-system-view.php:115
-msgid "An unspecified error occured"
+msgid "An unspecified error occurred"
 msgstr ""
 
 #: class/class-mainwp-system-view.php:119
@@ -6303,7 +6303,7 @@ msgid "Note saved."
 msgstr ""
 
 #: class/class-mainwp-system-view.php:166
-msgid "An error occured while saving your message."
+msgid "An error occurred while saving your message."
 msgstr ""
 
 #: class/class-mainwp-system-view.php:167
@@ -6397,7 +6397,7 @@ msgid "Note Saved"
 msgstr ""
 
 #: class/class-mainwp-system-view.php:199
-msgid "An error occured while saving your message"
+msgid "An error occurred while saving your message"
 msgstr ""
 
 #: class/class-mainwp-system-view.php:202
@@ -12465,7 +12465,7 @@ msgid ""
 msgstr ""
 
 #: includes/rest-api/controller/version2/class-mainwp-rest-updates-controller.php:1114
-msgid "An undefined error occured. Please try again."
+msgid "An undefined error occurred. Please try again."
 msgstr ""
 
 #: includes/rest-api/controller/version2/class-mainwp-rest-updates-controller.php:1133
@@ -12782,7 +12782,7 @@ msgid "Are you sure you want to Delete this backup?"
 msgstr ""
 
 #: modules/api-backups/assets/js/module-api-backups.js:113
-msgid "Successfull"
+msgid "Successful"
 msgstr ""
 
 #: modules/api-backups/classes/class-api-backups-3rd-party.php:295
@@ -19151,7 +19151,7 @@ msgid "ERROR"
 msgstr ""
 
 #: pages/page-mainwp-post-page-handler.php:523
-msgid "An undefined error occured!"
+msgid "An undefined error occurred!"
 msgstr ""
 
 #: pages/page-mainwp-post-page-handler.php:535

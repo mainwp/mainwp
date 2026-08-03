@@ -1171,7 +1171,7 @@ managebackups_remove = function (element) {
                 } else if (response.result == 'SUCCESS') {
                     result = MainWP.I18n.t('The task has been removed.');
                 } else {
-                    error = MainWP.I18n.t('An undefined error occured.');
+                    error = MainWP.I18n.t('An undefined error occurred.');
                 }
 
                 if (error != '') {
@@ -1208,7 +1208,7 @@ managebackups_resume = function (element) {
             } else if (response.result == 'SUCCESS') {
                 result = MainWP.I18n.t('The task has been resumed.');
             } else {
-                error = MainWP.I18n.t('An undefined error occured.');
+                error = MainWP.I18n.t('An undefined error occurred.');
             }
 
             if (error != '') {
@@ -1247,7 +1247,7 @@ managebackups_pause = function (element) {
             } else if (response.result == 'SUCCESS') {
                 result = MainWP.I18n.t('The task has been paused.');
             } else {
-                error = MainWP.I18n.t('An undefined error occured.');
+                error = MainWP.I18n.t('An undefined error occurred.');
             }
 
             if (error != '') {

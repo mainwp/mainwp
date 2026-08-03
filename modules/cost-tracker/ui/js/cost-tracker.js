@@ -175,7 +175,7 @@ let mainwp_module_cost_tracker_notes_save = function () {
             }
             jQuery('#mainwp-notes-subs-html').html(response?.esc_note_content??'');
         } else {
-            jQuery('#mainwp-notes-subs-status').html(MainWP.I18n.t('Undefined error occured while saving your note!')).addClass('red');
+            jQuery('#mainwp-notes-subs-status').html(MainWP.I18n.t('Undefined error occurred while saving your note!')).addClass('red');
         }
     }, 'json');
 

@@ -1575,7 +1575,7 @@ jQuery(function () {
         return false;
     });
 
-    jQuery('.mainwp-updates-overview-reconnect-site').on('click', function () {
+    jQuery(document).on('click', '.mainwp-updates-overview-reconnect-site', function () {
         mainwp_site_overview_reconnect(jQuery(this));
         return false;
     });

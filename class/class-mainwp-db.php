@@ -310,7 +310,8 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         $selectgroups  = isset( $params['with_tags'] ) && $params['with_tags'] ? true : false;
         $orderBy       = isset( $params['orderby'] ) ? $params['orderby'] : 'wp.url';
         $offset        = isset( $params['offset'] ) ? intval( $params['offset'] ) : false;
-        $rowcount      = isset( $params['rowcount'] ) && $params['rowcount'] ? true : false;
+        $rowcount      = isset( $params['rowcount'] ) ? (int) $params['rowcount'] : false;
+        $count_sql     = isset( $params['count_sql'] ) && $params['count_sql'] ? true : false;
         $extraWhere    = isset( $params['where'] ) ? $params['where'] : null; // NOTE: without 'AND' at begining and ending of 'where'.
         $for_manager   = isset( $params['for_manager'] ) && $params['for_manager'] ? true : false;
         $others_fields = isset( $params['others_fields'] ) && is_array( $params['others_fields'] ) ? $params['others_fields'] : array( 'favi_icon' );
@@ -509,16 +510,17 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
         // wpgroups to fix issue for mysql 8.0, as groups will generate error syntax.
         if ( $selectgroups ) {
-            $qry = 'SELECT ' . $select . $view_selects . ', GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ",") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.name SEPARATOR ",") as wpgroupids, GROUP_CONCAT(gr.color ORDER BY gr.name SEPARATOR ",") as wpgroups_colors ' .
-            $select_clients . '
+            $select_qry = 'SELECT ' . $select . $view_selects . ', GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ",") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.name SEPARATOR ",") as wpgroupids, GROUP_CONCAT(gr.color ORDER BY gr.name SEPARATOR ",") as wpgroups_colors ' .
+            $select_clients;
 
-            FROM ' . $this->table_name( 'wp' ) . ' wp
+            $qry       = ' FROM ' . $this->table_name( 'wp' ) . ' wp
             LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgr ON wp.id = wpgr.wpid
             LEFT JOIN ' . $this->table_name( 'group' ) . ' gr ON wpgr.groupid = gr.id
             ' . $join_clients . '
             JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
             ' . $view_joins . '
-            WHERE 1 ' . $where . $connected_sql . '
+            WHERE 1 ' . $where . $connected_sql;
+            $group_qry = '
             GROUP BY wp.id, wp_sync.sync_id
             ORDER BY ' . $orderBy;
         } elseif ( ! empty( $specific_wp_fields ) ) { // Optimize select sites data.
@@ -531,22 +533,30 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 $join_sync = ' JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid';
                 $group_by .= ', wp_sync.sync_id';
             }
-            $qry = 'SELECT ' . $select . $view_selects . '
-            FROM ' . $this->table_name( 'wp' ) . ' wp
+            $select_qry = 'SELECT ' . $select . $view_selects;
+            $qry        = ' FROM ' . $this->table_name( 'wp' ) . ' wp
             ' . $join_sync . ' ' . $view_joins . '
-            WHERE 1 ' . $where . $connected_sql . '
+            WHERE 1 ' . $where . $connected_sql;
+            $group_qry  = '
             GROUP BY ' . $group_by . '
             ORDER BY ' . $orderBy;
         } else {
-            $qry = 'SELECT ' . $select . $view_selects . $select_clients . '
-            FROM ' . $this->table_name( 'wp' ) . ' wp
+            $select_qry = 'SELECT ' . $select . $view_selects . $select_clients;
+            $qry        = ' FROM ' . $this->table_name( 'wp' ) . ' wp
             ' . $join_clients . '
             JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
             ' . $view_joins . '
-            WHERE 1 ' . $where . $connected_sql . '
+            WHERE 1 ' . $where . $connected_sql;
+            $group_qry  = '
             GROUP BY wp.id, wp_sync.sync_id
             ORDER BY ' . $orderBy;
         }
+
+        if ( $count_sql ) {
+            return 'SELECT COUNT(DISTINCT wp.id) ' . $qry;
+        }
+
+        $qry = $select_qry . $qry . $group_qry;
 
         if ( ( false !== $offset ) && ( false !== $rowcount ) ) {
             $qry .= ' LIMIT ' . $offset . ', ' . $rowcount;
@@ -2915,6 +2925,40 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
         return (int) $this->wpdb->get_var( $qry ); //phpcs:ignore PluginCheck.Security.DirectDB.Unprepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $where_allowed is from validated get_sql_where_access_sites() with numeric IDs.
     }
+
+
+    /**
+     * Get child site connection status counts.
+     *
+     * @return array|null {
+     *     Connection status counts.
+     *
+     *     @type int $total_sites          Total number of sites.
+     *     @type int $connected_sites      Number of connected sites.
+     *     @type int $disconnected_sites   Number of disconnected sites.
+     * }
+     */
+    public function get_sites_connections_status() {
+
+        $is_staging = 'no';
+
+        $sites_table = $this->table_name( 'wp' );
+        $sync_table  = $this->table_name( 'wp_sync' );
+
+        return $this->wpdb->get_row(
+            "
+            SELECT
+                COUNT(wp.id) AS total_sites,
+                SUM(CASE WHEN s.sync_errors = '' THEN 1 ELSE 0 END) AS connected_sites,
+                SUM(CASE WHEN s.sync_errors <> '' THEN 1 ELSE 0 END) AS disconnected_sites
+             FROM {$sites_table} wp
+             JOIN {$sync_table} s
+                ON s.wpid = wp.id " .
+                $this->get_sql_where_allow_access_sites( 'wp', $is_staging ),
+            ARRAY_A
+        );
+    }
+
 
     /**
      * Get child sites by group id via SQL.

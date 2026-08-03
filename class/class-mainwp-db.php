@@ -86,11 +86,13 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
     /**
      * Keep only option names that are safe to splice into SQL as an identifier.
      *
-     * The wp_options join and view builders put each name in identifier position
-     * (column alias), where escape()/esc_sql() is not a defense: it escapes quotes
-     * but leaves backticks alone, so a name like "a`, (SELECT ...) AS `b" breaks out
-     * of the alias. REST callers reach those builders through ?custom_fields.
-     * Anything outside [A-Za-z0-9_] is dropped rather than escaped.
+     * Every wp_options view builder below puts each name in identifier position
+     * (column and table aliases), where escape()/esc_sql() is not a defense: it
+     * escapes quotes but leaves backticks alone, so a name like "a`, (SELECT ...)
+     * AS `b" breaks out of the alias. Callers reach these through ?custom_fields on
+     * the REST sites endpoints and through the view_fields param of
+     * get_sql_website_by_params(). Anything outside [A-Za-z0-9_] is dropped rather
+     * than escaped, which also makes the surviving escape() calls no-ops.
      *
      * @param array $fields Option names.
      *
@@ -151,6 +153,8 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         if ( ! in_array( 'cust_site_icon_info', $fields, true ) ) {
             $fields[] = 'cust_site_icon_info';
         }
+
+        $fields = $this->filter_safe_option_names( $fields );
 
         if ( is_array( $fields ) ) {
             foreach ( $fields as $field ) {
@@ -651,7 +655,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             }
         }
 
-        $fields = array_values( array_filter( $fields ) );
+        $fields = array_values( array_filter( $this->filter_safe_option_names( $fields ) ) );
 
         $tbl_wp_options = $this->table_name( 'wp_options' );
 
@@ -729,6 +733,8 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 $fields[] = 'verify_method';
             }
         }
+
+        $fields = $this->filter_safe_option_names( $fields );
 
         foreach ( $fields as $field ) {
 

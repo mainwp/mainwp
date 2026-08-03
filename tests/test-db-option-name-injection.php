@@ -74,6 +74,53 @@ class MainWP_DB_Option_Name_Injection_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * get_option_view() builds unquoted subquery aliases and also uses the name as a
+	 * table alias, so it splices the payload in twice.
+	 *
+	 * @return void
+	 */
+	public function test_get_option_view_rejects_injected_option_name() {
+		$sql = \MainWP\Dashboard\MainWP_DB::instance()->get_option_view(
+			array( self::LEGIT, self::PAYLOAD ),
+			'custom_view'
+		);
+
+		$this->assertSqlRejectsPayload( $sql, 'get_option_view()' );
+	}
+
+	/**
+	 * get_option_view_by_join() takes ($view, $other_fields); custom_view keeps the
+	 * field list to exactly what the caller passed. Reachable with caller-supplied
+	 * names through the view_fields param of get_sql_website_by_params().
+	 *
+	 * @return void
+	 */
+	public function test_get_option_view_by_join_rejects_injected_option_name() {
+		$parts = \MainWP\Dashboard\MainWP_DB::instance()->get_option_view_by_join(
+			'custom_view',
+			array( self::LEGIT, self::PAYLOAD )
+		);
+
+		$this->assertIsArray( $parts );
+		$this->assertSqlRejectsPayload( $parts['selects'], 'get_option_view_by_join() selects' );
+		$this->assertSqlRejectsPayload( $parts['joins'], 'get_option_view_by_join() joins' );
+	}
+
+	/**
+	 * get_option_view_by() is the other half of the view_fields path.
+	 *
+	 * @return void
+	 */
+	public function test_get_option_view_by_rejects_injected_option_name() {
+		$sql = \MainWP\Dashboard\MainWP_DB::instance()->get_option_view_by(
+			'custom_view',
+			array( self::LEGIT, self::PAYLOAD )
+		);
+
+		$this->assertSqlRejectsPayload( $sql, 'get_option_view_by()' );
+	}
+
+	/**
 	 * get_wp_options_join() puts the name in both the SELECT alias and the JOIN
 	 * table alias, so both members of the return value need checking.
 	 *
@@ -106,22 +153,27 @@ class MainWP_DB_Option_Name_Injection_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * Backward-compat guard: real option names must still reach both guarded sinks. A
-	 * filter that is too strict would silently drop columns the read paths depend on,
-	 * which no injection assertion above would catch.
+	 * Backward-compat guard: real option names must still reach every sink. A filter
+	 * that is too strict would silently drop columns the read paths depend on, which
+	 * no injection assertion above would catch.
 	 *
 	 * @return void
 	 */
-	public function test_legitimate_option_names_survive_both_sinks() {
+	public function test_legitimate_option_names_survive_every_sink() {
 		$fields = array( 'favi_icon', 'site_info', 'health_site_status', 'recent_posts' );
 		$db     = \MainWP\Dashboard\MainWP_DB::instance();
 
-		$join = $db->get_wp_options_join( $fields, 'custom_view' );
+		$join    = $db->get_wp_options_join( $fields, 'custom_view' );
+		$by_join = $db->get_option_view_by_join( 'custom_view', $fields );
 
 		$fragments = array(
-			'get_wp_options_view()'         => $db->get_wp_options_view( $fields, 'custom_view' ),
-			'get_wp_options_join() selects' => $join['selects'],
-			'get_wp_options_join() joins'   => $join['joins'],
+			'get_option_view()'                 => $db->get_option_view( $fields, 'custom_view' ),
+			'get_wp_options_view()'             => $db->get_wp_options_view( $fields, 'custom_view' ),
+			'get_option_view_by()'              => $db->get_option_view_by( 'custom_view', $fields ),
+			'get_wp_options_join() selects'     => $join['selects'],
+			'get_wp_options_join() joins'       => $join['joins'],
+			'get_option_view_by_join() selects' => $by_join['selects'],
+			'get_option_view_by_join() joins'   => $by_join['joins'],
 		);
 
 		foreach ( $fragments as $context => $sql ) {

@@ -96,6 +96,14 @@ class MainWP_Sync_Sites_Ability_Test extends MainWP_Abilities_Test_Case {
 			$result->get_error_code(),
 			'Scalar exclude_ids should return mainwp_invalid_input error code.'
 		);
+
+		// Ids that all filter out (absint drops 0) must not net out to an
+		// all-sites sync. Schema minimum:1 rejects this on validated paths.
+		$result = $this->execute_ability( 'mainwp/sync-sites-v1', [
+			'site_ids' => [ 0 ],
+		] );
+
+		$this->assertWPError( $result, 'A site_ids list with no valid ids should return WP_Error.' );
 	}
 
 	/**

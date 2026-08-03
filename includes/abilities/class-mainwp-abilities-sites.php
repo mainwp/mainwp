@@ -342,7 +342,8 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                     'type'        => 'array',
                     'description' => __( 'Site IDs to sync. Empty array means all sites.', 'mainwp' ),
                     'items'       => array(
-                        'type' => 'integer',
+                        'type'    => 'integer',
+                        'minimum' => 1,
                     ),
                     'default'     => array(),
                 ),
@@ -350,7 +351,8 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                     'type'        => 'array',
                     'description' => __( 'Site IDs to exclude from sync.', 'mainwp' ),
                     'items'       => array(
-                        'type' => 'integer',
+                        'type'    => 'integer',
+                        'minimum' => 1,
                     ),
                     'default'     => array(),
                 ),
@@ -873,9 +875,21 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             }
         }
 
-        $site_ids            = isset( $input['site_ids'] ) && is_array( $input['site_ids'] )
+        $site_ids = isset( $input['site_ids'] ) && is_array( $input['site_ids'] )
             ? array_values( array_filter( array_map( 'absint', $input['site_ids'] ) ) )
             : array();
+
+        // A provided list whose ids all filter out (e.g. [0]) must not net out to
+        // the all-sites branch. Schema minimum:1 covers validated paths; this covers
+        // direct callback invocation.
+        if ( ! empty( $input['site_ids'] ) && empty( $site_ids ) ) {
+            return new \WP_Error(
+                'mainwp_invalid_input',
+                __( 'The site_ids parameter contains no valid site IDs.', 'mainwp' ),
+                array( 'status' => 400 )
+            );
+        }
+
         $site_ids_or_domains = isset( $input['site_ids_or_domains'] ) && is_array( $input['site_ids_or_domains'] )
             ? $input['site_ids_or_domains']
             : array();

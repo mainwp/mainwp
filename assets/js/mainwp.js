@@ -97,52 +97,69 @@ let mainwp_get_remove_calback = function (side_id) {
             id: side_id
         });
 
-        jQuery.post(ajaxurl, data, function(response) {
-            if (response?.error) {
-                let message = __('An unexpected error occurred. Please try again.', 'mainwp');
+        jQuery.ajax({
+            url: ajaxurl,
+            data: data,
+            timeout: 180000, // 3 minutes. Slightly longer than the PHP server timeout (2 minutes).
+            method: 'POST',
+            success: function ( response ) {
+                if (response?.error) {
+                    let message = __('The site has been removed. Please make sure that the MainWP Child plugin has been deactivated properly. You will be redirected to the Sites page right away.', 'mainwp');
 
-                if (typeof response.error === 'string') {
-                    message = response.error;
+                    if (typeof response.error === 'string') {
+                        message = response.error;
+                    }
+                    feedback('mainwp-message-zone', message, 'red');
+                    return;
                 }
-                feedback('mainwp-message-zone', message, 'red');
-                return;
-            }
 
-            switch (response?.result) {
-                case 'SUCCESS':
+                switch (response?.result) {
+                    case 'SUCCESS':
+                    case 'REMOVED': // for demo sites.
+                        feedback(
+                            'mainwp-message-zone',
+                            __('The site has been removed and the MainWP Child plugin has been disabled. You will be redirected to the Sites page right away.', 'mainwp'),
+                            'green'
+                        );
+                        break;
+
+                    case 'NOSITE':
+                        feedback(
+                            'mainwp-message-zone',
+                            __('Site could not be removed. Please reload the page and try again.', 'mainwp'),
+                            'red'
+                        );
+                        return;
+
+                    default:
+                        feedback(
+                            'mainwp-message-zone',
+                            __('The site has been removed. Please make sure that the MainWP Child plugin has been deactivated properly. You will be redirected to the Sites page right away.', 'mainwp'),
+                            'green'
+                        );
+                }
+
+                setTimeout(function() {
+                    mainwp_forceReload('admin.php?page=managesites');
+                }, 3000);
+            },
+            error: function (xhr, textStatus) {
+                if (textStatus === 'timeout') {
                     feedback(
                         'mainwp-message-zone',
-                        __('The site has been removed and the MainWP Child plugin has been disabled. You will be redirected to the Sites page right away.', 'mainwp'),
-                        'green'
-                    );
-                    break;
-
-                case 'NOSITE':
-                    feedback(
-                        'mainwp-message-zone',
-                        __('Site could not be removed. Please reload the page and try again.', 'mainwp'),
+                        __('The request timed out. Please make sure that the MainWP Child plugin has been deactivated properly.', 'mainwp'),
                         'red'
                     );
                     return;
+                }
 
-                default:
-                    feedback(
-                        'mainwp-message-zone',
-                        __('The site has been removed. Please make sure that the MainWP Child plugin has been deactivated properly. You will be redirected to the Sites page right away.', 'mainwp'),
-                        'green'
-                    );
-            }
-
-            setTimeout(function() {
-                mainwp_forceReload('admin.php?page=managesites');
-            }, 3000);
-
-        }, 'json').fail(function() {
-            feedback(
-                'mainwp-message-zone',
-                __('An unexpected error occurred. Please try again.', 'mainwp'),
-                'red'
-            );
+                feedback(
+                    'mainwp-message-zone',
+                    __('An unexpected error occurred. Please try again.', 'mainwp'),
+                    'red'
+                );
+            },
+            dataType: 'json'
         });
     }
 

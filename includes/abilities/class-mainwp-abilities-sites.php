@@ -859,7 +859,20 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
      * @return array|\WP_Error
      */
     public static function execute_sync_sites( $input ) { // phpcs:ignore -- NOSONAR - complexity method.
-        $input               = is_array( $input ) ? $input : array();
+        $input = is_array( $input ) ? $input : array();
+
+        // Core schema validation coerce-accepts scalars for type:array but hands the raw
+        // value through; a non-array must not fall into the all-sites branch below.
+        foreach ( array( 'site_ids', 'site_ids_or_domains' ) as $array_key ) {
+            if ( array_key_exists( $array_key, $input ) && ! is_array( $input[ $array_key ] ) ) {
+                return new \WP_Error(
+                    'mainwp_invalid_input',
+                    __( 'The site_ids and site_ids_or_domains parameters must be arrays of site IDs or domains.', 'mainwp' ),
+                    array( 'status' => 400 )
+                );
+            }
+        }
+
         $site_ids            = isset( $input['site_ids'] ) && is_array( $input['site_ids'] )
             ? array_values( array_filter( array_map( 'absint', $input['site_ids'] ) ) )
             : array();

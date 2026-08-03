@@ -783,10 +783,10 @@ class MainWP_REST_API_Execution_Test extends \WP_Test_REST_TestCase {
 		$site2_id = $this->create_test_site( [ 'name' => 'Sync Specific 2', 'offline_check_result' => 1 ] );
 
 		$request = new WP_REST_Request( 'POST', $this->ability_run_url( 'mainwp/sync-sites-v1' ) );
-		$request->set_body_params( [
-			'input' => [
-				'site_ids_or_domains' => [ $site1_id, $site2_id ],
-			],
+		// set_body_params() form input never reaches the run endpoint (it reads the
+		// JSON body only), which silently turned this into an all-sites sync.
+		$this->set_ability_input( $request, [
+			'site_ids_or_domains' => [ $site1_id, $site2_id ],
 		] );
 
 		$response = rest_do_request( $request );

@@ -65,6 +65,27 @@ class MainWP_Sync_Sites_Ability_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Test input validation rejects invalid values.
+	 *
+	 * @return void
+	 */
+	public function test_sync_sites_validates_input() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+
+		$result = $this->execute_ability( 'mainwp/sync-sites-v1', [
+			'site_ids_or_domains' => 'not-an-array',
+		] );
+
+		$this->assertWPError( $result, 'Invalid input should return WP_Error.' );
+		$this->assertEquals(
+			'mainwp_invalid_input',
+			$result->get_error_code(),
+			'Non-array input should return mainwp_invalid_input error code.'
+		);
+	}
+
+	/**
 	 * Test that sync-sites with specific IDs syncs those sites.
 	 *
 	 * @return void

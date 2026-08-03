@@ -56,6 +56,13 @@ class MainWP_REST_Integration_Test extends \WP_Test_REST_TestCase {
 	public function setUp(): void {
 		parent::setUp();
 
+		// Earlier runs can leak site rows past the per-test transaction (a DDL
+		// implicit commit breaks the rollback), and leaked rows sort ahead of this
+		// class's fixtures in collection responses. Start from an empty sites table;
+		// the tearDown LIKE-pattern delete cannot reach rows other classes leaked.
+		global $wpdb;
+		$wpdb->query( "DELETE FROM {$wpdb->prefix}mainwp_wp" );
+
 		// Note: mainwp_rest_api_v2_enabled filter is enabled in tests/bootstrap.php
 		// at priority 99 (after the database check at priority 10), ensuring REST v2
 		// routes are registered even without API keys in the test database.

@@ -658,6 +658,40 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
 
 
     /**
+     * Read the ?custom_fields argument as a list of wp_options names.
+     *
+     * These names travel into extra_view and reach the option-view builders in
+     * identifier position (column aliases), where escaping is not a defense, so
+     * anything outside [A-Za-z0-9_] is discarded rather than escaped. The DB layer
+     * screens them again; this keeps a bad name from being queried or echoed back
+     * by prepare_item_for_response() in the first place.
+     *
+     * health_site_status is dropped as well: every caller adds it explicitly for the
+     * health_score fast-path, and $never_in_response_fields reserves it out of the
+     * response, so accepting it here would only duplicate the entry.
+     *
+     * @param WP_REST_Request $request Request object.
+     *
+     * @return array Custom field names safe to query.
+     */
+    protected function get_requested_custom_fields( $request ) {
+        if ( ! isset( $request['custom_fields'] ) ) {
+            return array();
+        }
+
+        $fields = array_map( 'trim', wp_parse_list( $request['custom_fields'] ) );
+
+        $fields = array_filter(
+            $fields,
+            function ( $name ) {
+                return 'health_site_status' !== $name && preg_match( '/^[A-Za-z0-9_]+$/', $name );
+            }
+        );
+
+        return array_values( array_unique( $fields ) );
+    }
+
+    /**
      * Get item.
      *
      * @param  WP_REST_Request $request Request object.
@@ -678,7 +712,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         // Extract with_tags flag early so both paths use the same value.
         // Default to true for consistency with get_items() endpoint.
         $with_tags     = isset( $request['with_tags'] ) ? mainwp_string_to_bool( $request['with_tags'] ) : true;
-        $custom_fields = isset( $request['custom_fields'] ) ? array_map( 'trim', wp_parse_list( $request['custom_fields'] ) ) : array();
+        $custom_fields = $this->get_requested_custom_fields( $request );
 
         // Try abilities-first approach (with fallback to legacy logic).
         $ability = function_exists( 'wp_get_ability' ) ? wp_get_ability( 'mainwp/get-site-v1' ) : null;
@@ -787,7 +821,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         // These are processed in the legacy path but not in the ability schema.
         $with_tags     = isset( $request['with_tags'] ) ? mainwp_string_to_bool( $request['with_tags'] ) : true;
         $full_data     = isset( $request['full_data'] ) ? mainwp_string_to_bool( $request['full_data'] ) : true;
-        $custom_fields = isset( $request['custom_fields'] ) ? array_map( 'trim', wp_parse_list( $request['custom_fields'] ) ) : array();
+        $custom_fields = $this->get_requested_custom_fields( $request );
 
         // Try abilities-first approach (with fallback to legacy logic).
         // Skip abilities when with_tags=false, full_data=false, or include/exclude
@@ -2960,7 +2994,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             $data['last_sync'] = mainwp_rest_prepare_date_response( $data['last_sync'] );
         }
 
-        $custom_fields = isset( $request['custom_fields'] ) ? array_map( 'trim', wp_parse_list( $request['custom_fields'] ) ) : array();
+        $custom_fields = $this->get_requested_custom_fields( $request );
 
         if ( is_array( $custom_fields ) && ! empty( $custom_fields ) ) {
             foreach ( $custom_fields as $field ) {

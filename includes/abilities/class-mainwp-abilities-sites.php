@@ -863,11 +863,11 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
 
         // Core schema validation coerce-accepts scalars for type:array but hands the raw
         // value through; a non-array must not fall into the all-sites branch below.
-        foreach ( array( 'site_ids', 'site_ids_or_domains' ) as $array_key ) {
+        foreach ( array( 'site_ids', 'site_ids_or_domains', 'exclude_ids' ) as $array_key ) {
             if ( array_key_exists( $array_key, $input ) && ! is_array( $input[ $array_key ] ) ) {
                 return new \WP_Error(
                     'mainwp_invalid_input',
-                    __( 'The site_ids and site_ids_or_domains parameters must be arrays of site IDs or domains.', 'mainwp' ),
+                    __( 'The site_ids, site_ids_or_domains, and exclude_ids parameters must be arrays of site IDs or domains.', 'mainwp' ),
                     array( 'status' => 400 )
                 );
             }

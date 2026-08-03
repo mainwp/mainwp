@@ -4178,7 +4178,8 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
 
         // Core schema validation coerce-accepts scalars for type:array but hands the raw
         // value through; a non-array must not fall into the all-sites branch below.
-        if ( isset( $input['site_ids_or_domains'] ) && ! is_array( $input['site_ids_or_domains'] ) ) {
+        // array_key_exists, not isset: an explicit null is a present non-array too.
+        if ( array_key_exists( 'site_ids_or_domains', $input ) && ! is_array( $input['site_ids_or_domains'] ) ) {
             return new \WP_Error(
                 'mainwp_invalid_input',
                 __( 'The site_ids_or_domains parameter must be an array of site IDs or domains.', 'mainwp' ),
@@ -4311,7 +4312,8 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
 
         // Core schema validation coerce-accepts scalars for type:array but hands the raw
         // value through; a non-array must not fall into the all-sites branch below.
-        if ( isset( $input['site_ids_or_domains'] ) && ! is_array( $input['site_ids_or_domains'] ) ) {
+        // array_key_exists, not isset: an explicit null is a present non-array too.
+        if ( array_key_exists( 'site_ids_or_domains', $input ) && ! is_array( $input['site_ids_or_domains'] ) ) {
             return new \WP_Error(
                 'mainwp_invalid_input',
                 __( 'The site_ids_or_domains parameter must be an array of site IDs or domains.', 'mainwp' ),
@@ -4426,7 +4428,8 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
 
         // Core schema validation coerce-accepts scalars for type:array but hands the raw
         // value through; a non-array must not fall into the all-sites branch below.
-        if ( isset( $input['site_ids_or_domains'] ) && ! is_array( $input['site_ids_or_domains'] ) ) {
+        // array_key_exists, not isset: an explicit null is a present non-array too.
+        if ( array_key_exists( 'site_ids_or_domains', $input ) && ! is_array( $input['site_ids_or_domains'] ) ) {
             return new \WP_Error(
                 'mainwp_invalid_input',
                 __( 'The site_ids_or_domains parameter must be an array of site IDs or domains.', 'mainwp' ),
@@ -4567,7 +4570,8 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
 
         // Core schema validation coerce-accepts scalars for type:array but hands the raw
         // value through; a non-array must not fall into the all-sites branch below.
-        if ( isset( $input['site_ids_or_domains'] ) && ! is_array( $input['site_ids_or_domains'] ) ) {
+        // array_key_exists, not isset: an explicit null is a present non-array too.
+        if ( array_key_exists( 'site_ids_or_domains', $input ) && ! is_array( $input['site_ids_or_domains'] ) ) {
             return new \WP_Error(
                 'mainwp_invalid_input',
                 __( 'The site_ids_or_domains parameter must be an array of site IDs or domains.', 'mainwp' ),

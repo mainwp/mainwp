@@ -123,6 +123,15 @@ class Test_SuspendSites_Ability extends MainWP_Abilities_Test_Case {
             $result->get_error_code(),
             'Non-array input should return mainwp_invalid_input error code.'
         );
+
+        // An explicit null must be rejected, not silently widen the operation to
+        // every site like an omitted key does. Core schema validation catches it
+        // before the executor guard, so the error code is core's, not ours.
+        $result = $this->execute_ability( 'mainwp/suspend-sites-v1', [
+            'site_ids_or_domains' => null,
+        ] );
+
+        $this->assertWPError( $result, 'Explicit null should return WP_Error.' );
     }
 
     /**

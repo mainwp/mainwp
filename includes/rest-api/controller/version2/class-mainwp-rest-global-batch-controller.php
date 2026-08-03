@@ -45,7 +45,7 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
      *
      * @var string
      */
-    protected $controller_names = array( 'sites', 'clients', 'updates', 'costs', 'tags' );
+    protected $controller_names = array( 'sites', 'clients', 'costs', 'tags' );
 
     /**
      * Method instance()
@@ -105,6 +105,18 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
         $limit = $this->check_batch_limit( $items );
         if ( is_wp_error( $limit ) ) {
             return $limit;
+        }
+
+        // The updates controller has no batch-capable create handler, so report the whole group once
+        // instead of letting every item fail with a 405 from the WordPress core stub.
+        if ( ! empty( $items['updates'] ) ) {
+            $response['updates'] = array(
+                'error' => array(
+                    'code'    => 'rest_batch_group_not_supported',
+                    'message' => __( 'The updates group is not supported by the batch endpoint.', 'mainwp' ),
+                    'data'    => array( 'status' => 400 ),
+                ),
+            );
         }
 
         foreach ( $this->controller_names as $con_name ) {

@@ -742,6 +742,11 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
      * @return WP_Error|WP_REST_Response
      */
     public function client_fields( $request ) {  // phpcs:ignore -- NOSONAR - complex.
+        // pre_page shipped as the documented page size but was never read; keep it working through per_page.
+        if ( null === $request->get_param( 'per_page' ) && null !== $request->get_param( 'pre_page' ) ) {
+            $request->set_param( 'per_page', $request->get_param( 'pre_page' ) );
+        }
+
         // Prepare query args.
         $args     = $this->prepare_objects_query( $request, 'client_fields' );
         $page     = ! empty( $args['paged'] ) ? (int) $args['paged'] : 1;
@@ -1024,13 +1029,21 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
                 'sanitize_callback' => 'absint',
                 'description'       => __( 'Page number.', 'mainwp' ),
             ),
-            'pre_page' => array(
+            'per_page' => array(
                 'required'          => false,
                 'type'              => 'integer',
                 'sanitize_callback' => 'absint',
                 'minimum'           => 1,
                 'maximum'           => 200,
                 'description'       => __( 'Number of client fields per page.', 'mainwp' ),
+            ),
+            'pre_page' => array(
+                'required'          => false,
+                'type'              => 'integer',
+                'sanitize_callback' => 'absint',
+                'minimum'           => 1,
+                'maximum'           => 200,
+                'description'       => __( 'Deprecated alias of per_page. Number of client fields per page.', 'mainwp' ),
             ),
         );
     }

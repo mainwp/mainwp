@@ -4558,7 +4558,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                     'context'     => array( 'monitoring_view' ),
                 ),
                 'mainwp_uptime_monitoring_interval'        => array(
-                    'type'        => 'integer',
+                    'type'        => 'string',
                     'description' => __( 'Uptime monitoring interval.', 'mainwp' ),
                     'context'     => array( 'monitoring_view' ),
                 ),
@@ -4568,7 +4568,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                     'context'     => array( 'monitoring_view' ),
                 ),
                 'mainwp_uptime_monitoring_timeout'         => array(
-                    'type'        => 'integer',
+                    'type'        => 'string',
                     'description' => __( 'Uptime monitoring timeout.', 'mainwp' ),
                     'context'     => array( 'monitoring_view' ),
                 ),

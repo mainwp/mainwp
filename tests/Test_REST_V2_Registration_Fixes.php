@@ -416,6 +416,16 @@ class Test_REST_V2_Registration_Fixes extends \WP_Test_REST_TestCase {
 	}
 
 	/**
+	 * Fix 3: the public item schema agrees with the label strings the read endpoint returns.
+	 */
+	public function test_uptime_timeout_and_interval_item_schema_is_string(): void {
+		$schema = \MainWP_Rest_Settings_Controller::instance()->get_item_schema();
+
+		$this->assertSame( 'string', $schema['properties']['mainwp_uptime_monitoring_timeout']['type'] );
+		$this->assertSame( 'string', $schema['properties']['mainwp_uptime_monitoring_interval']['type'] );
+	}
+
+	/**
 	 * Fix 3: an empty timeout no longer writes a bogus value.
 	 */
 	public function test_monitoring_edit_rejects_empty_timeout(): void {

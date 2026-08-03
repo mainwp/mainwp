@@ -817,13 +817,16 @@ class MainWP_REST_API_Execution_Test extends \WP_Test_REST_TestCase {
 
 		try {
 			// Create sites to exceed batch threshold (lowered to 5 for testing).
+			// The seventh site stays out of the request: if the run endpoint ever
+			// ignores the input again, the all-sites fallback queues 7, not 6.
 			$site_ids = [];
-			for ( $i = 0; $i < 6; $i++ ) {
+			for ( $i = 0; $i < 7; $i++ ) {
 				$site_ids[] = $this->create_test_site( [
 					'name'                 => "Batch Test Site {$i}",
 					'offline_check_result' => 1,
 				] );
 			}
+			$site_ids = array_slice( $site_ids, 0, 6 );
 
 			$request = new WP_REST_Request( 'POST', $this->ability_run_url( 'mainwp/sync-sites-v1' ) );
 			// set_body_params() form input never reaches the run endpoint (it reads the
@@ -1904,6 +1907,13 @@ class MainWP_REST_API_Execution_Test extends \WP_Test_REST_TestCase {
 			'offline_check_result' => -1, // -1 = offline.
 		] );
 
+		// Not in the request: if the run endpoint ever ignores the input again,
+		// the all-sites fallback drags this site into the response.
+		$this->create_test_site( [
+			'name'                 => 'Online Control Site',
+			'offline_check_result' => 1,
+		] );
+
 		$request = new WP_REST_Request( 'POST', $this->ability_run_url( 'mainwp/sync-sites-v1' ) );
 		// set_body_params() form input never reaches the run endpoint (it reads the
 		// JSON body only), which silently turned this into an all-sites sync.
@@ -1923,7 +1933,7 @@ class MainWP_REST_API_Execution_Test extends \WP_Test_REST_TestCase {
 
 		// Site should appear in errors, not synced.
 		$this->assertEmpty( $data['synced'], 'Offline site should not be in synced.' );
-		$this->assertNotEmpty( $data['errors'], 'Offline site should be in errors.' );
+		$this->assertCount( 1, $data['errors'], 'Only the requested offline site should be in errors.' );
 		$this->assertEquals(
 			'mainwp_site_offline',
 			$data['errors'][0]['code'],

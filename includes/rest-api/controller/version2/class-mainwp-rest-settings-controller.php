@@ -2273,7 +2273,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             ),
             'trans_automatic_daily_update'        => array(
                 'required'          => false,
-                'description'       => __( 'Translation automatic daily update.', 'mainwp' ),
+                'description'       => __( 'Translation automatic daily update enabled.', 'mainwp' ),
                 'type'              => 'integer',
                 'enum'              => $val_bool,
                 'sanitize_callback' => $this->make_enum_sanitizer( $val_bool ),
@@ -2281,7 +2281,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             ),
             'automatic_daily_update'              => array(
                 'required'          => false,
-                'description'       => __( 'Plugin automatic daily update.', 'mainwp' ),
+                'description'       => __( 'Automatic daily update enabled.', 'mainwp' ),
                 'type'              => 'integer',
                 'enum'              => $val_bool,
                 'sanitize_callback' => $this->make_enum_sanitizer( $val_bool ),

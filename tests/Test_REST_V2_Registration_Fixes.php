@@ -94,7 +94,7 @@ class Test_REST_V2_Registration_Fixes extends \WP_Test_REST_TestCase {
 		$property->setAccessible( true );
 		$property->setValue( null, null );
 
-		$wpdb->query( "DELETE FROM {$wpdb->prefix}mainwp_api_keys WHERE description = 'Test API Key'" );
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}mainwp_api_keys WHERE description = %s", 'Test API Key' ) );
 
 		parent::tearDown();
 	}

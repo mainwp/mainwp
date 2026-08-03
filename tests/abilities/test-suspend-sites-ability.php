@@ -114,14 +114,14 @@ class Test_SuspendSites_Ability extends MainWP_Abilities_Test_Case {
         $this->set_current_user_as_admin();
 
         $result = $this->execute_ability( 'mainwp/suspend-sites-v1', [
-            'site_ids_or_domains' => [],
+            'site_ids_or_domains' => 'not-an-array',
         ] );
 
-        $this->assertWPError( $result, 'Empty sites array should return WP_Error.' );
+        $this->assertWPError( $result, 'Invalid input should return WP_Error.' );
         $this->assertEquals(
-            'mainwp_site_not_found',
+            'mainwp_invalid_input',
             $result->get_error_code(),
-            'Empty sites array should return mainwp_site_not_found error code.'
+            'Non-array input should return mainwp_invalid_input error code.'
         );
     }
 

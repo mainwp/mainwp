@@ -114,7 +114,7 @@ class Test_DisconnectSites_Ability extends MainWP_Abilities_Test_Case {
         $this->set_current_user_as_admin();
 
         $result = $this->execute_ability( 'mainwp/disconnect-sites-v1', [
-            'site_ids_or_domains' => [],
+            'site_ids_or_domains' => 'not-an-array',
         ] );
 
         $this->assertWPError( $result, 'Invalid input should return WP_Error.' );

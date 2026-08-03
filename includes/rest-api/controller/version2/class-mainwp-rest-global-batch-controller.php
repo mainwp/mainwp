@@ -41,9 +41,9 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
     protected $rest_base = 'batch';
 
     /**
-     * Route base.
+     * Controller names handled by the batch endpoint.
      *
-     * @var string
+     * @var array
      */
     protected $controller_names = array( 'sites', 'clients', 'costs', 'tags' );
 

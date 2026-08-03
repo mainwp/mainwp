@@ -804,10 +804,16 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
         $wp_upgrades         = ! empty( $wp_upgrades ) ? json_decode( $wp_upgrades, true ) : array();
         $wp_update_available = is_array( $wp_upgrades ) && ! empty( $wp_upgrades );
 
-        // Get health score if available.
+        // Get health score if available. The health_value column is a sortable
+        // composite (score - critical * 100) that goes negative when critical
+        // issues exist; recompute the real 0-100 score from the stored Site
+        // Health issue counts like the REST and UI surfaces do.
         $health_score = null;
-        if ( isset( $site->health_value ) ) {
-            $health_score = (int) $site->health_value;
+        // json_format=true returns a guaranteed array (scalars coerced to array()).
+        $health_status = MainWP_DB::instance()->get_website_option( $site, 'health_site_status', array(), true );
+        if ( ! empty( $health_status ) ) {
+            $hstatus      = MainWP_Utility::get_site_health( $health_status );
+            $health_score = (int) $hstatus['val'];
         }
 
         return array(

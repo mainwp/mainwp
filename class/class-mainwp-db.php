@@ -84,6 +84,35 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
     }
 
     /**
+     * Keep only option names that are safe to splice into SQL as an identifier.
+     *
+     * Every wp_options view builder below puts each name in identifier position
+     * (column and table aliases), where escape()/esc_sql() is not a defense: it
+     * escapes quotes but leaves backticks alone, so a name like "a`, (SELECT ...)
+     * AS `b" breaks out of the alias. Callers reach these through ?custom_fields on
+     * the REST sites endpoints and through the view_fields param of
+     * get_sql_website_by_params(). Anything outside [A-Za-z0-9_] is dropped rather
+     * than escaped, which also makes the surviving escape() calls no-ops.
+     *
+     * @param array $fields Option names.
+     *
+     * @return array Option names safe for identifier position.
+     */
+    protected function filter_safe_option_names( $fields ) {
+        if ( ! is_array( $fields ) ) {
+            return array();
+        }
+        return array_values(
+            array_filter(
+                $fields,
+                function ( $name ) {
+                    return is_string( $name ) && preg_match( '/^[A-Za-z0-9_]+$/', $name );
+                }
+            )
+        );
+    }
+
+    /**
      * Get wp_options database table view.
      *
      * @compatible function.
@@ -125,6 +154,8 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             $fields[] = 'cust_site_icon_info';
         }
 
+        $fields = $this->filter_safe_option_names( $fields );
+
         if ( is_array( $fields ) ) {
             foreach ( $fields as $field ) {
                 if ( empty( $field ) ) {
@@ -134,7 +165,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                     continue;
                 }
                 $view .= ', ';
-                $view .= '(SELECT ' . $this->escape( $field ) . '.value FROM ' . $this->table_name( 'wp_options' ) . ' ' . $this->escape( $field ) . ' WHERE  ' . $this->escape( $field ) . '.wpid = intwp.id AND ' . $this->escape( $field ) . '.name = "' . $this->escape( $field ) . '" LIMIT 1) AS ' . $this->escape( $field );
+                $view .= '(SELECT `' . $this->escape( $field ) . '`.value FROM ' . $this->table_name( 'wp_options' ) . ' `' . $this->escape( $field ) . '` WHERE  `' . $this->escape( $field ) . '`.wpid = intwp.id AND `' . $this->escape( $field ) . '`.name = "' . $this->escape( $field ) . '" LIMIT 1) AS `' . $this->escape( $field ) . '`';
             }
         }
 
@@ -185,7 +216,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             $fields[] = 'cust_site_icon_info';
         }
 
-        $fields = array_values( array_unique( array_filter( $fields ) ) );
+        $fields = array_values( array_unique( array_filter( $this->filter_safe_option_names( $fields ) ) ) );
 
         $tbl_wp_options = $this->table_name( 'wp_options' );
 
@@ -258,6 +289,8 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             $fields[] = 'cust_site_icon_info';
         }
 
+        $fields = $this->filter_safe_option_names( $fields );
+
         if ( is_array( $fields ) ) {
             foreach ( $fields as $field ) {
                 if ( empty( $field ) ) {
@@ -267,7 +300,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                     continue;
                 }
                 $view .= ', ';
-                $view .= 'MAX(CASE WHEN name = "' . $this->escape( $field ) . '" THEN value END) AS ' . $this->escape( $field );
+                $view .= 'MAX(CASE WHEN name = "' . $this->escape( $field ) . '" THEN value END) AS `' . $this->escape( $field ) . '`';
 
                 $included_opts[] = $this->escape( $field );
             }
@@ -632,7 +665,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             }
         }
 
-        $fields = array_values( array_filter( $fields ) );
+        $fields = array_values( array_filter( $this->filter_safe_option_names( $fields ) ) );
 
         $tbl_wp_options = $this->table_name( 'wp_options' );
 
@@ -711,6 +744,8 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             }
         }
 
+        $fields = $this->filter_safe_option_names( $fields );
+
         foreach ( $fields as $field ) {
 
             if ( empty( $field ) ) {
@@ -718,7 +753,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             }
 
             $view_query .= ', ';
-            $view_query .= 'MAX(CASE WHEN name = "' . $this->escape( $field ) . '" THEN value END) AS ' . $this->escape( $field );
+            $view_query .= 'MAX(CASE WHEN name = "' . $this->escape( $field ) . '" THEN value END) AS `' . $this->escape( $field ) . '`';
         }
 
         $view_query .= ' FROM ' . $this->table_name( 'wp_options' ) .

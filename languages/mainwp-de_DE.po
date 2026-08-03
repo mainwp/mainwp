@@ -164,7 +164,7 @@ msgstr "Der Auftrag wurde entfernt."
 
 #: assets/js/mainwp-backups.js:1174 assets/js/mainwp-backups.js:1211
 #: assets/js/mainwp-backups.js:1250 pages/page-mainwp-page.php:1677
-msgid "An undefined error occured."
+msgid "An undefined error occurred."
 msgstr "Ein undefinierter Fehler ist aufgetreten."
 
 #: assets/js/mainwp-backups.js:1196
@@ -387,7 +387,7 @@ msgstr "Notiz erfolgreich gespeichert."
 #: assets/js/mainwp-clients.js:762 assets/js/mainwp-plugins-themes.js:337
 #: assets/js/mainwp-plugins-themes.js:339 assets/js/mainwp.js:3628
 #: modules/cost-tracker/ui/js/cost-tracker.js:178
-msgid "Undefined error occured while saving your note!"
+msgid "Undefined error occurred while saving your note!"
 msgstr "Beim Speichern Ihrer Notiz ist ein undefinierter Fehler aufgetreten!"
 
 #: assets/js/mainwp-clients.js:855
@@ -566,7 +566,7 @@ msgid "You are about to suspend the selected sites?"
 msgstr "Sie sind dabei, die ausgewählten Websites zu sperren?"
 
 #: assets/js/mainwp-managesites-action.js:243
-msgid "Undefined error occured. Please try again."
+msgid "Undefined error occurred. Please try again."
 msgstr ""
 "Ein nicht definierter Fehler ist aufgetreten. Bitte versuchen Sie es erneut."
 
@@ -820,7 +820,7 @@ msgstr "Hinweis gespeichert!"
 
 #: assets/js/mainwp-plugins-themes.js:290
 #: assets/js/mainwp-plugins-themes.js:292
-msgid "Undefined error occured while saving your note"
+msgid "Undefined error occurred while saving your note"
 msgstr ""
 "Beim Speichern Ihrer Notiz ist ein nicht definierter Fehler aufgetreten"
 
@@ -6386,7 +6386,7 @@ msgid "Settings have been updated."
 msgstr "Einstellungen wurden aktualisiert."
 
 #: class/class-mainwp-system-view.php:62
-msgid "An error occured."
+msgid "An error occurred."
 msgstr "Es ist ein Fehler aufgetreten."
 
 #: class/class-mainwp-system-view.php:63
@@ -6402,7 +6402,7 @@ msgid "Your login is invalid."
 msgstr "Ihr Login ist ungültig."
 
 #: class/class-mainwp-system-view.php:66
-msgid "An error occured, please contact us."
+msgid "An error occurred, please contact us."
 msgstr "Ein Fehler ist aufgetreten, bitte kontaktieren Sie uns."
 
 #: class/class-mainwp-system-view.php:67
@@ -6414,7 +6414,7 @@ msgid "less"
 msgstr "weniger"
 
 #: class/class-mainwp-system-view.php:69
-msgid "An error occured: "
+msgid "An error occurred: "
 msgstr "Ein Fehler ist aufgetreten: "
 
 #: class/class-mainwp-system-view.php:70
@@ -6567,7 +6567,7 @@ msgid "The task has been removed"
 msgstr "Die Aufgabe wurde entfernt"
 
 #: class/class-mainwp-system-view.php:115
-msgid "An unspecified error occured"
+msgid "An unspecified error occurred"
 msgstr "Ein nicht spezifizierter Fehler ist aufgetreten"
 
 #: class/class-mainwp-system-view.php:119
@@ -6746,7 +6746,7 @@ msgid "Note saved."
 msgstr "Notiz gespeichert."
 
 #: class/class-mainwp-system-view.php:166
-msgid "An error occured while saving your message."
+msgid "An error occurred while saving your message."
 msgstr "Beim Speichern Ihrer Nachricht ist ein Fehler aufgetreten."
 
 #: class/class-mainwp-system-view.php:167
@@ -6848,7 +6848,7 @@ msgid "Note Saved"
 msgstr "Notiz Gespeichert"
 
 #: class/class-mainwp-system-view.php:199
-msgid "An error occured while saving your message"
+msgid "An error occurred while saving your message"
 msgstr "Beim Speichern Ihrer Nachricht ist ein Fehler aufgetreten"
 
 #: class/class-mainwp-system-view.php:202
@@ -13349,7 +13349,7 @@ msgstr ""
 "zur Fertigstellung."
 
 #: includes/rest-api/controller/version2/class-mainwp-rest-updates-controller.php:1114
-msgid "An undefined error occured. Please try again."
+msgid "An undefined error occurred. Please try again."
 msgstr ""
 "Ein undefinierter Fehler ist aufgetreten. Bitte versuchen Sie es erneut."
 
@@ -13677,7 +13677,7 @@ msgid "Are you sure you want to Delete this backup?"
 msgstr "Sind Sie sicher, dass Sie diese Sicherung löschen wollen?"
 
 #: modules/api-backups/assets/js/module-api-backups.js:113
-msgid "Successfull"
+msgid "Successful"
 msgstr "Erfolgreich"
 
 #: modules/api-backups/classes/class-api-backups-3rd-party.php:295
@@ -20687,7 +20687,7 @@ msgid "ERROR"
 msgstr "FEHLER"
 
 #: pages/page-mainwp-post-page-handler.php:523
-msgid "An undefined error occured!"
+msgid "An undefined error occurred!"
 msgstr "Ein undefinierter Fehler ist aufgetreten!"
 
 #: pages/page-mainwp-post-page-handler.php:535

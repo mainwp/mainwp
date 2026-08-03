@@ -24,12 +24,12 @@ jQuery(function ($) {
 });
 
 let mainwp_restapi_remove_key_confirm = function (pCheckedBox) {
-    let confirmMsg = __("You are about to delete the selected REST API Key?");
+    let confirmMsg = MainWP.I18n.t("You are about to delete the selected REST API Key?");
     mainwp_confirm(confirmMsg, function () { mainwp_restapi_bulk_remove_specific(pCheckedBox); });
 }
 
 let mainwp_restapi_bulk_remove_keys_confirm = function () {
-    let confirmMsg = __("You are about to delete the selected REST API Key(s)?");
+    let confirmMsg = MainWP.I18n.t("You are about to delete the selected REST API Key(s)?");
     mainwp_confirm(confirmMsg, function () { mainwp_restapi_bulk_init(); mainwp_restapi_remove_keys_next(); });
 }
 
@@ -50,7 +50,7 @@ let mainwp_restapi_remove_keys_next = function () {
         mainwp_restapi_bulk_remove_specific(checkedBox);
     }
     if ((bulk_RestAPITotal > 0) && (bulk_RestAPIFinished == bulk_RestAPITotal)) { // NOSONAR - modified outside the function.
-        setHtml('#mainwp-message-zone-apikeys', __("Process completed. Reloading page..."));
+        setHtml('#mainwp-message-zone-apikeys', MainWP.I18n.t("Process completed. Reloading page..."));
         setTimeout(function () {
             mainwp_forceReload();
         }, 3000);
@@ -79,7 +79,7 @@ let mainwp_restapi_bulk_remove_specific = function (pCheckedBox) {
         if (response.error != undefined) {
             error = response.error;
         } else if (response.success == 'SUCCESS') {
-            result = __('The REST API Key has been deleted.');
+            result = MainWP.I18n.t('The REST API Key has been deleted.');
         }
         if (error != '') {
             rowObj.html('<td colspan="999"><i class="red times icon"></i>' + error + '</td>');
@@ -225,8 +225,8 @@ const init_application_passwords = ($) => {
             <td data-order="0">&mdash;</td>
             <td>&mdash;</td>
             <td class="right aligned">
-                ${can_edit_table ? `<button type="button" class="ui mini basic button mainwp-edit-application-password" data-uuid="${item.uuid}" data-user-id="${item.user_id || ''}" data-name="${escape_html(item.name)}">${__("Edit")}</button>` : ''}
-                ${can_manage_table ? `<button type="button" class="ui mini grey basic button mainwp-revoke-application-password" data-uuid="${item.uuid}">${__("Revoke")}</button>` : ''}
+                ${can_edit_table ? `<button type="button" class="ui mini basic button mainwp-edit-application-password" data-uuid="${item.uuid}" data-user-id="${item.user_id || ''}" data-name="${escape_html(item.name)}">${MainWP.I18n.t("Edit")}</button>` : ''}
+                ${can_manage_table ? `<button type="button" class="ui mini grey basic button mainwp-revoke-application-password" data-uuid="${item.uuid}">${MainWP.I18n.t("Revoke")}</button>` : ''}
             </td>
         </tr>`;
 
@@ -264,7 +264,7 @@ const init_application_passwords = ($) => {
         const name = (edit_name_input.val() || '').trim();
         if (!name) {
             edit_name_input.trigger('focus');
-            show_message(__('Please enter an application name.'), 'error');
+            show_message(MainWP.I18n.t('Please enter an application name.'), 'error');
             return false;
         }
 
@@ -288,23 +288,23 @@ const init_application_passwords = ($) => {
                         const edit_btn = tr.find('.mainwp-edit-application-password');
                         if (edit_btn.length) {
                             edit_btn.attr('data-name', name);
-                            edit_btn.attr('aria-label', __('Rename "%s"').replace('%s', name));
+                            edit_btn.attr('aria-label', MainWP.I18n.t('Rename "%s"').replace('%s', name));
                         }
                         const revoke_btn = tr.find('.mainwp-revoke-application-password');
                         if (revoke_btn.length) {
-                            revoke_btn.attr('aria-label', __('Revoke "%s"').replace('%s', name));
+                            revoke_btn.attr('aria-label', MainWP.I18n.t('Revoke "%s"').replace('%s', name));
                         }
                         if (table) {
                             table.row(tr).invalidate().draw(false);
                         }
                     }
-                    show_message(__('Application password updated successfully.'), 'success');
+                    show_message(MainWP.I18n.t('Application password updated successfully.'), 'success');
                     edit_modal.modal('hide');
                 } catch {
                     mainwp_forceReload();
                 }
             } else {
-                const msg = (resp?.data?.message) ?? __('Failed to update Application Password.');
+                const msg = (resp?.data?.message) ?? MainWP.I18n.t('Failed to update Application Password.');
                 show_message(msg, 'error');
             }
         }, 'json');
@@ -340,12 +340,12 @@ const init_application_passwords = ($) => {
                     }
 
                     show_message(
-                        __("Selected application passwords have been revoked."),
+                        MainWP.I18n.t("Selected application passwords have been revoked."),
                         "success"
                     );
                 } else {
                     show_message(
-                        response.data.message || __("An error occurred."),
+                        response.data.message || MainWP.I18n.t("An error occurred."),
                         "error"
                     );
                 }
@@ -353,7 +353,7 @@ const init_application_passwords = ($) => {
             "json"
         ).fail(() => {
             show_message(
-                __(
+                MainWP.I18n.t(
                     "An error occurred while revoking the application passwords."
                 ),
                 "error"
@@ -385,7 +385,7 @@ const init_application_passwords = ($) => {
                     if (name.length === 0) {
                         app_pass_name_input.trigger("focus");
                         show_message(
-                            __("Please enter an application name."),
+                            MainWP.I18n.t("Please enter an application name."),
                             "error"
                         );
                         return false;
@@ -436,13 +436,13 @@ const init_application_passwords = ($) => {
                         .modal("show");
 
                     show_message(
-                        __("Application password created successfully!"),
+                        MainWP.I18n.t("Application password created successfully!"),
                         "success"
                     );
                 } else {
                     create_modal.modal("hide");
                     show_message(
-                        response.data.message || __("An error occurred."),
+                        response.data.message || MainWP.I18n.t("An error occurred."),
                         "error"
                     );
                 }
@@ -452,7 +452,7 @@ const init_application_passwords = ($) => {
             submit_button.removeClass("loading disabled");
             create_modal.modal("hide");
             show_message(
-                __(
+                MainWP.I18n.t(
                     "An error occurred while creating the application password."
                 ),
                 "error"
@@ -473,7 +473,7 @@ const init_application_passwords = ($) => {
 
         const button = $(this);
         const original_text = button.html();
-        button.html('<i class="check icon"></i> ' + __("Copied!"));
+        button.html('<i class="check icon"></i> ' + MainWP.I18n.t("Copied!"));
 
         setTimeout(() => {
             button.html(original_text);
@@ -488,7 +488,7 @@ const init_application_passwords = ($) => {
 
         if (
             !confirm(
-                __(
+                MainWP.I18n.t(
                     "Are you sure you want to revoke this password? This action cannot be undone."
                 )
             )
@@ -530,12 +530,12 @@ const init_application_passwords = ($) => {
                     }
 
                     show_message(
-                        __("Application password revoked successfully."),
+                        MainWP.I18n.t("Application password revoked successfully."),
                         "success"
                     );
                 } else {
                     show_message(
-                        response.data.message || __("An error occurred."),
+                        response.data.message || MainWP.I18n.t("An error occurred."),
                         "error"
                     );
                 }
@@ -544,7 +544,7 @@ const init_application_passwords = ($) => {
         ).fail(() => {
             button.prop("disabled", false).removeClass("disabled loading");
             show_message(
-                __(
+                MainWP.I18n.t(
                     "An error occurred while revoking the application password."
                 ),
                 "error"
@@ -581,7 +581,7 @@ const init_application_passwords = ($) => {
 
         if (selected.length === 0) {
             show_message(
-                __("Please select at least one application password."),
+                MainWP.I18n.t("Please select at least one application password."),
                 "error"
             );
             return false;
@@ -589,7 +589,7 @@ const init_application_passwords = ($) => {
 
         if (
             !confirm(
-                __(
+                MainWP.I18n.t(
                     "Are you sure you want to revoke the selected passwords? This action cannot be undone."
                 )
             )

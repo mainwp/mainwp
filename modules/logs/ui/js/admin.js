@@ -16,14 +16,14 @@ jQuery(function ($) {
         let str_enddate = jQuery('#log_delete_records_enddate').val();
         let errors = [];
         if (str_startdate == '' || str_enddate == '') {
-            errors.push(__('Please select Start Date and End Date.'));
+            errors.push(MainWP.I18n.t('Please select Start Date and End Date.'));
         }
         if (errors.length > 0) {
             mainwp_set_message_zone('#mainwp-message-zone', '<i class="close icon"></i>' + errors, 'red');
             return;
         }
 
-        let msg = __('Are you sure you want to delete logs for selected date?');
+        let msg = MainWP.I18n.t('Are you sure you want to delete logs for selected date?');
 
         mainwp_confirm(msg, function () {
             let data = mainwp_secure_data({
@@ -31,15 +31,15 @@ jQuery(function ($) {
                 startdate: jQuery('#log_delete_records_startdate').val(),
                 enddate: jQuery('#log_delete_records_enddate').val(),
             });
-            mainwp_set_message_zone('#mainwp-message-zone', __('Running ...'), 'green');
+            mainwp_set_message_zone('#mainwp-message-zone', MainWP.I18n.t('Running ...'), 'green');
             jQuery.post(ajaxurl, data, function (response) {
                 mainwp_set_message_zone('#mainwp-message-zone');
                 if (response.error) {
                     mainwp_set_message_zone('#mainwp-message-zone', '<i class="close icon"></i>' + response.error, 'red');
                 } else if (response.result) {
-                    mainwp_set_message_zone('#mainwp-message-zone', '<i class="close icon"></i>' + __('Logs records has been deleted successfully.'), 'green');
+                    mainwp_set_message_zone('#mainwp-message-zone', '<i class="close icon"></i>' + MainWP.I18n.t('Logs records has been deleted successfully.'), 'green');
                 } else {
-                    mainwp_set_message_zone('#mainwp-message-zone', '<i class="close icon"></i>' + __('Undefined error. Please try again.'), 'red');
+                    mainwp_set_message_zone('#mainwp-message-zone', '<i class="close icon"></i>' + MainWP.I18n.t('Undefined error. Please try again.'), 'red');
                 }
             }, 'json');
         });
@@ -51,26 +51,26 @@ jQuery(function ($) {
         let year = jQuery('#mainwp_module_log_compact_year').dropdown('get value');
         mainwp_set_message_zone('#mainwp-message-zone');
         if (0 == year) {
-            mainwp_set_message_zone('#mainwp-message-zone', '<i class="close icon"></i>' + __('Please select year.'), 'red');
+            mainwp_set_message_zone('#mainwp-message-zone', '<i class="close icon"></i>' + MainWP.I18n.t('Please select year.'), 'red');
             return;
         }
 
-        let msg = __('Are you sure you want to compact logs for selected year?');
+        let msg = MainWP.I18n.t('Are you sure you want to compact logs for selected year?');
 
         mainwp_confirm(msg, function () {
             let data = mainwp_secure_data({
                 action: 'mainwp_module_log_compact_records',
                 year: year,
             });
-            mainwp_set_message_zone('#mainwp-message-zone', __('Running ...'), 'green');
+            mainwp_set_message_zone('#mainwp-message-zone', MainWP.I18n.t('Running ...'), 'green');
             jQuery.post(ajaxurl, data, function (response) {
                 mainwp_set_message_zone('#mainwp-message-zone');
                 if (response.error) {
                     mainwp_set_message_zone('#mainwp-message-zone', '<i class="close icon"></i>' + response.error, 'red');
                 } else if (response.result) {
-                    mainwp_set_message_zone('#mainwp-message-zone', '<i class="close icon"></i>' + __('Logs records has been compact successfully.'), 'green');
+                    mainwp_set_message_zone('#mainwp-message-zone', '<i class="close icon"></i>' + MainWP.I18n.t('Logs records has been compact successfully.'), 'green');
                 } else {
-                    mainwp_set_message_zone('#mainwp-message-zone', '<i class="close icon"></i>' + __('Undefined error. Please try again.'), 'red');
+                    mainwp_set_message_zone('#mainwp-message-zone', '<i class="close icon"></i>' + MainWP.I18n.t('Undefined error. Please try again.'), 'red');
                 }
             }, 'json');
         });
@@ -80,7 +80,7 @@ jQuery(function ($) {
 
 
     jQuery('.mainwp-acts-logs-big-child-db-cleanup-btn').on('click', function () {
-        let msg = __('Are you sure you want to clean up activity logs for the selected site?');
+        let msg = MainWP.I18n.t('Are you sure you want to clean up activity logs for the selected site?');
         mainwp_confirm(msg, () => {
             let data = mainwp_secure_data({
                 action: 'mainwp_module_log_clean_up_child_logs',
@@ -91,17 +91,17 @@ jQuery(function ($) {
 
             let btn = $(this);
 
-            mainwp_set_message_zone('#mainwp-message-zone', __('Running ...'), 'green');
+            mainwp_set_message_zone('#mainwp-message-zone', MainWP.I18n.t('Running ...'), 'green');
             jQuery.post(ajaxurl, data, function (response) {
                 mainwp_set_message_zone('#mainwp-message-zone');
                 if (response?.error) {
                     mainwp_set_message_zone('#mainwp-message-zone', '<i class="close icon"></i>' + response.error, 'red');
                 } else if (response?.success) {
-                    mainwp_set_message_zone('#mainwp-message-zone', '<i class="close icon"></i>' + __('Log records were cleaned up successfully.'), 'green');
+                    mainwp_set_message_zone('#mainwp-message-zone', '<i class="close icon"></i>' + MainWP.I18n.t('Log records were cleaned up successfully.'), 'green');
                     $(btn).closest('.item').fadeOut(3000);
                     return;
                 } else {
-                    mainwp_set_message_zone('#mainwp-message-zone', '<i class="close icon"></i>' + __('Undefined error. Please try again.'), 'red');
+                    mainwp_set_message_zone('#mainwp-message-zone', '<i class="close icon"></i>' + MainWP.I18n.t('Undefined error. Please try again.'), 'red');
                 }
                 $(btn).attr('disabled', false);
             }, 'json');

@@ -164,7 +164,7 @@ msgstr "La tâche a été retirée."
 
 #: assets/js/mainwp-backups.js:1174 assets/js/mainwp-backups.js:1211
 #: assets/js/mainwp-backups.js:1250 pages/page-mainwp-page.php:1677
-msgid "An undefined error occured."
+msgid "An undefined error occurred."
 msgstr "Une erreur non définie s’est produite."
 
 #: assets/js/mainwp-backups.js:1196
@@ -388,7 +388,7 @@ msgstr "Note bien enregistrée."
 #: assets/js/mainwp-clients.js:762 assets/js/mainwp-plugins-themes.js:337
 #: assets/js/mainwp-plugins-themes.js:339 assets/js/mainwp.js:3628
 #: modules/cost-tracker/ui/js/cost-tracker.js:178
-msgid "Undefined error occured while saving your note!"
+msgid "Undefined error occurred while saving your note!"
 msgstr "Une erreur est survenue lors de l’enregistrement votre note !"
 
 #: assets/js/mainwp-clients.js:855
@@ -560,7 +560,7 @@ msgid "You are about to suspend the selected sites?"
 msgstr "Confirmez-vous la suspension des sites choisis ?"
 
 #: assets/js/mainwp-managesites-action.js:243
-msgid "Undefined error occured. Please try again."
+msgid "Undefined error occurred. Please try again."
 msgstr "Une erreur est survenue. Veuillez réessayer."
 
 #: assets/js/mainwp-managesites-action.js:302 assets/js/mainwp.js:2135
@@ -810,7 +810,7 @@ msgstr "Note enregistrée !"
 
 #: assets/js/mainwp-plugins-themes.js:290
 #: assets/js/mainwp-plugins-themes.js:292
-msgid "Undefined error occured while saving your note"
+msgid "Undefined error occurred while saving your note"
 msgstr "Une erreur est survenue lors de l’enregistrement votre note"
 
 #: assets/js/mainwp-plugins-themes.js:731
@@ -6325,7 +6325,7 @@ msgid "Settings have been updated."
 msgstr "Les paramètres ont été mis à jour."
 
 #: class/class-mainwp-system-view.php:62
-msgid "An error occured."
+msgid "An error occurred."
 msgstr "Une erreur est survenue."
 
 #: class/class-mainwp-system-view.php:63
@@ -6341,7 +6341,7 @@ msgid "Your login is invalid."
 msgstr "Votre connexion n’est pas valide."
 
 #: class/class-mainwp-system-view.php:66
-msgid "An error occured, please contact us."
+msgid "An error occurred, please contact us."
 msgstr "Une erreur s’est produite, veuillez nous contacter."
 
 #: class/class-mainwp-system-view.php:67
@@ -6353,7 +6353,7 @@ msgid "less"
 msgstr "moins"
 
 #: class/class-mainwp-system-view.php:69
-msgid "An error occured: "
+msgid "An error occurred: "
 msgstr "Une erreur est survenue : "
 
 #: class/class-mainwp-system-view.php:70
@@ -6505,7 +6505,7 @@ msgid "The task has been removed"
 msgstr "La tâche a été supprimée"
 
 #: class/class-mainwp-system-view.php:115
-msgid "An unspecified error occured"
+msgid "An unspecified error occurred"
 msgstr "Une erreur non spécifiée s’est produite"
 
 #: class/class-mainwp-system-view.php:119
@@ -6679,7 +6679,7 @@ msgid "Note saved."
 msgstr "Note  enregistrée."
 
 #: class/class-mainwp-system-view.php:166
-msgid "An error occured while saving your message."
+msgid "An error occurred while saving your message."
 msgstr "Une erreur s’est produite lors de l’enregistrement de votre message."
 
 #: class/class-mainwp-system-view.php:167
@@ -6780,7 +6780,7 @@ msgid "Note Saved"
 msgstr "Note sauvegardé"
 
 #: class/class-mainwp-system-view.php:199
-msgid "An error occured while saving your message"
+msgid "An error occurred while saving your message"
 msgstr "Erreur lors de l'enregistrement de votre message"
 
 #: class/class-mainwp-system-view.php:202
@@ -13286,7 +13286,7 @@ msgstr ""
 "d’avoir terminé."
 
 #: includes/rest-api/controller/version2/class-mainwp-rest-updates-controller.php:1114
-msgid "An undefined error occured. Please try again."
+msgid "An undefined error occurred. Please try again."
 msgstr "Une erreur non définie s'est produite. Essaie à nouveau."
 
 #: includes/rest-api/controller/version2/class-mainwp-rest-updates-controller.php:1133
@@ -13613,7 +13613,7 @@ msgid "Are you sure you want to Delete this backup?"
 msgstr "Confirmez-vous la suppression de cette sauvegarde ?"
 
 #: modules/api-backups/assets/js/module-api-backups.js:113
-msgid "Successfull"
+msgid "Successful"
 msgstr "Avec succès"
 
 #: modules/api-backups/classes/class-api-backups-3rd-party.php:295
@@ -20584,7 +20584,7 @@ msgstr "Nouvel article"
 
 #: pages/page-mainwp-post-page-handler.php:474
 #, fuzzy
-#| msgid "An undefined error occured!"
+#| msgid "An undefined error occurred!"
 msgid "Undefined error occurred!"
 msgstr "Une erreur indéfinie s'est produite."
 
@@ -20593,7 +20593,7 @@ msgid "ERROR"
 msgstr "ERREUR"
 
 #: pages/page-mainwp-post-page-handler.php:523
-msgid "An undefined error occured!"
+msgid "An undefined error occurred!"
 msgstr "Une erreur indéfinie s’est produite !"
 
 #: pages/page-mainwp-post-page-handler.php:535

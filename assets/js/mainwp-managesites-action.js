@@ -33,38 +33,38 @@ let mainwp_managesites_doaction = function (action) { // NOSONAR - complex.
 
       switch (action) {
         case 'delete':
-          confirmMsg = __("You are about to remove the selected sites from your MainWP Dashboard?");
+          confirmMsg = MainWP.I18n.t("You are about to remove the selected sites from your MainWP Dashboard?");
           break;
         case 'update_plugins':
-          confirmMsg = __("You are about to update plugins on the selected sites?");
+          confirmMsg = MainWP.I18n.t("You are about to update plugins on the selected sites?");
           _selection_cancelled = true;
           break;
         case 'update_themes':
-          confirmMsg = __("You are about to update themes on the selected sites?");
+          confirmMsg = MainWP.I18n.t("You are about to update themes on the selected sites?");
           _selection_cancelled = true;
           break;
         case 'update_wpcore':
-          confirmMsg = __("You are about to update WordPress core files on the selected sites?");
+          confirmMsg = MainWP.I18n.t("You are about to update WordPress core files on the selected sites?");
           _selection_cancelled = true;
           break;
         case 'update_translations':
-          confirmMsg = __("You are about to update translations on the selected sites?");
+          confirmMsg = MainWP.I18n.t("You are about to update translations on the selected sites?");
           _selection_cancelled = true;
           break;
         case 'update_everything':
-          confirmMsg = __("You are about to update everything on the selected sites?");
+          confirmMsg = MainWP.I18n.t("You are about to update everything on the selected sites?");
           _selection_cancelled = true;
           break;
         case 'check_abandoned_plugin':
-          confirmMsg = __("You are about to check abandoned plugin on the selected sites?");
+          confirmMsg = MainWP.I18n.t("You are about to check abandoned plugin on the selected sites?");
           _selection_cancelled = true;
           break;
         case 'check_abandoned_theme':
-          confirmMsg = __("You are about to check abandoned theme on the selected sites?");
+          confirmMsg = MainWP.I18n.t("You are about to check abandoned theme on the selected sites?");
           _selection_cancelled = true;
           break;
         case 'suspend':
-          confirmMsg = __("You are about to suspend the selected sites?");
+          confirmMsg = MainWP.I18n.t("You are about to suspend the selected sites?");
           _selection_cancelled = true;
           break;
       }
@@ -200,7 +200,7 @@ let mainwp_managesites_bulk_reconnect_next = function () {
     mainwp_managesites_bulk_reconnect_specific(checkedBox);
   }
   if ((bulkManageSitesTotal > 0) && (bulkManageSitesFinished == bulkManageSitesTotal)) {
-    setHtml('#mainwp-message-zone', __("Process completed. Reloading page..."));
+    setHtml('#mainwp-message-zone', MainWP.I18n.t("Process completed. Reloading page..."));
     setTimeout(function () {
       mainwp_forceReload();
     }, 3000);
@@ -240,7 +240,7 @@ let mainwp_managesites_bulk_reconnect_specific = function (pCheckedBox) {
     let msg = '', error = '';
     if (response.substring(0, 5) == 'ERROR') {
       if (response.length == 5) {
-        error = __('Undefined error occured. Please try again.');
+        error = MainWP.I18n.t('Undefined error occurred. Please try again.');
         error = siteUrl + ' - ' + error;
       } else {
         error = response.substring(6);
@@ -270,7 +270,7 @@ let mainwp_managesites_bulk_remove_next = function () {
     mainwp_managesites_bulk_remove_specific(checkedBox);
   }
   if ((bulkManageSitesTotal > 0) && (bulkManageSitesFinished == bulkManageSitesTotal)) { // NOSONAR - modified outside the function.
-    setHtml('#mainwp-message-zone', __("Process completed. Reloading page..."));
+    setHtml('#mainwp-message-zone', MainWP.I18n.t("Process completed. Reloading page..."));
     setTimeout(function () {
        mainwp_forceReload();
     }, 3000);
@@ -299,11 +299,11 @@ let mainwp_managesites_bulk_remove_specific = function (pCheckedBox) {
     if (response.error != undefined) {
       error = response.error;
     } else if (response.result == 'SUCCESS') {
-      result = __('The site has been removed and the MainWP Child plugin has been disabled.');
+      result = MainWP.I18n.t('The site has been removed and the MainWP Child plugin has been disabled.');
     } else if (response.result == 'NOSITE') {
-      error = __('Site not found. Please try again.');
+      error = MainWP.I18n.t('Site not found. Please try again.');
     } else {
-      result = __('The site has been removed but the MainWP Child plugin could not be disabled.');
+      result = MainWP.I18n.t('The site has been removed but the MainWP Child plugin could not be disabled.');
     }
 
     if (error != '') {
@@ -386,7 +386,7 @@ let mainwp_managesites_bulk_refresh_favico = function (siteIds) {
   let initData = {
     progressMax: nrOfWebsites,
     title: 'Refresh Favicon',
-    statusText: __('updated'),
+    statusText: MainWP.I18n.t('updated'),
     callback: function () {
       mainwpVars.bulkManageSitesTaskRunning = false;
       mainwp_forceReload();
@@ -493,7 +493,7 @@ let mainwp_managesites_bulk_suspend_status = function (siteIds, status) {
   let initData = {
     progressMax: nrOfWebsites,
     title: 'Suspend Site',
-    statusText: __('suspended'),
+    statusText: MainWP.I18n.t('suspended'),
     callback: function () {
       mainwpVars.bulkManageSitesTaskRunning = false;
       mainwp_forceReload();

@@ -147,7 +147,7 @@ class Log_Events_Filter_Segment {
                                 jQuery( '#mainwp-common-filter-segment-modal' ).modal('hide');
                             }, 2000);
                         } else {
-                            jQuery('#mainwp-common-filter-edit-segment-status').html(__('Undefined error occured while saving your segment!')).addClass('red');
+                            jQuery('#mainwp-common-filter-edit-segment-status').html(__('Undefined error occurred while saving your segment!')).addClass('red');
                         }
                     }, 'json');
                     return false;
@@ -247,7 +247,7 @@ class Log_Events_Filter_Segment {
                                 jQuery( '#mainwp-common-filter-segment-modal' ).modal('hide');
                             }, 2000);
                         } else {
-                            jQuery('#mainwp-common-filter-edit-segment-status').html(__('Undefined error occured while deleting your segment!')).addClass('red');
+                            jQuery('#mainwp-common-filter-edit-segment-status').html(__('Undefined error occurred while deleting your segment!')).addClass('red');
                         }
                     }, 'json');
 

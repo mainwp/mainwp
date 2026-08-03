@@ -338,6 +338,76 @@ class MainWP_Get_Site_Ability_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Test that get-site stats health_score stays within the 0-100 schema range.
+	 *
+	 * The mainwp_wp_sync.health_value column stores a sortable composite
+	 * (score - critical * 100) that goes negative when critical issues exist.
+	 * The ability output must report the real 0-100 score computed from the
+	 * health_site_status issue counts, or the Abilities API rejects the
+	 * response against the output schema.
+	 *
+	 * @return void
+	 */
+	public function test_get_site_stats_health_score_within_schema_range() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+
+		global $wpdb;
+
+		$site_id = $this->create_test_site( [
+			'name' => 'Health Score Site',
+		] );
+
+		// Site Health issue counts with one critical issue:
+		// val = 100 - ceil( 2.5 / 13.5 * 100 ) = 81, composite = 81 - 100 = -19.
+		$issue_counts = [
+			'good'        => 10,
+			'recommended' => 2,
+			'critical'    => 1,
+		];
+		$this->set_site_option( $site_id, 'health_site_status', wp_json_encode( $issue_counts ) );
+		$wpdb->update(
+			$wpdb->prefix . 'mainwp_wp_sync',
+			[ 'health_value' => -19 ],
+			[ 'wpid' => $site_id ],
+			[ '%d' ],
+			[ '%d' ]
+		);
+
+		$result = $this->execute_ability( 'mainwp/get-site-v1', [
+			'site_id_or_domain' => $site_id,
+			'include_stats'     => true,
+		] );
+
+		$this->assertNotWPError( $result );
+		$this->assertArrayHasKey( 'stats', $result );
+		$this->assertSame( 81, $result['stats']['health_score'] );
+	}
+
+	/**
+	 * Test that get-site stats health_score is null without health data.
+	 *
+	 * @return void
+	 */
+	public function test_get_site_stats_health_score_null_without_data() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+
+		$site_id = $this->create_test_site( [
+			'name' => 'No Health Data Site',
+		] );
+
+		$result = $this->execute_ability( 'mainwp/get-site-v1', [
+			'site_id_or_domain' => $site_id,
+			'include_stats'     => true,
+		] );
+
+		$this->assertNotWPError( $result );
+		$this->assertArrayHasKey( 'stats', $result );
+		$this->assertNull( $result['stats']['health_score'] );
+	}
+
+	/**
 	 * Test that get-site returns proper format for last_sync.
 	 *
 	 * @return void

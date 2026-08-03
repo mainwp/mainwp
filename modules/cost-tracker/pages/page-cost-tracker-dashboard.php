@@ -1548,7 +1548,7 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
                                 jQuery( '#mainwp-module-cost-tracker-segment-modal' ).modal('hide');
                             }, 2000);
                         } else {
-                            jQuery('#mainwp-cost-tracker-edit-segment-status').html(__('Undefined error occured while saving your segment!')).addClass('red');
+                            jQuery('#mainwp-cost-tracker-edit-segment-status').html(__('Undefined error occurred while saving your segment!')).addClass('red');
                         }
                     }, 'json');
 
@@ -1646,7 +1646,7 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
                                 jQuery( '#mainwp-module-cost-tracker-segment-modal' ).modal('hide');
                             }, 2000);
                         } else {
-                            jQuery('#mainwp-cost-tracker-edit-segment-status').html(__('Undefined error occured while deleting your segment!')).addClass('red');
+                            jQuery('#mainwp-cost-tracker-edit-segment-status').html(__('Undefined error occurred while deleting your segment!')).addClass('red');
                         }
                     }, 'json');
 

@@ -1265,9 +1265,10 @@ class Rest_Api_V1 { //phpcs:ignore -- NOSONAR - multi methods.
         }
 
         if ( true === $valid ) {
-            $data                 = array();
-            $params['extra_view'] = array( 'health_site_status' );
-            $websites             = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
+            $data = array();
+            // Pass extra_view positionally (8th arg) so health_site_status is actually
+            // fetched; a $params['extra_view'] local never reaches this query.
+            $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'health_site_status' ) ) );
             while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
                 $health_status = isset( $website->health_site_status ) ? json_decode( $website->health_site_status, true ) : array();
                 $hstatus       = MainWP_Utility::get_site_health( $health_status );

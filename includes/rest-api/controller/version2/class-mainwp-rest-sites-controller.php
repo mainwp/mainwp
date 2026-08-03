@@ -127,6 +127,9 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         'adminname',
         'securekey',
         'uniqueId',
+        // Projected onto the row for the health_score fast-path (not a schema field);
+        // reserve it so ?custom_fields=health_site_status cannot surface the raw value.
+        'health_site_status',
     );
 
     /**
@@ -157,9 +160,10 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      * `filter_response_data_by_allowed_fields()` expands it again to all schema
      * fields with empty-string placeholders. This helper avoids that behavior.
      *
-     * @param object          $item    Site item.
-     * @param WP_REST_Request $request Request object.
-     * @param string          $context Response context.
+     * @param object          $item            Site item.
+     * @param WP_REST_Request $request         Request object.
+     * @param string          $context         Response context.
+     * @param array           $addition_fields Extra fields to include beyond the schema projection.
      *
      * @return array
      */
@@ -654,6 +658,40 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
 
 
     /**
+     * Read the ?custom_fields argument as a list of wp_options names.
+     *
+     * These names travel into extra_view and reach the option-view builders in
+     * identifier position (column aliases), where escaping is not a defense, so
+     * anything outside [A-Za-z0-9_] is discarded rather than escaped. The DB layer
+     * screens them again; this keeps a bad name from being queried or echoed back
+     * by prepare_item_for_response() in the first place.
+     *
+     * health_site_status is dropped as well: every caller adds it explicitly for the
+     * health_score fast-path, and $never_in_response_fields reserves it out of the
+     * response, so accepting it here would only duplicate the entry.
+     *
+     * @param WP_REST_Request $request Request object.
+     *
+     * @return array Custom field names safe to query.
+     */
+    protected function get_requested_custom_fields( $request ) {
+        if ( ! isset( $request['custom_fields'] ) ) {
+            return array();
+        }
+
+        $fields = array_map( 'trim', wp_parse_list( $request['custom_fields'] ) );
+
+        $fields = array_filter(
+            $fields,
+            function ( $name ) {
+                return 'health_site_status' !== $name && preg_match( '/^[A-Za-z0-9_]+$/', $name );
+            }
+        );
+
+        return array_values( array_unique( $fields ) );
+    }
+
+    /**
      * Get item.
      *
      * @param  WP_REST_Request $request Request object.
@@ -674,7 +712,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         // Extract with_tags flag early so both paths use the same value.
         // Default to true for consistency with get_items() endpoint.
         $with_tags     = isset( $request['with_tags'] ) ? mainwp_string_to_bool( $request['with_tags'] ) : true;
-        $custom_fields = isset( $request['custom_fields'] ) ? array_map( 'trim', wp_parse_list( $request['custom_fields'] ) ) : array();
+        $custom_fields = $this->get_requested_custom_fields( $request );
 
         // Try abilities-first approach (with fallback to legacy logic).
         $ability = function_exists( 'wp_get_ability' ) ? wp_get_ability( 'mainwp/get-site-v1' ) : null;
@@ -701,7 +739,6 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             // We re-fetch from DB to apply REST-specific options (with_tags, fields) that
             // the ability schema does not support. This ensures consistent response format
             // between ability and legacy paths.
-            // See: .mwpdev/plans/abilities-api/phase-3-rest-integration-notes.md.
 
             $site_data = ! empty( $result ) && is_array( $result ) ? $result : array();
             $site_id   = isset( $site_data['id'] ) ? (int) $site_data['id'] : 0;
@@ -711,8 +748,9 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                     'full_data'    => true,
                     'selectgroups' => $with_tags,
                     'include'      => array( $site_id ),
-                    'extra_view'   => $custom_fields, // Pass custom fields to prepare_item_for_response() via params for abilities path since ability schema does not support fields parameter.
-                    'fields'       => $this->get_fields_for_response( $request ),
+                    'extra_view'   => array_merge( array( 'health_site_status' ), $custom_fields ), // Custom fields plus health_site_status, so prepare_item_for_response() reads the health data off the row instead of an extra per-site query.
+                    // health_site_status must be in fields too: get_websites_for_current_user() maps rows through map_site(), which keeps only fields; extra_view alone would be dropped before prepare_item_for_response() sees it.
+                    'fields'       => array_merge( array( 'health_site_status' ), $this->get_fields_for_response( $request ) ),
                 );
 
                 // Required to ensure custom fields are included in the DB query for abilities path since ability schema does not support fields parameter, but legacy path does.
@@ -745,8 +783,9 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             'full_data'    => true,
             'selectgroups' => $with_tags,
             'include'      => array( $item->id ),
-            'extra_view'   => $custom_fields, // Pass custom fields to prepare_item_for_response() via params for abilities path since ability schema does not support fields parameter.
-            'fields'       => $this->get_fields_for_response( $request ),
+            'extra_view'   => array_merge( array( 'health_site_status' ), $custom_fields ), // Custom fields plus health_site_status, so prepare_item_for_response() reads the health data off the row instead of an extra per-site query.
+            // health_site_status must be in fields too: get_websites_for_current_user() maps rows through map_site(), which keeps only fields; extra_view alone would be dropped before prepare_item_for_response() sees it.
+            'fields'       => array_merge( array( 'health_site_status' ), $this->get_fields_for_response( $request ) ),
         );
 
         // Required to ensure custom fields are included in the DB query for abilities path since ability schema does not support fields parameter, but legacy path does.
@@ -782,7 +821,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         // These are processed in the legacy path but not in the ability schema.
         $with_tags     = isset( $request['with_tags'] ) ? mainwp_string_to_bool( $request['with_tags'] ) : true;
         $full_data     = isset( $request['full_data'] ) ? mainwp_string_to_bool( $request['full_data'] ) : true;
-        $custom_fields = isset( $request['custom_fields'] ) ? array_map( 'trim', wp_parse_list( $request['custom_fields'] ) ) : array();
+        $custom_fields = $this->get_requested_custom_fields( $request );
 
         // Try abilities-first approach (with fallback to legacy logic).
         // Skip abilities when with_tags=false, full_data=false, or include/exclude
@@ -824,7 +863,6 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             // We re-fetch from DB using the IDs returned by the ability to apply REST-specific
             // options (with_tags, fields) that the ability schema does not support.
             // This ensures consistent response format between ability and legacy paths.
-            // See: .mwpdev/plans/abilities-api/phase-3-rest-integration-notes.md
             $normalized_items = array();
             if ( ! empty( $result['items'] ) ) {
                 // Get site IDs from ability results.
@@ -837,8 +875,9 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                         'full_data'    => true,
                         'selectgroups' => true,
                         'include'      => $site_ids,
-                        'extra_view'   => $custom_fields, // Pass custom fields to prepare_item_for_response() via params for abilities path since ability schema does not support fields parameter.
-                        'fields'       => $this->get_fields_for_response( $request ),
+                        'extra_view'   => array_merge( array( 'health_site_status' ), $custom_fields ), // Custom fields plus health_site_status, so prepare_item_for_response() reads the health data off the row instead of an extra per-site query.
+                        // health_site_status must be in fields too: get_websites_for_current_user() maps rows through map_site(), which keeps only fields; extra_view alone would be dropped before prepare_item_for_response() sees it.
+                        'fields'       => array_merge( array( 'health_site_status' ), $this->get_fields_for_response( $request ) ),
                     );
 
                     // Required to ensure custom fields are included in the DB query for abilities path since ability schema does not support fields parameter, but legacy path does.
@@ -868,6 +907,12 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         // Fallback: Legacy logic when Abilities API is not available.
         $args['selectgroups'] = isset( $request['with_tags'] ) ? mainwp_string_to_bool( $request['with_tags'] ) : true;
         $args['full_data']    = isset( $request['full_data'] ) ? mainwp_string_to_bool( $request['full_data'] ) : true;
+        // Fetch health_site_status onto the rows (extra_view = SQL column, fields =
+        // what map_site() keeps) so prepare_item_for_response() reads the health data
+        // off the object instead of a per-site query.
+        $args['extra_view'] = array_merge( array( 'health_site_status' ), $custom_fields );
+        $args_fields        = isset( $args['fields'] ) && is_array( $args['fields'] ) ? $args['fields'] : array();
+        $args['fields']     = array_merge( array( 'health_site_status' ), $args_fields );
 
         // get data.
         $websites = MainWP_DB::instance()->get_websites_for_current_user( $args );
@@ -905,6 +950,13 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
 
         $args['selectgroups'] = isset( $request['with_tags'] ) ? mainwp_string_to_bool( $request['with_tags'] ) : false;
         $args['full_data']    = isset( $request['full_data'] ) ? mainwp_string_to_bool( $request['full_data'] ) : false;
+        // health_score has context 'view', so get_fields_for_response() still lists it here
+        // (the request context defaults to 'view') and prepare_item_for_response() computes it
+        // even though the simple_view filter later strips it. Project health_site_status onto the
+        // rows so that computation reads off the object instead of a per-site option query.
+        $args['extra_view'] = array( 'health_site_status' );
+        $args_fields        = isset( $args['fields'] ) && is_array( $args['fields'] ) ? $args['fields'] : array();
+        $args['fields']     = array_merge( array( 'health_site_status' ), $args_fields );
 
         // get data.
         $websites = MainWP_DB::instance()->get_websites_for_current_user( $args );
@@ -2545,10 +2597,10 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                 // strip_never_in_response_fields() in
                 // prepare_site_item_for_response_context(), which strips these
                 // fields from every site response regardless of context or
-                // _fields. (check_permissions() in the auth layer does not
+                // _fields. check_permissions() in the auth layer does not
                 // currently gate ?context=edit to actual edit-permission keys,
                 // and no caller forwards request context to the schema-filter
-                // step, so the schema label alone is not the effective guard.)
+                // step, so the schema label alone is not the effective guard.
                 'http_user'              => array(
                     'type'        => 'string',
                     'description' => __( 'HTTP user', 'mainwp' ),
@@ -2853,7 +2905,6 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         $map_fields = array(
             'database_size'  => 'dbsize',
             'http_status'    => 'http_response_code',
-            'health_score'   => 'health_value',
             'icon'           => 'cust_site_icon_info',
             'last_sync'      => 'dtsSync',
             'last_post_time' => 'last_post_gmt',
@@ -2864,6 +2915,18 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                 if ( in_array( $field1, $fields ) && property_exists( $item, $field2 ) ) {
                     $data[ $field1 ] = $item->{$field2};
                 }
+            }
+
+            if ( in_array( 'health_score', $fields, true ) ) {
+                // health_value is a sortable composite (score - critical * 100) that goes
+                // negative on critical issues; report the label v1 and WP-CLI derive from
+                // the stored Site Health issue counts, not the raw column.
+                // Passing the $item object (not $item->id) with json_format=true uses the
+                // property fast-path when health_site_status is already on the row, and
+                // guards scalars to array() so a malformed value cannot fatal.
+                $health_status        = MainWP_DB::instance()->get_website_option( $item, 'health_site_status', array(), true );
+                $hstatus              = MainWP_Utility::get_site_health( $health_status );
+                $data['health_score'] = ( 80 <= $hstatus['val'] && empty( $hstatus['critical'] ) ) ? 'Good' : 'Should be improved';
             }
         }
 
@@ -2931,7 +2994,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             $data['last_sync'] = mainwp_rest_prepare_date_response( $data['last_sync'] );
         }
 
-        $custom_fields = isset( $request['custom_fields'] ) ? array_map( 'trim', wp_parse_list( $request['custom_fields'] ) ) : array();
+        $custom_fields = $this->get_requested_custom_fields( $request );
 
         if ( is_array( $custom_fields ) && ! empty( $custom_fields ) ) {
             foreach ( $custom_fields as $field ) {

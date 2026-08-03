@@ -81,6 +81,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
         $this->add_action( 'mainwp_save_settings', array( &$this, 'ajax_mainwp_save_settings' ) );
         $this->add_action( 'mainwp_guided_tours_option_update', array( &$this, 'ajax_guided_tours_option_update' ) );
         $this->add_action( 'mainwp_help_modal_content_update', array( &$this, 'ajax_mainwp_help_modal_content_update' ) );
+        $this->add_action( 'mainwp_widgets_connections_status_details_display_rows', array( MainWP_Connection_Status::instance(), 'ajax_display_rows' ) );
+
 
         // Page: Recent Posts.
         if ( \mainwp_current_user_can( 'dashboard', 'manage_posts' ) ) {

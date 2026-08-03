@@ -147,7 +147,7 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
         $allow_pages = array( 'ManageCostTracker', 'CostTrackerAdd', 'CostTrackerSettings', 'CostSummary', 'CostTrackerImport' );
         if ( isset( $_GET['page'] ) && in_array( $_GET['page'], $allow_pages, true ) ) { //phpcs:ignore WordPress.Security.NonceVerification.Recommended
             $base_url = Cost_Tracker_Manager::get_location_path( 'url' );
-            wp_enqueue_script( 'mainwp-module-cost-tracker-extension', $base_url . 'ui/js/cost-tracker.js', array( 'jquery' ), $this->version, true );
+            wp_enqueue_script( 'mainwp-module-cost-tracker-extension', $base_url . 'ui/js/cost-tracker.js', array( 'jquery', 'mainwp' ), $this->version, true );
             if ( 'CostSummary' === $_GET['page'] ) { //phpcs:ignore WordPress.Security.NonceVerification.Recommended
                 add_filter(
                     'mainwp_admin_enqueue_scripts',

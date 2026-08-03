@@ -782,11 +782,15 @@ class MainWP_REST_API_Execution_Test extends \WP_Test_REST_TestCase {
 		$site1_id = $this->create_test_site( [ 'name' => 'Sync Specific 1', 'offline_check_result' => 1 ] );
 		$site2_id = $this->create_test_site( [ 'name' => 'Sync Specific 2', 'offline_check_result' => 1 ] );
 
+		// Not in the request: if the run endpoint ever ignores the input again,
+		// the all-sites fallback drags this site into the response.
+		$control_id = $this->create_test_site( [ 'name' => 'Sync Control', 'offline_check_result' => 1 ] );
+
 		$request = new WP_REST_Request( 'POST', $this->ability_run_url( 'mainwp/sync-sites-v1' ) );
-		$request->set_body_params( [
-			'input' => [
-				'site_ids_or_domains' => [ $site1_id, $site2_id ],
-			],
+		// set_body_params() form input never reaches the run endpoint (it reads the
+		// JSON body only), which silently turned this into an all-sites sync.
+		$this->set_ability_input( $request, [
+			'site_ids_or_domains' => [ $site1_id, $site2_id ],
 		] );
 
 		$response = rest_do_request( $request );
@@ -800,6 +804,12 @@ class MainWP_REST_API_Execution_Test extends \WP_Test_REST_TestCase {
 		$data = $response->get_data();
 		$this->assertIsArray( $data, 'Response should be an array.' );
 		$this->assertArrayHasKey( 'synced', $data, 'Response should have synced key.' );
+
+		$touched_ids = array_merge(
+			array_map( static fn( $entry ) => (int) $entry['id'], $data['synced'] ),
+			array_map( static fn( $entry ) => (int) $entry['identifier'], $data['errors'] ?? [] )
+		);
+		$this->assertNotContains( $control_id, $touched_ids, 'Unrequested control site should not be touched.' );
 	}
 
 	/**
@@ -817,19 +827,22 @@ class MainWP_REST_API_Execution_Test extends \WP_Test_REST_TestCase {
 
 		try {
 			// Create sites to exceed batch threshold (lowered to 5 for testing).
+			// The seventh site stays out of the request: if the run endpoint ever
+			// ignores the input again, the all-sites fallback queues 7, not 6.
 			$site_ids = [];
-			for ( $i = 0; $i < 6; $i++ ) {
+			for ( $i = 0; $i < 7; $i++ ) {
 				$site_ids[] = $this->create_test_site( [
 					'name'                 => "Batch Test Site {$i}",
 					'offline_check_result' => 1,
 				] );
 			}
+			$site_ids = array_slice( $site_ids, 0, 6 );
 
 			$request = new WP_REST_Request( 'POST', $this->ability_run_url( 'mainwp/sync-sites-v1' ) );
-			$request->set_body_params( [
-				'input' => [
-					'site_ids_or_domains' => $site_ids,
-				],
+			// set_body_params() form input never reaches the run endpoint (it reads the
+			// JSON body only), which silently turned this into an all-sites sync.
+			$this->set_ability_input( $request, [
+				'site_ids_or_domains' => $site_ids,
 			] );
 
 			$response = rest_do_request( $request );
@@ -1904,11 +1917,18 @@ class MainWP_REST_API_Execution_Test extends \WP_Test_REST_TestCase {
 			'offline_check_result' => -1, // -1 = offline.
 		] );
 
+		// Not in the request: if the run endpoint ever ignores the input again,
+		// the all-sites fallback drags this site into the response.
+		$this->create_test_site( [
+			'name'                 => 'Online Control Site',
+			'offline_check_result' => 1,
+		] );
+
 		$request = new WP_REST_Request( 'POST', $this->ability_run_url( 'mainwp/sync-sites-v1' ) );
-		$request->set_body_params( [
-			'input' => [
-				'site_ids_or_domains' => [ $site_id ],
-			],
+		// set_body_params() form input never reaches the run endpoint (it reads the
+		// JSON body only), which silently turned this into an all-sites sync.
+		$this->set_ability_input( $request, [
+			'site_ids_or_domains' => [ $site_id ],
 		] );
 
 		$response = rest_do_request( $request );
@@ -1923,7 +1943,7 @@ class MainWP_REST_API_Execution_Test extends \WP_Test_REST_TestCase {
 
 		// Site should appear in errors, not synced.
 		$this->assertEmpty( $data['synced'], 'Offline site should not be in synced.' );
-		$this->assertNotEmpty( $data['errors'], 'Offline site should be in errors.' );
+		$this->assertCount( 1, $data['errors'], 'Only the requested offline site should be in errors.' );
 		$this->assertEquals(
 			'mainwp_site_offline',
 			$data['errors'][0]['code'],

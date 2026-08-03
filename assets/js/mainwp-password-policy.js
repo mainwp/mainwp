@@ -98,7 +98,7 @@ jQuery(document).ready(function($) {
 					statusDiv
 						.removeClass('green icon')
 						.addClass('red icon')
-						.html(response?.data?.message ?? __('An error occurred', 'mainwp'))
+						.html(response?.data?.message ?? MainWP.I18n.t('An error occurred', 'mainwp'))
 						.show();
 
 					$('html, body').animate({
@@ -111,7 +111,7 @@ jQuery(document).ready(function($) {
 				statusDiv
 					.removeClass('green icon')
 					.addClass('red icon')
-					.html(__('AJAX request failed', 'mainwp'))
+					.html(MainWP.I18n.t('AJAX request failed', 'mainwp'))
 					.show();
 
 				$('html, body').animate({
@@ -161,7 +161,7 @@ globalThis.mainwp_password_policy_start_update = function(siteIds, sitesData, se
 			'<div class="item">' +
 			'<div class="right floated content">' +
 			'<div class="password-policy-site-status" siteid="' + siteId + '">' +
-			'<span data-position="left center" data-inverted="" data-tooltip="' + __('Pending', 'mainwp') + '">' +
+			'<span data-position="left center" data-inverted="" data-tooltip="' + MainWP.I18n.t('Pending', 'mainwp') + '">' +
 			'<i class="clock outline icon"></i>' +
 			'</span>' +
 			'</div>' +
@@ -209,7 +209,7 @@ let mainwp_password_policy_update_next = function() {
 
 	mainwp_password_policy_update_site_status(
 		siteId,
-		'<span data-inverted="" data-position="left center" data-tooltip="' + __('Updating...', 'mainwp') + '">' +
+		'<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Updating...', 'mainwp') + '">' +
 		'<i class="sync alternate loading icon"></i>' +
 		'</span>'
 	);
@@ -242,13 +242,13 @@ let mainwp_password_policy_update_next_int = function(siteId, data, errors) {
 				if (response?.success) {
 					mainwp_password_policy_update_site_status(
 						pSiteId,
-						'<span data-inverted="" data-position="left center" data-tooltip="' + __('Updated successfully', 'mainwp') + '">' +
+						'<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Updated successfully', 'mainwp') + '">' +
 						'<i class="check green icon"></i>' +
 						'</span>',
 						true
 					);
 				} else {
-					let errorMsg = response?.error ? response.error : __('Unknown error', 'mainwp');
+					let errorMsg = response?.error ? response.error : MainWP.I18n.t('Unknown error', 'mainwp');
 					if ( response?.debug) {
 						console.log('Password policy update debug (Site ' + pSiteId + '):', response.debug);
 						errorMsg += ' (See console for details)';
@@ -270,7 +270,7 @@ let mainwp_password_policy_update_next_int = function(siteId, data, errors) {
 					mainwp_password_policy_vars.currentThreads--;
 					mainwp_password_policy_update_site_status(
 						pSiteId,
-						'<span data-inverted="" data-position="left center" data-tooltip="' + __('Process timed out. Please try again.', 'mainwp') + '">' +
+						'<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Process timed out. Please try again.', 'mainwp') + '">' +
 						'<i class="exclamation yellow icon"></i>' +
 						'</span>'
 					);
@@ -304,7 +304,7 @@ let mainwp_password_policy_update_site_status = function(siteId, statusHtml, isS
  * Update overall progress status
  */
 let mainwp_password_policy_update_progress_status = function() {
-	let statusText = mainwp_password_policy_vars.sitesDone + ' / ' + mainwp_password_policy_vars.sitesTotal + ' ' + __('updated', 'mainwp');
+	let statusText = mainwp_password_policy_vars.sitesDone + ' / ' + mainwp_password_policy_vars.sitesTotal + ' ' + MainWP.I18n.t('updated', 'mainwp');
 	jQuery('#mainwp-password-policy-progress-modal .mainwp-modal-progress').find('.label').html(statusText);
 	jQuery('#mainwp-password-policy-progress-modal .mainwp-modal-progress').progress('set progress', mainwp_password_policy_vars.sitesDone);
 };

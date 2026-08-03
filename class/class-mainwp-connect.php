@@ -619,7 +619,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @param array  $other_params other params.
      * @param string $custom_url Optional. Override the target base URL for browser-bound
      *                           requests ( see MainWP_Site_Url_Corrector::browser_target_url() ).
-     *                           Default null keeps the stored URL — server-side callers
+     *                           Default null keeps the stored URL ï¿½ server-side callers
      *                           ( backups, premium updates ) must not pass this.
      *
      * @return string $url
@@ -730,7 +730,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         }
 
         $params['data_signature'] = rawurlencode( $data_sign );
-       
+
         if ( null !== $custom_url && '' !== $custom_url ) {
             $url = $custom_url;
         } else {
@@ -1790,11 +1790,23 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             curl_setopt( $ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4 );
         }
 
+        $what = '';
+        if ( is_array( $others ) && isset( $others['function'] ) ) {
+            $what = $others['function'];
+        }
+
+        if ( 'deactivate' === $what ) {
+            $timeout = 120; // 2 minutes.
+        } else {
+            $timeout = 20 * 60 * 60;
+        }
+
         /** This filter is documented in class/class-mainwp-connect.php */
-        $timeout = (int) apply_filters( 'mainwp_fetch_url_site_timeout', 20 * 60 * 60 );
+        $timeout = (int) apply_filters( 'mainwp_fetch_url_site_timeout', $timeout, $what );
         if ( $timeout <= 0 ) {
             $timeout = 20 * 60 * 60; // values below 1 would disable the cURL timeout entirely.
         }
+
         curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout );
         MainWP_System_Utility::set_time_limit( $timeout );
 
@@ -1881,17 +1893,14 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         MainWP_Logger::instance()->log_execution_time( 'fetch_url_site :: [url=' . $url . ']' );
 
         $thr_error = null;
-        $what      = '';
-        if ( isset( $others['function'] ) ) {
-            $what = $others['function'];
-            if ( in_array( $what, array( 'installplugintheme', 'upgradeplugintheme', 'upgradetranslation', 'upgrade', 'stats', 'renew', 'reconnect' ), true ) ) {
-                MainWP_Cache_Helper::invalidate_cache_group( MainWP_Cache_Helper::CGR_UPDATES );
-                MainWP_Cache_Warm_Helper::invalidate_pages_by_site_actions( $what );
-            }
 
-            if ( 'process_premium_updates' === $what ) {
-                MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'function: [process_premium_updates] response data: [' . MainWP_Utility::value_to_string( $data ) . ']' );
-            }
+        if ( in_array( $what, array( 'installplugintheme', 'upgradeplugintheme', 'upgradetranslation', 'upgrade', 'stats', 'renew', 'reconnect' ), true ) ) {
+            MainWP_Cache_Helper::invalidate_cache_group( MainWP_Cache_Helper::CGR_UPDATES );
+            MainWP_Cache_Warm_Helper::invalidate_pages_by_site_actions( $what );
+        }
+
+        if ( 'process_premium_updates' === $what ) {
+            MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'function: [process_premium_updates] response data: [' . MainWP_Utility::value_to_string( $data ) . ']' );
         }
 
         if ( ( false === $data ) && empty( $http_status ) ) {

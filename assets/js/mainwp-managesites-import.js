@@ -17,14 +17,14 @@ jQuery(function () {
     jQuery(document).on('click', '#mainwp_managesites_btn_import', function () {
         if (import_stop_by_user) {
             import_stop_by_user = false;
-            jQuery('#mainwp_managesites_import_logging .log').append(__('Continue import.') + "\n");
-            jQuery('#mainwp_managesites_btn_import').val(__('Pause'));
+            jQuery('#mainwp_managesites_import_logging .log').append(MainWP.I18n.t('Continue import.') + "\n");
+            jQuery('#mainwp_managesites_btn_import').val(MainWP.I18n.t('Pause'));
             jQuery('#mainwp_managesites_btn_save_csv').attr('disabled', 'true'); // Disable
             mainwp_managesites_import_sites();
         } else {
             import_stop_by_user = true;
-            jQuery('#mainwp_managesites_import_logging .log').append(__('Paused import by user.') + "\n");
-            jQuery('#mainwp_managesites_btn_import').val(__('Continue'));
+            jQuery('#mainwp_managesites_import_logging .log').append(MainWP.I18n.t('Paused import by user.') + "\n");
+            jQuery('#mainwp_managesites_btn_import').val(MainWP.I18n.t('Continue'));
             jQuery('#mainwp_managesites_btn_save_csv').prop("disabled", false); //Enable
         }
     });
@@ -125,15 +125,15 @@ let mainwp_managesites_import_sites = function () { // NOSONAR - to compatible.
     let errors = [];
 
     if (import_wpname == '') {
-        errors.push(__('Please enter the site name.'));
+        errors.push(MainWP.I18n.t('Please enter the site name.'));
     }
 
     if (import_wpurl == '') {
-        errors.push(__('Please enter the site URL.'));
+        errors.push(MainWP.I18n.t('Please enter the site URL.'));
     }
 
     if (import_wpadmin == '') {
-        errors.push(__('Please enter username of the site administrator.'));
+        errors.push(MainWP.I18n.t('Please enter username of the site administrator.'));
     }
 
     if (errors.length > 0) {
@@ -172,12 +172,12 @@ let mainwp_managesites_import_sites = function () { // NOSONAR - to compatible.
         url = url.replaceAll('"', '&quot;');
 
         if (response == 'HTTPERROR') {
-            errors.push(check_result + __('HTTP error: website does not exist!'));
+            errors.push(check_result + MainWP.I18n.t('HTTP error: website does not exist!'));
         } else if (response == 'NOMAINWP') {
-            errors.push(check_result + __('MainWP Child plugin not detected! First install and activate the MainWP Child plugin and add your site to MainWP afterwards. Click <a href="%1" target="_blank">here</a> to install <a href="%2" target="_blank">MainWP</a> plugin (do not forget to activate it after installation)', url + 'wp-admin/plugin-install.php?tab=search&type=term&s=mainwp&plugin-search-input=Search+Plugins', url + 'wp-admin/plugin-install.php?tab=search&type=term&s=mainwp&plugin-search-input=Search+Plugins'));
+            errors.push(check_result + MainWP.I18n.t('MainWP Child plugin not detected! First install and activate the MainWP Child plugin and add your site to MainWP afterwards. Click <a href="%1" target="_blank">here</a> to install <a href="%2" target="_blank">MainWP</a> plugin (do not forget to activate it after installation)', url + 'wp-admin/plugin-install.php?tab=search&type=term&s=mainwp&plugin-search-input=Search+Plugins', url + 'wp-admin/plugin-install.php?tab=search&type=term&s=mainwp&plugin-search-input=Search+Plugins'));
         } else if (response.substring(0, 5) == 'ERROR') {
             if (response.length == 5) {
-                errors.push(check_result + __('Undefined error!'));
+                errors.push(check_result + MainWP.I18n.t('Undefined error!'));
             } else {
                 errors.push(check_result + 'ERROR: ' + response.substring(6));
             }
@@ -347,7 +347,7 @@ jQuery(document).ready(function ($) {
                 input_site_name.val(`${parsed_url.origin}`);
             } else {
                 const user_confirmed = confirm(
-                    __(
+                    MainWP.I18n.t(
                         "Please enter a valid URL. Example: http://example.com\nClick OK to stay and correct, or Cancel to continue without correcting."
                     )
                 );
@@ -385,7 +385,7 @@ jQuery(document).ready(function ($) {
             } else {
                 // Show confirm, asking the user if they want to edit or not
                 const user_confirmed = confirm(
-                    __(
+                    MainWP.I18n.t(
                         "The pasted URL is invalid. Example: http://example.com\nClick OK to stay and correct, or Cancel to continue without correcting."
                     )
                 );
@@ -780,12 +780,12 @@ const mainwp_managesites_import_handle_form_before_submit = function () {
 
     // Check if both CSV and table have data
     if (csv_selected && has_table_data) {
-        error_messages.push(__("You can only submit either the table data or a CSV file, not both at the same time"));
+        error_messages.push(MainWP.I18n.t("You can only submit either the table data or a CSV file, not both at the same time"));
     }
 
     // Check if both are empty
     if (!csv_selected && !has_table_data) {
-        error_messages.push(__("Please fill in the table or select a CSV file."));
+        error_messages.push(MainWP.I18n.t("Please fill in the table or select a CSV file."));
     }
 
     return error_messages;
@@ -814,15 +814,15 @@ const mainwp_managesites_validate_import_rows = function (error_messages, is_val
 
             let msg = "";
             if (!site_url) {
-                msg = __("Site URL is required in row %1", index + 1);
+                msg = MainWP.I18n.t("Site URL is required in row %1", index + 1);
                 error_messages.push(msg);
             }
             if (!admin_name) {
-                msg = __("Admin Name is required in row %1", index + 1);
+                msg = MainWP.I18n.t("Admin Name is required in row %1", index + 1);
                 error_messages.push(msg);
             }
             if (!admin_password) {
-                msg = __("Admin Password is required in row %1", index + 1);
+                msg = MainWP.I18n.t("Admin Password is required in row %1", index + 1);
                 error_messages.push(msg);
             }
 
@@ -834,7 +834,7 @@ const mainwp_managesites_validate_import_rows = function (error_messages, is_val
 
     });
     if (is_valid_row && error_messages.length === 0 && valid_row_count === 0) {
-        error_messages.push(__("At least one row must have both Site URL, Admin Name and Admin Password."));
+        error_messages.push(MainWP.I18n.t("At least one row must have both Site URL, Admin Name and Admin Password."));
     }
 
     return has_table_data;

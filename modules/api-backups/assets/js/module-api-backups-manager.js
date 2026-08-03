@@ -149,7 +149,7 @@ jQuery(function(){
 
     // Trigger action_delete_backup.
     jQuery('#mainwp_3rd_party_api_linode_action_cancel_backups').on('click', function () {
-        let confirmMsg = __('Are you sure you want to Disable and Delete all existing backups from this Linode?');
+        let confirmMsg = MainWP.I18n.t('Are you sure you want to Disable and Delete all existing backups from this Linode?');
         mainwp_confirm(confirmMsg, function () {
             linode_action_cancel_backups(this);
         });
@@ -200,7 +200,7 @@ jQuery(function(){
 
     // Trigger action_restore_backup.
     jQuery(document).on('click', '.mainwp_3rd_party_api_cpanel_action_restore_backup', function () {
-        let confirmMsg = __('Are you sure you want to Restore this backup?');
+        let confirmMsg = MainWP.I18n.t('Are you sure you want to Restore this backup?');
         mainwp_confirm(confirmMsg, function () {
             cPanel_action_restore_backup(this);
         });
@@ -208,7 +208,7 @@ jQuery(function(){
 
     // Trigger action_restore_database_backup.
     jQuery(document).on('click', '.mainwp_3rd_party_api_cpanel_action_restore_database_backup', function () {
-        let confirmMsg = __('Are you sure you want to Restore this backup?');
+        let confirmMsg = MainWP.I18n.t('Are you sure you want to Restore this backup?');
         mainwp_confirm(confirmMsg, () => {
             cpanel_action_restore_database_backup(this);
         });
@@ -216,7 +216,7 @@ jQuery(function(){
 
     // Trigger action_restore_manual_backup.
     jQuery(document).on('click', '.mainwp_3rd_party_api_cpanel_action_restore_manual_backup', function () {
-        let confirmMsg = __('Are you sure you want to Restore this backup?');
+        let confirmMsg = MainWP.I18n.t('Are you sure you want to Restore this backup?');
         mainwp_confirm(confirmMsg, function () {
             cpanel_action_restore_manual_backup();
         });
@@ -249,7 +249,7 @@ jQuery(function(){
 
     // Trigger action_restore_wptk_backup.
     jQuery('.mainwp_3rd_party_api_cpanel_action_restore_wptk_backup').on('click', function () {
-        let confirmMsg = __('Are you sure you want to Restore this backup?');
+        let confirmMsg = MainWP.I18n.t('Are you sure you want to Restore this backup?');
         mainwp_confirm(confirmMsg, function () {
             cpanel_action_restore_wptk_backup(this);
         });
@@ -257,7 +257,7 @@ jQuery(function(){
 
     // Trigger action_delete_wptk_backup.
     jQuery('.mainwp_3rd_party_api_cpanel_action_delete_wptk_backup').on('click', function () {
-        let confirmMsg = __('Are you sure you want to Delete this backup?');
+        let confirmMsg = MainWP.I18n.t('Are you sure you want to Delete this backup?');
         mainwp_confirm(confirmMsg, function () {
             cpanel_action_delete_wptk_backup(this);
         });
@@ -289,7 +289,7 @@ jQuery(function(){
 
     // Trigger action_restore_backup.
     jQuery(document).on('click', '.mainwp_3rd_party_api_plesk_action_restore_backup', function () {
-        let confirmMsg = __('Are you sure you want to Restore this backup?');
+        let confirmMsg = MainWP.I18n.t('Are you sure you want to Restore this backup?');
         mainwp_confirm(confirmMsg, function () {
             plesk_action_restore_backup();
         });
@@ -297,7 +297,7 @@ jQuery(function(){
 
     // Trigger action_delete_backup.
     jQuery(document).on('click', '.mainwp_3rd_party_api_plesk_action_delete_backup', function () {
-        let confirmMsg = __('Are you sure you want to Delete this backup?');
+        let confirmMsg = MainWP.I18n.t('Are you sure you want to Delete this backup?');
         mainwp_confirm(confirmMsg, function () {
             plesk_action_delete_backup();
         });
@@ -323,7 +323,7 @@ jQuery(function(){
 
 	// Trigger action_delete_backup.
 	jQuery('.mainwp_3rd_party_api_kinsta_action_delete_backup').on('click', function () {
-		let confirmMsg = __('Are you sure you want to Delete this backup?');
+		let confirmMsg = MainWP.I18n.t('Are you sure you want to Delete this backup?');
 		let backupId = jQuery(this).attr('backup_id');
 		mainwp_confirm(confirmMsg, function () {
 			kinsta_action_delete_backup(this, backupId);
@@ -332,7 +332,7 @@ jQuery(function(){
 
 	// Trigger action_restore_backup.
 	jQuery('.mainwp_3rd_party_api_kinsta_action_restore_backup').on('click', function () {
-		let confirmMsg = __('Are you sure you want to Restore this backup?');
+		let confirmMsg = MainWP.I18n.t('Are you sure you want to Restore this backup?');
 		let backupId = jQuery(this).attr('backup_id');
 		mainwp_confirm(confirmMsg, function () {
 			kinsta_action_restore_backup(this, backupId);

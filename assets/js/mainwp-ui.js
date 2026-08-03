@@ -36,7 +36,7 @@ function load_url(href, obj, e) { // NOSONAR - complex.
         if (e !== undefined)
             e.preventDefault();
 
-        jQuery('#wpbody-content').html('<div class="mainwp-loading"><img src="images/loading.gif" /> ' + __('Please wait...') + '</div>');
+        jQuery('#wpbody-content').html('<div class="mainwp-loading"><img src="images/loading.gif" /> ' + MainWP.I18n.t('Please wait...') + '</div>');
         if (jQuery(obj).hasClass('menu-top')) {
             let top = jQuery(obj).closest('li.menu-top');
             jQuery('#adminmenu .current').removeClass('current').addClass('wp-not-current-submenu');
@@ -736,7 +736,7 @@ let mainwp_upload_custom_icon = function (iconObj) {
 
     let deleteIcon = jQuery('#mainwp_delete_image_chk').is(':checked');
 
-    let msg = __('Updating the icon. Please wait...');
+    let msg = MainWP.I18n.t('Updating the icon. Please wait...');
     mainwp_set_message_zone('#mainwp-message-zone-upload', '<i class="notched circle loading icon"></i> ' + msg, '');
     jQuery('#update_custom_icon_btn').attr('disabled', 'disabled');
 
@@ -759,17 +759,17 @@ let mainwp_upload_custom_icon = function (iconObj) {
 
                 if (type === 'plugin') {
                     if (jQuery('#mainwp-show-plugins').length > 0) {
-                        msg = __('Loading...');
+                        msg = MainWP.I18n.t('Loading...');
                         mainwp_fetch_plugins();
                     }
                 } else if (jQuery('#mainwp_show_themes').length > 0) {
-                    msg = __('Loading...');
+                    msg = MainWP.I18n.t('Loading...');
                     mainwp_fetch_themes();
                 }
                 if (msg === '') {
                     mainwp_set_message_zone('#mainwp-message-zone-upload');
                 } else {
-                    mainwp_set_message_zone('#mainwp-message-zone-upload', '<i class="notched circle loading icon"></i> ' + __('Loading...'), '');
+                    mainwp_set_message_zone('#mainwp-message-zone-upload', '<i class="notched circle loading icon"></i> ' + MainWP.I18n.t('Loading...'), '');
                 }
                 setTimeout(function () {
                     mainwp_forceReload();
@@ -777,7 +777,7 @@ let mainwp_upload_custom_icon = function (iconObj) {
             } else if (response.error) {
                 feedback('mainwp-message-zone-upload', response.error, 'red');
             } else {
-                feedback('mainwp-message-zone-upload', __('Undefined error. Please try again.'), 'red');
+                feedback('mainwp-message-zone-upload', MainWP.I18n.t('Undefined error. Please try again.'), 'red');
             }
         },
         error: function () {
@@ -878,7 +878,7 @@ let mainwp_init_button_site_selection_dependency = function (buttonIds, containe
 };
 
 let mainwp_upload_custom_types_icon = function (iconObj, uploadAct, iconItemId, iconFileSlug, deleteIcon, callback_uploaded) {
-    let msg = __('Updating the icon. Please wait...');
+    let msg = MainWP.I18n.t('Updating the icon. Please wait...');
     mainwp_set_message_zone('#mainwp-message-zone-upload', '<i class="notched circle loading icon"></i> ' + msg, '');
     jQuery('#update_custom_icon_btn').attr('disabled', 'disabled');
 
@@ -910,7 +910,7 @@ let mainwp_upload_custom_types_icon = function (iconObj, uploadAct, iconItemId, 
             } else if (response.error) {
                 feedback('mainwp-message-zone-upload', response.error, 'red');
             } else {
-                feedback('mainwp-message-zone-upload', __('Undefined error. Please try again.'), 'red');
+                feedback('mainwp-message-zone-upload', MainWP.I18n.t('Undefined error. Please try again.'), 'red');
             }
         },
         error: function () {
@@ -1028,13 +1028,13 @@ if (!globalThis.mainwpUIHandleWidgetsLayout) {
         const statusElemId = '#mainwp-common-edit-widgets-layout-status';
         let _instance = {
             loadingStatus: function () {
-                jQuery(statusElemId).html('<i class="notched circle loading icon"></i> ' + __('Loading layouts. Please wait...')).show();
+                jQuery(statusElemId).html('<i class="notched circle loading icon"></i> ' + MainWP.I18n.t('Loading layouts. Please wait...')).show();
             },
             savingStatus: function () {
-                jQuery(statusElemId).html('<i class="notched circle loading icon"></i> ' + __('Saving layout. Please wait...')).show();
+                jQuery(statusElemId).html('<i class="notched circle loading icon"></i> ' + MainWP.I18n.t('Saving layout. Please wait...')).show();
             },
             deletingStatus: function () {
-                jQuery(statusElemId).html('<i class="notched circle loading icon"></i> ' + __('Deleting layout. Please wait...')).show();
+                jQuery(statusElemId).html('<i class="notched circle loading icon"></i> ' + MainWP.I18n.t('Deleting layout. Please wait...')).show();
 
             },
             showWorkingStatus: function (status, addClass) {
@@ -1048,7 +1048,7 @@ if (!globalThis.mainwpUIHandleWidgetsLayout) {
                 jQuery(statusElemId).removeClass('red green').hide();
             },
             showLayout: function (showBtn) {
-                jQuery('#mainwp-common-edit-widgets-layout-modal > div.header').html(__('Save Layout'));
+                jQuery('#mainwp-common-edit-widgets-layout-modal > div.header').html(MainWP.I18n.t('Save Layout'));
                 jQuery('#mainwp-common-edit-widgets-layout-edit-fields').show();
                 jQuery('#mainwp-common-edit-widgets-layout-save-button').show();
                 jQuery('#mainwp-common-layout-widgets-select-fields').hide();
@@ -1067,7 +1067,7 @@ if (!globalThis.mainwpUIHandleWidgetsLayout) {
             loadSegment: function (loadCallback) {
                 jQuery('#mainwp-common-edit-widgets-layout-edit-fields').hide();
                 jQuery('#mainwp-common-edit-widgets-layout-save-button').hide();
-                jQuery('#mainwp-common-edit-widgets-layout-modal > div.header').html(__('Load Layout'));
+                jQuery('#mainwp-common-edit-widgets-layout-modal > div.header').html(MainWP.I18n.t('Load Layout'));
                 jQuery('#mainwp-common-layout-widgets-select-fields').show();
                 jQuery('#mainwp-common-edit-widgets-select-layout-button').show();
                 jQuery('#mainwp-common-edit-widgets-layout-delete-button').show();
@@ -1172,7 +1172,7 @@ function mainwp_init_widget_layout_handlers() {
             action: 'mainwp_ui_load_widgets_layout',
             settings_slug: jQuery('#mainwp-manage-widgets-load-saved-layout-button').attr('settings-slug')
         });
-        mainwpUIHandleWidgetsLayout.showWorkingStatus('<i class="notched circle loading icon"></i> ' + __('Loading layouts. Please wait...'), '');
+        mainwpUIHandleWidgetsLayout.showWorkingStatus('<i class="notched circle loading icon"></i> ' + MainWP.I18n.t('Loading layouts. Please wait...'), '');
         jQuery.post(ajaxurl, data, function (response) {
             if (response.error != undefined) {
                 mainwpUIHandleWidgetsLayout.showWorkingStatus(response.error, 'red');
@@ -1181,7 +1181,7 @@ function mainwp_init_widget_layout_handlers() {
                 jQuery('#mainwp-common-edit-widgets-select-layout-button').addClass('disabled');
                 jQuery('#mainwp-common-edit-widgets-layout-delete-button').addClass('disabled');
             } else {
-                mainwpUIHandleWidgetsLayout.showWorkingStatus(__('No saved layouts found.'), 'yellow');
+                mainwpUIHandleWidgetsLayout.showWorkingStatus(MainWP.I18n.t('No saved layouts found.'), 'yellow');
             }
         }, 'json');
     };
@@ -1225,7 +1225,7 @@ function mainwp_init_widget_layout_handlers() {
         let seg_name = jQuery('#mainwp-common-edit-widgets-layout-name').val().trim();
 
         if ('' == seg_name) {
-            mainwpUIHandleWidgetsLayout.showWorkingStatus(__('Please enter a layout name.'), 'yellow');
+            mainwpUIHandleWidgetsLayout.showWorkingStatus(MainWP.I18n.t('Please enter a layout name.'), 'yellow');
             return false;
         }
 
@@ -1235,20 +1235,20 @@ function mainwp_init_widget_layout_handlers() {
             settings_slug: jQuery('#mainwp-manage-widgets-load-saved-layout-button').attr('settings-slug')
         };
 
-        mainwpUIHandleWidgetsLayout.showWorkingStatus('<i class="notched circle loading icon"></i> ' + __('Saving layout. Please wait...'), '');
+        mainwpUIHandleWidgetsLayout.showWorkingStatus('<i class="notched circle loading icon"></i> ' + MainWP.I18n.t('Saving layout. Please wait...'), '');
 
         mainwp_common_ui_widgets_save_layout('.grid-stack-item', data, function (response) {
             if (response.error != undefined) {
                 mainwpUIHandleWidgetsLayout.showWorkingStatus(response.error, 'red');
             } else if (response.result == 'SUCCESS') {
-                mainwpUIHandleWidgetsLayout.showWorkingStatus(__('Layout saved successfully.'), 'green');
+                mainwpUIHandleWidgetsLayout.showWorkingStatus(MainWP.I18n.t('Layout saved successfully.'), 'green');
                 setTimeout(function () {
                     jQuery('#mainwp-common-edit-widgets-layout-status').fadeOut(300);
                     jQuery('#mainwp-common-edit-widgets-layout-modal').modal('hide');
                     mainwp_forceReload();
                 }, 2000);
             } else {
-                mainwpUIHandleWidgetsLayout.showWorkingStatus(__('An error occurred while saving the layout.'), 'red');
+                mainwpUIHandleWidgetsLayout.showWorkingStatus(MainWP.I18n.t('An error occurred while saving the layout.'), 'red');
             }
         });
         e.preventDefault();
@@ -1300,7 +1300,7 @@ function mainwp_init_widget_layout_handlers() {
             seg_id: seg_id,
             settings_slug: jQuery('#mainwp-manage-widgets-load-saved-layout-button').attr('settings-slug')
         });
-        mainwpUIHandleWidgetsLayout.showWorkingStatus('<i class="notched circle loading icon"></i> ' + __('Deleting layout. Please wait...'), '');
+        mainwpUIHandleWidgetsLayout.showWorkingStatus('<i class="notched circle loading icon"></i> ' + MainWP.I18n.t('Deleting layout. Please wait...'), '');
         jQuery.post(ajaxurl, data, (response) => {
 
             $button.removeAttr('running');
@@ -1308,13 +1308,13 @@ function mainwp_init_widget_layout_handlers() {
             if (response.error != undefined) {
                 mainwpUIHandleWidgetsLayout.showWorkingStatus(response.error, 'red');
             } else if (response.result == 'SUCCESS') {
-                mainwpUIHandleWidgetsLayout.showWorkingStatus(__('Layout deleted successfully.'), 'green');
+                mainwpUIHandleWidgetsLayout.showWorkingStatus(MainWP.I18n.t('Layout deleted successfully.'), 'green');
                 setTimeout(function () {
                     jQuery('#mainwp-common-edit-widgets-layout-status').fadeOut(300);
                     jQuery('#mainwp-common-edit-widgets-layout-modal').modal('hide');
                 }, 2000);
             } else {
-                mainwpUIHandleWidgetsLayout.showWorkingStatus(__('An error occurred while deleting the layout.'), 'red');
+                mainwpUIHandleWidgetsLayout.showWorkingStatus(MainWP.I18n.t('An error occurred while deleting the layout.'), 'red');
             }
         }, 'json');
     });

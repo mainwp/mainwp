@@ -645,25 +645,18 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             ?>
             <div id="mainwp-add-new-site">
                 <form method="POST" class="ui form" action="" enctype="multipart/form-data" id="mainwp_managesites_add_form">
-                    <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
-                    <div class="ui labeled icon inverted menu mainwp-sub-submenu" id="mainwp-add-sites-tabular-menu">
-                        <a class="item active" data-tab="single-site">
-                            <i class="wordpress icon"></i><?php //phpcs:ignore -- WP icon. ?>
-                            <?php esc_html_e( 'Single Site', 'mainwp' ); ?>
-                        </a>
-                        <a class="item" data-tab="multiple-site">
-                            <div class="icons" style="margin:0.5rem auto">
-                                <i class="icon wordpress"></i><?php //phpcs:ignore -- WP icon. ?>
-                                <i class="icon wordpress"></i><?php //phpcs:ignore -- WP icon. ?>
-                            </div>
-                            <?php esc_html_e( 'Multiple Sites', 'mainwp' ); ?>
-                        </a>
-                        <a class="item" href="admin.php?page=managesites&do=bulknew">
-                            <i class="file upload icon"></i>
-                            <?php esc_html_e( 'Import Sites', 'mainwp' ); ?>
-                        </a>
-                    </div>
-                    <div class="ui bottom attached tab padded segment active" data-tab="single-site">
+                    <?php
+                    MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' );
+                    self::render_new_site_navigation();
+
+                    $active = 'single-site';
+
+                    if ( isset( $_GET['menu_active'] ) ) {
+                        $active = sanitize_text_field( wp_unslash( $_GET['menu_active'] ) ); // phpcs:ignore -- NOSONAR - ok. 'single-site';
+                    }
+
+                    ?>
+                    <div class="ui bottom attached tab padded segment <?php echo esc_attr( 'single-site' === $active ? 'active' : '' ); ?>" data-tab="single-site">
                         <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-add-site-info-message' ) ) : ?>
                             <div class="ui info message">
                                 <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-add-site-info-message"></i>
@@ -702,9 +695,12 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         <?php static::render_new_site_add_new_site( $groups );  // NOSONAR - render html form. ?>
                     </div>
 
-                    <div class="ui bottom attached tab padded segment" data-tab="multiple-site">
+                    <div class="ui bottom attached tab padded segment <?php echo esc_attr( 'multiple-site' === $active ? 'active' : '' ); ?>" data-tab="multiple-site">
                         <?php static::render_new_site_add_multi_new_site(); // NOSONAR - render html form. ?>
                     </div>
+                    <?php
+                    do_action( 'mainwp_add_site_tabs_content' );
+                    ?>
                 </form>
             </div>
 
@@ -806,6 +802,43 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         }
         static::render_footer( $showpage );
         MainWP_UI::render_modal_upload_icon();
+    }
+
+    /**
+     * Renders the Add New Site page navigation.
+     *
+     * Highlights the specified navigation item as active.
+     *
+     * @param bool $item_link Optional. Whether to render navigation items as links. Default false.
+     *
+     * @return void
+     */
+    private static function render_new_site_navigation( $item_link = false ) {
+
+        $active = isset( $_GET['menu_active'] ) ? sanitize_text_field( wp_unslash( $_GET['menu_active'] ) ) : 'single-site'; // phpcs:ignore -- NOSONAR - ok.
+
+        ?>
+        <div class="ui labeled icon inverted menu mainwp-sub-submenu" id="mainwp-add-sites-tabular-menu">
+            <a class="item <?php echo esc_attr( 'single-site' === $active ? 'active' : '' ); ?>>" data-tab="single-site" <?php echo $item_link ? 'href="admin.php?page=managesites&do=new&menu_active=single-site"' : ''; ?> >
+                <i class="wordpress icon"></i><?php //phpcs:ignore -- WP icon. ?>
+                <?php esc_html_e( 'Single Site', 'mainwp' ); ?>
+            </a>
+            <a class="item <?php echo esc_attr( 'multiple-site' === $active ? 'active' : '' ); ?>" data-tab="multiple-site" <?php echo $item_link ? 'href="admin.php?page=managesites&do=new&menu_active=multiple-site"' : ''; ?>>
+                <div class="icons" style="margin:0.5rem auto">
+                    <i class="icon wordpress"></i><?php //phpcs:ignore -- WP icon. ?>
+                    <i class="icon wordpress"></i><?php //phpcs:ignore -- WP icon. ?>
+                </div>
+                <?php esc_html_e( 'Multiple Sites', 'mainwp' ); ?>
+            </a>
+            <a class="item <?php echo esc_attr( 'import-sites' === $active ? 'active' : '' ); ?>" href="admin.php?page=managesites&do=bulknew&menu_active=import-sites">
+                <i class="file upload icon"></i>
+                <?php esc_html_e( 'Import Sites', 'mainwp' ); ?>
+            </a>
+            <?php
+            do_action( 'mainwp_add_site_top_navigation', $active, $item_link );
+            ?>
+        </div>
+        <?php
     }
 
     /**
@@ -1384,25 +1417,16 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         } elseif ( ( $has_file_upload || $has_import_data ) && check_admin_referer( 'mainwp-admin-nonce' ) ) { //phpcs:ignore WordPress.Security.NonceVerification.Missing
             static::render_import_sites_modal( 'admin.php?page=managesites&do=bulknew', $title_page );
         } else {
+            self::render_new_site_navigation( true );
+
+            $active = 'import-sites';
+
+            if ( isset( $_GET['menu_active'] ) ) {
+                $active = sanitize_text_field( wp_unslash( $_GET['menu_active'] ) ); // phpcs:ignore -- NOSONAR - ok. 'single-site';
+            }
+
             ?>
-            <div class="ui labeled icon inverted menu mainwp-sub-submenu" id="mainwp-add-sites-tabular-menu">
-                <a class="item" href="admin.php?page=managesites&do=new">
-                    <i class="wordpress icon"></i><?php //phpcs:ignore -- WP icon. ?>
-                    <?php esc_html_e( 'Single Site', 'mainwp' ); ?>
-                </a>
-                <a class="item" href="admin.php?page=managesites&do=new">
-                    <div class="icons" style="margin:0.5rem auto">
-                        <i class="icon wordpress"></i><?php //phpcs:ignore -- WP icon. ?>
-                        <i class="icon wordpress"></i><?php //phpcs:ignore -- WP icon. ?>
-                    </div>
-                    <?php esc_html_e( 'Multiple Sites', 'mainwp' ); ?>
-                </a>
-                <a class="item active" href="admin.php?page=managesites&do=bulknew">
-                    <i class="file upload icon"></i>
-                    <?php esc_html_e( 'Import Sites', 'mainwp' ); ?>
-                </a>
-            </div>
-            <div id="mainwp-import-sites" class="ui padded segment">
+            <div id="mainwp-import-sites" class="ui padded segment <?php echo esc_attr( 'import-sites' === $active ? 'active' : '' ); ?>">
                 <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-import-new-sites-info-message' ) ) : ?>
                     <div class="ui message">
                         <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-import-new-sites-info-message"></i>

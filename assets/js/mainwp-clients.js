@@ -73,7 +73,7 @@ jQuery(function () {
         $button.prop('disabled', false);
 
         if (response === 'success') {
-            $button.text(new_status === 0 ? __('Suspend Sites') : __('Unsuspend Sites'));
+            $button.text(new_status === 0 ? MainWP.I18n.t('Suspend Sites') : MainWP.I18n.t('Unsuspend Sites'));
             $button.attr('suspend-status', new_status);
         }
     });
@@ -153,13 +153,13 @@ jQuery(function () {
   jQuery(document).on('click', '#mainwp_manageclients_btn_import', function () {
     if (import_client_stop_by_user) {
         import_client_stop_by_user = false;
-        jQuery('#mainwp_manageclients_import_logging .log').append(__('Continue import.') + "\n");
-        jQuery('#mainwp_manageclients_btn_import').val(__('Pause'));
+        jQuery('#mainwp_manageclients_import_logging .log').append(MainWP.I18n.t('Continue import.') + "\n");
+        jQuery('#mainwp_manageclients_btn_import').val(MainWP.I18n.t('Pause'));
         mainwp_manageclient_import_client();
     } else {
         import_client_stop_by_user = true;
-        jQuery('#mainwp_manageclients_import_logging .log').append(__('Paused import by user.') + "\n");
-        jQuery('#mainwp_manageclients_btn_import').val(__('Continue'));
+        jQuery('#mainwp_manageclients_import_logging .log').append(MainWP.I18n.t('Paused import by user.') + "\n");
+        jQuery('#mainwp_manageclients_btn_import').val(MainWP.I18n.t('Continue'));
     }
   });
 
@@ -186,7 +186,7 @@ let mainwp_manageclients_doaction = function (action) {
   if (action && !bulkManageClientsTaskRunning) {
     let confirmMsg = '';
     if (action === 'delete') {
-      confirmMsg = __("You are about to remove the selected clients from your MainWP Dashboard?");
+      confirmMsg = MainWP.I18n.t("You are about to remove the selected clients from your MainWP Dashboard?");
     }
     mainwp_confirm(confirmMsg, function () { mainwp_manageclients_doaction_process(action); });
   }
@@ -215,7 +215,7 @@ let mainwp_manageclients_bulk_remove_next = function () {
     mainwp_manageclients_bulk_remove_specific(checkedBox);
   }
   if ((bulkManageClientsTotal > 0) && (bulkManageClientsFinished == bulkManageClientsTotal)) { // NOSONAR -- modified out side the function.
-    setHtml('#mainwp-message-zone-client', __("Process completed. Reloading page..."));
+    setHtml('#mainwp-message-zone-client', MainWP.I18n.t("Process completed. Reloading page..."));
     setTimeout(function () {
         mainwp_forceReload();
     }, 3000);
@@ -245,7 +245,7 @@ let mainwp_manageclients_bulk_remove_specific = function (pCheckedBox) {
     if (response.error != undefined) {
       error = response.error;
     } else if (response.success == 'SUCCESS') {
-      result = __('The client has been removed.');
+      result = MainWP.I18n.t('The client has been removed.');
     }
 
     if (error == '') {
@@ -314,8 +314,8 @@ let mainwp_client_fields_bulk_delete = function () {
   }
 
   const confirmMessage = selectedFields.length === 1
-    ? __('Are you sure you want to delete this field?')
-    : __('Are you sure you want to delete these %s fields?').replace('%s', selectedFields.length);
+    ? MainWP.I18n.t('Are you sure you want to delete this field?')
+    : MainWP.I18n.t('Are you sure you want to delete these %s fields?').replace('%s', selectedFields.length);
 
   if (!confirm(confirmMessage)) {
     return false;
@@ -336,11 +336,11 @@ let mainwp_client_fields_bulk_delete = function () {
           }
         });
       });
-      mainwp_set_message_zone('#mainwp-message-zone-client', __('Selected fields have been deleted successfully.'), 'green');
+      mainwp_set_message_zone('#mainwp-message-zone-client', MainWP.I18n.t('Selected fields have been deleted successfully.'), 'green');
       jQuery('#mainwp-client-fields-select-all').prop('checked', false);
       mainwp_client_fields_toggle_bulk_actions();
     } else {
-      const errorMessage = response?.data?.message || __('Fields could not be deleted.');
+      const errorMessage = response?.data?.message || MainWP.I18n.t('Fields could not be deleted.');
       mainwp_set_message_zone('#mainwp-message-zone-client', errorMessage, 'red');
     }
   }, 'json');
@@ -459,7 +459,7 @@ jQuery(document).on('click', '#bulk_add_multi_create_client', function (e) {
 
   // If there is a column with missing data, prevent submission and display a message.
   if (all_rows_valid) {
-    let msg = __('Creating the client. Please wait...');
+    let msg = MainWP.I18n.t('Creating the client. Please wait...');
     jQuery('#mainwp-message-zone').html('').hide(); // Hide message error
     mainwp_set_message_zone('#mainwp-message-zone-client', '<i class="notched circle loading icon"></i> ' + msg); // show message creating.
     jQuery('#bulk_add_multi_create_client').attr('disabled', 'disabled'); // disable button
@@ -474,7 +474,7 @@ jQuery(document).on('click', '#bulk_add_multi_create_client', function (e) {
       } else if (response?.error) {
         mainwp_set_message_zone('#mainwp-message-zone', response.error, 'red');
       } else {
-        mainwp_set_message_zone('#mainwp-message-zone', __('Undefined error. Please try again.'), 'red');
+        mainwp_set_message_zone('#mainwp-message-zone', MainWP.I18n.t('Undefined error. Please try again.'), 'red');
       }
       jQuery('#bulk_add_multi_create_client').attr('disabled', false); // enable button
     });
@@ -494,7 +494,7 @@ jQuery(document).on('click', '#bulk_add_createclient', function () {
 
 let mainwp_createclient = function (currPage) {
   if (jQuery('input[name="client_fields[default_field][client.name]"]').val() == '') {
-    feedback('mainwp-message-zone-client', __('Client name field is required! Please enter a Client name.'), 'yellow');
+    feedback('mainwp-message-zone-client', MainWP.I18n.t('Client name field is required! Please enter a Client name.'), 'yellow');
     return;
   }
 
@@ -524,7 +524,7 @@ let mainwp_createclient = function (currPage) {
 
 
   if (!valid_contact) {
-    feedback('mainwp-message-zone-client', __('Contact Name and Contact Email are required. Please enter a Contact Name and Contact Email.'), 'yellow');
+    feedback('mainwp-message-zone-client', MainWP.I18n.t('Contact Name and Contact Email are required. Please enter a Contact Name and Contact Email.'), 'yellow');
     return;
   }
 
@@ -547,9 +547,9 @@ let mainwp_createclient = function (currPage) {
   }
 
   mainwp_set_message_zone('#mainwp-message-zone-client');
-  let msg = __('Creating the client. Please wait...');
+  let msg = MainWP.I18n.t('Creating the client. Please wait...');
   if (jQuery('input[name="client_fields[client_id]"]').val() != 0) {
-    msg = __('Updating the client. Please wait...');
+    msg = MainWP.I18n.t('Updating the client. Please wait...');
   }
   mainwp_set_message_zone('#mainwp-message-zone-client', '<i class="notched circle loading icon"></i> ' + msg);
   jQuery('#bulk_add_createclient').attr('disabled', 'disabled');
@@ -583,7 +583,7 @@ let mainwp_createclient = function (currPage) {
       } else if (response?.error) {
         feedback('mainwp-message-zone-client', response.error, 'red');
       } else {
-        feedback('mainwp-message-zone-client', __('Undefined error. Please try again.'), 'red');
+        feedback('mainwp-message-zone-client', MainWP.I18n.t('Undefined error. Please try again.'), 'red');
       }
     },
     error: function () {
@@ -700,7 +700,7 @@ let mainwp_clients_update_custom_field = function (me) {
 
 // Delete Custom field
 jQuery(document).on('click', '#mainwp-clients-delete-general-field', function () {
-  if (confirm(__('Are you sure you want to delete this field?'))) {
+  if (confirm(MainWP.I18n.t('Are you sure you want to delete this field?'))) {
 
     let parent = jQuery(this).closest('.mainwp-field');
     jQuery.post(ajaxurl, mainwp_secure_data({
@@ -709,9 +709,9 @@ jQuery(document).on('click', '#mainwp-clients-delete-general-field', function ()
     }), function (data) {
       mainwp_set_message_zone('#mainwp-message-zone-client');
       if (data?.success) {
-        parent.html('<td colspan="3"><i class="green check icon"></i> ' + __('Field has been deleted successfully.') + '</td>').fadeOut(3000);
+        parent.html('<td colspan="3"><i class="green check icon"></i> ' + MainWP.I18n.t('Field has been deleted successfully.') + '</td>').fadeOut(3000);
       } else {
-        mainwp_set_message_zone('#mainwp-message-zone-client', __('Field can not be deleted.'), 'red');
+        mainwp_set_message_zone('#mainwp-message-zone-client', MainWP.I18n.t('Field can not be deleted.'), 'red');
       }
     }, 'json');
   }
@@ -720,7 +720,7 @@ jQuery(document).on('click', '#mainwp-clients-delete-general-field', function ()
 
 // Delete Custom field
 jQuery(document).on('click', '#mainwp-clients-delete-individual-field', function () {
-  if (confirm(__('Are you sure you want to delete this field?'))) {
+  if (confirm(MainWP.I18n.t('Are you sure you want to delete this field?'))) {
 
     let parent = jQuery(this).closest('.mainwp-field');
 
@@ -730,9 +730,9 @@ jQuery(document).on('click', '#mainwp-clients-delete-individual-field', function
       client_id: jQuery(this).attr('client-id'),
     }), function (data) {
       if (data?.success) {
-        parent.html('<td colspan="3"><i class="green check icon"></i> ' + __('Field has been deleted successfully.') + '</td>').fadeOut(3000);
+        parent.html('<td colspan="3"><i class="green check icon"></i> ' + MainWP.I18n.t('Field has been deleted successfully.') + '</td>').fadeOut(3000);
       } else {
-        mainwp_set_message_zone('#mainwp-message-zone-client', __('Field can not be deleted.'), 'red');
+        mainwp_set_message_zone('#mainwp-message-zone-client', MainWP.I18n.t('Field can not be deleted.'), 'red');
       }
     }, 'json');
   }
@@ -743,7 +743,7 @@ jQuery(document).on('click', '#mainwp-clients-delete-individual-field', function
 jQuery(document).on('click', '.mainwp-edit-client-note', function () {
   let id = jQuery(this).attr('id').substring(13);
   let note = jQuery('#mainwp-notes-' + id + '-note').html();
-  jQuery('#mainwp-notes-html').html(note == '' ? __('No saved notes. Click the Edit button to edit site notes.') : note);
+  jQuery('#mainwp-notes-html').html(note == '' ? MainWP.I18n.t('No saved notes. Click the Edit button to edit site notes.') : note);
   jQuery('#mainwp-notes-note').val(note);
   jQuery('#mainwp-notes-itemid').val(id);
   jQuery('#mainwp-which-note').val('client'); // to fix conflict.
@@ -762,19 +762,19 @@ let mainwp_notes_client_save = function () {
     note: newnote
   });
 
-  jQuery('#mainwp-notes-status').html('<i class="notched circle loading icon"></i> ' + __('Saving note. Please wait...')).show();
+  jQuery('#mainwp-notes-status').html('<i class="notched circle loading icon"></i> ' + MainWP.I18n.t('Saving note. Please wait...')).show();
 
   jQuery.post(ajaxurl, data, function (response) {
     if (response.error != undefined) {
       jQuery('#mainwp-notes-status').html(response.error).addClass('red');
     } else if (response.result == 'SUCCESS') {
-      jQuery('#mainwp-notes-status').html(__('Note saved successfully.')).addClass('green');
+      jQuery('#mainwp-notes-status').html(MainWP.I18n.t('Note saved successfully.')).addClass('green');
       if (jQuery('#mainwp-notes-' + normalid + '-note').length > 0) {
         jQuery('#mainwp-notes-' + normalid + '-note').html(response?.esc_note_content??'');
         jQuery('#mainwp-notes-html').html(response?.esc_note_content??'');
       }
     } else {
-      jQuery('#mainwp-notes-status').html(__('Undefined error occured while saving your note!')).addClass('red');
+      jQuery('#mainwp-notes-status').html(MainWP.I18n.t('Undefined error occurred while saving your note!')).addClass('red');
     }
   }, 'json');
 
@@ -867,11 +867,11 @@ const mainwp_manageclient_import_client = function () { // NOSONAR
   let errors = [];
 
   if (import_name == '') {
-    errors.push(__('Please enter the client name.'));
+    errors.push(MainWP.I18n.t('Please enter the client name.'));
   }
 
   if (import_email == '') {
-    errors.push(__('Please enter email of the client.'));
+    errors.push(MainWP.I18n.t('Please enter email of the client.'));
   }
 
   if (errors.length > 0) {

@@ -78,6 +78,16 @@ reviews:
 
         Report unprepared queries as CRITICAL security issues.
 
+        MainWP-specific patterns to ACCEPT (not violations):
+        - The wp_options view builders in class-mainwp-db.php
+          (get_option_view, get_wp_options_join, get_wp_options_view,
+          get_option_view_by_join, get_option_view_by) splice option names
+          as SQL identifiers (column and table aliases), which
+          $wpdb->prepare() cannot bind. Every name first passes through
+          filter_safe_option_names(), which drops anything outside
+          ^[A-Za-z0-9_]+$. Do not flag these builders for missing
+          prepare() or for concatenated option names.
+
     # Security-critical: Child site communication
     - path: "class/class-mainwp-connect*.php"
       instructions: |

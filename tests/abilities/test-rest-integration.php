@@ -61,6 +61,8 @@ class MainWP_REST_Integration_Test extends \WP_Test_REST_TestCase {
 		// class's fixtures in collection responses. Start from an empty sites table;
 		// the tearDown LIKE-pattern delete cannot reach rows other classes leaked.
 		global $wpdb;
+		$wpdb->query( "DELETE FROM {$wpdb->prefix}mainwp_wp_options" );
+		$wpdb->query( "DELETE FROM {$wpdb->prefix}mainwp_wp_sync" );
 		$wpdb->query( "DELETE FROM {$wpdb->prefix}mainwp_wp" );
 
 		// Note: mainwp_rest_api_v2_enabled filter is enabled in tests/bootstrap.php

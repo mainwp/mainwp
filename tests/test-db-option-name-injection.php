@@ -184,6 +184,32 @@ class MainWP_DB_Option_Name_Injection_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * The allowlist admits names that are invalid as bare identifiers: MySQL 8
+	 * reserved words ("groups", "rank") and all-digit names. The builders must
+	 * backtick-quote every generated alias so such a name degrades to an odd
+	 * column label instead of a syntax error that kills the whole query.
+	 *
+	 * @return void
+	 */
+	public function test_reserved_word_and_numeric_option_names_emit_quoted_aliases() {
+		$fields = array( 'groups', '123' );
+		$db     = \MainWP\Dashboard\MainWP_DB::instance();
+
+		$fragments = array(
+			'get_option_view()'     => $db->get_option_view( $fields, 'custom_view' ),
+			'get_wp_options_view()' => $db->get_wp_options_view( $fields, 'custom_view' ),
+			'get_option_view_by()'  => $db->get_option_view_by( 'custom_view', $fields ),
+		);
+
+		foreach ( $fragments as $context => $sql ) {
+			foreach ( $fields as $field ) {
+				$this->assertStringContainsString( 'AS `' . $field . '`', $sql, $context . ' emitted an unquoted alias for ' . $field . '.' );
+				$this->assertStringNotContainsString( 'AS ' . $field . ',', $sql, $context . ' emitted a bare alias for ' . $field . '.' );
+			}
+		}
+	}
+
+	/**
 	 * Run the controller's protected ?custom_fields parser.
 	 *
 	 * @param mixed $value Raw custom_fields value, or null to omit the argument.

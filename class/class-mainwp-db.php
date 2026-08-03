@@ -165,7 +165,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                     continue;
                 }
                 $view .= ', ';
-                $view .= '(SELECT ' . $this->escape( $field ) . '.value FROM ' . $this->table_name( 'wp_options' ) . ' ' . $this->escape( $field ) . ' WHERE  ' . $this->escape( $field ) . '.wpid = intwp.id AND ' . $this->escape( $field ) . '.name = "' . $this->escape( $field ) . '" LIMIT 1) AS ' . $this->escape( $field );
+                $view .= '(SELECT `' . $this->escape( $field ) . '`.value FROM ' . $this->table_name( 'wp_options' ) . ' `' . $this->escape( $field ) . '` WHERE  `' . $this->escape( $field ) . '`.wpid = intwp.id AND `' . $this->escape( $field ) . '`.name = "' . $this->escape( $field ) . '" LIMIT 1) AS `' . $this->escape( $field ) . '`';
             }
         }
 
@@ -300,7 +300,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                     continue;
                 }
                 $view .= ', ';
-                $view .= 'MAX(CASE WHEN name = "' . $this->escape( $field ) . '" THEN value END) AS ' . $this->escape( $field );
+                $view .= 'MAX(CASE WHEN name = "' . $this->escape( $field ) . '" THEN value END) AS `' . $this->escape( $field ) . '`';
 
                 $included_opts[] = $this->escape( $field );
             }
@@ -743,7 +743,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             }
 
             $view_query .= ', ';
-            $view_query .= 'MAX(CASE WHEN name = "' . $this->escape( $field ) . '" THEN value END) AS ' . $this->escape( $field );
+            $view_query .= 'MAX(CASE WHEN name = "' . $this->escape( $field ) . '" THEN value END) AS `' . $this->escape( $field ) . '`';
         }
 
         $view_query .= ' FROM ' . $this->table_name( 'wp_options' ) .

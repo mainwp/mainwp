@@ -65,6 +65,48 @@ class MainWP_Sync_Sites_Ability_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Test input validation rejects invalid values.
+	 *
+	 * @return void
+	 */
+	public function test_sync_sites_validates_input() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+
+		$result = $this->execute_ability( 'mainwp/sync-sites-v1', [
+			'site_ids_or_domains' => 'not-an-array',
+		] );
+
+		$this->assertWPError( $result, 'Invalid input should return WP_Error.' );
+		$this->assertEquals(
+			'mainwp_invalid_input',
+			$result->get_error_code(),
+			'Non-array input should return mainwp_invalid_input error code.'
+		);
+
+		// A scalar exclude_ids must be rejected too, not silently dropped —
+		// dropping it would sync sites the caller asked to exclude.
+		$result = $this->execute_ability( 'mainwp/sync-sites-v1', [
+			'exclude_ids' => '123',
+		] );
+
+		$this->assertWPError( $result, 'Scalar exclude_ids should return WP_Error.' );
+		$this->assertEquals(
+			'mainwp_invalid_input',
+			$result->get_error_code(),
+			'Scalar exclude_ids should return mainwp_invalid_input error code.'
+		);
+
+		// Ids that all filter out (absint drops 0) must not net out to an
+		// all-sites sync. Schema minimum:1 rejects this on validated paths.
+		$result = $this->execute_ability( 'mainwp/sync-sites-v1', [
+			'site_ids' => [ 0 ],
+		] );
+
+		$this->assertWPError( $result, 'A site_ids list with no valid ids should return WP_Error.' );
+	}
+
+	/**
 	 * Test that sync-sites with specific IDs syncs those sites.
 	 *
 	 * @return void

@@ -753,8 +753,16 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             $updated_settings['up_status_codes'] = implode( ',', $body['mainwp_uptime_monitoring_up_status_codes'] );
         }
         if ( isset( $body['mainwp_uptime_monitoring_interval'] ) ) {
-            $interval_values   = MainWP_Uptime_Monitoring_Edit::get_interval_values( false );
-            $interval = array_search( $body['mainwp_uptime_monitoring_interval'], $interval_values, true );
+            $interval_values = MainWP_Uptime_Monitoring_Edit::get_interval_values( false );
+            $interval        = array_search( $body['mainwp_uptime_monitoring_interval'], $interval_values, true );
+            // An empty string passes the enum validator, so an unmatched label has to be rejected here, before anything is saved.
+            if ( false === $interval ) {
+                return new WP_Error(
+                    'rest_invalid_param',
+                    __( 'Invalid mainwp_uptime_monitoring_interval value.', 'mainwp' ),
+                    array( 'status' => 400 )
+                );
+            }
             $updated_settings['interval'] = $interval;
         }
         if ( isset( $body['mainwp_uptime_monitoring_keyword'] ) ) {
@@ -764,8 +772,16 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             $updated_settings['method'] = $body['mainwp_uptime_monitoring_method'];
         }
         if ( isset( $body['mainwp_uptime_monitoring_timeout'] ) ) {
-            $timeout_values   = MainWP_Uptime_Monitoring_Edit::get_timeout_values( false );
-            $timeout = array_search( $body['mainwp_uptime_monitoring_timeout'], $timeout_values, true );
+            $timeout_values = MainWP_Uptime_Monitoring_Edit::get_timeout_values( false );
+            $timeout        = array_search( $body['mainwp_uptime_monitoring_timeout'], $timeout_values, true );
+            // An empty string passes the enum validator, so an unmatched label has to be rejected here, before anything is saved.
+            if ( false === $timeout ) {
+                return new WP_Error(
+                    'rest_invalid_param',
+                    __( 'Invalid mainwp_uptime_monitoring_timeout value.', 'mainwp' ),
+                    array( 'status' => 400 )
+                );
+            }
             $updated_settings['timeout'] = $timeout;
         }
         if ( isset( $body['mainwp_uptime_monitoring_type'] ) ) {
@@ -2258,14 +2274,16 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             'trans_automatic_daily_update'        => array(
                 'required'          => false,
                 'description'       => __( 'Translation automatic daily update.', 'mainwp' ),
-                'type'              => 'array',
+                'type'              => 'integer',
+                'enum'              => $val_bool,
                 'sanitize_callback' => $this->make_enum_sanitizer( $val_bool ),
                 'validate_callback' => $this->make_enum_validator( $val_bool ),
             ),
             'automatic_daily_update'              => array(
                 'required'          => false,
                 'description'       => __( 'Plugin automatic daily update.', 'mainwp' ),
-                'type'              => 'array',
+                'type'              => 'integer',
+                'enum'              => $val_bool,
                 'sanitize_callback' => $this->make_enum_sanitizer( $val_bool ),
                 'validate_callback' => $this->make_enum_validator( $val_bool ),
             ),
@@ -2594,14 +2612,16 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             'mainwp_uptime_monitoring_timeout'         => array(
                 'required'          => false,
                 'description'       => __( 'Uptime monitoring timeout.', 'mainwp' ),
-                'type'              => 'integer',
+                'type'              => 'string',
+                'enum'              => $timeout_values,
                 'sanitize_callback' => $this->make_enum_sanitizer( $timeout_values, 'string' ),
                 'validate_callback' => $this->make_enum_validator( $timeout_values, 'string' ),
             ),
             'mainwp_uptime_monitoring_interval'        => array(
                 'required'          => false,
                 'description'       => __( 'Uptime monitoring interval.', 'mainwp' ),
-                'type'              => 'integer',
+                'type'              => 'string',
+                'enum'              => $interval_values,
                 'sanitize_callback' => $this->make_enum_sanitizer( $interval_values, 'string' ),
                 'validate_callback' => $this->make_enum_validator( $interval_values, 'string' ),
             ),

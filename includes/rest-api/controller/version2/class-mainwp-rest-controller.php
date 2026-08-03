@@ -1557,11 +1557,14 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
             }
 
             // Standard sanitization for non-array types.
-            $value = $this->sanitize_field( $value );
-            $v     = $this->coerce_type( $value, $type );
+            // sanitize_field() trims, which fatals on an array or object, so treat those as a plain enum mismatch.
+            if ( is_scalar( $value ) ) {
+                $value = $this->sanitize_field( $value );
+                $v     = $this->coerce_type( $value, $type );
 
-            if ( in_array( $v, $allowed_norm, true ) ) {
-                return $v;
+                if ( in_array( $v, $allowed_norm, true ) ) {
+                    return $v;
+                }
             }
 
             return new WP_Error(
@@ -1643,11 +1646,14 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
             }
 
             // Standard validation for non-array types.
-            $value = $this->sanitize_field( $value );
-            $v     = $this->coerce_type( $value, $type );
+            // sanitize_field() trims, which fatals on an array or object, so treat those as a plain enum mismatch.
+            if ( is_scalar( $value ) ) {
+                $value = $this->sanitize_field( $value );
+                $v     = $this->coerce_type( $value, $type );
 
-            if ( in_array( $v, $allowed_norm, true ) ) {
-                return true;
+                if ( in_array( $v, $allowed_norm, true ) ) {
+                    return true;
+                }
             }
 
             return new WP_Error(

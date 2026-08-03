@@ -495,7 +495,11 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
         $limit = apply_filters( 'mainwp_rest_batch_items_limit', 100, $this->get_normalized_rest_base() );
         $total = 0;
 
-        foreach ( $this->controller_names as $con_name ) {
+        // The updates group is rejected as a whole by batch_items(), but its items still count
+        // toward the cap so an oversized request is refused before anything else is dispatched.
+        $count_names = array_merge( $this->controller_names, array( 'updates' ) );
+
+        foreach ( $count_names as $con_name ) {
             if ( ! empty( $items[ $con_name ] ) && is_countable( $items[ $con_name ] ) ) {
                 if ( ! empty( $items[ $con_name ]['create'] ) && is_countable( $items[ $con_name ]['create'] ) ) {
                     $total += count( $items[ $con_name ]['create'] );

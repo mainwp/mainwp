@@ -14,7 +14,7 @@ namespace MainWP\Dashboard\Tests;
 use WP_REST_Request;
 use WP_REST_Server;
 
-// phpcs:disable WordPress.Files.FileName.InvalidClassFileName
+// phpcs:disable WordPress.Files.FileName.InvalidClassFileName -- test classes use PSR-style Test_* filenames, not the mainwp-* convention.
 
 /**
  * Class Test_REST_V2_Registration_Fixes

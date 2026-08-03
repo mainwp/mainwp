@@ -271,6 +271,79 @@ class Test_REST_V2_Registration_Fixes extends \WP_Test_REST_TestCase {
 	}
 
 	/**
+	 * Fix 1: the updates group is rejected as a group but still counts toward the batch limit,
+	 * so an oversized request is refused before any other group is dispatched.
+	 */
+	public function test_batch_limit_counts_updates_items_and_rejects_before_mutation(): void {
+		$this->authenticate_as_admin();
+
+		$lower_limit = static function () {
+			return 2;
+		};
+		add_filter( 'mainwp_rest_batch_items_limit', $lower_limit );
+
+		$before = (int) \MainWP\Dashboard\MainWP_DB_Client::instance()->get_wp_clients( [ 'count_only' => true ] );
+
+		$response = $this->do_authenticated_request(
+			'POST',
+			'/mainwp/v2/batch',
+			[
+				'clients' => [
+					'create' => [
+						[ 'name' => 'REST V2 Batch Limit Client A' ],
+						[ 'name' => 'REST V2 Batch Limit Client B' ],
+					],
+				],
+				'updates' => [
+					'create' => [
+						[ 'site_id' => 1 ],
+					],
+				],
+			]
+		);
+
+		remove_filter( 'mainwp_rest_batch_items_limit', $lower_limit );
+
+		$this->assertSame( 413, $response->get_status() );
+		$this->assertSame( 'mainwp_rest_request_entity_too_large', $response->get_data()['code'] );
+
+		$after = (int) \MainWP\Dashboard\MainWP_DB_Client::instance()->get_wp_clients( [ 'count_only' => true ] );
+		$this->assertSame( $before, $after, 'A request over the batch limit must be rejected before any item is created.' );
+	}
+
+	/**
+	 * Fix 4: per_page enforces its declared bounds.
+	 */
+	public function test_client_fields_per_page_enforces_bounds(): void {
+		$this->authenticate_as_admin();
+
+		$response = $this->do_authenticated_request( 'GET', '/mainwp/v2/clients/fields', [], [ 'per_page' => 201 ] );
+
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'rest_invalid_param', $response->get_data()['code'] );
+
+		$response = $this->do_authenticated_request( 'GET', '/mainwp/v2/clients/fields', [], [ 'per_page' => 50 ] );
+
+		$this->assertNotSame( 400, $response->get_status() );
+	}
+
+	/**
+	 * Fix 4: the pre_page alias enforces the same bounds.
+	 */
+	public function test_client_fields_pre_page_enforces_bounds(): void {
+		$this->authenticate_as_admin();
+
+		$response = $this->do_authenticated_request( 'GET', '/mainwp/v2/clients/fields', [], [ 'pre_page' => 201 ] );
+
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'rest_invalid_param', $response->get_data()['code'] );
+
+		$response = $this->do_authenticated_request( 'GET', '/mainwp/v2/clients/fields', [], [ 'pre_page' => 50 ] );
+
+		$this->assertNotSame( 400, $response->get_status() );
+	}
+
+	/**
 	 * Fix 2: daily update params describe the integer value they actually accept.
 	 */
 	public function test_daily_update_params_registered_as_integer_enum(): void {

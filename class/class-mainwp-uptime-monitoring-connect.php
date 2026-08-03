@@ -327,6 +327,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         } elseif ( ! $is_notallowed && empty( $data ) && 'ping' !== $mo_apply_type && ! $second_try ) {
             usleep( 200000 );
             $this->fetch_uptime_monitor( $monitor, $global_settings, true, $params );
+            return; // Process only the second-try response.
         }
 
         $output                  = new \stdClass();
@@ -592,14 +593,16 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
                     $retry_later   = static::is_http_code_type( 'retry', $http_code );
                     $is_notallowed = static::is_http_code_type( 'notallowed', $http_code );
 
-                    if ( ! empty( $requestUrls[ $resource_id ] ) ) {
+                    if ( ! empty( $requestUrls[ $resource_id ] ) && isset( $handleToWebsite[ $resource_id ] ) ) {
 
-                        $mo_apply_type = static::get_apply_setting( 'type', $website->type, $global_settings, 'useglobal', 'http' );
+                        $running_website = $handleToWebsite[ $resource_id ];
+
+                        $mo_apply_type = static::get_apply_setting( 'type', $running_website->type, $global_settings, 'useglobal', 'http' );
 
                         $_try_second = false;
-                        if ( $retry_later && empty( $website->issub ) ) {
-                            $max_retries = static::get_apply_setting( 'maxretries', (int) $website->maxretries, $global_settings, -1, 0 );
-                            if ( $max_retries > 0 && $website->retries < $max_retries ) {
+                        if ( $retry_later && empty( $running_website->issub ) ) {
+                            $max_retries = static::get_apply_setting( 'maxretries', (int) $running_website->maxretries, $global_settings, -1, 0 );
+                            if ( $max_retries > 0 && $running_website->retries < $max_retries ) {
                                 $is_pending = true;
                                 ++$down_count;
                                 $set_retry = true;

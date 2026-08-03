@@ -326,8 +326,8 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
             }
         } elseif ( ! $is_notallowed && empty( $data ) && 'ping' !== $mo_apply_type && ! $second_try ) {
             usleep( 200000 );
-            $this->fetch_uptime_monitor( $monitor, $global_settings, true, $params );
-            return; // Process only the second-try response.
+             // Process only the second-try response.
+            return $this->fetch_uptime_monitor( $monitor, $global_settings, true, $params );
         }
 
         $output                  = new \stdClass();

@@ -566,7 +566,7 @@ KEY idx_wpid_issub (wpid, issub)";
         ';
 
         $_params['limit']        = $limit;
-        $_params['custom_where'] = $wpdb->prepare( $where, $glo_active, $local_timestamp, $glo_interval, $local_timestamp, $lasttime_counter, $glo_maxretries, $glo_maxretries, $local_timestamp );
+        $_params['custom_where'] = $this->wpdb->prepare( $where, $glo_active, $local_timestamp, $glo_interval, $local_timestamp, $lasttime_counter, $glo_maxretries, $glo_maxretries, $local_timestamp );
         $_params['order_by']     = ' mo.dts_auto_monitoring_time ASC ';
 
         $sql = $this->get_sql_monitor( $_params );

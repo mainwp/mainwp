@@ -9,18 +9,18 @@ jQuery(function ($) {
         jQuery('.mainwp-popup-tooltip').popup()
     }
 
-  jQuery(document).on('click', '#mainwp-help-menu-item, #mainwp-help-menu-item-mobile', function () {
-    jQuery('#mainwp-help-modal').modal({
-      inverted: true,
-      blurring: false,
-      closable: false,
-      onShow: function() {
-          jQuery('#mainwp-help-modal').parent('.ui.dimmer').removeClass('dimmer');
-          jQuery('#mainwp-help-modal').css({
-            'top':(jQuery(globalThis).height() - jQuery('#mainwp-help-modal').outerHeight()) / 2 + 'px',
-            'left':(jQuery(globalThis).width() - jQuery('#mainwp-help-modal').outerWidth()) / 2 + 'px'
-          });
-      },
+    jQuery(document).on('click', '#mainwp-help-menu-item, #mainwp-help-menu-item-mobile', function () {
+        jQuery('#mainwp-help-modal').modal({
+            inverted: true,
+            blurring: false,
+            closable: false,
+            onShow: function () {
+                jQuery('#mainwp-help-modal').parent('.ui.dimmer').removeClass('dimmer');
+                jQuery('#mainwp-help-modal').css({
+                    'top': (jQuery(globalThis).height() - jQuery('#mainwp-help-modal').outerHeight()) / 2 + 'px',
+                    'left': (jQuery(globalThis).width() - jQuery('#mainwp-help-modal').outerWidth()) / 2 + 'px'
+                });
+            },
 
         }).modal('show').draggable().resizable({
             handles: "n, e, s, w, ne, nw, se, sw", // Allows resizing from all edges
@@ -102,16 +102,38 @@ let mainwp_get_remove_calback = function (side_id) {
             data: data,
             timeout: 180000, // 3 minutes. Slightly longer than the PHP server timeout (2 minutes).
             method: 'POST',
-            success: function ( response ) {
+            success: function (response) {
                 if (response?.error) {
                     let message = MainWP.I18n.t('The site has been removed. Please make sure that the MainWP Child plugin has been deactivated properly. You will be redirected to the Sites page right away.', 'mainwp');
 
-                    if (typeof response.error === 'string') {
-                        message = response.error;
+                    if (typeof response.error === 'string' && response.error.trim() !== '') {
+                        message += ' ' + sprintf(__('Details: %s', 'mainwp'), response.error);
                     }
+
                     feedback('mainwp-message-zone', message, 'red');
-                    return;
-                }
+                } else {
+                    switch (response?.result) {
+                        case 'SUCCESS':
+                            feedback(
+                                'mainwp-message-zone',
+                                __('The site has been removed and the MainWP Child plugin has been disabled. You will be redirected to the Sites page right away.', 'mainwp'),
+                                'green'
+                            );
+                            break;
+                        case 'REMOVED': // for demo sites.
+                            feedback(
+                                'mainwp-message-zone',
+                                __('The site has been removed. You will be redirected to the Sites page right away.', 'mainwp'),
+                                'green'
+                            );
+                            break;
+                        case 'NOSITE':
+                            feedback(
+                                'mainwp-message-zone',
+                                __('Site could not be removed. Please reload the page and try again.', 'mainwp'),
+                                'red'
+                            );
+                            return;
 
                 switch (response?.result) {
                     case 'SUCCESS':
@@ -139,7 +161,7 @@ let mainwp_get_remove_calback = function (side_id) {
                         );
                 }
 
-                setTimeout(function() {
+                setTimeout(function () {
                     mainwp_forceReload('admin.php?page=managesites');
                 }, 3000);
             },
@@ -172,7 +194,7 @@ globalThis.mainwp_set_message_zone = globalThis.mainwp_set_message_zone || funct
         jQuery(zone_selector).html('');
     }
 
-    if ( colors !== undefined && colors != '') {
+    if (colors !== undefined && colors != '') {
         jQuery(zone_selector).removeClass('green yellow red');
         jQuery(zone_selector).addClass(colors);
     } else if (colors === '' || colors === undefined) {
@@ -322,7 +344,7 @@ jQuery(function () {
     jQuery(document).on('click', '.mainwp-plugin-delete', function () {
         let name = jQuery(this).closest('.row-manage-item').attr('plugin-title');
         let confirmMsg = MainWP.I18n.t('You are about to delete the %1?', name);
-        mainwp_confirm(confirmMsg, () =>{
+        mainwp_confirm(confirmMsg, () => {
             pluginAction(jQuery(this), 'delete');
         });
         return false;
@@ -1130,7 +1152,7 @@ globalThis.dashboard_update = function (websiteIds, isGlobalSync, pAction) {
 globalThis.dashboard_update_site_status_legacy = function (siteId, newStatus, isSuccess) {
     jQuery('.sync-site-status[siteid="' + siteId + '"]').html(newStatus);
     // Move successfully synced site to the bottom of the sync list
-    if ( isSuccess !== undefined && isSuccess) {
+    if (isSuccess !== undefined && isSuccess) {
         let row = jQuery('.sync-site-status[siteid="' + siteId + '"]').closest('.item');
         jQuery(row).insertAfter(jQuery("#sync-sites-status .item").not('.disconnected-site').last());
     }
@@ -1467,7 +1489,7 @@ jQuery(function ($) {
     jQuery('.mainwp-checkbox-showhide-elements').on('click', function () {
         let hiel = $(this).attr('hide-parent');
         // support multi hide values.
-        hiel.split(';').forEach( (hi) => {
+        hiel.split(';').forEach((hi) => {
             mainwp_showhide_elements(hi, $(this).find('input').is(':checked'));
         });
         let hideEvent = $(this).attr('fire-event-parent') ?? '';
@@ -2399,17 +2421,17 @@ jQuery(function () {
 /**
  * Add new user
  */
-  function mainwp_gen_passsword(len = 24) {
+function mainwp_gen_passsword(len = 24) {
     const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+{}[]<>?';
     const arr = new Uint32Array(len);
     crypto.getRandomValues(arr);
     return Array.from(arr, x => chars[x % chars.length]).join('');
-  }
+}
 
-  jQuery('.mainwp-generate-password-button').on('click', function (e) {
+jQuery('.mainwp-generate-password-button').on('click', function (e) {
     e.preventDefault();
     jQuery('#createuser #password, #mainwp-update-admin-password-form #password').val(mainwp_gen_passsword(24)).trigger('change');
-  });
+});
 
 jQuery(function () {
     jQuery(document).on('click', '#bulk_add_createuser', function () {
@@ -2510,9 +2532,9 @@ let mainwp_createuser = function () {
                 }
             } else {
                 jQuery('#mainwp-add-new-user-form').append(response);
-                jQuery('#mainwp-creating-new-user-modal').modal( {
+                jQuery('#mainwp-creating-new-user-modal').modal({
                     closable: false,
-                } ).modal( 'show' );
+                }).modal('show');
             }
         });
     }
@@ -3111,7 +3133,7 @@ jQuery(function ($) {
 
         $('#mainwp-plugin-details-modal')
             .modal({
-                onHide: function () {},
+                onHide: function () { },
                 onShow: () => {
                     $('#mainwp-plugin-details-modal')
                         .find('.ui.embed')
@@ -3139,27 +3161,27 @@ let themeChangesLoadData = {};
 
 jQuery(function ($) {
 
-     $(document).on('click', '.mainwp-show-history', function (e) {
+    $(document).on('click', '.mainwp-show-history', function (e) {
 
-         e.preventDefault();
-         e.stopPropagation();
+        e.preventDefault();
+        e.stopPropagation();
 
-         const view = $(this).attr('history-view');
-         let parent = false;
-         let type = 'plugin'; // default.
-         let title = '';
-         let info = '';
-         let name = '';
-         let slug = '';
-         let siteId = 0;
+        const view = $(this).attr('history-view');
+        let parent = false;
+        let type = 'plugin'; // default.
+        let title = '';
+        let info = '';
+        let name = '';
+        let slug = '';
+        let siteId = 0;
 
-         switch (view) {
+        switch (view) {
             case 'update-plugins-individual':
                 parent = $(this).closest('.plugins-bulk-updates');
                 siteId = $(parent).attr('site_id');
                 info = $(parent).attr('site_name') + ' (' + $(parent).attr('site_url') + ') ' + $(parent).attr('tz-info');
                 title = $(this).closest('tr').attr('plugin_name');
-                slug = decodeURIComponent( $(this).closest('tr').attr('plugin_slug') );
+                slug = decodeURIComponent($(this).closest('tr').attr('plugin_slug'));
                 name = $(this).closest('tr').attr('plugin_name');
                 break;
             case 'update-themes-individual':
@@ -3171,109 +3193,109 @@ jQuery(function ($) {
                 name = $(this).closest('tr').attr('theme_name');
                 type = 'theme';
                 break;
-             case 'manage-plugins-per-sites':
-             case 'manage-plugins-per-items':
-                 parent = $(this).closest('.mainwp-manage-plugin-item-website');
-                 title = $(parent).attr('plugin-name');
-                 info = $(parent).attr('site-name') + ' (' + $(parent).attr('site-url') + ') ' + $(parent).attr('tz-info');
-                 slug = decodeURIComponent($(parent).attr('plugin-slug'));
-                 siteId = $(parent).attr('site-id');
-                 break;
-             case 'manage-themes-per-sites':
-             case 'manage-themes-per-items':
-                 parent = $(this).closest('.mainwp-manage-theme-item-website');
-                 title = $(parent).attr('theme-name');
-                 name = $(parent).attr('theme-name');
-                 info = $(parent).attr('site-name') + ' (' + $(parent).attr('site-url') + ') ' + $(parent).attr('tz-info');
-                 slug = decodeURIComponent($(parent).attr('theme-slug'));
-                 siteId = $(parent).attr('site-id');
-                 type = 'theme';
-                 break;
-             case 'widget-plugins':
-                 parent = $(this).closest('.row-manage-item');
-                 title = $(parent).attr('plugin-name');
-                 info = $('#mainwp-widget-active-plugins').attr('site-info');
-                 slug = $(parent).attr('plugin-slug');
-                 siteId = $('#mainwp-widget-active-plugins').attr('site-id');
-                 break;
-             case 'widget-themes':
-                 parent = $(this).closest('.row-manage-item');
-                 title = $(parent).find('.themeName').val();
-                 info = $('#mainwp-widget-inactive-themes').attr('site-info');
-                 slug = $(parent).find('.themeSlug').val();
-                 name = $(parent).find('.themeName').val();
-                 siteId = $('#mainwp-widget-inactive-themes').attr('site-id');
-                 type = 'theme';
-                 break;
-             case 'update-plugin-per-item':
-                 parent = $(this).closest('tr');
-                 siteId = $(parent).attr('site_id');
-                 info = $(parent).attr('site_name') + ' (' + $(parent).attr('site_url') + ') ' + $(parent).attr('tz-info');
-                 title = $(parent).attr('plugin_name');
-                 slug = decodeURIComponent($(parent).attr('plugin_slug'));
-                 break;
-             case 'update-theme-per-item':
-                 parent = $(this).closest('tr');
-                 siteId = $(parent).attr('site_id');
-                 info = $(parent).attr('site_name') + ' (' + decodeURIComponent( $(parent).attr('site_url') ) + ') ' + $(parent).attr('tz-info');
-                 title = $(parent).attr('theme_name');
-                 name = $(parent).attr('theme_name');
-                 slug = decodeURIComponent($(parent).attr('theme_slug'));
-                 type = 'theme';
-                 break;
-             case 'update-plugin-per-site': // NOSONAR - same as above.
-                 parent = $(this).closest('.plugins-bulk-updates');
-                 siteId = $(parent).attr('site_id');
-                 info = $(parent).attr('site_name') + ' (' + $(parent).attr('site_url') + ') ' + $(parent).attr('tz-info');
-                 title = $(this).closest('tr').attr('plugin_name');
-                 slug = decodeURIComponent( $(this).closest('tr').attr('plugin_slug') );
-                 name = $(this).closest('tr').attr('plugin_name');
-                 break;
-             case 'update-theme-per-site': // NOSONAR - same above.
-                 parent = $(this).closest('.themes-bulk-updates');
-                 siteId = $(parent).attr('site_id');
-                 info = $(parent).attr('site_name') + ' (' + $(parent).attr('site_url') + ') ' + $(parent).attr('tz-info');
-                 title = $(this).closest('tr').attr('theme_name');
-                 slug = $(this).closest('tr').attr('theme_slug');
-                 name = $(this).closest('tr').attr('theme_name');
-                 type = 'theme';
-                 break;
-             case 'update-plugin-per-tag':
-                 parent = $(this).closest('.plugins-bulk-updates');
-                 siteId = $(parent).attr('site_id');
-                 info = $(parent).attr('site_name') + ' (' + $(parent).attr('site_url') + ') ' + $(parent).attr('tz-info');
-                 title = $(this).closest('tr').attr('plugin_name');
-                 slug = decodeURIComponent($(this).closest('tr').attr('plugin_slug'));
-                 break;
-             case 'update-theme-per-tag':
-                 parent = $(this).closest('.themes-bulk-updates');
-                 siteId = $(parent).attr('site_id');
-                 info = $(parent).attr('site_name') + ' (' + $(parent).attr('site_url') + ') ' + $(parent).attr('tz-info');
-                 title = $(this).closest('tr').attr('theme_name');
-                 name = $(this).closest('tr').attr('theme_name');
-                 slug = $(this).closest('tr').attr('theme_slug');
-                 type = 'theme';
-                 break;
-         }
+            case 'manage-plugins-per-sites':
+            case 'manage-plugins-per-items':
+                parent = $(this).closest('.mainwp-manage-plugin-item-website');
+                title = $(parent).attr('plugin-name');
+                info = $(parent).attr('site-name') + ' (' + $(parent).attr('site-url') + ') ' + $(parent).attr('tz-info');
+                slug = decodeURIComponent($(parent).attr('plugin-slug'));
+                siteId = $(parent).attr('site-id');
+                break;
+            case 'manage-themes-per-sites':
+            case 'manage-themes-per-items':
+                parent = $(this).closest('.mainwp-manage-theme-item-website');
+                title = $(parent).attr('theme-name');
+                name = $(parent).attr('theme-name');
+                info = $(parent).attr('site-name') + ' (' + $(parent).attr('site-url') + ') ' + $(parent).attr('tz-info');
+                slug = decodeURIComponent($(parent).attr('theme-slug'));
+                siteId = $(parent).attr('site-id');
+                type = 'theme';
+                break;
+            case 'widget-plugins':
+                parent = $(this).closest('.row-manage-item');
+                title = $(parent).attr('plugin-name');
+                info = $('#mainwp-widget-active-plugins').attr('site-info');
+                slug = $(parent).attr('plugin-slug');
+                siteId = $('#mainwp-widget-active-plugins').attr('site-id');
+                break;
+            case 'widget-themes':
+                parent = $(this).closest('.row-manage-item');
+                title = $(parent).find('.themeName').val();
+                info = $('#mainwp-widget-inactive-themes').attr('site-info');
+                slug = $(parent).find('.themeSlug').val();
+                name = $(parent).find('.themeName').val();
+                siteId = $('#mainwp-widget-inactive-themes').attr('site-id');
+                type = 'theme';
+                break;
+            case 'update-plugin-per-item':
+                parent = $(this).closest('tr');
+                siteId = $(parent).attr('site_id');
+                info = $(parent).attr('site_name') + ' (' + $(parent).attr('site_url') + ') ' + $(parent).attr('tz-info');
+                title = $(parent).attr('plugin_name');
+                slug = decodeURIComponent($(parent).attr('plugin_slug'));
+                break;
+            case 'update-theme-per-item':
+                parent = $(this).closest('tr');
+                siteId = $(parent).attr('site_id');
+                info = $(parent).attr('site_name') + ' (' + decodeURIComponent($(parent).attr('site_url')) + ') ' + $(parent).attr('tz-info');
+                title = $(parent).attr('theme_name');
+                name = $(parent).attr('theme_name');
+                slug = decodeURIComponent($(parent).attr('theme_slug'));
+                type = 'theme';
+                break;
+            case 'update-plugin-per-site': // NOSONAR - same as above.
+                parent = $(this).closest('.plugins-bulk-updates');
+                siteId = $(parent).attr('site_id');
+                info = $(parent).attr('site_name') + ' (' + $(parent).attr('site_url') + ') ' + $(parent).attr('tz-info');
+                title = $(this).closest('tr').attr('plugin_name');
+                slug = decodeURIComponent($(this).closest('tr').attr('plugin_slug'));
+                name = $(this).closest('tr').attr('plugin_name');
+                break;
+            case 'update-theme-per-site': // NOSONAR - same above.
+                parent = $(this).closest('.themes-bulk-updates');
+                siteId = $(parent).attr('site_id');
+                info = $(parent).attr('site_name') + ' (' + $(parent).attr('site_url') + ') ' + $(parent).attr('tz-info');
+                title = $(this).closest('tr').attr('theme_name');
+                slug = $(this).closest('tr').attr('theme_slug');
+                name = $(this).closest('tr').attr('theme_name');
+                type = 'theme';
+                break;
+            case 'update-plugin-per-tag':
+                parent = $(this).closest('.plugins-bulk-updates');
+                siteId = $(parent).attr('site_id');
+                info = $(parent).attr('site_name') + ' (' + $(parent).attr('site_url') + ') ' + $(parent).attr('tz-info');
+                title = $(this).closest('tr').attr('plugin_name');
+                slug = decodeURIComponent($(this).closest('tr').attr('plugin_slug'));
+                break;
+            case 'update-theme-per-tag':
+                parent = $(this).closest('.themes-bulk-updates');
+                siteId = $(parent).attr('site_id');
+                info = $(parent).attr('site_name') + ' (' + $(parent).attr('site_url') + ') ' + $(parent).attr('tz-info');
+                title = $(this).closest('tr').attr('theme_name');
+                name = $(this).closest('tr').attr('theme_name');
+                slug = $(this).closest('tr').attr('theme_slug');
+                type = 'theme';
+                break;
+        }
 
-         if (type === 'plugin') {
-             pluginChangesLoadData = mainwp_secure_data({
-                 action: 'mainwp_changes_logs_get_item_changes',
-                 type: 'plugin',
-                 slug: slug,
-                 siteId: siteId,
-                 from_date: '' // current date.
-             });
-         } else if (type === 'theme') {
-             themeChangesLoadData = mainwp_secure_data({
-                 action: 'mainwp_changes_logs_get_item_changes',
-                 type: 'theme',
-                 slug: slug,
-                 siteId: siteId,
-                 name: name,
-                 from_date: '' // current date.
-             });
-         }
+        if (type === 'plugin') {
+            pluginChangesLoadData = mainwp_secure_data({
+                action: 'mainwp_changes_logs_get_item_changes',
+                type: 'plugin',
+                slug: slug,
+                siteId: siteId,
+                from_date: '' // current date.
+            });
+        } else if (type === 'theme') {
+            themeChangesLoadData = mainwp_secure_data({
+                action: 'mainwp_changes_logs_get_item_changes',
+                type: 'theme',
+                slug: slug,
+                siteId: siteId,
+                name: name,
+                from_date: '' // current date.
+            });
+        }
 
         $('#mainwp-plugin-theme-history-changes-modal').modal({
             onHide: function () {
@@ -3287,7 +3309,7 @@ jQuery(function ($) {
     });
 });
 
-let mainwp_changes_history_box_init = function ( type, title, info ) {
+let mainwp_changes_history_box_init = function (type, title, info) {
     const hd = jQuery('#mainwp-plugin-theme-history-changes-modal > div.header');
     hd.find('.main-text').text(title + ' ' + MainWP.I18n.t('History')); // safe for escape.
     hd.find('.sub.header').text(info).show();
@@ -3295,11 +3317,11 @@ let mainwp_changes_history_box_init = function ( type, title, info ) {
     jQuery('#mainwp-plugin-theme-history-changes-modal').find('.scrolling.content').html('');
 }
 
-let mainwp_item_changes_load = function ( btnObj, load_more_date = '' ) {
+let mainwp_item_changes_load = function (btnObj, load_more_date = '') {
 
     let md = jQuery('#mainwp-plugin-theme-history-changes-modal');
     let parentContent = false;
-    if(btnObj){
+    if (btnObj) {
         parentContent = jQuery(btnObj).closest('.ui.accordion').find('.ui.content');
     } else {
         parentContent = jQuery(md).find('.scrolling.content')
@@ -3312,10 +3334,10 @@ let mainwp_item_changes_load = function ( btnObj, load_more_date = '' ) {
     let load_more = false;
 
     // set load date if provided
-    if(typeof load_more_date === 'string' && load_more_date !== ''){
-        if('theme' === type){
+    if (typeof load_more_date === 'string' && load_more_date !== '') {
+        if ('theme' === type) {
             themeChangesLoadData.from_date = load_more_date;
-        }else{
+        } else {
             pluginChangesLoadData.from_date = load_more_date;
         }
         load_more = true;
@@ -3327,7 +3349,7 @@ let mainwp_item_changes_load = function ( btnObj, load_more_date = '' ) {
     jQuery.post(ajaxurl, data, function (response) { // NOSONAR - complex.
         jQuery(md).find('.history-actions-loading').remove();
         if (response?.error) {
-            if(parentContent){
+            if (parentContent) {
                 let err_content = '<div class="ui message red">' + response.error + '</div>';
                 jQuery(parentContent).html(err_content);
             }
@@ -3337,7 +3359,7 @@ let mainwp_item_changes_load = function ( btnObj, load_more_date = '' ) {
                 if('theme' === type){
                     msg = MainWP.I18n.t('This theme has no recorded activity in Dashboard Insights.') ;
                 }
-                if(parentContent){
+                if (parentContent) {
                     let msg_content = '<div class="ui info message">' + msg + '</div>';
                     jQuery(parentContent).html(msg_content);
                 }
@@ -3403,9 +3425,9 @@ let mainwp_item_changes_load = function ( btnObj, load_more_date = '' ) {
                         jQuery(md).find('.scrolling.content').html(accordWrapper);
                     }
 
-                    jQuery('#change-history-according-wrapper .ui.accordion').accordion({exclusive: true});
+                    jQuery('#change-history-according-wrapper .ui.accordion').accordion({ exclusive: true });
 
-                    jQuery('.mainwp-day-history-switch-view').off('click.accordionFix').on('click.accordionFix', function(e){
+                    jQuery('.mainwp-day-history-switch-view').off('click.accordionFix').on('click.accordionFix', function (e) {
                         e.preventDefault();
                         e.stopPropagation(); // now it runs before ancestor handlers
                         dayHistory_SwitchViewHandler(this);
@@ -3413,21 +3435,21 @@ let mainwp_item_changes_load = function ( btnObj, load_more_date = '' ) {
                     });
                 }
 
-                if ( response?.onward_date ) {
+                if (response?.onward_date) {
                     jQuery(md).find('.actions .col-left').html('Data available from ' + response.onward_date + ' onward.');
                 }
                 if ( response?.more_date ) {
                     jQuery(md).find('.actions .col-right').html('<a href="javascript:void(0);" onclick="mainwp_item_changes_load(false,\'' + ( response.more_date ?? get_local_date_string() ) + '\');return false;">' + MainWP.I18n.t('Load More') + '</a>');
                 }
             }
-        } else if(parentContent){
+        } else if (parentContent) {
             let err_content = '<div class="ui message red">' + MainWP.I18n.t('Undefined error occurred. Please try again.') + '</div>';
             jQuery(parentContent).html(err_content);
         }
     }, 'json');
 }
 
-let get_icon_history_event = function( act ){
+let get_icon_history_event = function (act) {
     let icon = '';
 
     if (act === 'delete' || act === 'deleted') {
@@ -3447,14 +3469,14 @@ let get_icon_history_event = function( act ){
     return icon;
 }
 
-let get_color_changes_event = function( act ){
+let get_color_changes_event = function (act) {
     const actColorMap = {
-        red: ['deleted','removed','revoked','delete','deactivated','disabled','suspended','deactivate'],
-        orange: ['updated','modified','update'],
+        red: ['deleted', 'removed', 'revoked', 'delete', 'deactivated', 'disabled', 'suspended', 'deactivate'],
+        orange: ['updated', 'modified', 'update'],
         grey: ['opened'],
-        blue: ['logged-in','logged-out'],
-        teal: ['sync','installed','install','uploaded'],
-        green: ['activated','activate','created','published','enabled','added']
+        blue: ['logged-in', 'logged-out'],
+        teal: ['sync', 'installed', 'install', 'uploaded'],
+        green: ['activated', 'activate', 'created', 'published', 'enabled', 'added']
     };
 
     let color = '';
@@ -3560,9 +3582,9 @@ let dayHistory_SwitchViewHandler = function (btn) {
                         html: content
                     });
                     jQuery(md).find('.scrolling.content').html(accordWrapper);
-                    jQuery('#change-history-according-wrapper .ui.accordion').accordion({exclusive: true});
+                    jQuery('#change-history-according-wrapper .ui.accordion').accordion({ exclusive: true });
 
-                    jQuery('.mainwp-list-history-switch-view').off('click.accordionFix2').on('click.accordionFix2', function(e){
+                    jQuery('.mainwp-list-history-switch-view').off('click.accordionFix2').on('click.accordionFix2', function (e) {
                         e.preventDefault();
                         e.stopPropagation(); // now it runs before ancestor handlers
                         listHistory_SwitchViewHandler(this);
@@ -3590,17 +3612,17 @@ let listHistory_SwitchViewHandler = function (btn) {
     let md = jQuery('#mainwp-plugin-theme-history-changes-modal');
     const type = jQuery(md).attr('history-type');
 
-    if('theme' === type){
+    if ('theme' === type) {
         themeChangesLoadData.slug = jQuery(parent).data('slug');
         themeChangesLoadData.name = jQuery(parent).data('name');
         themeChangesLoadData.siteId = jQuery(parent).data('siteid');
         themeChangesLoadData.from_date = '';
-    }else{
+    } else {
         pluginChangesLoadData.slug = jQuery(parent).data('slug');;
         pluginChangesLoadData.siteId = jQuery(parent).data('siteid');;
         pluginChangesLoadData.from_date = '';
     }
-    mainwp_item_changes_load( btn );
+    mainwp_item_changes_load(btn);
 }
 
 
@@ -4130,7 +4152,7 @@ jQuery.mwp_strCut = function (i, l, s, w) {
     if (!s) {
         s = '0';
     }
-    while (o.length <  Number.parseInt(l)) {
+    while (o.length < Number.parseInt(l)) {
         // empty
         if (w == 'undefined') {
             o = s + o;
@@ -4214,7 +4236,7 @@ globalThis.mainwp_notice_dismiss = function (notice_id, time_set) {
         action: 'mainwp_notice_status_update'
     };
     data['notice_id'] = notice_id;
-    if ( time_set !== undefined ) {
+    if (time_set !== undefined) {
         data['time_set'] = time_set ? 1 : 0;
     }
     jQuery.post(ajaxurl, mainwp_secure_data(data), function () {
@@ -4923,7 +4945,7 @@ let mainwp_import_demo_data_action = function (obj) {
         jQuery.post(ajaxurl, data, function (response) {
             let error = false;
             if (response.count === undefined) {
-                 error = true;
+                error = true;
                 feedback('mainwp-message-zone', MainWP.I18n.t('Undefined error. Please try again.', 'mainwp'), 'green');
             } else {
                 feedback('mainwp-message-zone', MainWP.I18n.t('The demo content has been imported into your MainWP Dashboard.', 'mainwp'), 'green');
@@ -5231,7 +5253,7 @@ jQuery(function ($) {
             }
         }
 
-        if(me === undefined) {
+        if (me === undefined) {
             mainwp_settings_fields_value_on_change(this, val);
         } else {
             mainwp_settings_fields_value_on_change(me, val);
@@ -5360,7 +5382,7 @@ let mainwp_overview_gridstack_save_layout = function (item_id, grid) {
         item_id: item_id,
         page_widget: page_widget
     };
-    jQuery.post(ajaxurl, mainwp_secure_data(postVars), function () {});
+    jQuery.post(ajaxurl, mainwp_secure_data(postVars), function () { });
 }
 
 globalThis.mainwp_init_ui_calendar = ($selectors) => {
@@ -5473,7 +5495,7 @@ jQuery(function ($) {
     });
     jQuery('#module-update-logs-db-requirement').on('click', function () {
         let msg = MainWP.I18n.t('Are you sure?');
-        mainwp_confirm(msg,  () => {
+        mainwp_confirm(msg, () => {
             jQuery(this).closest('.ui.message').fadeOut();
             mainwp_module_logs_start_update_dismissed_db();
         });
@@ -5547,125 +5569,125 @@ function mainwp_forceReload(targetUrl) {
 }
 
 class TablePersistentState {
-  constructor(table, options = {}) {
-    if (!table || !(table instanceof HTMLElement)) {
-      throw new Error('TablePersistentState requires a table element');
+    constructor(table, options = {}) {
+        if (!table || !(table instanceof HTMLElement)) {
+            throw new Error('TablePersistentState requires a table element');
+        }
+
+        this.table = table;
+        this.tableId = table.id;
+        this.headers = table.querySelectorAll(
+            options.headerSelector || '.handle-cols-sorting'
+        );
+
+        this.options = {
+            storage: options.storage !== false, // default true
+            storagePrefix: options.storagePrefix || 'mainwp_tables_sort_state',
+            onPersist: options.onPersist || null,
+            defaultSort: options.defaultSort || null, //  column, direction
+        };
+
+        this.init();
     }
 
-    this.table = table;
-    this.tableId = table.id;
-    this.headers = table.querySelectorAll(
-      options.headerSelector || '.handle-cols-sorting'
-    );
+    /* ---------- Storage ---------- */
 
-    this.options = {
-      storage: options.storage !== false, // default true
-      storagePrefix: options.storagePrefix || 'mainwp_tables_sort_state',
-      onPersist: options.onPersist || null,
-      defaultSort: options.defaultSort || null, //  column, direction
-    };
-
-    this.init();
-  }
-
-  /* ---------- Storage ---------- */
-
-  get storageKey() {
-    return `${this.options.storagePrefix}:${this.tableId}`;
-  }
-
-  saveState(column, direction) {
-    if (!this.options.storage || !this.tableId) return;
-
-    localStorage.setItem(
-      this.storageKey,
-      JSON.stringify({ column, direction })
-    );
-  }
-
-  loadState() {
-    if (!this.options.storage || !this.tableId) return null;
-
-    try {
-      return JSON.parse(localStorage.getItem(this.storageKey));
-    } catch {
-      return null;
-    }
-  }
-
-  /* ---------- UI helpers ---------- */
-
-  clearIndicators() {
-    this.headers.forEach(th => {
-      th.classList.remove('sorted-asc', 'sorted-desc');
-      th.removeAttribute('aria-sort');
-    });
-  }
-
-  applyIndicator(th, direction) {
-    th.classList.add(direction === 'asc' ? 'sorted-asc' : 'sorted-desc');
-    th.setAttribute('aria-sort', direction);
-  }
-
-  toggleDirection(current) {
-    return current === 'asc' ? 'desc' : 'asc';
-  }
-
-  /* ---------- Sorting flow ---------- */
-
-  persistState(column, direction, th = null, persist = true, isrestore = false ) {
-    if (th) {
-      this.clearIndicators();
-      this.applyIndicator(th, direction);
+    get storageKey() {
+        return `${this.options.storagePrefix}:${this.tableId}`;
     }
 
-    if (persist) {
-      this.saveState(column, direction);
+    saveState(column, direction) {
+        if (!this.options.storage || !this.tableId) return;
+
+        localStorage.setItem(
+            this.storageKey,
+            JSON.stringify({ column, direction })
+        );
     }
 
-    if (typeof this.options.onPersist === 'function') {
-      this.options.onPersist({
-        table: this.table,
-        column,
-        direction,
-        isrestore
-      });
-    }
-  }
+    loadState() {
+        if (!this.options.storage || !this.tableId) return null;
 
-  /* ---------- Init ---------- */
-
-  restore() {
-    const saved = this.loadState() || this.options.defaultSort;
-    if (!saved) return;
-
-    const th = this.table.querySelector(
-      `[data-key="${saved.column}"]`
-    );
-
-    if (th) {
-      this.persistState(saved.column, saved.direction, th, false, true );
-    }
-  }
-
-  bindEvents() {
-    this.headers.forEach(th => {
-      th.addEventListener('click', () => {
-        const column = th.dataset.key;
-        const isAsc = th.classList.contains('sorted-asc');
-        const direction = this.toggleDirection(isAsc ? 'asc' : 'desc');
-
-        this.persistState(column, direction, th);
-      });
-    });
-  }
-
-  init() {
-    if (!this.tableId && this.options.storage) {
-      console.warn('TablePersistentState: table has no id, storage disabled');
+        try {
+            return JSON.parse(localStorage.getItem(this.storageKey));
+        } catch {
+            return null;
+        }
     }
 
-    this.restore();
-    this.bindEvents();
-  }
+    /* ---------- UI helpers ---------- */
+
+    clearIndicators() {
+        this.headers.forEach(th => {
+            th.classList.remove('sorted-asc', 'sorted-desc');
+            th.removeAttribute('aria-sort');
+        });
+    }
+
+    applyIndicator(th, direction) {
+        th.classList.add(direction === 'asc' ? 'sorted-asc' : 'sorted-desc');
+        th.setAttribute('aria-sort', direction);
+    }
+
+    toggleDirection(current) {
+        return current === 'asc' ? 'desc' : 'asc';
+    }
+
+    /* ---------- Sorting flow ---------- */
+
+    persistState(column, direction, th = null, persist = true, isrestore = false) {
+        if (th) {
+            this.clearIndicators();
+            this.applyIndicator(th, direction);
+        }
+
+        if (persist) {
+            this.saveState(column, direction);
+        }
+
+        if (typeof this.options.onPersist === 'function') {
+            this.options.onPersist({
+                table: this.table,
+                column,
+                direction,
+                isrestore
+            });
+        }
+    }
+
+    /* ---------- Init ---------- */
+
+    restore() {
+        const saved = this.loadState() || this.options.defaultSort;
+        if (!saved) return;
+
+        const th = this.table.querySelector(
+            `[data-key="${saved.column}"]`
+        );
+
+        if (th) {
+            this.persistState(saved.column, saved.direction, th, false, true);
+        }
+    }
+
+    bindEvents() {
+        this.headers.forEach(th => {
+            th.addEventListener('click', () => {
+                const column = th.dataset.key;
+                const isAsc = th.classList.contains('sorted-asc');
+                const direction = this.toggleDirection(isAsc ? 'asc' : 'desc');
+
+                this.persistState(column, direction, th);
+            });
+        });
+    }
+
+    init() {
+        if (!this.tableId && this.options.storage) {
+            console.warn('TablePersistentState: table has no id, storage disabled');
+        }
+
+        this.restore();
+        this.bindEvents();
+    }
 }

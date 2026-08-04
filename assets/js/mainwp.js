@@ -134,36 +134,18 @@ let mainwp_get_remove_calback = function (side_id) {
                                 'red'
                             );
                             return;
+                        default:
+                            feedback(
+                                'mainwp-message-zone',
+                                MainWP.I18n.t('The site has been removed. Please make sure that the MainWP Child plugin has been deactivated properly. You will be redirected to the Sites page right away.', 'mainwp'),
+                                'green'
+                            );
+                        }
 
-                switch (response?.result) {
-                    case 'SUCCESS':
-                    case 'REMOVED': // for demo sites.
-                        feedback(
-                            'mainwp-message-zone',
-                            MainWP.I18n.t('The site has been removed and the MainWP Child plugin has been disabled. You will be redirected to the Sites page right away.', 'mainwp'),
-                            'green'
-                        );
-                        break;
-
-                    case 'NOSITE':
-                        feedback(
-                            'mainwp-message-zone',
-                            MainWP.I18n.t('Site could not be removed. Please reload the page and try again.', 'mainwp'),
-                            'red'
-                        );
-                        return;
-
-                    default:
-                        feedback(
-                            'mainwp-message-zone',
-                            MainWP.I18n.t('The site has been removed. Please make sure that the MainWP Child plugin has been deactivated properly. You will be redirected to the Sites page right away.', 'mainwp'),
-                            'green'
-                        );
+                    setTimeout(function () {
+                        mainwp_forceReload('admin.php?page=managesites');
+                    }, 3000);
                 }
-
-                setTimeout(function () {
-                    mainwp_forceReload('admin.php?page=managesites');
-                }, 3000);
             },
             error: function (xhr, textStatus) {
                 if (textStatus === 'timeout') {

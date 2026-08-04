@@ -229,6 +229,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         mainwp_add_translation( $mainwpTranslations, 'is_activated_parent', esc_html__( '%1 could not be deleted. This theme is parent theme for the currently active theme.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'is_activated_theme', esc_html__( '%1 could not be deleted. This theme is active theme.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Change score changed. Click to review changes.', esc_html__( 'Change score changed. Click to review changes.', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Details: %1', esc_html__( 'Details: %1', 'mainwp' ) );
 
         return $mainwpTranslations;
     }
@@ -479,7 +480,6 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         static::check_rating_notice();
 
         static::render_browser_extensions_notice();
-
     }
 
     /**
@@ -790,9 +790,9 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                     <div class="header"><?php esc_html_e( 'Enjoying MainWP?', 'mainwp' ); ?></div>
                     <div>
                         <?php if ( $addons ) : ?>
-                        <?php esc_html_e( 'You\'ve been using MainWP for a while and it looks like you\'ve built a solid setup with add-ons.', 'mainwp' ); ?>
+                            <?php esc_html_e( 'You\'ve been using MainWP for a while and it looks like you\'ve built a solid setup with add-ons.', 'mainwp' ); ?>
                         <?php else : ?>
-                        <?php esc_html_e( 'You\'ve been using MainWP for a while.', 'mainwp' ); ?>
+                            <?php esc_html_e( 'You\'ve been using MainWP for a while.', 'mainwp' ); ?>
                         <?php endif; ?>
                     </div>
                     <div><?php esc_html_e( 'If MainWP has been helpful, would you mind leaving a quick review on WordPress.org? It helps others find the plugin and supports ongoing improvements.', 'mainwp' ); ?></div>

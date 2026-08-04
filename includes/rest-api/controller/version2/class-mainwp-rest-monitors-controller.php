@@ -1502,7 +1502,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
             ),
             'expected_status' => array(
                 'required'          => false,
-                'type'              => 'array',
+                'type'              => 'string',
                 'description'       => __( 'Expected HTTP status codes.', 'mainwp' ),
                 'sanitize_callback' => array( $this, 'sanitize_expected_status_text_field' ),
                 'validate_callback' => array( $this, 'settings_validate_expected_status_param' ),

@@ -123,25 +123,19 @@ let mainwp_get_remove_calback = function (side_id) {
                         );
                         return;
                     }
-                    const message = MainWP.I18n.t('An unexpected error occurred. Please reload the page and try again.');
                     feedback(
                         'mainwp-message-zone',
-                        message + (error_msg ? ' ' + error_msg : '' ),
+                        MainWP.I18n.t('The site has been removed. Please make sure that the MainWP Child plugin has been deactivated properly. You will be redirected to the Sites page right away.'),
                         'red'
                     );
-                    return;
-                }
-
-                if (!removed_site) {
+                } else if (!removed_site) {
                     feedback(
                         'mainwp-message-zone',
                         msg_not_removed,
                         'red'
                     );
                     return;
-                }
-
-                if (response?.error) {
+                } else if (response?.error) {
                     let message = MainWP.I18n.t('The site has been removed. Please make sure that the MainWP Child plugin has been deactivated properly. You will be redirected to the Sites page right away.');
                     if (error_msg) {
                         message += ' ' + error_msg;

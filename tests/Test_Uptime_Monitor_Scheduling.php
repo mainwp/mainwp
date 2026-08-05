@@ -7,515 +7,600 @@
 
 namespace MainWP\Dashboard\Tests;
 
+use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_DB_Uptime_Monitoring;
 use MainWP\Dashboard\MainWP_Uptime_Monitoring_Connect;
 use MainWP\Dashboard\MainWP_Uptime_Monitoring_Handle;
-use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_Uptime_Monitoring_Schedule;
 
 // phpcs:disable WordPress.Files.FileName.InvalidClassFileName
 
+/**
+ * Tests uptime monitor interval and confirmation-retry scheduling.
+ */
 class Test_Uptime_Monitor_Scheduling extends \WP_UnitTestCase {
 
-    const DOWN    = 0;
-    const UP      = 1;
-    const PENDING = 2;
-
-    /**
-     * Created site IDs for test.
-     *
-     * @var array
-     */
-    protected $created_site_ids = array();
-
-    /**
-     * Created site id for test.
-     *
-     * @var array
-     */
-    protected $site_id = 0;
-
-
-    /**
-     * Created monitor for test.
-     *
-     * @var array
-     */
-    protected $monitor = array();
-
-    /**
-     * Created monitor for test.
-     *
-     * @var array
-     */
-    protected $simulate_recent_test = '';
-
-    /**
-     * Hook most recent uptime response data.
-     *
-     * @var array
-     */
-    protected $most_recent_uptime_check_response = array();
-
-    /**
-     * Hook sending uptime notification object.
-     *
-     * @var array
-     */
-    protected $sending_uptime_notification_object = array();
-
-
-    /**
-     * Set up test environment.
-     *
-     * @return void
-     */
-    public function setUp(): void {
-        parent::setUp();
-
-        add_filter( 'mainwp_uptime_monitor_check_result', array( $this, 'hook_uptime_monitor_check_result' ), 10, 5 );
-        add_filter( 'mainwp_wp_mail_to', array( $this, 'hook_mainwp_wp_mail_to' ), 10, 5 );
-
-        $site_id = $this->create_test_site(
-            array(
-                'name' => 'Test Site',
-                'url'  => 'https://test-uptime-interval-scheduling.example.com/',
-            )
-        );
-
-        $this->created_site_ids[] = $site_id;
-        $this->create_test_monitor( $site_id );
-    }
-
-    /**
-     * Filters the uptime monitor check result.
-     *
-     * @param array $resp_info  Response information.
-     * @param array $data       Check response data.
-     * @param array $monitor    Monitor data.
-     * @param array $output     Check output.
-     * @param array $params     Additional parameters.
-     *
-     * @return array Modified response information.
-     */
-    public function hook_uptime_monitor_check_result( $resp_info, $data, $monitor, $output, $params ) {
-        if ( ! empty( $resp_info ) && is_array( $resp_info ) && $this->monitor && $monitor && $this->monitor->monitor_id === $monitor->monitor_id ) {
-            if ( 'runtest_1' === $this->simulate_recent_test ) {
-                // Simulate a response that triggers an uptime retry check in the next scheduled run.
-                $resp_info['http_code']                  = 0;
-                $this->most_recent_uptime_check_response[$monitor->monitor_id] = $resp_info;
-            } elseif ( 'runtest_2' === $this->simulate_recent_test ) {
-                // Simulate a response that triggers an uptime retry check in the next scheduled run.
-                $resp_info['http_code']                  = 200;
-                $resp_info['status']                     = static::DOWN;
-                $resp_info['retry']                     = 1; //  so it will do not set retry again.
-                $this->most_recent_uptime_check_response[$monitor->monitor_id] = $resp_info;
-            } elseif ( 'runtest_3' === $this->simulate_recent_test ) {
-                $resp_info['retry']                     = 1; //  so it will do not set retry again.
-                $this->most_recent_uptime_check_response[$monitor->monitor_id] = $resp_info;
-            }
-        }
-        return $resp_info;
-    }
-
-
-    /**
-     * Handles the `hook_mainwp_wp_mail_to` filter.
-     *
-     * @param string       $email           Recipient email address.
-     * @param string       $subject         Email subject.
-     * @param string       $mail_content    Email message content.
-     * @param string       $content_type    Email content type.
-     * @param object|mixed $object_sending  Object associated with the email being sent.
-     *
-     * @return string email.
-     */
-    public function hook_mainwp_wp_mail_to(
-        $email,
-        $subject,
-        $mail_content,
-        $content_type,
-        $object_sending
-    ) {
-        if ( ! empty( $object_sending ) ) {
-            if ( is_object( $object_sending ) && ! empty( $object_sending->monitor_id ) &&  $object_sending->monitor_id === $this->monitor->monitor_id ) {
-                $this->sending_uptime_notification_object = $object_sending;
-            } elseif ( is_array( $object_sending ) ) {
-                foreach ( $object_sending as $obj_status ) {
-                    if ( ! empty( $obj_status->monitor_id ) && $this->monitor->monitor_id === $obj_status->monitor_id ) {
-                        $this->sending_uptime_notification_object = $obj_status;
-
-
-                    }
-                }
-            }
-
-            if ( ! empty( $this->sending_uptime_notification_object ) ) {
-                return ''; // to prevent sending email.
-            }
-        }
-
-        return $email;
-    }
-
-
-    /**
-     * Tear down test environment.
-     *
-     * @return void
-     */
-    public function tearDown(): void {
-        global $wpdb;
-
-        // Get site IDs before deleting main records.
-        $site_ids = $this->created_site_ids;
-
-        // Clean up related tables for tracked site IDs.
-        if ( ! empty( $site_ids ) ) {
-            $ids_placeholder = implode( ',', array_map( 'intval', $site_ids ) );
-            $wpdb->query( "DELETE FROM {$wpdb->prefix}mainwp_wp_sync WHERE wpid IN ({$ids_placeholder})" );
-            $wpdb->query( "DELETE FROM {$wpdb->prefix}mainwp_wp_options WHERE wpid IN ({$ids_placeholder})" );
-            $wpdb->query( "DELETE FROM {$wpdb->prefix}mainwp_monitors WHERE wpid IN ({$ids_placeholder})" );
-        }
-
-        // Also clean by URL pattern (catches any sites not in created_site_ids).
-        $wpdb->query(
-            "DELETE FROM {$wpdb->prefix}mainwp_wp_sync
-			 WHERE wpid IN (SELECT id FROM {$wpdb->prefix}mainwp_wp WHERE url LIKE 'https://test-uptime-%')"
-        );
-        $wpdb->query(
-            "DELETE FROM {$wpdb->prefix}mainwp_wp_options
-			 WHERE wpid IN (SELECT id FROM {$wpdb->prefix}mainwp_wp WHERE url LIKE 'https://test-uptime-%')"
-        );
-
-        // Clean up test sites (main table - do this AFTER related tables).
-        $wpdb->query( "DELETE FROM {$wpdb->prefix}mainwp_wp WHERE url LIKE 'https://test-uptime-%'" );
-
-        parent::tearDown();
-    }
-
-
-    /**
-     * Tests the complete uptime monitoring scheduling flow, including:
-     *
-     * - Initial monitor scheduling.
-     * - Retry scheduling after a failed check.
-     * - Regular interval scheduling.
-     * - Heartbeat creation.
-     * - Notification scheduling and sending.
-     *
-     * @return void
-     */
-    public function test_monitor_is_scheduled_retried_and_notification_is_sent() {
-
-        $this->site_id = ! empty( $this->created_site_ids ) ? current( $this->created_site_ids ) : 0;
-        $site_id       = $this->site_id;
-        $this->monitor = MainWP_DB_Uptime_Monitoring::instance()->get_monitor_by( $site_id, 'issub', 0 );
-        $monitor_id    = $this->monitor ? $this->monitor->monitor_id : 0;
-
-        // Created site and monitor for testing.
-        $this->assertNotEmpty( $site_id, 'Site was not created.' );
-        $this->assertNotEmpty( $monitor_id, 'Monitor was not created.' );
-
-        $global_settings = MainWP_Uptime_Monitoring_Handle::get_default_monitoring_settings();
-
-        $global_settings['interval'] = 5; // mins.
-
-        // Get monitor for checking.
-        $time = mainwp_get_timestamp();
-
-        $params = array(
-            'main_counter_lasttime' => $time,
-            'global_settings'       => $global_settings,
-            'limit'                 => 10,
-            'dev_log_query'         => 0, // 1 for dev logs.
-        );
-
-        $monitors_found1 = MainWP_DB_Uptime_Monitoring::instance()->get_monitors_to_check_uptime( $params );
-
-        $this->assertNotEmpty(
-            $monitors_found1,
-            'Expected the monitor to be scheduled for its initial uptime check.'
-        );
-
-        $this->simulate_recent_test = 'runtest_1';
-        MainWP_Uptime_Monitoring_Connect::instance()->check_monitors( $monitors_found1, $global_settings );
-
-        $this->assertSame( 'runtest_1', $this->simulate_recent_test,  'The initial uptime check was not executed.' );
-        $this->assertNotEmpty( $this->most_recent_uptime_check_response, 'Expected an uptime check response after the initial check.' );
-        sleep( 1 );
-        $params = array(
-            'local_timestamp'       => $time + MINUTE_IN_SECONDS + 1, // simulate current time.
-            'main_counter_lasttime' => $time,
-            'global_settings'       => $global_settings,
-            'limit'                 => 10,
-            'dev_log_query'         => 0, // 1 for dev logs.
-        );
-
-        $monitors_found2 = MainWP_DB_Uptime_Monitoring::instance()->get_monitors_to_check_uptime( $params );
-
-        $this->simulate_recent_test = 'runtest_2';
-        MainWP_Uptime_Monitoring_Connect::instance()->check_monitors( $monitors_found2, $global_settings );
-
-        $this->assertNotEmpty( $monitors_found2, 'Expected the monitor to be scheduled for a retry.' );
-        $this->assertSame( 'runtest_2', $this->simulate_recent_test, 'The retry uptime check was not executed.' );
-        $this->assertNotEmpty( $this->most_recent_uptime_check_response, 'Expected an uptime check response after the retry.' );
-
-
-        sleep( 1 );
-        $params = array(
-            'local_timestamp'       => $time + 5 * MINUTE_IN_SECONDS + 1, // simulate current time.
-            'main_counter_lasttime' => $time + 5 * MINUTE_IN_SECONDS,
-            'global_settings'       => $global_settings,
-            'limit'                 => 10,
-            'dev_log_query'         => 0, // 1 for dev logs.
-        );
-
-        $monitors_found3 = MainWP_DB_Uptime_Monitoring::instance()->get_monitors_to_check_uptime( $params );
-
-        $this->simulate_recent_test = 'runtest_3';
-        MainWP_Uptime_Monitoring_Connect::instance()->check_monitors( $monitors_found3, $global_settings );
-
-        $this->assertNotEmpty( $monitors_found3, 'Expected the monitor to be scheduled for the regular interval check.' );
-        $this->assertNotEmpty( $this->most_recent_uptime_check_response, 'Monitor uptime response' );
-        $heartbeats = MainWP_DB_Uptime_Monitoring::instance()->get_heartbeat_data_for_incidents( $monitor_id );
-
-        $this->assertNotEmpty( $heartbeats, 'Expected heartbeat records to be created.' );
-        $last_heartbeat = MainWP_DB_Uptime_Monitoring::instance()->get_last_site_heartbeat( $site_id );
-
-        $this->assertNotEmpty( $last_heartbeat, 'Expected a latest heartbeat record.' );
-        $this->assertSame( 1, $last_heartbeat ? (int)$last_heartbeat->importance : 0, 'Expected the latest heartbeat importance to be 1.' );
-
-        $process_init = MainWP_DB_Uptime_Monitoring::instance()->get_uptime_notification_to_start_send( 50 );
-
-        $this->assertNotEmpty( $process_init, 'Expected a notification process to be created.' );
-
-        if ( is_array( $process_init ) && ! empty( $process_init ) ) {
-
-            foreach ( $process_init as $uptime_notice ) {
-                if ( ! empty( $uptime_notice->process_id ) ) {
-                    MainWP_DB::instance()->update_regular_process(
-                        array(
-                            'process_id'        => $uptime_notice->process_id,
-                            'dts_process_start' => $time, // set start time to current time, to continue processs.
-                        )
-                    );
-                }
-            }
-        }
-
-        $process_notices = MainWP_DB_Uptime_Monitoring::instance()->get_uptime_notification_to_continue_send( array( 'limit' => 3 ) );
-        $this->assertNotEmpty( $process_notices, 'Expected a notification process ready to continue sending.' );
-
-        if ( is_array( $process_notices ) && ! empty( $process_notices ) ) {
-            $simulate_params = array(
-                'local_time'     => $time,
-                'admin_email'    => 'admin-testing-uptime@local.com',
-                'email_settings' => array(
-                    'disable'    => 0,
-                    'recipients' => 'admin-testing-uptime@local.com',
-                    'subject'    => 'Uptime Monitoring Alert from your MainWP Dashboard',
-                    'heading'    => 'Uptime Monitoring',
-                ),
-            );
-            MainWP_Uptime_Monitoring_Schedule::instance()->send_uptime_notification_importance_status( $process_notices, $simulate_params );
-        }
-        $this->assertNotEmpty( $this->sending_uptime_notification_object,  'Expected an uptime notification to be sent.' );
-    }
-
-    /**
-     * Create a test site.
-     *
-     * Creates a site in mainwp_wp table and corresponding records in
-     * mainwp_wp_sync and mainwp_wp_options tables as needed.
-     *
-     * @param array $args Site properties.
-     * @return int Site ID.
-     */
-    protected function create_test_site( array $args = array() ): int {
-        global $wpdb;
-
-        // Extract values that go to other tables (not columns in mainwp_wp).
-        $verify_method = $args['verify_method'] ?? 1;
-        $version       = $args['version'] ?? '5.0.0';
-        $sync_errors   = $args['sync_errors'] ?? '';
-
-        // Remove non-column fields from args before merging.
-        unset( $args['verify_method'], $args['version'], $args['sync_errors'] );
-
-        // Defaults for mainwp_wp table columns only.
-        // Use current user ID if available, otherwise use 1.
-        $current_user_id = get_current_user_id();
-        $defaults        = array(
-            'userid'               => $current_user_id > 0 ? $current_user_id : 1,
-            'url'                  => 'https://test-uptime-' . wp_generate_uuid4() . '.example.com/',
-            'name'                 => 'Test Site',
-            'adminname'            => 'admin',
-            'pubkey'               => 'test-pubkey',
-            'privkey'              => 'test-privkey',
-            'ssl_version'          => 0,
-            'http_user'            => '',
-            'http_pass'            => '',
-            'suspended'            => 0,
-            'offline_check_result' => 1,
-            'client_id'            => 0,
-        );
-
-        // Format specifiers matching the column types.
-        $formats = array(
-            'userid'               => '%d',
-            'url'                  => '%s',
-            'name'                 => '%s',
-            'adminname'            => '%s',
-            'pubkey'               => '%s',
-            'privkey'              => '%s',
-            'ssl_version'          => '%d',
-            'http_user'            => '%s',
-            'http_pass'            => '%s',
-            'suspended'            => '%d',
-            'offline_check_result' => '%d',
-            'client_id'            => '%d',
-        );
-
-        $data = array_merge( $defaults, $args );
-
-        // Build format array in same order as data keys.
-        $format_array = array();
-        foreach ( array_keys( $data ) as $key ) {
-            $format_array[] = $formats[ $key ] ?? '%s';
-        }
-
-        $wpdb->insert(
-            $wpdb->prefix . 'mainwp_wp',
-            $data,
-            $format_array
-        );
-
-        $site_id                  = (int) $wpdb->insert_id;
-        $this->created_site_ids[] = $site_id;
-
-        // Store verify_method in options table.
-        $this->set_site_option( $site_id, 'verify_method', $verify_method );
-
-        // Create sync record with version and sync_errors.
-        $this->create_test_site_sync(
-            $site_id,
-            array(
-                'version'     => $version,
-                'sync_errors' => $sync_errors,
-            )
-        );
-
-        return $site_id;
-    }
-
-    /**
-     * Create a test site monitor.
-     *
-     * @param int   $site_id Site ID.
-     * @param array $args Monitor data.
-     * @return int Monitor ID.
-     */
-    protected function create_test_monitor( $site_id, $args = array() ): int {
-
-        $data = array(
-            'wpid'            => $site_id,
-            'active'          => 1,
-            'interval'        => -1, // 5 mins.
-            'timeout'         => -1,
-            'method'          => 'get',
-            'type'            => 'useglobal',
-            'up_status_codes' => 'useglobal',
-            'issub'           => 0, // primary monitor.
-        );
-
-        $data = array_merge( $data, $args );
-
-        global $wpdb;
-
-        $table = $wpdb->prefix . 'mainwp_monitors';
-
-        $wpdb->insert( $table, $data );
-
-        return $wpdb->insert_id;
-    }
-
-    /**
-     * Set a site option via MainWP's wp_options table.
-     *
-     * @param int    $site_id Site ID.
-     * @param string $option  Option name.
-     * @param mixed  $value   Option value.
-     * @return void
-     */
-    protected function set_site_option( int $site_id, string $option, $value ): void {
-        global $wpdb;
-
-        $table = $wpdb->prefix . 'mainwp_wp_options';
-
-        $exists = $wpdb->get_var(
-            $wpdb->prepare(
-                "SELECT COUNT(*) FROM {$table} WHERE wpid = %d AND name = %s",
-                $site_id,
-                $option
-            )
-        );
-
-        $serialized = is_scalar( $value ) ? $value : maybe_serialize( $value );
-
-        if ( $exists ) {
-            $wpdb->update(
-                $table,
-                array( 'value' => $serialized ),
-                array(
-                    'wpid' => $site_id,
-                    'name' => $option,
-                ),
-                array( '%s' ),
-                array( '%d', '%s' )
-            );
-        } else {
-            $wpdb->insert(
-                $table,
-                array(
-                    'wpid'  => $site_id,
-                    'name'  => $option,
-                    'value' => $serialized,
-                ),
-                array( '%d', '%s', '%s' )
-            );
-        }
-    }
-
-    /**
-     * Create a sync record for a test site.
-     *
-     * @param int   $site_id Site ID.
-     * @param array $args    Sync properties.
-     * @return void
-     */
-    protected function create_test_site_sync( int $site_id, array $args = array() ): void {
-        global $wpdb;
-
-        $defaults = array(
-            'wpid'        => $site_id,
-            'version'     => '5.0.0',
-            'sync_errors' => '',
-        );
-
-        $data         = array_merge( $defaults, $args );
-        $data['wpid'] = $site_id;
-
-        // Build format array dynamically to match $data keys/values.
-        $formats = array();
-        foreach ( $data as $value ) {
-            $formats[] = is_int( $value ) ? '%d' : '%s';
-        }
-
-        $wpdb->insert(
-            $wpdb->prefix . 'mainwp_wp_sync',
-            $data,
-            $formats
-        );
-    }
+	/**
+	 * Created site ID.
+	 *
+	 * @var int
+	 */
+	protected $site_id = 0;
+
+	/**
+	 * Created monitor ID.
+	 *
+	 * @var int
+	 */
+	protected $monitor_id = 0;
+
+	/**
+	 * Uptime notification captured before email delivery.
+	 *
+	 * @var object|false
+	 */
+	protected $sent_notification = false;
+
+	/**
+	 * Set up test fixtures.
+	 *
+	 * @return void
+	 */
+	public function setUp(): void {
+		parent::setUp();
+
+		add_filter( 'mainwp_wp_mail_to', array( $this, 'capture_uptime_notification' ), 10, 5 );
+
+		$this->site_id = $this->create_test_site(
+			array(
+				'name' => 'Test Site',
+				'url'  => 'https://test-uptime-interval-scheduling.example.com/',
+			)
+		);
+
+		$this->monitor_id = $this->create_test_monitor( $this->site_id );
+	}
+
+	/**
+	 * Clean up test fixtures and generated uptime data.
+	 *
+	 * @return void
+	 */
+	public function tearDown(): void {
+		global $wpdb;
+
+		remove_filter( 'mainwp_wp_mail_to', array( $this, 'capture_uptime_notification' ), 10 );
+
+		if ( $this->monitor_id ) {
+			MainWP_DB::instance()->delete_regular_process( false, $this->monitor_id, 'monitor', 'uptime_notification' );
+			MainWP_DB_Uptime_Monitoring::instance()->delete_monitor( array( 'monitor_id' => $this->monitor_id ) );
+		}
+
+		if ( $this->site_id ) {
+			$wpdb->delete( $wpdb->prefix . 'mainwp_wp_sync', array( 'wpid' => $this->site_id ), array( '%d' ) );
+			$wpdb->delete( $wpdb->prefix . 'mainwp_wp_options', array( 'wpid' => $this->site_id ), array( '%d' ) );
+			$wpdb->delete( $wpdb->prefix . 'mainwp_wp', array( 'id' => $this->site_id ), array( '%d' ) );
+		}
+
+		parent::tearDown();
+	}
+
+	/**
+	 * A healthy monitor using the global interval is not selected every minute.
+	 *
+	 * @return void
+	 */
+	public function test_healthy_monitor_honors_global_interval() {
+		$round_started_at = mainwp_get_timestamp();
+		$settings         = $this->get_global_settings( 5 );
+
+		$initial_monitors = $this->get_due_monitors( $settings, $round_started_at, $round_started_at );
+		$this->assert_monitor_selected( $initial_monitors, 'Expected the new monitor to be selected for its initial check.' );
+
+		$this->mark_monitor_started( $round_started_at );
+		$this->process_simulated_result( $this->get_monitor(), $settings, 200 );
+
+		$monitor = $this->get_monitor();
+		$this->assertSame( MainWP_Uptime_Monitoring_Connect::UP, (int) $monitor->last_status );
+		$this->assertSame( 0, (int) $monitor->dts_auto_monitoring_retry_time );
+
+		$one_minute_later = $this->get_due_monitors(
+			$settings,
+			(int) $monitor->dts_interval_lasttime + MINUTE_IN_SECONDS,
+			$round_started_at
+		);
+		$this->assert_monitor_not_selected( $one_minute_later, 'A healthy monitor must not be selected after one minute.' );
+
+		$five_minutes_later = $this->get_due_monitors(
+			$settings,
+			(int) $monitor->dts_interval_lasttime + 5 * MINUTE_IN_SECONDS + 1,
+			$round_started_at
+		);
+		$this->assert_monitor_selected( $five_minutes_later, 'Expected the monitor to become due after its five-minute global interval.' );
+
+		$settings['interval'] = 10;
+		$after_five_minutes   = $this->get_due_monitors(
+			$settings,
+			(int) $monitor->dts_interval_lasttime + 5 * MINUTE_IN_SECONDS + 1,
+			$round_started_at
+		);
+		$this->assert_monitor_not_selected( $after_five_minutes, 'Changing the global interval to ten minutes must defer the next check.' );
+
+		$after_ten_minutes = $this->get_due_monitors(
+			$settings,
+			(int) $monitor->dts_interval_lasttime + 10 * MINUTE_IN_SECONDS + 1,
+			$round_started_at
+		);
+		$this->assert_monitor_selected( $after_ten_minutes, 'Expected the monitor to become due after the updated ten-minute interval.' );
+	}
+
+	/**
+	 * An individual interval overrides the global interval.
+	 *
+	 * @return void
+	 */
+	public function test_healthy_monitor_honors_individual_interval() {
+		$round_started_at = mainwp_get_timestamp();
+		$settings         = $this->get_global_settings( 5 );
+
+		MainWP_DB_Uptime_Monitoring::instance()->update_wp_monitor(
+			array(
+				'monitor_id' => $this->monitor_id,
+				'active'     => 1,
+				'interval'   => 10,
+			)
+		);
+
+		$initial_monitors = $this->get_due_monitors( $settings, $round_started_at, $round_started_at );
+		$this->assert_monitor_selected( $initial_monitors, 'Expected the individual monitor to be selected for its initial check.' );
+
+		$this->mark_monitor_started( $round_started_at );
+		$this->process_simulated_result( $this->get_monitor(), $settings, 200 );
+
+		$monitor = $this->get_monitor();
+
+		$after_global_interval = $this->get_due_monitors(
+			$settings,
+			(int) $monitor->dts_interval_lasttime + 5 * MINUTE_IN_SECONDS + 1,
+			$round_started_at
+		);
+		$this->assert_monitor_not_selected( $after_global_interval, 'The five-minute global interval must not override the ten-minute individual interval.' );
+
+		$after_individual_interval = $this->get_due_monitors(
+			$settings,
+			(int) $monitor->dts_interval_lasttime + 10 * MINUTE_IN_SECONDS + 1,
+			$round_started_at
+		);
+		$this->assert_monitor_selected( $after_individual_interval, 'Expected the monitor to become due after its ten-minute individual interval.' );
+	}
+
+	/**
+	 * A persistent failure is retried once, becomes DOWN, and sends a notification.
+	 *
+	 * @return void
+	 */
+	public function test_failed_monitor_retries_and_sends_notification() {
+		$round_started_at = mainwp_get_timestamp();
+		$settings         = $this->get_global_settings( 5 );
+
+		$initial_monitors = $this->get_due_monitors( $settings, $round_started_at, $round_started_at );
+		$this->assert_monitor_selected( $initial_monitors, 'Expected the new monitor to be selected for its initial check.' );
+
+		$this->mark_monitor_started( $round_started_at );
+		$this->process_simulated_result( $this->get_monitor(), $settings, 0 );
+
+		$pending_monitor = $this->get_monitor();
+		$this->assertSame( MainWP_Uptime_Monitoring_Connect::PENDING, (int) $pending_monitor->last_status );
+		$this->assertSame( 1, (int) $pending_monitor->retries );
+		$this->assertGreaterThan( 0, (int) $pending_monitor->dts_auto_monitoring_retry_time );
+		$this->assertEmpty(
+			MainWP_DB::instance()->get_regular_process_by_item_id_type_slug( $this->monitor_id, 'monitor', 'uptime_notification' ),
+			'A PENDING result must not create a DOWN notification process.'
+		);
+
+		$retry_due_at = (int) $pending_monitor->dts_auto_monitoring_retry_time
+			+ (int) $pending_monitor->retry_interval * MINUTE_IN_SECONDS;
+
+		$before_retry = $this->get_due_monitors( $settings, $retry_due_at - 1, $round_started_at );
+		$this->assert_monitor_not_selected( $before_retry, 'The monitor must not be selected before its retry interval expires.' );
+
+		$retry_monitors = $this->get_due_monitors( $settings, $retry_due_at, $round_started_at );
+		$this->assert_monitor_selected( $retry_monitors, 'Expected the pending monitor to be selected when its retry interval expires.' );
+
+		$retry_monitor = $this->find_monitor( $retry_monitors );
+		$this->process_simulated_result( $retry_monitor, $settings, 0 );
+
+		$down_monitor = $this->get_monitor();
+		$this->assertSame( MainWP_Uptime_Monitoring_Connect::DOWN, (int) $down_monitor->last_status );
+		$this->assertSame( MainWP_Uptime_Monitoring_Connect::DOWN, (int) $down_monitor->last_main_status );
+		$this->assertSame( 1, (int) $down_monitor->retries );
+		$this->assertSame( 0, (int) $down_monitor->dts_auto_monitoring_retry_time );
+
+		$important_heartbeat = $this->get_latest_important_heartbeat();
+		$this->assertNotEmpty( $important_heartbeat, 'Expected a heartbeat for the confirmed failure.' );
+		$this->assertSame( MainWP_Uptime_Monitoring_Connect::DOWN, (int) $important_heartbeat->status );
+		$this->assertSame( 1, (int) $important_heartbeat->importance, 'The confirmed DOWN transition must be marked important.' );
+
+		$this->send_pending_notification();
+
+		$this->assertNotEmpty( $this->sent_notification, 'Expected the confirmed DOWN notification to be sent.' );
+		$this->assertSame( $this->monitor_id, (int) $this->sent_notification->monitor_id );
+	}
+
+	/**
+	 * Capture the uptime notification before WordPress attempts email delivery.
+	 *
+	 * @param string       $email          Recipient email address.
+	 * @param string       $subject        Email subject.
+	 * @param string       $mail_content   Email message content.
+	 * @param string       $content_type   Email content type.
+	 * @param object|array $object_sending Notification context.
+	 *
+	 * @return string Filtered recipient email address.
+	 */
+	public function capture_uptime_notification( $email, $subject, $mail_content, $content_type, $object_sending ) {
+		$objects = is_array( $object_sending ) ? $object_sending : array( $object_sending );
+
+		foreach ( $objects as $object ) {
+			if ( is_object( $object ) && isset( $object->monitor_id ) && $this->monitor_id === (int) $object->monitor_id ) {
+				$this->sent_notification = $object;
+				return '';
+			}
+		}
+
+		return $email;
+	}
+
+	/**
+	 * Return global monitoring settings for a test interval.
+	 *
+	 * @param int $interval Monitoring interval in minutes.
+	 *
+	 * @return array
+	 */
+	protected function get_global_settings( $interval ) {
+		$settings               = MainWP_Uptime_Monitoring_Handle::get_default_monitoring_settings();
+		$settings['active']     = 1;
+		$settings['interval']   = (int) $interval;
+		$settings['maxretries'] = 1;
+
+		return $settings;
+	}
+
+	/**
+	 * Get monitors that are due at a simulated timestamp.
+	 *
+	 * @param array $settings          Global monitoring settings.
+	 * @param int   $local_timestamp   Simulated current timestamp.
+	 * @param int   $round_started_at  Current monitoring round timestamp.
+	 *
+	 * @return array
+	 */
+	protected function get_due_monitors( $settings, $local_timestamp, $round_started_at ) {
+		return MainWP_DB_Uptime_Monitoring::instance()->get_monitors_to_check_uptime(
+			array(
+				'local_timestamp'       => (int) $local_timestamp,
+				'main_counter_lasttime' => (int) $round_started_at,
+				'global_settings'       => $settings,
+				'limit'                 => 10,
+				'dev_log_query'         => 0,
+			)
+		);
+	}
+
+	/**
+	 * Mark the fixture monitor as started, matching cron_uptime_check().
+	 *
+	 * @param int $round_started_at Monitoring round timestamp.
+	 *
+	 * @return void
+	 */
+	protected function mark_monitor_started( $round_started_at ) {
+		MainWP_DB_Uptime_Monitoring::instance()->update_wp_monitor(
+			array(
+				'monitor_id'                => $this->monitor_id,
+				'dts_auto_monitoring_start' => (int) $round_started_at,
+			)
+		);
+	}
+
+	/**
+	 * Process a deterministic uptime response without making a network request.
+	 *
+	 * @param object $monitor         Monitor object.
+	 * @param array  $settings        Global monitoring settings.
+	 * @param int    $http_code       Simulated HTTP response code.
+	 *
+	 * @return array
+	 */
+	protected function process_simulated_result( $monitor, $settings, $http_code ) {
+		$start  = microtime( true );
+		$output = new \stdClass();
+
+		$output->global_settings = $settings;
+		$output->requests_info   = array(
+			$monitor->monitor_id => array(
+				'http_code'        => (int) $http_code,
+				'http_error'       => '',
+				'down_count'       => 0,
+				'retry'            => 0,
+				'is_pending'       => 0,
+				'start'            => $start,
+				'end'              => $start + 0.01,
+				'use_monitor_type' => 'http',
+				'use_method'       => 'head',
+				'use_timeout'      => 60,
+			),
+		);
+
+		return MainWP_Uptime_Monitoring_Connect::instance()->handle_response_fetch_uptime(
+			'',
+			$monitor,
+			$output,
+			array( 'ignore_compatible_save' => 1 )
+		);
+	}
+
+	/**
+	 * Start and send the pending uptime notification.
+	 *
+	 * @return void
+	 */
+	protected function send_pending_notification() {
+		$local_time   = mainwp_get_timestamp();
+		$process_init = MainWP_DB_Uptime_Monitoring::instance()->get_uptime_notification_to_start_send( 50 );
+		$started      = false;
+
+		$this->assertNotEmpty( $process_init, 'Expected a notification process to be created.' );
+
+		foreach ( $process_init as $uptime_notice ) {
+			if ( (int) $uptime_notice->monitor_id !== $this->monitor_id || empty( $uptime_notice->process_id ) ) {
+				continue;
+			}
+
+			MainWP_DB::instance()->update_regular_process(
+				array(
+					'process_id'        => $uptime_notice->process_id,
+					'dts_process_start' => $local_time,
+				)
+			);
+			$started = true;
+		}
+
+		$this->assertTrue( $started, 'Expected the fixture notification process to be started.' );
+
+		$process_notices = MainWP_DB_Uptime_Monitoring::instance()->get_uptime_notification_to_continue_send(
+			array(
+				'limit'      => 3,
+				'monitor_id' => $this->monitor_id,
+			)
+		);
+		$this->assertNotEmpty( $process_notices, 'Expected a notification process ready to send.' );
+
+		MainWP_Uptime_Monitoring_Schedule::instance()->send_uptime_notification_importance_status(
+			$process_notices,
+			array(
+				'local_time'     => $local_time,
+				'admin_email'    => 'admin-testing-uptime@local.com',
+				'email_settings' => array(
+					'disable'    => 0,
+					'recipients' => 'admin-testing-uptime@local.com',
+					'subject'    => 'Uptime Monitoring Alert from your MainWP Dashboard',
+					'heading'    => 'Uptime Monitoring',
+				),
+			)
+		);
+	}
+
+	/**
+	 * Get the fixture monitor from the database.
+	 *
+	 * @return object
+	 */
+	protected function get_monitor() {
+		return MainWP_DB_Uptime_Monitoring::instance()->get_monitor_by( false, 'monitor_id', $this->monitor_id );
+	}
+
+	/**
+	 * Get the newest important heartbeat deterministically.
+	 *
+	 * @return object|null
+	 */
+	protected function get_latest_important_heartbeat() {
+		global $wpdb;
+
+		return $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT * FROM {$wpdb->prefix}mainwp_monitor_heartbeat WHERE monitor_id = %d AND importance = 1 ORDER BY heartbeat_id DESC LIMIT 1",
+				$this->monitor_id
+			)
+		);
+	}
+
+	/**
+	 * Find the fixture monitor in a selection result.
+	 *
+	 * @param array $monitors Selected monitors.
+	 *
+	 * @return object|false
+	 */
+	protected function find_monitor( $monitors ) {
+		foreach ( $monitors as $monitor ) {
+			if ( $this->monitor_id === (int) $monitor->monitor_id ) {
+				return $monitor;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Assert that the fixture monitor was selected.
+	 *
+	 * @param array  $monitors Selected monitors.
+	 * @param string $message  Assertion message.
+	 *
+	 * @return void
+	 */
+	protected function assert_monitor_selected( $monitors, $message ) {
+		$this->assertNotFalse( $this->find_monitor( $monitors ), $message );
+	}
+
+	/**
+	 * Assert that the fixture monitor was not selected.
+	 *
+	 * @param array  $monitors Selected monitors.
+	 * @param string $message  Assertion message.
+	 *
+	 * @return void
+	 */
+	protected function assert_monitor_not_selected( $monitors, $message ) {
+		$this->assertFalse( $this->find_monitor( $monitors ), $message );
+	}
+
+	/**
+	 * Create a test site.
+	 *
+	 * @param array $args Site properties.
+	 *
+	 * @return int
+	 */
+	protected function create_test_site( $args = array() ) {
+		global $wpdb;
+
+		$verify_method = $args['verify_method'] ?? 1;
+		$version       = $args['version'] ?? '5.0.0';
+		$sync_errors   = $args['sync_errors'] ?? '';
+
+		unset( $args['verify_method'], $args['version'], $args['sync_errors'] );
+
+		$defaults = array(
+			'userid'               => max( 1, get_current_user_id() ),
+			'url'                  => 'https://test-uptime-' . wp_generate_uuid4() . '.example.com/',
+			'name'                 => 'Test Site',
+			'adminname'            => 'admin',
+			'pubkey'               => 'test-pubkey',
+			'privkey'              => 'test-privkey',
+			'ssl_version'          => 0,
+			'http_user'            => '',
+			'http_pass'            => '',
+			'suspended'            => 0,
+			'offline_check_result' => 1,
+			'client_id'            => 0,
+		);
+
+		$formats = array(
+			'userid'               => '%d',
+			'url'                  => '%s',
+			'name'                 => '%s',
+			'adminname'            => '%s',
+			'pubkey'               => '%s',
+			'privkey'              => '%s',
+			'ssl_version'          => '%d',
+			'http_user'            => '%s',
+			'http_pass'            => '%s',
+			'suspended'            => '%d',
+			'offline_check_result' => '%d',
+			'client_id'            => '%d',
+		);
+
+		$data         = array_merge( $defaults, $args );
+		$format_array = array();
+
+		foreach ( array_keys( $data ) as $key ) {
+			$format_array[] = $formats[ $key ] ?? '%s';
+		}
+
+		$wpdb->insert( $wpdb->prefix . 'mainwp_wp', $data, $format_array );
+		$site_id = (int) $wpdb->insert_id;
+
+		$this->set_site_option( $site_id, 'verify_method', $verify_method );
+		$this->create_test_site_sync(
+			$site_id,
+			array(
+				'version'     => $version,
+				'sync_errors' => $sync_errors,
+			)
+		);
+
+		return $site_id;
+	}
+
+	/**
+	 * Create a test monitor.
+	 *
+	 * @param int   $site_id Site ID.
+	 * @param array $args    Monitor properties.
+	 *
+	 * @return int
+	 */
+	protected function create_test_monitor( $site_id, $args = array() ) {
+		global $wpdb;
+
+		$data = array_merge(
+			array(
+				'wpid'            => $site_id,
+				'active'          => -1,
+				'interval'        => -1,
+				'maxretries'      => -1,
+				'retry_interval'  => 1,
+				'timeout'         => -1,
+				'method'          => 'get',
+				'type'            => 'useglobal',
+				'up_status_codes' => 'useglobal',
+				'issub'           => 0,
+			),
+			$args
+		);
+
+		$wpdb->insert( $wpdb->prefix . 'mainwp_monitors', $data );
+
+		return (int) $wpdb->insert_id;
+	}
+
+	/**
+	 * Set a MainWP site option.
+	 *
+	 * @param int    $site_id Site ID.
+	 * @param string $option  Option name.
+	 * @param mixed  $value   Option value.
+	 *
+	 * @return void
+	 */
+	protected function set_site_option( $site_id, $option, $value ) {
+		global $wpdb;
+
+		$wpdb->insert(
+			$wpdb->prefix . 'mainwp_wp_options',
+			array(
+				'wpid'  => $site_id,
+				'name'  => $option,
+				'value' => is_scalar( $value ) ? $value : maybe_serialize( $value ),
+			),
+			array( '%d', '%s', '%s' )
+		);
+	}
+
+	/**
+	 * Create a MainWP site sync record.
+	 *
+	 * @param int   $site_id Site ID.
+	 * @param array $args    Sync properties.
+	 *
+	 * @return void
+	 */
+	protected function create_test_site_sync( $site_id, $args = array() ) {
+		global $wpdb;
+
+		$data = array_merge(
+			array(
+				'wpid'        => $site_id,
+				'version'     => '5.0.0',
+				'sync_errors' => '',
+			),
+			$args
+		);
+
+		$wpdb->insert( $wpdb->prefix . 'mainwp_wp_sync', $data, array( '%d', '%s', '%s' ) );
+	}
 }

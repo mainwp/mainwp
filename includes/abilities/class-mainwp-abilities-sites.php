@@ -342,7 +342,8 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                     'type'        => 'array',
                     'description' => __( 'Site IDs to sync. Empty array means all sites.', 'mainwp' ),
                     'items'       => array(
-                        'type' => 'integer',
+                        'type'    => 'integer',
+                        'minimum' => 1,
                     ),
                     'default'     => array(),
                 ),
@@ -350,7 +351,8 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                     'type'        => 'array',
                     'description' => __( 'Site IDs to exclude from sync.', 'mainwp' ),
                     'items'       => array(
-                        'type' => 'integer',
+                        'type'    => 'integer',
+                        'minimum' => 1,
                     ),
                     'default'     => array(),
                 ),
@@ -859,10 +861,35 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
      * @return array|\WP_Error
      */
     public static function execute_sync_sites( $input ) { // phpcs:ignore -- NOSONAR - complexity method.
-        $input               = is_array( $input ) ? $input : array();
-        $site_ids            = isset( $input['site_ids'] ) && is_array( $input['site_ids'] )
+        $input = is_array( $input ) ? $input : array();
+
+        // Core schema validation coerce-accepts scalars for type:array but hands the raw
+        // value through; a non-array must not fall into the all-sites branch below.
+        foreach ( array( 'site_ids', 'site_ids_or_domains', 'exclude_ids' ) as $array_key ) {
+            if ( array_key_exists( $array_key, $input ) && ! is_array( $input[ $array_key ] ) ) {
+                return new \WP_Error(
+                    'mainwp_invalid_input',
+                    __( 'The site_ids, site_ids_or_domains, and exclude_ids parameters must be arrays of site IDs or domains.', 'mainwp' ),
+                    array( 'status' => 400 )
+                );
+            }
+        }
+
+        $site_ids = isset( $input['site_ids'] ) && is_array( $input['site_ids'] )
             ? array_values( array_filter( array_map( 'absint', $input['site_ids'] ) ) )
             : array();
+
+        // A provided list whose ids all filter out (e.g. [0]) must not net out to
+        // the all-sites branch. Schema minimum:1 covers validated paths; this covers
+        // direct callback invocation.
+        if ( ! empty( $input['site_ids'] ) && empty( $site_ids ) ) {
+            return new \WP_Error(
+                'mainwp_invalid_input',
+                __( 'The site_ids parameter contains no valid site IDs.', 'mainwp' ),
+                array( 'status' => 400 )
+            );
+        }
+
         $site_ids_or_domains = isset( $input['site_ids_or_domains'] ) && is_array( $input['site_ids_or_domains'] )
             ? $input['site_ids_or_domains']
             : array();
@@ -4176,7 +4203,18 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
     public static function execute_reconnect_sites( $input ) { // phpcs:ignore -- NOSONAR - complexity.
         $input = MainWP_Abilities_Util::normalize_input( $input );
 
-        $identifiers = isset( $input['site_ids_or_domains'] ) && is_array( $input['site_ids_or_domains'] ) ? $input['site_ids_or_domains'] : array();
+        // Core schema validation coerce-accepts scalars for type:array but hands the raw
+        // value through; a non-array must not fall into the all-sites branch below.
+        // array_key_exists, not isset: an explicit null is a present non-array too.
+        if ( array_key_exists( 'site_ids_or_domains', $input ) && ! is_array( $input['site_ids_or_domains'] ) ) {
+            return new \WP_Error(
+                'mainwp_invalid_input',
+                __( 'The site_ids_or_domains parameter must be an array of site IDs or domains.', 'mainwp' ),
+                array( 'status' => 400 )
+            );
+        }
+
+        $identifiers = isset( $input['site_ids_or_domains'] ) ? $input['site_ids_or_domains'] : array();
 
         // If empty, get all sites for current user.
         if ( empty( $identifiers ) ) {
@@ -4299,7 +4337,18 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
     public static function execute_disconnect_sites( $input ) {
         $input = MainWP_Abilities_Util::normalize_input( $input );
 
-        $identifiers = isset( $input['site_ids_or_domains'] ) && is_array( $input['site_ids_or_domains'] ) ? $input['site_ids_or_domains'] : array();
+        // Core schema validation coerce-accepts scalars for type:array but hands the raw
+        // value through; a non-array must not fall into the all-sites branch below.
+        // array_key_exists, not isset: an explicit null is a present non-array too.
+        if ( array_key_exists( 'site_ids_or_domains', $input ) && ! is_array( $input['site_ids_or_domains'] ) ) {
+            return new \WP_Error(
+                'mainwp_invalid_input',
+                __( 'The site_ids_or_domains parameter must be an array of site IDs or domains.', 'mainwp' ),
+                array( 'status' => 400 )
+            );
+        }
+
+        $identifiers = isset( $input['site_ids_or_domains'] ) ? $input['site_ids_or_domains'] : array();
 
         // If empty, get all sites for current user.
         if ( empty( $identifiers ) ) {
@@ -4404,7 +4453,18 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
     public static function execute_check_sites( $input ) { // phpcs:ignore -- NOSONAR - complexity.
         $input = MainWP_Abilities_Util::normalize_input( $input );
 
-        $identifiers = isset( $input['site_ids_or_domains'] ) && is_array( $input['site_ids_or_domains'] ) ? $input['site_ids_or_domains'] : array();
+        // Core schema validation coerce-accepts scalars for type:array but hands the raw
+        // value through; a non-array must not fall into the all-sites branch below.
+        // array_key_exists, not isset: an explicit null is a present non-array too.
+        if ( array_key_exists( 'site_ids_or_domains', $input ) && ! is_array( $input['site_ids_or_domains'] ) ) {
+            return new \WP_Error(
+                'mainwp_invalid_input',
+                __( 'The site_ids_or_domains parameter must be an array of site IDs or domains.', 'mainwp' ),
+                array( 'status' => 400 )
+            );
+        }
+
+        $identifiers = isset( $input['site_ids_or_domains'] ) ? $input['site_ids_or_domains'] : array();
 
         // If empty, get all sites for current user.
         if ( empty( $identifiers ) ) {
@@ -4535,7 +4595,18 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
     public static function execute_suspend_sites( $input ) {
         $input = MainWP_Abilities_Util::normalize_input( $input );
 
-        $identifiers = isset( $input['site_ids_or_domains'] ) && is_array( $input['site_ids_or_domains'] ) ? $input['site_ids_or_domains'] : array();
+        // Core schema validation coerce-accepts scalars for type:array but hands the raw
+        // value through; a non-array must not fall into the all-sites branch below.
+        // array_key_exists, not isset: an explicit null is a present non-array too.
+        if ( array_key_exists( 'site_ids_or_domains', $input ) && ! is_array( $input['site_ids_or_domains'] ) ) {
+            return new \WP_Error(
+                'mainwp_invalid_input',
+                __( 'The site_ids_or_domains parameter must be an array of site IDs or domains.', 'mainwp' ),
+                array( 'status' => 400 )
+            );
+        }
+
+        $identifiers = isset( $input['site_ids_or_domains'] ) ? $input['site_ids_or_domains'] : array();
 
         // If empty, get all sites for current user.
         if ( empty( $identifiers ) ) {

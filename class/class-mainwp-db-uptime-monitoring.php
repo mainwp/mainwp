@@ -498,7 +498,8 @@ KEY idx_wpid_issub (wpid, issub)";
 
         $params = apply_filters( 'mainwp_uptime_monitoring_get_monitors_to_check_params', $params );
 
-        $local_timestamp  = mainwp_get_timestamp();
+        // support test case.
+        $local_timestamp  = isset( $params['local_timestamp'] ) ? (int) ( $params['local_timestamp'] ) : mainwp_get_timestamp();
         $lasttime_counter = isset( $params['main_counter_lasttime'] ) ? intval( $params['main_counter_lasttime'] ) : 0;
         $glo_settings     = isset( $params['global_settings'] ) && is_array( $params['global_settings'] ) ? $params['global_settings'] : array();
         $limit            = isset( $params['limit'] ) ? intval( $params['limit'] ) : 10;
@@ -539,22 +540,44 @@ KEY idx_wpid_issub (wpid, issub)";
             'view' => 'ping_view',
         );
 
-        $and_active = ' AND ( mo.active = 1 OR ( mo.active = -1 AND 1 = ' . $glo_active . ') ) ';
-
-        // interval = 0, use global settings.
-        $and_interval_run = ' ( mo.interval != -1 AND mo.dts_interval_lasttime + mo.interval * 60 < ' . intval( $local_timestamp ) . ' ) OR ( mo.interval = -1 AND mo.dts_interval_lasttime + ' . intval( $glo_interval ) . ' * 60 < ' . intval( $local_timestamp ) . ') ';
-        $and_interval_run = ' ( ' . $and_interval_run . ' )';
-
-        $and_main_round_run = ' ( mo.dts_auto_monitoring_start = 0  OR (  mo.dts_auto_monitoring_start < ' . intval( $lasttime_counter ) . ' ) ) '; // To ensure the check request is not completed.
-
-        $and_retry_run  = '  ( ( mo.maxretries != 0 AND mo.maxretries != -1 AND mo.retries < mo.maxretries ) OR ( mo.maxretries = -1 AND 0 != ' . intval( $glo_maxretries ) . ' AND mo.retries < ' . intval( $glo_maxretries ) . ' ) ) AND '; // in case maxretries >= 1, validate the maximum allowed retries.
-        $and_retry_run .= ' ( mo.dts_auto_monitoring_retry_time + mo.retry_interval * 60 <= ' . intval( $local_timestamp ) . ' ) '; // if retry is set, do it after retry_interval mins.
-        $and_retry_run  = ' ( ' . $and_retry_run . ' )';
-
-        $where .= $and_active . ' AND ( ' . $and_interval_run . ' OR ' . $and_main_round_run . ' OR ' . $and_retry_run . ' ) ';
+        $where .= '
+            AND ( mo.active = 1 OR ( mo.active = -1 AND 1 = %d ) )
+            AND (
+                (
+                    ( mo.interval != -1 AND mo.dts_interval_lasttime + mo.interval * 60 < %d )
+                    OR
+                    ( mo.interval = -1 AND mo.dts_interval_lasttime + %d * 60 < %d )
+                )
+                OR
+                ( mo.dts_auto_monitoring_start = 0 OR mo.dts_auto_monitoring_start < %d )
+                OR
+                (
+                    (
+                        ( mo.maxretries != 0 AND mo.maxretries != -1 AND mo.retries <= mo.maxretries )
+                        OR
+                        ( mo.maxretries = -1 AND 0 != %d AND mo.retries <= %d )
+                    )
+                    AND
+                    (
+                        mo.dts_auto_monitoring_retry_time != 0
+                        AND mo.dts_auto_monitoring_retry_time + mo.retry_interval * 60 <= %d
+                    )
+                )
+            )
+        ';
 
         $_params['limit']        = $limit;
-        $_params['custom_where'] = $where;
+        $_params['custom_where'] = $this->wpdb->prepare(
+            $where,
+            $glo_active,
+            $local_timestamp,
+            $glo_interval,
+            $local_timestamp,
+            $lasttime_counter,
+            $glo_maxretries,
+            $glo_maxretries,
+            $local_timestamp
+        );
         $_params['order_by']     = ' mo.dts_auto_monitoring_time ASC ';
 
         $sql = $this->get_sql_monitor( $_params );

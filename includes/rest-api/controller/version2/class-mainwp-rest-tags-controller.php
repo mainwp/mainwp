@@ -473,9 +473,9 @@ class MainWP_Rest_Tags_Controller extends MainWP_REST_Controller{ //phpcs:ignore
                     'context'           => array( 'view', 'edit' ),
                 ),
                 'count_sites' => array(
-                    'type'              => 'absint',
+                    'type'              => 'integer',
                     'description'       => __( 'Tag Sites.', 'mainwp' ),
-                    'sanitize_callback' => 'sanitize_hex_color',
+                    'sanitize_callback' => 'absint',
                     'validate_callback' => 'rest_validate_request_arg',
                     'context'           => array( 'view' ),
                 ),

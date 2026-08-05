@@ -234,7 +234,7 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
             );
             if ( ! empty( $mail_content ) ) {
                 MainWP_Logger::instance()->log_uptime_notice( 'Uptime notification is being sent for admin.' );
-                MainWP_Notification::send_websites_uptime_monitoring( $admin_email, $subject, $mail_content, $plain_text );
+                MainWP_Notification::send_websites_uptime_monitoring( $admin_email, $subject, $mail_content, $plain_text, $websites );
                 usleep( 100000 );
             }
             do_action( 'mainwp_after_notice_sites_uptime_monitoring_admin', $websites );

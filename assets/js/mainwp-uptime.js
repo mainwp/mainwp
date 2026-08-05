@@ -51,7 +51,7 @@ globalThis.mainwp_uptime_monitor_check_now = function (itemsData) {
   let numOfItems = itemsData.length;
   jQuery('#mainwp-sync-sites-modal #sync-sites-status').html('');
   mainwpPopup('#mainwp-sync-sites-modal').init({
-    title: __('Checking Uptime Status'),
+    title: MainWP.I18n.t('Checking Uptime Status'),
     progressMax: numOfItems,
     statusText: 'checked',
     callback: function () {
@@ -69,7 +69,7 @@ let uptime_monitoring_prepare_items_rows = function (itemsData) {
     jQuery("#sync-sites-status").append(`
       <div class="item">
           <div class="right floated content">
-              <div class="running-item-status" itemid="` + item.id + `" siteid="` + item.siteid + `" niceurl="` + item.niceurl + `"><span data-position="left center" data-inverted="" data-tooltip="` + __('Pending') + `"><i class="clock outline icon"></i></span></div>
+              <div class="running-item-status" itemid="` + item.id + `" siteid="` + item.siteid + `" niceurl="` + item.niceurl + `"><span data-position="left center" data-inverted="" data-tooltip="` + MainWP.I18n.t('Pending') + `"><i class="clock outline icon"></i></span></div>
           </div>
           <div class="content">` + item.url + `</div>
     </div>`);
@@ -146,7 +146,7 @@ let uptime_monitoring_check_next = function () {
 
   mainwpVars.currentItem++;
 
-  mainwp_uptime_monitoring_check_set_item_status(itemId, '<span data-inverted="" data-position="left center" data-tooltip="' + __('Checking uptime status...', 'mainwp') + '"><i class="sync alternate loading icon"></i></span>');
+  mainwp_uptime_monitoring_check_set_item_status(itemId, '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Checking uptime status...', 'mainwp') + '"><i class="sync alternate loading icon"></i></span>');
   let data = mainwp_secure_data({
     action: 'mainwp_uptime_monitoring_uptime_check',
     mo_id: itemId,
@@ -167,7 +167,7 @@ let uptime_monitoring_check_next_int = function (itemId, data, errors) {
           let extErr = response.error;
           mainwp_uptime_monitoring_check_set_item_status(pItemId, '<span data-inverted="" data-position="left center" data-tooltip="' + extErr + '"><i class="exclamation red icon"></i></span>');
         } else {
-          mainwp_uptime_monitoring_check_set_item_status(pItemId, '<span data-inverted="" data-position="left center" data-tooltip="' + __('Checking process completed successfully.', 'mainwp') + '"><i class="check green icon"></i></span>', true);
+          mainwp_uptime_monitoring_check_set_item_status(pItemId, '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Checking process completed successfully.', 'mainwp') + '"><i class="check green icon"></i></span>', true);
         }
         uptime_monitoring_check_done();
       }
@@ -175,7 +175,7 @@ let uptime_monitoring_check_next_int = function (itemId, data, errors) {
     error: function (pItemId, pData, pErrors) {
       return function () {
         if (pErrors > 5) {
-          mainwp_uptime_monitoring_check_set_item_status(pItemId, '<span data-inverted="" data-position="left center" data-tooltip="' + __('Process timed out. Please try again.', 'mainwp') + '"><i class="exclamation yellow icon"></i></span>');
+          mainwp_uptime_monitoring_check_set_item_status(pItemId, '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Process timed out. Please try again.', 'mainwp') + '"><i class="exclamation yellow icon"></i></span>');
           uptime_monitoring_check_done();
         } else {
           pErrors++;

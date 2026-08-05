@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 7.0.2
 Requires PHP: 7.4
-Stable tag: 6.1.5
+Stable tag: 6.1.6
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -150,6 +150,20 @@ Please report security bugs found in the source code of the MainWP plugin throug
 11. Dashboard Insights
 
 == Changelog ==
+
+= 6.1.6 - 8-5-2026 =
+
+* Fixed: Corrected Site Health calculations and REST API responses so health scores accurately reflect each site's status, including sites with missing, malformed, negative, or critical issue data.
+* Fixed: Corrected multiple REST API v2 schemas and pagination settings for automatic updates, uptime monitoring, expected status codes, tag site counts, and client custom fields, including support for the deprecated `pre_page` alias.
+* Fixed: Improved REST API validation and response handling to reject malformed settings, prevent PHP 8 errors and unintended batch operations, validate custom option names, and exclude sensitive or internal data from responses.
+* Fixed: Improved REST API validation so invalid monitoring values, unsupported enum formats, and unsupported batch update requests return appropriate errors.
+* Fixed: Ensured uptime monitors correctly report a DOWN status when no HTTP status code is received.
+* Fixed: Resolved an issue that could leave the site removal process stuck in the "Removing" state on some hosting environments.
+* Updated: Redesigned the "Connection Status" widget with tabbed filtering, live connection totals, paginated site details, in-widget reconnection, and more accurate staging site status reporting.
+* Updated: Improved uptime monitoring retry scheduling so retries occur only after a valid retry time has been set and the configured retry interval has elapsed.
+* Updated: Improved REST API pagination compatibility and expanded schemas for monitoring settings, update flags, expected statuses, and site counts.
+* Updated: Replaced the generic __() JavaScript translation function with a namespaced MainWP translation helper to prevent conflicts with other scripts.
+* Dev: Added the mainwp_add_site_top_navigation and mainwp_add_site_tabs_content hooks to support custom navigation and tab content on the "Add Site" screen.
 
 = 6.1.5 - 7-28-2026 =
 

@@ -82,7 +82,7 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
      * @param  bool $individual individual.
      * @return array
      */
-    public static function get_default_monitoring_settings( $individual ) {
+    public static function get_default_monitoring_settings( $individual = false ) {
         $default = array(
             'monitor_id'      => 0,
             'wpid'            => 0,

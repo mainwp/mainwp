@@ -90,12 +90,12 @@ let updatesoverview_updates_init_group_view = function () {
             jQuery(parent).find("[row-uid='" + uid + "']").next().remove(); // remove content according part
             jQuery(parent).find("[row-uid='" + uid + "']").remove(); // remove title according part
         } else {
-            jQuery(parent).find("[total-uid='" + uid + "']").html(total + ' ' + (total == 1 ? __('Update') : __('Updates')));
+            jQuery(parent).find("[total-uid='" + uid + "']").html(total + ' ' + (total == 1 ? MainWP.I18n.t('Update') : MainWP.I18n.t('Updates')));
             jQuery(parent).find("[total-uid='" + uid + "']").attr('sort-value', total);
         }
 
         if (can_update) {
-            jQuery(parent).find("[btn-all-uid='" + uid + "']").text(total == 1 ? __('Update') : __('Update All')).show();
+            jQuery(parent).find("[btn-all-uid='" + uid + "']").text(total == 1 ? MainWP.I18n.t('Update') : MainWP.I18n.t('Update All')).show();
         }
     });
 }
@@ -117,7 +117,7 @@ let updatesoverview_upgrade = function (id, obj) {
 
     updatesoverviewContinueAfterBackup = function (pId, pUpgradeElement) {
         return function () {
-            jQuery('.mainwp-wordpress-update[site_id="' + pId + '"] > td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Updating...', 'mainwp') + '"><i class="notched circle loading icon"></i></span> ' + __('Updating. Please wait...') + waiting_icon);
+            jQuery('.mainwp-wordpress-update[site_id="' + pId + '"] > td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Updating...', 'mainwp') + '"><i class="notched circle loading icon"></i></span> ' + MainWP.I18n.t('Updating. Please wait...') + waiting_icon);
             pUpgradeElement.val(1);
             let data = mainwp_secure_data({
                 action: 'mainwp_upgradewp',
@@ -132,7 +132,7 @@ let updatesoverview_upgrade = function (id, obj) {
                     }
                     let errIcon = '<i class="pause yellow icon"></i>';
                     if (response?.error?.errorCode == 'SUSPENDED_SITE') {
-                        errIcon = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Suspended site.') + '">' + errIcon + '</span>';
+                        errIcon = '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Suspended site.') + '">' + errIcon + '</span>';
                     }
                     jQuery('.mainwp-wordpress-update[site_id="' + pId + '"] > td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + err_msg + '">' + errIcon + '</span>');
                 } else {
@@ -151,7 +151,7 @@ let updatesoverview_upgrade = function (id, obj) {
 
     siteNames[id] = jQuery('.mainwp-wordpress-update[site_id="' + id + '"]').attr('site_name');
 
-    let msg = __('Are you sure you want to update the Wordpress core files on the selected site?');
+    let msg = MainWP.I18n.t('Are you sure you want to update the Wordpress core files on the selected site?');
     mainwp_confirm(msg, function () {
         return mainwp_updatesoverview_checkBackups(sitesToUpdate, siteNames);
     }, false, 1);
@@ -168,7 +168,7 @@ let updatesoverview_update_popup_init = function (data) {
     data = data || {};
     let settings = {
         allowMultiple: true,
-        statusText: __('updated'),
+        statusText: MainWP.I18n.t('updated'),
         callback: function () {
             mainwpVars.bulkTaskRunning = false;
             mainwp_forceReload();
@@ -223,7 +223,7 @@ let updatesoverview_wordpress_global_upgrade_all = function (groupId, updatesSel
         updatesoverviewContinueAfterBackup = function (pSitesCount, pSitesToUpdate) {
             return function () {
                 let initData = {
-                    title: __('Updating All'),
+                    title: MainWP.I18n.t('Updating All'),
                     progressMax: pSitesCount,
                 };
 
@@ -247,7 +247,7 @@ let updatesoverview_wordpress_global_upgrade_all = function (groupId, updatesSel
                     sitesList.push(decodeURIComponent(value));
                 }
             });
-            let confirmMsg = __('You are about to update %1 on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', __('WordPress Core'), sitesList.join('<br />'));
+            let confirmMsg = MainWP.I18n.t('You are about to update %1 on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', MainWP.I18n.t('WordPress Core'), sitesList.join('<br />'));
             mainwp_confirm(confirmMsg, _callback, false, 2);
         }
         return;
@@ -438,7 +438,7 @@ let updatesoverview_translations_global_upgrade_all = function (groupId, updates
             return function () {
 
                 let initData = {
-                    title: __('Updating all...'),
+                    title: MainWP.I18n.t('Updating all...'),
                     progressMax: pSitesCount
                 };
                 updatesoverview_update_popup_init(initData);
@@ -464,7 +464,7 @@ let updatesoverview_translations_global_upgrade_all = function (groupId, updates
                     sitesList.push(decodeURIComponent(value));
                 }
             });
-            let confirmMsg = __('You are about to update %1 on the following site(s):\n%2?', 'translations', sitesList.join(', '));
+            let confirmMsg = MainWP.I18n.t('You are about to update %1 on the following site(s):\n%2?', 'translations', sitesList.join(', '));
             mainwp_confirm(confirmMsg, _callback, false, 2);
         }
         return false;
@@ -535,7 +535,7 @@ let updatesoverview_translations_upgrade_all = function (slug, translationName) 
                 // init and show popup
 
                 let initData = {
-                    title: __('Updating %1', decodeURIComponent(translationName)),
+                    title: MainWP.I18n.t('Updating %1', decodeURIComponent(translationName)),
                     progressMax: pSitesCount
                 };
                 updatesoverview_update_popup_init(initData);
@@ -557,7 +557,7 @@ let updatesoverview_translations_upgrade_all = function (slug, translationName) 
                     sitesList.push(decodeURIComponent(value));
                 }
             });
-            let confirmMsg = __('You are about to update the %1 translation on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', translationName, sitesList.join('<br />'));
+            let confirmMsg = MainWP.I18n.t('You are about to update the %1 translation on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', translationName, sitesList.join('<br />'));
             mainwp_confirm(confirmMsg, _callback, false, 2);
         }
         return;
@@ -646,7 +646,7 @@ let updatesoverview_translations_upgrade_int = function (slug, websiteId, bulkMo
 
         // Show icon waiting
         const regression_waiting_icon = render_html_regression_waiting_icon();
-        let waiting_icon = render_tooltip_loading_icon('<i class="notched circle loading icon"></i> ' + __('Updating. Please wait...'));
+        let waiting_icon = render_tooltip_loading_icon('<i class="notched circle loading icon"></i> ' + MainWP.I18n.t('Updating. Please wait...'));
         if (regression_waiting_icon && "" !== regression_waiting_icon) {
             waiting_icon += regression_waiting_icon;
         }
@@ -716,7 +716,7 @@ let updatesoverview_translations_upgrade_int = function (slug, websiteId, bulkMo
                                 websiteHolder.find('td:last-child').html(success_icon);
                             } else {
                                 mainwpVars.errorCount++;
-                                _error = __('Update failed. Please try again.');
+                                _error = MainWP.I18n.t('Update failed. Please try again.');
                                 if (!done && pBulkMode) {
                                     updatesoverview_translations_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-html-popup" data-position="left center" data-html=""><i class="red times icon"></i></span>');
                                     mainwp_init_html_popup('.updatesoverview-upgrade-status-wp[siteid="' + pWebsiteId + '"] .mainwp-html-popup', _error);
@@ -759,9 +759,9 @@ let updatesoverview_translations_upgrade_int = function (slug, websiteId, bulkMo
                             websiteHolder = jQuery('.translations-bulk-updates[site_id="' + pWebsiteId + '"] tr[translation_slug="' + sid + '"]');
                         }
 
-                        result = __('FAILED');
+                        result = MainWP.I18n.t('FAILED');
                         if (!done && pBulkMode) {
-                            updatesoverview_translations_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-red"><i class="exclamation icon"></i> ' + __('FAILED') + '</span>');
+                            updatesoverview_translations_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-red"><i class="exclamation icon"></i> ' + MainWP.I18n.t('FAILED') + '</span>');
                             updatesoverview_translations_upgrade_all_update_done();
                             done = true;
                         }
@@ -877,7 +877,7 @@ let updatesoverview_plugins_global_upgrade_all = function (groupId, updatesSelec
             return function () {
 
                 let initData = {
-                    title: __('Updating all'),
+                    title: MainWP.I18n.t('Updating all'),
                     progressMax: pSitesCount
                 };
                 updatesoverview_update_popup_init(initData);
@@ -902,7 +902,7 @@ let updatesoverview_plugins_global_upgrade_all = function (groupId, updatesSelec
                     sitesList.push(decodeURIComponent(value));
                 }
             });
-            let confirmMsg = __('You are about to update %1 on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', __('plugins'), sitesList.join('<br />'));
+            let confirmMsg = MainWP.I18n.t('You are about to update %1 on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', MainWP.I18n.t('plugins'), sitesList.join('<br />'));
             mainwp_confirm(confirmMsg, _callback, false, 2);
         }
         return;
@@ -962,7 +962,7 @@ let updatesoverview_plugins_upgrade_all = function (slug, pluginName, updatesSel
     let _callback = function () {
 
         for (let id of sitesToUpdate) {
-            mainwpPopup('#mainwp-sync-sites-modal').appendItemsList(mainwp_links_visit_site_and_admin('', id) + ' ' + updatesmanage_link_to_site(decodeURIComponent(siteNames[id]), id), '<span class="updatesoverview-upgrade-status-wp" siteid="' + id + '">' + '<span data-inverted="" data-position="left center" data-tooltip="' + __('Pending', 'mainwp') + '"><i class="clock outline icon"></i></span> ' + '</span>');
+            mainwpPopup('#mainwp-sync-sites-modal').appendItemsList(mainwp_links_visit_site_and_admin('', id) + ' ' + updatesmanage_link_to_site(decodeURIComponent(siteNames[id]), id), '<span class="updatesoverview-upgrade-status-wp" siteid="' + id + '">' + '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Pending', 'mainwp') + '"><i class="clock outline icon"></i></span> ' + '</span>');
         }
 
         let sitesCount = sitesToUpdate.length;
@@ -971,7 +971,7 @@ let updatesoverview_plugins_upgrade_all = function (slug, pluginName, updatesSel
             return function () {
 
                 let initData = {
-                    title: __('Updating %1', decodeURIComponent(pluginName)),
+                    title: MainWP.I18n.t('Updating %1', decodeURIComponent(pluginName)),
                     progressMax: pSitesCount
                 };
                 updatesoverview_update_popup_init(initData);
@@ -995,7 +995,7 @@ let updatesoverview_plugins_upgrade_all = function (slug, pluginName, updatesSel
                     sitesList.push(decodeURIComponent(value));
                 }
             });
-            let confirmMsg = __('You are about to update the %1 plugin on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', pluginName, sitesList.join('<br />'));
+            let confirmMsg = MainWP.I18n.t('You are about to update the %1 plugin on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', pluginName, sitesList.join('<br />'));
             mainwp_confirm(confirmMsg, _callback, false, 2);
         }
         return;
@@ -1121,7 +1121,7 @@ let updatesoverview_plugins_upgrade_int_after_backup = function (pSlug, pWebsite
 
         let lastResult = pLastResult || null;
         const regression_waiting_icon = render_html_regression_waiting_icon();
-        let waiting_icon = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Updating...', 'mainwp') + '"><i class="notched circle loading icon"></i></span> ';
+        let waiting_icon = '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Updating...', 'mainwp') + '"><i class="notched circle loading icon"></i></span> ';
         if (regression_waiting_icon && "" !== regression_waiting_icon) {
             waiting_icon += regression_waiting_icon;
         }
@@ -1174,7 +1174,7 @@ let updatesoverview_plugins_upgrade_int_after_backup = function (pSlug, pWebsite
                             if (mainwp_get_result_entry(res, sid)) {
                                 lastResult = res;
                                 let _success_icon = `<i class="green check icon"></i>`;
-                                let success_icon = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '">' + _success_icon + '</span>';
+                                let success_icon = '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Update successful', 'mainwp') + '">' + _success_icon + '</span>';
                                 websiteHolder.attr('updated', 1);
                                 websiteHolder.find('td:last-child').html(success_icon + ' ' + mainwp_links_visit_site_and_admin('', pWebsiteId));
                             } else if (res_error[sid]) {
@@ -1371,7 +1371,7 @@ let updatesoverview_themes_global_upgrade_all = function (groupId, updatesSelect
             return function () {
 
                 let initData = {
-                    title: __('Updating all...'),
+                    title: MainWP.I18n.t('Updating all...'),
                     progressMax: pSitesCount
                 };
                 updatesoverview_update_popup_init(initData);
@@ -1395,7 +1395,7 @@ let updatesoverview_themes_global_upgrade_all = function (groupId, updatesSelect
                     sitesList.push(decodeURIComponent(value));
                 }
             });
-            let confirmMsg = __('You are about to update %1 on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', __('themes'), sitesList.join('<br />'));
+            let confirmMsg = MainWP.I18n.t('You are about to update %1 on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', MainWP.I18n.t('themes'), sitesList.join('<br />'));
             mainwp_confirm(confirmMsg, _callback, false, 2);
         }
         return;
@@ -1432,7 +1432,7 @@ let updatesoverview_themes_get_global_upgrade_all = function (groupId, updatesSe
 }
 
 let updates_please_select_items_notice = function () {
-    let msg = __('Please, select items to update.');
+    let msg = MainWP.I18n.t('Please, select items to update.');
     jQuery('#mainwp-modal-confirm-select .content-massage').html(msg);
     jQuery('#mainwp-modal-confirm-select').modal('show');
     return false;
@@ -1477,7 +1477,7 @@ let updatesoverview_themes_upgrade_all = function (slug, themeName, updatesSelec
                 //Step 2: show form
 
                 let initData = {
-                    title: __('Updating %1', decodeURIComponent(themeName)),
+                    title: MainWP.I18n.t('Updating %1', decodeURIComponent(themeName)),
                     progressMax: pSitesCount
                 };
                 updatesoverview_update_popup_init(initData);
@@ -1501,7 +1501,7 @@ let updatesoverview_themes_upgrade_all = function (slug, themeName, updatesSelec
                     sitesList.push(decodeURIComponent(value));
                 }
             });
-            let confirmMsg = __('You are about to update the %1 theme on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', themeName, sitesList.join('<br />'));
+            let confirmMsg = MainWP.I18n.t('You are about to update the %1 theme on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', themeName, sitesList.join('<br />'));
             mainwp_confirm(confirmMsg, _callback, false, 2);
         }
         return;
@@ -1603,7 +1603,7 @@ let updatesoverview_themes_upgrade_int = function (slug, websiteId, bulkMode, la
     let lastResultFinal = lastResult || null;
     // Show icon waiting
     const regression_waiting_icon = render_html_regression_waiting_icon();
-    let waiting_icon = render_tooltip_loading_icon('<i class="notched circle loading icon"></i> ' + __('Updating. Please wait...'));
+    let waiting_icon = render_tooltip_loading_icon('<i class="notched circle loading icon"></i> ' + MainWP.I18n.t('Updating. Please wait...'));
     if (regression_waiting_icon && "" !== regression_waiting_icon) {
         waiting_icon += regression_waiting_icon;
     }
@@ -1655,7 +1655,7 @@ let updatesoverview_themes_upgrade_int = function (slug, websiteId, bulkMode, la
                         if (mainwp_get_result_entry(res, sid)) {
                             lastResultFinal = res;
                             let _success_icon = `<i class="green check icon"></i>`;
-                            const success_icon = `<span data-inverted="" data-position="left center" data-tooltip="${__('Update successful', 'mainwp')}">${_success_icon}</span>`;
+                            const success_icon = `<span data-inverted="" data-position="left center" data-tooltip="${MainWP.I18n.t('Update successful', 'mainwp')}">${_success_icon}</span>`;
                             websiteHolder.attr('updated', 1);
                             websiteHolder.find('td:last-child').html(success_icon);
                         } else {
@@ -1787,9 +1787,9 @@ const updatesoverview_global_prepare_upgrade_all = function (which, current_site
 const updatesoverview_global_prepare_data_upgrade_all = function (which, onPrepared, current_siteid) {
 
     let initData = {
-        title: __('Updating All'),
+        title: MainWP.I18n.t('Updating All'),
         initVisibleContentMsg: true,
-        contentMsg: __('Preparing update data, please wait...'),
+        contentMsg: MainWP.I18n.t('Preparing update data, please wait...'),
     };
     mainwpPopup('#mainwp-prepare-data-modal').init(initData);
 
@@ -2004,7 +2004,7 @@ const updatesoverview_global_run_upgrade_all = function (which) { // NOSONAR - C
     } // end _callback()
     if (Object.keys(siteNames).length === 0) {
         mainwpVars.bulkTaskRunning = false;
-        mainwpPopup('#mainwp-prepare-data-modal').getContentMsgEl().html('<div class="ui yellow message">' + __('There are no updates available to process. Please try again.') + '</div>');
+        mainwpPopup('#mainwp-prepare-data-modal').getContentMsgEl().html('<div class="ui yellow message">' + MainWP.I18n.t('There are no updates available to process. Please try again.') + '</div>');
     } else {
         updatesoverview_global_upgrade_all_start(which, siteNames, _callback);
     }
@@ -2020,18 +2020,18 @@ let updatesoverview_global_upgrade_all_start = function (which, siteNames, _call
             }
         });
 
-        let whichUpdates = __('WordPress core files, plugins, themes and translations');
+        let whichUpdates = MainWP.I18n.t('WordPress core files, plugins, themes and translations');
         if (which == 'wp') {
-            whichUpdates = __('WordPress core files');
+            whichUpdates = MainWP.I18n.t('WordPress core files');
         } else if (which == 'plugin') {
-            whichUpdates = __('plugins');
+            whichUpdates = MainWP.I18n.t('plugins');
         } else if (which == 'theme') {
-            whichUpdates = __('themes');
+            whichUpdates = MainWP.I18n.t('themes');
         } else if (which == 'translation') {
-            whichUpdates = __('translations');
+            whichUpdates = MainWP.I18n.t('translations');
         }
 
-        let confirmMsg = __('You are about to update %1 on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', whichUpdates, sitesList.join('<br />'));
+        let confirmMsg = MainWP.I18n.t('You are about to update %1 on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', whichUpdates, sitesList.join('<br />'));
 
         mainwp_confirm(confirmMsg, _callback, false, 2);
     }
@@ -2042,7 +2042,7 @@ let updatesoverview_global_upgrade_all_after_backup = function (pSitesCount, pSi
         //Step 2: show form
 
         let initData = {
-            title: __('Updating All'),
+            title: MainWP.I18n.t('Updating All'),
             progressMax: pSitesCount,
         };
         updatesoverview_update_popup_init(initData);
@@ -2116,7 +2116,7 @@ let updatesoverview_upgrade_all_upgrade_next = function () {
 
     // process suspended site here to avoid starting the upgrade process and then showing the error after few seconds, also to avoid retrying the upgrade process for suspended sites in case of retry mechanism is triggered for some reason.
     if (mainwpVars.websitesSuspended.includes(websiteId)) {
-        let msgUI = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Suspended site.') + '"><i class="pause yellow icon"></i></span>';
+        let msgUI = '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Suspended site.') + '"><i class="pause yellow icon"></i></span>';
         updatesoverview_upgrade_all_update_site_bold(websiteId, false, msgUI);
         mainwpVars.errorCount++;
         updatesoverview_upgrade_all_update_done();
@@ -2223,7 +2223,7 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
                 return function (response) { // NOSONAR - complex ok.
                     let slugParts = pSlug.split(',');
                     if (response?.error?.errorCode == 'SUSPENDED_SITE') {
-                        let msgUI = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Suspended site.') + '"><i class="pause yellow icon"></i></span>';
+                        let msgUI = '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Suspended site.') + '"><i class="pause yellow icon"></i></span>';
                         updatesoverview_upgrade_all_update_site_bold(pWebsiteId, false, msgUI);
                         pPluginDone = true;
                         pUpgradeDone = true;
@@ -2250,7 +2250,7 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
                                     websiteHolder.attr('updated', 1);
                                     isError = false;
                                 } else {
-                                    result = __('Update failed!');
+                                    result = MainWP.I18n.t('Update failed!');
                                     pErrorMessage = result;
                                 }
                             }
@@ -2377,7 +2377,7 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
                 return function (response) { // NOSONAR - complex ok.
                     bulkErrorCode = response?.error?.errorCode ?? '';
                     if (bulkErrorCode == 'SUSPENDED_SITE') {
-                        let msgUI = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Suspended site.') + '"><i class="pause yellow icon"></i></span>';
+                        let msgUI = '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Suspended site.') + '"><i class="pause yellow icon"></i></span>';
                         updatesoverview_upgrade_all_update_site_bold(pWebsiteId, false, msgUI);
 
                         pThemeDone = true;
@@ -2415,7 +2415,7 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
                                     let roll_error = mainwp_updates_get_rollback_msg(pErrorMessage);
                                     mainwp_put_actions_errors_msg('updateall', pWebsiteId, roll_error ? 'roll' : 'default', roll_error || pErrorMessage);// save errors to show later.
                                 } else {
-                                    result = __('Update failed!');
+                                    result = MainWP.I18n.t('Update failed!');
                                     pErrorMessage = result;
                                 }
                             }
@@ -2514,7 +2514,7 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
                 return function (response) {
                     let bulkErrorCode = response?.error?.errorCode ?? '';
                     if (bulkErrorCode == 'SUSPENDED_SITE') {
-                        let msgUI = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Suspended site.') + '"><i class="pause yellow icon"></i></span>';
+                        let msgUI = '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Suspended site.') + '"><i class="pause yellow icon"></i></span>';
                         updatesoverview_upgrade_all_update_site_bold(pWebsiteId, false, msgUI);
 
                         pThemeDone = true;
@@ -2634,7 +2634,7 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
                 return function (response) { // NOSONAR -complex.
                     let bulkErrorCode = response?.error?.errorCode ?? '';
                     if (bulkErrorCode == 'SUSPENDED_SITE') {
-                        let msgUI = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Suspended site.') + '"><i class="pause yellow icon"></i></span>';
+                        let msgUI = '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Suspended site.') + '"><i class="pause yellow icon"></i></span>';
                         updatesoverview_upgrade_all_update_site_bold(pWebsiteId, false, msgUI);
 
                         pThemeDone = true;
@@ -2666,7 +2666,7 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
                                     mainwpVars.lastUpdateResultBySite[pWebsiteId] = response.result;
                                     websiteHolder.attr('updated', 1);
                                 } else {
-                                    result = __('Update failed!');
+                                    result = MainWP.I18n.t('Update failed!');
                                     pErrorMessage = result;
                                 }
                             }
@@ -2755,7 +2755,7 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
     } else {
         if (bulkErrorCode === 'SUSPENDED_SITE') {
             let _icon = '<i class="pause yellow icon"></i>';
-            let _error = __('Suspended site.');
+            let _error = MainWP.I18n.t('Suspended site.');
             updatesoverview_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-html-popup" data-position="left center" data-html="">' + _icon + '</span>');
             mainwp_init_html_popup('.updatesoverview-upgrade-status-wp[siteid="' + pWebsiteId + '"] .mainwp-html-popup', _error);
         } else if ((pErrorMessage != undefined) && (pErrorMessage != '')) {
@@ -2774,7 +2774,7 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
             }
 
             if (_error == '') {
-                _error = __('Update failed. Please try again.');
+                _error = MainWP.I18n.t('Update failed. Please try again.');
             }
 
             updatesoverview_upgrade_all_update_site_status(pWebsiteId, '<span class="mainwp-html-popup" data-position="left center" data-html="">' + _icon + '</span>');
@@ -2838,7 +2838,7 @@ let updatesoverview_dismiss_outdate_plugintheme_by_site = function (what, slug, 
     jQuery.post(ajaxurl, data, function (response) {
         if (response.result) {
             parent.attr('dismissed', '-1');
-            parent.find('td:last-child').html(__('<span data-tooltip="Ignored" data-position="left center" data-inverted=""><i class="check green icon"></i></span>'));
+            parent.find('td:last-child').html(MainWP.I18n.t('<span data-tooltip="Ignored" data-position="left center" data-inverted=""><i class="check green icon"></i></span>'));
 
         } else {
             parent.find('td:last-child').html(getErrorMessage(response.error));
@@ -2887,7 +2887,7 @@ let updatesoverview_unignore_plugintheme_abandoned_by_site = function (what, slu
 
                 if (parent.children('tr').length == 0) {
                     jQuery('#mainwp-unignore-detail-all').addClass('disabled');
-                    parent.append('<tr><td colspan="999">' + __('No ignored abandoned %1s', pWhat) + '</td></tr>');
+                    parent.append('<tr><td colspan="999">' + MainWP.I18n.t('No ignored abandoned %1s', pWhat) + '</td></tr>');
                 }
             }
         }
@@ -2909,7 +2909,7 @@ let updatesoverview_unignore_plugintheme_abandoned_by_site_all = function (what)
             if (response.result) {
                 let tableElement = jQuery('#ignored-abandoned-' + pWhat + 's-list');
                 tableElement.find('tr').remove();
-                tableElement.append('<tr><td colspan="999">' + __('No ignored abandoned %1s', pWhat) + '</td></tr>');
+                tableElement.append('<tr><td colspan="999">' + MainWP.I18n.t('No ignored abandoned %1s', pWhat) + '</td></tr>');
                 jQuery('#mainwp-unignore-detail-all').addClass('disabled');
             }
         }
@@ -2952,7 +2952,7 @@ let updatesoverview_plugins_abandoned_unignore_globally_all = function () {
             let tableElement = jQuery('#ignored-globally-abandoned-plugins-list');
             tableElement.find('tr').remove();
             jQuery('#mainwp-unignore-globally-all').addClass('disabled');
-            tableElement.append('<tr><td colspan="999">' + __('No ignored abandoned plugins.') + '</td></tr>');
+            tableElement.append('<tr><td colspan="999">' + MainWP.I18n.t('No ignored abandoned plugins.') + '</td></tr>');
         }
     }, 'json');
 
@@ -2976,7 +2976,7 @@ let updatesoverview_plugins_abandoned_unignore_globally = function (slug) {
             ignoreElement.remove();
             if (parent.children('tr').length == 0) {
                 jQuery('.mainwp-unignore-globally-all').addClass('disabled');
-                parent.append('<tr><td colspan="999">' + __('No ignored abandoned plugins.') + '</td></tr>');
+                parent.append('<tr><td colspan="999">' + MainWP.I18n.t('No ignored abandoned plugins.') + '</td></tr>');
             }
         }
     }, 'json');
@@ -3017,7 +3017,7 @@ let updatesoverview_themes_abandoned_unignore_globally_all = function () {
             let tableElement = jQuery('#globally-ignored-themes-list');
             tableElement.find('tr').remove();
             jQuery('.mainwp-unignore-globally-all').addClass('disabled');
-            tableElement.append('<tr><td colspan="999">' + __('No ignored abandoned themes.') + '</td></tr>');
+            tableElement.append('<tr><td colspan="999">' + MainWP.I18n.t('No ignored abandoned themes.') + '</td></tr>');
         }
     }, 'json');
 
@@ -3039,7 +3039,7 @@ let updatesoverview_themes_abandoned_unignore_globally = function (slug) {
             ignoreElement.remove();
             if (parent.children('tr').length == 0) {
                 jQuery('.mainwp-unignore-globally-all').addClass('disabled');
-                parent.append('<tr><td colspan="999">' + __('No ignored abandoned themes.') + '</td></tr>');
+                parent.append('<tr><td colspan="999">' + MainWP.I18n.t('No ignored abandoned themes.') + '</td></tr>');
             }
         }
     }, 'json');
@@ -3079,7 +3079,7 @@ let updatesoverview_recheck_http = function (elem, id) {
                 jQuery('#wp_http_response_code_' + id).removeClass('http-response-ok');
             }
         } else {
-            jQuery('#wp_http_response_code_' + id + ' .http-code').html(__('Undefined error!'));
+            jQuery('#wp_http_response_code_' + id + ' .http-code').html(MainWP.I18n.t('Undefined error!'));
         }
     }, 'json');
     return false;
@@ -3164,7 +3164,7 @@ let updatesoverview_unignore_plugintheme_by_site = function (what, slug, id, ver
                 mainwp_responsive_fix_remove_child_row(siteElement);
                 siteElement.remove();
                 if (parent.children('tr').length == 0) {
-                    parent.append('<tr><td colspan="999">' + __('No ignored %1s', pWhat) + '</td></tr>');
+                    parent.append('<tr><td colspan="999">' + MainWP.I18n.t('No ignored %1s', pWhat) + '</td></tr>');
                     jQuery('.mainwp-unignore-detail-all').addClass('disabled');
                 }
             }
@@ -3187,7 +3187,7 @@ let updatesoverview_unignore_plugintheme_by_site_all = function (what) {
             if (response.result) {
                 let tableElement = jQuery('#ignored-' + pWhat + 's-list');
                 tableElement.find('tr').remove();
-                tableElement.append('<tr><td colspan="999">' + __('No ignored %1s', pWhat) + '</td></tr>');
+                tableElement.append('<tr><td colspan="999">' + MainWP.I18n.t('No ignored %1s', pWhat) + '</td></tr>');
                 jQuery('.mainwp-unignore-detail-all').addClass('disabled');
             }
         }
@@ -3199,7 +3199,7 @@ let updatesoverview_unignore_plugintheme_by_site_all = function (what) {
 let updatesoverview_plugins_ignore_detail = function (slug, name, id, obj, ignore_ver) {
     const row = jQuery(obj).closest("tr");
     const site_name = jQuery(row).attr("site_name");
-    let msg = __(
+    let msg = MainWP.I18n.t(
         "Are you sure you want to ignore %1 plugin updates on %2? The updates will no longer be visible in your MainWP Dashboard.",
         decodeURIComponent(name),
         site_name ?? ''
@@ -3220,7 +3220,7 @@ let updatesoverview_plugins_unignore_detail_all = function () {
     return updatesoverview_unignore_plugintheme_by_site_all('plugin');
 };
 let updatesoverview_themes_ignore_detail = function (slug, name, id, obj, ignore_ver) {
-    let msg = __("Are you sure you want to ignore the %1 theme updates? The updates will no longer be visible in your MainWP Dashboard.", name);
+    let msg = MainWP.I18n.t("Are you sure you want to ignore the %1 theme updates? The updates will no longer be visible in your MainWP Dashboard.", name);
     mainwp_confirm(msg, function () {
         return updatesoverview_ignore_plugintheme_by_site('theme', slug, name, id, obj, ignore_ver);
     }, false);
@@ -3237,12 +3237,12 @@ let updatesoverview_plugins_ignore_all = function (slug, name, obj, ver) {
     const site_name = jQuery(row).attr("site_name");
     let msg = '';
     if (site_name === undefined) {
-        msg = __(
+        msg = MainWP.I18n.t(
             "Are you sure you want to ignore the %1 plugin updates? The updates will no longer be visible in your MainWP Dashboard.",
             decodeURIComponent(name)
         );
     } else {
-        msg = __(
+        msg = MainWP.I18n.t(
             "Are you sure you want to ignore %1 plugin updates on %2 site? The updates will no longer be visible in your MainWP Dashboard.",
             decodeURIComponent(name),
             site_name
@@ -3288,7 +3288,7 @@ let updatesoverview_plugins_unignore_globally_all = function () {
             let tableElement = jQuery('#globally-ignored-plugins-list');
             tableElement.find('tr').remove();
             jQuery('#mainwp-unignore-globally-all').addClass('disabled');
-            tableElement.append('<tr><td colspan="999">' + __('No ignored plugins.') + '</td></tr>');
+            tableElement.append('<tr><td colspan="999">' + MainWP.I18n.t('No ignored plugins.') + '</td></tr>');
         }
     }, 'json');
     return false;
@@ -3309,7 +3309,7 @@ let updatesoverview_plugins_unignore_globally = function (slug, ver) {
             ignoreElement.remove();
             if (parent.children('tr').length == 0) {
                 jQuery('#mainwp-unignore-globally-all').addClass('disabled');
-                parent.append('<tr><td colspan="999">' + __('No ignored plugins.') + '</td></tr>');
+                parent.append('<tr><td colspan="999">' + MainWP.I18n.t('No ignored plugins.') + '</td></tr>');
             }
         }
     }, 'json');
@@ -3317,7 +3317,7 @@ let updatesoverview_plugins_unignore_globally = function (slug, ver) {
 };
 
 let updatesoverview_themes_ignore_all = function (slug, name, obj, ver) {
-    let msg = __('Are you sure you want to ignore the %1 theme updates? The updates will no longer be visible in your MainWP Dashboard.', name);
+    let msg = MainWP.I18n.t('Are you sure you want to ignore the %1 theme updates? The updates will no longer be visible in your MainWP Dashboard.', name);
     mainwp_confirm(msg, function () {
 
         let data = mainwp_secure_data({
@@ -3359,7 +3359,7 @@ let updatesoverview_themes_unignore_globally_all = function () {
             let tableElement = jQuery('#globally-ignored-themes-list');
             tableElement.find('tr').remove();
             jQuery('#mainwp-unignore-globally-all').addClass('disabled');
-            tableElement.append('<tr><td colspan="999">' + __('No ignored themes.') + '</td></tr>');
+            tableElement.append('<tr><td colspan="999">' + MainWP.I18n.t('No ignored themes.') + '</td></tr>');
         }
     }, 'json');
 
@@ -3381,7 +3381,7 @@ let updatesoverview_themes_unignore_globally = function (slug, ver) {
             ignoreElement.remove();
             if (parent.children('tr').length == 0) {
                 jQuery('#mainwp-unignore-globally-all').addClass('disabled');
-                parent.append('<tr><td colspan="999">' + __('No ignored themes.') + '</td></tr>');
+                parent.append('<tr><td colspan="999">' + MainWP.I18n.t('No ignored themes.') + '</td></tr>');
             }
         }
     }, 'json');
@@ -3463,7 +3463,7 @@ let updatesoverview_unignore_cores_by_site = function (id, ver) {
                 mainwp_responsive_fix_remove_child_row(siteElement);
                 siteElement.remove();
                 if (parent.children('tr').length == 0) {
-                    parent.append('<tr><td colspan="999">' + __('No ignored WordPress') + '</td></tr>');
+                    parent.append('<tr><td colspan="999">' + MainWP.I18n.t('No ignored WordPress') + '</td></tr>');
                     jQuery('#mainwp-unignore-cores-detail-all').addClass('disabled');
                 }
             }
@@ -3484,7 +3484,7 @@ let updatesoverview_unignore_cores_by_site_all = function () {
             if (response.result && 'success' == response.result) {
                 let parent = jQuery('#ignored-cores-list');
                 parent.find('tr').remove();
-                parent.append('<tr><td colspan="999">' + __('No ignored WordPress') + '</td></tr>');
+                parent.append('<tr><td colspan="999">' + MainWP.I18n.t('No ignored WordPress') + '</td></tr>');
                 jQuery('.mainwp-unignore-detail-all').addClass('disabled');
             }
         }
@@ -3505,7 +3505,7 @@ let updatesoverview_cores_unignore_globally = function (ver) {
             ignoreElement.remove();
             if (parent.children('tr').length == 0) {
                 jQuery('#mainwp-unignore-globally-all').addClass('disabled');
-                parent.append('<tr><td colspan="999">' + __('No ignored WordPress.') + '</td></tr>');
+                parent.append('<tr><td colspan="999">' + MainWP.I18n.t('No ignored WordPress.') + '</td></tr>');
             }
         }
     }, 'json');
@@ -3525,35 +3525,35 @@ let updatesoverview_cores_unignore_globally_all = function () {
             let tableElement = jQuery('#globally-ignored-cores-list');
             tableElement.find('tr').remove();
             jQuery('#mainwp-unignore-globally-all').addClass('disabled');
-            tableElement.append('<tr><td colspan="999">' + __('No ignored WordPress.') + '</td></tr>');
+            tableElement.append('<tr><td colspan="999">' + MainWP.I18n.t('No ignored WordPress.') + '</td></tr>');
         }
     }, 'json');
     return false;
 };
 
 let updatesoverview_upgrade_translation = function (id, slug) {
-    let msg = __('Are you sure you want to update the translation on the selected site?');
+    let msg = MainWP.I18n.t('Are you sure you want to update the translation on the selected site?');
     mainwp_confirm(msg, function () {
         return updatesoverview_translations_upgrade_int(slug, id);
     }, false, 1);
 };
 
 let updatesoverview_translations_upgrade = function (slug, websiteid) {
-    let msg = __('Are you sure you want to update the translation on the selected site?');
+    let msg = MainWP.I18n.t('Are you sure you want to update the translation on the selected site?');
     mainwp_confirm(msg, function () {
         return updatesoverview_translations_upgrade_int(slug, websiteid);
     }, false, 1);
 };
 
 let updatesoverview_plugins_upgrade = function (slug, websiteid) {
-    let msg = __('Are you sure you want to update the plugin on the selected site?');
+    let msg = MainWP.I18n.t('Are you sure you want to update the plugin on the selected site?');
     mainwp_confirm(msg, function () {
         return updatesoverview_plugins_upgrade_int(slug, websiteid);
     }, false, 1);
 };
 
 let updatesoverview_themes_upgrade = function (slug, websiteid) {
-    let msg = __('Are you sure you want to update the theme on the selected site?');
+    let msg = MainWP.I18n.t('Are you sure you want to update the theme on the selected site?');
     mainwp_confirm(msg, function () {
         return updatesoverview_themes_upgrade_int(slug, websiteid);
     }, false, 1);
@@ -3574,9 +3574,9 @@ let updatesoverview_group_upgrade_translation = function (id, slug, groupId) {
 };
 
 let updatesoverview_upgrade_translation_all = function (id, updatesSelected) {
-    let msg = __('Are you sure you want to update all translations?');
+    let msg = MainWP.I18n.t('Are you sure you want to update all translations?');
     if (updatesSelected !== undefined && updatesSelected) {
-        msg = __('Are you sure you want to update selected translations?');
+        msg = MainWP.I18n.t('Are you sure you want to update selected translations?');
     }
     mainwp_confirm(msg, function () {
         return updatesoverview_upgrade_plugintheme_all('translation', id, false, updatesSelected);
@@ -3585,9 +3585,9 @@ let updatesoverview_upgrade_translation_all = function (id, updatesSelected) {
 };
 
 let updatesoverview_group_upgrade_translation_all = function (id, groupId, updatesSelected) {
-    let msg = __('Are you sure you want to update all translations?');
+    let msg = MainWP.I18n.t('Are you sure you want to update all translations?');
     if (updatesSelected !== undefined && updatesSelected) {
-        msg = __('Are you sure you want to update selected translations?');
+        msg = MainWP.I18n.t('Are you sure you want to update selected translations?');
     }
     mainwp_confirm(msg, function () {
         return updatesoverview_group_upgrade_plugintheme_all('translation', id, false, groupId, updatesSelected);
@@ -3596,16 +3596,16 @@ let updatesoverview_group_upgrade_translation_all = function (id, groupId, updat
 };
 
 let updatesoverview_upgrade_plugin = function (id, slug) {
-    let msg = __('Are you sure you want to update the plugin on the selected site?');
+    let msg = MainWP.I18n.t('Are you sure you want to update the plugin on the selected site?');
     mainwp_confirm(msg, function () {
         return updatesoverview_upgrade_plugintheme('plugin', id, slug);
     }, false, 1);
 };
 
 let updatesoverview_upgrade_plugin_all = function (id, updatesSelected) {
-    let msg = __('Are you sure you want to update all plugins?');
+    let msg = MainWP.I18n.t('Are you sure you want to update all plugins?');
     if (updatesSelected !== undefined && updatesSelected) {
-        msg = __('Are you sure you want to update selected plugins?');
+        msg = MainWP.I18n.t('Are you sure you want to update selected plugins?');
     }
     mainwp_confirm(msg, function () {
         return updatesoverview_upgrade_plugintheme_all('plugin', id, false, updatesSelected);
@@ -3614,9 +3614,9 @@ let updatesoverview_upgrade_plugin_all = function (id, updatesSelected) {
 };
 
 let updatesoverview_group_upgrade_plugin_all = function (id, groupId, updatesSelected) {
-    let msg = __('Are you sure you want to update all plugins?');
+    let msg = MainWP.I18n.t('Are you sure you want to update all plugins?');
     if (updatesSelected !== undefined && updatesSelected) {
-        msg = __('Are you sure you want to update selected plugins?');
+        msg = MainWP.I18n.t('Are you sure you want to update selected plugins?');
     }
     mainwp_confirm(msg, function () {
         return updatesoverview_group_upgrade_plugintheme_all('plugin', id, false, groupId, updatesSelected);
@@ -3625,15 +3625,15 @@ let updatesoverview_group_upgrade_plugin_all = function (id, groupId, updatesSel
 };
 
 let updatesoverview_upgrade_theme = function (id, slug) {
-    let msg = __('Are you sure you want to update the theme on the selected site?');
+    let msg = MainWP.I18n.t('Are you sure you want to update the theme on the selected site?');
     mainwp_confirm(msg, function () {
         return updatesoverview_upgrade_plugintheme('theme', id, slug);
     }, false, 1);
 };
 let updatesoverview_upgrade_theme_all = function (id, updatesSelected) {
-    let msg = __('Are you sure you want to update all themes?');
+    let msg = MainWP.I18n.t('Are you sure you want to update all themes?');
     if (updatesSelected !== undefined && updatesSelected) {
-        msg = __('Are you sure you want to update selected themes?');
+        msg = MainWP.I18n.t('Are you sure you want to update selected themes?');
     }
     mainwp_confirm(msg, function () {
         return updatesoverview_upgrade_plugintheme_all('theme', id, false, updatesSelected);
@@ -3642,9 +3642,9 @@ let updatesoverview_upgrade_theme_all = function (id, updatesSelected) {
 };
 
 let updatesoverview_group_upgrade_theme_all = function (id, groupId, updatesSelected) {
-    let msg = __('Are you sure you want to update all themes?');
+    let msg = MainWP.I18n.t('Are you sure you want to update all themes?');
     if (updatesSelected !== undefined && updatesSelected) {
-        msg = __('Are you sure you want to update selected themes?');
+        msg = MainWP.I18n.t('Are you sure you want to update selected themes?');
     }
     mainwp_confirm(msg, function () {
         return updatesoverview_group_upgrade_plugintheme_all('theme', id, false, groupId, updatesSelected);
@@ -3760,7 +3760,7 @@ let mainwp_render_regression_after_update = function (lastResult, lastSuccessPar
 
     const icon_success =
         '<span data-inverted="" data-position="left center" data-tooltip="' +
-        __('Update successful.', 'mainwp') +
+        MainWP.I18n.t('Update successful.', 'mainwp') +
         '"><i class="green check icon"></i></span>';
 
     const handleFinalIcon = function (regression_icon_final) {
@@ -3786,7 +3786,7 @@ let updatesoverview_upgrade_plugintheme_list = function (what, id, list, noCheck
 
             // Show icon waiting
             const regression_waiting_icon = render_html_regression_waiting_icon();
-            let waiting_icon = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Updating...', 'mainwp') + '"><i class="notched circle loading icon"></i></span> ' + __('Updating. Please wait...');
+            let waiting_icon = '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Updating...', 'mainwp') + '"><i class="notched circle loading icon"></i></span> ' + MainWP.I18n.t('Updating. Please wait...');
             if (regression_waiting_icon && "" !== regression_waiting_icon) {
                 waiting_icon += regression_waiting_icon;
             }
@@ -3840,7 +3840,7 @@ let updatesoverview_upgrade_plugintheme_list = function (what, id, list, noCheck
                         } else {
                             let res = response.result;
                             let res_error = response.result_error;
-                            const icon_success = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful.', 'mainwp') + '"><i class="green check icon"></i></span>';
+                            const icon_success = '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Update successful.', 'mainwp') + '"><i class="green check icon"></i></span>';
                             if (mainwp_get_result_entry(res, item)) {
                                 parent.find('td:last-child').html(icon_success);
                                 lastResult = res;
@@ -3884,14 +3884,14 @@ let updatesoverview_upgrade_plugintheme_list_popup = function (what, pId, pSiteN
     if (updateCount == 0)
         return;
 
-    let updateWhat = what == 'theme' ? __('themes') : __('translations');
-    updateWhat = (what == 'plugin') ? __('plugins') : updateWhat;
+    let updateWhat = what == 'theme' ? MainWP.I18n.t('themes') : MainWP.I18n.t('translations');
+    updateWhat = (what == 'plugin') ? MainWP.I18n.t('plugins') : updateWhat;
 
     mainwpPopup('#mainwp-sync-sites-modal').clearList();
     mainwpPopup('#mainwp-sync-sites-modal').appendItemsList(mainwp_links_visit_site_and_admin('', pId) + ' ' + updatesmanage_link_to_site(decodeURIComponent(pSiteName), pId) + ' (' + updateCount + ' ' + updateWhat + ')', '<span class="updatesoverview-upgrade-status-wp" siteid="' + pId + '">' + '<i class="clock outline icon"></i> ' + '</span>');
 
     let initData = {
-        title: __('Updating all'),
+        title: MainWP.I18n.t('Updating all'),
         progressMax: 1
     };
     updatesoverview_update_popup_init(initData);
@@ -4128,11 +4128,7 @@ const render_html_regression_sync_score_icon = function (score, change_score, we
     }
 
     if (icon_html !== "" && Number.isInteger(website_id)) {
-        let msg = 'Change score changed. Click to review changes.';
-        // eslint-disable-next-line no-constant-condition
-        if (typeof mainwpTranslations) {
-            msg = mainwpTranslations?.Change_score_changed_Click_to_review_changes || msg;
-        }
+        const msg = MainWP.I18n.t('Change score changed. Click to review changes.');
         icon_html = `<a href="admin.php?page=ManageSitesHTMLRegression&id=${website_id}" target="_blank" data-tooltip="${msg}" data-inverted="" data-position="left center">${icon_html}</a>`;
     }
 
@@ -4144,7 +4140,7 @@ const render_html_regression_icon = function (result, onDone) {
     if (typeof mainwp_html_regression === "undefined" || mainwp_html_regression.use_after_updates !== "1") {
         return '';
     }
-    const loading_icon = `<span data-inverted="" data-position="left center" data-tooltip="${__('Regression scan in progress...', 'mainwp')}"><i class="notched circle loading icon"></i></span>`;
+    const loading_icon = `<span data-inverted="" data-position="left center" data-tooltip="${MainWP.I18n.t('Regression scan in progress...', 'mainwp')}"><i class="notched circle loading icon"></i></span>`;
     setTimeout(() => {
         let _icon = '';
         if (
@@ -4175,10 +4171,10 @@ const render_html_regression_waiting_icon = function () {
         return '';
     }
 
-    return `<span data-inverted="" data-position="left center" data-tooltip="${__('Regression Testing scan will begin after the update is completed.', 'mainwp')}"><i class="hourglass half icon"></i></span>`;
+    return `<span data-inverted="" data-position="left center" data-tooltip="${MainWP.I18n.t('Regression Testing scan will begin after the update is completed.', 'mainwp')}"><i class="hourglass half icon"></i></span>`;
 }
 
 // Render Tooltip Loading Icon.
 const render_tooltip_loading_icon = function (icon_html) {
-    return `<span data-inverted="" data-position="left center" data-tooltip="${__('Update in progress…', 'mainwp')}">${icon_html}</span>`
+    return `<span data-inverted="" data-position="left center" data-tooltip="${MainWP.I18n.t('Update in progress…', 'mainwp')}">${icon_html}</span>`
 }

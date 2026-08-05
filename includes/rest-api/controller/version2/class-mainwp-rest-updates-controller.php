@@ -1111,7 +1111,7 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
             } elseif ( ! empty( $info['error'] ) ) {
                 $error = esc_html( $error );
             } else {
-                $error = esc_html__( 'An undefined error occured. Please try again.', 'mainwp' );
+                $error = esc_html__( 'An undefined error occurred. Please try again.', 'mainwp' );
             }
 
             if ( ! empty( $info['old_version'] ) ) {

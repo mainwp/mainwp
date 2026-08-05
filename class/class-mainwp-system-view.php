@@ -39,7 +39,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         /**
          * Method mainwp_add_translation()
          *
-         * Grab info needed to build array and strip chartacters "/[^A-Za-z0-9_]/".
+         * Grab info needed to build the translation array.
          *
          * @param mixed $pArray Array of tranlatable text.
          * @param mixed $pKey Key for each array enty.
@@ -50,8 +50,8 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                 $pArray = array();
             }
 
-            $strippedText = str_replace( ' ', '_', $pKey );
-            $strippedText = preg_replace( '/[\W]/', '', $strippedText );
+            // Keep this normalization aligned with MainWP.I18n.t() in assets/js/mainwp.js.
+            $strippedText = preg_replace( '/[^\p{L}\p{N}_]/u', '_', $pKey );
 
             $pArray[ $strippedText ] = $pText;
         }
@@ -59,14 +59,14 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         $mainwpTranslations = array();
         mainwp_add_translation( $mainwpTranslations, 'Update settings.', esc_html__( 'Update settings.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Settings have been updated.', esc_html__( 'Settings have been updated.', 'mainwp' ) );
-        mainwp_add_translation( $mainwpTranslations, 'An error occured.', esc_html__( 'An error occured.', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'An error occurred.', esc_html__( 'An error occurred.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Testing login.', esc_html__( 'Testing login.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Your login is valid.', esc_html__( 'Your login is valid.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Your login is invalid.', esc_html__( 'Your login is invalid.', 'mainwp' ) );
-        mainwp_add_translation( $mainwpTranslations, 'An error occured, please contact us.', esc_html__( 'An error occured, please contact us.', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'An error occurred, please contact us.', esc_html__( 'An error occurred, please contact us.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'more', esc_html__( 'more', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'less', esc_html__( 'less', 'mainwp' ) );
-        mainwp_add_translation( $mainwpTranslations, 'An error occured: ', esc_html__( 'An error occured: ', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'An error occurred: ', esc_html__( 'An error occurred: ', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'No data available. Connect your sites using the Settings submenu.', esc_html__( 'No data available. Connect your sites using the Settings submenu.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Undefined error.', esc_html__( 'Undefined error.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'PENDING', esc_html__( 'PENDING', 'mainwp' ) );
@@ -113,7 +113,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         mainwp_add_translation( $mainwpTranslations, 'Are you sure you want to delete this backup task?', esc_html__( 'Are you sure you want to delete this backup task?', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Removing the task..', esc_html__( 'Removing the task..', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'The task has been removed', esc_html__( 'The task has been removed', 'mainwp' ) );
-        mainwp_add_translation( $mainwpTranslations, 'An unspecified error occured', esc_html__( 'An unspecified error occured', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'An unspecified error occurred', esc_html__( 'An unspecified error occurred', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Connection test failed.', esc_html__( 'Connection test failed.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Error message:', esc_html__( 'Error message:', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Received HTTP-code:', esc_html__( 'Received HTTP-code:', 'mainwp' ) );
@@ -131,6 +131,14 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         mainwp_add_translation( $mainwpTranslations, 'The site has been removed and the MainWP Child plugin has been disabled.', esc_html__( 'The site has been removed and the MainWP Child plugin has been disabled.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'The requested site has not been found', esc_html__( 'The requested site has not been found', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'The site has been removed but the MainWP Child plugin could not be disabled', esc_html__( 'The site has been removed but the MainWP Child plugin could not be disabled', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Removing the site. Please wait...', esc_html__( 'Removing the site. Please wait...', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Site could not be removed. Please reload the page and try again.', esc_html__( 'Site could not be removed. Please reload the page and try again.', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Details:', esc_html__( 'Details:', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'The site has been removed. Please make sure that the MainWP Child plugin has been deactivated properly. You will be redirected to the Sites page right away.', esc_html__( 'The site has been removed. Please make sure that the MainWP Child plugin has been deactivated properly. You will be redirected to the Sites page right away.', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'The site has been removed and the MainWP Child plugin has been disabled. You will be redirected to the Sites page right away.', esc_html__( 'The site has been removed and the MainWP Child plugin has been disabled. You will be redirected to the Sites page right away.', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'The site has been removed. You will be redirected to the Sites page right away.', esc_html__( 'The site has been removed. You will be redirected to the Sites page right away.', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'The request timed out. Please make sure that the MainWP Child plugin has been deactivated properly.', esc_html__( 'The request timed out. Please make sure that the MainWP Child plugin has been deactivated properly.', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'An unexpected error occurred. Please reload the page and try again.', esc_html__( 'An unexpected error occurred. Please reload the page and try again.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Paused import by user.', esc_html__( 'Paused import by user.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Continue', esc_html__( 'Continue', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Continue import.', esc_html__( 'Continue import.', 'mainwp' ) );
@@ -164,7 +172,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         mainwp_add_translation( $mainwpTranslations, 'Download from child completed.', esc_html__( 'Download from child completed.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Please wait while we are saving your note', esc_html__( 'Please wait while we are saving your note', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Note saved.', esc_html__( 'Note saved.', 'mainwp' ) );
-        mainwp_add_translation( $mainwpTranslations, 'An error occured while saving your message.', esc_html__( 'An error occured while saving your message.', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'An error occurred while saving your message.', esc_html__( 'An error occurred while saving your message.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Please search and select users for update password.', esc_html__( 'Please search and select users for update password.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'All', esc_html__( 'All', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Any', esc_html__( 'Any', 'mainwp' ) );
@@ -197,7 +205,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         mainwp_add_translation( $mainwpTranslations, 'Are you sure?', esc_html__( 'Are you sure?', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Bulk reconnect finished.', esc_html__( 'Bulk reconnect finished.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Note Saved', esc_html__( 'Note Saved', 'mainwp' ) );
-        mainwp_add_translation( $mainwpTranslations, 'An error occured while saving your message', esc_html__( 'An error occured while saving your message', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'An error occurred while saving your message', esc_html__( 'An error occurred while saving your message', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Download from child site completed.', esc_html__( 'Download from child site completed.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Please wait while we are saving your note', esc_html__( 'Please wait while we are saving your note', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Installation Successful', esc_html__( 'Installation Successful', 'mainwp' ) );
@@ -229,7 +237,6 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         mainwp_add_translation( $mainwpTranslations, 'is_activated_parent', esc_html__( '%1 could not be deleted. This theme is parent theme for the currently active theme.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'is_activated_theme', esc_html__( '%1 could not be deleted. This theme is active theme.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Change score changed. Click to review changes.', esc_html__( 'Change score changed. Click to review changes.', 'mainwp' ) );
-
         return $mainwpTranslations;
     }
 
@@ -479,7 +486,6 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         static::check_rating_notice();
 
         static::render_browser_extensions_notice();
-
     }
 
     /**
@@ -790,9 +796,9 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                     <div class="header"><?php esc_html_e( 'Enjoying MainWP?', 'mainwp' ); ?></div>
                     <div>
                         <?php if ( $addons ) : ?>
-                        <?php esc_html_e( 'You\'ve been using MainWP for a while and it looks like you\'ve built a solid setup with add-ons.', 'mainwp' ); ?>
+                            <?php esc_html_e( 'You\'ve been using MainWP for a while and it looks like you\'ve built a solid setup with add-ons.', 'mainwp' ); ?>
                         <?php else : ?>
-                        <?php esc_html_e( 'You\'ve been using MainWP for a while.', 'mainwp' ); ?>
+                            <?php esc_html_e( 'You\'ve been using MainWP for a while.', 'mainwp' ); ?>
                         <?php endif; ?>
                     </div>
                     <div><?php esc_html_e( 'If MainWP has been helpful, would you mind leaving a quick review on WordPress.org? It helps others find the plugin and supports ongoing improvements.', 'mainwp' ); ?></div>

@@ -41,11 +41,11 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
     protected $rest_base = 'batch';
 
     /**
-     * Route base.
+     * Controller names handled by the batch endpoint.
      *
-     * @var string
+     * @var array
      */
-    protected $controller_names = array( 'sites', 'clients', 'updates', 'costs', 'tags' );
+    protected $controller_names = array( 'sites', 'clients', 'costs', 'tags' );
 
     /**
      * Method instance()
@@ -105,6 +105,18 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
         $limit = $this->check_batch_limit( $items );
         if ( is_wp_error( $limit ) ) {
             return $limit;
+        }
+
+        // The updates controller has no batch-capable create handler, so report the whole group once
+        // instead of letting every item fail with a 405 from the WordPress core stub.
+        if ( ! empty( $items['updates'] ) ) {
+            $response['updates'] = array(
+                'error' => array(
+                    'code'    => 'rest_batch_group_not_supported',
+                    'message' => __( 'The updates group is not supported by the batch endpoint.', 'mainwp' ),
+                    'data'    => array( 'status' => 400 ),
+                ),
+            );
         }
 
         foreach ( $this->controller_names as $con_name ) {
@@ -483,7 +495,11 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
         $limit = apply_filters( 'mainwp_rest_batch_items_limit', 100, $this->get_normalized_rest_base() );
         $total = 0;
 
-        foreach ( $this->controller_names as $con_name ) {
+        // The updates group is rejected as a whole by batch_items(), but its items still count
+        // toward the cap so an oversized request is refused before anything else is dispatched.
+        $count_names = array_merge( $this->controller_names, array( 'updates' ) );
+
+        foreach ( $count_names as $con_name ) {
             if ( ! empty( $items[ $con_name ] ) && is_countable( $items[ $con_name ] ) ) {
                 if ( ! empty( $items[ $con_name ]['create'] ) && is_countable( $items[ $con_name ]['create'] ) ) {
                     $total += count( $items[ $con_name ]['create'] );

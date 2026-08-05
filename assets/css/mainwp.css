@@ -1707,6 +1707,10 @@ body.show-upload-theme .mainwp-content-wrap .mainwp-upload-theme {
     overflow-x: auto;
 }
 
+#widget-connections-status-details table td .right.floated{
+    float: right !important;
+}
+
 .menu-connect-first-site .item.active,
 .mainwp-qsw-add-client .item.active {
     background: var(--grey-light) !important;

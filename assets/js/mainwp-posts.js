@@ -81,7 +81,7 @@ jQuery(function () {
         };
 
         if (action == 'delete') {
-            let msg = __('You are about to delete %1 page(s). Are you sure you want to proceed?', countSent);
+            let msg = MainWP.I18n.t('You are about to delete %1 page(s). Are you sure you want to proceed?', countSent);
             mainwp_confirm(msg, _callback);
             return;
         }
@@ -236,21 +236,21 @@ let mainwp_fetch_pages_prepare = function () { // NOSONAR - complexity 19/15.
             selected_sites.push(jQuery(this).val());
         });
         if (selected_sites.length == 0) {
-            errors.push('<div class="ui yellow message">' + __('Please select websites or groups or clients.') + '</div>');
+            errors.push('<div class="ui yellow message">' + MainWP.I18n.t('Please select websites or groups or clients.') + '</div>');
         }
     } else if (jQuery('input[name="select_by"]').val() == 'client') {
         jQuery("input[name='selected_clients[]']:checked").each(function () {
             selected_clients.push(jQuery(this).val());
         });
         if (selected_clients.length == 0) {
-            errors.push('<div class="ui yellow message">' + __('Please select websites or groups or clients.') + '</div>');
+            errors.push('<div class="ui yellow message">' + MainWP.I18n.t('Please select websites or groups or clients.') + '</div>');
         }
     } else {
         jQuery("input[name='selected_groups[]']:checked").each(function () {
             selected_groups.push(jQuery(this).val());
         });
         if (selected_groups.length == 0) {
-            errors.push('<div class="ui yellow message">' + __('Please select websites or groups or clients.') + '</div>');
+            errors.push('<div class="ui yellow message">' + MainWP.I18n.t('Please select websites or groups or clients.') + '</div>');
         }
     }
 
@@ -394,7 +394,7 @@ jQuery(function () {
         }
 
         mainwp_copyTextToClipboard(value).catch(function () {
-            alert(__('Unable to copy to clipboard.'));
+            alert(MainWP.I18n.t('Unable to copy to clipboard.'));
         });
 
         return false;
@@ -421,7 +421,7 @@ jQuery(function () {
             );
         }
         if (action == 'delete') {
-            let msg = __('You are about to delete %1 post(s). Are you sure you want to proceed?', countSent);
+            let msg = MainWP.I18n.t('You are about to delete %1 post(s). Are you sure you want to proceed?', countSent);
             mainwp_confirm(msg, _callback);
             return;
         }
@@ -525,7 +525,7 @@ let mainwp_fetch_posts = function (postId, userId, start_sites) {
     let _status = '';
     let statuses = jQuery("#mainwp_post_search_type").dropdown("get value");
     if (statuses == null)
-        errors.push('<div class="ui yellow message">' + __('Please select at least one post status.') + '</div>');
+        errors.push('<div class="ui yellow message">' + MainWP.I18n.t('Please select at least one post status.') + '</div>');
     else {
         _status = statuses.join(',');
     }
@@ -594,7 +594,7 @@ let mainwp_fetch_posts_prepare = function (postId, userId, start_sites) { // NOS
     let num_sites = jQuery('#search-bulk-sites').attr('number-sites');
     num_sites = Number.parseInt(num_sites);
 
-    let select_sites_error = '<div class="ui yellow message">' + __('Please select at least one website or group or client.') + '</div>';
+    let select_sites_error = '<div class="ui yellow message">' + MainWP.I18n.t('Please select at least one website or group or client.') + '</div>';
 
     let bulk_search = num_sites > 0;
 

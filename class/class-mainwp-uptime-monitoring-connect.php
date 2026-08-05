@@ -326,7 +326,8 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
             }
         } elseif ( ! $is_notallowed && empty( $data ) && 'ping' !== $mo_apply_type && ! $second_try ) {
             usleep( 200000 );
-            $this->fetch_uptime_monitor( $monitor, $global_settings, true, $params );
+            // Process only the second-try response.
+            return $this->fetch_uptime_monitor( $monitor, $global_settings, true, $params );
         }
 
         $output                  = new \stdClass();
@@ -568,10 +569,11 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
         if ( empty( $disabled_functions ) || ( false === stristr( $disabled_functions, 'curl_multi_exec' ) ) ) {
 
-            $lastRun = 0;
-            $running = null;
-
+            $lastRun     = 0;
+            $running     = null;
+            $retry_added = false;
             do {
+                $retry_added = false;
                 if ( 20 < time() - $lastRun ) {
                     MainWP_System_Utility::set_time_limit( 3600 );
                     $lastRun = time();
@@ -592,14 +594,16 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
                     $retry_later   = static::is_http_code_type( 'retry', $http_code );
                     $is_notallowed = static::is_http_code_type( 'notallowed', $http_code );
 
-                    if ( ! empty( $requestUrls[ $resource_id ] ) ) {
+                    if ( ! empty( $requestUrls[ $resource_id ] ) && isset( $handleToWebsite[ $resource_id ] ) ) {
 
-                        $mo_apply_type = static::get_apply_setting( 'type', $website->type, $global_settings, 'useglobal', 'http' );
+                        $running_website = $handleToWebsite[ $resource_id ];
+
+                        $mo_apply_type = static::get_apply_setting( 'type', $running_website->type, $global_settings, 'useglobal', 'http' );
 
                         $_try_second = false;
-                        if ( $retry_later && empty( $website->issub ) ) {
-                            $max_retries = static::get_apply_setting( 'maxretries', (int) $website->maxretries, $global_settings, -1, 0 );
-                            if ( $max_retries > 0 && $website->retries < $max_retries ) {
+                        if ( $retry_later && empty( $running_website->issub ) ) {
+                            $max_retries = static::get_apply_setting( 'maxretries', (int) $running_website->maxretries, $global_settings, -1, 0 );
+                            if ( $max_retries > 0 && $running_website->retries < $max_retries ) {
                                 $is_pending = true;
                                 ++$down_count;
                                 $set_retry = true;
@@ -613,7 +617,17 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
                             curl_setopt( $info['handle'], CURLOPT_URL, $requestUrls[ $resource_id ] );
                             curl_setopt( $info['handle'], CURLOPT_FRESH_CONNECT, true );
                             curl_setopt( $info['handle'], CURLOPT_FORBID_REUSE, true );
-                            curl_multi_add_handle( $mh, $info['handle'] );
+
+                            $add_retry = curl_multi_add_handle( $mh, $info['handle'] );
+                            if ( CURLM_OK === $add_retry ) {
+                                $mrc = curl_multi_exec( $mh, $running );
+                                if ( CURLM_OK === $mrc ) {
+                                    $retry_added = true;
+                                    unset( $requestUrls[ $resource_id ] );
+                                    continue; // libcurl updates $running automatically.
+                                }
+                                curl_multi_remove_handle( $mh, $info['handle'] );
+                            }
                             unset( $requestUrls[ $resource_id ] );
                             continue;
                         }
@@ -645,7 +659,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
                     }
                 }
                 usleep( 10000 );
-            } while ( $running > 0 );
+            } while ( $running > 0 || $retry_added );
 
             if ( MainWP_Connect::is_valid_curl_handle( $mh ) ) {
                 curl_multi_close( $mh );
@@ -812,7 +826,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         }
 
         if ( empty( $http_code ) ) {
-            $status = static::PENDING;
+            $status = static::DOWN; // Set the status to DOWN.
         }
 
         $mo_url = static::get_apply_monitor_url( $monitor );

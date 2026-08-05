@@ -89,21 +89,21 @@ globalThis.mainwp_fetch_plugins = function (notFetchContent) {
             selected_sites.push(jQuery(this).val());
         });
         if (selected_sites.length == 0) {
-            errors.push(__('Please select at least one website or group or client.'));
+            errors.push(MainWP.I18n.t('Please select at least one website or group or client.'));
         }
     } else if (jQuery('input[name="select_by"]').val() == 'client') {
         jQuery("input[name='selected_clients[]']:checked").each(function () {
             selected_clients.push(jQuery(this).val());
         });
         if (selected_clients.length == 0) {
-            errors.push(__('Please select at least one website or group or client.'));
+            errors.push(MainWP.I18n.t('Please select at least one website or group or client.'));
         }
     } else {
         jQuery("input[name='selected_groups[]']:checked").each(function () {
             selected_groups.push(jQuery(this).val());
         });
         if (selected_groups.length == 0) {
-            errors.push(__('Please select at least one website or group or client.'));
+            errors.push(MainWP.I18n.t('Please select at least one website or group or client.'));
         }
     }
 
@@ -111,7 +111,7 @@ globalThis.mainwp_fetch_plugins = function (notFetchContent) {
     let _status = jQuery("#mainwp_plugins_search_by_status").dropdown("get value");
 
     if (_status == null) {
-        errors.push(__('Please select at least one plugin status.'));
+        errors.push(MainWP.I18n.t('Please select at least one plugin status.'));
     }
 
     if (errors.length > 0) {
@@ -185,7 +185,7 @@ jQuery(function () {
             });
         }
         if (selectedIds.length == 0) {
-            feedback('mainwp-message-zone', __('Please select at least one website.'), 'yellow');
+            feedback('mainwp-message-zone', MainWP.I18n.t('Please select at least one website.'), 'yellow');
         } else {
             jQuery('#mainwp-message-zone').fadeOut(5000);
             let ids = selectedIds.join("-");
@@ -254,7 +254,7 @@ jQuery(function () {
         let name = rowEl.attr('plugin-name');
         let note = rowEl.find('.esc-content-note').html();
         jQuery('#mainwp-notes-title').html(decodeURIComponent(name));
-        jQuery('#mainwp-notes-html').html(note == '' ? __('No saved notes. Click the Edit button to edit plugin notes.') : note);
+        jQuery('#mainwp-notes-html').html(note == '' ? MainWP.I18n.t('No saved notes. Click the Edit button to edit plugin notes.') : note);
         jQuery('#mainwp-notes-note').val(note);
         jQuery('#mainwp-notes-slug').val(slug);
         mainwp_notes_show();
@@ -270,13 +270,13 @@ jQuery(function () {
             note: newnote
         });
 
-        jQuery('#mainwp-notes-status').html('<i class="notched circle loading icon"></i> ' + __('Saving note. Please wait...')).show();
+        jQuery('#mainwp-notes-status').html('<i class="notched circle loading icon"></i> ' + MainWP.I18n.t('Saving note. Please wait...')).show();
 
         jQuery.post(ajaxurl, data, function (pSlug) {
             return function (response) {
                 let rowEl = jQuery('tr[plugin-slug="' + pSlug + '"]');
                 if (response.result == 'SUCCESS') {
-                    jQuery('#mainwp-notes-status').html(__('Note saved successfully.')).addClass('green');
+                    jQuery('#mainwp-notes-status').html(MainWP.I18n.t('Note saved successfully.')).addClass('green');
                     rowEl.find('.esc-content-note').html(response?.esc_note_content??'');
                     jQuery('#mainwp-notes-html').html(response?.esc_note_content??'');
 
@@ -287,9 +287,9 @@ jQuery(function () {
                     }
 
                 } else if (response.error === undefined) {
-                    jQuery('#mainwp-notes-status').html('<i class="times red icon"></i> ' + __('Undefined error occured while saving your note') + '.');
+                    jQuery('#mainwp-notes-status').html('<i class="times red icon"></i> ' + MainWP.I18n.t('Undefined error occurred while saving your note') + '.');
                 } else {
-                    jQuery('#mainwp-notes-status').html('<i class="times red icon"></i> ' + __('Undefined error occured while saving your note') + ': ' + response.error);
+                    jQuery('#mainwp-notes-status').html('<i class="times red icon"></i> ' + MainWP.I18n.t('Undefined error occurred while saving your note') + ': ' + response.error);
                 }
             }
         }(slug), 'json');
@@ -329,13 +329,13 @@ jQuery(function () {
             note: newnote
         });
 
-        jQuery('#mainwp-notes-status').html('<i class="notched circle loading icon"></i> ' + __('Saving note. Please wait...')).show();
+        jQuery('#mainwp-notes-status').html('<i class="notched circle loading icon"></i> ' + MainWP.I18n.t('Saving note. Please wait...')).show();
 
         jQuery.post(ajaxurl, data, function (pSlug) {
             return function (response) {
                 let rowEl = jQuery('tr[theme-slug="' + pSlug + '"]');
                 if (response.result == 'SUCCESS') {
-                    jQuery('#mainwp-notes-status').html(__('Note saved successfully.')).addClass('green');
+                    jQuery('#mainwp-notes-status').html(MainWP.I18n.t('Note saved successfully.')).addClass('green');
                     rowEl.find('.esc-content-note').html(response?.esc_note_content??'');
                     jQuery('#mainwp-notes-html').html(response?.esc_note_content??'');
                     if (newnote == '') {
@@ -344,9 +344,9 @@ jQuery(function () {
                         rowEl.find('.mainwp-edit-theme-note').html('<i class="sticky green note icon"></i>');
                     }
                 } else if (response.error === undefined) {
-                    jQuery('#mainwp-notes-status').html('<i class="times red icon"></i> ' + __('Undefined error occured while saving your note!'));
+                    jQuery('#mainwp-notes-status').html('<i class="times red icon"></i> ' + MainWP.I18n.t('Undefined error occurred while saving your note!'));
                 } else {
-                    jQuery('#mainwp-notes-status').html('<i class="times red icon"></i> ' + __('Undefined error occured while saving your note!') + ': ' + response.error);
+                    jQuery('#mainwp-notes-status').html('<i class="times red icon"></i> ' + MainWP.I18n.t('Undefined error occurred while saving your note!') + ': ' + response.error);
                 }
             }
         }(slug), 'json');
@@ -557,7 +557,7 @@ jQuery(function () {
         }
 
         if (selectedIds.length == 0) {
-            feedback('mainwp-message-zone', __('Please select at least one website.'), 'yellow');
+            feedback('mainwp-message-zone', MainWP.I18n.t('Please select at least one website.'), 'yellow');
         } else {
             jQuery('#mainwp-message-zone').fadeOut(5000);
             let ids = selectedIds.join("-");
@@ -686,7 +686,7 @@ jQuery(function () {
                     if (response.error != undefined && response.error == new Object(response.error)) { // check if .error is object.
                         let entries = Object.entries(response.error);
                         for (let entry of entries) {
-                            let warnings = __(entry[0], encodeURIComponent(entry[1])); // entry[0]:id message, entry[1] string value.
+                            let warnings = MainWP.I18n.t(entry[0], encodeURIComponent(entry[1])); // entry[0]:id message, entry[1] string value.
                             jQuery('#mainwp-message-zone').after('<div class="ui info message yellow"><i class="ui close icon"></i><span>' + warnings + '</span></div>');
                         }
                     }
@@ -727,27 +727,27 @@ globalThis.mainwp_fetch_themes = function (notFetchContent) {
             selected_sites.push(jQuery(this).val());
         });
         if (selected_sites.length == 0) {
-            errors.push(__('Please select at least one website or group or client.'));
+            errors.push(MainWP.I18n.t('Please select at least one website or group or client.'));
         }
     } else if (jQuery('input[name="select_by"]').val() == 'client') {
         jQuery("input[name='selected_clients[]']:checked").each(function () {
             selected_clients.push(jQuery(this).val());
         });
         if (selected_clients.length == 0) {
-            errors.push(__('Please select at least one website or group or client.'));
+            errors.push(MainWP.I18n.t('Please select at least one website or group or client.'));
         }
     } else {
         jQuery("input[name='selected_groups[]']:checked").each(function () {
             selected_groups.push(jQuery(this).val());
         });
         if (selected_groups.length == 0) {
-            errors.push(__('Please select at least one website or group or client.'));
+            errors.push(MainWP.I18n.t('Please select at least one website or group or client.'));
         }
     }
 
     let _status = jQuery("#mainwp_themes_search_by_status").dropdown("get value");
     if (_status == null) {
-        errors.push(__('Please select at least one theme status.'));
+        errors.push(MainWP.I18n.t('Please select at least one theme status.'));
     }
 
     if (errors.length > 0) {
@@ -803,7 +803,7 @@ jQuery(function () {
     });
     jQuery(document).on('click', '.mainwp-manage-plugin-delete', function () {
         let name = jQuery(this).closest('.mainwp-manage-plugin-item-website').attr('plugin-name');
-        let confirmMsg = __('You are about to delete the %1?', name);
+        let confirmMsg = MainWP.I18n.t('You are about to delete the %1?', name);
         mainwp_confirm(confirmMsg,() => {
             manage_plugin_Action(jQuery(this), 'delete');
         });
@@ -824,7 +824,7 @@ let manage_plugin_Action = function (elem, what) {
     });
     let start_row = '<div class="one wide center aligned middle aligned column"></div><div class="thirteen wide left aligned middle aligned column">';
     let end_row = '</div>';
-    jQuery(rowElement).html(start_row + '<i class="notched circle loading icon"></i>' + __('Please wait...') + end_row);
+    jQuery(rowElement).html(start_row + '<i class="notched circle loading icon"></i>' + MainWP.I18n.t('Please wait...') + end_row);
     jQuery.post(ajaxurl, data, function (response) {
         if (response?.error) {
             jQuery(rowElement).html(start_row + '<span data-tooltip="' + response.error + '" data-inverted="" data-position="left center"><i class="times red icon"></i></span>' + end_row);
@@ -841,7 +841,7 @@ let manage_plugin_Action = function (elem, what) {
                 mainwp_fetch_plugins(true);
             }, 3000);
         } else {
-            jQuery(rowElement).html(start_row + '<span data-tooltip="Undefined error occured. Please try again." data-inverted="" data-position="left center"><i class="times red icon"></i></span>' + end_row);
+            jQuery(rowElement).html(start_row + '<span data-tooltip="Undefined error occurred. Please try again." data-inverted="" data-position="left center"><i class="times red icon"></i></span>' + end_row);
         }
     }, 'json');
 
@@ -850,7 +850,7 @@ let manage_plugin_Action = function (elem, what) {
 
 
 let manage_plugins_upgrade = function (slug, websiteid) {
-    let msg = __('Are you sure you want to update the plugin on the selected site?');
+    let msg = MainWP.I18n.t('Are you sure you want to update the plugin on the selected site?');
     mainwp_confirm(msg, function () {
         return manage_plugins_upgrade_int(slug, websiteid);
     }, false, 1);
@@ -878,7 +878,7 @@ let manage_plugins_upgrade_continueAfterBackup = function (slug, websiteId, webs
                     let res_error = response.result_error;
                     if (res[slug]) {
                         siteHolder.attr('updated', 1);
-                        siteHolder.find('.column.update-column').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '"><i class="green check icon"></i></span>');
+                        siteHolder.find('.column.update-column').html('<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Update successful', 'mainwp') + '"><i class="green check icon"></i></span>');
                     } else if (res_error[slug]) {
                         let _error = res_error[slug];
                         let _icon = '<i class="red times icon"></i>';
@@ -956,7 +956,7 @@ jQuery(function () {
     });
     jQuery(document).on('click', '.mainwp-manages-theme-delete', function () {
         let name = jQuery(this).closest('.mainwp-manage-theme-item-website').attr('theme-name');
-        let confirmMsg = __('You are about to delete the %1?', name);
+        let confirmMsg = MainWP.I18n.t('You are about to delete the %1?', name);
         mainwp_confirm(confirmMsg, () => {
             manages_themeAction(jQuery(this), 'delete');
         });
@@ -978,7 +978,7 @@ let manages_themeAction = function (elem, what) {
     let start_row = '<div class="one wide center aligned middle aligned column"></div><div class="thirteen wide left aligned middle aligned column">';
     let end_row = '</div>';
 
-    jQuery(rowElement).html(start_row + '<i class="notched circle loading icon"></i>' + __('Please wait...') + end_row);
+    jQuery(rowElement).html(start_row + '<i class="notched circle loading icon"></i>' + MainWP.I18n.t('Please wait...') + end_row);
     jQuery.post(ajaxurl, data, function (response) {
         if (response?.error) {
             jQuery(rowElement).html(start_row + '<span data-tooltip="' + response.error + '" data-inverted="" data-position="left center"><i class="times red icon"></i></span>' + end_row);
@@ -996,7 +996,7 @@ let manages_themeAction = function (elem, what) {
                 mainwp_fetch_themes(true);
             }, 100);
         } else {
-            jQuery(rowElement).html(start_row + '<span data-tooltip="Undefined error occured. Please try again." data-inverted="" data-position="left center"><i class="times red icon"></i></span>' + end_row);
+            jQuery(rowElement).html(start_row + '<span data-tooltip="Undefined error occurred. Please try again." data-inverted="" data-position="left center"><i class="times red icon"></i></span>' + end_row);
         }
     }, 'json');
 
@@ -1005,7 +1005,7 @@ let manages_themeAction = function (elem, what) {
 
 
 let manage_themes_upgrade_theme = function (slug, websiteid) {
-    let msg = __('Are you sure you want to update the theme on the selected site?');
+    let msg = MainWP.I18n.t('Are you sure you want to update the theme on the selected site?');
     mainwp_confirm(msg, function () {
         return manage_themes_upgrade_int(slug, websiteid);
     }, false, 1);
@@ -1034,7 +1034,7 @@ let manage_themes_upgrade_continueAfterBackup = function (slug, websiteId, websi
                     let res_error = response.result_error;
                     if (res[pSlug]) {
                         siteHolder.attr('updated', 1);
-                        siteHolder.find('.column.update-column').html('<span data-inverted="" data-position="left center" data-tooltip="' + __('Update successful', 'mainwp') + '"><i class="green check icon"></i></span>');
+                        siteHolder.find('.column.update-column').html('<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Update successful', 'mainwp') + '"><i class="green check icon"></i></span>');
                     } else if (res_error ? res_error[slug] : false) {
                         let _error = res_error[slug];
                         let _icon = '<i class="red times icon"></i>';
@@ -1103,12 +1103,12 @@ let manage_themes_upgrade_int = function (slug, websiteId) {
  */
 let mainwp_manages_checkBackups = function (sitesToUpdate, siteNames, continueAfterBackup) {
     let managesitesShowBusyFunction = function () {
-        let output = __('Checking if a backup is required for the selected updates...');
+        let output = MainWP.I18n.t('Checking if a backup is required for the selected updates...');
         mainwpPopup('#managesites-backup-box').getContentEl().html(output);
         jQuery('#managesites-backup-all').hide();
         jQuery('#managesites-backup-ignore').hide();
         mainwpPopup('#managesites-backup-box').init({
-            title: __("Checking backup settings..."), callback: function () {
+            title: MainWP.I18n.t("Checking backup settings..."), callback: function () {
                 mainwpVars.bulkManageSitesTaskRunning = false;
                 mainwp_forceReload();
             }
@@ -1149,7 +1149,7 @@ let mainwp_manages_checkBackups = function (sitesToUpdate, siteNames, continueAf
                 if (siteFeedback != undefined) {
                     mainwp_managesites_prepare_backup_popup(response, pSiteNames, siteFeedback);
                     mainwpPopup('#managesites-backup-box').init({
-                        title: __("Full backup required!"), callback: function () {
+                        title: MainWP.I18n.t("Full backup required!"), callback: function () {
                             continueAfterBackup = undefined;
                             mainwp_forceReload();
                         }

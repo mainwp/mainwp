@@ -1679,7 +1679,7 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 } else {
                     ?>
                     <div class="error">
-                        <p><strong>ERROR</strong>: <?php esc_html_e( 'An undefined error occured.', 'mainwp' ); ?></p>
+                        <p><strong>ERROR</strong>: <?php esc_html_e( 'An undefined error occurred.', 'mainwp' ); ?></p>
                     </div>
                     <?php
                 }

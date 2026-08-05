@@ -384,22 +384,20 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
                 $error = esc_html__( 'Be sure to deactivate the child plugin on the child site to avoid potential security issues.', 'mainwp' );
             }
 
+            $resp = array(
+                'removed_site' => ! empty( $result['removed_site'] ),
+            );
+
             if ( '' !== $error ) {
-                die(
-                    wp_json_encode(
-                        array(
-                            'error'        => esc_html( $error ),
-                            'removed_site' => ! empty( $result['removed_site'] ),
-                        )
-                    )
-                );
+                $resp['error'] = esc_html( $error );
             } elseif ( is_array( $result ) && isset( $result['deactivated'] ) ) {
-                die( wp_json_encode( array( 'result' => 'SUCCESS' ) ) );
+                $resp['result'] = 'SUCCESS';
             } elseif ( is_array( $result ) && isset( $result['removed'] ) ) {
-                die( wp_json_encode( array( 'result' => 'REMOVED' ) ) );
+                $resp['result'] = 'REMOVED';
             } else {
-                die( wp_json_encode( array( 'undefined_error' => true ) ) );
+                $resp['undefined_error'] = true;
             }
+            die( wp_json_encode( $resp ) );
         }
         // phpcs:enable
         die( wp_json_encode( array( 'result' => 'NOSITE' ) ) );

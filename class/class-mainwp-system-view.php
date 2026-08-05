@@ -229,7 +229,11 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         mainwp_add_translation( $mainwpTranslations, 'is_activated_parent', esc_html__( '%1 could not be deleted. This theme is parent theme for the currently active theme.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'is_activated_theme', esc_html__( '%1 could not be deleted. This theme is active theme.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Change score changed. Click to review changes.', esc_html__( 'Change score changed. Click to review changes.', 'mainwp' ) );
-        mainwp_add_translation( $mainwpTranslations, 'Details: %1', esc_html__( 'Details: %1', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Details:', esc_html__( 'Details:', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'The request timed out. Please make sure that the MainWP Child plugin has been deactivated properly.', esc_html__( 'The request timed out. Please make sure that the MainWP Child plugin has been deactivated properly.', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'An unexpected error occurred. Please reload the page and try again.', esc_html__( 'Details:', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Site could not be removed. Please reload the page and try again.', esc_html__( 'Site could not be removed. Please reload the page and try again.', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'The site has been removed. Please make sure that the MainWP Child plugin has been deactivated properly. You will be redirected to the Sites page right away.', esc_html__( 'The site has been removed. Please make sure that the MainWP Child plugin has been deactivated properly. You will be redirected to the Sites page right away.', 'mainwp' ) );
 
         return $mainwpTranslations;
     }

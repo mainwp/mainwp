@@ -103,27 +103,50 @@ let mainwp_get_remove_calback = function (side_id) {
             timeout: 180000, // 3 minutes. Slightly longer than the PHP server timeout (2 minutes).
             method: 'POST',
             success: function (response) {
+
+                const removed_site = response?.removed_site ?? false;
+                let msg_not_removed = MainWP.I18n.t('Site could not be removed. Please reload the page and try again.');
+
+                let error_msg = '';
+
+                if (typeof response?.error === 'string' && response.error.trim() !== '') {
+                    error_msg = MainWP.I18n.t('Details:') + ' ' + response.error;
+                    msg_not_removed += ' ' + error_msg;
+                }
+
                 if (response?.undefined_error) {
+                    if (!removed_site) {
+                        feedback(
+                            'mainwp-message-zone',
+                            msg_not_removed,
+                            'red'
+                        );
+                        return;
+                    }
+                    const message = MainWP.I18n.t('An unexpected error occurred. Please reload the page and try again.');
                     feedback(
                         'mainwp-message-zone',
-                        MainWP.I18n.t('Site could not be removed. Please reload the page and try again.'),
+                        message + (error_msg ? ' ' + error_msg : '' ),
                         'red'
                     );
                     return;
-                } else if (response?.error) {
-                    let removed_site = false;
-                    let message = MainWP.I18n.t('Site could not be removed. Please reload the page and try again.');
-                    if (response?.removed_site) {
-                        removed_site = true;
-                        message = MainWP.I18n.t('The site has been removed. Please make sure that the MainWP Child plugin has been deactivated properly. You will be redirected to the Sites page right away.');
-                    }
-                    if (typeof response.error === 'string' && response.error.trim() !== '') {
-                        message += ' ' + MainWP.I18n.t('Details: %1', response.error);
+                }
+
+                if (!removed_site) {
+                    feedback(
+                        'mainwp-message-zone',
+                        msg_not_removed,
+                        'red'
+                    );
+                    return;
+                }
+
+                if (response?.error) {
+                    let message = MainWP.I18n.t('The site has been removed. Please make sure that the MainWP Child plugin has been deactivated properly. You will be redirected to the Sites page right away.');
+                    if (error_msg) {
+                        message += ' ' + error_msg;
                     }
                     feedback('mainwp-message-zone', message, 'red');
-                    if (!removed_site) {
-                        return; // no auto redirect.
-                    }
                 } else {
                     switch (response?.result) {
                         case 'SUCCESS':
@@ -143,7 +166,7 @@ let mainwp_get_remove_calback = function (side_id) {
                         case 'NOSITE':
                             feedback(
                                 'mainwp-message-zone',
-                                MainWP.I18n.t('Site could not be removed. Please reload the page and try again.'),
+                                msg_not_removed,
                                 'red'
                             );
                             return;

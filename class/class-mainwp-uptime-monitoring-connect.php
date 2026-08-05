@@ -326,7 +326,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
             }
         } elseif ( ! $is_notallowed && empty( $data ) && 'ping' !== $mo_apply_type && ! $second_try ) {
             usleep( 200000 );
-             // Process only the second-try response.
+            // Process only the second-try response.
             return $this->fetch_uptime_monitor( $monitor, $global_settings, true, $params );
         }
 
@@ -569,10 +569,11 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
         if ( empty( $disabled_functions ) || ( false === stristr( $disabled_functions, 'curl_multi_exec' ) ) ) {
 
-            $lastRun = 0;
-            $running = null;
-
+            $lastRun     = 0;
+            $running     = null;
+            $retry_added = false;
             do {
+                $retry_added = false;
                 if ( 20 < time() - $lastRun ) {
                     MainWP_System_Utility::set_time_limit( 3600 );
                     $lastRun = time();
@@ -616,7 +617,17 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
                             curl_setopt( $info['handle'], CURLOPT_URL, $requestUrls[ $resource_id ] );
                             curl_setopt( $info['handle'], CURLOPT_FRESH_CONNECT, true );
                             curl_setopt( $info['handle'], CURLOPT_FORBID_REUSE, true );
-                            curl_multi_add_handle( $mh, $info['handle'] );
+
+                            $add_retry = curl_multi_add_handle( $mh, $info['handle'] );
+                            if ( CURLM_OK === $add_retry ) {
+                                $mrc = curl_multi_exec( $mh, $running );
+                                if ( CURLM_OK === $mrc ) {
+                                    $retry_added = true;
+                                    unset( $requestUrls[ $resource_id ] );
+                                    continue; // libcurl updates $running automatically.
+                                }
+                                curl_multi_remove_handle( $mh, $info['handle'] );
+                            }
                             unset( $requestUrls[ $resource_id ] );
                             continue;
                         }
@@ -648,7 +659,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
                     }
                 }
                 usleep( 10000 );
-            } while ( $running > 0 );
+            } while ( $running > 0 || $retry_added );
 
             if ( MainWP_Connect::is_valid_curl_handle( $mh ) ) {
                 curl_multi_close( $mh );

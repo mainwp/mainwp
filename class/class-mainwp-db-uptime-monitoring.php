@@ -498,7 +498,8 @@ KEY idx_wpid_issub (wpid, issub)";
 
         $params = apply_filters( 'mainwp_uptime_monitoring_get_monitors_to_check_params', $params );
 
-        $local_timestamp  = mainwp_get_timestamp();
+        // support test case.
+        $local_timestamp  = isset( $params['local_timestamp'] ) ? (int) ( $params['local_timestamp'] ) : mainwp_get_timestamp();
         $lasttime_counter = isset( $params['main_counter_lasttime'] ) ? intval( $params['main_counter_lasttime'] ) : 0;
         $glo_settings     = isset( $params['global_settings'] ) && is_array( $params['global_settings'] ) ? $params['global_settings'] : array();
         $limit            = isset( $params['limit'] ) ? intval( $params['limit'] ) : 10;

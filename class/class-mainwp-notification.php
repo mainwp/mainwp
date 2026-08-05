@@ -287,7 +287,8 @@ class MainWP_Notification { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 $emails,
                 $subject,
                 $mail_content,
-                $content_type
+                $content_type,
+                $site_mo
             );
         }
     }
@@ -333,8 +334,9 @@ class MainWP_Notification { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @param string $subject email content.
      * @param string $mail_content Text format.
      * @param string $content_type email content.
+     * @param mixed  $object_sending Optional object associated with the email being sent.
      */
-    public static function send_wp_mail( $email, $subject, $mail_content, $content_type = '' ) {
+    public static function send_wp_mail( $email, $subject, $mail_content, $content_type = '', $object_sending = null ) {
         if ( empty( $content_type ) ) {
             $content_type = "Content-Type: text/html; charset=\"utf-8\"\r\n";
         }
@@ -347,6 +349,31 @@ class MainWP_Notification { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         $custom_header = apply_filters( 'mainwp_send_mail_from_header', false, $email, $subject );
         if ( is_array( $custom_header ) && isset( $custom_header['from_name'] ) && isset( $custom_header['from_email'] ) && ! empty( $custom_header['from_name'] ) && ! empty( $custom_header['from_email'] ) ) {
             $from_header = $custom_header;
+        }
+
+        /**
+         * Fires before an email is sent via wp_mail().
+         *
+         * @since 6.1.6
+         *
+         * @param string       $email           Recipient email address.
+         * @param string       $subject         Email subject.
+         * @param string       $mail_content    Email message content.
+         * @param string       $content_type    Email content type.
+         * @param object|mixed $object_sending  Object associated with the email being sent.
+         */
+        $email = apply_filters(
+            'mainwp_wp_mail_to',
+            $email,
+            $subject,
+            $mail_content,
+            $content_type,
+            $object_sending
+        );
+
+        if ( empty( $email ) ) {
+            // stop send.
+            return false;
         }
 
         return wp_mail(

@@ -1382,25 +1382,46 @@ msgstr ""
 msgid "Number of users to import: %1 Created users: %2 Failed: %3"
 msgstr ""
 
-#: assets/js/mainwp.js:94
+#: assets/js/mainwp.js:94 class/class-mainwp-system-view.php:134
 msgid "Removing the site. Please wait..."
 msgstr ""
 
-#: assets/js/mainwp.js:107
+#: assets/js/mainwp.js:149 class/class-mainwp-system-view.php:138
 msgid ""
 "The site has been removed and the MainWP Child plugin has been disabled. You "
 "will be redirected to the Sites page right away."
 msgstr ""
 
-#: assets/js/mainwp.js:109
+#: assets/js/mainwp.js:108 class/class-mainwp-system-view.php:135
 msgid "Site could not be removed. Please reload the page and try again."
 msgstr ""
 
-#: assets/js/mainwp.js:112
+#: assets/js/mainwp.js:128 assets/js/mainwp.js:139 assets/js/mainwp.js:170
+#: class/class-mainwp-system-view.php:137
 msgid ""
 "The site has been removed. Please make sure that the MainWP Child plugin has "
 "been deactivated properly. You will be redirected to the Sites page right "
 "away."
+msgstr ""
+
+#: assets/js/mainwp.js:113 class/class-mainwp-system-view.php:136
+msgid "Details:"
+msgstr ""
+
+#: assets/js/mainwp.js:156 class/class-mainwp-system-view.php:139
+msgid ""
+"The site has been removed. You will be redirected to the Sites page right "
+"away."
+msgstr ""
+
+#: assets/js/mainwp.js:183 class/class-mainwp-system-view.php:140
+msgid ""
+"The request timed out. Please make sure that the MainWP Child plugin has been "
+"deactivated properly."
+msgstr ""
+
+#: assets/js/mainwp.js:191 class/class-mainwp-system-view.php:141
+msgid "An unexpected error occurred. Please reload the page and try again."
 msgstr ""
 
 #: assets/js/mainwp.js:438
@@ -6469,7 +6490,7 @@ msgstr ""
 msgid "%1 could not be deleted. This theme is active theme."
 msgstr ""
 
-#: class/class-mainwp-system-view.php:228
+#: assets/js/mainwp-updates.js:4131 class/class-mainwp-system-view.php:239
 msgid "Change score changed. Click to review changes."
 msgstr ""
 

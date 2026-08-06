@@ -91,7 +91,7 @@ jQuery(function ($) {
 
 let mainwp_get_remove_calback = function (side_id) {
     return function () {
-        feedback('mainwp-message-zone', '<i class="notched circle loading icon"></i> ' + MainWP.I18n.t('Removing the site. Please wait...', 'mainwp'), '');
+        feedback('mainwp-message-zone', '<i class="notched circle loading icon"></i> ' + MainWP.I18n.t('Removing the site. Please wait...'), '');
         let data = mainwp_secure_data({
             action: 'mainwp_removesite',
             id: side_id
@@ -103,55 +103,84 @@ let mainwp_get_remove_calback = function (side_id) {
             timeout: 180000, // 3 minutes. Slightly longer than the PHP server timeout (2 minutes).
             method: 'POST',
             success: function (response) {
-                if (response?.error) {
-                    let message = MainWP.I18n.t('The site has been removed. Please make sure that the MainWP Child plugin has been deactivated properly. You will be redirected to the Sites page right away.', 'mainwp');
 
-                    if (typeof response.error === 'string' && response.error.trim() !== '') {
-                        message += ' ' + sprintf(MainWP.I18n.t('Details: %s', 'mainwp'), response.error);
+                const removed_site = response?.removed_site ?? false;
+                let msg_not_removed = MainWP.I18n.t('Site could not be removed. Please reload the page and try again.');
+
+                let error_msg = '';
+
+                if (typeof response?.error === 'string' && response.error.trim() !== '') {
+                    error_msg = MainWP.I18n.t('Details:') + ' ' + response.error;
+                    msg_not_removed += ' ' + error_msg;
+                }
+
+                if (response?.undefined_error) {
+                    if (!removed_site) {
+                        feedback(
+                            'mainwp-message-zone',
+                            msg_not_removed,
+                            'red'
+                        );
+                        return;
                     }
-
+                    feedback(
+                        'mainwp-message-zone',
+                        MainWP.I18n.t('The site has been removed. Please make sure that the MainWP Child plugin has been deactivated properly. You will be redirected to the Sites page right away.'),
+                        'red'
+                    );
+                } else if (!removed_site) {
+                    feedback(
+                        'mainwp-message-zone',
+                        msg_not_removed,
+                        'red'
+                    );
+                    return;
+                } else if (response?.error) {
+                    let message = MainWP.I18n.t('The site has been removed. Please make sure that the MainWP Child plugin has been deactivated properly. You will be redirected to the Sites page right away.');
+                    if (error_msg) {
+                        message += ' ' + error_msg;
+                    }
                     feedback('mainwp-message-zone', message, 'red');
                 } else {
                     switch (response?.result) {
                         case 'SUCCESS':
                             feedback(
                                 'mainwp-message-zone',
-                                MainWP.I18n.t('The site has been removed and the MainWP Child plugin has been disabled. You will be redirected to the Sites page right away.', 'mainwp'),
+                                MainWP.I18n.t('The site has been removed and the MainWP Child plugin has been disabled. You will be redirected to the Sites page right away.'),
                                 'green'
                             );
                             break;
                         case 'REMOVED': // for demo sites.
                             feedback(
                                 'mainwp-message-zone',
-                                MainWP.I18n.t('The site has been removed. You will be redirected to the Sites page right away.', 'mainwp'),
+                                MainWP.I18n.t('The site has been removed. You will be redirected to the Sites page right away.'),
                                 'green'
                             );
                             break;
                         case 'NOSITE':
                             feedback(
                                 'mainwp-message-zone',
-                                MainWP.I18n.t('Site could not be removed. Please reload the page and try again.', 'mainwp'),
+                                msg_not_removed,
                                 'red'
                             );
                             return;
                         default:
                             feedback(
                                 'mainwp-message-zone',
-                                MainWP.I18n.t('The site has been removed. Please make sure that the MainWP Child plugin has been deactivated properly. You will be redirected to the Sites page right away.', 'mainwp'),
+                                MainWP.I18n.t('The site has been removed. Please make sure that the MainWP Child plugin has been deactivated properly. You will be redirected to the Sites page right away.'),
                                 'green'
                             );
-                        }
-
-                    setTimeout(function () {
-                        mainwp_forceReload('admin.php?page=managesites');
-                    }, 3000);
+                    }
                 }
+                setTimeout(function () {
+                    mainwp_forceReload('admin.php?page=managesites');
+                }, 3000);
             },
             error: function (xhr, textStatus) {
                 if (textStatus === 'timeout') {
                     feedback(
                         'mainwp-message-zone',
-                        MainWP.I18n.t('The request timed out. Please make sure that the MainWP Child plugin has been deactivated properly.', 'mainwp'),
+                        MainWP.I18n.t('The request timed out. Please make sure that the MainWP Child plugin has been deactivated properly.'),
                         'red'
                     );
                     return;
@@ -159,7 +188,7 @@ let mainwp_get_remove_calback = function (side_id) {
 
                 feedback(
                     'mainwp-message-zone',
-                    MainWP.I18n.t('An unexpected error occurred. Please try again.', 'mainwp'),
+                    MainWP.I18n.t('An unexpected error occurred. Please reload the page and try again.'),
                     'red'
                 );
             },
@@ -951,7 +980,7 @@ globalThis.mainwp_sync_sites_data = function (syncSiteIds, pAction) {
     }
 
     for (let id of allWebsiteIds) {
-        dashboard_update_site_status(id, '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Pending', 'mainwp') + '"><i class="clock outline icon"></i></span>');
+        dashboard_update_site_status(id, '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Pending') + '"><i class="clock outline icon"></i></span>');
     }
 
     let nrOfWebsites = allWebsiteIds.length;
@@ -1215,9 +1244,9 @@ let dashboard_update_next = function (pAction) {
     mainwpVars.websitesLeft--;
     let websiteId = mainwpVars.websitesToUpdate[mainwpVars.currentWebsite++];
     if ('checknow' == pAction) {
-        dashboard_update_site_status(websiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Checking uptime status...', 'mainwp') + '"><i class="sync alternate loading icon"></i></span>');
+        dashboard_update_site_status(websiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Checking uptime status...') + '"><i class="sync alternate loading icon"></i></span>');
     } else {
-        dashboard_update_site_status(websiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Syncing data...', 'mainwp') + '"><i class="sync alternate loading icon"></i></span>');
+        dashboard_update_site_status(websiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Syncing data...') + '"><i class="sync alternate loading icon"></i></span>');
     }
 
     let data = mainwp_secure_data({
@@ -1243,7 +1272,7 @@ let dashboard_update_next_int = function (websiteId, data, errors, action) {
                     let extErr = response.error;
                     dashboard_update_site_status(pWebsiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + extErr + '"><i class="exclamation red icon"></i></span>');
                 } else {
-                    dashboard_update_site_status(websiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Synchronization process completed successfully.', 'mainwp') + '"><i class="check green icon"></i></span>', true);
+                    dashboard_update_site_status(websiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Synchronization process completed successfully.') + '"><i class="check green icon"></i></span>', true);
                 }
                 dashboard_update_done(pAction);
             }
@@ -1251,7 +1280,7 @@ let dashboard_update_next_int = function (websiteId, data, errors, action) {
         error: function (pWebsiteId, pData, pErrors, pAction) {
             return function () {
                 if (pErrors > 5) {
-                    dashboard_update_site_status(pWebsiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Process timed out. Please try again.', 'mainwp') + '"><i class="exclamation yellow icon"></i></span>');
+                    dashboard_update_site_status(pWebsiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Process timed out. Please try again.') + '"><i class="exclamation yellow icon"></i></span>');
                     dashboard_update_done(pAction);
                 } else {
                     pErrors++;
@@ -1282,7 +1311,7 @@ let mainwp_delete_nonmainwp_data_next = function () {
     mainwpVars.currentThreads++;
     mainwpVars.websitesLeft--;
     let websiteId = mainwpVars.websitesToUpdate[mainwpVars.currentWebsite++];
-    dashboard_update_site_status(websiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Deleting...', 'mainwp') + '"><i class="sync alternate loading icon"></i></span>');
+    dashboard_update_site_status(websiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Deleting...') + '"><i class="sync alternate loading icon"></i></span>');
     let data = mainwp_secure_data({
         action: 'mainwp_delete_non_mainwp_actions',
         wp_id: websiteId,
@@ -1301,7 +1330,7 @@ let mainwp_delete_nonmainwp_data_next_int = function (websiteId, data, errors) {
                     let extErr = response.error;
                     dashboard_update_site_status(pWebsiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + extErr + '"><i class="exclamation red icon"></i></span>');
                 } else {
-                    dashboard_update_site_status(websiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Process completed successfully.', 'mainwp') + '"><i class="check green icon"></i></span>', true);
+                    dashboard_update_site_status(websiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Process completed successfully.') + '"><i class="check green icon"></i></span>', true);
                 }
                 mainwp_delete_nonmainwp_data_done();
             }
@@ -1309,7 +1338,7 @@ let mainwp_delete_nonmainwp_data_next_int = function (websiteId, data, errors) {
         error: function (pWebsiteId, pData, pErrors) {
             return function () {
                 if (pErrors > 5) {
-                    dashboard_update_site_status(pWebsiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Process timed out. Please try again.', 'mainwp') + '"><i class="exclamation yellow icon"></i></span>');
+                    dashboard_update_site_status(pWebsiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Process timed out. Please try again.') + '"><i class="exclamation yellow icon"></i></span>');
                     mainwp_delete_nonmainwp_data_done();
                 } else {
                     pErrors++;
@@ -1437,7 +1466,7 @@ let mainwp_tool_disconnect_sites_next_int = function (websiteId, data, errors) {
         error: function (pWebsiteId, pData, pErrors) {
             return function () {
                 if (pErrors > 5) {
-                    dashboard_update_site_status(pWebsiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Process timed out. Please try again.', 'mainwp') + '"><i class="exclamation yellow icon"></i></span>');
+                    dashboard_update_site_status(pWebsiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Process timed out. Please try again.') + '"><i class="exclamation yellow icon"></i></span>');
                     mainwp_tool_disconnect_sites_done();
                 } else {
                     pErrors++;
@@ -2310,7 +2339,7 @@ let managesites_remove = function (obj) {
     let name = jQuery(obj).attr('site-name');
     let id = jQuery(obj).attr('site-id');
 
-    let msg = MainWP.I18n.t('Are you sure you want to remove', 'mainwp') + ' ' + name + ' ' + MainWP.I18n.t('from your MainWP Dashboard?', 'mainwp');
+    let msg = MainWP.I18n.t('Are you sure you want to remove') + ' ' + name + ' ' + MainWP.I18n.t('from your MainWP Dashboard?');
 
     mainwp_confirm(msg, function () {
         jQuery('tr#child-site-' + id).html('<td colspan="999"><i class="notched circle loading icon"></i> ' + 'Removing and deactivating the MainWP Child plugin! Please wait...' + '</td>');
@@ -2651,7 +2680,7 @@ let mainwp_install_bulk = function (type, slug, name) {
         });
 
         if (selected_sites.length == 0) {
-            feedback('mainwp-message-zone', MainWP.I18n.t('Please select at least one website or a group or client.', 'mainwp'), 'yellow');
+            feedback('mainwp-message-zone', MainWP.I18n.t('Please select at least one website or a group or client.'), 'yellow');
             return;
         }
 
@@ -2666,7 +2695,7 @@ let mainwp_install_bulk = function (type, slug, name) {
         });
 
         if (selected_clients.length == 0) {
-            feedback('mainwp-message-zone', MainWP.I18n.t('Please select at least one website or a group or client.', 'mainwp'), 'yellow');
+            feedback('mainwp-message-zone', MainWP.I18n.t('Please select at least one website or a group or client.'), 'yellow');
             return;
         }
 
@@ -2680,7 +2709,7 @@ let mainwp_install_bulk = function (type, slug, name) {
         });
 
         if (selected_groups.length == 0) {
-            feedback('mainwp-message-zone', MainWP.I18n.t('Please select at least one website or a group or client.', 'mainwp'), 'yellow');
+            feedback('mainwp-message-zone', MainWP.I18n.t('Please select at least one website or a group or client.'), 'yellow');
             return;
         }
 
@@ -2800,7 +2829,7 @@ let mainwp_install_bulk_start_specific = function (type, url, activatePlugin, ov
                 statusEl.html(response.error);
                 statusEl.css('color', 'red');
             } else if (response?.ok[siteToInstall.attr('siteid')]) {
-                statusEl.html('<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Installation completed successfully.', 'mainwp') + '"><i class="check green icon"></i></span>');
+                statusEl.html('<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Installation completed successfully.') + '"><i class="check green icon"></i></span>');
                 if (installResults.installed_sites == undefined) {
                     installResults.installed_sites = [];
                 }
@@ -2808,7 +2837,7 @@ let mainwp_install_bulk_start_specific = function (type, url, activatePlugin, ov
             } else if (response?.errors[siteToInstall.attr('siteid')]) {
                 _error = response.errors[siteToInstall.attr('siteid')][1];
             } else {
-                _error = MainWP.I18n.t('Undefined error occurred. Please try again.', 'mainwp');
+                _error = MainWP.I18n.t('Undefined error occurred. Please try again.');
             }
 
             if (_error !== '') {
@@ -2881,9 +2910,9 @@ let mainwp_upload_bulk = function (type) {
 
     if (files.length == 0) {
         if (type == 'plugin') {
-            feedback('mainwp-message-zone', MainWP.I18n.t('Please upload at least one plugin to install.', 'mainwp'), 'yellow');
+            feedback('mainwp-message-zone', MainWP.I18n.t('Please upload at least one plugin to install.'), 'yellow');
         } else {
-            feedback('mainwp-message-zone', MainWP.I18n.t('Please upload at least one theme to install.', 'mainwp'), 'yellow');
+            feedback('mainwp-message-zone', MainWP.I18n.t('Please upload at least one theme to install.'), 'yellow');
         }
         return;
     }
@@ -2903,7 +2932,7 @@ let mainwp_upload_bulk = function (type) {
         });
 
         if (selected_sites.length == 0) {
-            feedback('mainwp-message-zone', MainWP.I18n.t('Please select at least one website or a group or client.', 'mainwp'), 'yellow');
+            feedback('mainwp-message-zone', MainWP.I18n.t('Please select at least one website or a group or client.'), 'yellow');
             return;
         }
         data['selected_sites[]'] = selected_sites;
@@ -2914,7 +2943,7 @@ let mainwp_upload_bulk = function (type) {
         });
 
         if (selected_clients.length == 0) {
-            feedback('mainwp-message-zone', MainWP.I18n.t('Please select at least one website or a group or client.', 'mainwp'), 'yellow');
+            feedback('mainwp-message-zone', MainWP.I18n.t('Please select at least one website or a group or client.'), 'yellow');
             return;
         }
         data['selected_clients[]'] = selected_clients;
@@ -2924,7 +2953,7 @@ let mainwp_upload_bulk = function (type) {
             selected_groups.push(jQuery(this).val());
         });
         if (selected_groups.length == 0) {
-            feedback('mainwp-message-zone', MainWP.I18n.t('Please select at least one website or a group or client.', 'mainwp'), 'yellow');
+            feedback('mainwp-message-zone', MainWP.I18n.t('Please select at least one website or a group or client.'), 'yellow');
             return;
         }
         data['selected_groups[]'] = selected_groups;
@@ -2948,8 +2977,8 @@ let mainwp_upload_bulk = function (type) {
                 installQueue +=
                     '<div class="siteBulkInstall item" siteid="' + siteId + '" status="queue">' +
                     '<div class="right floated content">' +
-                    '<span class="queue" data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Queued', 'mainwp') + '"><i class="clock outline icon"></i></span>' +
-                    '<span class="progress" data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Installing...', 'mainwp') + '" style="display:none"><i class="notched circle loading icon"></i></span>' +
+                    '<span class="queue" data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Queued') + '"><i class="clock outline icon"></i></span>' +
+                    '<span class="progress" data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Installing...') + '" style="display:none"><i class="notched circle loading icon"></i></span>' +
                     '<span class="status"></span>' +
                     '</div>' +
                     '<div class="content">' + mainwp_links_visit_site_and_admin('', siteId) + ' ' + '<a href="' + site['url'] + '">' + site.name.replace(/\\(.)/g, '$1') + '</a></div>' + // NOSONAR - no safe replaceAll alternative.
@@ -3090,9 +3119,9 @@ let mainwp_upload_bulk_start_specific = function (type, urls, activatePlugin, ov
                 if (response.cost_tracker_installed_info != undefined) { // to support add to cost tracker pro.
                     jQuery('div[siteId="' + siteid + '"] .installation-entries').after(response.cost_tracker_installed_info);
                 }
-                statusEl.html('<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Installation completed successfully.', 'mainwp') + '"><i class="check green icon"></i></span>');
+                statusEl.html('<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Installation completed successfully.') + '"><i class="check green icon"></i></span>');
             } else if (response?.errors[siteid] === undefined) {
-                statusEl.html('<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Undefined error occurred. Please try again.', 'mainwp') + '"><i class="times red icon"></i></span>');
+                statusEl.html('<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Undefined error occurred. Please try again.') + '"><i class="times red icon"></i></span>');
             } else {
                 statusEl.html('<span data-inverted="" data-position="left center" data-tooltip="' + response.errors[siteid][1] + '"><i class="times red icon"></i></span>');
             }
@@ -3350,9 +3379,9 @@ let mainwp_item_changes_load = function (btnObj, load_more_date = '') {
             }
         } else if (response?.list) {
             if (response.list.length == 0) {
-                let msg = MainWP.I18n.t('This plugin has no recorded activity in Dashboard Insights.') ;
-                if('theme' === type){
-                    msg = MainWP.I18n.t('This theme has no recorded activity in Dashboard Insights.') ;
+                let msg = MainWP.I18n.t('This plugin has no recorded activity in Dashboard Insights.');
+                if ('theme' === type) {
+                    msg = MainWP.I18n.t('This theme has no recorded activity in Dashboard Insights.');
                 }
                 if (parentContent) {
                     let msg_content = '<div class="ui info message">' + msg + '</div>';
@@ -3433,8 +3462,8 @@ let mainwp_item_changes_load = function (btnObj, load_more_date = '') {
                 if (response?.onward_date) {
                     jQuery(md).find('.actions .col-left').html('Data available from ' + response.onward_date + ' onward.');
                 }
-                if ( response?.more_date ) {
-                    jQuery(md).find('.actions .col-right').html('<a href="javascript:void(0);" onclick="mainwp_item_changes_load(false,\'' + ( response.more_date ?? get_local_date_string() ) + '\');return false;">' + MainWP.I18n.t('Load More') + '</a>');
+                if (response?.more_date) {
+                    jQuery(md).find('.actions .col-right').html('<a href="javascript:void(0);" onclick="mainwp_item_changes_load(false,\'' + (response.more_date ?? get_local_date_string()) + '\');return false;">' + MainWP.I18n.t('Load More') + '</a>');
                 }
             }
         } else if (parentContent) {
@@ -3542,7 +3571,7 @@ let dayHistory_SwitchViewHandler = function (btn) {
                                             ${name}
                                     </div>
                                     <div class="six wide column right aligned">
-                                        <button type="button" class="ui circular blue mini button mainwp-list-history-switch-view">` + ( 'plugin' === type ? MainWP.I18n.t('Plugin History') : MainWP.I18n.t('Theme History') ) + `</button> <button class="ui basic mini button ">${records.length} ` + MainWP.I18n.t('Actions') + `</button>
+                                        <button type="button" class="ui circular blue mini button mainwp-list-history-switch-view">` + ('plugin' === type ? MainWP.I18n.t('Plugin History') : MainWP.I18n.t('Theme History')) + `</button> <button class="ui basic mini button ">${records.length} ` + MainWP.I18n.t('Actions') + `</button>
                                     </div>
                                 </div>
                             </div>
@@ -3681,11 +3710,11 @@ let mainwp_install_check_plugin_start_specific = function (url, siteToInstall) {
                 statusEl.html(response.error);
                 statusEl.css('color', 'red');
             } else if (response?.ok[siteToInstall.attr('siteid')]) {
-                statusEl.html('<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Installation completed successfully.', 'mainwp') + '"><i class="check green icon"></i></span>');
+                statusEl.html('<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Installation completed successfully.') + '"><i class="check green icon"></i></span>');
             } else if (response?.errors[siteToInstall.attr('siteid')]) {
                 statusEl.html('<span data-inverted="" data-position="left center" data-tooltip="' + response.errors[siteToInstall.attr('siteid')][1] + '"><i class="times red icon"></i></span>');
             } else {
-                statusEl.html('<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Undefined error occurred. Please try again.', 'mainwp') + '"><i class="times red icon"></i></span>');
+                statusEl.html('<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Undefined error occurred. Please try again.') + '"><i class="times red icon"></i></span>');
             }
 
             bulkInstallCurrentThreads--;
@@ -3960,39 +3989,39 @@ jQuery.fn.exists = function () {
 globalThis.MainWP = globalThis.MainWP || {};
 globalThis.MainWP.I18n = globalThis.MainWP.I18n || {};
 
-MainWP.I18n.t = function ( text, ...args ) {
-    if ( ! text ) {
+MainWP.I18n.t = function (text, ...args) {
+    if (!text) {
         return text;
     }
 
     // Replace non-alphanumeric characters (including Unicode/accented characters) with '_'
-    const strippedText = text.replace( /[^\p{L}\p{N}_]/gu, '_' );
+    const strippedText = text.replace(/[^\p{L}\p{N}_]/gu, '_');
 
     let translated = text;
 
     if (
         strippedText &&
         typeof mainwpTranslations !== 'undefined' &&
-        mainwpTranslations[ strippedText ] !== undefined
+        mainwpTranslations[strippedText] !== undefined
     ) {
-        translated = mainwpTranslations[ strippedText ];
+        translated = mainwpTranslations[strippedText];
     }
 
-    if ( args.length === 0 ) {
+    if (args.length === 0) {
         return translated;
     }
 
     // Single-pass replacement to avoid placeholder collision issues
-    return translated.replace( /%(\d+)/g, ( match, index ) => {
-        const argIdx = parseInt( index, 10 ) - 1;
-        return args[ argIdx ] !== undefined ? args[ argIdx ] : match;
-    } );
+    return translated.replace(/%(\d+)/g, (match, index) => {
+        const argIdx = parseInt(index, 10) - 1;
+        return args[argIdx] !== undefined ? args[argIdx] : match;
+    });
 };
 
 // Deprecated. Remove in a future release.
-if ( typeof globalThis.__ !== 'function' ) {
-    globalThis.__ = function ( text, ...args ) {
-        return globalThis.MainWP.I18n.t( text, ...args );
+if (typeof globalThis.__ !== 'function') {
+    globalThis.__ = function (text, ...args) {
+        return globalThis.MainWP.I18n.t(text, ...args);
     };
 }
 
@@ -4903,7 +4932,7 @@ let mainwp_force_destroy_sessions_part_2 = function (id) {
             mainwp_force_destroy_sessions_successed += 1;
             dashboard_update_site_status(website_id, '<i class="check green icon"></i>', true);
         } else {
-            dashboard_update_site_status(website_id, '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Process timed out. Please try again.', 'mainwp') + '">');
+            dashboard_update_site_status(website_id, '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Process timed out. Please try again.') + '">');
         }
     }, 'json').fail(function () {
         let counter = id + 1;
@@ -4937,7 +4966,7 @@ let mainwp_import_demo_data_action = function (obj) {
     let confirmation = "Are you sure you want to import demo content into your MainWP Dashboard?";
     let msg_import = (jQuery(obj).attr('page-import') == 'qsw-import') ? '&message=qsw-import' : '';
     mainwp_confirm(confirmation, function () {
-        feedback('mainwp-message-zone', '<i class="notched circle loading icon"></i> ' + MainWP.I18n.t('Importing. Please wait...', 'mainwp'), '');
+        feedback('mainwp-message-zone', '<i class="notched circle loading icon"></i> ' + MainWP.I18n.t('Importing. Please wait...'), '');
         let data = mainwp_secure_data({
             action: 'mainwp_import_demo_data',
         });
@@ -4946,9 +4975,9 @@ let mainwp_import_demo_data_action = function (obj) {
             let error = false;
             if (response.count === undefined) {
                 error = true;
-                feedback('mainwp-message-zone', MainWP.I18n.t('Undefined error. Please try again.', 'mainwp'), 'green');
+                feedback('mainwp-message-zone', MainWP.I18n.t('Undefined error. Please try again.'), 'green');
             } else {
-                feedback('mainwp-message-zone', MainWP.I18n.t('The demo content has been imported into your MainWP Dashboard.', 'mainwp'), 'green');
+                feedback('mainwp-message-zone', MainWP.I18n.t('The demo content has been imported into your MainWP Dashboard.'), 'green');
             }
 
             if (!error) {
@@ -4963,7 +4992,7 @@ let mainwp_import_demo_data_action = function (obj) {
 let mainwp_remove_demo_data_action = function () {
     let confirmation = "Are you sure you want to delete demo content from your MainWP Dashboard?";
     mainwp_confirm(confirmation, function () {
-        feedback('mainwp-message-zone', '<i class="notched circle loading icon"></i> ' + MainWP.I18n.t('Deleting. Please wait...', 'mainwp'), '');
+        feedback('mainwp-message-zone', '<i class="notched circle loading icon"></i> ' + MainWP.I18n.t('Deleting. Please wait...'), '');
         let data = mainwp_secure_data({
             action: 'mainwp_delete_demo_data',
         });
@@ -4971,9 +5000,9 @@ let mainwp_remove_demo_data_action = function () {
             let error = false;
             if (response.success === undefined) {
                 error = true;
-                feedback('mainwp-message-zone', MainWP.I18n.t('Undefined error. Please try again.', 'mainwp'), 'green');
+                feedback('mainwp-message-zone', MainWP.I18n.t('Undefined error. Please try again.'), 'green');
             } else {
-                feedback('mainwp-message-zone', MainWP.I18n.t('The demo content has been deleted from your MainWP Dashboard.', 'mainwp'), 'green');
+                feedback('mainwp-message-zone', MainWP.I18n.t('The demo content has been deleted from your MainWP Dashboard.'), 'green');
             }
 
             if (!error) {
@@ -5106,12 +5135,12 @@ let mainwp_tool_renew_connections_start_specific = function (siteItem) {
         siteid: siteId
     });
 
-    connection_renew_status(siteId, '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Processing...', 'mainwp') + '"><i class="sync alternate loading icon"></i></span>');
+    connection_renew_status(siteId, '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Processing...') + '"><i class="sync alternate loading icon"></i></span>');
     jQuery.post(ajaxurl, data, function (response) {
         if (response.error) {
             connection_renew_status(siteId, '<span data-inverted="" data-position="left center" data-tooltip="' + response.error + '"><i class="times red icon"></i></span>');
         } else if (response.result == 'success') {
-            connection_renew_status(siteId, '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Renew connnection process completed successfully.', 'mainwp') + '"><i class="check green icon"></i></span>');
+            connection_renew_status(siteId, '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Renew connnection process completed successfully.') + '"><i class="check green icon"></i></span>');
         } else {
             connection_renew_status(siteId, '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Undefined error.') + '"><i class="times red icon"></i></span>');
 

@@ -240,6 +240,7 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
      * Prepare uptime status notification.
      *
      * @param array $process_notices sites.
+     * @param array $params Other parameters.
      *
      * @return bool True|False
      *
@@ -249,16 +250,22 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
      * @uses \MainWP\Dashboard\MainWP_Notification_Settings::get_site_email_settings()
      * @uses \MainWP\Dashboard\MainWP_Notification_Settings::get_default_emails_fields()
      */
-    public function send_uptime_notification_importance_status( $process_notices ) {
+    public function send_uptime_notification_importance_status( $process_notices, $params = array() ) {
+
+        if ( ! is_array( $process_notices ) || empty( $process_notices ) ) {
+            return false;
+        }
+
+        if ( ! is_array( $params ) ) {
+            $params = array();
+        }
 
         $plain_text = get_option( 'mainwp_daily_digest_plain_text', false );
 
-        $local_time = mainwp_get_timestamp();
-
-        $admin_email = MainWP_Notification_Settings::get_general_email();
-
+        $local_time  = ! empty( $params['local_time'] ) ? (int) $params['local_time'] : mainwp_get_timestamp();
+        $admin_email = ! empty( $params['admin_email'] ) ? $params['admin_email'] : MainWP_Notification_Settings::get_general_email();
         // general uptime notification, to administrator.
-        $gene_email_settings = MainWP_Notification_Settings::get_general_email_settings( 'uptime' );
+        $gene_email_settings = ! empty( $params['email_settings'] ) ? $params['email_settings'] : MainWP_Notification_Settings::get_general_email_settings( 'uptime' );
 
         $debug_settings = array(
             'admin_email'            => $admin_email,
@@ -338,6 +345,7 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
                             $new_obj->hb_http_code  = $hb_notice->http_code; // to fix for monitor with multi heartbeats down status.
                             $new_obj->status        = $hb_notice->status;
                             $new_obj->hb_time_check = strtotime( $hb_notice->time . ' UTC' );
+                            $new_obj->monitor_id    = $hb_notice->monitor_id;
                             $heartbeats_notices[]   = $new_obj;
 
                             if ( $need_to_prepared_tokens && false === $current_heartbeat ) {

@@ -4128,11 +4128,7 @@ const render_html_regression_sync_score_icon = function (score, change_score, we
     }
 
     if (icon_html !== "" && Number.isInteger(website_id)) {
-        let msg = 'Change score changed. Click to review changes.';
-        // eslint-disable-next-line no-constant-condition
-        if (typeof mainwpTranslations) {
-            msg = mainwpTranslations?.Change_score_changed_Click_to_review_changes || msg;
-        }
+        const msg = MainWP.I18n.t('Change score changed. Click to review changes.');
         icon_html = `<a href="admin.php?page=ManageSitesHTMLRegression&id=${website_id}" target="_blank" data-tooltip="${msg}" data-inverted="" data-position="left center">${icon_html}</a>`;
     }
 

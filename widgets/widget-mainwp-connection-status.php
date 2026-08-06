@@ -357,6 +357,7 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     },
                     "layout": {
                         "topStart": null,
+                        "topEnd": null,
                         "bottomEnd": {
                             "paging": {
                                 "numbers": <?php echo intval( $table_features['numbers'] ); ?>

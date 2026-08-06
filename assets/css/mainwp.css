@@ -1711,6 +1711,15 @@ body.show-upload-theme .mainwp-content-wrap .mainwp-upload-theme {
     float: right !important;
 }
 
+#widget-connections-status-details table td {
+    padding-top: .5em;
+    padding-bottom: .5em;
+}
+
+#widget-connections-status-details .mainwp_wp_sync {
+    line-height: 1.14285714em;
+}
+
 #widget-connections-status-details .dt-layout-row.dt-layout-table {
     margin-top: 0;
 }

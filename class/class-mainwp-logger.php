@@ -729,15 +729,21 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @return mixed $data filtered data.
      */
     public function prepare_log_info( $data ) {
-        $patterns[0]    = '/user=([^\&]+)\&/';
-        $replacement[0] = 'user=xxxxxx&';
-        $patterns[1]    = '/alt_user=([^\&]+)\&/';
-        $replacement[1] = 'alt_user=xxxxxx&';
-        $patterns[2]    = '/\&server=([^\&]+)\&/';
-        $replacement[2] = '&server=xxxxxx&';
-        $patterns[3]    = '/(^|[?&])data_signature=[^&]*/';
-        $replacement[3] = '$1data_signature=xxxxxx';
-        $data           = preg_replace( $patterns, $replacement, $data );
+        $patterns[]    = '/user=([^\&]+)\&/';
+        $replacement[] = 'user=xxxxxx&';
+        $patterns[]    = '/alt_user=([^\&]+)\&/';
+        $replacement[] = 'alt_user=xxxxxx&';
+        $patterns[]    = '/\&server=([^\&]+)\&/';
+        $replacement[] = '&server=xxxxxx&';
+        $patterns[]    = '/(^|[?&])data_signature=[^&]*/';
+        $replacement[] = '$1data_signature=xxxxxx';
+        $patterns[]    = '/(^|[?&])mainwpsignature=[^&]*/';
+        $replacement[] = '$mainwpsignature=xxxxxx';
+        $patterns[]    = '/(^|[?&])nonce=[^&]*/';
+        $replacement[] = '$nonce=xxxxxx';
+        $patterns[]    = '/(^|[?&])request_id=[^&]*/';
+        $replacement[] = '$request_id=xxxxxx';
+        $data          = preg_replace( $patterns, $replacement, $data );
         return $data;
     }
 

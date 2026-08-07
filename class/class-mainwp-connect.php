@@ -1340,8 +1340,6 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             'upgrade'        => ( 'upgradeplugintheme' === $what || 'upgrade' === $what || 'upgradetranslation' === $what ),
         );
 
-        $request_update = MainWP_Premium_Update::maybe_request_premium_updates( $website, $what, $params );
-
         if ( isset( $rawResponse ) && $rawResponse ) {
             $others['raw_response'] = 'yes';
         }
@@ -1351,9 +1349,15 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $updating_website = false;
         $type             = '';
         $list             = '';
-        if ( 'upgradeplugintheme' === $what || 'upgrade' === $what || 'upgradetranslation' === $what ) {
+
+        $premium_update = 'process_premium_updates' === $what && ! empty( $params['premium_perform'] ) && 'premium_update' === $params['premium_perform'] ? true : false;
+
+        if ( 'upgradeplugintheme' === $what || 'upgrade' === $what || 'upgradetranslation' === $what || $premium_update ) {
             $updating_website = true;
-            if ( 'upgradeplugintheme' === $what || 'upgradetranslation' === $what ) {
+            if ( $premium_update ) {
+                $type = $params['premium_type'];
+                $list = $params['list'];
+            } elseif ( 'upgradeplugintheme' === $what || 'upgradetranslation' === $what ) {
                 $type = $params['type'];
                 $list = $params['list'];
             } else {
@@ -1377,6 +1381,15 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             do_action( 'mainwp_website_before_updated', $website, $type, $list );
         }
 
+        $information = array();
+        $output      = array();
+
+        $request_update = MainWP_Premium_Update::maybe_request_premium_updates( $website, $what, $params, $output_result );
+
+        if ( $request_update ) {
+            return $output_result; // This is a recursive call, so return the information here.
+        }
+
         if ( 'renew' === $what ) {
             $postdata = static::get_renew_post_data_authed( $website, $what, $verify_signature );
         } else {
@@ -1385,38 +1398,30 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         }
         $others['function'] = $what;
 
-        $information = array();
-        $output      = array();
-
-        if ( ! $request_update ) {
-            // MWP-1548: decrypt http_user / http_pass before they hit the
-            // outbound HTTP Basic Auth header. Legacy plaintext rows pass
-            // through unchanged.
-            $http_user_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_user );
-            $http_pass_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_pass );
-            $information     = static::fetch_url( $website, $website->url, $postdata, $checkConstraints, $website->verify_certificate, $pRetryFailed, $http_user_plain, $http_pass_plain, $website->ssl_version, $others, $output );
-            if ( ! empty( $output ) ) {
-                if ( ! is_array( $information ) ) {
-                    $information = array();
-                }
-                $information['fetch_url_output'] = $output;
+        // MWP-1548: decrypt http_user / http_pass before they hit the
+        // outbound HTTP Basic Auth header. Legacy plaintext rows pass
+        // through unchanged.
+        $http_user_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_user );
+        $http_pass_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_pass );
+        $information     = static::fetch_url( $website, $website->url, $postdata, $checkConstraints, $website->verify_certificate, $pRetryFailed, $http_user_plain, $http_pass_plain, $website->ssl_version, $others, $output );
+        if ( ! empty( $output ) ) {
+            if ( ! is_array( $information ) ) {
+                $information = array();
             }
-            /**
-             * Fires immediately after fetch url action.
-             *
-             * @param object $website  website.
-             * @param array $information information result data.
-             * @param string $what action.
-             * @param array $params params input array.
-             * @param array $others others input array.
-             *
-             * @since 4.5.1.1
-             */
-            do_action( 'mainwp_fetch_url_authed', $website, $information, $what, $params, $others );
-        } else {
-            $slug                    = $params['list'];
-            $information['upgrades'] = array( $slug => 1 );
+            $information['fetch_url_output'] = $output;
         }
+        /**
+         * Fires immediately after fetch url action.
+         *
+         * @param object $website  website.
+         * @param array $information information result data.
+         * @param string $what action.
+         * @param array $params params input array.
+         * @param array $others others input array.
+         *
+         * @since 4.5.1.1
+         */
+        do_action( 'mainwp_fetch_url_authed', $website, $information, $what, $params, $others );
 
         if ( is_array( $information ) && isset( $information['sync'] ) && ! empty( $information['sync'] ) ) {
             MainWP_Sync::sync_information_array( $website, $information['sync'] );

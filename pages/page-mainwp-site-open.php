@@ -284,7 +284,7 @@ class MainWP_Site_Open { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
             $url  = ( isset( $website->url ) && '' !== $website->url ? $website->url : $website->siteurl );
             $url .= ( '/' !== substr( $url, - 1 ) ? '/' : '' );
 
-            $postdata         = MainWP_Connect::get_get_data_authed( $website, $file, 'f', true );
+            $postdata         = MainWP_Connect::get_get_data_authed( $website, $file, 'f', true, array( 'verify_signature' => true ) );
             $postdata['size'] = $size;
             ?>
             <form method="POST" action="<?php echo esc_url( $url ); ?>" id="redirectForm">
@@ -332,7 +332,7 @@ class MainWP_Site_Open { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
             $url  = ( isset( $website->url ) && '' !== $website->url ? $website->url : $website->siteurl );
             $url .= ( '/' !== substr( $url, - 1 ) ? '/' : '' );
 
-            $postdata                  = MainWP_Connect::get_get_data_authed( $website, 'index.php', 'where', true );
+            $postdata                  = MainWP_Connect::get_get_data_authed( $website, 'index.php', 'where', true, array( 'verify_signature' => true ) );
             $postdata['open_location'] = $open_location; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
             ?>
             <form method="POST" action="<?php echo esc_url( $url ); ?>" id="redirectForm">

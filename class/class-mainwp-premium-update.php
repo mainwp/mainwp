@@ -90,8 +90,6 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 'fluent-booking-pro/fluent-booking-pro.php',
                 'wp-social-ninja-pro/wp-social-ninja-pro.php',
                 'wp-payment-form-pro/wp-payment-form-pro.php',
-                'secure-custom-fields/secure-custom-fields.php',
-                'advanced-custom-fields/acf.php',
             );
 
             /**

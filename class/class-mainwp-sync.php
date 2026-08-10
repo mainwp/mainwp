@@ -645,6 +645,22 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             $done = true;
         }
 
+        if ( isset( $information['premium_updates_results'] ) && is_array( $information['premium_updates_results'] ) ) {
+            foreach ( array( 'plugin', 'theme' ) as $type ) {
+                if ( isset( $information['premium_updates_results'][ $type ] ) ) {
+                    $update_results = $information['premium_updates_results'][ $type ];
+                    if ( is_array( $update_results ) ) {
+                        foreach ( $update_results as $info ) {
+                            if ( is_array( $info ) && isset( $info['other_data'] ) ) {
+                                $output_array = $info['other_data'];
+                                mainwp_get_actions_handler_instance()->do_action_mainwp_install_actions( $website, 'updated', $output_array, $type );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         if ( isset( $information['primaryLasttimeBackup'] ) ) {
             MainWP_DB::instance()->update_website_option( $pWebsite, 'primary_lasttime_backup', $information['primaryLasttimeBackup'] );
             $done = true;

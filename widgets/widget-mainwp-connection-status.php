@@ -457,13 +457,6 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
         $per_page = isset( $_POST['per_page'] ) ? intval( wp_unslash( $_POST['per_page'] ) ) : 25; // phpcs:ignore -- NOSONAR - ok.
         $page = isset( $_POST['page'] ) ? intval( wp_unslash( $_POST['page'] ) ) : 1; // phpcs:ignore -- NOSONAR - ok.
 
-        $req_order = null;
-
-        if ( isset( $_REQUEST['order'] ) ) {
-            $order_values = MainWP_Utility::instance()->get_table_orders( $_REQUEST );
-            $req_order    = $order_values['order'];
-        }
-
         $perPage = isset( $_REQUEST['length'] ) ? intval( $_REQUEST['length'] ) : 25;
         $start   = isset( $_REQUEST['start'] ) ? intval( $_REQUEST['start'] ) : 0;
 
@@ -484,7 +477,7 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
             'status'             => $status,
             'offset'             => $start,
             'rowcount'           => $perPage,
-            'orderby'            => 'wp.id ' . ( 'asc' === $req_order ? 'asc' : 'desc' ),
+            'orderby'            => 'wp.url asc',
             'view'               => 'custom_view',
             'others_fields'      => array(),
         );

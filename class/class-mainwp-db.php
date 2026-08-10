@@ -148,7 +148,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      *
      * @param array  $fields Extra option fields.
      * @param string $view_query view query.
-     * @param array  $params Additional parameters.
+     * @param array<string, mixed>  $params Additional parameters.
 
      *
      * NOTE: This method is used to improve the performance of wp_options view, as the old view with subquery for each field will cause performance issue when there are many sites, and this method will generate the SQL with LEFT JOIN which will be much faster than subquery.

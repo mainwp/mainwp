@@ -109,7 +109,7 @@ class MainWP_Site_Open { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
 
         if ( isset( $_GET['openUrl'] ) && 'yes' === $_GET['openUrl'] ) {
 
-            $postdata                  = MainWP_Connect::get_get_data_authed( $website, 'index.php', 'where', true );
+            $postdata                  = MainWP_Connect::get_get_data_authed( $website, 'index.php', 'where', true, array( 'verify_signature' => true ) );
             $postdata['open_location'] = $location; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
             ?>
             <div class="ui segment" style="padding: 25rem">
@@ -189,9 +189,7 @@ class MainWP_Site_Open { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
         if ( MainWP_Demo_Handle::get_instance()->is_demo_website( $website ) ) {
             $action_url = $website->url . 'wp-admin.html';
         } else {
-            if ( ! isset( $params['verify_signature'] ) ) {
-                $params['verify_signature'] = true; // enable for open site.
-            }
+            $params['verify_signature'] = true; // enable for open site.
             $action_url = MainWP_Connect::get_get_data_authed( $website, ( null === $location || '' === $location ) ? 'index.php' : $location, 'where', false, $params );
         }
 

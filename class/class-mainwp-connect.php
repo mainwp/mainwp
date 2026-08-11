@@ -1528,6 +1528,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $others['function'] = $what;
 
         $information = static::fetch_url( $website, $website->url, $postdata, $checkConstraints, $website->verify_certificate, $pRetryFailed, $http_user_plain, $http_pass_plain, $website->ssl_version, $others, $output );
+
         if ( ! empty( $output ) ) {
             if ( ! is_array( $information ) ) {
                 $information = array();

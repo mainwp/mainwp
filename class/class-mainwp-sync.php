@@ -653,7 +653,7 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         foreach ( $update_results as $info ) {
                             if ( is_array( $info ) && isset( $info['other_data'] ) ) {
                                 $output_array = $info['other_data'];
-                                mainwp_get_actions_handler_instance()->do_action_mainwp_install_actions( $website, 'updated', $output_array, $type );
+                                mainwp_get_actions_handler_instance()->do_action_mainwp_install_actions( $pWebsite, 'updated', $output_array, $type );
                             }
                         }
                     }

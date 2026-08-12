@@ -326,6 +326,7 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             return MainWP_Connect::fetch_url_authed( $website, 'process_premium_updates', $params, false, false, true, null, true );
         } catch ( \Exception $e ) {
             // Just ignore.
+            $err = $e->getMessage(); //phpcs:ignore -- NOSONAR -for debug.
         }
         return false;
     }

@@ -516,9 +516,12 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 }
 
                 if ( 'process_premium_updates' === $what ) {
-                    $data_sign_v2['premium_perform'] = isset( $params['premium_perform'] ) ? $params['premium_perform'] : '';
-                    $data_sign_v2['premium_type']    = isset( $params['premium_type'] ) ? $params['premium_type'] : '';
-                    $data_sign_v2['list']            = isset( $params['list'] ) ? $params['list'] : '';
+                    $add_sign_params = array( 'premium_perform', 'premium_type', 'list' );
+                    foreach ( $add_sign_params as $_name ) {
+                        if ( isset( $params[ $_name ] ) ) {
+                            $data_sign_v2[ $_name ] = $params[ $_name ];
+                        }
+                    }
                 }
 
                 $sign_success_v2 = null;
@@ -573,7 +576,6 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 }
                 $data['sslVerify'] = $website->verify_certificate ? 1 : 0;
             }
-
             return http_build_query( $data, '', '&' );
         }
 
@@ -1491,10 +1493,12 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $information = array();
         $output      = array();
 
-        $request_update = MainWP_Premium_Update::maybe_request_premium_updates( $website, $what, $params, $output_result );
-
-        if ( $request_update ) {
-            return $output_result; // This is a recursive call, so return the information here.
+        if ( 'stats' === $what || ( 'upgradeplugintheme' === $what && isset( $params['type'] ) ) ) {
+            $request_update = MainWP_Premium_Update::maybe_request_premium_updates( $website, $what, $params, $output_result );
+            if ( $request_update ) {
+                // Return the information here.
+                return $output_result;
+            }
         }
 
         // MWP-1548: decrypt http_user / http_pass before they hit the

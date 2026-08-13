@@ -797,7 +797,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     }
                 }
 
-                $signature_v2 = ! empty( $signature ) ? base64_encode( $signature ) : ''; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
+                $signature_v2 = ! empty( $signature_v2 ) ? base64_encode( $signature_v2 ) : ''; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 
                 $params['data_signature']      = rawurlencode( $sign_value_v2 );
                 $params['mainwpsignature_adv'] = rawurlencode( $signature_v2 );
@@ -846,8 +846,6 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         if ( $asArray ) {
             return $params;
         }
-
-        $params['data_signature'] = rawurlencode( $params['data_signature'] );
 
         $url  = ( isset( $website->url ) && '' !== $website->url ? $website->url : $website->siteurl );
         $url .= ( substr( $url, - 1 ) !== '/' ? '/' : '' );

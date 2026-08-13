@@ -745,6 +745,10 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $replacement[] = '$request_id=xxxxxx';
         $patterns[]    = '/(^|[?&])mainwpsignature_adv=[^&]*/';
         $replacement[] = '$mainwpsignature_adv=xxxxxx';
+        $patterns[]    = '/(^|[?&])wp_http_user=[^&]*/';
+        $replacement[] = '$wp_http_user=xxxxxx';
+        $patterns[]    = '/(^|[?&])wp_http_pass=[^&]*/';
+        $replacement[] = '$wp_http_pass=xxxxxx';
         $data          = preg_replace( $patterns, $replacement, $data );
         return $data;
     }

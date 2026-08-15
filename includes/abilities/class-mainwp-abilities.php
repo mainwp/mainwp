@@ -20,6 +20,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 class MainWP_Abilities {
 
     /**
+     * Maximum encoded GET input size.
+     *
+     * @var int
+     */
+    private const MAX_GET_INPUT_BYTES = 8192;
+
+    /**
+     * Maximum DELETE JSON body size.
+     *
+     * @var int
+     */
+    private const MAX_DELETE_INPUT_BYTES = 1048576;
+
+    /**
      * Initialize the Abilities integration.
      *
      * Cron handlers are always initialized to process any previously queued jobs,
@@ -38,6 +52,15 @@ class MainWP_Abilities {
         // Feature gate: If Abilities API is not available, skip ability registration.
         if ( ! function_exists( 'wp_register_ability' ) ) {
             return;
+        }
+
+        if ( false === has_filter( 'rest_request_before_callbacks', array( static::class, 'normalize_rest_input_transport' ) ) ) {
+            add_filter(
+                'rest_request_before_callbacks',
+                array( static::class, 'normalize_rest_input_transport' ),
+                5,
+                3
+            );
         }
 
         // Hook into MainWP REST authentication to include Abilities API routes.
@@ -77,6 +100,163 @@ class MainWP_Abilities {
         // which works with both MainWP API keys (via MainWP_REST_Authentication) and
         // WordPress Application Passwords (via native WP REST auth).
         return $is_mainwp_api;
+    }
+
+    /**
+     * Restore typed JSON values before the Abilities API validates a request.
+     *
+     * WordPress reads GET and DELETE ability input only from query parameters.
+     * Query parsing cannot distinguish JSON null from strings without a JSON
+     * carrier, and credentials must not be placed in DELETE URLs. This adapter
+     * is limited to MainWP ability run routes and leaves the legacy bracket-style
+     * input query parameter unchanged when no JSON carrier is present.
+     *
+     * @param mixed            $response Result to send to the client, or null.
+     * @param array            $handler  Matched REST route handler.
+     * @param \WP_REST_Request $request  Current REST request.
+     * @return mixed
+     */
+    public static function normalize_rest_input_transport( $response, array $handler, \WP_REST_Request $request ) {
+        unset( $handler );
+
+        if ( null !== $response ) {
+            return $response;
+        }
+
+        if ( ! preg_match( '#^/wp-abilities/v1/abilities/mainwp/[a-z0-9-]+/run$#', $request->get_route() ) ) {
+            return $response;
+        }
+
+        $method = strtoupper( $request->get_method() );
+        if ( 'GET' === $method ) {
+            return static::normalize_get_input_transport( $response, $request );
+        }
+
+        if ( 'DELETE' === $method ) {
+            return static::normalize_delete_input_transport( $response, $request );
+        }
+
+        return $response;
+    }
+
+    /**
+     * Normalize the GET input_json query carrier.
+     *
+     * @param mixed            $response Result to send to the client, or null.
+     * @param \WP_REST_Request $request  Current REST request.
+     * @return mixed
+     */
+    private static function normalize_get_input_transport( $response, \WP_REST_Request $request ) {
+        $query = $request->get_query_params();
+        if ( ! array_key_exists( 'input_json', $query ) ) {
+            return $response;
+        }
+
+        if ( array_key_exists( 'input', $query ) ) {
+            return static::invalid_input_transport();
+        }
+
+        $input = static::decode_input_object( $query['input_json'], self::MAX_GET_INPUT_BYTES );
+        if ( is_wp_error( $input ) ) {
+            return $input;
+        }
+
+        unset( $query['input_json'] );
+        $query['input'] = $input;
+        $request->set_query_params( $query );
+
+        return $response;
+    }
+
+    /**
+     * Normalize the DELETE application/json body carrier.
+     *
+     * @param mixed            $response Result to send to the client, or null.
+     * @param \WP_REST_Request $request  Current REST request.
+     * @return mixed
+     */
+    private static function normalize_delete_input_transport( $response, \WP_REST_Request $request ) {
+        $body  = $request->get_body();
+        $query = $request->get_query_params();
+
+        if ( '' === trim( $body ) ) {
+            if ( array_key_exists( 'input_json', $query ) ) {
+                return static::invalid_input_transport();
+            }
+            return $response;
+        }
+
+        if ( array_key_exists( 'input', $query ) || array_key_exists( 'input_json', $query ) ) {
+            return static::invalid_input_transport();
+        }
+
+        $content_type = $request->get_content_type();
+        if ( ! is_array( $content_type ) || 'application/json' !== $content_type['value'] ) {
+            return static::invalid_input_transport();
+        }
+
+        if ( strlen( $body ) > self::MAX_DELETE_INPUT_BYTES ) {
+            return static::invalid_input_transport();
+        }
+
+        $shape   = json_decode( $body, false, 32 );
+        $decoded = json_decode( $body, true, 32 );
+        if (
+            JSON_ERROR_NONE !== json_last_error()
+            || ! $shape instanceof \stdClass
+            || array( 'input' ) !== array_keys( get_object_vars( $shape ) )
+            || ! $shape->input instanceof \stdClass
+            || ! is_array( $decoded )
+        ) {
+            return static::invalid_input_transport();
+        }
+
+        $input = $decoded['input'];
+        if ( ! is_array( $input ) ) {
+            return static::invalid_input_transport();
+        }
+
+        $query['input'] = $input;
+        $request->set_query_params( $query );
+
+        return $response;
+    }
+
+    /**
+     * Decode a bounded JSON object without coercing scalar values.
+     *
+     * @param mixed $raw       Raw JSON value.
+     * @param int   $max_bytes Maximum encoded size.
+     * @return array|\WP_Error
+     */
+    private static function decode_input_object( $raw, int $max_bytes ) {
+        if ( ! is_string( $raw ) || strlen( $raw ) > $max_bytes ) {
+            return static::invalid_input_transport();
+        }
+
+        $decoded = json_decode( $raw, true, 32 );
+        if (
+            JSON_ERROR_NONE !== json_last_error()
+            || ! is_array( $decoded )
+            || '{' !== substr( ltrim( $raw ), 0, 1 )
+        ) {
+            return static::invalid_input_transport();
+        }
+
+        return $decoded;
+    }
+
+    /**
+     * Return the closed, non-reflective transport error.
+     *
+     * @return \WP_Error
+     */
+    private static function invalid_input_transport(): \WP_Error {
+        return new \WP_Error(
+            'mainwp_abilities_invalid_input_transport',
+            __( 'The ability input transport is invalid.', 'mainwp' ),
+            array( 'status' => 400 )
+        );
     }
 
     /**

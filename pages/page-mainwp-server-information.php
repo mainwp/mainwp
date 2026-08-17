@@ -1896,7 +1896,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                             <div class="item"><?php echo esc_html__( '4730 S. Fort Apache Road', 'mainwp' ); ?></div>
                             <div class="item"><?php echo esc_html__( 'Suite 300', 'mainwp' ); ?></div>
                             <div class="item"><?php echo esc_html__( 'PO Box 27740', 'mainwp' ); ?></div>
-                            <div class="item"><?php echo esc_html__( 'Las Vegas, NV 89126', 'mainwp' ); ?></div>
+                            <div class="item"><?php echo esc_html__( 'Las Vegas, NV 89147-7947', 'mainwp' ); ?></div>
                             <div class="item"><?php echo esc_html__( 'United States', 'mainwp' ); ?></div>
                         </div>
                     </div>

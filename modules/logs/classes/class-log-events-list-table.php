@@ -665,7 +665,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
         }
 
         if ( 'system-setting' === $record->context && ! empty( $record->log_type_id ) ) {
-            $title = isset( Log_Changes_Logs_Helper::get_changes_logs_types( $record->log_type_id )['desc'] ) ? Log_Changes_Logs_Helper::get_changes_logs_types( $record->log_type_id )['desc'] : $title;
+            $title = Log_Changes_Logs_Helper::get_changes_logs_object_title( $record, $title );
         }
 
         if ( $with_icon ) {

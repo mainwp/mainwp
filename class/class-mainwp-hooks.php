@@ -222,6 +222,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
         add_filter( 'mainwp_encrypt_key_value', array( &$this, 'hook_encrypt_key_value' ), 10, 4 );
         add_filter( 'mainwp_decrypt_key_value', array( &$this, 'hook_decrypt_key_value' ), 10, 3 );
         add_action( 'mainwp_delete_key_file', array( &$this, 'hook_delete_key_file' ), 10, 1 );
+        add_filter( 'mainwp_delete_key_file_result', array( &$this, 'hook_delete_key_file_result' ), 10, 2 );
         add_filter( 'mainwp_verify_ping_nonce', array( MainWP_Utility::class, 'hook_verify_ping_nonce' ), 10, 3 );
         add_action( 'mainwp_fetch_url_authed', array( MainWP_Actions_Handler::instance(), 'hook_mainwp_fetch_url_authed' ), 10, 5 );
 
@@ -1989,6 +1990,19 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      */
     public function hook_delete_key_file( $key_file ) {
         return MainWP_Keys_Manager::instance()->delete_key_file( $key_file );
+    }
+
+    /**
+     * Delete one exact key file and return only read-verified truth.
+     *
+     * @param mixed  $input_value Filter-chain initial value.
+     * @param string $key_file    Key file name.
+     *
+     * @return bool Whether exact absence was proved.
+     */
+    public function hook_delete_key_file_result( $input_value, $key_file ) {
+        unset( $input_value );
+        return MainWP_Keys_Manager::instance()->delete_key_file_with_result( $key_file );
     }
 
     /**

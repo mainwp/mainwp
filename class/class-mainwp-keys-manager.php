@@ -151,6 +151,50 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
     }
 
     /**
+     * Delete one canonical private key file with exact absence readback.
+     *
+     * @param string $file_key Name of key file.
+     *
+     * @return bool Whether exact absence was proved.
+     */
+    public function delete_key_file_with_result( $file_key ) {
+        if ( ! is_string( $file_key ) || 1 !== preg_match( '/^[A-Za-z0-9][A-Za-z0-9_-]{0,254}$/D', $file_key ) ) {
+            return false;
+        }
+
+        $key_dir = static::get_keys_dir();
+        if ( ! is_string( $key_dir ) || '' === $key_dir ) {
+            return false;
+        }
+
+        $file_path = trailingslashit( $key_dir ) . $file_key;
+        if ( ! $this->key_file_exists( $file_path ) ) {
+            return true;
+        }
+
+        MainWP_Utility::delete_file( $file_path );
+        clearstatcache( true, $file_path );
+        return ! $this->key_file_exists( $file_path );
+    }
+
+    /**
+     * Check one exact private key path through the active filesystem boundary.
+     *
+     * @param string $file_path Absolute key path.
+     *
+     * @return bool Whether the path exists.
+     */
+    private function key_file_exists( $file_path ) {
+        global $wp_filesystem;
+
+        if ( is_object( $wp_filesystem ) && method_exists( $wp_filesystem, 'exists' ) ) {
+            return (bool) $wp_filesystem->exists( $file_path );
+        }
+
+        return file_exists( $file_path );
+    }
+
+    /**
      * Method get_decrypt_values()
      *
      * Get decrypt value.

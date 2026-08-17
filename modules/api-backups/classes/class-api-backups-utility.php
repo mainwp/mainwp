@@ -583,8 +583,9 @@ class Api_Backups_Utility { //phpcs:ignore -- NOSONAR - multi methods.
      *
      * @param string $name name data.
      * @param string $def_val default data.
+     * @param string $opt_name Option name.
      */
-    public function get_api_key( $name, $def_val = '' ) {
+    public function get_api_key( $name, $def_val = '', $opt_name = '' ) {
 
         $names = array(
             'vultr',
@@ -601,7 +602,12 @@ class Api_Backups_Utility { //phpcs:ignore -- NOSONAR - multi methods.
             return $def_val;
         }
 
-        $encrypted = get_option( 'mainwp_api_backups_' . $name . '_api_key' );
+        if ( ! empty( $opt_name ) ) {
+            $encrypted = get_option( 'mainwp_api_backups_' . $name . '_' . (string) $opt_name );
+        } else {
+            $encrypted = get_option( 'mainwp_api_backups_' . $name . '_api_key' );
+        }
+
         if ( is_array( $encrypted ) && ! empty( $encrypted['file_key'] ) ) {
             $key = $this->decrypt_api_keys( $encrypted );
             if ( ! empty( $key ) && is_string( $key ) ) {
@@ -618,8 +624,9 @@ class Api_Backups_Utility { //phpcs:ignore -- NOSONAR - multi methods.
      *
      * @param string $name name data.
      * @param string $value value data.
+     * @param string $opt_name Option name.
      */
-    public function update_api_key( $name, $value ) {
+    public function update_api_key( $name, $value, $opt_name = '' ) {
 
         $names = array(
             'vultr',
@@ -644,7 +651,12 @@ class Api_Backups_Utility { //phpcs:ignore -- NOSONAR - multi methods.
             return true;
         }
 
-        $opt_name = 'mainwp_api_backups_' . $name . '_api_key';
+        if ( ! empty( $opt_name ) ) {
+            $opt_name = 'mainwp_api_backups_' . $name . '_' . (string) $opt_name;
+        } else {
+            $opt_name = 'mainwp_api_backups_' . $name . '_api_key';
+        }
+
         $current  = get_option( $opt_name );
         $key_file = '';
 

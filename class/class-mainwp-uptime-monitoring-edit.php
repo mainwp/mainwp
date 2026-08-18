@@ -202,16 +202,13 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                     exit();
                 }
             } else {
+                $check_http_response        = ( isset( $_POST['mainwp_check_http_response'] ) ? 1 : 0 );
+                $chk_http_method            = isset( $_POST['mainwp_check_http_response_method'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_check_http_response_method'] ) ) : 'head';
+                $chk_http_method            = in_array( $chk_http_method, array( 'get', 'head' ) ) ? $chk_http_method : 'head';
                 $update['retention_limits'] = isset( $_POST['mainwp_edit_monitor_retention_days'] ) ? intval( $_POST['mainwp_edit_monitor_retention_days'] ) : 180;
                 MainWP_Uptime_Monitoring_Handle::update_uptime_global_settings( $update );
                 MainWP_Utility::update_option( 'mainwp_uptime_monitor_cleanup_heartbeat_at', 0 ); // reset cleanup heartbeat to process on next run.
-
-                $check_http_response = ( isset( $_POST['mainwp_check_http_response'] ) ? 1 : 0 );
                 MainWP_Utility::update_option( 'mainwp_check_http_response', $check_http_response );
-
-                $chk_http_method = isset( $_POST['mainwp_check_http_response_method'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_check_http_response_method'] ) ) : 'head';
-                $chk_http_method = in_array( $chk_http_method, array( 'get', 'head' ) ) ? $chk_http_method : 'head';
-
                 MainWP_Utility::update_option( 'mainwp_check_http_response_method', $chk_http_method );
             }
         }
@@ -287,7 +284,6 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
 
                 }
             }
-
             // add new main monitor.
             if ( empty( $mo_settings['monitor_id'] ) ) {
                 if ( empty( $mo_settings ) || ! is_array( $mo_settings ) ) {
@@ -319,6 +315,10 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
         } else {
             $disableGeneralSitesMonitoring = empty( $mo_settings['active'] ) ? true : false;
         }
+
+        $check_http_response = get_option( 'mainwp_check_http_response', 0 );
+        $chk_http_method     = get_option( 'mainwp_check_http_response_method', 'head' );
+        $chk_http_method     = in_array( $chk_http_method, array( 'get', 'head' ) ) ? $chk_http_method : 'head';
 
         $disabled_methods_individual = false;
 
@@ -402,23 +402,20 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                 </div>
                 <?php
             }
-            ?>
+            if ( ! $individual ) {
+                ?>
             <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-updates">
                 <label class="six wide column middle aligned">
                 <?php
-                MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_check_http_response', get_option( 'mainwp_check_http_response', '' ) );
+                MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_check_http_response', $check_http_response );
                 esc_html_e( 'Check site HTTP response after update', 'mainwp' );
                 ?>
                 </label>
                 <div class="ten wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="http-respon-check"  <?php echo ! $individual ? 'fire-event-parent="on-showhide-up-http-codes-element"' : ''; ?> data-tooltip="<?php esc_attr_e( 'Enable if you want your MainWP Dashboard to check child site header response after updates.', 'mainwp' ); ?>" data-inverted="" data-position="right center">
-                    <input type="checkbox" class="settings-field-value-change-handler" inverted-value="1" name="mainwp_check_http_response" id="mainwp_check_http_response" <?php echo 1 === (int) get_option( 'mainwp_check_http_response', 0 ) ? 'checked="true"' : ''; ?>/>
+                    <input type="checkbox" class="settings-field-value-change-handler" inverted-value="1" name="mainwp_check_http_response" id="mainwp_check_http_response" <?php echo 1 === (int) $check_http_response ? 'checked="true"' : ''; ?>/>
                 </div>
             </div>
-            <?php
-            $chk_http_method = get_option( 'mainwp_check_http_response_method', 'head' );
-            $chk_http_method = in_array( $chk_http_method, array( 'get', 'head' ) ) ? $chk_http_method : 'head';
-            ?>
-            <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-updates" default-indi-value="head" <?php echo 1 !== (int) get_option( 'mainwp_check_http_response', 0 ) ? 'style="display:none"' : ''; ?> hide-element="http-respon-check">
+            <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-updates" default-indi-value="head" <?php echo 1 !== (int) $check_http_response ? 'style="display:none"' : ''; ?> hide-element="http-respon-check">
                 <label class="six wide column middle aligned">
                 <?php
                 MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_check_http_response_method', (string) $chk_http_method );
@@ -432,6 +429,7 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                     </select>
                 </div>
             </div>
+            <?php } ?>
             <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-monitor-general" default-indi-value="<?php echo $individual ? -1 : 0; ?>">
                 <label class="six wide column middle aligned">
                 <?php
@@ -606,12 +604,13 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                 </div>
             </div>
 
-            <?php if ( ! $individual ) {
-                if( ! isset( $mo_settings['retention_limits'] ) ) {
+            <?php
+            if ( ! $individual ) {
+                if ( ! isset( $mo_settings['retention_limits'] ) ) {
                     $mo_settings['retention_limits'] = 180;
                 }
                 ?>
-             <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-monitor-general" default-indi-value="180">
+            <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-monitor-general" default-indi-value="180">
                 <label class="six wide column middle aligned">
                 <?php
                 $show_indi = 180 !== (int) $mo_settings['retention_limits'] ? 1 : 0;
@@ -638,7 +637,8 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                     </select>
                 </div>
             </div>
-            <?php }  else {
+                <?php
+            } else {
 
                 if ( ! $edit_sub_monitor ) {
 

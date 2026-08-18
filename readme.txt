@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 7.0.2
 Requires PHP: 7.4
-Stable tag: 6.1.6
+Stable tag: 6.1.7
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -150,6 +150,11 @@ Please report security bugs found in the source code of the MainWP plugin throug
 11. Dashboard Insights
 
 == Changelog ==
+
+= 6.1.7 - 8-18-2026 =
+
+* Updated: Improved the connection status table layout in the "Connection Status" widget for a cleaner, more focused presentation.
+* Updated: HTTP response options are now shown only in global settings, preventing them from appearing in individual monitor configurations.
 
 = 6.1.6 - 8-5-2026 =
 

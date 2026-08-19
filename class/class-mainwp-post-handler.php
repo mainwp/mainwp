@@ -83,7 +83,6 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
         $this->add_action( 'mainwp_help_modal_content_update', array( &$this, 'ajax_mainwp_help_modal_content_update' ) );
         $this->add_action( 'mainwp_widgets_connections_status_details_display_rows', array( MainWP_Connection_Status::instance(), 'ajax_display_rows' ) );
 
-
         // Page: Recent Posts.
         if ( \mainwp_current_user_can( 'dashboard', 'manage_posts' ) ) {
             $this->add_action( 'mainwp_post_unpublish', array( &$this, 'mainwp_post_unpublish' ) );
@@ -1073,8 +1072,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
             exit;
         }
 
-        $client_id      = 0; // 0 general fields.
-        $deleted_count  = 0;
+        $client_id     = 0; // 0 general fields.
+        $deleted_count = 0;
         foreach ( $field_ids as $field_id ) {
             if ( MainWP_DB_Client::instance()->delete_client_field_by( 'field_id', $field_id, $client_id ) ) {
                 ++$deleted_count;
@@ -2008,6 +2007,23 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
         }
 
         wp_send_json( $results );
+    }
+
+    /**
+     * Handle self_connect action.
+     */
+    public function ajax_self_connect() {
+
+        $mainwp_run = isset( $_POST['mainwp_run'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_run'] ) ) : ''; // phpcs:ignore -- NOSONAR -ok.
+
+        if ( 'self_connect' !== $mainwp_run ) {
+            status_header( 400 );
+            exit;
+        }
+
+        MainWP_System_Utility::instance()->handle_self_connect();
+
+        exit;
     }
 
 

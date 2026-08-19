@@ -223,6 +223,28 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         wp_die( 'MainWP Test' );
     }
 
+
+    /**
+     * Method test_self_connect()
+     *
+     * Server self-connect response.
+     *
+     * @return void
+     */
+    public function test_self_connect() {
+
+        if ( ! MainWP_System_Utility::instance()->verify_self_connect_request() ) {
+            status_header( 403 );
+            exit;
+        }
+
+        status_header( 200 );
+        header( 'Content-Type: text/plain; charset=utf-8' );
+
+        echo 'MainWP Self Connect OK';
+        exit;
+    }
+
     /**
      * Method get_cron_schedules()
      *

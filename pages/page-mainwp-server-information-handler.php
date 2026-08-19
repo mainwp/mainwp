@@ -2666,17 +2666,9 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
             return $cached_data;
         }
 
-        $url        = site_url( 'wp-cron.php' );
-        $query_args = array( 'mainwp_run' => 'test' );
-        $url        = esc_url_raw( add_query_arg( $query_args, $url ) );
-        $response   = wp_remote_post(
-            $url,
-            array(
-                'blocking'  => true,
-                'sslverify' => apply_filters( 'https_local_ssl_verify', true ),
-                'timeout'   => 15,
-            )
-        );
+        $url = admin_url( 'admin-ajax.php' );
+
+        $response = MainWP_System_Utility::test_self_connect( $url );
 
         if ( is_wp_error( $response ) ) {
             $cached_data = array(
@@ -2721,7 +2713,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
         }
 
         $response_body = wp_remote_retrieve_body( $response );
-        if ( false === strstr( $response_body, 'MainWP Test' ) ) {
+        if ( 'MainWP Self Connect OK' !== trim( $response_body ) ) {
             $cached_data = array(
                 'value'  => esc_html__( 'Unexpected response body. Note: This is common and usually not a problem unless WP-Cron or loopback requests are failing.', 'mainwp' ),
                 'status' => 'warning',

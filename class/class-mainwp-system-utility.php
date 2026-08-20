@@ -1912,7 +1912,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         if ( empty( $secret ) ) {
             return new \WP_Error(
                 'mainwp_self_connect_secret',
-                __( 'Unable to generate self-connect secret.' )
+                __( 'Unable to generate self-connect secret.', 'mainwp' )
             );
         }
 
@@ -1924,18 +1924,26 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             $secret
         );
 
+        /**
+         * Filter: https_local_ssl_verify
+         *
+         * Filters whether the server-self check shoul verify SSL Cert.
+         *
+         * @since Unknown
+         */
         $args = array(
-            'timeout' => 10,
-            'headers' => array(
+            'blocking'  => true,
+            'sslverify' => apply_filters( 'https_local_ssl_verify', true ),
+            'timeout'   => 15,
+            'headers'   => array(
                 'X-MainWP-Self-Connect-Timestamp' => (string) $timestamp,
                 'X-MainWP-Self-Connect-Signature' => $signature,
             ),
-            'body'    => array(
+            'body'      => array(
                 'action'     => 'mainwp_self_connect',
                 'mainwp_run' => 'self_connect',
             ),
         );
-
         return wp_remote_post( $url, $args );
     }
 

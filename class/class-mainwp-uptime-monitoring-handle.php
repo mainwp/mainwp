@@ -454,7 +454,6 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
      */
     public static function check_website_uptime_monitoring_status( $monitor, $params = array() ) {
         $glo_settings = static::get_global_monitoring_settings();
-        MainWP_Uptime_Monitoring_Connect::apply_bypass_cache_settings( $monitor, $glo_settings );
         return MainWP_Uptime_Monitoring_Connect::instance()->fetch_uptime_monitor( $monitor, $glo_settings, false, $params ); // Avoid updating compatible data.
     }
 

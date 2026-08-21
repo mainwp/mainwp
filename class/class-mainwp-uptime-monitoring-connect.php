@@ -437,7 +437,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
             MainWP_Logger::instance()->log_uptime_check( 'Schedule uptime checks: [siteid=' . $website->id . '] :: [url=' . $website->url . ' :: [monitorid=' . $website->monitor_id . '] :: [monitor-active=' . $website->active . ']' );
 
-            self::apply_bypass_cache_settings( $monitor, $global_settings );
+            self::apply_bypass_cache_settings( $website, $global_settings );
             $mo_url          = static::get_apply_monitor_url( $website );
             $bypass_settings = ! empty( $website->bypass_cache_params ) ? $website->bypass_cache_params : array();
             $headers_params  = is_array( $bypass_settings ) && ! empty( $bypass_settings['headers'] ) ? $bypass_settings['headers'] : array();

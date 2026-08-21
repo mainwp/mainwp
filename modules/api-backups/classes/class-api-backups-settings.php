@@ -203,6 +203,7 @@ class Api_Backups_Settings {
                         <?php if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce_cloudways'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce_cloudways'] ), 'cloudways_api_form_general' ) ) : ?>
                             <?php Api_Backups_Utility::update_option( 'mainwp_enable_cloudways_api', ( ! isset( $_POST['mainwp_enable_cloudways_api'] ) ? 0 : 1 ) ); ?>
                             <?php Api_Backups_Utility::update_option( 'mainwp_cloudways_api_account_email', ( isset( $_POST['mainwp_cloudways_api_account_email'] ) ? wp_unslash( $_POST['mainwp_cloudways_api_account_email'] ) : '' ) ); ?>
+                            <?php Api_Backups_Utility::update_option( 'mainwp_show_legacy_cloudways_credentials', ! empty( $_POST['mainwp_show_legacy_cloudways_credentials'] ) ? 1 : 0 ); ?>
                             <?php Api_Backups_Utility::get_instance()->update_api_key( 'cloudways', ( isset( $_POST['mainwp_cloudways_api_key'] ) ? wp_unslash( $_POST['mainwp_cloudways_api_key'] ) : '' ) ); ?>
                             <?php Api_Backups_Utility::get_instance()->update_api_key( 'cloudways', ( isset( $_POST['mainwp_cloudways_access_token'] ) ? wp_unslash( $_POST['mainwp_cloudways_access_token'] ) : '' ), 'access_token' ); ?>
                             <div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'API credentials have been successfully saved.', 'mainwp' ); ?></div>

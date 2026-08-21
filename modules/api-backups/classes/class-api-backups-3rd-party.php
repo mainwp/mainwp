@@ -2083,8 +2083,6 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
             $website_id = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : 0; //phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.NonceVerification.Recommended
         }
 
-        // Grab Cloudways access token.
-        $accessToken = static::fetch_cloudways_access_token();
 
         // Grab needed site options from WP_MAINWP_WP_OPTIONS table.
         $site_options = Api_Backups_Helper::get_website_options(
@@ -2101,6 +2099,8 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
             // Grab Backup operation from API.
             $backup_operation = static::call_cloudways_api_v2( 'GET', '/app/manage/backup?server_id=' . $server_id . '&app_id=' . $app_id );
         } else {
+            // Grab Cloudways access token.
+            $accessToken = static::fetch_cloudways_access_token();
             // Grab Backup operation from API.
             $backup_operation = static::call_cloudways_api( 'GET', '/app/manage/backup?server_id=' . $server_id . '&app_id=' . $app_id, $accessToken );
         }

@@ -1758,7 +1758,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @param string $url relative URL for the call.
      * @param string $accessToken Access token generated using OAuth Call.
      * @param array  $post Optional post data for the call.
-     * @return object Output from CW API.
+     * @return object|false Output from CW API.
      */
     public static function call_cloudways_api( $method, $url, $accessToken, $post = array() ) {
         $baseURL = 'https://api.cloudways.com/api/v1';

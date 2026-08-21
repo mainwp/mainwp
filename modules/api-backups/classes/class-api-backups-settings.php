@@ -368,7 +368,7 @@ class Api_Backups_Settings {
                                     $show_legacy_cloudways_creds = get_option( 'mainwp_show_legacy_cloudways_credentials' );
                                     if ( false === $show_legacy_cloudways_creds && ! empty( $_api_key ) ) {
                                         $show_legacy_cloudways_creds = 1;
-                                        MainWP_Utility::update_option( 'mainwp_show_legacy_cloudways_credentials', $show_legacy_cloudways_creds );
+                                        Api_Backups_Utility::update_option( 'mainwp_show_legacy_cloudways_credentials', $show_legacy_cloudways_creds );
                                     }
                                     ?>
                                     <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cloudways-settings">

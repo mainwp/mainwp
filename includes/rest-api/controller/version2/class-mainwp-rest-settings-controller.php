@@ -1506,7 +1506,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         // Update secrets if present.
         $update_secrets_api = function ( $slug, $value, $name = 'api_key' ) use ( &$updated ) { //  phpcs:ignore -- NOSONAR - complex.
             if ( ! empty( $slug ) && ! empty( $value ) ) {
-                Api_Backups_Utility::get_instance()->update_api_key( $slug, $value );
+                if ( 'access_token' === $name && 'cloudways' === $slug ) {
+                    Api_Backups_Utility::get_instance()->update_api_key( $slug, $value, 'access_token' );
+                } else {
+                    Api_Backups_Utility::get_instance()->update_api_key( $slug, $value );
+                }
                 $updated[ $name ] = $value;
             }
         };
@@ -1522,6 +1526,8 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         // Update api key or password.
         $update_secrets_api( $api['slug'] ?? '', $body['secrets']['api_key'] ?? '', 'api_key' );
         $update_secrets_api( $api['slug'] ?? '', $body['password'] ?? '', 'password' );
+
+        $update_secrets_api( $api['slug'] ?? '', $body['secrets']['access_token'] ?? '', 'access_token' );
 
         return rest_ensure_response(
             array(
@@ -2945,10 +2951,16 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 'required'    => false,
                 'description' => __( 'Secrets (Cpanel not used).', 'mainwp' ),
                 'properties'  => array(
-                    'api_key' => array(
+                    'api_key'      => array(
                         'type'              => 'string',
-                        'required'          => true,
+                        'required'          => false,
                         'description'       => __( 'API key (for kinsta).', 'mainwp' ),
+                        'sanitize_callback' => 'sanitize_text_field',
+                    ),
+                    'access_token' => array(
+                        'type'              => 'string',
+                        'required'          => false,
+                        'description'       => __( 'Access token (for Cloudways).', 'mainwp' ),
                         'sanitize_callback' => 'sanitize_text_field',
                     ),
                 ),

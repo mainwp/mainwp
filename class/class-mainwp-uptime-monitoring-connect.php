@@ -122,7 +122,13 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
      */
     public function fetch_uptime_monitor( &$monitor, $global_settings = array(), $second_try = false, $params = array() ) { //phpcs:ignore -- NOSONAR - complexity.
 
+        static::apply_bypass_cache_settings( $monitor, $global_settings );
+
         $mo_url = static::get_apply_monitor_url( $monitor );
+
+        $bypass_settings = ! empty( $monitor->bypass_cache_params ) ? $monitor->bypass_cache_params : array();
+        $headers_params  = is_array( $bypass_settings ) && ! empty( $bypass_settings['headers'] ) ? $bypass_settings['headers'] : array();
+        $headers_flatten = is_array( $bypass_settings ) && ! empty( $bypass_settings['headers_flatten'] ) ? $bypass_settings['headers_flatten'] : array();
 
         $start = microtime( true );
 
@@ -165,6 +171,8 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
             curl_setopt( $ch, CURLOPT_POSTFIELDS, $body );
 
             $headers = array( 'Content-Length' => strlen( $body ) );
+            $headers = array_merge( $headers, $headers_params );
+
             $headers = apply_filters( 'mainwp_connect_http_request_headers', $headers, false, $monitor );
 
             if ( class_exists( '\WpOrg\Requests\Requests' ) ) {
@@ -182,13 +190,16 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         curl_setopt( $ch, CURLOPT_HEADER, true );
         curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, strtoupper( $mo_apply_method ) );
 
-        if ( 'get' === $mo_apply_method ) {
+        if ( 'get' === $mo_apply_method || 'head' === $mo_apply_method ) {
             // to fix Content-Length.
             curl_setopt(
                 $ch,
                 CURLOPT_HTTPHEADER,
-                array(
-                    'Content-Length:', // removes the Content-Length header.
+                array_merge(
+                    array(
+                        'Content-Length:', // removes the Content-Length header.
+                    ),
+                    $headers_flatten
                 )
             );
         }
@@ -426,7 +437,11 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
             MainWP_Logger::instance()->log_uptime_check( 'Schedule uptime checks: [siteid=' . $website->id . '] :: [url=' . $website->url . ' :: [monitorid=' . $website->monitor_id . '] :: [monitor-active=' . $website->active . ']' );
 
-            $mo_url = static::get_apply_monitor_url( $website );
+            self::apply_bypass_cache_settings( $monitor, $global_settings );
+            $mo_url          = static::get_apply_monitor_url( $website );
+            $bypass_settings = ! empty( $website->bypass_cache_params ) ? $website->bypass_cache_params : array();
+            $headers_params  = is_array( $bypass_settings ) && ! empty( $bypass_settings['headers'] ) ? $bypass_settings['headers'] : array();
+            $headers_flatten = is_array( $bypass_settings ) && ! empty( $bypass_settings['headers_flatten'] ) ? $bypass_settings['headers_flatten'] : array();
 
             if ( property_exists( $website, 'http_user' ) ) {
                 // MWP-1548: decrypt at boundary for outbound Basic Auth.
@@ -468,6 +483,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
                 curl_setopt( $ch, CURLOPT_POSTFIELDS, $body );
 
                 $headers = array( 'Content-Length' => strlen( $body ) );
+                $headers = array_merge( $headers, $headers_params );
                 $headers = apply_filters( 'mainwp_connect_http_request_headers', $headers, false, $monitor );
 
                 if ( class_exists( '\WpOrg\Requests\Requests' ) ) {
@@ -484,13 +500,16 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
             curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, strtoupper( $mo_apply_method ) );
 
-            if ( 'get' === $mo_apply_method ) {
+            if ( 'get' === $mo_apply_method || 'head' === $mo_apply_method ) {
                 // to fix Content-Length.
                 curl_setopt(
                     $ch,
                     CURLOPT_HTTPHEADER,
-                    array(
-                        'Content-Length:', // removes the Content-Length header.
+                    array_merge(
+                        array(
+                            'Content-Length:', // removes the Content-Length header.
+                        ),
+                        $headers_flatten
                     )
                 );
             }
@@ -849,9 +868,10 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
             $heart_msg .= " {$code_msg}";
         }
 
-        $mo_apply_type   = static::get_apply_setting( 'type', $monitor->type, $global_settings, 'useglobal', 'http' );
-        $use_mo_active   = static::get_apply_setting( 'active', (int) $monitor->active, $global_settings, -1, 0 );
-        $use_mo_interval = static::get_apply_setting( 'interval', (int) $monitor->interval, $global_settings, -1, 60 );
+        $mo_apply_type    = static::get_apply_setting( 'type', $monitor->type, $global_settings, 'useglobal', 'http' );
+        $use_mo_active    = static::get_apply_setting( 'active', (int) $monitor->active, $global_settings, -1, 0 );
+        $use_mo_interval  = static::get_apply_setting( 'interval', (int) $monitor->interval, $global_settings, -1, 60 );
+        $use_bypass_cache = static::get_apply_setting( 'bypass_cache', (int) ( $monitor->bypass_cache ?? -1 ), $global_settings, -1, 0 );
 
         $keywordFound = true; // set it as found.
 
@@ -981,6 +1001,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         $debug .= ' :: [monitor_interval=' . $monitor->interval . '] :: [apply_monitor_interval=' . $use_mo_interval . ']';
         $debug .= ' :: [monitor_method=' . $monitor->method . '] :: [apply_monitor_method=' . $use_mo_method . ']';
         $debug .= ' :: [monitor_timeout=' . $monitor->timeout . '] :: [apply_monitor_timeout=' . $use_mo_timeout . ']';
+        $debug .= ' :: [bypass_cache=' . $monitor->bypass_cache . '] :: [apply_bypass_cache=' . $use_bypass_cache . ']';
         $debug .= ' :: [ping_ms=' . $heartbeat['ping_ms'] . ']';
         $debug .= ' :: [duration_sec=' . $sec_since_last . ']';
         $debug .= ' :: [retry=' . ( $set_retry ? 1 : 0 ) . ']';
@@ -1006,6 +1027,33 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
             'importance'         => $importance,
             'check_offline_time' => $db_timestamp,
         );
+    }
+
+    /**
+     * Method apply_bypass_cache_settings
+     *
+     * @param  mixed $monitor Monitor.
+     * @param  array $global_settings Global Settings.
+     * @return void
+     */
+    public static function apply_bypass_cache_settings( &$monitor, $global_settings ) {
+        $mo_apply_bypass_cache = static::get_apply_setting( 'bypass_cache', (int) ( $monitor->bypass_cache ?? -1 ), $global_settings, -1, 0 );
+        $bypass_param          = '';
+        if ( 1 === (int) $mo_apply_bypass_cache ) {
+            $mo_url                       = static::get_apply_monitor_url( $monitor, false );
+            $bypass_param                 = ( false === strpos( $mo_url, '?' ) ? '?' : '&' ) . 'mots=' . time();
+            $monitor->bypass_cache_params = array(
+                'url_param'       => $bypass_param,
+                'headers'         => array(
+                    'Cache-Control' => 'no-cache, no-store, max-age=0',
+                    'Pragma'        => 'no-cache',
+                ),
+                'headers_flatten' => array(
+                    'Cache-Control: no-cache, no-store, max-age=0',
+                    'Pragma: no-cache',
+                ),
+            );
+        }
     }
 
 
@@ -1105,18 +1153,20 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
      *
      * @return string
      */
-    public static function get_apply_monitor_url( $monitor ) {
-
+    public static function get_apply_monitor_url( $monitor, $with_bypass_cache = true ) { // phpcs:ignore --NOSONAR -complex.
+        $url = '';
         if ( ! empty( $monitor ) ) {
 
             if ( is_object( $monitor ) ) {
-                $url    = $monitor->url;
-                $suburl = $monitor->suburl;
-                $issub  = $monitor->issub;
+                $url             = $monitor->url;
+                $suburl          = $monitor->suburl;
+                $issub           = $monitor->issub;
+                $bypass_settings = ! empty( $monitor->bypass_cache_params ) ? $monitor->bypass_cache_params : array();
             } elseif ( is_array( $monitor ) ) {
-                $url    = $monitor['url'];
-                $suburl = $monitor['suburl'];
-                $issub  = $monitor['issub'];
+                $url             = $monitor['url'];
+                $suburl          = $monitor['suburl'];
+                $issub           = $monitor['issub'];
+                $bypass_settings = ! empty( $monitor['bypass_cache_params'] ) ? $monitor['bypass_cache_params'] : array(); // compatible.
             }
 
             if ( '/' !== substr( $url, -1 ) ) {
@@ -1125,6 +1175,10 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
             if ( $issub && ! empty( $suburl ) ) {
                 $url .= $suburl;
+            }
+
+            if ( $with_bypass_cache && is_array( $bypass_settings ) && ! empty( $bypass_settings ) && ! empty( $bypass_settings['url_param'] ) ) {
+                $url .= $bypass_settings['url_param'];
             }
         }
 

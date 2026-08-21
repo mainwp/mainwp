@@ -644,8 +644,9 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             );
         } elseif ( in_array( $view, array( 'simple_view', 'base_view', 'monitor_view', 'ping_view', 'uptime_notification' ) ) ) {
             $fields = array();
-            if ( 'monitor_view' === $view ) {
+            if ( 'monitor_view' === $view || 'ping_view' === $view ) {
                 $fields[] = 'health_site_status';
+                $fields[] = 'bypass_cache';
             }
         } elseif ( 'custom_view' !== $view ) {
             $fields = $default;
@@ -721,7 +722,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             );
         } elseif ( in_array( $view, array( 'simple_view', 'base_view', 'monitor_view', 'ping_view', 'uptime_notification' ) ) ) {
             $fields = array();
-            if ( 'monitor_view' === $view ) {
+            if ( 'monitor_view' === $view || 'ping_view' === $view ) {
                 $fields[] = 'health_site_status';
             }
         } elseif ( 'custom_view' !== $view ) {

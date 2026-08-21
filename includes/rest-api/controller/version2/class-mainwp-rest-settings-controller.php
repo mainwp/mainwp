@@ -25,6 +25,7 @@ use MainWP\Dashboard\MainWP_Sync;
 use MainWP\Dashboard\MainWP_Manage_Sites_View;
 use MainWP\Dashboard\MainWP_Uptime_Monitoring_Handle;
 use MainWP\Dashboard\MainWP_Uptime_Monitoring_Edit;
+use MainWP\Dashboard\MainWP_Credential_Render;
 
 // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
@@ -1505,12 +1506,8 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
 
         // Update secrets if present.
         $update_secrets_api = function ( $slug, $value, $name = 'api_key' ) use ( &$updated ) { //  phpcs:ignore -- NOSONAR - complex.
-            if ( ! empty( $slug ) && ! empty( $value ) ) {
-                if ( 'access_token' === $name && 'cloudways' === $slug ) {
-                    Api_Backups_Utility::get_instance()->update_api_key( $slug, $value, 'access_token' );
-                } else {
-                    Api_Backups_Utility::get_instance()->update_api_key( $slug, $value );
-                }
+            $success = Api_Backups_Utility::get_instance()->update_api_key( $slug, $value );
+            if ( $success ) {
                 $updated[ $name ] = $value;
             }
         };
@@ -1524,10 +1521,29 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         $update_if_present( 'company_id', $api['options']['company_id'] ?? '' );
 
         // Update api key or password.
-        $update_secrets_api( $api['slug'] ?? '', $body['secrets']['api_key'] ?? '', 'api_key' );
-        $update_secrets_api( $api['slug'] ?? '', $body['password'] ?? '', 'password' );
+        if ( ! empty( $api['slug'] ) ) {
+            if ( isset( $body['secrets']['api_key'] ) ) {
+                $update_secrets_api( $api['slug'] ?? '', $body['secrets']['api_key'] ?? '', 'api_key' );
+            }
+            if ( isset( $body['password'] ) ) {
+                $update_secrets_api( $api['slug'] ?? '', $body['password'] ?? '', 'password' );
+            }
+        }
 
-        $update_secrets_api( $api['slug'] ?? '', $body['secrets']['access_token'] ?? '', 'access_token' );
+        if ( ! empty( $api['slug'] ) && 'cloudways' === $api['slug'] && isset( $body['secrets']['access_token'] ) ) {
+            $success = Api_Backups_Utility::get_instance()->update_api_key( 'cloudways', $body['secrets']['access_token'], 'access_token' );
+            if ( $success ) {
+                $updated['access_token'] = $body['secrets']['access_token'];
+            }
+        }
+
+        // Get secrets key.
+        $secrets = array( 'api_key', 'access_token', 'password' );
+        foreach ( $secrets as $secret_key ) {
+            if ( isset( $updated[ $secret_key ] ) ) {
+                $updated[ $secret_key ] = MainWP_Credential_Render::value_for_input( false );
+            }
+        }
 
         return rest_ensure_response(
             array(

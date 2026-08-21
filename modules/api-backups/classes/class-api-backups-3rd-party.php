@@ -1700,13 +1700,14 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @param string $method GET|POST|PUT|DELETE.
      * @param string $url relative URL for the call.
      * @param array  $post Optional post data for the call.
-     * @return object Output from CW API.
+     * @return object|false Output from CW API.
      */
-    public function call_cloudways_api_v2( $method, $url, $post = array() ) {
+    public static function call_cloudways_api_v2( $method, $url, $post = array() ) {
 
         $access_token = self::get_saved_v2_access_token();
 
         $ch = curl_init();
+
         curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, $method );
         curl_setopt( $ch, CURLOPT_URL, self::CLOUDWAYS_API_URL . $url );
         curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
@@ -1715,9 +1716,8 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
             $ch,
             CURLOPT_HTTPHEADER,
             array(
-                'X-Access-Token: ' . $access_token,
+                'Authorization: Bearer ' . $access_token,
                 'Accept: application/json',
-                'Content-Type: application/json',
             )
         );
 
@@ -1727,20 +1727,22 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
             foreach ( $post as $name => $value ) {
                 $encoded .= rawurlencode( $name ) . '=' . rawurlencode( $value ) . '&';
             }
+
             $encoded = substr( $encoded, 0, strlen( $encoded ) - 1 );
 
             curl_setopt( $ch, CURLOPT_POSTFIELDS, $encoded );
             curl_setopt( $ch, CURLOPT_POST, 1 );
         }
 
-        $output = curl_exec( $ch );
+        $output   = curl_exec( $ch );
+        $httpcode = (int) curl_getinfo( $ch, CURLINFO_HTTP_CODE );
 
-        $httpcode = (string) curl_getinfo( $ch, CURLINFO_HTTP_CODE );
+        curl_close( $ch );
 
-        if ( '200' !== $httpcode ) {
+        if ( 200 !== $httpcode ) {
             return false;
         }
-        curl_close( $ch );
+
         return json_decode( $output );
     }
 
@@ -1787,10 +1789,12 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
 
         $httpcode = (string) curl_getinfo( $ch, CURLINFO_HTTP_CODE );
 
+        curl_close( $ch );
+
         if ( '200' !== $httpcode ) {
             return false;
         }
-        curl_close( $ch );
+
         return json_decode( $output );
     }
 

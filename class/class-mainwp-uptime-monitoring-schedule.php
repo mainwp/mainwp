@@ -116,7 +116,7 @@ class MainWP_Uptime_Monitoring_Schedule { // phpcs:ignore Generic.Classes.Openin
 
         MainWP_Logger::instance()->log_uptime_check( 'Uptime Monitoring :: [count_monitors=' . ( $checkuptime_monitors ? count( $checkuptime_monitors ) : 0 ) . ']' );
 
-        foreach ( $checkuptime_monitors as $monitor ) {
+        foreach ( $checkuptime_monitors as &$monitor ) {
             $update = array(
                 'monitor_id'                => $monitor->monitor_id,
                 'dts_auto_monitoring_start' => mainwp_get_timestamp(),

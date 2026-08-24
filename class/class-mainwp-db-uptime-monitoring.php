@@ -366,7 +366,7 @@ KEY idx_wpid_issub (wpid, issub)";
      * @param  string $obj OBJECT|ARRAY_A.
      * @return object|null
      */
-    public function get_monitor_by( $site_id, $by, $value, $params = array(), $obj = OBJECT ) {
+    public function get_monitor_by( $site_id, $by, $value, $params = array(), $obj = OBJECT ) { // phpcs:ignore --NOSONAR -complex.
 
         if ( ! is_array( $params ) ) {
             $params = array();

@@ -729,54 +729,71 @@ return array(
     // Database.
     1740 => array(
         'type_id'     => 1740,
+        'title'       => esc_html__( 'Created Table', 'mainwp' ),
         'desc'        => esc_html__( 'Plugin created database table(s)', 'mainwp' ),
         'context'     => 'database',
         'action_name' => 'created',
     ),
+
     1745 => array(
         'type_id'     => 1745,
+        'title'       => esc_html__( 'Modified Table', 'mainwp' ),
         'desc'        => esc_html__( 'Plugin modified the structure of database table(s)', 'mainwp' ),
         'context'     => 'database',
         'action_name' => 'modified',
     ),
+
     1750 => array(
         'type_id'     => 1750,
+        'title'       => esc_html__( 'Deleted Table', 'mainwp' ),
         'desc'        => esc_html__( 'Plugin deleted database table(s)', 'mainwp' ),
         'context'     => 'database',
         'action_name' => 'deleted',
     ),
+
     1755 => array(
         'type_id'     => 1755,
+        'title'       => esc_html__( 'Created Table', 'mainwp' ),
         'desc'        => esc_html__( 'Theme created database table(s)', 'mainwp' ),
         'context'     => 'database',
         'action_name' => 'created',
     ),
+
     1760 => array(
         'type_id'     => 1760,
+        'title'       => esc_html__( 'Modified Table', 'mainwp' ),
         'desc'        => esc_html__( 'Theme modified the structure of table(s) in the database', 'mainwp' ),
         'context'     => 'database',
         'action_name' => 'modified',
     ),
+
     1765 => array(
         'type_id'     => 1765,
+        'title'       => esc_html__( 'Deleted Table', 'mainwp' ),
         'desc'        => esc_html__( 'Theme deleted database table(s)', 'mainwp' ),
         'context'     => 'database',
         'action_name' => 'deleted',
     ),
+
     1770 => array(
         'type_id'     => 1770,
+        'title'       => esc_html__( 'Created Table', 'mainwp' ),
         'desc'        => esc_html__( 'Unknown component created database table(s)', 'mainwp' ),
         'context'     => 'database',
         'action_name' => 'created',
     ),
+
     1775 => array(
         'type_id'     => 1775,
-        'desc'        => esc_html__( 'Unknown component modified the structure of table(s )in the database', 'mainwp' ),
+        'title'       => esc_html__( 'Modified Table', 'mainwp' ),
+        'desc'        => esc_html__( 'Unknown component modified the structure of table(s) in the database', 'mainwp' ),
         'context'     => 'database',
         'action_name' => 'modified',
     ),
+
     1780 => array(
         'type_id'     => 1780,
+        'title'       => esc_html__( 'Deleted Table', 'mainwp' ),
         'desc'        => esc_html__( 'Unknown component deleted database table(s)', 'mainwp' ),
         'context'     => 'database',
         'action_name' => 'deleted',

@@ -664,6 +664,10 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             $title = preg_replace( '/( ?(plugin|theme))$/i', '', $title );
         }
 
+        if ( ( 'system-setting' === $record->context || 'database' === $record->context ) && ! empty( $record->log_type_id ) ) {
+            $title = Log_Changes_Logs_Helper::get_changes_logs_object_title( $record, $title );
+        }
+
         if ( $with_icon ) {
             $obj_icon = $this->get_object_icon( $record );
             return $obj_icon . $title;

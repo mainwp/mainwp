@@ -332,6 +332,35 @@ class Log_Changes_Logs_Helper {
     }
 
     /**
+     * Method get_changes_logs_object_title().
+     *
+     * @param object $item Logs type code.
+     * @param string $default_title Default title.
+     *
+     * @return strinng Object title.
+     */
+    public static function get_changes_logs_object_title( $item = null, $default_title = '' ) { //phpcs:ignore -- NOSONAR - long function.
+        $title = '';
+        if ( ! empty( $item->log_type_id ) ) {
+            if ( 'system-setting' === $item->context ) {
+                $title = isset( self::get_changes_logs_types( $item->log_type_id )['title'] ) ? self::get_changes_logs_types( $item->log_type_id )['title'] : '';
+                if ( empty( $title ) ) {
+                    $title = esc_html__( 'System Setting', 'mainwp' );
+                }
+            } elseif ( 'database' === $item->context ) {
+                if ( ! empty( $item->meta['tablenames'] ) ) {
+                    $title = is_array( $item->meta['tablenames'] ) ? implode( ', ', $item->meta['tablenames'] ) : esc_html( $item->meta['tablenames'] );
+                    $title = esc_html( $title );
+                }
+                if ( empty( $title ) ) {
+                    $title = esc_html__( 'Database Table', 'mainwp' );
+                }
+            }
+        }
+        return ! empty( $title ) ? $title : $default_title;
+    }
+
+    /**
      * Method get_history_changes().
      *
      * @param array $args Arguments.

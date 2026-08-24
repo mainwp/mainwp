@@ -368,9 +368,16 @@ class Log_Settings {
                 static::$enable_logs_items = array();
             }
 
-            if ( ! isset( static::$enable_logs_items['changeslogs'] ) ) {
-                static::$enable_logs_items['changeslogs'] = array_fill_keys( static::get_disabled_changes_logs_default_settings(), 0 );
-            }
+            $default_disabled_changeslogs = array_fill_keys(
+                static::get_disabled_changes_logs_default_settings(),
+                0
+            );
+
+            static::$enable_logs_items['changeslogs'] = array_replace(
+                $default_disabled_changeslogs,
+                static::$enable_logs_items['changeslogs'] ?? array()
+            );
+
         }
         return static::$enable_logs_items;
     }
@@ -517,7 +524,7 @@ class Log_Settings {
     private static function get_data_logs_default( $type = '' ) {
 
         $init_un_logs = array(
-            'sites_sync' => 0
+            'sites_sync' => 0,
         );
 
         $logs = array(

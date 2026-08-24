@@ -788,6 +788,10 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             $updated_settings['type'] = $body['mainwp_uptime_monitoring_type'];
         }
 
+        if ( isset( $body['mainwp_uptime_monitoring_bypass_cache'] ) ) {
+            $updated_settings['bypass_cache'] = $body['mainwp_uptime_monitoring_bypass_cache'] ? 1 : 0;
+        }
+
         // Save monitoring the updated settings.
         $updated_settings = apply_filters( 'mainwp_uptime_monitoring_update_global_settings', $updated_settings );
         MainWP_Uptime_Monitoring_Handle::update_uptime_global_settings( $updated_settings );
@@ -2631,6 +2635,12 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 'type'              => 'string',
                 'sanitize_callback' => 'sanitize_text_field',
             ),
+            'mainwp_uptime_monitoring_bypass_cache'    => array(
+                'required'          => false,
+                'description'       => __( 'Uptime monitoring attempt to bypass page cache.', 'mainwp' ),
+                'type'              => 'integer',
+                'sanitize_callback' => 'intval',
+            ),
             'mainwp_uptime_monitoring_up_status_codes' => array(
                 'required'          => false,
                 'description'       => __( 'Uptime monitoring up status codes.', 'mainwp' ),
@@ -4202,14 +4212,14 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         $monitoring_settings = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
 
         // Get interval values.
-        $interval_values   = MainWP_Uptime_Monitoring_Edit::get_interval_values( false );
-        $interval = $monitoring_settings['interval'] ?? 60;
-        $interval          = isset( $interval_values[ $interval ] ) ? $interval_values[ $interval ] : $interval_values[60];
+        $interval_values = MainWP_Uptime_Monitoring_Edit::get_interval_values( false );
+        $interval        = $monitoring_settings['interval'] ?? 60;
+        $interval        = isset( $interval_values[ $interval ] ) ? $interval_values[ $interval ] : $interval_values[60];
 
         // Get timeout values.
-        $timeout_values   = MainWP_Uptime_Monitoring_Edit::get_timeout_values( false );
-        $timeout = $monitoring_settings['timeout'] ?? 60;
-        $timeout          = isset( $timeout_values[ $timeout ] ) ? $timeout_values[ $timeout ] : $timeout_values[60];
+        $timeout_values = MainWP_Uptime_Monitoring_Edit::get_timeout_values( false );
+        $timeout        = $monitoring_settings['timeout'] ?? 60;
+        $timeout        = isset( $timeout_values[ $timeout ] ) ? $timeout_values[ $timeout ] : $timeout_values[60];
 
         return array(
             'mainwp_uptime_monitoring_active'          => (int) $monitoring_settings['active'] ?? 0,
@@ -4220,6 +4230,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             'mainwp_uptime_monitoring_up_status_codes' => explode( ',', $monitoring_settings['up_status_codes'] ) ?? array(),
             'mainwp_uptime_monitoring_down_confirmation_check' => (int) $monitoring_settings['maxretries'] ?? 1,
             'mainwp_uptime_monitoring_keyword'         => $monitoring_settings['keyword'] ?? '',
+            'mainwp_uptime_monitoring_bypass_cache'    => (int) ( $monitoring_settings['bypass_cache'] ?? 0 ),
             'mainwp_disable_sites_health_monitoring'   => (int) get_option( 'mainwp_disableSitesHealthMonitoring', 1 ),
             'mainwp_sitehealth_threshold'              => (int) get_option( 'mainwp_sitehealthThreshold', 80 ),
         );
@@ -4590,6 +4601,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 'mainwp_uptime_monitoring_keyword'         => array(
                     'type'        => 'string',
                     'description' => __( 'Uptime monitoring keyword.', 'mainwp' ),
+                    'context'     => array( 'monitoring_view' ),
+                ),
+                'mainwp_uptime_monitoring_bypass_cache'    => array(
+                    'type'        => 'integer',
+                    'description' => __( 'Uptime monitoring attempt to bypass page cache.', 'mainwp' ),
                     'context'     => array( 'monitoring_view' ),
                 ),
                 'mainwp_primary_backup'                    => array(

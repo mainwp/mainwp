@@ -1018,7 +1018,16 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
         $error_msg = '';
         $result    = '';
         try {
-            $result = MainWP_Monitoring_Handler::handle_check_website( $website );
+            if ( ! empty( $monitor->issub ) ) {
+                $result = MainWP_Uptime_Monitoring_Handle::check_website_uptime_monitoring_status(
+                    $monitor,
+                    array(
+                        'ignore_compatible_save' => 1, // compatible.
+                    )
+                );
+            } else {
+                $result = MainWP_Monitoring_Handler::handle_check_website( $website );
+            }
         } catch ( \Exception $e ) {
             $error_msg = $e->getMessage();
         }

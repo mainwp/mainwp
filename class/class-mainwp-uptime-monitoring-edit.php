@@ -624,7 +624,7 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
             $bypass_opt = (int) $mo_settings['bypass_cache'];
             ?>
             <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-monitor-general" <?php echo $disableGeneralSitesMonitoring ? 'style="display:none"' : ''; ?> hide-element="uptime-monitoring" default-indi-value="<?php echo $individual ? -1 : 0; ?>">
-                <label class="six wide column middle aligned">
+                <label class="six wide column middle aligned" data-tooltip="<?php esc_attr_e( 'Attempts to bypass the page cache when checking uptime. This is a best-effort approach and does not guarantee that the request reaches the origin server.', 'mainwp' ); ?>" data-inverted="" data-position="top center">
                 <?php
                 MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_edit_monitor_bypass_cache', $bypass_opt, true, ( $individual ? -1 : 0 ) );
                 esc_html_e( 'Attempt to bypass page cache', 'mainwp' );
@@ -634,7 +634,7 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                 if ( $individual ) {
                     ?>
                     <div class="ten wide column">
-                        <select name="mainwp_edit_monitor_bypass_cache" id="mainwp_edit_monitor_bypass_cache" class="ui dropdown settings-field-value-change-handler">
+                        <select name="mainwp_edit_monitor_bypass_cache" id="mainwp_edit_monitor_bypass_cache" class="ui dropdown settings-field-value-change-handler" >
                             <option value="-1" <?php echo -1 === $bypass_opt ? 'selected' : ''; ?>><?php esc_html_e( 'Use global setting', 'mainwp' ); ?></option>
                             <option value="1" <?php echo 1 === $bypass_opt ? 'selected' : ''; ?>><?php esc_html_e( 'Enable', 'mainwp' ); ?></option>
                             <option value="0" <?php echo 0 === $bypass_opt ? 'selected' : ''; ?>><?php esc_html_e( 'Disable', 'mainwp' ); ?></option>

@@ -381,7 +381,7 @@ class Log_Settings {
      * @return array Disalbed default.
      */
     public static function get_disabled_changes_logs_default_settings() {
-        return array( 1925, 1930, 1935, 1940, 1945, 1950, 1955 );
+        return array( 1310, 1315, 1680, 1925, 1930, 1935, 1940, 1945, 1950, 1955 );
     }
 
     /**
@@ -517,7 +517,7 @@ class Log_Settings {
     private static function get_data_logs_default( $type = '' ) {
 
         $init_un_logs = array(
-            'sites_sync' => 0,
+            'sites_sync' => 0
         );
 
         $logs = array(

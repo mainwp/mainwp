@@ -1202,7 +1202,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
         }
 
         if ( isset( $settings['bypass_cache'] ) && in_array( (int) $settings['bypass_cache'], array( -1, 1, 0 ), true ) ) {
-            $updated_settings['bypass_cache'] = $settings['bypass_cache'];
+            $update_data['bypass_cache'] = $settings['bypass_cache'];
         }
 
         // Apply filters to allow customization.
@@ -2229,7 +2229,11 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
                 'interval'        => array( 'type' => 'string' ),
                 'expected_status' => array( 'type' => array( 'string' ) ),
                 'keyword'         => array( 'type' => 'string' ),
-                'bypass_cache'    => array( 'type' => 'integer' ),
+                'bypass_cache'    => array(
+                    'type'        => 'integer',
+                    'enum'        => array( -1, 0, 1 ),
+                    'description' => __( 'Cache bypass setting. -1 uses the global setting, 0 disables it, and 1 enables it.', 'mainwp' ),
+                ),
             ),
         );
     }

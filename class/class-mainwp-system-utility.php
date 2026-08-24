@@ -1893,4 +1893,147 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         }
         return $http_ver_int;
     }
+
+
+    /**
+     * Method test_self_connect()
+     *
+     * Server self-connect test.
+     *
+     * @param string $url Dashboard self-connect URL.
+     *
+     * @return array|WP_Error
+     */
+    public static function test_self_connect( $url ) {
+
+        $secret    = static::get_self_connect_secret();
+        $timestamp = time();
+
+        if ( empty( $secret ) ) {
+            return new \WP_Error(
+                'mainwp_self_connect_secret',
+                __( 'Unable to generate self-connect secret.', 'mainwp' )
+            );
+        }
+
+        $message = 'mainwp_self_connect|' . $timestamp;
+
+        $signature = hash_hmac(
+            'sha256',
+            $message,
+            $secret
+        );
+
+        /**
+         * Filter: https_local_ssl_verify
+         *
+         * Filters whether the server-self check shoul verify SSL Cert.
+         *
+         * @since Unknown
+         */
+        $args = array(
+            'blocking'  => true,
+            'sslverify' => apply_filters( 'https_local_ssl_verify', true ),
+            'timeout'   => 15,
+            'headers'   => array(
+                'X-MainWP-Self-Connect-Timestamp' => (string) $timestamp,
+                'X-MainWP-Self-Connect-Signature' => $signature,
+            ),
+            'body'      => array(
+                'action'     => 'mainwp_self_connect',
+                'mainwp_run' => 'self_connect',
+            ),
+        );
+        return wp_remote_post( $url, $args );
+    }
+
+
+    /**
+     * Method handle_self_connect()
+     *
+     * Server self-connect response.
+     *
+     * @return void
+     */
+    public function handle_self_connect() {
+
+        if ( ! $this->verify_self_connect_request() ) {
+            status_header( 403 );
+            exit;
+        }
+
+        status_header( 200 );
+        header( 'Content-Type: text/plain; charset=utf-8' );
+
+        echo 'MainWP Self Connect OK';
+        exit;
+    }
+
+
+    /**
+     * Method verify_self_connect_request()
+     *
+     * Server self-connect test.
+     *
+     * @return bool
+     */
+    private function verify_self_connect_request() {
+
+        $signature = isset( $_SERVER['HTTP_X_MAINWP_SELF_CONNECT_SIGNATURE'] )
+        ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_MAINWP_SELF_CONNECT_SIGNATURE'] ) )
+        : '';
+
+        $timestamp = isset( $_SERVER['HTTP_X_MAINWP_SELF_CONNECT_TIMESTAMP'] )
+        ? (int) $_SERVER['HTTP_X_MAINWP_SELF_CONNECT_TIMESTAMP']
+        : 0;
+
+        if ( 64 !== strlen( $signature ) || empty( $timestamp ) ) {
+            return false;
+        }
+
+        // Prevent replay attacks.
+        if ( abs( time() - $timestamp ) > 300 ) {
+            return false;
+        }
+
+        $secret = static::get_self_connect_secret();
+
+        if ( empty( $secret ) ) {
+            return false;
+        }
+
+        $message = 'mainwp_self_connect|' . $timestamp;
+
+        $expected = hash_hmac(
+            'sha256',
+            $message,
+            $secret
+        );
+
+        return hash_equals( $expected, $signature );
+    }
+
+
+    /**
+     * Method get_self_connect_secret()
+     *
+     * @return string Self connect secret.
+     */
+    public static function get_self_connect_secret() {
+
+        $option_name = 'mainwp_self_connect_secret';
+        $secret      = get_option( $option_name, '' );
+
+        if ( ! is_string( $secret ) || 64 !== strlen( $secret ) ) {
+            try {
+                $secret = bin2hex( random_bytes( 32 ) );
+            } catch ( \Exception $e ) {
+                return '';
+            }
+
+            update_option( $option_name, $secret, false );
+        }
+
+        return $secret;
+    }
 }

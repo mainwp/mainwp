@@ -203,7 +203,9 @@ class Api_Backups_Settings {
                         <?php if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce_cloudways'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce_cloudways'] ), 'cloudways_api_form_general' ) ) : ?>
                             <?php Api_Backups_Utility::update_option( 'mainwp_enable_cloudways_api', ( ! isset( $_POST['mainwp_enable_cloudways_api'] ) ? 0 : 1 ) ); ?>
                             <?php Api_Backups_Utility::update_option( 'mainwp_cloudways_api_account_email', ( isset( $_POST['mainwp_cloudways_api_account_email'] ) ? wp_unslash( $_POST['mainwp_cloudways_api_account_email'] ) : '' ) ); ?>
+                            <?php Api_Backups_Utility::update_option( 'mainwp_show_legacy_cloudways_credentials', ! empty( $_POST['mainwp_show_legacy_cloudways_credentials'] ) ? 1 : 0 ); ?>
                             <?php Api_Backups_Utility::get_instance()->update_api_key( 'cloudways', ( isset( $_POST['mainwp_cloudways_api_key'] ) ? wp_unslash( $_POST['mainwp_cloudways_api_key'] ) : '' ) ); ?>
+                            <?php Api_Backups_Utility::get_instance()->update_api_key( 'cloudways', ( isset( $_POST['mainwp_cloudways_access_token'] ) ? wp_unslash( $_POST['mainwp_cloudways_access_token'] ) : '' ), 'access_token' ); ?>
                             <div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'API credentials have been successfully saved.', 'mainwp' ); ?></div>
                             <?php
                             Api_Backups_3rd_Party::cloudways_action_update_ids();
@@ -348,7 +350,38 @@ class Api_Backups_Settings {
                                             <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_enable_cloudways_api" id="mainwp_enable_cloudways_api" <?php echo 1 === (int) get_option( 'mainwp_enable_cloudways_api', 0 ) ? 'checked="true"' : ''; ?> />
                                         </div>
                                     </div>
+                                    <?php
+                                    $cld_access_token = Api_Backups_3rd_Party::get_cloudways_access_token();
+                                    ?>
                                     <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cloudways-settings">
+                                        <label class="six wide column middle aligned">
+                                        <?php
+                                        MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $cld_access_token );
+                                        esc_html_e( 'Access Token', 'mainwp' );
+                                        ?>
+                                        </label>
+                                        <div class="five wide column">
+                                            <input type="password" class="settings-field-value-change-handler" name="mainwp_cloudways_access_token" id="mainwp_cloudways_access_token" value="<?php echo esc_attr( MainWP_Credential_Render::value_for_input( ! empty( $cld_access_token ) ) ); ?>" autocomplete="new-password"  />
+                                        </div>
+                                    </div>
+                                    <?php
+                                    $_api_key                    = Api_Backups_3rd_Party::get_cloudways_api_key();
+                                    $show_legacy_cloudways_creds = get_option( 'mainwp_show_legacy_cloudways_credentials' );
+                                    if ( false === $show_legacy_cloudways_creds && ! empty( $_api_key ) ) {
+                                        $show_legacy_cloudways_creds = 1;
+                                        Api_Backups_Utility::update_option( 'mainwp_show_legacy_cloudways_credentials', $show_legacy_cloudways_creds );
+                                    }
+                                    ?>
+                                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cloudways-settings">
+                                        <label class="six wide column middle aligned">
+                                            <?php MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', get_option( 'mainwp_show_legacy_cloudways_credentials', 0 ) ); ?>
+                                            <?php esc_html_e( 'Show Legacy API Credentials', 'mainwp' ); ?></label>
+                                        <div class="ten wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="hide-legacy-cloudways"  data-tooltip="<?php esc_attr_e( 'If enabled, the legacy Cloudways API will be visible.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
+                                            <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_show_legacy_cloudways_credentials" id="mainwp_show_legacy_cloudways_credentials" <?php echo 1 === (int) $show_legacy_cloudways_creds ? 'checked="true"' : ''; ?> />
+                                        </div>
+                                    </div>
+
+                                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cloudways-settings" hide-element="hide-legacy-cloudways" <?php echo $show_legacy_cloudways_creds ? '' : 'style="display:none;"'; ?> >
                                         <label class="six wide column middle aligned">
                                             <?php
                                             MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', get_option( 'mainwp_cloudways_api_account_email' ) );
@@ -359,10 +392,7 @@ class Api_Backups_Settings {
                                                 <input type="text" class="settings-field-value-change-handler" name="mainwp_cloudways_api_account_email" id="mainwp_cloudways_api_account_email" value="<?php echo false === get_option( 'mainwp_cloudways_api_account_email' ) ? '' : esc_attr( get_option( 'mainwp_cloudways_api_account_email' ) ); ?>"  />
                                             </div>
                                     </div>
-                                    <?php
-                                        $_api_key = Api_Backups_3rd_Party::get_cloudways_api_key();
-                                    ?>
-                                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cloudways-settings">
+                                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cloudways-settings" hide-element="hide-legacy-cloudways" <?php echo $show_legacy_cloudways_creds ? '' : 'style="display:none;"'; ?>>
                                         <label class="six wide column middle aligned">
                                         <?php
                                         MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $_api_key );

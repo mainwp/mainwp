@@ -25,6 +25,7 @@ use MainWP\Dashboard\MainWP_Sync;
 use MainWP\Dashboard\MainWP_Manage_Sites_View;
 use MainWP\Dashboard\MainWP_Uptime_Monitoring_Handle;
 use MainWP\Dashboard\MainWP_Uptime_Monitoring_Edit;
+use MainWP\Dashboard\MainWP_Credential_Render;
 
 // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
@@ -1505,8 +1506,8 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
 
         // Update secrets if present.
         $update_secrets_api = function ( $slug, $value, $name = 'api_key' ) use ( &$updated ) { //  phpcs:ignore -- NOSONAR - complex.
-            if ( ! empty( $slug ) && ! empty( $value ) ) {
-                Api_Backups_Utility::get_instance()->update_api_key( $slug, $value );
+            $success = Api_Backups_Utility::get_instance()->update_api_key( $slug, $value );
+            if ( $success ) {
                 $updated[ $name ] = $value;
             }
         };
@@ -1520,8 +1521,29 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         $update_if_present( 'company_id', $api['options']['company_id'] ?? '' );
 
         // Update api key or password.
-        $update_secrets_api( $api['slug'] ?? '', $body['secrets']['api_key'] ?? '', 'api_key' );
-        $update_secrets_api( $api['slug'] ?? '', $body['password'] ?? '', 'password' );
+        if ( ! empty( $api['slug'] ) ) {
+            if ( isset( $body['secrets']['api_key'] ) ) {
+                $update_secrets_api( $api['slug'] ?? '', $body['secrets']['api_key'] ?? '', 'api_key' );
+            }
+            if ( isset( $body['password'] ) ) {
+                $update_secrets_api( $api['slug'] ?? '', $body['password'] ?? '', 'password' );
+            }
+        }
+
+        if ( ! empty( $api['slug'] ) && 'cloudways' === $api['slug'] && isset( $body['secrets']['access_token'] ) ) {
+            $success = Api_Backups_Utility::get_instance()->update_api_key( 'cloudways', $body['secrets']['access_token'], 'access_token' );
+            if ( $success ) {
+                $updated['access_token'] = $body['secrets']['access_token'];
+            }
+        }
+
+        // Get secrets key.
+        $secrets = array( 'api_key', 'access_token', 'password' );
+        foreach ( $secrets as $secret_key ) {
+            if ( isset( $updated[ $secret_key ] ) ) {
+                $updated[ $secret_key ] = MainWP_Credential_Render::value_for_input( false );
+            }
+        }
 
         return rest_ensure_response(
             array(
@@ -2945,10 +2967,16 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 'required'    => false,
                 'description' => __( 'Secrets (Cpanel not used).', 'mainwp' ),
                 'properties'  => array(
-                    'api_key' => array(
+                    'api_key'      => array(
                         'type'              => 'string',
-                        'required'          => true,
+                        'required'          => false,
                         'description'       => __( 'API key (for kinsta).', 'mainwp' ),
+                        'sanitize_callback' => 'sanitize_text_field',
+                    ),
+                    'access_token' => array(
+                        'type'              => 'string',
+                        'required'          => false,
+                        'description'       => __( 'Access token (for Cloudways).', 'mainwp' ),
                         'sanitize_callback' => 'sanitize_text_field',
                     ),
                 ),
@@ -3988,7 +4016,8 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                     'account_email' => 'mainwp_cloudways_api_account_email',
                 ),
                 'secrets'        => array(
-                    'api_key' => array( Api_Backups_3rd_Party::class, 'get_cloudways_api_key' ),
+                    'api_key'      => array( Api_Backups_3rd_Party::class, 'get_cloudways_api_key' ),
+                    'access_token' => array( Api_Backups_3rd_Party::class, 'get_cloudways_access_token' ),
                 ),
             ),
             'gridpane'     => array(
@@ -4202,14 +4231,14 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         $monitoring_settings = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
 
         // Get interval values.
-        $interval_values   = MainWP_Uptime_Monitoring_Edit::get_interval_values( false );
-        $interval = $monitoring_settings['interval'] ?? 60;
-        $interval          = isset( $interval_values[ $interval ] ) ? $interval_values[ $interval ] : $interval_values[60];
+        $interval_values = MainWP_Uptime_Monitoring_Edit::get_interval_values( false );
+        $interval        = $monitoring_settings['interval'] ?? 60;
+        $interval        = isset( $interval_values[ $interval ] ) ? $interval_values[ $interval ] : $interval_values[60];
 
         // Get timeout values.
-        $timeout_values   = MainWP_Uptime_Monitoring_Edit::get_timeout_values( false );
-        $timeout = $monitoring_settings['timeout'] ?? 60;
-        $timeout          = isset( $timeout_values[ $timeout ] ) ? $timeout_values[ $timeout ] : $timeout_values[60];
+        $timeout_values = MainWP_Uptime_Monitoring_Edit::get_timeout_values( false );
+        $timeout        = $monitoring_settings['timeout'] ?? 60;
+        $timeout        = isset( $timeout_values[ $timeout ] ) ? $timeout_values[ $timeout ] : $timeout_values[60];
 
         return array(
             'mainwp_uptime_monitoring_active'          => (int) $monitoring_settings['active'] ?? 0,

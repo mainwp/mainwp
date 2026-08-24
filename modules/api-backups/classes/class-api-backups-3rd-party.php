@@ -31,6 +31,8 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
 
     // phpcs:disable WordPress.DB.RestrictedFunctions, Generic.Metrics.CyclomaticComplexity, WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors -- Using cURL functions.
 
+    const CLOUDWAYS_API_URL = 'https://api.cloudways.com/api/v2';
+
     /**
      * Public static variable to hold the single instance of the class.
      *
@@ -38,6 +40,13 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      */
     protected static $instance = null;
 
+
+    /**
+     * Public static variable to hold the saved access token value.
+     *
+     * @var mixed Default null
+     */
+    protected static $access_token = null;
 
     /**
      * Public static variable.
@@ -1652,6 +1661,30 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
         } // END if.
     }
 
+    /**
+     * Fetch Cloudways oAuth Access Token.
+     *
+     * Fetch the Cloudways oAuth access token from the given API credentials.
+     *
+     * @return mixed Return Cloudways Access Token.
+     */
+    public static function get_saved_v2_access_token() {
+        if ( null === static::$access_token ) {
+            static::$access_token = self::get_cloudways_access_token();
+        }
+        return static::$access_token;
+    }
+    /**
+     * Fetch Cloudways oAuth Access Token.
+     *
+     * Fetch the Cloudways oAuth access token from the given API credentials.
+     *
+     * @return mixed Return Cloudways Access Token.
+     */
+    public static function is_access_token_v2() {
+        return ! empty( self::get_saved_v2_access_token() );
+    }
+
     /*********************************************************************************
      * Cloudways API Methods.
      **********************************************************************************/
@@ -1666,9 +1699,66 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      *
      * @param string $method GET|POST|PUT|DELETE.
      * @param string $url relative URL for the call.
+     * @param array  $post Optional post data for the call.
+     * @return object|false Output from CW API.
+     */
+    public static function call_cloudways_api_v2( $method, $url, $post = array() ) {
+
+        $access_token = self::get_saved_v2_access_token();
+
+        $ch = curl_init();
+
+        curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, $method );
+        curl_setopt( $ch, CURLOPT_URL, self::CLOUDWAYS_API_URL . $url );
+        curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+
+        curl_setopt(
+            $ch,
+            CURLOPT_HTTPHEADER,
+            array(
+                'Authorization: Bearer ' . $access_token,
+                'Accept: application/json',
+            )
+        );
+
+        // Set Post Parameters.
+        $encoded = '';
+        if ( count( $post ) ) {
+            foreach ( $post as $name => $value ) {
+                $encoded .= rawurlencode( $name ) . '=' . rawurlencode( $value ) . '&';
+            }
+
+            $encoded = substr( $encoded, 0, strlen( $encoded ) - 1 );
+
+            curl_setopt( $ch, CURLOPT_POSTFIELDS, $encoded );
+            curl_setopt( $ch, CURLOPT_POST, 1 );
+        }
+
+        $output   = curl_exec( $ch );
+        $httpcode = (int) curl_getinfo( $ch, CURLINFO_HTTP_CODE );
+
+        curl_close( $ch );
+
+        if ( 200 !== $httpcode ) {
+            return false;
+        }
+
+        return json_decode( $output );
+    }
+
+    /**
+     * Call Cloudways API, Authenticate & perform given method.
+     *
+     * Use this function to contact CW API
+     * We use OAuth, an open standard for authorization. Here are the steps involved:
+     * 1. Get your API Key from here: https://platform.cloudways.com/api
+     * 2. Enter in your account email address and API Key below.
+     *
+     * @param string $method GET|POST|PUT|DELETE.
+     * @param string $url relative URL for the call.
      * @param string $accessToken Access token generated using OAuth Call.
      * @param array  $post Optional post data for the call.
-     * @return object Output from CW API.
+     * @return object|false Output from CW API.
      */
     public static function call_cloudways_api( $method, $url, $accessToken, $post = array() ) {
         $baseURL = 'https://api.cloudways.com/api/v1';
@@ -1699,10 +1789,12 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
 
         $httpcode = (string) curl_getinfo( $ch, CURLINFO_HTTP_CODE );
 
+        curl_close( $ch );
+
         if ( '200' !== $httpcode ) {
             return false;
         }
-        curl_close( $ch );
+
         return json_decode( $output );
     }
 
@@ -1739,11 +1831,17 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @return mixed Returns available list of servers.
      */
     public static function fetch_cloudways_server_list() { //phpcs:ignore -- NOSONAR - complex.
-        // Grab access token.
-        $accessToken = static::fetch_cloudways_access_token();
 
-        // Fetch Server List.
-        $serverList = (array) static::call_cloudways_api( 'GET', '/server', $accessToken );
+        if ( static::is_access_token_v2() ) {
+            $serverList = (array) static::call_cloudways_api_v2( 'GET', '/server' );
+        } else {
+            // Grab access token.
+            $accessToken = static::fetch_cloudways_access_token();
+
+            // Fetch Server List.
+            $serverList = (array) static::call_cloudways_api( 'GET', '/server', $accessToken );
+        }
+
         if ( ! array_key_exists( 'servers', $serverList ) ) {
             return;
         }
@@ -1861,19 +1959,32 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
             'app_id'    => $app_id,
         );
 
-        // Grab Cloudways access token.
-        $accessToken = static::fetch_cloudways_access_token();
+        $accessToken = '';
 
-        // Send Payload & create backup.
-        $api_response = (array) static::call_cloudways_api( 'POST', '/app/manage/takeBackup', $accessToken, $data );
+        if ( static::is_access_token_v2() ) {
+            $api_response = (array) static::call_cloudways_api_v2( 'POST', '/app/manage/takeBackup', $data );
+        } else {
+
+            // Grab Cloudways access token.
+            $accessToken = static::fetch_cloudways_access_token();
+
+            // Send Payload & create backup.
+            $api_response = (array) static::call_cloudways_api( 'POST', '/app/manage/takeBackup', $accessToken, $data );
+        }
 
         $success = true;
 
         if ( true !== $api_response['status'] ) {
             $success = false;
         } else {
-            // Save current backup operation.
-            $backup_operation = (array) static::call_cloudways_api( 'GET', static::OPERATION . $api_response['operation_id'], $accessToken );
+            if ( static::is_access_token_v2() ) {
+                // Save current backup operation.
+                $backup_operation = (array) static::call_cloudways_api_v2( 'GET', static::OPERATION . $api_response['operation_id'] );
+            } else {
+                // Save current backup operation.
+                $backup_operation = (array) static::call_cloudways_api( 'GET', static::OPERATION . $api_response['operation_id'], $accessToken );
+            }
+
             $backup_operation = wp_json_encode( $backup_operation['operation'] );
             Api_Backups_Helper::update_website_option( $website_id, 'mainwp_3rd_party_cloudways_backup_operation', $backup_operation );
 
@@ -1924,11 +2035,17 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
         $backup_operation = isset( $site_options['mainwp_3rd_party_cloudways_backup_operation'] ) ? $site_options['mainwp_3rd_party_cloudways_backup_operation'] : null;
         $operation_id     = json_decode( $backup_operation, true )['id'];
 
-        // Grab Cloudways access token.
-        $accessToken = static::fetch_cloudways_access_token();
+        if ( static::is_access_token_v2() ) {
+            // Send Payload & list backups. https://api.cloudways.com/api/v1/operation/{id}.
+            $operation_polling = static::call_cloudways_api_v2( 'GET', static::OPERATION . $operation_id );
+        } else {
 
-        // Send Payload & list backups. https://api.cloudways.com/api/v1/operation/{id}.
-        $operation_polling       = static::call_cloudways_api( 'GET', static::OPERATION . $operation_id, $accessToken );
+            // Grab Cloudways access token.
+            $accessToken = static::fetch_cloudways_access_token();
+
+            // Send Payload & list backups. https://api.cloudways.com/api/v1/operation/{id}.
+            $operation_polling = static::call_cloudways_api( 'GET', static::OPERATION . $operation_id, $accessToken );
+        }
         $backup_polling_response = $operation_polling->operation;
 
         // If backup has not been completed yet, sleep for 30 seconds and check again.
@@ -1966,8 +2083,6 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
             $website_id = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : 0; //phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.NonceVerification.Recommended
         }
 
-        // Grab Cloudways access token.
-        $accessToken = static::fetch_cloudways_access_token();
 
         // Grab needed site options from WP_MAINWP_WP_OPTIONS table.
         $site_options = Api_Backups_Helper::get_website_options(
@@ -1980,15 +2095,28 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
         $server_id    = isset( $site_options['mainwp_3rd_party_instance_id'] ) ? $site_options['mainwp_3rd_party_instance_id'] : null;
         $app_id       = isset( $site_options['mainwp_3rd_party_app_id'] ) ? $site_options['mainwp_3rd_party_app_id'] : null;
 
-        // Grab Backup operation from API.
-        $backup_operation = static::call_cloudways_api( 'GET', '/app/manage/backup?server_id=' . $server_id . '&app_id=' . $app_id, $accessToken );
-        $operation_id     = $backup_operation->operation_id;
+        if ( static::is_access_token_v2() ) {
+            // Grab Backup operation from API.
+            $backup_operation = static::call_cloudways_api_v2( 'GET', '/app/manage/backup?server_id=' . $server_id . '&app_id=' . $app_id );
+        } else {
+            // Grab Cloudways access token.
+            $accessToken = static::fetch_cloudways_access_token();
+            // Grab Backup operation from API.
+            $backup_operation = static::call_cloudways_api( 'GET', '/app/manage/backup?server_id=' . $server_id . '&app_id=' . $app_id, $accessToken );
+        }
+
+        $operation_id = $backup_operation->operation_id;
 
         sleep( 3 ); // REQUIRED! Wait 3 seconds for cURL connection to be closed before opening a new one.
 
-        // Send Payload & list backups. https://api.cloudways.com/api/v1/operation/{id}.
-        $operation_polling = static::call_cloudways_api( 'GET', static::OPERATION . $operation_id, $accessToken );
-        $operation         = $operation_polling->operation;
+        if ( static::is_access_token_v2() ) {
+            $operation_polling = static::call_cloudways_api_v2( 'GET', static::OPERATION . $operation_id );
+        } else {
+            // Send Payload & list backups. https://api.cloudways.com/api/v1/operation/{id}.
+            $operation_polling = static::call_cloudways_api( 'GET', static::OPERATION . $operation_id, $accessToken );
+        }
+
+        $operation = $operation_polling->operation;
 
         // Save backup operation.
         Api_Backups_Helper::update_website_option( $website_id, 'mainwp_3rd_party_cloudways_available_backups', $operation->parameters );
@@ -2039,11 +2167,15 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
             'type'      => 'complete',
         );
 
-        // Grab Cloudways access token.
-        $accessToken = static::fetch_cloudways_access_token();
+        if ( static::is_access_token_v2() ) {
+            $api_response = static::call_cloudways_api_v2( 'POST', '/app/manage/restore', $data );
+        } else {
+            // Grab Cloudways access token.
+            $accessToken = static::fetch_cloudways_access_token();
 
-        // Send Payload & create backup.
-        $api_response = static::call_cloudways_api( 'POST', '/app/manage/restore', $accessToken, $data );
+            // Send Payload & create backup.
+            $api_response = static::call_cloudways_api( 'POST', '/app/manage/restore', $accessToken, $data );
+        }
 
         // Handle API response.
         if ( 1 !== (int) $api_response->status ) {
@@ -2234,6 +2366,14 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
     public static function get_cloudways_api_key() {
         return Api_Backups_Utility::get_instance()->get_api_key( 'cloudways' );
     }
+
+    /**
+     * Method get_cloudways_access_token().
+     */
+    public static function get_cloudways_access_token() {
+        return Api_Backups_Utility::get_instance()->get_api_key( 'cloudways', '', 'access_token' );
+    }
+
 
     /**
      * Method get_cpanel_account_password().

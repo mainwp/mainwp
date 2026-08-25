@@ -172,13 +172,15 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             return true;
         }
 
-        // A dangling symlink fails every exists() check, so the shared helper would skip it and leave the entry behind.
+        MainWP_Utility::delete_file( $file_path );
+        clearstatcache( true, $file_path );
+
+        // A dangling symlink fails every exists() check, so the transport-aware helper skips it and leaves the entry behind.
         if ( is_link( $file_path ) ) {
             wp_delete_file( $file_path );
-        } else {
-            MainWP_Utility::delete_file( $file_path );
+            clearstatcache( true, $file_path );
         }
-        clearstatcache( true, $file_path );
+
         return ! $this->key_entry_present( $file_path );
     }
 

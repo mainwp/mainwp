@@ -18,6 +18,9 @@ class MainWP_Key_File_Result_Filesystem {
     /** @var bool */
     public $present;
 
+    /** @var int */
+    public $delete_calls = 0;
+
     /** @var bool */
     private $delete_succeeds;
 
@@ -49,6 +52,7 @@ class MainWP_Key_File_Result_Filesystem {
      * @return bool
      */
     public function delete( $path ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Filesystem contract requires the path.
+        ++$this->delete_calls;
         if ( $this->delete_succeeds ) {
             $this->present = false;
             return true;
@@ -169,6 +173,30 @@ class Test_Key_File_Deletion_Result extends \WP_UnitTestCase {
         $this->assertFalse( file_exists( $path ) );
 
         $this->assertTrue( apply_filters( 'mainwp_delete_key_file_result', null, $name ) );
+        clearstatcache( true, $path );
+        $this->assertFalse( is_link( $path ) );
+    }
+
+    /**
+     * The configured transport gets the first delete; direct unlink only runs on a symlink it left behind.
+     */
+    public function test_filter_uses_transport_before_direct_unlink_on_symlink() {
+        global $wp_filesystem;
+
+        $name = 'fathom_result_test_' . wp_generate_password( 8, false );
+        $dir  = MainWP_Keys_Manager::get_keys_dir();
+        if ( ! is_dir( $dir ) ) {
+            wp_mkdir_p( $dir );
+        }
+        $path = $dir . $name;
+        if ( ! @symlink( $dir . 'missing_' . $name, $path ) ) {
+            $this->markTestSkipped( 'Filesystem does not allow symlinks in the keys dir.' );
+        }
+
+        $wp_filesystem = new MainWP_Key_File_Result_Filesystem( true, true );
+
+        $this->assertTrue( apply_filters( 'mainwp_delete_key_file_result', null, $name ) );
+        $this->assertSame( 1, $wp_filesystem->delete_calls );
         clearstatcache( true, $path );
         $this->assertFalse( is_link( $path ) );
     }

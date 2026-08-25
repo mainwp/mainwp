@@ -1201,15 +1201,19 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
             $update_data['method'] = $settings['method'];
         }
 
-        if ( isset( $settings['bypass_cache'] ) && in_array( (int) $settings['bypass_cache'], array( -1, 1, 0 ), true ) ) {
-            $update_data['bypass_cache'] = $settings['bypass_cache'];
-        }
-
         // Apply filters to allow customization.
         $update_data = apply_filters( 'mainwp_uptime_monitoring_update_monitor_data', $update_data, $monitor_id );
 
         // Update the monitor.
         $result = $this->db->update_wp_monitor( $update_data );
+
+        if ( isset( $settings['bypass_cache'] ) ) {
+            $bypass_cache = (int) $settings['bypass_cache'];
+            if ( in_array( $bypass_cache, array( -1, 1, 0 ), true ) ) {
+                MainWP_DB_Uptime_Monitoring::instance()->update_website_option( $monitor->wpid, 'bypass_cache', $bypass_cache );
+                $update_data['bypass_cache'] = $bypass_cache;
+            }
+        }
 
         if ( false === $result ) {
             return new WP_Error(

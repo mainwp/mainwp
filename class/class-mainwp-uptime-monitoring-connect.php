@@ -841,9 +841,9 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
             $_try_second = false;
 
-            $mo_url = static::get_apply_monitor_url( $website );
-
             if ( empty( $data ) && 'ping' !== $mo_apply_type ) {
+                static::apply_bypass_cache_settings( $website, $global_settings );
+                $mo_url = static::get_apply_monitor_url( $website );
                 curl_setopt( $ch, CURLOPT_URL, $mo_url );
                 $_try_second = true;
             }

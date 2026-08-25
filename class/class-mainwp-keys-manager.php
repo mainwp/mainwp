@@ -498,6 +498,7 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @return void
      */
     public static function migrate_private_filenames( $from_version, $to_version ) {
+        unset( $to_version );
         if ( ! version_compare( $from_version, '9.0.2.0', '<' ) ) {
             return;
         }
@@ -527,10 +528,10 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             $new_path = $key_dir . $new_name;
             if ( file_exists( $new_path ) ) {
                 // New file already present (rare race); legacy is stale, remove it.
-                @unlink( $old_path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- cleanup of stale legacy.
+                wp_delete_file( $old_path );
                 continue;
             }
-            @rename( $old_path, $new_path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- best-effort; lazy migration in get_key_file() handles failures.
+            @rename( $old_path, $new_path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors, WordPress.WP.AlternativeFunctions.rename_rename -- best-effort direct rename inside the keys dir, before WP_Filesystem is initialized; lazy migration in get_key_file() handles failures.
         }
     }
 
@@ -554,6 +555,7 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @return void
      */
     public static function migrate_sibling_dir_perms( $from_version, $to_version ) {
+        unset( $to_version );
         if ( ! version_compare( $from_version, '9.0.2.1', '<' ) ) {
             return;
         }
@@ -636,6 +638,7 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @return void
      */
     public static function fix_sibling_dir_perms_9023( $from_version, $to_version ) {
+        unset( $to_version );
 
         if ( empty( $from_version ) || version_compare( $from_version, '9.0.2.1', '<' ) || version_compare( $from_version, '9.0.2.3', '>=' ) ) {
             return;

@@ -1762,7 +1762,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
     /**
      * Method hook_uptime_preload_data().
      *
-     * @param array  $websites Websites array.
+     * @param array $websites Websites array.
      *
      * @return void
      */
@@ -2095,7 +2095,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
     /**
      * Method hook_get_primary_backup_method.
      *
-     * @param mixed $inpval Hook input value.
+     * @param mixed     $inpval Hook input value.
      * @param int|false $siteid Optional Site ID; false for global method.
      *
      * @since 6.0.10.
@@ -2118,5 +2118,4 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
         }
         return $primaryBackup;
     }
-
 }

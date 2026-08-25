@@ -1196,7 +1196,9 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * @return mixed bool|results.
      */
     public function add_client_field( $field ) {
-        if ( ! empty( $field['field_name'] ) && isset( $field['client_id'] ) ) {
+        // "0" is a name the column stores, so the write is refused only for a name that is missing
+        // or empty, not for every name PHP reads as falsy.
+        if ( isset( $field['field_name'] ) && '' !== $field['field_name'] && isset( $field['client_id'] ) ) {
             if ( $this->get_client_fields_by( 'field_name', $field['field_name'], $field['client_id'] ) ) { // field name existed for the client can not create.
                 return false;
             }
@@ -1218,7 +1220,8 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * @return mixed|false field.
      */
     public function update_client_field( $field_id, $field ) {
-        if ( $field_id && ! empty( $field['field_name'] ) ) {
+        // Same as the add above: a rename to "0" is a rename, not a name left out.
+        if ( $field_id && isset( $field['field_name'] ) && '' !== $field['field_name'] ) {
             $current = $this->get_client_fields_by( 'field_id', $field_id );
             if ( $current && $this->wpdb->update( $this->table_name( 'wp_clients_fields' ), $field, array( 'field_id' => $field_id ) ) ) {
                 return $this->get_client_fields_by( 'field_id', $current->field_id );

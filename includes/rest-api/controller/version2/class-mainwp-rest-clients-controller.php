@@ -770,10 +770,11 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
 
         $data = array();
         foreach ( $fields as $field ) {
+            // A stored "0" is reported as the value it is, not as an empty one.
             $record = array(
                 'field_id'    => (int) $field->field_id ? $field->field_id : 0,
-                'name'        => $field->field_name ? $field->field_name : '',
-                'description' => $field->field_desc ? $field->field_desc : '',
+                'name'        => isset( $field->field_name ) ? $field->field_name : '',
+                'description' => isset( $field->field_desc ) ? $field->field_desc : '',
             );
             $data[] = $this->filter_response_data_by_allowed_fields( $record, 'field_view' );
         }
@@ -820,13 +821,17 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
             return $invalid;
         }
 
-        // Validate request body.
-        if ( empty( $body['name'] ) || empty( $body['description'] ) ) {
-            return new WP_Error(
-                'empty_name',
-                __( 'Name and description are required.', 'mainwp' ),
-                array( 'status' => 400 )
-            );
+        // Validate request body. "0" is a value the column stores, so a required value is one whose
+        // key was sent carrying something other than whitespace, not one that passes a falsy test.
+        // validate_client_field_values() has already refused a key sent as anything but a string.
+        foreach ( array( 'name', 'description' ) as $required ) {
+            if ( ! isset( $body[ $required ] ) || '' === trim( $body[ $required ] ) ) {
+                return new WP_Error(
+                    'empty_name',
+                    __( 'Name and description are required.', 'mainwp' ),
+                    array( 'status' => 400 )
+                );
+            }
         }
 
         $client_id = 0;
@@ -877,11 +882,11 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
             );
         }
 
-        // Prepare response data.
+        // Prepare response data. A stored "0" is reported as the value it is, not as an empty one.
         $data = array(
             'field_id'    => (int) $field->field_id ? $field->field_id : 0,
-            'name'        => $field->field_name ? $field->field_name : '',
-            'description' => $field->field_desc ? $field->field_desc : '',
+            'name'        => isset( $field->field_name ) ? $field->field_name : '',
+            'description' => isset( $field->field_desc ) ? $field->field_desc : '',
         );
 
         return rest_ensure_response(
@@ -924,8 +929,10 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
             return $invalid;
         }
 
-        $name = ! empty( $body['name'] ) ? sanitize_text_field( wp_unslash( $body['name'] ) ) : $field->field_name;
-        $desc = ! empty( $body['description'] ) ? sanitize_text_field( wp_unslash( $body['description'] ) ) : $field->field_desc;
+        // Only a key left out, or sent empty, keeps the stored value. "0" is a value the column
+        // stores, and a falsy test would drop it on the floor and answer that the edit succeeded.
+        $name = isset( $body['name'] ) && '' !== $body['name'] ? sanitize_text_field( wp_unslash( $body['name'] ) ) : $field->field_name;
+        $desc = isset( $body['description'] ) && '' !== $body['description'] ? sanitize_text_field( wp_unslash( $body['description'] ) ) : $field->field_desc;
 
         // field_name is varchar(191), so a longer name is truncated by wpdb before the unique index sees
         // it and the duplicate lookup, which queries the untruncated name, would not recognise the refusal.

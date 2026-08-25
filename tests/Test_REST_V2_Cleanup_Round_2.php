@@ -1217,6 +1217,65 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 	}
 
 	/**
+	 * PR review: "0" is a value both columns store, so an add carrying it is not an add with values
+	 * missing.
+	 */
+	public function test_client_fields_add_stores_zero_string_values(): void {
+		$this->authenticate_as_admin();
+
+		$response = $this->do_authenticated_request(
+			'POST',
+			'/mainwp/v2/clients/fields/add',
+			[
+				'name'        => '0',
+				'description' => '0',
+			]
+		);
+
+		$this->assertSame( 200, $response->get_status() );
+
+		$field_id = (int) $response->get_data()['data']['field_id'];
+		$this->assertNotSame( 0, $field_id );
+		$this->assertSame( '0', $response->get_data()['data']['name'] );
+		$this->assertSame( '0', $response->get_data()['data']['description'] );
+
+		$stored = \MainWP\Dashboard\MainWP_DB_Client::instance()->get_client_fields_by( 'field_id', $field_id );
+		$this->assertSame( '0', $stored->field_name );
+		$this->assertSame( '0', $stored->field_desc );
+
+		$this->delete_client_field_by_id( $field_id );
+	}
+
+	/**
+	 * The same for an edit: a description sent as "0" is stored, not read as a key left out.
+	 */
+	public function test_client_fields_edit_stores_a_zero_string_description(): void {
+		$this->authenticate_as_admin();
+
+		$field = \MainWP\Dashboard\MainWP_DB_Client::instance()->add_client_field(
+			[
+				'field_name' => 'REST V2 Cleanup Zero Desc Field',
+				'field_desc' => 'before',
+				'client_id'  => 0,
+			]
+		);
+		$this->assertNotEmpty( $field, 'Could not create the client field the test edits.' );
+
+		$response = $this->do_authenticated_request(
+			'PUT',
+			'/mainwp/v2/clients/fields/' . $field->field_id . '/edit',
+			[ 'description' => '0' ]
+		);
+
+		$this->assertSame( 200, $response->get_status() );
+
+		$stored = \MainWP\Dashboard\MainWP_DB_Client::instance()->get_client_fields_by( 'field_id', $field->field_id );
+		$this->assertSame( '0', $stored->field_desc );
+
+		$this->delete_client_field_by_id( (int) $field->field_id );
+	}
+
+	/**
 	 * Item 6: a group with no items is still a group the endpoint cannot dispatch.
 	 */
 	public function test_batch_empty_group_value_returns_group_error(): void {
@@ -1404,6 +1463,30 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 		$this->assertCount( 2, $data['sites']['sync'] );
 		$this->assertSame( 999999, $data['sites']['sync'][0]['id'] );
 		$this->assertSame( 999998, $data['sites']['sync'][1]['id'] );
+	}
+
+	/**
+	 * PR review: an id action reads whole numbers, so a fractional string is a group the endpoint
+	 * refuses instead of a cast onto whichever site the leading digits name.
+	 */
+	public function test_batch_id_action_rejects_fractional_string_ids(): void {
+		$this->authenticate_as_admin();
+
+		$response = $this->do_authenticated_request(
+			'POST',
+			'/mainwp/v2/batch',
+			[
+				'sites' => [
+					'sync' => [ '1.9' ],
+				],
+			]
+		);
+
+		$data = $response->get_data();
+
+		$this->assertArrayHasKey( 'sites', $data );
+		$this->assertSame( 'rest_invalid_param', $data['sites']['error']['code'] );
+		$this->assertArrayNotHasKey( 'sync', $data['sites'] );
 	}
 
 	/**

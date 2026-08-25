@@ -815,6 +815,11 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
             return $body;
         }
 
+        $invalid = $this->validate_client_field_values( $body );
+        if ( is_wp_error( $invalid ) ) {
+            return $invalid;
+        }
+
         // Validate request body.
         if ( empty( $body['name'] ) || empty( $body['description'] ) ) {
             return new WP_Error(
@@ -837,10 +842,16 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
         );
 
         if ( ! $field ) {
+            // add_client_field() returns false for a name it refuses to store as well as for a failed
+            // insert, so a name left empty by sanitizing or already taken stays a client error and
+            // everything else is a server failure.
+            $taken  = MainWP_DB_Client::instance()->get_client_fields_by( 'field_name', $name, $client_id );
+            $status = ( '' === $name || ! empty( $taken ) ) ? 400 : 500;
+
             return new WP_Error(
                 'create_field_failed',
                 __( 'Create client field failed.', 'mainwp' ),
-                array( 'status' => 400 )
+                array( 'status' => $status )
             );
         }
 
@@ -886,22 +897,33 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
             return $body;
         }
 
+        $invalid = $this->validate_client_field_values( $body );
+        if ( is_wp_error( $invalid ) ) {
+            return $invalid;
+        }
+
         $name = ! empty( $body['name'] ) ? sanitize_text_field( wp_unslash( $body['name'] ) ) : $field->field_name;
         $desc = ! empty( $body['description'] ) ? sanitize_text_field( wp_unslash( $body['description'] ) ) : $field->field_desc;
 
-        $updated = MainWP_DB_Client::instance()->update_client_field(
-            $field->field_id,
-            array(
-                'field_name' => $name,
-                'field_desc' => $desc,
-            )
-        );
-        if ( ! $updated ) {
-            return new WP_Error(
-                'update_field_failed',
-                __( 'Field already exists, try different field name.', 'mainwp' ),
-                array( 'status' => 400 )
+        // $wpdb->update() reports no changed rows for an edit that stores the values already there, and
+        // the DB layer cannot tell that apart from a failure, so an edit that changes nothing is not run.
+        if ( $name !== $field->field_name || $desc !== $field->field_desc ) {
+            $updated = MainWP_DB_Client::instance()->update_client_field(
+                $field->field_id,
+                array(
+                    'field_name' => $name,
+                    'field_desc' => $desc,
+                )
             );
+            if ( ! $updated ) {
+                // The DB layer refuses a name left empty by sanitizing, which is the caller's fault;
+                // anything else that gets here is the write itself failing.
+                return new WP_Error(
+                    'update_field_failed',
+                    __( 'Field already exists, try different field name.', 'mainwp' ),
+                    array( 'status' => '' === $name ? 400 : 500 )
+                );
+            }
         }
 
         return rest_ensure_response(
@@ -1082,6 +1104,29 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
             __( 'Request body is empty.', 'mainwp' ),
             array( 'status' => 400 )
         );
+    }
+
+    /**
+     * Validate the client field text values carried by a request body.
+     *
+     * @param array $body Request body.
+     *
+     * @return WP_Error|true Error when a value cannot be stored as text.
+     */
+    private function validate_client_field_values( $body ) {
+        foreach ( array( 'name', 'description' ) as $key ) {
+            // A body read as raw JSON skips the registered sanitizers, so an array or object value would
+            // reach sanitize_text_field() and be stored as an empty string, wiping what it meant to set.
+            if ( isset( $body[ $key ] ) && ! is_scalar( $body[ $key ] ) ) {
+                return new WP_Error(
+                    'invalid_field_value',
+                    __( 'Name and description must be text values.', 'mainwp' ),
+                    array( 'status' => 400 )
+                );
+            }
+        }
+
+        return true;
     }
 
     /**

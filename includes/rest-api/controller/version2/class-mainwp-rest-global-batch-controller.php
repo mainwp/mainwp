@@ -109,15 +109,16 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
 
         // Groups the batch endpoint cannot dispatch (updates has no batch-capable create handler,
         // costs has no controller at all, anything else is unknown) are reported once each instead
-        // of being dropped without a word or failing per item with a 405 from the core stub. Only
-        // the body names groups, so an array-valued query param is not mistaken for one.
+        // of being dropped without a word or failing per item with a 405 from the core stub. The name
+        // alone decides, so an empty or scalar value still gets the error. Only the body names groups,
+        // so an array-valued query param is not mistaken for one.
         $body_groups = $request->get_json_params();
         if ( empty( $body_groups ) || ! is_array( $body_groups ) ) {
             $body_groups = (array) $request->get_body_params();
         }
 
-        foreach ( $body_groups as $group_name => $group_items ) {
-            if ( in_array( $group_name, $this->controller_names, true ) || ! is_array( $group_items ) || empty( $group_items ) ) {
+        foreach ( array_keys( $body_groups ) as $group_name ) {
+            if ( in_array( $group_name, $this->controller_names, true ) ) {
                 continue;
             }
 

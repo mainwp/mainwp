@@ -197,9 +197,10 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 	 * @param string $route        REST route.
 	 * @param string $body         Raw request body.
 	 * @param string $content_type Content type header value.
+	 * @param array  $query        Query parameters, kept out of the body params so the raw body is what the handler reads.
 	 * @return \WP_REST_Response Response object.
 	 */
-	protected function do_authenticated_raw_request( string $method, string $route, string $body = '', string $content_type = 'application/json' ): \WP_REST_Response {
+	protected function do_authenticated_raw_request( string $method, string $route, string $body = '', string $content_type = 'application/json', array $query = [] ): \WP_REST_Response {
 		$original_get    = $_GET;
 		$original_server = $_SERVER;
 
@@ -215,6 +216,10 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 		$request = new WP_REST_Request( $method, $route );
 		$request->set_header( 'content-type', $content_type );
 		$request->set_body( $body );
+
+		if ( ! empty( $query ) ) {
+			$request->set_query_params( $query );
+		}
 
 		$response = rest_do_request( $request );
 
@@ -251,7 +256,7 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 	 * parentheses inside message strings from ending a construction early.
 	 *
 	 * @param string $file Absolute path to the PHP file.
-	 * @return array List of [ 'line' => int, 'source' => string ] entries.
+	 * @return array List of [ 'line' => int, 'source' => string, 'args' => array ] entries.
 	 */
 	protected function collect_wp_error_constructions( string $file ): array {
 		$tokens = token_get_all( file_get_contents( $file ) );
@@ -268,29 +273,56 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 				++$j;
 			}
 
-			if ( $j >= $count || ! is_array( $tokens[ $j ] ) || T_STRING !== $tokens[ $j ][0] || 'WP_Error' !== $tokens[ $j ][1] ) {
+			// PHP 8 tokenizes a fully qualified `new \WP_Error` as a single name token where PHP 7.4
+			// emits a separator plus a string, so the comparison is on the name text.
+			if ( $j >= $count || ! is_array( $tokens[ $j ] ) || 'WP_Error' !== ltrim( $tokens[ $j ][1], '\\' ) ) {
 				continue;
 			}
 
-			$line   = $tokens[ $j ][2];
-			$source = '';
-			$depth  = 0;
+			$line    = $tokens[ $j ][2];
+			$source  = '';
+			$args    = [];
+			$current = '';
+			$depth   = 0;
+			$nesting = 0;
+
 			for ( $k = $j + 1; $k < $count; $k++ ) {
-				$text    = is_array( $tokens[ $k ] ) ? $tokens[ $k ][1] : $tokens[ $k ];
+				$token   = $tokens[ $k ];
+				$text    = is_array( $token ) ? $token[1] : $token;
 				$source .= $text;
-				if ( '(' === $tokens[ $k ] ) {
-					++$depth;
-				} elseif ( ')' === $tokens[ $k ] ) {
-					--$depth;
+
+				if ( '(' === $token || '[' === $token ) {
+					if ( '(' === $token ) {
+						++$depth;
+					}
+					++$nesting;
+					if ( 1 === $nesting ) {
+						continue;
+					}
+				} elseif ( ')' === $token || ']' === $token ) {
+					if ( ')' === $token ) {
+						--$depth;
+					}
+					--$nesting;
 					if ( 0 === $depth ) {
 						break;
 					}
+				} elseif ( ',' === $token && 1 === $nesting ) {
+					$args[]  = trim( $current );
+					$current = '';
+					continue;
 				}
+
+				$current .= $text;
 			}
+
+			$args[] = trim( $current );
 
 			$found[] = [
 				'line'   => $line,
 				'source' => $source,
+				// A trailing comma leaves an empty tail, which is not an argument.
+				'args'   => array_values( array_filter( $args, static fn ( $arg ) => '' !== $arg ) ),
 			];
 		}
 
@@ -301,7 +333,9 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 	 * Item 1: every settings controller error declares the HTTP status it should return.
 	 *
 	 * Without a status WordPress falls back to 500, so validation and not-found
-	 * errors surfaced as server errors.
+	 * errors surfaced as server errors. The status travels in the third (data)
+	 * argument, so the assertion is that the argument is there at all: a status
+	 * built in a variable or a constant passes, a two-argument error does not.
 	 */
 	public function test_settings_controller_errors_declare_a_status(): void {
 		$file = dirname( __DIR__ ) . '/includes/rest-api/controller/version2/class-mainwp-rest-settings-controller.php';
@@ -312,12 +346,37 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 
 		$missing = [];
 		foreach ( $constructions as $construction ) {
-			if ( false === strpos( $construction['source'], "'status'" ) ) {
+			if ( count( $construction['args'] ) < 3 ) {
 				$missing[] = $construction['line'];
 			}
 		}
 
-		$this->assertSame( [], $missing, 'WP_Error constructions without a status, at lines: ' . implode( ', ', $missing ) );
+		$this->assertSame( [], $missing, 'WP_Error constructions without a data argument, at lines: ' . implode( ', ', $missing ) );
+	}
+
+	/**
+	 * The argument scan reads the constructor's shape, not the words in it.
+	 */
+	public function test_wp_error_argument_scan_reads_constructor_shape(): void {
+		$fixture = tempnam( sys_get_temp_dir(), 'mainwp-wp-error-scan' );
+
+		file_put_contents(
+			$fixture,
+			'<?php' . "\n"
+			. '$a = new WP_Error( \'code_one\', __( \'One, two (three).\' ) );' . "\n"
+			. '$b = new WP_Error( \'code_two\', __( \'Two.\' ), array( \'status\' => 400 ) );' . "\n"
+			. '$c = new \WP_Error( $code, $message, $data );' . "\n"
+			. '$d = new WP_Error( \'code_four\', __( \'Four.\' ), [ \'status\' => 404, \'key\' => 1 ], );' . "\n"
+		);
+
+		$constructions = $this->collect_wp_error_constructions( $fixture );
+		unlink( $fixture );
+
+		$this->assertCount( 4, $constructions );
+		$this->assertCount( 2, $constructions[0]['args'], 'A message containing commas and parentheses is one argument.' );
+		$this->assertCount( 3, $constructions[1]['args'] );
+		$this->assertCount( 3, $constructions[2]['args'], 'A status passed through a variable still counts as the data argument.' );
+		$this->assertCount( 3, $constructions[3]['args'], 'A short-array data argument with a trailing comma is one argument.' );
 	}
 
 	/**
@@ -510,6 +569,155 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 
 		$this->assertSame( 404, $response->get_status() );
 		$this->assertSame( 'invalid_field_id', $response->get_data()['code'] );
+	}
+
+	/**
+	 * An edit that stores the values already there is a success.
+	 *
+	 * $wpdb->update() reports no changed rows for it, which the DB layer returns as false, so the
+	 * route used to answer a no-op edit with an error.
+	 */
+	public function test_client_fields_edit_with_unchanged_values_succeeds(): void {
+		$this->authenticate_as_admin();
+
+		$field = \MainWP\Dashboard\MainWP_DB_Client::instance()->add_client_field(
+			[
+				'field_name' => 'REST V2 Cleanup Unchanged Field',
+				'field_desc' => 'unchanged',
+				'client_id'  => 0,
+			]
+		);
+		$this->assertNotEmpty( $field, 'Could not create the client field the test edits.' );
+
+		$response = $this->do_authenticated_request(
+			'PUT',
+			'/mainwp/v2/clients/fields/' . $field->field_id . '/edit',
+			[
+				'name'        => 'REST V2 Cleanup Unchanged Field',
+				'description' => 'unchanged',
+			]
+		);
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( 1, $response->get_data()['success'] );
+
+		$stored = \MainWP\Dashboard\MainWP_DB_Client::instance()->get_client_fields_by( 'field_id', $field->field_id );
+		$this->assertSame( 'REST V2 Cleanup Unchanged Field', $stored->field_name );
+		$this->assertSame( 'unchanged', $stored->field_desc );
+
+		$this->delete_client_field( 'REST V2 Cleanup Unchanged Field' );
+	}
+
+	/**
+	 * A JSON body sent without the JSON content type is read raw, so the registered sanitizers
+	 * never see it. A nested value would sanitize down to an empty string and wipe the field.
+	 */
+	public function test_client_fields_edit_rejects_non_scalar_description(): void {
+		$this->authenticate_as_admin();
+
+		$field = \MainWP\Dashboard\MainWP_DB_Client::instance()->add_client_field(
+			[
+				'field_name' => 'REST V2 Cleanup Nested Field',
+				'field_desc' => 'keep this',
+				'client_id'  => 0,
+			]
+		);
+		$this->assertNotEmpty( $field, 'Could not create the client field the test edits.' );
+
+		$response = $this->do_authenticated_raw_request(
+			'PUT',
+			'/mainwp/v2/clients/fields/' . $field->field_id . '/edit',
+			'{"description":{"nested":"value"}}',
+			'text/plain'
+		);
+
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'invalid_field_value', $response->get_data()['code'] );
+
+		$stored = \MainWP\Dashboard\MainWP_DB_Client::instance()->get_client_fields_by( 'field_id', $field->field_id );
+		$this->assertSame( 'keep this', $stored->field_desc );
+
+		$this->delete_client_field( 'REST V2 Cleanup Nested Field' );
+	}
+
+	/**
+	 * The same value check guards the add route.
+	 *
+	 * Both add params are required, so the query string is what satisfies the required check while
+	 * the raw body carries the values the handler actually reads.
+	 */
+	public function test_client_fields_add_rejects_non_scalar_name(): void {
+		$this->authenticate_as_admin();
+
+		$response = $this->do_authenticated_raw_request(
+			'POST',
+			'/mainwp/v2/clients/fields/add',
+			'{"name":{"nested":"value"},"description":"REST V2 Cleanup Guard description"}',
+			'text/plain',
+			[
+				'name'        => 'REST V2 Cleanup Guard Field',
+				'description' => 'REST V2 Cleanup Guard description',
+			]
+		);
+
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'invalid_field_value', $response->get_data()['code'] );
+
+		$created = \MainWP\Dashboard\MainWP_DB_Client::instance()->get_client_fields_by( 'field_name', 'REST V2 Cleanup Guard Field' );
+		$this->assertEmpty( $created, 'A rejected add must not create the field.' );
+	}
+
+	/**
+	 * A name the DB layer will not store is still the caller's fault, so it keeps its 400.
+	 *
+	 * Only a genuine write failure is a 500.
+	 */
+	public function test_client_fields_add_rejects_name_that_sanitizes_away(): void {
+		$this->authenticate_as_admin();
+
+		$response = $this->do_authenticated_raw_request(
+			'POST',
+			'/mainwp/v2/clients/fields/add',
+			'{"name":"<b>","description":"REST V2 Cleanup Blank description"}',
+			'text/plain',
+			[
+				'name'        => 'REST V2 Cleanup Blank Field',
+				'description' => 'REST V2 Cleanup Blank description',
+			]
+		);
+
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'create_field_failed', $response->get_data()['code'] );
+	}
+
+	/**
+	 * Item 6: a group with no items is still a group the endpoint cannot dispatch.
+	 */
+	public function test_batch_empty_group_value_returns_group_error(): void {
+		$this->authenticate_as_admin();
+
+		$response = $this->do_authenticated_request( 'POST', '/mainwp/v2/batch', [ 'costs' => [] ] );
+
+		$data = $response->get_data();
+
+		$this->assertArrayHasKey( 'costs', $data );
+		$this->assertSame( 'rest_batch_group_not_supported', $data['costs']['error']['code'] );
+		$this->assertSame( 400, $data['costs']['error']['data']['status'] );
+	}
+
+	/**
+	 * Item 6: a group whose value is not an array is reported, not dropped.
+	 */
+	public function test_batch_scalar_group_value_returns_group_error(): void {
+		$this->authenticate_as_admin();
+
+		$response = $this->do_authenticated_request( 'POST', '/mainwp/v2/batch', [ 'unknown_group' => 'x' ] );
+
+		$data = $response->get_data();
+
+		$this->assertArrayHasKey( 'unknown_group', $data );
+		$this->assertSame( 'rest_batch_group_not_supported', $data['unknown_group']['error']['code'] );
+		$this->assertSame( 400, $data['unknown_group']['error']['data']['status'] );
 	}
 
 	/**

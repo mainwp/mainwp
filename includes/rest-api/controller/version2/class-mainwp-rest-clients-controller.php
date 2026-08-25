@@ -833,6 +833,17 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
         $name      = sanitize_text_field( wp_unslash( $body['name'] ) );
         $desc      = sanitize_text_field( wp_unslash( $body['description'] ) );
 
+        // field_name is varchar(191), so a longer name is truncated by wpdb before the unique index sees
+        // it and the duplicate lookup, which queries the untruncated name, would not recognise the refusal.
+        // A body read as raw JSON skips the registered maxLength, so the limit is enforced here as well.
+        if ( mb_strlen( $name ) > 191 ) {
+            return new WP_Error(
+                'invalid_field_value',
+                __( 'Name must be 191 characters or fewer.', 'mainwp' ),
+                array( 'status' => 400 )
+            );
+        }
+
         $field = MainWP_DB_Client::instance()->add_client_field(
             array(
                 'field_name' => $name,
@@ -904,6 +915,17 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
 
         $name = ! empty( $body['name'] ) ? sanitize_text_field( wp_unslash( $body['name'] ) ) : $field->field_name;
         $desc = ! empty( $body['description'] ) ? sanitize_text_field( wp_unslash( $body['description'] ) ) : $field->field_desc;
+
+        // field_name is varchar(191), so a longer name is truncated by wpdb before the unique index sees
+        // it and the duplicate lookup, which queries the untruncated name, would not recognise the refusal.
+        // A body read as raw JSON skips the registered maxLength, so the limit is enforced here as well.
+        if ( mb_strlen( $name ) > 191 ) {
+            return new WP_Error(
+                'invalid_field_value',
+                __( 'Name must be 191 characters or fewer.', 'mainwp' ),
+                array( 'status' => 400 )
+            );
+        }
 
         // $wpdb->update() reports no changed rows for an edit that stores the values already there, and
         // the DB layer cannot tell that apart from a failure, so an edit that changes nothing is not run.
@@ -987,6 +1009,7 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
             'name'        => array(
                 'required'          => false,
                 'type'              => 'string',
+                'maxLength'         => 191,
                 'sanitize_callback' => 'sanitize_text_field',
                 'description'       => __( 'Field name.', 'mainwp' ),
             ),
@@ -1009,6 +1032,7 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
             'name'        => array(
                 'required'          => true,
                 'type'              => 'string',
+                'maxLength'         => 191,
                 'sanitize_callback' => 'sanitize_text_field',
                 'description'       => __( 'Field name.', 'mainwp' ),
             ),

@@ -1034,6 +1034,84 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 	}
 
 	/**
+	 * A name longer than the column is a client error, not a write that failed.
+	 *
+	 * field_name is varchar(191): wpdb truncates a longer name, the unique index refuses it, and the
+	 * duplicate lookup queries the untruncated name and finds nothing, so without the length check the
+	 * add answers 500.
+	 */
+	public function test_client_fields_add_name_over_191_characters_returns_400(): void {
+		$this->authenticate_as_admin();
+
+		$name = str_pad( 'REST V2 Cleanup Long Name ', 192, 'x' );
+
+		$response = $this->do_authenticated_request(
+			'POST',
+			'/mainwp/v2/clients/fields/add',
+			[
+				'name'        => $name,
+				'description' => 'too long',
+			]
+		);
+
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'invalid_field_value', $response->get_data()['code'] );
+	}
+
+	/**
+	 * The same for a rename onto a name longer than the column.
+	 */
+	public function test_client_fields_edit_name_over_191_characters_returns_400(): void {
+		$this->authenticate_as_admin();
+
+		$field = \MainWP\Dashboard\MainWP_DB_Client::instance()->add_client_field(
+			[
+				'field_name' => 'REST V2 Cleanup Long Rename Field',
+				'field_desc' => 'before',
+				'client_id'  => 0,
+			]
+		);
+		$this->assertNotEmpty( $field, 'Could not create the client field the test renames.' );
+
+		$response = $this->do_authenticated_request(
+			'PUT',
+			'/mainwp/v2/clients/fields/' . $field->field_id . '/edit',
+			[ 'name' => str_pad( 'REST V2 Cleanup Long Rename ', 192, 'x' ) ]
+		);
+
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'invalid_field_value', $response->get_data()['code'] );
+
+		$stored = \MainWP\Dashboard\MainWP_DB_Client::instance()->get_client_fields_by( 'field_id', $field->field_id );
+		$this->assertSame( 'REST V2 Cleanup Long Rename Field', $stored->field_name );
+
+		$this->delete_client_field_by_id( (int) $field->field_id );
+	}
+
+	/**
+	 * A name of exactly the column width is still storable.
+	 */
+	public function test_client_fields_add_name_of_191_characters_succeeds(): void {
+		$this->authenticate_as_admin();
+
+		$name = str_pad( 'REST V2 Cleanup Max Name ', 191, 'x' );
+
+		$response = $this->do_authenticated_request(
+			'POST',
+			'/mainwp/v2/clients/fields/add',
+			[
+				'name'        => $name,
+				'description' => 'at the limit',
+			]
+		);
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( $name, $response->get_data()['data']['name'] );
+
+		$this->delete_client_field_by_id( (int) $response->get_data()['data']['field_id'] );
+	}
+
+	/**
 	 * Item 6: a group with no items is still a group the endpoint cannot dispatch.
 	 */
 	public function test_batch_empty_group_value_returns_group_error(): void {

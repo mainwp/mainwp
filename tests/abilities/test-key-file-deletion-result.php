@@ -146,4 +146,30 @@ class Test_Key_File_Deletion_Result extends \WP_UnitTestCase {
 
         $this->assertFalse( apply_filters( 'mainwp_delete_key_file_result', null, $this->file_key ) );
     }
+
+    /**
+     * A dangling symlink fails exists() yet still occupies the key path; it must be removed, not reported absent.
+     */
+    public function test_filter_removes_dangling_symlink_entry() {
+        global $wp_filesystem;
+
+        $wp_filesystem = null;
+
+        $name = 'probe_dangling_' . wp_generate_password( 8, false );
+        $dir  = MainWP_Keys_Manager::get_keys_dir();
+        if ( ! is_dir( $dir ) ) {
+            wp_mkdir_p( $dir );
+        }
+        $path = $dir . $name;
+        if ( ! @symlink( $dir . 'missing_' . $name, $path ) ) {
+            $this->markTestSkipped( 'Filesystem does not allow symlinks in the keys dir.' );
+        }
+
+        $this->assertTrue( is_link( $path ) );
+        $this->assertFalse( file_exists( $path ) );
+
+        $this->assertTrue( apply_filters( 'mainwp_delete_key_file_result', null, $name ) );
+        clearstatcache( true, $path );
+        $this->assertFalse( is_link( $path ) );
+    }
 }

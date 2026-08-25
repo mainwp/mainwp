@@ -168,13 +168,29 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         }
 
         $file_path = trailingslashit( $key_dir ) . $file_key;
-        if ( ! $this->key_file_exists( $file_path ) ) {
+        if ( ! $this->key_entry_present( $file_path ) ) {
             return true;
         }
 
-        MainWP_Utility::delete_file( $file_path );
+        // A dangling symlink fails every exists() check, so the shared helper would skip it and leave the entry behind.
+        if ( is_link( $file_path ) ) {
+            wp_delete_file( $file_path );
+        } else {
+            MainWP_Utility::delete_file( $file_path );
+        }
         clearstatcache( true, $file_path );
-        return ! $this->key_file_exists( $file_path );
+        return ! $this->key_entry_present( $file_path );
+    }
+
+    /**
+     * Whether any directory entry, file or symlink, still occupies the key path.
+     *
+     * @param string $file_path Absolute key path.
+     *
+     * @return bool Whether an entry is present.
+     */
+    private function key_entry_present( $file_path ) {
+        return $this->key_file_exists( $file_path ) || is_link( $file_path );
     }
 
     /**

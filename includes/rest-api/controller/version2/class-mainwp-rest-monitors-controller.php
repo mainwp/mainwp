@@ -905,6 +905,23 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
             );
         }
 
+        // Reject a key the route does not declare. get_sanitized_settings_params() drops it, so a
+        // misspelled setting would otherwise reach the processor as an empty settings array and
+        // answer as a successful no-op. The individual route reports the same mistake through its
+        // schema, so it gets the same error code here.
+        $unknown_keys = array_diff( array_keys( $body ), array_keys( $this->get_global_monitor_settings_allowed_fields() ) );
+        if ( ! empty( $unknown_keys ) ) {
+            return new WP_Error(
+                'rest_additional_properties_forbidden',
+                sprintf(
+                    /* translators: %s: comma separated list of request body keys the route does not accept. */
+                    __( 'Unknown settings: %s.', 'mainwp' ),
+                    implode( ', ', $unknown_keys )
+                ),
+                array( 'status' => 400 )
+            );
+        }
+
         // Process global monitoring settings update.
         $result = $this->process_global_monitoring_settings_update( $this->get_sanitized_settings_params( $request, $body ) );
         if ( is_wp_error( $result ) ) {
@@ -1078,7 +1095,9 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
         // read from there rather than from the raw body; WordPress currently writes the sanitized
         // value back into the JSON body too, but that is internal to sanitize_params(), not a
         // contract. get_params() also carries auth, query and route params, so keep only the
-        // settings keys the route declares and only the ones this body actually sent.
+        // settings keys the route declares and only the ones this body actually sent. It merges in
+        // the reverse of get_parameter_order(), so a JSON body value beats a query parameter of the
+        // same name rather than the other way round.
         $allowed = $this->get_global_monitor_settings_allowed_fields();
         $params  = array_intersect_key( $request->get_params(), $allowed );
 

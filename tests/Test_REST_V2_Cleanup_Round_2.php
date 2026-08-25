@@ -2450,6 +2450,108 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 
 		$this->assertSame( 1, (int) $stored->active );
 	}
+	/**
+	 * PR review: a misspelled settings key is rejected on the global route too.
+	 *
+	 * get_sanitized_settings_params() keeps only the keys the route declares, so a misspelled key
+	 * used to reach the processor as an empty settings array and answer as a successful no-op.
+	 * The individual route reports the same mistake through its schema.
+	 */
+	public function test_monitors_global_settings_rejects_unknown_key(): void {
+		$this->authenticate_as_admin();
+
+		$before = \MainWP\Dashboard\MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
+
+		$response = $this->do_authenticated_request(
+			'PUT',
+			'/mainwp/v2/monitors/settings',
+			[ 'intervl' => '5m' ]
+		);
+
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'rest_additional_properties_forbidden', $response->get_data()['code'] );
+		$this->assertStringContainsString( 'intervl', $response->get_data()['message'] );
+
+		$after = \MainWP\Dashboard\MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
+		$this->assertSame( $before, $after );
+	}
+
+	/**
+	 * A body that mixes a known key with an unknown one writes nothing.
+	 *
+	 * This is what pins the check ahead of the processor: a guard that ran after it would already
+	 * have saved the known key.
+	 */
+	public function test_monitors_global_settings_rejects_a_partly_unknown_body(): void {
+		$this->authenticate_as_admin();
+
+		$before = \MainWP\Dashboard\MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
+
+		$response = $this->do_authenticated_request(
+			'PUT',
+			'/mainwp/v2/monitors/settings',
+			[
+				'interval' => '15m',
+				'intervl'  => '5m',
+			]
+		);
+
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'rest_additional_properties_forbidden', $response->get_data()['code'] );
+
+		$after = \MainWP\Dashboard\MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
+		$this->assertSame( $before, $after );
+	}
+
+	/**
+	 * A valid global settings body still returns 200 with the unknown-key check in place.
+	 */
+	public function test_monitors_global_settings_accepts_a_declared_key(): void {
+		$this->authenticate_as_admin();
+
+		$before = \MainWP\Dashboard\MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
+
+		$response = $this->do_authenticated_request(
+			'PUT',
+			'/mainwp/v2/monitors/settings',
+			[ 'interval' => '15m' ]
+		);
+
+		$this->assertSame( 200, $response->get_status() );
+
+		$settings = \MainWP\Dashboard\MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
+		$this->assertSame( 15, (int) $settings['interval'] );
+
+		\MainWP\Dashboard\MainWP_Uptime_Monitoring_Handle::update_uptime_global_settings( $before );
+	}
+
+	/**
+	 * The JSON body beats a conflicting query parameter of the same name.
+	 *
+	 * WP_REST_Request::get_parameter_order() puts JSON first and get_params() reverses that order
+	 * before merging, so the JSON value is written last and wins. get_sanitized_settings_params()
+	 * reads get_params(), so this is what decides which value the route persists.
+	 */
+	public function test_monitors_global_settings_json_body_beats_a_conflicting_query_param(): void {
+		$this->authenticate_as_admin();
+
+		$before = \MainWP\Dashboard\MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
+
+		$response = $this->do_authenticated_raw_request(
+			'PUT',
+			'/mainwp/v2/monitors/settings',
+			'{"interval":"5m"}',
+			'application/json',
+			[ 'interval' => '10m' ]
+		);
+
+		$this->assertSame( 200, $response->get_status() );
+
+		$settings = \MainWP\Dashboard\MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
+		$this->assertSame( 5, (int) $settings['interval'] );
+
+		\MainWP\Dashboard\MainWP_Uptime_Monitoring_Handle::update_uptime_global_settings( $before );
+	}
 
 	/**
 	 * Create a site, its sync row and a monitor for it.

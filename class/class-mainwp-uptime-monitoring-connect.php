@@ -1274,12 +1274,18 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
 
     /**
-     * Build apply monitor url.
+     *
+     * Build the URL used by an uptime monitor or sub-monitor.
      *
      * @param  string $url monitor url.
      * @param  string $suburl sub monitor url.
      *
-     * @return string
+     * The monitor URL contains only the site's base URL; HTTP Basic Authentication
+     * credentials are not embedded in the URL. Therefore, there are no `user` or
+     * `pass` components from wp_parse_url() that need to be preserved here.
+     *
+     * Authentication, when configured, is handled separately by the HTTP request
+     * layer rather than being included in the monitor URL.
      */
     public static function build_apply_monitor_url( $url, $suburl = '' ) {
         if ( empty( $suburl ) ) {

@@ -1050,17 +1050,14 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
      */
     public static function apply_bypass_cache_settings( &$monitor, $global_settings ) {
         $mo_apply_bypass_cache = static::get_apply_setting( 'bypass_cache', (int) ( $monitor->bypass_cache ?? -1 ), $global_settings, -1, 0 );
-        $bypass_param          = '';
         if ( 1 === (int) $mo_apply_bypass_cache ) {
-            $mo_raw_url                   = static::get_apply_monitor_url( $monitor, true );
-            $bypass_param                 = ( false === strpos( $mo_raw_url, '?' ) ? '?' : '&' ) . 'mots=' . (int) ( microtime( true ) * 1000000 );
             $monitor->bypass_cache_params = array(
-                'url_param'       => $bypass_param,
-                'headers'         => array(
+                'bypass_cache_value' => (int) ( microtime( true ) * 1000000 ),
+                'headers'            => array(
                     'Cache-Control' => 'no-cache, no-store, max-age=0',
                     'Pragma'        => 'no-cache',
                 ),
-                'headers_flatten' => array(
+                'headers_flatten'    => array(
                     'Cache-Control: no-cache, no-store, max-age=0',
                     'Pragma: no-cache',
                 ),
@@ -1166,7 +1163,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
      *
      * @return string
      */
-    public static function get_apply_monitor_url( $monitor, $raw_url = false ) { // phpcs:ignore --NOSONAR -complex.
+    public static function get_apply_monitor_url( $monitor ) { // phpcs:ignore --NOSONAR -complex.
         $url = '';
         if ( ! empty( $monitor ) ) {
 
@@ -1190,12 +1187,8 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
                 $url .= $suburl;
             }
 
-            if ( $raw_url ) {
-                return $url;
-            }
-
-            if ( is_array( $bypass_settings ) && ! empty( $bypass_settings ) && ! empty( $bypass_settings['url_param'] ) ) {
-                $url .= $bypass_settings['url_param'];
+            if ( is_array( $bypass_settings ) && ! empty( $bypass_settings['bypass_cache_value'] ) ) {
+                $url = add_query_arg( 'mots', $bypass_settings['bypass_cache_value'], $url );
             }
         }
 

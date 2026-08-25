@@ -1064,7 +1064,7 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
     /**
      * Create client fields allowed fields.
      *
-     * @return WP_Error|WP_REST_Response
+     * @return array
      */
     public function create_client_fields_allowed_fields() {
         // See edit_client_fields_allowed_fields(): the registered sanitizer displaces the type check

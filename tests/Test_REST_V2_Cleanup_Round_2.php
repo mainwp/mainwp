@@ -1894,6 +1894,29 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 	}
 
 	/**
+	 * PR review: a digit string past PHP_INT_MAX would cast to PHP_INT_MAX and target that id instead.
+	 */
+	public function test_batch_id_action_rejects_an_overflowing_string_id(): void {
+		$this->authenticate_as_admin();
+
+		$response = $this->do_authenticated_request(
+			'POST',
+			'/mainwp/v2/batch',
+			[
+				'sites' => [
+					'sync' => [ '99999999999999999999' ],
+				],
+			]
+		);
+
+		$data = $response->get_data();
+
+		$this->assertArrayHasKey( 'sites', $data );
+		$this->assertSame( 'rest_invalid_param', $data['sites']['error']['code'] );
+		$this->assertArrayNotHasKey( 'sync', $data['sites'] );
+	}
+
+	/**
 	 * PR review: an action sent as an object of named items is reported, not dispatched.
 	 *
 	 * The dispatch walks an action as a list, so an object's values used to be dispatched with the

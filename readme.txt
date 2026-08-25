@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 7.0.2
 Requires PHP: 7.4
-Stable tag: 6.1.7
+Stable tag: 6.1.8
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -150,6 +150,15 @@ Please report security bugs found in the source code of the MainWP plugin throug
 11. Dashboard Insights
 
 == Changelog ==
+
+= 6.1.8 - 8-25-2026 =
+
+* Fixed: Improved self-connection checks by using the standard AJAX endpoint and more reliable request and response validation.
+* Added: Support for the Cloudways REST API v2 in "API Backups"", with secure access-token authentication and continued support for legacy API credentials.
+* Added: Option to bypass cache during Uptime Monitoring checks, with global and per-monitor settings to help improve the accuracy of site availability checks.
+* Added: Localized titles for Network Activity changes involving site registration, users, comments, URLs, homepage settings, date and time, updates, language, site title, and site icon.
+* Updated: Improved activity log entries for system settings and database changes with clearer, more descriptive object titles.
+* Updated: default Network Activity settings to exclude additional event types from logging.
 
 = 6.1.7 - 8-18-2026 =
 

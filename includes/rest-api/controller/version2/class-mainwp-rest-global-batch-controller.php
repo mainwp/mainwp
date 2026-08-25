@@ -125,9 +125,10 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
         global $wp_rest_server;
 
         // Get the request params.
-        $items    = array_filter( $request->get_params() );
-        $query    = $request->get_query_params();
-        $response = array();
+        $all_params = $request->get_params();
+        $items      = array_filter( $all_params );
+        $query      = $request->get_query_params();
+        $response   = array();
 
         $body_groups = $request->get_json_params();
         if ( empty( $body_groups ) || ! is_array( $body_groups ) ) {
@@ -180,6 +181,10 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
                 // A falsy group is filtered out of the items, so it is read back from the body to be
                 // reported rather than passed over.
                 $group_items = $body_groups[ $group_name ];
+            } elseif ( array_key_exists( $group_name, $all_params ) ) {
+                // A falsy group sent only in the query string is in neither of the above, and
+                // skipping it answered the whole request with an empty success.
+                $group_items = $all_params[ $group_name ];
             } else {
                 continue;
             }

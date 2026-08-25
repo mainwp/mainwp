@@ -1038,12 +1038,16 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
      * @return array
      */
     public function edit_client_fields_allowed_fields() {
+        // WordPress only runs the type check its own sanitizer carries, and a registered
+        // sanitize_callback replaces it, so without an explicit validate_callback a JSON 42 or true
+        // would reach the handler already cast to text by sanitize_text_field().
         return array(
             'name'        => array(
                 'required'          => false,
                 'type'              => 'string',
                 'maxLength'         => 191,
                 'sanitize_callback' => 'sanitize_text_field',
+                'validate_callback' => 'rest_validate_request_arg',
                 'description'       => __( 'Field name.', 'mainwp' ),
             ),
             'description' => array(
@@ -1051,6 +1055,7 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
                 'type'              => 'string',
                 'maxLength'         => 255,
                 'sanitize_callback' => 'sanitize_text_field',
+                'validate_callback' => 'rest_validate_request_arg',
                 'description'       => __( 'Field description.', 'mainwp' ),
             ),
         );
@@ -1062,12 +1067,15 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
      * @return WP_Error|WP_REST_Response
      */
     public function create_client_fields_allowed_fields() {
+        // See edit_client_fields_allowed_fields(): the registered sanitizer displaces the type check
+        // WordPress would otherwise run, so the declared type needs its own validate_callback.
         return array(
             'name'        => array(
                 'required'          => true,
                 'type'              => 'string',
                 'maxLength'         => 191,
                 'sanitize_callback' => 'sanitize_text_field',
+                'validate_callback' => 'rest_validate_request_arg',
                 'description'       => __( 'Field name.', 'mainwp' ),
             ),
             'description' => array(
@@ -1075,6 +1083,7 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
                 'type'              => 'string',
                 'maxLength'         => 255,
                 'sanitize_callback' => 'sanitize_text_field',
+                'validate_callback' => 'rest_validate_request_arg',
                 'description'       => __( 'Field description.', 'mainwp' ),
             ),
         );

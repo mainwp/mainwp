@@ -1176,8 +1176,9 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 	 * A name longer than the column is a client error, not a write that failed.
 	 *
 	 * field_name is varchar(191): wpdb truncates a longer name, the unique index refuses it, and the
-	 * duplicate lookup queries the untruncated name and finds nothing, so without the length check the
-	 * add answers 500.
+	 * duplicate lookup queries the untruncated name and finds nothing, so without a length check the
+	 * add answers 500. A body the route parsed into params is refused by the registered maxLength;
+	 * the handler check below it answers for a body only the raw fallback can read.
 	 */
 	public function test_client_fields_add_name_over_191_characters_returns_400(): void {
 		$this->authenticate_as_admin();
@@ -1194,7 +1195,7 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 		);
 
 		$this->assertSame( 400, $response->get_status() );
-		$this->assertSame( 'invalid_field_value', $response->get_data()['code'] );
+		$this->assertSame( 'rest_invalid_param', $response->get_data()['code'] );
 	}
 
 	/**
@@ -1219,7 +1220,7 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 		);
 
 		$this->assertSame( 400, $response->get_status() );
-		$this->assertSame( 'invalid_field_value', $response->get_data()['code'] );
+		$this->assertSame( 'rest_invalid_param', $response->get_data()['code'] );
 
 		$stored = \MainWP\Dashboard\MainWP_DB_Client::instance()->get_client_fields_by( 'field_id', $field->field_id );
 		$this->assertSame( 'REST V2 Cleanup Long Rename Field', $stored->field_name );
@@ -1269,7 +1270,7 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 		);
 
 		$this->assertSame( 400, $response->get_status() );
-		$this->assertSame( 'invalid_field_value', $response->get_data()['code'] );
+		$this->assertSame( 'rest_invalid_param', $response->get_data()['code'] );
 	}
 
 	/**
@@ -1291,6 +1292,41 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 			'PUT',
 			'/mainwp/v2/clients/fields/' . $field->field_id . '/edit',
 			[ 'description' => str_pad( 'REST V2 Cleanup Long Description ', 256, 'x' ) ]
+		);
+
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'rest_invalid_param', $response->get_data()['code'] );
+
+		$stored = \MainWP\Dashboard\MainWP_DB_Client::instance()->get_client_fields_by( 'field_id', $field->field_id );
+		$this->assertSame( 'before', $stored->field_desc );
+
+		$this->delete_client_field_by_id( (int) $field->field_id );
+	}
+
+	/**
+	 * The handler length check still answers for a body only the raw fallback can read.
+	 *
+	 * JSON sent without the JSON content type never becomes a request param, so the registered
+	 * maxLength does not see it and the handler is the only thing standing between a 256-character
+	 * description and a truncated write.
+	 */
+	public function test_client_fields_edit_raw_body_description_over_255_characters_returns_400(): void {
+		$this->authenticate_as_admin();
+
+		$field = \MainWP\Dashboard\MainWP_DB_Client::instance()->add_client_field(
+			[
+				'field_name' => 'REST V2 Cleanup Raw Long Desc Field',
+				'field_desc' => 'before',
+				'client_id'  => 0,
+			]
+		);
+		$this->assertNotEmpty( $field, 'Could not create the client field the test edits.' );
+
+		$response = $this->do_authenticated_raw_request(
+			'PUT',
+			'/mainwp/v2/clients/fields/' . $field->field_id . '/edit',
+			(string) wp_json_encode( [ 'description' => str_pad( 'REST V2 Cleanup Long Description ', 256, 'x' ) ] ),
+			'text/plain'
 		);
 
 		$this->assertSame( 400, $response->get_status() );
@@ -1537,6 +1573,58 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 
 		$stored = $db->get_client_fields_by( 'field_id', $field->field_id );
 		$this->assertSame( 'REST V2 Cleanup Non String Rename', $stored->field_name );
+		$this->assertSame( 'before', $stored->field_desc );
+
+		$this->delete_client_field_by_id( (int) $field->field_id );
+	}
+
+	/**
+	 * PR review: the route refuses a non-string name before the sanitizer casts it to one.
+	 *
+	 * sanitize_text_field() is a sanitize_callback, and WordPress runs a registered sanitizer
+	 * without validating the declared type first, so 42 used to reach the handler as "42".
+	 */
+	public function test_client_fields_add_rejects_a_non_string_name_at_the_route(): void {
+		$this->authenticate_as_admin();
+
+		$response = $this->do_authenticated_request(
+			'POST',
+			'/mainwp/v2/clients/fields/add',
+			[
+				'name'        => 42,
+				'description' => 'x',
+			]
+		);
+
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'rest_invalid_param', $response->get_data()['code'] );
+	}
+
+	/**
+	 * The same on the edit side: true used to be sanitized to "1" and stored over the description.
+	 */
+	public function test_client_fields_edit_rejects_a_boolean_description_at_the_route(): void {
+		$this->authenticate_as_admin();
+
+		$field = \MainWP\Dashboard\MainWP_DB_Client::instance()->add_client_field(
+			[
+				'field_name' => 'REST V2 Cleanup Boolean Desc Field',
+				'field_desc' => 'before',
+				'client_id'  => 0,
+			]
+		);
+		$this->assertNotEmpty( $field, 'Could not create the client field the test edits.' );
+
+		$response = $this->do_authenticated_request(
+			'PUT',
+			'/mainwp/v2/clients/fields/' . $field->field_id . '/edit',
+			[ 'description' => true ]
+		);
+
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'rest_invalid_param', $response->get_data()['code'] );
+
+		$stored = \MainWP\Dashboard\MainWP_DB_Client::instance()->get_client_fields_by( 'field_id', $field->field_id );
 		$this->assertSame( 'before', $stored->field_desc );
 
 		$this->delete_client_field_by_id( (int) $field->field_id );
@@ -2156,6 +2244,30 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 		$this->assertSame( 'rest_invalid_param', $data['sites']['error']['code'] );
 		$this->assertSame( 400, $data['sites']['error']['data']['status'] );
 		$this->assertArrayNotHasKey( 'create', $data['sites'] );
+	}
+
+	/**
+	 * PR review: a falsy supported group sent only in the query string is answered, not dropped.
+	 *
+	 * array_filter() takes "0" out of the items and the body carries nothing to read it back from,
+	 * so the shape check was skipped and the request came back as an empty success.
+	 */
+	public function test_batch_falsy_query_only_group_returns_invalid_param(): void {
+		$this->authenticate_as_admin();
+
+		$response = $this->do_authenticated_raw_request(
+			'POST',
+			'/mainwp/v2/batch',
+			'',
+			'application/json',
+			[ 'sites' => '0' ]
+		);
+
+		$data = $response->get_data();
+
+		$this->assertArrayHasKey( 'sites', $data );
+		$this->assertSame( 'rest_invalid_param', $data['sites']['error']['code'] );
+		$this->assertSame( 400, $data['sites']['error']['data']['status'] );
 	}
 
 	/**

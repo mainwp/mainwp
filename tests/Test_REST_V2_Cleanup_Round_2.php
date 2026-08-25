@@ -938,6 +938,102 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 	}
 
 	/**
+	 * A name that differs only in case is a duplicate when the column collation says so.
+	 *
+	 * field_name is utf8mb4_unicode_520_ci here, so the unique index reads "Example" and "example"
+	 * as the same name and the refused add has to answer as a client error rather than as the write
+	 * itself failing.
+	 */
+	public function test_client_fields_add_case_only_duplicate_name_returns_400(): void {
+		global $wpdb;
+
+		$this->authenticate_as_admin();
+
+		$name = 'REST V2 Cleanup Case Field';
+
+		$created = $this->do_authenticated_request(
+			'POST',
+			'/mainwp/v2/clients/fields/add',
+			[
+				'name'        => $name,
+				'description' => 'first',
+			]
+		);
+
+		$this->assertSame( 200, $created->get_status() );
+		$field_id = (int) $created->get_data()['data']['field_id'];
+
+		$suppressed = $wpdb->suppress_errors( true );
+
+		$response = $this->do_authenticated_request(
+			'POST',
+			'/mainwp/v2/clients/fields/add',
+			[
+				'name'        => strtolower( $name ),
+				'description' => 'second',
+			]
+		);
+
+		$wpdb->suppress_errors( $suppressed );
+
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'create_field_failed', $response->get_data()['code'] );
+
+		$this->delete_client_field_by_id( $field_id );
+	}
+
+	/**
+	 * The same for a rename onto a name another field owns in a different case.
+	 *
+	 * With field_name on utf8mb4_unicode_520_ci the unique index rejects the update, so the answer
+	 * is 400 and the stored name is left alone.
+	 */
+	public function test_client_fields_edit_case_only_duplicate_name_returns_400(): void {
+		global $wpdb;
+
+		$this->authenticate_as_admin();
+
+		$name = 'REST V2 Cleanup Case Taken';
+
+		$owner = \MainWP\Dashboard\MainWP_DB_Client::instance()->add_client_field(
+			[
+				'field_name' => $name,
+				'field_desc' => 'owner',
+				'client_id'  => 0,
+			]
+		);
+		$this->assertNotEmpty( $owner, 'Could not create the client field that owns the name.' );
+
+		$field = \MainWP\Dashboard\MainWP_DB_Client::instance()->add_client_field(
+			[
+				'field_name' => 'REST V2 Cleanup Case Rename Field',
+				'field_desc' => 'before',
+				'client_id'  => 0,
+			]
+		);
+		$this->assertNotEmpty( $field, 'Could not create the client field the test renames.' );
+
+		$suppressed = $wpdb->suppress_errors( true );
+
+		$response = $this->do_authenticated_request(
+			'PUT',
+			'/mainwp/v2/clients/fields/' . $field->field_id . '/edit',
+			[ 'name' => strtolower( $name ) ]
+		);
+
+		$wpdb->suppress_errors( $suppressed );
+
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'update_field_failed', $response->get_data()['code'] );
+
+		$stored = \MainWP\Dashboard\MainWP_DB_Client::instance()->get_client_fields_by( 'field_id', $field->field_id );
+		$this->assertSame( 'REST V2 Cleanup Case Rename Field', $stored->field_name );
+
+		$this->delete_client_field_by_id( (int) $owner->field_id );
+		$this->delete_client_field_by_id( (int) $field->field_id );
+	}
+
+	/**
 	 * Item 6: a group with no items is still a group the endpoint cannot dispatch.
 	 */
 	public function test_batch_empty_group_value_returns_group_error(): void {

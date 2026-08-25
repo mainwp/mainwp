@@ -1379,6 +1379,13 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             $where      .= ' AND clients_fields.field_name LIKE "%' . $search_term . '%"';
         }
 
+        // Handle exact field name. The value is queried as it is stored, with no bracket stripping, so
+        // the column collation decides equality the same way the unique index does. An empty string
+        // filters on an empty name; pass null to leave the filter off.
+        if ( isset( $params['field_name_exact'] ) && is_string( $params['field_name_exact'] ) ) {
+            $where .= $this->wpdb->prepare( ' AND clients_fields.field_name = %s', $params['field_name_exact'] );
+        }
+
         // Handle client id.
         if ( isset( $params['client_id'] ) && ! empty( $params['client_id'] ) ) {
             $client_ids = wp_parse_id_list( $params['client_id'] );

@@ -1147,10 +1147,16 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
      */
     private function client_field_name_taken( $name, $client_id, $exclude_id = 0 ) {
         // A field_name lookup strips [ and ] from the value it queries with while the stored name keeps
-        // them, so a bracketed name never matches its own row and a duplicate reads as a write failure.
-        // The unique index is on the stored name, so the names have to be compared as they are stored.
+        // them, and a PHP comparison would call two names that differ only in case distinct while the
+        // column collation and the unique index call them the same. The match is left to the database
+        // on the stored value so this answer agrees with the index that refused the write.
         $client_id = (int) $client_id;
-        $fields    = MainWP_DB_Client::instance()->get_client_fields_by_params( array( 'client_id' => $client_id ) );
+        $fields    = MainWP_DB_Client::instance()->get_client_fields_by_params(
+            array(
+                'client_id'        => $client_id,
+                'field_name_exact' => (string) $name,
+            )
+        );
 
         if ( ! is_array( $fields ) ) {
             return false;
@@ -1163,9 +1169,7 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
                 continue;
             }
 
-            if ( (string) $existing->field_name === (string) $name ) {
-                return true;
-            }
+            return true;
         }
 
         return false;

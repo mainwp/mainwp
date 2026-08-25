@@ -109,27 +109,51 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
 
         // Groups the batch endpoint cannot dispatch (updates has no batch-capable create handler,
         // costs has no controller at all, anything else is unknown) are reported once each instead
-        // of being dropped without a word or failing per item with a 405 from the core stub. The name
-        // alone decides, so an empty or scalar value still gets the error. Only the body names groups,
-        // so an array-valued query param is not mistaken for one.
+        // of being dropped without a word or failing per item with a 405 from the core stub. For an
+        // unsupported name the value does not matter, so an empty or scalar group still gets the
+        // error. Only the body names groups, so an array-valued query param is not mistaken for one.
         $body_groups = $request->get_json_params();
         if ( empty( $body_groups ) || ! is_array( $body_groups ) ) {
             $body_groups = (array) $request->get_body_params();
         }
 
-        foreach ( array_keys( $body_groups ) as $group_name ) {
-            if ( in_array( $group_name, $this->controller_names, true ) ) {
+        foreach ( $body_groups as $group_name => $group_items ) {
+            if ( ! in_array( $group_name, $this->controller_names, true ) ) {
+                $response[ $group_name ] = array(
+                    'error' => array(
+                        'code'    => 'rest_batch_group_not_supported',
+                        /* translators: %s: batch group name */
+                        'message' => sprintf( __( 'The %s group is not supported by the batch endpoint.', 'mainwp' ), $group_name ),
+                        'data'    => array( 'status' => 400 ),
+                    ),
+                );
                 continue;
             }
 
-            $response[ $group_name ] = array(
-                'error' => array(
-                    'code'    => 'rest_batch_group_not_supported',
-                    /* translators: %s: batch group name */
-                    'message' => sprintf( __( 'The %s group is not supported by the batch endpoint.', 'mainwp' ), $group_name ),
-                    'data'    => array( 'status' => 400 ),
-                ),
-            );
+            // The dispatch below indexes into the group and then walks each action list, so a scalar in
+            // either place would reach a foreach over something that is not a list. The group is dropped
+            // from the items as well as reported, so nothing in it is dispatched.
+            $dispatchable = is_array( $group_items );
+            if ( $dispatchable ) {
+                foreach ( $group_items as $action_items ) {
+                    if ( ! is_array( $action_items ) ) {
+                        $dispatchable = false;
+                        break;
+                    }
+                }
+            }
+
+            if ( ! $dispatchable ) {
+                $response[ $group_name ] = array(
+                    'error' => array(
+                        'code'    => 'rest_invalid_param',
+                        /* translators: %s: batch group name */
+                        'message' => sprintf( __( 'The %s group must be an object of action arrays.', 'mainwp' ), $group_name ),
+                        'data'    => array( 'status' => 400 ),
+                    ),
+                );
+                unset( $items[ $group_name ] );
+            }
         }
 
         foreach ( $this->controller_names as $con_name ) {

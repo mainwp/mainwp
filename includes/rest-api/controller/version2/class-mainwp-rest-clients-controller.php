@@ -916,12 +916,17 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
                 )
             );
             if ( ! $updated ) {
-                // The DB layer refuses a name left empty by sanitizing, which is the caller's fault;
-                // anything else that gets here is the write itself failing.
+                // The DB layer refuses a name left empty by sanitizing, and the unique index on
+                // (client_id, field_name) refuses a rename onto a name another field of this client
+                // already owns. Both are the caller's fault; anything else is the write itself failing.
+                $taken  = MainWP_DB_Client::instance()->get_client_fields_by( 'field_name', $name, $field->client_id );
+                $owned  = ! empty( $taken ) && (int) $taken->field_id !== (int) $field->field_id;
+                $status = ( '' === $name || $owned ) ? 400 : 500;
+
                 return new WP_Error(
                     'update_field_failed',
                     __( 'Field already exists, try different field name.', 'mainwp' ),
-                    array( 'status' => '' === $name ? 400 : 500 )
+                    array( 'status' => $status )
                 );
             }
         }
@@ -1115,9 +1120,10 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
      */
     private function validate_client_field_values( $body ) {
         foreach ( array( 'name', 'description' ) as $key ) {
-            // A body read as raw JSON skips the registered sanitizers, so an array or object value would
-            // reach sanitize_text_field() and be stored as an empty string, wiping what it meant to set.
-            if ( isset( $body[ $key ] ) && ! is_scalar( $body[ $key ] ) ) {
+            // A body read as raw JSON skips the registered sanitizers, so a value that is not already
+            // text reaches sanitize_text_field() and is stored as a cast of itself or as an empty
+            // string, wiping what it meant to set. A key sent as null counts as sent, not as omitted.
+            if ( array_key_exists( $key, $body ) && ! is_string( $body[ $key ] ) ) {
                 return new WP_Error(
                     'invalid_field_value',
                     __( 'Name and description must be text values.', 'mainwp' ),

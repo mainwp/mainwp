@@ -253,7 +253,9 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 	 * Collect every `new WP_Error( ... )` construction in a PHP file.
 	 *
 	 * Tokenizing rather than matching parentheses in raw text keeps braces and
-	 * parentheses inside message strings from ending a construction early.
+	 * parentheses inside message strings from ending a construction early. The
+	 * argument split follows a delimiter stack over (), [] and {}, so commas in
+	 * a match arm or a closure body are not read as argument separators.
 	 *
 	 * @param string $file Absolute path to the PHP file.
 	 * @return array List of [ 'line' => int, 'source' => string, 'args' => array ] entries.
@@ -283,31 +285,27 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 			$source  = '';
 			$args    = [];
 			$current = '';
-			$depth   = 0;
-			$nesting = 0;
+			$stack   = [];
 
 			for ( $k = $j + 1; $k < $count; $k++ ) {
 				$token   = $tokens[ $k ];
 				$text    = is_array( $token ) ? $token[1] : $token;
 				$source .= $text;
 
-				if ( '(' === $token || '[' === $token ) {
-					if ( '(' === $token ) {
-						++$depth;
-					}
-					++$nesting;
-					if ( 1 === $nesting ) {
+				$opened = $this->closing_delimiter_for( $token );
+
+				if ( null !== $opened ) {
+					$stack[] = $opened;
+					// The constructor's own parenthesis is the boundary, not part of an argument.
+					if ( 1 === count( $stack ) ) {
 						continue;
 					}
-				} elseif ( ')' === $token || ']' === $token ) {
-					if ( ')' === $token ) {
-						--$depth;
-					}
-					--$nesting;
-					if ( 0 === $depth ) {
+				} elseif ( ! empty( $stack ) && $token === end( $stack ) ) {
+					array_pop( $stack );
+					if ( empty( $stack ) ) {
 						break;
 					}
-				} elseif ( ',' === $token && 1 === $nesting ) {
+				} elseif ( ',' === $token && 1 === count( $stack ) ) {
 					$args[]  = trim( $current );
 					$current = '';
 					continue;
@@ -327,6 +325,29 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 		}
 
 		return $found;
+	}
+
+	/**
+	 * The delimiter that closes the given token, or null when the token opens nothing.
+	 *
+	 * @param mixed $token Token from token_get_all(), either a string or a [ id, text, line ] array.
+	 * @return string|null Closing delimiter.
+	 */
+	protected function closing_delimiter_for( $token ): ?string {
+		if ( '(' === $token ) {
+			return ')';
+		}
+
+		if ( '[' === $token ) {
+			return ']';
+		}
+
+		// An interpolated string opens its brace as an array token but closes it with a plain '}'.
+		if ( '{' === $token || ( is_array( $token ) && in_array( $token[0], [ T_CURLY_OPEN, T_DOLLAR_OPEN_CURLY_BRACES ], true ) ) ) {
+			return '}';
+		}
+
+		return null;
 	}
 
 	/**
@@ -367,16 +388,20 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 			. '$b = new WP_Error( \'code_two\', __( \'Two.\' ), array( \'status\' => 400 ) );' . "\n"
 			. '$c = new \WP_Error( $code, $message, $data );' . "\n"
 			. '$d = new WP_Error( \'code_four\', __( \'Four.\' ), [ \'status\' => 404, \'key\' => 1 ], );' . "\n"
+			. '$e = new WP_Error( \'code_five\', match ( $kind ) { 1, 2 => __( \'Low.\' ), default => __( \'High.\' ) } );' . "\n"
+			. '$f = new WP_Error( \'code_six\', $message, array( \'status\' => 400, \'map\' => function ( $a, $b ) { return [ $a, $b ]; } ) );' . "\n"
 		);
 
 		$constructions = $this->collect_wp_error_constructions( $fixture );
 		unlink( $fixture );
 
-		$this->assertCount( 4, $constructions );
+		$this->assertCount( 6, $constructions );
 		$this->assertCount( 2, $constructions[0]['args'], 'A message containing commas and parentheses is one argument.' );
 		$this->assertCount( 3, $constructions[1]['args'] );
 		$this->assertCount( 3, $constructions[2]['args'], 'A status passed through a variable still counts as the data argument.' );
 		$this->assertCount( 3, $constructions[3]['args'], 'A short-array data argument with a trailing comma is one argument.' );
+		$this->assertCount( 2, $constructions[4]['args'], 'The commas in a match arm do not separate arguments.' );
+		$this->assertCount( 3, $constructions[5]['args'], 'The commas in a closure body do not separate arguments.' );
 	}
 
 	/**
@@ -609,6 +634,57 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 	}
 
 	/**
+	 * Renaming a field onto a name another field of the same client owns is the caller's mistake.
+	 *
+	 * The unique index on (client_id, field_name) refuses the write, so update_client_field() returns
+	 * the same false a broken write returns and the status has to be worked out from the name.
+	 */
+	public function test_client_fields_edit_duplicate_name_returns_400(): void {
+		global $wpdb;
+
+		$this->authenticate_as_admin();
+
+		$owner = \MainWP\Dashboard\MainWP_DB_Client::instance()->add_client_field(
+			[
+				'field_name' => 'REST V2 Cleanup Taken Name',
+				'field_desc' => 'owner',
+				'client_id'  => 0,
+			]
+		);
+		$this->assertNotEmpty( $owner, 'Could not create the client field that owns the name.' );
+
+		$field = \MainWP\Dashboard\MainWP_DB_Client::instance()->add_client_field(
+			[
+				'field_name' => 'REST V2 Cleanup Rename Field',
+				'field_desc' => 'before',
+				'client_id'  => 0,
+			]
+		);
+		$this->assertNotEmpty( $field, 'Could not create the client field the test renames.' );
+
+		// The rejected write is a real duplicate-key error, and wpdb prints those while the test suite
+		// has error display on.
+		$suppressed = $wpdb->suppress_errors( true );
+
+		$response = $this->do_authenticated_request(
+			'PUT',
+			'/mainwp/v2/clients/fields/' . $field->field_id . '/edit',
+			[ 'name' => 'REST V2 Cleanup Taken Name' ]
+		);
+
+		$wpdb->suppress_errors( $suppressed );
+
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'update_field_failed', $response->get_data()['code'] );
+
+		$stored = \MainWP\Dashboard\MainWP_DB_Client::instance()->get_client_fields_by( 'field_id', $field->field_id );
+		$this->assertSame( 'REST V2 Cleanup Rename Field', $stored->field_name );
+
+		$this->delete_client_field( 'REST V2 Cleanup Taken Name' );
+		$this->delete_client_field( 'REST V2 Cleanup Rename Field' );
+	}
+
+	/**
 	 * A JSON body sent without the JSON content type is read raw, so the registered sanitizers
 	 * never see it. A nested value would sanitize down to an empty string and wipe the field.
 	 */
@@ -638,6 +714,82 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 		$this->assertSame( 'keep this', $stored->field_desc );
 
 		$this->delete_client_field( 'REST V2 Cleanup Nested Field' );
+	}
+
+	/**
+	 * Anything that is not text is rejected, whatever it casts to.
+	 *
+	 * The raw path reads json_decode() output, so true, a number and null arrive as themselves:
+	 * true would be stored as "1", a number as its digits, and null would clear the field while
+	 * looking like the key was never sent.
+	 */
+	public function test_client_fields_edit_rejects_non_text_values(): void {
+		$this->authenticate_as_admin();
+
+		$field = \MainWP\Dashboard\MainWP_DB_Client::instance()->add_client_field(
+			[
+				'field_name' => 'REST V2 Cleanup Typed Field',
+				'field_desc' => 'keep this',
+				'client_id'  => 0,
+			]
+		);
+		$this->assertNotEmpty( $field, 'Could not create the client field the test edits.' );
+
+		$bodies = [
+			'{"description":true}',
+			'{"description":42}',
+			'{"description":null}',
+			'{"name":true}',
+		];
+
+		foreach ( $bodies as $body ) {
+			$response = $this->do_authenticated_raw_request(
+				'PUT',
+				'/mainwp/v2/clients/fields/' . $field->field_id . '/edit',
+				$body,
+				'text/plain'
+			);
+
+			$this->assertSame( 400, $response->get_status(), 'Body should be rejected: ' . $body );
+			$this->assertSame( 'invalid_field_value', $response->get_data()['code'], 'Body should be rejected: ' . $body );
+		}
+
+		$stored = \MainWP\Dashboard\MainWP_DB_Client::instance()->get_client_fields_by( 'field_id', $field->field_id );
+		$this->assertSame( 'REST V2 Cleanup Typed Field', $stored->field_name );
+		$this->assertSame( 'keep this', $stored->field_desc );
+
+		$this->delete_client_field( 'REST V2 Cleanup Typed Field' );
+	}
+
+	/**
+	 * An omitted key is still omitted: the edit keeps the stored value the body says nothing about.
+	 */
+	public function test_client_fields_edit_leaves_an_omitted_key_alone(): void {
+		$this->authenticate_as_admin();
+
+		$field = \MainWP\Dashboard\MainWP_DB_Client::instance()->add_client_field(
+			[
+				'field_name' => 'REST V2 Cleanup Omitted Field',
+				'field_desc' => 'before',
+				'client_id'  => 0,
+			]
+		);
+		$this->assertNotEmpty( $field, 'Could not create the client field the test edits.' );
+
+		$response = $this->do_authenticated_raw_request(
+			'PUT',
+			'/mainwp/v2/clients/fields/' . $field->field_id . '/edit',
+			'{"description":"after"}',
+			'text/plain'
+		);
+
+		$this->assertSame( 200, $response->get_status() );
+
+		$stored = \MainWP\Dashboard\MainWP_DB_Client::instance()->get_client_fields_by( 'field_id', $field->field_id );
+		$this->assertSame( 'REST V2 Cleanup Omitted Field', $stored->field_name );
+		$this->assertSame( 'after', $stored->field_desc );
+
+		$this->delete_client_field( 'REST V2 Cleanup Omitted Field' );
 	}
 
 	/**
@@ -718,6 +870,59 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 		$this->assertArrayHasKey( 'unknown_group', $data );
 		$this->assertSame( 'rest_batch_group_not_supported', $data['unknown_group']['error']['code'] );
 		$this->assertSame( 400, $data['unknown_group']['error']['data']['status'] );
+	}
+
+	/**
+	 * Item 6 follow-up: a supported group sent as a scalar is reported, not dropped.
+	 *
+	 * The dispatch reads an action off the group, which a string does not have, so the request used
+	 * to come back as an empty success.
+	 */
+	public function test_batch_scalar_supported_group_returns_invalid_param(): void {
+		$this->authenticate_as_admin();
+
+		$response = $this->do_authenticated_request( 'POST', '/mainwp/v2/batch', [ 'sites' => 'x' ] );
+
+		$data = $response->get_data();
+
+		$this->assertArrayHasKey( 'sites', $data );
+		$this->assertSame( 'rest_invalid_param', $data['sites']['error']['code'] );
+		$this->assertSame( 400, $data['sites']['error']['data']['status'] );
+	}
+
+	/**
+	 * Item 6 follow-up: an action sent as a scalar is reported before the dispatch walks it.
+	 */
+	public function test_batch_scalar_action_value_returns_invalid_param(): void {
+		$this->authenticate_as_admin();
+
+		$response = $this->do_authenticated_request( 'POST', '/mainwp/v2/batch', [ 'sites' => [ 'create' => 'x' ] ] );
+
+		$data = $response->get_data();
+
+		$this->assertArrayHasKey( 'sites', $data );
+		$this->assertSame( 'rest_invalid_param', $data['sites']['error']['code'] );
+		$this->assertSame( 400, $data['sites']['error']['data']['status'] );
+		$this->assertArrayNotHasKey( 'create', $data['sites'] );
+	}
+
+	/**
+	 * Item 6 follow-up: a well-formed group is still dispatched and answers in the same shape.
+	 *
+	 * The site id does not exist, so the dispatch answers with a per-item error and nothing is
+	 * written; a group-level error here would mean the shape check swallowed a valid request.
+	 */
+	public function test_batch_valid_group_is_still_dispatched(): void {
+		$this->authenticate_as_admin();
+
+		$response = $this->do_authenticated_request( 'POST', '/mainwp/v2/batch', [ 'sites' => [ 'sync' => [ 999999 ] ] ] );
+
+		$data = $response->get_data();
+
+		$this->assertArrayHasKey( 'sites', $data );
+		$this->assertArrayNotHasKey( 'error', $data['sites'] );
+		$this->assertCount( 1, $data['sites']['sync'] );
+		$this->assertSame( 999999, $data['sites']['sync'][0]['id'] );
 	}
 
 	/**

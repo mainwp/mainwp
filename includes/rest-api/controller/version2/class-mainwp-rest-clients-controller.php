@@ -810,12 +810,9 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
      */
     public function create_client_fields( $request ) {
         // Get request body.
-        $body = $request->get_body_params();
-        if ( empty( $body ) ) {
-            return new WP_Error(
-                'empty_body',
-                __( 'Request body is empty.', 'mainwp' ),
-            );
+        $body = $this->get_request_body( $request );
+        if ( is_wp_error( $body ) ) {
+            return $body;
         }
 
         // Validate request body.
@@ -823,6 +820,7 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
             return new WP_Error(
                 'empty_name',
                 __( 'Name and description are required.', 'mainwp' ),
+                array( 'status' => 400 )
             );
         }
 
@@ -842,6 +840,7 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
             return new WP_Error(
                 'create_field_failed',
                 __( 'Create client field failed.', 'mainwp' ),
+                array( 'status' => 400 )
             );
         }
 
@@ -877,16 +876,14 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
             return new WP_Error(
                 'invalid_field_id',
                 __( 'Invalid client field.', 'mainwp' ),
+                array( 'status' => 404 )
             );
         }
 
         // Get request body.
-        $body = $request->get_json_params();
-        if ( empty( $body ) ) {
-            return new WP_Error(
-                'empty_body',
-                __( 'Request body is empty.', 'mainwp' ),
-            );
+        $body = $this->get_request_body( $request );
+        if ( is_wp_error( $body ) ) {
+            return $body;
         }
 
         $name = ! empty( $body['name'] ) ? sanitize_text_field( wp_unslash( $body['name'] ) ) : $field->field_name;
@@ -903,6 +900,7 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
             return new WP_Error(
                 'update_field_failed',
                 __( 'Field already exists, try different field name.', 'mainwp' ),
+                array( 'status' => 400 )
             );
         }
 
@@ -1047,6 +1045,42 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
                 'maximum'           => 200,
                 'description'       => __( 'Deprecated alias of per_page. Number of client fields per page.', 'mainwp' ),
             ),
+        );
+    }
+
+    /**
+     * Get request body.
+     *
+     * @param WP_REST_Request $request Full details about the request.
+     *
+     * @return array|WP_Error Body payload, or an error when the request carries none.
+     */
+    private function get_request_body( $request ) {
+        // Get request body from form-encoded senders.
+        $body = $request->get_body_params();
+        if ( ! empty( $body ) && is_array( $body ) ) {
+            return $body;
+        }
+
+        // Get request body from JSON senders.
+        $body = $request->get_json_params();
+        if ( ! empty( $body ) && is_array( $body ) ) {
+            return $body;
+        }
+
+        // Get request body from raw, for JSON sent without the JSON content type.
+        $body = $request->get_body();
+        if ( ! empty( $body ) && is_string( $body ) ) {
+            $body = json_decode( $body, true );
+            if ( is_array( $body ) && ! empty( $body ) ) {
+                return $body;
+            }
+        }
+
+        return new WP_Error(
+            'empty_body',
+            __( 'Request body is empty.', 'mainwp' ),
+            array( 'status' => 400 )
         );
     }
 

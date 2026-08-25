@@ -175,6 +175,13 @@ class MainWP_Rest_Tags_Controller extends MainWP_REST_Controller{ //phpcs:ignore
      * @return array
      */
     protected function get_formatted_item_data( $data ) {
+        // wpdb hands back every column as a string, so the fields the schema declares as
+        // integers would otherwise ship as strings.
+        foreach ( array( 'id', 'count_sites' ) as $int_field ) {
+            if ( is_array( $data ) && array_key_exists( $int_field, $data ) ) {
+                $data[ $int_field ] = (int) $data[ $int_field ];
+            }
+        }
         return $data;
     }
 

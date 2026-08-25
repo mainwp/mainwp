@@ -45,7 +45,7 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
      *
      * @var array
      */
-    protected $controller_names = array( 'sites', 'clients', 'costs', 'tags' );
+    protected $controller_names = array( 'sites', 'clients', 'tags' );
 
     /**
      * Method instance()
@@ -107,13 +107,25 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
             return $limit;
         }
 
-        // The updates controller has no batch-capable create handler, so report the whole group once
-        // instead of letting every item fail with a 405 from the WordPress core stub.
-        if ( ! empty( $items['updates'] ) ) {
-            $response['updates'] = array(
+        // Groups the batch endpoint cannot dispatch (updates has no batch-capable create handler,
+        // costs has no controller at all, anything else is unknown) are reported once each instead
+        // of being dropped without a word or failing per item with a 405 from the core stub. Only
+        // the body names groups, so an array-valued query param is not mistaken for one.
+        $body_groups = $request->get_json_params();
+        if ( empty( $body_groups ) || ! is_array( $body_groups ) ) {
+            $body_groups = (array) $request->get_body_params();
+        }
+
+        foreach ( $body_groups as $group_name => $group_items ) {
+            if ( in_array( $group_name, $this->controller_names, true ) || ! is_array( $group_items ) || empty( $group_items ) ) {
+                continue;
+            }
+
+            $response[ $group_name ] = array(
                 'error' => array(
                     'code'    => 'rest_batch_group_not_supported',
-                    'message' => __( 'The updates group is not supported by the batch endpoint.', 'mainwp' ),
+                    /* translators: %s: batch group name */
+                    'message' => sprintf( __( 'The %s group is not supported by the batch endpoint.', 'mainwp' ), $group_name ),
                     'data'    => array( 'status' => 400 ),
                 ),
             );
@@ -495,9 +507,10 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
         $limit = apply_filters( 'mainwp_rest_batch_items_limit', 100, $this->get_normalized_rest_base() );
         $total = 0;
 
-        // The updates group is rejected as a whole by batch_items(), but its items still count
-        // toward the cap so an oversized request is refused before anything else is dispatched.
-        $count_names = array_merge( $this->controller_names, array( 'updates' ) );
+        // The updates and costs groups are rejected as a whole by batch_items(), but their items
+        // still count toward the cap so an oversized request is refused before anything else is
+        // dispatched.
+        $count_names = array_merge( $this->controller_names, array( 'updates', 'costs' ) );
 
         foreach ( $count_names as $con_name ) {
             if ( ! empty( $items[ $con_name ] ) && is_countable( $items[ $con_name ] ) ) {

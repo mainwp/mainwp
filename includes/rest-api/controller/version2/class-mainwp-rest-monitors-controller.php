@@ -898,7 +898,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
         }
 
         // Process global monitoring settings update.
-        $result = $this->process_global_monitoring_settings_update( $body );
+        $result = $this->process_global_monitoring_settings_update( $this->get_sanitized_settings_params( $request, $body ) );
         if ( is_wp_error( $result ) ) {
             return $result;
         }
@@ -952,6 +952,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
         }
 
         // Validate request body against schema.
+        $body   = $this->get_sanitized_settings_params( $request, $body );
         $schema = $this->get_monitor_settings_schema(); // Get default schema.
         $valid  = rest_validate_value_from_schema( $body, $schema, 'body' );
         if ( is_wp_error( $valid ) ) {
@@ -1042,6 +1043,26 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
                 ),
             )
         );
+    }
+
+    /**
+     * Get the settings the request carries, as the registered callbacks sanitized them.
+     *
+     * @param WP_REST_Request $request Full details about the request.
+     * @param array           $body    Raw request body.
+     *
+     * @return array Sanitized settings, keyed by the keys the body carried.
+     */
+    private function get_sanitized_settings_params( $request, $body ) {
+        // The registered sanitize_callbacks produce the request params, so the persisted value is
+        // read from there rather than from the raw body; WordPress currently writes the sanitized
+        // value back into the JSON body too, but that is internal to sanitize_params(), not a
+        // contract. get_params() also carries auth, query and route params, so keep only the
+        // settings keys the route declares and only the ones this body actually sent.
+        $allowed = $this->get_global_monitor_settings_allowed_fields();
+        $params  = array_intersect_key( $request->get_params(), $allowed );
+
+        return array_intersect_key( $params, $body );
     }
 
     /**

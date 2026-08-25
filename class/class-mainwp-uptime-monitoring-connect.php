@@ -126,6 +126,45 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
         $mo_url = static::get_apply_monitor_url( $monitor );
 
+        /**
+         * Filter to short-circuit an uptime monitor request before signing or HTTP communication.
+         *
+         * This filter fires early, before request signing or HTTP communication, allowing
+         * PHPUnit tests to bypass child site communication and provide a mocked response.
+         *
+         * SECURITY WARNING - TEST ONLY:
+         * This filter is only applied when ALL of the following conditions are met:
+         * 1. MAINWP_TESTING_MODE is defined and evaluates to true.
+         * 2. A PHPUnit test environment is detected through WP_TESTS_DOMAIN,
+         *    PHPUNIT_COMPOSER_INSTALL, or WP_TESTS_DIR.
+         *
+         * These checks help prevent production code from enabling the testing mode and
+         * spoofing child site responses.
+         *
+         * IMPORTANT: MAINWP_TESTING_MODE must only be defined in the PHPUnit bootstrap
+         * file (tests/bootstrap.php). It must not be defined in production code,
+         * wp-config.php, or plugin files.
+         *
+         * @since 6.1.8
+         *
+         * @param mixed  $pre_result     Return a non-false value to short-circuit the request.
+         * @param object $monitor        Website object being monitored.
+         * @param string $mo_url         Monitor URL.
+         * @param array  $global_settings Global monitor settings.
+         * @param bool   $second_try     Whether this is a retry attempt.
+         * @param array  $params         Request parameters.
+         * @return mixed The mocked response when short-circuited, or false to proceed normally.
+         */
+        $is_phpunit_env = defined( 'WP_TESTS_DOMAIN' ) || defined( 'PHPUNIT_COMPOSER_INSTALL' ) || ( defined( 'WP_TESTS_DIR' ) && WP_TESTS_DIR );
+
+        if ( defined( 'MAINWP_TESTING_MODE' ) && MAINWP_TESTING_MODE && $is_phpunit_env ) {
+            $pre_monitor = apply_filters( 'mainwp_fetch_uptime_monitor_pre', false, $monitor, $mo_url, $global_settings, $second_try, $params );
+
+            if ( false !== $pre_monitor ) {
+                return $pre_monitor;
+            }
+        }
+
         $bypass_settings = ! empty( $monitor->bypass_cache_params ) ? $monitor->bypass_cache_params : array();
         $headers_params  = is_array( $bypass_settings ) && ! empty( $bypass_settings['headers'] ) ? $bypass_settings['headers'] : array();
         $headers_flatten = is_array( $bypass_settings ) && ! empty( $bypass_settings['headers_flatten'] ) ? $bypass_settings['headers_flatten'] : array();
@@ -444,7 +483,46 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
             MainWP_Logger::instance()->log_uptime_check( 'Schedule uptime checks: [siteid=' . $website->id . '] :: [url=' . $website->url . ' :: [monitorid=' . $website->monitor_id . '] :: [monitor-active=' . $website->active . ']' );
 
             self::apply_bypass_cache_settings( $website, $global_settings );
-            $mo_url          = static::get_apply_monitor_url( $website );
+            $mo_url = static::get_apply_monitor_url( $website );
+
+            /**
+             * Filter to short-circuit an uptime monitor request before signing or HTTP communication.
+             *
+             * This filter fires early, before request signing or HTTP communication, allowing
+             * PHPUnit tests to bypass child site communication and provide a mocked response.
+             *
+             * SECURITY WARNING - TEST ONLY:
+             * This filter is only applied when ALL of the following conditions are met:
+             * 1. MAINWP_TESTING_MODE is defined and evaluates to true.
+             * 2. A PHPUnit test environment is detected through WP_TESTS_DOMAIN,
+             *    PHPUNIT_COMPOSER_INSTALL, or WP_TESTS_DIR.
+             *
+             * These checks help prevent production code from enabling the testing mode and
+             * spoofing child site responses.
+             *
+             * IMPORTANT: MAINWP_TESTING_MODE must only be defined in the PHPUnit bootstrap
+             * file (tests/bootstrap.php). It must not be defined in production code,
+             * wp-config.php, or plugin files.
+             *
+             * @since 6.1.8
+             *
+             * @param mixed  $pre_result     Return a non-false value to short-circuit the request.
+             * @param object $monitor        Website object being monitored.
+             * @param string $mo_url         Monitor URL.
+             * @param array  $global_settings Global monitor settings.
+             * @param array  $params         Request parameters.
+             * @return mixed The mocked response when short-circuited, or false to proceed normally.
+             */
+            $is_phpunit_env = defined( 'WP_TESTS_DOMAIN' ) || defined( 'PHPUNIT_COMPOSER_INSTALL' ) || ( defined( 'WP_TESTS_DIR' ) && WP_TESTS_DIR );
+
+            if ( defined( 'MAINWP_TESTING_MODE' ) && MAINWP_TESTING_MODE && $is_phpunit_env ) {
+                $pre_monitor = apply_filters( 'mainwp_fetch_uptime_urls_pre', false, $website, $mo_url, $global_settings, $params );
+
+                if ( false !== $pre_monitor ) {
+                    return $pre_monitor;
+                }
+            }
+
             $bypass_settings = ! empty( $website->bypass_cache_params ) ? $website->bypass_cache_params : array();
             $headers_params  = is_array( $bypass_settings ) && ! empty( $bypass_settings['headers'] ) ? $bypass_settings['headers'] : array();
             $headers_flatten = is_array( $bypass_settings ) && ! empty( $bypass_settings['headers_flatten'] ) ? $bypass_settings['headers_flatten'] : array();
@@ -640,6 +718,9 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
                                 $set_retry = true;
                             }
                         } elseif ( ! $is_notallowed && empty( $data ) && 'ping' !== $mo_apply_type ) {
+                            $site = &$handleToWebsite[ $resource_id ];
+                            static::apply_bypass_cache_settings( $site, $global_settings );
+                            $requestUrls[ $resource_id ] = static::get_apply_monitor_url( $site ); // Re-generate the monitoring URL.
                             curl_setopt( $info['handle'], CURLOPT_URL, $requestUrls[ $resource_id ] );
                             $_try_second = true;
                         }
@@ -860,7 +941,8 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
             $status = static::DOWN; // Set the status to DOWN.
         }
 
-        $mo_url = static::get_apply_monitor_url( $monitor );
+        // CEM logs url.
+        $mo_url = ! empty( $monitor->_monitor_url ) ? $monitor->_monitor_url : 'UNDEFINED-URL';
 
         $_status_str = '';
         if ( static::UP === $status ) {
@@ -1158,26 +1240,24 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
     /**
      * Get apply monitor url.
      *
-     * @param  mixed $monitor monitor.
+     * @param  object $monitor monitor.
      *
      * @return string
      */
-    public static function get_apply_monitor_url( $monitor ) { // phpcs:ignore --NOSONAR -complex.
+    public static function get_apply_monitor_url( &$monitor ) { // phpcs:ignore --NOSONAR -complex.
+
+        if ( ! is_object( $monitor ) ) {
+            return '';
+        }
+
         $url = '';
 
         if ( ! empty( $monitor ) ) {
 
-            if ( is_object( $monitor ) ) {
-                $url             = $monitor->url;
-                $suburl          = $monitor->suburl;
-                $issub           = $monitor->issub;
-                $bypass_settings = ! empty( $monitor->bypass_cache_params ) ? $monitor->bypass_cache_params : array();
-            } elseif ( is_array( $monitor ) ) {
-                $url             = $monitor['url'];
-                $suburl          = $monitor['suburl'];
-                $issub           = $monitor['issub'];
-                $bypass_settings = ! empty( $monitor['bypass_cache_params'] ) ? $monitor['bypass_cache_params'] : array(); // compatible.
-            }
+            $url             = $monitor->url;
+            $suburl          = $monitor->suburl;
+            $issub           = $monitor->issub;
+            $bypass_settings = ! empty( $monitor->bypass_cache_params ) ? $monitor->bypass_cache_params : array();
 
             if ( $issub && ! empty( $suburl ) ) {
                 $url = static::build_apply_monitor_url( $url, $suburl );
@@ -1188,7 +1268,8 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
             }
         }
 
-        return apply_filters( 'mainwp_uptime_monitoring_check_url', $url, $monitor );
+        $monitor->_monitor_url = apply_filters( 'mainwp_uptime_monitoring_check_url', $url, $monitor );
+        return $monitor->_monitor_url;
     }
 
 

@@ -867,13 +867,13 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
             // add_client_field() returns false for a name it refuses to store as well as for a failed
             // insert, so a name left empty by sanitizing or already taken stays a client error and
             // everything else is a server failure.
-            $taken  = $this->client_field_name_taken( $name, $client_id );
-            $status = ( '' === $name || $taken ) ? 400 : 500;
+            $taken        = $this->client_field_name_taken( $name, $client_id );
+            $caller_fault = ( '' === $name || $taken );
 
             return new WP_Error(
                 'create_field_failed',
-                __( 'Create client field failed.', 'mainwp' ),
-                array( 'status' => $status )
+                $caller_fault ? __( 'Create client field failed.', 'mainwp' ) : __( 'Creating the client field failed.', 'mainwp' ),
+                array( 'status' => $caller_fault ? 400 : 500 )
             );
         }
 
@@ -963,13 +963,13 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
                 // The DB layer refuses a name left empty by sanitizing, and the unique index on
                 // (client_id, field_name) refuses a rename onto a name another field of this client
                 // already owns. Both are the caller's fault; anything else is the write itself failing.
-                $owned  = $this->client_field_name_taken( $name, $field->client_id, $field->field_id );
-                $status = ( '' === $name || $owned ) ? 400 : 500;
+                $owned        = $this->client_field_name_taken( $name, $field->client_id, $field->field_id );
+                $caller_fault = ( '' === $name || $owned );
 
                 return new WP_Error(
                     'update_field_failed',
-                    __( 'Field already exists, try different field name.', 'mainwp' ),
-                    array( 'status' => $status )
+                    $caller_fault ? __( 'Field already exists, try different field name.', 'mainwp' ) : __( 'Updating the client field failed.', 'mainwp' ),
+                    array( 'status' => $caller_fault ? 400 : 500 )
                 );
             }
         }

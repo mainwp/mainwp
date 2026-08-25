@@ -50,6 +50,20 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 	protected $consumer_secret;
 
 	/**
+	 * Site id created for the monitor fixture.
+	 *
+	 * @var int
+	 */
+	protected $monitor_site_id = 0;
+
+	/**
+	 * Monitor id created for the monitor fixture.
+	 *
+	 * @var int
+	 */
+	protected $monitor_id = 0;
+
+	/**
 	 * Set up test environment.
 	 *
 	 * Mirrors tests/abilities/test-rest-integration.php: the MainWP REST server
@@ -95,6 +109,17 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 		$property->setValue( null, null );
 
 		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}mainwp_api_keys WHERE description = %s", 'Test API Key' ) );
+
+		if ( $this->monitor_id ) {
+			$wpdb->delete( $wpdb->prefix . 'mainwp_monitors', [ 'monitor_id' => $this->monitor_id ], [ '%d' ] );
+			$this->monitor_id = 0;
+		}
+
+		if ( $this->monitor_site_id ) {
+			$wpdb->delete( $wpdb->prefix . 'mainwp_wp_sync', [ 'wpid' => $this->monitor_site_id ], [ '%d' ] );
+			$wpdb->delete( $wpdb->prefix . 'mainwp_wp', [ 'id' => $this->monitor_site_id ], [ '%d' ] );
+			$this->monitor_site_id = 0;
+		}
 
 		parent::tearDown();
 	}
@@ -676,6 +701,9 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 
 		$this->assertSame( 400, $response->get_status() );
 		$this->assertSame( 'update_field_failed', $response->get_data()['code'] );
+		// The 500 branch of this code answers with its own message, so the duplicate-name message
+		// belongs to the 400 branch only.
+		$this->assertSame( 'Field already exists, try different field name.', $response->get_data()['message'] );
 
 		$stored = \MainWP\Dashboard\MainWP_DB_Client::instance()->get_client_fields_by( 'field_id', $field->field_id );
 		$this->assertSame( 'REST V2 Cleanup Rename Field', $stored->field_name );
@@ -885,6 +913,8 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 
 		$this->assertSame( 400, $response->get_status() );
 		$this->assertSame( 'create_field_failed', $response->get_data()['code'] );
+		// The 500 branch of this code answers with its own message.
+		$this->assertSame( 'Create client field failed.', $response->get_data()['message'] );
 
 		$this->delete_client_field_by_id( $field_id );
 	}
@@ -1445,6 +1475,191 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 		$this->assertSame( (int) $tag->id, $data[ $tag->id ]['id'] );
 
 		\MainWP\Dashboard\MainWP_DB_Common::instance()->remove_group( $tag->id );
+	}
+
+	/**
+	 * PR review: a supported group sent only as a query parameter is shape checked too.
+	 *
+	 * The dispatch reads the merged request params, so checking the body alone let sites[create]=x
+	 * reach a foreach over a string.
+	 */
+	public function test_batch_query_only_group_shape_is_validated(): void {
+		$this->authenticate_as_admin();
+
+		$response = $this->do_authenticated_raw_request(
+			'POST',
+			'/mainwp/v2/batch',
+			'',
+			'application/json',
+			[ 'sites' => [ 'create' => 'x' ] ]
+		);
+
+		$data = $response->get_data();
+
+		$this->assertArrayHasKey( 'sites', $data );
+		$this->assertSame( 'rest_invalid_param', $data['sites']['error']['code'] );
+		$this->assertSame( 400, $data['sites']['error']['data']['status'] );
+		$this->assertArrayNotHasKey( 'create', $data['sites'] );
+	}
+
+	/**
+	 * PR review: a misspelled settings key is rejected, not quietly dropped.
+	 *
+	 * The schema forbids additional properties, so it has to see the body the caller sent rather
+	 * than the params filtered down to the keys the route registered.
+	 */
+	public function test_monitors_individual_settings_rejects_unknown_key(): void {
+		$this->authenticate_as_admin();
+
+		$monitor_id = $this->create_monitor_fixture();
+
+		$response = $this->do_authenticated_request(
+			'PUT',
+			'/mainwp/v2/monitors/' . $monitor_id . '/settings',
+			[ 'intervl' => '5m' ]
+		);
+
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'rest_additional_properties_forbidden', $response->get_data()['code'] );
+	}
+
+	/**
+	 * PR review: a JSON scalar body is no body, on the individual route.
+	 *
+	 * It used to reach array_intersect_key(), which fatals on anything that is not an array. The
+	 * handler is called directly here: both settings routes register args, and WordPress walks the
+	 * body params itself while sanitizing those, which fatals on a scalar before the route callback
+	 * is reached.
+	 */
+	public function test_monitors_individual_settings_rejects_scalar_body(): void {
+		$this->authenticate_as_admin();
+
+		$monitor_id = $this->create_monitor_fixture();
+
+		$request = new WP_REST_Request( 'PUT', '/mainwp/v2/monitors/' . $monitor_id . '/settings' );
+		$request->set_url_params( [ 'id_domain' => (string) $monitor_id ] );
+		$request->set_header( 'content-type', 'application/json' );
+		$request->set_body( '5' );
+
+		$result = \MainWP_Rest_Monitors_Controller::instance()->update_individual_monitor_settings( $request );
+
+		$this->assertWPError( $result );
+		$this->assertSame( 'empty_body', $result->get_error_code() );
+		$this->assertSame( 400, $result->get_error_data()['status'] );
+	}
+
+	/**
+	 * PR review: a JSON list body is no body either, on the individual route.
+	 *
+	 * Its keys are positions, so it used to intersect down to nothing and answer as a success that
+	 * wrote nothing.
+	 */
+	public function test_monitors_individual_settings_rejects_list_body(): void {
+		$this->authenticate_as_admin();
+
+		$monitor_id = $this->create_monitor_fixture();
+
+		$response = $this->do_authenticated_raw_request(
+			'PUT',
+			'/mainwp/v2/monitors/' . $monitor_id . '/settings',
+			'[1,2]'
+		);
+
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'empty_body', $response->get_data()['code'] );
+	}
+
+	/**
+	 * PR review: the same for a scalar body on the global route, called the same way and for the
+	 * same reason.
+	 */
+	public function test_monitors_global_settings_rejects_scalar_body(): void {
+		$this->authenticate_as_admin();
+
+		$request = new WP_REST_Request( 'PUT', '/mainwp/v2/monitors/settings' );
+		$request->set_header( 'content-type', 'application/json' );
+		$request->set_body( '5' );
+
+		$result = \MainWP_Rest_Monitors_Controller::instance()->update_global_monitoring_settings( $request );
+
+		$this->assertWPError( $result );
+		$this->assertSame( 'empty_body', $result->get_error_code() );
+		$this->assertSame( 400, $result->get_error_data()['status'] );
+	}
+
+	/**
+	 * PR review: the same for a list body on the global route.
+	 */
+	public function test_monitors_global_settings_rejects_list_body(): void {
+		$this->authenticate_as_admin();
+
+		$response = $this->do_authenticated_raw_request( 'PUT', '/mainwp/v2/monitors/settings', '[1,2]' );
+
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'empty_body', $response->get_data()['code'] );
+	}
+
+	/**
+	 * Create a site, its sync row and a monitor for it.
+	 *
+	 * The monitor lookup joins the sites and the sync tables, so a monitor row on its own is
+	 * invisible to the route.
+	 *
+	 * @return int Monitor id.
+	 */
+	private function create_monitor_fixture(): int {
+		global $wpdb;
+
+		$wpdb->insert(
+			$wpdb->prefix . 'mainwp_wp',
+			[
+				'userid'               => max( 1, get_current_user_id() ),
+				'url'                  => 'https://rest-v2-cleanup-monitor.example.com/',
+				'name'                 => 'REST V2 Cleanup Monitor Site',
+				'adminname'            => 'admin',
+				'pubkey'               => 'test-pubkey',
+				'privkey'              => 'test-privkey',
+				'ssl_version'          => 0,
+				'http_user'            => '',
+				'http_pass'            => '',
+				'suspended'            => 0,
+				'offline_check_result' => 1,
+				'client_id'            => 0,
+			],
+			[ '%d', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%d', '%d', '%d' ]
+		);
+
+		$this->monitor_site_id = (int) $wpdb->insert_id;
+
+		$wpdb->insert(
+			$wpdb->prefix . 'mainwp_wp_sync',
+			[
+				'wpid'        => $this->monitor_site_id,
+				'version'     => '5.0.0',
+				'sync_errors' => '',
+			],
+			[ '%d', '%s', '%s' ]
+		);
+
+		$wpdb->insert(
+			$wpdb->prefix . 'mainwp_monitors',
+			[
+				'wpid'            => $this->monitor_site_id,
+				'active'          => -1,
+				'interval'        => -1,
+				'maxretries'      => -1,
+				'retry_interval'  => 1,
+				'timeout'         => -1,
+				'method'          => 'get',
+				'type'            => 'useglobal',
+				'up_status_codes' => 'useglobal',
+				'issub'           => 0,
+			]
+		);
+
+		$this->monitor_id = (int) $wpdb->insert_id;
+
+		return $this->monitor_id;
 	}
 
 	/**

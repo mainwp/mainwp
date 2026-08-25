@@ -880,6 +880,14 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
     public function update_global_monitoring_settings( $request ) {
         // Get request body.
         $body = $request->get_json_params();
+
+        // A JSON scalar or list body carries none of the settings keys: array_intersect_key() below
+        // fatals on the scalar, and the list would intersect down to nothing and answer as a
+        // successful no-op, so both are treated as no body at all.
+        if ( ! is_array( $body ) || ( array() !== $body && array_is_list( $body ) ) ) {
+            $body = array();
+        }
+
         if ( empty( $body ) ) {
             return new WP_Error(
                 'empty_body',
@@ -935,10 +943,18 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
         // Get request body.
         $body = $request->get_json_params();
 
+        // A JSON scalar or list body carries none of the settings keys: array_intersect_key() below
+        // fatals on the scalar, and the list would intersect down to nothing and answer as a
+        // successful no-op, so both are treated as no body at all.
+        if ( ! is_array( $body ) || ( array() !== $body && array_is_list( $body ) ) ) {
+            $body = array();
+        }
+
         if ( empty( $body ) ) {
             return new WP_Error(
                 'empty_body',
                 __( 'Request body is empty.', 'mainwp' ),
+                array( 'status' => 400 )
             );
         }
 
@@ -951,16 +967,20 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
             );
         }
 
-        // Validate request body against schema.
-        $body   = $this->get_sanitized_settings_params( $request, $body );
+        // Validate request body against schema. The schema has to see the raw body: the sanitized
+        // params keep only the keys the route registered, so a misspelled key would be filtered out
+        // before additionalProperties could reject it.
         $schema = $this->get_monitor_settings_schema(); // Get default schema.
         $valid  = rest_validate_value_from_schema( $body, $schema, 'body' );
         if ( is_wp_error( $valid ) ) {
+            // A schema error carries no status of its own and REST falls back to 500 for one that
+            // has none, which is the wrong answer for a body the caller got wrong.
+            $valid->add_data( array( 'status' => 400 ) );
             return $valid;
         }
 
         // Sanitize request body.
-        $data = rest_sanitize_value_from_schema( $body, $schema );
+        $data = rest_sanitize_value_from_schema( $this->get_sanitized_settings_params( $request, $body ), $schema );
 
         // Process individual monitor settings update.
         $result = $this->process_individual_monitor_settings_update( $monitor, $data );

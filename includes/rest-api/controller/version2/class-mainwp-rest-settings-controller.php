@@ -3011,7 +3011,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      *
      * @param string $value API slug.
      *
-     * @return string
+     * @return array|WP_Error The API backup definition the slug names, with the slug added to it, or WP_Error for a slug with no definition.
      */
     public function sanitize_api_slug( $value ) {
         if ( empty( $value ) ) {

@@ -111,7 +111,7 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
             $body_groups = (array) $request->get_body_params();
         }
 
-        foreach ( $body_groups as $group_name => $group_items ) {
+        foreach ( array_keys( $body_groups ) as $group_name ) {
             if ( ! in_array( $group_name, $this->controller_names, true ) ) {
                 $response[ $group_name ] = array(
                     'error' => array(
@@ -121,12 +121,25 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
                         'data'    => array( 'status' => 400 ),
                     ),
                 );
+            }
+        }
+
+        // Shapes are checked against the items the dispatch below reads, not against the body, so a
+        // group sent as a query parameter cannot skip the check. The dispatch indexes into the group
+        // and then walks each action list, so a scalar in either place would reach a foreach over
+        // something that is not a list. The group is dropped from the items as well as reported, so
+        // nothing in it is dispatched.
+        foreach ( $this->controller_names as $group_name ) {
+            if ( isset( $items[ $group_name ] ) ) {
+                $group_items = $items[ $group_name ];
+            } elseif ( array_key_exists( $group_name, $body_groups ) ) {
+                // A falsy group is filtered out of the items, so it is read back from the body to be
+                // reported rather than passed over.
+                $group_items = $body_groups[ $group_name ];
+            } else {
                 continue;
             }
 
-            // The dispatch below indexes into the group and then walks each action list, so a scalar in
-            // either place would reach a foreach over something that is not a list. The group is dropped
-            // from the items as well as reported, so nothing in it is dispatched.
             $dispatchable = is_array( $group_items );
             if ( $dispatchable ) {
                 foreach ( $group_items as $action_items ) {

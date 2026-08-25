@@ -931,10 +931,12 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
             return $invalid;
         }
 
-        // Only a key left out, or sent empty, keeps the stored value. "0" is a value the column
-        // stores, and a falsy test would drop it on the floor and answer that the edit succeeded.
-        $name = isset( $body['name'] ) && '' !== $body['name'] ? sanitize_text_field( wp_unslash( $body['name'] ) ) : $field->field_name;
-        $desc = isset( $body['description'] ) && '' !== $body['description'] ? sanitize_text_field( wp_unslash( $body['description'] ) ) : $field->field_desc;
+        // Only a key left out, or sent with nothing but whitespace, keeps the stored value. The add
+        // route reads a value the same way, and sanitizing trims whitespace away, so a value tested
+        // untrimmed here would sanitize down to an empty string the DB layer refuses. "0" is a value
+        // the column stores, and a falsy test would drop it and answer that the edit succeeded.
+        $name = isset( $body['name'] ) && '' !== trim( $body['name'] ) ? sanitize_text_field( wp_unslash( $body['name'] ) ) : $field->field_name;
+        $desc = isset( $body['description'] ) && '' !== trim( $body['description'] ) ? sanitize_text_field( wp_unslash( $body['description'] ) ) : $field->field_desc;
 
         // field_name is varchar(191), so a longer name is truncated by wpdb before the unique index sees
         // it and the duplicate lookup, which queries the untruncated name, would not recognise the refusal.

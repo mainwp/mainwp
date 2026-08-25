@@ -861,6 +861,75 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 	}
 
 	/**
+	 * A name that is only whitespace keeps the stored name instead of failing the edit.
+	 *
+	 * sanitize_text_field() trims it away to an empty string, which the DB layer refuses, so the
+	 * edit answered 400 for a value the add route already reads as nothing sent. The body is sent
+	 * raw because the registered sanitizer would trim it before the handler saw it.
+	 */
+	public function test_client_fields_edit_whitespace_only_name_keeps_the_stored_name(): void {
+		$this->authenticate_as_admin();
+
+		$field = \MainWP\Dashboard\MainWP_DB_Client::instance()->add_client_field(
+			[
+				'field_name' => 'REST V2 Cleanup Whitespace Name Field',
+				'field_desc' => 'before',
+				'client_id'  => 0,
+			]
+		);
+		$this->assertNotEmpty( $field, 'Could not create the client field the test edits.' );
+
+		$response = $this->do_authenticated_raw_request(
+			'PATCH',
+			'/mainwp/v2/clients/fields/' . $field->field_id . '/edit',
+			'{"name":"   ","description":"after"}',
+			'text/plain'
+		);
+
+		$this->assertSame( 200, $response->get_status() );
+
+		$stored = \MainWP\Dashboard\MainWP_DB_Client::instance()->get_client_fields_by( 'field_id', $field->field_id );
+		$this->assertSame( 'REST V2 Cleanup Whitespace Name Field', $stored->field_name );
+		$this->assertSame( 'after', $stored->field_desc );
+
+		$this->delete_client_field( 'REST V2 Cleanup Whitespace Name Field' );
+	}
+
+	/**
+	 * A description that is only whitespace keeps the stored description, for the same reason.
+	 *
+	 * Here the write goes through, so the stored value used to be wiped and the caller was told the
+	 * edit succeeded.
+	 */
+	public function test_client_fields_edit_whitespace_only_description_keeps_the_stored_description(): void {
+		$this->authenticate_as_admin();
+
+		$field = \MainWP\Dashboard\MainWP_DB_Client::instance()->add_client_field(
+			[
+				'field_name' => 'REST V2 Cleanup Whitespace Desc Field',
+				'field_desc' => 'before',
+				'client_id'  => 0,
+			]
+		);
+		$this->assertNotEmpty( $field, 'Could not create the client field the test edits.' );
+
+		$response = $this->do_authenticated_raw_request(
+			'PATCH',
+			'/mainwp/v2/clients/fields/' . $field->field_id . '/edit',
+			'{"description":"   "}',
+			'text/plain'
+		);
+
+		$this->assertSame( 200, $response->get_status() );
+
+		$stored = \MainWP\Dashboard\MainWP_DB_Client::instance()->get_client_fields_by( 'field_id', $field->field_id );
+		$this->assertSame( 'REST V2 Cleanup Whitespace Desc Field', $stored->field_name );
+		$this->assertSame( 'before', $stored->field_desc );
+
+		$this->delete_client_field( 'REST V2 Cleanup Whitespace Desc Field' );
+	}
+
+	/**
 	 * The same value check guards the add route.
 	 *
 	 * Both add params are required, so the query string is what satisfies the required check while
@@ -1629,6 +1698,62 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 	}
 
 	/**
+	 * PR review: an action sent as an object of named items is reported, not dispatched.
+	 *
+	 * The dispatch walks an action as a list, so an object's values used to be dispatched with the
+	 * names dropped and the caller got no word that the shape was wrong. sync is what the test
+	 * sends: a pre-fix run of the same body under remove would delete the site the value names.
+	 */
+	public function test_batch_associative_action_payload_returns_invalid_param(): void {
+		$this->authenticate_as_admin();
+
+		$response = $this->do_authenticated_request(
+			'POST',
+			'/mainwp/v2/batch',
+			[
+				'sites' => [
+					'sync' => [ 'target' => 999999 ],
+				],
+			]
+		);
+
+		$data = $response->get_data();
+
+		$this->assertArrayHasKey( 'sites', $data );
+		$this->assertSame( 'rest_invalid_param', $data['sites']['error']['code'] );
+		$this->assertSame( 400, $data['sites']['error']['data']['status'] );
+		$this->assertArrayNotHasKey( 'sync', $data['sites'] );
+	}
+
+	/**
+	 * An action sent empty dispatches nothing and does not make the group malformed.
+	 *
+	 * The site id does not exist, so the action that does carry items answers with a per-item error;
+	 * a group-level error here would mean the list check refused an empty action.
+	 */
+	public function test_batch_empty_action_payload_leaves_the_group_dispatchable(): void {
+		$this->authenticate_as_admin();
+
+		$response = $this->do_authenticated_request(
+			'POST',
+			'/mainwp/v2/batch',
+			[
+				'sites' => [
+					'sync'      => [],
+					'reconnect' => [ 999999 ],
+				],
+			]
+		);
+
+		$data = $response->get_data();
+
+		$this->assertArrayHasKey( 'sites', $data );
+		$this->assertArrayNotHasKey( 'error', $data['sites'] );
+		$this->assertCount( 1, $data['sites']['reconnect'] );
+		$this->assertSame( 999999, $data['sites']['reconnect'][0]['id'] );
+	}
+
+	/**
 	 * Item 4: a global monitoring settings write stores what the registered sanitizers produced,
 	 * not the raw body value.
 	 *
@@ -2020,6 +2145,67 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 
 		$this->assertSame( 400, $response->get_status() );
 		$this->assertSame( 'empty_body', $response->get_data()['code'] );
+	}
+
+	/**
+	 * The individual settings body is checked against the schema after the registered callbacks ran.
+	 *
+	 * WordPress sanitizes the params before it calls the route handler and writes the results back
+	 * into the JSON body, so the string values the route declares reach the integer schema as what
+	 * the sanitizers made of them: "useglobal" as -1, and the "30s" timeout label as its 30 key.
+	 * Without that the route would 400 on values its own args accept.
+	 */
+	public function test_monitors_individual_settings_accepts_the_string_values_the_route_declares(): void {
+		global $wpdb;
+
+		$this->authenticate_as_admin();
+
+		$monitor_id = $this->create_monitor_fixture();
+
+		$response = $this->do_authenticated_request(
+			'PATCH',
+			'/mainwp/v2/monitors/' . $monitor_id . '/settings',
+			[
+				'active'  => 'useglobal',
+				'timeout' => '30s',
+			]
+		);
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( 1, $response->get_data()['success'] );
+
+		$stored = $wpdb->get_row(
+			$wpdb->prepare( "SELECT active, timeout FROM {$wpdb->prefix}mainwp_monitors WHERE monitor_id = %d", $monitor_id )
+		);
+
+		$this->assertSame( -1, (int) $stored->active );
+		$this->assertSame( 30, (int) $stored->timeout );
+	}
+
+	/**
+	 * The same for the numeric strings the active arg declares.
+	 */
+	public function test_monitors_individual_settings_accepts_a_numeric_string_active(): void {
+		global $wpdb;
+
+		$this->authenticate_as_admin();
+
+		$monitor_id = $this->create_monitor_fixture();
+
+		$response = $this->do_authenticated_request(
+			'PATCH',
+			'/mainwp/v2/monitors/' . $monitor_id . '/settings',
+			[ 'active' => '1' ]
+		);
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( 1, $response->get_data()['success'] );
+
+		$stored = $wpdb->get_row(
+			$wpdb->prepare( "SELECT active FROM {$wpdb->prefix}mainwp_monitors WHERE monitor_id = %d", $monitor_id )
+		);
+
+		$this->assertSame( 1, (int) $stored->active );
 	}
 
 	/**

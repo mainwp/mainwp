@@ -605,6 +605,13 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
                 return false;
             }
 
+            // The dispatch walks an action as a list, so an object of named items would be
+            // dispatched by its values with the names dropped and nothing said about the shape. An
+            // empty action dispatches nothing, and range() cannot answer for a count of zero.
+            if ( array() !== $action_items && array_keys( $action_items ) !== range( 0, count( $action_items ) - 1 ) ) {
+                return false;
+            }
+
             foreach ( $action_items as $item ) {
                 if ( 'item' === $actions[ $action_name ] ) {
                     if ( ! is_array( $item ) ) {

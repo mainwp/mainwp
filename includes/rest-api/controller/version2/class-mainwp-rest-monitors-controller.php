@@ -884,7 +884,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
         // A JSON scalar or list body carries none of the settings keys: array_intersect_key() below
         // fatals on the scalar, and the list would intersect down to nothing and answer as a
         // successful no-op, so both are treated as no body at all.
-        if ( ! is_array( $body ) || ( array() !== $body && array_is_list( $body ) ) ) {
+        if ( ! is_array( $body ) || ( array() !== $body && array_keys( $body ) === range( 0, count( $body ) - 1 ) ) ) {
             $body = array();
         }
 
@@ -946,7 +946,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
         // A JSON scalar or list body carries none of the settings keys: array_intersect_key() below
         // fatals on the scalar, and the list would intersect down to nothing and answer as a
         // successful no-op, so both are treated as no body at all.
-        if ( ! is_array( $body ) || ( array() !== $body && array_is_list( $body ) ) ) {
+        if ( ! is_array( $body ) || ( array() !== $body && array_keys( $body ) === range( 0, count( $body ) - 1 ) ) ) {
             $body = array();
         }
 

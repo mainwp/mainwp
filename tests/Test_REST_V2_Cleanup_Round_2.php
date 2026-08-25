@@ -1300,6 +1300,113 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 	}
 
 	/**
+	 * PR review: a group sent as a JSON list is reported, not run as an empty request.
+	 *
+	 * The dispatch indexes the group by action name, which a list has none of, so the request used
+	 * to come back as an empty success with nothing dispatched and nothing said.
+	 */
+	public function test_batch_list_shaped_group_returns_invalid_param(): void {
+		$this->authenticate_as_admin();
+
+		$response = $this->do_authenticated_request(
+			'POST',
+			'/mainwp/v2/batch',
+			[
+				'sites' => [
+					[ 'create' => [ [ 'name' => 'REST V2 Cleanup List Group Site' ] ] ],
+				],
+			]
+		);
+
+		$data = $response->get_data();
+
+		$this->assertArrayHasKey( 'sites', $data );
+		$this->assertSame( 'rest_invalid_param', $data['sites']['error']['code'] );
+		$this->assertSame( 400, $data['sites']['error']['data']['status'] );
+		$this->assertArrayNotHasKey( 'create', $data['sites'] );
+	}
+
+	/**
+	 * PR review: an action the dispatch does not read is reported, not dropped.
+	 *
+	 * A misspelled action used to answer with an empty success, so a caller could not tell a typo
+	 * from a batch that ran.
+	 */
+	public function test_batch_unknown_action_key_returns_invalid_param(): void {
+		$this->authenticate_as_admin();
+
+		$response = $this->do_authenticated_request(
+			'POST',
+			'/mainwp/v2/batch',
+			[
+				'sites' => [
+					'craete' => [ [ 'name' => 'REST V2 Cleanup Unknown Action Site' ] ],
+				],
+			]
+		);
+
+		$data = $response->get_data();
+
+		$this->assertArrayHasKey( 'sites', $data );
+		$this->assertSame( 'rest_invalid_param', $data['sites']['error']['code'] );
+		$this->assertSame( 400, $data['sites']['error']['data']['status'] );
+		$this->assertArrayNotHasKey( 'craete', $data['sites'] );
+	}
+
+	/**
+	 * PR review: a create item that is not an object is reported before it reaches the dispatch.
+	 *
+	 * Every create item is handed to set_body_params(), which takes an array.
+	 */
+	public function test_batch_null_create_item_returns_invalid_param(): void {
+		$this->authenticate_as_admin();
+
+		$response = $this->do_authenticated_request(
+			'POST',
+			'/mainwp/v2/batch',
+			[
+				'sites' => [
+					'create' => [ null ],
+				],
+			]
+		);
+
+		$data = $response->get_data();
+
+		$this->assertArrayHasKey( 'sites', $data );
+		$this->assertSame( 'rest_invalid_param', $data['sites']['error']['code'] );
+		$this->assertSame( 400, $data['sites']['error']['data']['status'] );
+		$this->assertArrayNotHasKey( 'create', $data['sites'] );
+	}
+
+	/**
+	 * PR review: ids still dispatch whether they arrive as numbers or as strings.
+	 *
+	 * A query-sent id is always a string, so the id check cannot demand an int.
+	 */
+	public function test_batch_id_action_accepts_int_and_numeric_string_ids(): void {
+		$this->authenticate_as_admin();
+
+		$response = $this->do_authenticated_request(
+			'POST',
+			'/mainwp/v2/batch',
+			[
+				'sites' => [
+					'sync' => [ 999999, '999998' ],
+				],
+			]
+		);
+
+		$data = $response->get_data();
+
+		$this->assertArrayHasKey( 'sites', $data );
+		$this->assertArrayNotHasKey( 'error', $data['sites'] );
+		$this->assertCount( 2, $data['sites']['sync'] );
+		$this->assertSame( 999999, $data['sites']['sync'][0]['id'] );
+		$this->assertSame( 999998, $data['sites']['sync'][1]['id'] );
+	}
+
+	/**
 	 * Item 4: a global monitoring settings write stores what the registered sanitizers produced,
 	 * not the raw body value.
 	 *

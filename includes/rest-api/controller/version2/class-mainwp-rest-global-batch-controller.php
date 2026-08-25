@@ -48,6 +48,34 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
     protected $controller_names = array( 'sites', 'clients', 'tags' );
 
     /**
+     * Actions the dispatch below reads per group, each marked with the shape it reads its items in:
+     * an 'item' action passes every item on as a request body, an 'id' action casts every item to an int.
+     *
+     * @var array
+     */
+    const GROUP_ACTIONS = array(
+        'sites'   => array(
+            'create'             => 'item',
+            'sync'               => 'id',
+            'reconnect'          => 'id',
+            'disconnect'         => 'id',
+            'suspend'            => 'id',
+            'check'              => 'id',
+            'remove'             => 'id',
+            'security'           => 'id',
+            'plugins'            => 'id',
+            'themes'             => 'id',
+            'non-mainwp-changes' => 'id',
+        ),
+        'clients' => array(
+            'create' => 'item',
+        ),
+        'tags'    => array(
+            'create' => 'item',
+        ),
+    );
+
+    /**
      * Method instance()
      *
      * Create public static instance.
@@ -125,10 +153,8 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
         }
 
         // Shapes are checked against the items the dispatch below reads, not against the body, so a
-        // group sent as a query parameter cannot skip the check. The dispatch indexes into the group
-        // and then walks each action list, so a scalar in either place would reach a foreach over
-        // something that is not a list. The group is dropped from the items as well as reported, so
-        // nothing in it is dispatched.
+        // group sent as a query parameter cannot skip the check. The group is dropped from the items
+        // as well as reported, so nothing in it is dispatched.
         foreach ( $this->controller_names as $group_name ) {
             if ( isset( $items[ $group_name ] ) ) {
                 $group_items = $items[ $group_name ];
@@ -140,22 +166,12 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
                 continue;
             }
 
-            $dispatchable = is_array( $group_items );
-            if ( $dispatchable ) {
-                foreach ( $group_items as $action_items ) {
-                    if ( ! is_array( $action_items ) ) {
-                        $dispatchable = false;
-                        break;
-                    }
-                }
-            }
-
-            if ( ! $dispatchable ) {
+            if ( ! $this->is_dispatchable_group( $group_name, $group_items ) ) {
                 $response[ $group_name ] = array(
                     'error' => array(
                         'code'    => 'rest_invalid_param',
                         /* translators: %s: batch group name */
-                        'message' => sprintf( __( 'The %s group must be an object of action arrays.', 'mainwp' ), $group_name ),
+                        'message' => sprintf( __( 'The %s group must be an object of supported action arrays.', 'mainwp' ), $group_name ),
                         'data'    => array( 'status' => 400 ),
                     ),
                 );
@@ -535,6 +551,55 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
         return $response;
     }
 
+
+    /**
+     * Check that a group carries only what the dispatch below can read.
+     *
+     * The dispatch indexes the group by action name and then walks each action list, so a scalar in
+     * either place would reach a foreach over something that is not a list, a JSON list carries none
+     * of the names it indexes by, and an action it does not read is silently dropped. Items are
+     * checked too: a create item is passed on as a request body and an id item is cast to an int, so
+     * neither can be an arbitrary value.
+     *
+     * @param string $group_name  Group name.
+     * @param mixed  $group_items Group value taken from the request.
+     * @return bool
+     */
+    private function is_dispatchable_group( $group_name, $group_items ) {
+        if ( ! is_array( $group_items ) ) {
+            return false;
+        }
+
+        // An empty group dispatches nothing and is not the caller getting the shape wrong. It is
+        // taken out of the list test as well, which range() cannot answer for a count of zero.
+        if ( array() === $group_items ) {
+            return true;
+        }
+
+        if ( array_keys( $group_items ) === range( 0, count( $group_items ) - 1 ) ) {
+            return false;
+        }
+
+        $actions = isset( self::GROUP_ACTIONS[ $group_name ] ) ? self::GROUP_ACTIONS[ $group_name ] : array();
+
+        foreach ( $group_items as $action_name => $action_items ) {
+            if ( ! isset( $actions[ $action_name ] ) || ! is_array( $action_items ) ) {
+                return false;
+            }
+
+            foreach ( $action_items as $item ) {
+                if ( 'item' === $actions[ $action_name ] ) {
+                    if ( ! is_array( $item ) ) {
+                        return false;
+                    }
+                } elseif ( ! is_int( $item ) && ! ( is_string( $item ) && is_numeric( $item ) ) ) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
 
     /**
      * Check batch limit.

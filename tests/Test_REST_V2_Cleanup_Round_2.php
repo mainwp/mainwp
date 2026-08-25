@@ -1484,6 +1484,65 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 	}
 
 	/**
+	 * PR review: a name that is not a string is refused instead of stored as an empty name.
+	 *
+	 * false is set and is not '', so the guard used to let it through and wpdb wrote it as ''.
+	 */
+	public function test_client_field_add_rejects_a_non_string_name(): void {
+		global $wpdb;
+
+		$table  = $wpdb->prefix . 'mainwp_wp_clients_fields';
+		$before = (int) $wpdb->get_var( "SELECT COUNT(field_id) FROM {$table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- table name built from the wpdb prefix, test-only row count.
+
+		$this->assertFalse(
+			\MainWP\Dashboard\MainWP_DB_Client::instance()->add_client_field(
+				[
+					'field_name' => false,
+					'field_desc' => 'Non string name',
+					'client_id'  => 0,
+				]
+			)
+		);
+
+		// A name lookup cannot answer for the empty name the pre-fix write left behind, so the row
+		// count is what says nothing was inserted.
+		$after = (int) $wpdb->get_var( "SELECT COUNT(field_id) FROM {$table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- table name built from the wpdb prefix, test-only row count.
+		$this->assertSame( $before, $after );
+	}
+
+	/**
+	 * The same on the edit side: a rename to a non-string leaves the stored row alone.
+	 */
+	public function test_client_field_update_rejects_a_non_string_name(): void {
+		$db = \MainWP\Dashboard\MainWP_DB_Client::instance();
+
+		$field = $db->add_client_field(
+			[
+				'field_name' => 'REST V2 Cleanup Non String Rename',
+				'field_desc' => 'before',
+				'client_id'  => 0,
+			]
+		);
+		$this->assertNotEmpty( $field, 'Could not create the client field the test renames.' );
+
+		$this->assertFalse(
+			$db->update_client_field(
+				$field->field_id,
+				[
+					'field_name' => false,
+					'field_desc' => 'after',
+				]
+			)
+		);
+
+		$stored = $db->get_client_fields_by( 'field_id', $field->field_id );
+		$this->assertSame( 'REST V2 Cleanup Non String Rename', $stored->field_name );
+		$this->assertSame( 'before', $stored->field_desc );
+
+		$this->delete_client_field_by_id( (int) $field->field_id );
+	}
+
+	/**
 	 * Item 6: a group with no items is still a group the endpoint cannot dispatch.
 	 */
 	public function test_batch_empty_group_value_returns_group_error(): void {
@@ -1686,6 +1745,55 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 			[
 				'sites' => [
 					'sync' => [ '1.9' ],
+				],
+			]
+		);
+
+		$data = $response->get_data();
+
+		$this->assertArrayHasKey( 'sites', $data );
+		$this->assertSame( 'rest_invalid_param', $data['sites']['error']['code'] );
+		$this->assertArrayNotHasKey( 'sync', $data['sites'] );
+	}
+
+	/**
+	 * PR review: an id of 0 is refused instead of dispatched into a no-op.
+	 *
+	 * Every site action skips an id that casts to 0, so the batch used to answer with neither an
+	 * operation nor an error entry for the item and the caller read that as a success.
+	 */
+	public function test_batch_id_action_rejects_a_zero_id(): void {
+		$this->authenticate_as_admin();
+
+		$response = $this->do_authenticated_request(
+			'POST',
+			'/mainwp/v2/batch',
+			[
+				'sites' => [
+					'sync' => [ 0 ],
+				],
+			]
+		);
+
+		$data = $response->get_data();
+
+		$this->assertArrayHasKey( 'sites', $data );
+		$this->assertSame( 'rest_invalid_param', $data['sites']['error']['code'] );
+		$this->assertArrayNotHasKey( 'sync', $data['sites'] );
+	}
+
+	/**
+	 * The same for a padded zero: "00" is all digits, and it casts to the id the dispatch skips.
+	 */
+	public function test_batch_id_action_rejects_a_padded_zero_string_id(): void {
+		$this->authenticate_as_admin();
+
+		$response = $this->do_authenticated_request(
+			'POST',
+			'/mainwp/v2/batch',
+			[
+				'sites' => [
+					'sync' => [ '00' ],
 				],
 			]
 		);

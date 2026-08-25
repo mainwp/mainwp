@@ -617,9 +617,11 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
                     if ( ! is_array( $item ) ) {
                         return false;
                     }
-                } elseif ( ! ( is_int( $item ) && $item >= 0 ) && ! ( is_string( $item ) && '' !== $item && ctype_digit( $item ) ) ) {
+                } elseif ( ! ( is_int( $item ) && $item > 0 ) && ! ( is_string( $item ) && ctype_digit( $item ) && (int) $item > 0 ) ) {
                     // A fractional or exponent string is numeric, and the (int) cast below would read
-                    // it as a whole id the caller never asked for, so only digits are accepted.
+                    // it as a whole id the caller never asked for, so only digits are accepted. Zero
+                    // is refused with them: every site action skips an id that casts to 0, so the
+                    // batch would answer with neither an operation nor an error for that item.
                     return false;
                 }
             }

@@ -122,7 +122,52 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
      */
     public function fetch_uptime_monitor( &$monitor, $global_settings = array(), $second_try = false, $params = array() ) { //phpcs:ignore -- NOSONAR - complexity.
 
+        static::apply_bypass_cache_settings( $monitor, $global_settings );
+
         $mo_url = static::get_apply_monitor_url( $monitor );
+
+        /**
+         * Filter to short-circuit an uptime monitor request before signing or HTTP communication.
+         *
+         * This filter fires early, before request signing or HTTP communication, allowing
+         * PHPUnit tests to bypass child site communication and provide a mocked response.
+         *
+         * SECURITY WARNING - TEST ONLY:
+         * This filter is only applied when ALL of the following conditions are met:
+         * 1. MAINWP_TESTING_MODE is defined and evaluates to true.
+         * 2. A PHPUnit test environment is detected through WP_TESTS_DOMAIN,
+         *    PHPUNIT_COMPOSER_INSTALL, or WP_TESTS_DIR.
+         *
+         * These checks help prevent production code from enabling the testing mode and
+         * spoofing child site responses.
+         *
+         * IMPORTANT: MAINWP_TESTING_MODE must only be defined in the PHPUnit bootstrap
+         * file (tests/bootstrap.php). It must not be defined in production code,
+         * wp-config.php, or plugin files.
+         *
+         * @since 6.1.8
+         *
+         * @param mixed  $pre_result     Return a non-false value to short-circuit the request.
+         * @param object $monitor        Website object being monitored.
+         * @param string $mo_url         Monitor URL.
+         * @param array  $global_settings Global monitor settings.
+         * @param bool   $second_try     Whether this is a retry attempt.
+         * @param array  $params         Request parameters.
+         * @return mixed The mocked response when short-circuited, or false to proceed normally.
+         */
+        $is_phpunit_env = defined( 'WP_TESTS_DOMAIN' ) || defined( 'PHPUNIT_COMPOSER_INSTALL' ) || ( defined( 'WP_TESTS_DIR' ) && WP_TESTS_DIR );
+
+        if ( defined( 'MAINWP_TESTING_MODE' ) && MAINWP_TESTING_MODE && $is_phpunit_env ) {
+            $pre_monitor = apply_filters( 'mainwp_fetch_uptime_monitor_pre', false, $monitor, $mo_url, $global_settings, $second_try, $params );
+
+            if ( false !== $pre_monitor ) {
+                return $pre_monitor;
+            }
+        }
+
+        $bypass_settings = ! empty( $monitor->bypass_cache_params ) ? $monitor->bypass_cache_params : array();
+        $headers_params  = is_array( $bypass_settings ) && ! empty( $bypass_settings['headers'] ) ? $bypass_settings['headers'] : array();
+        $headers_flatten = is_array( $bypass_settings ) && ! empty( $bypass_settings['headers_flatten'] ) ? $bypass_settings['headers_flatten'] : array();
 
         $start = microtime( true );
 
@@ -165,6 +210,8 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
             curl_setopt( $ch, CURLOPT_POSTFIELDS, $body );
 
             $headers = array( 'Content-Length' => strlen( $body ) );
+            $headers = array_merge( $headers, $headers_params );
+
             $headers = apply_filters( 'mainwp_connect_http_request_headers', $headers, false, $monitor );
 
             if ( class_exists( '\WpOrg\Requests\Requests' ) ) {
@@ -182,14 +229,23 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         curl_setopt( $ch, CURLOPT_HEADER, true );
         curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, strtoupper( $mo_apply_method ) );
 
-        if ( 'get' === $mo_apply_method ) {
+        if ( 'get' === $mo_apply_method || 'head' === $mo_apply_method ) {
             // to fix Content-Length.
             curl_setopt(
                 $ch,
                 CURLOPT_HTTPHEADER,
-                array(
-                    'Content-Length:', // removes the Content-Length header.
+                array_merge(
+                    array(
+                        'Content-Length:', // removes the Content-Length header.
+                    ),
+                    $headers_flatten
                 )
+            );
+        } elseif ( 'post' !== $mo_apply_method ) {
+            curl_setopt(
+                $ch,
+                CURLOPT_HTTPHEADER,
+                $headers_flatten
             );
         }
 
@@ -426,7 +482,50 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
             MainWP_Logger::instance()->log_uptime_check( 'Schedule uptime checks: [siteid=' . $website->id . '] :: [url=' . $website->url . ' :: [monitorid=' . $website->monitor_id . '] :: [monitor-active=' . $website->active . ']' );
 
+            self::apply_bypass_cache_settings( $website, $global_settings );
             $mo_url = static::get_apply_monitor_url( $website );
+
+            /**
+             * Filter to short-circuit an uptime monitor request before signing or HTTP communication.
+             *
+             * This filter fires early, before request signing or HTTP communication, allowing
+             * PHPUnit tests to bypass child site communication and provide a mocked response.
+             *
+             * SECURITY WARNING - TEST ONLY:
+             * This filter is only applied when ALL of the following conditions are met:
+             * 1. MAINWP_TESTING_MODE is defined and evaluates to true.
+             * 2. A PHPUnit test environment is detected through WP_TESTS_DOMAIN,
+             *    PHPUNIT_COMPOSER_INSTALL, or WP_TESTS_DIR.
+             *
+             * These checks help prevent production code from enabling the testing mode and
+             * spoofing child site responses.
+             *
+             * IMPORTANT: MAINWP_TESTING_MODE must only be defined in the PHPUnit bootstrap
+             * file (tests/bootstrap.php). It must not be defined in production code,
+             * wp-config.php, or plugin files.
+             *
+             * @since 6.1.8
+             *
+             * @param mixed  $pre_result     Return a non-false value to short-circuit the request.
+             * @param object $monitor        Website object being monitored.
+             * @param string $mo_url         Monitor URL.
+             * @param array  $global_settings Global monitor settings.
+             * @param array  $params         Request parameters.
+             * @return mixed The mocked response when short-circuited, or false to proceed normally.
+             */
+            $is_phpunit_env = defined( 'WP_TESTS_DOMAIN' ) || defined( 'PHPUNIT_COMPOSER_INSTALL' ) || ( defined( 'WP_TESTS_DIR' ) && WP_TESTS_DIR );
+
+            if ( defined( 'MAINWP_TESTING_MODE' ) && MAINWP_TESTING_MODE && $is_phpunit_env ) {
+                $pre_monitor = apply_filters( 'mainwp_fetch_uptime_urls_pre', false, $website, $mo_url, $global_settings, $params );
+
+                if ( false !== $pre_monitor ) {
+                    return $pre_monitor;
+                }
+            }
+
+            $bypass_settings = ! empty( $website->bypass_cache_params ) ? $website->bypass_cache_params : array();
+            $headers_params  = is_array( $bypass_settings ) && ! empty( $bypass_settings['headers'] ) ? $bypass_settings['headers'] : array();
+            $headers_flatten = is_array( $bypass_settings ) && ! empty( $bypass_settings['headers_flatten'] ) ? $bypass_settings['headers_flatten'] : array();
 
             if ( property_exists( $website, 'http_user' ) ) {
                 // MWP-1548: decrypt at boundary for outbound Basic Auth.
@@ -468,7 +567,8 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
                 curl_setopt( $ch, CURLOPT_POSTFIELDS, $body );
 
                 $headers = array( 'Content-Length' => strlen( $body ) );
-                $headers = apply_filters( 'mainwp_connect_http_request_headers', $headers, false, $monitor );
+                $headers = array_merge( $headers, $headers_params );
+                $headers = apply_filters( 'mainwp_connect_http_request_headers', $headers, false, $website );
 
                 if ( class_exists( '\WpOrg\Requests\Requests' ) ) {
                     $headers = \WpOrg\Requests\Requests::flatten( $headers );
@@ -484,14 +584,23 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
             curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, strtoupper( $mo_apply_method ) );
 
-            if ( 'get' === $mo_apply_method ) {
+            if ( 'get' === $mo_apply_method || 'head' === $mo_apply_method ) {
                 // to fix Content-Length.
                 curl_setopt(
                     $ch,
                     CURLOPT_HTTPHEADER,
-                    array(
-                        'Content-Length:', // removes the Content-Length header.
+                    array_merge(
+                        array(
+                            'Content-Length:', // removes the Content-Length header.
+                        ),
+                        $headers_flatten
                     )
+                );
+            } elseif ( 'post' !== $mo_apply_method ) {
+                curl_setopt(
+                    $ch,
+                    CURLOPT_HTTPHEADER,
+                    $headers_flatten
                 );
             }
 
@@ -609,6 +718,9 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
                                 $set_retry = true;
                             }
                         } elseif ( ! $is_notallowed && empty( $data ) && 'ping' !== $mo_apply_type ) {
+                            $site = &$handleToWebsite[ $resource_id ];
+                            static::apply_bypass_cache_settings( $site, $global_settings );
+                            $requestUrls[ $resource_id ] = static::get_apply_monitor_url( $site ); // Re-generate the monitoring URL.
                             curl_setopt( $info['handle'], CURLOPT_URL, $requestUrls[ $resource_id ] );
                             $_try_second = true;
                         }
@@ -729,9 +841,9 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
 
             $_try_second = false;
 
-            $mo_url = static::get_apply_monitor_url( $website );
-
             if ( empty( $data ) && 'ping' !== $mo_apply_type ) {
+                static::apply_bypass_cache_settings( $website, $global_settings );
+                $mo_url = static::get_apply_monitor_url( $website );
                 curl_setopt( $ch, CURLOPT_URL, $mo_url );
                 $_try_second = true;
             }
@@ -829,7 +941,8 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
             $status = static::DOWN; // Set the status to DOWN.
         }
 
-        $mo_url = static::get_apply_monitor_url( $monitor );
+        // CEM logs url.
+        $mo_url = ! empty( $monitor->_monitor_url ) ? $monitor->_monitor_url : 'UNDEFINED-URL';
 
         $_status_str = '';
         if ( static::UP === $status ) {
@@ -849,9 +962,10 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
             $heart_msg .= " {$code_msg}";
         }
 
-        $mo_apply_type   = static::get_apply_setting( 'type', $monitor->type, $global_settings, 'useglobal', 'http' );
-        $use_mo_active   = static::get_apply_setting( 'active', (int) $monitor->active, $global_settings, -1, 0 );
-        $use_mo_interval = static::get_apply_setting( 'interval', (int) $monitor->interval, $global_settings, -1, 60 );
+        $mo_apply_type    = static::get_apply_setting( 'type', $monitor->type, $global_settings, 'useglobal', 'http' );
+        $use_mo_active    = static::get_apply_setting( 'active', (int) $monitor->active, $global_settings, -1, 0 );
+        $use_mo_interval  = static::get_apply_setting( 'interval', (int) $monitor->interval, $global_settings, -1, 60 );
+        $use_bypass_cache = static::get_apply_setting( 'bypass_cache', (int) ( $monitor->bypass_cache ?? -1 ), $global_settings, -1, 0 );
 
         $keywordFound = true; // set it as found.
 
@@ -981,6 +1095,7 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         $debug .= ' :: [monitor_interval=' . $monitor->interval . '] :: [apply_monitor_interval=' . $use_mo_interval . ']';
         $debug .= ' :: [monitor_method=' . $monitor->method . '] :: [apply_monitor_method=' . $use_mo_method . ']';
         $debug .= ' :: [monitor_timeout=' . $monitor->timeout . '] :: [apply_monitor_timeout=' . $use_mo_timeout . ']';
+        $debug .= ' :: [bypass_cache=' . $monitor->bypass_cache . '] :: [apply_bypass_cache=' . $use_bypass_cache . ']';
         $debug .= ' :: [ping_ms=' . $heartbeat['ping_ms'] . ']';
         $debug .= ' :: [duration_sec=' . $sec_since_last . ']';
         $debug .= ' :: [retry=' . ( $set_retry ? 1 : 0 ) . ']';
@@ -1006,6 +1121,30 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
             'importance'         => $importance,
             'check_offline_time' => $db_timestamp,
         );
+    }
+
+    /**
+     * Method apply_bypass_cache_settings
+     *
+     * @param  mixed $monitor Monitor.
+     * @param  array $global_settings Global Settings.
+     * @return void
+     */
+    public static function apply_bypass_cache_settings( &$monitor, $global_settings ) {
+        $mo_apply_bypass_cache = static::get_apply_setting( 'bypass_cache', (int) ( $monitor->bypass_cache ?? -1 ), $global_settings, -1, 0 );
+        if ( 1 === (int) $mo_apply_bypass_cache ) {
+            $monitor->bypass_cache_params = array(
+                'bypass_cache_value' => (int) ( microtime( true ) * 1000000 ),
+                'headers'            => array(
+                    'Cache-Control' => 'no-cache, no-store, max-age=0',
+                    'Pragma'        => 'no-cache',
+                ),
+                'headers_flatten'    => array(
+                    'Cache-Control: no-cache, no-store, max-age=0',
+                    'Pragma: no-cache',
+                ),
+            );
+        }
     }
 
 
@@ -1101,34 +1240,93 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
     /**
      * Get apply monitor url.
      *
-     * @param  mixed $monitor monitor.
+     * @param  object $monitor monitor.
      *
      * @return string
      */
-    public static function get_apply_monitor_url( $monitor ) {
+    public static function get_apply_monitor_url( &$monitor ) { // phpcs:ignore --NOSONAR -complex.
+
+        if ( ! is_object( $monitor ) ) {
+            return '';
+        }
+
+        $url = '';
 
         if ( ! empty( $monitor ) ) {
 
-            if ( is_object( $monitor ) ) {
-                $url    = $monitor->url;
-                $suburl = $monitor->suburl;
-                $issub  = $monitor->issub;
-            } elseif ( is_array( $monitor ) ) {
-                $url    = $monitor['url'];
-                $suburl = $monitor['suburl'];
-                $issub  = $monitor['issub'];
-            }
-
-            if ( '/' !== substr( $url, -1 ) ) {
-                $url .= '/';
-            }
+            $url             = $monitor->url;
+            $suburl          = $monitor->suburl;
+            $issub           = $monitor->issub;
+            $bypass_settings = ! empty( $monitor->bypass_cache_params ) ? $monitor->bypass_cache_params : array();
 
             if ( $issub && ! empty( $suburl ) ) {
-                $url .= $suburl;
+                $url = static::build_apply_monitor_url( $url, $suburl );
+            }
+
+            if ( is_array( $bypass_settings ) && ! empty( $bypass_settings['bypass_cache_value'] ) ) {
+                $url = add_query_arg( 'mots', $bypass_settings['bypass_cache_value'], $url );
             }
         }
 
-        return apply_filters( 'mainwp_uptime_monitoring_check_url', $url, $monitor );
+        $monitor->_monitor_url = apply_filters( 'mainwp_uptime_monitoring_check_url', $url, $monitor );
+        return $monitor->_monitor_url;
+    }
+
+
+    /**
+     *
+     * Build the URL used by an uptime monitor or sub-monitor.
+     *
+     * @param  string $url monitor url.
+     * @param  string $suburl sub monitor url.
+     *
+     * The monitor URL contains only the site's base URL; HTTP Basic Authentication
+     * credentials are not embedded in the URL. Therefore, there are no `user` or
+     * `pass` components from wp_parse_url() that need to be preserved here.
+     *
+     * Authentication, when configured, is handled separately by the HTTP request
+     * layer rather than being included in the monitor URL.
+     */
+    public static function build_apply_monitor_url( $url, $suburl = '' ) {
+        if ( empty( $suburl ) ) {
+            return $url;
+        }
+
+        $url_parts    = wp_parse_url( $url );
+        $suburl_parts = wp_parse_url( $suburl );
+
+        if ( false === $url_parts || false === $suburl_parts ) {
+            return $url;
+        }
+
+        // Build the path first.
+        $base_path = isset( $url_parts['path'] ) ? rtrim( $url_parts['path'], '/' ) : '';
+        $sub_path  = isset( $suburl_parts['path'] ) ? ltrim( $suburl_parts['path'], '/' ) : '';
+
+        $url_parts['path'] = $base_path . '/' . $sub_path;
+
+        // Merge query parameters from the base URL and sub-monitor URL.
+        $query = array();
+
+        if ( isset( $url_parts['query'] ) ) {
+            parse_str( $url_parts['query'], $query );
+        }
+
+        if ( isset( $suburl_parts['query'] ) ) {
+            parse_str( $suburl_parts['query'], $sub_query );
+            $query = array_merge( $query, $sub_query );
+        }
+
+        $url_parts['query'] = http_build_query( $query );
+
+        // Rebuild the URL.
+        $scheme = isset( $url_parts['scheme'] ) ? $url_parts['scheme'] . '://' : '';
+        $host   = isset( $url_parts['host'] ) ? $url_parts['host'] : '';
+        $port   = isset( $url_parts['port'] ) ? ':' . $url_parts['port'] : '';
+        $path   = isset( $url_parts['path'] ) ? $url_parts['path'] : '';
+        $query  = ! empty( $url_parts['query'] ) ? '?' . $url_parts['query'] : '';
+
+        return $scheme . $host . $port . $path . $query;
     }
 
     /**

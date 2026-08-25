@@ -223,6 +223,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         wp_die( 'MainWP Test' );
     }
 
+
     /**
      * Method get_cron_schedules()
      *

@@ -367,8 +367,9 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
             $incidents_30d = (int) $this->db->count_site_incidents_stats( $monitor_id, $one_month_ago, $today );
 
             // Get monitor type & check frequency.
-            $type         = $this->get_apply_setting( 'type', $monitor->type ?? '', 'useglobal', 'http' );
-            $interval_min = (int) $this->get_apply_setting( 'interval', (int) ( $monitor->interval ?? 0 ), -1, 60 );
+            $type             = $this->get_apply_setting( 'type', $monitor->type ?? '', 'useglobal', 'http' );
+            $interval_min     = (int) $this->get_apply_setting( 'interval', (int) ( $monitor->interval ?? 0 ), -1, 60 );
+            $bypass_cache_opt = (int) $this->get_apply_setting( 'bypass_cache', (int) ( $monitor->bypass_cache ?? -1 ), -1, 0 );
 
             $record = array(
                 'id'                   => $monitor_id,
@@ -386,6 +387,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
                 'last_check_at'        => ! empty( $monitor->lasttime_check ) ? gmdate( 'Y-m-d H:i:s', (int) $monitor->lasttime_check ) : '',
                 'last_status_code'     => ! empty( $monitor->last_http_code ) ? (int) $monitor->last_http_code : '',
                 'last_status'          => $this->uptime_status( $monitor->last_status ?? null ),
+                'bypass_cache'         => $bypass_cache_opt,
             );
 
             // Filter data by allowed fields.
@@ -531,8 +533,9 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
         $heartbeat_data = $this->db->get_uptime_monitoring_stats( $monitor_id, $one_month_ago, $today );
 
         // Get monitor type & check frequency.
-        $type         = $this->get_apply_setting( 'type', $monitor->type ?? '', 'useglobal', 'http' );
-        $interval_min = (int) $this->get_apply_setting( 'interval', (int) ( $monitor->interval ?? 0 ), -1, 60 );
+        $type             = $this->get_apply_setting( 'type', $monitor->type ?? '', 'useglobal', 'http' );
+        $interval_min     = (int) $this->get_apply_setting( 'interval', (int) ( $monitor->interval ?? 0 ), -1, 60 );
+        $bypass_cache_opt = (int) $this->get_apply_setting( 'bypass_cache', (int) ( $monitor->bypass_cache ?? -1 ), -1, 0 );
 
         $record = array(
             'id'                   => $monitor_id,
@@ -552,6 +555,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
             'last_check_at'        => ! empty( $monitor->lasttime_check ) ? gmdate( 'Y-m-d H:i:s', (int) $monitor->lasttime_check ) : '',
             'last_status_code'     => ! empty( $monitor->last_http_code ) ? (int) $monitor->last_http_code : '',
             'last_status'          => $this->uptime_status( $monitor->last_status ?? null ),
+            'bypass_cache'         => $bypass_cache_opt,
         );
 
         return rest_ensure_response(
@@ -1014,7 +1018,16 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
         $error_msg = '';
         $result    = '';
         try {
-            $result = MainWP_Monitoring_Handler::handle_check_website( $website );
+            if ( ! empty( $monitor->issub ) ) {
+                $result = MainWP_Uptime_Monitoring_Handle::check_website_uptime_monitoring_status(
+                    $monitor,
+                    array(
+                        'ignore_compatible_save' => 1, // compatible.
+                    )
+                );
+            } else {
+                $result = MainWP_Monitoring_Handler::handle_check_website( $website );
+            }
         } catch ( \Exception $e ) {
             $error_msg = $e->getMessage();
         }
@@ -1110,6 +1123,10 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
             $updated_settings['keyword'] = $settings['keyword'];
         }
 
+        if ( isset( $settings['bypass_cache'] ) && in_array( (int) $settings['bypass_cache'], array( 1, 0 ), true ) ) {
+            $updated_settings['bypass_cache'] = $settings['bypass_cache'];
+        }
+
         // Apply filters to allow customization.
         $updated_settings = apply_filters( 'mainwp_uptime_monitoring_update_global_settings', $updated_settings );
 
@@ -1189,6 +1206,14 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
 
         // Update the monitor.
         $result = $this->db->update_wp_monitor( $update_data );
+
+        if ( isset( $settings['bypass_cache'] ) ) {
+            $bypass_cache = (int) $settings['bypass_cache'];
+            if ( in_array( $bypass_cache, array( -1, 1, 0 ), true ) ) {
+                MainWP_DB_Uptime_Monitoring::instance()->update_website_option( $monitor->wpid, 'bypass_cache', $bypass_cache );
+                $update_data['bypass_cache'] = $bypass_cache;
+            }
+        }
 
         if ( false === $result ) {
             return new WP_Error(
@@ -2208,6 +2233,11 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
                 'interval'        => array( 'type' => 'string' ),
                 'expected_status' => array( 'type' => array( 'string' ) ),
                 'keyword'         => array( 'type' => 'string' ),
+                'bypass_cache'    => array(
+                    'type'        => 'integer',
+                    'enum'        => array( -1, 0, 1 ),
+                    'description' => __( 'Cache bypass setting. -1 uses the global setting, 0 disables it, and 1 enables it.', 'mainwp' ),
+                ),
             ),
         );
     }
@@ -2256,6 +2286,11 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
                 'type'                 => array(
                     'type'        => 'string',
                     'description' => __( 'Monitor type.', 'mainwp' ),
+                    'context'     => array( 'view', 'monitor_view' ),
+                ),
+                'bypass_cache'         => array(
+                    'type'        => 'integer',
+                    'description' => __( 'Attempt to bypass page cache.', 'mainwp' ),
                     'context'     => array( 'view', 'monitor_view' ),
                 ),
                 'last_status'          => array(

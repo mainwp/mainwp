@@ -332,6 +332,46 @@ class Log_Changes_Logs_Helper {
     }
 
     /**
+     * Method get_changes_logs_object_title().
+     *
+     * @param object $item Logs type code.
+     * @param string $default_title Default title.
+     *
+     * @return strinng Object title.
+     */
+    public static function get_changes_logs_object_title( $item = null, $default_title = '' ) { //phpcs:ignore -- NOSONAR - long function.
+        $title = '';
+        if ( ! empty( $item->log_type_id ) ) {
+            $meta = isset( $item->meta ) && is_array( $item->meta )
+            ? $item->meta
+            : array();
+            if ( 'system-setting' === $item->context ) {
+                $title = isset( self::get_changes_logs_types( $item->log_type_id )['title'] ) ? self::get_changes_logs_types( $item->log_type_id )['title'] : '';
+                if ( empty( $title ) ) {
+                    $title = esc_html__( 'System Setting', 'mainwp' );
+                }
+            } elseif ( 'database' === $item->context ) {
+                if ( ! empty( $meta['tablenames'] ) ) {
+                    $title = is_array( $meta['tablenames'] ) ? implode( ', ', $meta['tablenames'] ) : esc_html( $meta['tablenames'] );
+                    $title = esc_html( $title );
+                }
+                if ( empty( $title ) ) {
+                    $title = esc_html__( 'Database Table', 'mainwp' );
+                }
+            } elseif ( ( 1970 === (int) $item->log_type_id || 1980 === (int) $item->log_type_id ) ) {
+                if ( ! empty( $meta['name'] ) && is_scalar( $meta['name'] ) ) {
+                    $title = esc_html( $meta['name'] );
+                } elseif ( empty( $default_title ) ) {
+                    $title = 1970 === (int) $item->log_type_id
+                        ? esc_html__( 'Plugin', 'mainwp' )
+                        : esc_html__( 'Theme', 'mainwp' );
+                }
+            }
+        }
+        return ! empty( $title ) ? $title : $default_title;
+    }
+
+    /**
      * Method get_history_changes().
      *
      * @param array $args Arguments.

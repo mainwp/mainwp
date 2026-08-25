@@ -1499,10 +1499,12 @@ jQuery(function ($) {
     });
     jQuery('.mainwp-checkbox-showhide-elements').on('click', function () {
         let hiel = $(this).attr('hide-parent');
-        // support multi hide values.
-        hiel.split(';').forEach((hi) => {
-            mainwp_showhide_elements(hi, $(this).find('input').is(':checked'));
-        });
+        if (hiel !== undefined && hiel !== '') {
+            // support multi hide values.
+            hiel.split(';').forEach((hi) => {
+                mainwp_showhide_elements(hi, $(this).find('input').is(':checked'));
+            });
+        }
         let hideEvent = $(this).attr('fire-event-parent') ?? '';
         if (hideEvent != '') {
             // to sure click events finished.

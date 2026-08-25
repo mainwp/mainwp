@@ -101,12 +101,6 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
         $query    = $request->get_query_params();
         $response = array();
 
-        // Check batch limit.
-        $limit = $this->check_batch_limit( $items );
-        if ( is_wp_error( $limit ) ) {
-            return $limit;
-        }
-
         // Groups the batch endpoint cannot dispatch (updates has no batch-capable create handler,
         // costs has no controller at all, anything else is unknown) are reported once each instead
         // of being dropped without a word or failing per item with a 405 from the core stub. For an
@@ -154,6 +148,13 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
                 );
                 unset( $items[ $group_name ] );
             }
+        }
+
+        // Counted after the malformed groups are dropped: nothing in them is dispatched, so their items
+        // must not be what pushes a request over the cap and hides the per-group error behind a 413.
+        $limit = $this->check_batch_limit( $items );
+        if ( is_wp_error( $limit ) ) {
+            return $limit;
         }
 
         foreach ( $this->controller_names as $con_name ) {

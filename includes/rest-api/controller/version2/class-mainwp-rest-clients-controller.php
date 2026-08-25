@@ -845,8 +845,8 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
             // add_client_field() returns false for a name it refuses to store as well as for a failed
             // insert, so a name left empty by sanitizing or already taken stays a client error and
             // everything else is a server failure.
-            $taken  = MainWP_DB_Client::instance()->get_client_fields_by( 'field_name', $name, $client_id );
-            $status = ( '' === $name || ! empty( $taken ) ) ? 400 : 500;
+            $taken  = $this->client_field_name_taken( $name, $client_id );
+            $status = ( '' === $name || $taken ) ? 400 : 500;
 
             return new WP_Error(
                 'create_field_failed',
@@ -919,8 +919,7 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
                 // The DB layer refuses a name left empty by sanitizing, and the unique index on
                 // (client_id, field_name) refuses a rename onto a name another field of this client
                 // already owns. Both are the caller's fault; anything else is the write itself failing.
-                $taken  = MainWP_DB_Client::instance()->get_client_fields_by( 'field_name', $name, $field->client_id );
-                $owned  = ! empty( $taken ) && (int) $taken->field_id !== (int) $field->field_id;
+                $owned  = $this->client_field_name_taken( $name, $field->client_id, $field->field_id );
                 $status = ( '' === $name || $owned ) ? 400 : 500;
 
                 return new WP_Error(
@@ -1133,6 +1132,43 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
         }
 
         return true;
+    }
+
+    /**
+     * Whether a client already has a field stored under the given name.
+     *
+     * @param string $name       Field name as the handler sanitized it before the write.
+     * @param int    $client_id  Client the field belongs to.
+     * @param int    $exclude_id Field id to skip, for a rename that keeps its own name.
+     *
+     * @uses MainWP_DB_Client::instance()->get_client_fields_by_params()
+     *
+     * @return bool
+     */
+    private function client_field_name_taken( $name, $client_id, $exclude_id = 0 ) {
+        // A field_name lookup strips [ and ] from the value it queries with while the stored name keeps
+        // them, so a bracketed name never matches its own row and a duplicate reads as a write failure.
+        // The unique index is on the stored name, so the names have to be compared as they are stored.
+        $client_id = (int) $client_id;
+        $fields    = MainWP_DB_Client::instance()->get_client_fields_by_params( array( 'client_id' => $client_id ) );
+
+        if ( ! is_array( $fields ) ) {
+            return false;
+        }
+
+        foreach ( $fields as $existing ) {
+            // Client 0 holds the general fields this route writes, and 0 is not a value the query filters
+            // on, so the owner check happens here.
+            if ( (int) $existing->client_id !== $client_id || (int) $existing->field_id === (int) $exclude_id ) {
+                continue;
+            }
+
+            if ( (string) $existing->field_name === (string) $name ) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

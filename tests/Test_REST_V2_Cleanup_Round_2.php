@@ -843,6 +843,101 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 	}
 
 	/**
+	 * A name with brackets in it is a duplicate like any other.
+	 *
+	 * The field_name lookup the status used to be worked out from strips [ and ] before it queries,
+	 * while the row keeps them, so the second add looked like the write itself had failed.
+	 */
+	public function test_client_fields_add_duplicate_bracketed_name_returns_400(): void {
+		global $wpdb;
+
+		$this->authenticate_as_admin();
+
+		$name = 'REST V2 Cleanup [Bracket] Field';
+
+		$created = $this->do_authenticated_request(
+			'POST',
+			'/mainwp/v2/clients/fields/add',
+			[
+				'name'        => $name,
+				'description' => 'first',
+			]
+		);
+
+		$this->assertSame( 200, $created->get_status() );
+		$this->assertSame( $name, $created->get_data()['data']['name'] );
+		$field_id = (int) $created->get_data()['data']['field_id'];
+
+		// The rejected insert is a real duplicate-key error, and wpdb prints those while the test suite
+		// has error display on.
+		$suppressed = $wpdb->suppress_errors( true );
+
+		$response = $this->do_authenticated_request(
+			'POST',
+			'/mainwp/v2/clients/fields/add',
+			[
+				'name'        => $name,
+				'description' => 'second',
+			]
+		);
+
+		$wpdb->suppress_errors( $suppressed );
+
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'create_field_failed', $response->get_data()['code'] );
+
+		$this->delete_client_field_by_id( $field_id );
+	}
+
+	/**
+	 * The same for a rename onto a bracketed name another field owns.
+	 */
+	public function test_client_fields_edit_duplicate_bracketed_name_returns_400(): void {
+		global $wpdb;
+
+		$this->authenticate_as_admin();
+
+		$name = 'REST V2 Cleanup [Bracket] Taken';
+
+		$owner = \MainWP\Dashboard\MainWP_DB_Client::instance()->add_client_field(
+			[
+				'field_name' => $name,
+				'field_desc' => 'owner',
+				'client_id'  => 0,
+			]
+		);
+		$this->assertNotEmpty( $owner, 'Could not create the client field that owns the name.' );
+
+		$field = \MainWP\Dashboard\MainWP_DB_Client::instance()->add_client_field(
+			[
+				'field_name' => 'REST V2 Cleanup Bracket Rename Field',
+				'field_desc' => 'before',
+				'client_id'  => 0,
+			]
+		);
+		$this->assertNotEmpty( $field, 'Could not create the client field the test renames.' );
+
+		$suppressed = $wpdb->suppress_errors( true );
+
+		$response = $this->do_authenticated_request(
+			'PUT',
+			'/mainwp/v2/clients/fields/' . $field->field_id . '/edit',
+			[ 'name' => $name ]
+		);
+
+		$wpdb->suppress_errors( $suppressed );
+
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'update_field_failed', $response->get_data()['code'] );
+
+		$stored = \MainWP\Dashboard\MainWP_DB_Client::instance()->get_client_fields_by( 'field_id', $field->field_id );
+		$this->assertSame( 'REST V2 Cleanup Bracket Rename Field', $stored->field_name );
+
+		$this->delete_client_field_by_id( (int) $owner->field_id );
+		$this->delete_client_field_by_id( (int) $field->field_id );
+	}
+
+	/**
 	 * Item 6: a group with no items is still a group the endpoint cannot dispatch.
 	 */
 	public function test_batch_empty_group_value_returns_group_error(): void {
@@ -1021,6 +1116,42 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 	}
 
 	/**
+	 * A malformed group cannot spend the batch limit.
+	 *
+	 * Its items are never dispatched, so counting them before the shape check let a scalar action
+	 * answer with the global 413 instead of the per-group error that says what is wrong.
+	 */
+	public function test_batch_malformed_group_is_dropped_before_the_limit_check(): void {
+		$this->authenticate_as_admin();
+
+		$lower_limit = static function () {
+			return 2;
+		};
+		add_filter( 'mainwp_rest_batch_items_limit', $lower_limit );
+
+		$response = $this->do_authenticated_request(
+			'POST',
+			'/mainwp/v2/batch',
+			[
+				'sites' => [
+					'sync'   => [ 1, 2, 3 ],
+					'create' => 'x',
+				],
+			]
+		);
+
+		remove_filter( 'mainwp_rest_batch_items_limit', $lower_limit );
+
+		$data = $response->get_data();
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertArrayHasKey( 'sites', $data );
+		$this->assertSame( 'rest_invalid_param', $data['sites']['error']['code'] );
+		$this->assertSame( 400, $data['sites']['error']['data']['status'] );
+		$this->assertArrayNotHasKey( 'sync', $data['sites'] );
+	}
+
+	/**
 	 * Item 6: a group the batch endpoint does not handle is reported, not ignored.
 	 */
 	public function test_batch_unknown_group_returns_group_error(): void {
@@ -1078,6 +1209,21 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 
 		if ( ! empty( $field ) ) {
 			\MainWP\Dashboard\MainWP_DB_Client::instance()->delete_client_field_by( 'field_id', $field->field_id, 0 );
+		}
+	}
+
+	/**
+	 * Delete a client field by id.
+	 *
+	 * A name lookup strips [ and ] from what it queries with, so a bracketed field has to be
+	 * cleaned up by id.
+	 *
+	 * @param int $field_id Field id.
+	 * @return void
+	 */
+	private function delete_client_field_by_id( int $field_id ): void {
+		if ( $field_id ) {
+			\MainWP\Dashboard\MainWP_DB_Client::instance()->delete_client_field_by( 'field_id', $field_id, 0 );
 		}
 	}
 }

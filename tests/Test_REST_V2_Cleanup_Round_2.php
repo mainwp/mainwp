@@ -544,8 +544,48 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 		$this->assertSame( 200, $response->get_status() );
 		$this->assertSame( 1, $data['success'] );
 		$this->assertSame( 'REST V2 Cleanup Field', $data['data']['name'] );
+		$this->assertIsInt( $data['data']['field_id'] );
 
 		$this->delete_client_field( 'REST V2 Cleanup Field' );
+	}
+
+	/**
+	 * PR review: the fields list answers field_id as the integer its schema declares.
+	 *
+	 * wpdb hands every column back as a string, so the mapping has to cast or the list disagrees
+	 * with the type a client reads off the schema.
+	 */
+	public function test_client_fields_list_returns_an_integer_field_id(): void {
+		$this->authenticate_as_admin();
+
+		$created = $this->do_authenticated_request(
+			'POST',
+			'/mainwp/v2/clients/fields/add',
+			[
+				'name'        => 'REST V2 Cleanup List Field',
+				'description' => 'REST V2 Cleanup List Field description',
+			]
+		);
+
+		$this->assertSame( 200, $created->get_status() );
+		$field_id = (int) $created->get_data()['data']['field_id'];
+
+		$response = $this->do_authenticated_request( 'GET', '/mainwp/v2/clients/fields' );
+
+		$this->assertSame( 200, $response->get_status() );
+
+		$listed = null;
+		foreach ( $response->get_data()['data'] as $field ) {
+			if ( $field_id === (int) $field['field_id'] ) {
+				$listed = $field;
+				break;
+			}
+		}
+
+		$this->assertNotNull( $listed, 'The created field is missing from the fields list.' );
+		$this->assertIsInt( $listed['field_id'] );
+
+		$this->delete_client_field_by_id( $field_id );
 	}
 
 	/**
@@ -1302,6 +1342,29 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 	}
 
 	/**
+	 * PR review: a client id of 0 is no client, not every general field.
+	 *
+	 * delete_client() reads the rows it is about to drop through this call, so a falsy id answering
+	 * with the whole general set would take every general field down with one client.
+	 */
+	public function test_client_field_lookup_by_client_id_zero_returns_nothing(): void {
+		$db = \MainWP\Dashboard\MainWP_DB_Client::instance();
+
+		$field = $db->add_client_field(
+			[
+				'field_name' => 'REST V2 Cleanup General Field',
+				'field_desc' => 'General field',
+				'client_id'  => 0,
+			]
+		);
+		$this->assertNotEmpty( $field, 'Could not create the general client field the test looks up.' );
+
+		$this->assertNull( $db->get_client_fields_by( 'client_id', 0 ) );
+
+		$this->delete_client_field_by_id( (int) $field->field_id );
+	}
+
+	/**
 	 * PR review: a field named "0" is edited and deleted through the routes by its own id.
 	 *
 	 * The route segment is read as an id whenever it is all digits, so "0" as a route parameter is
@@ -1788,6 +1851,31 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 
 		$this->assertSame( 200, $response->get_status() );
 		$this->assertSame( [], $data );
+	}
+
+	/**
+	 * PR review: an underscore parameter belongs to the REST server, not to a group name.
+	 *
+	 * _fields, _embed and _locale can arrive in a JSON body, and reporting them as unsupported
+	 * groups answered a request the caller never made.
+	 */
+	public function test_batch_reserved_underscore_body_param_is_not_a_group(): void {
+		$this->authenticate_as_admin();
+
+		$response = $this->do_authenticated_request(
+			'POST',
+			'/mainwp/v2/batch',
+			[
+				'_fields' => 'id',
+				'sites'   => [ 'sync' => [ 999999 ] ],
+			]
+		);
+
+		$data = $response->get_data();
+
+		$this->assertArrayNotHasKey( '_fields', $data );
+		$this->assertArrayHasKey( 'sites', $data );
+		$this->assertCount( 1, $data['sites']['sync'] );
 	}
 
 	/**

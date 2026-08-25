@@ -770,9 +770,10 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
 
         $data = array();
         foreach ( $fields as $field ) {
-            // A stored "0" is reported as the value it is, not as an empty one.
+            // A stored "0" is reported as the value it is, not as an empty one. field_id is cast
+            // because wpdb answers every column as a string and the schema declares an integer.
             $record = array(
-                'field_id'    => (int) $field->field_id ? $field->field_id : 0,
+                'field_id'    => isset( $field->field_id ) ? (int) $field->field_id : 0,
                 'name'        => isset( $field->field_name ) ? $field->field_name : '',
                 'description' => isset( $field->field_desc ) ? $field->field_desc : '',
             );
@@ -883,8 +884,9 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
         }
 
         // Prepare response data. A stored "0" is reported as the value it is, not as an empty one.
+        // field_id is cast because wpdb answers every column as a string and the schema declares an integer.
         $data = array(
-            'field_id'    => (int) $field->field_id ? $field->field_id : 0,
+            'field_id'    => isset( $field->field_id ) ? (int) $field->field_id : 0,
             'name'        => isset( $field->field_name ) ? $field->field_name : '',
             'description' => isset( $field->field_desc ) ? $field->field_desc : '',
         );

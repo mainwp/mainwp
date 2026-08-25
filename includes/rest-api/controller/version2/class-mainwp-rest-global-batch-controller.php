@@ -140,10 +140,11 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
         //
         // The names come from the same merged params the limit check and the dispatch read, so a
         // group sent only in the query string is answered rather than counted in silence. A group is
-        // always an array, so scalar params (per_page, the auth keys) name none, and the underscore
-        // parameters WordPress reserves for the REST server itself (_fields, _embed) are not the
-        // caller naming one either. The body is read on top of that because a falsy group is filtered
-        // out of the items, and for an unsupported name the value does not matter.
+        // always an array there, so scalar params (per_page, the auth keys) name none. The body is
+        // read on top of that because a falsy group is filtered out of the items, and because for an
+        // unsupported name the value does not matter, so a scalar body group is reported too.
+        // Whichever source it came from, an underscore parameter is one WordPress reserves for the
+        // REST server itself (_fields, _embed, _locale) and never a group the caller named.
         $groups = array();
         foreach ( $items as $param_name => $param_value ) {
             if ( is_array( $param_value ) && 0 !== strpos( (string) $param_name, '_' ) ) {
@@ -151,7 +152,9 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
             }
         }
         foreach ( array_keys( $body_groups ) as $body_group_name ) {
-            $groups[ $body_group_name ] = true;
+            if ( 0 !== strpos( (string) $body_group_name, '_' ) ) {
+                $groups[ $body_group_name ] = true;
+            }
         }
 
         foreach ( array_keys( $groups ) as $group_name ) {

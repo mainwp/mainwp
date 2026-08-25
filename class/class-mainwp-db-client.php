@@ -1277,7 +1277,10 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      */
     public function get_client_fields_by( $by = 'field_id', $value = null, $client_id = 0 ) {
 
-        if ( empty( $by ) || empty( $value ) ) {
+        // "0" is a name the column stores, so a falsy test here would make a field named "0" unfindable
+        // and let a second one be created under the same name. Only a value that was never supplied is
+        // refused; an id of 0 simply matches no row, as it did before.
+        if ( empty( $by ) || null === $value || '' === $value ) {
             return null;
         }
 

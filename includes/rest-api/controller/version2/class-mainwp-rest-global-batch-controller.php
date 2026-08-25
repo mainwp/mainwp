@@ -129,17 +129,32 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
         $query    = $request->get_query_params();
         $response = array();
 
-        // Groups the batch endpoint cannot dispatch (updates has no batch-capable create handler,
-        // costs has no controller at all, anything else is unknown) are reported once each instead
-        // of being dropped without a word or failing per item with a 405 from the core stub. For an
-        // unsupported name the value does not matter, so an empty or scalar group still gets the
-        // error. Only the body names groups, so an array-valued query param is not mistaken for one.
         $body_groups = $request->get_json_params();
         if ( empty( $body_groups ) || ! is_array( $body_groups ) ) {
             $body_groups = (array) $request->get_body_params();
         }
 
-        foreach ( array_keys( $body_groups ) as $group_name ) {
+        // Groups the batch endpoint cannot dispatch (updates has no batch-capable create handler,
+        // costs has no controller at all, anything else is unknown) are reported once each instead
+        // of being dropped without a word or failing per item with a 405 from the core stub.
+        //
+        // The names come from the same merged params the limit check and the dispatch read, so a
+        // group sent only in the query string is answered rather than counted in silence. A group is
+        // always an array, so scalar params (per_page, the auth keys) name none, and the underscore
+        // parameters WordPress reserves for the REST server itself (_fields, _embed) are not the
+        // caller naming one either. The body is read on top of that because a falsy group is filtered
+        // out of the items, and for an unsupported name the value does not matter.
+        $groups = array();
+        foreach ( $items as $param_name => $param_value ) {
+            if ( is_array( $param_value ) && 0 !== strpos( (string) $param_name, '_' ) ) {
+                $groups[ $param_name ] = true;
+            }
+        }
+        foreach ( array_keys( $body_groups ) as $body_group_name ) {
+            $groups[ $body_group_name ] = true;
+        }
+
+        foreach ( array_keys( $groups ) as $group_name ) {
             if ( ! in_array( $group_name, $this->controller_names, true ) ) {
                 $response[ $group_name ] = array(
                     'error' => array(

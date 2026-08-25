@@ -1244,11 +1244,12 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
         $decoded     = rawurldecode( (string) $raw );
         $field_value = trim( sanitize_text_field( wp_unslash( $decoded ) ) );
 
-        if ( empty( $field_value ) ) {
+        if ( '' === $field_value ) {
             return false;
         }
 
-        // Get client field by id.
+        // Get client field by id. A digit-only segment is an id, so "0" and any other all-digit name is
+        // addressable by its own id only, never by name.
         if ( ctype_digit( $field_value ) ) {
             return MainWP_DB_Client::instance()->get_client_fields_by( 'field_id', (int) $field_value );
         }

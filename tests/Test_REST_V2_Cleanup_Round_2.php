@@ -1276,6 +1276,82 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 	}
 
 	/**
+	 * PR review: the name lookup has to find a field named "0".
+	 *
+	 * A falsy test there hid the row from the duplicate check that stands in front of the unique
+	 * index, and from the token resolver that maps a name to the field it belongs to.
+	 */
+	public function test_client_field_name_lookup_finds_a_field_named_zero(): void {
+		$db = \MainWP\Dashboard\MainWP_DB_Client::instance();
+
+		$field = $db->add_client_field(
+			[
+				'field_name' => '0',
+				'field_desc' => 'Zero name field',
+				'client_id'  => 0,
+			]
+		);
+		$this->assertNotEmpty( $field, 'Could not create the client field the test looks up.' );
+
+		$found = $db->get_client_fields_by( 'field_name', '0', 0 );
+
+		$this->assertNotEmpty( $found, 'A field named "0" must be findable by name.' );
+		$this->assertSame( (int) $field->field_id, (int) $found->field_id );
+
+		$this->delete_client_field_by_id( (int) $field->field_id );
+	}
+
+	/**
+	 * PR review: a field named "0" is edited and deleted through the routes by its own id.
+	 *
+	 * The route segment is read as an id whenever it is all digits, so "0" as a route parameter is
+	 * the id 0 and never the name, the same way a field named "42" is only reachable by its own id.
+	 */
+	public function test_client_fields_named_zero_are_edited_and_deleted_by_id(): void {
+		$this->authenticate_as_admin();
+
+		$response = $this->do_authenticated_request(
+			'POST',
+			'/mainwp/v2/clients/fields/add',
+			[
+				'name'        => '0',
+				'description' => 'Zero name field',
+			]
+		);
+
+		$this->assertSame( 200, $response->get_status() );
+
+		$field_id = (int) $response->get_data()['data']['field_id'];
+		$this->assertNotSame( 0, $field_id );
+
+		$edited = $this->do_authenticated_request(
+			'PUT',
+			'/mainwp/v2/clients/fields/' . $field_id . '/edit',
+			[ 'description' => 'Zero name field edited' ]
+		);
+
+		$this->assertSame( 200, $edited->get_status() );
+
+		$stored = \MainWP\Dashboard\MainWP_DB_Client::instance()->get_client_fields_by( 'field_id', $field_id );
+		$this->assertSame( '0', $stored->field_name );
+		$this->assertSame( 'Zero name field edited', $stored->field_desc );
+
+		$by_name = $this->do_authenticated_request(
+			'PUT',
+			'/mainwp/v2/clients/fields/0/edit',
+			[ 'description' => 'Reached by name' ]
+		);
+
+		$this->assertSame( 404, $by_name->get_status() );
+		$this->assertSame( 'invalid_field_id', $by_name->get_data()['code'] );
+
+		$deleted = $this->do_authenticated_request( 'DELETE', '/mainwp/v2/clients/fields/' . $field_id . '/delete' );
+
+		$this->assertSame( 200, $deleted->get_status() );
+		$this->assertEmpty( \MainWP\Dashboard\MainWP_DB_Client::instance()->get_client_fields_by( 'field_id', $field_id ) );
+	}
+
+	/**
 	 * Item 6: a group with no items is still a group the endpoint cannot dispatch.
 	 */
 	public function test_batch_empty_group_value_returns_group_error(): void {
@@ -1643,6 +1719,75 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 		$this->assertArrayHasKey( 'unknown_group', $data );
 		$this->assertSame( 'rest_batch_group_not_supported', $data['unknown_group']['error']['code'] );
 		$this->assertSame( 400, $data['unknown_group']['error']['data']['status'] );
+	}
+
+	/**
+	 * PR review: a group sent only in the query string is answered, not dropped without a word.
+	 *
+	 * The limit check reads the merged params, so such a group already spent the caller's budget
+	 * while the report, which read the body alone, said nothing about it.
+	 */
+	public function test_batch_query_only_unsupported_group_is_reported(): void {
+		$this->authenticate_as_admin();
+
+		$response = $this->do_authenticated_raw_request(
+			'POST',
+			'/mainwp/v2/batch',
+			'',
+			'application/json',
+			[ 'updates' => [ 'create' => [ '1' ] ] ]
+		);
+
+		$data = $response->get_data();
+
+		$this->assertArrayHasKey( 'updates', $data );
+		$this->assertSame( 'rest_batch_group_not_supported', $data['updates']['error']['code'] );
+		$this->assertSame( 400, $data['updates']['error']['data']['status'] );
+	}
+
+	/**
+	 * A query-only unsupported group still counts toward the limit, as a body one does.
+	 */
+	public function test_batch_limit_counts_query_only_updates_items(): void {
+		$this->authenticate_as_admin();
+
+		$lower_limit = static function () {
+			return 2;
+		};
+		add_filter( 'mainwp_rest_batch_items_limit', $lower_limit );
+
+		$response = $this->do_authenticated_raw_request(
+			'POST',
+			'/mainwp/v2/batch',
+			'',
+			'application/json',
+			[ 'updates' => [ 'create' => [ '1', '2', '3' ] ] ]
+		);
+
+		remove_filter( 'mainwp_rest_batch_items_limit', $lower_limit );
+
+		$this->assertSame( 413, $response->get_status() );
+		$this->assertSame( 'mainwp_rest_request_entity_too_large', $response->get_data()['code'] );
+	}
+
+	/**
+	 * A group is always an array, so a scalar query parameter names none.
+	 */
+	public function test_batch_scalar_query_param_is_not_reported_as_a_group(): void {
+		$this->authenticate_as_admin();
+
+		$response = $this->do_authenticated_raw_request(
+			'POST',
+			'/mainwp/v2/batch',
+			'',
+			'application/json',
+			[ 'per_page' => '5' ]
+		);
+
+		$data = $response->get_data();
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( [], $data );
 	}
 
 	/**

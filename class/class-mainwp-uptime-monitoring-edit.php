@@ -192,9 +192,18 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                     }
                 }
 
-                $update = apply_filters( 'mainwp_uptime_monitoring_update_monitor_data', $update, $site_id );
+                $bypass_cache_opt = -1;
+                if ( empty( $update['issub'] ) ) {
+                    $bypass_cache_opt = isset( $_POST['mainwp_edit_monitor_bypass_cache'] ) && in_array( (int) $_POST['mainwp_edit_monitor_bypass_cache'], array( -1, 1, 0 ), true ) ? (int) $_POST['mainwp_edit_monitor_bypass_cache'] : -1;
+                }
+
+                $update = apply_filters( 'mainwp_uptime_monitoring_update_monitor_data', $update, $site_id, $bypass_cache_opt );
 
                 MainWP_DB_Uptime_Monitoring::instance()->update_wp_monitor( $update );
+
+                if ( $site_id && empty( $update['issub'] ) ) {
+                    MainWP_DB_Uptime_Monitoring::instance()->update_website_option( $site_id, 'bypass_cache', $bypass_cache_opt );
+                }
 
                 MainWP_Uptime_Monitoring_Schedule::instance()->check_to_disable_schedule_individual_uptime_monitoring(); // required a check to sync the settings.
                 if ( $sub_editing ) {
@@ -206,6 +215,7 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                 $chk_http_method            = isset( $_POST['mainwp_check_http_response_method'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_check_http_response_method'] ) ) : 'head';
                 $chk_http_method            = in_array( $chk_http_method, array( 'get', 'head' ) ) ? $chk_http_method : 'head';
                 $update['retention_limits'] = isset( $_POST['mainwp_edit_monitor_retention_days'] ) ? intval( $_POST['mainwp_edit_monitor_retention_days'] ) : 180;
+                $update['bypass_cache']     = ( isset( $_POST['mainwp_edit_monitor_bypass_cache'] ) ? 1 : 0 );
                 MainWP_Uptime_Monitoring_Handle::update_uptime_global_settings( $update );
                 MainWP_Utility::update_option( 'mainwp_uptime_monitor_cleanup_heartbeat_at', 0 ); // reset cleanup heartbeat to process on next run.
                 MainWP_Utility::update_option( 'mainwp_check_http_response', $check_http_response );
@@ -603,6 +613,44 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                     </div>
                 </div>
             </div>
+
+        <?php
+        if ( ! $is_sub_url ) {
+
+            if ( ! isset( $mo_settings['bypass_cache'] ) ) {
+                $mo_settings['bypass_cache'] = $individual ? -1 : 0;
+            }
+
+            $bypass_opt = (int) $mo_settings['bypass_cache'];
+            ?>
+            <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-monitor-general" <?php echo $disableGeneralSitesMonitoring ? 'style="display:none"' : ''; ?> hide-element="uptime-monitoring" default-indi-value="<?php echo $individual ? -1 : 0; ?>">
+                <label class="six wide column middle aligned" data-tooltip="<?php esc_attr_e( 'Attempts to bypass the page cache when checking uptime. This is a best-effort approach and does not guarantee that the request reaches the origin server.', 'mainwp' ); ?>" data-inverted="" data-position="top center">
+                <?php
+                MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_edit_monitor_bypass_cache', $bypass_opt, true, ( $individual ? -1 : 0 ) );
+                esc_html_e( 'Attempt to bypass page cache', 'mainwp' );
+                ?>
+                </label>
+                <?php
+                if ( $individual ) {
+                    ?>
+                    <div class="ten wide column">
+                        <select name="mainwp_edit_monitor_bypass_cache" id="mainwp_edit_monitor_bypass_cache" class="ui dropdown settings-field-value-change-handler" >
+                            <option value="-1" <?php echo -1 === $bypass_opt ? 'selected' : ''; ?>><?php esc_html_e( 'Use global setting', 'mainwp' ); ?></option>
+                            <option value="1" <?php echo 1 === $bypass_opt ? 'selected' : ''; ?>><?php esc_html_e( 'Enable', 'mainwp' ); ?></option>
+                            <option value="0" <?php echo 0 === $bypass_opt ? 'selected' : ''; ?>><?php esc_html_e( 'Disable', 'mainwp' ); ?></option>
+                        </select>
+                    </div>
+                    <?php
+                } else {
+                    ?>
+                    <div class="ten wide column ui toggle checkbox">
+                    <input type="checkbox" value="1" class="settings-field-value-change-handler" name="mainwp_edit_monitor_bypass_cache" id="mainwp_edit_monitor_bypass_cache" <?php echo 1 === $bypass_opt ? 'checked="true"' : ''; ?>/>
+                    </div>
+                    <?php
+                }
+                ?>
+            </div>
+        <?php } ?>
 
             <?php
             if ( ! $individual ) {

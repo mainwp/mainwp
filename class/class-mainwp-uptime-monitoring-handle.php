@@ -95,6 +95,7 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
             'suburl'          => '',
             'method'          => 'useglobal',
             'timeout'         => -1, // use global setting default.
+            'bypass_cache'    => -1,
         );
         if ( ! $individual ) {
             $up_codes = array( 200, 201, 202, 203, 204, 205, 206 );
@@ -107,6 +108,7 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
             $default['timeout']          = 60; // seconds.
             $default['interval']         = 60; // mins.
             $default['retention_limits'] = 180; // days.
+            $default['bypass_cache']     = 0;
             unset( $default['suburl'] );
         }
         return $default;
@@ -123,8 +125,16 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
         if ( empty( $global_settings ) || ! is_array( $global_settings ) ) {
             $global_settings = static::get_default_monitoring_settings( false );
         }
+        $update = false;
         if ( ! isset( $global_settings['retention_limits'] ) ) {
             $global_settings['retention_limits'] = 0; // to compatible.
+            $update                              = true;
+        }
+        if ( ! isset( $global_settings['bypass_cache'] ) ) {
+            $global_settings['bypass_cache'] = 0;
+            $update                          = true;
+        }
+        if ( $update ) {
             self::update_uptime_global_settings( $global_settings );
         }
         return $global_settings;

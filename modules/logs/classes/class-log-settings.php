@@ -368,9 +368,16 @@ class Log_Settings {
                 static::$enable_logs_items = array();
             }
 
-            if ( ! isset( static::$enable_logs_items['changeslogs'] ) ) {
-                static::$enable_logs_items['changeslogs'] = array_fill_keys( static::get_disabled_changes_logs_default_settings(), 0 );
-            }
+            $default_disabled_changeslogs = array_fill_keys(
+                static::get_disabled_changes_logs_default_settings(),
+                0
+            );
+
+            static::$enable_logs_items['changeslogs'] = array_replace(
+                $default_disabled_changeslogs,
+                static::$enable_logs_items['changeslogs'] ?? array()
+            );
+
         }
         return static::$enable_logs_items;
     }
@@ -381,7 +388,7 @@ class Log_Settings {
      * @return array Disalbed default.
      */
     public static function get_disabled_changes_logs_default_settings() {
-        return array( 1925, 1930, 1935, 1940, 1945, 1950, 1955 );
+        return array( 1310, 1315, 1680, 1925, 1930, 1935, 1940, 1945, 1950, 1955 );
     }
 
     /**

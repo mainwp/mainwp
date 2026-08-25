@@ -34,6 +34,14 @@ class Test_Uptime_Monitor_Scheduling extends \WP_UnitTestCase {
 	 */
 	protected $monitor_id = 0;
 
+    /**
+     * Created sub-monitor ID.
+     *
+     * @var int
+     */
+    protected $sub_monitor_id = 0;
+
+
 	/**
 	 * Uptime notification captured before email delivery.
 	 *
@@ -59,6 +67,14 @@ class Test_Uptime_Monitor_Scheduling extends \WP_UnitTestCase {
 		);
 
 		$this->monitor_id = $this->create_test_monitor( $this->site_id );
+
+        $this->sub_monitor_id = $this->create_test_monitor(
+            $this->site_id,
+            array(
+                'suburl' => 'testsubpage'
+            )
+        );
+
 	}
 
 	/**
@@ -82,8 +98,391 @@ class Test_Uptime_Monitor_Scheduling extends \WP_UnitTestCase {
 			$wpdb->delete( $wpdb->prefix . 'mainwp_wp', array( 'id' => $this->site_id ), array( '%d' ) );
 		}
 
+        if ( $this->sub_monitor_id ) {
+            MainWP_DB::instance()->delete_regular_process( false, $this->sub_monitor_id, 'monitor', 'uptime_notification' );
+            MainWP_DB_Uptime_Monitoring::instance()->delete_monitor( array( 'monitor_id' => $this->sub_monitor_id ) );
+        }
+
 		parent::tearDown();
 	}
+
+
+    /**
+     * Verify per-site bypass-cache inheritance for primary and sub-monitors.
+     *
+     * The resolved bypass-cache setting is used by URL construction, request
+     * headers, retries, and single/multi-monitor checks.
+     *
+     * Site -1: inherit Global 1, both monitors = 1.
+     * Site 0: override Global 1, both monitors = 0.
+     * Site 1: override Global 0, both monitors = 1.
+     *
+     * @return void
+     */
+    public function test_bypass_cache_setting_is_inherited_by_sub_monitors() {
+        $global_settings                 = $this->get_global_settings( 5 );
+        $global_settings['bypass_cache'] = 1;
+
+        // Per-site setting enabled.
+        MainWP_DB_Uptime_Monitoring::instance()->update_website_option(
+            $this->site_id,
+            'bypass_cache',
+            1
+        );
+
+        $primary_monitor = $this->get_monitor();
+        $sub_monitor     = MainWP_DB_Uptime_Monitoring::instance()->get_monitor_by(
+            false,
+            'monitor_id',
+            $this->sub_monitor_id
+        );
+
+        MainWP_Uptime_Monitoring_Connect::apply_bypass_cache_settings(
+            $primary_monitor,
+            $global_settings
+        );
+        MainWP_Uptime_Monitoring_Connect::apply_bypass_cache_settings(
+            $sub_monitor,
+            $global_settings
+        );
+
+        $this->assertSame(
+            1,
+            (int) ( $primary_monitor->bypass_cache ?? 0 ),
+            'The primary monitor should use the enabled per-site bypass_cache setting.'
+        );
+
+        $this->assertSame(
+            1,
+            (int) ( $sub_monitor->bypass_cache ?? 0 ),
+            'The sub-monitor should use the enabled per-site bypass_cache setting.'
+        );
+
+        $this->assertObjectHasProperty(
+            'bypass_cache_params',
+            $primary_monitor,
+            'The primary monitor should have bypass-cache request parameters.'
+        );
+
+        $this->assertObjectHasProperty(
+            'bypass_cache_params',
+            $sub_monitor,
+            'The sub-monitor should have bypass-cache request parameters.'
+        );
+
+        $this->assertNotEmpty(
+            $primary_monitor->bypass_cache_params['headers'],
+            'The primary monitor should have bypass-cache request headers.'
+        );
+
+        $this->assertNotEmpty(
+            $primary_monitor->bypass_cache_params['headers_flatten'],
+            'The primary monitor should have flattened bypass-cache request headers.'
+        );
+
+        $this->assertNotEmpty(
+            $sub_monitor->bypass_cache_params['headers'],
+            'The sub-monitor should have bypass-cache request headers.'
+        );
+
+        $this->assertNotEmpty(
+            $sub_monitor->bypass_cache_params['headers_flatten'],
+            'The sub-monitor should have flattened bypass-cache request headers.'
+        );
+
+        $primary_url    = MainWP_Uptime_Monitoring_Connect::get_apply_monitor_url( $primary_monitor );
+        $submonitor_url = MainWP_Uptime_Monitoring_Connect::get_apply_monitor_url( $sub_monitor );
+
+        $this->assertStringContainsString(
+            'mots=',
+            $primary_url,
+            'The primary monitor URL should contain the cache-bypass parameter.'
+        );
+
+        $this->assertStringContainsString(
+            'mots=',
+            $submonitor_url,
+            'The sub-monitor URL should contain the cache-bypass parameter.'
+        );
+
+        // Per-site setting disabled must override the global setting.
+        MainWP_DB_Uptime_Monitoring::instance()->update_website_option(
+            $this->site_id,
+            'bypass_cache',
+            0
+        );
+
+        $primary_monitor = $this->get_monitor();
+        $sub_monitor     = MainWP_DB_Uptime_Monitoring::instance()->get_monitor_by(
+            false,
+            'monitor_id',
+            $this->sub_monitor_id
+        );
+
+        MainWP_Uptime_Monitoring_Connect::apply_bypass_cache_settings(
+            $primary_monitor,
+            $global_settings
+        );
+        MainWP_Uptime_Monitoring_Connect::apply_bypass_cache_settings(
+            $sub_monitor,
+            $global_settings
+        );
+
+        $this->assertSame(
+            0,
+            (int) ( $primary_monitor->bypass_cache ?? 0 ),
+            'The primary monitor should use the disabled per-site bypass_cache setting.'
+        );
+
+        $this->assertSame(
+            0,
+            (int) ( $sub_monitor->bypass_cache ?? 0 ),
+            'The sub-monitor should use the disabled per-site bypass_cache setting.'
+        );
+
+        $this->assertObjectNotHasProperty(
+            'bypass_cache_params',
+            $primary_monitor,
+            'The primary monitor should not have bypass-cache request parameters when the setting is disabled.'
+        );
+
+        $this->assertObjectNotHasProperty(
+            'bypass_cache_params',
+            $sub_monitor,
+            'The sub-monitor should not have bypass-cache request parameters when the setting is disabled.'
+        );
+
+        $primary_url    = MainWP_Uptime_Monitoring_Connect::get_apply_monitor_url( $primary_monitor );
+        $submonitor_url = MainWP_Uptime_Monitoring_Connect::get_apply_monitor_url( $sub_monitor );
+
+        $this->assertStringNotContainsString(
+            'mots=',
+            $primary_url,
+            'The primary monitor URL should not contain the cache-bypass parameter.'
+        );
+
+        $this->assertStringNotContainsString(
+            'mots=',
+            $submonitor_url,
+            'The sub-monitor URL should not contain the cache-bypass parameter.'
+        );
+
+        // Per-site setting enabled must override the global setting.
+        $global_settings['bypass_cache'] = 0;
+
+        MainWP_DB_Uptime_Monitoring::instance()->update_website_option(
+            $this->site_id,
+            'bypass_cache',
+            1
+        );
+
+        $primary_monitor = $this->get_monitor();
+        $sub_monitor     = MainWP_DB_Uptime_Monitoring::instance()->get_monitor_by(
+            false,
+            'monitor_id',
+            $this->sub_monitor_id
+        );
+
+        MainWP_Uptime_Monitoring_Connect::apply_bypass_cache_settings(
+            $primary_monitor,
+            $global_settings
+        );
+        MainWP_Uptime_Monitoring_Connect::apply_bypass_cache_settings(
+            $sub_monitor,
+            $global_settings
+        );
+
+        $this->assertSame(
+            1,
+            (int) ( $primary_monitor->bypass_cache ?? 0 ),
+            'The primary monitor should use the enabled per-site bypass_cache setting.'
+        );
+
+        $this->assertSame(
+            1,
+            (int) ( $sub_monitor->bypass_cache ?? 0 ),
+            'The sub-monitor should use the enabled per-site bypass_cache setting.'
+        );
+
+        $this->assertObjectHasProperty(
+            'bypass_cache_params',
+            $primary_monitor,
+            'The primary monitor should have bypass-cache request parameters.'
+        );
+
+        $this->assertObjectHasProperty(
+            'bypass_cache_params',
+            $sub_monitor,
+            'The sub-monitor should have bypass-cache request parameters.'
+        );
+
+        $this->assertNotEmpty(
+            $primary_monitor->bypass_cache_params['headers'],
+            'The primary monitor should have bypass-cache request headers.'
+        );
+
+        $this->assertNotEmpty(
+            $primary_monitor->bypass_cache_params['headers_flatten'],
+            'The primary monitor should have flattened bypass-cache request headers.'
+        );
+
+        $this->assertNotEmpty(
+            $sub_monitor->bypass_cache_params['headers'],
+            'The sub-monitor should have bypass-cache request headers.'
+        );
+
+        $this->assertNotEmpty(
+            $sub_monitor->bypass_cache_params['headers_flatten'],
+            'The sub-monitor should have flattened bypass-cache request headers.'
+        );
+
+        $primary_url    = MainWP_Uptime_Monitoring_Connect::get_apply_monitor_url( $primary_monitor );
+        $submonitor_url = MainWP_Uptime_Monitoring_Connect::get_apply_monitor_url( $sub_monitor );
+
+        $this->assertStringContainsString(
+            'mots=',
+            $primary_url,
+            'The primary monitor URL should contain the cache-bypass parameter.'
+        );
+
+        $this->assertStringContainsString(
+            'mots=',
+            $submonitor_url,
+            'The sub-monitor URL should contain the cache-bypass parameter.'
+        );
+
+
+    }
+
+    /**
+     * Verify per-site bypass-cache inheritance across uptime monitor flows.
+     *
+     * The per-site bypass-cache setting is the source of truth for uptime monitor
+     * processing. It must be inherited consistently by both single-monitor and
+     * multi-monitor flows before any subsequent bypass-cache handling occurs.
+     *
+     * Once inherited, the resolved setting must remain consistent throughout the
+     * monitor flow, including generated bypass-cache request parameters, request
+     * headers, and retry attempts.
+     *
+     * @return void
+     */
+    public function test_per_site_bypass_cache_setting_is_inherited_across_uptime_monitor_flows() {
+
+        $global_settings                 = $this->get_global_settings( 5 );
+        $global_settings['bypass_cache'] = 1;
+
+        // Enable the per-site bypass-cache setting.
+        MainWP_DB_Uptime_Monitoring::instance()->update_website_option(
+            $this->site_id,
+            'bypass_cache',
+            -1
+        );
+
+        // Verify inheritance in the single-monitor flow.
+        $primary_monitor = $this->get_monitor();
+
+        $this->mock_fetch_uptime_monitor();
+
+        $monitor = MainWP_Uptime_Monitoring_Connect::instance()->fetch_uptime_monitor(
+            $primary_monitor,
+            $global_settings
+        );
+
+        $this->assertObjectHasProperty(
+            'bypass_cache_params',
+            $monitor,
+            'The monitor should have bypass-cache request parameters.'
+        );
+
+        $this->assertIsInt(
+            $monitor->bypass_cache_params['bypass_cache_value'],
+            'The monitor should have an integer bypass_cache_value.'
+        );
+
+        $this->assertNotEmpty(
+            $monitor->bypass_cache_params['headers'],
+            'The monitor should have bypass-cache request headers.'
+        );
+
+        $this->assertNotEmpty(
+            $monitor->bypass_cache_params['headers_flatten'],
+            'The monitor should have flattened bypass-cache request headers.'
+        );
+
+        // Verify inheritance in the multi-monitor URL flow.
+        $primary_monitor = $this->get_monitor();
+
+        $this->mock_fetch_uptime_urls();
+
+        $output                  = new \stdClass();
+        $output->global_settings = $global_settings;
+        $monitors = array( $primary_monitor );
+        $monitor = MainWP_Uptime_Monitoring_Connect::instance()->fetch_uptime_urls(
+            $monitors,
+            false,
+            $output
+        );
+
+        $this->assertObjectHasProperty(
+            'bypass_cache_params',
+            $monitor,
+            'The monitor should have bypass-cache request parameters.'
+        );
+
+        $this->assertIsInt(
+            $monitor->bypass_cache_params['bypass_cache_value'],
+            'The monitor should have an integer bypass_cache_value.'
+        );
+
+        $this->assertNotEmpty(
+            $monitor->bypass_cache_params['headers'],
+            'The monitor should have bypass-cache request headers.'
+        );
+
+        $this->assertNotEmpty(
+            $monitor->bypass_cache_params['headers_flatten'],
+            'The monitor should have flattened bypass-cache request headers.'
+        );
+    }
+
+    /**
+     * Bypass the uptime monitor request during testing.
+     *
+     * Uses the mainwp_fetch_uptime_monitor_pre filter to return the monitor
+     * object directly and prevent the actual uptime monitor request.
+     *
+     * @return void
+     */
+    private function mock_fetch_uptime_monitor(): void {
+        add_filter(
+            'mainwp_fetch_uptime_monitor_pre',
+            function ( $result, $monitor, $mo_url, $global_settings, $second_try, $params ) {
+                return $monitor;
+            },
+            10,
+            6
+        );
+    }
+
+    /**
+     * Bypass the uptime monitor URL request during testing.
+     *
+     * Uses the mainwp_fetch_uptime_urls_pre filter to return the website object
+     * directly and prevent the actual uptime monitor URL request.
+     *
+     * @return void
+     */
+    private function mock_fetch_uptime_urls(): void {
+        add_filter(
+            'mainwp_fetch_uptime_urls_pre',
+            function ( $result, $website, $mo_url, $global_settings, $params ) {
+                return $website;
+            },
+            10,
+            5
+        );
+    }
 
 	/**
 	 * A healthy monitor using the global interval is not selected every minute.
@@ -552,6 +951,8 @@ class Test_Uptime_Monitor_Scheduling extends \WP_UnitTestCase {
 			),
 			$args
 		);
+
+        $data['issub'] =  !empty($data['suburl']) ? 1 : 0;
 
 		$wpdb->insert( $wpdb->prefix . 'mainwp_monitors', $data );
 

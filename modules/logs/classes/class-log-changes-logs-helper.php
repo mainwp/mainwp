@@ -355,7 +355,7 @@ class Log_Changes_Logs_Helper {
                 if ( empty( $title ) ) {
                     $title = esc_html__( 'Database Table', 'mainwp' );
                 }
-            } elseif ( ( 1970 === (int) $item->log_type_id || 1980 === (int) $item->log_type_id ) && ! empty( $item->meta['name'] ) ) {
+            } elseif ( ( 1970 === (int) $item->log_type_id || 1980 === (int) $item->log_type_id ) ) {
                 if ( ! empty( $item->meta['name'] ) && is_scalar( $item->meta['name'] ) ) {
                     $title = esc_html( $item->meta['name'] );
                 } elseif ( empty( $default_title ) ) {

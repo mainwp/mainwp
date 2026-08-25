@@ -1159,12 +1159,12 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
      * Get apply monitor url.
      *
      * @param  mixed $monitor monitor.
-     * @param  bool  $raw_url True if get raw monitor url.
      *
      * @return string
      */
     public static function get_apply_monitor_url( $monitor ) { // phpcs:ignore --NOSONAR -complex.
         $url = '';
+
         if ( ! empty( $monitor ) ) {
 
             if ( is_object( $monitor ) ) {
@@ -1179,12 +1179,8 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
                 $bypass_settings = ! empty( $monitor['bypass_cache_params'] ) ? $monitor['bypass_cache_params'] : array(); // compatible.
             }
 
-            if ( '/' !== substr( $url, -1 ) ) {
-                $url .= '/';
-            }
-
             if ( $issub && ! empty( $suburl ) ) {
-                $url .= $suburl;
+                $url = static::build_apply_monitor_url( $url, $suburl );
             }
 
             if ( is_array( $bypass_settings ) && ! empty( $bypass_settings['bypass_cache_value'] ) ) {
@@ -1193,6 +1189,57 @@ class MainWP_Uptime_Monitoring_Connect { // phpcs:ignore Generic.Classes.Opening
         }
 
         return apply_filters( 'mainwp_uptime_monitoring_check_url', $url, $monitor );
+    }
+
+
+    /**
+     * Build apply monitor url.
+     *
+     * @param  string $url monitor url.
+     * @param  string $suburl sub monitor url.
+     *
+     * @return string
+     */
+    public static function build_apply_monitor_url( $url, $suburl = '' ) {
+        if ( empty( $suburl ) ) {
+            return $url;
+        }
+
+        $url_parts    = wp_parse_url( $url );
+        $suburl_parts = wp_parse_url( $suburl );
+
+        if ( false === $url_parts || false === $suburl_parts ) {
+            return $url;
+        }
+
+        // Build the path first.
+        $base_path = isset( $url_parts['path'] ) ? rtrim( $url_parts['path'], '/' ) : '';
+        $sub_path  = isset( $suburl_parts['path'] ) ? ltrim( $suburl_parts['path'], '/' ) : '';
+
+        $url_parts['path'] = $base_path . '/' . $sub_path;
+
+        // Merge query parameters from the base URL and sub-monitor URL.
+        $query = array();
+
+        if ( isset( $url_parts['query'] ) ) {
+            parse_str( $url_parts['query'], $query );
+        }
+
+        if ( isset( $suburl_parts['query'] ) ) {
+            parse_str( $suburl_parts['query'], $sub_query );
+            $query = array_merge( $query, $sub_query );
+        }
+
+        $url_parts['query'] = http_build_query( $query );
+
+        // Rebuild the URL.
+        $scheme = isset( $url_parts['scheme'] ) ? $url_parts['scheme'] . '://' : '';
+        $host   = isset( $url_parts['host'] ) ? $url_parts['host'] : '';
+        $port   = isset( $url_parts['port'] ) ? ':' . $url_parts['port'] : '';
+        $path   = isset( $url_parts['path'] ) ? $url_parts['path'] : '';
+        $query  = ! empty( $url_parts['query'] ) ? '?' . $url_parts['query'] : '';
+
+        return $scheme . $host . $port . $path . $query;
     }
 
     /**

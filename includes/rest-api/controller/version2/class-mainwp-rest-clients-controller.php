@@ -844,6 +844,17 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
             );
         }
 
+        // field_desc is varchar(255), so a longer description is either refused by the write or stored
+        // truncated depending on the server's strict mode, and neither answers what the caller sent.
+        // A body read as raw JSON skips the registered maxLength, so the limit is enforced here as well.
+        if ( mb_strlen( $desc ) > 255 ) {
+            return new WP_Error(
+                'invalid_field_value',
+                __( 'Description must be 255 characters or fewer.', 'mainwp' ),
+                array( 'status' => 400 )
+            );
+        }
+
         $field = MainWP_DB_Client::instance()->add_client_field(
             array(
                 'field_name' => $name,
@@ -923,6 +934,17 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
             return new WP_Error(
                 'invalid_field_value',
                 __( 'Name must be 191 characters or fewer.', 'mainwp' ),
+                array( 'status' => 400 )
+            );
+        }
+
+        // field_desc is varchar(255), so a longer description is either refused by the write or stored
+        // truncated depending on the server's strict mode, and neither answers what the caller sent.
+        // A body read as raw JSON skips the registered maxLength, so the limit is enforced here as well.
+        if ( mb_strlen( $desc ) > 255 ) {
+            return new WP_Error(
+                'invalid_field_value',
+                __( 'Description must be 255 characters or fewer.', 'mainwp' ),
                 array( 'status' => 400 )
             );
         }
@@ -1016,6 +1038,7 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
             'description' => array(
                 'required'          => false,
                 'type'              => 'string',
+                'maxLength'         => 255,
                 'sanitize_callback' => 'sanitize_text_field',
                 'description'       => __( 'Field description.', 'mainwp' ),
             ),
@@ -1039,6 +1062,7 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
             'description' => array(
                 'required'          => true,
                 'type'              => 'string',
+                'maxLength'         => 255,
                 'sanitize_callback' => 'sanitize_text_field',
                 'description'       => __( 'Field description.', 'mainwp' ),
             ),

@@ -1112,6 +1112,81 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 	}
 
 	/**
+	 * A description longer than the column is a client error, not a silently shortened write.
+	 *
+	 * field_desc is varchar(255): wpdb truncates a longer description, so the add would answer 200
+	 * with a stored value the caller never sent.
+	 */
+	public function test_client_fields_add_description_over_255_characters_returns_400(): void {
+		$this->authenticate_as_admin();
+
+		$response = $this->do_authenticated_request(
+			'POST',
+			'/mainwp/v2/clients/fields/add',
+			[
+				'name'        => 'REST V2 Cleanup Long Desc Field',
+				'description' => str_pad( 'REST V2 Cleanup Long Description ', 256, 'x' ),
+			]
+		);
+
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'invalid_field_value', $response->get_data()['code'] );
+	}
+
+	/**
+	 * The same for an edit that sets a description longer than the column.
+	 */
+	public function test_client_fields_edit_description_over_255_characters_returns_400(): void {
+		$this->authenticate_as_admin();
+
+		$field = \MainWP\Dashboard\MainWP_DB_Client::instance()->add_client_field(
+			[
+				'field_name' => 'REST V2 Cleanup Long Desc Edit Field',
+				'field_desc' => 'before',
+				'client_id'  => 0,
+			]
+		);
+		$this->assertNotEmpty( $field, 'Could not create the client field the test edits.' );
+
+		$response = $this->do_authenticated_request(
+			'PUT',
+			'/mainwp/v2/clients/fields/' . $field->field_id . '/edit',
+			[ 'description' => str_pad( 'REST V2 Cleanup Long Description ', 256, 'x' ) ]
+		);
+
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'invalid_field_value', $response->get_data()['code'] );
+
+		$stored = \MainWP\Dashboard\MainWP_DB_Client::instance()->get_client_fields_by( 'field_id', $field->field_id );
+		$this->assertSame( 'before', $stored->field_desc );
+
+		$this->delete_client_field_by_id( (int) $field->field_id );
+	}
+
+	/**
+	 * A description of exactly the column width is still storable.
+	 */
+	public function test_client_fields_add_description_of_255_characters_succeeds(): void {
+		$this->authenticate_as_admin();
+
+		$desc = str_pad( 'REST V2 Cleanup Max Description ', 255, 'x' );
+
+		$response = $this->do_authenticated_request(
+			'POST',
+			'/mainwp/v2/clients/fields/add',
+			[
+				'name'        => 'REST V2 Cleanup Max Desc Field',
+				'description' => $desc,
+			]
+		);
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( $desc, $response->get_data()['data']['description'] );
+
+		$this->delete_client_field_by_id( (int) $response->get_data()['data']['field_id'] );
+	}
+
+	/**
 	 * Item 6: a group with no items is still a group the endpoint cannot dispatch.
 	 */
 	public function test_batch_empty_group_value_returns_group_error(): void {

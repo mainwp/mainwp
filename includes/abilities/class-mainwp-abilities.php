@@ -129,11 +129,11 @@ class MainWP_Abilities {
 
         $method = strtoupper( $request->get_method() );
         if ( 'GET' === $method ) {
-            return static::normalize_get_input_transport( $response, $request );
+            return self::normalize_get_input_transport( $response, $request );
         }
 
         if ( 'DELETE' === $method ) {
-            return static::normalize_delete_input_transport( $response, $request );
+            return self::normalize_delete_input_transport( $response, $request );
         }
 
         return $response;
@@ -153,10 +153,10 @@ class MainWP_Abilities {
         }
 
         if ( array_key_exists( 'input', $query ) ) {
-            return static::invalid_input_transport();
+            return self::invalid_input_transport();
         }
 
-        $input = static::decode_input_object( $query['input_json'], self::MAX_GET_INPUT_BYTES );
+        $input = self::decode_input_object( $query['input_json'], self::MAX_GET_INPUT_BYTES );
         if ( is_wp_error( $input ) ) {
             return $input;
         }
@@ -181,22 +181,22 @@ class MainWP_Abilities {
 
         if ( '' === trim( $body ) ) {
             if ( array_key_exists( 'input_json', $query ) ) {
-                return static::invalid_input_transport();
+                return self::invalid_input_transport();
             }
             return $response;
         }
 
         if ( array_key_exists( 'input', $query ) || array_key_exists( 'input_json', $query ) ) {
-            return static::invalid_input_transport();
+            return self::invalid_input_transport();
         }
 
         $content_type = $request->get_content_type();
         if ( ! is_array( $content_type ) || 'application/json' !== $content_type['value'] ) {
-            return static::invalid_input_transport();
+            return self::invalid_input_transport();
         }
 
         if ( strlen( $body ) > self::MAX_DELETE_INPUT_BYTES ) {
-            return static::invalid_input_transport();
+            return self::invalid_input_transport();
         }
 
         $shape   = json_decode( $body, false, 32 );
@@ -208,12 +208,12 @@ class MainWP_Abilities {
             || ! $shape->input instanceof \stdClass
             || ! is_array( $decoded )
         ) {
-            return static::invalid_input_transport();
+            return self::invalid_input_transport();
         }
 
         $input = $decoded['input'];
         if ( ! is_array( $input ) ) {
-            return static::invalid_input_transport();
+            return self::invalid_input_transport();
         }
 
         $query['input'] = $input;
@@ -231,7 +231,7 @@ class MainWP_Abilities {
      */
     private static function decode_input_object( $raw, int $max_bytes ) {
         if ( ! is_string( $raw ) || strlen( $raw ) > $max_bytes ) {
-            return static::invalid_input_transport();
+            return self::invalid_input_transport();
         }
 
         $decoded = json_decode( $raw, true, 32 );
@@ -240,7 +240,7 @@ class MainWP_Abilities {
             || ! is_array( $decoded )
             || '{' !== substr( ltrim( $raw ), 0, 1 )
         ) {
-            return static::invalid_input_transport();
+            return self::invalid_input_transport();
         }
 
         return $decoded;

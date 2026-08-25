@@ -1210,7 +1210,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
         if ( isset( $settings['bypass_cache'] ) ) {
             $bypass_cache = (int) $settings['bypass_cache'];
             if ( in_array( $bypass_cache, array( -1, 1, 0 ), true ) ) {
-                MainWP_DB_Uptime_Monitoring::instance()->update_website_option( $website_id, 'bypass_cache', $bypass_cache );
+                MainWP_DB_Uptime_Monitoring::instance()->update_website_option( $monitor->wpid, 'bypass_cache', $bypass_cache );
                 $update_data['bypass_cache'] = $bypass_cache;
             }
         }

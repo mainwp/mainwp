@@ -2059,8 +2059,8 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             || ( 'themes-updates' === $current_tab && 0 < $total_theme_upgrades )
             || ( 'wordpress-updates' === $current_tab && 0 < $total_wp_upgrades )
             || ( 'translations-updates' === $current_tab && 0 < $total_translation_upgrades )
-            || ( 'abandoned-plugins' === $current_tab && 0 < $total_plugins_outdate )
-            || ( 'abandoned-themes' === $current_tab && 0 < $total_themes_outdate );
+            || 'abandoned-plugins' === $current_tab
+            || 'abandoned-themes' === $current_tab;
         $current_tab_updates_count = 0;
 
         if ( 'plugins-updates' === $current_tab ) {

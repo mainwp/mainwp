@@ -2685,9 +2685,10 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                 // groupids is validated and sanitized in the database save function
                 // before updating the group associations.
                 'groupids'               => array(
-                    'description' => __( 'Site tag/group IDs. Accepts a comma-separated string of IDs.', 'mainwp' ),
+                    'description' => __( 'Site tag/group IDs as a comma-separated string.', 'mainwp' ),
                     'context'     => array( 'edit' ),
                 ),
+
             ),
         );
     }
@@ -3089,6 +3090,16 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             return new \WP_Error(
                 'rest_invalid_param',
                 __( 'The "tags" parameter is not supported for this endpoint.', 'mainwp' ),
+                array(
+                    'status' => 400,
+                )
+            );
+        }
+
+        if ( isset( $request['groupids'] ) && ! is_string( $request['groupids'] ) ) {
+            return new WP_Error(
+                'rest_invalid_param',
+                __( 'The groupids parameter must be a string.', 'mainwp' ),
                 array(
                     'status' => 400,
                 )

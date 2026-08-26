@@ -1125,8 +1125,17 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         // to support remove site's groups/tags.
         if ( isset( $data['groupids'] ) ) {
             $groupids = array();
+
             if ( ! empty( $data['groupids'] ) ) {
-                $groupids = explode( ',', sanitize_text_field( wp_unslash( $data['groupids'] ) ) );
+                $groupids = array_filter(
+                    array_map(
+                        'absint',
+                        explode(
+                            ',',
+                            sanitize_text_field( wp_unslash( $data['groupids'] ) )
+                        )
+                    )
+                );
             }
 
             $table_wp_group = esc_sql( $this->table_name( 'wp_group' ) );

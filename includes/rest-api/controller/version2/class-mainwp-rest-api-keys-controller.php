@@ -242,8 +242,8 @@ class MainWP_Rest_API_Keys_Controller extends MainWP_REST_Controller { //phpcs:i
         $consumer_key    = 'ck_' . $_consumer_key;
         $consumer_secret = 'cs_' . $_consumer_secret;
         $active          = ! empty( $body['active'] ) ? 1 : 0;
-        $permission      = ! empty( $body['permissions'] ) ? sanitize_text_field( wp_unslash( $body['permissions'] ) ) : '';
-        $desc            = ! empty( $body['description'] ) ? sanitize_text_field( wp_unslash( $body['description'] ) ) : '';
+        $permission      = ! empty( $body['permissions'] ) ? sanitize_text_field( $body['permissions'] ) : '';
+        $desc            = ! empty( $body['description'] ) ? sanitize_text_field( $body['description'] ) : '';
         $scope           = $this->determine_scope( $permission );
 
         try {
@@ -323,7 +323,7 @@ class MainWP_Rest_API_Keys_Controller extends MainWP_REST_Controller { //phpcs:i
             $active = $body['active'] ? 1 : 0;
         }
         // Determine description.
-        $desc = ! empty( $body['description'] ) ? sanitize_text_field( wp_unslash( $body['description'] ) ) : $current_description;
+        $desc = ! empty( $body['description'] ) ? sanitize_text_field( $body['description'] ) : $current_description;
 
         // Edit api key v1.
         if ( ! is_numeric( $cons_key_id ) ) {

@@ -186,7 +186,7 @@ class MainWP_Rest_Posts_Controller extends MainWP_REST_Controller { //phpcs:igno
             $args['search_on'] = $request['search_on'];
         }
         if ( ! empty( $request['post_type'] ) ) {
-            $args['post_type'] = isset( $request['post_type'] ) && 0 < strlen( sanitize_text_field( wp_unslash( $request['post_type'] ) ) ) ? sanitize_text_field( wp_unslash( $request['post_type'] ) ) : 'post';
+            $args['post_type'] = isset( $request['post_type'] ) && 0 < strlen( sanitize_text_field( $request['post_type'] ) ) ? sanitize_text_field( $request['post_type'] ) : 'post';
         }
         if ( ! empty( $request['maximum'] ) ) {
             $args['maximum'] = $request['maximum'];

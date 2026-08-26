@@ -1766,9 +1766,9 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         $params = array(
             'wpid'        => $website->id,
             'where_extra' => ' AND dismiss = 0 ',
-            'order'       => ! empty( $args['order'] ) ? sanitize_text_field( wp_unslash( $args['order'] ) ) : '',
-            'order_by'    => ! empty( $args['orderby'] ) ? sanitize_text_field( wp_unslash( $args['orderby'] ) ) : '',
-            'source'      => ! empty( $request['source'] ) ? sanitize_text_field( wp_unslash( $request['source'] ) ) : 'wpadmin',
+            'order'       => ! empty( $args['order'] ) ? sanitize_text_field( $args['order'] ) : '',
+            'order_by'    => ! empty( $args['orderby'] ) ? sanitize_text_field( $args['orderby'] ) : '',
+            'source'      => ! empty( $request['source'] ) ? sanitize_text_field( $request['source'] ) : 'wpadmin',
         );
 
         if ( ! empty( $args['paged'] ) && ! empty( $args['items_per_page'] ) ) {
@@ -1781,8 +1781,8 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             $params['offset']   = 0;
         }
 
-        $params['actions']            = ! empty( $request['actions'] ) ? sanitize_text_field( wp_unslash( $request['actions'] ) ) : '';
-        $params['contexts']           = ! empty( $request['contexts'] ) ? sanitize_text_field( wp_unslash( $request['contexts'] ) ) : '';
+        $params['actions']            = ! empty( $request['actions'] ) ? sanitize_text_field( $request['actions'] ) : '';
+        $params['contexts']           = ! empty( $request['contexts'] ) ? sanitize_text_field( $request['contexts'] ) : '';
         $params['total_count']        = ! empty( $request['total_count'] ) ? mainwp_string_to_bool( $request['total_count'] ) : false;
         $params['optimize_view']      = ! empty( $request['optimize_view'] ) ? mainwp_string_to_bool( $request['optimize_view'] ) : false;
         $params['optimize_with_meta'] = ! empty( $request['optimize_with_meta'] ) ? mainwp_string_to_bool( $request['optimize_with_meta'] ) : false;
@@ -2697,16 +2697,16 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      */
     protected function prepare_object_for_database( $request ) {
         $item_fields                   = array();
-        $item_fields['url']            = isset( $request['url'] ) ? sanitize_text_field( wp_unslash( $request['url'] ) ) : '';
-        $item_fields['name']           = isset( $request['name'] ) ? sanitize_text_field( wp_unslash( $request['name'] ) ) : '';
-        $item_fields['wpadmin']        = isset( $request['admin'] ) ? sanitize_text_field( wp_unslash( $request['admin'] ) ) : '';
-        $item_fields['adminpwd']       = isset( $request['adminpassword'] ) ? wp_unslash( $request['adminpassword'] ) : '';
-        $item_fields['unique_id']      = isset( $request['uniqueid'] ) ? sanitize_text_field( wp_unslash( $request['uniqueid'] ) ) : '';
+        $item_fields['url']            = isset( $request['url'] ) ? sanitize_text_field( $request['url'] ) : '';
+        $item_fields['name']           = isset( $request['name'] ) ? sanitize_text_field( $request['name'] ) : '';
+        $item_fields['wpadmin']        = isset( $request['admin'] ) ? sanitize_text_field( $request['admin'] ) : '';
+        $item_fields['adminpwd']       = isset( $request['adminpassword'] ) ? $request['adminpassword'] : '';
+        $item_fields['unique_id']      = isset( $request['uniqueid'] ) ? sanitize_text_field( $request['uniqueid'] ) : '';
         $item_fields['ssl_verify']     = empty( $request['ssl_verify'] ) ? false : intval( $request['ssl_verify'] );
         $item_fields['force_use_ipv4'] = isset( $request['force_use_ipv4'] ) && mainwp_string_to_bool( $request['force_use_ipv4'] ) ? 1 : 0;
-        $item_fields['http_user']      = isset( $request['http_user'] ) ? sanitize_text_field( wp_unslash( $request['http_user'] ) ) : '';
-        $item_fields['http_pass']      = isset( $request['http_pass'] ) ? wp_unslash( $request['http_pass'] ) : '';
-        $item_fields['groupids']       = isset( $request['groupids'] ) && ! empty( $request['groupids'] ) ? explode( ',', sanitize_text_field( wp_unslash( $request['groupids'] ) ) ) : array();
+        $item_fields['http_user']      = isset( $request['http_user'] ) ? sanitize_text_field( $request['http_user'] ) : '';
+        $item_fields['http_pass']      = isset( $request['http_pass'] ) ? $request['http_pass'] : '';
+        $item_fields['groupids']       = isset( $request['groupids'] ) && ! empty( $request['groupids'] ) ? explode( ',', sanitize_text_field( $request['groupids'] ) ) : array();
         $item_fields['clientid']       = isset( $request['client_id'] ) && ! empty( $request['client_id'] ) ? intval( $request['client_id'] ) : 0;
 
         /**

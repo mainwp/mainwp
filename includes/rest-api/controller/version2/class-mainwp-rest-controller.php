@@ -1507,7 +1507,7 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
         if ( null === $value || '' === $value ) {
             return '';
         }
-        return sanitize_text_field( wp_unslash( trim( $value ) ) );
+        return sanitize_text_field( trim( $value ) );
     }
 
     /**

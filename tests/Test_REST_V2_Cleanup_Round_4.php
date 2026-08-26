@@ -174,9 +174,10 @@ class Test_REST_V2_Cleanup_Round_4 extends \WP_Test_REST_TestCase {
 	 * @param array  $json_body   Body payload, encoded as JSON.
 	 * @param array  $body_params Form body parameters, as WP_REST_Server sets them from an unslashed $_POST.
 	 * @param string $raw_body    Raw body with no content type, left for core's own parsing.
+	 * @param array  $query_params Query-string parameters, as core sets them from $_GET.
 	 * @return \WP_REST_Response Response object.
 	 */
-	protected function do_authenticated_request( string $method, string $route, array $json_body = [], array $body_params = [], string $raw_body = '' ): \WP_REST_Response {
+	protected function do_authenticated_request( string $method, string $route, array $json_body = [], array $body_params = [], string $raw_body = '', array $query_params = [] ): \WP_REST_Response {
 		$original_get    = $_GET;
 		$original_server = $_SERVER;
 
@@ -202,6 +203,10 @@ class Test_REST_V2_Cleanup_Round_4 extends \WP_Test_REST_TestCase {
 
 		if ( '' !== $raw_body ) {
 			$request->set_body( $raw_body );
+		}
+
+		if ( ! empty( $query_params ) ) {
+			$request->set_query_params( $query_params );
 		}
 
 		$response = rest_do_request( $request );
@@ -405,6 +410,49 @@ class Test_REST_V2_Cleanup_Round_4 extends \WP_Test_REST_TestCase {
 		$data = $response->get_data();
 		$this->assertSame( 'rest_invalid_param', $data['code'] );
 		$this->assertSame( '1', (string) $this->get_key_enabled( $target['key_id'] ) );
+	}
+
+	/**
+	 * Core validates the required args from every bag, so a value that arrived
+	 * on the query string must be the one the handler stores.
+	 */
+	public function test_api_keys_add_key_honours_query_permissions(): void {
+		global $wpdb;
+		$this->authenticate_as_admin();
+
+		$response = $this->do_authenticated_request(
+			'POST',
+			'/mainwp/v2/rest-api/add-key',
+			[ 'active' => true, 'description' => 'Test API Key' ],
+			[],
+			'',
+			[ 'permissions' => 'write' ]
+		);
+
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$permissions = $wpdb->get_var( $wpdb->prepare( "SELECT permissions FROM {$wpdb->prefix}mainwp_api_keys WHERE description = %s ORDER BY key_id DESC LIMIT 1", 'Test API Key' ) );
+		$this->assertSame( 'write', $permissions );
+	}
+
+	/**
+	 * Same for edit-key: a query-string active=0 next to a JSON description must disable the key.
+	 */
+	public function test_api_keys_edit_key_honours_query_active(): void {
+		$this->authenticate_as_admin();
+		$target = $this->create_rest_api_key( $this->admin_user_id, 'read' );
+
+		$response = $this->do_authenticated_request(
+			'PUT',
+			'/mainwp/v2/rest-api/edit-key/' . $target['key_id'],
+			[ 'description' => self::BACKSLASH_VALUE ],
+			[],
+			'',
+			[ 'active' => '0' ]
+		);
+
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$this->assertSame( '0', $this->get_key_enabled( $target['key_id'] ) );
+		$this->assertSame( self::BACKSLASH_VALUE, $this->get_key_description( $target['key_id'] ) );
 	}
 
 	/**

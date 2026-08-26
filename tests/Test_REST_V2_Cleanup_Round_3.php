@@ -304,7 +304,7 @@ class Test_REST_V2_Cleanup_Round_3 extends \WP_Test_REST_TestCase {
 	}
 
 	/**
-	 * Item 2: dbDelta parses every index line of the fresh-install backup progress schema.
+	 * Item 2: dbDelta parses every index line of the backup progress schema.
 	 *
 	 * The install SQL only exists inside MainWP_Install::install(), so the
 	 * mainwp_db_install_tables filter captures it and aborts the install before
@@ -338,7 +338,7 @@ class Test_REST_V2_Cleanup_Round_3 extends \WP_Test_REST_TestCase {
 			}
 		}
 		$this->assertNotNull( $query, 'backup progress schema not found in install SQL' );
-		$this->assertStringContainsString( 'UNIQUE', $query, 'fresh-install schema should declare the unique task_id index' );
+		$this->assertStringNotContainsString( 'UNIQUE', $query, 'progress rows are per task and site, so task_id must not be unique' );
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 

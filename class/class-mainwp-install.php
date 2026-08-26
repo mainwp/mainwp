@@ -305,7 +305,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         $tbl  .= ') ' . $charset_collate . ';';
         $sql[] = $tbl;
 
-        $tbl = 'CREATE TABLE ' . $this->table_name( 'wp_backup_progress' ) . " (
+        $tbl   = 'CREATE TABLE ' . $this->table_name( 'wp_backup_progress' ) . " (
   task_id int(11) NOT NULL,
   wp_id int(11) NOT NULL,
   dtsFetched int(11) NOT NULL DEFAULT 0,
@@ -319,10 +319,6 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
   last_error text NOT NULL DEFAULT '',
   pid int(11) NOT NULL DEFAULT 0,
   KEY idx_task_id (task_id)";
-        if ( empty( $currentVersion ) || version_compare( $currentVersion, '8.53', '<=' ) ) {
-            $tbl .= ',
-            UNIQUE KEY task_id (task_id)';
-        }
         $tbl  .= ') ' . $charset_collate;
         $sql[] = $tbl;
 

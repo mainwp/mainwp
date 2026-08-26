@@ -576,7 +576,7 @@ class Test_REST_V2_Cleanup_Round_7 extends \WP_Test_REST_TestCase {
 
 	/**
 	 * Item 3: prepare_object_for_database() keeps the value 2 (use the global
-	 * setting) instead of folding it into 1 through mainwp_string_to_bool().
+	 * setting) instead of collapsing it to 0 through mainwp_string_to_bool().
 	 */
 	public function test_prepare_object_for_database_keeps_force_use_ipv4_global_value(): void {
 		$controller = new \MainWP_Rest_Sites_Controller();

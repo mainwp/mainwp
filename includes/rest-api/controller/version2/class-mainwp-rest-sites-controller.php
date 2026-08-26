@@ -2910,7 +2910,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         $item_fields['unique_id']  = sanitize_text_field( $request['uniqueid'] ?? $request['uniqueId'] ?? '' ); // uniqueid is the documented input spelling, uniqueId is what the item schema registers on this route.
         $item_fields['ssl_verify'] = empty( $request['ssl_verify'] ) ? false : intval( $request['ssl_verify'] );
         // The add route accepts 2 (use the global setting) and mainwp_string_to_bool()
-        // would fold it into 1, so keep it before the boolean conversion.
+        // would collapse it to 0, so keep it before the boolean conversion.
         $force_use_ipv4                = isset( $request['force_use_ipv4'] ) ? $request['force_use_ipv4'] : 0;
         $item_fields['force_use_ipv4'] = 2 === (int) $force_use_ipv4 ? 2 : ( mainwp_string_to_bool( $force_use_ipv4 ) ? 1 : 0 );
         $item_fields['http_user']      = isset( $request['http_user'] ) ? sanitize_text_field( $request['http_user'] ) : '';

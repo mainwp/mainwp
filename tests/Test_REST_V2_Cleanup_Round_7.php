@@ -575,6 +575,42 @@ class Test_REST_V2_Cleanup_Round_7 extends \WP_Test_REST_TestCase {
 	}
 
 	/**
+	 * Item 3: prepare_object_for_database() keeps the value 2 (use the global
+	 * setting) instead of folding it into 1 through mainwp_string_to_bool().
+	 */
+	public function test_prepare_object_for_database_keeps_force_use_ipv4_global_value(): void {
+		$controller = new \MainWP_Rest_Sites_Controller();
+		$method     = new \ReflectionMethod( $controller, 'prepare_object_for_database' );
+		$method->setAccessible( true );
+
+		$cases = [
+			[ 2, 2 ],
+			[ '2', 2 ],
+			[ true, 1 ],
+			[ '1', 1 ],
+			[ false, 0 ],
+			[ '0', 0 ],
+		];
+
+		foreach ( $cases as list( $input, $expected ) ) {
+			$request = new WP_REST_Request( 'POST', '/mainwp/v2/sites/add' );
+			$request->set_body_params( [ 'force_use_ipv4' => $input ] );
+
+			$fields = $method->invoke( $controller, $request );
+
+			$this->assertSame( $expected, $fields['force_use_ipv4'], wp_json_encode( $input ) );
+		}
+
+		// Absent altogether defaults to 0.
+		$request = new WP_REST_Request( 'POST', '/mainwp/v2/sites/add' );
+		$request->set_body_params( [ 'name' => 'x' ] );
+
+		$fields = $method->invoke( $controller, $request );
+
+		$this->assertSame( 0, $fields['force_use_ipv4'], 'absent' );
+	}
+
+	/**
 	 * Item 3: a boolean reaches the column as the 1 the DB layer stores for it.
 	 */
 	public function test_force_use_ipv4_boolean_reaches_the_column(): void {

@@ -305,6 +305,27 @@ class Test_REST_V2_Cleanup_Round_4 extends \WP_Test_REST_TestCase {
 	}
 
 	/**
+	 * Item 1: a repair that cannot confirm its result leaves a retry marker, and a
+	 * later successful run clears it.
+	 */
+	public function test_install_repair_marker_tracks_unconfirmed_repair(): void {
+		delete_option( \MainWP\Dashboard\MainWP_Install::BACKUP_PROGRESS_INDEX_REPAIR_PENDING );
+
+		$failing = new class() extends \MainWP\Dashboard\MainWP_Install {
+			// A lookup error is the shape a locked or unreadable table produces.
+			protected function find_backup_progress_task_id_unique_keys() {
+				return null;
+			}
+		};
+
+		$this->assertFalse( $failing->repair_backup_progress_index() );
+		$this->assertNotEmpty( get_option( \MainWP\Dashboard\MainWP_Install::BACKUP_PROGRESS_INDEX_REPAIR_PENDING ), 'an unconfirmed repair must leave the retry marker' );
+
+		$this->assertTrue( \MainWP\Dashboard\MainWP_Install::instance()->repair_backup_progress_index() );
+		$this->assertFalse( get_option( \MainWP\Dashboard\MainWP_Install::BACKUP_PROGRESS_INDEX_REPAIR_PENDING ), 'a confirmed repair must clear the retry marker' );
+	}
+
+	/**
 	 * Item 2: POST /rest-api/add-key accepts a JSON body.
 	 */
 	public function test_api_keys_add_key_accepts_json_body(): void {

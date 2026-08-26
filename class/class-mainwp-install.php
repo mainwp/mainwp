@@ -41,6 +41,11 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     protected $option_db_key = 'mainwp_db_version';
 
     /**
+     * Option set while the backup progress index repair still needs a retry.
+     */
+    const BACKUP_PROGRESS_INDEX_REPAIR_PENDING = 'mainwp_backup_progress_index_repair_pending';
+
+    /**
      * Private static variable to hold the single instance of the class.
      *
      * @static
@@ -99,6 +104,12 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         }
 
         if ( $currentVersion === $this->mainwp_db_version ) {
+            // The index repair keeps its own marker so a failed DROP is retried on
+            // its own, without holding the DB version back and re-running every
+            // older migration on each load.
+            if ( get_option( self::BACKUP_PROGRESS_INDEX_REPAIR_PENDING ) ) {
+                $this->repair_backup_progress_index();
+            }
             return;
         }
 
@@ -445,11 +456,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         }
         $wpdb->suppress_errors( $suppress );
 
-        // A repair that could not complete keeps the stored version behind so
-        // the next load runs post_update() again instead of skipping it for good.
-        if ( ! $this->post_update() ) {
-            return;
-        }
+        $this->post_update();
 
         do_action( 'mainwp_db_after_update', $currentVersion, $this->mainwp_db_version ); // new version: $this->mainwp_db_version.
 
@@ -474,7 +481,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * Update MainWP DB.
      *
-     * @return bool False when a migration could not complete and the version must not advance.
+     * @return void
      */
     public function post_update() { // phpcs:ignore -- NOSONAR - complex.
 
@@ -482,7 +489,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         $currentVersion = get_site_option( $this->option_db_key );
 
         if ( false === $currentVersion ) {
-            return true;
+            return;
         }
 
         $suppress = $this->wpdb->suppress_errors();
@@ -571,15 +578,12 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         $this->update_optimize_indexes_55( $currentVersion );
 
         // dbDelta never drops an index, so the stray unique key needs an explicit migration.
-        $repaired = true;
         if ( version_compare( $currentVersion, '9.0.2.4', '<' ) ) { // NOSONAR - no ip.
-            $repaired = $this->drop_backup_progress_unique_index();
+            $this->repair_backup_progress_index();
         }
 
         $this->wpdb->suppress_errors( $suppress );
         MainWP_DB_Client::instance()->check_to_updates_reports_data_861( $currentVersion );
-
-        return $repaired;
     }
 
     /**
@@ -627,6 +631,21 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
                 delete_option( 'mainwp_notice_consumer_secret_migration_failed' );
             }
         }
+    }
+
+    /**
+     * Run the backup progress index repair and remember whether it still needs a retry.
+     *
+     * @return bool True when the repair is confirmed complete.
+     */
+    public function repair_backup_progress_index() {
+        $repaired = $this->drop_backup_progress_unique_index();
+        if ( $repaired ) {
+            delete_option( self::BACKUP_PROGRESS_INDEX_REPAIR_PENDING );
+        } else {
+            update_option( self::BACKUP_PROGRESS_INDEX_REPAIR_PENDING, current_time( 'mysql' ) );
+        }
+        return $repaired;
     }
 
     /**

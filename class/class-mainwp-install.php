@@ -641,8 +641,12 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      */
     public function drop_backup_progress_unique_index() {
         $table = $this->table_name( 'wp_backup_progress' );
+        $keys  = $this->find_backup_progress_task_id_unique_keys();
+        if ( null === $keys ) {
+            return false;
+        }
 
-        foreach ( $this->find_backup_progress_task_id_unique_keys() as $key_name ) {
+        foreach ( $keys as $key_name ) {
             $this->wpdb->query( "ALTER TABLE {$table} DROP INDEX `{$key_name}`" ); // phpcs:ignore -- table name is internal, key name comes from the schema and is allowlisted below.
         }
 
@@ -655,11 +659,17 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * A composite unique key over task_id and wp_id is legitimate and is left out.
      *
-     * @return array
+     * @return array|null Key names, or null when the lookup itself failed and nothing can be concluded.
      */
     protected function find_backup_progress_task_id_unique_keys() {
-        $table   = $this->table_name( 'wp_backup_progress' );
-        $indexes = $this->wpdb->get_results( "SHOW INDEX FROM {$table} WHERE Non_unique = 0", ARRAY_A ); // phpcs:ignore -- table name is internal.
+        $table = $this->table_name( 'wp_backup_progress' );
+
+        // suppress_errors() is on in post_update(), so a failed SHOW INDEX looks like an empty index list; last_error is the only tell.
+        $this->wpdb->last_error = '';
+        $indexes                = $this->wpdb->get_results( "SHOW INDEX FROM {$table} WHERE Non_unique = 0", ARRAY_A ); // phpcs:ignore -- table name is internal.
+        if ( '' !== $this->wpdb->last_error ) {
+            return null;
+        }
 
         $key_columns = array();
         foreach ( (array) $indexes as $index ) {

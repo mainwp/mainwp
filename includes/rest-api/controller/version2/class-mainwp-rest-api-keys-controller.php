@@ -467,12 +467,14 @@ class MainWP_Rest_API_Keys_Controller extends MainWP_REST_Controller { //phpcs:i
                 'type'              => 'boolean',
                 'description'       => __( 'Active or disable API key.', 'mainwp' ),
                 'sanitize_callback' => 'rest_sanitize_boolean',
+                'validate_callback' => 'rest_validate_request_arg',
             ),
             'description' => array(
                 'required'          => false,
                 'type'              => 'string',
                 'description'       => __( 'API key description.', 'mainwp' ),
                 'sanitize_callback' => 'sanitize_text_field',
+                'validate_callback' => 'rest_validate_request_arg',
             ),
             'permissions' => array(
                 'required'          => true,
@@ -498,12 +500,14 @@ class MainWP_Rest_API_Keys_Controller extends MainWP_REST_Controller { //phpcs:i
                     'type'              => 'boolean',
                     'description'       => __( 'Active or disable API key.', 'mainwp' ),
                     'sanitize_callback' => 'rest_sanitize_boolean',
+                    'validate_callback' => 'rest_validate_request_arg',
                 ),
                 'description' => array(
                     'required'          => false,
                     'type'              => 'string',
                     'description'       => __( 'API key description.', 'mainwp' ),
                     'sanitize_callback' => 'sanitize_text_field',
+                    'validate_callback' => 'rest_validate_request_arg',
                 ),
                 'permissions' => array(
                     'required'          => false,
@@ -525,6 +529,13 @@ class MainWP_Rest_API_Keys_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return bool|WP_Error
      */
     public function rest_api_validate_permissions_param( $value, $request, $param ) {
+        // A custom validate_callback replaces the registered-type check, so the
+        // declared string type has to be enforced here before explode() sees an array.
+        $valid = rest_validate_request_arg( $value, $request, $param );
+        if ( is_wp_error( $valid ) ) {
+            return $valid;
+        }
+
         if ( empty( $value ) ) {
             return false;
         }

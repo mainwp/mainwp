@@ -104,12 +104,10 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         }
 
         if ( $currentVersion === $this->mainwp_db_version ) {
-            // The index repair keeps its own marker so a failed DROP is retried on
-            // its own, without holding the DB version back and re-running every
+            // The index repair keeps its own marker so a failed DROP is retried at
+            // most hourly, without holding the DB version back and re-running every
             // older migration on each load.
-            if ( get_site_option( self::BACKUP_PROGRESS_INDEX_REPAIR_PENDING ) ) {
-                $this->repair_backup_progress_index();
-            }
+            $this->maybe_retry_backup_progress_index_repair();
             return;
         }
 
@@ -634,6 +632,25 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     }
 
     /**
+     * Retry a pending backup progress index repair, no more than once an hour.
+     *
+     * A DB user without ALTER never clears the marker, so an unthrottled retry
+     * would run two SHOW INDEX plus a failing ALTER on every single request.
+     *
+     * @return bool True when a repair attempt was made.
+     */
+    public function maybe_retry_backup_progress_index_repair() {
+        $pending = (int) get_site_option( self::BACKUP_PROGRESS_INDEX_REPAIR_PENDING );
+        if ( empty( $pending ) || time() - $pending < HOUR_IN_SECONDS ) {
+            return false;
+        }
+
+        $this->repair_backup_progress_index();
+
+        return true;
+    }
+
+    /**
      * Run the backup progress index repair and remember whether it still needs a retry.
      *
      * @return bool True when the repair is confirmed complete.
@@ -647,7 +664,8 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         if ( $repaired ) {
             delete_site_option( self::BACKUP_PROGRESS_INDEX_REPAIR_PENDING );
         } else {
-            update_site_option( self::BACKUP_PROGRESS_INDEX_REPAIR_PENDING, current_time( 'mysql' ) );
+            // A timestamp, not a formatted date: the retry throttle compares it against time().
+            update_site_option( self::BACKUP_PROGRESS_INDEX_REPAIR_PENDING, time() );
         }
         return $repaired;
     }

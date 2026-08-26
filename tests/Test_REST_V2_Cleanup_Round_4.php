@@ -224,6 +224,17 @@ class Test_REST_V2_Cleanup_Round_4 extends \WP_Test_REST_TestCase {
 	}
 
 	/**
+	 * Read the stored enabled flag of an API key row.
+	 *
+	 * @param int $key_id Key row id.
+	 * @return string|null
+	 */
+	protected function get_key_enabled( int $key_id ): ?string {
+		global $wpdb;
+		return $wpdb->get_var( $wpdb->prepare( "SELECT enabled FROM {$wpdb->prefix}mainwp_api_keys WHERE key_id = %d", $key_id ) );
+	}
+
+	/**
 	 * Backup progress table name.
 	 *
 	 * @return string
@@ -323,6 +334,77 @@ class Test_REST_V2_Cleanup_Round_4 extends \WP_Test_REST_TestCase {
 
 		$this->assertTrue( \MainWP\Dashboard\MainWP_Install::instance()->repair_backup_progress_index() );
 		$this->assertFalse( get_site_option( \MainWP\Dashboard\MainWP_Install::BACKUP_PROGRESS_INDEX_REPAIR_PENDING ), 'a confirmed repair must clear the retry marker' );
+	}
+
+	/**
+	 * The repair retry runs at most once an hour while the marker is set.
+	 */
+	public function test_install_repair_retry_is_throttled(): void {
+		delete_site_option( \MainWP\Dashboard\MainWP_Install::BACKUP_PROGRESS_INDEX_REPAIR_PENDING );
+
+		$install = \MainWP\Dashboard\MainWP_Install::instance();
+
+		$this->assertFalse( $install->maybe_retry_backup_progress_index_repair(), 'no marker means nothing to retry' );
+
+		update_site_option( \MainWP\Dashboard\MainWP_Install::BACKUP_PROGRESS_INDEX_REPAIR_PENDING, time() );
+		$this->assertFalse( $install->maybe_retry_backup_progress_index_repair(), 'a marker younger than an hour must not trigger another ALTER' );
+
+		update_site_option( \MainWP\Dashboard\MainWP_Install::BACKUP_PROGRESS_INDEX_REPAIR_PENDING, time() - 2 * HOUR_IN_SECONDS );
+		$this->assertTrue( $install->maybe_retry_backup_progress_index_repair() );
+		$this->assertFalse( get_site_option( \MainWP\Dashboard\MainWP_Install::BACKUP_PROGRESS_INDEX_REPAIR_PENDING ), 'a confirmed retry must clear the marker' );
+	}
+
+	/**
+	 * The permissions validator runs before the permission callback, so an array
+	 * value must be rejected by type instead of reaching explode().
+	 */
+	public function test_api_keys_add_key_rejects_array_permissions(): void {
+		$this->authenticate_as_admin();
+
+		$response = $this->do_authenticated_request(
+			'POST',
+			'/mainwp/v2/rest-api/add-key',
+			[
+				'active'      => 1,
+				'permissions' => [ [ 'write' ] ],
+				'description' => 'Test API Key',
+			]
+		);
+
+		$this->assertSame( 400, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$data = $response->get_data();
+		$this->assertSame( 'rest_invalid_param', $data['code'] );
+
+		$target   = $this->create_rest_api_key( $this->admin_user_id, 'read' );
+		$response = $this->do_authenticated_request(
+			'PUT',
+			'/mainwp/v2/rest-api/edit-key/' . $target['key_id'],
+			[ 'permissions' => [ 'write' ] ]
+		);
+
+		$this->assertSame( 400, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$data = $response->get_data();
+		$this->assertSame( 'rest_invalid_param', $data['code'] );
+	}
+
+	/**
+	 * A form body casts an array to true, so active needs its declared type validated.
+	 */
+	public function test_api_keys_edit_key_rejects_array_active(): void {
+		$this->authenticate_as_admin();
+		$target = $this->create_rest_api_key( $this->admin_user_id, 'read' );
+
+		$response = $this->do_authenticated_request(
+			'PUT',
+			'/mainwp/v2/rest-api/edit-key/' . $target['key_id'],
+			[],
+			[ 'active' => [ 'false' ] ]
+		);
+
+		$this->assertSame( 400, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$data = $response->get_data();
+		$this->assertSame( 'rest_invalid_param', $data['code'] );
+		$this->assertSame( '1', (string) $this->get_key_enabled( $target['key_id'] ) );
 	}
 
 	/**

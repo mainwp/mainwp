@@ -477,7 +477,9 @@ class MainWP_Rest_API_Keys_Controller extends MainWP_REST_Controller { //phpcs:i
                 'required'          => true,
                 'type'              => 'boolean',
                 'description'       => __( 'Active or disable API key.', 'mainwp' ),
-                'sanitize_callback' => 'rest_sanitize_boolean',
+                // rest_parse_request_arg validates before it sanitizes, so an explicit
+                // JSON null is a 400 instead of being coerced to false past the validator.
+                'sanitize_callback' => 'rest_parse_request_arg',
                 'validate_callback' => 'rest_validate_request_arg',
             ),
             'description' => array(
@@ -510,7 +512,7 @@ class MainWP_Rest_API_Keys_Controller extends MainWP_REST_Controller { //phpcs:i
                     'required'          => false,
                     'type'              => 'boolean',
                     'description'       => __( 'Active or disable API key.', 'mainwp' ),
-                    'sanitize_callback' => 'rest_sanitize_boolean',
+                    'sanitize_callback' => 'rest_parse_request_arg',
                     'validate_callback' => 'rest_validate_request_arg',
                 ),
                 'description' => array(

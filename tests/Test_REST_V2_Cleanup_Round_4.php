@@ -456,6 +456,25 @@ class Test_REST_V2_Cleanup_Round_4 extends \WP_Test_REST_TestCase {
 	}
 
 	/**
+	 * Core skips validators on an explicit null, so a plain boolean sanitizer
+	 * would coerce it to false and disable the key; the parse sanitizer rejects it.
+	 */
+	public function test_api_keys_edit_key_rejects_null_active(): void {
+		$this->authenticate_as_admin();
+		$target = $this->create_rest_api_key( $this->admin_user_id, 'read' );
+
+		$response = $this->do_authenticated_request(
+			'PUT',
+			'/mainwp/v2/rest-api/edit-key/' . $target['key_id'],
+			[ 'active' => null ]
+		);
+
+		$this->assertSame( 400, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$this->assertSame( 'rest_invalid_param', $response->as_error()->get_error_code() );
+		$this->assertSame( '1', $this->get_key_enabled( $target['key_id'] ) );
+	}
+
+	/**
 	 * Item 2: POST /rest-api/add-key accepts a JSON body.
 	 */
 	public function test_api_keys_add_key_accepts_json_body(): void {

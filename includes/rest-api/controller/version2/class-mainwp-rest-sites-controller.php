@@ -2885,6 +2885,10 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         return array(
             'description'       => __( 'Force IPv4: 0 to disable, 1 to force IPv4, 2 to use the global setting.', 'mainwp' ),
             'type'              => array( 'boolean', 'integer', 'string' ),
+            // The DB layer only clamps values above 2, so without the enum -1 would be
+            // stored as sent and "yes" would silently become 0. Core compares the enum
+            // against the coerced value, so "1" and "true" still match true.
+            'enum'              => array( false, true, 2 ),
             'sanitize_callback' => 'rest_parse_request_arg',
             'validate_callback' => 'rest_validate_request_arg',
         );

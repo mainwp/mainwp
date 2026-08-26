@@ -131,6 +131,14 @@ class Test_REST_V2_Cleanup_Round_7 extends \WP_Test_REST_TestCase {
 		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}mainwp_api_keys WHERE description = %s", self::KEY_DESCRIPTION ) );
 		// A renamed row keeps the name as a prefix, so match the prefix rather than the exact name.
 		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}mainwp_group WHERE name LIKE %s", $wpdb->esc_like( self::TAG_NAME ) . '%' ) );
+
+		// add_website() writes a per-site key file straight to disk, outside the DB
+		// transaction, so deleting the mainwp_wp row alone leaves it orphaned on disk.
+		$site_ids = $wpdb->get_col( $wpdb->prepare( "SELECT id FROM {$wpdb->prefix}mainwp_wp WHERE name LIKE %s", $wpdb->esc_like( self::SITE_NAME ) . '%' ) );
+		foreach ( $site_ids as $site_id ) {
+			\MainWP\Dashboard\MainWP_Encrypt_Data_Lib::remove_key_file( (int) $site_id );
+			$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}mainwp_wp_options WHERE wpid = %d", (int) $site_id ) );
+		}
 		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}mainwp_wp WHERE name LIKE %s", $wpdb->esc_like( self::SITE_NAME ) . '%' ) );
 
 		$cost_ids = $wpdb->get_col( $wpdb->prepare( "SELECT id FROM {$wpdb->prefix}mainwp_cost_tracker WHERE name LIKE %s", $wpdb->esc_like( self::COST_NAME ) . '%' ) );
@@ -524,6 +532,45 @@ class Test_REST_V2_Cleanup_Round_7 extends \WP_Test_REST_TestCase {
 			);
 
 			$this->assertNotSame( 'rest_invalid_param', $this->error_code_of( $response ), 'edit ' . $label . ': ' . wp_json_encode( $response->get_data() ) );
+		}
+	}
+
+	/**
+	 * Item 3: values outside the registered enum fail arg validation on both routes.
+	 */
+	public function test_force_use_ipv4_rejects_values_outside_the_enum(): void {
+		$this->authenticate_as_admin();
+		$url = 'https://round7-ipv4-reject.example/';
+		$this->create_site( $url );
+
+		foreach ( [ -1, 3, '-1', 'yes', '', array( 1 ) ] as $value ) {
+			$label = wp_json_encode( $value );
+
+			$response = $this->do_authenticated_request(
+				'POST',
+				'/mainwp/v2/sites/add',
+				[
+					'url'            => $url,
+					'name'           => self::SITE_NAME,
+					'force_use_ipv4' => $value,
+				]
+			);
+
+			$this->assertSame( 400, $response->get_status(), 'add ' . $label . ': ' . wp_json_encode( $response->get_data() ) );
+			$data = $response->get_data();
+			$this->assertSame( 'rest_invalid_param', $data['code'], 'add ' . $label . ': ' . wp_json_encode( $data ) );
+			$this->assertArrayHasKey( 'force_use_ipv4', $data['data']['params'], 'add ' . $label . ': ' . wp_json_encode( $data ) );
+
+			$response = $this->do_authenticated_request(
+				'PUT',
+				'/mainwp/v2/sites/999999/edit',
+				[ 'force_use_ipv4' => $value ]
+			);
+
+			$this->assertSame( 400, $response->get_status(), 'edit ' . $label . ': ' . wp_json_encode( $response->get_data() ) );
+			$data = $response->get_data();
+			$this->assertSame( 'rest_invalid_param', $data['code'], 'edit ' . $label . ': ' . wp_json_encode( $data ) );
+			$this->assertArrayHasKey( 'force_use_ipv4', $data['data']['params'], 'edit ' . $label . ': ' . wp_json_encode( $data ) );
 		}
 	}
 

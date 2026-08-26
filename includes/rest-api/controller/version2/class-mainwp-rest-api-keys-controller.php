@@ -309,6 +309,7 @@ class MainWP_Rest_API_Keys_Controller extends MainWP_REST_Controller { //phpcs:i
             return new WP_Error(
                 'empty_body',
                 __( 'Request body is empty.', 'mainwp' ),
+                array( 'status' => 400 )
             );
         }
 

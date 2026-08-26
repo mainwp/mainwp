@@ -486,6 +486,56 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
     }
 
     /**
+     * Get the args a batch update item is validated against.
+     *
+     * Mirrors the args the controller's own edit route registers.
+     *
+     * @return array
+     */
+    public function get_batch_update_args() {
+        $args       = $this->get_endpoint_args_for_item_schema( WP_REST_Server::EDITABLE );
+        $args['id'] = $this->get_batch_item_id_arg();
+        return $args;
+    }
+
+    /**
+     * Get the args a batch delete item is validated against.
+     *
+     * @return array
+     */
+    public function get_batch_delete_args() {
+        return array(
+            'id'    => $this->get_batch_item_id_arg(),
+            'force' => array(
+                'type'              => 'boolean',
+                'description'       => __( 'Force deletion.', 'mainwp' ),
+                'sanitize_callback' => 'rest_parse_request_arg',
+                'validate_callback' => 'rest_validate_request_arg',
+            ),
+        );
+    }
+
+    /**
+     * Get the id arg a batch update or delete item is validated against.
+     *
+     * The sites item schema registers id with a wp_parse_id_list sanitizer for the
+     * collection filter, which would turn a batch item's scalar id into an array
+     * before get_site_item() reads it, so batch items get their own scalar id arg.
+     *
+     * @return array
+     */
+    protected function get_batch_item_id_arg() {
+        return array(
+            'type'              => 'integer',
+            'required'          => true,
+            'minimum'           => 1,
+            'description'       => __( 'Item ID.', 'mainwp' ),
+            'sanitize_callback' => 'rest_parse_request_arg',
+            'validate_callback' => 'rest_validate_request_arg',
+        );
+    }
+
+    /**
      * Bulk create, update and delete items.
      *
      * @param WP_REST_Request $request Full details about the request.
@@ -559,11 +609,20 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
             foreach ( $items['update'] as $item ) {
                 $_item = new WP_REST_Request( 'PUT', $request->get_route() );
                 $_item->set_body_params( $item );
-                $_response = $this->update_item( $_item );
+
+                // Core only validates the registered args of a dispatched request, so a
+                // request assembled here has to run those checks itself.
+                $_item->set_attributes( array( 'args' => $this->get_batch_update_args() ) );
+                $valid = $_item->has_valid_params();
+                if ( ! is_wp_error( $valid ) ) {
+                    $valid = $_item->sanitize_params();
+                }
+
+                $_response = is_wp_error( $valid ) ? $valid : $this->update_item( $_item );
 
                 if ( is_wp_error( $_response ) ) {
                     $response['update'][] = array(
-                        'id'    => $item['id'],
+                        'id'    => (int) ( $item['id'] ?? 0 ),
                         'error' => array(
                             'code'    => $_response->get_error_code(),
                             'message' => $_response->get_error_message(),
@@ -591,7 +650,16 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
                         'force' => true,
                     )
                 );
-                $_response = $this->delete_item( $_item );
+
+                // Core only validates the registered args of a dispatched request, so a
+                // request assembled here has to run those checks itself.
+                $_item->set_attributes( array( 'args' => $this->get_batch_delete_args() ) );
+                $valid = $_item->has_valid_params();
+                if ( ! is_wp_error( $valid ) ) {
+                    $valid = $_item->sanitize_params();
+                }
+
+                $_response = is_wp_error( $valid ) ? $valid : $this->delete_item( $_item );
 
                 if ( is_wp_error( $_response ) ) {
                     $response['delete'][] = array(
@@ -1555,6 +1623,7 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
             return new WP_Error(
                 'empty_body',
                 __( 'Request body is empty.', 'mainwp' ),
+                array( 'status' => 400 )
             );
         }
 

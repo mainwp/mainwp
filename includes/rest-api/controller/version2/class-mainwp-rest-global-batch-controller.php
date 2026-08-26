@@ -45,7 +45,7 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
      *
      * @var array
      */
-    protected $controller_names = array( 'sites', 'clients', 'costs', 'tags' );
+    protected $controller_names = array( 'sites', 'clients', 'tags' );
 
     /**
      * Method instance()

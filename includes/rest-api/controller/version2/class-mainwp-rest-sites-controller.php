@@ -383,6 +383,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                     'methods'             => WP_REST_Server::EDITABLE,
                     'callback'            => array( $this, 'update_item' ),
                     'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                    'args'                => $this->get_edit_site_args(),
                 ),
             )
         );
@@ -2710,9 +2711,112 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
     }
 
     /**
+     * Get the args a batch update item is validated against.
+     *
+     * @return array
+     */
+    public function get_batch_update_args() {
+        $args       = $this->get_edit_site_args();
+        $args['id'] = $this->get_batch_item_id_arg();
+        return $args;
+    }
+
+    /**
+     * Arguments registered by the edit route.
+     *
+     * The schema's id arg is the collection filter (wp_parse_id_list) and the edit
+     * route identifies the site by its URL segment, so id is dropped here. Schema
+     * defaults are dropped too: core injects arg defaults as request params, and
+     * prepare_object_for_update() treats every present field as a change, so a
+     * name-only edit would otherwise also write suspended = 0 and the update flags.
+     *
+     * @return array
+     */
+    protected function get_edit_site_args() {
+        $args = $this->get_endpoint_args_for_item_schema( WP_REST_Server::EDITABLE );
+        unset( $args['id'] );
+        foreach ( $args as &$arg ) {
+            unset( $arg['default'] );
+        }
+        unset( $arg );
+        return array_merge( $args, $this->get_edit_site_extra_args() );
+    }
+
+    /**
+     * Extra arguments accepted by the edit route.
+     *
+     * These are the documented update-only input spellings that prepare_object_for_update()
+     * reads. They are absent from the item schema, so core never type-checked them.
+     *
+     * @return array
+     */
+    protected function get_edit_site_extra_args() {
+        return array(
+            'adminname'             => array(
+                'description' => __( 'Site administrator username.', 'mainwp' ),
+                'type'        => 'string',
+            ),
+            'admin'                 => array(
+                'description' => __( 'Site administrator username, accepted alias of adminname.', 'mainwp' ),
+                'type'        => 'string',
+            ),
+            'uniqueid'              => array(
+                'description' => __( 'Unique security ID.', 'mainwp' ),
+                'type'        => 'string',
+            ),
+            'groupids'              => array(
+                'description' => __( 'Comma-separated tag IDs.', 'mainwp' ),
+                'type'        => 'string',
+            ),
+            'protocol'              => array(
+                'description' => __( 'Site protocol.', 'mainwp' ),
+                'type'        => 'string',
+                'enum'        => array( 'http', 'https' ),
+            ),
+            'sslversion'            => array(
+                'description' => __( 'SSL version.', 'mainwp' ),
+                'type'        => 'string',
+            ),
+            'disablehealthchecking' => array(
+                'description' => __( 'Disable health check.', 'mainwp' ),
+                'type'        => 'integer',
+                'enum'        => array( 0, 1 ),
+            ),
+            'healththreshold'       => array(
+                'description' => __( 'Health threshold.', 'mainwp' ),
+                'type'        => 'integer',
+            ),
+            'backup_before_upgrade' => array(
+                'description' => __( 'Backup before upgrade.', 'mainwp' ),
+                'type'        => 'integer',
+                'enum'        => array( 0, 1 ),
+            ),
+            'ignore_core_updates'   => array(
+                'description' => __( 'Ignore WordPress core updates.', 'mainwp' ),
+                'type'        => 'integer',
+                'enum'        => array( 0, 1 ),
+            ),
+            'ignore_plugin_updates' => array(
+                'description' => __( 'Ignore plugin updates.', 'mainwp' ),
+                'type'        => 'integer',
+                'enum'        => array( 0, 1 ),
+            ),
+            'ignore_theme_updates'  => array(
+                'description' => __( 'Ignore theme updates.', 'mainwp' ),
+                'type'        => 'integer',
+                'enum'        => array( 0, 1 ),
+            ),
+            'monitoring_emails'     => array(
+                'description' => __( 'Monitoring notification email addresses.', 'mainwp' ),
+                'type'        => 'string',
+            ),
+        );
+    }
+
+    /**
      * Extra arguments accepted by the add route.
      *
-     * These four are consumed by prepare_object_for_database() but absent from
+     * These are consumed by prepare_object_for_database() but absent from
      * the item schema, so core never type-checked them and an array value
      * reached the string sanitizers and fataled the request. Registering them
      * here types them without touching the published item schema.
@@ -2736,6 +2840,14 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             'groupids'      => array(
                 'description' => __( 'Comma-separated tag IDs.', 'mainwp' ),
                 'type'        => 'string',
+            ),
+            'ssl_verify'    => array(
+                'description'       => __( 'Verify the SSL certificate of the child site.', 'mainwp' ),
+                'type'              => 'boolean',
+                // rest_parse_request_arg validates before it sanitizes, so an explicit
+                // JSON null is a 400 instead of being coerced to false past the validator.
+                'sanitize_callback' => 'rest_parse_request_arg',
+                'validate_callback' => 'rest_validate_request_arg',
             ),
         );
     }
@@ -2802,9 +2914,14 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         );
 
         $data = array();
-        foreach ( $map_fields_update as $field ) {
+        // The value side is the documented input spelling; the item-schema spelling on
+        // the key side is accepted as a fallback, the same way prepare_object_for_database()
+        // accepts uniqueId.
+        foreach ( $map_fields_update as $schema_field => $field ) {
             if ( isset( $request[ $field ] ) ) {
                 $data[ $field ] = $request[ $field ];
+            } elseif ( isset( $request[ $schema_field ] ) ) {
+                $data[ $field ] = $request[ $schema_field ];
             }
         }
 

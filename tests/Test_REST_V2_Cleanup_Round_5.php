@@ -108,7 +108,8 @@ class Test_REST_V2_Cleanup_Round_5 extends \WP_Test_REST_TestCase {
 		$property->setValue( null, null );
 
 		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}mainwp_api_keys WHERE description = %s", self::KEY_DESCRIPTION ) );
-		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}mainwp_group WHERE name = %s", self::TAG_NAME ) );
+		// The second create is renamed to "<name> (1)" by check_group_name(), so match the prefix.
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}mainwp_group WHERE name LIKE %s", $wpdb->esc_like( self::TAG_NAME ) . '%' ) );
 
 		parent::tearDown();
 	}

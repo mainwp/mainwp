@@ -591,6 +591,38 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
     }
 
     /**
+     * Build the internal request for one batch create item.
+     *
+     * A create item has to carry its fields in an object: no create arg is required, so a
+     * scalar or a JSON list would pass validation and then insert a row built out of the
+     * schema defaults alone. An empty array stays allowed because json_decode() reports
+     * {} and [] as the same empty PHP array. Core only validates the registered args of a
+     * dispatched request, so a request assembled here has to run those checks itself.
+     *
+     * @param string $route    Batch route the parent request came in on.
+     * @param mixed  $item     Raw item from the batch payload.
+     * @param array  $args     Args to validate against.
+     * @param array  $defaults Schema defaults the item falls back on.
+     * @param array  $query    Query params of the batch request.
+     * @return WP_REST_Request|WP_Error
+     */
+    protected function prepare_batch_create_request( $route, $item, $args, $defaults, $query ) {
+        if ( ! is_array( $item ) || ( ! empty( $item ) && wp_is_numeric_array( $item ) ) ) {
+            return new WP_Error( 'rest_invalid_param', __( 'Batch create items must be objects.', 'mainwp' ), array( 'status' => 400 ) );
+        }
+        $_item = new WP_REST_Request( 'POST', $route );
+        $_item->set_default_params( $defaults );
+        $_item->set_body_params( $item );
+        $_item->set_query_params( $query );
+        $_item->set_attributes( array( 'args' => $args ) );
+        $valid = $_item->has_valid_params();
+        if ( ! is_wp_error( $valid ) ) {
+            $valid = $_item->sanitize_params();
+        }
+        return is_wp_error( $valid ) ? $valid : $_item;
+    }
+
+    /**
      * Id to report for a batch item that failed before it could be resolved.
      *
      * @param mixed $id Raw id from the batch payload.
@@ -627,8 +659,6 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
 
         if ( ! empty( $items['create'] ) ) {
             foreach ( $items['create'] as $item ) {
-                $_item = new WP_REST_Request( 'POST', $request->get_route() );
-
                 // Default parameters.
                 $defaults = array();
                 $schema   = $this->get_public_item_schema();
@@ -637,23 +667,9 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
                         $defaults[ $arg ] = $options['default'];
                     }
                 }
-                $_item->set_default_params( $defaults );
 
-                // Set request parameters.
-                $_item->set_body_params( $item );
-
-                // Set query (GET) parameters.
-                $_item->set_query_params( $query );
-
-                // Core only validates the registered args of a dispatched request, so a
-                // request assembled here has to run those checks itself.
-                $_item->set_attributes( array( 'args' => $this->get_batch_create_args() ) );
-                $valid = $_item->has_valid_params();
-                if ( ! is_wp_error( $valid ) ) {
-                    $valid = $_item->sanitize_params();
-                }
-
-                $_response = is_wp_error( $valid ) ? $valid : $this->create_item( $_item );
+                $_item     = $this->prepare_batch_create_request( $request->get_route(), $item, $this->get_batch_create_args(), $defaults, $query );
+                $_response = is_wp_error( $_item ) ? $_item : $this->create_item( $_item );
 
                 if ( is_wp_error( $_response ) ) {
                     $response['create'][] = array(

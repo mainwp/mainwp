@@ -149,7 +149,6 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
 
             if ( ! empty( $items[ $con_name ]['create'] ) ) {
                 foreach ( $items[ $con_name ]['create'] as $item ) {
-                    $_item = new WP_REST_Request( 'POST', $request->get_route() );
                     // Default parameters.
                     $defaults = array();
                     $schema   = $controller_obj->get_public_item_schema();
@@ -159,23 +158,9 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
                             $defaults[ $arg ] = $options['default'];
                         }
                     }
-                    $_item->set_default_params( $defaults );
 
-                    // Set request parameters.
-                    $_item->set_body_params( $item );
-
-                    // Set query (GET) parameters.
-                    $_item->set_query_params( $query );
-
-                    // Core only validates the registered args of a dispatched request, so a
-                    // request assembled here has to run those checks itself.
-                    $_item->set_attributes( array( 'args' => $controller_obj->get_batch_create_args() ) );
-                    $valid = $_item->has_valid_params();
-                    if ( ! is_wp_error( $valid ) ) {
-                        $valid = $_item->sanitize_params();
-                    }
-
-                    $_response = is_wp_error( $valid ) ? $valid : $controller_obj->create_item( $_item );
+                    $_item     = $this->prepare_batch_create_request( $request->get_route(), $item, $controller_obj->get_batch_create_args(), $defaults, $query );
+                    $_response = is_wp_error( $_item ) ? $_item : $controller_obj->create_item( $_item );
 
                     if ( is_wp_error( $_response ) ) {
                         $response[ $con_name ]['create'][] = array(

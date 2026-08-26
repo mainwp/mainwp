@@ -2889,26 +2889,45 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             // stored as sent and "yes" would silently become 0. Core compares the enum
             // against the coerced value, so "1" and "true" still match true.
             'enum'              => array( false, true, 2 ),
-            'sanitize_callback' => 'rest_parse_request_arg',
-            // Core lists the enum with %l, which prints its false member as an empty
-            // string ("is not one of , 1, and 2"), so an enum rejection is re-worded in
-            // the values the route documents. rest_validate_request_arg() does not call
-            // validate_callback itself, so this does not recurse.
+            // Both callbacks re-word an enum rejection: sanitize_params() runs the
+            // sanitizer over every parameter bag while has_valid_params() only checks the
+            // highest-priority one, so a valid body value alongside an invalid query value
+            // is refused by the sanitizer and would otherwise carry core's wording.
+            // rest_validate_request_arg() does not call validate_callback itself, so
+            // neither closure recurses.
             'validate_callback' => function ( $value, $request, $param ) {
-                $valid = rest_validate_request_arg( $value, $request, $param );
+                return $this->force_use_ipv4_enum_error( rest_validate_request_arg( $value, $request, $param ), $param );
+            },
+            'sanitize_callback' => function ( $value, $request, $param ) {
+                $valid = $this->force_use_ipv4_enum_error( rest_validate_request_arg( $value, $request, $param ), $param );
 
-                if ( is_wp_error( $valid ) && 'rest_not_in_enum' === $valid->get_error_code() ) {
-                    return new WP_Error(
-                        'rest_not_in_enum',
-                        /* translators: %s: parameter name */
-                        sprintf( __( '%s is not one of 0, 1, or 2.', 'mainwp' ), $param ),
-                        array( 'status' => 400 )
-                    );
-                }
-
-                return $valid;
+                return is_wp_error( $valid ) ? $valid : rest_sanitize_request_arg( $value, $request, $param );
             },
         );
+    }
+
+    /**
+     * Re-word a force_use_ipv4 enum rejection, passing anything else through.
+     *
+     * Core lists the enum with %l, which prints its false member as an empty string
+     * ("is not one of , 1, and 2"), so the rejection is worded in the values the route
+     * documents instead.
+     *
+     * @param true|WP_Error $result Result of validating the value.
+     * @param string        $param  Parameter name.
+     * @return true|WP_Error
+     */
+    private function force_use_ipv4_enum_error( $result, $param ) {
+        if ( is_wp_error( $result ) && 'rest_not_in_enum' === $result->get_error_code() ) {
+            return new WP_Error(
+                'rest_not_in_enum',
+                /* translators: %s: parameter name */
+                sprintf( __( '%s is not one of 0, 1, or 2.', 'mainwp' ), $param ),
+                array( 'status' => 400 )
+            );
+        }
+
+        return $result;
     }
 
     /**

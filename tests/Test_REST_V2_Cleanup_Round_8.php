@@ -461,6 +461,76 @@ class Test_REST_V2_Cleanup_Round_8 extends \WP_Test_REST_TestCase {
 	}
 
 	/**
+	 * Review round 1: no create arg is required, so a scalar item used to pass validation
+	 * and reach set_body_params()'s array type hint. Both batch routes report it per item.
+	 */
+	public function test_batch_create_rejects_non_array_item(): void {
+		$this->authenticate_as_admin();
+
+		$response = $this->do_authenticated_request(
+			'POST',
+			'/mainwp/v2/tags/batch',
+			[ 'create' => [ 'x' ] ]
+		);
+
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$data = $response->get_data();
+		$this->assertCount( 1, $data['create'], wp_json_encode( $data ) );
+		$this->assertSame( 'rest_invalid_param', $data['create'][0]['error']['code'], wp_json_encode( $data ) );
+		$this->assertSame( 0, $data['create'][0]['id'] );
+
+		$response = $this->do_authenticated_request(
+			'POST',
+			'/mainwp/v2/batch',
+			[ 'tags' => [ 'create' => [ 'x' ] ] ]
+		);
+
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$data = $response->get_data();
+		$this->assertCount( 1, $data['tags']['create'], wp_json_encode( $data ) );
+		$this->assertSame( 'rest_invalid_param', $data['tags']['create'][0]['error']['code'], wp_json_encode( $data ) );
+		$this->assertSame( 0, $data['tags']['create'][0]['id'] );
+	}
+
+	/**
+	 * Review round 1: a JSON list is an array without string keys, so sanitize_params()
+	 * would drop its entries as unregistered and the handler would build a row out of the
+	 * schema defaults alone. It is refused the same way a scalar is, and neither shape
+	 * stops the items after it.
+	 */
+	public function test_batch_create_rejects_list_item_and_continues(): void {
+		$this->authenticate_as_admin();
+
+		$response = $this->do_authenticated_request(
+			'POST',
+			'/mainwp/v2/tags/batch',
+			[ 'create' => [ [ 'x' ], [ 'name' => self::TAG_NAME ] ] ]
+		);
+
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$data = $response->get_data();
+		$this->assertCount( 2, $data['create'], wp_json_encode( $data ) );
+		$this->assertSame( 'rest_invalid_param', $data['create'][0]['error']['code'], wp_json_encode( $data ) );
+		$this->assertSame( 0, $data['create'][0]['id'] );
+		$this->assertArrayNotHasKey( 'error', $data['create'][1], wp_json_encode( $data ) );
+		$this->assertSame( 1, $data['create'][1]['success'], wp_json_encode( $data ) );
+
+		$response = $this->do_authenticated_request(
+			'POST',
+			'/mainwp/v2/batch',
+			[ 'tags' => [ 'create' => [ [ 'x' ], [ 'name' => self::TAG_NAME ] ] ] ]
+		);
+
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$data = $response->get_data();
+		$this->assertCount( 2, $data['tags']['create'], wp_json_encode( $data ) );
+		$this->assertSame( 'rest_invalid_param', $data['tags']['create'][0]['error']['code'], wp_json_encode( $data ) );
+		$this->assertSame( 0, $data['tags']['create'][0]['id'] );
+		$this->assertArrayNotHasKey( 'error', $data['tags']['create'][1], wp_json_encode( $data ) );
+		$this->assertSame( 1, $data['tags']['create'][1]['success'], wp_json_encode( $data ) );
+	}
+
+	/**
 	 * A cost payload the handler accepts, spelled the way the wire and the docs spell it.
 	 *
 	 * @param int $site_id Site the cost applies to.
@@ -484,14 +554,35 @@ class Test_REST_V2_Cleanup_Round_8 extends \WP_Test_REST_TestCase {
 	}
 
 	/**
+	 * Add one cost through the REST route and read the row back.
+	 *
+	 * @param int    $site_id Site the cost applies to.
+	 * @param string $name    Cost name.
+	 * @return object Row.
+	 */
+	protected function create_cost( int $site_id, string $name ) {
+		$payload         = $this->costs_payload( $site_id );
+		$payload['name'] = $name;
+
+		$response = $this->do_authenticated_request( 'POST', '/mainwp/v2/costs/add', $payload );
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+
+		$row = $this->get_cost_row( $name );
+		$this->assertNotNull( $row, 'the add route should have inserted ' . $name );
+
+		return $row;
+	}
+
+	/**
 	 * Read one cost row by the name this class inserts under.
 	 *
+	 * @param string $name Cost name.
 	 * @return object|null Row, or null when nothing was inserted.
 	 */
-	protected function get_cost_row() {
+	protected function get_cost_row( string $name = self::COST_NAME ) {
 		global $wpdb;
 
-		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}mainwp_cost_tracker WHERE name = %s", self::COST_NAME ) );
+		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}mainwp_cost_tracker WHERE name = %s", $name ) );
 	}
 
 	/**
@@ -638,6 +729,89 @@ class Test_REST_V2_Cleanup_Round_8 extends \WP_Test_REST_TestCase {
 	}
 
 	/**
+	 * Review round 1: WP_REST_Request ranks body params above URL params, so an edit used
+	 * to write to whichever cost the body named. The batch route has no path id, so its
+	 * items still address themselves by the id in the item body.
+	 */
+	public function test_costs_edit_writes_to_the_path_id_not_the_body_id(): void {
+		$this->skip_if_no_costs_controller();
+		$this->authenticate_as_admin();
+
+		$site_id = $this->create_site( 'https://round8-cost-path-id.example/' );
+		$first   = $this->create_cost( $site_id, self::COST_NAME . ' A' );
+		$second  = $this->create_cost( $site_id, self::COST_NAME . ' B' );
+
+		$payload         = $this->costs_payload( $site_id );
+		$payload['id']   = (int) $second->id;
+		$payload['name'] = self::COST_NAME . ' renamed by path';
+
+		$response = $this->do_authenticated_request( 'PUT', '/mainwp/v2/costs/' . (int) $first->id . '/edit', $payload );
+
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+
+		$renamed = $this->get_cost_row( self::COST_NAME . ' renamed by path' );
+		$this->assertNotNull( $renamed, 'the edit should have renamed a cost row' );
+		$this->assertSame( (int) $first->id, (int) $renamed->id );
+		$this->assertNotNull( $this->get_cost_row( self::COST_NAME . ' B' ), 'the cost the body named should be untouched' );
+
+		// Same payload through the batch route, where the item body is the only place an
+		// id can come from.
+		$payload['name'] = self::COST_NAME . ' renamed by body';
+
+		$response = $this->do_authenticated_request( 'POST', '/mainwp/v2/costs/batch', [ 'update' => [ $payload ] ] );
+
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$data = $response->get_data();
+		$this->assertArrayNotHasKey( 'error', $data['update'][0], wp_json_encode( $data ) );
+
+		$renamed = $this->get_cost_row( self::COST_NAME . ' renamed by body' );
+		$this->assertNotNull( $renamed, 'the batch update should have renamed a cost row' );
+		$this->assertSame( (int) $second->id, (int) $renamed->id );
+	}
+
+	/**
+	 * Review round 1: the read routes resolve through the same get_request_item(), where
+	 * a ?id= query param outranked the path before the pin moved into it.
+	 */
+	public function test_costs_get_returns_the_path_id_not_the_query_id(): void {
+		$this->skip_if_no_costs_controller();
+		$this->authenticate_as_admin();
+
+		$site_id = $this->create_site( 'https://round8-cost-get-path-id.example/' );
+		$first   = $this->create_cost( $site_id, self::COST_NAME . ' get A' );
+		$second  = $this->create_cost( $site_id, self::COST_NAME . ' get B' );
+
+		$response = $this->do_authenticated_request( 'GET', '/mainwp/v2/costs/' . (int) $first->id, [], [], '', [ 'id' => (int) $second->id ] );
+
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$data = $response->get_data();
+		$this->assertSame( (int) $first->id, (int) $data['data']->id, wp_json_encode( $data ) );
+	}
+
+	/**
+	 * Review round 1: WP_REST_Request reads body and JSON params on a DELETE too, so the
+	 * remove route is pinned to its path id the same way the edit route is.
+	 */
+	public function test_costs_remove_deletes_the_path_id_not_the_body_id(): void {
+		$this->skip_if_no_costs_controller();
+		$this->authenticate_as_admin();
+
+		$site_id = $this->create_site( 'https://round8-cost-remove-id.example/' );
+		$first   = $this->create_cost( $site_id, self::COST_NAME . ' A' );
+		$second  = $this->create_cost( $site_id, self::COST_NAME . ' B' );
+
+		$response = $this->do_authenticated_request(
+			'DELETE',
+			'/mainwp/v2/costs/' . (int) $first->id . '/remove',
+			[ 'id' => (int) $second->id ]
+		);
+
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$this->assertNull( $this->get_cost_row( self::COST_NAME . ' A' ), 'the cost the path named should be gone' );
+		$this->assertNotNull( $this->get_cost_row( self::COST_NAME . ' B' ), 'the cost the body named should be untouched' );
+	}
+
+	/**
 	 * Item 5: an omitted force_use_ipv4 stays null, so the handshake falls back to the
 	 * mainwp_forceUseIPv4 option the way the UI and the v1 add handler leave it. A sent
 	 * value still maps to what the DB layer stores.
@@ -674,6 +848,30 @@ class Test_REST_V2_Cleanup_Round_8 extends \WP_Test_REST_TestCase {
 
 			$this->assertSame( $expected, $fields['force_use_ipv4'], wp_json_encode( $input ) );
 		}
+	}
+
+	/**
+	 * Review round 1: has_valid_params() only checks the highest-priority bag, while
+	 * sanitize_params() runs the sanitizer over every bag. A valid body value alongside an
+	 * invalid query value is refused by the sanitizer, which used to carry core's own enum
+	 * wording instead of the values the route documents.
+	 */
+	public function test_force_use_ipv4_rewords_an_enum_rejection_from_any_bag(): void {
+		$this->authenticate_as_admin();
+
+		$response = $this->do_authenticated_request(
+			'PUT',
+			'/mainwp/v2/sites/999999/edit',
+			[ 'force_use_ipv4' => 1 ],
+			[],
+			'',
+			[ 'force_use_ipv4' => '-1' ]
+		);
+
+		$this->assertSame( 400, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$data = $response->get_data();
+		$this->assertSame( 'rest_invalid_param', $data['code'], wp_json_encode( $data ) );
+		$this->assertStringContainsString( '0, 1, or 2', $data['data']['params']['force_use_ipv4'], wp_json_encode( $data ) );
 	}
 
 	/**

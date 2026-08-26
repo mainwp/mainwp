@@ -414,12 +414,32 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
 
 
     /**
+     * Make the id in the path the id every parameter bag reports.
+     *
+     * WP_REST_Request ranks body and query params above URL params, so a body id would
+     * decide which cost a /costs/{id}/edit or /costs/{id}/remove call writes to, and a
+     * ?id= query param which cost the read routes return. The batch route carries no
+     * path id, so its items keep addressing themselves by the id in the item body.
+     * set_param() overwrites the key in every bag that already holds it.
+     *
+     * @param WP_REST_Request $request Full details about the request.
+     * @return void
+     */
+    protected function pin_id_to_path( $request ) {
+        $url_params = $request->get_url_params();
+        if ( isset( $url_params['id'] ) ) {
+            $request->set_param( 'id', (int) $url_params['id'] );
+        }
+    }
+
+    /**
      * Get site by.
      *
      * @param WP_REST_Request $request Full details about the request.
      * @return WP_Error|Object Item.
      */
     public function get_request_item( $request ) {
+        $this->pin_id_to_path( $request );
         $id   = $request['id'];
         $item = Cost_Tracker_DB::get_instance()->get_cost_tracker_by( 'id', $id );
         if ( empty( $item ) ) {

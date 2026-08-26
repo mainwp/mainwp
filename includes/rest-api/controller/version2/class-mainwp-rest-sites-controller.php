@@ -2391,8 +2391,8 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                 ),
                 'tags'                   => array(
                     'type'        => 'string',
-                    'description' => __( 'Site tags/groups.', 'mainwp' ),
-                    'context'     => array( 'view', 'edit' ),
+                    'description' => __( 'Site tags.', 'mainwp' ),
+                    'context'     => array( 'view' ),
                 ),
                 'note'                   => array(
                     'type'        => 'string',
@@ -2682,7 +2682,12 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                         'sanitize_callback' => 'absint',
                     ),
                 ),
-
+                // groupids is validated and sanitized in the database save function
+                // before updating the group associations.
+                'groupids'               => array(
+                    'description' => __( 'Site tag/group IDs. Accepts a comma-separated string of IDs.', 'mainwp' ),
+                    'context'     => array( 'edit' ),
+                ),
             ),
         );
     }
@@ -2754,11 +2759,6 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             if ( isset( $request[ $field ] ) ) {
                 $data[ $field ] = $request[ $field ];
             }
-        }
-
-        // to support tags update.
-        if ( isset( $request['tags'] ) ) {
-            $data['groupids'] = $request['tags'];
         }
 
         if ( isset( $request['client_id'] ) ) {
@@ -3084,14 +3084,22 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         if ( is_wp_error( $website ) ) {
             return $website;
         }
+
+        if ( isset( $request['tags'] ) ) {
+            return new \WP_Error(
+                'rest_invalid_param',
+                __( 'The "tags" parameter is not supported for this endpoint.', 'mainwp' ),
+                array(
+                    'status' => 400,
+                )
+            );
+        }
+
         $resp_data            = array();
         $resp_data['success'] = 0;
         try {
             $item   = $this->prepare_object_for_update( $request );
             $result = MainWP_DB_Common::instance()->rest_api_update_website( $website->id, $item );
-            if ( is_wp_error( $result ) ) {
-                return $result;
-            }
             if ( is_array( $result ) && ! empty( $result['success'] ) ) {
                     $resp_data['success'] = 1;
                     $params               = array(

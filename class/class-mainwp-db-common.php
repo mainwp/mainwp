@@ -1130,21 +1130,38 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             }
 
             $table_wp_group = esc_sql( $this->table_name( 'wp_group' ) );
-            $this->wpdb->query( $this->wpdb->prepare( "DELETE FROM `{$table_wp_group}` WHERE wpid=%d", $websiteid ) );
+
+            $result = $this->wpdb->query(
+                $this->wpdb->prepare(
+                    "DELETE FROM `{$table_wp_group}` WHERE wpid=%d",
+                    (int) $websiteid
+                )
+            );
+
+            if ( false === $result ) {
+                return false;
+            }
 
             if ( ! empty( $groupids ) ) {
-                // update groups.
+                $websiteid = (int) $websiteid;
+                $values    = array();
+                $args      = array();
+
                 foreach ( $groupids as $groupid ) {
-                    $this->wpdb->insert(
-                        $this->table_name( 'wp_group' ),
-                        array(
-                            'wpid'    => $websiteid,
-                            'groupid' => $groupid,
-                        )
-                    );
+                    $values[] = '(%d, %d)';
+                    $args[]   = $websiteid;
+                    $args[]   = (int) $groupid;
                 }
-                $success = true;
+
+                $sql = $this->wpdb->prepare( "INSERT INTO `{$table_wp_group}` (wpid, groupid) VALUES " . implode( ', ', $values ), $args ); // phpcs:ignore --NOSONAR - placeholder are ok.
+
+                $result = $this->wpdb->query( $sql );
+
+                if ( false === $result ) {
+                    return false;
+                }
             }
+            $success = true;
         }
 
         $newValues = array();

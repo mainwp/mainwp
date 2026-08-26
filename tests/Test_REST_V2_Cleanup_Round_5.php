@@ -29,6 +29,13 @@ class Test_REST_V2_Cleanup_Round_5 extends \WP_Test_REST_TestCase {
 	const KEY_DESCRIPTION = 'Round 5 Test API Key';
 
 	/**
+	 * Name of the tag rows the batch create test inserts.
+	 *
+	 * @var string
+	 */
+	const TAG_NAME = 'Round 5 Batch Tag';
+
+	/**
 	 * REST server instance.
 	 *
 	 * @var WP_REST_Server
@@ -101,6 +108,7 @@ class Test_REST_V2_Cleanup_Round_5 extends \WP_Test_REST_TestCase {
 		$property->setValue( null, null );
 
 		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}mainwp_api_keys WHERE description = %s", self::KEY_DESCRIPTION ) );
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}mainwp_group WHERE name = %s", self::TAG_NAME ) );
 
 		parent::tearDown();
 	}
@@ -246,6 +254,37 @@ class Test_REST_V2_Cleanup_Round_5 extends \WP_Test_REST_TestCase {
 		$this->assertArrayHasKey( 'error', $data['sites']['create'][0], wp_json_encode( $data ) );
 		$this->assertSame( 'rest_invalid_param', $data['sites']['create'][0]['error']['code'] );
 		$this->assertSame( 0, $data['sites']['create'][0]['id'] );
+	}
+
+	/**
+	 * Item 1 regression: a batch create that passes validation still reaches the
+	 * handler. The tags schema carried a misspelled validate_callback that only
+	 * batch validation could trigger, so a valid tag has to go through both routes.
+	 */
+	public function test_batch_create_valid_tag_reaches_handler(): void {
+		$this->authenticate_as_admin();
+
+		$response = $this->do_authenticated_request(
+			'POST',
+			'/mainwp/v2/tags/batch',
+			[ 'create' => [ [ 'name' => self::TAG_NAME ] ] ]
+		);
+
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$data = $response->get_data();
+		$this->assertArrayNotHasKey( 'error', $data['create'][0], wp_json_encode( $data ) );
+		$this->assertSame( 1, $data['create'][0]['success'], wp_json_encode( $data ) );
+
+		$response = $this->do_authenticated_request(
+			'POST',
+			'/mainwp/v2/batch',
+			[ 'tags' => [ 'create' => [ [ 'name' => self::TAG_NAME ] ] ] ]
+		);
+
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$data = $response->get_data();
+		$this->assertArrayNotHasKey( 'error', $data['tags']['create'][0], wp_json_encode( $data ) );
+		$this->assertSame( 1, $data['tags']['create'][0]['success'], wp_json_encode( $data ) );
 	}
 
 	/**

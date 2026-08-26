@@ -4,7 +4,7 @@
  *
  * Covers registered-arg validation on batch update and delete, the /sites/{id}/edit
  * route args and its update field map, the ssl_verify arg on /sites/add, the
- * empty_body status code, and the dead costs group on the global batch endpoint.
+ * empty_body status code, and the costs group on the global batch endpoint.
  *
  * @package MainWP\Dashboard\Tests
  */
@@ -184,6 +184,18 @@ class Test_REST_V2_Cleanup_Round_6 extends \WP_Test_REST_TestCase {
 		global $wpdb;
 
 		return $wpdb->get_var( $wpdb->prepare( "SELECT name FROM {$wpdb->prefix}mainwp_group WHERE id = %d", $tag_id ) );
+	}
+
+	/**
+	 * Look a tag up by name, to check whether a batch created one.
+	 *
+	 * @param string $name Tag name.
+	 * @return string|null Tag ID, or null when no row matches.
+	 */
+	protected function get_tag_id_by_name( string $name ) {
+		global $wpdb;
+
+		return $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$wpdb->prefix}mainwp_group WHERE name = %s", $name ) );
 	}
 
 	/**
@@ -582,25 +594,76 @@ class Test_REST_V2_Cleanup_Round_6 extends \WP_Test_REST_TestCase {
 	}
 
 	/**
-	 * Item 5: no costs controller is registered, so the group is neither dispatched
-	 * nor counted toward the batch limit.
+	 * Skip when the Cost Tracker module has not registered its REST controller.
+	 *
+	 * @return void
 	 */
-	public function test_global_batch_ignores_costs_group_without_counting_it(): void {
+	protected function skip_if_no_costs_controller(): void {
+		if ( ! class_exists( '\MainWP_Rest_Costs_Controller' ) ) {
+			$this->markTestSkipped( 'Cost Tracker module is not loaded, so no costs controller exists.' );
+		}
+
+		if ( ! array_key_exists( '/mainwp/v2/costs/batch', $this->server->get_routes() ) ) {
+			$this->markTestSkipped( 'Cost Tracker REST routes are not registered in this harness.' );
+		}
+	}
+
+	/**
+	 * Item 5: the costs group reaches the Cost Tracker controller, which registers
+	 * under its own namespace key rather than the shared mainwp/v2 one.
+	 */
+	public function test_global_batch_dispatches_costs_group(): void {
+		$this->skip_if_no_costs_controller();
+		$this->authenticate_as_admin();
+
+		$item = [ 'name' => [ 'x' ] ];
+
+		$response = $this->do_authenticated_request(
+			'POST',
+			'/mainwp/v2/batch',
+			[ 'costs' => [ 'create' => [ $item ] ] ]
+		);
+
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$data = $response->get_data();
+		$this->assertArrayHasKey( 'costs', $data, wp_json_encode( $data ) );
+		$this->assertArrayHasKey( 'error', $data['costs']['create'][0], wp_json_encode( $data ) );
+		$this->assertSame( 'rest_invalid_param', $data['costs']['create'][0]['error']['code'], wp_json_encode( $data ) );
+		$this->assertSame( 0, $data['costs']['create'][0]['id'] );
+
+		// The same item on the controller's own batch route has to fail identically,
+		// which is what proves the global batch reached that controller and its args.
+		$response = $this->do_authenticated_request(
+			'POST',
+			'/mainwp/v2/costs/batch',
+			[ 'create' => [ $item ] ]
+		);
+
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$own = $response->get_data();
+		$this->assertSame( $data['costs']['create'][0]['error']['code'], $own['create'][0]['error']['code'], wp_json_encode( $own ) );
+	}
+
+	/**
+	 * Item 5: costs items count toward the batch limit, so an oversized costs group
+	 * is refused before any group is dispatched.
+	 */
+	public function test_global_batch_counts_costs_toward_limit(): void {
+		$this->skip_if_no_costs_controller();
 		$this->authenticate_as_admin();
 
 		$response = $this->do_authenticated_request(
 			'POST',
 			'/mainwp/v2/batch',
 			[
-				'costs' => [ 'create' => array_fill( 0, 100, [ 'x' => 1 ] ) ],
+				'costs' => [ 'create' => array_fill( 0, 100, [ 'name' => 'x' ] ) ],
 				'tags'  => [ 'create' => [ [ 'name' => self::TAG_NAME ] ] ],
 			]
 		);
 
-		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
-		$data = $response->get_data();
-		$this->assertArrayNotHasKey( 'error', $data['tags']['create'][0], wp_json_encode( $data ) );
-		$this->assertFalse( array_key_exists( 'costs', $data ), wp_json_encode( $data ) );
+		$this->assertSame( 413, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$this->assertSame( 'mainwp_rest_request_entity_too_large', $response->as_error()->get_error_code() );
+		$this->assertNull( $this->get_tag_id_by_name( self::TAG_NAME ) );
 	}
 
 }

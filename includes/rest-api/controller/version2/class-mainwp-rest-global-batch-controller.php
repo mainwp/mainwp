@@ -45,7 +45,7 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
      *
      * @var array
      */
-    protected $controller_names = array( 'sites', 'clients', 'tags' );
+    protected $controller_names = array( 'sites', 'clients', 'costs', 'tags' );
 
     /**
      * Method instance()
@@ -80,6 +80,26 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
                 ),
             )
         );
+    }
+
+    /**
+     * Resolve a batch group's controller.
+     *
+     * Module controllers register under a namespace key of their own
+     * (the Cost Tracker uses mainwp/v2/costs), so a miss on the shared
+     * namespace is retried under the group's key before it is treated
+     * as an unregistered group.
+     *
+     * @param string $con_name Group name.
+     * @return MainWP_REST_Controller|false
+     */
+    private function get_batch_controller( $con_name ) {
+        $server     = MainWP_Rest_Server::instance();
+        $controller = $server->get_rest_controller( $this->namespace, $con_name );
+        if ( false === $controller ) {
+            $controller = $server->get_rest_controller( $this->namespace . '/' . $con_name, $con_name );
+        }
+        return $controller;
     }
 
     /**
@@ -121,7 +141,7 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
 
         foreach ( $this->controller_names as $con_name ) {
 
-            $controller_obj = MainWP_Rest_Server::instance()->get_rest_controller( $this->namespace, $con_name );
+            $controller_obj = $this->get_batch_controller( $con_name );
 
             if ( false === $controller_obj ) {
                 continue;

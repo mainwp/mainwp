@@ -267,9 +267,9 @@ class Test_REST_V2_Cleanup_Round_4 extends \WP_Test_REST_TestCase {
 
 		$had_lookup_key = ! empty( $this->progress_key_columns( 'idx_task_id' ) );
 
-		$dropped = \MainWP\Dashboard\MainWP_Install::instance()->drop_backup_progress_unique_index();
+		$repaired = \MainWP\Dashboard\MainWP_Install::instance()->drop_backup_progress_unique_index();
 
-		$this->assertContains( 'task_id', $dropped );
+		$this->assertTrue( $repaired );
 		$unique_on_task_id = $wpdb->get_col( "SHOW INDEX FROM {$table} WHERE Non_unique = 0 AND Column_name = 'task_id'", 2 );
 		$this->assertSame( [], $unique_on_task_id );
 
@@ -293,9 +293,9 @@ class Test_REST_V2_Cleanup_Round_4 extends \WP_Test_REST_TestCase {
 		$wpdb->query( "ALTER TABLE {$table} ADD UNIQUE KEY task_wp (task_id, wp_id)" );
 		$this->assertSame( [ 'task_id', 'wp_id' ], $this->progress_key_columns( 'task_wp' ) );
 
-		$dropped = \MainWP\Dashboard\MainWP_Install::instance()->drop_backup_progress_unique_index();
+		$repaired = \MainWP\Dashboard\MainWP_Install::instance()->drop_backup_progress_unique_index();
 
-		$this->assertNotContains( 'task_wp', $dropped );
+		$this->assertTrue( $repaired, 'nothing to drop still counts as repaired' );
 		$this->assertSame( [ 'task_id', 'wp_id' ], $this->progress_key_columns( 'task_wp' ) );
 	}
 

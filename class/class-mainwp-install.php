@@ -445,7 +445,11 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         }
         $wpdb->suppress_errors( $suppress );
 
-        $this->post_update();
+        // A repair that could not complete keeps the stored version behind so
+        // the next load runs post_update() again instead of skipping it for good.
+        if ( ! $this->post_update() ) {
+            return;
+        }
 
         do_action( 'mainwp_db_after_update', $currentVersion, $this->mainwp_db_version ); // new version: $this->mainwp_db_version.
 
@@ -470,7 +474,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * Update MainWP DB.
      *
-     * @return void
+     * @return bool False when a migration could not complete and the version must not advance.
      */
     public function post_update() { // phpcs:ignore -- NOSONAR - complex.
 
@@ -478,7 +482,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         $currentVersion = get_site_option( $this->option_db_key );
 
         if ( false === $currentVersion ) {
-            return;
+            return true;
         }
 
         $suppress = $this->wpdb->suppress_errors();
@@ -567,12 +571,15 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         $this->update_optimize_indexes_55( $currentVersion );
 
         // dbDelta never drops an index, so the stray unique key needs an explicit migration.
+        $repaired = true;
         if ( version_compare( $currentVersion, '9.0.2.4', '<' ) ) { // NOSONAR - no ip.
-            $this->drop_backup_progress_unique_index();
+            $repaired = $this->drop_backup_progress_unique_index();
         }
 
         $this->wpdb->suppress_errors( $suppress );
         MainWP_DB_Client::instance()->check_to_updates_reports_data_861( $currentVersion );
+
+        return $repaired;
     }
 
     /**
@@ -630,9 +637,27 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      * per site, so a task covering two or more sites could never insert its
      * second row. dbDelta never drops an index, so the stray key has to go here.
      *
-     * @return array Names of the dropped keys.
+     * @return bool True when no such key remains, false when one survived a failed DROP.
      */
     public function drop_backup_progress_unique_index() {
+        $table = $this->table_name( 'wp_backup_progress' );
+
+        foreach ( $this->find_backup_progress_task_id_unique_keys() as $key_name ) {
+            $this->wpdb->query( "ALTER TABLE {$table} DROP INDEX `{$key_name}`" ); // phpcs:ignore -- table name is internal, key name comes from the schema and is allowlisted below.
+        }
+
+        // suppress_errors() hides a failed DROP, so the table is the only source of truth.
+        return array() === $this->find_backup_progress_task_id_unique_keys();
+    }
+
+    /**
+     * Names of the unique keys on the backup progress table that cover task_id alone.
+     *
+     * A composite unique key over task_id and wp_id is legitimate and is left out.
+     *
+     * @return array
+     */
+    protected function find_backup_progress_task_id_unique_keys() {
         $table   = $this->table_name( 'wp_backup_progress' );
         $indexes = $this->wpdb->get_results( "SHOW INDEX FROM {$table} WHERE Non_unique = 0", ARRAY_A ); // phpcs:ignore -- table name is internal.
 
@@ -644,19 +669,14 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             $key_columns[ $index['Key_name'] ][] = $index['Column_name'];
         }
 
-        $dropped = array();
+        $keys = array();
         foreach ( $key_columns as $key_name => $columns ) {
-            // A composite unique key covering task_id and wp_id is legitimate; only the task_id-only key is wrong.
-            if ( array( 'task_id' ) !== $columns || ! preg_match( '/^[A-Za-z0-9_]+$/', $key_name ) ) {
-                continue;
-            }
-            // A false result leaves the key in place; only report what actually went away.
-            if ( false !== $this->wpdb->query( "ALTER TABLE {$table} DROP INDEX `{$key_name}`" ) ) { // phpcs:ignore -- table name is internal, key name comes from the schema and is allowlisted above.
-                $dropped[] = $key_name;
+            if ( array( 'task_id' ) === $columns && preg_match( '/^[A-Za-z0-9_]+$/', $key_name ) ) {
+                $keys[] = $key_name;
             }
         }
 
-        return $dropped;
+        return $keys;
     }
 
     /**

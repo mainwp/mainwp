@@ -454,7 +454,6 @@ class MainWP_Rest_Tags_Controller extends MainWP_REST_Controller{ //phpcs:ignore
                     'type'              => 'integer',
                     'description'       => __( 'Tag ID.', 'mainwp' ),
                     'sanitize_callback' => 'absint',
-                    'validate_callback' => 'wp_parse_id_list',
                     'context'           => array( 'view', 'edit' ),
                 ),
                 'name'        => array(

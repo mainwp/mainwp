@@ -191,6 +191,58 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
                     }
                 }
             }
+
+            // check_batch_limit() counts update and delete items for every group, so they
+            // are dispatched here the same way the per-controller batch route dispatches them.
+            if ( ! empty( $items[ $con_name ]['update'] ) ) {
+                foreach ( $items[ $con_name ]['update'] as $item ) {
+                    $_item = new WP_REST_Request( 'PUT', $request->get_route() );
+                    $_item->set_body_params( $item );
+
+                    // Core only validates the registered args of a dispatched request, so a
+                    // request assembled here has to run those checks itself.
+                    $_item->set_attributes( array( 'args' => $controller_obj->get_batch_update_args() ) );
+                    $valid = $_item->has_valid_params();
+                    if ( ! is_wp_error( $valid ) ) {
+                        $valid = $_item->sanitize_params();
+                    }
+
+                    $_response = is_wp_error( $valid ) ? $valid : $controller_obj->update_item( $_item );
+
+                    if ( is_wp_error( $_response ) ) {
+                        $response[ $con_name ]['update'][] = array(
+                            'id'    => (int) ( $item['id'] ?? 0 ),
+                            'error' => array(
+                                'code'    => $_response->get_error_code(),
+                                'message' => $_response->get_error_message(),
+                                'data'    => $_response->get_error_data(),
+                            ),
+                        );
+                    } else {
+                        $response[ $con_name ]['update'][] = $wp_rest_server->response_to_data( $_response, '' );
+                    }
+                }
+            }
+
+            if ( ! empty( $items[ $con_name ]['delete'] ) ) {
+                foreach ( $items[ $con_name ]['delete'] as $id ) {
+                    $_item     = $this->prepare_batch_id_request( $request->get_route(), $id, array( 'force' => true ), $controller_obj->get_batch_delete_args() );
+                    $_response = is_wp_error( $_item ) ? $_item : $controller_obj->delete_item( $_item );
+
+                    if ( is_wp_error( $_response ) ) {
+                        $response[ $con_name ]['delete'][] = array(
+                            'id'    => $this->batch_error_id( $id ),
+                            'error' => array(
+                                'code'    => $_response->get_error_code(),
+                                'message' => $_response->get_error_message(),
+                                'data'    => $_response->get_error_data(),
+                            ),
+                        );
+                    } else {
+                        $response[ $con_name ]['delete'][] = $wp_rest_server->response_to_data( $_response, '' );
+                    }
+                }
+            }
         }
 
         $con_name = 'sites';

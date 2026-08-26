@@ -2810,6 +2810,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                 'description' => __( 'Monitoring notification email addresses.', 'mainwp' ),
                 'type'        => 'string',
             ),
+            'force_use_ipv4'        => $this->get_force_use_ipv4_arg(),
         );
 
         // The item schema types the is_ignore* columns as view strings, and the DB layer
@@ -2842,23 +2843,23 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      */
     protected function get_add_site_extra_args() {
         return array(
-            'admin'         => array(
+            'admin'          => array(
                 'description' => __( 'Site administrator username.', 'mainwp' ),
                 'type'        => 'string',
             ),
-            'adminpassword' => array(
+            'adminpassword'  => array(
                 'description' => __( 'Site administrator password.', 'mainwp' ),
                 'type'        => 'string',
             ),
-            'uniqueid'      => array(
+            'uniqueid'       => array(
                 'description' => __( 'Unique security ID.', 'mainwp' ),
                 'type'        => 'string',
             ),
-            'groupids'      => array(
+            'groupids'       => array(
                 'description' => __( 'Comma-separated tag IDs.', 'mainwp' ),
                 'type'        => 'string',
             ),
-            'ssl_verify'    => array(
+            'ssl_verify'     => array(
                 'description'       => __( 'Verify the SSL certificate of the child site.', 'mainwp' ),
                 'type'              => 'boolean',
                 // rest_parse_request_arg validates before it sanitizes, so an explicit
@@ -2866,6 +2867,26 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                 'sanitize_callback' => 'rest_parse_request_arg',
                 'validate_callback' => 'rest_validate_request_arg',
             ),
+            'force_use_ipv4' => $this->get_force_use_ipv4_arg(),
+        );
+    }
+
+    /**
+     * The force_use_ipv4 argument the two input routes accept.
+     *
+     * The item schema types it as a view string, so a JSON boolean was refused even
+     * though OpenAPI documents one. The type order decides how core coerces the value:
+     * true / "1" / "0" match boolean first, while 2 and "2" fall through to integer and
+     * keep the "use the global setting" value the DB layer stores.
+     *
+     * @return array
+     */
+    protected function get_force_use_ipv4_arg() {
+        return array(
+            'description'       => __( 'Force IPv4: 0 to disable, 1 to force IPv4, 2 to use the global setting.', 'mainwp' ),
+            'type'              => array( 'boolean', 'integer', 'string' ),
+            'sanitize_callback' => 'rest_parse_request_arg',
+            'validate_callback' => 'rest_validate_request_arg',
         );
     }
 
@@ -2942,7 +2963,12 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             }
         }
 
-        $data['client_id'] = isset( $request['client_id'] ) && ! empty( $request['client_id'] ) ? intval( $request['client_id'] ) : 0;
+        // rest_api_update_website() writes client_id whenever the key is set, so an
+        // unconditional entry here would unassign the client on every name-only edit.
+        // A sent 0 stays the explicit unassign.
+        if ( isset( $request['client_id'] ) ) {
+            $data['client_id'] = intval( $request['client_id'] );
+        }
 
         /**
          * Filters an object before it is inserted via the REST API.

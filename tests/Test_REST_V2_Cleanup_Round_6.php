@@ -320,6 +320,60 @@ class Test_REST_V2_Cleanup_Round_6 extends \WP_Test_REST_TestCase {
 	}
 
 	/**
+	 * Item 1: a delete id is validated as sent. Cast first, true / 5.9 / ["x"] would
+	 * have become ids 1 / 5 / 1 and deleted a different row.
+	 */
+	public function test_batch_delete_rejects_malformed_ids(): void {
+		$this->authenticate_as_admin();
+		$tag_id = $this->create_tag();
+
+		$response = $this->do_authenticated_request(
+			'POST',
+			'/mainwp/v2/tags/batch',
+			[ 'delete' => [ true, $tag_id + 0.9, [ 'x' ], 0 ] ]
+		);
+
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$data = $response->get_data();
+		$this->assertCount( 4, $data['delete'] );
+		foreach ( $data['delete'] as $i => $item ) {
+			$this->assertArrayHasKey( 'error', $item, "item $i: " . wp_json_encode( $item ) );
+			$this->assertSame( 'rest_invalid_param', $item['error']['code'], "item $i" );
+		}
+		$this->assertSame( 0, $data['delete'][0]['id'] );
+		$this->assertSame( $tag_id, $data['delete'][1]['id'] );
+		$this->assertSame( 0, $data['delete'][2]['id'] );
+		$this->assertNotNull( $this->get_tag_name( $tag_id ) );
+	}
+
+	/**
+	 * Item 2: the view-only is_ignore* spellings are accepted as edit fallbacks, so they
+	 * carry the same 0|1 contract as ignore_*_updates instead of the schema's string type.
+	 */
+	public function test_sites_edit_types_is_ignore_aliases_as_integer_enum(): void {
+		$this->authenticate_as_admin();
+
+		foreach ( [ 'is_ignoreCoreUpdates', 'is_ignorePluginUpdates', 'is_ignoreThemeUpdates' ] as $alias ) {
+			$response = $this->do_authenticated_request(
+				'PUT',
+				'/mainwp/v2/sites/999999/edit',
+				[ $alias => 'false' ]
+			);
+
+			$this->assertSame( 400, $response->get_status(), $alias );
+			$this->assertSame( 'rest_invalid_param', $response->as_error()->get_error_code(), $alias );
+		}
+
+		$response = $this->do_authenticated_request(
+			'POST',
+			'/mainwp/v2/sites/batch',
+			[ 'update' => [ [ 'id' => 1, 'is_ignoreCoreUpdates' => 'false' ] ] ]
+		);
+		$data = $response->get_data();
+		$this->assertSame( 'rest_invalid_param', $data['update'][0]['error']['code'], wp_json_encode( $data ) );
+	}
+
+	/**
 	 * Item 2: the edit route registers the args it accepts, minus the collection id filter.
 	 */
 	public function test_sites_edit_route_registers_args(): void {

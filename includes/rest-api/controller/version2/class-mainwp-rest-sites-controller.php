@@ -2751,7 +2751,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      * @return array
      */
     protected function get_edit_site_extra_args() {
-        return array(
+        $args = array(
             'adminname'             => array(
                 'description' => __( 'Site administrator username.', 'mainwp' ),
                 'type'        => 'string',
@@ -2811,6 +2811,23 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                 'type'        => 'string',
             ),
         );
+
+        // The item schema types the is_ignore* columns as view strings, and the DB layer
+        // tests them for truthiness, so left as strings "false" would enable ignoring.
+        $aliases = array(
+            'is_ignoreCoreUpdates'   => 'ignore_core_updates',
+            'is_ignorePluginUpdates' => 'ignore_plugin_updates',
+            'is_ignoreThemeUpdates'  => 'ignore_theme_updates',
+        );
+        foreach ( $aliases as $alias => $documented ) {
+            $args[ $alias ] = array(
+                'description' => $args[ $documented ]['description'],
+                'type'        => 'integer',
+                'enum'        => array( 0, 1 ),
+            );
+        }
+
+        return $args;
     }
 
     /**

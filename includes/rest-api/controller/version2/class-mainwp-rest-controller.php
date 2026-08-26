@@ -637,13 +637,9 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
 
         if ( ! empty( $items['delete'] ) ) {
             foreach ( $items['delete'] as $id ) {
-                $id = (int) $id;
-
-                if ( 0 === $id ) {
-                    continue;
-                }
-
                 $_item = new WP_REST_Request( 'DELETE', $request->get_route() );
+                // The raw value goes in uncast: an (int) cast first would turn true, 5.9
+                // or ["x"] into a valid-looking id and delete a different item.
                 $_item->set_query_params(
                     array(
                         'id'    => $id,
@@ -663,7 +659,7 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
 
                 if ( is_wp_error( $_response ) ) {
                     $response['delete'][] = array(
-                        'id'    => $id,
+                        'id'    => is_numeric( $id ) ? (int) $id : 0,
                         'error' => array(
                             'code'    => $_response->get_error_code(),
                             'message' => $_response->get_error_message(),

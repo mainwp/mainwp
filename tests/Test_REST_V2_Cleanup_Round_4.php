@@ -360,6 +360,25 @@ class Test_REST_V2_Cleanup_Round_4 extends \WP_Test_REST_TestCase {
 	}
 
 	/**
+	 * A JSON payload sent without a JSON content type never reaches the
+	 * registered-arg validation, so the helper must not decode it either.
+	 */
+	public function test_get_request_body_data_ignores_unlabelled_raw_json(): void {
+		$controller = new \MainWP_Rest_API_Keys_Controller();
+		$method     = new \ReflectionMethod( $controller, 'get_request_body_data' );
+		$method->setAccessible( true );
+
+		$request = new WP_REST_Request( 'PUT', '/mainwp/v2/rest-api/edit-key/1' );
+		$request->set_header( 'content-type', 'text/plain' );
+		$request->set_body( '{"permissions":[["write"]]}' );
+
+		$error = $method->invoke( $controller, $request );
+
+		$this->assertWPError( $error );
+		$this->assertSame( 'empty_body', $error->get_error_code() );
+	}
+
+	/**
 	 * Item 3: POST /sites/add rejects array values for the args it consumes but never declared.
 	 */
 	public function test_sites_add_rejects_array_typed_params(): void {

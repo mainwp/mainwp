@@ -1526,17 +1526,13 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
     protected function get_request_body_data( $request ) {
         $body = $request->get_json_params();
 
+        // Only the two parsed bags count: a raw-body decode would hand the
+        // handler values that never went through the registered-arg validation.
         if ( ! is_array( $body ) || empty( $body ) ) {
             $body = $request->get_body_params();
         }
 
         if ( ! is_array( $body ) || empty( $body ) ) {
-            // A client can post a JSON payload without the matching content type, which leaves both param sets empty.
-            $decoded = json_decode( (string) $request->get_body(), true );
-            $body    = is_array( $decoded ) && ! empty( $decoded ) ? $decoded : array();
-        }
-
-        if ( empty( $body ) ) {
             return new WP_Error(
                 'empty_body',
                 __( 'Request body is empty.', 'mainwp' ),

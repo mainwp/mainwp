@@ -650,8 +650,10 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             if ( array( 'task_id' ) !== $columns || ! preg_match( '/^[A-Za-z0-9_]+$/', $key_name ) ) {
                 continue;
             }
-            $this->wpdb->query( "ALTER TABLE {$table} DROP INDEX `{$key_name}`" ); // phpcs:ignore -- table name is internal, key name comes from the schema and is allowlisted above.
-            $dropped[] = $key_name;
+            // A false result leaves the key in place; only report what actually went away.
+            if ( false !== $this->wpdb->query( "ALTER TABLE {$table} DROP INDEX `{$key_name}`" ) ) { // phpcs:ignore -- table name is internal, key name comes from the schema and is allowlisted above.
+                $dropped[] = $key_name;
+            }
         }
 
         return $dropped;

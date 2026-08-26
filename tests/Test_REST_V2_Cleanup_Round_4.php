@@ -173,9 +173,10 @@ class Test_REST_V2_Cleanup_Round_4 extends \WP_Test_REST_TestCase {
 	 * @param string $route       REST route.
 	 * @param array  $json_body   Body payload, encoded as JSON.
 	 * @param array  $body_params Form body parameters, as WP_REST_Server sets them from an unslashed $_POST.
+	 * @param string $raw_body    Raw body with no content type, left for core's own parsing.
 	 * @return \WP_REST_Response Response object.
 	 */
-	protected function do_authenticated_request( string $method, string $route, array $json_body = [], array $body_params = [] ): \WP_REST_Response {
+	protected function do_authenticated_request( string $method, string $route, array $json_body = [], array $body_params = [], string $raw_body = '' ): \WP_REST_Response {
 		$original_get    = $_GET;
 		$original_server = $_SERVER;
 
@@ -197,6 +198,10 @@ class Test_REST_V2_Cleanup_Round_4 extends \WP_Test_REST_TestCase {
 
 		if ( ! empty( $body_params ) ) {
 			$request->set_body_params( $body_params );
+		}
+
+		if ( '' !== $raw_body ) {
+			$request->set_body( $raw_body );
 		}
 
 		$response = rest_do_request( $request );
@@ -339,6 +344,25 @@ class Test_REST_V2_Cleanup_Round_4 extends \WP_Test_REST_TestCase {
 
 		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
 		$this->assertSame( self::BACKSLASH_VALUE, $this->get_key_description( $target['key_id'] ) );
+	}
+
+	/**
+	 * A JSON payload sent without a JSON content type is parsed by core as one
+	 * URL-encoded key, so edit-key must report empty_body instead of a no-op success.
+	 */
+	public function test_api_keys_edit_key_rejects_unlabelled_json_body(): void {
+		$this->authenticate_as_admin();
+		$target = $this->create_rest_api_key( $this->admin_user_id, 'read' );
+
+		$response = $this->do_authenticated_request(
+			'PUT',
+			'/mainwp/v2/rest-api/edit-key/' . $target['key_id'],
+			[],
+			[],
+			'{"active":false}'
+		);
+
+		$this->assertSame( 'empty_body', $response->as_error()->get_error_code(), wp_json_encode( $response->get_data() ) );
 	}
 
 	/**

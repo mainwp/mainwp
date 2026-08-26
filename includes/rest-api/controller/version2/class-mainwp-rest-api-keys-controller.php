@@ -295,6 +295,15 @@ class MainWP_Rest_API_Keys_Controller extends MainWP_REST_Controller { //phpcs:i
             return $body;
         }
 
+        // Every field here is optional, so a JSON payload sent without its content type
+        // (which core parses as one URL-encoded key) would otherwise "succeed" and change nothing.
+        if ( ! array_key_exists( 'active', $body ) && ! array_key_exists( 'description', $body ) && ! array_key_exists( 'permissions', $body ) ) {
+            return new WP_Error(
+                'empty_body',
+                __( 'Request body is empty.', 'mainwp' ),
+            );
+        }
+
         // Get key identifier.
         $cons_key_id = $request->get_param( 'key_identifier' );
 

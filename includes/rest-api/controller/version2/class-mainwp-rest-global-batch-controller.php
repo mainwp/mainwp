@@ -180,23 +180,12 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
         if ( $controller_obj ) {
             if ( ! empty( $items[ $con_name ]['sync'] ) ) {
                 foreach ( $items[ $con_name ]['sync'] as $id ) {
-                    $id = (int) $id;
-
-                    if ( 0 === $id ) {
-                        continue;
-                    }
-
-                    $_item = new WP_REST_Request( 'DELETE', $request->get_route() );
-                    $_item->set_query_params(
-                        array(
-                            'id' => $id,
-                        )
-                    );
-                    $_response = $controller_obj->sync_item( $_item );
+                    $_item     = $this->prepare_batch_id_request( $request->get_route(), $id );
+                    $_response = is_wp_error( $_item ) ? $_item : $controller_obj->sync_item( $_item );
 
                     if ( is_wp_error( $_response ) ) {
                         $response[ $con_name ]['sync'][] = array(
-                            'id'    => $id,
+                            'id'    => $this->batch_error_id( $id ),
                             'error' => array(
                                 'code'    => $_response->get_error_code(),
                                 'message' => $_response->get_error_message(),
@@ -211,23 +200,12 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
 
             if ( ! empty( $items[ $con_name ]['reconnect'] ) ) {
                 foreach ( $items[ $con_name ]['reconnect'] as $id ) {
-                    $id = (int) $id;
-
-                    if ( 0 === $id ) {
-                        continue;
-                    }
-
-                    $_item = new WP_REST_Request( 'DELETE', $request->get_route() );
-                    $_item->set_query_params(
-                        array(
-                            'id' => $id,
-                        )
-                    );
-                    $_response = $controller_obj->reconnect_item( $_item );
+                    $_item     = $this->prepare_batch_id_request( $request->get_route(), $id );
+                    $_response = is_wp_error( $_item ) ? $_item : $controller_obj->reconnect_item( $_item );
 
                     if ( is_wp_error( $_response ) ) {
                         $response[ $con_name ]['reconnect'][] = array(
-                            'id'    => $id,
+                            'id'    => $this->batch_error_id( $id ),
                             'error' => array(
                                 'code'    => $_response->get_error_code(),
                                 'message' => $_response->get_error_message(),
@@ -242,23 +220,12 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
 
             if ( ! empty( $items[ $con_name ]['disconnect'] ) ) {
                 foreach ( $items[ $con_name ]['disconnect'] as $id ) {
-                    $id = (int) $id;
-
-                    if ( 0 === $id ) {
-                        continue;
-                    }
-
-                    $_item = new WP_REST_Request( 'DELETE', $request->get_route() );
-                    $_item->set_query_params(
-                        array(
-                            'id' => $id,
-                        )
-                    );
-                    $_response = $controller_obj->disconnect_site( $_item );
+                    $_item     = $this->prepare_batch_id_request( $request->get_route(), $id );
+                    $_response = is_wp_error( $_item ) ? $_item : $controller_obj->disconnect_site( $_item );
 
                     if ( is_wp_error( $_response ) ) {
                         $response[ $con_name ]['disconnect'][] = array(
-                            'id'    => $id,
+                            'id'    => $this->batch_error_id( $id ),
                             'error' => array(
                                 'code'    => $_response->get_error_code(),
                                 'message' => $_response->get_error_message(),
@@ -273,23 +240,12 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
 
             if ( ! empty( $items[ $con_name ]['suspend'] ) ) {
                 foreach ( $items[ $con_name ]['suspend'] as $id ) {
-                    $id = (int) $id;
-
-                    if ( 0 === $id ) {
-                        continue;
-                    }
-
-                    $_item = new WP_REST_Request( 'DELETE', $request->get_route() );
-                    $_item->set_query_params(
-                        array(
-                            'id' => $id,
-                        )
-                    );
-                    $_response = $controller_obj->suspend_item( $_item );
+                    $_item     = $this->prepare_batch_id_request( $request->get_route(), $id );
+                    $_response = is_wp_error( $_item ) ? $_item : $controller_obj->suspend_item( $_item );
 
                     if ( is_wp_error( $_response ) ) {
                         $response[ $con_name ]['suspend'][] = array(
-                            'id'    => $id,
+                            'id'    => $this->batch_error_id( $id ),
                             'error' => array(
                                 'code'    => $_response->get_error_code(),
                                 'message' => $_response->get_error_message(),
@@ -304,23 +260,12 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
 
             if ( ! empty( $items[ $con_name ]['check'] ) ) {
                 foreach ( $items[ $con_name ]['check'] as $id ) {
-                    $id = (int) $id;
-
-                    if ( 0 === $id ) {
-                        continue;
-                    }
-
-                    $_item = new WP_REST_Request( 'DELETE', $request->get_route() );
-                    $_item->set_query_params(
-                        array(
-                            'id' => $id,
-                        )
-                    );
-                    $_response = $controller_obj->check_item( $_item );
+                    $_item     = $this->prepare_batch_id_request( $request->get_route(), $id );
+                    $_response = is_wp_error( $_item ) ? $_item : $controller_obj->check_item( $_item );
 
                     if ( is_wp_error( $_response ) ) {
                         $response[ $con_name ]['check'][] = array(
-                            'id'    => $id,
+                            'id'    => $this->batch_error_id( $id ),
                             'error' => array(
                                 'code'    => $_response->get_error_code(),
                                 'message' => $_response->get_error_message(),
@@ -335,23 +280,12 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
 
             if ( ! empty( $items[ $con_name ]['remove'] ) ) {
                 foreach ( $items[ $con_name ]['remove'] as $id ) {
-                    $id = (int) $id;
-
-                    if ( 0 === $id ) {
-                        continue;
-                    }
-
-                    $_item = new WP_REST_Request( 'DELETE', $request->get_route() );
-                    $_item->set_query_params(
-                        array(
-                            'id' => $id,
-                        )
-                    );
-                    $_response = $controller_obj->delete_item( $_item );
+                    $_item     = $this->prepare_batch_id_request( $request->get_route(), $id );
+                    $_response = is_wp_error( $_item ) ? $_item : $controller_obj->delete_item( $_item );
 
                     if ( is_wp_error( $_response ) ) {
                         $response[ $con_name ]['remove'][] = array(
-                            'id'    => $id,
+                            'id'    => $this->batch_error_id( $id ),
                             'error' => array(
                                 'code'    => $_response->get_error_code(),
                                 'message' => $_response->get_error_message(),
@@ -366,23 +300,12 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
 
             if ( ! empty( $items[ $con_name ]['security'] ) ) {
                 foreach ( $items[ $con_name ]['security'] as $id ) {
-                    $id = (int) $id;
-
-                    if ( 0 === $id ) {
-                        continue;
-                    }
-
-                    $_item = new WP_REST_Request( 'DELETE', $request->get_route() );
-                    $_item->set_query_params(
-                        array(
-                            'id' => $id,
-                        )
-                    );
-                    $_response = $controller_obj->security_item( $_item );
+                    $_item     = $this->prepare_batch_id_request( $request->get_route(), $id );
+                    $_response = is_wp_error( $_item ) ? $_item : $controller_obj->security_item( $_item );
 
                     if ( is_wp_error( $_response ) ) {
                         $response[ $con_name ]['security'][] = array(
-                            'id'    => $id,
+                            'id'    => $this->batch_error_id( $id ),
                             'error' => array(
                                 'code'    => $_response->get_error_code(),
                                 'message' => $_response->get_error_message(),
@@ -397,23 +320,12 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
 
             if ( ! empty( $items[ $con_name ]['plugins'] ) ) {
                 foreach ( $items[ $con_name ]['plugins'] as $id ) {
-                    $id = (int) $id;
-
-                    if ( 0 === $id ) {
-                        continue;
-                    }
-
-                    $_item = new WP_REST_Request( 'DELETE', $request->get_route() );
-                    $_item->set_query_params(
-                        array(
-                            'id' => $id,
-                        )
-                    );
-                    $_response = $controller_obj->get_site_plugins( $_item );
+                    $_item     = $this->prepare_batch_id_request( $request->get_route(), $id );
+                    $_response = is_wp_error( $_item ) ? $_item : $controller_obj->get_site_plugins( $_item );
 
                     if ( is_wp_error( $_response ) ) {
                         $response[ $con_name ]['plugins'][] = array(
-                            'id'    => $id,
+                            'id'    => $this->batch_error_id( $id ),
                             'error' => array(
                                 'code'    => $_response->get_error_code(),
                                 'message' => $_response->get_error_message(),
@@ -428,23 +340,12 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
 
             if ( ! empty( $items[ $con_name ]['themes'] ) ) {
                 foreach ( $items[ $con_name ]['themes'] as $id ) {
-                    $id = (int) $id;
-
-                    if ( 0 === $id ) {
-                        continue;
-                    }
-
-                    $_item = new WP_REST_Request( 'DELETE', $request->get_route() );
-                    $_item->set_query_params(
-                        array(
-                            'id' => $id,
-                        )
-                    );
-                    $_response = $controller_obj->get_site_themes( $_item );
+                    $_item     = $this->prepare_batch_id_request( $request->get_route(), $id );
+                    $_response = is_wp_error( $_item ) ? $_item : $controller_obj->get_site_themes( $_item );
 
                     if ( is_wp_error( $_response ) ) {
                         $response[ $con_name ]['themes'][] = array(
-                            'id'    => $id,
+                            'id'    => $this->batch_error_id( $id ),
                             'error' => array(
                                 'code'    => $_response->get_error_code(),
                                 'message' => $_response->get_error_message(),
@@ -459,23 +360,12 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
 
             if ( ! empty( $items[ $con_name ]['non-mainwp-changes'] ) ) {
                 foreach ( $items[ $con_name ]['non-mainwp-changes'] as $id ) {
-                    $id = (int) $id;
-
-                    if ( 0 === $id ) {
-                        continue;
-                    }
-
-                    $_item = new WP_REST_Request( 'DELETE', $request->get_route() );
-                    $_item->set_query_params(
-                        array(
-                            'id' => $id,
-                        )
-                    );
-                    $_response = $controller_obj->get_non_mainwp_changes_of_site( $_item );
+                    $_item     = $this->prepare_batch_id_request( $request->get_route(), $id );
+                    $_response = is_wp_error( $_item ) ? $_item : $controller_obj->get_non_mainwp_changes_of_site( $_item );
 
                     if ( is_wp_error( $_response ) ) {
                         $response[ $con_name ]['non-mainwp-changes'][] = array(
-                            'id'    => $id,
+                            'id'    => $this->batch_error_id( $id ),
                             'error' => array(
                                 'code'    => $_response->get_error_code(),
                                 'message' => $_response->get_error_message(),

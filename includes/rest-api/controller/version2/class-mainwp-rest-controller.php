@@ -536,6 +536,45 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
     }
 
     /**
+     * Build the internal request for one batch item addressed by id.
+     *
+     * The raw value goes in uncast and is validated against the batch id arg: an
+     * (int) cast first would turn true, 5.9 or ["x"] into a valid-looking id and
+     * act on a different item.
+     *
+     * @param string $route Batch route the parent request came in on.
+     * @param mixed  $id    Raw id from the batch payload.
+     * @param array  $query Extra query params (e.g. force for delete).
+     * @param array  $args  Args to validate against; defaults to the id arg alone.
+     * @return WP_REST_Request|WP_Error
+     */
+    protected function prepare_batch_id_request( $route, $id, $query = array(), $args = array() ) {
+        if ( empty( $args ) ) {
+            $args = array( 'id' => $this->get_batch_item_id_arg() );
+        }
+        $_item = new WP_REST_Request( 'DELETE', $route );
+        $_item->set_query_params( array_merge( array( 'id' => $id ), $query ) );
+        // Core only validates the registered args of a dispatched request, so a
+        // request assembled here has to run those checks itself.
+        $_item->set_attributes( array( 'args' => $args ) );
+        $valid = $_item->has_valid_params();
+        if ( ! is_wp_error( $valid ) ) {
+            $valid = $_item->sanitize_params();
+        }
+        return is_wp_error( $valid ) ? $valid : $_item;
+    }
+
+    /**
+     * Id to report for a batch item that failed before it could be resolved.
+     *
+     * @param mixed $id Raw id from the batch payload.
+     * @return int
+     */
+    protected function batch_error_id( $id ) {
+        return is_numeric( $id ) ? (int) $id : 0;
+    }
+
+    /**
      * Bulk create, update and delete items.
      *
      * @param WP_REST_Request $request Full details about the request.
@@ -637,29 +676,12 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
 
         if ( ! empty( $items['delete'] ) ) {
             foreach ( $items['delete'] as $id ) {
-                $_item = new WP_REST_Request( 'DELETE', $request->get_route() );
-                // The raw value goes in uncast: an (int) cast first would turn true, 5.9
-                // or ["x"] into a valid-looking id and delete a different item.
-                $_item->set_query_params(
-                    array(
-                        'id'    => $id,
-                        'force' => true,
-                    )
-                );
-
-                // Core only validates the registered args of a dispatched request, so a
-                // request assembled here has to run those checks itself.
-                $_item->set_attributes( array( 'args' => $this->get_batch_delete_args() ) );
-                $valid = $_item->has_valid_params();
-                if ( ! is_wp_error( $valid ) ) {
-                    $valid = $_item->sanitize_params();
-                }
-
-                $_response = is_wp_error( $valid ) ? $valid : $this->delete_item( $_item );
+                $_item     = $this->prepare_batch_id_request( $request->get_route(), $id, array( 'force' => true ), $this->get_batch_delete_args() );
+                $_response = is_wp_error( $_item ) ? $_item : $this->delete_item( $_item );
 
                 if ( is_wp_error( $_response ) ) {
                     $response['delete'][] = array(
-                        'id'    => is_numeric( $id ) ? (int) $id : 0,
+                        'id'    => $this->batch_error_id( $id ),
                         'error' => array(
                             'code'    => $_response->get_error_code(),
                             'message' => $_response->get_error_message(),
@@ -676,23 +698,12 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
         if ( MainWP_Utility::string_ends_by( $route, '/sites/batch' ) ) {
             if ( ! empty( $items['sync'] ) ) {
                 foreach ( $items['sync'] as $id ) {
-                    $id = (int) $id;
-
-                    if ( 0 === $id ) {
-                        continue;
-                    }
-
-                    $_item = new WP_REST_Request( 'DELETE', $request->get_route() );
-                    $_item->set_query_params(
-                        array(
-                            'id' => $id,
-                        )
-                    );
-                    $_response = $this->sync_item( $_item );
+                    $_item     = $this->prepare_batch_id_request( $request->get_route(), $id );
+                    $_response = is_wp_error( $_item ) ? $_item : $this->sync_item( $_item );
 
                     if ( is_wp_error( $_response ) ) {
                         $response['sync'][] = array(
-                            'id'    => $id,
+                            'id'    => $this->batch_error_id( $id ),
                             'error' => array(
                                 'code'    => $_response->get_error_code(),
                                 'message' => $_response->get_error_message(),
@@ -707,23 +718,12 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
 
             if ( ! empty( $items['reconnect'] ) ) {
                 foreach ( $items['reconnect'] as $id ) {
-                    $id = (int) $id;
-
-                    if ( 0 === $id ) {
-                        continue;
-                    }
-
-                    $_item = new WP_REST_Request( 'DELETE', $request->get_route() );
-                    $_item->set_query_params(
-                        array(
-                            'id' => $id,
-                        )
-                    );
-                    $_response = $this->reconnect_item( $_item );
+                    $_item     = $this->prepare_batch_id_request( $request->get_route(), $id );
+                    $_response = is_wp_error( $_item ) ? $_item : $this->reconnect_item( $_item );
 
                     if ( is_wp_error( $_response ) ) {
                         $response['reconnect'][] = array(
-                            'id'    => $id,
+                            'id'    => $this->batch_error_id( $id ),
                             'error' => array(
                                 'code'    => $_response->get_error_code(),
                                 'message' => $_response->get_error_message(),
@@ -738,23 +738,12 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
 
             if ( ! empty( $items['disconnect'] ) ) {
                 foreach ( $items['disconnect'] as $id ) {
-                    $id = (int) $id;
-
-                    if ( 0 === $id ) {
-                        continue;
-                    }
-
-                    $_item = new WP_REST_Request( 'DELETE', $request->get_route() );
-                    $_item->set_query_params(
-                        array(
-                            'id' => $id,
-                        )
-                    );
-                    $_response = $this->disconnect_site( $_item );
+                    $_item     = $this->prepare_batch_id_request( $request->get_route(), $id );
+                    $_response = is_wp_error( $_item ) ? $_item : $this->disconnect_site( $_item );
 
                     if ( is_wp_error( $_response ) ) {
                         $response['disconnect'][] = array(
-                            'id'    => $id,
+                            'id'    => $this->batch_error_id( $id ),
                             'error' => array(
                                 'code'    => $_response->get_error_code(),
                                 'message' => $_response->get_error_message(),
@@ -769,23 +758,12 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
 
             if ( ! empty( $items['suspend'] ) ) {
                 foreach ( $items['suspend'] as $id ) {
-                    $id = (int) $id;
-
-                    if ( 0 === $id ) {
-                        continue;
-                    }
-
-                    $_item = new WP_REST_Request( 'DELETE', $request->get_route() );
-                    $_item->set_query_params(
-                        array(
-                            'id' => $id,
-                        )
-                    );
-                    $_response = $this->suspend_item( $_item );
+                    $_item     = $this->prepare_batch_id_request( $request->get_route(), $id );
+                    $_response = is_wp_error( $_item ) ? $_item : $this->suspend_item( $_item );
 
                     if ( is_wp_error( $_response ) ) {
                         $response['suspend'][] = array(
-                            'id'    => $id,
+                            'id'    => $this->batch_error_id( $id ),
                             'error' => array(
                                 'code'    => $_response->get_error_code(),
                                 'message' => $_response->get_error_message(),
@@ -800,23 +778,12 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
 
             if ( ! empty( $items['check'] ) ) {
                 foreach ( $items['check'] as $id ) {
-                    $id = (int) $id;
-
-                    if ( 0 === $id ) {
-                        continue;
-                    }
-
-                    $_item = new WP_REST_Request( 'DELETE', $request->get_route() );
-                    $_item->set_query_params(
-                        array(
-                            'id' => $id,
-                        )
-                    );
-                    $_response = $this->check_item( $_item );
+                    $_item     = $this->prepare_batch_id_request( $request->get_route(), $id );
+                    $_response = is_wp_error( $_item ) ? $_item : $this->check_item( $_item );
 
                     if ( is_wp_error( $_response ) ) {
                         $response['check'][] = array(
-                            'id'    => $id,
+                            'id'    => $this->batch_error_id( $id ),
                             'error' => array(
                                 'code'    => $_response->get_error_code(),
                                 'message' => $_response->get_error_message(),
@@ -831,23 +798,12 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
 
             if ( ! empty( $items['remove'] ) ) {
                 foreach ( $items['remove'] as $id ) {
-                    $id = (int) $id;
-
-                    if ( 0 === $id ) {
-                        continue;
-                    }
-
-                    $_item = new WP_REST_Request( 'DELETE', $request->get_route() );
-                    $_item->set_query_params(
-                        array(
-                            'id' => $id,
-                        )
-                    );
-                    $_response = $this->delete_item( $_item );
+                    $_item     = $this->prepare_batch_id_request( $request->get_route(), $id );
+                    $_response = is_wp_error( $_item ) ? $_item : $this->delete_item( $_item );
 
                     if ( is_wp_error( $_response ) ) {
                         $response['remove'][] = array(
-                            'id'    => $id,
+                            'id'    => $this->batch_error_id( $id ),
                             'error' => array(
                                 'code'    => $_response->get_error_code(),
                                 'message' => $_response->get_error_message(),
@@ -862,23 +818,12 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
 
             if ( ! empty( $items['security'] ) ) {
                 foreach ( $items['security'] as $id ) {
-                    $id = (int) $id;
-
-                    if ( 0 === $id ) {
-                        continue;
-                    }
-
-                    $_item = new WP_REST_Request( 'DELETE', $request->get_route() );
-                    $_item->set_query_params(
-                        array(
-                            'id' => $id,
-                        )
-                    );
-                    $_response = $this->security_item( $_item );
+                    $_item     = $this->prepare_batch_id_request( $request->get_route(), $id );
+                    $_response = is_wp_error( $_item ) ? $_item : $this->security_item( $_item );
 
                     if ( is_wp_error( $_response ) ) {
                         $response['security'][] = array(
-                            'id'    => $id,
+                            'id'    => $this->batch_error_id( $id ),
                             'error' => array(
                                 'code'    => $_response->get_error_code(),
                                 'message' => $_response->get_error_message(),
@@ -893,23 +838,12 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
 
             if ( ! empty( $items['plugins'] ) ) {
                 foreach ( $items['plugins'] as $id ) {
-                    $id = (int) $id;
-
-                    if ( 0 === $id ) {
-                        continue;
-                    }
-
-                    $_item = new WP_REST_Request( 'DELETE', $request->get_route() );
-                    $_item->set_query_params(
-                        array(
-                            'id' => $id,
-                        )
-                    );
-                    $_response = $this->get_site_plugins( $_item );
+                    $_item     = $this->prepare_batch_id_request( $request->get_route(), $id );
+                    $_response = is_wp_error( $_item ) ? $_item : $this->get_site_plugins( $_item );
 
                     if ( is_wp_error( $_response ) ) {
                         $response['plugins'][] = array(
-                            'id'    => $id,
+                            'id'    => $this->batch_error_id( $id ),
                             'error' => array(
                                 'code'    => $_response->get_error_code(),
                                 'message' => $_response->get_error_message(),
@@ -924,23 +858,12 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
 
             if ( ! empty( $items['themes'] ) ) {
                 foreach ( $items['themes'] as $id ) {
-                    $id = (int) $id;
-
-                    if ( 0 === $id ) {
-                        continue;
-                    }
-
-                    $_item = new WP_REST_Request( 'DELETE', $request->get_route() );
-                    $_item->set_query_params(
-                        array(
-                            'id' => $id,
-                        )
-                    );
-                    $_response = $this->get_site_themes( $_item );
+                    $_item     = $this->prepare_batch_id_request( $request->get_route(), $id );
+                    $_response = is_wp_error( $_item ) ? $_item : $this->get_site_themes( $_item );
 
                     if ( is_wp_error( $_response ) ) {
                         $response['themes'][] = array(
-                            'id'    => $id,
+                            'id'    => $this->batch_error_id( $id ),
                             'error' => array(
                                 'code'    => $_response->get_error_code(),
                                 'message' => $_response->get_error_message(),
@@ -955,23 +878,12 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
 
             if ( ! empty( $items['non-mainwp-changes'] ) ) {
                 foreach ( $items['non-mainwp-changes'] as $id ) {
-                    $id = (int) $id;
-
-                    if ( 0 === $id ) {
-                        continue;
-                    }
-
-                    $_item = new WP_REST_Request( 'DELETE', $request->get_route() );
-                    $_item->set_query_params(
-                        array(
-                            'id' => $id,
-                        )
-                    );
-                    $_response = $this->get_non_mainwp_changes_of_site( $_item );
+                    $_item     = $this->prepare_batch_id_request( $request->get_route(), $id );
+                    $_response = is_wp_error( $_item ) ? $_item : $this->get_non_mainwp_changes_of_site( $_item );
 
                     if ( is_wp_error( $_response ) ) {
                         $response['non-mainwp-changes'][] = array(
-                            'id'    => $id,
+                            'id'    => $this->batch_error_id( $id ),
                             'error' => array(
                                 'code'    => $_response->get_error_code(),
                                 'message' => $_response->get_error_message(),

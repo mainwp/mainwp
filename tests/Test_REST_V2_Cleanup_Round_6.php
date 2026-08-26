@@ -347,6 +347,77 @@ class Test_REST_V2_Cleanup_Round_6 extends \WP_Test_REST_TestCase {
 	}
 
 	/**
+	 * Item 1: every batch id loop goes through one helper, so the same raw value is
+	 * accepted or rejected the same way whichever group it arrives in.
+	 */
+	public function test_prepare_batch_id_request_matrix(): void {
+		$controller = new \MainWP_Rest_Tags_Controller();
+		$method     = new \ReflectionMethod( $controller, 'prepare_batch_id_request' );
+		$method->setAccessible( true );
+
+		$rejected = [
+			'true'        => [ true, 'rest_invalid_param' ],
+			'float 5.9'   => [ 5.9, 'rest_invalid_param' ],
+			'array'       => [ [ 'x' ], 'rest_invalid_param' ],
+			'zero'        => [ 0, 'rest_invalid_param' ],
+			'negative'    => [ -1, 'rest_invalid_param' ],
+			'non-numeric' => [ 'abc', 'rest_invalid_param' ],
+			'null'        => [ null, 'rest_missing_callback_param' ],
+		];
+
+		foreach ( $rejected as $label => $case ) {
+			list( $input, $code ) = $case;
+
+			$result = $method->invoke( $controller, '/mainwp/v2/tags/batch', $input );
+
+			$this->assertWPError( $result, $label );
+			$this->assertSame( $code, $result->get_error_code(), $label );
+		}
+
+		// An integral float or a numeric string is a valid integer to core, and comes
+		// back out of the request bag as an int.
+		foreach ( [ 'numeric string' => '5', 'int' => 5, 'integral float' => 5.0 ] as $label => $input ) {
+			$result = $method->invoke( $controller, '/mainwp/v2/tags/batch', $input );
+
+			$this->assertInstanceOf( WP_REST_Request::class, $result, $label );
+			$this->assertSame( 5, $result['id'], $label );
+		}
+	}
+
+	/**
+	 * Item 1: the sites-only groups validate ids the same way delete does, so a
+	 * remove of true / ["x"] / 0 reports an error instead of removing site 1.
+	 */
+	public function test_sites_batch_remove_rejects_malformed_ids(): void {
+		$this->authenticate_as_admin();
+
+		$response = $this->do_authenticated_request(
+			'POST',
+			'/mainwp/v2/sites/batch',
+			[ 'remove' => [ true, [ 'x' ], 0 ] ]
+		);
+
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$data = $response->get_data();
+		$this->assertCount( 3, $data['remove'], wp_json_encode( $data ) );
+		foreach ( $data['remove'] as $i => $item ) {
+			$this->assertArrayHasKey( 'error', $item, "item $i: " . wp_json_encode( $item ) );
+			$this->assertSame( 'rest_invalid_param', $item['error']['code'], "item $i" );
+			$this->assertSame( 0, $item['id'], "item $i" );
+		}
+
+		$response = $this->do_authenticated_request(
+			'POST',
+			'/mainwp/v2/batch',
+			[ 'sites' => [ 'remove' => [ true ] ] ]
+		);
+
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$data = $response->get_data();
+		$this->assertSame( 'rest_invalid_param', $data['sites']['remove'][0]['error']['code'], wp_json_encode( $data ) );
+	}
+
+	/**
 	 * Item 2: the view-only is_ignore* spellings are accepted as edit fallbacks, so they
 	 * carry the same 0|1 contract as ignore_*_updates instead of the schema's string type.
 	 */

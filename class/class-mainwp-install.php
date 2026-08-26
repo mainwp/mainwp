@@ -41,7 +41,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     protected $option_db_key = 'mainwp_db_version';
 
     /**
-     * Option set while the backup progress index repair still needs a retry.
+     * Network-scoped like mainwp_db_version, so every blog on a multisite sees the pending repair.
      */
     const BACKUP_PROGRESS_INDEX_REPAIR_PENDING = 'mainwp_backup_progress_index_repair_pending';
 
@@ -107,7 +107,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             // The index repair keeps its own marker so a failed DROP is retried on
             // its own, without holding the DB version back and re-running every
             // older migration on each load.
-            if ( get_option( self::BACKUP_PROGRESS_INDEX_REPAIR_PENDING ) ) {
+            if ( get_site_option( self::BACKUP_PROGRESS_INDEX_REPAIR_PENDING ) ) {
                 $this->repair_backup_progress_index();
             }
             return;
@@ -641,9 +641,9 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     public function repair_backup_progress_index() {
         $repaired = $this->drop_backup_progress_unique_index();
         if ( $repaired ) {
-            delete_option( self::BACKUP_PROGRESS_INDEX_REPAIR_PENDING );
+            delete_site_option( self::BACKUP_PROGRESS_INDEX_REPAIR_PENDING );
         } else {
-            update_option( self::BACKUP_PROGRESS_INDEX_REPAIR_PENDING, current_time( 'mysql' ) );
+            update_site_option( self::BACKUP_PROGRESS_INDEX_REPAIR_PENDING, current_time( 'mysql' ) );
         }
         return $repaired;
     }
@@ -666,7 +666,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         }
 
         foreach ( $keys as $key_name ) {
-            $this->wpdb->query( "ALTER TABLE {$table} DROP INDEX `{$key_name}`" ); // phpcs:ignore -- table name is internal, key name comes from the schema and is allowlisted below.
+            $this->wpdb->query( "ALTER TABLE {$table} DROP INDEX `{$key_name}`" ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL statement; table name is a hardcoded internal identifier, key name comes from SHOW INDEX and is allowlisted below.
         }
 
         // suppress_errors() hides a failed DROP, so the table is the only source of truth.
@@ -685,7 +685,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
 
         // suppress_errors() is on in post_update(), so a failed SHOW INDEX looks like an empty index list; last_error is the only tell.
         $this->wpdb->last_error = '';
-        $indexes                = $this->wpdb->get_results( "SHOW INDEX FROM {$table} WHERE Non_unique = 0", ARRAY_A ); // phpcs:ignore -- table name is internal.
+        $indexes                = $this->wpdb->get_results( "SHOW INDEX FROM {$table} WHERE Non_unique = 0", ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL introspection; table name is a hardcoded internal identifier, no user input involved.
         if ( '' !== $this->wpdb->last_error ) {
             return null;
         }

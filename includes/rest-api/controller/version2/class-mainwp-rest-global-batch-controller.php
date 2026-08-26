@@ -196,22 +196,12 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
             // are dispatched here the same way the per-controller batch route dispatches them.
             if ( ! empty( $items[ $con_name ]['update'] ) ) {
                 foreach ( $items[ $con_name ]['update'] as $item ) {
-                    $_item = new WP_REST_Request( 'PUT', $request->get_route() );
-                    $_item->set_body_params( $item );
-
-                    // Core only validates the registered args of a dispatched request, so a
-                    // request assembled here has to run those checks itself.
-                    $_item->set_attributes( array( 'args' => $controller_obj->get_batch_update_args() ) );
-                    $valid = $_item->has_valid_params();
-                    if ( ! is_wp_error( $valid ) ) {
-                        $valid = $_item->sanitize_params();
-                    }
-
-                    $_response = is_wp_error( $valid ) ? $valid : $controller_obj->update_item( $_item );
+                    $_item     = $this->prepare_batch_update_request( $request->get_route(), $item, $controller_obj->get_batch_update_args() );
+                    $_response = is_wp_error( $_item ) ? $_item : $controller_obj->update_item( $_item );
 
                     if ( is_wp_error( $_response ) ) {
                         $response[ $con_name ]['update'][] = array(
-                            'id'    => (int) ( $item['id'] ?? 0 ),
+                            'id'    => is_array( $item ) ? $this->batch_error_id( $item['id'] ?? 0 ) : 0,
                             'error' => array(
                                 'code'    => $_response->get_error_code(),
                                 'message' => $_response->get_error_message(),

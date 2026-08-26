@@ -2890,7 +2890,24 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             // against the coerced value, so "1" and "true" still match true.
             'enum'              => array( false, true, 2 ),
             'sanitize_callback' => 'rest_parse_request_arg',
-            'validate_callback' => 'rest_validate_request_arg',
+            // Core lists the enum with %l, which prints its false member as an empty
+            // string ("is not one of , 1, and 2"), so an enum rejection is re-worded in
+            // the values the route documents. rest_validate_request_arg() does not call
+            // validate_callback itself, so this does not recurse.
+            'validate_callback' => function ( $value, $request, $param ) {
+                $valid = rest_validate_request_arg( $value, $request, $param );
+
+                if ( is_wp_error( $valid ) && 'rest_not_in_enum' === $valid->get_error_code() ) {
+                    return new WP_Error(
+                        'rest_not_in_enum',
+                        /* translators: %s: parameter name */
+                        sprintf( __( '%s is not one of 0, 1, or 2.', 'mainwp' ), $param ),
+                        array( 'status' => 400 )
+                    );
+                }
+
+                return $valid;
+            },
         );
     }
 
@@ -2909,14 +2926,19 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         $item_fields['adminpwd']   = isset( $request['adminpassword'] ) ? (string) $request['adminpassword'] : ''; // Cast only; sanitize_text_field() strips characters a password may legitimately hold.
         $item_fields['unique_id']  = sanitize_text_field( $request['uniqueid'] ?? $request['uniqueId'] ?? '' ); // uniqueid is the documented input spelling, uniqueId is what the item schema registers on this route.
         $item_fields['ssl_verify'] = empty( $request['ssl_verify'] ) ? false : intval( $request['ssl_verify'] );
-        // The add route accepts 2 (use the global setting) and mainwp_string_to_bool()
-        // would collapse it to 0, so keep it before the boolean conversion.
-        $force_use_ipv4                = isset( $request['force_use_ipv4'] ) ? $request['force_use_ipv4'] : 0;
-        $item_fields['force_use_ipv4'] = 2 === (int) $force_use_ipv4 ? 2 : ( mainwp_string_to_bool( $force_use_ipv4 ) ? 1 : 0 );
-        $item_fields['http_user']      = isset( $request['http_user'] ) ? sanitize_text_field( $request['http_user'] ) : '';
-        $item_fields['http_pass']      = isset( $request['http_pass'] ) ? (string) $request['http_pass'] : ''; // Cast only, same reason as adminpwd.
-        $item_fields['groupids']       = isset( $request['groupids'] ) && ! empty( $request['groupids'] ) ? explode( ',', sanitize_text_field( $request['groupids'] ) ) : array();
-        $item_fields['clientid']       = isset( $request['client_id'] ) && ! empty( $request['client_id'] ) ? intval( $request['client_id'] ) : 0;
+        // add_website() never stores the column on a create, so this value only steers the
+        // handshake. Omitted stays null, which fetch_url() reads as "use the global
+        // mainwp_forceUseIPv4 option", the same as the UI and the v1 add handler send.
+        $item_fields['force_use_ipv4'] = null;
+        if ( isset( $request['force_use_ipv4'] ) ) {
+            // The add route accepts 2 (use the global setting) and mainwp_string_to_bool()
+            // would collapse it to 0, so keep it before the boolean conversion.
+            $item_fields['force_use_ipv4'] = 2 === (int) $request['force_use_ipv4'] ? 2 : ( mainwp_string_to_bool( $request['force_use_ipv4'] ) ? 1 : 0 );
+        }
+        $item_fields['http_user'] = isset( $request['http_user'] ) ? sanitize_text_field( $request['http_user'] ) : '';
+        $item_fields['http_pass'] = isset( $request['http_pass'] ) ? (string) $request['http_pass'] : ''; // Cast only, same reason as adminpwd.
+        $item_fields['groupids']  = isset( $request['groupids'] ) && ! empty( $request['groupids'] ) ? explode( ',', sanitize_text_field( $request['groupids'] ) ) : array();
+        $item_fields['clientid']  = isset( $request['client_id'] ) && ! empty( $request['client_id'] ) ? intval( $request['client_id'] ) : 0;
 
         /**
          * Filters an object before it is inserted via the REST API.

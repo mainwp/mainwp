@@ -543,7 +543,18 @@ class Test_REST_V2_Cleanup_Round_7 extends \WP_Test_REST_TestCase {
 		$url = 'https://round7-ipv4-reject.example/';
 		$this->create_site( $url );
 
-		foreach ( [ -1, 3, '-1', 'yes', '', array( 1 ) ] as $value ) {
+		// An array matches none of the registered types, so it is refused before the
+		// enum; every other value coerces to one of them and reaches the enum check.
+		$cases = [
+			[ -1, 'rest_not_in_enum' ],
+			[ 3, 'rest_not_in_enum' ],
+			[ '-1', 'rest_not_in_enum' ],
+			[ 'yes', 'rest_not_in_enum' ],
+			[ '', 'rest_not_in_enum' ],
+			[ array( 1 ), 'rest_invalid_type' ],
+		];
+
+		foreach ( $cases as list( $value, $expected_code ) ) {
 			$label = wp_json_encode( $value );
 
 			$response = $this->do_authenticated_request(
@@ -560,6 +571,7 @@ class Test_REST_V2_Cleanup_Round_7 extends \WP_Test_REST_TestCase {
 			$data = $response->get_data();
 			$this->assertSame( 'rest_invalid_param', $data['code'], 'add ' . $label . ': ' . wp_json_encode( $data ) );
 			$this->assertArrayHasKey( 'force_use_ipv4', $data['data']['params'], 'add ' . $label . ': ' . wp_json_encode( $data ) );
+			$this->assert_force_use_ipv4_rejection( $data, $expected_code, 'add ' . $label );
 
 			$response = $this->do_authenticated_request(
 				'PUT',
@@ -571,6 +583,26 @@ class Test_REST_V2_Cleanup_Round_7 extends \WP_Test_REST_TestCase {
 			$data = $response->get_data();
 			$this->assertSame( 'rest_invalid_param', $data['code'], 'edit ' . $label . ': ' . wp_json_encode( $data ) );
 			$this->assertArrayHasKey( 'force_use_ipv4', $data['data']['params'], 'edit ' . $label . ': ' . wp_json_encode( $data ) );
+			$this->assert_force_use_ipv4_rejection( $data, $expected_code, 'edit ' . $label );
+		}
+	}
+
+	/**
+	 * Item 4: assert how a force_use_ipv4 value was refused, and that an enum
+	 * rejection names the accepted values instead of core's %l list, which prints
+	 * the false member of the enum as an empty string.
+	 *
+	 * @param array  $data          Error data of the response.
+	 * @param string $expected_code Error code the param is expected to carry.
+	 * @param string $label         Assertion label.
+	 */
+	protected function assert_force_use_ipv4_rejection( array $data, string $expected_code, string $label ): void {
+		$context = $label . ': ' . wp_json_encode( $data );
+
+		$this->assertSame( $expected_code, $data['data']['details']['force_use_ipv4']['code'], $context );
+
+		if ( 'rest_not_in_enum' === $expected_code ) {
+			$this->assertStringContainsString( '0, 1, or 2', $data['data']['params']['force_use_ipv4'], $context );
 		}
 	}
 
@@ -601,13 +633,13 @@ class Test_REST_V2_Cleanup_Round_7 extends \WP_Test_REST_TestCase {
 			$this->assertSame( $expected, $fields['force_use_ipv4'], wp_json_encode( $input ) );
 		}
 
-		// Absent altogether defaults to 0.
+		// Absent altogether stays null, which the handshake reads as "use the global option".
 		$request = new WP_REST_Request( 'POST', '/mainwp/v2/sites/add' );
 		$request->set_body_params( [ 'name' => 'x' ] );
 
 		$fields = $method->invoke( $controller, $request );
 
-		$this->assertSame( 0, $fields['force_use_ipv4'], 'absent' );
+		$this->assertNull( $fields['force_use_ipv4'], 'absent' );
 	}
 
 	/**

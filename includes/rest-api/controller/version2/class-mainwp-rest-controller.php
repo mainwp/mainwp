@@ -565,6 +565,32 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
     }
 
     /**
+     * Build the internal request for one batch update item.
+     *
+     * An update item has to carry its fields in an object: a scalar cannot be a body,
+     * and core only validates the registered args of a dispatched request, so a
+     * request assembled here has to run those checks itself.
+     *
+     * @param string $route Batch route the parent request came in on.
+     * @param mixed  $item  Raw item from the batch payload.
+     * @param array  $args  Args to validate against.
+     * @return WP_REST_Request|WP_Error
+     */
+    protected function prepare_batch_update_request( $route, $item, $args ) {
+        if ( ! is_array( $item ) ) {
+            return new WP_Error( 'rest_invalid_param', __( 'Batch update items must be objects carrying an item ID.', 'mainwp' ), array( 'status' => 400 ) );
+        }
+        $_item = new WP_REST_Request( 'PUT', $route );
+        $_item->set_body_params( $item );
+        $_item->set_attributes( array( 'args' => $args ) );
+        $valid = $_item->has_valid_params();
+        if ( ! is_wp_error( $valid ) ) {
+            $valid = $_item->sanitize_params();
+        }
+        return is_wp_error( $valid ) ? $valid : $_item;
+    }
+
+    /**
      * Id to report for a batch item that failed before it could be resolved.
      *
      * @param mixed $id Raw id from the batch payload.
@@ -646,22 +672,12 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
 
         if ( ! empty( $items['update'] ) ) {
             foreach ( $items['update'] as $item ) {
-                $_item = new WP_REST_Request( 'PUT', $request->get_route() );
-                $_item->set_body_params( $item );
-
-                // Core only validates the registered args of a dispatched request, so a
-                // request assembled here has to run those checks itself.
-                $_item->set_attributes( array( 'args' => $this->get_batch_update_args() ) );
-                $valid = $_item->has_valid_params();
-                if ( ! is_wp_error( $valid ) ) {
-                    $valid = $_item->sanitize_params();
-                }
-
-                $_response = is_wp_error( $valid ) ? $valid : $this->update_item( $_item );
+                $_item     = $this->prepare_batch_update_request( $request->get_route(), $item, $this->get_batch_update_args() );
+                $_response = is_wp_error( $_item ) ? $_item : $this->update_item( $_item );
 
                 if ( is_wp_error( $_response ) ) {
                     $response['update'][] = array(
-                        'id'    => (int) ( $item['id'] ?? 0 ),
+                        'id'    => is_array( $item ) ? $this->batch_error_id( $item['id'] ?? 0 ) : 0,
                         'error' => array(
                             'code'    => $_response->get_error_code(),
                             'message' => $_response->get_error_message(),

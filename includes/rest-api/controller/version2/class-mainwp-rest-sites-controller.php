@@ -2685,6 +2685,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                 // groupids is validated and sanitized in the database save function
                 // before updating the group associations.
                 'groupids'               => array(
+                    'type'        => 'string',
                     'description' => __( 'Site tag/group IDs as a comma-separated string.', 'mainwp' ),
                     'context'     => array( 'edit' ),
                 ),

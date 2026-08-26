@@ -1122,20 +1122,28 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             $success = true;
         }
 
-        // to support remove site's groups/tags.
-        if ( isset( $data['groupids'] ) ) {
-            $groupids = array();
+        $websiteid = (int) $websiteid;
 
-            if ( ! empty( $data['groupids'] ) ) {
-                $groupids = array_filter(
-                    array_map(
-                        'absint',
-                        explode(
-                            ',',
-                            sanitize_text_field( wp_unslash( $data['groupids'] ) )
-                        )
-                    )
-                );
+        $groupids = array();
+        // Support removing the site's groups/tags.
+        if ( isset( $data['groupids'] ) ) {
+
+            if ( ! is_string( $data['groupids'] ) ) {
+                return false;
+            }
+
+            $groupids_string = trim( wp_unslash( $data['groupids'] ) );
+
+            if ( '' !== $groupids_string ) {
+                $tokens = array_map( 'trim', explode( ',', $groupids_string ) );
+
+                foreach ( $tokens as $token ) {
+                    if ( '' === $token || ! ctype_digit( $token ) || 0 === (int) $token ) {
+                        return false;
+                    }
+                }
+
+                $groupids = array_map( 'absint', $tokens );
             }
 
             $table_wp_group = esc_sql( $this->table_name( 'wp_group' ) );
@@ -1143,7 +1151,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             $result = $this->wpdb->query(
                 $this->wpdb->prepare(
                     "DELETE FROM `{$table_wp_group}` WHERE wpid=%d",
-                    (int) $websiteid
+                    $websiteid
                 )
             );
 
@@ -1152,9 +1160,8 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             }
 
             if ( ! empty( $groupids ) ) {
-                $websiteid = (int) $websiteid;
-                $values    = array();
-                $args      = array();
+                $values = array();
+                $args   = array();
 
                 foreach ( $groupids as $groupid ) {
                     $values[] = '(%d, %d)';

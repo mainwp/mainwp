@@ -639,7 +639,11 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      * @return bool True when the repair is confirmed complete.
      */
     public function repair_backup_progress_index() {
+        // The retry from install() runs outside post_update()'s suppression; a
+        // persistently failing ALTER must not log or print on every request.
+        $suppress = $this->wpdb->suppress_errors();
         $repaired = $this->drop_backup_progress_unique_index();
+        $this->wpdb->suppress_errors( $suppress );
         if ( $repaired ) {
             delete_site_option( self::BACKUP_PROGRESS_INDEX_REPAIR_PENDING );
         } else {

@@ -225,13 +225,9 @@ class MainWP_Rest_API_Keys_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function create_new_key( $request ) { // phpcs:ignore -- NOSONAR - complex.
-        // Get request body.
-        $body = $request->get_body_params();
-        if ( empty( $body ) ) {
-            return new WP_Error(
-                'empty_body',
-                __( 'Request body is empty.', 'mainwp' ),
-            );
+        $body = $this->get_request_body_data( $request );
+        if ( is_wp_error( $body ) ) {
+            return $body;
         }
 
         // Generate consumer key and secret.
@@ -294,13 +290,9 @@ class MainWP_Rest_API_Keys_Controller extends MainWP_REST_Controller { //phpcs:i
             );
         }
 
-        // Get request body.
-        $body = $request->get_json_params();
-        if ( empty( $body ) ) {
-            return new WP_Error(
-                'empty_body',
-                __( 'Request body is empty.', 'mainwp' ),
-            );
+        $body = $this->get_request_body_data( $request );
+        if ( is_wp_error( $body ) ) {
+            return $body;
         }
 
         // Get key identifier.

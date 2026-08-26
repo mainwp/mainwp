@@ -31,7 +31,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * @var string DB version info.
      */
-    protected $mainwp_db_version = '9.0.2.3'; // NOSONAR - no IP. Bumped for MWP-1566 sibling-dir chmod migration (MWP-1558 follow-up). Original 9.0.2.0 bump for MWP-1557/1558.
+    protected $mainwp_db_version = '9.0.2.4'; // NOSONAR - no IP. 9.0.2.4 drops the stray unique index on backup progress task_id. Bumped for MWP-1566 sibling-dir chmod migration (MWP-1558 follow-up). Original 9.0.2.0 bump for MWP-1557/1558.
 
     /**
      * Protected variable to hold the database option name.
@@ -566,6 +566,11 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
 
         $this->update_optimize_indexes_55( $currentVersion );
 
+        // dbDelta never drops an index, so the stray unique key needs an explicit migration.
+        if ( version_compare( $currentVersion, '9.0.2.4', '<' ) ) { // NOSONAR - no ip.
+            $this->drop_backup_progress_unique_index();
+        }
+
         $this->wpdb->suppress_errors( $suppress );
         MainWP_DB_Client::instance()->check_to_updates_reports_data_861( $currentVersion );
     }
@@ -615,6 +620,41 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
                 delete_option( 'mainwp_notice_consumer_secret_migration_failed' );
             }
         }
+    }
+
+    /**
+     * Drop a stray unique index on the backup progress task_id column.
+     *
+     * Fresh installs made between DB 8.53 and the schema fix created
+     * wp_backup_progress with UNIQUE (task_id). Progress rows are per task and
+     * per site, so a task covering two or more sites could never insert its
+     * second row. dbDelta never drops an index, so the stray key has to go here.
+     *
+     * @return array Names of the dropped keys.
+     */
+    public function drop_backup_progress_unique_index() {
+        $table   = $this->table_name( 'wp_backup_progress' );
+        $indexes = $this->wpdb->get_results( "SHOW INDEX FROM {$table} WHERE Non_unique = 0", ARRAY_A ); // phpcs:ignore -- table name is internal.
+
+        $key_columns = array();
+        foreach ( (array) $indexes as $index ) {
+            if ( 'PRIMARY' === $index['Key_name'] ) {
+                continue;
+            }
+            $key_columns[ $index['Key_name'] ][] = $index['Column_name'];
+        }
+
+        $dropped = array();
+        foreach ( $key_columns as $key_name => $columns ) {
+            // A composite unique key covering task_id and wp_id is legitimate; only the task_id-only key is wrong.
+            if ( array( 'task_id' ) !== $columns || ! preg_match( '/^[A-Za-z0-9_]+$/', $key_name ) ) {
+                continue;
+            }
+            $this->wpdb->query( "ALTER TABLE {$table} DROP INDEX `{$key_name}`" ); // phpcs:ignore -- table name is internal, key name comes from the schema and is allowlisted above.
+            $dropped[] = $key_name;
+        }
+
+        return $dropped;
     }
 
     /**

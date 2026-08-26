@@ -370,7 +370,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                     'methods'             => WP_REST_Server::CREATABLE,
                     'callback'            => array( $this, 'create_item' ),
                     'permission_callback' => array( $this, 'get_rest_permissions_check' ),
-                    'args'                => $this->get_endpoint_args_for_item_schema( WP_REST_Server::EDITABLE ),
+                    'args'                => array_merge( $this->get_endpoint_args_for_item_schema( WP_REST_Server::EDITABLE ), $this->get_add_site_extra_args() ),
                 ),
             )
         );
@@ -2687,6 +2687,37 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         );
     }
 
+
+    /**
+     * Extra arguments accepted by the add route.
+     *
+     * These four are consumed by prepare_object_for_database() but absent from
+     * the item schema, so core never type-checked them and an array value
+     * reached the string sanitizers and fataled the request. Registering them
+     * here types them without touching the published item schema.
+     *
+     * @return array
+     */
+    protected function get_add_site_extra_args() {
+        return array(
+            'admin'         => array(
+                'description' => __( 'Site administrator username.', 'mainwp' ),
+                'type'        => 'string',
+            ),
+            'adminpassword' => array(
+                'description' => __( 'Site administrator password.', 'mainwp' ),
+                'type'        => 'string',
+            ),
+            'uniqueid'      => array(
+                'description' => __( 'Unique security ID.', 'mainwp' ),
+                'type'        => 'string',
+            ),
+            'groupids'      => array(
+                'description' => __( 'Comma-separated tag IDs.', 'mainwp' ),
+                'type'        => 'string',
+            ),
+        );
+    }
 
     /**
      * Prepare a single order for create or update.

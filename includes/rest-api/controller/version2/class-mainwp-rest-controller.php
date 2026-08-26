@@ -1507,7 +1507,43 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
         if ( null === $value || '' === $value ) {
             return '';
         }
+        // trim() raises a TypeError on arrays and objects under PHP 8, and a body value is free to be either.
+        if ( ! is_scalar( $value ) ) {
+            return '';
+        }
         return sanitize_text_field( trim( $value ) );
+    }
+
+    /**
+     * Read the request body as an associative array.
+     *
+     * The published routes accept either a JSON or a form-encoded body; clients
+     * send both, so JSON params are tried first and form params second.
+     *
+     * @param WP_REST_Request $request Request object.
+     * @return array|WP_Error Body data, or an empty_body error when nothing usable was sent.
+     */
+    protected function get_request_body_data( $request ) {
+        $body = $request->get_json_params();
+
+        if ( ! is_array( $body ) || empty( $body ) ) {
+            $body = $request->get_body_params();
+        }
+
+        if ( ! is_array( $body ) || empty( $body ) ) {
+            // A client can post a JSON payload without the matching content type, which leaves both param sets empty.
+            $decoded = json_decode( (string) $request->get_body(), true );
+            $body    = is_array( $decoded ) && ! empty( $decoded ) ? $decoded : array();
+        }
+
+        if ( empty( $body ) ) {
+            return new WP_Error(
+                'empty_body',
+                __( 'Request body is empty.', 'mainwp' ),
+            );
+        }
+
+        return $body;
     }
 
     /**

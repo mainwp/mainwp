@@ -475,6 +475,17 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
     }
 
     /**
+     * Get the args a batch create item is validated against.
+     *
+     * Mirrors the args the controller's own create route registers.
+     *
+     * @return array
+     */
+    public function get_batch_create_args() {
+        return $this->get_endpoint_args_for_item_schema( WP_REST_Server::CREATABLE );
+    }
+
+    /**
      * Bulk create, update and delete items.
      *
      * @param WP_REST_Request $request Full details about the request.
@@ -519,7 +530,15 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
                 // Set query (GET) parameters.
                 $_item->set_query_params( $query );
 
-                $_response = $this->create_item( $_item );
+                // Core only validates the registered args of a dispatched request, so a
+                // request assembled here has to run those checks itself.
+                $_item->set_attributes( array( 'args' => $this->get_batch_create_args() ) );
+                $valid = $_item->has_valid_params();
+                if ( ! is_wp_error( $valid ) ) {
+                    $valid = $_item->sanitize_params();
+                }
+
+                $_response = is_wp_error( $valid ) ? $valid : $this->create_item( $_item );
 
                 if ( is_wp_error( $_response ) ) {
                     $response['create'][] = array(

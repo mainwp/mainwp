@@ -370,7 +370,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                     'methods'             => WP_REST_Server::CREATABLE,
                     'callback'            => array( $this, 'create_item' ),
                     'permission_callback' => array( $this, 'get_rest_permissions_check' ),
-                    'args'                => array_merge( $this->get_endpoint_args_for_item_schema( WP_REST_Server::EDITABLE ), $this->get_add_site_extra_args() ),
+                    'args'                => $this->get_add_site_args(),
                 ),
             )
         );
@@ -2665,7 +2665,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                 'force_use_ipv4'         => array(
                     'type'    => 'string',
                     'default' => '',
-                    'context' => array( 'view' ),
+                    'context' => array( 'view', 'edit' ),
                 ),
                 'ssl_version'            => array(
                     'type'    => 'string',
@@ -2687,6 +2687,27 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         );
     }
 
+
+    /**
+     * Arguments registered by the add route.
+     *
+     * @return array
+     */
+    protected function get_add_site_args() {
+        return array_merge( $this->get_endpoint_args_for_item_schema( WP_REST_Server::EDITABLE ), $this->get_add_site_extra_args() );
+    }
+
+    /**
+     * Get the args a batch create item is validated against.
+     *
+     * The add route registers the editable schema args plus the add-only extras,
+     * so a batch create item has to be held to that same set.
+     *
+     * @return array
+     */
+    public function get_batch_create_args() {
+        return $this->get_add_site_args();
+    }
 
     /**
      * Extra arguments accepted by the add route.
@@ -2731,12 +2752,12 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         $item_fields['url']            = isset( $request['url'] ) ? sanitize_text_field( $request['url'] ) : '';
         $item_fields['name']           = isset( $request['name'] ) ? sanitize_text_field( $request['name'] ) : '';
         $item_fields['wpadmin']        = isset( $request['admin'] ) ? sanitize_text_field( $request['admin'] ) : '';
-        $item_fields['adminpwd']       = isset( $request['adminpassword'] ) ? $request['adminpassword'] : '';
-        $item_fields['unique_id']      = isset( $request['uniqueid'] ) ? sanitize_text_field( $request['uniqueid'] ) : '';
+        $item_fields['adminpwd']       = isset( $request['adminpassword'] ) ? (string) $request['adminpassword'] : ''; // Cast only; sanitize_text_field() strips characters a password may legitimately hold.
+        $item_fields['unique_id']      = sanitize_text_field( $request['uniqueid'] ?? $request['uniqueId'] ?? '' ); // uniqueid is the documented input spelling, uniqueId is what the item schema registers on this route.
         $item_fields['ssl_verify']     = empty( $request['ssl_verify'] ) ? false : intval( $request['ssl_verify'] );
         $item_fields['force_use_ipv4'] = isset( $request['force_use_ipv4'] ) && mainwp_string_to_bool( $request['force_use_ipv4'] ) ? 1 : 0;
         $item_fields['http_user']      = isset( $request['http_user'] ) ? sanitize_text_field( $request['http_user'] ) : '';
-        $item_fields['http_pass']      = isset( $request['http_pass'] ) ? $request['http_pass'] : '';
+        $item_fields['http_pass']      = isset( $request['http_pass'] ) ? (string) $request['http_pass'] : ''; // Cast only, same reason as adminpwd.
         $item_fields['groupids']       = isset( $request['groupids'] ) && ! empty( $request['groupids'] ) ? explode( ',', sanitize_text_field( $request['groupids'] ) ) : array();
         $item_fields['clientid']       = isset( $request['client_id'] ) && ! empty( $request['client_id'] ) ? intval( $request['client_id'] ) : 0;
 

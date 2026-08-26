@@ -2389,10 +2389,10 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                         'sanitize_callback' => 'sanitize_text_field',
                     ),
                 ),
-                'tags'                   => array( // response as tags.
+                'tags'                   => array(
                     'type'        => 'string',
-                    'description' => __( 'Site tags.', 'mainwp' ),
-                    'context'     => array( 'view' ),
+                    'description' => __( 'Site tags/groups.', 'mainwp' ),
+                    'context'     => array( 'view', 'edit' ),
                 ),
                 'note'                   => array(
                     'type'        => 'string',
@@ -2756,7 +2756,14 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             }
         }
 
-        $data['client_id'] = isset( $request['client_id'] ) && ! empty( $request['client_id'] ) ? intval( $request['client_id'] ) : 0;
+        // to support tags update.
+        if ( isset( $request['tags'] ) ) {
+            $data['groupids'] = $request['tags'];
+        }
+
+        if ( isset( $request['client_id'] ) ) {
+            $data['client_id'] = isset( $request['client_id'] ) && ! empty( $request['client_id'] ) ? intval( $request['client_id'] ) : 0;
+        }
 
         /**
          * Filters an object before it is inserted via the REST API.
@@ -3028,7 +3035,6 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         $resp_data            = array();
         $resp_data['success'] = 0;
         $site_id              = 0;
-        $url                  = '';
         $data                 = array(); //phpcs:ignore -- NOSONAR - not used data.
         $found_id             = 0;
         try {
@@ -3039,8 +3045,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                 $item['name'] = rtrim( $item['name'], '/' );
             }
 
-            $url     = $item['url'];
-            $website = MainWP_DB::instance()->get_websites_by_url( $item['url'] );
+            $website                                      = MainWP_DB::instance()->get_websites_by_url( $item['url'] );
             list( $message, $error, $site_id, $found_id ) = MainWP_Manage_Sites_View::add_wp_site( $website, $item );
 
             if ( ! empty( $site_id ) ) {
@@ -3084,6 +3089,9 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         try {
             $item   = $this->prepare_object_for_update( $request );
             $result = MainWP_DB_Common::instance()->rest_api_update_website( $website->id, $item );
+            if ( is_wp_error( $result ) ) {
+                return $result;
+            }
             if ( is_array( $result ) && ! empty( $result['success'] ) ) {
                     $resp_data['success'] = 1;
                     $params               = array(

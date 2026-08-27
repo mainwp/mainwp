@@ -84,8 +84,9 @@ class Test_REST_V2_Cleanup_Round_10 extends \WP_UnitTestCase {
 		}
 		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}mainwp_wp WHERE name LIKE %s", $wpdb->esc_like( self::SITE_NAME ) . '%' ) );
 
-		// A test that stops on a failed assertion never reaches its own delete.
-		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}mainwp_lookup_item_objects WHERE item_name = %s", self::LOOKUP_ITEM_NAME ) );
+		// A test that stops on a failed assertion never reaches its own delete; the prefix
+		// also covers the names the refusal cases must never have stored.
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}mainwp_lookup_item_objects WHERE item_name LIKE %s", $wpdb->esc_like( self::LOOKUP_ITEM_NAME ) . '%' ) );
 
 		parent::tearDown();
 	}
@@ -143,23 +144,55 @@ class Test_REST_V2_Cleanup_Round_10 extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * Item 1: insert_lookup_item() writes the item name it is given. Hardcoding 'cost' makes
-	 * every other caller's row unreadable through the item_name the caller looks it up by.
+	 * Item 1: insert_lookup_item() writes the item name it is given, and the row it wrote
+	 * reads back and deletes through the lookup API under that same name. Hardcoding 'cost'
+	 * made every other caller's row unreadable through the item_name it looks up by.
 	 */
 	public function test_insert_lookup_item_writes_the_item_name_it_is_given(): void {
 		global $wpdb;
 
+		$db      = \MainWP\Dashboard\MainWP_DB::instance();
 		$site_id = $this->add_site_row( 'https://round10-lookup-item-name.example/' );
 
-		$lookup_id = \MainWP\Dashboard\MainWP_DB::instance()->insert_lookup_item( self::LOOKUP_ITEM_NAME, 40210, 'site', $site_id );
+		$lookup_id = $db->insert_lookup_item( self::LOOKUP_ITEM_NAME, 40210, 'site', $site_id );
 
 		$this->assertGreaterThan( 0, (int) $lookup_id, 'insert_lookup_item should have inserted a lookup row' );
 
 		$item_name = $wpdb->get_var( $wpdb->prepare( "SELECT item_name FROM {$wpdb->prefix}mainwp_lookup_item_objects WHERE lookup_id = %d", $lookup_id ) );
-
-		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}mainwp_lookup_item_objects WHERE lookup_id = %d", $lookup_id ) );
-
 		$this->assertSame( self::LOOKUP_ITEM_NAME, $item_name );
+
+		$rows = $db->get_lookup_items( self::LOOKUP_ITEM_NAME, 40210, 'site' );
+		$this->assertCount( 1, $rows, 'get_lookup_items should find the row under the name it was inserted with' );
+		$this->assertSame( (int) $lookup_id, (int) $rows[0]->lookup_id );
+
+		$db->delete_lookup_items( 'object_name', [ 'item_id' => 40210, 'item_name' => self::LOOKUP_ITEM_NAME, 'object_names' => [ 'site' ] ] );
+		$this->assertSame( [], $db->get_lookup_items( self::LOOKUP_ITEM_NAME, 40210, 'site' ), 'delete_lookup_items should have removed the row under the same name' );
+	}
+
+	/**
+	 * Item 1, review round 1: a name that sanitizing would alter is refused rather than stored
+	 * under a value get_lookup_items() and delete_lookup_items() can never match, and a name
+	 * past the column length is refused instead of handing back a stale insert id.
+	 */
+	public function test_insert_lookup_item_refuses_a_name_it_could_not_store_as_given(): void {
+		global $wpdb;
+
+		$db      = \MainWP\Dashboard\MainWP_DB::instance();
+		$site_id = $this->add_site_row( 'https://round10-lookup-item-refuse.example/' );
+
+		// A stored row first, so a stale insert_id would be non-zero.
+		$this->assertGreaterThan( 0, (int) $db->insert_lookup_item( self::LOOKUP_ITEM_NAME, 40210, 'site', $site_id ) );
+
+		$cases = [
+			'percent-encoded'  => self::LOOKUP_ITEM_NAME . '%20x',
+			'past varchar(32)' => str_pad( self::LOOKUP_ITEM_NAME, 33, 'x' ),
+			'not a string'     => [ self::LOOKUP_ITEM_NAME ],
+		];
+		foreach ( $cases as $label => $name ) {
+			$this->assertFalse( $db->insert_lookup_item( $name, 40211, 'site', $site_id ), $label );
+		}
+
+		$this->assertSame( '0', $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}mainwp_lookup_item_objects WHERE item_id = %d", 40211 ) ), 'no refused name should have stored a row' );
 	}
 
 	/**

@@ -4000,7 +4000,12 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      * @return mixed Result
      */
     public function insert_lookup_item( $item_name, $item_id, $obj_name, $obj_id ) {
-        $item_name = is_string( $item_name ) ? sanitize_text_field( $item_name ) : '';
+        // get_lookup_items() and delete_lookup_items() match item_name as given, so a
+        // name that sanitizing would alter is refused instead of being stored under a
+        // value the caller can never read back or delete.
+        if ( ! is_string( $item_name ) || sanitize_text_field( $item_name ) !== $item_name ) {
+            return false;
+        }
         if ( empty( $item_name ) || empty( $item_id ) || empty( $obj_name ) || empty( $obj_id ) ) {
             return false;
         }
@@ -4010,7 +4015,11 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             'object_name' => $obj_name,
             'object_id'   => $obj_id,
         );
-        $this->wpdb->insert( $this->table_name( 'lookup_item_objects' ), $data );
+        // wpdb refuses a value past the column length before any SQL runs, and
+        // insert_id would still hold the previous insert's id.
+        if ( false === $this->wpdb->insert( $this->table_name( 'lookup_item_objects' ), $data ) ) {
+            return false;
+        }
         return $this->wpdb->insert_id; // must return lookup id.
     }
 

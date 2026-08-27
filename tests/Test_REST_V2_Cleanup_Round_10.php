@@ -242,4 +242,53 @@ class Test_REST_V2_Cleanup_Round_10 extends \WP_UnitTestCase {
 			'the clone private key should decrypt to the source plaintext under the clone key file'
 		);
 	}
+
+	/**
+	 * Item 2, PR review round 1: re-cloning over an existing staging clone refreshes its
+	 * force_use_ipv4 from the source. The force_update branch rewrote every other
+	 * connection setting and left this one at whatever the first clone stored.
+	 */
+	public function test_force_updating_a_clone_copies_the_source_force_use_ipv4(): void {
+		$plugin_file = 'round10/round10.php';
+		$key         = md5( $plugin_file . '-SNNonceAdder' );
+
+		$source_id = $this->add_site_row( 'https://round10-reclone.test/', [ 'force_use_ipv4' => 2 ] );
+		$this->assertSame( '2', (string) $this->get_site_column( $source_id, 'force_use_ipv4' ), 'the source site should have been created with force_use_ipv4 on the global setting' );
+
+		// Api_Backups_3rd_Party hooks mainwp_added_new_site to a Cloudways / GridPane
+		// lookup that calls out over the network. It registers from admin_init, which this
+		// harness never fires, but drop it when something did register it.
+		$listener = null;
+		if ( has_action( 'mainwp_added_new_site' ) && class_exists( '\MainWP\Dashboard\Module\ApiBackups\Api_Backups_3rd_Party' ) ) {
+			$listener = [ \MainWP\Dashboard\Module\ApiBackups\Api_Backups_3rd_Party::instance(), 'hook_added_new_site' ];
+			if ( ! remove_action( 'mainwp_added_new_site', $listener, 10 ) ) {
+				$listener = null;
+			}
+		}
+
+		try {
+			$ret = \MainWP\Dashboard\MainWP_Extensions_Handler::hook_clone_site( $plugin_file, $key, $source_id, 'round10', 'https://round10-reclone.test/staging/' );
+		} finally {
+			if ( null !== $listener ) {
+				add_action( 'mainwp_added_new_site', $listener, 10, 2 );
+			}
+		}
+
+		$this->assertIsArray( $ret, 'hook_clone_site should have returned a result array' );
+		$this->assertArrayHasKey( 'siteid', $ret, wp_json_encode( $ret ) );
+		$clone_id = (int) $ret['siteid'];
+		$this->assertGreaterThan( 0, $clone_id, wp_json_encode( $ret ) );
+		$this->assertSame( '2', (string) $this->get_site_column( $clone_id, 'force_use_ipv4' ), 'the clone should carry the source force_use_ipv4' );
+
+		\MainWP\Dashboard\MainWP_DB::instance()->update_website_values( $source_id, [ 'force_use_ipv4' => 1 ] );
+		$this->assertSame( '1', (string) $this->get_site_column( $source_id, 'force_use_ipv4' ), 'the source force_use_ipv4 should have changed' );
+
+		$ret = \MainWP\Dashboard\MainWP_Extensions_Handler::hook_clone_site( $plugin_file, $key, $source_id, 'round10', 'https://round10-reclone.test/staging/', true );
+
+		$this->assertIsArray( $ret, 'the force_update call should have returned a result array' );
+		$this->assertSame( 'Site updated.', $ret['response'] ?? null, wp_json_encode( $ret ) );
+		$this->assertSame( $clone_id, (int) ( $ret['siteid'] ?? 0 ), 'the force_update call should have found the existing clone row' );
+
+		$this->assertSame( '1', (string) $this->get_site_column( $clone_id, 'force_use_ipv4' ), 'the force_update branch should refresh the clone force_use_ipv4 from the source' );
+	}
 }

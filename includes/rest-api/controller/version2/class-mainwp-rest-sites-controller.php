@@ -2900,8 +2900,11 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             },
             'sanitize_callback' => function ( $value, $request, $param ) {
                 $valid = $this->force_use_ipv4_enum_error( rest_validate_request_arg( $value, $request, $param ), $param );
+                if ( is_wp_error( $valid ) ) {
+                    return $valid;
+                }
 
-                return is_wp_error( $valid ) ? $valid : rest_sanitize_request_arg( $value, $request, $param );
+                return rest_sanitize_request_arg( $value, $request, $param );
             },
         );
     }
@@ -2952,7 +2955,11 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         if ( isset( $request['force_use_ipv4'] ) ) {
             // The add route accepts 2 (use the global setting) and mainwp_string_to_bool()
             // would collapse it to 0, so keep it before the boolean conversion.
-            $item_fields['force_use_ipv4'] = 2 === (int) $request['force_use_ipv4'] ? 2 : ( mainwp_string_to_bool( $request['force_use_ipv4'] ) ? 1 : 0 );
+            if ( 2 === (int) $request['force_use_ipv4'] ) {
+                $item_fields['force_use_ipv4'] = 2;
+            } else {
+                $item_fields['force_use_ipv4'] = mainwp_string_to_bool( $request['force_use_ipv4'] ) ? 1 : 0;
+            }
         }
         $item_fields['http_user'] = isset( $request['http_user'] ) ? sanitize_text_field( $request['http_user'] ) : '';
         $item_fields['http_pass'] = isset( $request['http_pass'] ) ? (string) $request['http_pass'] : ''; // Cast only, same reason as adminpwd.

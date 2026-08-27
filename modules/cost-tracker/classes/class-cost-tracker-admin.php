@@ -850,7 +850,7 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
 
         $cost_data = array(
             'name'           => $cost_name,
-            'url'            => isset( $cost_data_raw['cost']['url'] ) && is_string( $cost_data_raw['cost']['url'] ) ? esc_url( $cost_data_raw['cost']['url'] ) : '',
+            'url'            => isset( $cost_data_raw['cost']['url'] ) && is_string( $cost_data_raw['cost']['url'] ) ? esc_url_raw( $cost_data_raw['cost']['url'] ) : '',
             'type'           => isset( $cost_data_raw['cost']['type'] ) ? sanitize_text_field( $cost_data_raw['cost']['type'] ) : '',
             'product_type'   => isset( $cost_data_raw['cost']['product_type'] ) ? sanitize_text_field( $cost_data_raw['cost']['product_type'] ) : '',
             'license_type'   => isset( $cost_data_raw['cost']['license_type'] ) ? sanitize_text_field( $cost_data_raw['cost']['license_type'] ) : '',
@@ -868,7 +868,7 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
                 if ( ! is_string( $url ) ) {
                     continue;
                 }
-                $url = esc_url( trim( $url ) );
+                $url = esc_url_raw( trim( $url ) );
                 if ( empty( $url ) ) {
                     continue;
                 }

@@ -939,6 +939,7 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
                                 'http_user'          => MainWP_Credential_Storage::decrypt_credential( $website->http_user ),
                                 'http_pass'          => MainWP_Credential_Storage::decrypt_credential( $website->http_pass ),
                                 'ssl_version'        => $website->ssl_version,
+                                'force_use_ipv4'     => $website->force_use_ipv4,
                             )
                         );
                     }

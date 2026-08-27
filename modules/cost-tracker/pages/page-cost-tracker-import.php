@@ -283,7 +283,7 @@ class Cost_Tracker_Import {
             return array();
         }
 
-        MainWP_System_Utility::get_wp_file_system();
+        $hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
 
         /**
          * WordPress files system object.
@@ -292,11 +292,16 @@ class Cost_Tracker_Import {
          */
         global $wp_filesystem;
 
-        $content = $wp_filesystem->get_contents( $tmp_path );
+        $lines = array();
 
-        $content        = str_replace( "\r\n", "\r", $content );
-        $content        = str_replace( "\n", "\r", $content );
-        $lines          = explode( "\r", $content );
+        if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
+            $content = $wp_filesystem->get_contents( $tmp_path );
+
+            $content = str_replace( "\r\n", "\r", $content );
+            $content = str_replace( "\n", "\r", $content );
+            $lines   = explode( "\r", $content );
+        }
+
         $import_data    = array();
         $default_values = array(
             'cost.name'           => '',

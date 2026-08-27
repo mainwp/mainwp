@@ -89,6 +89,8 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
         add_filter( 'mainwp_module_cost_tracker_get_default_cost_fields', array( $this, 'hook_get_default_cost_fields' ), 10, 2 );
         add_filter( 'mainwp_module_cost_tracker_get_next_renewal', array( $this, 'hook_get_next_renewal' ), 10, 3 );
         add_action( 'mainwp_delete_site', array( $this, 'hook_delete_site' ), 10, 3 );
+        add_action( 'mainwp_client_deleted', array( $this, 'hook_delete_client' ) );
+        add_action( 'mainwp_site_tag_action', array( $this, 'hook_site_tag_action' ), 10, 2 );
         add_filter( 'mainwp_module_cost_tracker_get_total_cost', array( $this, 'hook_get_total_cost' ), 10, 2 );
     }
 
@@ -127,6 +129,55 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
                 'item_name'    => 'cost',
                 'object_id'    => $site->id,
                 'object_names' => array( 'site' ),
+            )
+        );
+    }
+
+    /**
+     * Method hook_delete_client()
+     *
+     * Prunes the cost lookup rows of a deleted client. Left behind, they keep matching the
+     * client filter on the Costs page long after the client is gone.
+     *
+     * @param mixed $client client object.
+     *
+     * @return bool result.
+     */
+    public function hook_delete_client( $client ) {
+        if ( empty( $client ) || empty( $client->client_id ) ) {
+            return false;
+        }
+        return MainWP_DB::instance()->delete_lookup_items(
+            'object_id',
+            array(
+                'item_name'    => 'cost',
+                'object_id'    => $client->client_id,
+                'object_names' => array( 'client' ),
+            )
+        );
+    }
+
+    /**
+     * Method hook_site_tag_action()
+     *
+     * Prunes the cost lookup rows of a deleted tag. The hook also fires on create and update,
+     * which leave the rows alone.
+     *
+     * @param mixed  $group  tag object.
+     * @param string $action tag action.
+     *
+     * @return bool result.
+     */
+    public function hook_site_tag_action( $group, $action ) {
+        if ( 'deleted' !== $action || empty( $group ) || empty( $group->id ) ) {
+            return false;
+        }
+        return MainWP_DB::instance()->delete_lookup_items(
+            'object_id',
+            array(
+                'item_name'    => 'cost',
+                'object_id'    => $group->id,
+                'object_names' => array( 'tag' ),
             )
         );
     }
@@ -762,12 +813,12 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
     /**
      * AJAX handler for importing cost tracker entries.
      *
-     * @return void
+     * @return never wp_send_json_*() exits.
      */
     public static function ajax_import_cost() { //phpcs:ignore -- NOSONAR - complex method.
         MainWP_Post_Handler::instance()->secure_request( 'mainwp_cost_tracker_import_cost' );
 
-        if ( ! isset( $_POST['encoded_data'] ) ) {
+        if ( ! isset( $_POST['encoded_data'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- secure_request() verifies the nonce above.
             return wp_send_json_error(
                 array(
                     'message' => esc_html__( 'No cost data provided', 'mainwp' ),
@@ -775,7 +826,7 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
             );
         }
 
-        $encoded_data  = wp_unslash( $_POST['encoded_data'] );
+        $encoded_data  = wp_unslash( $_POST['encoded_data'] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- nonce verified by secure_request() above; a JSON string whose decoded fields are each sanitized below.
         $cost_data_raw = json_decode( $encoded_data, true );
 
         if ( null === $cost_data_raw || ! is_array( $cost_data_raw ) ) {

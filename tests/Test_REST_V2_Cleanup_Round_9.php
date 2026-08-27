@@ -50,6 +50,13 @@ class Test_REST_V2_Cleanup_Round_9 extends \WP_Test_REST_TestCase {
 	const COST_NAME = 'rest-v2-cleanup-round-9 Cost';
 
 	/**
+	 * Name of the client rows this class inserts.
+	 *
+	 * @var string
+	 */
+	const CLIENT_NAME = 'rest-v2-cleanup-round-9 Client';
+
+	/**
 	 * REST server instance.
 	 *
 	 * @var WP_REST_Server
@@ -140,6 +147,9 @@ class Test_REST_V2_Cleanup_Round_9 extends \WP_Test_REST_TestCase {
 		}
 		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}mainwp_cost_tracker WHERE name LIKE %s", $wpdb->esc_like( self::COST_NAME ) . '%' ) );
 
+		// A test that stops before its own delete_client() call leaves the client row behind.
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}mainwp_wp_clients WHERE name LIKE %s", $wpdb->esc_like( self::CLIENT_NAME ) . '%' ) );
+
 		parent::tearDown();
 	}
 
@@ -201,6 +211,25 @@ class Test_REST_V2_Cleanup_Round_9 extends \WP_Test_REST_TestCase {
 		$tag = \MainWP\Dashboard\MainWP_DB_Common::instance()->add_tag( [ 'name' => self::TAG_NAME ] );
 
 		return (int) $tag->id;
+	}
+
+	/**
+	 * Insert a client row directly, so a cost has a real client to point at.
+	 *
+	 * @return int Client ID.
+	 */
+	protected function create_client(): int {
+		$client = \MainWP\Dashboard\MainWP_DB_Client::instance()->update_client(
+			[
+				'name'         => self::CLIENT_NAME,
+				'client_email' => 'round9-client-' . wp_generate_uuid4() . '@example.test',
+				'created'      => time(),
+			]
+		);
+
+		$this->assertNotFalse( $client, 'update_client should insert a client row' );
+
+		return (int) $client->client_id;
 	}
 
 	/**
@@ -522,6 +551,45 @@ class Test_REST_V2_Cleanup_Round_9 extends \WP_Test_REST_TestCase {
 		$this->assertSame( [ $site_id ], $this->get_lookup_object_ids( $cost_id, 'site' ) );
 		$this->assertSame( [ $tag_id ], $this->get_lookup_object_ids( $cost_id, 'tag' ) );
 		$this->assertSame( [ 7 ], $this->get_lookup_object_ids( $cost_id, 'client' ) );
+	}
+
+	/**
+	 * Item 2: deleting a client or a tag prunes the cost lookup rows that pointed at it, the
+	 * way deleting a site already did. A stale client row still matches the Costs page client
+	 * filter, so the cost keeps showing up under an owner that no longer exists.
+	 */
+	public function test_deleting_a_client_or_a_tag_prunes_its_cost_lookup_rows(): void {
+		$this->skip_if_no_costs_controller();
+		$this->authenticate_as_admin();
+
+		$site_id   = $this->create_site( 'https://round9-cost-lookup-delete.example/' );
+		$tag_id    = $this->create_tag();
+		$client_id = $this->create_client();
+
+		$payload            = $this->costs_payload( $site_id );
+		$payload['groups']  = [ $tag_id ];
+		$payload['clients'] = [ $client_id ];
+
+		$response = $this->do_authenticated_request( 'POST', '/mainwp/v2/costs/batch', [ 'create' => [ $payload ] ] );
+
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$data = $response->get_data();
+		$this->assertArrayNotHasKey( 'error', $data['create'][0], wp_json_encode( $data ) );
+
+		$row = $this->get_cost_row();
+		$this->assertNotNull( $row, 'the batch create should have inserted a cost row' );
+
+		$cost_id = (int) $row->id;
+		$this->assertSame( [ $site_id ], $this->get_lookup_object_ids( $cost_id, 'site' ) );
+		$this->assertSame( [ $tag_id ], $this->get_lookup_object_ids( $cost_id, 'tag' ) );
+		$this->assertSame( [ $client_id ], $this->get_lookup_object_ids( $cost_id, 'client' ) );
+
+		$this->assertTrue( \MainWP\Dashboard\MainWP_DB_Client::instance()->delete_client( $client_id ), 'delete_client should have removed the client row' );
+		$this->assertNotEmpty( \MainWP\Dashboard\MainWP_DB_Common::instance()->remove_group( $tag_id ), 'remove_group should have removed the tag row' );
+
+		$this->assertSame( [ $site_id ], $this->get_lookup_object_ids( $cost_id, 'site' ) );
+		$this->assertSame( [], $this->get_lookup_object_ids( $cost_id, 'tag' ) );
+		$this->assertSame( [], $this->get_lookup_object_ids( $cost_id, 'client' ) );
 	}
 
 	/**

@@ -113,7 +113,7 @@ class MainWP_QQ2_File_Uploader { // phpcs:ignore Generic.Classes.OpeningBraceSam
      *
      * @return array success'=>true|error'=>'error message'
      */
-    public function handle_upload( $uploadDirectory, $replaceOldFile = false ) {
+    public function handle_upload( $uploadDirectory, $replaceOldFile = false ) { // phpcs:ignore --NOSONAR -complex.
 
         if ( ! $this->file ) {
             return array( 'error' => 'No files were uploaded!' );
@@ -153,15 +153,15 @@ class MainWP_QQ2_File_Uploader { // phpcs:ignore Generic.Classes.OpeningBraceSam
         }
 
         try {
-            if ( isset( $_FILES['qqfile'] ) && $this->file->save( $uploadDirectory . $filename . '.' . $ext ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+            if ( isset( $_FILES['qqfile'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
                 $file = $_FILES['qqfile']; // phpcs:ignore -- NOSONAR -ok.
                 if ( UPLOAD_ERR_OK === $file['error'] ) {
                     $tmp_path = isset( $file['tmp_name'] ) ? $file['tmp_name'] : '';
-                    if ( is_uploaded_file( $tmp_path ) ) {
+                    if ( is_uploaded_file( $tmp_path ) && $this->file->save( $uploadDirectory . $filename . '.' . $ext ) ) {
                         return array(
                             'success' => true,
-                            'path'    => esc_html( $uploadDirectory . $filename . '.' . $ext ),
-                            'tmp'     => esc_html( $tmp_path ),
+                            'path'    => $uploadDirectory . $filename . '.' . $ext,
+                            'tmp'     => $tmp_path,
                         );
                     }
                 }

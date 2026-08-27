@@ -296,10 +296,11 @@ class Cost_Tracker_Import {
 
         if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
             $content = $wp_filesystem->get_contents( $tmp_path );
-
-            $content = str_replace( "\r\n", "\r", $content );
-            $content = str_replace( "\n", "\r", $content );
-            $lines   = explode( "\r", $content );
+            if ( $content ) {
+                $content = str_replace( "\r\n", "\r", $content );
+                $content = str_replace( "\n", "\r", $content );
+                $lines   = explode( "\r", $content );
+            }
         }
 
         $import_data    = array();

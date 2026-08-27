@@ -1137,11 +1137,11 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         $tmp_path = isset( $_FILES['mainwp_client_import_file_bulkupload']['tmp_name'] ) ? $_FILES['mainwp_client_import_file_bulkupload']['tmp_name'] : '';  // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- NOSONAR
 
-        if( ! is_uploaded_file( $tmp_path ) ){
+        if ( ! is_uploaded_file( $tmp_path ) ) {
             return false;
         }
 
-        MainWP_System_Utility::get_wp_file_system();
+        $hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
         //phpcs:enable
         /**
          * WordPress files system object.
@@ -1150,12 +1150,18 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
          */
         global $wp_filesystem;
 
-        $content = $wp_filesystem->get_contents( $tmp_path );
+        $lines = array();
 
-        // to compatible with EOL on OSs.
-        $content        = str_replace( "\r\n", "\r", $content );
-        $content        = str_replace( "\n", "\r", $content );
-        $lines          = explode( "\r", $content );
+        if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
+            $content = $wp_filesystem->get_contents( $tmp_path );
+            if ( ! empty( $content ) ) {
+                // to compatible with EOL on OSs.
+                $content = str_replace( "\r\n", "\r", $content );
+                $content = str_replace( "\n", "\r", $content );
+                $lines   = explode( "\r", $content );
+            }
+        }
+
         $import_data    = array();
         $default_values = array(
             'client.name'              => '',

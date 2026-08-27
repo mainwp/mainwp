@@ -411,7 +411,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             if ( isset( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) && is_uploaded_file( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) ) {
                 $tmp_path = $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'];
 
-                MainWP_System_Utility::get_wp_file_system();
+                $hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
                 //phpcs:enable
                 /**
                  * WordPress files system object.
@@ -420,12 +420,16 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                  */
                 global $wp_filesystem;
 
-                $content = $wp_filesystem->get_contents( $tmp_path );
-
-                // to compatible with EOL on OSs.
-                $content = str_replace( "\r\n", "\r", $content );
-                $content = str_replace( "\n", "\r", $content );
-                $lines   = explode( "\r", $content );
+                $lines = array();
+                if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
+                    $content = $wp_filesystem->get_contents( $tmp_path );
+                    if ( ! empty( $content ) ) {
+                        // to compatible with EOL on OSs.
+                        $content = str_replace( "\r\n", "\r", $content );
+                        $content = str_replace( "\n", "\r", $content );
+                        $lines   = explode( "\r", $content );
+                    }
+                }
 
                 $default_values = array(
                     'name'               => '',

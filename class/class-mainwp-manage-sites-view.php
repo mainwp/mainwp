@@ -2397,6 +2397,9 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         'http_user'         => $http_user,
                         'http_pass'         => $http_pass,
                         'sslVersion'        => $sslVersion,
+                        // Steers the handshake above; passing it on is what gets it stored,
+                        // instead of the column waiting for the first edit of the site.
+                        'force_use_ipv4'    => $force_use_ipv4,
                     );
 
                     $id = MainWP_DB::instance()->add_website( $current_user->ID, $params['name'], $params['url'], $params['wpadmin'], base64_encode( $pubkey ), base64_encode( $privkey ), $others ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() used for http encoding compatible.

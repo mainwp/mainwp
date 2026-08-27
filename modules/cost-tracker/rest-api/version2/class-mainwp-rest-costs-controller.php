@@ -292,6 +292,10 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
      * @return WP_Error|WP_REST_Response
      */
     public function create_item( $request ) {
+        // handle_rest_update_insert_item() reads a non-empty id as "update that row", and
+        // the body bag outranks anything the create route registers, so the id is cleared
+        // out of every bag before the handler can point a create at an existing cost.
+        $request->set_param( 'id', null );
         try {
             $resp_data = $this->handle_rest_update_insert_item( $request );
         } catch ( MainWP_Extra_Exception $e ) {
@@ -843,6 +847,9 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
                     'sanitize_callback' => 'absint',
                     'validate_callback' => 'rest_validate_request_arg',
                     'context'           => array( 'view', 'edit' ),
+                    // The write routes take the cost from the path, and batch items from the
+                    // id arg get_batch_update_args() adds, so no route accepts it as input.
+                    'readonly'          => true,
                 ),
                 'name'                => array(
                     'type'              => 'string',

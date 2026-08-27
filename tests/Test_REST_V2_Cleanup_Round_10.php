@@ -32,6 +32,13 @@ class Test_REST_V2_Cleanup_Round_10 extends \WP_UnitTestCase {
 	const LOOKUP_ITEM_NAME = 'round10-probe';
 
 	/**
+	 * Name of the cost rows this class inserts.
+	 *
+	 * @var string
+	 */
+	const COST_NAME = 'rest-v2-cleanup-round-10 Cost';
+
+	/**
 	 * Admin user ID.
 	 *
 	 * @var int
@@ -88,6 +95,14 @@ class Test_REST_V2_Cleanup_Round_10 extends \WP_UnitTestCase {
 		// also covers the names the refusal cases must never have stored.
 		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}mainwp_lookup_item_objects WHERE item_name LIKE %s", $wpdb->esc_like( self::LOOKUP_ITEM_NAME ) . '%' ) );
 
+		$cost_ids = $wpdb->get_col( $wpdb->prepare( "SELECT id FROM {$wpdb->prefix}mainwp_cost_tracker WHERE name LIKE %s", $wpdb->esc_like( self::COST_NAME ) . '%' ) );
+		foreach ( $cost_ids as $cost_id ) {
+			$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}mainwp_lookup_item_objects WHERE item_name = 'cost' AND item_id = %d", $cost_id ) );
+		}
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}mainwp_cost_tracker WHERE name LIKE %s", $wpdb->esc_like( self::COST_NAME ) . '%' ) );
+
+		unset( $_POST['security'], $_POST['encoded_data'], $_REQUEST['security'] );
+
 		parent::tearDown();
 	}
 
@@ -141,6 +156,53 @@ class Test_REST_V2_Cleanup_Round_10 extends \WP_UnitTestCase {
 		$this->assertContains( $column, [ 'privkey', 'force_use_ipv4' ], 'unexpected column' );
 
 		return $wpdb->get_var( $wpdb->prepare( "SELECT `{$column}` FROM {$wpdb->prefix}mainwp_wp WHERE id = %d", $site_id ) );
+	}
+
+	/**
+	 * Post one cost payload through the import handler and hand back the decoded response.
+	 *
+	 * @param array $cost Cost payload, as the admin pastes it.
+	 * @return array Decoded wp_send_json_* response.
+	 */
+	protected function import_cost( array $cost ): array {
+		// check_security() reads the nonce out of $_REQUEST, and wp_send_json() ends the
+		// response with a plain die() unless wp_doing_ajax() is true, which routes it to the
+		// ajax die handler this harness has to replace with its throwing one.
+		$nonce                 = wp_create_nonce( 'mainwp_cost_tracker_import_cost' );
+		$_POST['security']     = $nonce;
+		$_REQUEST['security']  = $nonce;
+		$_POST['encoded_data'] = wp_slash( wp_json_encode( [ 'cost' => $cost ] ) );
+
+		add_filter( 'wp_doing_ajax', '__return_true' );
+		add_filter( 'wp_die_ajax_handler', [ $this, 'get_wp_die_handler' ] );
+		ob_start();
+		try {
+			\MainWP\Dashboard\Module\CostTracker\Cost_Tracker_Admin::ajax_import_cost();
+		} catch ( \WPDieException $e ) {
+			unset( $e );
+		} finally {
+			$body = ob_get_clean();
+			remove_filter( 'wp_die_ajax_handler', [ $this, 'get_wp_die_handler' ] );
+			remove_filter( 'wp_doing_ajax', '__return_true' );
+		}
+
+		$decoded = json_decode( $body, true );
+
+		$this->assertIsArray( $decoded, 'the import handler should have emitted a JSON response, got: ' . $body );
+
+		return $decoded;
+	}
+
+	/**
+	 * Read one cost row by its exact name.
+	 *
+	 * @param string $name Cost name.
+	 * @return object|null The row, or null when nothing was stored under that name.
+	 */
+	protected function get_cost_row( string $name ) {
+		global $wpdb;
+
+		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}mainwp_cost_tracker WHERE name = %s", $name ) );
 	}
 
 	/**
@@ -290,5 +352,63 @@ class Test_REST_V2_Cleanup_Round_10 extends \WP_UnitTestCase {
 		$this->assertSame( $clone_id, (int) ( $ret['siteid'] ?? 0 ), 'the force_update call should have found the existing clone row' );
 
 		$this->assertSame( '1', (string) $this->get_site_column( $clone_id, 'force_use_ipv4' ), 'the force_update branch should refresh the clone force_use_ipv4 from the source' );
+	}
+
+	/**
+	 * Item 3: the import handler stores a well-formed payload as sent, and refuses a field
+	 * whose shape it cannot store rather than coercing it into a value nobody pasted.
+	 */
+	public function test_import_cost_stores_a_valid_payload_and_refuses_malformed_scalars(): void {
+		$base = [
+			'name'           => self::COST_NAME . ' ok',
+			'url'            => 'https://example.test/?a=1&b=2',
+			'type'           => 'subscription',
+			'product_type'   => 'plugin',
+			'license_type'   => 'single_site',
+			'price'          => '12.50',
+			'payment_method' => 'paypal',
+			'renewal_type'   => 'monthly',
+			'last_renewal'   => 1700000000,
+			'cost_status'    => 'active',
+		];
+
+		$response = $this->import_cost( $base );
+		$this->assertTrue( $response['success'] ?? false, wp_json_encode( $response ) );
+
+		$row = $this->get_cost_row( $base['name'] );
+		$this->assertNotNull( $row, 'the valid payload should have stored a row' );
+		$this->assertSame( 'https://example.test/?a=1&b=2', $row->url );
+		$this->assertSame( 12.5, (float) $row->price );
+		$this->assertSame( 1700000000, (int) $row->last_renewal );
+
+		$cases = [
+			'array price'       => [ 'price' => [ 5 ] ],
+			'non-numeric price' => [ 'price' => 'abc' ],
+			'bool price'        => [ 'price' => true ],
+			'array renewal'     => [ 'last_renewal' => [ 1 ] ],
+			'date renewal'      => [ 'last_renewal' => '2026-01-15' ],
+			'array type'        => [ 'type' => [ 'x' ] ],
+			'int url'           => [ 'url' => 123 ],
+			'string sites'      => [ 'select_sites' => 'https://example.test/' ],
+		];
+
+		foreach ( $cases as $label => $replacement ) {
+			$cost         = array_merge( $base, $replacement );
+			$cost['name'] = self::COST_NAME . ' ' . $label;
+
+			$response = $this->import_cost( $cost );
+			$this->assertFalse( $response['success'] ?? true, $label );
+			$this->assertSame( 'Invalid cost data format', $response['data']['message'] ?? '', $label );
+			$this->assertNull( $this->get_cost_row( $cost['name'] ), $label . ' should not have stored a row' );
+		}
+
+		$absent   = [ 'name' => self::COST_NAME . ' absent' ];
+		$response = $this->import_cost( $absent );
+		$this->assertTrue( $response['success'] ?? false, wp_json_encode( $response ) );
+
+		$row = $this->get_cost_row( $absent['name'] );
+		$this->assertNotNull( $row, 'a payload carrying only a name should still store a row' );
+		$this->assertSame( 0.0, (float) $row->price );
+		$this->assertSame( '', $row->url );
 	}
 }

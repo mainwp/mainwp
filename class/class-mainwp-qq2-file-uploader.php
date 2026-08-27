@@ -153,7 +153,7 @@ class MainWP_QQ2_File_Uploader { // phpcs:ignore Generic.Classes.OpeningBraceSam
         }
 
         try {
-            if ( $this->file->save( $uploadDirectory . $filename . '.' . $ext ) && isset( $_FILES['qqfile'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+            if ( isset( $_FILES['qqfile'] ) && $this->file->save( $uploadDirectory . $filename . '.' . $ext ) ) { // phpcs:ignore WordPress.Security.NonceVerification
                 $file = $_FILES['qqfile']; // phpcs:ignore -- NOSONAR -ok.
                 if ( UPLOAD_ERR_OK === $file['error'] ) {
                     $tmp_path = isset( $file['tmp_name'] ) ? $file['tmp_name'] : '';
@@ -161,7 +161,7 @@ class MainWP_QQ2_File_Uploader { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         return array(
                             'success' => true,
                             'path'    => esc_html( $uploadDirectory . $filename . '.' . $ext ),
-                            'tmp'     => esc_html( $tmp_name ),
+                            'tmp'     => esc_html( $tmp_path ),
                         );
                     }
                 }

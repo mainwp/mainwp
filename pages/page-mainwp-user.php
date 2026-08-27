@@ -2040,13 +2040,12 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     }
                 }
             }
-
+            $output = new \stdClass();
             if ( ! empty( $dbwebsites ) ) {
                 $post_data      = array(
                     'new_user'      => base64_encode( wp_json_encode( $user_to_add ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
                     'send_password' => ( isset( $_POST['send_password'] ) ? intval( $_POST['send_password'] ) : '' ),
                 );
-                $output         = new \stdClass();
                 $output->ok     = array();
                 $output->errors = array();
 
@@ -2152,63 +2151,67 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $errors = array();
         if ( isset( $_FILES['import_user_file_bulkupload']['error'] ) && UPLOAD_ERR_OK === $_FILES['import_user_file_bulkupload']['error'] ) {
-            if ( isset( $_FILES['import_user_file_bulkupload']['tmp_name'] ) && is_uploaded_file( $_FILES['import_user_file_bulkupload']['tmp_name'] ) ) {
-                $tmp_path = isset( $_FILES['import_user_file_bulkupload']['tmp_name'] ) ? sanitize_text_field( wp_unslash( $_FILES['import_user_file_bulkupload']['tmp_name'] ) ) : '';
-                MainWP_System_Utility::get_wp_file_system();
+            $upld_success = false;
+            if ( isset( $_FILES['import_user_file_bulkupload']['tmp_name'] ) ) {
+                $tmp_path = $_FILES['import_user_file_bulkupload']['tmp_name'];
+                if ( is_uploaded_file( $tmp_path ) ) {
+                    $upld_success = true;
+                    MainWP_System_Utility::get_wp_file_system();
+
                 // phpcs:enable
-                /**
-                 * WordPress files system object.
-                 *
-                 * @global object
-                 */
-                global $wp_filesystem;
+                    /**
+                     * WordPress files system object.
+                     *
+                     * @global object
+                     */
+                    global $wp_filesystem;
 
-                $content = $wp_filesystem->get_contents( $tmp_path );
-                $lines   = explode( "\r\n", $content );
+                    $content = $wp_filesystem->get_contents( $tmp_path );
+                    $lines   = explode( "\r\n", $content );
 
-                if ( is_array( $lines ) && ! empty( $lines ) ) {
-                    $i = 0;
-                    // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-                    if ( ! empty( $_POST['import_user_chk_header_first'] ) ) {
-                        $header_line = trim( $lines[0] ) . "\n";
-                        unset( $lines[0] );
-                    }
-                    // phpcs:enable
-
-                    foreach ( $lines as $originalLine ) {
-
-                        $line = trim( $originalLine );
-
-                        if ( MainWP_Utility::starts_with( $line, '#' ) ) {
-                            continue;
+                    if ( is_array( $lines ) && ! empty( $lines ) ) {
+                        $i = 0;
+                        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+                        if ( ! empty( $_POST['import_user_chk_header_first'] ) ) {
+                            $header_line = trim( $lines[0] ) . "\n";
+                            unset( $lines[0] );
                         }
+                        // phpcs:enable
 
-                        $items = str_getcsv( $line, ',' );
+                        foreach ( $lines as $originalLine ) {
 
-                        if ( 3 > count( $items ) ) {
-                            continue;
-                        }
+                            $line = trim( $originalLine );
 
-                        $import_data = array(
-                            'user_login'    => sanitize_text_field( wp_unslash( $items[0] ) ),
-                            'email'         => sanitize_text_field( wp_unslash( $items[1] ) ),
-                            'first_name'    => sanitize_text_field( wp_unslash( $items[2] ) ),
-                            'last_name'     => sanitize_text_field( wp_unslash( $items[3] ) ),
-                            'url'           => sanitize_text_field( wp_unslash( $items[4] ) ),
-                            'pass1'         => sanitize_text_field( wp_unslash( $items[5] ) ),
-                            'send_password' => intval( $items[6] ),
-                            'role'          => sanitize_text_field( wp_unslash( strtolower( $items[7] ) ) ),
-                            'select_sites'  => sanitize_text_field( wp_unslash( $items[8] ) ),
-                            'select_groups' => sanitize_text_field( wp_unslash( $items[9] ) ),
-                        );
-                        $encoded     = wp_json_encode( $import_data );
-                        ?>
+                            if ( MainWP_Utility::starts_with( $line, '#' ) ) {
+                                continue;
+                            }
+
+                            $items = str_getcsv( $line, ',' );
+
+                            if ( 3 > count( $items ) ) {
+                                continue;
+                            }
+
+                            $import_data = array(
+                                'user_login'    => sanitize_text_field( wp_unslash( $items[0] ) ),
+                                'email'         => sanitize_text_field( wp_unslash( $items[1] ) ),
+                                'first_name'    => sanitize_text_field( wp_unslash( $items[2] ) ),
+                                'last_name'     => sanitize_text_field( wp_unslash( $items[3] ) ),
+                                'url'           => sanitize_text_field( wp_unslash( $items[4] ) ),
+                                'pass1'         => sanitize_text_field( wp_unslash( $items[5] ) ),
+                                'send_password' => intval( $items[6] ),
+                                'role'          => sanitize_text_field( wp_unslash( strtolower( $items[7] ) ) ),
+                                'select_sites'  => sanitize_text_field( wp_unslash( $items[8] ) ),
+                                'select_groups' => sanitize_text_field( wp_unslash( $items[9] ) ),
+                            );
+                            $encoded     = wp_json_encode( $import_data );
+                            ?>
                         <input type="hidden" id="user_import_csv_line_<?php echo intval( $i + 1 ); ?>" original-line="<?php echo esc_attr( sanitize_text_field( $line ) ); ?>" encoded-data="<?php echo esc_html( $encoded ); ?>" />
-                        <?php
-                        ++$i;
-                    }
-                    $header_line = trim( $header_line );
-                    ?>
+                            <?php
+                            ++$i;
+                        }
+                        $header_line = trim( $header_line );
+                        ?>
                     <div class="ui modal" id="mainwp-import-users-modal">
                     <i class="close icon"></i>
                         <div class="header"><?php esc_html_e( 'Importing new users and add them to your sites.', 'mainwp' ); ?></div>
@@ -2261,12 +2264,15 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                             } );
                         </script>
 
-                    <?php
+                        <?php
 
-                } else {
-                    $errors[] = esc_html__( 'Invalid data. Please make sure that the Import file has been formated properly.', 'mainwp' );
+                    } else {
+                        $errors[] = esc_html__( 'Invalid data. Please make sure that the Import file has been formated properly.', 'mainwp' );
+                    }
                 }
-            } else {
+            }
+
+            if ( ! $upld_success ) {
                 $errors[] = esc_html__( 'File could not be uploaded. Temporary file cold not be created. Please make sure that the tmpfile() PHP function is enabled on your server.', 'mainwp' );
             }
         } else {

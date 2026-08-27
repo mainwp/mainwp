@@ -818,7 +818,7 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
     public static function ajax_import_cost() { //phpcs:ignore -- NOSONAR - complex method.
         MainWP_Post_Handler::instance()->secure_request( 'mainwp_cost_tracker_import_cost' );
 
-        if ( ! isset( $_POST['encoded_data'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- secure_request() verifies the nonce above.
+        if ( ! isset( $_POST['encoded_data'] ) || ! is_string( $_POST['encoded_data'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- secure_request() verifies the nonce above.
             return wp_send_json_error(
                 array(
                     'message' => esc_html__( 'No cost data provided', 'mainwp' ),
@@ -826,10 +826,11 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
             );
         }
 
-        $encoded_data  = wp_unslash( $_POST['encoded_data'] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- nonce verified by secure_request() above; a JSON string whose decoded fields are each sanitized below.
+        $encoded_data  = wp_unslash( $_POST['encoded_data'] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- nonce verified by secure_request() above; a JSON string, and each decoded field is type-checked and sanitized below before use.
         $cost_data_raw = json_decode( $encoded_data, true );
 
-        if ( null === $cost_data_raw || ! is_array( $cost_data_raw ) ) {
+        // The decoded fields feed string functions, so a non-object cost shape is refused here.
+        if ( ! is_array( $cost_data_raw ) || ! isset( $cost_data_raw['cost'] ) || ! is_array( $cost_data_raw['cost'] ) ) {
             return wp_send_json_error(
                 array(
                     'message' => esc_html__( 'Invalid cost data format', 'mainwp' ),
@@ -837,7 +838,7 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
             );
         }
 
-        $cost_name = isset( $cost_data_raw['cost']['name'] ) ? sanitize_text_field( $cost_data_raw['cost']['name'] ) : '';
+        $cost_name = isset( $cost_data_raw['cost']['name'] ) && is_string( $cost_data_raw['cost']['name'] ) ? sanitize_text_field( $cost_data_raw['cost']['name'] ) : '';
 
         if ( empty( $cost_name ) ) {
             return wp_send_json_error(
@@ -849,7 +850,7 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
 
         $cost_data = array(
             'name'           => $cost_name,
-            'url'            => isset( $cost_data_raw['cost']['url'] ) ? esc_url( $cost_data_raw['cost']['url'] ) : '',
+            'url'            => isset( $cost_data_raw['cost']['url'] ) && is_string( $cost_data_raw['cost']['url'] ) ? esc_url( $cost_data_raw['cost']['url'] ) : '',
             'type'           => isset( $cost_data_raw['cost']['type'] ) ? sanitize_text_field( $cost_data_raw['cost']['type'] ) : '',
             'product_type'   => isset( $cost_data_raw['cost']['product_type'] ) ? sanitize_text_field( $cost_data_raw['cost']['product_type'] ) : '',
             'license_type'   => isset( $cost_data_raw['cost']['license_type'] ) ? sanitize_text_field( $cost_data_raw['cost']['license_type'] ) : '',
@@ -864,6 +865,9 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
 
         if ( isset( $cost_data_raw['cost']['select_sites'] ) && is_array( $cost_data_raw['cost']['select_sites'] ) ) {
             foreach ( $cost_data_raw['cost']['select_sites'] as $url ) {
+                if ( ! is_string( $url ) ) {
+                    continue;
+                }
                 $url = esc_url( trim( $url ) );
                 if ( empty( $url ) ) {
                     continue;

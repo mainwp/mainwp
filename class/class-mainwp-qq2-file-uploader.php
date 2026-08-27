@@ -153,19 +153,25 @@ class MainWP_QQ2_File_Uploader { // phpcs:ignore Generic.Classes.OpeningBraceSam
         }
 
         try {
-            if ( $this->file->save( $uploadDirectory . $filename . '.' . $ext ) ) {
-                $tmp_name = isset( $_FILES['qqfile']['tmp_name'] ) ? sanitize_text_field( wp_unslash( $_FILES['qqfile']['tmp_name'] ) ) : ''; //phpcs:ignore WordPress.Security.NonceVerification.Missing -- verify in caller.
-                return array(
-                    'success' => true,
-                    'path'    => esc_html( $uploadDirectory . $filename . '.' . $ext ),
-                    'tmp'     => esc_html( $tmp_name ),
-                );
-            } else {
-                return array(
-                    'error' => esc_html__( 'Could not save uploaded file!', 'mainwp' ) . ' ' .
-                            esc_html__( 'The upload was cancelled, or server error encountered.', 'mainwp' ),
-                );
+            if ( $this->file->save( $uploadDirectory . $filename . '.' . $ext ) && isset( $_FILES['qqfile'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+                $file = $_FILES['qqfile']; // phpcs:ignore -- NOSONAR -ok.
+                if ( UPLOAD_ERR_OK === $file['error'] ) {
+                    $tmp_path = isset( $file['tmp_name'] ) ? $file['tmp_name'] : '';
+                    if ( is_uploaded_file( $tmp_path ) ) {
+                        return array(
+                            'success' => true,
+                            'path'    => esc_html( $uploadDirectory . $filename . '.' . $ext ),
+                            'tmp'     => esc_html( $tmp_name ),
+                        );
+                    }
+                }
             }
+
+            return array(
+                'error' => esc_html__( 'Could not save uploaded file!', 'mainwp' ) . ' ' .
+                esc_html__( 'The upload was cancelled, or server error encountered.', 'mainwp' ),
+            );
+
         } catch ( \Exception $e ) {
             return array( 'error' => $e->getMessage() );
         }

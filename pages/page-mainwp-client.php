@@ -1130,7 +1130,17 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @return array Import data.
      */
     public static function handle_client_import_files() {  // phpcs:ignore -- NOSONAR
-        $tmp_path = isset( $_FILES['mainwp_client_import_file_bulkupload']['tmp_name'] ) ? sanitize_text_field( wp_unslash( $_FILES['mainwp_client_import_file_bulkupload']['tmp_name'] ) ) : '';  // phpcs:ignore WordPress.Security.NonceVerification.Missing -- NOSONAR
+
+        if ( isset( $_FILES['mainwp_client_import_file_bulkupload']['error'] ) && UPLOAD_ERR_OK !== $_FILES['mainwp_client_import_file_bulkupload']['error'] ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- NOSONAR
+            return false;
+        }
+
+        $tmp_path = isset( $_FILES['mainwp_client_import_file_bulkupload']['tmp_name'] ) ? $_FILES['mainwp_client_import_file_bulkupload']['tmp_name'] : '';  // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- NOSONAR
+
+        if( ! is_uploaded_file( $tmp_path ) ){
+            return false;
+        }
+
         MainWP_System_Utility::get_wp_file_system();
         //phpcs:enable
         /**
@@ -1496,8 +1506,8 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         }
 
         // compatible with quick setup.
-        if ( isset( $_FILES['mainwp_client_image_uploader'] ) && isset( $_FILES['mainwp_client_image_uploader']['error']['client_field'] ) && UPLOAD_ERR_OK === $_FILES['mainwp_client_image_uploader']['error']['client_field'] ) { // phpcs:ignore WordPress.Security.NonceVerification
-            $output = MainWP_System_Utility::handle_upload_image( 'client-images', $_FILES['mainwp_client_image_uploader'], 'client_field' ); // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        if ( isset( $_FILES['mainwp_client_image_uploader']['error']['client_field'] ) && UPLOAD_ERR_OK === $_FILES['mainwp_client_image_uploader']['error']['client_field'] ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+            $output = MainWP_System_Utility::handle_upload_image( 'client-images', $_FILES['mainwp_client_image_uploader'], 'client_field' ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             if ( is_array( $output ) && isset( $output['filename'] ) && ! empty( $output['filename'] ) ) {
                 $client_image = $output['filename'];
             }

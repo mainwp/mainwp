@@ -153,11 +153,11 @@ class MainWP_QQ2_File_Uploader { // phpcs:ignore Generic.Classes.OpeningBraceSam
         }
 
         try {
-            if ( isset( $_FILES['qqfile'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+            if ( isset( $_FILES['qqfile'] ) && $this->file->save( $uploadDirectory . $filename . '.' . $ext ) ) { // phpcs:ignore WordPress.Security.NonceVerification
                 $file = $_FILES['qqfile']; // phpcs:ignore -- NOSONAR -ok.
                 if ( UPLOAD_ERR_OK === $file['error'] ) {
                     $tmp_path = isset( $file['tmp_name'] ) ? $file['tmp_name'] : '';
-                    if ( is_uploaded_file( $tmp_path ) && $this->file->save( $uploadDirectory . $filename . '.' . $ext ) ) {
+                    if ( is_uploaded_file( $tmp_path ) ) {
                         return array(
                             'success' => true,
                             'path'    => $uploadDirectory . $filename . '.' . $ext,

@@ -843,10 +843,19 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
                     $fields[ $field ] = 0;
                     continue;
                 }
+                if ( 'int' === $kind ) {
+                    // is_numeric() lets 1700000000.9 and '1e9' through, and intval() would
+                    // quietly turn them into a renewal timestamp nobody pasted.
+                    if ( ! is_int( $value ) && ! ( is_string( $value ) && preg_match( '/^-?\d+$/', $value ) ) ) {
+                        return false;
+                    }
+                    $fields[ $field ] = (int) $value;
+                    continue;
+                }
                 if ( ! is_numeric( $value ) ) {
                     return false;
                 }
-                $fields[ $field ] = 'float' === $kind ? floatval( $value ) : intval( $value );
+                $fields[ $field ] = floatval( $value );
                 continue;
             }
 
@@ -915,7 +924,7 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
 
         $cost_data = array_merge( array( 'name' => $cost_name ), $cost_fields );
 
-        $select_sites = isset( $cost_data_raw['cost']['select_sites'] ) ? $cost_data_raw['cost']['select_sites'] : array();
+        $select_sites = $cost_data_raw['cost']['select_sites'] ?? array();
 
         if ( ! is_array( $select_sites ) ) {
             return wp_send_json_error(

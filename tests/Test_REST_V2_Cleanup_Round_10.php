@@ -387,6 +387,8 @@ class Test_REST_V2_Cleanup_Round_10 extends \WP_UnitTestCase {
 			'bool price'        => [ 'price' => true ],
 			'array renewal'     => [ 'last_renewal' => [ 1 ] ],
 			'date renewal'      => [ 'last_renewal' => '2026-01-15' ],
+			'fraction renewal'  => [ 'last_renewal' => 1700000000.9 ],
+			'exponent renewal'  => [ 'last_renewal' => '1e9' ],
 			'array type'        => [ 'type' => [ 'x' ] ],
 			'int url'           => [ 'url' => 123 ],
 			'string sites'      => [ 'select_sites' => 'https://example.test/' ],
@@ -410,5 +412,11 @@ class Test_REST_V2_Cleanup_Round_10 extends \WP_UnitTestCase {
 		$this->assertNotNull( $row, 'a payload carrying only a name should still store a row' );
 		$this->assertSame( 0.0, (float) $row->price );
 		$this->assertSame( '', $row->url );
+
+		// A digits-only string is the one non-int form the timestamp accepts.
+		$digits   = [ 'name' => self::COST_NAME . ' digits', 'last_renewal' => '1700000000' ];
+		$response = $this->import_cost( $digits );
+		$this->assertTrue( $response['success'] ?? false, wp_json_encode( $response ) );
+		$this->assertSame( 1700000000, (int) $this->get_cost_row( $digits['name'] )->last_renewal );
 	}
 }

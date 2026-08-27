@@ -473,30 +473,6 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
     }
 
     /**
-     * Adds new client.
-     *
-     * @param WP_REST_Request $request Full details about the request.
-     * @return WP_Error|WP_REST_Response
-     */
-    public function add_item( $request ) {
-        // get data.
-        $fields = $request->get_json_params();
-        try {
-            $data     = MainWP_Client_Handler::rest_api_add_client( $fields );
-            $response = new \WP_REST_Response( $data );
-            $response->set_status( 200 );
-        } catch ( \Exception $e ) {
-            return new WP_Error( $e->getCode(), $e->getMessage(), array( 'status' => 400 ) );
-        }
-
-        // get data.
-        $value = MainWP_DB_Client::instance()->get_wp_clients( $prepared_args );
-        return rest_ensure_response( $value );
-    }
-
-
-
-    /**
      * Update item.
      *
      * @param WP_REST_Request $request Full details about the request.
@@ -673,16 +649,6 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
                 'data'    => $data,
             )
         );
-    }
-
-    /**
-     * Only return writable props from schema.
-     *
-     * @param  array $schema schema.
-     * @return bool
-     */
-    protected function filter_writable_props( $schema ) {
-        return empty( $schema['readonly'] );
     }
 
     /**

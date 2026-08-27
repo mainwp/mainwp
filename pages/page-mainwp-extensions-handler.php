@@ -967,12 +967,13 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 'http_user'         => MainWP_Credential_Storage::decrypt_credential( $website->http_user ),
                 'http_pass'         => MainWP_Credential_Storage::decrypt_credential( $website->http_pass ),
                 'sslVersion'        => $website->ssl_version,
+                'force_use_ipv4'    => $website->force_use_ipv4,
                 'wpe'               => $website->wpe,
                 'isStaging'         => 1,
             );
 
             $de_privkey = base64_decode( $website->privkey ); //phpcs:ignore -- NOSONAR -trust - compatible.
-            $de_privkey = MainWP_Encrypt_Data_Lib::instance()->decrypt_privkey( $de_privkey, $site_id );
+            $de_privkey = MainWP_Encrypt_Data_Lib::instance()->decrypt_privkey( $de_privkey, $website->id );
 
             if ( ! empty( $de_privkey ) ) {
                 $de_privkey = base64_encode( $de_privkey ); //phpcs:ignore -- NOSONAR -ok.

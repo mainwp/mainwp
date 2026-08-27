@@ -241,15 +241,9 @@ PRIMARY KEY  (`id`)  ';
             $wpdb->update( $this->table_name( 'cost_tracker' ), $update, array( 'id' => intval( $id ) ) );
             $this->invalidate_cost_tracker_caches( $id );
             return $this->get_cost_tracker_by( 'id', $id );
-        } else {
-            if ( isset( $update['id'] ) ) {
-                unset( $update['id'] );
-            }
-
-            if ( $wpdb->insert( $this->table_name( 'cost_tracker' ), $update ) ) {
-                $this->invalidate_cost_tracker_caches();
-                return $this->get_cost_tracker_by( 'id', $wpdb->insert_id );
-            }
+        } elseif ( $wpdb->insert( $this->table_name( 'cost_tracker' ), $update ) ) {
+            $this->invalidate_cost_tracker_caches();
+            return $this->get_cost_tracker_by( 'id', $wpdb->insert_id );
         }
         return false;
     }

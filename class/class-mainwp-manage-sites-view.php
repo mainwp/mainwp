@@ -429,6 +429,13 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         $content = str_replace( "\n", "\r", $content );
                         $lines   = explode( "\r", $content );
                     }
+                } else {
+                    ?>
+                    <div class="error below-h2">
+                        <p><strong><?php esc_html_e( 'Error', 'mainwp' ); ?></strong>: <?php esc_html_e( 'Unable to initialize the WordPress filesystem. Please try again.', 'mainwp' ); ?></p>
+                    </div>
+                    <?php
+                    return;
                 }
 
                 $default_values = array(

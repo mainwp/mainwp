@@ -1180,6 +1180,8 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 $content = str_replace( "\n", "\r", $content );
                 $lines   = explode( "\r", $content );
             }
+        } else {
+            return false;
         }
 
         $import_data    = array();

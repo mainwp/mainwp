@@ -367,7 +367,7 @@ class Cost_Tracker_Import {
         }
 
         return array(
-            'header_line' => esc_js( $header_line ),
+            'header_line' => null !== $header_line ? esc_js( $header_line ) : '',
             'data'        => $import_data,
         );
     }

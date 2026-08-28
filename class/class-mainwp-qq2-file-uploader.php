@@ -153,21 +153,25 @@ class MainWP_QQ2_File_Uploader { // phpcs:ignore Generic.Classes.OpeningBraceSam
         }
 
         try {
-            if ( $this->file->save( $uploadDirectory . $filename . '.' . $ext ) ) {
-                $tmp_path = '';
-                if ( isset( $_FILES['qqfile'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-                    $file = $_FILES['qqfile']; // phpcs:ignore -- NOSONAR -ok.
-                    if ( isset( $file['error'] ) && UPLOAD_ERR_OK === $file['error'] ) {
-                        $tmp_name = isset( $file['tmp_name'] ) ? $file['tmp_name'] : '';
-                        if ( is_uploaded_file( $tmp_name ) ) {
-                            $tmp_path = $tmp_name;
-                        }
-                    }
+            // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+            $success  = false;
+            $tmp_name = '';
+            if ( isset( $_FILES['qqfile'] ) ) {
+                // Multipart upload: validate before saving.
+                if ( isset( $_FILES['qqfile']['error'] ) && isset( $_FILES['qqfile']['tmp_name'] ) && UPLOAD_ERR_OK === $_FILES['qqfile']['error'] && is_uploaded_file( $_FILES['qqfile']['tmp_name'] ) && $this->file->save( $uploadDirectory . $filename . '.' . $ext ) ) {
+                    $success  = true;
+                    $tmp_name = $_FILES['qqfile']['tmp_name'];
                 }
+            } elseif ( $this->file->save( $uploadDirectory . $filename . '.' . $ext ) ) {
+                $success = true;
+            }
+            // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+
+            if ( $success ) {
                 return array(
                     'success' => true,
                     'path'    => $uploadDirectory . $filename . '.' . $ext,
-                    'tmp'     => $tmp_path,
+                    'tmp'     => $tmp_name,
                 );
             } else {
                 return array(

@@ -173,12 +173,11 @@ class MainWP_QQ2_File_Uploader { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     'path'    => $uploadDirectory . $filename . '.' . $ext,
                     'tmp'     => $tmp_name,
                 );
-            } else {
-                return array(
-                    'error' => esc_html__( 'Could not save uploaded file!', 'mainwp' ) . ' ' .
-                    esc_html__( 'The upload was cancelled, or server error encountered.', 'mainwp' ),
-                );
             }
+            return array(
+                'error' => esc_html__( 'Could not save uploaded file!', 'mainwp' ) . ' ' .
+                esc_html__( 'The upload was cancelled, or server error encountered.', 'mainwp' ),
+            );
         } catch ( \Exception $e ) {
             return array( 'error' => $e->getMessage() );
         }

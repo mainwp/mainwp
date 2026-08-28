@@ -153,25 +153,28 @@ class MainWP_QQ2_File_Uploader { // phpcs:ignore Generic.Classes.OpeningBraceSam
         }
 
         try {
-            if ( isset( $_FILES['qqfile'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-                $file = $_FILES['qqfile']; // phpcs:ignore -- NOSONAR -ok.
-                if ( UPLOAD_ERR_OK === $file['error'] ) {
-                    $tmp_path = isset( $file['tmp_name'] ) ? $file['tmp_name'] : '';
-                    if ( is_uploaded_file( $tmp_path ) && $this->file->save( $uploadDirectory . $filename . '.' . $ext ) ) {
-                        return array(
-                            'success' => true,
-                            'path'    => $uploadDirectory . $filename . '.' . $ext,
-                            'tmp'     => $tmp_path,
-                        );
+            if ( $this->file->save( $uploadDirectory . $filename . '.' . $ext ) ) {
+                $tmp_path = '';
+                if ( isset( $_FILES['qqfile'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+                    $file = $_FILES['qqfile']; // phpcs:ignore -- NOSONAR -ok.
+                    if ( isset( $file['error'] ) && UPLOAD_ERR_OK === $file['error'] ) {
+                        $tmp_name = isset( $file['tmp_name'] ) ? $file['tmp_name'] : '';
+                        if ( is_uploaded_file( $tmp_name ) ) {
+                            $tmp_path = $tmp_name;
+                        }
                     }
                 }
+                return array(
+                    'success' => true,
+                    'path'    => $uploadDirectory . $filename . '.' . $ext,
+                    'tmp'     => $tmp_path,
+                );
+            } else {
+                return array(
+                    'error' => esc_html__( 'Could not save uploaded file!', 'mainwp' ) . ' ' .
+                    esc_html__( 'The upload was cancelled, or server error encountered.', 'mainwp' ),
+                );
             }
-
-            return array(
-                'error' => esc_html__( 'Could not save uploaded file!', 'mainwp' ) . ' ' .
-                esc_html__( 'The upload was cancelled, or server error encountered.', 'mainwp' ),
-            );
-
         } catch ( \Exception $e ) {
             return array( 'error' => $e->getMessage() );
         }

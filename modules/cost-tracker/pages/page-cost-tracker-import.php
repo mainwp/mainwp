@@ -292,15 +292,23 @@ class Cost_Tracker_Import {
          */
         global $wp_filesystem;
 
-        $lines = array();
+        if ( ! $hasWPFileSystem || empty( $wp_filesystem ) ) {
+            return array();
+        }
 
-        if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
-            $content = $wp_filesystem->get_contents( $tmp_path );
-            if ( $content ) {
-                $content = str_replace( "\r\n", "\r", $content );
-                $content = str_replace( "\n", "\r", $content );
-                $lines   = explode( "\r", $content );
-            }
+        $content = $wp_filesystem->get_contents( $tmp_path );
+
+        if ( false === $content ) {
+            return array();
+        }
+
+        $header_line = null;
+        $lines       = array();
+
+        if ( is_string( $content ) ) {
+            $content = str_replace( "\r\n", "\r", $content );
+            $content = str_replace( "\n", "\r", $content );
+            $lines   = explode( "\r", $content );
         }
 
         $import_data    = array();
@@ -319,7 +327,6 @@ class Cost_Tracker_Import {
         );
 
         if ( is_array( $lines ) && ( ! empty( $lines ) ) ) {
-            $header_line = null;
             foreach ( $lines as $original_line ) {
                 $line = trim( $original_line );
                 if ( \MainWP\Dashboard\MainWP_Utility::starts_with( $line, '#' ) ) {

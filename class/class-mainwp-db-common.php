@@ -1124,59 +1124,65 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
 
         $websiteid = (int) $websiteid;
 
+        $group_update_success = null;
+
         $groupids = array();
         // Support removing the site's groups/tags.
-        if ( isset( $data['groupids'] ) ) {
-
-            if ( ! is_string( $data['groupids'] ) ) {
-                return false;
-            }
+        if ( isset( $data['groupids'] ) && is_string( $data['groupids'] ) ) {
+            $group_update_success = true;
+            $valid_groupids       = true;
 
             $groupids_string = trim( wp_unslash( $data['groupids'] ) );
 
             if ( '' !== $groupids_string ) {
                 $tokens = array_map( 'trim', explode( ',', $groupids_string ) );
-
                 foreach ( $tokens as $token ) {
                     if ( '' === $token || ! ctype_digit( $token ) || 0 === (int) $token ) {
-                        return false;
+                        $valid_groupids       = false;
+                        $group_update_success = false;
+                        break;
                     }
                 }
 
-                $groupids = array_map( 'absint', $tokens );
-            }
-
-            $table_wp_group = esc_sql( $this->table_name( 'wp_group' ) );
-
-            $result = $this->wpdb->query(
-                $this->wpdb->prepare(
-                    "DELETE FROM `{$table_wp_group}` WHERE wpid=%d",
-                    $websiteid
-                )
-            );
-
-            if ( false === $result ) {
-                return false;
-            }
-
-            if ( ! empty( $groupids ) ) {
-                $values = array();
-                $args   = array();
-
-                foreach ( $groupids as $groupid ) {
-                    $values[] = '(%d, %d)';
-                    $args[]   = $websiteid;
-                    $args[]   = (int) $groupid;
+                if ( $valid_groupids ) {
+                    $groupids = array_map( 'absint', $tokens );
                 }
+            }
 
-                $sql = $this->wpdb->prepare( "INSERT INTO `{$table_wp_group}` (wpid, groupid) VALUES " . implode( ', ', $values ), $args ); // phpcs:ignore --NOSONAR - placeholder are ok.
+            if ( $valid_groupids ) {
+                $table_wp_group = esc_sql( $this->table_name( 'wp_group' ) );
 
-                $result = $this->wpdb->query( $sql );
+                $result = $this->wpdb->query(
+                    $this->wpdb->prepare(
+                        "DELETE FROM `{$table_wp_group}` WHERE wpid=%d",
+                        $websiteid
+                    )
+                );
 
                 if ( false === $result ) {
-                    return false;
+                    $group_update_success = false;
+                } elseif ( ! empty( $groupids ) ) {
+                    $values = array();
+                    $args   = array();
+
+                    foreach ( $groupids as $groupid ) {
+                        $values[] = '(%d, %d)';
+                        $args[]   = $websiteid;
+                        $args[]   = (int) $groupid;
+                    }
+
+                    $sql = $this->wpdb->prepare( "INSERT INTO `{$table_wp_group}` (wpid, groupid) VALUES " . implode( ', ', $values ), $args ); // phpcs:ignore --NOSONAR - placeholder are ok.
+
+                    $result = $this->wpdb->query( $sql );
+
+                    if ( false === $result ) {
+                        $group_update_success = false;
+                    }
                 }
             }
+        }
+
+        if ( true === $group_update_success ) {
             $success = true;
         }
 
@@ -1224,10 +1230,17 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
 
         }
 
-        return array(
+        $response = array(
             'message' => 'Site updated successfully.',
             'site'    => $website->url,
             'success' => $success,
         );
+
+        if ( null !== $group_update_success ) {
+            $response['group_updated'] = $group_update_success ? true : false;
+            $response['group_message'] = $group_update_success ? 'Tags updated successfully.' : 'Failed to update tags or invalid tag IDs.';
+        }
+
+        return $response;
     }
 }

@@ -3087,7 +3087,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             return $website;
         }
 
-        if ( isset( $request['tags'] ) ) {
+        if ( array_key_exists( 'tags', $request ) ) {
             return new \WP_Error(
                 'rest_invalid_param',
                 __( 'The "tags" parameter is not supported for this endpoint.', 'mainwp' ),
@@ -3097,8 +3097,8 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             );
         }
 
-        if ( isset( $request['groupids'] ) && ! is_string( $request['groupids'] ) ) {
-            return new WP_Error(
+        if ( array_key_exists( 'groupids', $request ) && ! is_string( $request['groupids'] ) ) {
+            return new \WP_Error(
                 'rest_invalid_param',
                 __( 'The groupids parameter must be a string.', 'mainwp' ),
                 array(

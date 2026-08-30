@@ -1280,8 +1280,11 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
 
         $pending = array();
         foreach ( $decoded as $child_task_id => $attempts ) {
-            if ( is_string( $child_task_id ) && '' !== $child_task_id ) {
-                $pending[ $child_task_id ] = (int) $attempts;
+            // PHP turns numeric-string keys into ints across a JSON round
+            // trip, so an all-digits child task id would otherwise be
+            // dropped by an is_string() check.
+            if ( ( is_string( $child_task_id ) || is_int( $child_task_id ) ) && '' !== (string) $child_task_id ) {
+                $pending[ (string) $child_task_id ] = (int) $attempts;
             }
         }
         return $pending;

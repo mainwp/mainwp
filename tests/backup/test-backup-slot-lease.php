@@ -978,6 +978,107 @@ class MainWP_Backup_Slot_Lease_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * The progress table's index is not unique, so a duplicate row for the
+	 * same task/site - an existing read-then-insert race - can carry this
+	 * driver's own creating marker too. Both rows then belong to this
+	 * driver, so the created task is adopted on both and nothing is owed
+	 * as a cancel, even though only one row's update would once have
+	 * counted as a match.
+	 *
+	 * @return void
+	 */
+	public function test_a_duplicate_progress_row_does_not_turn_a_kept_task_id_into_an_owed_cancel() {
+		list( $site_id, $task ) = $this->site_and_task_for_create();
+		$this->acquire_leased_slot();
+		$child_task_id = 'child-task-created-after-loss';
+
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			function ( $result, $website, $what ) use ( $task, $site_id, $child_task_id ) {
+				unset( $website );
+				if ( 'backup_preflight' === $what ) {
+					return array( 'task_spine' => 1 );
+				}
+				if ( 'backup_task_create' !== $what ) {
+					return $result;
+				}
+
+				apply_filters( 'mainwp_fetch_url_site_timeout', 20 * HOUR_IN_SECONDS, null );
+				$this->steal_slot_row();
+
+				// Duplicate the row the way the existing read-then-insert race
+				// would: same task/site, carrying the marker the executor
+				// already wrote before this round trip left.
+				$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+				global $wpdb;
+				$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture, duplicating a progress row the way an existing race does.
+					MainWP_DB_Backup::instance()->get_table_name( 'wp_backup_progress' ),
+					array(
+						'task_id'              => $task->id,
+						'wp_id'                => $site_id,
+						'dtsFetched'           => $progress->dtsFetched,
+						'fetchResult'          => wp_json_encode( array() ),
+						'removedFiles'         => 0,
+						'downloadedDB'         => '',
+						'downloadedFULL'       => '',
+						'child_backup_task_id' => $progress->child_backup_task_id,
+					)
+				);
+
+				return array(
+					'task_id' => $child_task_id,
+					'phase'   => 'queued',
+				);
+			},
+			10,
+			3
+		);
+
+		$result = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+
+		$this->assertFalse( $result, 'A driver that lost its slot stops without completing the site.' );
+
+		global $wpdb;
+		$rows = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test assertion, reading both duplicate rows back.
+			$wpdb->prepare( 'SELECT child_backup_task_id FROM ' . MainWP_DB_Backup::instance()->get_table_name( 'wp_backup_progress' ) . ' WHERE task_id = %d AND wp_id = %d', $task->id, $site_id )
+		);
+		$this->assertCount( 2, $rows, 'Precondition: both duplicate rows exist.' );
+		foreach ( $rows as $row ) {
+			$this->assertSame( $child_task_id, (string) $row->child_backup_task_id, 'Every row carrying the marker is adopted, not just the first one matched.' );
+		}
+
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$this->assertEmpty(
+			MainWP_DB::instance()->get_website_option( $website, MainWP_Manage_Backups_Handler::PENDING_CANCEL_OPTION ),
+			'Both rows already belong to this driver, so nothing is owed as a cancel.'
+		);
+	}
+
+	/**
+	 * PHP turns numeric-string keys into ints across a JSON round trip, so
+	 * an all-digits child task id must still be findable after
+	 * record_pending_child_cancel() writes it and the site option is read
+	 * back.
+	 *
+	 * @return void
+	 */
+	public function test_an_all_numeric_child_task_id_survives_the_owed_cancel_round_trip() {
+		list( $site_id, $task ) = $this->site_and_task_for_create();
+		unset( $task );
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+
+		// The second call is what re-reads the stored option through the
+		// key filter; a lone call never reaches it.
+		MainWP_Manage_Backups_Handler::record_pending_child_cancel( $website, '123456' );
+		MainWP_Manage_Backups_Handler::record_pending_child_cancel( $website, 'task-1788000000-abcdef' );
+
+		$owed = json_decode( (string) MainWP_DB::instance()->get_website_option( $website, MainWP_Manage_Backups_Handler::PENDING_CANCEL_OPTION ), true );
+		$this->assertIsArray( $owed, 'The all-numeric id must still be owed a cancel.' );
+		$this->assertArrayHasKey( '123456', $owed, 'The id survives the JSON round trip.' );
+		$this->assertArrayHasKey( 'task-1788000000-abcdef', $owed, 'The later id is owed alongside it.' );
+	}
+
+	/**
 	 * Hashing a downloaded artifact in chunks, so the lease can be
 	 * refreshed while it runs, produces the digest hash_file() would.
 	 *

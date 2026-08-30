@@ -562,7 +562,7 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
     /**
      * Record a concurrency slot decision.
      *
-     * @param string $event          acquired|refused|released.
+     * @param string $event          acquired|refused|released|reclaimed_stale.
      * @param string $token          Slot token, '' on refusal.
      * @param int    $active         Active slot count after the decision.
      * @param int    $max_concurrent Configured slot limit.

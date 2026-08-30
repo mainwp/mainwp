@@ -514,37 +514,120 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     const SLOT_OPTION_PREFIX = 'mainwp_backup_slot_';
 
     /**
+     * Bound applied to a child round trip made under a native lease.
+     *
+     * Native requests otherwise inherit the transport's 20-hour backstop,
+     * which is no bound at all: a child that stops answering holds the
+     * slot and a PHP worker for the rest of the day. 900 and not something
+     * shorter because backup_task_create can carry an inline incremental
+     * manifest of ~6 MiB base64 and has no chunk fallback on timeout, so
+     * the bound has to cover that upload on a slow uplink (~7 KiB/s).
+     *
+     * @var int
+     */
+    const NATIVE_REQUEST_TIMEOUT_SECONDS = 900;
+
+    /**
+     * Bound applied to one artifact transfer attempt under a native lease.
+     * Today's transport default, so this only clamps a filter user that
+     * raised it past what a lease can cover.
+     *
+     * @var int
+     */
+    const NATIVE_TRANSFER_TIMEOUT_SECONDS = 1800;
+
+    /**
+     * Floor for a native slot lease: it has to outlast the holder's own
+     * work between two child requests - site loop bookkeeping, DB writes,
+     * the settle grace, hashing a downloaded artifact.
+     *
+     * @var int
+     */
+    const DEFAULT_SLOT_LEASE_SECONDS = 10 * MINUTE_IN_SECONDS;
+
+    /**
+     * Slack added to a request's bound when it becomes the lease, so the
+     * lease outlives the request it covers rather than expiring with it.
+     *
+     * @var int
+     */
+    const SLOT_LEASE_MARGIN_SECONDS = 60;
+
+    /**
+     * Native slot tokens whose holder is executing right now.
+     *
+     * Both transport filters are process-global and carry no lane, so the
+     * clamp and the heartbeat are scoped by this stack instead of by token
+     * possession: a legacy holder in the same process is never touched.
+     *
+     * @var string[]
+     */
+    private static array $native_lease_tokens = array();
+
+    /**
+     * The installed request-timeout callback, kept so remove_filter() gets
+     * the same closure back.
+     *
+     * @var \Closure|null
+     */
+    private static ?\Closure $request_timeout_filter = null;
+
+    /**
+     * The installed transfer-timeout callback, kept for the same reason.
+     *
+     * @var \Closure|null
+     */
+    private static ?\Closure $transfer_timeout_filter = null;
+
+    /**
      * Method acquire_backup_slot()
      *
      * Acquire a backup execution slot from the DB semaphore. Each slot is
      * one fixed-name wp_options row; the table's UNIQUE(option_name) key
      * makes the INSERT the atomic acquisition - exactly one contender
      * wins each slot, enforced by the database rather than a best-effort
-     * transient read-modify-write. Slots from crashed processes expire
-     * after two hours (reclaimed by compare-and-delete on the exact
-     * stored value, so racing reclaimers cannot double-free), and a
-     * crash never blocks backups permanently.
+     * transient read-modify-write. A stale row is reclaimed by
+     * compare-and-delete on the exact stored value, so racing reclaimers
+     * cannot double-free.
+     *
+     * How long a crashed holder blocks the slot depends on the lane. A
+     * native holder refreshes a lease on its row before every child
+     * request, bounded by that request's own timeout, so its row goes
+     * stale minutes after the process dies. A legacy holder makes one
+     * round trip in which the child builds the whole archive, with no
+     * bound worth leasing against, so its row keeps the two-hour rule -
+     * as do rows written before this lane existed.
      *
      * All reads and writes go straight to the table: the options/
      * notoptions caches never see these names, so an external object
      * cache cannot serve a stale slot state.
      *
-     * @param int $max_concurrent Maximum concurrent backup tasks (default 2).
+     * @param int    $max_concurrent Maximum concurrent backup tasks (default 2).
+     * @param string $lane           native|legacy. Defaults to legacy so the
+     *                               deprecated shim and any outside caller keep
+     *                               today's semantics untouched; a native holder
+     *                               must also open a lease scope to refresh the
+     *                               row it just claimed.
      *
      * @return string|false Slot token on success, false when all slots are in use.
      */
-    public static function acquire_backup_slot( int $max_concurrent = 2 ): string|false {
+    public static function acquire_backup_slot( int $max_concurrent = 2, string $lane = 'legacy' ): string|false {
         global $wpdb;
 
         $now   = time();
         $token = wp_generate_password( 12, false );
-        $value = (string) wp_json_encode(
-            array(
-                'token'   => $token,
-                'started' => $now,
-                'pid'     => getmypid(),
-            )
+        $lane  = 'native' === $lane ? 'native' : 'legacy';
+        $claim = array(
+            'token'   => $token,
+            'started' => $now,
+            'pid'     => getmypid(),
+            'lane'    => $lane,
         );
+        if ( 'native' === $lane ) {
+            $claim['heartbeat'] = $now;
+            $claim['lease']     = self::DEFAULT_SLOT_LEASE_SECONDS;
+        }
+        $value = (string) wp_json_encode( $claim );
 
         // A live holder in a slot above a just-lowered maximum still occupies
         // capacity, but the fixed-name loop below only visits slots 1..max and
@@ -566,16 +649,19 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", $name )
             );
             if ( null !== $held ) {
-                $data  = json_decode( (string) $held, true );
-                $stale = ! is_array( $data ) || ! isset( $data['started'] ) || ( $now - (int) $data['started'] ) >= 2 * HOUR_IN_SECONDS;
-                if ( ! $stale ) {
+                $data = json_decode( (string) $held, true );
+                if ( self::is_slot_live( $data, $now ) ) {
                     continue; // Live holder; try the next slot.
                 }
                 // Reclaim by exact value: a contender that lost this DELETE
                 // race deletes nothing and then loses the INSERT race too.
-                $wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- compare-and-delete reclaim.
+                $reclaimed = $wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- compare-and-delete reclaim.
                     $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name = %s AND option_value = %s", $name, (string) $held )
                 );
+                if ( 1 === $reclaimed ) {
+                    /** This action is documented in class/backup/class-mainwp-backup-monitor.php */
+                    do_action( 'mainwp_backup_diag_slot', 'reclaimed_stale', is_array( $data ) && isset( $data['token'] ) ? (string) $data['token'] : '', $live, $max_concurrent );
+                }
             }
 
             // UNIQUE(option_name) makes this the atomic claim: 1 row means
@@ -589,7 +675,7 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                  * leaves a diagnostics trace instead of vanishing with the
                  * released row.
                  *
-                 * @param string $event          acquired|refused|released.
+                 * @param string $event          acquired|refused|released|reclaimed_stale.
                  * @param string $token          Slot token, '' on refusal.
                  * @param int    $active         Active slot count after the decision.
                  * @param int    $max_concurrent Configured slot limit.
@@ -646,6 +732,175 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     }
 
     /**
+     * Method begin_native_lease()
+     *
+     * Open the lease scope for a native holder: from here until the
+     * matching end_native_lease(), every child request the process makes
+     * is bounded and refreshes this holder's slot row.
+     *
+     * @param string $token Slot token from acquire_backup_slot().
+     *
+     * @return void
+     */
+    public static function begin_native_lease( string $token ): void {
+        if ( '' === $token ) {
+            return;
+        }
+
+        $was_empty                   = empty( self::$native_lease_tokens );
+        self::$native_lease_tokens[] = $token;
+        if ( ! $was_empty ) {
+            return;
+        }
+
+        // Last in line, so the clamp lands after every other filter user;
+        // a smaller cap (the restore orchestrator's slice bound) still wins
+        // through the min().
+        self::$request_timeout_filter  = static function ( $timeout ) {
+            $bound = min( (int) $timeout, self::NATIVE_REQUEST_TIMEOUT_SECONDS );
+            self::touch_for_request( $bound + self::SLOT_LEASE_MARGIN_SECONDS );
+            return $bound;
+        };
+        self::$transfer_timeout_filter = static function ( $timeouts ) {
+            if ( ! is_array( $timeouts ) || ! isset( $timeouts['timeout'] ) ) {
+                return $timeouts;
+            }
+            $timeouts['timeout'] = min( (int) $timeouts['timeout'], self::NATIVE_TRANSFER_TIMEOUT_SECONDS );
+            self::touch_for_request( (int) ( $timeouts['connect_timeout'] ?? 0 ) + (int) $timeouts['timeout'] + self::SLOT_LEASE_MARGIN_SECONDS );
+            return $timeouts;
+        };
+
+        add_filter( 'mainwp_fetch_url_site_timeout', self::$request_timeout_filter, PHP_INT_MAX );
+        add_filter( 'mainwp_download_to_file_timeouts', self::$transfer_timeout_filter, PHP_INT_MAX );
+    }
+
+    /**
+     * Method end_native_lease()
+     *
+     * Close one holder's lease scope. A token that is not in scope is a
+     * no-op, so a finally block can call this unconditionally.
+     *
+     * @param string $token Slot token from acquire_backup_slot().
+     *
+     * @return void
+     */
+    public static function end_native_lease( string $token ): void {
+        $at = array_search( $token, self::$native_lease_tokens, true );
+        if ( false === $at ) {
+            return;
+        }
+
+        unset( self::$native_lease_tokens[ $at ] );
+        self::$native_lease_tokens = array_values( self::$native_lease_tokens );
+        if ( ! empty( self::$native_lease_tokens ) ) {
+            return;
+        }
+
+        if ( null !== self::$request_timeout_filter ) {
+            remove_filter( 'mainwp_fetch_url_site_timeout', self::$request_timeout_filter, PHP_INT_MAX );
+            self::$request_timeout_filter = null;
+        }
+        if ( null !== self::$transfer_timeout_filter ) {
+            remove_filter( 'mainwp_download_to_file_timeouts', self::$transfer_timeout_filter, PHP_INT_MAX );
+            self::$transfer_timeout_filter = null;
+        }
+    }
+
+    /**
+     * Refresh the leases from inside a timeout filter.
+     *
+     * A diagnostics or DB hiccup here must never propagate: the filter
+     * still has to return a timeout, and a request with no timeout is
+     * exactly the failure the lease exists to prevent.
+     *
+     * @param int $lease_seconds Lease the pending request needs.
+     *
+     * @return void
+     */
+    private static function touch_for_request( int $lease_seconds ): void {
+        try {
+            self::touch_native_leases( $lease_seconds );
+        } catch ( \Throwable $e ) {
+            unset( $e );
+        }
+    }
+
+    /**
+     * Method touch_native_leases()
+     *
+     * Refresh every slot row held by a token in the current lease scope.
+     * A holder whose row was already reclaimed and re-owned updates zero
+     * rows and is left alone: it has lost its slot, and its release will
+     * delete nothing, which is the existing contract.
+     *
+     * @param int $lease_seconds Lease to write, floored at DEFAULT_SLOT_LEASE_SECONDS.
+     *
+     * @return void
+     */
+    public static function touch_native_leases( int $lease_seconds ): void {
+        global $wpdb;
+
+        if ( empty( self::$native_lease_tokens ) ) {
+            return;
+        }
+
+        $now   = time();
+        $lease = max( self::DEFAULT_SLOT_LEASE_SECONDS, $lease_seconds );
+
+        $rows = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- the semaphore must bypass the options caches.
+            $wpdb->prepare(
+                "SELECT option_name, option_value FROM {$wpdb->options} WHERE option_name LIKE %s",
+                $wpdb->esc_like( self::SLOT_OPTION_PREFIX ) . '%'
+            )
+        );
+
+        foreach ( (array) $rows as $row ) {
+            $data = json_decode( (string) $row->option_value, true );
+            if ( ! is_array( $data ) || ! isset( $data['token'] ) || ! in_array( (string) $data['token'], self::$native_lease_tokens, true ) ) {
+                continue;
+            }
+            $data['heartbeat'] = $now;
+            $data['lease']     = $lease;
+            $wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- compare-and-update heartbeat.
+                $wpdb->prepare(
+                    "UPDATE {$wpdb->options} SET option_value = %s WHERE option_name = %s AND option_value = %s",
+                    (string) wp_json_encode( $data ),
+                    $row->option_name,
+                    (string) $row->option_value
+                )
+            );
+        }
+    }
+
+    /**
+     * Whether a decoded slot row still belongs to a live holder.
+     *
+     * The pre-check count and the reclaim loop both ask this, so they
+     * cannot disagree about the same row at the same time.
+     *
+     * @param mixed $data Decoded slot value; anything at all, the row may be malformed.
+     * @param int   $now  Current time.
+     *
+     * @return bool True while the holder still owns the slot.
+     */
+    private static function is_slot_live( mixed $data, int $now ): bool {
+        if ( ! is_array( $data ) || ! isset( $data['started'] ) ) {
+            return false;
+        }
+
+        if ( 'native' === ( $data['lane'] ?? '' )
+            && isset( $data['heartbeat'], $data['lease'] )
+            && is_numeric( $data['heartbeat'] )
+            && is_numeric( $data['lease'] )
+        ) {
+            return $now < (int) $data['heartbeat'] + (int) $data['lease'];
+        }
+
+        // Legacy, pre-lease, or a native row missing either lease field.
+        return ( $now - (int) $data['started'] ) < 2 * HOUR_IN_SECONDS;
+    }
+
+    /**
      * Count slot rows whose holder is still live (not expired), for the
      * diagnostics trace.
      *
@@ -665,8 +920,7 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
         $live = 0;
         foreach ( (array) $rows as $value ) {
-            $data = json_decode( (string) $value, true );
-            if ( is_array( $data ) && isset( $data['started'] ) && ( $now - (int) $data['started'] ) < 2 * HOUR_IN_SECONDS ) {
+            if ( self::is_slot_live( json_decode( (string) $value, true ), $now ) ) {
                 ++$live;
             }
         }

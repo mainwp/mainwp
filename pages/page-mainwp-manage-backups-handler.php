@@ -785,14 +785,19 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         }
 
         // Cap concurrent backup tasks; a refused task stays queued for the next cron cycle.
-        $slot_token = MainWP_Backup_Monitor::acquire_backup_slot( MainWP_Backup_Settings::get_max_concurrent_backups() );
+        $slot_token = MainWP_Backup_Monitor::acquire_backup_slot( MainWP_Backup_Settings::get_max_concurrent_backups(), 'native' );
         if ( false === $slot_token ) {
             return false;
         }
 
         try {
+            // Inside the lease scope every child request this driver makes
+            // is bounded and stamps the slot row, so a driver that dies
+            // mid-run frees its slot in minutes instead of two hours.
+            MainWP_Backup_Monitor::begin_native_lease( $slot_token );
             return static::execute_backup_task_run( $task, $nrOfSites, $updateRun, $run_grace_seconds );
         } finally {
+            MainWP_Backup_Monitor::end_native_lease( $slot_token );
             MainWP_Backup_Monitor::release_backup_slot( $slot_token );
         }
     }
@@ -890,6 +895,15 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         $currentCount = 0;
 
         foreach ( $sites as $siteid ) {
+            // The work between two child requests - bookkeeping, DB writes,
+            // hashing a downloaded artifact - carries no request timeout to
+            // lease against, so tick the lease per site. And re-assert the
+            // cron lanes' own no-limit policy: fetch_url_site sets PHP's
+            // execution limit to the request bound and never restores it,
+            // so the bound would otherwise leak into that same work.
+            MainWP_Backup_Monitor::touch_native_leases( MainWP_Backup_Monitor::DEFAULT_SLOT_LEASE_SECONDS );
+            MainWP_System_Utility::set_time_limit( 0 );
+
             if ( isset( $completed_sites[ $siteid ] ) && ( true === $completed_sites[ $siteid ] ) ) {
                 // A completed-marked site whose validated artifact still
                 // lacks its snapshot is re-driven, not skipped: nothing
@@ -1452,7 +1466,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         // claim_backup_run() deliberately does not apply here: that is
         // scheduled-run dedup (one driver owns a given run), not the
         // dashboard-wide concurrency cap this guard enforces.
-        $slot_token = MainWP_Backup_Monitor::acquire_backup_slot( MainWP_Backup_Settings::get_max_concurrent_backups() );
+        $slot_token = MainWP_Backup_Monitor::acquire_backup_slot( MainWP_Backup_Settings::get_max_concurrent_backups(), 'legacy' );
         if ( false === $slot_token ) {
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_CONCURRENCY_LIMIT ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         }

@@ -1060,7 +1060,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                 MainWP_System_Utility::set_time_limit( 0 );
             }
 
-            if ( MainWP_Backup_Monitor::native_lease_lost() ) {
+            if ( ! MainWP_Backup_Monitor::confirm_native_lease() ) {
                 // The slot went away while this site was being driven, so
                 // whatever the child did or did not do happened outside a
                 // slot this holder owns. Marking the site complete would
@@ -1098,7 +1098,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
 
         MainWP_System_Utility::set_time_limit( 0 );
 
-        $lease_lost = MainWP_Backup_Monitor::native_lease_lost();
+        $lease_lost = ! MainWP_Backup_Monitor::confirm_native_lease();
         if ( $lease_lost ) {
             // Both loop exits above leave the run unfinished, so the reason
             // is recorded once here, on the same path a per-site failure
@@ -1296,12 +1296,16 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      * belong to more than one backup task: two terminal marks close together
      * must both stay owed, not have the later one overwrite the earlier.
      *
+     * Public because the terminal mark is not the only way a task ends up
+     * unowned: a driver that loses its concurrency slot right after a
+     * create holds the only copy of that child task id.
+     *
      * @param object $website       Website row.
      * @param string $child_task_id Child task id still active on the child.
      *
      * @return void
      */
-    protected static function record_pending_child_cancel( $website, $child_task_id ) {
+    public static function record_pending_child_cancel( $website, $child_task_id ) {
         $pending = static::read_pending_child_cancels( $website );
         if ( ! isset( $pending[ (string) $child_task_id ] ) ) {
             $pending[ (string) $child_task_id ] = 0;

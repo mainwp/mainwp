@@ -2107,6 +2107,14 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 return static::fetch_url_authed( $website, $what, $params );
             } catch ( \Exception $e ) {
                 $last_error = $e;
+                // Checked before the backoff, not only at the top of the
+                // next attempt: sleeping first would spend the delay on a
+                // slot that is already gone, and a single-attempt call
+                // never reaches the top of a next attempt at all - it would
+                // report an exhausted retry for a loss.
+                if ( MainWP_Backup_Monitor::native_lease_lost() ) {
+                    throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_SLOT_LOST ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+                }
                 if ( $attempt < $max_retries ) {
                     /**
                      * Filter the backoff delay in seconds between retried child requests.

@@ -15,6 +15,7 @@
 namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Backup_Error_Codes;
+use MainWP\Dashboard\MainWP_Backup_Executor;
 use MainWP\Dashboard\MainWP_Backup_File_Manager;
 use MainWP\Dashboard\MainWP_Backup_Monitor;
 use MainWP\Dashboard\MainWP_Backup_Snapshots;
@@ -755,10 +756,11 @@ class MainWP_Backup_Slot_Lease_Test extends MainWP_Abilities_Test_Case {
 
 	/**
 	 * A child answer that arrives intact is no proof the holder still owns
-	 * the slot: the loss can land while the answer is in flight, which is
-	 * where the transport resolves its timeout seam. The site is stopped at
-	 * that answer, so none of what it would have produced - a snapshot row,
-	 * a completed mark - is written, and the run says why it stopped.
+	 * the slot: the loss can land after the request was bounded and before
+	 * the answer is consumed, so the holder's last touch remembers a slot
+	 * it no longer has. The site is stopped at that answer anyway, so none
+	 * of what it would have produced - a snapshot row, a completed mark -
+	 * is written, and the run says why it stopped.
 	 *
 	 * @return void
 	 */
@@ -797,11 +799,13 @@ class MainWP_Backup_Slot_Lease_Test extends MainWP_Abilities_Test_Case {
 				if ( 'backup_task_run' !== $what ) {
 					return $result;
 				}
-				// The slot goes to another process while this answer is in
-				// flight, so the holder meets the loss at the transport's
-				// own timeout seam rather than after the fact.
-				$this->steal_slot_row();
+				// The request is bounded against a healthy row, and only
+				// then does the slot go to another process. The holder's
+				// last touch therefore says it still owns the slot, which
+				// is the whole point: what it remembers is not what the
+				// row says by the time the answer is consumed.
 				apply_filters( 'mainwp_fetch_url_site_timeout', 20 * HOUR_IN_SECONDS, null );
+				$this->steal_slot_row();
 				$answered = true;
 
 				return array(
@@ -852,6 +856,125 @@ class MainWP_Backup_Slot_Lease_Test extends MainWP_Abilities_Test_Case {
 			(string) $row->backup_errors,
 			'The reason the run stopped reaches the task row.'
 		);
+	}
+
+	/**
+	 * A site and a task set up for one create round trip under a lease.
+	 *
+	 * @return array Site id and task row.
+	 */
+	private function site_and_task_for_create(): array {
+		update_option( 'mainwp_enableNativeBackups', 1 );
+
+		$user = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $user );
+		$site_id = $this->create_test_site(
+			array(
+				'userid' => $user,
+				'url'    => 'http://127.0.0.1:9/create/',
+			)
+		);
+		$task    = MainWP_DB_Backup::instance()->add_backup_task( $user, 'Slot lost after create task', 'manual', 'full', '', (string) $site_id, '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0 );
+		$this->assertNotFalse( $task, 'Precondition: the task row must insert.' );
+
+		return array( (int) $site_id, $task );
+	}
+
+	/**
+	 * Answer the create round trip with a real child task id, and take the
+	 * slot to another process while that answer is in hand.
+	 *
+	 * @param int         $task_id     Task id, for the replacement claim.
+	 * @param int         $site_id     Site id, for the replacement claim.
+	 * @param string|null $replacement Claim a replacement driver writes over this driver's marker, null for none.
+	 *
+	 * @return string The child task id the create answers with.
+	 */
+	private function answer_create_after_losing_the_slot( int $task_id, int $site_id, ?string $replacement = null ): string {
+		$child_task_id = 'child-task-created-after-loss';
+
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			function ( $result, $website, $what ) use ( $task_id, $site_id, $replacement, $child_task_id ) {
+				unset( $website );
+				if ( 'backup_preflight' === $what ) {
+					return array( 'task_spine' => 1 );
+				}
+				if ( 'backup_task_create' !== $what ) {
+					return $result;
+				}
+
+				// Bounded against a healthy row first, so the driver's own
+				// memory still says it holds the slot when the answer lands.
+				apply_filters( 'mainwp_fetch_url_site_timeout', 20 * HOUR_IN_SECONDS, null );
+				$this->steal_slot_row();
+				if ( null !== $replacement ) {
+					MainWP_DB_Backup::instance()->update_backup_task_progress( $task_id, $site_id, array( 'child_backup_task_id' => $replacement ) );
+				}
+
+				return array(
+					'task_id' => $child_task_id,
+					'phase'   => 'queued',
+				);
+			},
+			10,
+			3
+		);
+
+		return $child_task_id;
+	}
+
+	/**
+	 * A slot lost right after a successful create leaves a real task
+	 * building on the child under an id only this driver has seen. The
+	 * driver stops, but the id goes onto the row it still owns, so the
+	 * next cycle resumes that task instead of asking for a second one.
+	 *
+	 * @return void
+	 */
+	public function test_a_slot_lost_after_a_create_leaves_the_child_task_id_on_the_row() {
+		list( $site_id, $task ) = $this->site_and_task_for_create();
+		$this->acquire_leased_slot();
+		$child_task_id = $this->answer_create_after_losing_the_slot( (int) $task->id, $site_id );
+
+		$result = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+
+		$this->assertFalse( $result, 'A driver that lost its slot stops without completing the site.' );
+		$this->assertTrue( MainWP_Backup_Monitor::native_lease_lost(), 'The guard asked the row rather than trusting the last touch.' );
+
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+		$this->assertSame( $child_task_id, (string) $progress->child_backup_task_id, 'The created task is left on the row for the next cycle to resume.' );
+
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$this->assertEmpty(
+			MainWP_DB::instance()->get_website_option( $website, MainWP_Manage_Backups_Handler::PENDING_CANCEL_OPTION ),
+			'A task the row adopted is still wanted, so it is not owed as a cancel.'
+		);
+	}
+
+	/**
+	 * When a replacement driver has already claimed the row, the created
+	 * task has nowhere to go: the row is left exactly as it is and the id
+	 * is owed to the child as a cancel, since nothing else can name it.
+	 *
+	 * @return void
+	 */
+	public function test_a_slot_lost_after_a_create_owes_a_cancel_when_another_driver_holds_the_row() {
+		list( $site_id, $task ) = $this->site_and_task_for_create();
+		$this->acquire_leased_slot();
+		$child_task_id = $this->answer_create_after_losing_the_slot( (int) $task->id, $site_id, 'child-task-replacement-driver' );
+
+		$result = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+
+		$this->assertFalse( $result, 'A driver that lost its slot stops without completing the site.' );
+
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+		$this->assertSame( 'child-task-replacement-driver', (string) $progress->child_backup_task_id, 'A row a replacement driver claimed is left untouched.' );
+
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$owed    = json_decode( (string) MainWP_DB::instance()->get_website_option( $website, MainWP_Manage_Backups_Handler::PENDING_CANCEL_OPTION ), true );
+		$this->assertIsArray( $owed, 'The abandoned child task must be owed a cancel.' );
+		$this->assertArrayHasKey( $child_task_id, $owed, 'The cancel is owed by the exact id the child answered with.' );
 	}
 
 	/**

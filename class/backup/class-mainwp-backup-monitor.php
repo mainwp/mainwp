@@ -848,6 +848,34 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     }
 
     /**
+     * Method confirm_native_lease()
+     *
+     * Ask the slot row, rather than the last touch's memory, whether this
+     * holder still owns its slot.
+     *
+     * A lease can be reclaimed by another reader between two of this
+     * holder's touches - a reader whose clock runs behind reads a fresh
+     * heartbeat as one from the future and treats the row as dead - and
+     * native_lease_lost() only reports what the last touch saw. So a
+     * decision that consumes the result of I/O, or that completes work,
+     * re-validates here instead: the refresh either renews the row or
+     * finds it gone and marks the lease lost.
+     *
+     * @return bool True while the holder still owns its slot; true as
+     *              well outside a lease scope, where there is no slot to
+     *              lose.
+     */
+    public static function confirm_native_lease(): bool {
+        if ( empty( self::$native_lease_tokens ) ) {
+            return true;
+        }
+
+        self::touch_native_leases( self::DEFAULT_SLOT_LEASE_SECONDS );
+
+        return ! self::native_lease_lost();
+    }
+
+    /**
      * Flag the holder in scope as having lost its slot, tracing it once.
      *
      * Both doors into this state - a refresh that found no row, and a

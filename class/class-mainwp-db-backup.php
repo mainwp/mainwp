@@ -89,6 +89,37 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
     }
 
     /**
+     * Method update_backup_task_progress_if_marker()
+     *
+     * Update a progress row only while it still carries the creating
+     * marker the caller wrote. A driver that lost its slot mid-create, or
+     * one cleaning up after a refused create, must not overwrite a
+     * replacement driver's claim - and reading the row first and updating
+     * it after leaves exactly the window where that claim lands, so the
+     * marker is part of the WHERE clause instead.
+     *
+     * @param mixed  $task_id Task ID.
+     * @param mixed  $site_id Child Site ID.
+     * @param string $marker  Creating marker the row must still carry.
+     * @param array  $values  Values to update.
+     *
+     * @return int Rows updated: 1 when the marker was still there, 0 when it was not.
+     */
+    public function update_backup_task_progress_if_marker( $task_id, $site_id, $marker, array $values ): int {
+        $updated = $this->wpdb->update(
+            $this->table_name( 'wp_backup_progress' ),
+            $values,
+            array(
+                'task_id'              => $task_id,
+                'wp_id'                => $site_id,
+                'child_backup_task_id' => $marker,
+            )
+        );
+
+        return is_numeric( $updated ) ? (int) $updated : 0;
+    }
+
+    /**
      * Method add_backup_task_progress()
      *
      * Add backup task progress.

@@ -417,13 +417,17 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 throw $e;
             }
 
-            if ( MainWP_Backup_Monitor::native_lease_lost() ) {
+            if ( ! MainWP_Backup_Monitor::confirm_native_lease() ) {
                 // The slot went to another process while this round trip was
                 // in flight, so a replacement driver may already own the
-                // progress row; touching it now could clear that driver's
-                // marker. A marker this driver leaves behind is reclaimed by
-                // the CREATE_MARKER_TTL_SECONDS window on the next cycle;
-                // nothing here is terminal.
+                // progress row. A task the child did create is real work
+                // nobody else can name: hand it to whoever holds the row,
+                // and when that is another driver's claim, owe the child a
+                // cancel for the exact id instead of leaving it running with
+                // no way to stop it. A marker this driver leaves behind is
+                // reclaimed by the CREATE_MARKER_TTL_SECONDS window on the
+                // next cycle; nothing here is terminal.
+                static::hand_off_created_task_after_slot_loss( $website, $taskId, $creating_marker, $information );
                 return false;
             }
 
@@ -553,7 +557,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 );
             }
 
-            if ( MainWP_Backup_Monitor::native_lease_lost() ) {
+            if ( ! MainWP_Backup_Monitor::confirm_native_lease() ) {
                 return false; // Same stop as a slice that is still working: the row is untouched and the next cycle runs it again.
             }
 
@@ -948,7 +952,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 }
             }
 
-            if ( MainWP_Backup_Monitor::native_lease_lost() ) {
+            if ( ! MainWP_Backup_Monitor::confirm_native_lease() ) {
                 return false; // A snapshot is what retires the site, so it may not be written under a slot this driver no longer owns.
             }
 
@@ -985,9 +989,10 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     /**
      * Clear this driver's own creating marker from the progress row.
      *
-     * Compares the live row against the driver's unique token first, so a
+     * One conditional write, keyed on the driver's unique token, so a
      * concurrent driver's claim (a real task id or its own marker) is never
-     * clobbered by a loser cleaning up after its refused create.
+     * clobbered by a loser cleaning up after its refused create - and no
+     * window opens between reading the row and writing it.
      *
      * @param int    $task_id Task ID.
      * @param int    $site_id Site ID.
@@ -996,10 +1001,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @return void
      */
     private static function clear_creating_marker_if_mine( $task_id, $site_id, $marker ) {
-        $current = MainWP_DB_Backup::instance()->get_backup_task_progress( $task_id, $site_id );
-        if ( $current && $current->child_backup_task_id === $marker ) {
-            MainWP_DB_Backup::instance()->update_backup_task_progress( $task_id, $site_id, array( 'child_backup_task_id' => '' ) );
-        }
+        MainWP_DB_Backup::instance()->update_backup_task_progress_if_marker( $task_id, $site_id, $marker, array( 'child_backup_task_id' => '' ) );
     }
 
     /**
@@ -1019,16 +1021,55 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @return void
      */
     private static function reset_create_window_if_mine( $task_id, $site_id, $marker ) {
-        $current = MainWP_DB_Backup::instance()->get_backup_task_progress( $task_id, $site_id );
-        if ( $current && $current->child_backup_task_id === $marker ) {
-            MainWP_DB_Backup::instance()->update_backup_task_progress(
-                $task_id,
-                $site_id,
-                array(
-                    'dtsFetched'           => 0,
-                    'child_backup_task_id' => '',
-                )
-            );
+        MainWP_DB_Backup::instance()->update_backup_task_progress_if_marker(
+            $task_id,
+            $site_id,
+            $marker,
+            array(
+                'dtsFetched'           => 0,
+                'child_backup_task_id' => '',
+            )
+        );
+    }
+
+    /**
+     * Place the child task a create round trip returned after this driver
+     * lost its slot.
+     *
+     * The child is already building a backup under an id only this driver
+     * has seen, so dropping it would leave that task running until its
+     * wall clock expires, refusing every backup on the site meanwhile.
+     * The id goes onto the row while the row still carries this driver's
+     * marker, and the next cycle resumes it. A row a replacement driver
+     * already owns is left exactly as it is, and the id is owed to the
+     * child as a cancel instead - nothing else can name it.
+     *
+     * @param object $website     Website object.
+     * @param mixed  $task_id     Task id.
+     * @param string $marker      This driver's creating marker token.
+     * @param mixed  $information Child response to the create round trip.
+     *
+     * @return void
+     */
+    protected static function hand_off_created_task_after_slot_loss( $website, $task_id, $marker, $information ) {
+        if ( ! is_array( $information ) || ! empty( $information['error'] ) || empty( $information['task_id'] ) || ! is_string( $information['task_id'] ) ) {
+            return;
+        }
+
+        $child_task_id = sanitize_text_field( $information['task_id'] );
+
+        $adopted = MainWP_DB_Backup::instance()->update_backup_task_progress_if_marker(
+            $task_id,
+            (int) $website->id,
+            $marker,
+            array(
+                'child_backup_task_id'  => $child_task_id,
+                'foreign_refused_since' => 0,
+            )
+        );
+
+        if ( 1 !== $adopted ) {
+            MainWP_Manage_Backups_Handler::record_pending_child_cancel( $website, $child_task_id );
         }
     }
 
@@ -1489,7 +1530,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             );
         }
 
-        if ( MainWP_Backup_Monitor::native_lease_lost() ) {
+        if ( ! MainWP_Backup_Monitor::confirm_native_lease() ) {
             return false; // A snapshot is what retires the site, so it may not be written under a slot this driver no longer owns.
         }
 

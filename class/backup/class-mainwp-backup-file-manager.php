@@ -213,7 +213,7 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
                 // is not yet servable, and announcing that as a download
                 // poisons the resume state with a vacuous success.
                 static::assert_download_landed( $local_file );
-                if ( MainWP_Backup_Monitor::native_lease_lost() ) {
+                if ( ! MainWP_Backup_Monitor::confirm_native_lease() ) {
                     // The token path's hash makes this same call: the slot
                     // may already be re-owned by a process writing this same
                     // path, so bytes that landed outside the slot cannot be

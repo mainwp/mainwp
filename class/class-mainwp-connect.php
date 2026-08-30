@@ -2074,6 +2074,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         return false;
     }
 
+    // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber -- all throws are MainWP_Exception.
     /**
      * Method fetch_with_retry()
      *
@@ -2088,18 +2089,19 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @param int    $max_retries Maximum attempts (default 3).
      *
      * @return mixed Child site response.
-     * @throws MainWP_Exception When all attempts fail.
+     * @throws MainWP_Exception ERR_RETRY_EXHAUSTED when all attempts fail, or ERR_SLOT_LOST when the concurrency slot is lost mid-retry.
      */
     public static function fetch_with_retry( &$website, $what, $params = array(), $max_retries = 3 ) {
+        // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber
         $last_error = null;
 
         for ( $attempt = 1; $attempt <= $max_retries; $attempt++ ) {
             if ( 1 < $attempt && MainWP_Backup_Monitor::native_lease_lost() ) {
                 // The slot went to another process while an earlier attempt
                 // was in flight. Spending the remaining attempts would make
-                // them all outside it, so stop and let the exhausted path
-                // report the failure the caller already handles.
-                break;
+                // them all outside it, so report the loss as itself rather
+                // than as an exhausted retry the caller would misread.
+                throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_SLOT_LOST ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
             }
             try {
                 return static::fetch_url_authed( $website, $what, $params );

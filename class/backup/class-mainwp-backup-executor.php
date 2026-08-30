@@ -419,12 +419,11 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
             if ( MainWP_Backup_Monitor::native_lease_lost() ) {
                 // The slot went to another process while this round trip was
-                // in flight, so this answer was produced outside a slot this
-                // driver owns and writing it to the shared row could clobber
-                // the driver that does own it. Hand the create window back
-                // the way a yielded refusal does and leave the site for the
-                // next cycle; nothing here is terminal.
-                static::reset_create_window_if_mine( $taskId, (int) $website->id, $creating_marker );
+                // in flight, so a replacement driver may already own the
+                // progress row; touching it now could clear that driver's
+                // marker. A marker this driver leaves behind is reclaimed by
+                // the CREATE_MARKER_TTL_SECONDS window on the next cycle;
+                // nothing here is terminal.
                 return false;
             }
 

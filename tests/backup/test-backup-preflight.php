@@ -1097,7 +1097,10 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 					'error_code' => MainWP_Backup_Monitor::CHILD_INCOMPATIBLE_CODE,
 				),
 				// The legacy engine would happily answer; the gate must fire first.
-				'backup'           => array( 'full' => 'backup-legacy.tar.gz', 'size' => 10 ),
+				'backup'           => array(
+					'full' => 'backup-legacy.tar.gz',
+					'size' => 10,
+				),
 			)
 		);
 

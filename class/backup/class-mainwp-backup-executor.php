@@ -1068,10 +1068,10 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             )
         );
 
-        // The progress table's index is not unique, so a duplicate row for
-        // the same site (an existing read-then-insert race) can carry the
-        // same marker; both then belong to this driver, so any positive
-        // count counts as adopted.
+        // (task_id, wp_id) is unique from db 9.0.2.24 on, so the marker
+        // match is a single row. Any positive count is this driver's own
+        // row adopted; only a zero means a replacement driver took the row
+        // over, and then the id is owed to the child as a cancel.
         if ( $adopted < 1 ) {
             MainWP_Manage_Backups_Handler::record_pending_child_cancel( $website, $child_task_id );
         }

@@ -128,24 +128,29 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * @param mixed $wp_id Child Site ID.
      * @param mixed $information Task info to add.
      *
-     * @return (array|null) $this->get_backup_task_progress() or null on failure
+     * @return (object|null) $this->get_backup_task_progress() or null on failure
      */
     public function add_backup_task_progress( $task_id, $wp_id, $information ) {
-        $values = array(
-            'task_id'        => $task_id,
-            'wp_id'          => $wp_id,
-            'dtsFetched'     => time(),
-            'fetchResult'    => wp_json_encode( $information ),
-            'removedFiles'   => 0,
-            'downloadedDB'   => '',
-            'downloadedFULL' => '',
+        // Callers reach here only after reading no row for the pair, which
+        // races: a second driver reading the same gap inserts too. The pair
+        // is UNIQUE, so the loser adopts the row that landed first instead
+        // of failing - the self-assignment leaves the winner's row exactly
+        // as written, and either way the caller gets the row back.
+        $inserted = $this->wpdb->query(
+            $this->wpdb->prepare(
+                'INSERT INTO ' . $this->table_name( 'wp_backup_progress' ) . " ( task_id, wp_id, dtsFetched, fetchResult, removedFiles, downloadedDB, downloadedFULL ) VALUES ( %d, %d, %d, %s, 0, '', '' ) ON DUPLICATE KEY UPDATE task_id = task_id", // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted helper.
+                $task_id,
+                $wp_id,
+                time(),
+                wp_json_encode( $information )
+            )
         );
 
-        if ( $this->wpdb->insert( $this->table_name( 'wp_backup_progress' ), $values ) ) {
-            return $this->get_backup_task_progress( $task_id, $wp_id );
+        if ( false === $inserted ) {
+            return null;
         }
 
-        return null;
+        return $this->get_backup_task_progress( $task_id, $wp_id );
     }
 
     /**

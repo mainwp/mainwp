@@ -978,16 +978,14 @@ class MainWP_Backup_Slot_Lease_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * The progress table's index is not unique, so a duplicate row for the
-	 * same task/site - an existing read-then-insert race - can carry this
-	 * driver's own creating marker too. Both rows then belong to this
-	 * driver, so the created task is adopted on both and nothing is owed
-	 * as a cancel, even though only one row's update would once have
-	 * counted as a match.
+	 * A second insert for the same task/site - the old read-then-insert
+	 * race - is refused by the uniq_task_wp key since 9.0.2.24, so the
+	 * marker-carrying row stays singular, the created task id is kept on
+	 * it, and nothing is owed as a cancel.
 	 *
 	 * @return void
 	 */
-	public function test_a_duplicate_progress_row_does_not_turn_a_kept_task_id_into_an_owed_cancel() {
+	public function test_a_refused_duplicate_progress_insert_keeps_the_kept_task_id() {
 		list( $site_id, $task ) = $this->site_and_task_for_create();
 		$this->acquire_leased_slot();
 		$child_task_id = 'child-task-created-after-loss';
@@ -1006,12 +1004,13 @@ class MainWP_Backup_Slot_Lease_Test extends MainWP_Abilities_Test_Case {
 				apply_filters( 'mainwp_fetch_url_site_timeout', 20 * HOUR_IN_SECONDS, null );
 				$this->steal_slot_row();
 
-				// Duplicate the row the way the existing read-then-insert race
-				// would: same task/site, carrying the marker the executor
-				// already wrote before this round trip left.
+				// Attempt the duplicate the old read-then-insert race would
+				// have created; the uniq_task_wp key refuses it, leaving the
+				// marker-carrying row singular.
 				$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
 				global $wpdb;
-				$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture, duplicating a progress row the way an existing race does.
+				$suppress = $wpdb->suppress_errors();
+				$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture, attempting the duplicate the unique key refuses.
 					MainWP_DB_Backup::instance()->get_table_name( 'wp_backup_progress' ),
 					array(
 						'task_id'              => $task->id,
@@ -1024,6 +1023,7 @@ class MainWP_Backup_Slot_Lease_Test extends MainWP_Abilities_Test_Case {
 						'child_backup_task_id' => $progress->child_backup_task_id,
 					)
 				);
+				$wpdb->suppress_errors( $suppress );
 
 				return array(
 					'task_id' => $child_task_id,
@@ -1042,15 +1042,15 @@ class MainWP_Backup_Slot_Lease_Test extends MainWP_Abilities_Test_Case {
 		$rows = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test assertion, reading both duplicate rows back.
 			$wpdb->prepare( 'SELECT child_backup_task_id FROM ' . MainWP_DB_Backup::instance()->get_table_name( 'wp_backup_progress' ) . ' WHERE task_id = %d AND wp_id = %d', $task->id, $site_id )
 		);
-		$this->assertCount( 2, $rows, 'Precondition: both duplicate rows exist.' );
+		$this->assertCount( 1, $rows, 'The unique key keeps the pair to one row.' );
 		foreach ( $rows as $row ) {
-			$this->assertSame( $child_task_id, (string) $row->child_backup_task_id, 'Every row carrying the marker is adopted, not just the first one matched.' );
+			$this->assertSame( $child_task_id, (string) $row->child_backup_task_id, 'The surviving marker row adopts the created task id.' );
 		}
 
 		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
 		$this->assertEmpty(
 			MainWP_DB::instance()->get_website_option( $website, MainWP_Manage_Backups_Handler::PENDING_CANCEL_OPTION ),
-			'Both rows already belong to this driver, so nothing is owed as a cancel.'
+			'The row already belongs to this driver, so nothing is owed as a cancel.'
 		);
 	}
 

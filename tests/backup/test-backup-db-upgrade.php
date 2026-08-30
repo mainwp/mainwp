@@ -22,6 +22,11 @@ use MainWP\Dashboard\MainWP_Install;
 class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 
 	/**
+	 * Task id the progress-dedupe fixture rows hang off.
+	 */
+	const DEDUPE_TASK_ID = 888899;
+
+	/**
 	 * Stored mainwp_db_version before the test.
 	 *
 	 * @var mixed
@@ -157,6 +162,13 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		}
 		if ( ! $this->index_exists( $table, 'idx_task_id' ) ) {
 			$wpdb->query( "ALTER TABLE {$table} ADD INDEX idx_task_id (task_id)" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
+		}
+		// The dedupe fixture's rows outlive a failed test - the install()
+		// under test implicitly commits them - and leftover duplicates make
+		// the unique key uninsertable, so they go before it is restored.
+		$wpdb->query( 'DELETE FROM ' . $table . ' WHERE task_id = ' . self::DEDUPE_TASK_ID ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
+		if ( ! $this->index_exists( $table, 'uniq_task_wp' ) ) {
+			$wpdb->query( "ALTER TABLE {$table} ADD UNIQUE KEY uniq_task_wp (task_id, wp_id)" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
 		}
 
 		if ( false === $this->saved_db_version ) {
@@ -973,6 +985,91 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * (task_id, wp_id) was not unique before db 9.0.2.24, so the executor's
+	 * read-then-insert could leave a site with several progress rows and
+	 * every read path took an arbitrary one. The upgrade must collapse an
+	 * existing install's duplicates to the freshest row of each pair -
+	 * older rows carry a stale phase, artifact paths and child task id -
+	 * leave a second site's row alone, and only then add the unique key,
+	 * which ADD UNIQUE would otherwise refuse. Re-running install() stays
+	 * idempotent.
+	 *
+	 * @return void
+	 */
+	public function test_upgrade_dedupes_progress_rows_then_adds_unique_task_site_key() {
+		global $wpdb;
+
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_progress' );
+		$this->assertTrue( $this->index_exists( $table, 'uniq_task_wp' ), 'Precondition: fresh install has the (task_id, wp_id) unique key.' );
+
+		// Simulate the pre-9.0.2.24 shape: no unique key, and a site
+		// carrying the duplicate rows the insert race could leave behind.
+		$wpdb->query( "ALTER TABLE {$table} DROP INDEX uniq_task_wp" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture, identifiers cannot be prepared.
+		$wpdb->query( 'DELETE FROM ' . $table . ' WHERE task_id = ' . self::DEDUPE_TASK_ID ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture cleanup, identifiers cannot be prepared.
+
+		$racing_rows = array(
+			1000 => 'oldest-row',
+			2000 => 'freshest-row',
+			1500 => 'middle-row',
+		);
+
+		foreach ( $racing_rows as $fetched => $marker ) {
+			$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
+				$table,
+				array(
+					'task_id'              => self::DEDUPE_TASK_ID,
+					'wp_id'                => 888801,
+					'dtsFetched'           => $fetched,
+					'child_backup_task_id' => $marker,
+				)
+			);
+		}
+		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
+			$table,
+			array(
+				'task_id'              => self::DEDUPE_TASK_ID,
+				'wp_id'                => 888802,
+				'dtsFetched'           => 1200,
+				'child_backup_task_id' => 'other-site-row',
+			)
+		);
+
+		// A third site holds the tie the freshest-wins rule cannot break:
+		// two same-second race inserts, which the count-based cull handles.
+		foreach ( array( 'tied-row-a', 'tied-row-b' ) as $marker ) {
+			$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
+				$table,
+				array(
+					'task_id'              => self::DEDUPE_TASK_ID,
+					'wp_id'                => 888803,
+					'dtsFetched'           => 1300,
+					'child_backup_task_id' => $marker,
+				)
+			);
+		}
+
+		update_site_option( 'mainwp_db_version', '9.0.2.23' );
+
+		MainWP_Install::instance()->install();
+
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT wp_id, child_backup_task_id FROM {$table} WHERE task_id = %d ORDER BY wp_id", self::DEDUPE_TASK_ID ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test probe, identifiers cannot be prepared.
+
+		$this->assertCount( 3, $rows, 'The upgrade must leave one row per site: the duplicates collapse, the single-row site keeps its own.' );
+		$this->assertSame( 'freshest-row', $rows[0]->child_backup_task_id, 'The surviving row must be the freshest by dtsFetched; an older row replays a stale child task id.' );
+		$this->assertSame( 'other-site-row', $rows[1]->child_backup_task_id, 'A site with a single row must be left alone.' );
+		$this->assertContains( $rows[2]->child_backup_task_id, array( 'tied-row-a', 'tied-row-b' ), 'A tie on dtsFetched must still collapse to one of the tied rows.' );
+
+		$this->assertTrue( $this->index_exists( $table, 'uniq_task_wp' ), 'The upgrade must add the (task_id, wp_id) unique key once the duplicates are gone.' );
+		$this->assertSame( array( 'task_id', 'wp_id' ), $this->index_columns( $table, 'uniq_task_wp' ), 'The unique key must cover the pair, in that order.' );
+
+		$wpdb->query( 'DELETE FROM ' . $table . ' WHERE task_id = ' . self::DEDUPE_TASK_ID ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture cleanup, identifiers cannot be prepared.
+
+		update_site_option( 'mainwp_db_version', '9.0.2.23' );
+		MainWP_Install::instance()->install();
+		$this->assertTrue( $this->index_exists( $table, 'uniq_task_wp' ), 'Re-running install must remain idempotent.' );
+	}
+
+	/**
 	 * A true fresh installation - no plugin tables and no stored
 	 * mainwp_db_version - must create the complete schema in one install()
 	 * run: every plugin table, the version-gated primary keys, the backup
@@ -1070,6 +1167,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		$progress_table = MainWP_DB::instance()->get_table_name( 'wp_backup_progress' );
 		$this->assertTrue( $this->index_exists( $progress_table, 'idx_task_id' ), 'Fresh install must create idx_task_id.' );
 		$this->assertFalse( $this->index_exists( $progress_table, 'task_id' ), 'Fresh install must not recreate the legacy unique task_id key.' );
+		$this->assertTrue( $this->index_exists( $progress_table, 'uniq_task_wp' ), 'Fresh install must create the (task_id, wp_id) unique key.' );
 		$upload_job_table = MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' );
 		$this->assertTrue( $this->index_exists( $upload_job_table, 'uniq_snap_dest_kind' ), 'Fresh install must create the kind-widened upload-job unique key.' );
 

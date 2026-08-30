@@ -31,7 +31,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * @var string DB version info.
      */
-    protected $mainwp_db_version = '9.0.2.23'; // NOSONAR - no IP. Added wp_backup_progress.foreign_refused_since to stamp the first consecutive marker-less child already-running refusal on a manual run's progress row; the executor surfaces a foreign collision to the operator only after the refusal persists past FOREIGN_REFUSAL_SURFACE_SECONDS (a same-run create-window reset race re-marks within milliseconds and never accumulates), instead of always yielding it as the generic no-snapshot line. Previous 9.0.2.22 made wp_backup.authorized_sites nullable: NULL is now the never-stamped sentinel (a pre-authorized_sites row, backfilled from live expansion on its first run), while a stamped empty string is authoritative and means the save authorized zero sites - so an empty-saved group can no longer be mistaken for a legacy row and lazily auto-authorize a member added later. Previous 9.0.2.21 added wp_backup.authorized_sites, the site set that passed authorize_task_scope() at save time; the scheduled runner backs up only that set (cron has no user context to authorize a group's later additions against). Previous 9.0.2.20 bump made pre_update_tables() drop the legacy unnamed UNIQUE (task_id) key from wp_backup_progress - a leftover of the <= 8.53 CREATE clause that capped the table at one per-site progress row per task, so the second add_backup_task_progress() insert on a multi-site run died on a duplicate key. Previous 9.0.2.19 bump added reclaim_count to wp_backup_upload_job and wp_backup_restore_job, the stale-lease-reclaim counter that lets acquire_next_job() route a job whose worker keeps dying mid-run to fail_permanent instead of reclaiming it forever. Previous 9.0.2.18 bump added wp_backup_snapshot.woo_meta, the Woo order-storage facts a database-bearing backup captured at dump time, read by the restore initiate handler's preserve-orders gate; 9.0.2.17 bump added wp_backup.backup_notices, the informational-notes channel that keeps run notes (like the large-site ZIP auto-switch) out of backup_errors; 9.0.2.16 added wp_backup.zip_force_override for the large-site ZIP auto-switch override; 9.0.2.15 added wp_backup_snapshot.test_restore_state/test_restore_at for the verified-restore (sandbox test-restore) result; 9.0.2.14 added wp_backup_snapshot.encryption for the per-snapshot archive-encryption metadata.
+    protected $mainwp_db_version = '9.0.2.24'; // NOSONAR - no IP. Added the UNIQUE KEY uniq_task_wp (task_id, wp_id) to wp_backup_progress: the pair was never unique, so the executor's read-then-insert could land two progress rows for one site when drivers raced, and every guard that reads the row by pair then read an arbitrary one of them - pre_update_tables() collapses existing duplicates to the freshest row per pair before the key is added, and add_backup_task_progress() inserts ON DUPLICATE KEY UPDATE so a losing racer adopts the surviving row instead of failing. Previous 9.0.2.23 added wp_backup_progress.foreign_refused_since to stamp the first consecutive marker-less child already-running refusal on a manual run's progress row; the executor surfaces a foreign collision to the operator only after the refusal persists past FOREIGN_REFUSAL_SURFACE_SECONDS (a same-run create-window reset race re-marks within milliseconds and never accumulates), instead of always yielding it as the generic no-snapshot line. Previous 9.0.2.22 made wp_backup.authorized_sites nullable: NULL is now the never-stamped sentinel (a pre-authorized_sites row, backfilled from live expansion on its first run), while a stamped empty string is authoritative and means the save authorized zero sites - so an empty-saved group can no longer be mistaken for a legacy row and lazily auto-authorize a member added later. Previous 9.0.2.21 added wp_backup.authorized_sites, the site set that passed authorize_task_scope() at save time; the scheduled runner backs up only that set (cron has no user context to authorize a group's later additions against). Previous 9.0.2.20 bump made pre_update_tables() drop the legacy unnamed UNIQUE (task_id) key from wp_backup_progress - a leftover of the <= 8.53 CREATE clause that capped the table at one per-site progress row per task, so the second add_backup_task_progress() insert on a multi-site run died on a duplicate key. Previous 9.0.2.19 bump added reclaim_count to wp_backup_upload_job and wp_backup_restore_job, the stale-lease-reclaim counter that lets acquire_next_job() route a job whose worker keeps dying mid-run to fail_permanent instead of reclaiming it forever. Previous 9.0.2.18 bump added wp_backup_snapshot.woo_meta, the Woo order-storage facts a database-bearing backup captured at dump time, read by the restore initiate handler's preserve-orders gate; 9.0.2.17 bump added wp_backup.backup_notices, the informational-notes channel that keeps run notes (like the large-site ZIP auto-switch) out of backup_errors; 9.0.2.16 added wp_backup.zip_force_override for the large-site ZIP auto-switch override; 9.0.2.15 added wp_backup_snapshot.test_restore_state/test_restore_at for the verified-restore (sandbox test-restore) result; 9.0.2.14 added wp_backup_snapshot.encryption for the per-snapshot archive-encryption metadata.
 
     /**
      * Protected variable to hold the database option name.
@@ -340,6 +340,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
   files_processed int(11) NOT NULL DEFAULT 0,
   files_total int(11) NOT NULL DEFAULT 0,
   foreign_refused_since int(11) NOT NULL DEFAULT 0,
+  UNIQUE KEY uniq_task_wp (task_id, wp_id),
   KEY idx_task_id (task_id)";
         $tbl  .= ') ' . $charset_collate;
         $sql[] = $tbl;
@@ -715,6 +716,18 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             }
         }
 
+        // Same reason: dbDelta cannot be relied on to add the progress
+        // table's (task_id, wp_id) unique key to an existing install.
+        // pre_update_tables() has already collapsed the duplicate rows that
+        // would refuse it.
+        if ( version_compare( $currentVersion, '9.0.2.24', '<' ) ) { // NOSONAR - none IP.
+            $progress_table = esc_sql( $this->table_name( 'wp_backup_progress' ) );
+            $has_index      = $this->wpdb->get_results( "SHOW INDEX FROM {$progress_table} WHERE Key_name = 'uniq_task_wp'" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL introspection; table name escaped via esc_sql.
+            if ( empty( $has_index ) ) {
+                $this->wpdb->query( "ALTER TABLE {$progress_table} ADD UNIQUE KEY uniq_task_wp (task_id, wp_id)" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL statement; table name escaped via esc_sql.
+            }
+        }
+
         // Rename the backups feature flag to mainwp_enableNativeBackups; reads fall back to the
         // old name until this has run (see MainWP_Backup_Settings::is_native_backups_enabled()).
         // The old option is kept, mirroring the effective value, not deleted: a rollback to a
@@ -854,6 +867,34 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             if ( ! empty( $has_column ) ) {
                 $this->wpdb->query( "ALTER TABLE {$backup_table} MODIFY COLUMN authorized_sites text NULL" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL statement; table name escaped via esc_sql.
                 $this->wpdb->query( "UPDATE {$backup_table} SET authorized_sites = NULL WHERE authorized_sites = ''" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery -- one-time reset of the pre-nullable default.
+            }
+        }
+
+        // (task_id, wp_id) becomes UNIQUE on the progress table, and ADD
+        // UNIQUE refuses while duplicates are present, so an install that
+        // already raced two rows onto one site is collapsed here first - one
+        // pass before dbDelta and post_update() add the key. The freshest row
+        // wins because it is the one every read path would have been meant to
+        // return. The table carries no primary key or row id to tie-break
+        // with, so rows sharing the winning dtsFetched are culled by count:
+        // they are same-second race inserts of the same reset payload and
+        // carry nothing to choose between.
+        if ( version_compare( $currentVersion, '9.0.2.24', '<' ) ) { // NOSONAR - none IP.
+            $progress_table = esc_sql( $this->table_name( 'wp_backup_progress' ) );
+            $table_found    = $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $progress_table ) ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- table probe.
+            if ( ! empty( $table_found ) ) {
+                $this->wpdb->query( "DELETE stale FROM {$progress_table} stale INNER JOIN {$progress_table} fresh ON stale.task_id = fresh.task_id AND stale.wp_id = fresh.wp_id AND stale.dtsFetched < fresh.dtsFetched" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery -- one-time dedupe; table name escaped via esc_sql.
+                $tied = $this->wpdb->get_results( "SELECT task_id, wp_id, COUNT(*) AS row_count FROM {$progress_table} GROUP BY task_id, wp_id HAVING row_count > 1" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery -- one-time dedupe; table name escaped via esc_sql.
+                foreach ( $tied as $pair ) {
+                    $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- one-time dedupe.
+                        $this->wpdb->prepare(
+                            "DELETE FROM {$progress_table} WHERE task_id = %d AND wp_id = %d LIMIT %d", // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- table name escaped via esc_sql.
+                            $pair->task_id,
+                            $pair->wp_id,
+                            (int) $pair->row_count - 1
+                        )
+                    );
+                }
             }
         }
 

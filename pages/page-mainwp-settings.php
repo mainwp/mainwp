@@ -280,6 +280,8 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
     /**
      * Get the Settings navigation items.
      *
+     * @param string $context Navigation context.
+     *
      * @return array<int, array<string, mixed>> Settings navigation items.
      */
     public static function get_navigation_items( $context = 'default' ) {

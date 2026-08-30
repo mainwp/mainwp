@@ -461,4 +461,35 @@ class MainWP_Backup_Progress_Recording_Test extends \WP_UnitTestCase {
 		$this->assertSame( 'running', $response['status'] );
 		$this->assertSame( 'Working', $response['label'] );
 	}
+
+	/**
+	 * The executor reaches add_backup_task_progress() only after reading no
+	 * row for the site, so two drivers reading that same gap both insert.
+	 * The pair is unique, so the second insert adopts the row that landed
+	 * first instead of failing: one row survives, carrying the first
+	 * driver's content. A second row would split the run's state, and every
+	 * read path takes an arbitrary one of the two.
+	 *
+	 * @return void
+	 */
+	public function test_second_insert_for_same_task_and_site_adopts_the_existing_row() {
+		global $wpdb;
+
+		$table = MainWP_DB_Backup::instance()->get_table_name( 'wp_backup_progress' );
+
+		// set_up() landed the first row; mark it so the survivor is named.
+		MainWP_DB_Backup::instance()->update_backup_task_progress(
+			self::TASK_ID,
+			self::SITE_ID,
+			array( 'child_backup_task_id' => 'child-task-first' )
+		);
+
+		$adopted = MainWP_DB_Backup::instance()->add_backup_task_progress( self::TASK_ID, self::SITE_ID, array( 'racing' => true ) );
+
+		$count = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE task_id = %d AND wp_id = %d", self::TASK_ID, self::SITE_ID ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test probe, identifiers cannot be prepared.
+
+		$this->assertSame( 1, $count, 'A second insert for the same task and site must not create a second progress row.' );
+		$this->assertNotNull( $adopted, 'The losing insert must hand back the surviving row, not a failure.' );
+		$this->assertSame( 'child-task-first', $adopted->child_backup_task_id, 'The row that landed first must survive untouched.' );
+	}
 }

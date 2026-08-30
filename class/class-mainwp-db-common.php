@@ -65,13 +65,13 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         $sync_table = $this->table_name( 'wp_sync' );
 
         $sql = $this->wpdb->prepare(
-            "
+            '
 		SELECT
 			COUNT(*) AS total_sites,
 			SUM(CASE WHEN s.dtsSync >= %d THEN 1 ELSE 0 END) AS synced_sites,
 			MAX(s.dtsSync) AS last_sync
-		FROM {$site_table} w
-		INNER JOIN {$sync_table} s ON s.wpid = w.id
+		FROM ' . $site_table . ' w
+		INNER JOIN ' . $sync_table . " s ON s.wpid = w.id
 		WHERE s.sync_errors = ''
 		" . $this->get_sql_where_allow_access_sites( 'w', $is_staging ),
             $cutoff

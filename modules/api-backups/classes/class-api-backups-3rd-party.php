@@ -2085,7 +2085,6 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
             $website_id = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : 0; //phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.NonceVerification.Recommended
         }
 
-
         // Grab needed site options from WP_MAINWP_WP_OPTIONS table.
         $site_options = Api_Backups_Helper::get_website_options(
             $website_id,

@@ -140,7 +140,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 'show_in_palette'       => true,
                 'left_menu_parent'      => 'ServerInformation',
                 'palette_titles'        => array( esc_html__( 'System Info', 'mainwp' ), esc_html__( '.htaccess File', 'mainwp' ) ),
-                'condition'             => static function() {
+                'condition'             => static function () {
                     return MainWP_Server_Information_Handler::is_apache_server_software();
                 },
             ),
@@ -278,7 +278,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             }
 
             if ( ! empty( $menu_item['before_title'] ) ) {
-                $item['before_title'] = $menu_item['before_title'];
+                $item['before_title']      = $menu_item['before_title'];
                 $item['palette_titles'][1] = trim( wp_strip_all_tags( $menu_item['before_title'] ) . ' ' . $menu_item['title'] );
             }
 
@@ -290,6 +290,8 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
     /**
      * Get the Info navigation items.
+     *
+     * @param string $context Navigation context.
      *
      * @return array<int, array<string, mixed>> Info navigation items.
      */
@@ -418,7 +420,10 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 <div class="mainwp_boxout">
                     <div class="mainwp_boxoutin"></div>
                     <?php foreach ( static::get_navigation_items() as $item ) { ?>
-                        <?php if ( empty( $item['show_in_subpages_menu'] ) ) { continue; } ?>
+                        <?php
+                        if ( empty( $item['show_in_subpages_menu'] ) ) {
+                            continue; }
+                        ?>
                         <a href="<?php echo esc_url( static::get_navigation_item_url( $item['href'] ) ); ?>" class="mainwp-submenu"><?php echo esc_html( $item['title'] ); ?></a>
                     <?php } ?>
                 </div>

@@ -1276,7 +1276,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @return array<string, array<int, mixed>> Command palette configuration.
      */
     private function get_command_palette_data() {
-        $registered_pages    = $this->get_command_palette_registered_pages();
+        $registered_pages     = $this->get_command_palette_registered_pages();
         $registered_page_urls = array();
 
         foreach ( $registered_pages as $slug => $page_data ) {

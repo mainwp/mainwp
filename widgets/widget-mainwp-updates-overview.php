@@ -127,7 +127,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
         global $current_user;
 
         $current_wpid = (int) MainWP_System_Utility::get_current_wpid();
-        $is_staging = 'no';
+        $is_staging   = 'no';
 
         if ( $current_wpid ) {
             $sql        = MainWP_DB::instance()->get_sql_website_by_id( $current_wpid, false, array( 'wp_upgrades', 'ignored_wp_upgrades', 'ignored_trans_updates', 'premium_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon' ) );
@@ -461,8 +461,8 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
     /**
      * Method prepare_update_data().
      *
-     * @param string $update_type: Values all, core, plugin, theme, trans.
-     * @param int $current_wpid Current site id.
+     * @param string $update_type Values all, core, plugin, theme, trans.
+     * @param int    $current_wpid Current site id.
      */
     public static function prepare_update_data( $update_type, $current_wpid ) { // phpcs:ignore -- NOSONAR - long function.
 
@@ -772,7 +772,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     <div class="center aligned middle alidgned column">
                     <?php if ( ! get_option( 'mainwp_hide_update_everything', false ) ) : ?>
                         <?php if ( $can_total_update ) : ?>
-                            <a href="#" <?php echo empty( $total_upgrades ) ? 'disabled' : 'onClick="updatesoverview_global_upgrade_all( \'all\', ' .  intval( $current_wpid ) . ' ); return false;"'; ?> class="ui mini basic green fluid button" id="mainwp-update-everything-button"><?php echo esc_html( apply_filters( 'mainwp_update_everything_button_text', esc_html__( 'Update Everything', 'mainwp' ) ) ); ?></a>
+                            <a href="#" <?php echo empty( $total_upgrades ) ? 'disabled' : 'onClick="updatesoverview_global_upgrade_all( \'all\', ' . intval( $current_wpid ) . ' ); return false;"'; ?> class="ui mini basic green fluid button" id="mainwp-update-everything-button"><?php echo esc_html( apply_filters( 'mainwp_update_everything_button_text', esc_html__( 'Update Everything', 'mainwp' ) ) ); ?></a>
                         <?php endif; ?>
                     <?php endif; ?>
                     </div>

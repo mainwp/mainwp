@@ -2094,6 +2094,13 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $last_error = null;
 
         for ( $attempt = 1; $attempt <= $max_retries; $attempt++ ) {
+            if ( 1 < $attempt && MainWP_Backup_Monitor::native_lease_lost() ) {
+                // The slot went to another process while an earlier attempt
+                // was in flight. Spending the remaining attempts would make
+                // them all outside it, so stop and let the exhausted path
+                // report the failure the caller already handles.
+                break;
+            }
             try {
                 return static::fetch_url_authed( $website, $what, $params );
             } catch ( \Exception $e ) {

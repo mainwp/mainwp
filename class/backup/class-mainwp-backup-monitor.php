@@ -879,13 +879,23 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * to the floor so it ends quickly. Stopping the run is the holder's
      * decision, not a throw through every catch between here and it.
      *
-     * @param mixed $timeout_in Timeout the transport offered. Non-numeric and non-positive both mean no bound at all, which is libcurl's unlimited deadline.
+     * @param mixed $timeout_in Timeout the transport offered. Non-numeric, non-finite and non-positive all mean no bound at all, which is libcurl's unlimited deadline.
      * @param int   $cap        Native bound for this kind of request.
      *
      * @return int Seconds the request may take.
      */
     private static function resolve_native_bound( mixed $timeout_in, int $cap ): int {
-        $bound   = is_numeric( $timeout_in ) && $timeout_in > 0 ? min( (int) $timeout_in, $cap ) : $cap;
+        // Compared and rounded as a float before the cast: (int) truncates,
+        // so a sub-second offer would become 0 - the unlimited deadline this
+        // is here to prevent - and INF or a value past PHP_INT_MAX would cast
+        // to a number that is not a timeout at all.
+        $n = is_numeric( $timeout_in ) ? (float) $timeout_in : 0.0;
+        if ( ! is_finite( $n ) || $n <= 0 ) {
+            $bound = $cap;
+        } else {
+            $bound = (int) min( max( 1.0, ceil( $n ) ), $cap );
+        }
+
         $covered = self::touch_for_request( $bound + self::SLOT_LEASE_MARGIN_SECONDS );
 
         if ( PHP_INT_MAX === $covered ) {
@@ -1024,14 +1034,23 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             && is_numeric( $data['heartbeat'] )
             && is_numeric( $data['lease'] )
         ) {
+            $beat = (int) $data['heartbeat'];
+
+            // A heartbeat further ahead of this reader than the margin the
+            // lease already allows for was written by a clock this reader
+            // cannot trust, or by hand: nothing can vouch for it, so the row
+            // is reclaimable now rather than once the skew has elapsed.
+            // Clamping it to $now instead would slide the expiry forward on
+            // every read and still hold the slot for heartbeat + lease.
+            if ( $beat > $now + self::SLOT_LEASE_MARGIN_SECONDS ) {
+                return false;
+            }
+
             // The stored lease follows whatever timeout a filter user set,
             // so cap it at the age rule the other lanes keep: a raised
             // transport timeout must not buy a dead holder more than two
-            // hours of refusals. The heartbeat itself is clamped to $now
-            // too, so a heartbeat ahead of this reader's clock (a backwards
-            // clock step, a hand-edited row) can't buy coverage past the
-            // lease, or the row would hold the slot forever.
-            $beat = min( (int) $data['heartbeat'], $now );
+            // hours of refusals. Inside the margin the heartbeat is taken as
+            // written, which is at most a minute of extra coverage.
             return $now < $beat + min( (int) $data['lease'], 2 * HOUR_IN_SECONDS );
         }
 

@@ -17,6 +17,7 @@ namespace MainWP\Dashboard\Tests;
 use MainWP\Dashboard\MainWP_Backup_Error_Codes;
 use MainWP\Dashboard\MainWP_Backup_File_Manager;
 use MainWP\Dashboard\MainWP_Backup_Monitor;
+use MainWP\Dashboard\MainWP_Backup_Snapshots;
 use MainWP\Dashboard\MainWP_Connect;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_DB_Backup;
@@ -326,10 +327,17 @@ class MainWP_Backup_Slot_Lease_Test extends MainWP_Abilities_Test_Case {
 
 		$in_scope = array(
 			'the transport backstop is clamped to the native bound' => array( 20 * HOUR_IN_SECONDS, $cap ),
-			'a shorter bound already in force wins'                 => array( 120, 120 ),
-			'zero is libcurl\'s no-timeout, so it takes the bound'   => array( 0, $cap ),
-			'a negative timeout is no timeout either'               => array( -1, $cap ),
-			'a non-numeric timeout is no timeout either'            => array( 'none', $cap ),
+			'a shorter bound already in force wins'      => array( 120, 120 ),
+			'zero is libcurl\'s no-timeout, so it takes the bound' => array( 0, $cap ),
+			'a negative timeout is no timeout either'    => array( -1, $cap ),
+			'a non-numeric timeout is no timeout either' => array( 'none', $cap ),
+			'half a second still buys a whole second'    => array( '0.5', 1 ),
+			'a fraction rounds up rather than down'      => array( '1.5', 2 ),
+			'so does a fraction under the cap'           => array( '30.5', 31 ),
+			'an infinite timeout is no timeout at all'   => array( INF, $cap ),
+			'neither is one past what a float can count' => array( PHP_FLOAT_MAX, $cap ),
+			'nor one written in exponent form'           => array( '1e100', $cap ),
+			'nor the largest integer there is'           => array( PHP_INT_MAX, $cap ),
 		);
 		foreach ( $in_scope as $label => $case ) {
 			$this->assertSame( $case[1], apply_filters( 'mainwp_fetch_url_site_timeout', $case[0], null ), $label );
@@ -548,7 +556,7 @@ class MainWP_Backup_Slot_Lease_Test extends MainWP_Abilities_Test_Case {
 				'url'    => 'http://127.0.0.1:9/',
 			)
 		);
-		$task = MainWP_DB_Backup::instance()->add_backup_task( $user, 'Slot lease site loop task', 'manual', 'full', '', (string) $site_id, '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0 );
+		$task    = MainWP_DB_Backup::instance()->add_backup_task( $user, 'Slot lease site loop task', 'manual', 'full', '', (string) $site_id, '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0 );
 		$this->assertNotFalse( $task, 'Precondition: the task row must insert.' );
 
 		// Age the heartbeat the claim wrote, so a heartbeat back at "now"
@@ -743,6 +751,107 @@ class MainWP_Backup_Slot_Lease_Test extends MainWP_Abilities_Test_Case {
 		$this->assertFalse( MainWP_Backup_Monitor::native_lease_lost(), 'Closing the scope clears the flag for the next run in this process.' );
 		$this->assertFalse( has_filter( 'mainwp_fetch_url_site_timeout' ), 'The scope closes with the run.' );
 		$this->assertFalse( has_filter( 'mainwp_download_to_file_timeouts' ), 'The scope closes with the run.' );
+	}
+
+	/**
+	 * A child answer that arrives intact is no proof the holder still owns
+	 * the slot: the loss can land while the answer is in flight, which is
+	 * where the transport resolves its timeout seam. The site is stopped at
+	 * that answer, so none of what it would have produced - a snapshot row,
+	 * a completed mark - is written, and the run says why it stopped.
+	 *
+	 * @return void
+	 */
+	public function test_a_slot_lost_inside_a_successful_request_records_no_snapshot() {
+		update_option( 'mainwp_enableNativeBackups', 1 );
+
+		$user = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $user );
+		$site_id = $this->create_test_site(
+			array(
+				'userid' => $user,
+				'url'    => 'http://127.0.0.1:9/',
+			)
+		);
+		$task    = MainWP_DB_Backup::instance()->add_backup_task( $user, 'Slot lost mid-request task', 'manual', 'full', '', (string) $site_id, '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0 );
+		$this->assertNotFalse( $task, 'Precondition: the task row must insert.' );
+
+		// A child task already created and not yet consumed, so the one
+		// round trip this run makes is the slice call answered below.
+		MainWP_DB_Backup::instance()->add_backup_task_progress( (int) $task->id, $site_id, array() );
+		MainWP_DB_Backup::instance()->update_backup_task_progress(
+			(int) $task->id,
+			$site_id,
+			array(
+				'dtsFetched'           => time(),
+				'child_backup_task_id' => 'child-task-slot-lost',
+				'fetchResult'          => '',
+			)
+		);
+
+		$answered = false;
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			function ( $result, $website, $what ) use ( &$answered ) {
+				unset( $website );
+				if ( 'backup_task_run' !== $what ) {
+					return $result;
+				}
+				// The slot goes to another process while this answer is in
+				// flight, so the holder meets the loss at the transport's
+				// own timeout seam rather than after the fact.
+				$this->steal_slot_row();
+				apply_filters( 'mainwp_fetch_url_site_timeout', 20 * HOUR_IN_SECONDS, null );
+				$answered = true;
+
+				return array(
+					'phase' => 'completed',
+					'file'  => 'full-slot-lost.zip',
+					'size'  => 4096,
+				);
+			},
+			10,
+			3
+		);
+
+		$lost = 0;
+		add_action(
+			'mainwp_backup_diag_slot',
+			function ( $event ) use ( &$lost ) {
+				if ( 'lost' === $event ) {
+					++$lost;
+				}
+			},
+			10,
+			4
+		);
+
+		$result = MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, false );
+
+		$this->assertTrue( $answered, 'Precondition: the run must reach the child round trip.' );
+		$this->assertFalse( $result, 'A run that lost its slot has not completed.' );
+		$this->assertSame( 1, $lost, 'The loss is traced once.' );
+		$this->assertNull(
+			MainWP_Backup_Snapshots::instance()->get_latest_complete( (int) $site_id, (int) $task->id ),
+			'An answer received outside the slot must record no snapshot.'
+		);
+
+		// The stop is at the answer, not further down: an unclaimed
+		// fetchResult and an unspent attempt are what say the completion was
+		// never consumed and no download was tried under the lost slot.
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+		$this->assertEmpty( $progress->fetchResult, 'A completion answered outside the slot must not be claimed.' );
+		$this->assertSame( 'child-task-slot-lost', (string) $progress->child_backup_task_id, 'The slice is left for the next cycle to run again.' );
+		$this->assertSame( 0, (int) $progress->attempts, 'Stopping at the answer spends no retry attempt.' );
+
+		$row = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$this->assertNotEmpty( $row, 'Precondition: the task row must still be there.' );
+		$this->assertEmpty( json_decode( (string) $row->completed_sites, true ), 'The site must not be retired on the strength of that answer.' );
+		$this->assertStringContainsString(
+			MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_SLOT_LOST ),
+			(string) $row->backup_errors,
+			'The reason the run stopped reaches the task row.'
+		);
 	}
 
 	/**

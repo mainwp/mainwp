@@ -309,36 +309,80 @@ class MainWP_Backup_Concurrency_Test extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * A heartbeat stamped ahead of this reader's clock must not buy the row
-	 * coverage past its own lease: without the clamp the row would stay
-	 * live until the future heartbeat plus its lease.
+	 * Drive the seeded slot through a native acquisition against a limit of
+	 * one: a live row holds the only slot and refuses, a dead one is
+	 * reclaimed and replaced by the new holder's row.
+	 *
+	 * @param bool   $live  Whether the seeded row must count as live.
+	 * @param string $label Case name, so a failure names the row that broke.
 	 *
 	 * @return void
 	 */
-	public function test_a_future_heartbeat_grants_no_coverage_beyond_its_lease() {
-		$now = time();
-		$this->seed_slot_row( 1, 'time-traveler', $now - 60, 'native', $now + 7200, 0 );
-
+	private function assert_slot_liveness( bool $live, string $label ) {
 		$token = MainWP_Backup_Monitor::acquire_backup_slot( 1, 'native' );
 
-		$this->assertIsString( $token, 'A zero-lease row must not be shielded by a future heartbeat.' );
-		$tokens = array_column( $this->slot_rows(), 'token' );
-		$this->assertNotContains( 'time-traveler', $tokens, 'The reclaimed row must be gone.' );
+		if ( $live ) {
+			$this->assertFalse( $token, $label . ': a live row holds the only slot.' );
+			return;
+		}
+
+		$this->assertIsString( $token, $label . ': a dead row must not block the only slot.' );
+		$this->assertSame( array( $token ), array_column( $this->slot_rows(), 'token' ), $label . ': the dead row must be reclaimed and replaced.' );
 	}
 
 	/**
-	 * A native holder still heartbeating keeps its slot past two hours: a
-	 * fleet walk that legitimately runs longer than the old age rule is no
-	 * longer reclaimed out from under itself.
+	 * The whole liveness rule in one table. A row is live only while
+	 * something can still vouch for it: a lease a native holder keeps
+	 * refreshing, or - for every other shape - the two-hour age rule. A
+	 * heartbeat further ahead of the reader than the lease margin allows
+	 * for vouches for nothing, so it is reclaimable immediately rather than
+	 * once the skew has elapsed.
 	 *
 	 * @return void
 	 */
-	public function test_live_native_lease_survives_the_two_hour_age_rule() {
+	public function test_slot_liveness_follows_one_rule() {
 		$now = time();
-		$this->seed_slot_row( 1, 'long-runner', $now - 3 * HOUR_IN_SECONDS, 'native', $now - 60, 600 );
 
-		$this->assertFalse( MainWP_Backup_Monitor::acquire_backup_slot( 1, 'native' ), 'A heartbeating holder still owns the only slot.' );
-		$this->assertSame( array( 'long-runner' ), array_column( $this->slot_rows(), 'token' ), 'The live holder\'s row must be untouched.' );
+		// lane, heartbeat, lease, started, live.
+		$shaped = array(
+			'old format, fresh'                      => array( null, null, null, $now - 60, true ),
+			'old format, past two hours'             => array( null, null, null, $now - 3 * HOUR_IN_SECONDS, false ),
+			'legacy, fresh'                          => array( 'legacy', null, null, $now - 60, true ),
+			'native, lease running'                  => array( 'native', $now - 10, 600, $now - 60, true ),
+			'native, lease run out'                  => array( 'native', $now - 900, 600, $now - 60, false ),
+			'native, lease running past two hours'   => array( 'native', $now - 60, 600, $now - 3 * HOUR_IN_SECONDS, true ),
+			'native, heartbeat inside the tolerance' => array( 'native', $now + 30, 600, $now - 60, true ),
+			'native, heartbeat past the tolerance'   => array( 'native', $now + 3600, 600, $now - 60, false ),
+			'native, far-future heartbeat, no lease' => array( 'native', $now + 7200, 0, $now - 60, false ),
+			'native, lease past the two-hour cap'    => array( 'native', $now - 3 * HOUR_IN_SECONDS, 999999999, $now - 3 * HOUR_IN_SECONDS, false ),
+			'native, no lease field, fresh'          => array( 'native', $now - 60, null, $now - 60, true ),
+			'native, no lease field, past two hours' => array( 'native', $now - 60, null, $now - 3 * HOUR_IN_SECONDS, false ),
+		);
+
+		foreach ( $shaped as $label => $case ) {
+			$this->purge_slot_rows();
+			$this->seed_slot_row( 1, 'seeded-holder', $case[3], $case[0], $case[1], $case[2] );
+			$this->assert_slot_liveness( $case[4], $label );
+		}
+
+		$raw = array(
+			'no token to release by' => array(
+				(string) wp_json_encode(
+					array(
+						'started' => $now - 60,
+						'pid'     => 1,
+					)
+				),
+				false,
+			),
+			'unreadable value'       => array( '{"token":"truncat', false ),
+		);
+
+		foreach ( $raw as $label => $case ) {
+			$this->purge_slot_rows();
+			$this->seed_raw_slot_row( 1, $case[0] );
+			$this->assert_slot_liveness( $case[1], $label );
+		}
 	}
 
 	/**
@@ -368,10 +412,26 @@ class MainWP_Backup_Concurrency_Test extends \WP_UnitTestCase {
 		$now = time();
 
 		$cases = array(
-			'truncated JSON'      => array( '{"token":"truncat', '' ),
-			'no started stamp'    => array( (string) wp_json_encode( array( 'token' => 'no-started', 'pid' => 1 ) ), 'no-started' ),
-			'aged, no token'      => array( (string) wp_json_encode( array( 'started' => $now - 3 * HOUR_IN_SECONDS, 'pid' => 1 ) ), '' ),
-			'live lease, no token' => array(
+			'truncated JSON'          => array( '{"token":"truncat', '' ),
+			'no started stamp'        => array(
+				(string) wp_json_encode(
+					array(
+						'token' => 'no-started',
+						'pid'   => 1,
+					)
+				),
+				'no-started',
+			),
+			'aged, no token'          => array(
+				(string) wp_json_encode(
+					array(
+						'started' => $now - 3 * HOUR_IN_SECONDS,
+						'pid'     => 1,
+					)
+				),
+				'',
+			),
+			'live lease, no token'    => array(
 				(string) wp_json_encode(
 					array(
 						'started'   => $now - 60,
@@ -410,33 +470,6 @@ class MainWP_Backup_Concurrency_Test extends \WP_UnitTestCase {
 			$reclaimed = $this->slot_events_named( 'reclaimed_stale' );
 			$this->assertCount( 1, $reclaimed, $label . ': the reclaim must be recorded.' );
 			$this->assertSame( $case[1], $reclaimed[0]['token'], $label . ': the reclaim names the token the row carried.' );
-		}
-	}
-
-	/**
-	 * Compatibility pin, green before and after the lease: rows that carry
-	 * no usable lease - a legacy holder, a row written before the lane
-	 * existed, a native row missing its lease length - all keep the
-	 * two-hour age rule.
-	 *
-	 * @return void
-	 */
-	public function test_rows_without_a_usable_lease_keep_the_age_rule() {
-		$now = time();
-
-		foreach ( array(
-			'legacy'        => array( 'legacy', null, null ),
-			'old format'    => array( null, null, null ),
-			'no lease field' => array( 'native', $now - 60, null ),
-		) as $label => $shape ) {
-			$this->seed_slot_row( 1, 'fresh-holder', $now - 60, $shape[0], $shape[1], $shape[2] );
-			$this->assertFalse( MainWP_Backup_Monitor::acquire_backup_slot( 1, 'native' ), $label . ': a fresh row is live.' );
-
-			$this->purge_slot_rows();
-			$this->seed_slot_row( 1, 'aged-holder', $now - 3 * HOUR_IN_SECONDS, $shape[0], $shape[1], $shape[2] );
-			$this->assertIsString( MainWP_Backup_Monitor::acquire_backup_slot( 1, 'native' ), $label . ': a row past two hours is reclaimed.' );
-
-			$this->purge_slot_rows();
 		}
 	}
 }

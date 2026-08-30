@@ -213,6 +213,14 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
                 // is not yet servable, and announcing that as a download
                 // poisons the resume state with a vacuous success.
                 static::assert_download_landed( $local_file );
+                if ( MainWP_Backup_Monitor::native_lease_lost() ) {
+                    // The token path's hash makes this same call: the slot
+                    // may already be re-owned by a process writing this same
+                    // path, so bytes that landed outside the slot cannot be
+                    // announced as a download.
+                    wp_delete_file( $local_file );
+                    throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_SLOT_LOST ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+                }
                 static::fire_downloaded_action( $website, $local_file, false );
                 return;
             } catch ( MainWP_Exception $e ) {

@@ -417,6 +417,17 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 throw $e;
             }
 
+            if ( MainWP_Backup_Monitor::native_lease_lost() ) {
+                // The slot went to another process while this round trip was
+                // in flight, so this answer was produced outside a slot this
+                // driver owns and writing it to the shared row could clobber
+                // the driver that does own it. Hand the create window back
+                // the way a yielded refusal does and leave the site for the
+                // next cycle; nothing here is terminal.
+                static::reset_create_window_if_mine( $taskId, (int) $website->id, $creating_marker );
+                return false;
+            }
+
             // A task-spine child refuses a duplicate start with a coded error;
             // classify only that stable code so wording cannot change behavior.
             $refused_already_running = isset( $information['error'] ) && (
@@ -541,6 +552,10 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         'task_id' => (int) $taskId,
                     )
                 );
+            }
+
+            if ( MainWP_Backup_Monitor::native_lease_lost() ) {
+                return false; // Same stop as a slice that is still working: the row is untouched and the next cycle runs it again.
             }
 
             if ( ! empty( $temp ) && 'incremental' === $type
@@ -932,6 +947,10 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         MainWP_Backup_File_Manager::release_download_lock( $localBackupFile );
                     }
                 }
+            }
+
+            if ( MainWP_Backup_Monitor::native_lease_lost() ) {
+                return false; // A snapshot is what retires the site, so it may not be written under a slot this driver no longer owns.
             }
 
             static::record_run_snapshot_locked( $website, $pTask, $backupTaskProgress, $localBackupFile );
@@ -1405,7 +1424,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      *
      * @throws MainWP_Exception When an artifact cannot be downloaded or fails validation.
      *
-     * @return array Backup result with the snapshot id.
+     * @return array|false Backup result with the snapshot id, false when the run stopped without recording one.
      */
     // phpcs:ignore Squiz.Commenting.FunctionCommentThrowTag.Missing -- registry factory throws are MainWP_Exception, documented above.
     protected static function finish_incremental_backup( $website, $pTask, $artifacts, $progress ) { // phpcs:ignore -- NOSONAR - download loop with per-role validation.
@@ -1469,6 +1488,10 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 'role' => $role,
                 'path' => $local,
             );
+        }
+
+        if ( MainWP_Backup_Monitor::native_lease_lost() ) {
+            return false; // A snapshot is what retires the site, so it may not be written under a slot this driver no longer owns.
         }
 
         $snapshots = MainWP_Backup_Snapshots::instance();

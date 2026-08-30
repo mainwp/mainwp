@@ -309,6 +309,24 @@ class MainWP_Backup_Concurrency_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * A heartbeat stamped ahead of this reader's clock must not buy the row
+	 * coverage past its own lease: without the clamp the row would stay
+	 * live until the future heartbeat plus its lease.
+	 *
+	 * @return void
+	 */
+	public function test_a_future_heartbeat_grants_no_coverage_beyond_its_lease() {
+		$now = time();
+		$this->seed_slot_row( 1, 'time-traveler', $now - 60, 'native', $now + 7200, 0 );
+
+		$token = MainWP_Backup_Monitor::acquire_backup_slot( 1, 'native' );
+
+		$this->assertIsString( $token, 'A zero-lease row must not be shielded by a future heartbeat.' );
+		$tokens = array_column( $this->slot_rows(), 'token' );
+		$this->assertNotContains( 'time-traveler', $tokens, 'The reclaimed row must be gone.' );
+	}
+
+	/**
 	 * A native holder still heartbeating keeps its slot past two hours: a
 	 * fleet walk that legitimately runs longer than the old age rule is no
 	 * longer reclaimed out from under itself.

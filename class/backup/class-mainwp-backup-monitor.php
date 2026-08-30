@@ -929,8 +929,12 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             // The stored lease follows whatever timeout a filter user set,
             // so cap it at the age rule the other lanes keep: a raised
             // transport timeout must not buy a dead holder more than two
-            // hours of refusals.
-            return $now < (int) $data['heartbeat'] + min( (int) $data['lease'], 2 * HOUR_IN_SECONDS );
+            // hours of refusals. The heartbeat itself is clamped to $now
+            // too, so a heartbeat ahead of this reader's clock (a backwards
+            // clock step, a hand-edited row) can't buy coverage past the
+            // lease, or the row would hold the slot forever.
+            $beat = min( (int) $data['heartbeat'], $now );
+            return $now < $beat + min( (int) $data['lease'], 2 * HOUR_IN_SECONDS );
         }
 
         // Legacy, pre-lease, or a native row missing either lease field.

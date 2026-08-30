@@ -171,6 +171,10 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 			$wpdb->query( "ALTER TABLE {$table} ADD UNIQUE KEY uniq_task_wp (task_id, wp_id)" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
 		}
 
+		// install() implicitly commits past the transaction rollback, so a
+		// repair marker a test set must be cleared by hand.
+		delete_site_option( MainWP_Install::BACKUP_PROGRESS_UNIQ_KEY_REPAIR_PENDING );
+
 		if ( false === $this->saved_db_version ) {
 			delete_site_option( 'mainwp_db_version' );
 		} else {
@@ -988,11 +992,11 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 	 * (task_id, wp_id) was not unique before db 9.0.2.24, so the executor's
 	 * read-then-insert could leave a site with several progress rows and
 	 * every read path took an arbitrary one. The upgrade must collapse an
-	 * existing install's duplicates to the freshest row of each pair -
-	 * older rows carry a stale phase, artifact paths and child task id -
-	 * leave a second site's row alone, and only then add the unique key,
-	 * which ADD UNIQUE would otherwise refuse. Re-running install() stays
-	 * idempotent.
+	 * existing install's duplicates to one row per pair - a row naming the
+	 * child's backup task first, then the freshest dtsFetched, then a
+	 * count-based cull for what is left - leave a second site's row alone,
+	 * and only then add the unique key, which ADD UNIQUE would otherwise
+	 * refuse. Re-running install() stays idempotent.
 	 *
 	 * @return void
 	 */
@@ -1048,16 +1052,40 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 			);
 		}
 
+		// A fourth site holds the shape freshest-wins gets wrong: the
+		// executor stamps child_backup_task_id without advancing dtsFetched,
+		// so a dead driver's later reset row outranks the only row that can
+		// still poll or cancel the child's queued run.
+		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
+			$table,
+			array(
+				'task_id'              => self::DEDUPE_TASK_ID,
+				'wp_id'                => 888804,
+				'dtsFetched'           => 1400,
+				'child_backup_task_id' => 'child-task-still-running',
+			)
+		);
+		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
+			$table,
+			array(
+				'task_id'              => self::DEDUPE_TASK_ID,
+				'wp_id'                => 888804,
+				'dtsFetched'           => 1900,
+				'child_backup_task_id' => '',
+			)
+		);
+
 		update_site_option( 'mainwp_db_version', '9.0.2.23' );
 
 		MainWP_Install::instance()->install();
 
 		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT wp_id, child_backup_task_id FROM {$table} WHERE task_id = %d ORDER BY wp_id", self::DEDUPE_TASK_ID ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test probe, identifiers cannot be prepared.
 
-		$this->assertCount( 3, $rows, 'The upgrade must leave one row per site: the duplicates collapse, the single-row site keeps its own.' );
-		$this->assertSame( 'freshest-row', $rows[0]->child_backup_task_id, 'The surviving row must be the freshest by dtsFetched; an older row replays a stale child task id.' );
+		$this->assertCount( 4, $rows, 'The upgrade must leave one row per site: the duplicates collapse, the single-row site keeps its own.' );
+		$this->assertSame( 'freshest-row', $rows[0]->child_backup_task_id, 'Among rows that all name a child task, the freshest by dtsFetched must survive; an older row replays a stale child task id.' );
 		$this->assertSame( 'other-site-row', $rows[1]->child_backup_task_id, 'A site with a single row must be left alone.' );
 		$this->assertContains( $rows[2]->child_backup_task_id, array( 'tied-row-a', 'tied-row-b' ), 'A tie on dtsFetched must still collapse to one of the tied rows.' );
+		$this->assertSame( 'child-task-still-running', $rows[3]->child_backup_task_id, 'A row naming the child task must outlive a later row that names none; the child task id is the only handle left on a run already queued on the child.' );
 
 		$this->assertTrue( $this->index_exists( $table, 'uniq_task_wp' ), 'The upgrade must add the (task_id, wp_id) unique key once the duplicates are gone.' );
 		$this->assertSame( array( 'task_id', 'wp_id' ), $this->index_columns( $table, 'uniq_task_wp' ), 'The unique key must cover the pair, in that order.' );
@@ -1067,6 +1095,124 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		update_site_option( 'mainwp_db_version', '9.0.2.23' );
 		MainWP_Install::instance()->install();
 		$this->assertTrue( $this->index_exists( $table, 'uniq_task_wp' ), 'Re-running install must remain idempotent.' );
+	}
+
+	/**
+	 * The unique key is the whole point of the 9.0.2.24 bump, so an upgrade
+	 * that installed it must leave no repair marker behind - a marker would
+	 * make every later request pay the hourly retry for nothing.
+	 *
+	 * @return void
+	 */
+	public function test_successful_upgrade_leaves_no_uniq_key_repair_marker() {
+		global $wpdb;
+
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_progress' );
+
+		$wpdb->query( "ALTER TABLE {$table} DROP INDEX uniq_task_wp" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture, identifiers cannot be prepared.
+		update_site_option( MainWP_Install::BACKUP_PROGRESS_UNIQ_KEY_REPAIR_PENDING, time() );
+
+		update_site_option( 'mainwp_db_version', '9.0.2.23' );
+		MainWP_Install::instance()->install();
+
+		$this->assertTrue( $this->index_exists( $table, 'uniq_task_wp' ), 'The upgrade must add the unique key.' );
+		$this->assertFalse(
+			get_site_option( MainWP_Install::BACKUP_PROGRESS_UNIQ_KEY_REPAIR_PENDING ),
+			'An upgrade that installed the key must clear the repair marker.'
+		);
+	}
+
+	/**
+	 * dbDelta and the migration ALTER both run error-suppressed, and
+	 * install() early-returns once the stored version matches the shipped
+	 * one, so a key install that silently failed would never be retried and
+	 * add_backup_task_progress() would quietly fall back to plain inserts.
+	 * A stale repair marker must make the next install() call reinstall the
+	 * key, collapsing any duplicates that landed while it was gone - ADD
+	 * UNIQUE refuses otherwise, and the retry would be stuck forever.
+	 *
+	 * @return void
+	 */
+	public function test_stale_repair_marker_reinstalls_the_uniq_key_and_dedupes_first() {
+		global $wpdb;
+
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_progress' );
+
+		// Bring the stored version up to the shipped one so install() takes
+		// the early-return path the retry hangs off.
+		update_site_option( 'mainwp_db_version', '9.0.2.23' );
+		MainWP_Install::instance()->install();
+
+		// Simulate the ALTER having failed: no key, a marker older than the
+		// throttle, and a duplicate pair inserted while the key was absent.
+		$wpdb->query( "ALTER TABLE {$table} DROP INDEX uniq_task_wp" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture, identifiers cannot be prepared.
+		$wpdb->query( 'DELETE FROM ' . $table . ' WHERE task_id = ' . self::DEDUPE_TASK_ID ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture cleanup, identifiers cannot be prepared.
+		$racing_rows = array(
+			1000 => 'child-task-live',
+			2000 => '',
+		);
+		foreach ( $racing_rows as $fetched => $marker ) {
+			$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
+				$table,
+				array(
+					'task_id'              => self::DEDUPE_TASK_ID,
+					'wp_id'                => 888811,
+					'dtsFetched'           => $fetched,
+					'child_backup_task_id' => $marker,
+				)
+			);
+		}
+		update_site_option( MainWP_Install::BACKUP_PROGRESS_UNIQ_KEY_REPAIR_PENDING, time() - HOUR_IN_SECONDS - 1 );
+
+		MainWP_Install::instance()->install();
+
+		$this->assertTrue( $this->index_exists( $table, 'uniq_task_wp' ), 'A stale repair marker must make install() reinstall the unique key.' );
+		$this->assertSame( array( 'task_id', 'wp_id' ), $this->index_columns( $table, 'uniq_task_wp' ), 'The reinstalled key must cover the pair, in that order.' );
+		$this->assertFalse(
+			get_site_option( MainWP_Install::BACKUP_PROGRESS_UNIQ_KEY_REPAIR_PENDING ),
+			'A retry that installed the key must clear the repair marker.'
+		);
+
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT child_backup_task_id FROM {$table} WHERE task_id = %d", self::DEDUPE_TASK_ID ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test probe, identifiers cannot be prepared.
+		$this->assertCount( 1, $rows, 'The retry must collapse duplicates that landed while the key was missing; ADD UNIQUE refuses otherwise.' );
+		$this->assertSame( 'child-task-live', $rows[0]->child_backup_task_id, 'The retry must apply the same survivor rule as the migration.' );
+
+		$wpdb->query( 'DELETE FROM ' . $table . ' WHERE task_id = ' . self::DEDUPE_TASK_ID ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture cleanup, identifiers cannot be prepared.
+	}
+
+	/**
+	 * An install whose DB user cannot ALTER would pay two SHOW INDEX and a
+	 * failing ALTER on every request, so a repair marker younger than an
+	 * hour must make the retry a no-op.
+	 *
+	 * @return void
+	 */
+	public function test_fresh_repair_marker_throttles_the_uniq_key_retry() {
+		global $wpdb;
+
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_progress' );
+
+		update_site_option( 'mainwp_db_version', '9.0.2.23' );
+		MainWP_Install::instance()->install();
+
+		$wpdb->query( "ALTER TABLE {$table} DROP INDEX uniq_task_wp" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture, identifiers cannot be prepared.
+		$marked = time() - 60;
+		update_site_option( MainWP_Install::BACKUP_PROGRESS_UNIQ_KEY_REPAIR_PENDING, $marked );
+
+		MainWP_Install::instance()->install();
+
+		$this->assertFalse( $this->index_exists( $table, 'uniq_task_wp' ), 'A marker younger than an hour must not trigger a retry.' );
+		$this->assertSame(
+			$marked,
+			(int) get_site_option( MainWP_Install::BACKUP_PROGRESS_UNIQ_KEY_REPAIR_PENDING ),
+			'A throttled retry must leave the marker timestamp untouched.'
+		);
+
+		// tear_down restores the key, but assert the throttle is a throttle
+		// and not a permanent give-up before handing it back.
+		update_site_option( MainWP_Install::BACKUP_PROGRESS_UNIQ_KEY_REPAIR_PENDING, time() - HOUR_IN_SECONDS - 1 );
+		MainWP_Install::instance()->install();
+		$this->assertTrue( $this->index_exists( $table, 'uniq_task_wp' ), 'Once the marker ages past the hour, the retry must run.' );
 	}
 
 	/**

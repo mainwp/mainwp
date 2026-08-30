@@ -27,11 +27,20 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     // phpcs:disable WordPress.DB.RestrictedFunctions, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- unprepared SQL ok, table and column identifiers cannot be prepared and are escaped via esc_sql.
 
     /**
+     * Network-scoped option holding the time() of the last failed attempt to
+     * install the wp_backup_progress (task_id, wp_id) unique key. Absent once
+     * the key is there.
+     *
+     * @var string Option name.
+     */
+    const BACKUP_PROGRESS_UNIQ_KEY_REPAIR_PENDING = 'mainwp_backup_progress_uniq_key_repair_pending';
+
+    /**
      * Private variable to hold the database version info.
      *
      * @var string DB version info.
      */
-    protected $mainwp_db_version = '9.0.2.24'; // NOSONAR - no IP. Added the UNIQUE KEY uniq_task_wp (task_id, wp_id) to wp_backup_progress: the pair was never unique, so the executor's read-then-insert could land two progress rows for one site when drivers raced, and every guard that reads the row by pair then read an arbitrary one of them - pre_update_tables() collapses existing duplicates to the freshest row per pair before the key is added, and add_backup_task_progress() inserts ON DUPLICATE KEY UPDATE so a losing racer adopts the surviving row instead of failing. Previous 9.0.2.23 added wp_backup_progress.foreign_refused_since to stamp the first consecutive marker-less child already-running refusal on a manual run's progress row; the executor surfaces a foreign collision to the operator only after the refusal persists past FOREIGN_REFUSAL_SURFACE_SECONDS (a same-run create-window reset race re-marks within milliseconds and never accumulates), instead of always yielding it as the generic no-snapshot line. Previous 9.0.2.22 made wp_backup.authorized_sites nullable: NULL is now the never-stamped sentinel (a pre-authorized_sites row, backfilled from live expansion on its first run), while a stamped empty string is authoritative and means the save authorized zero sites - so an empty-saved group can no longer be mistaken for a legacy row and lazily auto-authorize a member added later. Previous 9.0.2.21 added wp_backup.authorized_sites, the site set that passed authorize_task_scope() at save time; the scheduled runner backs up only that set (cron has no user context to authorize a group's later additions against). Previous 9.0.2.20 bump made pre_update_tables() drop the legacy unnamed UNIQUE (task_id) key from wp_backup_progress - a leftover of the <= 8.53 CREATE clause that capped the table at one per-site progress row per task, so the second add_backup_task_progress() insert on a multi-site run died on a duplicate key. Previous 9.0.2.19 bump added reclaim_count to wp_backup_upload_job and wp_backup_restore_job, the stale-lease-reclaim counter that lets acquire_next_job() route a job whose worker keeps dying mid-run to fail_permanent instead of reclaiming it forever. Previous 9.0.2.18 bump added wp_backup_snapshot.woo_meta, the Woo order-storage facts a database-bearing backup captured at dump time, read by the restore initiate handler's preserve-orders gate; 9.0.2.17 bump added wp_backup.backup_notices, the informational-notes channel that keeps run notes (like the large-site ZIP auto-switch) out of backup_errors; 9.0.2.16 added wp_backup.zip_force_override for the large-site ZIP auto-switch override; 9.0.2.15 added wp_backup_snapshot.test_restore_state/test_restore_at for the verified-restore (sandbox test-restore) result; 9.0.2.14 added wp_backup_snapshot.encryption for the per-snapshot archive-encryption metadata.
+    protected $mainwp_db_version = '9.0.2.24'; // NOSONAR - no IP. Added the UNIQUE KEY uniq_task_wp (task_id, wp_id) to wp_backup_progress: the pair was never unique, so the executor's read-then-insert could land two progress rows for one site when drivers raced, and every guard that reads the row by pair then read an arbitrary one of them - pre_update_tables() collapses existing duplicates to one row per pair before the key is added (a row naming the child's backup task beats one that does not, then the freshest dtsFetched), ensure_backup_progress_unique_key() re-runs that collapse and hourly retries the key install when the ALTER did not take, and add_backup_task_progress() inserts ON DUPLICATE KEY UPDATE so a losing racer adopts the surviving row instead of failing. Previous 9.0.2.23 added wp_backup_progress.foreign_refused_since to stamp the first consecutive marker-less child already-running refusal on a manual run's progress row; the executor surfaces a foreign collision to the operator only after the refusal persists past FOREIGN_REFUSAL_SURFACE_SECONDS (a same-run create-window reset race re-marks within milliseconds and never accumulates), instead of always yielding it as the generic no-snapshot line. Previous 9.0.2.22 made wp_backup.authorized_sites nullable: NULL is now the never-stamped sentinel (a pre-authorized_sites row, backfilled from live expansion on its first run), while a stamped empty string is authoritative and means the save authorized zero sites - so an empty-saved group can no longer be mistaken for a legacy row and lazily auto-authorize a member added later. Previous 9.0.2.21 added wp_backup.authorized_sites, the site set that passed authorize_task_scope() at save time; the scheduled runner backs up only that set (cron has no user context to authorize a group's later additions against). Previous 9.0.2.20 bump made pre_update_tables() drop the legacy unnamed UNIQUE (task_id) key from wp_backup_progress - a leftover of the <= 8.53 CREATE clause that capped the table at one per-site progress row per task, so the second add_backup_task_progress() insert on a multi-site run died on a duplicate key. Previous 9.0.2.19 bump added reclaim_count to wp_backup_upload_job and wp_backup_restore_job, the stale-lease-reclaim counter that lets acquire_next_job() route a job whose worker keeps dying mid-run to fail_permanent instead of reclaiming it forever. Previous 9.0.2.18 bump added wp_backup_snapshot.woo_meta, the Woo order-storage facts a database-bearing backup captured at dump time, read by the restore initiate handler's preserve-orders gate; 9.0.2.17 bump added wp_backup.backup_notices, the informational-notes channel that keeps run notes (like the large-site ZIP auto-switch) out of backup_errors; 9.0.2.16 added wp_backup.zip_force_override for the large-site ZIP auto-switch override; 9.0.2.15 added wp_backup_snapshot.test_restore_state/test_restore_at for the verified-restore (sandbox test-restore) result; 9.0.2.14 added wp_backup_snapshot.encryption for the per-snapshot archive-encryption metadata.
 
     /**
      * Protected variable to hold the database option name.
@@ -112,6 +121,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         }
 
         if ( $currentVersion === $this->mainwp_db_version ) {
+            $this->maybe_retry_backup_progress_unique_key();
             return;
         }
 
@@ -718,14 +728,8 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
 
         // Same reason: dbDelta cannot be relied on to add the progress
         // table's (task_id, wp_id) unique key to an existing install.
-        // pre_update_tables() has already collapsed the duplicate rows that
-        // would refuse it.
         if ( version_compare( $currentVersion, '9.0.2.24', '<' ) ) { // NOSONAR - none IP.
-            $progress_table = esc_sql( $this->table_name( 'wp_backup_progress' ) );
-            $has_index      = $this->wpdb->get_results( "SHOW INDEX FROM {$progress_table} WHERE Key_name = 'uniq_task_wp'" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL introspection; table name escaped via esc_sql.
-            if ( empty( $has_index ) ) {
-                $this->wpdb->query( "ALTER TABLE {$progress_table} ADD UNIQUE KEY uniq_task_wp (task_id, wp_id)" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL statement; table name escaped via esc_sql.
-            }
+            $this->ensure_backup_progress_unique_key();
         }
 
         // Rename the backups feature flag to mainwp_enableNativeBackups; reads fall back to the
@@ -873,32 +877,118 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         // (task_id, wp_id) becomes UNIQUE on the progress table, and ADD
         // UNIQUE refuses while duplicates are present, so an install that
         // already raced two rows onto one site is collapsed here first - one
-        // pass before dbDelta and post_update() add the key. The freshest row
-        // wins because it is the one every read path would have been meant to
-        // return. The table carries no primary key or row id to tie-break
-        // with, so rows sharing the winning dtsFetched are culled by count:
-        // they are same-second race inserts of the same reset payload and
-        // carry nothing to choose between.
+        // pass before dbDelta and post_update() add the key.
         if ( version_compare( $currentVersion, '9.0.2.24', '<' ) ) { // NOSONAR - none IP.
             $progress_table = esc_sql( $this->table_name( 'wp_backup_progress' ) );
             $table_found    = $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $progress_table ) ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- table probe.
             if ( ! empty( $table_found ) ) {
-                $this->wpdb->query( "DELETE stale FROM {$progress_table} stale INNER JOIN {$progress_table} fresh ON stale.task_id = fresh.task_id AND stale.wp_id = fresh.wp_id AND stale.dtsFetched < fresh.dtsFetched" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery -- one-time dedupe; table name escaped via esc_sql.
-                $tied = $this->wpdb->get_results( "SELECT task_id, wp_id, COUNT(*) AS row_count FROM {$progress_table} GROUP BY task_id, wp_id HAVING row_count > 1" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery -- one-time dedupe; table name escaped via esc_sql.
-                foreach ( $tied as $pair ) {
-                    $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- one-time dedupe.
-                        $this->wpdb->prepare(
-                            "DELETE FROM {$progress_table} WHERE task_id = %d AND wp_id = %d LIMIT %d", // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- table name escaped via esc_sql.
-                            $pair->task_id,
-                            $pair->wp_id,
-                            (int) $pair->row_count - 1
-                        )
-                    );
-                }
+                $this->dedupe_backup_progress_rows( $progress_table );
             }
         }
 
         $this->wpdb->suppress_errors( $suppress );
+    }
+
+    /**
+     * Method dedupe_backup_progress_rows()
+     *
+     * Collapse the progress table to one row per (task_id, wp_id).
+     *
+     * @param string $progress_table Progress table name, already escaped via esc_sql.
+     *
+     * @return void
+     */
+    private function dedupe_backup_progress_rows( $progress_table ) {
+        // A row naming the child's backup task outranks one that does not:
+        // that id is the only handle left on a run already queued on the
+        // child, and the executor stamps it without advancing dtsFetched, so
+        // a dead driver's later reset row can look fresher than the row that
+        // can still poll or cancel the run.
+        $this->wpdb->query( "DELETE idless FROM {$progress_table} idless INNER JOIN {$progress_table} named ON idless.task_id = named.task_id AND idless.wp_id = named.wp_id AND idless.child_backup_task_id = '' AND named.child_backup_task_id <> ''" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery -- one-time dedupe; table name escaped via esc_sql.
+
+        // Rows that survive the first pass are alike on that test, so the
+        // freshest is the one every read path would have been meant to return.
+        $this->wpdb->query( "DELETE stale FROM {$progress_table} stale INNER JOIN {$progress_table} fresh ON stale.task_id = fresh.task_id AND stale.wp_id = fresh.wp_id AND stale.dtsFetched < fresh.dtsFetched" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery -- one-time dedupe; table name escaped via esc_sql.
+
+        // The table carries no primary key or row id to tie-break with, so
+        // rows still indistinguishable on both tests are culled by count:
+        // they are same-second race inserts of the same payload and carry
+        // nothing to choose between.
+        $tied = $this->wpdb->get_results( "SELECT task_id, wp_id, COUNT(*) AS row_count FROM {$progress_table} GROUP BY task_id, wp_id HAVING row_count > 1" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery -- one-time dedupe; table name escaped via esc_sql.
+        foreach ( $tied as $pair ) {
+            $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- one-time dedupe.
+                $this->wpdb->prepare(
+                    "DELETE FROM {$progress_table} WHERE task_id = %d AND wp_id = %d LIMIT %d", // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- table name escaped via esc_sql.
+                    $pair->task_id,
+                    $pair->wp_id,
+                    (int) $pair->row_count - 1
+                )
+            );
+        }
+    }
+
+    /**
+     * Method ensure_backup_progress_unique_key()
+     *
+     * Install the progress table's (task_id, wp_id) unique key when it is
+     * missing, and record whether it is there afterwards. A dbDelta or ALTER
+     * that never took would otherwise be stamped as done by the version bump
+     * and never retried, silently reverting add_backup_task_progress() to
+     * plain-insert semantics.
+     *
+     * @return bool True when the key is present, false when it could not be installed.
+     */
+    public function ensure_backup_progress_unique_key() {
+        // The retry path runs outside post_update()'s suppression, and a DB
+        // user without ALTER would otherwise log a failure on every request.
+        $suppress = $this->wpdb->suppress_errors();
+
+        $progress_table = esc_sql( $this->table_name( 'wp_backup_progress' ) );
+        $table_found    = $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $progress_table ) ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- table probe.
+        $has_index      = array();
+
+        if ( ! empty( $table_found ) ) {
+            $has_index = $this->wpdb->get_results( "SHOW INDEX FROM {$progress_table} WHERE Key_name = 'uniq_task_wp'" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL introspection; table name escaped via esc_sql.
+            if ( empty( $has_index ) ) {
+                // A duplicate landed between the migration's dedupe and a
+                // failed ALTER would refuse every later retry, so the collapse
+                // runs again whenever the key is still missing.
+                $this->dedupe_backup_progress_rows( $progress_table );
+                $this->wpdb->query( "ALTER TABLE {$progress_table} ADD UNIQUE KEY uniq_task_wp (task_id, wp_id)" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL statement; table name escaped via esc_sql.
+                // The ALTER runs error-suppressed, so the index itself is the
+                // only trustworthy report of what happened.
+                $has_index = $this->wpdb->get_results( "SHOW INDEX FROM {$progress_table} WHERE Key_name = 'uniq_task_wp'" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL introspection; table name escaped via esc_sql.
+            }
+        }
+
+        $this->wpdb->suppress_errors( $suppress );
+
+        if ( empty( $has_index ) ) {
+            update_site_option( static::BACKUP_PROGRESS_UNIQ_KEY_REPAIR_PENDING, time() );
+            return false;
+        }
+
+        delete_site_option( static::BACKUP_PROGRESS_UNIQ_KEY_REPAIR_PENDING );
+        return true;
+    }
+
+    /**
+     * Method maybe_retry_backup_progress_unique_key()
+     *
+     * Retry a pending progress-table unique key install, at most hourly. The
+     * throttle keeps an install whose DB user cannot ALTER from paying two
+     * SHOW INDEX and a failing ALTER on every request.
+     *
+     * @return void
+     */
+    public function maybe_retry_backup_progress_unique_key() {
+        $pending = (int) get_site_option( static::BACKUP_PROGRESS_UNIQ_KEY_REPAIR_PENDING );
+
+        if ( empty( $pending ) || ( time() - $pending ) < HOUR_IN_SECONDS ) {
+            return;
+        }
+
+        $this->ensure_backup_progress_unique_key();
     }
 
     /**

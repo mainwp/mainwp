@@ -762,7 +762,15 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             // min() that would hand the request an unlimited deadline.
             $bound   = $timeout > 0 ? min( (int) $timeout, self::NATIVE_REQUEST_TIMEOUT_SECONDS ) : self::NATIVE_REQUEST_TIMEOUT_SECONDS;
             $covered = self::touch_for_request( $bound + self::SLOT_LEASE_MARGIN_SECONDS );
-            return min( $bound, max( 30, $covered - self::SLOT_LEASE_MARGIN_SECONDS ) );
+            $usable  = $covered - self::SLOT_LEASE_MARGIN_SECONDS;
+            if ( $usable < 30 ) {
+                // Too little coverage to bound a request by means the row is
+                // gone - reclaimed, and by now very likely re-owned. Going on
+                // would run this backup under someone else's slot, so the
+                // holder stops here instead of taking a short timeout.
+                throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_SLOT_LOST ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+            }
+            return min( $bound, $usable );
         };
         self::$transfer_timeout_filter = static function ( $timeouts ) {
             if ( ! is_array( $timeouts ) || ! isset( $timeouts['timeout'] ) ) {
@@ -772,8 +780,12 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             // Connect time is inside libcurl's total timeout, so leasing
             // against it as well would let a raised connect_timeout inflate
             // a dead holder's lease past the attempt it covers.
-            $covered             = self::touch_for_request( $bound + self::SLOT_LEASE_MARGIN_SECONDS );
-            $timeouts['timeout'] = min( $bound, max( 30, $covered - self::SLOT_LEASE_MARGIN_SECONDS ) );
+            $covered = self::touch_for_request( $bound + self::SLOT_LEASE_MARGIN_SECONDS );
+            $usable  = $covered - self::SLOT_LEASE_MARGIN_SECONDS;
+            if ( $usable < 30 ) {
+                throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_SLOT_LOST ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+            }
+            $timeouts['timeout'] = min( $bound, $usable );
             return $timeouts;
         };
 
@@ -816,11 +828,11 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     /**
      * Refresh the leases from inside a timeout filter.
      *
-     * A diagnostics or DB hiccup here must never propagate: the filter
-     * still has to return a timeout, and a request with no timeout is
+     * A diagnostics or DB hiccup here must never propagate as itself: the
+     * filter has to decide on a number, and a request with no timeout is
      * exactly the failure the lease exists to prevent. A throw counts as
-     * no coverage, so the caller bounds the request to its floor instead
-     * of assuming a lease that may not have been written.
+     * no coverage, which the caller then treats like a lost slot rather
+     * than assuming a lease that may not have been written.
      *
      * @param int $lease_seconds Lease the pending request needs.
      *

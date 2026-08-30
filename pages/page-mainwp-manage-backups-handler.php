@@ -1045,6 +1045,11 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                 $errorEntries[] = 'Site: <strong>' . MainWP_Utility::get_nice_url( $website->url ) . '</strong><br />' . $_error_output;
 
                 static::close_child_task_after_terminal_mark( (int) $task->id, (int) $siteid );
+            } finally {
+                // A child request leaves PHP's execution limit at the bound it
+                // gave itself, so the bookkeeping and hashing that follow would
+                // inherit it instead of the cron lanes' no-limit policy.
+                MainWP_System_Utility::set_time_limit( 0 );
             }
 
             $_backup_result = isset( $backupResult ) ? $backupResult : ( isset( $_error_output ) ? $_error_output : '' );
@@ -1073,6 +1078,8 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                 break;
             }
         }
+
+        MainWP_System_Utility::set_time_limit( 0 );
 
         if ( null !== $errorOutput ) {
             MainWP_DB_Backup::instance()->update_backup_errors( $task->id, MainWP_Backup_Monitor::format_backup_errors( $errorEntries ) );

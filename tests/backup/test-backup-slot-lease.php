@@ -14,10 +14,12 @@
 
 namespace MainWP\Dashboard\Tests;
 
+use MainWP\Dashboard\MainWP_Backup_Error_Codes;
 use MainWP\Dashboard\MainWP_Backup_Monitor;
 use MainWP\Dashboard\MainWP_Connect;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_DB_Backup;
+use MainWP\Dashboard\MainWP_Exception;
 use MainWP\Dashboard\MainWP_Manage_Backups_Handler;
 
 /**
@@ -243,7 +245,8 @@ class MainWP_Backup_Slot_Lease_Test extends MainWP_Abilities_Test_Case {
 	/**
 	 * A request never outlives the coverage its slot row actually carries:
 	 * a touch that lands buys the full bound, and a holder whose row is
-	 * gone - it already lost its slot - is bounded to the floor.
+	 * gone - it lost its slot, which another process may already be running
+	 * on - fails closed rather than being handed a shorter request.
 	 *
 	 * @return void
 	 */
@@ -259,19 +262,25 @@ class MainWP_Backup_Slot_Lease_Test extends MainWP_Abilities_Test_Case {
 
 		$this->purge_slot_rows();
 
-		$this->assertSame(
-			30,
-			apply_filters( 'mainwp_fetch_url_site_timeout', 20 * HOUR_IN_SECONDS, null ),
-			'With no row left to lease against, the request gets the floor.'
-		);
-		$timeouts = apply_filters(
-			'mainwp_download_to_file_timeouts',
-			array(
-				'connect_timeout' => 30,
-				'timeout'         => 7200,
-			)
-		);
-		$this->assertSame( 30, (int) $timeouts['timeout'], 'A transfer with no coverage gets the floor too.' );
+		try {
+			apply_filters( 'mainwp_fetch_url_site_timeout', 20 * HOUR_IN_SECONDS, null );
+			$this->fail( 'A request with no coverage left must not be given a timeout.' );
+		} catch ( MainWP_Exception $e ) {
+			$this->assertSame( MainWP_Backup_Error_Codes::ERR_SLOT_LOST, $e->get_message_error_code() );
+		}
+
+		try {
+			apply_filters(
+				'mainwp_download_to_file_timeouts',
+				array(
+					'connect_timeout' => 30,
+					'timeout'         => 7200,
+				)
+			);
+			$this->fail( 'A transfer with no coverage left must not be given a timeout either.' );
+		} catch ( MainWP_Exception $e ) {
+			$this->assertSame( MainWP_Backup_Error_Codes::ERR_SLOT_LOST, $e->get_message_error_code() );
+		}
 	}
 
 	/**
@@ -340,9 +349,10 @@ class MainWP_Backup_Slot_Lease_Test extends MainWP_Abilities_Test_Case {
 
 	/**
 	 * A holder whose row was reclaimed and re-owned while it was away
-	 * refreshes nothing: the compare-and-update misses the new value, the
-	 * new holder's lease is untouched, and the zombie's release still
-	 * frees nothing.
+	 * refreshes nothing: the compare-and-update misses the new value, so
+	 * the zombie's next request fails closed instead of running on under
+	 * the new owner's slot, the new holder's lease is untouched, and the
+	 * zombie's release still frees nothing.
 	 *
 	 * @return void
 	 */
@@ -366,7 +376,12 @@ class MainWP_Backup_Slot_Lease_Test extends MainWP_Abilities_Test_Case {
 		);
 		$wpdb->query( $wpdb->prepare( "INSERT INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')", $name, $replacement ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture for the DB semaphore.
 
-		apply_filters( 'mainwp_fetch_url_site_timeout', 20 * HOUR_IN_SECONDS, null );
+		try {
+			apply_filters( 'mainwp_fetch_url_site_timeout', 20 * HOUR_IN_SECONDS, null );
+			$this->fail( 'A zombie holder must not be handed a timeout to keep working under.' );
+		} catch ( MainWP_Exception $e ) {
+			$this->assertSame( MainWP_Backup_Error_Codes::ERR_SLOT_LOST, $e->get_message_error_code() );
+		}
 
 		$rows = $this->slot_rows();
 		$this->assertSame( 'new-owner', $rows[ $name ]['token'] ?? '' );
@@ -443,7 +458,8 @@ class MainWP_Backup_Slot_Lease_Test extends MainWP_Abilities_Test_Case {
 	/**
 	 * The site loop ticks the lease before it drives a site, so the work
 	 * between two child requests - which carries no request timeout to
-	 * lease against - runs on a row that was just refreshed.
+	 * lease against - runs on a row that was just refreshed and under the
+	 * cron lanes' no-limit policy rather than a request's own bound.
 	 *
 	 * @return void
 	 */
@@ -474,12 +490,14 @@ class MainWP_Backup_Slot_Lease_Test extends MainWP_Abilities_Test_Case {
 			4
 		);
 
-		$seen = null;
+		$seen  = null;
+		$limit = null;
 		add_action(
 			'mainwp_backup_diag_site_mark',
-			function () use ( &$seen ) {
+			function () use ( &$seen, &$limit ) {
 				if ( null === $seen ) {
-					$seen = array_values( $this->slot_rows() )[0] ?? array();
+					$seen  = array_values( $this->slot_rows() )[0] ?? array();
+					$limit = ini_get( 'max_execution_time' );
 				}
 			},
 			10,
@@ -487,13 +505,18 @@ class MainWP_Backup_Slot_Lease_Test extends MainWP_Abilities_Test_Case {
 		);
 
 		$started = time();
+		// On CLI the limit is already 0, so a bound has to be in force for
+		// the loop re-asserting the policy to be worth observing.
+		set_time_limit( 900 );
 		MainWP_Manage_Backups_Handler::execute_backup_task( $task );
+		set_time_limit( 0 );
 
 		$this->assertNotNull( $aged, 'Precondition: the run must claim a slot.' );
 		$this->assertIsArray( $seen, 'Precondition: the run must reach the site loop.' );
 		$this->assertNotEmpty( $seen, 'Precondition: the holder must still own its row inside the loop.' );
 		$this->assertGreaterThanOrEqual( $started, (int) ( $seen['heartbeat'] ?? 0 ), 'The loop refreshes the heartbeat before the site is driven.' );
 		$this->assertGreaterThanOrEqual( MainWP_Backup_Monitor::DEFAULT_SLOT_LEASE_SECONDS, (int) ( $seen['lease'] ?? 0 ) );
+		$this->assertSame( '0', $limit, 'The loop re-asserts the cron lanes\' no-limit policy before the site is driven.' );
 	}
 
 	/**

@@ -236,6 +236,11 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
             }
         }
 
+        // The transfer's own lease is spent by the time it returns, and
+        // hashing a multi-gigabyte artifact has no transport filter to renew
+        // one. Outside a native lease scope this is a no-op.
+        MainWP_Backup_Monitor::touch_native_leases( MainWP_Backup_Monitor::DEFAULT_SLOT_LEASE_SECONDS );
+
         static::assert_download_landed( $local_file );
 
         if ( ! empty( $token_info['hash'] ) && file_exists( $local_file ) ) {

@@ -68,6 +68,7 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
     const ERR_WALL_CLOCK        = 'mainwp_backup_wall_clock_exceeded';
     const ERR_UNKNOWN_PHASE     = 'mainwp_backup_unknown_phase';
     const ERR_CONCURRENCY_LIMIT = 'mainwp_backup_concurrency_limit';
+    const ERR_SLOT_LOST         = 'mainwp_backup_slot_lost';
 
     // Restore preflight.
     const ERR_RESTORE_ARTIFACT_MISSING = 'mainwp_restore_artifact_missing';
@@ -237,6 +238,7 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
             self::ERR_WALL_CLOCK                 => esc_html__( 'The backup ran past the maximum time allowed on the child site and was stopped. The site may be very large or the host may limit how long a process can run. Try running the backup during off-peak hours, or split large folders into separate schedules.', 'mainwp' ),
             self::ERR_UNKNOWN_PHASE              => esc_html__( 'The backup reached a step the child site does not recognize. This usually means the MainWP Child plugin is older than the dashboard. Update the MainWP Child plugin on the site to the latest version, then run the backup again.', 'mainwp' ),
             self::ERR_CONCURRENCY_LIMIT          => esc_html__( 'The maximum number of concurrent backups is already running. Wait for one to finish, then try again.', 'mainwp' ),
+            self::ERR_SLOT_LOST                  => esc_html__( 'This backup lost its concurrency slot because it stopped checking in for too long. It will run again on the next cycle.', 'mainwp' ),
             self::ERR_RESTORE_ARTIFACT_MISSING   => esc_html__( 'A backup file this restore needs is no longer in offsite storage, so the restore was stopped before any changes were made. The cloud copy may have been removed by retention or deleted at the storage provider. Run a fresh backup for this site, then restore again.', 'mainwp' ),
             self::ERR_RESTORE_DB_PERMS           => esc_html__( 'The site database user is missing a permission the restore needs to swap tables, so the restore was stopped before any changes were made. Grant the database user the CREATE, DROP, and ALTER permissions, or ask your host, then try again.', 'mainwp' ),
             self::ERR_RESTORE_DISK_FULL          => esc_html__( 'There is not enough free disk space on the dashboard to stage this backup file. Free up disk space on the dashboard server and try the restore again.', 'mainwp' ),

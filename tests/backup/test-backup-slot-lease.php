@@ -106,6 +106,32 @@ class MainWP_Backup_Slot_Lease_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Push a token's stored heartbeat into the past, so a later refresh
+	 * shows up as a heartbeat that moved rather than one the claim wrote.
+	 *
+	 * @param string $token   Slot token.
+	 * @param int    $seconds How far back to set the heartbeat.
+	 *
+	 * @return int|null The heartbeat written, null when the token owns no row.
+	 */
+	private function age_slot_heartbeat( string $token, int $seconds ) {
+		global $wpdb;
+
+		foreach ( $this->slot_rows() as $name => $row ) {
+			if ( ( $row['token'] ?? '' ) !== $token ) {
+				continue;
+			}
+			$row['heartbeat'] = time() - $seconds;
+			$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture for the DB semaphore.
+				$wpdb->prepare( "UPDATE {$wpdb->options} SET option_value = %s WHERE option_name = %s", (string) wp_json_encode( $row ), $name )
+			);
+			return (int) $row['heartbeat'];
+		}
+
+		return null;
+	}
+
+	/**
 	 * Acquire a native slot and open its lease scope, the way the
 	 * scheduled holder does.
 	 *
@@ -149,7 +175,8 @@ class MainWP_Backup_Slot_Lease_Test extends MainWP_Abilities_Test_Case {
 
 	/**
 	 * Callback test. An artifact transfer attempt is bounded the same way,
-	 * and its lease covers connect time plus transfer time.
+	 * and its lease covers the transfer bound only - connect time is inside
+	 * that bound, so raising connect_timeout buys no lease.
 	 *
 	 * @return void
 	 */
@@ -165,12 +192,86 @@ class MainWP_Backup_Slot_Lease_Test extends MainWP_Abilities_Test_Case {
 			)
 		);
 
+		$leased = MainWP_Backup_Monitor::NATIVE_TRANSFER_TIMEOUT_SECONDS + MainWP_Backup_Monitor::SLOT_LEASE_MARGIN_SECONDS;
 		$this->assertSame( MainWP_Backup_Monitor::NATIVE_TRANSFER_TIMEOUT_SECONDS, (int) $timeouts['timeout'] );
 		$this->assertSame( 30, (int) $timeouts['connect_timeout'], 'Only the transfer bound is clamped.' );
-		$this->assertSame(
-			30 + MainWP_Backup_Monitor::NATIVE_TRANSFER_TIMEOUT_SECONDS + MainWP_Backup_Monitor::SLOT_LEASE_MARGIN_SECONDS,
-			(int) ( $this->row_for_token( $token )['lease'] ?? 0 )
+		$this->assertSame( $leased, (int) ( $this->row_for_token( $token )['lease'] ?? 0 ) );
+
+		$raised = apply_filters(
+			'mainwp_download_to_file_timeouts',
+			array(
+				'connect_timeout' => 7200,
+				'timeout'         => 7200,
+			)
 		);
+		$this->assertSame( MainWP_Backup_Monitor::NATIVE_TRANSFER_TIMEOUT_SECONDS, (int) $raised['timeout'] );
+		$this->assertSame( $leased, (int) ( $this->row_for_token( $token )['lease'] ?? 0 ), 'A raised connect_timeout must not inflate the lease.' );
+	}
+
+	/**
+	 * Callback test. A timeout of 0 or less is libcurl's "no timeout at
+	 * all", so it resolves to the native bound instead of passing through
+	 * as an unlimited request under a lease that expires minutes later.
+	 *
+	 * @return void
+	 */
+	public function test_non_positive_timeouts_resolve_to_the_native_bound() {
+		$token = $this->acquire_leased_slot();
+
+		foreach ( array( 0, -1 ) as $unbounded ) {
+			$this->assertSame(
+				MainWP_Backup_Monitor::NATIVE_REQUEST_TIMEOUT_SECONDS,
+				apply_filters( 'mainwp_fetch_url_site_timeout', $unbounded, null ),
+				'An unbounded request must be given the native bound.'
+			);
+			$this->assertSame(
+				MainWP_Backup_Monitor::NATIVE_REQUEST_TIMEOUT_SECONDS + MainWP_Backup_Monitor::SLOT_LEASE_MARGIN_SECONDS,
+				(int) ( $this->row_for_token( $token )['lease'] ?? 0 )
+			);
+		}
+
+		$timeouts = apply_filters(
+			'mainwp_download_to_file_timeouts',
+			array(
+				'connect_timeout' => 30,
+				'timeout'         => 0,
+			)
+		);
+		$this->assertSame( MainWP_Backup_Monitor::NATIVE_TRANSFER_TIMEOUT_SECONDS, (int) $timeouts['timeout'] );
+	}
+
+	/**
+	 * A request never outlives the coverage its slot row actually carries:
+	 * a touch that lands buys the full bound, and a holder whose row is
+	 * gone - it already lost its slot - is bounded to the floor.
+	 *
+	 * @return void
+	 */
+	public function test_a_request_is_bounded_by_the_coverage_its_row_has() {
+		$token = $this->acquire_leased_slot();
+
+		$this->assertSame(
+			MainWP_Backup_Monitor::NATIVE_REQUEST_TIMEOUT_SECONDS,
+			apply_filters( 'mainwp_fetch_url_site_timeout', 20 * HOUR_IN_SECONDS, null ),
+			'A touch that lands covers the full bound.'
+		);
+		$this->assertNotSame( array(), $this->row_for_token( $token ), 'Precondition: the touch wrote the holder\'s row.' );
+
+		$this->purge_slot_rows();
+
+		$this->assertSame(
+			30,
+			apply_filters( 'mainwp_fetch_url_site_timeout', 20 * HOUR_IN_SECONDS, null ),
+			'With no row left to lease against, the request gets the floor.'
+		);
+		$timeouts = apply_filters(
+			'mainwp_download_to_file_timeouts',
+			array(
+				'connect_timeout' => 30,
+				'timeout'         => 7200,
+			)
+		);
+		$this->assertSame( 30, (int) $timeouts['timeout'], 'A transfer with no coverage gets the floor too.' );
 	}
 
 	/**
@@ -337,6 +438,62 @@ class MainWP_Backup_Slot_Lease_Test extends MainWP_Abilities_Test_Case {
 
 		$this->assertSame( array(), $this->slot_rows(), 'The slot is released when the run returns.' );
 		$this->assertFalse( has_filter( 'mainwp_fetch_url_site_timeout' ), 'The scope closes with the run.' );
+	}
+
+	/**
+	 * The site loop ticks the lease before it drives a site, so the work
+	 * between two child requests - which carries no request timeout to
+	 * lease against - runs on a row that was just refreshed.
+	 *
+	 * @return void
+	 */
+	public function test_the_site_loop_ticks_the_lease_before_each_site() {
+		$user = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $user );
+		$site_id = $this->create_test_site(
+			array(
+				'userid' => $user,
+				'url'    => 'http://127.0.0.1:9/',
+			)
+		);
+		$task = MainWP_DB_Backup::instance()->add_backup_task( $user, 'Slot lease site loop task', 'manual', 'full', '', (string) $site_id, '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0 );
+		$this->assertNotFalse( $task, 'Precondition: the task row must insert.' );
+
+		// Age the heartbeat the claim wrote, so a heartbeat back at "now"
+		// inside the loop can only have come from the loop's own tick.
+		$aged = null;
+		add_action(
+			'mainwp_backup_diag_slot',
+			function ( $event, $token ) use ( &$aged ) {
+				if ( 'acquired' !== $event || null !== $aged ) {
+					return;
+				}
+				$aged = $this->age_slot_heartbeat( (string) $token, 500 );
+			},
+			10,
+			4
+		);
+
+		$seen = null;
+		add_action(
+			'mainwp_backup_diag_site_mark',
+			function () use ( &$seen ) {
+				if ( null === $seen ) {
+					$seen = array_values( $this->slot_rows() )[0] ?? array();
+				}
+			},
+			10,
+			4
+		);
+
+		$started = time();
+		MainWP_Manage_Backups_Handler::execute_backup_task( $task );
+
+		$this->assertNotNull( $aged, 'Precondition: the run must claim a slot.' );
+		$this->assertIsArray( $seen, 'Precondition: the run must reach the site loop.' );
+		$this->assertNotEmpty( $seen, 'Precondition: the holder must still own its row inside the loop.' );
+		$this->assertGreaterThanOrEqual( $started, (int) ( $seen['heartbeat'] ?? 0 ), 'The loop refreshes the heartbeat before the site is driven.' );
+		$this->assertGreaterThanOrEqual( MainWP_Backup_Monitor::DEFAULT_SLOT_LEASE_SECONDS, (int) ( $seen['lease'] ?? 0 ) );
 	}
 
 	/**

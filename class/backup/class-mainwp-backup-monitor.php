@@ -660,7 +660,7 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 );
                 if ( 1 === $reclaimed ) {
                     /** This action is documented in class/backup/class-mainwp-backup-monitor.php */
-                    do_action( 'mainwp_backup_diag_slot', 'reclaimed_stale', is_array( $data ) && isset( $data['token'] ) ? (string) $data['token'] : '', $live, $max_concurrent );
+                    do_action( 'mainwp_backup_diag_slot', 'reclaimed_stale', is_array( $data ) && isset( $data['token'] ) ? (string) $data['token'] : '', self::count_live_slots( $now ), $max_concurrent );
                 }
             }
 
@@ -757,16 +757,23 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         // a smaller cap (the restore orchestrator's slice bound) still wins
         // through the min().
         self::$request_timeout_filter  = static function ( $timeout ) {
-            $bound = min( (int) $timeout, self::NATIVE_REQUEST_TIMEOUT_SECONDS );
-            self::touch_for_request( $bound + self::SLOT_LEASE_MARGIN_SECONDS );
-            return $bound;
+            // A non-positive timeout is libcurl's "no timeout at all", so it
+            // resolves to the native bound rather than passing through a
+            // min() that would hand the request an unlimited deadline.
+            $bound   = $timeout > 0 ? min( (int) $timeout, self::NATIVE_REQUEST_TIMEOUT_SECONDS ) : self::NATIVE_REQUEST_TIMEOUT_SECONDS;
+            $covered = self::touch_for_request( $bound + self::SLOT_LEASE_MARGIN_SECONDS );
+            return min( $bound, max( 30, $covered - self::SLOT_LEASE_MARGIN_SECONDS ) );
         };
         self::$transfer_timeout_filter = static function ( $timeouts ) {
             if ( ! is_array( $timeouts ) || ! isset( $timeouts['timeout'] ) ) {
                 return $timeouts;
             }
-            $timeouts['timeout'] = min( (int) $timeouts['timeout'], self::NATIVE_TRANSFER_TIMEOUT_SECONDS );
-            self::touch_for_request( (int) ( $timeouts['connect_timeout'] ?? 0 ) + (int) $timeouts['timeout'] + self::SLOT_LEASE_MARGIN_SECONDS );
+            $bound = $timeouts['timeout'] > 0 ? min( (int) $timeouts['timeout'], self::NATIVE_TRANSFER_TIMEOUT_SECONDS ) : self::NATIVE_TRANSFER_TIMEOUT_SECONDS;
+            // Connect time is inside libcurl's total timeout, so leasing
+            // against it as well would let a raised connect_timeout inflate
+            // a dead holder's lease past the attempt it covers.
+            $covered             = self::touch_for_request( $bound + self::SLOT_LEASE_MARGIN_SECONDS );
+            $timeouts['timeout'] = min( $bound, max( 30, $covered - self::SLOT_LEASE_MARGIN_SECONDS ) );
             return $timeouts;
         };
 
@@ -811,17 +818,20 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      *
      * A diagnostics or DB hiccup here must never propagate: the filter
      * still has to return a timeout, and a request with no timeout is
-     * exactly the failure the lease exists to prevent.
+     * exactly the failure the lease exists to prevent. A throw counts as
+     * no coverage, so the caller bounds the request to its floor instead
+     * of assuming a lease that may not have been written.
      *
      * @param int $lease_seconds Lease the pending request needs.
      *
-     * @return void
+     * @return int Seconds of lease coverage the slot rows carry from now.
      */
-    private static function touch_for_request( int $lease_seconds ): void {
+    private static function touch_for_request( int $lease_seconds ): int {
         try {
-            self::touch_native_leases( $lease_seconds );
+            return self::touch_native_leases( $lease_seconds );
         } catch ( \Throwable $e ) {
             unset( $e );
+            return 0;
         }
     }
 
@@ -833,15 +843,23 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * rows and is left alone: it has lost its slot, and its release will
      * delete nothing, which is the existing contract.
      *
+     * The return value is what the caller bounds the pending request by,
+     * so a write that did not land cannot leave a request outliving the
+     * lease its row actually carries: it reports the coverage the stored
+     * rows have, not the coverage that was asked for.
+     *
      * @param int $lease_seconds Lease to write, floored at DEFAULT_SLOT_LEASE_SECONDS.
      *
-     * @return void
+     * @return int Seconds of coverage guaranteed from now: the smallest
+     *             heartbeat + lease still stored for a token in scope, 0
+     *             for a token whose row is gone, PHP_INT_MAX when nothing
+     *             is in scope.
      */
-    public static function touch_native_leases( int $lease_seconds ): void {
+    public static function touch_native_leases( int $lease_seconds ): int {
         global $wpdb;
 
         if ( empty( self::$native_lease_tokens ) ) {
-            return;
+            return PHP_INT_MAX;
         }
 
         $now   = time();
@@ -854,14 +872,18 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             )
         );
 
+        $covered = array_fill_keys( self::$native_lease_tokens, 0 );
+
         foreach ( (array) $rows as $row ) {
             $data = json_decode( (string) $row->option_value, true );
             if ( ! is_array( $data ) || ! isset( $data['token'] ) || ! in_array( (string) $data['token'], self::$native_lease_tokens, true ) ) {
                 continue;
             }
+            $token             = (string) $data['token'];
+            $stored            = (int) ( $data['heartbeat'] ?? 0 ) + (int) ( $data['lease'] ?? 0 ) - $now;
             $data['heartbeat'] = $now;
             $data['lease']     = $lease;
-            $wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- compare-and-update heartbeat.
+            $written           = $wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- compare-and-update heartbeat.
                 $wpdb->prepare(
                     "UPDATE {$wpdb->options} SET option_value = %s WHERE option_name = %s AND option_value = %s",
                     (string) wp_json_encode( $data ),
@@ -869,7 +891,11 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                     (string) $row->option_value
                 )
             );
+
+            $covered[ $token ] = 1 === $written ? $lease : $stored;
         }
+
+        return (int) min( $covered );
     }
 
     /**
@@ -888,12 +914,23 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             return false;
         }
 
+        // A row with no usable token can never be released: both the
+        // release and the reclaim match on it, so treating one as live
+        // would hold the slot until it aged out.
+        if ( ! isset( $data['token'] ) || ! is_string( $data['token'] ) || '' === $data['token'] ) {
+            return false;
+        }
+
         if ( 'native' === ( $data['lane'] ?? '' )
             && isset( $data['heartbeat'], $data['lease'] )
             && is_numeric( $data['heartbeat'] )
             && is_numeric( $data['lease'] )
         ) {
-            return $now < (int) $data['heartbeat'] + (int) $data['lease'];
+            // The stored lease follows whatever timeout a filter user set,
+            // so cap it at the age rule the other lanes keep: a raised
+            // transport timeout must not buy a dead holder more than two
+            // hours of refusals.
+            return $now < (int) $data['heartbeat'] + min( (int) $data['lease'], 2 * HOUR_IN_SECONDS );
         }
 
         // Legacy, pre-lease, or a native row missing either lease field.

@@ -305,6 +305,7 @@ class MainWP_Backup_Concurrency_Test extends \WP_UnitTestCase {
 		$this->assertCount( 1, $reclaimed );
 		$this->assertSame( 'dead-driver', $reclaimed[0]['token'] );
 		$this->assertSame( 1, $reclaimed[0]['max_concurrent'] );
+		$this->assertSame( 0, $reclaimed[0]['active'], 'The freed row must not still be counted as active capacity.' );
 	}
 
 	/**
@@ -338,24 +339,60 @@ class MainWP_Backup_Concurrency_Test extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * A row nothing can read - truncated JSON, no started stamp, no token -
-	 * is reclaimed rather than left to age out, and the reclaim event
-	 * carries '' when there is no token to name.
+	 * A row no holder can ever release - unreadable, no started stamp, no
+	 * token, or a lease long enough to outlast the age rule - is reclaimed
+	 * rather than left to block the slot, and the reclaim event names the
+	 * token only when the row carried one.
 	 *
 	 * @return void
 	 */
-	public function test_malformed_rows_are_reclaimed_with_an_empty_token() {
+	public function test_unreleasable_rows_are_reclaimed() {
 		$now = time();
-		$this->seed_raw_slot_row( 1, '{"token":"truncat' );
-		$this->seed_raw_slot_row( 2, (string) wp_json_encode( array( 'token' => 'no-started', 'pid' => 1 ) ) );
-		$this->seed_raw_slot_row( 3, (string) wp_json_encode( array( 'started' => $now - 3 * HOUR_IN_SECONDS, 'pid' => 1 ) ) );
+
+		$cases = array(
+			'truncated JSON'      => array( '{"token":"truncat', '' ),
+			'no started stamp'    => array( (string) wp_json_encode( array( 'token' => 'no-started', 'pid' => 1 ) ), 'no-started' ),
+			'aged, no token'      => array( (string) wp_json_encode( array( 'started' => $now - 3 * HOUR_IN_SECONDS, 'pid' => 1 ) ), '' ),
+			'live lease, no token' => array(
+				(string) wp_json_encode(
+					array(
+						'started'   => $now - 60,
+						'pid'       => 1,
+						'lane'      => 'native',
+						'heartbeat' => $now - 10,
+						'lease'     => 600,
+					)
+				),
+				'',
+			),
+			'lease past the age rule' => array(
+				(string) wp_json_encode(
+					array(
+						'token'     => 'greedy-lease',
+						'started'   => $now - 3 * HOUR_IN_SECONDS,
+						'pid'       => 1,
+						'lane'      => 'native',
+						'heartbeat' => $now - 3 * HOUR_IN_SECONDS,
+						'lease'     => 999999999,
+					)
+				),
+				'greedy-lease',
+			),
+		);
+
 		$this->record_slot_events();
 
-		$this->assertIsString( MainWP_Backup_Monitor::acquire_backup_slot( 3, 'native' ) );
+		foreach ( $cases as $label => $case ) {
+			$this->purge_slot_rows();
+			$this->slot_events = array();
+			$this->seed_raw_slot_row( 1, $case[0] );
 
-		$reclaimed = $this->slot_events_named( 'reclaimed_stale' );
-		$this->assertCount( 1, $reclaimed, 'Only the slot actually claimed is reclaimed on this pass.' );
-		$this->assertSame( '', $reclaimed[0]['token'], 'A row with no readable token names none.' );
+			$this->assertIsString( MainWP_Backup_Monitor::acquire_backup_slot( 1, 'native' ), $label . ': the row must not block the only slot.' );
+
+			$reclaimed = $this->slot_events_named( 'reclaimed_stale' );
+			$this->assertCount( 1, $reclaimed, $label . ': the reclaim must be recorded.' );
+			$this->assertSame( $case[1], $reclaimed[0]['token'], $label . ': the reclaim names the token the row carried.' );
+		}
 	}
 
 	/**

@@ -887,6 +887,10 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
 
                 $mail_title       = 'A Scheduled Backup has been Started - MainWP';
                 $formated_content = MainWP_Format::format_email( $email, $output, $mail_title );
+                // A mail send has no transport filter to lease against and
+                // can block on an SMTP round trip, so tick before it rather
+                // than let the lease run out inside wp_mail().
+                MainWP_Backup_Monitor::touch_native_leases( MainWP_Backup_Monitor::DEFAULT_SLOT_LEASE_SECONDS );
                 wp_mail( $email, $mail_title, $formated_content, 'content-type: text/html' );
                 MainWP_DB_Backup::instance()->update_backup_task_with_values( $task->id, array( 'lastStartNotificationSent' => time() ) );
             }
@@ -1356,6 +1360,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         $errorOutput      = 'Errors occurred while executing task: <strong>' . esc_html( $task->name ) . '</strong><br /><br />' . wp_kses_post( MainWP_Backup_Error_Codes::sanitize_message( $task->backup_errors ) );
         $mail_title       = 'A scheduled backup had an Error - MainWP';
         $formated_content = MainWP_Format::format_email( $email, $errorOutput, $mail_title );
+        MainWP_Backup_Monitor::touch_native_leases( MainWP_Backup_Monitor::DEFAULT_SLOT_LEASE_SECONDS );
         wp_mail( $email, $mail_title, $formated_content, 'content-type: text/html' );
     }
 

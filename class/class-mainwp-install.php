@@ -36,6 +36,14 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     const BACKUP_PROGRESS_UNIQ_KEY_REPAIR_PENDING = 'mainwp_backup_progress_uniq_key_repair_pending';
 
     /**
+     * MySQL advisory lock name serializing the wp_backup_progress duplicate
+     * collapse.
+     *
+     * @var string Lock name.
+     */
+    const BACKUP_PROGRESS_DEDUPE_LOCK = 'mainwp_backup_progress_dedupe';
+
+    /**
      * Private variable to hold the database version info.
      *
      * @var string DB version info.
@@ -896,9 +904,43 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * @param string $progress_table Progress table name, already escaped via esc_sql.
      *
-     * @return void
+     * @return bool True when the collapse ran, false when another request owns it.
      */
     private function dedupe_backup_progress_rows( $progress_table ) {
+        // The count-based cull below deletes by a COUNT taken in an earlier
+        // statement, so two requests racing through the migration or the
+        // hourly retry would each read row_count = 2 and each delete one row,
+        // emptying the pair. The whole collapse is serialized instead, and
+        // whoever loses the race skips it rather than waiting: the work is
+        // idempotent and the winner is already doing it. GET_LOCK is
+        // connection-scoped, so a request that dies mid-collapse releases it
+        // on disconnect instead of wedging every later attempt.
+        $locked = $this->wpdb->get_var( "SELECT GET_LOCK('" . static::BACKUP_PROGRESS_DEDUPE_LOCK . "', 0)" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- advisory lock, no table involved.
+
+        if ( '1' !== (string) $locked ) {
+            return false;
+        }
+
+        try {
+            $this->run_backup_progress_dedupe_passes( $progress_table );
+        } finally {
+            $this->wpdb->get_var( "SELECT RELEASE_LOCK('" . static::BACKUP_PROGRESS_DEDUPE_LOCK . "')" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- advisory lock, no table involved.
+        }
+
+        return true;
+    }
+
+    /**
+     * Method run_backup_progress_dedupe_passes()
+     *
+     * The three survivor passes of the progress-table collapse. Only ever
+     * called while the dedupe advisory lock is held.
+     *
+     * @param string $progress_table Progress table name, already escaped via esc_sql.
+     *
+     * @return void
+     */
+    private function run_backup_progress_dedupe_passes( $progress_table ) {
         // A row naming the child's backup task outranks one that does not:
         // that id is the only handle left on a run already queued on the
         // child, and the executor stamps it without advancing dtsFetched, so
@@ -952,11 +994,15 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             if ( empty( $has_index ) ) {
                 // A duplicate landed between the migration's dedupe and a
                 // failed ALTER would refuse every later retry, so the collapse
-                // runs again whenever the key is still missing.
-                $this->dedupe_backup_progress_rows( $progress_table );
-                $this->wpdb->query( "ALTER TABLE {$progress_table} ADD UNIQUE KEY uniq_task_wp (task_id, wp_id)" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL statement; table name escaped via esc_sql.
-                // The ALTER runs error-suppressed, so the index itself is the
-                // only trustworthy report of what happened.
+                // runs again whenever the key is still missing. ADD UNIQUE
+                // would only fail on the duplicates a skipped collapse leaves
+                // behind, so a lost race waits for the hourly retry.
+                if ( $this->dedupe_backup_progress_rows( $progress_table ) ) {
+                    $this->wpdb->query( "ALTER TABLE {$progress_table} ADD UNIQUE KEY uniq_task_wp (task_id, wp_id)" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL statement; table name escaped via esc_sql.
+                }
+                // The ALTER runs error-suppressed, and the request that won
+                // the collapse may have added the key meanwhile, so the index
+                // itself is the only trustworthy report of what happened.
                 $has_index = $this->wpdb->get_results( "SHOW INDEX FROM {$progress_table} WHERE Key_name = 'uniq_task_wp'" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL introspection; table name escaped via esc_sql.
             }
         }

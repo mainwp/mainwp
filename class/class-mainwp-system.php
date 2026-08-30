@@ -380,6 +380,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 'mainwp_backup_before_upgrade',
                 'mainwp_backup_before_upgrade_require_offsite',
                 'mainwp_enableNativeBackups',
+                'mainwp_backup_progress_uniq_key_repair_pending',
                 'mainwp_maximumInstallUpdateRequests',
                 'mainwp_maximumSyncRequests',
                 'mainwp_primaryBackup',

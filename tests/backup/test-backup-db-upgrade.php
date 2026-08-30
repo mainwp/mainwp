@@ -1216,6 +1216,91 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * The count-based cull reads a COUNT in one statement and deletes by it
+	 * in another, so two requests collapsing the same pair at once would
+	 * each delete one row and leave the site with none. A request that
+	 * cannot take the dedupe lock must leave the rows alone, skip the ALTER
+	 * the surviving duplicates would refuse anyway, and leave the repair
+	 * marker stamped - and the retry must then finish the job once the lock
+	 * is free.
+	 *
+	 * @return void
+	 */
+	public function test_dedupe_skips_and_marks_pending_while_another_request_holds_the_lock() {
+		global $wpdb;
+
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_progress' );
+
+		update_site_option( 'mainwp_db_version', '9.0.2.23' );
+		MainWP_Install::instance()->install();
+
+		$wpdb->query( "ALTER TABLE {$table} DROP INDEX uniq_task_wp" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture, identifiers cannot be prepared.
+		$wpdb->query( 'DELETE FROM ' . $table . ' WHERE task_id = ' . self::DEDUPE_TASK_ID ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture cleanup, identifiers cannot be prepared.
+
+		// A pair only the count-based cull can resolve: same dtsFetched, and
+		// both rows name a child task, so neither self-join pass touches them.
+		foreach ( array( 'tied-lock-a', 'tied-lock-b' ) as $marker ) {
+			$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
+				$table,
+				array(
+					'task_id'              => self::DEDUPE_TASK_ID,
+					'wp_id'                => 888821,
+					'dtsFetched'           => 1700,
+					'child_backup_task_id' => $marker,
+				)
+			);
+		}
+
+		// The racing request. A second wpdb rather than raw mysqli because
+		// wpdb parses the socket form DB_HOST takes on this harness, and the
+		// advisory lock is scoped to the connection that took it.
+		$holder = new \wpdb( DB_USER, DB_PASSWORD, DB_NAME, DB_HOST );
+
+		try {
+			$this->assertSame(
+				'1',
+				(string) $holder->get_var( "SELECT GET_LOCK('mainwp_backup_progress_dedupe', 0)" ), // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared -- advisory lock on the stand-in connection.
+				'Precondition: the second connection must own the dedupe lock.'
+			);
+
+			$this->assertFalse(
+				MainWP_Install::instance()->ensure_backup_progress_unique_key(),
+				'A request that cannot take the dedupe lock must report the key install as unfinished.'
+			);
+			$this->assertFalse( $this->index_exists( $table, 'uniq_task_wp' ), 'The skipped attempt must not add the key over surviving duplicates.' );
+			$this->assertSame(
+				2,
+				(int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE task_id = %d", self::DEDUPE_TASK_ID ) ), // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test probe, identifiers cannot be prepared.
+				'The skipped attempt must leave both rows; acting on a stale count is what empties the pair.'
+			);
+			$this->assertNotEmpty(
+				get_site_option( MainWP_Install::BACKUP_PROGRESS_UNIQ_KEY_REPAIR_PENDING ),
+				'A skipped attempt must leave the repair marker stamped for the hourly retry.'
+			);
+		} finally {
+			$holder->get_var( "SELECT RELEASE_LOCK('mainwp_backup_progress_dedupe')" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared -- advisory lock on the stand-in connection.
+			$holder->close();
+		}
+
+		$this->assertTrue(
+			MainWP_Install::instance()->ensure_backup_progress_unique_key(),
+			'Once the lock is free the retry must finish the key install.'
+		);
+		$this->assertTrue( $this->index_exists( $table, 'uniq_task_wp' ), 'The retry must add the unique key.' );
+		$this->assertSame(
+			1,
+			(int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE task_id = %d", self::DEDUPE_TASK_ID ) ), // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test probe, identifiers cannot be prepared.
+			'The retry must collapse the tied pair to a single row.'
+		);
+		$this->assertFalse(
+			get_site_option( MainWP_Install::BACKUP_PROGRESS_UNIQ_KEY_REPAIR_PENDING ),
+			'A retry that installed the key must clear the repair marker.'
+		);
+
+		$wpdb->query( 'DELETE FROM ' . $table . ' WHERE task_id = ' . self::DEDUPE_TASK_ID ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture cleanup, identifiers cannot be prepared.
+	}
+
+	/**
 	 * A true fresh installation - no plugin tables and no stored
 	 * mainwp_db_version - must create the complete schema in one install()
 	 * run: every plugin table, the version-gated primary keys, the backup

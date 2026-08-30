@@ -31,6 +31,20 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
     const MAX_TOKEN_RETRIES = 2;
 
     /**
+     * Bytes read per hash_update() when verifying a downloaded artifact.
+     *
+     * @var int
+     */
+    const HASH_CHUNK_BYTES = 8 * MB_IN_BYTES;
+
+    /**
+     * Wall-clock seconds between lease refreshes while hashing.
+     *
+     * @var int
+     */
+    const HASH_LEASE_TICK_SECONDS = 60;
+
+    /**
      * Method get_class_name()
      *
      * Get Class Name.
@@ -244,7 +258,7 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
         static::assert_download_landed( $local_file );
 
         if ( ! empty( $token_info['hash'] ) && file_exists( $local_file ) ) {
-            $actual_hash = (string) hash_file( 'sha256', $local_file );
+            $actual_hash = static::hash_artifact( $local_file );
             if ( ! hash_equals( (string) $token_info['hash'], $actual_hash ) ) {
                 wp_delete_file( $local_file );
                 // phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped; the hashes are hex digests.
@@ -261,6 +275,69 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
         }
 
         static::fire_downloaded_action( $website, $local_file, true );
+    }
+
+    // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag -- the registry factory throws MainWP_Exception.
+    /**
+     * Method hash_artifact()
+     *
+     * Hash a downloaded artifact in 8 MiB chunks, refreshing the native
+     * lease as it goes.
+     *
+     * A multi-gigabyte artifact can take longer to hash than a lease
+     * lasts, and there is no transport filter inside hash_file() to renew
+     * one, so a holder would go stale reading back its own download. If
+     * the lease is lost anyway the artifact cannot be trusted - the slot
+     * may already be re-owned by a process writing this same path - so
+     * the file is removed, the way a bad download's is.
+     *
+     * @param string $local_file Absolute local artifact path.
+     *
+     * @return string Lowercase hex sha256 digest.
+     *
+     * @throws MainWP_Exception When the artifact cannot be opened, or the lease is lost mid-hash.
+     */
+    private static function hash_artifact( string $local_file ): string {
+        // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag
+        // phpcs:disable WordPress.WP.AlternativeFunctions -- streaming a multi-gigabyte artifact.
+        $handle = fopen( $local_file, 'rb' );
+        if ( false === $handle ) {
+            wp_delete_file( $local_file );
+            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_DL_FILE_NOT_FOUND, 'the downloaded artifact could not be opened for verification' ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+        }
+
+        $context   = hash_init( 'sha256' );
+        $next_tick = time() + static::HASH_LEASE_TICK_SECONDS;
+        $lost      = false;
+
+        while ( true ) {
+            if ( MainWP_Backup_Monitor::native_lease_lost() ) {
+                $lost = true;
+                break;
+            }
+            // A short or failed read ends the loop rather than spinning on
+            // feof(); the digest it produces then fails the comparison the
+            // caller makes, which is the outcome either way.
+            $chunk = fread( $handle, static::HASH_CHUNK_BYTES );
+            if ( false === $chunk || '' === $chunk ) {
+                break;
+            }
+            hash_update( $context, $chunk );
+            if ( time() >= $next_tick ) {
+                MainWP_Backup_Monitor::touch_native_leases( MainWP_Backup_Monitor::DEFAULT_SLOT_LEASE_SECONDS );
+                $next_tick = time() + static::HASH_LEASE_TICK_SECONDS;
+            }
+        }
+
+        fclose( $handle );
+        // phpcs:enable WordPress.WP.AlternativeFunctions
+
+        if ( $lost ) {
+            wp_delete_file( $local_file );
+            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_SLOT_LOST ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+        }
+
+        return hash_final( $context );
     }
 
     // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.Missing -- the registry factory throws MainWP_Exception.

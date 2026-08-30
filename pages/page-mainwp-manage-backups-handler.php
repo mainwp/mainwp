@@ -908,6 +908,14 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             MainWP_Backup_Monitor::touch_native_leases( MainWP_Backup_Monitor::DEFAULT_SLOT_LEASE_SECONDS );
             MainWP_System_Utility::set_time_limit( 0 );
 
+            if ( MainWP_Backup_Monitor::native_lease_lost() ) {
+                // The slot was reclaimed under this holder and another
+                // process may already own it, so driving another site would
+                // run it under someone else's slot. The rows are left as
+                // they are; the next cycle resumes the task from here.
+                break;
+            }
+
             if ( isset( $completed_sites[ $siteid ] ) && ( true === $completed_sites[ $siteid ] ) ) {
                 // A completed-marked site whose validated artifact still
                 // lacks its snapshot is re-driven, not skipped: nothing
@@ -1052,6 +1060,15 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                 MainWP_System_Utility::set_time_limit( 0 );
             }
 
+            if ( MainWP_Backup_Monitor::native_lease_lost() ) {
+                // The slot went away while this site was being driven, so
+                // whatever the child did or did not do happened outside a
+                // slot this holder owns. Marking the site complete would
+                // retire it on the strength of that, so the loop stops
+                // here and leaves the site for the next cycle.
+                break;
+            }
+
             $_backup_result = isset( $backupResult ) ? $backupResult : ( isset( $_error_output ) ? $_error_output : '' );
             do_action( 'mainwp_managesite_schedule_backup', $website, array( 'type' => $task->type ), $_backup_result );
 
@@ -1081,8 +1098,28 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
 
         MainWP_System_Utility::set_time_limit( 0 );
 
+        $lease_lost = MainWP_Backup_Monitor::native_lease_lost();
+        if ( $lease_lost ) {
+            // Both loop exits above leave the run unfinished, so the reason
+            // is recorded once here, on the same path a per-site failure
+            // takes to the task row and the failure email.
+            if ( null === $errorOutput ) {
+                $errorOutput = '';
+            }
+            $_slot_lost     = MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_SLOT_LOST );
+            $errorOutput   .= $_slot_lost . '<br />';
+            $errorEntries[] = $_slot_lost;
+        }
+
         if ( null !== $errorOutput ) {
             MainWP_DB_Backup::instance()->update_backup_errors( $task->id, MainWP_Backup_Monitor::format_backup_errors( $errorEntries ) );
+        }
+
+        if ( $lease_lost ) {
+            // The run is not finished, so none of the close bookkeeping may
+            // fire: the task stays in the state get_backup_tasks_to_complete()
+            // picks up on the next cycle.
+            return false;
         }
 
         if ( count( $completed_sites ) === count( $sites ) ) {

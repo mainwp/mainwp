@@ -554,6 +554,15 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     const SLOT_LEASE_MARGIN_SECONDS = 60;
 
     /**
+     * Least coverage a request can still be bounded by. Below this the
+     * row is gone rather than merely short, and the request is cut to
+     * this floor so it ends quickly and the holder reaches its own stop.
+     *
+     * @var int
+     */
+    private const MIN_REQUEST_SECONDS = 30;
+
+    /**
      * Native slot tokens whose holder is executing right now.
      *
      * Both transport filters are process-global and carry no lane, so the
@@ -578,6 +587,20 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @var \Closure|null
      */
     private static ?\Closure $transfer_timeout_filter = null;
+
+    /**
+     * Whether the holder in scope has lost the slot row it was working
+     * under.
+     *
+     * Process-level and not per-token: every lane that opens a scope
+     * holds one slot for the length of one run, which is the assumption
+     * the scope stack itself already makes. The holder's own loop reads
+     * this and stops, so the transport and executor layers below it need
+     * no new failure to rethrow.
+     *
+     * @var bool
+     */
+    private static bool $native_lease_lost = false;
 
     /**
      * Method acquire_backup_slot()
@@ -675,7 +698,7 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                  * leaves a diagnostics trace instead of vanishing with the
                  * released row.
                  *
-                 * @param string $event          acquired|refused|released|reclaimed_stale.
+                 * @param string $event          acquired|refused|released|reclaimed_stale|lost.
                  * @param string $token          Slot token, '' on refusal.
                  * @param int    $active         Active slot count after the decision.
                  * @param int    $max_concurrent Configured slot limit.
@@ -753,39 +776,23 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             return;
         }
 
+        self::$native_lease_lost = false;
+
         // Last in line, so the clamp lands after every other filter user;
         // a smaller cap (the restore orchestrator's slice bound) still wins
-        // through the min().
+        // through the min() inside the resolver.
         self::$request_timeout_filter  = static function ( $timeout ) {
-            // A non-positive timeout is libcurl's "no timeout at all", so it
-            // resolves to the native bound rather than passing through a
-            // min() that would hand the request an unlimited deadline.
-            $bound   = $timeout > 0 ? min( (int) $timeout, self::NATIVE_REQUEST_TIMEOUT_SECONDS ) : self::NATIVE_REQUEST_TIMEOUT_SECONDS;
-            $covered = self::touch_for_request( $bound + self::SLOT_LEASE_MARGIN_SECONDS );
-            $usable  = $covered - self::SLOT_LEASE_MARGIN_SECONDS;
-            if ( $usable < 30 ) {
-                // Too little coverage to bound a request by means the row is
-                // gone - reclaimed, and by now very likely re-owned. Going on
-                // would run this backup under someone else's slot, so the
-                // holder stops here instead of taking a short timeout.
-                throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_SLOT_LOST ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
-            }
-            return min( $bound, $usable );
+            return self::resolve_native_bound( $timeout, self::NATIVE_REQUEST_TIMEOUT_SECONDS );
         };
         self::$transfer_timeout_filter = static function ( $timeouts ) {
             if ( ! is_array( $timeouts ) || ! isset( $timeouts['timeout'] ) ) {
                 return $timeouts;
             }
-            $bound = $timeouts['timeout'] > 0 ? min( (int) $timeouts['timeout'], self::NATIVE_TRANSFER_TIMEOUT_SECONDS ) : self::NATIVE_TRANSFER_TIMEOUT_SECONDS;
-            // Connect time is inside libcurl's total timeout, so leasing
-            // against it as well would let a raised connect_timeout inflate
-            // a dead holder's lease past the attempt it covers.
-            $covered = self::touch_for_request( $bound + self::SLOT_LEASE_MARGIN_SECONDS );
-            $usable  = $covered - self::SLOT_LEASE_MARGIN_SECONDS;
-            if ( $usable < 30 ) {
-                throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_SLOT_LOST ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
-            }
-            $timeouts['timeout'] = min( $bound, $usable );
+            // Only the total is bounded: connect time is inside libcurl's
+            // total timeout, so leasing against it as well would let a
+            // raised connect_timeout inflate a dead holder's lease past the
+            // attempt it covers.
+            $timeouts['timeout'] = self::resolve_native_bound( $timeouts['timeout'], self::NATIVE_TRANSFER_TIMEOUT_SECONDS );
             return $timeouts;
         };
 
@@ -815,6 +822,8 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             return;
         }
 
+        self::$native_lease_lost = false;
+
         if ( null !== self::$request_timeout_filter ) {
             remove_filter( 'mainwp_fetch_url_site_timeout', self::$request_timeout_filter, PHP_INT_MAX );
             self::$request_timeout_filter = null;
@@ -823,6 +832,76 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             remove_filter( 'mainwp_download_to_file_timeouts', self::$transfer_timeout_filter, PHP_INT_MAX );
             self::$transfer_timeout_filter = null;
         }
+    }
+
+    /**
+     * Method native_lease_lost()
+     *
+     * Whether the holder in scope has lost its slot: a refresh found the
+     * row it was working under gone, so another process may already own
+     * that slot. The holder's own loop is where the run stops on this.
+     *
+     * @return bool True once the loss has been seen in this scope.
+     */
+    public static function native_lease_lost(): bool {
+        return self::$native_lease_lost;
+    }
+
+    /**
+     * Flag the holder in scope as having lost its slot, tracing it once.
+     *
+     * Both doors into this state - a refresh that found no row, and a
+     * request the remaining coverage cannot bound - land here, and every
+     * later request in the same run would find the same thing, so the
+     * trace fires on the transition rather than per call.
+     *
+     * @return void
+     */
+    private static function mark_native_lease_lost(): void {
+        if ( self::$native_lease_lost ) {
+            return;
+        }
+
+        self::$native_lease_lost = true;
+
+        /** This action is documented in class/backup/class-mainwp-backup-monitor.php */
+        do_action( 'mainwp_backup_diag_slot', 'lost', (string) ( self::$native_lease_tokens[0] ?? '' ), self::count_live_slots( time() ), 0 );
+    }
+
+    /**
+     * Bound one request under a native lease and refresh the lease that
+     * bounds it.
+     *
+     * A request never outlives the coverage its slot row actually
+     * carries, so a heartbeat write that did not land buys nothing.
+     * Coverage too short to bound a request by means the row is gone -
+     * reclaimed, and by now very likely re-owned - and the request is cut
+     * to the floor so it ends quickly. Stopping the run is the holder's
+     * decision, not a throw through every catch between here and it.
+     *
+     * @param mixed $timeout_in Timeout the transport offered. Non-numeric and non-positive both mean no bound at all, which is libcurl's unlimited deadline.
+     * @param int   $cap        Native bound for this kind of request.
+     *
+     * @return int Seconds the request may take.
+     */
+    private static function resolve_native_bound( mixed $timeout_in, int $cap ): int {
+        $bound   = is_numeric( $timeout_in ) && $timeout_in > 0 ? min( (int) $timeout_in, $cap ) : $cap;
+        $covered = self::touch_for_request( $bound + self::SLOT_LEASE_MARGIN_SECONDS );
+
+        if ( PHP_INT_MAX === $covered ) {
+            return $bound;
+        }
+
+        $usable = $covered - self::SLOT_LEASE_MARGIN_SECONDS;
+        if ( $usable >= $bound ) {
+            return $bound;
+        }
+        if ( $usable >= self::MIN_REQUEST_SECONDS ) {
+            return $usable;
+        }
+
+        self::mark_native_lease_lost();
+        return self::MIN_REQUEST_SECONDS;
     }
 
     /**
@@ -858,7 +937,10 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * The return value is what the caller bounds the pending request by,
      * so a write that did not land cannot leave a request outliving the
      * lease its row actually carries: it reports the coverage the stored
-     * rows have, not the coverage that was asked for.
+     * rows have, not the coverage that was asked for. A token left with
+     * no coverage at all also flags the scope as having lost its slot, so
+     * the direct ticks - the site loop, the artifact hash - read
+     * native_lease_lost() instead of interpreting this number.
      *
      * @param int $lease_seconds Lease to write, floored at DEFAULT_SLOT_LEASE_SECONDS.
      *
@@ -907,7 +989,11 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             $covered[ $token ] = 1 === $written ? $lease : $stored;
         }
 
-        return (int) min( $covered );
+        $lowest = (int) min( $covered );
+        if ( $lowest <= 0 ) {
+            self::mark_native_lease_lost();
+        }
+        return $lowest;
     }
 
     /**

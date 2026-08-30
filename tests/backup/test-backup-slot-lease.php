@@ -15,6 +15,7 @@
 namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Backup_Error_Codes;
+use MainWP\Dashboard\MainWP_Backup_File_Manager;
 use MainWP\Dashboard\MainWP_Backup_Monitor;
 use MainWP\Dashboard\MainWP_Connect;
 use MainWP\Dashboard\MainWP_DB;
@@ -26,6 +27,15 @@ use MainWP\Dashboard\MainWP_Manage_Backups_Handler;
  * Class MainWP_Backup_Slot_Lease_Test
  */
 class MainWP_Backup_Slot_Lease_Test extends MainWP_Abilities_Test_Case {
+
+	/**
+	 * The bound a request gets once its holder has lost the slot: short
+	 * enough that the request in flight ends and the holder reaches its
+	 * own stop. Mirrors the monitor's private floor.
+	 *
+	 * @var int
+	 */
+	const LOST_SLOT_BOUND = 30;
 
 	/**
 	 * Tokens whose lease scope this test opened.
@@ -246,7 +256,8 @@ class MainWP_Backup_Slot_Lease_Test extends MainWP_Abilities_Test_Case {
 	 * A request never outlives the coverage its slot row actually carries:
 	 * a touch that lands buys the full bound, and a holder whose row is
 	 * gone - it lost its slot, which another process may already be running
-	 * on - fails closed rather than being handed a shorter request.
+	 * on - is flagged and handed a request short enough to end quickly.
+	 * Stopping is the holder's own decision, so nothing is thrown here.
 	 *
 	 * @return void
 	 */
@@ -259,28 +270,92 @@ class MainWP_Backup_Slot_Lease_Test extends MainWP_Abilities_Test_Case {
 			'A touch that lands covers the full bound.'
 		);
 		$this->assertNotSame( array(), $this->row_for_token( $token ), 'Precondition: the touch wrote the holder\'s row.' );
+		$this->assertFalse( MainWP_Backup_Monitor::native_lease_lost(), 'A covered holder has not lost anything.' );
 
 		$this->purge_slot_rows();
 
-		try {
-			apply_filters( 'mainwp_fetch_url_site_timeout', 20 * HOUR_IN_SECONDS, null );
-			$this->fail( 'A request with no coverage left must not be given a timeout.' );
-		} catch ( MainWP_Exception $e ) {
-			$this->assertSame( MainWP_Backup_Error_Codes::ERR_SLOT_LOST, $e->get_message_error_code() );
+		$this->assertSame(
+			self::LOST_SLOT_BOUND,
+			apply_filters( 'mainwp_fetch_url_site_timeout', 20 * HOUR_IN_SECONDS, null ),
+			'A request with no coverage left is cut to the floor, not given the bound it asked for.'
+		);
+		$this->assertTrue( MainWP_Backup_Monitor::native_lease_lost(), 'The holder is flagged as having lost its slot.' );
+
+		$timeouts = apply_filters(
+			'mainwp_download_to_file_timeouts',
+			array(
+				'connect_timeout' => 30,
+				'timeout'         => 7200,
+			)
+		);
+		$this->assertSame( self::LOST_SLOT_BOUND, (int) $timeouts['timeout'], 'A transfer with no coverage left is cut the same way.' );
+	}
+
+	/**
+	 * The matrix the bound resolver decides on, driven through the filter
+	 * the transport actually calls. Partial coverage - a row that is still
+	 * there but carries less than the request asks for - is not in the
+	 * table because it cannot be produced in-process: the read and the
+	 * write are one call, and the only way the write reports no rows is a
+	 * value that is already what the write would store, which is full
+	 * coverage by definition.
+	 *
+	 * @return void
+	 */
+	public function test_the_bound_a_request_gets_follows_its_scope_and_its_coverage() {
+		$cap = MainWP_Backup_Monitor::NATIVE_REQUEST_TIMEOUT_SECONDS;
+
+		// With nothing in scope there is no row to bound against and no
+		// filter installed either, so this row of the matrix is only
+		// reachable by calling the resolver the way the callbacks do.
+		$resolve = new \ReflectionMethod( MainWP_Backup_Monitor::class, 'resolve_native_bound' );
+		$resolve->setAccessible( true );
+
+		$out_of_scope = array(
+			'no scope, no timeout offered'  => array( 0, $cap ),
+			'no scope, negative timeout'    => array( -1, $cap ),
+			'no scope, non-numeric timeout' => array( 'none', $cap ),
+			'no scope, shorter timeout'     => array( 120, 120 ),
+		);
+		foreach ( $out_of_scope as $label => $case ) {
+			$this->assertSame( $case[1], $resolve->invoke( null, $case[0], $cap ), $label );
+			$this->assertFalse( MainWP_Backup_Monitor::native_lease_lost(), $label . ' - nothing in scope can lose a slot.' );
 		}
 
-		try {
-			apply_filters(
-				'mainwp_download_to_file_timeouts',
-				array(
-					'connect_timeout' => 30,
-					'timeout'         => 7200,
-				)
-			);
-			$this->fail( 'A transfer with no coverage left must not be given a timeout either.' );
-		} catch ( MainWP_Exception $e ) {
-			$this->assertSame( MainWP_Backup_Error_Codes::ERR_SLOT_LOST, $e->get_message_error_code() );
+		$this->acquire_leased_slot();
+
+		$in_scope = array(
+			'the transport backstop is clamped to the native bound' => array( 20 * HOUR_IN_SECONDS, $cap ),
+			'a shorter bound already in force wins'                 => array( 120, 120 ),
+			'zero is libcurl\'s no-timeout, so it takes the bound'   => array( 0, $cap ),
+			'a negative timeout is no timeout either'               => array( -1, $cap ),
+			'a non-numeric timeout is no timeout either'            => array( 'none', $cap ),
+		);
+		foreach ( $in_scope as $label => $case ) {
+			$this->assertSame( $case[1], apply_filters( 'mainwp_fetch_url_site_timeout', $case[0], null ), $label );
+			$this->assertFalse( MainWP_Backup_Monitor::native_lease_lost(), $label . ' - and the slot is still held.' );
 		}
+
+		$lost = 0;
+		add_action(
+			'mainwp_backup_diag_slot',
+			function ( $event ) use ( &$lost ) {
+				if ( 'lost' === $event ) {
+					++$lost;
+				}
+			},
+			10,
+			4
+		);
+
+		$this->purge_slot_rows();
+
+		$this->assertSame( self::LOST_SLOT_BOUND, apply_filters( 'mainwp_fetch_url_site_timeout', 20 * HOUR_IN_SECONDS, null ), 'No coverage left cuts the request to the floor.' );
+		$this->assertTrue( MainWP_Backup_Monitor::native_lease_lost() );
+		$this->assertSame( 1, $lost, 'The loss is traced once.' );
+
+		$this->assertSame( self::LOST_SLOT_BOUND, apply_filters( 'mainwp_fetch_url_site_timeout', 20 * HOUR_IN_SECONDS, null ) );
+		$this->assertSame( 1, $lost, 'Every later request in the same run finds the same thing and must not re-trace it.' );
 	}
 
 	/**
@@ -350,9 +425,10 @@ class MainWP_Backup_Slot_Lease_Test extends MainWP_Abilities_Test_Case {
 	/**
 	 * A holder whose row was reclaimed and re-owned while it was away
 	 * refreshes nothing: the compare-and-update misses the new value, so
-	 * the zombie's next request fails closed instead of running on under
-	 * the new owner's slot, the new holder's lease is untouched, and the
-	 * zombie's release still frees nothing.
+	 * the zombie is flagged as having lost its slot and its next request
+	 * is cut to the floor instead of running on under the new owner's
+	 * slot, the new holder's lease is untouched, and the zombie's release
+	 * still frees nothing.
 	 *
 	 * @return void
 	 */
@@ -376,12 +452,12 @@ class MainWP_Backup_Slot_Lease_Test extends MainWP_Abilities_Test_Case {
 		);
 		$wpdb->query( $wpdb->prepare( "INSERT INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')", $name, $replacement ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture for the DB semaphore.
 
-		try {
-			apply_filters( 'mainwp_fetch_url_site_timeout', 20 * HOUR_IN_SECONDS, null );
-			$this->fail( 'A zombie holder must not be handed a timeout to keep working under.' );
-		} catch ( MainWP_Exception $e ) {
-			$this->assertSame( MainWP_Backup_Error_Codes::ERR_SLOT_LOST, $e->get_message_error_code() );
-		}
+		$this->assertSame(
+			self::LOST_SLOT_BOUND,
+			apply_filters( 'mainwp_fetch_url_site_timeout', 20 * HOUR_IN_SECONDS, null ),
+			'A zombie holder must not be handed a timeout to keep working under.'
+		);
+		$this->assertTrue( MainWP_Backup_Monitor::native_lease_lost(), 'The zombie knows it lost its slot.' );
 
 		$rows = $this->slot_rows();
 		$this->assertSame( 'new-owner', $rows[ $name ]['token'] ?? '' );
@@ -560,5 +636,162 @@ class MainWP_Backup_Slot_Lease_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( 'legacy', $row['lane'] ?? '', 'Run Now holds a legacy slot.' );
 		$this->assertArrayNotHasKey( 'heartbeat', $row, 'A legacy row carries no lease to expire.' );
 		$this->assertFalse( $armed, 'A legacy holder must not clamp its own long round trip.' );
+	}
+
+	/**
+	 * Replace slot 1 with a row another process owns, the way a reclaim
+	 * plus a fresh claim would leave it.
+	 *
+	 * @return void
+	 */
+	private function steal_slot_row() {
+		global $wpdb;
+
+		$name = MainWP_Backup_Monitor::SLOT_OPTION_PREFIX . '1';
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name = %s", $name ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture for the DB semaphore.
+		$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture for the DB semaphore.
+			$wpdb->prepare(
+				"INSERT INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')",
+				$name,
+				(string) wp_json_encode(
+					array(
+						'token'     => 'slot-stolen-by-another-process',
+						'started'   => time(),
+						'pid'       => 2,
+						'lane'      => 'native',
+						'heartbeat' => time(),
+						'lease'     => MainWP_Backup_Monitor::DEFAULT_SLOT_LEASE_SECONDS,
+					)
+				)
+			)
+		);
+	}
+
+	/**
+	 * The decision the filters no longer make themselves: a holder whose
+	 * slot went to another process stops the run instead of driving the
+	 * rest of the task under a slot it does not own. Nothing is marked
+	 * complete, the reason reaches the task row, and the scope closes
+	 * clean.
+	 *
+	 * @return void
+	 */
+	public function test_a_holder_that_loses_its_slot_stops_the_run_without_completing_a_site() {
+		$user = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $user );
+		$first  = $this->create_test_site(
+			array(
+				'userid' => $user,
+				'url'    => 'http://127.0.0.1:9/first/',
+			)
+		);
+		$second = $this->create_test_site(
+			array(
+				'userid' => $user,
+				'url'    => 'http://127.0.0.1:9/second/',
+			)
+		);
+		$task   = MainWP_DB_Backup::instance()->add_backup_task( $user, 'Slot lease lost holder task', 'manual', 'full', '', $first . ',' . $second, '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0 );
+		$this->assertNotFalse( $task, 'Precondition: the task row must insert.' );
+
+		$stolen       = false;
+		$lost         = 0;
+		$flag_at_lost = null;
+		add_action(
+			'mainwp_backup_diag_slot',
+			function ( $event ) use ( &$stolen, &$lost, &$flag_at_lost ) {
+				if ( 'acquired' === $event && ! $stolen ) {
+					$stolen = true;
+					$this->steal_slot_row();
+				}
+				if ( 'lost' === $event ) {
+					++$lost;
+					$flag_at_lost = MainWP_Backup_Monitor::native_lease_lost();
+				}
+			},
+			10,
+			4
+		);
+
+		$marked = array();
+		add_action(
+			'mainwp_backup_diag_site_mark',
+			function ( $task_id, $site_id ) use ( &$marked ) {
+				$marked[] = (int) $site_id;
+			},
+			10,
+			4
+		);
+
+		$result = MainWP_Manage_Backups_Handler::execute_backup_task( $task );
+
+		$this->assertTrue( $stolen, 'Precondition: the run must claim a slot for another process to take.' );
+		$this->assertFalse( $result, 'A run that lost its slot has not completed.' );
+		$this->assertSame( 1, $lost, 'The loss is traced once, not once per site.' );
+		$this->assertTrue( $flag_at_lost, 'The flag the holder reads is set before the loss is traced.' );
+		$this->assertSame( array(), $marked, 'Neither site may be driven under a slot this holder no longer owns.' );
+
+		$row = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$this->assertNotEmpty( $row, 'Precondition: the task row must still be there.' );
+		$this->assertEmpty( json_decode( (string) $row->completed_sites, true ), 'No site is retired by a run that lost its slot.' );
+		$this->assertStringContainsString(
+			MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_SLOT_LOST ),
+			(string) $row->backup_errors,
+			'The reason the run stopped reaches the task row and the failure email path.'
+		);
+
+		$this->assertFalse( MainWP_Backup_Monitor::native_lease_lost(), 'Closing the scope clears the flag for the next run in this process.' );
+		$this->assertFalse( has_filter( 'mainwp_fetch_url_site_timeout' ), 'The scope closes with the run.' );
+		$this->assertFalse( has_filter( 'mainwp_download_to_file_timeouts' ), 'The scope closes with the run.' );
+	}
+
+	/**
+	 * Hashing a downloaded artifact in chunks, so the lease can be
+	 * refreshed while it runs, produces the digest hash_file() would.
+	 *
+	 * @return void
+	 */
+	public function test_the_chunked_artifact_hash_matches_hash_file() {
+		// Larger than one chunk, so the loop runs more than once.
+		$file  = wp_tempnam( 'mainwp-hash-stream' );
+		$bytes = MainWP_Backup_File_Manager::HASH_CHUNK_BYTES + 4096;
+		file_put_contents( $file, str_repeat( 'mainwp-artifact-', (int) ceil( $bytes / 16 ) ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+
+		$hash = new \ReflectionMethod( MainWP_Backup_File_Manager::class, 'hash_artifact' );
+		$hash->setAccessible( true );
+
+		$this->assertSame( hash_file( 'sha256', $file ), $hash->invoke( null, $file ) );
+
+		wp_delete_file( $file );
+	}
+
+	/**
+	 * A lease lost while an artifact is being hashed stops the hash and
+	 * removes the file, the same shape a bad download takes: the slot may
+	 * already be re-owned by a process writing this same path, so the
+	 * bytes cannot be trusted.
+	 *
+	 * @return void
+	 */
+	public function test_the_artifact_hash_stops_and_clears_the_file_when_the_slot_is_lost() {
+		$this->acquire_leased_slot();
+		$this->purge_slot_rows();
+		MainWP_Backup_Monitor::touch_native_leases( MainWP_Backup_Monitor::DEFAULT_SLOT_LEASE_SECONDS );
+		$this->assertTrue( MainWP_Backup_Monitor::native_lease_lost(), 'Precondition: the direct tick must see the row is gone.' );
+
+		$file = wp_tempnam( 'mainwp-hash-lost' );
+		file_put_contents( $file, 'artifact bytes' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+
+		$hash = new \ReflectionMethod( MainWP_Backup_File_Manager::class, 'hash_artifact' );
+		$hash->setAccessible( true );
+
+		try {
+			$hash->invoke( null, $file );
+			$this->fail( 'An artifact hashed under a lost slot must not be reported as verified.' );
+		} catch ( MainWP_Exception $e ) {
+			$this->assertSame( MainWP_Backup_Error_Codes::ERR_SLOT_LOST, $e->get_message_error_code() );
+		}
+
+		$this->assertFileDoesNotExist( $file, 'The unverifiable artifact is removed the way a bad download is.' );
 	}
 }

@@ -1055,7 +1055,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         if ( $has_file_upload ) {
             $import_client_data = static::handle_client_import_files();
         }
-        if ( ! is_array( $import_client_data ) || ! isset( $import_client_data['data'] ) ) {
+        if ( ! is_array( $import_client_data ) || empty( $import_client_data['data'] ) || ! is_array( $import_client_data['data'] ) ) {
             return new \WP_Error(
                 'client_import_failed',
                 __( 'Failed to import client data. Please try again.', 'mainwp' )
@@ -1171,6 +1171,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         global $wp_filesystem;
 
         $lines = array();
+        $header_line = '';
 
         if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
             $content = $wp_filesystem->get_contents( $tmp_path );

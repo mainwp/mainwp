@@ -2162,7 +2162,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             if ( ! $upld_success ) {
                 $errors[] = esc_html__( 'File could not be uploaded. Temporary file cold not be created. Please make sure that the tmpfile() PHP function is enabled on your server.', 'mainwp' );
             } else {
-                    $line = array();
+                    $lines = array();
 
                     $hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
 

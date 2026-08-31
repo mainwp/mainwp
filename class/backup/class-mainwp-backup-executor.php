@@ -178,7 +178,11 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         $backup_result = array();
 
         // Creating a backup.
-        $website   = MainWP_DB::instance()->get_website_by_id( $siteid );
+        $website = MainWP_DB::instance()->get_website_by_id( $siteid );
+        if ( empty( $website ) ) {
+            throw new MainWP_Exception( esc_html__( 'Site not found.', 'mainwp' ) );
+        }
+
         $subfolder = str_replace( '%sitename%', MainWP_Utility::sanitize( $website->name ), $subfolder );
         $subfolder = str_replace( '%url%', MainWP_Utility::sanitize( MainWP_Utility::get_nice_url( $website->url ) ), $subfolder );
         $subfolder = str_replace( '%type%', $type, $subfolder );

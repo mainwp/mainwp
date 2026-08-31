@@ -208,16 +208,7 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
      */
     public function acquire_next_job( string $token, int $lease_seconds = 300, ?int $now = null, ?int $job_id = null ): ?object {
         $now          = null === $now ? time() : $now;
-        $statuses     = array(
-            self::STATUS_PENDING,
-            self::STATUS_PREFLIGHT,
-            self::STATUS_PRE_SNAPSHOT,
-            self::STATUS_STAGING,
-            self::STATUS_TRANSFERRING,
-            self::STATUS_RUNNING,
-            self::STATUS_VERIFYING,
-            self::STATUS_FAILED_RETRYABLE,
-        );
+        $statuses     = self::active_statuses();
         $placeholders = implode( ',', array_fill( 0, count( $statuses ), '%s' ) );
 
         // A job whose expired lease has already been reclaimed past the

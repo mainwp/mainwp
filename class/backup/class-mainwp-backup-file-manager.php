@@ -137,6 +137,11 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
         krsort( $dbBackups );
         krsort( $fullBackups );
 
+        // Both lists are newest-first and the sweep runs BEFORE the incoming
+        // artifact is written into this same directory, so the cut is
+        // >= $maxBackups on purpose: it keeps $maxBackups - 1 existing files
+        // and the download about to land restores the count to exactly
+        // $maxBackups. A strict > would leave one file too many.
         $cnt = 0;
         foreach ( $dbBackups as $key => $dbBackup ) {
             ++$cnt;
@@ -154,6 +159,9 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
         }
 
         $website = MainWP_DB::instance()->get_website_by_id( $pSiteId );
+        if ( empty( $website ) ) {
+            throw new MainWP_Exception( esc_html__( 'Site not found.', 'mainwp' ) );
+        }
         MainWP_Utility::end_session();
 
         // MWP-1548: decrypt once at function boundary; both branches use the same credentials.

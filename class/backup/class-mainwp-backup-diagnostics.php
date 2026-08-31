@@ -655,6 +655,12 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * provider credentials - and the snapshot rows are exported without
      * their encryption metadata.
      *
+     * The export endpoint is gated on the global execute_backups
+     * capability, which says nothing about which sites the caller may
+     * reach, so a site-scoped user gets a bundle narrowed to their own
+     * sites: the per-site table rows, the per-site event files, and the
+     * shared _global stream line by line.
+     *
      * @return string Bundle path, or '' when there is nothing to export
      *                or the bundle could not be written.
      */
@@ -670,8 +676,10 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 return '';
             }
 
-            $sections = $this->bundle_sections( $dir );
-            $base     = $dir . 'diagnostics-bundle-' . gmdate( 'Ymd-His' );
+            $allowed_sites = $this->export_scope_site_ids();
+            $sections      = $this->bundle_sections( $dir, $allowed_sites );
+            $events        = $this->scope_event_files( $event_files, $allowed_sites, $sections['tasks'] );
+            $base          = $dir . 'diagnostics-bundle-' . gmdate( 'Ymd-His' );
 
             if ( class_exists( \ZipArchive::class ) ) {
                 $path = $base . '.zip';
@@ -682,8 +690,11 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 foreach ( $sections as $name => $data ) {
                     $zip->addFromString( $name . '.json', (string) wp_json_encode( $data, JSON_PRETTY_PRINT ) );
                 }
-                foreach ( $event_files as $event_file ) {
+                foreach ( $events['files'] as $event_file ) {
                     $zip->addFile( $event_file, 'events/' . basename( $event_file ) );
+                }
+                foreach ( $events['blobs'] as $name => $content ) {
+                    $zip->addFromString( 'events/' . $name, $content );
                 }
                 $zip->close();
                 return $path;
@@ -692,9 +703,12 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
             // No ZipArchive on this host: one plain JSON document instead.
             $payload           = $sections;
             $payload['events'] = array();
-            foreach ( $event_files as $event_file ) {
+            foreach ( $events['files'] as $event_file ) {
                 $lines                                        = (string) file_get_contents( $event_file ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- bounded local read.
                 $payload['events'][ basename( $event_file ) ] = array_values( array_filter( explode( "\n", $lines ) ) );
+            }
+            foreach ( $events['blobs'] as $name => $content ) {
+                $payload['events'][ $name ] = array_values( array_filter( explode( "\n", $content ) ) );
             }
             $path = $base . '.json';
             if ( false === file_put_contents( $path, wp_json_encode( $payload ) ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions -- local bundle write.
@@ -707,14 +721,183 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
     }
 
     /**
+     * The site ids the current user may receive rows for, or null when the
+     * user can reach every site the dashboard manages (the common
+     * single-user case, which exports exactly as before).
+     *
+     * The two checks are the ones every per-site backup path already
+     * applies - MainWP_Post_Backup_Handler::authorize_restore_site() and
+     * MainWP_Manage_Backups_Handler::authorize_task_scope() both gate on
+     * can_edit_website() plus the 'site' right.
+     *
+     * @return int[]|null Allowed site ids, or null when unrestricted.
+     */
+    private function export_scope_site_ids(): ?array {
+        global $wpdb;
+
+        $site_ids = (array) $wpdb->get_col( 'SELECT id FROM ' . MainWP_DB::instance()->get_table_name( 'wp' ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery -- id list of a known internal table, no user input.
+
+        $allowed = array();
+        foreach ( $site_ids as $site_id ) {
+            $site_id = (int) $site_id;
+            $website = MainWP_DB::instance()->get_website_by_id( $site_id );
+            if ( MainWP_System_Utility::can_edit_website( $website ) && \mainwp_current_user_can( 'site', $site_id ) ) {
+                $allowed[] = $site_id;
+            }
+        }
+
+        return count( $allowed ) === count( $site_ids ) ? null : $allowed;
+    }
+
+    /**
+     * Split the event files into the ones copied verbatim and the ones
+     * rewritten line by line, honoring the caller's site scope.
+     *
+     * Run keys carry their site: "terminal-<site>", "<task>-<site>" and
+     * "<task>-<site>-preflight" name it directly, and "restore-<job>" /
+     * "rtransfer-<child task>" resolve through the restore job table. The
+     * shared _global stream mixes sites, so it is filtered by each line's
+     * own site_id and task_id instead of being dropped. A run key whose
+     * site cannot be resolved is left out rather than guessed at.
+     *
+     * @param string[]   $event_files Absolute paths of the run event files.
+     * @param int[]|null $allowed     Allowed site ids, null when unrestricted.
+     * @param array      $tasks       The exported task rows, already scoped.
+     *
+     * @return array{files:string[],blobs:array<string,string>}
+     */
+    private function scope_event_files( array $event_files, ?array $allowed, array $tasks ): array {
+        if ( null === $allowed ) {
+            return array(
+                'files' => $event_files,
+                'blobs' => array(),
+            );
+        }
+
+        $allowed_tasks = array_map( static fn( $task ) => (int) $task['id'], $tasks );
+        $by_run_key    = $this->restore_run_key_sites();
+
+        // record() names files with sanitize_file_name(), which trims the
+        // leading underscore, so the shared stream is on disk as "global".
+        $global_key = sanitize_file_name( '_global' );
+
+        $files = array();
+        $blobs = array();
+        foreach ( $event_files as $event_file ) {
+            $run_key = basename( $event_file, '.jsonl' );
+            if ( $global_key === $run_key ) {
+                $blobs[ basename( $event_file ) ] = $this->filter_event_lines( $event_file, $allowed, $allowed_tasks );
+                continue;
+            }
+
+            $site_id = isset( $by_run_key[ $run_key ] ) ? $by_run_key[ $run_key ] : $this->run_key_site_id( $run_key );
+            if ( null !== $site_id && in_array( $site_id, $allowed, true ) ) {
+                $files[] = $event_file;
+            }
+        }
+
+        return array(
+            'files' => $files,
+            'blobs' => $blobs,
+        );
+    }
+
+    /**
+     * The site behind every restore-scoped run key, keyed by run key.
+     *
+     * @return array<string,int> Run key => site id.
+     */
+    private function restore_run_key_sites(): array {
+        global $wpdb;
+
+        $rows = (array) $wpdb->get_results( 'SELECT id, site_id, child_task_id FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery -- known internal table, no user input.
+
+        // Keyed by the on-disk file name, which record() ran through
+        // sanitize_file_name(), so a child task id carrying a trimmed
+        // character still matches its file.
+        $map = array();
+        foreach ( $rows as $row ) {
+            $map[ sanitize_file_name( 'restore-' . (int) $row['id'] ) ] = (int) $row['site_id'];
+            if ( '' !== (string) $row['child_task_id'] ) {
+                $map[ sanitize_file_name( 'rtransfer-' . (string) $row['child_task_id'] ) ] = (int) $row['site_id'];
+            }
+        }
+
+        return $map;
+    }
+
+    /**
+     * The site id a name-scoped run key belongs to, or null when the key
+     * does not name one.
+     *
+     * @param string $run_key Run key (the event file's base name).
+     *
+     * @return int|null Site id, or null when unresolvable.
+     */
+    private function run_key_site_id( string $run_key ): ?int {
+        if ( 0 === strpos( $run_key, 'terminal-' ) ) {
+            $site_id = (int) substr( $run_key, strlen( 'terminal-' ) );
+            return $site_id > 0 ? $site_id : null;
+        }
+
+        // "<task>-<site>", plus the optional child task id or "preflight"
+        // suffix the poll and preflight keys carry.
+        $parts = explode( '-', $run_key );
+        if ( count( $parts ) >= 2 && ctype_digit( $parts[0] ) && ctype_digit( $parts[1] ) && (int) $parts[1] > 0 ) {
+            return (int) $parts[1];
+        }
+
+        return null;
+    }
+
+    /**
+     * Read one event file and keep only the lines within the caller's
+     * scope: a line naming no site and no task (a host-level slot or
+     * guardrail record) stays, one naming either must name an allowed one.
+     *
+     * @param string $file          Event file path.
+     * @param int[]  $allowed_sites Allowed site ids.
+     * @param int[]  $allowed_tasks Allowed task ids.
+     *
+     * @return string The kept lines, newline separated.
+     */
+    private function filter_event_lines( string $file, array $allowed_sites, array $allowed_tasks ): string {
+        $lines = explode( "\n", (string) file_get_contents( $file ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- bounded local read.
+
+        $kept = array();
+        foreach ( $lines as $line ) {
+            if ( '' === trim( $line ) ) {
+                continue;
+            }
+            $event = json_decode( $line, true );
+            if ( ! is_array( $event ) ) {
+                continue;
+            }
+            $site_id = isset( $event['site_id'] ) ? (int) $event['site_id'] : 0;
+            $task_id = isset( $event['task_id'] ) ? (int) $event['task_id'] : 0;
+            if ( 0 !== $site_id && ! in_array( $site_id, $allowed_sites, true ) ) {
+                continue;
+            }
+            if ( 0 !== $task_id && ! in_array( $task_id, $allowed_tasks, true ) ) {
+                continue;
+            }
+            $kept[] = $line;
+        }
+
+        return implode( "\n", $kept );
+    }
+
+    /**
      * The bundle's JSON sections: the environment summary plus bounded
      * dumps of the backup tables.
      *
-     * @param string $dir Diagnostics directory (for the disk-free probe).
+     * @param string     $dir     Diagnostics directory (for the disk-free probe).
+     * @param int[]|null $allowed Site ids the caller may receive rows for;
+     *                            null exports every site.
      *
      * @return array Section name => data.
      */
-    private function bundle_sections( string $dir ): array {
+    private function bundle_sections( string $dir, ?array $allowed = null ): array {
         global $wpdb;
 
         /**
@@ -725,17 +908,35 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
         $cap       = max( 1, (int) apply_filters( 'mainwp_backup_diagnostics_export_row_cap', 5000 ) );
         $truncated = false;
 
-        $tables   = array(
-            'tasks'        => 'wp_backup',
-            'snapshots'    => 'wp_backup_snapshot',
-            'progress'     => 'wp_backup_progress',
-            'restore_jobs' => 'wp_backup_restore_job',
-            'upload_jobs'  => 'wp_backup_upload_job',
+        // A scoped caller gets the same tables narrowed to their own sites.
+        // The narrowing is pushed into SQL for the site-keyed tables so the
+        // row cap is spent on rows they may actually see, rather than
+        // trimming a full-network page down to nothing.
+        $snapshot_table = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+        $scoped         = null !== $allowed;
+        $site_list      = $scoped ? implode( ',', array_map( 'intval', $allowed ) ) : '';
+
+        $tables = array(
+            'tasks'        => array( 'wp_backup', '' ),
+            'snapshots'    => array( 'wp_backup_snapshot', 'site_id IN (' . $site_list . ')' ),
+            'progress'     => array( 'wp_backup_progress', 'wp_id IN (' . $site_list . ')' ),
+            'restore_jobs' => array( 'wp_backup_restore_job', 'site_id IN (' . $site_list . ')' ),
+            'upload_jobs'  => array( 'wp_backup_upload_job', 'snapshot_id IN ( SELECT id FROM ' . $snapshot_table . ' WHERE site_id IN (' . $site_list . ') )' ),
         );
+
         $sections = array();
-        foreach ( $tables as $name => $table ) {
+        foreach ( $tables as $name => $spec ) {
+            list( $table, $scope_where ) = $spec;
+
+            if ( $scoped && '' !== $scope_where && empty( $allowed ) ) {
+                // No reachable site: no per-site rows, and no "IN ()" query.
+                $sections[ $name ] = array();
+                continue;
+            }
+
             $table_name = MainWP_DB::instance()->get_table_name( $table );
-            $rows       = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM ' . $table_name . ' LIMIT %d', $cap + 1 ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery -- bounded diagnostic dump of a known internal table.
+            $where      = $scoped && '' !== $scope_where ? ' WHERE ' . $scope_where : '';
+            $rows       = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM ' . $table_name . $where . ' LIMIT %d', $cap + 1 ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- bounded diagnostic dump of a known internal table; the scope clause interpolates only intval'd site ids.
             $rows       = is_array( $rows ) ? $rows : array();
             if ( count( $rows ) > $cap ) {
                 $rows      = array_slice( $rows, 0, $cap );
@@ -745,6 +946,21 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 foreach ( $rows as $index => $row ) {
                     unset( $rows[ $index ]['encryption'] );
                 }
+            }
+            // The task table names its sites in a comma list (and through
+            // groups), so it cannot be narrowed in SQL: a task is exported
+            // only when every site it targets is one the caller may reach,
+            // the same rule the task edit gate applies.
+            if ( 'tasks' === $name && $scoped ) {
+                $rows = array_values(
+                    array_filter(
+                        $rows,
+                        static function ( $row ) use ( $allowed ) {
+                            $task_sites = MainWP_Manage_Backups_Handler::expand_task_site_ids( $row['sites'] ?? '', $row['groups'] ?? '' );
+                            return array() === array_diff( $task_sites, $allowed );
+                        }
+                    )
+                );
             }
             $sections[ $name ] = $rows;
         }
@@ -766,8 +982,12 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
         $wp_table      = MainWP_DB::instance()->get_table_name( 'wp' );
         $sync_table    = MainWP_DB::instance()->get_table_name( 'wp_sync' );
         $options_table = MainWP_DB::instance()->get_table_name( 'wp_options' );
-        $site_rows     = $wpdb->get_results( $wpdb->prepare( 'SELECT w.id, w.name, w.url, s.version FROM ' . $wp_table . ' w LEFT JOIN ' . $sync_table . ' s ON s.wpid = w.id LIMIT %d', $cap + 1 ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery -- bounded diagnostic dump of a known internal table.
-        $site_rows     = is_array( $site_rows ) ? $site_rows : array();
+        $site_where    = $scoped ? ' WHERE w.id IN (' . $site_list . ')' : '';
+        $site_rows     = array();
+        if ( ! $scoped || ! empty( $allowed ) ) {
+            $site_rows = $wpdb->get_results( $wpdb->prepare( 'SELECT w.id, w.name, w.url, s.version FROM ' . $wp_table . ' w LEFT JOIN ' . $sync_table . ' s ON s.wpid = w.id' . $site_where . ' LIMIT %d', $cap + 1 ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- bounded diagnostic dump of a known internal table; the scope clause interpolates only intval'd site ids.
+        }
+        $site_rows = is_array( $site_rows ) ? $site_rows : array();
         if ( count( $site_rows ) > $cap ) {
             $site_rows = array_slice( $site_rows, 0, $cap );
             $truncated = true;

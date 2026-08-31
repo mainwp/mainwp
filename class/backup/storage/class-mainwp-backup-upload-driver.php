@@ -616,6 +616,9 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
         if ( ! empty( $enc['encrypt'] ) ) {
             $meta                   = is_array( $enc['meta'] ) ? $enc['meta'] : array();
             $manifest['encryption'] = array(
+                // The recovering child gates on this marker (meta_is_encrypted);
+                // without it every encrypted bundle is refused as plaintext.
+                'enc'            => 1,
                 'cipher'         => MainWP_Backup_Encryption::CIPHER_ID,
                 'overhead'       => MainWP_Backup_Archive_Cipher::OVERHEAD,
                 'wrapped_dek'    => isset( $meta['wrapped_dek'] ) ? (string) $meta['wrapped_dek'] : '',

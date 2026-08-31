@@ -456,7 +456,15 @@ class MainWP_Backup_Storage_S3 implements MainWP_Backup_Storage_Provider, MainWP
             return $endpoint . '/' . $bucket;
         }
 
+        // A malformed endpoint gives no host to prefix the bucket onto
+        // (wp_parse_url returns false, or a parse with no host). Fall back to
+        // the path-style form so the caller gets an obviously wrong URL that
+        // fails the request rather than a fatal on a missing key.
         $parts = wp_parse_url( $endpoint );
+        if ( ! is_array( $parts ) || empty( $parts['scheme'] ) || empty( $parts['host'] ) ) {
+            return $endpoint . '/' . $bucket;
+        }
+
         return $parts['scheme'] . '://' . $bucket . '.' . $parts['host'] . ( isset( $parts['port'] ) ? ':' . $parts['port'] : '' );
     }
 

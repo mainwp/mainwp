@@ -201,4 +201,28 @@ class MainWP_Backup_Cancel_Handler_Test extends MainWP_Abilities_Test_Case {
 		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
 		$this->assertLessThan( (int) $task->last_run, (int) $task->completed, 'A refused cancel must not close the local run.' );
 	}
+
+	/**
+	 * A "busy" result is the child refusing because a live runner still owns
+	 * the lease mid-slice. The backup is still running, so the handler must
+	 * report that instead of closing the run and clearing the projection.
+	 *
+	 * @return void
+	 */
+	public function test_cancel_busy_result_is_reported_and_run_stays_open() {
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		list( $site_id, $task ) = $this->make_in_flight_run();
+
+		list( $response, ) = $this->invoke_cancel( $site_id, array( 'result' => 'busy' ) );
+
+		$this->assertIsArray( $response );
+		$this->assertNotSame( 'cancelled', $response['status'] ?? null, 'A busy child must not read as a completed cancel.' );
+		$this->assertNotEmpty( $response['error'] ?? '', 'A busy child must surface an error the user can act on.' );
+
+		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$this->assertLessThan( (int) $task->last_run, (int) $task->completed, 'A busy cancel must not close the local run.' );
+
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( (int) $task->id, $site_id );
+		$this->assertSame( 'child-task-123', (string) $progress->child_backup_task_id, 'A busy cancel must keep the live child task id on the row.' );
+	}
 }

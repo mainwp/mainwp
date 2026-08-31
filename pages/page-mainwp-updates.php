@@ -437,7 +437,17 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         // enforce, so it cannot show "ready" for a snapshot the automatic
         // and interactive checks would refuse under a strict policy.
         $require_offsite = (bool) get_option( 'mainwp_backup_before_upgrade_require_offsite', 0 );
-        $has_recent      = MainWP_Backup_Executor::has_recent_native_backup( (int) $website->id, $max_age_days, $require_offsite );
+
+        // The per-group view renders the same site once per group it belongs
+        // to, so the snapshot lookup is memoized per request. Keyed on the
+        // arguments that change the answer, not the site alone.
+        static $recent_cache = array();
+
+        $cache_key = (int) $website->id . '|' . $max_age_days . '|' . ( $require_offsite ? '1' : '0' );
+        if ( ! isset( $recent_cache[ $cache_key ] ) ) {
+            $recent_cache[ $cache_key ] = MainWP_Backup_Executor::has_recent_native_backup( (int) $website->id, $max_age_days, $require_offsite );
+        }
+        $has_recent = $recent_cache[ $cache_key ];
 
         if ( $has_recent ) {
             $tooltip = sprintf(

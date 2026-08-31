@@ -1061,6 +1061,84 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * The export endpoint is gated on the global execute_backups
+	 * capability, which says nothing about which sites the caller may
+	 * reach. A site-scoped user must get a bundle carrying only their own
+	 * sites: the per-site table rows, the per-site event files, and the
+	 * shared _global stream filtered line by line.
+	 *
+	 * @return void
+	 */
+	public function test_export_bundle_scopes_rows_and_events_to_allowed_sites() {
+		if ( ! class_exists( \ZipArchive::class ) ) {
+			$this->markTestSkipped( 'ZipArchive is unavailable in this environment.' );
+		}
+
+		$this->enable_recorder();
+
+		$user = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $user );
+
+		$site_allowed = $this->create_test_site();
+		$site_denied  = $this->create_test_site();
+
+		$task_allowed = MainWP_DB_Backup::instance()->add_backup_task( $user, 'Scoped allowed task', 'daily', 'full', '', (string) $site_allowed, '', '', '', 0, 0, 0, 0, 0, 'tar.gz', 0, 1, 150, 0, 0 );
+		$task_denied  = MainWP_DB_Backup::instance()->add_backup_task( $user, 'Scoped denied task', 'daily', 'full', '', (string) $site_denied, '', '', '', 0, 0, 0, 0, 0, 'tar.gz', 0, 1, 150, 0, 0 );
+		$this->assertNotFalse( $task_allowed, 'Precondition: the allowed task row must insert.' );
+		$this->assertNotFalse( $task_denied, 'Precondition: the denied task row must insert.' );
+
+		MainWP_DB_Backup::instance()->add_backup_task_progress( (int) $task_allowed->id, $site_allowed, array() );
+		MainWP_DB_Backup::instance()->add_backup_task_progress( (int) $task_denied->id, $site_denied, array() );
+
+		MainWP_Backup_Diagnostics::instance()->record( 'terminal-' . $site_allowed, 'terminal', $site_allowed, 0, array( 'success' => true ) );
+		MainWP_Backup_Diagnostics::instance()->record( 'terminal-' . $site_denied, 'terminal', $site_denied, 0, array( 'success' => true ) );
+		MainWP_Backup_Diagnostics::instance()->record( '_global', 'site_mark', $site_allowed, (int) $task_allowed->id, array( 'outcome' => 'allowed-mark' ) );
+		MainWP_Backup_Diagnostics::instance()->record( '_global', 'site_mark', $site_denied, (int) $task_denied->id, array( 'outcome' => 'denied-mark' ) );
+
+		$deny = function ( $allowed, $cap_type, $cap ) use ( $site_denied ) {
+			if ( 'site' === $cap_type && (int) $cap === (int) $site_denied ) {
+				return false;
+			}
+			return $allowed;
+		};
+		add_filter( 'mainwp_currentusercan', $deny, 10, 3 );
+
+		$bundle = MainWP_Backup_Diagnostics::instance()->export_bundle();
+
+		remove_filter( 'mainwp_currentusercan', $deny, 10 );
+
+		$this->assertNotSame( '', $bundle );
+
+		$zip = new \ZipArchive();
+		$this->assertTrue( $zip->open( $bundle ) );
+		$sites    = json_decode( (string) $zip->getFromName( 'sites.json' ), true );
+		$tasks    = json_decode( (string) $zip->getFromName( 'tasks.json' ), true );
+		$progress = json_decode( (string) $zip->getFromName( 'progress.json' ), true );
+		$global   = (string) $zip->getFromName( 'events/' . sanitize_file_name( '_global' ) . '.jsonl' );
+		$kept     = $zip->locateName( 'events/terminal-' . $site_allowed . '.jsonl' );
+		$dropped  = $zip->locateName( 'events/terminal-' . $site_denied . '.jsonl' );
+		$zip->close();
+
+		$site_ids = array_map( 'intval', array_column( (array) $sites, 'id' ) );
+		$this->assertContains( $site_allowed, $site_ids, 'The reachable site must stay in the bundle.' );
+		$this->assertNotContains( $site_denied, $site_ids, 'A site the caller cannot reach must not be exported.' );
+
+		$task_names = array_column( (array) $tasks, 'name' );
+		$this->assertContains( 'Scoped allowed task', $task_names );
+		$this->assertNotContains( 'Scoped denied task', $task_names, 'A task over an out-of-scope site must not be exported.' );
+
+		$progress_sites = array_map( 'intval', array_column( (array) $progress, 'wp_id' ) );
+		$this->assertContains( $site_allowed, $progress_sites );
+		$this->assertNotContains( $site_denied, $progress_sites, 'Progress rows must be narrowed to the allowed sites.' );
+
+		$this->assertNotFalse( $kept, 'The allowed site\'s own event file must ride along.' );
+		$this->assertFalse( $dropped, 'An out-of-scope site\'s event file must not be exported.' );
+
+		$this->assertStringContainsString( 'allowed-mark', $global, 'The shared stream keeps the caller\'s own lines.' );
+		$this->assertStringNotContainsString( 'denied-mark', $global, 'The shared stream must drop out-of-scope lines.' );
+	}
+
+	/**
 	 * With no recorded events there is nothing worth exporting.
 	 *
 	 * @return void

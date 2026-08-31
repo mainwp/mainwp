@@ -152,7 +152,7 @@ class MainWP_Backup_List_View { // phpcs:ignore Generic.Classes.OpeningBraceSame
         ?>
         <tr>
         <?php
-        foreach ( $columns as $column_name => $title ) {
+        foreach ( array_keys( $columns ) as $column_name ) {
             if ( method_exists( $this, 'column_' . $column_name ) ) {
                 echo '<td>';
                 echo call_user_func( array( $this, 'column_' . $column_name ), $item ); // phpcs:ignore WordPress.Security.EscapeOutput

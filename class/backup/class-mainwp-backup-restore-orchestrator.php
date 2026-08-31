@@ -1336,6 +1336,14 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
     /**
      * External reachability check (test seam).
      *
+     * This is not a bare liveness ping: phase_verifying() completes the
+     * restore on a true and permanently fails it on a false, so the answer
+     * is the restore's verdict. Certificate verification therefore follows
+     * the site's own verify_certificate setting (fetch_url() semantics,
+     * verification on by default) instead of being switched off: a restore
+     * that left the site serving a broken certificate must not be reported
+     * as verified.
+     *
      * @param object $website Website object.
      *
      * @return bool True when the site answers with a non-server-error.
@@ -1345,7 +1353,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             $website->url,
             array(
                 'timeout'   => 15,
-                'sslverify' => false,
+                'sslverify' => static::ssl_verify_for( $website ),
             )
         );
         if ( is_wp_error( $response ) ) {
@@ -1353,6 +1361,27 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         }
         $code = (int) wp_remote_retrieve_response_code( $response );
         return $code >= 200 && $code < 500;
+    }
+
+    /**
+     * Resolve the sslverify argument for a site, mirroring fetch_url()
+     * semantics: 1 verifies, 0 does not, and 2 (or an unset value) defers to
+     * the dashboard-wide mainwp_sslVerifyCertificate option, which verifies
+     * unless it was explicitly turned off.
+     *
+     * @param object $website Website object.
+     *
+     * @return bool Whether to verify the certificate.
+     */
+    protected static function ssl_verify_for( object $website ): bool {
+        $verify = isset( $website->verify_certificate ) ? (int) $website->verify_certificate : 2;
+        if ( 1 === $verify ) {
+            return true;
+        }
+        if ( 0 === $verify ) {
+            return false;
+        }
+        return false === get_option( 'mainwp_sslVerifyCertificate' ) || 1 === (int) get_option( 'mainwp_sslVerifyCertificate' );
     }
 
     /**

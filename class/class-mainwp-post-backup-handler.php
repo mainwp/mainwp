@@ -655,6 +655,14 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         $task        = MainWP_DB_Backup::instance()->get_manual_backup_task( $site_id );
         $started_out = null !== $task && (int) $task->last_run >= $started ? (int) $task->last_run : $started;
 
+        // The hidden manual task is normally created by the claim above, but a
+        // concurrent site delete (or a failed insert) can leave the re-read
+        // empty; report the failure instead of dereferencing null.
+        if ( empty( $task ) ) {
+            wp_send_json( array( 'error' => esc_html__( 'The backup could not be started for this site. Please reload the page and try again.', 'mainwp' ) ) );
+            return;
+        }
+
         wp_send_json(
             array(
                 'job_id'  => (int) $task->id,
@@ -851,6 +859,15 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
 
         if ( isset( $information['error'] ) ) {
             wp_send_json( array( 'error' => is_string( $information['error'] ) ? $information['error'] : esc_html__( 'The child site could not cancel the backup.', 'mainwp' ) ) );
+            return;
+        }
+
+        // A live runner still owns the lease mid-slice, so the child refused
+        // rather than fight it: the backup is still running. Closing the local
+        // run here would report a cancel that did not happen and leave the poll
+        // blind to a child task that keeps going.
+        if ( isset( $information['result'] ) && 'busy' === $information['result'] ) {
+            wp_send_json( array( 'error' => esc_html__( 'The backup is mid-step on the child site and could not be cancelled yet. Wait a moment and try again.', 'mainwp' ) ) );
             return;
         }
 

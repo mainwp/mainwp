@@ -486,7 +486,10 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                         return; // The form still works; settings just are not pre-filled.
                     }
                     let map = settingsFieldMap[ response.provider ] || {};
-                    let settings = response.settings && 'object' === typeof response.settings ? response.settings : {};
+                    let settings = {};
+                    if ( response.settings && 'object' === typeof response.settings ) {
+                        settings = response.settings;
+                    }
                     for ( let key in map ) {
                         let value = typeof settings[ key ] !== 'undefined' ? settings[ key ] : '';
                         if ( '#mainwp-storage-sse' === map[ key ] ) {

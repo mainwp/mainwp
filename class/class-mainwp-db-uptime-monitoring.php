@@ -508,7 +508,7 @@ KEY idx_wpid_issub (wpid, issub)";
         }
 
         // 2. Recovery path: Create default primary monitor if missing.
-        $created_id = $this->update_monitor( // add monitor.
+        $created_id = $this->update_wp_monitor( // add monitor.
             array(
                 'wpid'   => $site_id,
                 'suburl' => '',
@@ -528,23 +528,27 @@ KEY idx_wpid_issub (wpid, issub)";
      * Get the primary monitor for a specific site.
      *
      * @param int  $site_id Website ID (wpid).
-     * @param bool $obj  Optional. Whether to return an object or associative array. Default true.
+     * @param bool $obj     Optional. Whether to return an object or associative array. Default true.
      *
-     * @return object|array|false The primary monitor row object/array, or false if not found.
+     * @return object|array|false The primary monitor row, or false if not found.
      */
     public function get_primary_monitor( $site_id, $obj = true ) {
         if ( empty( $site_id ) ) {
             return false;
         }
 
-        $sql = $this->wpdb->prepare(
-            'SELECT * FROM ' . $this->table_name( 'monitors' ) . ' WHERE wpid = %d AND suburl = "" LIMIT 1',
-            $site_id
-        );
+        $result = $this->get_monitor_by( $site_id, 'issub', 0, array(), $obj ? OBJECT : ARRAY_A );
 
-        $result = $obj ? $this->wpdb->get_row( $sql, OBJECT ) : $this->wpdb->get_row( $sql, ARRAY_A );
+        if ( empty( $result ) ) {
+            return false;
+        }
 
-        return ! empty( $result ) ? $result : false;
+        // If get_monitor_by returns an array of multiple results, return the first row.
+        if ( is_array( $result ) && isset( $result[0] ) ) {
+            return $result[0];
+        }
+
+        return $result;
     }
 
     /**
@@ -750,17 +754,6 @@ KEY idx_wpid_issub (wpid, issub)";
             $hb_time
         );
         return $this->wpdb->get_results( $sql );
-    }
-
-    /**
-     * Update site monitor.
-     *
-     * @param array $data data.
-     *
-     * @return object|null Database query results or null on failure.
-     */
-    public function update_monitor( $data ) {
-        return $this->update_wp_monitor( $data );
     }
 
 

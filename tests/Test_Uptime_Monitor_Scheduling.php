@@ -132,7 +132,7 @@ class Test_Uptime_Monitor_Scheduling extends \WP_UnitTestCase {
 
 		foreach ( $active_matrix as $primary_active_setting ) {
 			// Setup baseline Primary Monitor
-			$db->update_monitor(
+			$db->update_wp_monitor(
 				array(
 					'monitor_id' => $this->monitor_id,
 					'active'     => $primary_active_setting,
@@ -185,7 +185,7 @@ class Test_Uptime_Monitor_Scheduling extends \WP_UnitTestCase {
 			// -----------------------------------------------------------------
 			// AC: Editing an existing Sub-Monitor updates ONLY that Sub-Monitor
 			// -----------------------------------------------------------------
-			$db->update_monitor(
+			$db->update_wp_monitor(
 				array(
 					'monitor_id' => $first_sub_id,
 					'suburl'     => 'edited-first-sub-page',
@@ -222,7 +222,7 @@ class Test_Uptime_Monitor_Scheduling extends \WP_UnitTestCase {
 
 			// Edit only the middle sub-monitor
 			$target_sub_id = $multi_sub_ids[1];
-			$db->update_monitor(
+			$db->update_wp_monitor(
 				array(
 					'monitor_id' => $target_sub_id,
 					'suburl'     => 'isolated-sub-update',
@@ -241,7 +241,7 @@ class Test_Uptime_Monitor_Scheduling extends \WP_UnitTestCase {
 			// -----------------------------------------------------------------
 			// AC: Saving Primary Monitor settings still updates or creates ONLY Primary Monitor
 			// -----------------------------------------------------------------
-			$db->update_monitor(
+			$db->update_wp_monitor(
 				array(
 					'monitor_id' => $this->monitor_id,
 					'active'     => 1,

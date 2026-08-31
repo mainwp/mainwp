@@ -507,6 +507,9 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 setSnapshotsPlaceholder( snapshotsPlaceholders.loading );
                 snapshotsTable.clear().draw();
                 $.post( ajaxurl, { action: 'mainwp_restore_snapshot_list', security: nonces.list, site_id: siteId }, function ( response ) {
+                    if ( siteId !== currentSite ) {
+                        return; // A site switch superseded this request; its response must not repaint the newer site's list.
+                    }
                     siteIsMultisite = !! response.multisite;
                     siteHasWooCommerce = !! response.site_has_woocommerce;
                     currentSiteUrl = response.site_url || '';
@@ -532,7 +535,13 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     }
                 }, 'json' ).fail( function () {
                     // A transport error skips the success callback: without this
-                    // the loader spins forever and the page reads as hung.
+                    // the loader spins forever and the page reads as hung. Same
+                    // supersession rule as the success path, or a delayed
+                    // failure from the previous site would erase the list the
+                    // newer request just drew.
+                    if ( siteId !== currentSite ) {
+                        return;
+                    }
                     setSnapshotsPlaceholder( snapshotsPlaceholders.error );
                     snapshotsTable.clear().draw();
                     enableSnapshotControls( currentSite > 0 );

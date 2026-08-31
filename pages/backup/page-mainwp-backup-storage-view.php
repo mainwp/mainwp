@@ -486,8 +486,9 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                         return; // The form still works; settings just are not pre-filled.
                     }
                     let map = settingsFieldMap[ response.provider ] || {};
+                    let settings = response.settings && 'object' === typeof response.settings ? response.settings : {};
                     for ( let key in map ) {
-                        let value = typeof response.settings[ key ] !== 'undefined' ? response.settings[ key ] : '';
+                        let value = typeof settings[ key ] !== 'undefined' ? settings[ key ] : '';
                         if ( '#mainwp-storage-sse' === map[ key ] ) {
                             // A Fomantic dropdown keeps its own label, so .val()
                             // would leave the previous destination's choice on
@@ -503,7 +504,7 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                         }
                         jQuery( map[ key ] ).val( value );
                     }
-                    jQuery( '#mainwp-storage-path-style' ).prop( 'checked', !! parseInt( response.settings.path_style || 0 ) );
+                    jQuery( '#mainwp-storage-path-style' ).prop( 'checked', !! parseInt( settings.path_style || 0 ) );
                     jQuery( '#mainwp-storage-is-default' ).prop( 'checked', !! response.is_default );
                     if ( response.credentials_invalid ) {
                         feedbackZone( '<?php echo esc_js( __( 'The saved credentials can no longer be read. Re-enter every setting for this destination.', 'mainwp' ) ); ?>', 'yellow' );

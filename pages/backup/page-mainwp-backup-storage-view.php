@@ -186,13 +186,13 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Path style addressing', 'mainwp' ); ?></label>
                         <div class="ten wide column ui toggle checkbox">
                             <input type="checkbox" id="mainwp-storage-path-style"/>
-                            <label><?php esc_html_e( 'Required by MinIO and some self hosted services.', 'mainwp' ); ?></label>
+                            <label><?php esc_html_e( 'Required by MinIO and some self-hosted services.', 'mainwp' ); ?></label>
                         </div>
                     </div>
                     <div class="ui grid field">
-                        <label class="six wide column middle aligned"><?php esc_html_e( 'Server-side encryption', 'mainwp' ); ?></label>
+                        <label class="six wide column middle aligned" for="mainwp-storage-sse"><?php esc_html_e( 'Server-side encryption', 'mainwp' ); ?></label>
                         <div class="ten wide column">
-                            <select id="mainwp-storage-sse">
+                            <select id="mainwp-storage-sse" class="ui dropdown">
                                 <option value=""><?php esc_html_e( 'None', 'mainwp' ); ?></option>
                                 <option value="AES256"><?php esc_html_e( 'SSE-S3 (AES-256)', 'mainwp' ); ?></option>
                                 <option value="aws:kms"><?php esc_html_e( 'SSE-KMS (account default key)', 'mainwp' ); ?></option>
@@ -449,8 +449,11 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
 
             jQuery( '#mainwp-storage-reset' ).on( 'click', function () {
                 jQuery( '#mainwp-storage-id' ).val( 0 );
-                jQuery( '#mainwp-storage-name, #mainwp-storage-endpoint, #mainwp-storage-bucket, #mainwp-storage-region, #mainwp-storage-access-key, #mainwp-storage-secret-key, #mainwp-storage-sse, #mainwp-storage-base-path, #mainwp-storage-gcs-bucket, #mainwp-storage-gcs-access-key, #mainwp-storage-gcs-secret-key, #mainwp-storage-dropbox-app-key, #mainwp-storage-dropbox-app-secret, #mainwp-storage-dropbox-refresh-token, #mainwp-storage-dropbox-base-path, #mainwp-storage-sftp-host, #mainwp-storage-sftp-port, #mainwp-storage-sftp-username, #mainwp-storage-sftp-password, #mainwp-storage-sftp-private-key, #mainwp-storage-sftp-base-path, #mainwp-storage-sftp-host-fingerprint' ).val( '' );
+                jQuery( '#mainwp-storage-name, #mainwp-storage-endpoint, #mainwp-storage-bucket, #mainwp-storage-region, #mainwp-storage-access-key, #mainwp-storage-secret-key, #mainwp-storage-base-path, #mainwp-storage-gcs-bucket, #mainwp-storage-gcs-access-key, #mainwp-storage-gcs-secret-key, #mainwp-storage-dropbox-app-key, #mainwp-storage-dropbox-app-secret, #mainwp-storage-dropbox-refresh-token, #mainwp-storage-dropbox-base-path, #mainwp-storage-sftp-host, #mainwp-storage-sftp-port, #mainwp-storage-sftp-username, #mainwp-storage-sftp-password, #mainwp-storage-sftp-private-key, #mainwp-storage-sftp-base-path, #mainwp-storage-sftp-host-fingerprint' ).val( '' );
                 jQuery( '#mainwp-storage-path-style, #mainwp-storage-is-default' ).prop( 'checked', false );
+                // Fomantic owns this select's visible label, so clearing the
+                // underlying value would leave the previous choice on screen.
+                jQuery( '#mainwp-storage-sse' ).dropdown( 'restore defaults' );
                 jQuery( '#mainwp-storage-form-title' ).text( '<?php echo esc_js( __( 'Add Storage Destination', 'mainwp' ) ); ?>' );
                 jQuery( this ).hide();
             } );
@@ -484,7 +487,21 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                     }
                     let map = settingsFieldMap[ response.provider ] || {};
                     for ( let key in map ) {
-                        jQuery( map[ key ] ).val( typeof response.settings[ key ] !== 'undefined' ? response.settings[ key ] : '' );
+                        let value = typeof response.settings[ key ] !== 'undefined' ? response.settings[ key ] : '';
+                        if ( '#mainwp-storage-sse' === map[ key ] ) {
+                            // A Fomantic dropdown keeps its own label, so .val()
+                            // would leave the previous destination's choice on
+                            // screen. An empty setting means None, which
+                            // 'set selected' will not match, so restore the
+                            // default instead.
+                            if ( '' === value ) {
+                                jQuery( map[ key ] ).dropdown( 'restore defaults' );
+                            } else {
+                                jQuery( map[ key ] ).dropdown( 'set selected', value );
+                            }
+                            continue;
+                        }
+                        jQuery( map[ key ] ).val( value );
                     }
                     jQuery( '#mainwp-storage-path-style' ).prop( 'checked', !! parseInt( response.settings.path_style || 0 ) );
                     jQuery( '#mainwp-storage-is-default' ).prop( 'checked', !! response.is_default );

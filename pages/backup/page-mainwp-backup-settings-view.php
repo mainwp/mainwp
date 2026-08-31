@@ -80,10 +80,10 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
         <h3 class="ui dividing header">
             <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-backups' ); ?>
             <?php esc_html_e( 'Backup Settings', 'mainwp' ); ?>
-            <div class="sub header"><?php /* translators: 1: opening anchor tag, 2: closing anchor tag */ printf( esc_html__( 'MainWP is actively moving away from further development of the native backups feature. The best long-term solution would be one of the %1$sBackup Extensions%2$s.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank">', '</a>' ); // NOSONAR - noopener - open safe. ?></div>
+            <div class="sub header"><?php /* translators: 1: opening anchor tag, 2: closing anchor tag */ printf( esc_html__( 'Native backups back up your Child Sites directly from this dashboard. %1$sBackup Extensions%2$s for third-party plugins are also available.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank">', '</a>' ); // NOSONAR - noopener - open safe. ?></div>
         </h3>
         <?php if ( ! empty( $primaryBackupMethods ) ) : ?>
-        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-backups">
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups">
             <label class="six wide column middle aligned"><?php esc_html_e( 'Select primary backup system', 'mainwp' ); ?></label>
             <div class="ten wide column">
                 <select class="ui dropdown" name="mainwp_primaryBackup" id="mainwp_primaryBackup">
@@ -101,7 +101,7 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
         </div>
         <?php endif; ?>
 
-        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-backups">
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups">
             <label class="six wide column middle aligned">
             <?php
             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_enableNativeBackups', (int) $enableNativeBackups );
@@ -112,7 +112,7 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
                 <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_options_enableNativeBackups" id="mainwp_options_enableNativeBackups" <?php echo 0 === (int) $enableNativeBackups ? '' : 'checked="true"'; ?>/>
             </div>
         </div>
-        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="1">
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="1">
             <label class="six wide column middle aligned">
             <?php
             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_backupsOnServer', (int) $backupsOnServer );
@@ -124,7 +124,7 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
             </div>
         </div>
 
-        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="1">
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="1">
             <label class="six wide column middle aligned">
             <?php
             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_backupOnExternalSources', (int) $backupOnExternalSources );
@@ -136,7 +136,7 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
             </div>
         </div>
 
-        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="5">
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="5">
             <label class="six wide column middle aligned">
             <?php
             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_on_demand_retention_count', (int) $onDemandRetentionCount );
@@ -230,7 +230,7 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
             </div>
         </div>
 
-        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="tar.gz">
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="tar.gz">
             <label class="six wide column middle aligned">
             <?php
             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_archiveFormat', $archiveFormat );
@@ -243,27 +243,27 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
                     <?php
                     if ( 'zip' === $archiveFormat ) :
                         ?>
-                        selected<?php endif; ?>>Zip</option>
+                        selected<?php endif; ?>><?php esc_html_e( 'Zip', 'mainwp' ); ?></option>
                     <option value="tar"
                     <?php
                     if ( 'tar' === $archiveFormat ) :
                         ?>
-                        selected<?php endif; ?>>Tar</option>
+                        selected<?php endif; ?>><?php esc_html_e( 'Tar', 'mainwp' ); ?></option>
                     <option value="tar.gz"
                     <?php
                     if ( ( false === $archiveFormat ) || ( 'tar.gz' === $archiveFormat ) ) :
                         ?>
-                        selected<?php endif; ?>>Tar GZip</option>
+                        selected<?php endif; ?>><?php esc_html_e( 'Tar GZip', 'mainwp' ); ?></option>
                     <option value="tar.bz2"
                     <?php
                     if ( 'tar.bz2' === $archiveFormat ) :
                         ?>
-                        selected<?php endif; ?>>Tar BZip2</option>
+                        selected<?php endif; ?>><?php esc_html_e( 'Tar BZip2', 'mainwp' ); ?></option>
                 </select>
             </div>
         </div>
 
-        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?>
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?>
         <?php
         if ( empty( $hidden_elems ) && 'zip' !== $archiveFormat ) {
             echo 'style="display: none;"';
@@ -282,7 +282,7 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
             </div>
         </div>
 
-        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?>
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?>
         <?php
         if ( empty( $hidden_elems ) && 'zip' !== $archiveFormat ) {
             echo 'style="display: none;"';
@@ -300,7 +300,7 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
             </div>
         </div>
 
-        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-backups" default-indi-value="1" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?>
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups" default-indi-value="1" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?>
         <?php
         if ( empty( $hidden_elems ) && 'zip' !== $archiveFormat ) {
             echo 'style="display: none;"';
@@ -318,7 +318,7 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
             </div>
         </div>
 
-        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="1">
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="1">
             <label class="six wide column middle aligned">
             <?php
             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_notificationOnBackupFail', (int) $notificationOnBackupFail );
@@ -329,7 +329,7 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
                 <input type="checkbox" class="settings-field-value-change-handler" inverted-value="1" name="mainwp_options_notificationOnBackupFail" id="mainwp_options_notificationOnBackupFail" value="1" <?php echo $notificationOnBackupFail ? 'checked="checked"' : ''; ?>/>
             </div>
         </div>
-        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="1">
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="1">
             <label class="six wide column middle aligned">
             <?php
             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_notificationOnBackupStart', (int) $notificationOnBackupStart );
@@ -341,7 +341,7 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
             </div>
         </div>
 
-        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="1">
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="1">
             <label class="six wide column middle aligned">
             <?php
             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_chunkedBackupTasks', (int) $chunkedBackupTasks );
@@ -379,10 +379,10 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
                 <i class="right dropdown icon"></i>
                 <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-backups' ); ?>
                 <?php esc_html_e( 'Backup Settings', 'mainwp' ); ?>
-                <div class="sub header"><?php /* translators: 1: opening anchor tag, 2: closing anchor tag */ printf( esc_html__( 'MainWP is actively moving away from further development of the native backups feature. The best long-term solution would be one of the %1$sBackup Extensions%2$s.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank">', '</a>' ); // NOSONAR - noopener - open safe. ?></div>
+                <div class="sub header"><?php /* translators: 1: opening anchor tag, 2: closing anchor tag */ printf( esc_html__( 'Native backups back up your Child Sites directly from this dashboard. %1$sBackup Extensions%2$s for third-party plugins are also available.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank">', '</a>' ); // NOSONAR - noopener - open safe. ?></div>
             </h2>
             <div class="content">
-        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-wrapper settings-field-indicator-backups">
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups">
             <label class="six wide column middle aligned"><?php esc_html_e( 'Select primary backup system', 'mainwp' ); ?></label>
             <div class="ten wide column">
                 <select class="ui dropdown" name="mainwp_primaryBackup" id="mainwp_primaryBackup">

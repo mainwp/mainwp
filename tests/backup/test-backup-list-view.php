@@ -45,8 +45,8 @@ class MainWP_Backup_List_View_Test extends \WP_UnitTestCase {
 	public function test_column_type_labels_db_and_full() {
 		$view = new MainWP_Backup_List_View();
 
-		$this->assertStringContainsString( 'DATABASE', $view->column_type( $this->make_item( array( 'type' => 'db' ) ) ) );
-		$this->assertStringContainsString( 'FULL', $view->column_type( $this->make_item( array( 'type' => 'full' ) ) ) );
+		$this->assertStringContainsString( 'Database backup', $view->column_type( $this->make_item( array( 'type' => 'db' ) ) ) );
+		$this->assertStringContainsString( 'Full backup', $view->column_type( $this->make_item( array( 'type' => 'full' ) ) ) );
 	}
 
 	/**
@@ -57,7 +57,7 @@ class MainWP_Backup_List_View_Test extends \WP_UnitTestCase {
 	public function test_column_type_labels_incremental() {
 		$view = new MainWP_Backup_List_View();
 
-		$this->assertStringContainsString( 'INCREMENTAL', $view->column_type( $this->make_item( array( 'type' => 'incremental' ) ) ) );
+		$this->assertStringContainsString( 'Incremental backup', $view->column_type( $this->make_item( array( 'type' => 'incremental' ) ) ) );
 	}
 
 	/**
@@ -65,10 +65,11 @@ class MainWP_Backup_List_View_Test extends \WP_UnitTestCase {
 	 *
 	 * @return void
 	 */
-	public function test_column_schedule_uppercases() {
+	public function test_column_schedule_renders_sentence_case_label() {
 		$view = new MainWP_Backup_List_View();
 
-		$this->assertSame( 'WEEKLY', $view->column_schedule( $this->make_item( array( 'schedule' => 'weekly' ) ) ) );
+		$this->assertSame( 'Weekly', $view->column_schedule( $this->make_item( array( 'schedule' => 'weekly' ) ) ) );
+		$this->assertSame( 'Manual', $view->column_schedule( $this->make_item( array( 'schedule' => 'manual' ) ) ) );
 	}
 
 	/**
@@ -79,7 +80,7 @@ class MainWP_Backup_List_View_Test extends \WP_UnitTestCase {
 	public function test_column_destination_falls_back_to_server() {
 		$view = new MainWP_Backup_List_View();
 
-		$this->assertSame( 'SERVER', $view->column_destination( $this->make_item() ) );
+		$this->assertSame( 'Server', $view->column_destination( $this->make_item() ) );
 	}
 
 	/**
@@ -200,9 +201,9 @@ class MainWP_Backup_List_View_Test extends \WP_UnitTestCase {
 
 		$output = $view->column_details( $item );
 
-		$this->assertStringContainsString( 'CURRENTLY RUNNING', $output, 'A run inside the stall threshold must still read as running.' );
+		$this->assertStringContainsString( 'Currently running', $output, 'A run inside the stall threshold must still read as running.' );
 		$this->assertStringContainsString( '10m', $output, 'The elapsed time since last_run must be shown.' );
-		$this->assertStringNotContainsString( 'STALE', $output, 'A run inside the threshold must not be flagged stale.' );
+		$this->assertStringNotContainsString( 'Stale', $output, 'A run inside the threshold must not be flagged stale.' );
 		$this->assertStringNotContainsString( 'mainwp-native-backup-task-reset', $output, 'The reset affordance must not appear for a non-stale run.' );
 	}
 
@@ -232,12 +233,12 @@ class MainWP_Backup_List_View_Test extends \WP_UnitTestCase {
 
 		$output = $view->column_details( $item );
 
-		$this->assertStringContainsString( 'STALE', $output, 'A run past the stall threshold must be flagged stale.' );
+		$this->assertStringContainsString( 'Stale', $output, 'A run past the stall threshold must be flagged stale.' );
 		$this->assertStringContainsString( '3h 20m', $output, 'The elapsed time since last_run must be shown.' );
-		$this->assertStringContainsString( 'may be stuck', $output );
+		$this->assertStringContainsString( 'May be stuck.', $output );
 		$this->assertStringContainsString( 'mainwp-native-backup-task-reset', $output, 'The stale row must expose a reset affordance.' );
 		$this->assertStringContainsString( 'task_id="42"', $output, 'The reset affordance must be keyed to this task id.' );
-		$this->assertStringNotContainsString( 'CURRENTLY RUNNING', $output, 'A stale run must not also read as plain running.' );
+		$this->assertStringNotContainsString( 'Currently running', $output, 'A stale run must not also read as plain running.' );
 	}
 
 	/**

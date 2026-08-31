@@ -110,7 +110,7 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
             <div class="mainwp-search-submit">
                 <?php if ( ! empty( $task ) ) : ?>
                 <input type="hidden" id="backup_task_id" value="<?php echo esc_attr( $task->id ); ?>"/>
-                <input type="button" name="mainwp_managebackups_update" id="mainwp_managebackups_update" class="ui big green fluid button" value="<?php esc_attr_e( 'Update Schedule Backup', 'mainwp' ); ?>"/>
+                <input type="button" name="mainwp_managebackups_update" id="mainwp_managebackups_update" class="ui big green fluid button" value="<?php esc_attr_e( 'Update Backup Task', 'mainwp' ); ?>"/>
                 <?php else : ?>
                 <input type="button" name="mainwp_managebackups_add" id="mainwp_managebackups_add" class="ui big green fluid button" value="<?php esc_attr_e( 'Schedule Backup', 'mainwp' ); ?>"/>
                 <?php endif; ?>
@@ -225,8 +225,16 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @uses \MainWP\Dashboard\MainWP_Manage_Backups_Handler::validate_backup_tasks()
      */
     public static function render_schedule_backup(): void {  //phpcs:ignore -- NOSONAR - complex.
-        $backupTask   = null;
-        $backupTaskId = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        $backupTask = null;
+        // Resolve the same way render_manager() does: `task_id` is the edit
+        // address, `id` only a legacy fallback.
+        if ( isset( $_GET['task_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+            $backupTaskId = intval( $_GET['task_id'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        } elseif ( isset( $_GET['id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+            $backupTaskId = intval( $_GET['id'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        } else {
+            $backupTaskId = false;
+        }
 
         if ( ! empty( $backupTaskId ) ) {
             if ( ! \mainwp_current_user_can( 'dashboard', 'edit_backup_tasks' ) ) {
@@ -441,7 +449,7 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     <label class="six wide column middle aligned"></label>
                     <div class="ten wide column ui toggle checkbox">
                         <textarea id="mainwp-kbl-content" disabled></textarea><br />
-                        <em><?php esc_html_e( 'This adds known backup locations of popular WordPress backup plugins to the exclude list. Old backups can take up a lot of space and can cause your current MainWP backup to timeout.', 'mainwp' ); ?></em>
+                        <em><?php esc_html_e( 'This adds known backup locations of popular WordPress backup plugins to the exclude list. Old backups can take up a lot of space and can cause your current MainWP backup to time out.', 'mainwp' ); ?></em>
                     </div>
                 </div>
                 <div class="ui grid field">
@@ -454,7 +462,7 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     <label class="six wide column middle aligned"></label>
                     <div class="ten wide column ui toggle checkbox">
                         <textarea id="mainwp-kcl-content" disabled></textarea><br />
-                        <em><?php esc_html_e( 'This adds known cache locations of popular WordPress cache plugins to the exclude list. A cache can be massive with thousands of files and can cause your current MainWP backup to timeout. Your cache will be rebuilt by your caching plugin when the backup is restored.', 'mainwp' ); ?></em>
+                        <em><?php esc_html_e( 'This adds known cache locations of popular WordPress cache plugins to the exclude list. A cache can be massive with thousands of files and can cause your current MainWP backup to time out. Your cache will be rebuilt by your caching plugin when the backup is restored.', 'mainwp' ); ?></em>
                     </div>
                 </div>
                 <div class="ui grid field">

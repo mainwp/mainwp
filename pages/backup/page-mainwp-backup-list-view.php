@@ -91,7 +91,7 @@ class MainWP_Backup_List_View { // phpcs:ignore Generic.Classes.OpeningBraceSame
                         'websites'    => esc_html__( 'Websites', 'mainwp' ),
                         'details'     => esc_html__( 'Details', 'mainwp' ),
                         'trigger'     => esc_html__( 'Trigger', 'mainwp' ),
-                        'actions'     => esc_html__( 'Trigger', 'mainwp' ),
+                        'actions'     => esc_html__( 'Actions', 'mainwp' ),
                     );
 
                     if ( ! $can_trigger ) {
@@ -127,6 +127,7 @@ class MainWP_Backup_List_View { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     jQuery( '#mainwp-backups-table' ).DataTable( {
                             "colReorder" : true,
                             "stateSave":  true,
+                            "scrollX": true,
                             "pagingType": "full_numbers",
                             "order": [],
                             "columnDefs": [ {
@@ -176,7 +177,9 @@ class MainWP_Backup_List_View { // phpcs:ignore Generic.Classes.OpeningBraceSame
     public function column_actions( $item ) {
 
         $actions = array(
-            'edit'   => sprintf( '<a class="item" href="admin.php?page=ManageBackups&id=%d"><i class="edit outline icon"></i> ' . esc_html__( 'Edit', 'mainwp' ) . '</a>', (int) $item->id ),
+            // Backups-owned query var: a bare `id` also puts the dashboard chrome
+            // into single-site mode, which crowns the edit screen with a site panel.
+            'edit'   => sprintf( '<a class="item" href="admin.php?page=ManageBackups&task_id=%d"><i class="edit outline icon"></i> ' . esc_html__( 'Edit', 'mainwp' ) . '</a>', (int) $item->id ),
             'delete' => sprintf( '<a class="submitdelete item" href="#" task_id="%d" onClick="return managebackups_remove(this);"><i class="trash alternate outline icon"></i> ' . esc_html__( 'Delete', 'mainwp' ) . '</a>', (int) $item->id ),
         );
 
@@ -229,13 +232,7 @@ class MainWP_Backup_List_View { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @return string Action content.
      */
     public function column_type( $item ) {
-        if ( 'db' === $item->type ) {
-            return esc_html__( 'DATABASE BACKUP', 'mainwp' );
-        }
-        if ( 'incremental' === $item->type ) {
-            return esc_html__( 'INCREMENTAL BACKUP', 'mainwp' );
-        }
-        return esc_html__( 'FULL BACKUP', 'mainwp' );
+        return MainWP_Backup_Page::backup_type_label( $item->type );
     }
 
     /**
@@ -246,7 +243,15 @@ class MainWP_Backup_List_View { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @return string Action content.
      */
     public function column_schedule( $item ) {
-        return esc_html( strtoupper( $item->schedule ) );
+        $labels   = array(
+            'daily'    => esc_html__( 'Daily', 'mainwp' ),
+            'weekly'   => esc_html__( 'Weekly', 'mainwp' ),
+            'monthly'  => esc_html__( 'Monthly', 'mainwp' ),
+            'interval' => esc_html__( 'Interval', 'mainwp' ),
+            'manual'   => esc_html__( 'Manual', 'mainwp' ),
+        );
+        $schedule = strtolower( (string) $item->schedule );
+        return isset( $labels[ $schedule ] ) ? $labels[ $schedule ] : esc_html( ucfirst( $schedule ) );
     }
 
     /**
@@ -269,7 +274,7 @@ class MainWP_Backup_List_View { // phpcs:ignore Generic.Classes.OpeningBraceSame
             return $storage;
         }
 
-        return esc_html__( 'SERVER', 'mainwp' );
+        return esc_html__( 'Server', 'mainwp' );
     }
 
     /**
@@ -398,11 +403,21 @@ class MainWP_Backup_List_View { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @uses  \MainWP\Dashboard\MainWP_Utility::get_timestamp()
      */
     public function column_details( $item ) {
-        $output  = '<strong>' . esc_html__( 'LAST RUN MANUALLY: ', 'mainwp' ) . '</strong>' . ( empty( $item->last_run_manually ) ? '-' : MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $item->last_run_manually ) ) ) . '<br />';
-        $output .= '<strong>' . esc_html__( 'LAST RUN: ', 'mainwp' ) . '</strong>' . ( empty( $item->last_run ) ? '-' : MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $item->last_run ) ) ) . '<br />';
-        $output .= '<strong>' . esc_html__( 'LAST COMPLETED: ', 'mainwp' ) . '</strong>' . ( empty( $item->completed ) ? '-' : MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $item->completed ) ) ) . '<br />';
-        $output .= '<strong>' . esc_html__( 'NEXT RUN: ', 'mainwp' ) . '</strong>' . ( empty( $item->last_run ) ? esc_html__( 'Any minute', 'mainwp' ) : MainWP_Utility::format_timestamp( ( 'daily' === $item->schedule ? ( 60 * 60 * 24 ) : ( 'weekly' === $item->schedule ? ( 60 * 60 * 24 * 7 ) : ( 60 * 60 * 24 * 30 ) ) ) + MainWP_Utility::get_timestamp( $item->last_run ) ) );
-        $output .= '<strong>';
+        $last_run  = empty( $item->last_run ) ? '-' : MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $item->last_run ) );
+        $manually  = empty( $item->last_run_manually ) ? '-' : MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $item->last_run_manually ) );
+        $completed = empty( $item->completed ) ? '-' : MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $item->completed ) );
+
+        $history = sprintf(
+            /* translators: 1: when the task was last run manually, 2: when the last run completed. */
+            __( 'Last run manually: %1$s. Last completed: %2$s.', 'mainwp' ),
+            $manually,
+            $completed
+        );
+
+        $output  = '<strong>' . esc_html__( 'Last run', 'mainwp' ) . ':</strong> ' . esc_html( $last_run );
+        $output .= ' <i class="info circle icon" data-tooltip="' . esc_attr( $history ) . '" data-position="top left" data-variation="wide inverted"></i>';
+        $output .= '<br /><strong>' . esc_html__( 'Next run', 'mainwp' ) . ':</strong> ' . esc_html( $this->next_run_label( $item ) );
+
         if ( ! empty( $item->last_run ) && $item->completed < $item->last_run ) {
             $completed_sites = $item->completed_sites;
             if ( '' !== $completed_sites ) {
@@ -413,8 +428,8 @@ class MainWP_Backup_List_View { // phpcs:ignore Generic.Classes.OpeningBraceSame
             }
 
             // A crashed scheduled run never advances `completed` past
-            // `last_run`, so without this branch the row shows CURRENTLY
-            // RUNNING forever with no way to clear it. Once the elapsed
+            // `last_run`, so without this branch the row reads as currently
+            // running forever with no way to clear it. Once the elapsed
             // time since last_run passes the same wall-clock threshold the
             // executor already uses for its per-site busy-since stall
             // check, flip to a stale state with the elapsed time and a
@@ -423,15 +438,15 @@ class MainWP_Backup_List_View { // phpcs:ignore Generic.Classes.OpeningBraceSame
             $elapsed_label   = $this->format_elapsed_time( $elapsed_seconds );
 
             if ( $elapsed_seconds > MainWP_Backup_Executor::STALL_THRESHOLD_SECONDS ) {
-                $output .= '<br />' . esc_html__( 'STALE: ', 'mainwp' ) . '</strong>'
+                $output .= '<br /><strong>' . esc_html__( 'Stale', 'mainwp' ) . ':</strong> '
                     . sprintf(
                         /* translators: %s: elapsed time since the run started, e.g. "3h 20m". */
-                        esc_html__( 'Running for %s — may be stuck.', 'mainwp' ),
+                        esc_html__( 'Running for %s. May be stuck.', 'mainwp' ),
                         esc_html( $elapsed_label )
                     )
                     . ' <a href="#" class="mainwp-native-backup-task-reset" task_id="' . (int) $item->id . '" onClick="return managebackups_reset_stale(this);">' . esc_html__( 'Reset', 'mainwp' ) . '</a>';
             } else {
-                $output .= '<br />' . esc_html__( 'CURRENTLY RUNNING: ', 'mainwp' ) . '</strong>'
+                $output .= '<br /><strong>' . esc_html__( 'Currently running', 'mainwp' ) . ':</strong> '
                     . count( $completed_sites ) . '/' . count( $item->the_sites )
                     . ' (' . sprintf(
                         /* translators: %s: elapsed time since the run started, e.g. "12m". */
@@ -469,7 +484,41 @@ class MainWP_Backup_List_View { // phpcs:ignore Generic.Classes.OpeningBraceSame
     }
 
     /**
-     * Format a duration for the details column: "3h 20m", "12m", or "45s".
+     * The task's next scheduled run.
+     *
+     * The cron writes an authoritative `next_run` for every schedule shape it
+     * supports, including time-of-day, day-of-week, and day-of-month. The
+     * interval estimate is only reached by rows written before that column
+     * existed, and it cannot see any of those refinements.
+     *
+     * @param object $item Task row.
+     *
+     * @return string Formatted timestamp, or a placeholder when the task has
+     *                never run.
+     */
+    private function next_run_label( $item ) {
+        if ( isset( $item->next_run ) && (int) $item->next_run > 0 ) {
+            return MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $item->next_run ) );
+        }
+
+        if ( empty( $item->last_run ) ) {
+            return __( 'Any minute', 'mainwp' );
+        }
+
+        if ( 'daily' === $item->schedule ) {
+            $interval = DAY_IN_SECONDS;
+        } elseif ( 'weekly' === $item->schedule ) {
+            $interval = WEEK_IN_SECONDS;
+        } else {
+            $interval = 30 * DAY_IN_SECONDS;
+        }
+
+        return MainWP_Utility::format_timestamp( $interval + MainWP_Utility::get_timestamp( $item->last_run ) );
+    }
+
+    /**
+     * Format a duration for the details column: "80d 10h", "3h 20m", "12m",
+     * or "45s".
      *
      * @param int $seconds Elapsed seconds.
      *
@@ -477,9 +526,13 @@ class MainWP_Backup_List_View { // phpcs:ignore Generic.Classes.OpeningBraceSame
      */
     private function format_elapsed_time( $seconds ) {
         $seconds = max( 0, (int) $seconds );
-        $hours   = (int) floor( $seconds / HOUR_IN_SECONDS );
+        $days    = (int) floor( $seconds / DAY_IN_SECONDS );
+        $hours   = (int) floor( ( $seconds % DAY_IN_SECONDS ) / HOUR_IN_SECONDS );
         $minutes = (int) floor( ( $seconds % HOUR_IN_SECONDS ) / MINUTE_IN_SECONDS );
 
+        if ( $days > 0 ) {
+            return sprintf( '%dd %dh', $days, $hours );
+        }
         if ( $hours > 0 ) {
             return sprintf( '%dh %dm', $hours, $minutes );
         }
@@ -497,6 +550,6 @@ class MainWP_Backup_List_View { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @return string Action content.
      */
     public function column_trigger( $item ) {
-        return '<span class="backup_run_loading"><img src="' . MAINWP_PLUGIN_URL . 'assets/images/loader.gif" /></span>&nbsp;<a href="#" class="backup_run_now" task_id="' . (int) $item->id . '" task_type="' . esc_attr( $item->type ) . '">' . esc_html__( 'Run now', 'mainwp' ) . '</a>';
+        return '<span class="backup_run_loading"><img src="' . MAINWP_PLUGIN_URL . 'assets/images/loader.gif" /></span>&nbsp;<a href="#" class="backup_run_now" task_id="' . (int) $item->id . '" task_type="' . esc_attr( $item->type ) . '">' . esc_html__( 'Run Now', 'mainwp' ) . '</a>';
     }
 }

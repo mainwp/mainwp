@@ -168,9 +168,9 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 
 		$this->assertStringContainsString( 'snap.restore_reason', $output );
 		$this->assertMatchesRegularExpression(
-			'/title="[^"]*escAttr\( snap\.restore_reason \)/s',
+			"/\\\$\( row \)\.attr\( 'title', snap\.restore_reason \)/",
 			$output,
-			'The restore_reason tooltip must pass through the attribute escaper.'
+			'The restore_reason tooltip must be applied to the row via jQuery attr(), not an inline attribute.'
 		);
 	}
 

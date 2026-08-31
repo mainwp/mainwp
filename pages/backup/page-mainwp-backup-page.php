@@ -91,6 +91,67 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
          * @see \MainWP\Dashboard\MainWP_Backup_Page::render_footer
          */
         add_action( 'mainwp-pagefooter-backups', array( static::get_class_name(), 'render_footer' ) );
+
+        add_action( 'mainwp_help_sidebar_content', array( static::get_class_name(), 'mainwp_help_content' ) );
+    }
+
+    /**
+     * Method mainwp_help_content()
+     *
+     * Creates the MainWP Help Documentation List for the help component in the sidebar.
+     */
+    public static function mainwp_help_content(): void {
+        $backups_pages = array( 'ManageBackups', 'ManageBackupsAddNew', 'ManageBackupsStorage', 'ManageBackupsSnapshots' );
+        if ( ! isset( $_GET['page'] ) || ! in_array( $_GET['page'], $backups_pages, true ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+            return;
+        }
+        ?>
+        <p><?php esc_html_e( 'If you need help with backups, please review following help documents', 'mainwp' ); ?></p>
+        <div class="ui list">
+            <div class="item"><i class="external alternate icon"></i> <a href="https://docs.mainwp.com/sites/backups/manage-backups" target="_blank">Manage Backups</a></div>
+            <div class="item"><i class="external alternate icon"></i> <a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank">Backup Extensions</a></div>
+            <?php
+            /**
+             * Action: mainwp_backups_help_item
+             *
+             * Fires at the bottom of the help articles list in the Help sidebar on the Backups page.
+             *
+             * Suggested HTML markup:
+             *
+             * <div class="item"><a href="Your custom URL">Your custom text</a></div>
+             *
+             * @since 7.0
+             */
+            do_action( 'mainwp_backups_help_item' );
+            ?>
+        </div>
+        <?php
+    }
+
+    /**
+     * The display label for a backup task type, escaped for HTML output.
+     *
+     * The stored type is machine state; only what the user reads goes through
+     * here, so an unknown type falls through unchanged rather than being
+     * relabelled as a full backup.
+     *
+     * @param string $type Stored task type.
+     *
+     * @return string Translated label, or the raw type when unknown.
+     */
+    public static function backup_type_label( $type ): string {
+        switch ( $type ) {
+            case 'full':
+                return esc_html__( 'Full backup', 'mainwp' );
+            case 'db':
+                return esc_html__( 'Database backup', 'mainwp' );
+            case 'incremental':
+                return esc_html__( 'Incremental backup', 'mainwp' );
+            case 'files':
+                return esc_html__( 'Files only backup', 'mainwp' );
+            default:
+                return esc_html( (string) $type );
+        }
     }
 
     /**
@@ -292,12 +353,21 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
     public static function render_manager(): void {  //phpcs:ignore -- NOSONAR - complex.
         $backupTask = null;
         //phpcs:disable WordPress.Security.NonceVerification.Recommended
-        if ( isset( $_GET['id'] ) ) {
+        // The edit screen is addressed by `task_id`; a bare `id` also switches
+        // the dashboard chrome into single-site mode. Old `&id=` links still
+        // open the right task, they just keep the site panel.
+        $backupTaskId = 0;
+        if ( isset( $_GET['task_id'] ) ) {
+            $backupTaskId = intval( $_GET['task_id'] );
+        } elseif ( isset( $_GET['id'] ) ) {
+            $backupTaskId = intval( $_GET['id'] );
+        }
+
+        if ( $backupTaskId > 0 ) {
             if ( ! \mainwp_current_user_can( 'dashboard', 'edit_backup_tasks' ) ) {
                 \mainwp_do_not_have_permissions( esc_html__( 'edit backup tasks', 'mainwp' ) );
                 return;
             }
-            $backupTaskId = intval( $_GET['id'] );
 
             $backupTask = MainWP_DB_Backup::instance()->get_backup_task_by_id( $backupTaskId );
             if ( ! MainWP_Manage_Backups_Handler::can_edit_backuptask( $backupTask ) ) {
@@ -356,7 +426,7 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             </div>
 
             <div class="ui modal" id="managebackups-task-status-box" tabindex="0">
-                <div class="header">Running task</div>
+                <div class="header"><?php esc_html_e( 'Running Task', 'mainwp' ); ?></div>
                     <div class="content mainwp-modal-content"></div>
                     <div class="actions mainwp-modal-actions">
                         <input id="managebackups-task-status-close" type="button" name="Close" value="<?php esc_attr_e( 'Cancel', 'mainwp' ); ?>" class="button" />

@@ -218,10 +218,10 @@ let backup_retry_fail = function (siteId, pData, remoteDestinations, pid, type, 
                     if (responseError != undefined) {
                         appendToDiv(backsprocessContentEl, ' ' + mainwp_backup_error_html(responseError));
                     } else {
-                        appendToDiv(backsprocessContentEl, ' <span class="mainwp-red">' + __('ERROR') + ': ' + __('The backup timed out before the child site finished responding. The site may be overloaded, or the host may be limiting long-running requests.') + ' <a href="https://mainwp.com/help/docs/mainwp-introduction/resolving-system-requirement-issues/">' + __('See this help document for possible fixes.') + '</a> (mainwp_backup_timeout)</span>'); // NOSONAR - noopener - open safe.
+                        appendToDiv(backsprocessContentEl, ' <span class="mainwp-red">' + MainWP.I18n.t('ERROR') + ': ' + MainWP.I18n.t('The backup timed out before the child site finished responding. The site may be overloaded, or the host may be limiting long-running requests.') + ' <a href="https://mainwp.com/help/docs/mainwp-introduction/resolving-system-requirement-issues/">' + MainWP.I18n.t('See this help document for possible fixes.') + '</a> (mainwp_backup_timeout)</span>'); // NOSONAR - noopener - open safe.
                     }
                 } else {
-                    appendToDiv(backsprocessContentEl, ' Backup stalled, trying to resume from last file...');
+                    appendToDiv(backsprocessContentEl, ' ' + MainWP.I18n.t('Backup stalled, trying to resume from last file...'));
                     pData['filename'] = response.result.file;
                     pData['append'] = 1;
                     pData = mainwp_secure_data(pData, true); //Rescure
@@ -260,18 +260,16 @@ let backup_retry_fail = function (siteId, pData, remoteDestinations, pid, type, 
                 if (responseError != undefined) {
                     appendToDiv(backsprocessContentEl, ' ' + mainwp_backup_error_html(responseError));
                 } else {
-                    appendToDiv(backsprocessContentEl, ' <span class="mainwp-red">' + __('ERROR') + ': ' + __('The backup timed out before the child site finished responding. The site may be overloaded, or the host may be limiting long-running requests.') + ' <a href="https://mainwp.com/help/docs/mainwp-introduction/resolving-system-requirement-issues/">' + __('See this help document for possible fixes.') + '</a> (mainwp_backup_timeout)</span>'); // NOSONAR - noopener - open safe.
+                    appendToDiv(backsprocessContentEl, ' <span class="mainwp-red">' + MainWP.I18n.t('ERROR') + ': ' + MainWP.I18n.t('The backup timed out before the child site finished responding. The site may be overloaded, or the host may be limiting long-running requests.') + ' <a href="https://mainwp.com/help/docs/mainwp-introduction/resolving-system-requirement-issues/">' + MainWP.I18n.t('See this help document for possible fixes.') + '</a> (mainwp_backup_timeout)</span>'); // NOSONAR - noopener - open safe.
                 }
             } else {
                 // busy or other.
-                //Try again in 5seconds
                 setTimeout(function () {
                     backup_retry_fail(siteId, pData, remoteDestinations, pid, type, subfolder, filename, responseError);
                 }, 10000);
             }
         },
         error: function () {
-            //Try again in 10seconds
             setTimeout(function () {
                 backup_retry_fail(siteId, pData, remoteDestinations, pid, type, subfolder, filename, responseError);
             }, 10000);
@@ -357,7 +355,7 @@ backup_download_file = function (pSiteId, type, url, file, regexfile, size, subf
                     // a diagnostic code; no generic "Backup failed" line on top.
                     appendToDiv(backsprocessContentEl, mainwp_backup_error_html(response.error));
 
-                    jQuery('#managesite-backup-status-close').prop('value', 'Close');
+                    jQuery('#managesite-backup-status-close').prop('value', MainWP.I18n.t('Close'));
                     return;
                 }
 
@@ -374,13 +372,13 @@ backup_download_file = function (pSiteId, type, url, file, regexfile, size, subf
             }
         }(pSiteId, file, regexfile, subfolder, remote_destinations, size, type, url),
         error: function () {
-            return function () {
-                //Try again in 10seconds
-                /*setTimeout(function() {
-                 download_retry_fail(pSiteId, pData, pFile, pRegexFile, pSubfolder, pRemoteDestinations, pSize, pType, pUrl);
-                 },10000);*/
-            }
-        }(pSiteId, file, regexfile, subfolder, remote_destinations, size, type, url),
+            // Clearing the flag also stops the file-size poller above, which
+            // reschedules itself for as long as the download is running.
+            backupDownloadRunning = false;
+            backupError = true;
+            appendToDiv(backsprocessContentEl, ' <span class="mainwp-red">' + MainWP.I18n.t('ERROR') + ': ' + MainWP.I18n.t('The download from the child site failed. Check that the site is reachable and try again.') + '</span>');
+            jQuery('#managesite-backup-status-close').prop('value', MainWP.I18n.t('Close'));
+        },
         dataType: 'json'
     });
 };
@@ -396,7 +394,7 @@ backup_upload_file = function (pSiteId, pFile, pRegexFile, pSubfolder, pRemoteDe
     let backsprocessContentEl = mainwpPopup('#managesite-backup-status-box').getContentEl();
     backupCompleted = true;
     appendToDiv(backsprocessContentEl, MainWP.I18n.t('Backup completed!'));
-    jQuery('#managesite-backup-status-close').prop('value', 'Close');
+    jQuery('#managesite-backup-status-close').prop('value', MainWP.I18n.t('Close'));
     // The archive list refreshes in place when the user closes the modal
     // (see the init callback), so do not auto-close or reload the page.
 };
@@ -503,7 +501,7 @@ let managebackups_render_task_phase = function (siteId, progress) {
     if (pct !== null && pct > 0 && pct < 100 && manageBackupsPhaseStartTime) {
         let denom = pct - manageBackupsPhaseStartPercent;
         if (denom > 0) {
-            parts.push('~' + managebackups_fmt_clock((Date.now() - manageBackupsPhaseStartTime) * (100 - pct) / denom) + ' ' + __('remaining'));
+            parts.push('~' + managebackups_fmt_clock((Date.now() - manageBackupsPhaseStartTime) * (100 - pct) / denom) + ' ' + MainWP.I18n.t('remaining'));
         }
     }
 
@@ -528,7 +526,6 @@ managebackups_run_now = function (el) {
 
     let taskId = el.attr('task_id');
     let taskType = el.attr('task_type');
-    //Fetch the sites to backup
     let data = mainwp_secure_data({
         action: 'mainwp_backuptask_get_sites',
         task_id: taskId
@@ -536,8 +533,22 @@ managebackups_run_now = function (el) {
 
     manageBackupsError = false;
 
+    // Nothing has started child-side yet, so put the Run now link back and let
+    // the user retry instead of leaving the modal on "Starting the backup task...".
+    let startFailed = function (errorHtml) {
+        el.parent().find('.backup_run_loading').hide();
+        el.show();
+        appendToDiv(mainwpPopup('#managebackups-task-status-box').getContentEl(), errorHtml);
+        jQuery('#managebackups-task-status-close').prop('value', MainWP.I18n.t('Close'));
+    };
+
     jQuery.post(ajaxurl, data, function (pTaskId, pTaskType) {
         return function (response) {
+            if (!response || !response.result || !response.result.sites) {
+                startFailed(response && response.error ? mainwp_backup_error_html(response.error) : '<span class="mainwp-red">' + MainWP.I18n.t('ERROR') + ': ' + MainWP.I18n.t('The backup task could not be started. Reload the page and try again.') + '</span>');
+                return;
+            }
+
             manageBackupTaskSites = response.result.sites;
             manageBackupsTaskRemoteDestinations = response.result.remoteDestinations;
             manageBackupsTaskId = pTaskId;
@@ -546,7 +557,9 @@ managebackups_run_now = function (el) {
 
             managebackups_run_next();
         }
-    }(taskId, taskType), 'json');
+    }(taskId, taskType), 'json').fail(function () {
+        startFailed('<span class="mainwp-red">' + MainWP.I18n.t('ERROR') + ': ' + MainWP.I18n.t('The backup task could not be started. Reload the page and try again.') + '</span>');
+    });
 };
 managebackups_run_next = function () {
     let backtaskContentEl = mainwpPopup('#managebackups-task-status-box').getContentEl();
@@ -648,7 +661,7 @@ managebackups_run_next = function () {
             return function () {
                 backupCreateRunning = false;
                 clearInterval(pInterVal);
-                appendToDiv(backtaskContentEl, '[' + pSiteName + '] <span class="mainwp-red">' + __('ERROR') + ': ' + __('The backup request to the child site timed out. The site may be overloaded, or the host may be limiting long-running requests.') + ' <a href="https://mainwp.com/help/docs/mainwp-introduction/resolving-system-requirement-issues/">' + __('See this help document for possible fixes.') + '</a> (mainwp_backup_timeout)</span>'); // NOSONAR - noopener - open safe.
+                appendToDiv(backtaskContentEl, '[' + pSiteName + '] <span class="mainwp-red">' + MainWP.I18n.t('ERROR') + ': ' + MainWP.I18n.t('The backup request to the child site timed out. The site may be overloaded, or the host may be limiting long-running requests.') + ' <a href="https://mainwp.com/help/docs/mainwp-introduction/resolving-system-requirement-issues/">' + MainWP.I18n.t('See this help document for possible fixes.') + '</a> (mainwp_backup_timeout)</span>'); // NOSONAR - noopener - open safe.
                 // A transport failure (not a JSON error response) must still
                 // advance the loop - otherwise one unreachable site silently
                 // stalls the rest of a multi-site Run Now.
@@ -661,7 +674,7 @@ managebackups_run_next = function () {
 
 let managebackups_backup_download_file = function (pSiteId, pSiteName, type, url, file, regexfile, size, subfolder, remote_destinations) {
     let backtaskContentEl = mainwpPopup('#managebackups-task-status-box').getContentEl();
-    appendToDiv(backtaskContentEl, '[' + pSiteName + '] Downloading the file. <div id="managebackups-task-status-progress" siteId="' + pSiteId + '" class="ui green progress"><div class="bar"><div class="progress"></div></div></div>');
+    appendToDiv(backtaskContentEl, '[' + pSiteName + '] ' + MainWP.I18n.t('Downloading the file.') + ' <div id="managebackups-task-status-progress" siteId="' + pSiteId + '" class="ui green progress"><div class="bar"><div class="progress"></div></div></div>');
     jQuery('#managebackups-task-status-progress[siteId="' + pSiteId + '"]').progress({ value: 0, total: size });
     let interVal = setInterval(function () {
         let data = mainwp_secure_data({
@@ -770,7 +783,7 @@ mainwp_managebackups_update = function () {
     } else {
         feedback('mainwp-message-zone', MainWP.I18n.t('Adding the task...'), 'green');
 
-        jQuery('#mainwp_managebackups_update').attr('disabled', 'true'); //disable button to add..
+        jQuery('#mainwp_managebackups_update').attr('disabled', 'true');
 
         //let loadFilesBeforeZip = jQuery( '[name="mainwp_options_loadFilesBeforeZip"]:checked' ).val();
         let name = jQuery('#mainwp_managebackups_add_name').val();
@@ -812,12 +825,15 @@ mainwp_managebackups_update = function () {
             if (response.error != undefined) {
                 feedback('mainwp-message-zone', response.error, 'red');
             } else {
-                //Message the backup task was added
                 feedback('mainwp-message-zone', response.result, 'green');
             }
 
-            jQuery('#mainwp_managebackups_update').prop("disabled", false); //Enable add button
-        }, 'json');
+            jQuery('#mainwp_managebackups_update').prop("disabled", false);
+        }, 'json').fail(function () {
+            managebackups_init();
+            feedback('mainwp-message-zone', MainWP.I18n.t('The backup task could not be saved. Reload the page and try again.'), 'red');
+            jQuery('#mainwp_managebackups_update').prop("disabled", false);
+        });
     }
 };
 mainwp_managebackups_add = function () {
@@ -851,9 +867,8 @@ mainwp_managebackups_add = function () {
     } else {
         feedback('mainwp-message-zone', MainWP.I18n.t('Adding the task...'), 'green');
 
-        jQuery('#mainwp_managebackups_add').attr('disabled', 'true'); //disable button to add..
+        jQuery('#mainwp_managebackups_add').attr('disabled', 'true');
 
-        jQuery('#mainwp_managesites_add').attr('disabled', 'true'); //Disable add button
         let loadFilesBeforeZip = jQuery('[name="mainwp_options_loadFilesBeforeZip"]:checked').val();
         let name = jQuery('#mainwp_managebackups_add_name').val();
         name = name.replace(/"/g, '&quot;');
@@ -893,12 +908,15 @@ mainwp_managebackups_add = function () {
             if (response.error != undefined) {
                 feedback('mainwp-message-zone', response.error, 'red');
             } else {
-                //Message the backup task was added
                 location.href = 'admin.php?page=ManageBackups&a=1';
                 feedback('mainwp-message-zone', response.result, 'green');
             }
-            jQuery('#mainwp_managebackups_add').prop("disabled", false); //Enable add button
-        }, 'json');
+            jQuery('#mainwp_managebackups_add').prop("disabled", false);
+        }, 'json').fail(function () {
+            managebackups_init();
+            feedback('mainwp-message-zone', MainWP.I18n.t('The backup task could not be saved. Reload the page and try again.'), 'red');
+            jQuery('#mainwp_managebackups_add').prop("disabled", false);
+        });
     }
 };
 managebackups_remove = function (element) {
@@ -1029,7 +1047,7 @@ managebackups_show_message = function (text, color) {
 managebackups_reset_stale = function (element) {
     let id = jQuery(element).attr('task_id');
 
-    mainwp_confirm(__('Reset this task\'s stuck run? Only do this if you are sure the scheduled backup crashed.'), function () {
+    mainwp_confirm(MainWP.I18n.t('Reset this task\'s stuck run? Only do this if you are sure the scheduled backup crashed.'), function () {
         let data = mainwp_secure_data({
             action: 'mainwp_native_backup_task_reset',
             task_id: id
@@ -1042,12 +1060,12 @@ managebackups_reset_stale = function (element) {
             let cancelled = response.cancelled != undefined ? response.cancelled : 0;
             let uncancelled = response.uncancelled != undefined ? response.uncancelled : 0;
             if (uncancelled > 0) {
-                managebackups_show_message(__('Task reset. Cancelled %1 child backup run(s); %2 site(s) could not be stopped. See the task\'s Last run notes.', cancelled, uncancelled), 'yellow');
+                managebackups_show_message(MainWP.I18n.t('Task reset. Cancelled %1 child backup run(s); %2 site(s) could not be stopped. See the task\'s Last run notes.', cancelled, uncancelled), 'yellow');
                 setTimeout(function () {
                     location.reload();
                 }, 5000);
             } else {
-                managebackups_show_message(__('Task reset. Cancelled %1 child backup run(s).', cancelled), 'green');
+                managebackups_show_message(MainWP.I18n.t('Task reset. Cancelled %1 child backup run(s).', cancelled), 'green');
                 setTimeout(function () {
                     location.reload();
                 }, 1500);
@@ -1107,7 +1125,6 @@ mainwp_updatesoverview_checkBackups = function (sitesToUpdate, siteNames) {
         sitesToCheck.push(id);
     }
 
-    //Step 2: Check if backups are ok.
     let data = mainwp_secure_data({
         action: 'mainwp_checkbackups',
         sites: sitesToCheck

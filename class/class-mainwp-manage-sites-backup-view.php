@@ -43,8 +43,8 @@ class MainWP_Manage_Sites_Backup_View { // phpcs:ignore Generic.Classes.OpeningB
             $downloadLink = admin_url( '?sig=' . MainWP_System_Utility::get_download_sig( $fullBackup ) . '&mwpdl=' . rawurlencode( str_replace( $mwpDir, '', $fullBackup ) ) );
             $output      .= '<div class="ui grid field">';
             $output      .= '<label class="six wide column middle aligned">' . MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( filemtime( $fullBackup ) ) ) . ' - ' . MainWP_Utility::human_filesize( filesize( $fullBackup ) ) . '</label>';
-            $restoreLink  = $native_backups ? '' : '<a href="admin.php?page=SiteRestore&websiteid=' . intval( $website->id ) . '&f=' . base64_encode( $downloadLink ) . '&size=' . filesize( $fullBackup ) . '&_opennonce=' . wp_create_nonce( 'mainwp-admin-nonce' ) . '" class="mainwp-upgrade-button button" target="_blank" title="' . basename( $fullBackup ) . '">Restore</a>'; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() used for http encoding compatible.
-            $output      .= '<div class="ten wide column ui toggle checkbox"><a title="' . basename( $fullBackup ) . '" href="' . esc_url( $downloadLink ) . '" class="button">Download</a>' . $restoreLink;
+            $restoreLink  = $native_backups ? '' : '<a href="admin.php?page=SiteRestore&websiteid=' . intval( $website->id ) . '&f=' . base64_encode( $downloadLink ) . '&size=' . filesize( $fullBackup ) . '&_opennonce=' . wp_create_nonce( 'mainwp-admin-nonce' ) . '" class="mainwp-upgrade-button button" target="_blank" title="' . esc_attr( basename( $fullBackup ) ) . '">' . esc_html__( 'Restore', 'mainwp' ) . '</a>'; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() used for http encoding compatible.
+            $output      .= '<div class="ten wide column ui toggle checkbox"><a title="' . esc_attr( basename( $fullBackup ) ) . '" href="' . esc_url( $downloadLink ) . '" class="button">' . esc_html__( 'Download', 'mainwp' ) . '</a>' . $restoreLink;
             $output      .= '</div>';
             $output      .= '</div>';
         }
@@ -62,7 +62,7 @@ class MainWP_Manage_Sites_Backup_View { // phpcs:ignore Generic.Classes.OpeningB
         foreach ( $dbBackups as $dbBackup ) {
             $downloadLink = admin_url( '?sig=' . MainWP_System_Utility::get_download_sig( $dbBackup ) . '&mwpdl=' . rawurlencode( str_replace( $mwpDir, '', $dbBackup ) ) );
             $output      .= '<div class="ui grid field">';
-            $output      .= '<label class="six wide column middle aligned">' . MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( filemtime( $dbBackup ) ) ) . ' - ' . MainWP_Utility::human_filesize( filesize( $dbBackup ) ) . '</label><div class="ten wide column ui toggle checkbox"><a title="' . basename( $dbBackup ) . '" href="' . esc_url( $downloadLink ) . '" download class="button">Download</a></div>';
+            $output      .= '<label class="six wide column middle aligned">' . MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( filemtime( $dbBackup ) ) ) . ' - ' . MainWP_Utility::human_filesize( filesize( $dbBackup ) ) . '</label><div class="ten wide column ui toggle checkbox"><a title="' . esc_attr( basename( $dbBackup ) ) . '" href="' . esc_url( $downloadLink ) . '" download class="button">' . esc_html__( 'Download', 'mainwp' ) . '</a></div>';
             $output      .= '</div>';
         }
         ?>
@@ -98,7 +98,7 @@ class MainWP_Manage_Sites_Backup_View { // phpcs:ignore Generic.Classes.OpeningB
         <div id="ajax-information-zone" class="updated" style="display: none;"></div>
 
         <?php if ( empty( $primaryBackupMethods ) ) { ?>
-            <div class="ui blue message"><?php printf( /* translators: 1: Opening anchor tag, 2: Closing anchor tag with icon. */ esc_html__( 'Did you know that MainWP has Extensions for working with popular backup plugins? Visit the %1$sExtensions Site%2$s for options.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank" ?>', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?></div>
+            <div class="ui blue message"><?php printf( /* translators: 1: Opening anchor tag, 2: Closing anchor tag with icon. */ esc_html__( 'Did you know that MainWP has Extensions for working with popular backup plugins? Visit the %1$sExtensions Site%2$s for options.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe. ?></div>
             <?php
         }
 
@@ -120,12 +120,12 @@ class MainWP_Manage_Sites_Backup_View { // phpcs:ignore Generic.Classes.OpeningB
 
         <div class="ui modal" id="managesite-backup-status-box">
             <div class="header">
-                <?php esc_html_e( 'Backup ', 'mainwp' ); ?><?php echo esc_html( stripslashes( $website->name ) ); ?>
+                <?php esc_html_e( 'Backup', 'mainwp' ); ?> <?php echo esc_html( stripslashes( $website->name ) ); ?>
             </div>
             <div class="scrolling content mainwp-modal-content">
             </div>
             <div class="actions mainwp-modal-actions">
-                <input id="managesite-backup-status-close" type="button" name="Close" value="<?php esc_attr_e( 'Cancel ', 'mainwp' ); ?>" class="button" />
+                <input id="managesite-backup-status-close" type="button" name="Close" value="<?php esc_attr_e( 'Cancel', 'mainwp' ); ?>" class="button" />
             </div>
         </div>
 
@@ -229,11 +229,12 @@ class MainWP_Manage_Sites_Backup_View { // phpcs:ignore Generic.Classes.OpeningB
                     <label class="six wide column middle aligned"><?php esc_html_e( 'Archive type', 'mainwp' ); ?></label>
                     <div class="ten wide column">
                         <select name="mainwp_archiveFormat" id="mainwp_archiveFormat" class="ui dropdown">
-                            <option value="global"
-                            <?php
-                            if ( $useGlobal ) :
+                            <option value="global" <?php echo $useGlobal ? 'selected' : ''; ?>>
+                                <?php
+                                /* translators: %s: the global archive format, for example "Tar GZip". */
+                                printf( esc_html__( 'Global setting (%s)', 'mainwp' ), esc_html( $globalArchiveFormatText ) );
                                 ?>
-                                selected<?php endif; ?>>Global setting (<?php echo esc_html( $globalArchiveFormatText ); ?>)</option>
+                            </option>
                             <option value="zip"
                             <?php
                             if ( 'zip' === $archiveFormat ) :
@@ -269,7 +270,7 @@ class MainWP_Manage_Sites_Backup_View { // phpcs:ignore Generic.Classes.OpeningB
                         <label class="six wide column middle aligned"></label>
                         <div class="ten wide column ui toggle checkbox">
                             <textarea id="mainwp-kbl-content" disabled></textarea><br />
-                            <em><?php esc_html_e( 'This adds known backup locations of popular WordPress backup plugins to the exclude list. Old backups can take up a lot of space and can cause your current MainWP backup to timeout.', 'mainwp' ); ?></em>
+                            <em><?php esc_html_e( 'This adds known backup locations of popular WordPress backup plugins to the exclude list. Old backups can take up a lot of space and can cause your current MainWP backup to time out.', 'mainwp' ); ?></em>
                         </div>
                     </div>
                     <div class="ui grid field">
@@ -282,7 +283,7 @@ class MainWP_Manage_Sites_Backup_View { // phpcs:ignore Generic.Classes.OpeningB
                         <label class="six wide column middle aligned"></label>
                         <div class="ten wide column ui toggle checkbox">
                             <textarea id="mainwp-kcl-content" disabled></textarea><br />
-                            <em><?php esc_html_e( 'This adds known cache locations of popular WordPress cache plugins to the exclude list. A cache can be massive with thousands of files and can cause your current MainWP backup to timeout. Your cache will be rebuilt by your caching plugin when the backup is restored.', 'mainwp' ); ?></em>
+                            <em><?php esc_html_e( 'This adds known cache locations of popular WordPress cache plugins to the exclude list. A cache can be massive with thousands of files and can cause your current MainWP backup to time out. Your cache will be rebuilt by your caching plugin when the backup is restored.', 'mainwp' ); ?></em>
                         </div>
                     </div>
                     <div class="ui grid field">

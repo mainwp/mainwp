@@ -38,6 +38,11 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
 
         MainWP_Backup_Page::render_header( 'Snapshots' );
         static::render_restore_surface( $site_id, false );
+        // render_top_header() opens .mainwp-content-wrap and only the footer
+        // closes it. The embedded per-site surface renders inside a page that
+        // owns its own wrapper, so the footer belongs here, not in
+        // render_restore_surface().
+        MainWP_Backup_Page::render_footer( 'Snapshots' );
     }
 
     /**
@@ -64,7 +69,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 <div class="ui form">
                     <?php if ( ! $locked ) : ?>
                     <div class="inline field">
-                        <label><?php esc_html_e( 'Site', 'mainwp' ); ?></label>
+                        <label for="mainwp-restore-site-selector"><?php esc_html_e( 'Site', 'mainwp' ); ?></label>
                         <select id="mainwp-restore-site-selector" class="ui search selection dropdown">
                             <option value="0"><?php esc_html_e( 'Select a site', 'mainwp' ); ?></option>
                             <?php
@@ -90,35 +95,52 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     </div>
                     <?php endif; ?>
 
+                    <?php
+                    // One column list drives the header and the no-JS
+                    // placeholder row's colspan, so adding or removing a column
+                    // cannot leave the placeholder spanning the wrong width.
+                    // DataTables computes its own colspan for the rows it draws.
+                    $snapshot_columns = array(
+                        'backup'       => esc_html__( 'Backup', 'mainwp' ),
+                        'type'         => esc_html__( 'Type', 'mainwp' ),
+                        'created'      => esc_html__( 'Created', 'mainwp' ),
+                        'size'         => esc_html__( 'Size', 'mainwp' ),
+                        'source'       => esc_html__( 'Available from', 'mainwp' ),
+                        'test_restore' => esc_html__( 'Test Restore', 'mainwp' ),
+                        'actions'      => '',
+                    );
+                    ?>
+                    <div class="ui toggle checkbox" style="margin-bottom: 1em;">
+                        <input type="checkbox" id="mainwp-snapshots-show-removed">
+                        <label for="mainwp-snapshots-show-removed"><?php esc_html_e( 'Show removed backups', 'mainwp' ); ?></label>
+                    </div>
+
                     <table class="ui table" id="mainwp-restore-snapshots-table">
-                    <thead>
-                        <tr>
-                            <th scope="col"><?php esc_html_e( 'Backup', 'mainwp' ); ?></th>
-                            <th scope="col"><?php esc_html_e( 'Type', 'mainwp' ); ?></th>
-                            <th scope="col"><?php esc_html_e( 'Created', 'mainwp' ); ?></th>
-                            <th scope="col"><?php esc_html_e( 'Size', 'mainwp' ); ?></th>
-                            <th scope="col"><?php esc_html_e( 'Available from', 'mainwp' ); ?></th>
-                            <th scope="col"><?php esc_html_e( 'Test Restore', 'mainwp' ); ?></th>
-                            <th scope="col" class="collapsing"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr><td colspan="7"><?php echo $locked ? esc_html__( 'Loading backups...', 'mainwp' ) : esc_html__( 'Select a site to list its backups.', 'mainwp' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- esc_html__ escapes both branches. ?></td></tr>
-                    </tbody>
-                </table>
+                        <thead>
+                            <tr>
+                                <?php foreach ( $snapshot_columns as $column_key => $column_label ) : ?>
+                                <th scope="col" class="<?php echo esc_attr( 'actions' === $column_key ? 'collapsing' : '' ); ?>"><?php echo esc_html( $column_label ); ?></th>
+                                <?php endforeach; ?>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="<?php echo (int) count( $snapshot_columns ); ?>"><?php echo $locked ? esc_html__( 'Loading backups...', 'mainwp' ) : esc_html__( 'Select a site to list its backups.', 'mainwp' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- esc_html__ escapes both branches. ?></td></tr>
+                        </tbody>
+                    </table>
+                </div>
 
                 <?php if ( MainWP_Backup_Settings::is_native_backups_enabled() ) : ?>
                 <div class="mainwp-native-backup-now-row" style="margin-top: 1em;">
                     <button type="button" class="ui green button<?php echo $site_id > 0 ? '' : ' disabled'; ?>" id="mainwp-native-backup-now-btn" <?php disabled( 0, $site_id ); ?>>
-                        <i class="cloud upload alternate icon"></i><?php esc_html_e( 'Back up now', 'mainwp' ); ?>
+                        <i class="cloud upload alternate icon"></i><?php esc_html_e( 'Back Up Now', 'mainwp' ); ?>
                     </button>
                     <button type="button" class="ui button" id="mainwp-native-backup-cancel-btn" style="display: none;">
                         <i class="times icon"></i><?php esc_html_e( 'Cancel backup', 'mainwp' ); ?>
                     </button>
                     <button type="button" class="ui basic button<?php echo $site_id > 0 ? '' : ' disabled'; ?>" id="mainwp-snapshots-cleanup-btn" <?php disabled( 0, $site_id ); ?>>
-                        <i class="broom icon"></i><?php esc_html_e( 'Clean up', 'mainwp' ); ?>
+                        <i class="broom icon"></i><?php esc_html_e( 'Clean Up', 'mainwp' ); ?>
                     </button>
-                    <span id="mainwp-native-backup-now-status" class="mainwp-native-backup-now-status" style="margin-left: 1em; color: var(--mainwp-text-color, inherit);"></span>
+                    <span id="mainwp-native-backup-now-status" class="mainwp-native-backup-now-status" aria-live="polite" style="margin-left: 1em; color: var(--mainwp-text-color, inherit);"></span>
                 </div>
                     <?php $backup_now_local_only = $site_id > 0 && empty( MainWP_DB_Backup::instance()->manual_backup_task_destinations( $site_id ) ); ?>
                 <div id="mainwp-native-backup-now-note" class="mainwp-native-backup-now-note" data-local-only="<?php echo $backup_now_local_only ? '1' : '0'; ?>" style="margin-top: .5em; opacity: .8;<?php echo $backup_now_local_only ? '' : ' display: none;'; ?>">
@@ -140,13 +162,13 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         <div class="field">
                             <div class="ui checkbox" id="mainwp-restore-presnapshot-box">
                                 <input type="checkbox" id="mainwp-restore-presnapshot" checked="checked">
-                                <label><?php esc_html_e( 'Create a safety backup first (recommended). It stays on the site and is the rollback if the restore fails. Without it, files changed by a failed restore cannot be rolled back automatically.', 'mainwp' ); ?></label>
+                                <label for="mainwp-restore-presnapshot"><?php esc_html_e( 'Create a safety backup first (recommended). It stays on the site and is the rollback if the restore fails. Without it, files changed by a failed restore cannot be rolled back automatically.', 'mainwp' ); ?></label>
                             </div>
                         </div>
                         <div class="field">
                             <div class="ui checkbox" id="mainwp-restore-consent-box">
                                 <input type="checkbox" id="mainwp-restore-consent">
-                                <label><?php esc_html_e( 'I understand this replaces the current site content.', 'mainwp' ); ?></label>
+                                <label for="mainwp-restore-consent"><?php esc_html_e( 'I understand this replaces the current site content.', 'mainwp' ); ?></label>
                             </div>
                         </div>
                         <div class="field" id="mainwp-restore-preserve-orders-box" style="display:none;">
@@ -160,7 +182,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 </div>
                 <div id="mainwp-restore-progress-pane" style="display:none;">
                     <div class="ui active inline loader" id="mainwp-restore-spinner"></div>
-                    <span id="mainwp-restore-status-text"></span>
+                    <span id="mainwp-restore-status-text" aria-live="polite"></span>
                     <div class="ui tiny indicating progress" id="mainwp-restore-progress-bar" style="display:none;margin-top:.75em;"><div class="bar"></div></div>
                     <div class="ui small blue message" id="mainwp-restore-safety-note" style="display:none;"><?php esc_html_e( 'A safety backup was taken before this restore. If the result looks wrong, you can roll back to it.', 'mainwp' ); ?></div>
                     <div class="ui small yellow message" id="mainwp-restore-cancel-warning" style="display:none;"><?php esc_html_e( 'Cancelling now stops the restore while the site is mid-change. Files already copied stay in place and the previous database tables are kept aside, so a rollback from the safety backup remains available if the site looks wrong afterwards.', 'mainwp' ); ?></div>
@@ -171,10 +193,10 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 </div>
             </div>
             <div class="actions">
-                <div class="ui cancel button" id="mainwp-restore-close-btn"><?php esc_html_e( 'Close', 'mainwp' ); ?></div>
-                <div class="ui button" id="mainwp-restore-cancel-btn" style="display:none;"><?php esc_html_e( 'Cancel Restore', 'mainwp' ); ?></div>
-                <div class="ui button" id="mainwp-restore-rollback-btn" style="display:none;"><?php esc_html_e( 'Roll Back', 'mainwp' ); ?></div>
-                <div class="ui green disabled button" id="mainwp-restore-start-btn"><i class="undo icon"></i><?php esc_html_e( 'Start Restore', 'mainwp' ); ?></div>
+                <button type="button" class="ui cancel button" id="mainwp-restore-close-btn"><?php esc_html_e( 'Close', 'mainwp' ); ?></button>
+                <button type="button" class="ui button" id="mainwp-restore-cancel-btn" style="display:none;"><?php esc_html_e( 'Cancel Restore', 'mainwp' ); ?></button>
+                <button type="button" class="ui button" id="mainwp-restore-rollback-btn" style="display:none;"><?php esc_html_e( 'Roll Back', 'mainwp' ); ?></button>
+                <button type="button" class="ui green disabled button" id="mainwp-restore-start-btn"><i class="undo icon"></i><?php esc_html_e( 'Start Restore', 'mainwp' ); ?></button>
             </div>
         </div>
         <?php
@@ -201,6 +223,17 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             'failed_permanent' => esc_html__( 'Restore failed', 'mainwp' ),
             'cancelled'        => esc_html__( 'Restore cancelled', 'mainwp' ),
         );
+
+        // The rows are built in JS from the AJAX payload, so the shared display
+        // map has to travel with the page. backup_type_label() already escapes,
+        // so the values go into the row markup as-is; snap.type itself stays raw
+        // everywhere the restore flow reads it.
+        $type_labels = array(
+            'full'        => MainWP_Backup_Page::backup_type_label( 'full' ),
+            'db'          => MainWP_Backup_Page::backup_type_label( 'db' ),
+            'incremental' => MainWP_Backup_Page::backup_type_label( 'incremental' ),
+            'files'       => MainWP_Backup_Page::backup_type_label( 'files' ),
+        );
         ?>
         <script type="text/javascript">
         jQuery( function ( $ ) {
@@ -216,7 +249,10 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 snapshotsCleanup: '<?php echo esc_js( wp_create_nonce( 'mainwp_snapshots_cleanup' ) ); ?>'
             };
             var statusLabels = <?php echo wp_json_encode( $labels ); ?>;
+            var backupTypeLabels = <?php echo wp_json_encode( $type_labels ); ?>;
             var currentSite = <?php echo (int) $site_id; ?>;
+            var snapshotsTable = null;
+            var showRemovedSnapshots = false;
             var currentSnapshot = 0;
             var currentJob = 0;
             var pollTimer = null;
@@ -321,49 +357,165 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 }
             }
 
+            var snapshotsPlaceholders = {
+                idle:    '<?php echo esc_js( esc_html__( 'Select a site to list its backups.', 'mainwp' ) ); ?>',
+                loading: '<div class="ui active inline loader mini"></div>',
+                empty:   '<?php echo esc_js( esc_html__( 'No backups recorded for this site yet.', 'mainwp' ) ); ?>',
+                error:   '<?php echo esc_js( esc_html__( 'The backup list could not be loaded. Check the connection to the dashboard and try again.', 'mainwp' ) ); ?>'
+            };
+
+            // DataTables paints the full-width placeholder row from
+            // language.emptyTable at draw time, so the loading, empty, and
+            // failed states all speak through it; a hand-built <tr> would be
+            // thrown away by the next draw.
+            function setSnapshotsPlaceholder( text ) {
+                snapshotsTable.settings()[0].oLanguage.sEmptyTable = text;
+            }
+
+            // Back Up Now and Clean Up act on the selected site, so they follow
+            // the list: never left disabled by a reload that failed.
+            function enableSnapshotControls( enabled ) {
+                $( '#mainwp-native-backup-now-btn, #mainwp-snapshots-cleanup-btn' ).prop( 'disabled', ! enabled ).toggleClass( 'disabled', ! enabled );
+            }
+
+            function testRestoreCell( snap ) {
+                if ( 'pass' === snap.test_restore_state ) {
+                    var testedOn = snap.test_restore_at > 0 ? ' ' + new Date( snap.test_restore_at * 1000 ).toLocaleDateString() : '';
+                    return '<span class="ui mini green label"><i class="check icon"></i>' + testRestoreLabels.pass + '</span>' + testedOn;
+                }
+                if ( 'fail' === snap.test_restore_state ) {
+                    return '<span class="ui mini red label">' + testRestoreLabels.fail + '</span>';
+                }
+                if ( 'unsupported' === snap.test_restore_state ) {
+                    return '<span class="ui mini grey label">' + testRestoreLabels.unsupported + '</span>';
+                }
+                if ( 'unavailable' === snap.test_restore_state ) {
+                    return '<span class="ui mini grey label">' + testRestoreLabels.unavailable + '</span>';
+                }
+                return '&mdash;';
+            }
+
+            // The static placeholder row is the no-JS fallback; drop it before
+            // DataTables takes the tbody over so it can never become a data row.
+            $( '#mainwp-restore-snapshots-table tbody' ).empty();
+            snapshotsTable = $( '#mainwp-restore-snapshots-table' ).DataTable( {
+                "data": [],
+                // Same order as the header rendered by render_restore_surface().
+                // The snapshot object is the row data, so sorting works off the
+                // raw values while only the display strings are built here.
+                "columns": [
+                    {
+                        "data": "id",
+                        "render": function ( data, type ) {
+                            return 'display' === type ? '#' + data : ( parseInt( data, 10 ) || 0 );
+                        }
+                    },
+                    {
+                        "data": "type",
+                        "render": function ( data ) {
+                            // backup_type_label() already escaped these; an
+                            // unrecognised type falls back to the raw value.
+                            return backupTypeLabels[ data ] || escAttr( data );
+                        }
+                    },
+                    {
+                        "data": "created",
+                        "render": function ( data, type ) {
+                            return ( 'display' === type || 'filter' === type ) ? new Date( data * 1000 ).toLocaleString() : ( parseInt( data, 10 ) || 0 );
+                        }
+                    },
+                    {
+                        "data": null,
+                        // Not orderable: the payload carries only the formatted
+                        // size, so sorting it would put 900 MB above 1.2 GB.
+                        "orderable": false,
+                        "render": function ( data, type, snap ) {
+                            return snap.size_label ? escAttr( snap.size_label ) : '&mdash;';
+                        }
+                    },
+                    {
+                        "data": null,
+                        "render": function ( data, type, snap ) {
+                            var sourceCell = sourceLabels[ snap.source ] || escAttr( snap.source );
+                            if ( 'display' === type && 'verified' === snap.offsite_state ) {
+                                sourceCell += ' <span class="ui mini green label">' + offsiteVerifiedLabel + '</span>';
+                            }
+                            return sourceCell;
+                        }
+                    },
+                    {
+                        "data": null,
+                        "render": function ( data, type, snap ) {
+                            return testRestoreCell( snap );
+                        }
+                    },
+                    {
+                        "data": null,
+                        "orderable": false,
+                        "className": "collapsing",
+                        "render": function ( data, type, snap ) {
+                            // snap.type stays raw here: the confirm pane and the
+                            // WooCommerce branches read this attribute as state.
+                            return snap.restorable
+                                ? '<a href="#" class="ui mini green button mainwp-restore-snapshot" data-snapshot="' + snap.id + '" data-snapshot-type="' + snap.type + '" data-snapshot-age="' + ( parseInt( snap.age_days, 10 ) || 0 ) + '"><?php echo esc_js( esc_html__( 'Restore', 'mainwp' ) ); ?></a>'
+                                : '';
+                        }
+                    }
+                ],
+                "createdRow": function ( row, snap ) {
+                    if ( snap.restorable ) {
+                        return;
+                    }
+                    $( row ).addClass( 'disabled' );
+                    if ( snap.restore_reason ) {
+                        $( row ).attr( 'title', snap.restore_reason );
+                    }
+                },
+                "order": [ [ 2, 'desc' ] ],
+                "pageLength": 10,
+                "pagingType": "full_numbers",
+                "stateSave": true,
+                "language": {
+                    "emptyTable": snapshotsPlaceholders.idle,
+                    "zeroRecords": '<?php echo esc_js( esc_html__( 'No backups match the current filter.', 'mainwp' ) ); ?>'
+                }
+            } );
+
+            // The search stack is global to the page, so scope the callback to
+            // this table. Filtering runs before the row nodes exist, so it reads
+            // the snapshot's source off the row data rather than a row class.
+            $.fn.dataTable.ext.search.push( function ( settings, filterData, rowIndex, snap ) {
+                if ( 'mainwp-restore-snapshots-table' !== settings.nTable.id ) {
+                    return true;
+                }
+                return showRemovedSnapshots || ! snap || 'unavailable' !== snap.source;
+            } );
+
+            $( '#mainwp-snapshots-show-removed' ).on( 'change', function () {
+                showRemovedSnapshots = this.checked;
+                snapshotsTable.draw();
+            } );
+
+            // Every reload path - a site switch, a finished restore, a finished
+            // backup, a cleanup - comes through here, so the table is only ever
+            // refilled through the DataTables API.
             function loadSnapshots( siteId ) {
                 currentSite = siteId;
                 if ( siteId > 0 ) {
-                    $( '#mainwp-native-backup-now-btn' ).prop( 'disabled', false ).removeClass( 'disabled' );
-                    $( '#mainwp-snapshots-cleanup-btn' ).prop( 'disabled', false ).removeClass( 'disabled' );
+                    enableSnapshotControls( true );
                 }
-                var $tbody = $( '#mainwp-restore-snapshots-table tbody' );
-                $tbody.html( '<tr><td colspan="6"><div class="ui active inline loader mini"></div></td></tr>' );
+                setSnapshotsPlaceholder( snapshotsPlaceholders.loading );
+                snapshotsTable.clear().draw();
                 $.post( ajaxurl, { action: 'mainwp_restore_snapshot_list', security: nonces.list, site_id: siteId }, function ( response ) {
-                    var rows = '';
                     siteIsMultisite = !! response.multisite;
                     siteHasWooCommerce = !! response.site_has_woocommerce;
                     currentSiteUrl = response.site_url || '';
                     $( '#mainwp-native-backup-now-note' ).attr( 'data-local-only', response.local_only ? '1' : '0' ).toggle( !! response.local_only );
-                    ( response.snapshots || [] ).forEach( function ( snap ) {
-                        var when = new Date( snap.created * 1000 ).toLocaleString();
-                        var action = snap.restorable
-                            ? '<a href="#" class="ui mini green button mainwp-restore-snapshot" data-snapshot="' + snap.id + '" data-snapshot-type="' + snap.type + '" data-snapshot-age="' + ( parseInt( snap.age_days, 10 ) || 0 ) + '"><?php echo esc_js( esc_html__( 'Restore', 'mainwp' ) ); ?></a>'
-                            : '';
-                        var rowClass = snap.restorable ? '' : ' class="disabled"';
-                        var rowTitle = ( ! snap.restorable && snap.restore_reason ) ? ' title="' + escAttr( snap.restore_reason ) + '"' : '';
-                        var sourceCell = ( sourceLabels[ snap.source ] || snap.source );
-                        if ( 'verified' === snap.offsite_state ) {
-                            sourceCell += ' <span class="ui mini green label">' + offsiteVerifiedLabel + '</span>';
-                        }
-                        var sizeCell = snap.size_label ? escAttr( snap.size_label ) : '&mdash;';
-                        var testRestoreCell = '&mdash;';
-                        if ( 'pass' === snap.test_restore_state ) {
-                            var testedOn = snap.test_restore_at > 0 ? ' ' + new Date( snap.test_restore_at * 1000 ).toLocaleDateString() : '';
-                            testRestoreCell = '<span class="ui mini green label"><i class="check icon"></i>' + testRestoreLabels.pass + '</span>' + testedOn;
-                        } else if ( 'fail' === snap.test_restore_state ) {
-                            testRestoreCell = '<span class="ui mini red label">' + testRestoreLabels.fail + '</span>';
-                        } else if ( 'unsupported' === snap.test_restore_state ) {
-                            testRestoreCell = '<span class="ui mini grey label">' + testRestoreLabels.unsupported + '</span>';
-                        } else if ( 'unavailable' === snap.test_restore_state ) {
-                            testRestoreCell = '<span class="ui mini grey label">' + testRestoreLabels.unavailable + '</span>';
-                        }
-                        rows += '<tr' + rowClass + rowTitle + '><td>#' + snap.id + '</td><td>' + snap.type + '</td><td>' + when + '</td><td>' + sizeCell + '</td><td>' + sourceCell + '</td><td>' + testRestoreCell + '</td><td>' + action + '</td></tr>';
-                    } );
-                    if ( '' === rows ) {
-                        rows = '<tr><td colspan="7"><?php echo esc_js( esc_html__( 'No backups recorded for this site yet.', 'mainwp' ) ); ?></td></tr>';
-                    }
-                    $tbody.html( rows );
+
+                    setSnapshotsPlaceholder( snapshotsPlaceholders.empty );
+                    snapshotsTable.clear();
+                    snapshotsTable.rows.add( response.snapshots || [] );
+                    snapshotsTable.draw();
 
                     // The reload bootstrap: resume what the server says is
                     // running for this site. A restore mid-flight reopens the
@@ -378,7 +530,13 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     if ( response.manual_backup_running && ! backupPollTimer ) {
                         resumeBackupFollow();
                     }
-                }, 'json' );
+                }, 'json' ).fail( function () {
+                    // A transport error skips the success callback: without this
+                    // the loader spins forever and the page reads as hung.
+                    setSnapshotsPlaceholder( snapshotsPlaceholders.error );
+                    snapshotsTable.clear().draw();
+                    enableSnapshotControls( currentSite > 0 );
+                } );
             }
 
             function setPane( confirming ) {
@@ -657,7 +815,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 window.clearTimeout( pollTimer );
             } );
 
-            // On-demand "Back up now": kick the native backup, then poll the
+            // On-demand "Back Up Now": kick the native backup, then poll the
             // same way the restore flow does and refresh the list on success.
             function setBackupStatus( text, isError ) {
                 $( '#mainwp-native-backup-now-status' ).text( text ).css( 'color', isError ? '#AD0000' : '' );

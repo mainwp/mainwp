@@ -3087,7 +3087,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             return $website;
         }
 
-        if ( array_key_exists( 'tags', $request ) ) {
+        if ( $request->has_param( 'tags' ) ) {
             return new \WP_Error(
                 'rest_invalid_param',
                 __( 'The "tags" parameter is not supported for this endpoint.', 'mainwp' ),
@@ -3097,7 +3097,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             );
         }
 
-        if ( array_key_exists( 'groupids', $request ) && ! is_string( $request['groupids'] ) ) {
+        if ( $request->has_param( 'groupids' ) && ! is_string( $request['groupids'] ) ) {
             return new \WP_Error(
                 'rest_invalid_param',
                 __( 'The groupids parameter must be a string.', 'mainwp' ),
@@ -3112,6 +3112,13 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         try {
             $item   = $this->prepare_object_for_update( $request );
             $result = MainWP_DB_Common::instance()->rest_api_update_website( $website->id, $item );
+            if ( is_array( $result ) ) {
+                foreach ( array( 'group_updated', 'group_message' ) as $field ) {
+                    if ( array_key_exists( $field, $result ) ) {
+                        $resp_data[ $field ] = $result[ $field ];
+                    }
+                }
+            }
             if ( is_array( $result ) && ! empty( $result['success'] ) ) {
                     $resp_data['success'] = 1;
                     $params               = array(

@@ -1126,16 +1126,24 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
 
         $group_update_success = null;
 
-        $groupids = array();
         // Support removing the site's groups/tags.
         if ( isset( $data['groupids'] ) && is_string( $data['groupids'] ) ) {
             $group_update_success = true;
             $valid_groupids       = true;
 
+            $new_groupids   = array();
+            $old_groupids   = array();
+            $current_groups = $this->get_groups_by_website_id( $websiteid );
+
+            $old_groupids = $current_groups
+                ? array_map( 'intval', wp_list_pluck( $current_groups, 'id' ) )
+                : array();
+
             $groupids_string = trim( wp_unslash( $data['groupids'] ) );
 
             if ( '' !== $groupids_string ) {
                 $tokens = array_map( 'trim', explode( ',', $groupids_string ) );
+
                 foreach ( $tokens as $token ) {
                     if ( '' === $token || ! ctype_digit( $token ) || 0 === (int) $token ) {
                         $valid_groupids       = false;
@@ -1145,40 +1153,36 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
                 }
 
                 if ( $valid_groupids ) {
-                    $groupids = array_map( 'absint', $tokens );
+                    $new_groupids = array_values( array_unique( array_map( 'absint', $tokens ) ) );
+
+                    $groups = $this->get_groups_for_current_user();
+
+                    if ( $groups ) {
+                        $allowed_groupids = array_map(
+                            function ( $group ) {
+                                return (int) $group->id;
+                            },
+                            $groups
+                        );
+
+                        // Reject IDs that the current user cannot access.
+                        if ( count( $new_groupids ) !== count( array_intersect( $new_groupids, $allowed_groupids ) ) ) {
+                            $valid_groupids       = false;
+                            $group_update_success = false;
+                        }
+                    } else {
+                        $valid_groupids       = false;
+                        $group_update_success = false;
+                    }
                 }
             }
 
             if ( $valid_groupids ) {
-                $table_wp_group = esc_sql( $this->table_name( 'wp_group' ) );
-
-                $result = $this->wpdb->query(
-                    $this->wpdb->prepare(
-                        "DELETE FROM `{$table_wp_group}` WHERE wpid=%d",
-                        $websiteid
-                    )
+                $group_update_success = $this->safe_update_site_group_ids(
+                    $websiteid,
+                    $new_groupids,
+                    $old_groupids
                 );
-
-                if ( false === $result ) {
-                    $group_update_success = false;
-                } elseif ( ! empty( $groupids ) ) {
-                    $values = array();
-                    $args   = array();
-
-                    foreach ( $groupids as $groupid ) {
-                        $values[] = '(%d, %d)';
-                        $args[]   = $websiteid;
-                        $args[]   = (int) $groupid;
-                    }
-
-                    $sql = $this->wpdb->prepare( "INSERT INTO `{$table_wp_group}` (wpid, groupid) VALUES " . implode( ', ', $values ), $args ); // phpcs:ignore --NOSONAR - placeholder are ok.
-
-                    $result = $this->wpdb->query( $sql );
-
-                    if ( false === $result ) {
-                        $group_update_success = false;
-                    }
-                }
             }
         }
 
@@ -1242,5 +1246,71 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         }
 
         return $response;
+    }
+
+    /**
+     * Safely update the group associations for a site.
+     *
+     * New group associations are inserted before obsolete associations are removed.
+     * If an insert fails, only the associations created during this operation are
+     * removed, preserving the site's existing group associations.
+     *
+     * @param int   $site_id       Site ID.
+     * @param array $new_group_ids New group IDs.
+     * @param array $old_group_ids Existing group IDs.
+     *
+     * @return bool True on success, false if validation or an insert fails.
+     */
+    private function safe_update_site_group_ids( $site_id, $new_group_ids, $old_group_ids ) {
+        if ( empty( $site_id ) || ! is_array( $new_group_ids ) || ! is_array( $old_group_ids ) ) {
+            return false;
+        }
+
+        $table_name         = esc_sql( $this->table_name( 'wp_group' ) );
+        $inserted_group_ids = array();
+
+        // Insert new associations first.
+        foreach ( array_diff( $new_group_ids, $old_group_ids ) as $group_id ) {
+            $result = $this->wpdb->insert(
+                $table_name,
+                array(
+                    'wpid'    => $site_id,
+                    'groupid' => $group_id,
+                ),
+                array( '%d', '%d' )
+            );
+
+            if ( false === $result ) {
+                // Remove only the associations created by this operation.
+                foreach ( $inserted_group_ids as $inserted_group_id ) {
+                    $this->wpdb->delete(
+                        $table_name,
+                        array(
+                            'wpid'    => $site_id,
+                            'groupid' => $inserted_group_id,
+                        ),
+                        array( '%d', '%d' )
+                    );
+                }
+
+                return false;
+            }
+
+            $inserted_group_ids[] = $group_id;
+        }
+
+        // Only after all inserts succeed, remove obsolete associations.
+        foreach ( array_diff( $old_group_ids, $new_group_ids ) as $old_group_id ) {
+            $this->wpdb->delete(
+                $table_name,
+                array(
+                    'wpid'    => $site_id,
+                    'groupid' => $old_group_id,
+                ),
+                array( '%d', '%d' )
+            );
+        }
+
+        return true;
     }
 }

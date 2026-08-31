@@ -108,6 +108,206 @@ class Test_Uptime_Monitor_Scheduling extends \WP_UnitTestCase {
 
 
     /**
+	 * Verify uptime monitor creation and editing behaviors for primary and sub-monitors
+	 * against all acceptance criteria.
+	 *
+	 * AC Coverage:
+	 * - Creating first Sub-Monitor does not change Primary Monitor row or status.
+	 * - Primary and Sub-Monitor have distinct monitor IDs.
+	 * - Primary Monitor using global settings remains active after Sub-Monitor creation.
+	 * - Editing an existing Sub-Monitor updates only that Sub-Monitor.
+	 * - Saving Primary Monitor settings updates/creates only the Primary Monitor.
+	 * - Safe recovery path for affected sites with Sub-Monitors but no Primary Monitor.
+	 * - Covers creation/editing across 0, 1, and multiple Sub-Monitors with inherited (-1),
+	 *   enabled (1), and disabled (0) primary active settings.
+	 *
+	 * @return void
+	 */
+	public function test_uptime_monitor_acceptance_criteria_matrix() {
+		$global_settings = $this->get_global_settings( 5 );
+		$db              = MainWP_DB_Uptime_Monitoring::instance();
+
+		// Primary settings matrix: -1 (Inherit/Global), 1 (Enabled), 0 (Disabled)
+		$active_matrix = array( -1, 1, 0 );
+
+		foreach ( $active_matrix as $primary_active_setting ) {
+			// Setup baseline Primary Monitor
+			$db->update_monitor(
+				array(
+					'monitor_id' => $this->monitor_id,
+					'active'     => $primary_active_setting,
+					'suburl'     => '',
+				)
+			);
+
+			$expected_active = ( -1 === $primary_active_setting ) ? (int) $global_settings['active'] : $primary_active_setting;
+
+			// -----------------------------------------------------------------
+			// SCENARIO 1: Zero Sub-Monitors Clean Slate
+			// -----------------------------------------------------------------
+			$existing_subs = $db->get_sub_monitors( $this->site_id );
+			if ( ! empty( $existing_subs ) ) {
+                foreach ( $existing_subs as $sub ) {
+                    $db->delete_monitor( array( 'monitor_id' => $sub->monitor_id ) );
+                }
+            }
+
+			$this->assertCount( 0, $db->get_sub_monitors( $this->site_id ), 'Site should initially have zero sub-monitors.' );
+
+			// -----------------------------------------------------------------
+			// AC: Creating first Sub-Monitor does not change Primary Monitor row/status
+			// AC: Distinct monitor IDs
+			// AC: Primary using global settings remains active after creation
+			// -----------------------------------------------------------------
+			$primary_before = $db->get_monitor_by( false, 'monitor_id', $this->monitor_id );
+
+			$first_sub_id = $this->create_test_monitor(
+				$this->site_id,
+				array(
+					'suburl' => 'first-sub-page',
+					'active' => $primary_active_setting,
+				)
+			);
+
+			$primary_after = $db->get_monitor_by( false, 'monitor_id', $this->monitor_id );
+
+			// AC: Primary and Sub-Monitor have distinct monitor IDs.
+			$this->assertNotEquals( $this->monitor_id, $first_sub_id, 'Primary and Sub-Monitor must have distinct monitor IDs.' );
+
+			// AC: Creating first Sub-Monitor does not change Primary Monitor row or status.
+			$this->assertSame( (int) $primary_before->active, (int) $primary_after->active, 'Primary monitor active status column must remain unchanged.' );
+			$this->assertSame( $primary_before->suburl, $primary_after->suburl, 'Primary monitor suburl must remain unchanged.' );
+
+			// AC: Primary Monitor using global settings remains active after Sub-Monitor is created.
+			$resolved_primary_after = ( -1 === (int) $primary_after->active ) ? (int) $global_settings['active'] : (int) $primary_after->active;
+			$this->assertSame( $expected_active, $resolved_primary_after, 'Primary monitor effective active state must be maintained.' );
+
+			// -----------------------------------------------------------------
+			// AC: Editing an existing Sub-Monitor updates ONLY that Sub-Monitor
+			// -----------------------------------------------------------------
+			$db->update_monitor(
+				array(
+					'monitor_id' => $first_sub_id,
+					'suburl'     => 'edited-first-sub-page',
+				)
+			);
+
+			$edited_first_sub = $db->get_monitor_by( false, 'monitor_id', $first_sub_id );
+			$primary_unaffected = $db->get_monitor_by( false, 'monitor_id', $this->monitor_id );
+
+			$this->assertSame( 'edited-first-sub-page', $edited_first_sub->suburl, 'Target sub-monitor suburl should be updated.' );
+			$this->assertSame( '', $primary_unaffected->suburl, 'Primary monitor suburl must remain empty and untouched when editing sub-monitor.' );
+
+			// Clean up single sub-monitor
+			$db->delete_monitor( array( 'monitor_id' => $first_sub_id ) );
+
+			// -----------------------------------------------------------------
+			// AC: Multiple Sub-Monitors creation & batch isolated editing
+			// -----------------------------------------------------------------
+			$multi_sub_ids = array();
+			$sub_paths     = array( 'multi-sub-1', 'multi-sub-2', 'multi-sub-3' );
+
+			foreach ( $sub_paths as $path ) {
+				$multi_sub_ids[] = $this->create_test_monitor(
+					$this->site_id,
+					array(
+						'suburl' => $path,
+						'active' => $primary_active_setting,
+					)
+				);
+			}
+
+			$sub_monitors_count = $db->get_sub_monitors( $this->site_id );
+			$this->assertCount( count( $sub_paths ), $sub_monitors_count, 'Site should contain exact number of created sub-monitors.' );
+
+			// Edit only the middle sub-monitor
+			$target_sub_id = $multi_sub_ids[1];
+			$db->update_monitor(
+				array(
+					'monitor_id' => $target_sub_id,
+					'suburl'     => 'isolated-sub-update',
+				)
+			);
+
+			// AC: Verify only target sub-monitor changed
+			$sub_0 = $db->get_monitor_by( false, 'monitor_id', $multi_sub_ids[0] );
+			$sub_1 = $db->get_monitor_by( false, 'monitor_id', $multi_sub_ids[1] );
+			$sub_2 = $db->get_monitor_by( false, 'monitor_id', $multi_sub_ids[2] );
+
+			$this->assertSame( 'multi-sub-1', $sub_0->suburl, 'Unedited sub-monitor 0 should remain untouched.' );
+			$this->assertSame( 'isolated-sub-update', $sub_1->suburl, 'Target sub-monitor 1 should reflect updated suburl.' );
+			$this->assertSame( 'multi-sub-3', $sub_2->suburl, 'Unedited sub-monitor 2 should remain untouched.' );
+
+			// -----------------------------------------------------------------
+			// AC: Saving Primary Monitor settings still updates or creates ONLY Primary Monitor
+			// -----------------------------------------------------------------
+			$db->update_monitor(
+				array(
+					'monitor_id' => $this->monitor_id,
+					'active'     => 1,
+				)
+			);
+
+			$primary_updated = $db->get_monitor_by( false, 'monitor_id', $this->monitor_id );
+			$sub_1_after_primary_update = $db->get_monitor_by( false, 'monitor_id', $target_sub_id );
+
+			$this->assertSame( 1, (int) $primary_updated->active, 'Primary monitor active field should be updated.' );
+			$this->assertSame( 'isolated-sub-update', $sub_1_after_primary_update->suburl, 'Sub-monitor data should not be overwritten when saving primary settings.' );
+
+			// Clean up multi sub-monitors
+			foreach ( $multi_sub_ids as $sub_id ) {
+				$db->delete_monitor( array( 'monitor_id' => $sub_id ) );
+			}
+		}
+	}
+
+	/**
+	 * Verify safe recovery path for affected sites with Sub-Monitors but no Primary Monitor.
+	 *
+	 * AC Coverage:
+	 * - A safe recovery path is provided for affected sites with Sub-Monitors but no Primary Monitor.
+	 *
+	 * @return void
+	 */
+	public function test_safe_recovery_path_for_orphaned_sub_monitors() {
+		$db = MainWP_DB_Uptime_Monitoring::instance();
+
+		// 1. Purge all existing primary and sub-monitors for this site to ensure a clean baseline.
+		$db->delete_site_monitors( $this->site_id );
+
+		// 2. Create an orphaned sub-monitor scenario (suburl is non-empty, active = 1).
+		$orphan_sub_id = $this->create_test_monitor(
+			$this->site_id,
+			array(
+				'suburl' => 'orphaned-sub-page',
+				'active' => 1,
+			)
+		);
+
+		// Assert orphaned state: Exactly 1 sub-monitor exists, 0 primary monitors exist.
+		$primary_monitor = $db->get_primary_monitor( $this->site_id );
+		$sub_monitors    = $db->get_sub_monitors( $this->site_id );
+
+		$this->assertFalse( $primary_monitor, 'Primary monitor should be missing prior to recovery.' );
+		$this->assertCount( 1, $sub_monitors, 'Exactly one orphaned sub-monitor should exist prior to recovery.' );
+
+		// 3. Trigger Recovery Path: Heals missing primary monitor.
+		$recovered_primary = $db->get_or_create_primary_monitor( $this->site_id );
+
+		$this->assertNotEmpty( $recovered_primary, 'Recovery method must return or create a primary monitor.' );
+		$this->assertEmpty( $recovered_primary->suburl, 'Recovered primary monitor must have an empty suburl.' );
+		$this->assertEquals( $this->site_id, $recovered_primary->wpid, 'Recovered primary monitor must be assigned to correct site.' );
+
+		// 4. Verify sub-monitors remain intact post-recovery.
+		$sub_monitors_after_recovery = $db->get_sub_monitors( $this->site_id );
+		$this->assertCount( 1, $sub_monitors_after_recovery, 'Orphaned sub-monitors must not be destroyed during primary monitor recovery.' );
+		$this->assertSame( (int) $orphan_sub_id, (int) $sub_monitors_after_recovery[0]->monitor_id );
+
+		// Re-assign created primary monitor ID so tearDown() cleans up properly.
+		$this->monitor_id = (int) $recovered_primary->monitor_id;
+	}
+
+    /**
      * Verify per-site bypass-cache inheritance for primary and sub-monitors.
      *
      * The resolved bypass-cache setting is used by URL construction, request

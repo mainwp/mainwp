@@ -133,23 +133,18 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             if ( ! $showHttp ) {
                 $url = substr( $url, 7 );
             }
-        } elseif ( static::starts_with( $pUrl, 'https://' ) ) {
+        } elseif ( static::starts_with( $url, 'https://' ) ) {
             if ( ! $showHttp ) {
                 $url = substr( $url, 8 );
             }
         } elseif ( $showHttp ) {
-                $url = 'http://' . $url;
+            $url = 'http://' . $url; // phpcs:ignore -- NOSONAR -compatible.
         }
 
-        if ( static::ends_with( $url, '/' ) ) {
-            if ( ! $showHttp ) {
-                $url = substr( $url, 0, strlen( $url ) - 1 );
-            }
-            if ( $showTrailingSlash ) {
-                $url = rtrim( $url, '/' );
-            }
-        } elseif ( $showTrailingSlash ) {
-            $url = $url . '/';
+        if ( $showTrailingSlash ) {
+            $url = rtrim( $url, '/' ) . '/';
+        } else {
+            $url = rtrim( $url, '/' );
         }
 
         return $url;

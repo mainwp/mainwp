@@ -122,10 +122,11 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      *
      * @param string $pUrl Website URL.
      * @param bool   $showHttp Show HTTP.
+     * @param bool   $showTrailingSlash Show Trailing Slash.
      *
      * @return string $url.
      */
-    public static function get_nice_url( $pUrl, $showHttp = false ) {
+    public static function get_nice_url( $pUrl, $showHttp = false, $showTrailingSlash = true ) {
         $url = $pUrl;
 
         if ( static::starts_with( $url, 'http://' ) ) {
@@ -144,7 +145,10 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             if ( ! $showHttp ) {
                 $url = substr( $url, 0, strlen( $url ) - 1 );
             }
-        } else {
+            if ( $showTrailingSlash ) {
+                $url = rtrim( $url, '/' );
+            }
+        } elseif ( $showTrailingSlash ) {
             $url = $url . '/';
         }
 

@@ -48,6 +48,10 @@ let mainwp_managesites_import_sites = function () { // NOSONAR - to compatible.
     if (import_stop_by_user)
         return;
 
+    if (!jQuery('[id^="mainwp_managesites_import_csv_line_"]').length) {
+        return;
+    }
+
     let page_href = jQuery("#mainwp-import-sites-modal").attr('data-page-url');
 
     jQuery('#mainwp-importing-sites').hide();

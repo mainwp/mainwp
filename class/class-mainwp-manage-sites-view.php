@@ -470,7 +470,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                             continue;
                         }
 
-                        if ( 3 > count( $items ) ) {
+                        if ( 10 > count( $items ) ) {
                             continue;
                         }
 

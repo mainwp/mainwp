@@ -1060,68 +1060,6 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         }
         $success = false;
 
-        $map_fields = array(
-            'http_user'   => 'http_user',
-            'http_pass'   => 'http_pass',
-            'name'        => 'name',
-            'adminname'   => 'admin',
-            'ssl_version' => 'sslversion',
-            'uniqueId'    => 'uniqueid',
-        );
-
-        $update_fields = array();
-
-        foreach ( $map_fields as $field => $name ) {
-            if ( isset( $data[ $name ] ) && empty( ! $data[ $name ] ) ) {
-                $value = $data[ $name ];
-                // MWP-1548: encrypt http_user / http_pass at rest before
-                // they hit the raw SQL UPDATE. Same fail-closed contract
-                // as the other write paths in MainWP_DB.
-                if ( 'http_user' === $field || 'http_pass' === $field ) {
-                    $encrypted = MainWP_Credential_Storage::encrypt_credential( $value, $field );
-                    if ( false === $encrypted ) {
-                        return false;
-                    }
-                    $value = $encrypted;
-                }
-                $update_fields[ $field ] = $value;
-            }
-        }
-
-        if ( isset( $data['verify'] ) ) {
-            $verify                              = intval( $data['verify'] );
-            $update_fields['verify_certificate'] = $verify;
-        }
-
-        if ( isset( $data['protocol'] ) && ( 'http' === $data['protocol'] || 'https' === $data['protocol'] ) ) {
-            $url                  = $data['protocol'] . '://' . MainWP_Utility::remove_http_prefix( $website->url, true );
-            $update_fields['url'] = $this->escape( $url );
-        }
-
-        if ( isset( $data['disablehealthchecking'] ) ) {
-            $update_fields['disable_health_check'] = $data['disablehealthchecking'] ? 1 : 0;
-        }
-
-        if ( isset( $data['healththreshold'] ) ) {
-            $update_fields['health_threshold'] = intval( $data['healththreshold'] );
-        }
-
-        if ( isset( $data['suspended'] ) ) {
-            $update_fields['suspended'] = 1 === intval( $data['suspended'] ) ? 1 : 0;
-        }
-
-        if ( ! empty( $update_fields ) ) {
-            $updated = $this->wpdb->update(
-                $this->table_name( 'wp' ),
-                $update_fields,
-                array( 'id' => $websiteid )
-            );
-            if ( false === $updated ) {
-                return false;
-            }
-            $success = true;
-        }
-
         $websiteid = (int) $websiteid;
 
         $group_update_success = null;
@@ -1187,6 +1125,73 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         }
 
         if ( true === $group_update_success ) {
+            $success = true;
+        } elseif ( false === $group_update_success ) {
+            return array(
+                'group_updated' => false,
+                'group_message' => 'Failed to update tags or invalid tag IDs.',
+            );
+        }
+
+        $map_fields = array(
+            'http_user'   => 'http_user',
+            'http_pass'   => 'http_pass',
+            'name'        => 'name',
+            'adminname'   => 'admin',
+            'ssl_version' => 'sslversion',
+            'uniqueId'    => 'uniqueid',
+        );
+
+        $update_fields = array();
+
+        foreach ( $map_fields as $field => $name ) {
+            if ( isset( $data[ $name ] ) && empty( ! $data[ $name ] ) ) {
+                $value = $data[ $name ];
+                // MWP-1548: encrypt http_user / http_pass at rest before
+                // they hit the raw SQL UPDATE. Same fail-closed contract
+                // as the other write paths in MainWP_DB.
+                if ( 'http_user' === $field || 'http_pass' === $field ) {
+                    $encrypted = MainWP_Credential_Storage::encrypt_credential( $value, $field );
+                    if ( false === $encrypted ) {
+                        return false;
+                    }
+                    $value = $encrypted;
+                }
+                $update_fields[ $field ] = $value;
+            }
+        }
+
+        if ( isset( $data['verify'] ) ) {
+            $verify                              = intval( $data['verify'] );
+            $update_fields['verify_certificate'] = $verify;
+        }
+
+        if ( isset( $data['protocol'] ) && ( 'http' === $data['protocol'] || 'https' === $data['protocol'] ) ) {
+            $url                  = $data['protocol'] . '://' . MainWP_Utility::remove_http_prefix( $website->url, true );
+            $update_fields['url'] = $this->escape( $url );
+        }
+
+        if ( isset( $data['disablehealthchecking'] ) ) {
+            $update_fields['disable_health_check'] = $data['disablehealthchecking'] ? 1 : 0;
+        }
+
+        if ( isset( $data['healththreshold'] ) ) {
+            $update_fields['health_threshold'] = intval( $data['healththreshold'] );
+        }
+
+        if ( isset( $data['suspended'] ) ) {
+            $update_fields['suspended'] = 1 === intval( $data['suspended'] ) ? 1 : 0;
+        }
+
+        if ( ! empty( $update_fields ) ) {
+            $updated = $this->wpdb->update(
+                $this->table_name( 'wp' ),
+                $update_fields,
+                array( 'id' => $websiteid )
+            );
+            if ( false === $updated ) {
+                return false;
+            }
             $success = true;
         }
 
@@ -1261,13 +1266,14 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      *
      * @return bool True on success, false if validation or an insert fails.
      */
-    private function safe_update_site_group_ids( $site_id, $new_group_ids, $old_group_ids ) {
+    private function safe_update_site_group_ids( $site_id, $new_group_ids, $old_group_ids ) { // phpcs:ignore -- NOSONAR -complex.
         if ( empty( $site_id ) || ! is_array( $new_group_ids ) || ! is_array( $old_group_ids ) ) {
             return false;
         }
 
         $table_name         = esc_sql( $this->table_name( 'wp_group' ) );
         $inserted_group_ids = array();
+        $deleted_group_ids  = array();
 
         // Insert new associations first.
         foreach ( array_diff( $new_group_ids, $old_group_ids ) as $group_id ) {
@@ -1299,9 +1305,9 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             $inserted_group_ids[] = $group_id;
         }
 
-        // Only after all inserts succeed, remove obsolete associations.
+        // Remove obsolete associations.
         foreach ( array_diff( $old_group_ids, $new_group_ids ) as $old_group_id ) {
-            $this->wpdb->delete(
+            $success = $this->wpdb->delete(
                 $table_name,
                 array(
                     'wpid'    => $site_id,
@@ -1309,6 +1315,36 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
                 ),
                 array( '%d', '%d' )
             );
+
+            if ( false === $success ) {
+                // Remove associations created by this operation.
+                foreach ( $inserted_group_ids as $inserted_group_id ) {
+                    $this->wpdb->delete(
+                        $table_name,
+                        array(
+                            'wpid'    => $site_id,
+                            'groupid' => $inserted_group_id,
+                        ),
+                        array( '%d', '%d' )
+                    );
+                }
+
+                // Restore associations removed by this operation.
+                foreach ( $deleted_group_ids as $deleted_group_id ) {
+                    $this->wpdb->insert(
+                        $table_name,
+                        array(
+                            'wpid'    => $site_id,
+                            'groupid' => $deleted_group_id,
+                        ),
+                        array( '%d', '%d' )
+                    );
+                }
+
+                return false;
+            }
+
+            $deleted_group_ids[] = $old_group_id;
         }
 
         return true;

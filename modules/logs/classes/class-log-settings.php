@@ -296,7 +296,7 @@ class Log_Settings {
                                 <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_module_log_enabled" id="mainwp_module_log_enabled" <?php echo $enabled ? 'checked="true"' : ''; ?> /><label></label>
                             </div>
                         </div>
-                        <div class="ui grid field">
+                        <div class="ui grid field" id="field-log-enable-auto-archive">
                             <label class="six wide column middle aligned"><?php esc_html_e( 'Automatically archive logs', 'mainwp' ); ?></label>
                             <div class="ten wide column ui toggle checkbox mainwp-checkbox-showhide-elements"  hide-parent="auto-archive" data-tooltip="<?php esc_attr_e( 'Automatically move older logs to the archive after a specified period of time. This helps keep your active logs organized while maintaining a searchable history.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
                                 <input type="checkbox" name="mainwp_module_log_enable_auto_archive" id="mainwp_module_log_enable_auto_archive" <?php echo $enabled_auto_archive ? 'checked="true"' : ''; ?> /><label></label>

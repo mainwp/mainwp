@@ -377,7 +377,7 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                     </div>
                 <?php endif; ?>
                 <?php do_action( 'mainwp_module_log_render_db_update_notice' ); ?>
-                <?php do_action( 'mainwp_module_log_render_db_size_notice' ); ?>
+                <?php do_action( 'mainwp_module_log_render_db_size_notice', 300, 'overview' ); ?>
 
                 <?php
                 /**

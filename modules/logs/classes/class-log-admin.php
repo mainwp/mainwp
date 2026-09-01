@@ -316,8 +316,9 @@ class Log_Admin {
      * Render logs db large size notice.
      *
      * @param int $limit DB size limit in MByte, default 300 MB.
+     * @param string $which The page slug where the notice is displayed.
      */
-    public function render_logs_db_notice( $limit = 300 ) {
+    public function render_logs_db_notice( $limit = 300, $which = '' ) {
         if ( empty( $limit ) ) {
             $limit = 300; // MB.
         }
@@ -325,11 +326,11 @@ class Log_Admin {
             $size = Log_DB_Helper::instance()->get_db_size();
             if ( $size >= $limit ) {
                 ?>
-                <div class="ui yellow message">
+                <div class="ui yellow message" <?php echo 'overview' === $which ? 'style="margin: 1em;"' : ''; ?>>
                     <i class="close icon mainwp-notice-dismiss" notice-id="logs-db-size-large"></i>
                     <?php
                     /* translators: 1: Database size in MB, 2: Opening anchor tag, 3: Closing anchor tag */
-                    printf( esc_html__( 'Your Network Activity logs are using a lot of database space (%1$s MB). Go to %2$sMainWP > Settings > Network Activity Settings%3$s and enable Automatically archive logs, then set a Data retention period to keep the table size under control.', 'mainwp' ), esc_html( $size ), '<a href="admin.php?page=MainWPTools#mainwp-clear-archived-sites-changes-data">', '</a>' ); // NOSONAR - noopener - open safe.
+                    printf( esc_html__( 'Your Network Activity logs are using a lot of database space (%1$s MB). Go to %2$sMainWP > Settings > Network Activity Settings%3$s and enable Automatically archive logs, then set a Data retention period to keep the table size under control.', 'mainwp' ), esc_html( $size ), '<a href="admin.php?page=SettingsInsights#field-log-enable-auto-archive">', '</a>' ); // NOSONAR - noopener - open safe.
                     ?>
                 </div>
                 <?php

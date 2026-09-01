@@ -154,6 +154,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
         if ( 'widget-overview' === $this->table_id_prefix ) {
             $columns = array(
                 'created'    => esc_html__( 'Time', 'mainwp' ),
+                'user_id'    => esc_html__( 'User', 'mainwp' ),
                 'log_object' => esc_html__( 'Object', 'mainwp' ),
                 'event'      => esc_html__( 'Event', 'mainwp' ),
                 'name'       => esc_html__( 'Site', 'mainwp' ),
@@ -180,7 +181,6 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
         if ( 'widget-overview' === $this->table_id_prefix ) {
             unset( $columns['log_site_name'] );
             unset( $columns['icon'] );
-            unset( $columns['user_id'] );
             unset( $columns['action'] );
             unset( $columns['source'] );
             unset( $columns['col_action'] );

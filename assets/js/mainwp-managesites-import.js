@@ -12,7 +12,7 @@ let import_count_fails = 0;
 globalThis.mainwpVars = globalThis.mainwpVars || {};
 
 jQuery(function () {
-    import_total = jQuery('#mainwp_managesites_total_import').val();
+    import_total = Number.parseInt( jQuery('#mainwp_managesites_total_import').val() );
 
     jQuery(document).on('click', '#mainwp_managesites_btn_import', function () {
         if (import_stop_by_user) {
@@ -48,24 +48,25 @@ let mainwp_managesites_import_sites = function () { // NOSONAR - to compatible.
     if (import_stop_by_user)
         return;
 
-    if (!jQuery('[id^="mainwp_managesites_import_csv_line_"]').length) {
-        return;
-    }
-
     let page_href = jQuery("#mainwp-import-sites-modal").attr('data-page-url');
 
     jQuery('#mainwp-importing-sites').hide();
 
     import_current++;
 
-    if (import_current > import_total) {
+    if (import_current > import_total || 0 === import_total ) {
         jQuery('#mainwp-import-sites-status-message').hide();
         jQuery('#mainwp_managesites_btn_import').attr('disabled', 'true'); //Disable
-        if (import_count_success < import_total) {
+        if (import_count_success < import_total || 0 === import_total) {
             jQuery('#mainwp_managesites_btn_save_csv').prop("disabled", false); //Enable
         }
 
-        if (import_count_fails == 0) {
+        if( 0 === import_total ){
+            jQuery( '#mainwp_managesites_import_logging .log' ).html(
+                '<div style="text-align:center;margin:50px 0;"><h2 class="ui icon header"><i class="orange exclamation triangle icon"></i><div class="content">No sites to import<div class="sub header">No valid data rows were found in the import file.</div></div></h2></div>'
+            );
+            jQuery( "#mainwp-import-sites-modal > .close.icon").show();
+        } else if (import_count_fails == 0) {
             jQuery('#mainwp_managesites_import_logging .log').html('<div style="text-align:center;margin:50px 0;"><h2 class="ui icon header"><i class="green check icon"></i><div class="content">Congratulations!<div class="sub header">' + import_count_success + ' sites imported successfully.</div></div></h2></div>');
             jQuery('#mainwp_managesites_btn_import').hide();
             if (page_href !== undefined && page_href !== '') {

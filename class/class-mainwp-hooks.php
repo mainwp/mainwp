@@ -871,8 +871,8 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      * Method hook_get_all_posts()
      * Hook to get posts from sites.
      *
-     * @param object $sites     Child Sites object.
-     * @param array  $post_data with values: keyword, dtsstart, dtsstop, status, maxRecords, post_type.
+     * @param object|array $sites     Child Sites object.
+     * @param array        $post_data with values: keyword, dtsstart, dtsstop, status, maxRecords, post_type.
      *
      * @return \stdClass $output All posts data array.
      *
@@ -890,9 +890,10 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
         $data[] = 'verify_certificate';
 
         if ( '' !== $sites ) {
-            foreach ( $sites as $v ) {
-                if ( MainWP_Utility::ctype_digit( $v ) ) {
-                    $website = MainWP_DB::instance()->get_website_by_id( $v );
+            foreach ( $sites as $site ) {
+                $site_id = isset( $site->id ) ? $site->id : '';
+                if ( MainWP_Utility::ctype_digit( $site_id ) ) {
+                    $website = MainWP_DB::instance()->get_website_by_id( $site_id );
                     if ( empty( $website->sync_errors ) && ! MainWP_System_Utility::is_suspended_site( $website ) ) {
                         $dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data );
                     }
@@ -1761,7 +1762,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
     /**
      * Method hook_uptime_preload_data().
      *
-     * @param array  $websites Websites array.
+     * @param array $websites Websites array.
      *
      * @return void
      */
@@ -2081,7 +2082,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
     /**
      * Method hook_get_primary_backup_method.
      *
-     * @param mixed $inpval Hook input value.
+     * @param mixed     $inpval Hook input value.
      * @param int|false $siteid Optional Site ID; false for global method.
      *
      * @since 6.0.10.
@@ -2104,5 +2105,4 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
         }
         return $primaryBackup;
     }
-
 }

@@ -1898,6 +1898,7 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
         $db             = MainWP_DB::instance();
         $data_fields    = $system_utility->get_default_map_site_fields();
         $data_fields[]  = 'users';
+        $data_fields[]  = 'verify_certificate'; // Add verify_certificate to the list of fields to fetch from the database.
 
         // Default result.
         $website_url = array();

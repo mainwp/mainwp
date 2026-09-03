@@ -326,7 +326,7 @@ class Log_Admin {
             $size = Log_DB_Helper::instance()->get_db_size();
             if ( $size >= $limit ) {
                 ?>
-                <div class="ui yellow message" <?php echo 'overview' === $which ? 'style="margin: 1em;"' : ''; ?>>
+                <div class="ui yellow message" <?php echo 'overview' === $which || 'client_overview' === $which ? 'style="margin: 1em;"' : ''; ?>>
                     <i class="close icon mainwp-notice-dismiss" notice-id="logs-db-size-large"></i>
                     <?php
                     /* translators: 1: Database size in MB, 2: Opening anchor tag, 3: Closing anchor tag */

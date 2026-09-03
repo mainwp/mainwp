@@ -61,28 +61,47 @@ let mainwp_managesites_import_sites = function () { // NOSONAR - to compatible.
             jQuery('#mainwp_managesites_btn_save_csv').prop("disabled", false); //Enable
         }
 
-        if( 0 === import_total ){
+        if ( 0 === import_total ) {
             jQuery( '#mainwp_managesites_import_logging .log' ).html(
-                '<div style="text-align:center;margin:50px 0;"><h2 class="ui icon header"><i class="orange exclamation triangle icon"></i><div class="content">No sites to import<div class="sub header">No valid data rows were found in the import file.</div></div></h2></div>'
+                '<div style="text-align:center;margin:50px 0;"><h2 class="ui icon header"><i class="orange exclamation triangle icon"></i><div class="content">' +
+                MainWP.I18n.t( 'No sites to import' ) +
+                '<div class="sub header">' +
+                MainWP.I18n.t( 'No valid data rows were found in the import file.' ) +
+                '</div></div></h2></div>'
             );
-            jQuery( "#mainwp-import-sites-modal > .close.icon").show();
-        } else if (import_count_fails == 0) {
-            jQuery('#mainwp_managesites_import_logging .log').html('<div style="text-align:center;margin:50px 0;"><h2 class="ui icon header"><i class="green check icon"></i><div class="content">Congratulations!<div class="sub header">' + import_count_success + ' sites imported successfully.</div></div></h2></div>');
-            jQuery('#mainwp_managesites_btn_import').hide();
-            if (page_href !== undefined && page_href !== '') {
-                setTimeout(function () {
-                    mainwp_forceReload(page_href);
-                }, 2000);
+            jQuery( '#mainwp-import-sites-modal > .close.icon' ).show();
+        } else if ( 0 === import_count_fails ) {
+            jQuery( '#mainwp_managesites_import_logging .log' ).html(
+                '<div style="text-align:center;margin:50px 0;"><h2 class="ui icon header"><i class="green check icon"></i><div class="content">' +
+                MainWP.I18n.t( 'Congratulations!' ) +
+                '<div class="sub header">' +
+                import_count_success + ' ' +
+                MainWP.I18n.t( 'sites imported successfully.' ) +
+                '</div></div></h2></div>'
+            );
+            jQuery( '#mainwp_managesites_btn_import' ).hide();
+
+            if ( page_href !== undefined && '' !== page_href ) {
+                setTimeout( function () {
+                    mainwp_forceReload( page_href );
+                }, 2000 );
             } else {
-                setTimeout(function () {
+                setTimeout( function () {
                     mainwp_forceReload();
-                }, 2000);
+                }, 2000 );
             }
         } else {
-            jQuery('#mainwp_managesites_import_logging .log').append('<div class="ui yellow message">Process completed with errors. ' + import_count_fails + ' site(s) failed to import. Please review logs to resolve problems and try again.</div>');
-            jQuery('#mainwp_managesites_btn_import').hide();
-            jQuery('#mainwp-import-sites-modal-try-again').show();
-            jQuery('#mainwp-import-sites-modal-continue').show();
+            jQuery( '#mainwp_managesites_import_logging .log' ).append(
+                '<div class="ui yellow message">' +
+                MainWP.I18n.t( 'Process completed with errors.' ) + ' ' +
+                import_count_fails + ' ' +
+                MainWP.I18n.t( 'site(s) failed to import.' ) + ' ' +
+                MainWP.I18n.t( 'Please review logs to resolve problems and try again.' ) +
+                '</div>'
+            );
+            jQuery( '#mainwp_managesites_btn_import' ).hide();
+            jQuery( '#mainwp-import-sites-modal-try-again' ).show();
+            jQuery( '#mainwp-import-sites-modal-continue' ).show();
         }
 
         jQuery('#mainwp_managesites_import_logging').scrollTop(jQuery('#mainwp_managesites_import_logging .log').height());

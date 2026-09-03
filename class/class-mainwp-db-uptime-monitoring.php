@@ -488,43 +488,6 @@ KEY idx_wpid_issub (wpid, issub)";
     }
 
     /**
-     * Get the primary monitor for a site, or automatically create one if it does not exist.
-     *
-     * @param int  $site_id Website ID (wpid).
-     * @param bool $obj  Optional. Whether to return an object or associative array. Default true.
-     *
-     * @return object|array|false The primary monitor record, or false on failure.
-     */
-    public function get_or_create_primary_monitor( $site_id, $obj = true ) {
-        if ( empty( $site_id ) ) {
-            return false;
-        }
-
-        // 1. Try to fetch the existing primary monitor (suburl = '').
-        $primary = $this->get_primary_monitor( $site_id, $obj );
-
-        if ( ! empty( $primary ) ) {
-            return $primary;
-        }
-
-        // 2. Recovery path: Create default primary monitor if missing.
-        $created_id = $this->update_wp_monitor( // add monitor.
-            array(
-                'wpid'   => $site_id,
-                'suburl' => '',
-                'active' => -1, // Fallback to global setting.
-            )
-        );
-
-        if ( ! $created_id ) {
-            return false;
-        }
-
-        // 3. Return the newly created primary monitor record.
-        return $this->get_primary_monitor( $site_id, $obj );
-    }
-
-    /**
      * Get the primary monitor for a specific site.
      *
      * @param int  $site_id Website ID (wpid).
@@ -1023,7 +986,6 @@ KEY idx_wpid_issub (wpid, issub)";
         return $qry;
     }
 
-
     /**
      * Delete all monitors (primary and sub-monitors) for a specific site along with related data.
      *
@@ -1047,7 +1009,7 @@ KEY idx_wpid_issub (wpid, issub)";
 
         foreach ( $monitor_ids as $monitor_id ) {
             // Re-use single monitor deletion or execute cascading deletions.
-            $this->delete_monitor( array( 'monitor_id' => (int) $monitor_id ) );
+            $this->remove_monitor_and_data( (int) $monitor_id );
         }
 
         return true;
@@ -1060,13 +1022,39 @@ KEY idx_wpid_issub (wpid, issub)";
      *
      * @return bool True on successful deletion, false on failure or missing ID.
      */
-    public function delete_monitor( $args ) {
+    public function delete_monitor( $args ) { // phpcs:ignore --NOSONAR -complex.
         if ( empty( $args ) || ! is_array( $args ) ) {
             return false;
         }
 
-        // 1. Resolve target monitor ID
         $monitor_id = isset( $args['monitor_id'] ) && $args['monitor_id'] > 0 ? (int) $args['monitor_id'] : 0;
+
+        if ( empty( $monitor_id ) ) {
+            return false;
+        }
+
+        $monitor = $this->get_monitor_by( false, 'monitor_id', $monitor_id );
+
+        if ( empty( $monitor ) ) {
+            return false;
+        }
+
+        // If it is primary monitor.
+        if ( empty( $monitor->suburl ) && empty( $monitor->issub ) ) {
+            return $this->delete_site_monitors( $monitor->wpid );
+        }
+
+        return $this->remove_monitor_and_data( $monitor_id );
+    }
+
+    /**
+     * Delete a single monitor by monitor ID or specified parameters.
+     *
+     * @param int $monitor_id Monitor ID.
+     *
+     * @return bool True on successful deletion, false on failure or missing ID.
+     */
+    public function remove_monitor_and_data( $monitor_id ) {
 
         if ( empty( $monitor_id ) ) {
             return false;
@@ -1074,14 +1062,14 @@ KEY idx_wpid_issub (wpid, issub)";
 
         $table_monitors = $this->table_name( 'monitors' );
 
-        // 2. Perform deletion on the primary table
+        // Perform deletion on the primary table.
         $deleted = $this->wpdb->delete(
             $table_monitors,
             array( 'monitor_id' => $monitor_id ),
             array( '%d' )
         );
 
-        // 3. Trigger cascading cleanups if row deletion succeeded
+        // Trigger cascading cleanups if row deletion succeeded.
         if ( $deleted ) {
             $this->delete_heartbeat( $monitor_id );
             $this->delete_stats( $monitor_id );

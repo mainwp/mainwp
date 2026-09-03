@@ -574,7 +574,7 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                         }
                         $maxretries_val = ! empty( $mo_settings['maxretries'] ) && 1 <= intval( $mo_settings['maxretries'] ) ? intval( $mo_settings['maxretries'] ) : 1;
                         ?>
-                        <option value="<?php echo intval( $maxretries_val ); ?>" <?php echo 0 < (int) $maxretries_val ? 'selected' : ''; ?>><?php esc_html_e( 'Enable', 'mainwp' ); ?></option>
+                        <option value="<?php echo intval( $maxretries_val ); ?>" <?php echo (int) $mo_settings['maxretries'] === (int) $maxretries_val ? 'selected' : ''; ?>><?php esc_html_e( 'Enable', 'mainwp' ); ?></option>
                         <option value="0" <?php echo 0 === $maxretries_val ? 'selected' : ''; ?>><?php esc_html_e( 'Disable', 'mainwp' ); ?></option>
                     </select>
                 </div>

@@ -126,7 +126,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      *
      * @return string $url.
      */
-    public static function get_nice_url( $pUrl, $showHttp = false, $showTrailingSlash = true ) {
+    public static function get_nice_url( $pUrl, $showHttp = false, $showTrailingSlash = false ) {
         $url = $pUrl;
 
         if ( static::starts_with( $url, 'http://' ) ) {

@@ -720,7 +720,7 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
                                 $websites      = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user_by_params( array( 'select_wp_fields' => $wpsite_fields ) ) );
                                 while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
                                     ?>
-                                    <div class="item" data-value="<?php echo esc_attr( $website->id ); ?>"><?php echo esc_html( MainWP_Utility::get_nice_url( stripslashes( $website->name ) ) ); ?></div>
+                                    <div class="item" data-value="<?php echo esc_attr( $website->id ); ?>"><?php echo esc_html( MainWP_Utility::get_nice_url( stripslashes( $website->name ), false, false ) ); ?></div>
                                     <?php
                                 }
                                 MainWP_DB::free_result( $websites );

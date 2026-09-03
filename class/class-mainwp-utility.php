@@ -126,7 +126,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      *
      * @return string $url.
      */
-    public static function get_nice_url( $pUrl, $showHttp = false, $showTrailingSlash = false ) {
+    public static function get_nice_url( $pUrl, $showHttp = false, $showTrailingSlash = true ) {
         $url = $pUrl;
 
         if ( static::starts_with( $url, 'http://' ) ) {
@@ -141,10 +141,12 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $url = 'http://' . $url; // phpcs:ignore -- NOSONAR -compatible.
         }
 
-        if ( $showTrailingSlash ) {
-            $url = rtrim( $url, '/' ) . '/';
-        } else {
-            $url = rtrim( $url, '/' );
+        if ( static::ends_with( $url, '/' ) ) {
+            if ( ! $showHttp || ! $showTrailingSlash ) { // Not ideal, but required for backward compatibility, coderabbit:ignore.
+                $url = substr( $url, 0, strlen( $url ) - 1 );
+            }
+        } elseif ( $showTrailingSlash ) {
+            $url = $url . '/';
         }
 
         return $url;

@@ -237,6 +237,11 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         mainwp_add_translation( $mainwpTranslations, 'is_activated_parent', esc_html__( '%1 could not be deleted. This theme is parent theme for the currently active theme.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'is_activated_theme', esc_html__( '%1 could not be deleted. This theme is active theme.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Change score changed. Click to review changes.', esc_html__( 'Change score changed. Click to review changes.', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'No sites to import', esc_html__( 'No sites to import', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'No valid data rows were found in the import file.', esc_html__( 'No valid data rows were found in the import file.', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Congratulations!', esc_html__( 'Congratulations!', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'sites imported successfully.', esc_html__( 'sites imported successfully.', 'mainwp' ) );
+
         return $mainwpTranslations;
     }
 

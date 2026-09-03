@@ -12,7 +12,7 @@ let import_count_fails = 0;
 globalThis.mainwpVars = globalThis.mainwpVars || {};
 
 jQuery(function () {
-    import_total = Number.parseInt( jQuery('#mainwp_managesites_total_import').val() );
+    import_total = Number.parseInt( jQuery('#mainwp_managesites_total_import').val(), 10 ) || 0;
 
     jQuery(document).on('click', '#mainwp_managesites_btn_import', function () {
         if (import_stop_by_user) {

@@ -1804,3 +1804,7 @@ body.show-upload-theme .mainwp-content-wrap .mainwp-upload-theme {
 #sync-sites-status .item.disconnected-site {
     order: 3;
 }
+
+#mainwp-plugin-details-modal iframe{
+    height: calc(100% + 67px) !important;
+}

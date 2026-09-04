@@ -461,14 +461,13 @@ class MainWP_Rest_Tags_Controller extends MainWP_REST_Controller{ //phpcs:ignore
                     'type'              => 'integer',
                     'description'       => __( 'Tag ID.', 'mainwp' ),
                     'sanitize_callback' => 'absint',
-                    'validate_callback' => 'wp_parse_id_list',
                     'context'           => array( 'view', 'edit' ),
                 ),
                 'name'        => array(
                     'type'              => 'string',
                     'description'       => __( 'Tag name.', 'mainwp' ),
                     'sanitize_callback' => 'sanitize_text_field',
-                    'validate_callback' => 'rest_validatze_request_arg',
+                    'validate_callback' => 'rest_validate_request_arg',
                     'context'           => array( 'view', 'edit' ),
                 ),
                 'color'       => array(

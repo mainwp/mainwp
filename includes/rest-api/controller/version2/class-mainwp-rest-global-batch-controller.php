@@ -45,7 +45,35 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
      *
      * @var array
      */
-    protected $controller_names = array( 'sites', 'clients', 'costs', 'tags' );
+    protected $controller_names = array( 'sites', 'clients', 'tags' );
+
+    /**
+     * Actions the dispatch below reads per group, each marked with the shape it reads its items in:
+     * an 'item' action passes every item on as a request body, an 'id' action casts every item to an int.
+     *
+     * @var array
+     */
+    const GROUP_ACTIONS = array(
+        'sites'   => array(
+            'create'             => 'item',
+            'sync'               => 'id',
+            'reconnect'          => 'id',
+            'disconnect'         => 'id',
+            'suspend'            => 'id',
+            'check'              => 'id',
+            'remove'             => 'id',
+            'security'           => 'id',
+            'plugins'            => 'id',
+            'themes'             => 'id',
+            'non-mainwp-changes' => 'id',
+        ),
+        'clients' => array(
+            'create' => 'item',
+        ),
+        'tags'    => array(
+            'create' => 'item',
+        ),
+    );
 
     /**
      * Method instance()
@@ -97,26 +125,88 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
         global $wp_rest_server;
 
         // Get the request params.
-        $items    = array_filter( $request->get_params() );
-        $query    = $request->get_query_params();
-        $response = array();
+        $all_params = $request->get_params();
+        $items      = array_filter( $all_params );
+        $query      = $request->get_query_params();
+        $response   = array();
 
-        // Check batch limit.
+        $body_groups = $request->get_json_params();
+        if ( empty( $body_groups ) || ! is_array( $body_groups ) ) {
+            $body_groups = (array) $request->get_body_params();
+        }
+
+        // Groups the batch endpoint cannot dispatch (updates has no batch-capable create handler,
+        // costs has no controller at all, anything else is unknown) are reported once each instead
+        // of being dropped without a word or failing per item with a 405 from the core stub.
+        //
+        // The names come from the same merged params the limit check and the dispatch read, so a
+        // group sent only in the query string is answered rather than counted in silence. A group is
+        // always an array there, so scalar params (per_page, the auth keys) name none. The body is
+        // read on top of that because a falsy group is filtered out of the items, and because for an
+        // unsupported name the value does not matter, so a scalar body group is reported too.
+        // Whichever source it came from, an underscore parameter is one WordPress reserves for the
+        // REST server itself (_fields, _embed, _locale) and never a group the caller named.
+        $groups = array();
+        foreach ( $items as $param_name => $param_value ) {
+            if ( is_array( $param_value ) && 0 !== strpos( (string) $param_name, '_' ) ) {
+                $groups[ $param_name ] = true;
+            }
+        }
+        foreach ( array_keys( $body_groups ) as $body_group_name ) {
+            if ( 0 !== strpos( (string) $body_group_name, '_' ) ) {
+                $groups[ $body_group_name ] = true;
+            }
+        }
+
+        foreach ( array_keys( $groups ) as $group_name ) {
+            if ( ! in_array( $group_name, $this->controller_names, true ) ) {
+                $response[ $group_name ] = array(
+                    'error' => array(
+                        'code'    => 'rest_batch_group_not_supported',
+                        /* translators: %s: batch group name */
+                        'message' => sprintf( __( 'The %s group is not supported by the batch endpoint.', 'mainwp' ), $group_name ),
+                        'data'    => array( 'status' => 400 ),
+                    ),
+                );
+            }
+        }
+
+        // Shapes are checked against the items the dispatch below reads, not against the body, so a
+        // group sent as a query parameter cannot skip the check. The group is dropped from the items
+        // as well as reported, so nothing in it is dispatched.
+        foreach ( $this->controller_names as $group_name ) {
+            if ( isset( $items[ $group_name ] ) ) {
+                $group_items = $items[ $group_name ];
+            } elseif ( array_key_exists( $group_name, $body_groups ) ) {
+                // A falsy group is filtered out of the items, so it is read back from the body to be
+                // reported rather than passed over.
+                $group_items = $body_groups[ $group_name ];
+            } elseif ( array_key_exists( $group_name, $all_params ) ) {
+                // A falsy group sent only in the query string is in neither of the above, and
+                // skipping it answered the whole request with an empty success.
+                $group_items = $all_params[ $group_name ];
+            } else {
+                continue;
+            }
+
+            if ( ! $this->is_dispatchable_group( $group_name, $group_items ) ) {
+                $response[ $group_name ] = array(
+                    'error' => array(
+                        'code'    => 'rest_invalid_param',
+                        /* translators: %s: batch group name */
+                        'message' => sprintf( __( 'The %s group must be an object of supported action arrays.', 'mainwp' ), $group_name ),
+                        'data'    => array( 'status' => 400 ),
+                    ),
+                );
+                unset( $items[ $group_name ] );
+            }
+        }
+
+        // Counted after the malformed groups are dropped: nothing in them is dispatched, so their items
+        // must not be what pushes a request over the cap and hides the per-group error behind a 413.
         $limit = $this->check_batch_limit( $items );
         if ( is_wp_error( $limit ) ) {
             return $limit;
-        }
-
-        // The updates controller has no batch-capable create handler, so report the whole group once
-        // instead of letting every item fail with a 405 from the WordPress core stub.
-        if ( ! empty( $items['updates'] ) ) {
-            $response['updates'] = array(
-                'error' => array(
-                    'code'    => 'rest_batch_group_not_supported',
-                    'message' => __( 'The updates group is not supported by the batch endpoint.', 'mainwp' ),
-                    'data'    => array( 'status' => 400 ),
-                ),
-            );
         }
 
         foreach ( $this->controller_names as $con_name ) {
@@ -486,6 +576,67 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
 
 
     /**
+     * Check that a group carries only what the dispatch below can read.
+     *
+     * The dispatch indexes the group by action name and then walks each action list, so a scalar in
+     * either place would reach a foreach over something that is not a list, a JSON list carries none
+     * of the names it indexes by, and an action it does not read is silently dropped. Items are
+     * checked too: a create item is passed on as a request body and an id item is cast to an int, so
+     * neither can be an arbitrary value.
+     *
+     * @param string $group_name  Group name.
+     * @param mixed  $group_items Group value taken from the request.
+     * @return bool
+     */
+    private function is_dispatchable_group( $group_name, $group_items ) {
+        if ( ! is_array( $group_items ) ) {
+            return false;
+        }
+
+        // An empty group dispatches nothing and is not the caller getting the shape wrong. It is
+        // taken out of the list test as well, which range() cannot answer for a count of zero.
+        if ( array() === $group_items ) {
+            return true;
+        }
+
+        if ( array_keys( $group_items ) === range( 0, count( $group_items ) - 1 ) ) {
+            return false;
+        }
+
+        $actions = isset( self::GROUP_ACTIONS[ $group_name ] ) ? self::GROUP_ACTIONS[ $group_name ] : array();
+
+        foreach ( $group_items as $action_name => $action_items ) {
+            if ( ! isset( $actions[ $action_name ] ) || ! is_array( $action_items ) ) {
+                return false;
+            }
+
+            // The dispatch walks an action as a list, so an object of named items would be
+            // dispatched by its values with the names dropped and nothing said about the shape. An
+            // empty action dispatches nothing, and range() cannot answer for a count of zero.
+            if ( array() !== $action_items && array_keys( $action_items ) !== range( 0, count( $action_items ) - 1 ) ) {
+                return false;
+            }
+
+            foreach ( $action_items as $item ) {
+                if ( 'item' === $actions[ $action_name ] ) {
+                    if ( ! is_array( $item ) ) {
+                        return false;
+                    }
+                } elseif ( ! ( is_int( $item ) && $item > 0 ) && ! ( is_string( $item ) && ctype_digit( $item ) && (int) $item > 0 && ltrim( $item, '0' ) === (string) (int) $item ) ) {
+                    // A fractional or exponent string is numeric, and the (int) cast below would read
+                    // it as a whole id the caller never asked for, so only digits are accepted. Zero
+                    // is refused with them: every site action skips an id that casts to 0, so the
+                    // batch would answer with neither an operation nor an error for that item. A digit
+                    // string past PHP_INT_MAX casts to PHP_INT_MAX, a different id than the one sent.
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Check batch limit.
      *
      * @param array $items Request items.
@@ -495,9 +646,10 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
         $limit = apply_filters( 'mainwp_rest_batch_items_limit', 100, $this->get_normalized_rest_base() );
         $total = 0;
 
-        // The updates group is rejected as a whole by batch_items(), but its items still count
-        // toward the cap so an oversized request is refused before anything else is dispatched.
-        $count_names = array_merge( $this->controller_names, array( 'updates' ) );
+        // The updates and costs groups are rejected as a whole by batch_items(), but their items
+        // still count toward the cap so an oversized request is refused before anything else is
+        // dispatched.
+        $count_names = array_merge( $this->controller_names, array( 'updates', 'costs' ) );
 
         foreach ( $count_names as $con_name ) {
             if ( ! empty( $items[ $con_name ] ) && is_countable( $items[ $con_name ] ) ) {

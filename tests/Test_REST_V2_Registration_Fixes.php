@@ -235,9 +235,9 @@ class Test_REST_V2_Registration_Fixes extends \WP_Test_REST_TestCase {
 	}
 
 	/**
-	 * Fix 1: other groups keep processing and unknown groups stay silently ignored.
+	 * Fix 1: other groups keep processing while the groups the endpoint cannot dispatch are reported.
 	 */
-	public function test_batch_processes_other_groups_and_ignores_unknown_groups(): void {
+	public function test_batch_processes_other_groups_and_reports_unknown_groups(): void {
 		$this->authenticate_as_admin();
 
 		$response = $this->do_authenticated_request(
@@ -267,7 +267,7 @@ class Test_REST_V2_Registration_Fixes extends \WP_Test_REST_TestCase {
 		$this->assertSame( 'rest_batch_group_not_supported', $data['updates']['error']['code'] );
 		$this->assertArrayHasKey( 'clients', $data );
 		$this->assertArrayHasKey( 'create', $data['clients'] );
-		$this->assertArrayNotHasKey( 'unknown_group', $data );
+		$this->assertSame( 'rest_batch_group_not_supported', $data['unknown_group']['error']['code'] );
 	}
 
 	/**

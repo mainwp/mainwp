@@ -115,10 +115,11 @@ class MainWP_Api_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
      * Get activation info.
      *
      * @param mixed $ext_key extension key.
+     * @param bool  $get_stable Get stable info or not.
      *
      * @return mixed get_option() get activation information.
      */
-    public function get_activation_info( $ext_key ) {
+    public function get_activation_info( $ext_key, $get_stable = true ) {
         if ( empty( $ext_key ) ) {
             return array();
         }
@@ -149,6 +150,28 @@ class MainWP_Api_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                 && ! empty( $rewritten['api_key']['encrypted_val'] ) ) {
                 MainWP_Utility::update_option( $ext_key . '_APIManAdder', $rewritten );
             }
+        }
+
+        $stable = get_option( $ext_key . '_stable_apiadder' );
+
+        // If the current API key information is empty, use the saved stable information if available.
+        if ( $get_stable && is_array( $info ) && empty( $info['api_key'] ) && is_array( $stable ) && ! empty( $stable['api_key'] ) && ! empty( $stable['activated_key'] ) && ! empty( $stable['instance_id'] ) ) {
+            $info['api_key']       = $stable['api_key'];
+            $info['activated_key'] = $stable['activated_key'];
+            $info['instance_id']   = $stable['instance_id'];
+            $this->set_activation_info( $ext_key, $info ); // Do not update stable info.
+        }
+
+        // Save stable information for the first time.
+        if ( ( ! is_array( $stable ) || empty( $stable['api_key'] ) ) && is_array( $info ) && ! empty( $info['api_key'] ) && ! empty( $info['instance_id'] ) ) {
+            $init_stable = array(
+                'api_key'       => $info['api_key'],
+                'activated_key' => $info['activated_key'],
+                'instance_id'   => $info['instance_id'],
+
+            );
+
+            MainWP_Utility::update_option( $ext_key . '_stable_apiadder', $init_stable );
         }
 
         return static::decrypt_activation_info( $info );
@@ -200,11 +223,12 @@ class MainWP_Api_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
      *
      * @param mixed $ext_key Extension key.
      * @param mixed $info    Activation information.
+     * @param bool  $update_stable To update stable info or not.
      *
      * @return mixed Set activation info.
      * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
      */
-    public function set_activation_info( $ext_key, $info ) {
+    public function set_activation_info( $ext_key, $info, $update_stable = false ) {
 
         if ( empty( $ext_key ) ) {
             return false;
@@ -233,6 +257,17 @@ class MainWP_Api_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             && is_string( $info['api_key'] )
             && '' !== $info['api_key'] ) {
             return false;
+        }
+
+        // Currently, stable activation information is not updated
+        // when an extension plugin is activated or deactivated.
+        if ( $update_stable ) {
+            $stable_info = array(
+                'api_key'       => is_array( $info ) && isset( $info['api_key'] ) ? $info['api_key'] : '',
+                'activated_key' => is_array( $info ) && isset( $info['activated_key'] ) ? $info['activated_key'] : 'Deactivated',
+                'instance_id'   => is_array( $info ) && isset( $info['instance_id'] ) ? $info['instance_id'] : '',
+            );
+            MainWP_Utility::update_option( $ext_key . '_stable_apiadder', $stable_info );
         }
 
         return MainWP_Utility::update_option( $ext_key . '_APIManAdder', $info );
@@ -379,7 +414,7 @@ class MainWP_Api_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             // second slot. The encrypt filter only fails on broken installs
             // (missing keyfile, un-writable uploads/mainwp/pk/), but when it
             // does the operator needs to know.
-            if ( false === $this->set_activation_info( $api_slug, $options ) ) {
+            if ( false === $this->set_activation_info( $api_slug, $options, true ) ) {
                 $return['error'] = esc_html__( 'License activated upstream but local state could not be saved. Check uploads/mainwp/pk/ permissions and try the activation again.', 'mainwp' );
             }
 
@@ -427,7 +462,7 @@ class MainWP_Api_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
 
         if ( empty( $api_key ) ) {
             $options['api_key'] = '';
-            $this->set_activation_info( $api_slug, $options );
+            $this->set_activation_info( $api_slug, $options, true );
         }
 
         $return = array();
@@ -463,7 +498,7 @@ class MainWP_Api_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             // MWP-1546 follow-up: surface the fail-closed write. The slot was
             // already released at mainwp.com; without the local persist the
             // dashboard would still display the extension as Activated.
-            if ( false === $this->set_activation_info( $api_slug, $options ) ) {
+            if ( false === $this->set_activation_info( $api_slug, $options, true ) ) {
                 $return['error'] = esc_html__( 'License deactivated upstream but local state could not be cleared. Check uploads/mainwp/pk/ permissions.', 'mainwp' );
             }
 
@@ -615,7 +650,7 @@ class MainWP_Api_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                 // call may have produced a fresh license key upstream; if the
                 // local persist fails the dashboard would lose track of it
                 // entirely.
-                if ( false === $this->set_activation_info( $api_slug, $options ) ) {
+                if ( false === $this->set_activation_info( $api_slug, $options, true ) ) {
                     $return['error'] = esc_html__( 'License retrieved upstream but local state could not be saved. Check uploads/mainwp/pk/ permissions and try again.', 'mainwp' );
                 }
 

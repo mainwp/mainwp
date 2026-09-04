@@ -433,6 +433,8 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
             $email_description = esc_html__( 'Alert if any of your websites return unexpected HTTP status after running updates.', 'mainwp' );
         } elseif ( 'deactivated_license_alert' === $type ) {
             $email_description = esc_html__( 'Receive a notification when an extension\'s license is deactivated.', 'mainwp' );
+        } elseif ( 'auto_updates' === $type ) {
+            $email_description = esc_html__( 'Receive a notification about auto-updates.', 'mainwp' );
         }
 
         $addition_desc = apply_filters( 'mainwp_notification_type_desc', '', $type );
@@ -505,6 +507,7 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
     public static function get_notification_types( $type = '' ) {
         $types = array(
             'daily_digest'              => esc_html__( 'Daily Digest Email', 'mainwp' ),
+            'auto_updates'              => esc_html__( 'Auto Updates Email', 'mainwp' ),
             'uptime'                    => esc_html__( 'Uptime Monitoring Email', 'mainwp' ),
             'site_health'               => esc_html__( 'Site Health Monitoring Email', 'mainwp' ),
             'deactivated_license_alert' => esc_html__( 'Extension License Deactivation Notification Email', 'mainwp' ),
@@ -667,6 +670,12 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
                 'recipients' => $recipients,
                 'subject'    => $general ? 'Daily Digest from Your MainWP Dashboard' : '[site.name] Daily Digest from Your MainWP Dashboard',
                 'heading'    => $general ? 'Daily Digest' : '[site.name] Daily Digest',
+            ),
+            'auto_updates'              => array(
+                'disable'    => $disable,
+                'recipients' => $recipients,
+                'subject'    => $general ? 'Auto Updates Notification from Your MainWP Dashboard' : '[site.name] Auto Updates Notification from Your MainWP Dashboard',
+                'heading'    => $general ? 'Auto Updates Notification' : '[site.name] Auto Updates Notification',
             ),
             'uptime'                    => array(
                 'disable'    => $disable,

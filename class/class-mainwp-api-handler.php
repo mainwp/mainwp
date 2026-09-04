@@ -85,7 +85,7 @@ class MainWP_API_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                         $rslt              = new \stdClass();
                         $rslt->slug        = $slug;
                         $rslt->new_version = $response['new_version'];
-                        $rslt->package     = $response['package'];
+                        $rslt->package     = array_key_exists( 'package', $response ) ? $response['package'] : null;
                         $rslt->key_status  = '';
                         $rslt->apiManager  = 1;
 

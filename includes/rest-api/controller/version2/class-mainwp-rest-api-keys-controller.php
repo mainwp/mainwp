@@ -225,14 +225,17 @@ class MainWP_Rest_API_Keys_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function create_new_key( $request ) { // phpcs:ignore -- NOSONAR - complex.
-        // Get request body.
-        $body = $request->get_body_params();
-        if ( empty( $body ) ) {
-            return new WP_Error(
-                'empty_body',
-                __( 'Request body is empty.', 'mainwp' ),
-            );
+        $body = $this->get_request_body_data( $request );
+        if ( is_wp_error( $body ) ) {
+            return $body;
         }
+
+        // Core validated and sanitized the registered args from every bag
+        // (query included); reading only the body bag would ignore a query
+        // value that satisfied the required-arg check.
+        $active_param      = $request->get_param( 'active' );
+        $permissions_param = $request->get_param( 'permissions' );
+        $description_param = $request->get_param( 'description' );
 
         // Generate consumer key and secret.
         $_consumer_key    = MainWP_Rest_Api_Page::mainwp_generate_rand_hash();
@@ -241,9 +244,9 @@ class MainWP_Rest_API_Keys_Controller extends MainWP_REST_Controller { //phpcs:i
         // Map data.
         $consumer_key    = 'ck_' . $_consumer_key;
         $consumer_secret = 'cs_' . $_consumer_secret;
-        $active          = ! empty( $body['active'] ) ? 1 : 0;
-        $permission      = ! empty( $body['permissions'] ) ? sanitize_text_field( wp_unslash( $body['permissions'] ) ) : '';
-        $desc            = ! empty( $body['description'] ) ? sanitize_text_field( wp_unslash( $body['description'] ) ) : '';
+        $active          = ! empty( $active_param ) ? 1 : 0;
+        $permission      = ! empty( $permissions_param ) ? sanitize_text_field( $permissions_param ) : '';
+        $desc            = ! empty( $description_param ) ? sanitize_text_field( $description_param ) : '';
         $scope           = $this->determine_scope( $permission );
 
         try {
@@ -294,14 +297,24 @@ class MainWP_Rest_API_Keys_Controller extends MainWP_REST_Controller { //phpcs:i
             );
         }
 
-        // Get request body.
-        $body = $request->get_json_params();
-        if ( empty( $body ) ) {
+        $body = $this->get_request_body_data( $request );
+        if ( is_wp_error( $body ) ) {
+            return $body;
+        }
+
+        // Every field here is optional, so a JSON payload sent without its content type
+        // (which core parses as one URL-encoded key) would otherwise "succeed" and change nothing.
+        // has_param() also sees a validated query value the body bag alone would miss.
+        if ( ! $request->has_param( 'active' ) && ! $request->has_param( 'description' ) && ! $request->has_param( 'permissions' ) ) {
             return new WP_Error(
                 'empty_body',
                 __( 'Request body is empty.', 'mainwp' ),
+                array( 'status' => 400 )
             );
         }
+
+        $description_param = $request->get_param( 'description' );
+        $permissions_param = $request->get_param( 'permissions' );
 
         // Get key identifier.
         $cons_key_id = $request->get_param( 'key_identifier' );
@@ -319,15 +332,15 @@ class MainWP_Rest_API_Keys_Controller extends MainWP_REST_Controller { //phpcs:i
 
         // Determine active.
         $active = $current_enabled;
-        if ( isset( $body['active'] ) ) {
-            $active = $body['active'] ? 1 : 0;
+        if ( $request->has_param( 'active' ) ) {
+            $active = $request->get_param( 'active' ) ? 1 : 0;
         }
         // Determine description.
-        $desc = ! empty( $body['description'] ) ? sanitize_text_field( wp_unslash( $body['description'] ) ) : $current_description;
+        $desc = ! empty( $description_param ) ? sanitize_text_field( $description_param ) : $current_description;
 
         // Edit api key v1.
         if ( ! is_numeric( $cons_key_id ) ) {
-            $scope    = ! empty( $body['permissions'] ) ? $this->determine_scope( $body['permissions'], 'v1' ) : $current_permissions;
+            $scope    = ! empty( $permissions_param ) ? $this->determine_scope( $permissions_param, 'v1' ) : $current_permissions;
             $save     = false;
             $all_keys = get_option( 'mainwp_rest_api_keys', false );
             if ( is_array( $all_keys ) && isset( $all_keys[ $cons_key_id ] ) ) {
@@ -350,7 +363,7 @@ class MainWP_Rest_API_Keys_Controller extends MainWP_REST_Controller { //phpcs:i
 
             MainWP_Utility::update_option( 'mainwp_rest_api_keys', $all_keys );
         } else {
-            $scope = ! empty( $body['permissions'] ) ? $this->determine_scope( $body['permissions'] ) : $current_permissions;
+            $scope = ! empty( $permissions_param ) ? $this->determine_scope( $permissions_param ) : $current_permissions;
             // Update api key.
             $updated = MainWP_DB::instance()->update_rest_api_key( $api_key->key_id, $scope, $desc, $active );
             if ( false === $updated ) {
@@ -465,13 +478,17 @@ class MainWP_Rest_API_Keys_Controller extends MainWP_REST_Controller { //phpcs:i
                 'required'          => true,
                 'type'              => 'boolean',
                 'description'       => __( 'Active or disable API key.', 'mainwp' ),
-                'sanitize_callback' => 'rest_sanitize_boolean',
+                // rest_parse_request_arg validates before it sanitizes, so an explicit
+                // JSON null is a 400 instead of being coerced to false past the validator.
+                'sanitize_callback' => 'rest_parse_request_arg',
+                'validate_callback' => 'rest_validate_request_arg',
             ),
             'description' => array(
                 'required'          => false,
                 'type'              => 'string',
                 'description'       => __( 'API key description.', 'mainwp' ),
                 'sanitize_callback' => 'sanitize_text_field',
+                'validate_callback' => 'rest_validate_request_arg',
             ),
             'permissions' => array(
                 'required'          => true,
@@ -496,13 +513,15 @@ class MainWP_Rest_API_Keys_Controller extends MainWP_REST_Controller { //phpcs:i
                     'required'          => false,
                     'type'              => 'boolean',
                     'description'       => __( 'Active or disable API key.', 'mainwp' ),
-                    'sanitize_callback' => 'rest_sanitize_boolean',
+                    'sanitize_callback' => 'rest_parse_request_arg',
+                    'validate_callback' => 'rest_validate_request_arg',
                 ),
                 'description' => array(
                     'required'          => false,
                     'type'              => 'string',
                     'description'       => __( 'API key description.', 'mainwp' ),
                     'sanitize_callback' => 'sanitize_text_field',
+                    'validate_callback' => 'rest_validate_request_arg',
                 ),
                 'permissions' => array(
                     'required'          => false,
@@ -524,6 +543,13 @@ class MainWP_Rest_API_Keys_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return bool|WP_Error
      */
     public function rest_api_validate_permissions_param( $value, $request, $param ) {
+        // A custom validate_callback replaces the registered-type check, so the
+        // declared string type has to be enforced here before explode() sees an array.
+        $valid = rest_validate_request_arg( $value, $request, $param );
+        if ( is_wp_error( $valid ) ) {
+            return $valid;
+        }
+
         if ( empty( $value ) ) {
             return false;
         }

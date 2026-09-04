@@ -59,6 +59,10 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler { // phpcs:
 
         $this->add_action( 'mainwp_extension_plugin_action', array( &$this, 'ajax_extension_plugin_action' ) );
 
+        if ( \mainwp_current_user_can( 'dashboard', 'manage_extensions' ) ) {
+            $this->add_action( 'mainwp_extension_update_check_retry', array( &$this, 'retry_extension_update_check' ) );
+        }
+
         if ( \mainwp_current_user_can( 'dashboard', 'bulk_install_and_activate_extensions' ) ) {
             $this->add_action( 'mainwp_extension_grabapikey', array( &$this, 'grab_extension_api_key' ) );
             $this->add_action( 'mainwp_extension_saveextensionapilogin', array( &$this, 'save_extensions_api_login' ) );
@@ -70,6 +74,24 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler { // phpcs:
 
         // Page: ManageSites.
         $this->add_action( 'mainwp_ext_applypluginsettings', array( &$this, 'mainwp_ext_applypluginsettings' ) );
+        $this->maybe_fetch_purchase_data();
+    }
+
+    /**
+     * Retry Add-on update checks.
+     */
+    public function retry_extension_update_check() {
+        $this->check_security( 'mainwp_extension_update_check_retry' );
+
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_extensions' ) ) {
+            wp_send_json( array( 'error' => esc_html__( 'You are not allowed to manage Add-ons.', 'mainwp' ) ) );
+        }
+
+        if ( MainWP_System_Handler::instance()->retry_extension_update_check() ) {
+            wp_send_json( array( 'result' => 'SUCCESS' ) );
+        }
+
+        wp_send_json( array( 'error' => esc_html__( 'The update check is still failing. Make sure your MainWP Dashboard can connect to mainwp.com, then try again.', 'mainwp' ) ) );
     }
 
     /**
@@ -333,6 +355,8 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler { // phpcs:
                 MainWP_Utility::update_option( 'mainwp_extensions_api_save_login', '' );
                 MainWP_Utility::update_option( 'mainwp_extensions_plan_info', '' );
             }
+            // Not save the api key still update the "mainwp_extensions_updated_master_api_key" option to trigger the same follow-up actions as a normal save.
+            update_option( 'mainwp_extensions_updated_master_api_key', 1 );
             die(
                 wp_json_encode(
                     array(
@@ -348,6 +372,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler { // phpcs:
         }
 
         if ( empty( $api_key ) ) {
+            update_option( 'mainwp_extensions_updated_master_api_key', 1 );
             die( wp_json_encode( array( 'saved' => 1 ) ) );
         }
 
@@ -388,7 +413,35 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler { // phpcs:
             MainWP_Utility::update_option( 'mainwp_extensions_plan_info', '' );
         }
 
+        update_option( 'mainwp_extensions_updated_master_api_key', 1 );
+
         die( wp_json_encode( $return ) );
+    }
+
+    /**
+     * Maybe fetch purchase data.
+     *
+     * @return void
+     */
+    private function maybe_fetch_purchase_data() {
+        $updated_time = get_option( 'mainwp_master_api_key_updated_time' );
+        if ( false === $updated_time ) {
+            delete_option( 'mainwp_extensions_all_activation_cached' );
+        }
+        if ( time() - (int) $updated_time > 3 * DAY_IN_SECONDS ) {
+            $api_key = MainWP_Api_Manager_Key::instance()->get_decrypt_master_api_key();
+            $data    = get_option( 'mainwp_purchased_extension_stable_data' );
+            if ( false === $data ) {
+                $data   = MainWP_Api_Manager::instance()->get_purchased_extension( $api_key );
+                $result = json_decode( $data, true );
+                if ( is_array( $result ) && isset( $result['success'] ) && $result['success'] ) {
+                    // Save the purchased data, to avoid too many API calls. The data is not critical, if it is outdated, the user can click the "Retry" button to get the latest data.
+                    // Auto refresh the data every 12 hours, to make sure the data is not too old.
+                    MainWP_Utility::update_option( 'mainwp_purchased_extension_stable_data', $data );
+                }
+                MainWP_Utility::update_option( 'mainwp_master_api_key_updated_time', time() );
+            }
+        }
     }
 
     /**

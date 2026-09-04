@@ -69,10 +69,10 @@ class MainWP_Manage_Screenshots { // phpcs:ignore Generic.Classes.OpeningBraceSa
         $reset_filter = isset( $_REQUEST['reset'] ) && ( 'yes' === $_REQUEST['reset'] ) ? true : false;
 
         if ( ! isset( $_REQUEST['g'] ) && ! $reset_filter ) {
-            $selected_status = get_user_option( 'mainwp_screenshots_filter_status', '' );
-            $selected_group  = get_user_option( 'mainwp_screenshots_filter_group', '' );
-            $selected_client = get_user_option( 'mainwp_screenshots_filter_client', '' );
-            $is_not          = get_user_option( 'mainwp_screenshots_filter_is_not', '' );
+            $selected_status = get_user_option( 'mainwp_screenshots_filter_status' );
+            $selected_group  = get_user_option( 'mainwp_screenshots_filter_group' );
+            $selected_client = get_user_option( 'mainwp_screenshots_filter_client' );
+            $is_not          = get_user_option( 'mainwp_screenshots_filter_is_not' );
         }
         // phpcs:enable
 

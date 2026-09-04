@@ -483,9 +483,30 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
 
         if ( ! empty( $api_key ) ) {
 
-            $data = MainWP_Api_Manager::instance()->get_purchased_extension( $api_key );
+            $data                       = get_option( 'mainwp_purchased_extension_stable_data' );
+            $should_fetch_purchase_data = get_option( 'mainwp_extensions_updated_master_api_key' );
 
-            $result = json_decode( $data, true );
+            if ( false === $data || $should_fetch_purchase_data ) {
+                $data   = MainWP_Api_Manager::instance()->get_purchased_extension( $api_key );
+                $result = json_decode( $data, true );
+
+                if ( is_array( $result ) && isset( $result['success'] ) && $result['success'] ) {
+                    // Save the purchased data, to avoid too many API calls. The data is not critical, if it is outdated, the user can click the "Retry" button to get the latest data.
+                    // Auto refresh the data every 12 hours, to make sure the data is not too old.
+                    MainWP_Utility::update_option( 'mainwp_purchased_extension_stable_data', $data );
+                    if ( $should_fetch_purchase_data ) {
+                        MainWP_Utility::update_option( 'mainwp_extensions_updated_master_api_key', false );
+                    }
+                }
+            } elseif ( false !== $data ) { // If the API call fails and there is cached data, use the cached data. The data is not critical, if it is outdated, the user can click the "Retry" button to get the latest data.
+                MainWP_Logger::instance()->debug( 'Get cached purchased software data :: [data=' . (string) $data . ']' );
+                $result = json_decode( $data, true );
+                if ( ! is_array( $result ) || ! ( isset( $result['success'] ) && $result['success'] ) ) {
+                    $data = false;
+                }
+            }
+
+            $result = ! empty( $data ) ? json_decode( $data, true ) : false;
             $return = array();
 
             if ( is_array( $result ) ) {

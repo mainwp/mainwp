@@ -154,6 +154,19 @@ if ( class_exists( '\MainWP\Dashboard\MainWP_Abilities' ) ) {
     \MainWP\Dashboard\MainWP_Abilities::init();
 }
 
+if ( file_exists( MAINWP_PLUGIN_DIR . 'modules/system-monitor/bootstrap.php' ) ) {
+    define( 'MAINWP_SYSTEM_MONITOR_FILE', __FILE__ );
+    require_once MAINWP_PLUGIN_DIR . 'modules/system-monitor/bootstrap.php'; // NOSONAR - WP compatible.
+    register_activation_hook(
+        MAINWP_SYSTEM_MONITOR_FILE,
+        array( MainWP\Dashboard\SystemMonitor\MainWP_System_Monitor::class, 'activate' )
+    );
+    register_deactivation_hook(
+        MAINWP_SYSTEM_MONITOR_FILE,
+        array( MainWP\Dashboard\SystemMonitor\MainWP_System_Monitor::class, 'deactivate' )
+    );
+}
+
 // Detect if secupress_scanner is running.
 $mainwp_is_secupress_scanning = false;
 if ( ! empty( $_GET ) && isset( $_GET['test'] ) && isset( $_GET['action'] ) && 'secupress_scanner' === $_GET['action'] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized.Recommended

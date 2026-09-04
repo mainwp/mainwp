@@ -1071,7 +1071,9 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
             );
         }
 
-        return $issues;
+        $db_issues = MainWP_Database_Schema_Checker::get_detected_db_issues();
+
+        return array_merge( $issues, is_array( $db_issues ) ? $db_issues : array() );
     }
 
     /**
@@ -1378,7 +1380,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
             $frequency_auto_update = 'daily';
         }
 
-        $show_widgets = get_user_option( 'mainwp_settings_show_widgets', array() );
+        $show_widgets = get_user_option( 'mainwp_settings_show_widgets' );
         if ( ! is_array( $show_widgets ) ) {
             $show_widgets = array();
         }
@@ -2139,7 +2141,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
      * @return array<int,array<string,mixed>>
      */
     public static function get_conflict_signal_report_rows() {
-        $caching_plugins     = static::get_active_plugins_by_keyword_group(
+        $caching_plugins  = static::get_active_plugins_by_keyword_group(
             array(
                 'cache',
                 'rocket',
@@ -2154,7 +2156,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
                 'hummingbird',
             )
         );
-        $security_plugins    = static::get_active_plugins_by_keyword_group(
+        $security_plugins = static::get_active_plugins_by_keyword_group(
             array(
                 'wordfence',
                 'sucuri',
@@ -2169,16 +2171,9 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
                 'limit login',
             )
         );
-        $maintenance_plugins = static::get_active_plugins_by_keyword_group(
-            array(
-                'maintenance',
-                'coming soon',
-                'seedprod',
-                'lightstart',
-            )
-        );
-        $maintenance_mode    = static::get_maintenance_mode_indicators();
-        $dropins             = static::get_dropin_conflict_indicators();
+
+        $maintenance_mode = static::get_maintenance_mode_indicators();
+        $dropins          = static::get_dropin_conflict_indicators();
 
         return self::add_export_labels_to_rows(
             array(
@@ -2208,6 +2203,189 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
             )
         );
     }
+
+
+    /**
+     * Get database rows.
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    public static function get_database_report_rows() { // phpcs:ignore -- NOSONAR - complex function.
+
+        $db_info = MainWP_Database_Schema_Checker::get_database_info();
+
+        $database_size = isset( $db_info['database_size'] ) ? $db_info['database_size'] : array();
+
+        $data_size  = isset( $database_size['data'] ) ? $database_size['data'] : 0;
+        $index_size = isset( $database_size['index'] ) ? $database_size['index'] : 0;
+
+        $db_privileges_info = MainWP_Database_Schema_Checker::get_database_privileges();
+
+        $db_privileges = ! empty( $db_privileges_info['database_grants'] ) && is_array( $db_privileges_info['database_grants'] ) ? implode( ', ', $db_privileges_info['database_grants'] ) . '.' : '';
+
+        $db_privileges_status = 'pass';
+        if ( ! empty( $db_privileges_info['database_missing_privileges'] ) && is_array( $db_privileges_info['database_missing_privileges'] ) ) {
+            $db_privileges       .= ' ' . esc_html__( 'Missing database privileges:', 'mainwp' ) . ' ' . implode( ', ', $db_privileges_info['database_missing_privileges'] );
+            $db_privileges_status = 'error';
+        }
+
+        $db_rows_info = array(
+            array(
+                'label' => esc_html__( 'MainWP database version', 'mainwp' ),
+                'value' => $db_info['mainwp_database_version'],
+            ),
+            array(
+                'label' => esc_html__( 'Database prefix', 'mainwp' ),
+                'value' => $db_info['database_prefix'],
+            ),
+            array(
+                'label' => esc_html__( 'Total Database Size', 'mainwp' ),
+                'value' => esc_html( sprintf( __( '%sMB', 'mainwp' ), $data_size + $index_size ) ),
+            ),
+            array(
+                'label' => esc_html__( 'Database Data Size', 'mainwp' ),
+                'value' => esc_html( sprintf( __( '%sMB', 'mainwp' ), $data_size ) ),
+            ),
+            array(
+                'label' => esc_html__( 'Database Index Size', 'mainwp' ),
+                'value' => esc_html( sprintf( __( '%sMB', 'mainwp' ), $index_size ) ),
+            ),
+            array(
+                'status' => $db_privileges_status,
+                'label'  => esc_html__( 'Database privileges', 'mainwp' ),
+                'value'  => $db_privileges,
+            ),
+        );
+
+        $db_rows         = array();
+        $db_rows_missing = array();
+
+        if ( isset( $db_info['database_tables'] ) && is_array( $db_info['database_tables'] ) ) {
+
+            $missing_db_tables = MainWP_Database_Schema_Checker::detect_missing_tables( $db_info['database_tables'] );
+
+            if ( is_array( $missing_db_tables ) ) {
+                foreach ( array( 'core', 'extensions' ) as $type ) {
+                    $miss_tables = isset( $missing_db_tables[ $type ] ) ? $missing_db_tables[ $type ] : array();
+                    if ( ! empty( $miss_tables ) && is_array( $miss_tables ) ) {
+                        if ( 'core' === $type ) {
+                            foreach ( $miss_tables  as $tb_name ) {
+                                $db_rows_missing[] = array(
+                                    'label'  => $tb_name,
+                                    'value'  => esc_html__( 'Missing core table', 'mainwp' ),
+                                    'status' => 'error',
+                                );
+                            }
+                        } else {
+                            foreach ( $miss_tables  as $ext_slug => $miss_ext_tables ) {
+                                $title = MainWP_Database_Schema_Checker::get_loaded_extension_title( $ext_slug );
+                                foreach ( $miss_ext_tables  as $tb_name ) {
+                                    $db_rows_missing[] = array(
+                                        'label'  => $tb_name,
+                                        'value'  => sprintf( esc_html__( 'Missing extension table:  %1s', 'mainwp' ), $title ),
+                                        'status' => 'error',
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            foreach ( array( 'core', 'other' ) as $type ) {
+                $type_tables = isset( $db_info['database_tables'][ $type ] ) ? $db_info['database_tables'][ $type ] : array();
+                if ( is_array( $type_tables ) ) {
+                    foreach ( $type_tables  as $tb_name => $info ) {
+
+                        if ( empty( $info ) ) {
+                            continue; // Missing table, so skip column detection.
+                        }
+
+                        $status = 'pass';
+
+                        $detect_cols_issues = array();
+
+                        /**
+                         *  Filter to disable detection of missing table columns. Useful for slow hosts.
+                         *
+                         * @since 6.1.3.
+                         */
+                        if ( apply_filters( 'mainwp_detect_table_column_issues', true ) ) {
+                            $detect_cols_issues = MainWP_Database_Schema_Checker::detect_table_columns_issues( $tb_name, $type );
+                        }
+
+                        $missing_cols = is_array( $detect_cols_issues ) && isset( $detect_cols_issues['missing_columns'] ) ? $detect_cols_issues['missing_columns'] : array();
+                        $invalid_cols = is_array( $detect_cols_issues ) && isset( $detect_cols_issues['invalid_columns'] ) ? $detect_cols_issues['invalid_columns'] : array();
+
+                        $issues_cols_info = array();
+
+                        if ( ! empty( $missing_cols ) && is_array( $missing_cols ) ) {
+                            $issues_cols_info[] = sprintf( esc_html__( 'Missing columns: %1s;', 'mainwp' ), implode( ', ', $missing_cols ) );
+                            $status             = 'error';
+                        }
+
+                        if ( ! empty( $invalid_cols ) && is_array( $invalid_cols ) && isset( $invalid_cols[0]['column'] ) ) {
+
+                            $issues_string = implode(
+                                '; ',
+                                array_map(
+                                    static function ( $issue ) {
+                                            return sprintf(
+                                                'column: "%s" - expected: "%s" - actual: "%s"',
+                                                $issue['column'],
+                                                $issue['expected'],
+                                                $issue['actual']
+                                            );
+                                    },
+                                    $invalid_cols
+                                )
+                            );
+
+                            $issues_cols_info[] = sprintf(
+                                esc_html__( 'Incorrect column definitions found: %s;', 'mainwp' ),
+                                $issues_string
+                            );
+
+                            if ( 'pass' === $status ) {
+                                $status = 'error'; // warning - incorrect column definition.
+                            }
+                        }
+
+                        $tbl_info = '';
+                        if ( is_array( $info ) && isset( $info['data'] ) ) {
+                            $tbl_info = sprintf( __( 'Data: %sMB + Index: %sMB + Engine %s', 'mainwp' ), $info['data'], $info['index'], $info['engine'] );
+                        }
+
+                        $db_rows[] = array(
+                            'label'  => esc_html( $tb_name ),
+                            'value'  => esc_html(
+                                $tbl_info . ( ! empty( $issues_cols_info ) ? ' (' . implode( '; ', $issues_cols_info ) . ') ' : '' ),
+                            ),
+                            'status' => $status,
+                        );
+
+                    }
+                }
+            }
+
+            MainWP_Database_Schema_Checker::prepare_db_and_tables_issues( $missing_db_tables );
+        }
+
+        return self::add_export_labels_to_rows(
+            array_merge( $db_rows_info, $db_rows_missing, $db_rows ),
+            array(
+                'Database',
+                'Database privileges',
+                'MainWP database version',
+                'Database prefix',
+                'Total Database Size',
+                'Database Data Size',
+                'Database Index Size',
+                'Missing core table',
+            )
+        );
+    }
+
 
     /**
      * Format boolean label.

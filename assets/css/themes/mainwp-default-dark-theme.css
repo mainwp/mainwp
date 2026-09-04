@@ -1587,6 +1587,10 @@ body.mainwp-ui.mainwp-custom-theme,
   border-left: 1px solid var(--mainwp-border) !important;
 }
 
+.mainwp-ui.mainwp-custom-theme #mainwp-header-command-palette-actions {
+  border-right-color: var(--mainwp-border) !important;
+}
+
 .mainwp-ui.mainwp-custom-theme #mainwp-header-secondary-actions {
   padding: 7px 10px;
   margin: 0 10px;
@@ -1596,6 +1600,121 @@ body.mainwp-ui.mainwp-custom-theme,
 
 .mainwp-ui.mainwp-custom-theme #mainwp-top-header .ui.button {
   font-size: 0.85714286rem !important;
+}
+
+.mainwp-ui.mainwp-custom-theme #mainwp-command-palette-trigger {
+  background: transparent !important;
+  border-color: var(--mainwp-border) !important;
+  color: var(--mainwp-text) !important;
+}
+
+.mainwp-ui.mainwp-custom-theme #mainwp-command-palette-trigger kbd {
+  color: inherit !important;
+}
+
+.mainwp-ui.mainwp-custom-theme .components-modal__frame.commands-command-menu,
+.mainwp-ui.mainwp-custom-theme .commands-command-menu {
+  background: var(--mainwp-element-background) !important;
+  border: 1px solid var(--mainwp-border) !important;
+  border-radius: var(--area-radius) !important;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45) !important;
+  color: var(--mainwp-text) !important;
+  overflow: hidden !important;
+}
+
+.mainwp-ui.mainwp-custom-theme .commands-command-menu .components-modal__content {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.mainwp-ui.mainwp-custom-theme .commands-command-menu__overlay {
+  background: rgba(18, 19, 19, 0.78) !important;
+}
+
+.mainwp-ui.mainwp-custom-theme .commands-command-menu__header {
+  background: var(--mainwp-element-background) !important;
+}
+
+.mainwp-ui.mainwp-custom-theme .commands-command-menu__header-search-icon,
+.mainwp-ui.mainwp-custom-theme .commands-command-menu__header-search-icon svg {
+  color: var(--mainwp-text-secondary) !important;
+  fill: var(--mainwp-text-secondary) !important;
+}
+
+.mainwp-ui.mainwp-custom-theme .commands-command-menu__header-search-icon svg path {
+  fill: currentColor !important;
+}
+
+.mainwp-ui.mainwp-custom-theme .commands-command-menu__header .components-button {
+  background: var(--mainwp-element-background-secondary) !important;
+  border-color: var(--mainwp-border-strong) !important;
+  color: var(--mainwp-text-header) !important;
+}
+
+.mainwp-ui.mainwp-custom-theme .commands-command-menu__header .components-button:hover,
+.mainwp-ui.mainwp-custom-theme .commands-command-menu__header .components-button:focus {
+  background: var(--mainwp-border-strong) !important;
+  color: var(--mainwp-text-header) !important;
+}
+
+.mainwp-ui.mainwp-custom-theme .commands-command-menu__container [cmdk-input] {
+  background: transparent !important;
+  color: var(--mainwp-text-header) !important;
+}
+
+.mainwp-ui.mainwp-custom-theme .commands-command-menu__container [cmdk-input]::placeholder {
+  color: var(--mainwp-text-secondary) !important;
+}
+
+.mainwp-ui.mainwp-custom-theme .commands-command-menu__container [cmdk-root] > [cmdk-list]:has([cmdk-group-items]:not(:empty)),
+.mainwp-ui.mainwp-custom-theme .commands-command-menu__container [cmdk-root] > [cmdk-list]:has([cmdk-empty]) {
+  border-top-color: var(--mainwp-border) !important;
+}
+
+.mainwp-ui.mainwp-custom-theme .commands-command-menu__container [cmdk-item] {
+  color: var(--mainwp-text) !important;
+  border-radius: 0.75rem !important;
+}
+
+.mainwp-ui.mainwp-custom-theme .commands-command-menu__container [cmdk-item][aria-disabled=true] {
+  color: var(--mainwp-text-secondary) !important;
+}
+
+.mainwp-ui.mainwp-custom-theme .commands-command-menu__container [cmdk-item] svg {
+  fill: var(--mainwp-text-secondary) !important;
+}
+
+.mainwp-ui.mainwp-custom-theme .commands-command-menu__container [cmdk-item][aria-disabled=true] svg {
+  fill: var(--mainwp-text-secondary) !important;
+}
+
+.mainwp-ui.mainwp-custom-theme .commands-command-menu__container [cmdk-item][aria-selected=true],
+.mainwp-ui.mainwp-custom-theme .commands-command-menu__container [cmdk-item]:active {
+  background: var(--mainwp-blue) !important;
+  color: #ffffff !important;
+}
+
+.mainwp-ui.mainwp-custom-theme .commands-command-menu__container [cmdk-item][aria-selected=true] svg,
+.mainwp-ui.mainwp-custom-theme .commands-command-menu__container [cmdk-item]:active svg {
+  fill: #ffffff !important;
+}
+
+.mainwp-ui.mainwp-custom-theme .commands-command-menu__container [cmdk-item][aria-selected=true] .commands-command-menu__item-category,
+.mainwp-ui.mainwp-custom-theme .commands-command-menu__container [cmdk-item]:active .commands-command-menu__item-category {
+  color: #ffffff !important;
+}
+
+.mainwp-ui.mainwp-custom-theme .commands-command-menu__container [cmdk-item][aria-selected=true] mark,
+.mainwp-ui.mainwp-custom-theme .commands-command-menu__container [cmdk-item]:active mark {
+  color: inherit !important;
+}
+
+.mainwp-ui.mainwp-custom-theme .commands-command-menu__item-category,
+.mainwp-ui.mainwp-custom-theme .commands-command-menu__container [cmdk-empty],
+.mainwp-ui.mainwp-custom-theme .commands-command-menu__container [cmdk-loading] {
+  color: var(--mainwp-text-secondary) !important;
 }
 
 .mainwp-ui.mainwp-custom-theme #mainwp-top-header .ui.icon.button:not(.red, .green) {

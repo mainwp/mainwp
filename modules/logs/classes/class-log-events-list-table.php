@@ -1165,7 +1165,6 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                                                 data.range === 'thismonth' &&
                                                 ( data.current_client_id === 0 || data.current_client_id === '' || data.current_client_id === '0' ) &&
                                                 ( data.current_site_id === 0 || data.current_site_id === '' || data.current_site_id === '0' )
-
                                             ) {
                                                 show_filter = false;
                                             }

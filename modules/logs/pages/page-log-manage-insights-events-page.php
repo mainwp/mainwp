@@ -638,7 +638,7 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
                     <?php if ( ! $optimize ) { ?>
                     <div class="two wide middle aligned column">
                         <div id="mainwp-module-log-filter-users" class="ui selection multiple fluid dropdown seg_users">
-                            <input type="hidden" value="<?php echo esc_html( $filter_user_ids ); ?>">
+                            <input type="hidden" value="<?php echo esc_attr( $filter_user_ids ); ?>">
                             <i class="dropdown icon"></i>
                             <div class="default text"><?php esc_html_e( 'All users', 'mainwp' ); ?></div>
                             <div class="menu">

@@ -682,7 +682,7 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
                         </div>
                         <div class="two wide middle aligned column">
                             <div id="mainwp-module-log-filter-users" class="ui selection multiple fluid mini dropdown seg_users">
-                                <input type="hidden" value="<?php echo esc_html( $filter_user_ids ); ?>">
+                                <input type="hidden" value="<?php echo esc_attr( $filter_user_ids ); ?>">
                                 <i class="dropdown icon"></i>
                                 <div class="default text"><?php esc_html_e( 'All users', 'mainwp' ); ?></div>
                                 <div class="menu">
@@ -847,10 +847,13 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
         $this->load_events_list_table( 'widget-overview', true );
 
         $insights_filters = array();
+        $context          = 'operations';
         //phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( ! empty( $_POST['current_site_id'] ) ) {
             $insights_filters['wpid'] = intval( $_POST['current_site_id'] );
+            $context                  = 'individual';
         } elseif ( ! empty( $_POST['current_client_id'] ) ) {
+            $context   = 'client';
             $client_id = intval( $_POST['current_client_id'] );
             $websites  = MainWP_DB_Client::instance()->get_websites_by_client_ids( $client_id );
             $site_ids  = array();
@@ -896,7 +899,7 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
             }
         }
         $insights_filters['sources_conds'] = $sources_conds;
-        $others_filters = MainWP_Site_Actions::instance()->get_insights_filters(); // get ajax filters.
+        $others_filters                    = MainWP_Site_Actions::instance()->get_widget_insights_filters( $context ); // get ajax filters.
         if ( is_array( $others_filters ) ) {
             $insights_filters = array_merge( $others_filters, $insights_filters );
         }

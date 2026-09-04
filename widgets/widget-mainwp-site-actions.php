@@ -85,19 +85,22 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @return mixed render_site_info()
      */
     public static function render() {
-        $current_wpid    = MainWP_System_Utility::get_current_wpid();
-        $website         = null;
-        $params          = array();
+        $current_wpid = MainWP_System_Utility::get_current_wpid();
+        $website      = null;
+        $params       = array( 'context' => 'operations' );
+
         $params['limit'] = apply_filters( 'mainwp_widget_site_actions_limit_number', 50 );
         if ( $current_wpid ) {
             $params  = array(
-                'wpid' => $current_wpid,
+                'wpid'    => $current_wpid,
+                'context' => 'individual',
             );
             $website = MainWP_DB::instance()->get_website_by_id( $current_wpid );
         } elseif ( isset( $_GET['client_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             $client_id = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             $params    = array(
                 'client_id' => $client_id,
+                'context'   => 'client',
             );
         }
         static::instance()->render_info( $params, $website );
@@ -180,9 +183,10 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             <div id="mainwp-non-mainwp-changes-feed">
                 <div id="mainwp-message-zone" style="display:none;" class="ui message"></div>
                 <?php
+                $context          = ! empty( $params['context'] ) ? $params['context'] : '';
                 $optimize_tbl     = apply_filters( 'mainwp_widget_sites_changes_optimize_view', false );
-                $insights_filters = $this->get_insights_filters( true );
-                static::render_logs_overview_top( $insights_filters, $optimize_tbl );
+                $insights_filters = $this->get_widget_insights_filters( $context, true );
+                static::render_logs_overview_top( $insights_filters, $optimize_tbl, $website );
 
                 MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' );
                 $this->list_events_table->display();
@@ -227,10 +231,11 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
     /**
      * Render Manage Tasks Table Top.
      *
-     * @param array $insights_filters Insights filters.
-     * @param bool  $optimize Optimize table view or not.
+     * @param array       $insights_filters Insights filters.
+     * @param bool        $optimize Optimize table view or not.
+     * @param object|null $website Website data.
      */
-    public static function render_logs_overview_top( $insights_filters, $optimize = false ) { //phpcs:ignore -- NOSONAR - complex.
+    public static function render_logs_overview_top( $insights_filters, $optimize = false, $website = null ) { //phpcs:ignore -- NOSONAR - complex.
         $manager = Log_Manager::instance();
 
         $filter_user_ids             = '';
@@ -268,7 +273,7 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     <?php if ( ! $optimize ) { ?>
                     <div class="two wide middle aligned column">
                         <div id="mainwp-module-log-filter-users" class="ui selection multiple fluid dropdown seg_users">
-                            <input type="hidden" value="<?php echo esc_html( $filter_user_ids ); ?>">
+                            <input type="hidden" value="<?php echo esc_attr( $filter_user_ids ); ?>">
                             <i class="dropdown icon"></i>
                             <div class="default text"><?php esc_html_e( 'All users', 'mainwp' ); ?></div>
                             <div class="menu">
@@ -317,6 +322,7 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                 </div>
                         </div>
                     </div>
+                    <?php if ( empty( $website ) ) { ?>
                     <div class="two wide middle aligned column">
                         <div id="mainwp-module-log-filter-sites" class="ui selection multiple fluid dropdown seg_sites">
                             <input type="hidden" value="<?php echo esc_attr( $filter_sites ); ?>">
@@ -337,6 +343,7 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                             </div>
                         </div>
                     </div>
+                    <?php } ?>
                     <div class="three wide middle aligned right aligned column">
                         <a onclick="mainwp_module_log_manage_events_filter()" href="#" class="ui mini green basic button"><i class="filter icon"></i> <?php esc_html_e( 'Filter', 'mainwp' ); ?></a>
                         <a onclick="mainwp_module_log_manage_events_reset_filters(this)" href="#" class="ui mini basic button" <?php echo $default_filter ? 'disabled="disabled"' : ''; ?>><i class="times icon"></i> <?php esc_html_e( 'Reset', 'mainwp' ); ?></a>
@@ -351,9 +358,19 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         <script type="text/javascript">
             jQuery( document ).ready( function( $ ) {
                 mainwp_module_log_manage_events_filter = function() {
-                    let user = jQuery( '#mainwp-module-log-filter-users').dropdown('get value');
+                    let current_site_id = $( '#mainwp-widget-filter-current-site-id').length ? $( '#mainwp-widget-filter-current-site-id').val() : 0;
+                    let current_client_id = $( '#mainwp-widget-filter-current-client-id').length ? $( '#mainwp-widget-filter-current-client-id').val() : 0;
 
-                    let sites = jQuery( '#mainwp-module-log-filter-sites').dropdown('get value');
+                    if(current_site_id === '' || current_site_id === '0'){
+                        current_site_id = 0;
+                    }
+
+                    if(current_client_id === '' || current_client_id === '0'){
+                        current_client_id = 0;
+                    }
+
+                    let user = jQuery( '#mainwp-module-log-filter-users').dropdown('get value');
+                    let sites = jQuery( '#mainwp-module-log-filter-sites').length ? jQuery( '#mainwp-module-log-filter-sites').dropdown('get value') : '';
                     let events = jQuery( '#mainwp-module-log-filter-events').dropdown('get value');
 
                     let params = '';
@@ -362,7 +379,18 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     params += '&events=' + encodeURIComponent( events );
 
                     params += '&_widget_actions_opennonce=' + mainwpParams._wpnonce;
-                    window.location = 'admin.php?page=mainwp_tab' + params;
+
+
+                    if( current_site_id > 0){
+                        window.location = 'admin.php?page=managesites&dashboard=' + current_site_id + params;
+                    } else {
+                        if(current_client_id > 0){
+                            window.location = 'admin.php?page=ManageClients&client_id=' + current_client_id + params;
+                        } else {
+                            window.location = 'admin.php?page=mainwp_tab' + params;
+                        }
+                    }
+
                     return false;
                 };
 
@@ -387,13 +415,14 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
     }
 
     /**
-     * Method get_insights_filters()
+     * Method get_widget_insights_filters()
      *
      * Get insights filters.
      *
-     * @param bool $save_filter To save filter.
+     * @param string $context Context filter.
+     * @param bool   $save_filter To save filter.
      */
-    public function get_insights_filters( $save_filter = false ) { //phpcs:ignore -- NOSONAR - complex method.
+    public function get_widget_insights_filters( $context, $save_filter = false ) { //phpcs:ignore -- NOSONAR - complex method.
 
         $filters = array( 'user', 'sites', 'events' );
 
@@ -421,7 +450,7 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         $update_filter = false;
 
         if ( $get_saved ) {
-            $filters_saved = get_user_option( 'mainwp_widget_actions_logs_filters_saved' );
+            $filters_saved = $this->get_or_set_widget_saved_filters( $context );
             if ( ! is_array( $filters_saved ) ) {
                 $filters_saved = array();
             }
@@ -489,8 +518,8 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         }
 
         if ( $save_filter && $update_filter ) {
-            MainWP_Utility::update_user_option(
-                'mainwp_widget_actions_logs_filters_saved',
+            $this->get_or_set_widget_saved_filters(
+                $context,
                 array(
                     'user_ids' => $filter_user_ids,
                     'sites'    => $filter_sites,
@@ -514,6 +543,29 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             )
         );
     }
+
+    /**
+     * Get or save the user's saved widget action log filters.
+     *
+     * @param string     $context The widget context. Accepts 'individual', 'client', or 'operations'.
+     * @param array|null $filters Filters to save. Pass null to retrieve the saved filters.
+     *
+     * @return mixed|false The saved filters when retrieving, or false when the context is invalid.
+     */
+    public function get_or_set_widget_saved_filters( $context, $filters = null ) {
+        if ( ! in_array( $context, array( 'individual', 'client', 'operations' ) ) ) {
+            return false;
+        }
+
+        $option = 'mainwp_widget_actions_logs_' . $context . '_filters_saved';
+
+        if ( null === $filters ) {
+            return get_user_option( $option );
+        } else {
+            return MainWP_Utility::update_user_option( $option, $filters );
+        }
+    }
+
 
     /**
      * Method load_sites_table()

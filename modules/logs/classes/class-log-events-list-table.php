@@ -1143,26 +1143,47 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                                     } else {
                                         if( 'mainwp_module_log_widget_events_overview_display_rows' === ajax_action ){
                                             data.source = widgetViewSource;
+                                            data.sites =  $( '#mainwp-module-log-filter-sites').length ? $( '#mainwp-module-log-filter-sites').dropdown('get value') : '';
+                                            data.events =  $( '#mainwp-module-log-filter-events').length ? $( '#mainwp-module-log-filter-events').dropdown('get value') : '';
                                         } else if( 'mainwp_module_log_widget_insights_display_rows' === ajax_action ) {
                                             // set recent number for none-manage-events table.
                                             data.recent_number =  $( '#mainwp-widget-filter-events-limit').length ? $( '#mainwp-widget-filter-events-limit').val() : 100;
                                         }
                                     }
 
-                                    if('mainwp_module_log_manage_events_display_rows' === ajax_action ){
-                                        if( ( data.source == '' || data.source == 'allsource' ) &&
-                                            ( data.events == '' || data.events == 'allevents' ) &&
-                                            ( data.sites == '' || data.sites == 'allsites' ) &&
-                                            ( data.group == '' || data.group == 'alltags' ) &&
-                                            ( data.client == '' || data.client == 'allclients' ) &&
-                                            ( data.user == '' || data.user == 'allusers' ) &&
-                                            data.range == 'thismonth' &&
-                                            data.current_client_id == '' &&
-                                            data.current_site_id == ''
-                                        ){
-                                            jQuery('#mainwp-module-log-filters-row').fadeOut(300);
-                                        } else{
-                                            jQuery('#mainwp-module-log-filters-row').fadeIn(300);
+                                    if(jQuery('#mainwp-module-log-filters-row').length){
+                                        let show_filter = true;
+
+                                        if ( 'mainwp_module_log_manage_events_display_rows' === ajax_action ) {
+                                            if (
+                                                ( data.source === '' || data.source === 'allsource' ) &&
+                                                ( data.events === '' || data.events === 'allevents' ) &&
+                                                ( data.sites === '' || data.sites === 'allsites' ) &&
+                                                ( data.group === '' || data.group === 'alltags' ) &&
+                                                ( data.client === 0 || data.client === '' || data.client === 'allclients' ) &&
+                                                ( data.user === 0 || data.user === '' || data.user === '0' || data.user === 'allusers' ) &&
+                                                data.range === 'thismonth' &&
+                                                ( data.current_client_id === 0 || data.current_client_id === '' || data.current_client_id === '0' ) &&
+                                                ( data.current_site_id === 0 || data.current_site_id === '' || data.current_site_id === '0' )
+
+                                            ) {
+                                                show_filter = false;
+                                            }
+                                        } else if ( 'mainwp_module_log_widget_events_overview_display_rows' === ajax_action ) {
+                                            if (
+                                                ( data.events === '' || data.events === 'allevents' ) &&
+                                                ( data.sites === '' || data.sites === 'allsites' ) &&
+                                                ( data.user === 0 || data.user === '' || data.user === '0' || data.user === 'allusers' ) &&
+                                                ( data.current_site_id === 0 || data.current_site_id === '' || data.current_site_id === '0' )
+                                            ) {
+                                                show_filter = false;
+                                            }
+                                        }
+
+                                        if ( show_filter ) {
+                                            jQuery( '#mainwp-module-log-filters-row' ).fadeIn( 300 );
+                                        } else {
+                                            jQuery( '#mainwp-module-log-filters-row' ).fadeOut( 300 );
                                         }
                                     }
 

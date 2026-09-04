@@ -16,6 +16,7 @@ use MainWP\Dashboard\MainWP_DB_Common;
 use MainWP\Dashboard\MainWP_Post_Handler;
 use MainWP\Dashboard\MainWP_Logger;
 use MainWP\Dashboard\MainWP_Ui_Manage_Widgets_Layout;
+use MainWP\Dashboard\MainWP_Site_Actions;
 
 // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
@@ -812,9 +813,9 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
      * Method load_sites_table()
      *
      * @param string $tbl_id Table Id
-     * @param bool $optimize Whether optimize data query.
+     * @param bool   $optimize Whether optimize data query.
      *
-     * Load sites table.
+     *   Load sites table.
      */
     public function load_events_list_table( $tbl_id = '', $optimize = false ) {
         $manager                 = Log_Manager::instance();
@@ -895,6 +896,11 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
             }
         }
         $insights_filters['sources_conds'] = $sources_conds;
+        $others_filters = MainWP_Site_Actions::instance()->get_insights_filters(); // get ajax filters.
+        if ( is_array( $others_filters ) ) {
+            $insights_filters = array_merge( $others_filters, $insights_filters );
+        }
+
         $this->list_events_table->prepare_items( false, $insights_filters );
         $output = $this->list_events_table->ajax_get_datatable_rows();
         MainWP_Logger::instance()->log_execution_time( 'ajax_events_display_rows()' );

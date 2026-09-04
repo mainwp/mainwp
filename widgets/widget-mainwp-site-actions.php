@@ -13,6 +13,8 @@ use MainWP\Dashboard\MainWP_UI;
 use MainWP\Dashboard\Module\Log\Log_Manager;
 use MainWP\Dashboard\Module\Log\Log_Events_List_Table;
 use MainWP\Dashboard\Module\Log\Log_DB_Helper;
+use MainWP\Dashboard\Module\Log\Log_Events_Filter_Segment;
+
 
 // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
@@ -178,6 +180,10 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             <div id="mainwp-non-mainwp-changes-feed">
                 <div id="mainwp-message-zone" style="display:none;" class="ui message"></div>
                 <?php
+                $optimize_tbl     = apply_filters( 'mainwp_widget_sites_changes_optimize_view', false );
+                $insights_filters = $this->get_insights_filters( true );
+                static::render_logs_overview_top( $insights_filters, $optimize_tbl );
+
                 MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' );
                 $this->list_events_table->display();
                 ?>
@@ -216,6 +222,297 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
          * @since 4.0
          */
         do_action( 'mainwp_non_mainwp_changes_widget_bottom', $website );
+    }
+
+    /**
+     * Render Manage Tasks Table Top.
+     *
+     * @param array $insights_filters Insights filters.
+     * @param bool  $optimize Optimize table view or not.
+     */
+    public static function render_logs_overview_top( $insights_filters, $optimize = false ) { //phpcs:ignore -- NOSONAR - complex.
+        $manager = Log_Manager::instance();
+
+        $filter_user_ids             = '';
+        $array_usersfilter_sites_ids = array();
+
+        $filter_sites  = '';
+        $filter_events = '';
+
+        $array_sites_ids   = array();
+        $array_events_list = array();
+
+        extract( $insights_filters ); //phpcs:ignore -- ok.
+
+        $default_filter = false;
+        // extracted values.
+        if ( empty( $filter_user_ids ) && empty( $array_usersfilter_sites_ids ) && empty( $array_sites_ids ) && empty( $array_events_list ) ) {
+            $default_filter = true;
+        }
+
+        ?>
+        <div id="mainwp-module-log-overview-sub-header">
+            <div class="ui stackable grid">
+                <div class="eight wide middle aligned column">
+                </div>
+                <div class="eight wide right aligned middle aligned column">
+                    <a href="#" class="ui mini basic button" id="mainwp-sites-changes-filter-toggle-button">
+                        <i class="filter icon"></i> <?php esc_html_e( 'Show Filters', 'mainwp' ); ?>
+                    </a>
+                </div>
+            </div>
+
+        <div id="mainwp-module-log-filters-row" style="display:none">
+            <div class="ui divider"></div>
+                <div class="ui stackable compact grid mini form">
+                    <?php if ( ! $optimize ) { ?>
+                    <div class="two wide middle aligned column">
+                        <div id="mainwp-module-log-filter-users" class="ui selection multiple fluid dropdown seg_users">
+                            <input type="hidden" value="<?php echo esc_html( $filter_user_ids ); ?>">
+                            <i class="dropdown icon"></i>
+                            <div class="default text"><?php esc_html_e( 'All users', 'mainwp' ); ?></div>
+                            <div class="menu">
+                                <?php
+                                $users = $manager->admin->get_all_users();
+                                foreach ( $users as $item ) {
+                                    ?>
+                                    <div class="item" data-value="<?php echo intval( $item['id'] ) . '-' . (int) $item['site_id'] . '-' . ( ! empty( $item['is_dashboard_user'] ) ? 1 : 0 ); ?>"><?php echo ( ! empty( $item['login'] ) ? esc_html( $item['login'] ) : esc_html( $item['nicename'] ) ) . ' (' . esc_html( $item['source'] ) . ')'; ?></div>
+                                    <?php
+                                }
+                                ?>
+                                <div class="item" data-value="allusers"><?php esc_html_e( 'All users', 'mainwp' ); ?></div>
+                            </div>
+                        </div>
+                    </div>
+                    <?php } ?>
+                    <?php
+                    // add filters: filter_events, filter_sites.
+                    ?>
+                    <div class="two wide middle aligned column">
+                        <div id="mainwp-module-log-filter-events" class="ui selection multiple fluid dropdown seg_events">
+                                <input type="hidden" value="<?php echo esc_attr( $filter_events ); ?>">
+                                <i class="dropdown icon"></i>
+                                <div class="default text"><?php esc_html_e( 'All Events', 'mainwp' ); ?></div>
+                                <div class="menu">
+                                    <?php
+                                    $manager = Log_Manager::instance();
+                                    $events  = $manager->connectors->term_labels['logs_action'];
+                                    if ( ! is_array( $events ) ) {
+                                        $events = array();
+                                    }
+
+                                    $seen_event_labels = array();
+                                    foreach ( $events as $eve_name => $eve_title ) {
+                                        $clean_title = stripslashes( $eve_title );
+                                        if ( isset( $seen_event_labels[ $clean_title ] ) ) {
+                                            continue;
+                                        }
+                                        $seen_event_labels[ $clean_title ] = true;
+                                        ?>
+                                        <div class="item" data-value="<?php echo esc_attr( $eve_name ); ?>"><?php echo esc_html( $clean_title ); ?></div>
+                                        <?php
+                                    }
+                                    ?>
+                                    <div class="item" data-value="allevents"><?php esc_html_e( 'All Events', 'mainwp' ); ?></div>
+                                </div>
+                        </div>
+                    </div>
+                    <div class="two wide middle aligned column">
+                        <div id="mainwp-module-log-filter-sites" class="ui selection multiple fluid dropdown seg_sites">
+                            <input type="hidden" value="<?php echo esc_attr( $filter_sites ); ?>">
+                            <i class="dropdown icon"></i>
+                            <div class="default text"><?php esc_html_e( 'All Websites', 'mainwp' ); ?></div>
+                            <div class="menu">
+                                <?php
+                                $wpsite_fields = array( 'id', 'name' );
+                                $websites      = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user_by_params( array( 'select_wp_fields' => $wpsite_fields ) ) );
+                                while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
+                                    ?>
+                                    <div class="item" data-value="<?php echo esc_attr( $website->id ); ?>"><?php echo esc_html( MainWP_Utility::get_nice_url( stripslashes( $website->name ) ) ); ?></div>
+                                    <?php
+                                }
+                                MainWP_DB::free_result( $websites );
+                                ?>
+                                <div class="item" data-value="allsites"><?php esc_html_e( 'All Websites', 'mainwp' ); ?></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="three wide middle aligned right aligned column">
+                        <a onclick="mainwp_module_log_manage_events_filter()" href="#" class="ui mini green basic button"><i class="filter icon"></i> <?php esc_html_e( 'Filter', 'mainwp' ); ?></a>
+                        <a onclick="mainwp_module_log_manage_events_reset_filters(this)" href="#" class="ui mini basic button" <?php echo $default_filter ? 'disabled="disabled"' : ''; ?>><i class="times icon"></i> <?php esc_html_e( 'Reset', 'mainwp' ); ?></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php
+        MainWP_UI::render_modal_save_segment( 'manage-events' );
+
+        ?>
+        <script type="text/javascript">
+            jQuery( document ).ready( function( $ ) {
+                mainwp_module_log_manage_events_filter = function() {
+                    let user = jQuery( '#mainwp-module-log-filter-users').dropdown('get value');
+
+                    let sites = jQuery( '#mainwp-module-log-filter-sites').dropdown('get value');
+                    let events = jQuery( '#mainwp-module-log-filter-events').dropdown('get value');
+
+                    let params = '';
+                    params += '&user=' + encodeURIComponent( user );
+                    params += '&sites=' + encodeURIComponent( sites );
+                    params += '&events=' + encodeURIComponent( events );
+
+                    params += '&_widget_actions_opennonce=' + mainwpParams._wpnonce;
+                    window.location = 'admin.php?page=mainwp_tab' + params;
+                    return false;
+                };
+
+                mainwp_module_log_manage_events_reset_filters = function(resetObj) {
+                    try {
+                        jQuery( '#mainwp-module-log-filter-users').dropdown('clear');
+                        jQuery( '#mainwp-module-log-filter-sites').dropdown('clear');
+                        jQuery( '#mainwp-module-log-filter-events').dropdown('clear');
+
+                        jQuery(resetObj).attr('disabled', 'disabled');
+                        mainwp_module_log_manage_events_filter();
+                    } catch(err) {
+                        // to fix js error.
+                        console.log(err);
+                    }
+                };
+
+            });
+        </script>
+
+        <?php
+    }
+
+    /**
+     * Method get_insights_filters()
+     *
+     * Get insights filters.
+     *
+     * @param bool $save_filter To save filter.
+     */
+    public function get_insights_filters( $save_filter = false ) { //phpcs:ignore -- NOSONAR - complex method.
+
+        $filters = array( 'user', 'sites', 'events' );
+
+        $get_saved = true;
+
+        if ( isset( $_GET['_widget_actions_opennonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_widget_actions_opennonce'] ), 'mainwp-admin-nonce' ) ) { //phpcs:ignore -- NOSONAR -ok.
+            foreach ( $filters as $filter ) {
+                if ( isset( $_REQUEST[ $filter ] ) ) { //phpcs:ignore -- safe.
+                    $get_saved = false;
+                    break;
+                }
+            }
+        }
+
+        $filter_user_ids = '';
+
+        $filter_sites  = '';
+        $filter_events = '';
+
+        $array_usersfilter_sites_ids = array();
+        $array_sites_ids             = array();
+
+        $array_events_list = array();
+
+        $update_filter = false;
+
+        if ( $get_saved ) {
+            $filters_saved = get_user_option( 'mainwp_widget_actions_logs_filters_saved' );
+            if ( ! is_array( $filters_saved ) ) {
+                $filters_saved = array();
+            }
+            $filter_user_ids = isset( $filters_saved['user_ids'] ) && ! empty( $filters_saved['user_ids'] ) ? $filters_saved['user_ids'] : '';
+
+            $filter_sites  = isset( $filters_saved['sites'] ) && ! empty( $filters_saved['sites'] ) ? $filters_saved['sites'] : '';
+            $filter_events = isset( $filters_saved['events'] ) && ! empty( $filters_saved['events'] ) ? $filters_saved['events'] : '';
+
+        } else {
+            // phpcs:disable WordPress.Security.NonceVerification
+            $filter_user_ids = isset( $_REQUEST['user'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['user'] ) ) : '';
+            $filter_sites    = isset( $_REQUEST['sites'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['sites'] ) ) : '';
+            $filter_events   = isset( $_REQUEST['events'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['events'] ) ) : '';
+
+            // phpcs:enable WordPress.Security.NonceVerification
+            $update_filter = true;
+        }
+
+        if ( ! empty( $filter_user_ids ) ) {
+            $array_usersfilter_sites_ids = explode( ',', $filter_user_ids ); // convert to array.
+            if ( in_array( 'allusers', $array_usersfilter_sites_ids, true ) ) {
+                $array_usersfilter_sites_ids = false;
+                $filter_user_ids             = '';
+            } else {
+                // to valid and fix filters.
+                $users_filters = array();
+                foreach ( $array_usersfilter_sites_ids as $users_filter ) {
+                    if ( 2 === substr_count( $users_filter, '-' ) ) {
+                        $users_filters[] = $users_filter;
+                    }
+                }
+                $array_usersfilter_sites_ids = $users_filters;
+                $filter_user_ids             = implode( ',', $users_filters );
+            }
+        }
+
+        if ( ! empty( $filter_sites ) ) {
+            $array_sites_ids = explode( ',', $filter_sites ); // convert to array.
+            if ( in_array( 'allsites', $array_sites_ids, true ) ) {
+                $array_sites_ids = false;
+                $filter_sites    = '';
+            } else {
+                $array_sites_ids = MainWP_Utility::array_numeric_filter( $array_sites_ids );
+                $filter_sites    = implode( ',', $array_sites_ids );
+            }
+        }
+
+        if ( ! empty( $filter_events ) ) {
+            $array_events_list = explode( ',', $filter_events ); // convert to array.
+            if ( in_array( 'allevents', $array_events_list, true ) ) {
+                $filter_events     = '';
+                $array_events_list = false;
+            } else {
+                if ( in_array( 'updated', $array_events_list, true ) && ! in_array( 'update', $array_events_list, true ) ) {
+                    $array_events_list[] = 'update';
+                } elseif ( in_array( 'update', $array_events_list, true ) && ! in_array( 'updated', $array_events_list, true ) ) {
+                    $array_events_list[] = 'updated';
+                }
+                if ( in_array( 'deleted', $array_events_list, true ) && ! in_array( 'delete', $array_events_list, true ) ) {
+                    $array_events_list[] = 'delete';
+                } elseif ( in_array( 'delete', $array_events_list, true ) && ! in_array( 'deleted', $array_events_list, true ) ) {
+                    $array_events_list[] = 'deleted';
+                }
+            }
+        }
+
+        if ( $save_filter && $update_filter ) {
+            MainWP_Utility::update_user_option(
+                'mainwp_widget_actions_logs_filters_saved',
+                array(
+                    'user_ids' => $filter_user_ids,
+                    'sites'    => $filter_sites,
+                    'events'   => $filter_events,
+                )
+            );
+        }
+
+        $filters_params = compact(
+            'filter_user_ids',
+            'filter_sites',
+            'filter_events',
+        );
+
+        return array_merge(
+            $filters_params,
+            compact(
+                'array_usersfilter_sites_ids',
+                'array_sites_ids',
+                'array_events_list',
+            )
+        );
     }
 
     /**

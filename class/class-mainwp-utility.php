@@ -120,11 +120,11 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      *
      * @param string $pUrl                         Website URL.
      * @param bool   $showHttp                     Whether to show HTTP.
-     * @param bool   $showTrailingSlashWhenHttpShown Whether to show the trailing slash when HTTP is shown.
+     * @param bool   $removeTrailingSlash  Whether to removev the trailing slash.
      *
      * @return string The formatted URL.
      */
-    public static function get_nice_url( $pUrl, $showHttp = false, $showTrailingSlashWhenHttpShown = true ) {
+    public static function get_nice_url( $pUrl, $showHttp = false, $removeTrailingSlash = false ) {
         $url = $pUrl;
 
         if ( static::starts_with( $url, 'http://' ) ) {
@@ -140,11 +140,15 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         }
 
         if ( static::ends_with( $url, '/' ) ) {
-            if ( ! $showHttp || ! $showTrailingSlashWhenHttpShown ) {
+            if ( ! $showHttp ) {
                 $url = substr( $url, 0, strlen( $url ) - 1 );
             }
-        } elseif ( $showTrailingSlashWhenHttpShown ) {
+        } else {
             $url .= '/';
+        }
+
+        if ( $removeTrailingSlash ) {
+            $url = rtrim( $url, '/' );
         }
 
         return $url;

@@ -872,8 +872,8 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      * Method hook_get_all_posts()
      * Hook to get posts from sites.
      *
-     * @param object $sites     Child Sites object.
-     * @param array  $post_data with values: keyword, dtsstart, dtsstop, status, maxRecords, post_type.
+     * @param object|array $sites     Child Sites object.
+     * @param array        $post_data with values: keyword, dtsstart, dtsstop, status, maxRecords, post_type.
      *
      * @return \stdClass $output All posts data array.
      *
@@ -883,7 +883,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
      */
-    public function hook_get_all_posts( $sites, $post_data = array() ) {
+    public function hook_get_all_posts( $sites, $post_data = array() ) {  // phpcs:ignore -- NOSONAR - complex.
 
         $dbwebsites = array();
 
@@ -891,9 +891,19 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
         $data[] = 'verify_certificate';
 
         if ( '' !== $sites ) {
-            foreach ( $sites as $v ) {
-                if ( MainWP_Utility::ctype_digit( $v ) ) {
-                    $website = MainWP_DB::instance()->get_website_by_id( $v );
+            foreach ( $sites as $site ) {
+                // Keep accepting the legacy list of scalar site IDs as well
+                // as the mapped website objects used by REST v2.
+                if ( is_object( $site ) ) {
+                    $site_id = isset( $site->id ) ? $site->id : '';
+                } elseif ( is_array( $site ) ) {
+                    $site_id = isset( $site['id'] ) ? $site['id'] : '';
+                } else {
+                    $site_id = $site;
+                }
+
+                if ( MainWP_Utility::ctype_digit( $site_id ) ) {
+                    $website = MainWP_DB::instance()->get_website_by_id( $site_id );
                     if ( empty( $website->sync_errors ) && ! MainWP_System_Utility::is_suspended_site( $website ) ) {
                         $dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data );
                     }

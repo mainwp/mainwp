@@ -488,6 +488,42 @@ KEY idx_wpid_issub (wpid, issub)";
     }
 
     /**
+     * Get the primary monitor for a site, or automatically create one if it does not exist.
+     *
+     * @param int  $site_id Website ID (wpid).
+     * @param bool $obj  Optional. Whether to return an object or associative array. Default true.
+     *
+     * @return object|array|false The primary monitor record, or false on failure.
+     */
+    public function get_or_create_primary_monitor( $site_id, $obj = true ) {
+        if ( empty( $site_id ) ) {
+            return false;
+        }
+
+        // 1. Try to fetch the existing primary monitor (suburl = '').
+        $primary = $this->get_primary_monitor( $site_id, $obj );
+
+        if ( ! empty( $primary ) ) {
+            return $primary;
+        }
+
+        $data = array(
+            'wpid'   => $site_id,
+            'suburl' => '',
+        );
+
+        // 2. Recovery path: Create default primary monitor if missing.
+        $created_id = $this->update_wp_monitor( $data );
+
+        if ( ! $created_id ) {
+            return false;
+        }
+
+        // 3. Return the newly created primary monitor record.
+        return $this->get_primary_monitor( $site_id, $obj );
+    }
+
+    /**
      * Get the primary monitor for a specific site.
      *
      * @param int  $site_id Website ID (wpid).
@@ -725,7 +761,7 @@ KEY idx_wpid_issub (wpid, issub)";
      *
      * @param array $data data.
      *
-     * @return object|null Database query results or null on failure.
+     * @return object|null|false Database query results or null or false on failure.
      */
     public function update_wp_monitor( $data ) { // phpcs:ignore -- NOSONAR - complexity.
         if ( ! is_array( $data ) ) {
@@ -762,13 +798,40 @@ KEY idx_wpid_issub (wpid, issub)";
             );
                 return $id;
         } else {
-            if ( empty( $data['method'] ) || ! isset( $allowed_methods[ $data['method'] ] ) ) {
-                $data['method'] = 'get';
-            }
+
+            $default = MainWP_Uptime_Monitoring_Handle::get_default_monitoring_settings( true );
+
+            $monitor_fields = array(
+                'wpid',
+                'active',
+                'keyword',
+                'interval',
+                'maxretries',
+                'up_status_codes',
+                'type',
+                'method',
+                'timeout',
+                'suburl',
+                'lasttime_check',
+            );
+
+            $allowed_fields = array_flip( $monitor_fields );
+
+            $default = array_intersect_key( $default, $allowed_fields );
+            $data    = array_intersect_key( $data, $allowed_fields );
+
+            $data = array_merge( $default, $data );
 
             $data['issub'] = ! empty( $data['suburl'] ) ? 1 : 0;
 
+            $site_id = filter_var( $data['wpid'] ?? null, FILTER_VALIDATE_INT );
+            if ( false === $site_id || $site_id <= 0 ) {
+                return false;
+            }
+            $data['wpid'] = $site_id;
+
             $this->wpdb->insert( $this->table_name( 'monitors' ), $data );
+
             return $this->wpdb->insert_id;
         }
     }
@@ -793,7 +856,7 @@ KEY idx_wpid_issub (wpid, issub)";
      *
      * @param array $params params.
      *
-     * @return object|null Database query result or null on failure.
+     * @return  string|false Database query result or null on failure.
      */
     public function get_sql_monitor( $params ) { //phpcs:ignore -- NOSONAR - complexity.
 
@@ -813,7 +876,16 @@ KEY idx_wpid_issub (wpid, issub)";
 
         $extra_view = ! empty( $params['extra_view'] ) ? $params['extra_view'] : array();
 
-        $site_id   = isset( $params['wpid'] ) ? intval( $params['wpid'] ) : false;
+        $site_id = isset( $params['wpid'] ) ? $params['wpid'] : false;
+
+        if ( false !== $site_id ) {
+            if ( ! filter_var( $site_id, FILTER_VALIDATE_INT ) || (int) $site_id <= 0 ) {
+                return false;
+            }
+
+            $site_id = (int) $site_id;
+        }
+
         $monitorid = isset( $params['monitor_id'] ) ? intval( $params['monitor_id'] ) : false;
         $sub_url   = isset( $params['suburl'] ) ? $params['suburl'] : false;
         $is_sub    = isset( $params['issub'] ) ? intval( $params['issub'] ) : false;

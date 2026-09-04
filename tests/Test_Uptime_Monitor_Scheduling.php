@@ -142,6 +142,7 @@ class Test_Uptime_Monitor_Scheduling extends \WP_UnitTestCase {
 
 			$expected_active = ( -1 === $primary_active_setting ) ? (int) $global_settings['active'] : $primary_active_setting;
 
+
 			// -----------------------------------------------------------------
 			// SCENARIO 1: Zero Sub-Monitors Clean Slate
 			// -----------------------------------------------------------------
@@ -280,7 +281,6 @@ class Test_Uptime_Monitor_Scheduling extends \WP_UnitTestCase {
 			$this->site_id,
 			array(
 				'suburl' => 'orphaned-sub-page',
-				'active' => 1,
 			)
 		);
 
@@ -291,12 +291,31 @@ class Test_Uptime_Monitor_Scheduling extends \WP_UnitTestCase {
 		$this->assertFalse( $primary_monitor, 'Primary monitor should be missing prior to recovery.' );
 		$this->assertCount( 1, $sub_monitors, 'Exactly one orphaned sub-monitor should exist prior to recovery.' );
 
-		// 3. Trigger Recovery Path: Heals missing primary monitor.
-		$recovered_primary = $this->get_or_create_primary_monitor( $this->site_id );
+        $sub_monitor = $sub_monitors[0];
 
+        $this->assertSame( -1, (int) $sub_monitor->active );
+        $this->assertSame( '', $sub_monitor->keyword );
+        $this->assertSame( -1, (int) $sub_monitor->interval );
+        $this->assertSame( -1, (int) $sub_monitor->maxretries );
+        $this->assertSame( 'useglobal', $sub_monitor->up_status_codes );
+        $this->assertSame( 'useglobal', $sub_monitor->type );
+        $this->assertSame( 'useglobal', $sub_monitor->method );
+        $this->assertSame( -1, (int) $sub_monitor->timeout );
+        $this->assertSame( (int) $this->site_id, (int) $sub_monitor->wpid );
+
+		// 3. Trigger Recovery Path: Heals missing primary monitor.
+		$recovered_primary = $db->get_or_create_primary_monitor( $this->site_id );
 		$this->assertNotEmpty( $recovered_primary, 'Recovery method must return or create a primary monitor.' );
-		$this->assertEmpty( $recovered_primary->suburl, 'Recovered primary monitor must have an empty suburl.' );
-		$this->assertEquals( $this->site_id, $recovered_primary->wpid, 'Recovered primary monitor must be assigned to correct site.' );
+        $this->assertSame( -1, (int) $recovered_primary->active );
+        $this->assertSame( '', $recovered_primary->keyword );
+        $this->assertSame( -1, (int) $recovered_primary->interval );
+        $this->assertSame( -1, (int) $recovered_primary->maxretries );
+        $this->assertSame( 'useglobal', $recovered_primary->up_status_codes );
+        $this->assertSame( 'useglobal', $recovered_primary->type );
+        $this->assertSame( 'useglobal', $recovered_primary->method );
+        $this->assertSame( -1, (int) $recovered_primary->timeout );
+        $this->assertSame( (int) $this->site_id, (int) $recovered_primary->wpid );
+        $this->assertEmpty( $recovered_primary->suburl, 'Recovered primary monitor must have an empty suburl.' );
 
 		// 4. Verify sub-monitors remain intact post-recovery.
 		$sub_monitors_after_recovery = $db->get_sub_monitors( $this->site_id );
@@ -308,44 +327,6 @@ class Test_Uptime_Monitor_Scheduling extends \WP_UnitTestCase {
 		$this->monitor_id = (int) $recovered_primary->monitor_id;
 	}
 
-    /**
-     * Get the primary monitor for a site, or automatically create one if it does not exist.
-     *
-     * @param int  $site_id Website ID (wpid).
-     * @param bool $obj  Optional. Whether to return an object or associative array. Default true.
-     *
-     * @return object|array|false The primary monitor record, or false on failure.
-     */
-    public function get_or_create_primary_monitor( $site_id, $obj = true ) {
-        if ( empty( $site_id ) ) {
-            return false;
-        }
-
-        $db = MainWP_DB_Uptime_Monitoring::instance();
-
-        // 1. Try to fetch the existing primary monitor (suburl = '').
-        $primary = $db->get_primary_monitor( $site_id, $obj );
-
-        if ( ! empty( $primary ) ) {
-            return $primary;
-        }
-
-        // 2. Recovery path: Create default primary monitor if missing.
-        $created_id = $db->update_wp_monitor( // add monitor.
-            array(
-                'wpid'   => $site_id,
-                'suburl' => '',
-                'active' => -1, // Fallback to global setting.
-            )
-        );
-
-        if ( ! $created_id ) {
-            return false;
-        }
-
-        // 3. Return the newly created primary monitor record.
-        return $db->get_primary_monitor( $site_id, $obj );
-    }
 
     /**
      * Verify per-site bypass-cache inheritance for primary and sub-monitors.
@@ -1177,19 +1158,9 @@ class Test_Uptime_Monitor_Scheduling extends \WP_UnitTestCase {
 		$data = array_merge(
 			array(
 				'wpid'            => $site_id,
-				'active'          => -1,
-				'interval'        => -1,
-				'maxretries'      => -1,
-				'retry_interval'  => 1,
-				'timeout'         => -1,
-				'method'          => 'get',
-				'type'            => 'useglobal',
-				'up_status_codes' => 'useglobal',
-				'issub'           => 0,
 			),
 			$args
 		);
-        $data['issub'] =  !empty($data['suburl']) ? 1 : 0;
         return MainWP_DB_Uptime_Monitoring::instance()->update_wp_monitor( $data );
 	}
 

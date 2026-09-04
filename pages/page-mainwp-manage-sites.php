@@ -2570,9 +2570,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
     public static function render_import_sites_modal( $url, $title_page = null ) {
         ?>
         <div class="ui large modal <?php echo ( 'Import Sites' === $title_page ) ? 'mainwp-qsw-import-modal' : ''; ?>" id="mainwp-import-sites-modal" data-page-url="<?php echo esc_url( $url ); ?>" >
-        <?php if ( 'Import Sites' !== $title_page ) : ?>
-                <i class="close icon"></i>
-            <?php endif; ?>
+            <i class="close icon" <?php echo 'Import Sites' === $title_page ? 'style="display:none"' : ''; ?> ></i>
             <div class="header"><?php echo esc_html( $title_page ); ?></div>
             <div class="scrolling content">
         <?php MainWP_Manage_Sites_View::render_import_sites(); ?>

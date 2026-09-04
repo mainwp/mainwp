@@ -134,28 +134,27 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     }
 
     /**
-     * Method get_nice_url()
+     * Get a nice URL.
      *
-     * Grab url.
+     * @param string $pUrl                         Website URL.
+     * @param bool   $showHttp                     Whether to show HTTP.
+     * @param bool   $removeTrailingSlash  Whether to removev the trailing slash.
      *
-     * @param string $pUrl Website URL.
-     * @param bool   $showHttp Show HTTP.
-     *
-     * @return string $url.
+     * @return string The formatted URL.
      */
-    public static function get_nice_url( $pUrl, $showHttp = false ) {
+    public static function get_nice_url( $pUrl, $showHttp = false, $removeTrailingSlash = false ) {
         $url = $pUrl;
 
         if ( static::starts_with( $url, 'http://' ) ) {
             if ( ! $showHttp ) {
                 $url = substr( $url, 7 );
             }
-        } elseif ( static::starts_with( $pUrl, 'https://' ) ) {
+        } elseif ( static::starts_with( $url, 'https://' ) ) {
             if ( ! $showHttp ) {
                 $url = substr( $url, 8 );
             }
         } elseif ( $showHttp ) {
-                $url = 'http://' . $url;
+            $url = 'http://' . $url; // phpcs:ignore -- NOSONAR -compatible.
         }
 
         if ( static::ends_with( $url, '/' ) ) {
@@ -163,7 +162,11 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 $url = substr( $url, 0, strlen( $url ) - 1 );
             }
         } else {
-            $url = $url . '/';
+            $url .= '/';
+        }
+
+        if ( $removeTrailingSlash ) {
+            $url = rtrim( $url, '/' );
         }
 
         return $url;

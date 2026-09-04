@@ -409,8 +409,9 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
         //phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended
         if ( isset( $_FILES['mainwp_managesites_file_bulkupload']['error'] ) && UPLOAD_ERR_OK === $_FILES['mainwp_managesites_file_bulkupload']['error'] && check_admin_referer( 'mainwp-admin-nonce' ) ) {
             if ( isset( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) && is_uploaded_file( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) ) {
-                $tmp_path = isset( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) ? sanitize_text_field( wp_unslash( $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'] ) ) : ''; //phpcs:ignore WordPress.Security.NonceVerification
-                MainWP_System_Utility::get_wp_file_system();
+                $tmp_path = $_FILES['mainwp_managesites_file_bulkupload']['tmp_name'];
+
+                $hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
                 //phpcs:enable
                 /**
                  * WordPress files system object.
@@ -419,12 +420,23 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                  */
                 global $wp_filesystem;
 
-                $content = $wp_filesystem->get_contents( $tmp_path );
-
-                // to compatible with EOL on OSs.
-                $content = str_replace( "\r\n", "\r", $content );
-                $content = str_replace( "\n", "\r", $content );
-                $lines   = explode( "\r", $content );
+                $lines = array();
+                if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
+                    $content = $wp_filesystem->get_contents( $tmp_path );
+                    if ( ! empty( $content ) ) {
+                        // to compatible with EOL on OSs.
+                        $content = str_replace( "\r\n", "\r", $content );
+                        $content = str_replace( "\n", "\r", $content );
+                        $lines   = explode( "\r", $content );
+                    }
+                } else {
+                    ?>
+                    <div class="error below-h2">
+                        <p><strong><?php esc_html_e( 'Error', 'mainwp' ); ?></strong>: <?php esc_html_e( 'Unable to initialize the WordPress filesystem. Please try again.', 'mainwp' ); ?></p>
+                    </div>
+                    <?php
+                    return;
+                }
 
                 $default_values = array(
                     'name'               => '',
@@ -458,7 +470,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                             continue;
                         }
 
-                        if ( 3 > count( $items ) ) {
+                        if ( 10 > count( $items ) ) {
                             continue;
                         }
 

@@ -805,6 +805,25 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     }
 
     /**
+     * Format a privacy-safe diagnostic for an unexpected Child response.
+     *
+     * @param mixed $website Website information.
+     * @param mixed $data    Raw response data.
+     *
+     * @return string Redacted diagnostic message.
+     */
+    private static function format_unexpected_response_log( $website, $data ) {
+        $site_id = 0;
+        if ( is_object( $website ) && property_exists( $website, 'id' ) && 0 < (int) $website->id ) {
+            $site_id = (int) $website->id;
+        }
+
+        $response_bytes = is_string( $data ) ? strlen( $data ) : 0;
+
+        return 'curl_multi_getcontent :: unexpected response :: [siteid=' . $site_id . '] :: [response_bytes=' . $response_bytes . ']';
+    }
+
+    /**
      * Method fetch_urls_authed()
      *
      * Fetches data from child sites if authenticated.
@@ -1097,16 +1116,8 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     }
 
                     if ( ! $contains ) {
-                        // Add useful debug log for unexpected response.
-                        $log_data = (string) $data;
-                        if ( is_string( $log_data ) && strlen( $log_data ) > 2000 ) {
-                            $log_data = substr( $log_data, 0, 2000 ) . '...[truncated]';
-                        }
-                        $log_url = isset( $requestUrls[ $rid ] ) ? $requestUrls[ $rid ] : '';
-                        if ( empty( $log_url ) ) {
-                            $log_url = ( isset( $handleToWebsite[ $rid ] ) && is_object( $handleToWebsite[ $rid ] ) && property_exists( $handleToWebsite[ $rid ], 'url' ) ) ? $handleToWebsite[ $rid ]->url : 'Unknown';
-                        }
-                        MainWP_Logger::instance()->debug( 'curl_multi_getcontent :: unexpected response :: [data=' . $log_data . '] :: [url=' . $log_url . ']' );
+                        $log_website = isset( $handleToWebsite[ $rid ] ) ? $handleToWebsite[ $rid ] : null;
+                        MainWP_Logger::instance()->debug( static::format_unexpected_response_log( $log_website, $data ) );
                     }
 
                     if ( null !== $handler ) {

@@ -494,8 +494,6 @@ KEY idx_wpid_issub (wpid, issub)";
      * @return array<int>
      */
     public function get_sites_missing_primary_monitor() {
-        global $wpdb;
-
         $sites_table    = $this->table_name( 'wp' );
         $monitors_table = $this->table_name( 'monitors' );
 
@@ -836,6 +834,10 @@ KEY idx_wpid_issub (wpid, issub)";
                 return false;
             }
             $data['wpid'] = $site_id;
+
+            if ( ! isset( $data['lasttime_check '] ) ) {
+                $data['lasttime_check '] = 0; // to fix NOT NULL.
+            }
 
             $this->wpdb->insert( $this->table_name( 'monitors' ), $data );
 

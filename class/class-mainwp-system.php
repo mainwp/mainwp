@@ -64,7 +64,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * @var string The plugin current update version.
      */
-    private $check_ver_update = '0.0.5';
+    private $check_ver_update = '0.0.6';
 
     /**
      * Private variable to hold the plugin slug (mainwp/mainwp.php)
@@ -821,6 +821,10 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 }
             }
             update_option( 'mainwp_extensions_all_activation_cached', '' );
+        }
+
+        if ( version_compare( $saved_ver, '0.0.6', '<' ) ) {
+            MainWP_DB_Uptime_Monitoring::instance()->repair_missing_primary_monitors();
         }
 
         MainWP_Utility::update_option( 'mainwp_update_check_version', $current_ver );

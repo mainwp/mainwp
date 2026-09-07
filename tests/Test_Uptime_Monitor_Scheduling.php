@@ -304,7 +304,8 @@ class Test_Uptime_Monitor_Scheduling extends \WP_UnitTestCase {
         $this->assertSame( (int) $this->site_id, (int) $sub_monitor->wpid );
 
 		// 3. Trigger Recovery Path: Heals missing primary monitor.
-		$recovered_primary = $db->get_or_create_primary_monitor( $this->site_id );
+        $db->repair_missing_primary_monitors();
+        $recovered_primary = $db->get_primary_monitor( $this->site_id );
 		$this->assertNotEmpty( $recovered_primary, 'Recovery method must return or create a primary monitor.' );
         $this->assertSame( -1, (int) $recovered_primary->active );
         $this->assertSame( '', $recovered_primary->keyword );

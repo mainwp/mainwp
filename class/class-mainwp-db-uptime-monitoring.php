@@ -487,40 +487,47 @@ KEY idx_wpid_issub (wpid, issub)";
         return $this->wpdb->get_results( $this->get_sql_monitor( $params ), $obj ); //phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- SQL built with esc_sql().
     }
 
+
     /**
-     * Get the primary monitor for a site, or automatically create one if it does not exist.
+     * Get site IDs that do not have a Primary Monitor.
      *
-     * @param int  $site_id Website ID (wpid).
-     * @param bool $obj  Optional. Whether to return an object or associative array. Default true.
-     *
-     * @return object|array|false The primary monitor record, or false on failure.
+     * @return array<int>
      */
-    public function get_or_create_primary_monitor( $site_id, $obj = true ) {
-        if ( empty( $site_id ) ) {
-            return false;
-        }
+    public function get_sites_missing_primary_monitor() {
+        global $wpdb;
 
-        // 1. Try to fetch the existing primary monitor (suburl = '').
-        $primary = $this->get_primary_monitor( $site_id, $obj );
+        $sites_table    = $this->table_name( 'wp' );
+        $monitors_table = $this->table_name( 'monitors' );
 
-        if ( ! empty( $primary ) ) {
-            return $primary;
-        }
-
-        $data = array(
-            'wpid'   => $site_id,
-            'suburl' => '',
+        return $this->wpdb->get_col(
+            "SELECT s.id
+            FROM {$sites_table} AS s
+            LEFT JOIN {$monitors_table} AS m
+                ON m.wpid = s.id
+                AND m.suburl = ''
+            WHERE m.monitor_id IS NULL"
         );
+    }
 
-        // 2. Recovery path: Create default primary monitor if missing.
-        $created_id = $this->update_wp_monitor( $data );
-
-        if ( ! $created_id ) {
-            return false;
+    /**
+     * Repair sites that are missing their Primary Monitor.
+     *
+     * @return int Number of Primary Monitors created.
+     */
+    public function repair_missing_primary_monitors() {
+        $site_ids = $this->get_sites_missing_primary_monitor();
+        $created  = 0;
+        foreach ( $site_ids as $site_id ) {
+            $data       = array(
+                'wpid'   => $site_id,
+                'suburl' => '',
+            );
+            $created_id = $this->update_wp_monitor( $data );
+            if ( $created_id ) {
+                ++$created;
+            }
         }
-
-        // 3. Return the newly created primary monitor record.
-        return $this->get_primary_monitor( $site_id, $obj );
+        return $created;
     }
 
     /**

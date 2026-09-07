@@ -203,7 +203,6 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
 
                 if ( $site_id && empty( $update['issub'] ) ) {
                     MainWP_DB_Uptime_Monitoring::instance()->update_website_option( $site_id, 'bypass_cache', $bypass_cache_opt );
-                    MainWP_DB_Uptime_Monitoring::instance()->get_or_create_primary_monitor( $site_id );
                 }
 
                 MainWP_Uptime_Monitoring_Schedule::instance()->check_to_disable_schedule_individual_uptime_monitoring(); // required a check to sync the settings.

@@ -704,8 +704,9 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
         $website = MainWP_DB::instance()->get_website_by_id( $websiteId );
         try {
             $info = array(
-                'result'       => array(),
-                'result_error' => array(),
+                'result'         => array(),
+                'result_error'   => array(),
+                'result_started' => array(),
             );
 
             $result = MainWP_Updates_Handler::upgrade_plugin_theme_translation( $websiteId, sanitize_text_field( wp_unslash( $_POST['type'] ) ), $slugs ); // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -716,6 +717,9 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
                 }
                 if ( isset( $result['result_error'] ) ) {
                     $info['result_error'] = $result['result_error'];
+                }
+                if ( isset( $result['result_started'] ) ) {
+                    $info['result_started'] = $result['result_started'];
                 }
             }
 

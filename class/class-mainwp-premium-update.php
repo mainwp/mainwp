@@ -186,13 +186,13 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @param mixed $website Child Site info.
      * @param mixed $what stats|upgradeplugintheme What function to perform.
      * @param mixed $params plugin|theme Update Type.
+     * @param mixed $output Output result.
      *
      * @return mixed $request_update
      */
-    public static function maybe_request_premium_updates( $website, $what, $params ) { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function maybe_request_premium_updates( $website, $what, $params, &$output ) { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         self::$last_request_response = null;
 
-        $request_update = false;
         if ( 'stats' === $what || ( 'upgradeplugintheme' === $what && isset( $params['type'] ) ) ) {
 
             $update_type = '';
@@ -228,13 +228,13 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 static::try_to_detect_premiums_update( $website, 'theme' );
             }
 
-            if ( 'upgradeplugintheme' === $what && ( 'plugin' === $update_type || 'theme' === $update_type ) && static::check_request_update_premium( $params['list'], $update_type ) ) {
-                static::request_premiums_update( $website, $update_type, $params['list'] );
-                $request_update = true;
+            if ( 'upgradeplugintheme' === $what && ( 'plugin' === $update_type || 'theme' === $update_type ) && ( static::check_request_update_premium( $params['list'], $update_type ) || static::check_premium_updates( explode( ',', $params['list'] ), $update_type ) ) ) {
+                $output = static::request_premiums_update( $website, $update_type, $params['list'] );
+                return true;
             }
         }
 
-        return $request_update;
+        return false;
     }
 
     /**
@@ -255,7 +255,7 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             return false;
         }
 
-        if ( 1 < count( $updates ) ) {
+        if ( 3 < count( $updates ) ) {
             return false;
         }
 
@@ -421,20 +421,99 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @param mixed $website Child Site.
      * @param array $params Other params.
      *
-     * @return mixed null|array information.
+     * @return mixed false|array information.
      */
     public static function handle_premium_update_actions( $website, $params = array() ) {
         if ( ! is_array( $params ) ) {
-            return null;
+            return false;
         }
         MainWP_Logger::instance()->debug( 'Request premium update :: [siteid=' . $website->id . '] :: [type=' . $params['premium_type'] . '] :: [perform=' . $params['premium_perform'] . ']' );
-        $result = null;
         try {
-            $result = MainWP_Connect::fetch_url_authed( $website, 'process_premium_updates', $params, false, false, true, null, true );
+            return MainWP_Connect::fetch_url_authed( $website, 'process_premium_updates', $params, false, false, true, null, true );
         } catch ( \Exception $e ) {
             // Just ignore.
+            $err = $e->getMessage(); //phpcs:ignore -- NOSONAR -for debug.
         }
-        return $result;
+        return false;
+    }
+
+    /**
+     * Resolve the sslverify argument for a website, mirroring fetch_url() semantics.
+     *
+     * @param mixed $website Child Site.
+     *
+     * @return bool
+     */
+    private static function get_ssl_verify( $website ) {
+        $verify = isset( $website->verify_certificate ) ? (int) $website->verify_certificate : 2;
+        if ( 1 === $verify ) {
+            return true;
+        }
+        if ( 0 === $verify ) {
+            return false;
+        }
+        return ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 === (int) get_option( 'mainwp_sslVerifyCertificate' ) );
+    }
+
+    /**
+     * Resolve the force-IPv4 flag for a website, mirroring fetch_url() semantics.
+     *
+     * @param mixed $website Child Site.
+     *
+     * @return bool
+     */
+    private static function get_force_use_ipv4( $website ) {
+        $force = isset( $website->force_use_ipv4 ) && null !== $website->force_use_ipv4 ? (int) $website->force_use_ipv4 : null;
+        if ( 1 === $force ) {
+            return true;
+        }
+        if ( null === $force || 2 === $force ) {
+            return 1 === (int) get_option( 'mainwp_forceUseIPv4' );
+        }
+        return false;
+    }
+
+    /**
+     * Log the outcome of a premium detect/request GET and record failures per site.
+     *
+     * These requests previously discarded their responses entirely, leaving
+     * support blind to sites where the premium checks silently fail (MWP-1660).
+     *
+     * @param mixed                 $website Child Site.
+     * @param string                $where_url Requested wp-admin location.
+     * @param array|\WP_Error|mixed $response HTTP response.
+     */
+    private static function log_request_outcome( $website, $where_url, $response ) {
+        $error = '';
+        if ( is_wp_error( $response ) ) {
+            $error = $response->get_error_message();
+        } else {
+            $code = (int) wp_remote_retrieve_response_code( $response );
+            if ( $code < 200 || $code >= 400 ) {
+                $error = 'HTTP ' . $code;
+            }
+        }
+
+        if ( '' === $error ) {
+            MainWP_Logger::instance()->debug_for_website( $website, 'premium_update', '[where=' . $where_url . '] :: ok' );
+            return;
+        }
+
+        MainWP_Logger::instance()->warning_for_website( $website, 'premium_update', '[where=' . $where_url . '] :: ' . $error, false );
+
+        $count = (int) MainWP_DB::instance()->get_website_option( $website, 'premium_updates_error_count' );
+        MainWP_DB::instance()->update_website_option( $website, 'premium_updates_error_count', (string) ( $count + 1 ) );
+        MainWP_DB::instance()->update_website_option(
+            $website,
+            'premium_updates_last_error',
+            wp_json_encode(
+                array(
+                    'time'  => time(),
+                    'where' => $where_url,
+                    'error' => $error,
+                )
+            )
+        );
     }
 
     /**
@@ -525,19 +604,57 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @param mixed $type Type of update, plugin|theme.
      * @param mixed $list_items list of plugins & themes installed.
      *
-     * @return mixed null|true.
+     * @return mixed
      */
     public static function request_premiums_update( $website, $type, $list_items ) {
         if ( ! in_array( $type, array( 'plugin', 'theme' ) ) ) {
-            return null;
+            return false;
         }
         $params = array(
             'premium_type'    => $type,
             'premium_perform' => 'premium_update',
             'list'            => $list_items,
         );
-        static::handle_premium_update_actions( $website, $params );
-        return true;
+        return static::handle_premium_update_actions( $website, $params );
+    }
+
+    /**
+     * Parse the child's `<mainwp>` result envelope out of an HTML response body.
+     *
+     * The premium request route runs the regular upgradeplugintheme callable
+     * mid-render of a wp-admin page; the callable terminates via
+     * MainWP_Helper::write(), so its result envelope is embedded in the page
+     * output. Returns null when no valid envelope is present (e.g. timeout).
+     *
+     * @param string $body Response body.
+     *
+     * @return array|null Decoded information array or null.
+     */
+    public static function parse_mainwp_envelope( $body ) {
+        if ( ! is_string( $body ) || '' === $body ) {
+            return null;
+        }
+        if ( ! preg_match( '/<mainwp>(.*)<\/mainwp>/', $body, $results ) ) {
+            return null;
+        }
+        $information = MainWP_System_Utility::get_child_response( base64_decode( $results[1] ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for backwards compatibility.
+        return is_array( $information ) ? $information : null;
+    }
+
+    /**
+     * Get the parsed result of the most recent premium request-update GET.
+     *
+     * Used by fetch_url_authed() to report the child's real result. Returns null
+     * when the request timed out or produced no parsable envelope; callers keep
+     * the previous optimistic behavior in that case (MWP-1660).
+     *
+     * @return array|null
+     */
+    public static function get_last_parsed_response() {
+        if ( null === self::$last_request_response || is_wp_error( self::$last_request_response ) ) {
+            return null;
+        }
+        return static::parse_mainwp_envelope( wp_remote_retrieve_body( self::$last_request_response ) );
     }
 
     /**

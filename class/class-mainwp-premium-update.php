@@ -438,24 +438,6 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     }
 
     /**
-     * Resolve the sslverify argument for a website, mirroring fetch_url() semantics.
-     *
-     * @param mixed $website Child Site.
-     *
-     * @return bool
-     */
-    private static function get_ssl_verify( $website ) {
-        $verify = isset( $website->verify_certificate ) ? (int) $website->verify_certificate : 2;
-        if ( 1 === $verify ) {
-            return true;
-        }
-        if ( 0 === $verify ) {
-            return false;
-        }
-        return ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 === (int) get_option( 'mainwp_sslVerifyCertificate' ) );
-    }
-
-    /**
      * Resolve the force-IPv4 flag for a website, mirroring fetch_url() semantics.
      *
      * @param mixed $website Child Site.

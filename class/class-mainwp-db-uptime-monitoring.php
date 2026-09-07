@@ -505,7 +505,14 @@ KEY idx_wpid_issub (wpid, issub)";
             LEFT JOIN {$monitors_table} AS m
                 ON m.wpid = s.id
                 AND m.suburl = ''
-            WHERE m.monitor_id IS NULL"
+            WHERE m.monitor_id IS NULL
+                AND EXISTS (
+                    SELECT 1
+                    FROM {$monitors_table} AS sm
+                    WHERE sm.wpid = s.id
+                        AND sm.suburl != ''
+                        AND sm.suburl IS NOT NULL
+                )"
         );
     }
 

@@ -666,7 +666,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                             </div>
                         <?php endif; ?>
 
-                        <div id="mainwp-message-zone" style="display: none;" class="ui message"></div>
+                        <div id="mainwp-message-zone" style="display: none;" class="ui message mainwp-connection-diagnostic-zone" role="status" aria-live="polite"></div>
 
                         <div id="mainwp_managesites_add_errors" style="display: none" class="ui red message"></div>
                         <div id="mainwp_managesites_add_message" style="display: none" class="ui green message"></div>
@@ -704,26 +704,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 </form>
             </div>
 
-            <div class="ui modal" id="mainwp-test-connection-modal">
-                <i class="close icon"></i>
-                <div class="header"><?php esc_html_e( 'Connection Test', 'mainwp' ); ?></div>
-                <div class="content">
-                    <div class="ui active dimmer">
-                        <div class="ui double text loader"><?php esc_html_e( 'Testing...', 'mainwp' ); ?></div>
-                    </div>
-                    <div id="mainwp-test-connection-result" class="ui segment" style="display:none">
-                        <h2 class="ui center aligned icon header">
-                            <i class=" icon"></i>
-                            <div class="content">
-                                <span></span>
-                                <div class="sub header"></div>
-                            </div>
-                        </h2>
-                    </div>
-                </div>
-                <div class="actions">
-                </div>
-            </div>
+            <?php MainWP_UI::render_modal_connection_test(); ?>
 
             <script type="text/javascript">
                 jQuery( document ).ready( function () {
@@ -857,7 +838,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         <div class="ui grid field">
             <label class="six wide column middle aligned"><?php esc_html_e( 'Site URL', 'mainwp' ); ?></label>
             <div class="ui six wide column" data-tooltip="<?php esc_attr_e( 'Enter your website URL.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
-                <div class="ui left action input">
+                <div class="ui fluid left action input mainwp-connection-url-input">
                     <select class="ui compact selection dropdown" id="mainwp_managesites_add_wpurl_protocol" name="mainwp_managesites_add_wpurl_protocol">
                         <option value="http"><?php echo esc_html( 'http://' ); ?></option>
                         <option selected="" value="https"><?php echo esc_html( 'https://' ); ?></option>
@@ -1793,7 +1774,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
         ?>
         <div id="mainwp-manage-sites-content" class="ui padded segment">
-            <div id="mainwp-message-zone" class="ui message" style="display: none;"></div>
+            <div id="mainwp-message-zone" class="ui message mainwp-connection-diagnostic-zone" role="status" aria-live="polite" style="display: none;"></div>
             <form method="post" class="mainwp-table-container">
                 <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                 <?php
@@ -1887,11 +1868,13 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         }
 
         if ( ( isset( $_GET['action'] ) && 'add_submonitor' === $_GET['action'] ) || ! empty( $_GET['sub_monitor_id'] ) ) {
-            $websiteid = intval( $_GET['monitor_wpid'] );
-            $website   = MainWP_DB::instance()->get_website_by_id( $websiteid );
-            // Show modal.
-            static::render_monitor_site( $website );
-            return;
+            $websiteid = isset( $_GET['monitor_wpid'] ) ? intval( $_GET['monitor_wpid'] ) : 0;
+            $website   = 0 < $websiteid ? MainWP_DB::instance()->get_website_by_id( $websiteid ) : null;
+            if ( MainWP_Manage_Sites_Handler::can_access_site( $website, $websiteid ) ) {
+                // Show modal.
+                static::render_monitor_site( $website );
+                return;
+            }
         }
 
         if ( ! empty( $_GET['emailsettingsid'] ) ) {

@@ -521,6 +521,284 @@ globalThis.mainwp_get_reconnect_error = function (response, siteId) { // NOSONAR
     }
 }
 
+let mainwp_render_reconnect_failure = function (container, response) {
+    mainwp_set_message_zone(container, '', '', true);
+    if (mainwp_render_connection_diagnostic(container, response)) {
+        return;
+    }
+    jQuery(container).empty().text(response?.message || __('Reconnect failed.')).addClass('red').show();
+};
+
+const mainwpConnectionDiagnosticsDocs = 'https://docs.mainwp.com/troubleshooting/potential-issues';
+// Allow admin-ajax queue/bootstrap time around the server-side probe budget.
+const mainwpConnectionDiagnosticRequestTimeout = Math.max(1000, Number(jQuery('#mainwp-test-connection-modal').attr('data-mainwp-diagnostic-request-timeout')) || 35000);
+let mainwpConnectionDiagnosticRequest = null;
+let mainwpConnectionDiagnosticGeneration = 0;
+
+let mainwp_copy_connection_diagnostic = function (support, button) {
+    let copyButton = button ? jQuery(button) : jQuery();
+    let copyToken = {};
+    if (copyButton.length) {
+        copyButton.data('mainwp-copy-token', copyToken);
+    }
+    let setButtonStatus = function (label) {
+        if (copyButton.length && copyButton.data('mainwp-copy-token') === copyToken) {
+            clearTimeout(copyButton.data('mainwp-copy-status-timer'));
+            copyButton.text(label);
+            copyButton.data('mainwp-copy-status-timer', setTimeout(function () {
+                if (copyButton.data('mainwp-copy-token') === copyToken) {
+                    copyButton.text(__('Copy diagnostic details'));
+                    copyButton.removeData('mainwp-copy-status-timer mainwp-copy-token');
+                }
+            }, 1500));
+        }
+    };
+    let copied = function () {
+        setButtonStatus(__('Copied'));
+    };
+    let copyFailed = function () {
+        setButtonStatus(__('Copy failed'));
+    };
+    let isCopyCurrent = function () {
+        return !copyButton.length || copyButton.data('mainwp-copy-token') === copyToken;
+    };
+
+    if (!support || typeof support !== 'object') {
+        copyFailed();
+        return;
+    }
+
+    let text;
+    try {
+        text = JSON.stringify(support, null, 2);
+    } catch (error) {
+        copyFailed();
+        return;
+    }
+
+    if (typeof text !== 'string') {
+        copyFailed();
+        return;
+    }
+
+    let fallback = function () {
+        if (!isCopyCurrent()) {
+            return;
+        }
+        try {
+            if (typeof ClipboardJS !== 'undefined' && typeof ClipboardJS.copy === 'function' && ClipboardJS.copy(text)) {
+                copied();
+                return;
+            }
+        } catch (error) {
+            // Continue to the browser copy fallback.
+        }
+
+        let textarea = null;
+        try {
+            textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.setAttribute('readonly', 'readonly');
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            if (document.execCommand('copy')) {
+                copied();
+            } else {
+                copyFailed();
+            }
+        } catch (error) {
+            copyFailed();
+        } finally {
+            try {
+                if (textarea && textarea.parentNode) {
+                    textarea.parentNode.removeChild(textarea);
+                }
+            } catch (error) {
+                copyFailed();
+            }
+        }
+    };
+
+    try {
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function' && window.isSecureContext) {
+            Promise.resolve(navigator.clipboard.writeText(text)).then(copied).catch(fallback);
+            return;
+        }
+    } catch (error) {
+        fallback();
+        return;
+    }
+    fallback();
+};
+
+let mainwp_cancel_connection_diagnostic_request = function () {
+    let request = mainwpConnectionDiagnosticRequest;
+    mainwpConnectionDiagnosticGeneration++;
+    mainwpConnectionDiagnosticRequest = null;
+    if (request && request.readyState !== 4) {
+        request.abort();
+    }
+};
+
+globalThis.mainwp_prepare_connection_diagnostic_modal = function () {
+    mainwp_cancel_connection_diagnostic_request();
+    let modal = jQuery('#mainwp-test-connection-modal');
+    modal
+        .modal('setting', 'closable', true)
+        .modal('setting', 'onHide', function () {
+            mainwp_cancel_connection_diagnostic_request();
+        })
+        .modal('show');
+    modal.children('.content').css('position', 'relative');
+    modal.children('.content').attr('aria-busy', 'true');
+    modal.find('.dimmer').css('pointer-events', 'none').show();
+    modal.find('#mainwp-test-connection-result').empty().hide().removeData('mainwp-diagnostic-support');
+    let copyButton = modal.find('[data-mainwp-diagnostic-action="copy"]');
+    clearTimeout(copyButton.data('mainwp-copy-status-timer'));
+    copyButton.removeData('mainwp-copy-status-timer mainwp-copy-token').text(__('Copy diagnostic details'));
+    modal.find('[data-mainwp-diagnostic-action="copy"]').prop('disabled', true);
+};
+
+let mainwp_request_connection_diagnostic = function (data) {
+    let generation = mainwpConnectionDiagnosticGeneration;
+    let request = jQuery.ajax({
+        type: 'POST',
+        url: ajaxurl,
+        data: data,
+        dataType: 'json',
+        timeout: mainwpConnectionDiagnosticRequestTimeout
+    });
+    mainwpConnectionDiagnosticRequest = request;
+    request.done(function (response) {
+        if (generation !== mainwpConnectionDiagnosticGeneration) {
+            return;
+        }
+        if (!mainwp_render_connection_diagnostic('#mainwp-test-connection-result', response)) {
+            mainwp_render_connection_request_failure('#mainwp-test-connection-result');
+        }
+    }).fail(function (xhr, textStatus) {
+        if (generation !== mainwpConnectionDiagnosticGeneration || textStatus === 'abort') {
+            return;
+        }
+        mainwp_render_connection_request_failure('#mainwp-test-connection-result');
+    }).always(function () {
+        if (generation === mainwpConnectionDiagnosticGeneration) {
+            mainwpConnectionDiagnosticRequest = null;
+        }
+    });
+};
+
+// Renders only server-provided allowlisted presentation strings through text nodes.
+globalThis.mainwp_render_connection_diagnostic = function (container, payload, options = {}) { // NOSONAR - explicit DOM construction keeps the trust boundary visible.
+    let result = payload?.connection_diagnostic || payload;
+    if (!result?.diagnosis || !result?.presentation) {
+        return false;
+    }
+
+    let target = jQuery(container);
+    if (!target.length) {
+        return false;
+    }
+
+    let verdict = ['success', 'warning', 'failure', 'not_tested'].includes(result.diagnosis.verdict) ? result.diagnosis.verdict : 'failure';
+    let style = {
+        success: { color: 'positive', icon: 'green check circle' },
+        warning: { color: 'warning', icon: 'yellow exclamation circle' },
+        failure: { color: 'negative', icon: 'red times circle' },
+        not_tested: { color: 'warning', icon: 'grey minus circle' }
+    }[verdict];
+
+    target.empty();
+    let message = jQuery('<div>').addClass('ui icon message ' + style.color);
+    message.append(jQuery('<i>').addClass(style.icon + ' icon'));
+    let content = jQuery('<div>').addClass('content');
+    content.append(jQuery('<div>').addClass('header').text(result.presentation.title || __('Connection test result')));
+    content.append(jQuery('<p>').text(result.presentation.explanation || ''));
+    message.append(content);
+    target.append(message);
+
+    let rows = jQuery('<div>').addClass('ui relaxed divided list');
+    [result.presentation.server, result.presentation.child].forEach(function (row) {
+        if (!row?.label) {
+            return;
+        }
+        let icon = row.state === 'success' ? 'green check' : (row.state === 'failure' ? 'red times' : (row.state === 'warning' ? 'yellow exclamation' : 'grey minus'));
+        let item = jQuery('<div>').addClass('item');
+        item.append(jQuery('<i>').addClass(icon + ' circle icon'));
+        item.append(jQuery('<div>').addClass('content').text(row.label));
+        rows.append(item);
+    });
+    target.append(rows);
+
+    if (Array.isArray(result.presentation.facts) && result.presentation.facts.length) {
+        let facts = jQuery('<ul>').addClass('ui list');
+        result.presentation.facts.slice(0, 3).forEach(function (fact) {
+            facts.append(jQuery('<li>').text(fact));
+        });
+        target.append(facts);
+    }
+
+    if (Array.isArray(result.presentation.steps) && result.presentation.steps.length) {
+        target.append(jQuery('<h4>').addClass('ui header').text(__('Next step')));
+        let steps = jQuery('<ol>').addClass('ui list');
+        result.presentation.steps.slice(0, 3).forEach(function (step) {
+            steps.append(jQuery('<li>').text(step));
+        });
+        target.append(steps);
+    }
+
+    target.data('mainwp-diagnostic-support', result.support || {});
+    target.show();
+
+    let modal = target.closest('#mainwp-test-connection-modal');
+    if (modal.length) {
+        modal.find('.dimmer').hide();
+        modal.children('.content').attr('aria-busy', 'false');
+        modal.find('[data-mainwp-diagnostic-action="copy"]').prop('disabled', false);
+    } else if (options.actions !== false) {
+        let actions = jQuery('<div>').addClass('ui small stackable buttons');
+        let copy = jQuery('<button>').attr('type', 'button').addClass('ui basic button').text(__('Copy diagnostic details'));
+        copy.on('click', function () {
+            mainwp_copy_connection_diagnostic(result.support || {}, this);
+        });
+        let docs = jQuery('<a>').addClass('ui basic button').attr({ href: mainwpConnectionDiagnosticsDocs, target: '_blank', rel: 'noopener noreferrer' }).text(__('Learn more'));
+        actions.append(copy, docs);
+        target.append(actions);
+    }
+
+    return true;
+};
+
+globalThis.mainwp_render_connection_request_failure = function (container) {
+    let rendered = mainwp_render_connection_diagnostic(container, {
+        diagnosis: { verdict: 'failure', diagnosis_id: 'dashboard_request_failed' },
+        presentation: {
+            title: __('The Dashboard could not complete the connection test.'),
+            explanation: __('The request to the Dashboard ended before a diagnostic result was returned.'),
+            server: { state: 'not_tested', label: __('Server request — Not completed') },
+            child: { state: 'not_tested', label: __('MainWP Child — Not tested') },
+            facts: [],
+            steps: [__('Check the Dashboard connection and try again.')]
+        },
+        support: { diagnosis_id: 'dashboard_request_failed', phase: 'dashboard_ajax' }
+    }, { actions: false });
+    return rendered;
+};
+
+jQuery(document).on('click', '#mainwp-test-connection-modal [data-mainwp-diagnostic-action="copy"]', function () {
+    let support = jQuery('#mainwp-test-connection-result').data('mainwp-diagnostic-support');
+    mainwp_copy_connection_diagnostic(support, this);
+});
+
+jQuery(document).on('keydown', '#mainwp-test-connection-modal > .close.icon', function (event) {
+    if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        jQuery('#mainwp-test-connection-modal').modal('hide');
+    }
+});
+
 function shake_element(select) {
     let pos = jQuery(select).position();
     let type = jQuery(select).css('position');
@@ -1645,27 +1923,13 @@ let mainwp_site_overview_reconnect = function (pElement) {
     feedback('mainwp-message-zone', '<i class="notched circle loading icon"></i> ' + 'Trying to reconnect. Please wait...', '');
     let data = mainwp_secure_data({
         action: 'mainwp_reconnectwp',
-        siteid: pElement.attr('siteid')
+        siteid: pElement.attr('siteid'),
+        response_format: 'json'
     });
 
-    jQuery.post(ajaxurl, data, function () {
-        return function (response) {
-            response = response.trim();
-            if (response.substring(0, 5) == 'ERROR') {
-                let error;
-                if (response.length == 5) {
-                    error = 'Undefined error! Please try again. If the process keeps failing, please review <a href="https://docs.mainwp.com/">MainWP Knowledgebase</a>, and if you still have issues, please let us know in the <a href="https://community.mainwp.com/c/community-support/5">MainWP Community</a>.'; // NOSONAR - noopener - open safe.
-                    feedback('mainwp-message-zone', error, 'red');
-                } else {
-                    error = response.substring(6);
-                    let err = mainwp_js_get_error_not_detected_connect(error, 'html_msg', 'mainwp-message-zone');
-                    if (false === err) {
-                        feedback('mainwp-message-zone', error, 'red');  // it is not json error string.
-                    }
-                }
-            } else if ('reconnect_failed' === response) {
+    jQuery.post(ajaxurl, data, function (response) {
+            if (!response.success && 'reconnect_failed' === response.code) {
                 mainwp_set_message_zone('#mainwp-message-zone');
-
                 jQuery('#mainwp-reconnect-site-with-user-passwd-modal').modal({
                     onHide: function () {
                         mainwp_forceReload();
@@ -1673,16 +1937,21 @@ let mainwp_site_overview_reconnect = function (pElement) {
                     closable: false
                 }).modal('show');
                 jQuery('#mainwp_managesites_add_wpadmin').val(pElement.attr('adminuser'));
-                jQuery(document).on('click', '#mainwp-popup-reconnect-site-btn', function () {
-                    mainwp_reconnect_with_pw(pElement.attr('siteid'));
-                    return false;
-                });
-            } else {
+                jQuery(document)
+                    .off('click.mainwpReconnectCredentials', '#mainwp-popup-reconnect-site-btn')
+                    .on('click.mainwpReconnectCredentials', '#mainwp-popup-reconnect-site-btn', function () {
+                        mainwp_reconnect_with_pw(pElement.attr('siteid'));
+                        return false;
+                    });
+            } else if (response.success) {
                 mainwp_set_message_zone('#mainwp-message-zone');
                 mainwp_forceReload();
+            } else {
+                mainwp_render_reconnect_failure('#mainwp-message-zone', response);
             }
-        }
-    }());
+    }, 'json').fail(function () {
+        mainwp_render_connection_request_failure('#mainwp-message-zone');
+    });
 };
 
 let mainwp_reconnect_with_pw = function (siteid) {
@@ -1706,108 +1975,110 @@ let mainwp_reconnect_with_pw = function (siteid) {
         action: 'mainwp_reconnectwp',
         managesites_add_wpadmin: jQuery('#mainwp_managesites_add_wpadmin').val(),
         managesites_add_adminpwd: encodeURIComponent(jQuery('#mainwp_managesites_add_admin_pwd').val()),
-        siteid: siteid
+        siteid: siteid,
+        response_format: 'json'
     });
 
     jQuery.post(ajaxurl, data, function (response) {
-        response = response.trim();
         mainwp_set_message_zone('#mainwp-message-zone-reconnect');
-        if (response.substring(0, 5) == 'ERROR') {
-            let error;
-            if (response.length == 5) {
-                error = 'Undefined error! Please try again. If the process keeps failing, please review this <a href="https://docs.mainwp.com/troubleshooting/potential-issues">Knowledgebase document</a>, and if you still have issues, please let us know in the <a href="https://community.mainwp.com/c/community-support/5">MainWP Community</a>.'; // NOSONAR - noopener - open safe.
-                mainwp_set_message_zone('#mainwp-message-zone-reconnect', error, 'red');
-            } else {
-                error = response.substring(6);
-                let err = mainwp_js_get_error_not_detected_connect(error, 'html_msg', 'mainwp-message-zone-reconnect');
-                if (false === err) {
-                    mainwp_set_message_zone('#mainwp-message-zone-reconnect', error, 'red');  // it is not json error string.
-                }
-            }
-        } else if ('reconnect_failed' === response) {
-            // do not show reconnect popup again.
-            mainwp_set_message_zone('#mainwp-message-zone-reconnect', mainwp_get_reconnect_error(response, siteid), 'red');
-        } else {
-            mainwp_set_message_zone('#mainwp-message-zone-reconnect', response, 'green');
+        if (response.success) {
+            mainwp_set_message_zone('#mainwp-message-zone-reconnect', response.message, 'green');
             mainwp_forceReload();
+        } else {
+            mainwp_render_reconnect_failure('#mainwp-message-zone-reconnect', response);
         }
+    }, 'json').fail(function () {
+        mainwp_render_connection_request_failure('#mainwp-message-zone-reconnect');
     });
 };
 
 
 let mainwp_managesites_reconnect = function (pElement) {
-    let wrapElement = pElement.closest('tr');
-    wrapElement.html('<td colspan="999"><i class="notched circle loading icon"></i> ' + 'Trying to reconnect. Please wait...' + '</td>');
-    let siteid = wrapElement.attr('siteid');
+    let siteid = typeof pElement === 'object' ? pElement.closest('tr').attr('siteid') : pElement;
+    let wrapElement = jQuery('.mainwp-manage-wpsites-table tr').filter(function () {
+        return String(jQuery(this).attr('siteid')) === String(siteid);
+    }).first();
+    if (!wrapElement.length || wrapElement.data('mainwp-reconnect-in-flight')) {
+        return;
+    }
+    wrapElement.data('mainwp-reconnect-in-flight', true);
+    // Detach instead of serializing so initialized controls and live checkbox state survive a failed request.
+    let tableRowFocusTarget = wrapElement.find(':focus');
+    let tableRowContents = wrapElement.children().detach();
+    let restoreTableRow = function () {
+        wrapElement.empty().append(tableRowContents).removeData('mainwp-reconnect-in-flight').show();
+        if (tableRowFocusTarget.length) {
+            tableRowFocusTarget.trigger('focus');
+        }
+    };
+    wrapElement.append('<td colspan="999"><i class="notched circle loading icon"></i> ' + 'Trying to reconnect. Please wait...' + '</td>');
     let data = mainwp_secure_data({
         action: 'mainwp_reconnectwp',
-        siteid: siteid
+        siteid: siteid,
+        response_format: 'json'
     });
 
-    jQuery.post(ajaxurl, data, function (pWrapElement) {
-        return function (response) {
-            response = response.trim();
-            pWrapElement.hide(); // hide reconnect item
-            if (response.substring(0, 5) == 'ERROR') {
-                let error;
-                if (response.length == 5) {
-                    error = 'Undefined error! Please try again. If the process keeps failing, please review this <a href="https://docs.mainwp.com/troubleshooting/potential-issues">Knowledgebase document</a>, and if you still have issues, please let us know in the <a href="https://community.mainwp.com/c/community-support/5">MainWP Community</a>.'; // NOSONAR - noopener - open safe.
-                    feedback('mainwp-message-zone', error, 'red');
-                } else {
-                    error = response.substring(6);
-                    let err = mainwp_js_get_error_not_detected_connect(error, 'html_msg', 'mainwp-message-zone');
-                    if (false === err) {
-                        feedback('mainwp-message-zone', error, 'red');  // it is not json error string.
-                    }
-                }
-            } else if ('reconnect_failed' === response) {
-                feedback('mainwp-message-zone', mainwp_get_reconnect_error(response, siteid), 'error');
+    jQuery.post(ajaxurl, data, function (response) {
+            if (response.success) {
+                wrapElement.removeData('mainwp-reconnect-in-flight').hide();
+                feedback('mainwp-message-zone', response.message, 'green');
+                setTimeout(function () {
+                    mainwp_forceReload();
+                }, 6000);
             } else {
-                feedback('mainwp-message-zone', response, 'green');
+                restoreTableRow();
+                mainwp_render_reconnect_failure('#mainwp-message-zone', response);
             }
-            setTimeout(function () {
-                mainwp_forceReload();
-            }, 6000);
-        }
-
-    }(wrapElement));
+    }, 'json').fail(function () {
+        restoreTableRow();
+        mainwp_render_connection_request_failure('#mainwp-message-zone');
+    });
 };
 
 let mainwp_managesites_cards_reconnect = function (element) {
-    element.html('<i class="notched loading circle icon"></i> Reconnecting...');
+    if (element.data('mainwp-reconnect-in-flight')) {
+        return;
+    }
+    element.data('mainwp-reconnect-in-flight', true);
+    let cardAriaDisabled = element.attr('aria-disabled');
+    let cardActionContents = element.contents().detach();
+    let resetCardActionState = function () {
+        element.removeData('mainwp-reconnect-in-flight').removeAttr('aria-busy');
+        if (typeof cardAriaDisabled === 'undefined') {
+            element.removeAttr('aria-disabled');
+        } else {
+            element.attr('aria-disabled', cardAriaDisabled);
+        }
+    };
+    let restoreCardAction = function () {
+        element.empty().append(cardActionContents);
+        resetCardActionState();
+        element.show();
+    };
+    element.attr({ 'aria-disabled': 'true', 'aria-busy': 'true' }).append('<i class="notched loading circle icon"></i> Reconnecting...');
     let siteid = element.attr('site-id');
     let data = mainwp_secure_data({
         action: 'mainwp_reconnectwp',
-        siteid: siteid
+        siteid: siteid,
+        response_format: 'json'
     });
 
-    jQuery.post(ajaxurl, data, function (element) {
-        return function (response) {
-            response = response.trim();
-            element.hide();
-            if (response.substring(0, 5) == 'ERROR') {
-                let error;
-                if (response.length == 5) {
-                    error = 'Undefined error! Please try again. If the process keeps failing, please review this <a href="https://docs.mainwp.com/troubleshooting/potential-issues">Knowledgebase document</a>, and if you still have issues, please let us know in the <a href="https://community.mainwp.com/c/community-support/5">MainWP Community</a>.'; // NOSONAR - noopener - open safe.
-                    feedback('mainwp-message-zone', error, 'red');
-                } else {
-                    error = response.substring(6);
-                    let err = mainwp_js_get_error_not_detected_connect(error, 'html_msg', 'mainwp-message-zone');
-                    if (false === err) {
-                        feedback('mainwp-message-zone', error, 'red');  // it is not json error string.
-                    }
-                }
-            } else if ('reconnect_failed' === response) {
-                feedback('mainwp-message-zone', mainwp_get_reconnect_error(response, siteid), 'error');
+    jQuery.post(ajaxurl, data, function (response) {
+            if (response.success) {
+                resetCardActionState();
+                element.hide();
+                feedback('mainwp-message-zone', response.message, 'green');
+                setTimeout(function () {
+                    mainwp_forceReload();
+                }, 6000);
             } else {
-                feedback('mainwp-message-zone', response, 'green');
+                restoreCardAction();
+                mainwp_render_reconnect_failure('#mainwp-message-zone', response);
             }
-            setTimeout(function () {
-                mainwp_forceReload();
-            }, 6000);
-        }
-
-    }(element));
+    }, 'json').fail(function () {
+        restoreCardAction();
+        mainwp_render_connection_request_failure('#mainwp-message-zone');
+    });
 };
 
 // Connect a new website
@@ -1847,7 +2118,7 @@ let mainwp_managesites_add = function () {
     });
 
     jQuery.post(ajaxurl, data, function (res_things) { // NOSONAR - function complexity.
-        let response = res_things.response;
+        let response = res_things.response || 'ERROR';
         response = response.trim();
         let errors = [];
         let url = jQuery('#mainwp_managesites_add_wpurl_protocol').val() + '://' + jQuery('#mainwp_managesites_add_wpurl').val().trim();
@@ -1864,6 +2135,13 @@ let mainwp_managesites_add = function () {
             resp_data = '';
         }
         jQuery('#mainwp-response-data-container').attr('resp-data', resp_data);
+
+        if (res_things.connection_diagnostic && response !== 'OK') {
+            mainwp_set_message_zone('#mainwp-message-zone', '', '', true);
+            mainwp_render_connection_diagnostic('#mainwp-message-zone', res_things);
+            jQuery('#mainwp_managesites_add').prop('disabled', false);
+            return;
+        }
 
         if (response == 'HTTPERROR') {
             errors.push(MainWP.I18n.t('This site can not be reached! Please use the Test Connection feature and see if the positive response will be returned. For additional help, please review this <a href="https://docs.mainwp.com/troubleshooting/potential-issues/">Knowledgebase document</a>, and if you still have issues, please let us know in the <a href="https://managers.mainwp.com/c/community-support/5">MainWP Community</a>.')); // NOSONAR - noopener - open safe.
@@ -1889,7 +2167,7 @@ let mainwp_managesites_add = function () {
                 managesites_add_wpadmin: jQuery('#mainwp_managesites_add_wpadmin').val(),
                 managesites_add_adminpwd: encodeURIComponent(jQuery('#mainwp_managesites_add_admin_pwd').val().trim()),
                 managesites_add_uniqueId: jQuery('#mainwp_managesites_add_uniqueId').val(),
-                ssl_verify: jQuery('#mainwp_managesites_verify_certificate').is(':checked') ? 1 : 0,
+                verify_certificate: jQuery('#mainwp_managesites_verify_certificate').is(':checked') ? 1 : 0,
                 ssl_version: jQuery('#mainwp_managesites_add_ssl_version').val(),
                 groupids: group_ids,
                 clientid: client_id,
@@ -1933,7 +2211,9 @@ let mainwp_managesites_add = function () {
 
                 if (response.substring(0, 5) == 'ERROR') {
                     mainwp_set_message_zone('#mainwp-message-zone', '', '', true);
-                    feedback('mainwp-message-zone', response.substring(6) + (resp_data == '' ? '' : '<br>' + show_resp), 'red');
+                    if (!mainwp_render_connection_diagnostic('#mainwp-message-zone', res_things)) {
+                        feedback('mainwp-message-zone', response.substring(6) + (resp_data == '' ? '' : '<br>' + show_resp), 'red');
+                    }
                 } else {
                     mainwp_set_message_zone('#mainwp-message-zone', '', '', true);
                     feedback('mainwp-message-zone', response, 'green');
@@ -1966,7 +2246,11 @@ let mainwp_managesites_add = function () {
                 }
 
                 jQuery('#mainwp_managesites_add').prop("disabled", false); //Enable add button
-            }, 'json');
+            }, 'json').fail(function () {
+                mainwp_set_message_zone('#mainwp-message-zone', '', '', true);
+                mainwp_render_connection_request_failure('#mainwp-message-zone');
+                jQuery('#mainwp_managesites_add').prop('disabled', false);
+            });
         }
         if (errors.length > 0) {
             mainwp_set_message_zone('#mainwp-message-zone', '', '', true);
@@ -1977,7 +2261,11 @@ let mainwp_managesites_add = function () {
             }
             feedback('mainwp-message-zone', errors.join('<br />'), 'red');
         }
-    }, 'json');
+    }, 'json').fail(function () {
+        mainwp_set_message_zone('#mainwp-message-zone', '', '', true);
+        mainwp_render_connection_request_failure('#mainwp-message-zone');
+        jQuery('#mainwp_managesites_add').prop('disabled', false);
+    });
 };
 
 let mainwp_managesites_add_valid = function () {
@@ -2189,9 +2477,7 @@ let mainwp_extension_apply_plugin_settings = function (pPluginToInstall, pSiteId
 
 // Test Connection (Add Site Page)
 let mainwp_managesites_test = function () {
-
     let errors = [];
-
     if (jQuery('#mainwp_managesites_add_wpurl').val().trim() == '') {
         errors.push(MainWP.I18n.t('Please enter a valid URL for your site.'));
     } else {
@@ -2209,65 +2495,28 @@ let mainwp_managesites_test = function () {
 
     if (errors.length > 0) {
         feedback('mainwp-message-zone', errors.join('<br />'), 'red');
-    } else {
-        jQuery('#mainwp-test-connection-modal').modal('setting', 'closable', false).modal('show');
-        jQuery('#mainwp-test-connection-modal .dimmer').show();
-        jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result').hide();
-
-        let clean_url = jQuery('#mainwp_managesites_add_wpurl').val().trim();
-        let protocol = jQuery('#mainwp_managesites_add_wpurl_protocol').val();
-        let url = protocol + '://' + clean_url;
-
-        if (!url.endsWith('/')) {
-            url += '/';
-        }
-
-        let data = mainwp_secure_data({
-            action: 'mainwp_testwp',
-            url: url,
-            test_verify_cert: jQuery('#mainwp_managesites_verify_certificate').is(':checked') ? 1 : 0,
-            ssl_version: jQuery('#mainwp_managesites_add_ssl_version').val(),
-            http_user: jQuery('#mainwp_managesites_add_http_user').val(),
-            http_pass: jQuery('#mainwp_managesites_add_http_pass').val()
-        });
-
-        jQuery.post(ajaxurl, data, function (response) { // NOSONAR - complex.
-            jQuery('#mainwp-test-connection-modal .dimmer').hide();
-            jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result i').removeClass('red green check times');
-            jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result .content span').html('');
-            jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result .content .sub.header').html('');
-            if (response.error) {
-                if (response.httpCode) {
-                    jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result').show();
-                    jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result i').addClass('red times');
-                    jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result .content span').html(MainWP.I18n.t('Connection failed!'));
-                    jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result .content .sub.header').html(MainWP.I18n.t('URL:') + ' ' + response.host + ' - ' + MainWP.I18n.t('HTTP-code:') + ' ' + response.httpCode + (response.httpCodeString ? ' (' + response.httpCodeString + ')' : '') + ' - ' + MainWP.I18n.t('Error message: ') + ' ' + response.error);
-                } else {
-                    jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result').show();
-                    jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result i').addClass('red times');
-                    jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result .content span').html(MainWP.I18n.t('Connection test failed.'));
-                    jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result .content .sub.header').html(MainWP.I18n.t('Error message:') + ' ' + response.error);
-                }
-            } else if (response.httpCode) {
-                if (response.httpCode == '200') {
-                    jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result').show();
-                    jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result i').addClass('green check');
-                    jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result .content span').html(MainWP.I18n.t('Connection successful!'));
-                    jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result .content .sub.header').html(MainWP.I18n.t('URL:') + ' ' + response.host + (response.ip === undefined ? '' : ' (IP: ' + response.ip + ')') + ' - ' + MainWP.I18n.t('Received HTTP-code') + ' ' + response.httpCode + (response.httpCodeString ? ' (' + response.httpCodeString + ')' : ''));
-                } else {
-                    jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result').show();
-                    jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result i').addClass('red times');
-                    jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result .content span').html(MainWP.I18n.t('Connection test failed.'));
-                    jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result .content .sub.header').html(MainWP.I18n.t('URL:') + ' ' + response.host + (response.ip === undefined ? '' : ' (IP: ' + response.ip + ')') + ' - ' + MainWP.I18n.t('Received HTTP-code:') + ' ' + response.httpCode + (response.httpCodeString ? ' (' + response.httpCodeString + ')' : ''));
-                }
-            } else {
-                jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result').show('');
-                jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result i').addClass('red times');
-                jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result .content span').html(MainWP.I18n.t('Connection test failed.'));
-                jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result .content .sub.header').html(MainWP.I18n.t('Invalid response from the server, please try again.'));
-            }
-        }, 'json');
+        return;
     }
+
+    mainwp_prepare_connection_diagnostic_modal();
+    let clean_url = jQuery('#mainwp_managesites_add_wpurl').val().trim();
+    let protocol = jQuery('#mainwp_managesites_add_wpurl_protocol').val();
+    let url = protocol + '://' + clean_url;
+    if (!url.endsWith('/')) {
+        url += '/';
+    }
+
+    let data = mainwp_secure_data({
+        action: 'mainwp_testwp',
+        url: url,
+        admin: jQuery('#mainwp_managesites_add_wpadmin').val(),
+        test_verify_cert: jQuery('#mainwp_managesites_verify_certificate').is(':checked') ? 1 : 0,
+        ssl_version: jQuery('#mainwp_managesites_add_ssl_version').val(),
+        http_user: jQuery('#mainwp_managesites_add_http_user').val(),
+        http_pass: jQuery('#mainwp_managesites_add_http_pass').val()
+    });
+
+    mainwp_request_connection_diagnostic(data);
 };
 
 // Test Connection (Edit Site Page)
@@ -2284,55 +2533,21 @@ let mainwp_managesites_edit_test = function () {
         url += '/';
     }
 
-    jQuery('#mainwp-test-connection-modal').modal('setting', 'closable', false).modal('show');
-    jQuery('#mainwp-test-connection-modal .dimmer').show();
-    jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result').hide();
+    mainwp_prepare_connection_diagnostic_modal();
 
     let data = mainwp_secure_data({
         action: 'mainwp_testwp',
+        siteid: jQuery('#mainwp_managesites_edit_siteid').val(),
         url: url,
         test_verify_cert: jQuery('#mainwp_managesites_edit_verifycertificate').val(),
         ssl_version: jQuery('#mainwp_managesites_edit_ssl_version').val(),
+        force_use_ipv4: jQuery('#mainwp_managesites_edit_forceuseipv4').val(),
         http_user: jQuery('#mainwp_managesites_edit_http_user').val(),
+        http_user_dirty: jQuery('#mainwp_managesites_edit_http_user').data('mainwp-http-user-dirty') ? 1 : 0,
         http_pass: jQuery('#mainwp_managesites_edit_http_pass').val()
     });
 
-    jQuery.post(ajaxurl, data, function (response) { // NOSONAR - complex.
-        jQuery('#mainwp-test-connection-modal .dimmer').hide();
-        jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result i').removeClass('red green check times');
-        jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result .content span').html('');
-        jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result .content .sub.header').html('');
-        if (response.error) {
-            if (response.httpCode) {
-                jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result').show();
-                jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result i').addClass('red times');
-                jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result .content span').html(MainWP.I18n.t('Connection failed!'));
-                jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result .content .sub.header').html(MainWP.I18n.t('URL:') + ' ' + response.host + ' - ' + MainWP.I18n.t('HTTP-code:') + ' ' + response.httpCode + (response.httpCodeString ? ' (' + response.httpCodeString + ')' : '') + ' - ' + MainWP.I18n.t('Error message: ') + ' ' + response.error);
-            } else {
-                jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result').show();
-                jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result i').addClass('red times');
-                jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result .content span').html(MainWP.I18n.t('Connection test failed.'));
-                jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result .content .sub.header').html(MainWP.I18n.t('Error message:') + ' ' + response.error);
-            }
-        } else if (response.httpCode) {
-            if (response.httpCode == '200') {
-                jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result').show();
-                jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result i').addClass('green check');
-                jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result .content span').html(MainWP.I18n.t('Connection successful!'));
-                jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result .content .sub.header').html(MainWP.I18n.t('URL:') + ' ' + response.host + (response.ip === undefined ? '' : ' (IP: ' + response.ip + ')') + ' - ' + MainWP.I18n.t('Received HTTP-code') + ' ' + response.httpCode + (response.httpCodeString ? ' (' + response.httpCodeString + ')' : ''));
-            } else {
-                jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result').show();
-                jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result i').addClass('red times');
-                jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result .content span').html(MainWP.I18n.t('Connection test failed.'));
-                jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result .content .sub.header').html(MainWP.I18n.t('URL:') + ' ' + response.host + (response.ip === undefined ? '' : ' (IP: ' + response.ip + ')') + ' - ' + MainWP.I18n.t('Received HTTP-code:') + ' ' + response.httpCode + (response.httpCodeString ? ' (' + response.httpCodeString + ')' : ''));
-            }
-        } else {
-            jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result').show('');
-            jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result i').addClass('red times');
-            jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result .content span').html(MainWP.I18n.t('Connection test failed.'));
-            jQuery('#mainwp-test-connection-modal .content #mainwp-test-connection-result .content .sub.header').html(MainWP.I18n.t('Invalid response from the server, please try again.'));
-        }
-    }, 'json');
+    mainwp_request_connection_diagnostic(data);
 };
 
 let managesites_remove = function (obj) {
@@ -2385,6 +2600,9 @@ let managesites_remove = function (obj) {
 jQuery(function () {
 
     jQuery(document).on('click', '#mainwp_managesites_add', function () {
+        if (jQuery('#mainwp_connect_first_site_form').length) {
+            return;
+        }
         mainwp_managesites_add();
     });
 
@@ -2409,6 +2627,11 @@ jQuery(function () {
     // Trigger Connection Test (Edit Site Page)
     jQuery(document).on('click', '#mainwp_managesites_edit_test', function () {
         mainwp_managesites_edit_test();
+    });
+
+    // Preserve an explicitly re-entered HTTP username when testing a changed origin.
+    jQuery(document).on('input', '#mainwp_managesites_edit_http_user', function () {
+        jQuery(this).data('mainwp-http-user-dirty', true);
     });
 
     // Use detected URL (Edit Site Page): set the protocol and www selectors to the child-reported address; no autosave.

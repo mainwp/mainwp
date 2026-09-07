@@ -369,7 +369,7 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                         <?php echo '<strong>' . esc_html( stripslashes( $website->name ) ) . '</strong>' . esc_html__( ' is Disconnected. Click the Reconnect button to establish the connection again.', 'mainwp' ); ?>
                     </div>
                 <?php endif; ?>
-                <div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
+                <div id="mainwp-message-zone" class="ui message mainwp-connection-diagnostic-zone" role="status" aria-live="polite" style="display:none;"></div>
                 <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'widgets' ) ) : ?>
                     <div class="ui message" style="margin: 1em;">
                         <i class="close icon mainwp-notice-dismiss" notice-id="widgets"></i>

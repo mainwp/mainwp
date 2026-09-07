@@ -746,8 +746,8 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $replacement[] = '$mainwpsignature=xxxxxx';
         $patterns[]    = '/(^|[?&])nonce=[^&]*/';
         $replacement[] = '$nonce=xxxxxx';
-        $patterns[]    = '/(^|[?&])request_id=[^&]*/';
-        $replacement[] = '$request_id=xxxxxx';
+        $patterns[]    = '/(^|[?&])req_id=[^&]*/';
+        $replacement[] = '$req_id=xxxxxx';
         $patterns[]    = '/(^|[?&])mainwpsignature_adv=[^&]*/';
         $replacement[] = '$mainwpsignature_adv=xxxxxx';
         $patterns[]    = '/(^|[?&])wp_http_user=[^&]*/';

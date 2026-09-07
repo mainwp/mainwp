@@ -513,7 +513,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     'nonce'         => $data['nonce'],
                     'expires'       => $ts + 60,
                     'user'          => $website->adminname,
-                    'request_id'    => wp_generate_uuid4(),
+                    'req_id'    => wp_generate_uuid4(),
                 );
 
                 if ( ! empty( $alt_user ) ) {
@@ -661,7 +661,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     'nonce'         => $data['nonce'],
                     'expires'       => $ts + 60,
                     'user'          => $website->adminname,
-                    'request_id'    => wp_generate_uuid4(),
+                    'req_id'    => wp_generate_uuid4(),
                 );
                 $sign_value_v2 = wp_json_encode( $data_sign_v2 );
 
@@ -796,7 +796,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     'nonce'         => $nonce,
                     'expires'       => $ts + 60,
                     'user'          => $website->adminname,
-                    'request_id'    => wp_generate_uuid4(),
+                    'req_id'    => wp_generate_uuid4(),
                 );
 
                 if ( ! empty( $alt_user ) ) {

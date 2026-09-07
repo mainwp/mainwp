@@ -374,10 +374,12 @@ class Log_Admin {
     /**
      * Get WP users.
      *
+     * @param array|null $sites_ids Optional, array websites ids.
+     *
      * @return array Array of users.
      */
-    public function get_all_users() {
-        $users_sites = Log_DB_Helper::instance()->get_logs_users();
+    public function get_all_users( $sites_ids = null ) {
+        $users_sites = Log_DB_Helper::instance()->get_logs_users( $sites_ids );
         return ! empty( $users_sites ) ? $users_sites : array();
     }
 

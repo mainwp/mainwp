@@ -155,11 +155,23 @@ class Log_DB_Helper extends MainWP_DB {
     /**
      * Method get_logs_users().
      *
+     * @param array|null $sites_ids Optional, array websites ids.
+     *
      * @return array Users list.
      */
-    public function get_logs_users() { //phpcs:ignore -- NOSONAR -complex.
+    public function get_logs_users( $sites_ids = null ) { //phpcs:ignore -- NOSONAR -complex.
         $where = MainWP_DB::instance()->get_sql_where_allow_access_sites( 'wp' );
-        $sql   = 'SELECT lo.log_id, lo.site_id, lo.user_id, lo.user_login, lo.connector, wp.name, me.meta_log_id, me.meta_key, me.meta_value '
+
+        if ( ! empty( $sites_ids ) ) {
+            $sites_ids    = array_map( 'intval', $sites_ids );
+            $placeholders = implode( ',', array_fill( 0, count( $sites_ids ), '%d' ) );
+            $where       .= $this->wpdb->prepare(
+                " AND wp.id IN ($placeholders)", // phpcs:ignore --NOSONAR -- $placeholders contains only generated %d placeholders.
+                $sites_ids
+            );
+        }
+
+        $sql = 'SELECT lo.log_id, lo.site_id, lo.user_id, lo.user_login, lo.connector, wp.name, me.meta_log_id, me.meta_key, me.meta_value '
         . ', CASE
                 WHEN connector != "non-mainwp-changes" THEN "dashboard"
                 ELSE "wpadmin"
@@ -170,7 +182,6 @@ class Log_DB_Helper extends MainWP_DB {
         . ' WHERE me.meta_key = "user_meta_json" '
         . $where
         . ' GROUP BY site_id, user_id, log_source ';
-
         $users_sites_logs = $this->wpdb->get_results( $sql ); //phpcs:ignore -- ok.
         if ( $users_sites_logs ) {
             $logs_users = array();

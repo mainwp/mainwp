@@ -154,6 +154,7 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         <input type="hidden" id="mainwp-widget-filter-current-site-id" value="<?php echo isset( $params['wpid'] ) ? intval( $params['wpid'] ) : 0; ?>" />
         <input type="hidden" id="mainwp-widget-filter-current-client-id" value="<?php echo isset( $params['client_id'] ) ? intval( $params['client_id'] ) : 0; ?>" />
         <input type="hidden" id="mainwp-widget-filter-events-limit" value="<?php echo isset( $params['limit'] ) ? intval( $params['limit'] ) : 50; ?>" />
+        <input type="hidden" id="mainwp-widget-filter-events-context" value="<?php echo isset( $params['context'] ) ? esc_attr( $params['context'] ) : ''; ?>" />
 
         <div id="mainwp-widget-site-actions" class="mainwp-scrolly-overflow">
             <?php
@@ -183,10 +184,12 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             <div id="mainwp-non-mainwp-changes-feed">
                 <div id="mainwp-message-zone" style="display:none;" class="ui message"></div>
                 <?php
-                $context          = ! empty( $params['context'] ) ? $params['context'] : '';
+                $context  = ! empty( $params['context'] ) ? $params['context'] : '';
+                $clientid = ! empty( $params['client_id'] ) ? $params['client_id'] : '';
+
                 $optimize_tbl     = apply_filters( 'mainwp_widget_sites_changes_optimize_view', false );
                 $insights_filters = $this->get_widget_insights_filters( $context, true );
-                static::render_logs_overview_top( $insights_filters, $optimize_tbl, $website );
+                static::render_logs_overview_top( $insights_filters, $optimize_tbl, $website, $clientid, $context );
 
                 MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' );
                 $this->list_events_table->display();
@@ -234,8 +237,10 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @param array       $insights_filters Insights filters.
      * @param bool        $optimize Optimize table view or not.
      * @param object|null $website Website data.
+     * @param int         $clientid Client id.
+     * @param string      $context Widget context: 'individual', 'client', 'operations'.
      */
-    public static function render_logs_overview_top( $insights_filters, $optimize = false, $website = null ) { //phpcs:ignore -- NOSONAR - complex.
+    public static function render_logs_overview_top( $insights_filters, $optimize = false, $website = null, $clientid = null, $context = '' ) { //phpcs:ignore -- NOSONAR - complex.
         $manager = Log_Manager::instance();
 
         $filter_user_ids             = '';
@@ -278,7 +283,23 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                             <div class="default text"><?php esc_html_e( 'All users', 'mainwp' ); ?></div>
                             <div class="menu">
                                 <?php
-                                $users = $manager->admin->get_all_users();
+                                $websites_ids = array();
+                                if ( $website ) {
+                                    $websites_ids = array( $website->id );
+                                } elseif ( 'client' === $context && ! empty( $clientid ) ) {
+                                    $client_sites = MainWP_DB_Client::instance()->get_websites_by_client_ids( $clientid );
+                                    if ( is_array( $client_sites ) && ! empty( $client_sites ) ) {
+                                        $websites_ids = array_map(
+                                            static function ( $site ) {
+                                                return (int) $site->id;
+                                            },
+                                            $client_sites
+                                        );
+                                    }
+                                }
+
+                                $users = $manager->admin->get_all_users( $websites_ids );
+
                                 foreach ( $users as $item ) {
                                     ?>
                                     <div class="item" data-value="<?php echo intval( $item['id'] ) . '-' . (int) $item['site_id'] . '-' . ( ! empty( $item['is_dashboard_user'] ) ? 1 : 0 ); ?>"><?php echo ( ! empty( $item['login'] ) ? esc_html( $item['login'] ) : esc_html( $item['nicename'] ) ) . ' (' . esc_html( $item['source'] ) . ')'; ?></div>

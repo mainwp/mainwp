@@ -298,7 +298,7 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                     }
                                 }
 
-                                $users = $manager->admin->get_all_users( $websites_ids );
+                                $users = ( 'client' === $context && empty( $websites_ids ) ) ? array() : $manager->admin->get_all_users( $websites_ids );
 
                                 foreach ( $users as $item ) {
                                     ?>

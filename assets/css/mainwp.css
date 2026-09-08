@@ -273,6 +273,11 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button,
     vertical-align: middle;
 }
 
+.mainwp-ui.mainwp-custom-theme.mainwp-default-theme .commands-command-menu__container [cmdk-item] > .commands-command-menu__item,
+.mainwp-ui.mainwp-custom-theme.mainwp-default-dark-theme .commands-command-menu__container [cmdk-item] > .commands-command-menu__item {
+    border-radius: 0.75rem;
+}
+
 /* Sub-Header */
 
 .mainwp-sub-header,

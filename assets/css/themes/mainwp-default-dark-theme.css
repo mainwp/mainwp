@@ -1675,7 +1675,6 @@ body.mainwp-ui.mainwp-custom-theme,
 
 .mainwp-ui.mainwp-custom-theme .commands-command-menu__container [cmdk-item] {
   color: var(--mainwp-text) !important;
-  border-radius: 0.75rem !important;
 }
 
 .mainwp-ui.mainwp-custom-theme .commands-command-menu__container [cmdk-item][aria-disabled=true] {
@@ -1692,7 +1691,6 @@ body.mainwp-ui.mainwp-custom-theme,
 
 .mainwp-ui.mainwp-custom-theme .commands-command-menu__container [cmdk-item][aria-selected=true],
 .mainwp-ui.mainwp-custom-theme .commands-command-menu__container [cmdk-item]:active {
-  background: var(--mainwp-blue) !important;
   color: #ffffff !important;
 }
 

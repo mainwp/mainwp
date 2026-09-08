@@ -916,14 +916,13 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             <?php
             MainWP_Client_Handler::show_notice_existed_contact_emails();
             ?>
-            <div id="mainwp-message-zone" class="ui message mainwp-connection-diagnostic-zone" role="status" aria-live="polite" style="display:none;"></div>
+            <div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
             <?php if ( $updated ) { ?>
             <div class="ui message green"><i class="close icon"></i> <?php esc_html_e( 'Child site settings saved successfully.', 'mainwp' ); ?></div>
             <?php } ?>
             <form method="POST" action="" id="mainwp-edit-single-site-form" enctype="multipart/form-data" class="ui form">
                 <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                 <input type="hidden" name="wp_nonce" value="<?php echo esc_attr( wp_create_nonce( 'UpdateWebsite' . $website->id ) ); ?>" />
-                <input type="hidden" id="mainwp_managesites_edit_siteid" value="<?php echo intval( $website->id ); ?>" />
 
                 <div class="ui basic accordion mainwp-blank-accordion mainwp-sidebar-accordion" id="mainwp-edit-site-general-settings-accordion">
                     <h2 class="ui dividing header active title">
@@ -1493,7 +1492,24 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 <input type="button" name="submit_remove_website" id="mainwp-managesites-remove-site" class="ui button red big floated right" value="<?php esc_attr_e( 'Remove Site', 'mainwp' ); ?>"/>
             </form>
         </div>
-        <?php MainWP_UI::render_modal_connection_test(); ?>
+        <div class="ui modal" id="mainwp-test-connection-modal">
+            <i class="close icon"></i>
+            <div class="header"><?php esc_html_e( 'Connection Test', 'mainwp' ); ?></div>
+            <div class="content">
+                <div class="ui active dimmer">
+                    <div class="ui text loader"><?php esc_html_e( 'Testing connection...', 'mainwp' ); ?></div>
+                </div>
+                <div id="mainwp-test-connection-result" class="ui segment" style="display:none">
+                    <h2 class="ui center aligned icon header">
+                        <i class=" icon"></i>
+                        <div class="content">
+                            <span></span>
+                            <div class="sub header"></div>
+                        </div>
+                    </h2>
+                </div>
+            </div>
+        </div>
 
             <script type="text/javascript">
                 jQuery( document ).ready( function () {
@@ -1969,7 +1985,6 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             $success    = false;
             $_error     = '';
             $error_code = '';
-            $diagnosis  = null;
             try {
                 if ( $sync_first ) {
                     $success = MainWP_Sync::sync_site( $website, true );
@@ -2051,7 +2066,6 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         $err        = urldecode( $information['error'] );
                         $_error     = MainWP_Utility::esc_content( $err );
                         $error_code = isset( $information['error_code'] ) ? sanitize_text_field( wp_unslash( $information['error_code'] ) ) : '';
-                        $diagnosis  = MainWP_Connection_Diagnostics::from_child_response( $information, 'reconnect' );
                     } elseif ( isset( $information['register'] ) && 'OK' === $information['register'] ) {
 
                         $en_pk_data = MainWP_Encrypt_Data_Lib::instance()->encrypt_privkey( $privkey, $website->id, true );
@@ -2085,14 +2099,10 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     }
                 }
             } catch ( MainWP_Exception $e ) {
-                $diagnosis = $e->get_diagnosis();
                 if ( 'HTTPERROR' === $e->getMessage() ) {
                     $_error = 'HTTP error' . ( null !== $e->get_message_extra() ? ' - ' . $e->get_message_extra() : '' );
                 } elseif ( 'NOMAINWP' === $e->getMessage() ) {
                     $_error = MainWP_Error_Helper::get_error_not_detected_connect(); // phpcs:ignore WordPress.Security.EscapeOutput
-                } else {
-                    $_error     = $e->getMessage();
-                    $error_code = $e->get_message_error_code();
                 }
             }
 
@@ -2103,22 +2113,14 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
              *
              * @param object   $website  website data.
              */
-            $hook_error = '';
-            if ( ! $success ) {
-                $hook_error = is_array( $diagnosis ) && ! empty( $diagnosis['presentation']['title'] ) ? $diagnosis['presentation']['title'] : esc_html__( 'Site could not be reconnected.', 'mainwp' );
-            }
-            do_action( 'mainwp_site_reconnected', $website, $success, $hook_error );
+            do_action( 'mainwp_site_reconnected', $website, $success, $_error );
 
             if ( $success ) {
                 return true;
             }
 
             if ( ! empty( $_error ) ) {
-                $exception = new MainWP_Exception( $_error, '', $error_code ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-                if ( is_array( $diagnosis ) ) {
-                    $exception->set_diagnosis( $diagnosis );
-                }
-                throw $exception;
+                throw new MainWP_Exception( $_error, '', $error_code ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             }
         } else {
             throw new MainWP_Exception( esc_html__( 'This operation is not allowed!', 'mainwp' ) );
@@ -2323,9 +2325,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 );
 
                 if ( isset( $information['error'] ) && '' !== $information['error'] ) {
-                    $error                           = MainWP_Utility::esc_content( $information['error'] );
-                    $output['connection_diagnostic'] = MainWP_Connection_Diagnostics::from_child_response( $information, 'handshake' );
-                    unset( $output['fetch_data'], $output['error_message'], $output['child_error_code'] );
+                    $error = MainWP_Utility::esc_content( $information['error'] );
                     if ( is_array( $output ) ) {
                         if ( ! empty( $output['error_category'] ) ) {
                             $error_category = $output['error_category'];
@@ -2502,9 +2502,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         self::maybe_fetch_initial_site_favicon( $id, $params );
                     }
                 } else {
-                    $error                           = esc_html__( 'Undefined error occurred. Please try again. For additional help, contact MainWP Support.', 'mainwp' );
-                    $output['connection_diagnostic'] = MainWP_Connection_Diagnostics::from_child_response( array( 'error' => 'unexpected_registration_response' ), 'handshake' );
-                    unset( $output['fetch_data'], $output['error_message'], $output['child_error_code'] );
+                    $error = sprintf( esc_html__( 'Undefined error occurred. Please try again. For additional help, contact the MainWP Support.', 'mainwp' ), '<a href="https://docs.mainwp.com/troubleshooting/potential-issues" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe.
                 }
             } catch ( MainWP_Exception $e ) {
                 if ( 'HTTPERROR' === $e->getMessage() ) {
@@ -2514,23 +2512,6 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 } else {
                     $error = $e->getMessage();
                 }
-                $output['connection_diagnostic'] = $e->get_diagnosis();
-                if ( empty( $output['connection_diagnostic'] ) ) {
-                    $output['connection_diagnostic'] = MainWP_Connection_Diagnostics::test_unconnected(
-                        $params['url'],
-                        $params['wpadmin'],
-                        array(
-                            'verify_certificate' => $verifyCertificate,
-                            'ssl_version'        => $sslVersion,
-                            'force_use_ipv4'     => $force_use_ipv4,
-                            'http_user'          => $http_user,
-                            'http_pass'          => $http_pass,
-                            'allow_fallback'     => true,
-                        )
-                    );
-                }
-                $output['connection_diagnostic'] = MainWP_Connection_Diagnostics::mark_connection_action_failed( $output['connection_diagnostic'] );
-                unset( $output['fetch_data'], $output['error_message'], $output['child_error_code'] );
             }
         }
 
@@ -2549,15 +2530,8 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             'source_screen' => $source_screen,
         );
 
-        $public_error = $error;
-        if ( ! empty( $output['connection_diagnostic']['presentation']['title'] ) ) {
-            $public_error   = $output['connection_diagnostic']['presentation']['title'];
-            $error_category = $output['connection_diagnostic']['diagnosis']['category'];
-            $error_code     = $output['connection_diagnostic']['diagnosis']['diagnosis_id'];
-        }
-
         if ( empty( $id ) ) {
-            $telem_info['error_message']  = $public_error;
+            $telem_info['error_message']  = $error;
             $telem_info['error_category'] = $error_category;
             $telem_info['error_code']     = $error_code;
 
@@ -2569,9 +2543,9 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             }
         }
 
-        do_action( 'mainwp_after_add_site', array( $message, $public_error, $id, $existed_id ), $website, $params, $output, $telem_info );
+        do_action( 'mainwp_after_add_site', array( $message, $error, $id, $existed_id ), $website, $params, $output, $telem_info );
 
-        return array( $message, $public_error, $id, $existed_id );
+        return array( $message, $error, $id, $existed_id );
     }
 
     /**

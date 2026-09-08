@@ -228,8 +228,7 @@ let mainwp_managesites_bulk_reconnect_specific = function (pCheckedBox) {
 
   let data = mainwp_secure_data({
     action: 'mainwp_reconnectwp',
-    siteid: siteId,
-    response_format: 'json'
+    siteid: siteId
   });
 
   jQuery.post(ajaxurl, data, function (response) {
@@ -237,27 +236,30 @@ let mainwp_managesites_bulk_reconnect_specific = function (pCheckedBox) {
     bulkManageSitesFinished++;
     rowObj.html('<td colspan="999"></td>');
 
+    response = response.trim();
     let msg = '', error = '';
-    if (response.success) {
-      msg = siteUrl + ' - ' + response.message;
-    } else if (response.connection_diagnostic?.presentation?.title) {
-      error = siteUrl + ' - ' + response.connection_diagnostic.presentation.title;
+    if (response.substring(0, 5) == 'ERROR') {
+      if (response.length == 5) {
+        error = MainWP.I18n.t('Undefined error occurred. Please try again.');
+        error = siteUrl + ' - ' + error;
+      } else {
+        error = response.substring(6);
+        let err = mainwp_js_get_error_not_detected_connect(error, 'html_msg', false, true);
+        if (true !== err && '' != err) {
+          error = err; // decoded error.
+        }
+      }
     } else {
-      error = siteUrl + ' - ' + (response.message || MainWP.I18n.t('Reconnect failed. Please try again.'));
+      msg = siteUrl + ' - ' + mainwp_get_reconnect_error(response, siteId);
     }
 
     if (msg != '') {
       rowObj.removeClass('error');
       rowObj.addClass('positive');
-      rowObj.empty().append(jQuery('<td>').attr('colspan', '999').append(jQuery('<i>').addClass('green check icon'), document.createTextNode(msg)));
+      rowObj.html('<td colspan="999"><i class="green check icon"></i>' + msg + '</td>');
     } else if (error != '') {
-      rowObj.empty().append(jQuery('<td>').attr('colspan', '999').append(jQuery('<i>').addClass('red times icon'), document.createTextNode(error)));
+      rowObj.html('<td colspan="999"><i class="red times icon"></i>' + error + '</td>');
     }
-    mainwp_managesites_bulk_reconnect_next();
-  }, 'json').fail(function () {
-    bulkManageSitesCurrentThreads--;
-    bulkManageSitesFinished++;
-    rowObj.empty().append(jQuery('<td>').attr('colspan', '999').append(jQuery('<i>').addClass('red times icon'), document.createTextNode(siteUrl + ' - ' + __('Dashboard request failed.'))));
     mainwp_managesites_bulk_reconnect_next();
   });
 };

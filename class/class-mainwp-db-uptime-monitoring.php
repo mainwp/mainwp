@@ -788,8 +788,31 @@ KEY idx_wpid_issub (wpid, issub)";
             }
         }
 
+        $lock_name = '';
+
         if ( ! isset( $data['monitor_id'] ) && ! empty( $data['wpid'] ) && empty( $data['suburl'] ) ) {
-            $check = $this->get_monitor_by( $data['wpid'], 'issub', 0 );
+            $site_id = filter_var( $data['wpid'], FILTER_VALIDATE_INT );
+
+            if ( false === $site_id || $site_id <= 0 ) {
+                return false;
+            }
+
+            $lock_name = 'mainwp_primary_monitor_' . $site_id;
+
+            $lock_acquired = $this->wpdb->get_var(
+                $this->wpdb->prepare(
+                    'SELECT GET_LOCK( %s, 10 )',
+                    $lock_name
+                )
+            );
+
+            if ( '1' !== (string) $lock_acquired ) {
+                return false;
+            }
+
+            // Recheck while holding the lock.
+            $check = $this->get_monitor_by( $site_id, 'issub', 0 );
+
             if ( ! empty( $check ) ) {
                 $data['monitor_id'] = $check->monitor_id;
             }
@@ -808,7 +831,17 @@ KEY idx_wpid_issub (wpid, issub)";
                 $data,
                 array( 'monitor_id' => $id )
             );
-                return $id;
+
+            if ( ! empty( $lock_name ) ) {
+                $this->wpdb->get_var(
+                    $this->wpdb->prepare(
+                        'SELECT RELEASE_LOCK( %s )',
+                        $lock_name
+                    )
+                );
+            }
+
+            return $id;
         } else {
 
             $default = MainWP_Uptime_Monitoring_Handle::get_default_monitoring_settings( true );
@@ -838,20 +871,39 @@ KEY idx_wpid_issub (wpid, issub)";
 
             $site_id = filter_var( $data['wpid'] ?? null, FILTER_VALIDATE_INT );
             if ( false === $site_id || $site_id <= 0 ) {
+                if ( ! empty( $lock_name ) ) {
+                    $this->wpdb->get_var(
+                        $this->wpdb->prepare(
+                            'SELECT RELEASE_LOCK( %s )',
+                            $lock_name
+                        )
+                    );
+                }
+
                 return false;
             }
             $data['wpid'] = $site_id;
 
-            if ( ! isset( $data['lasttime_check '] ) ) {
-                $data['lasttime_check '] = 0; // to fix NOT NULL.
+            if ( ! isset( $data['lasttime_check'] ) ) {
+                $data['lasttime_check'] = 0; // to fix NOT NULL.
             }
 
             $this->wpdb->insert( $this->table_name( 'monitors' ), $data );
 
-            return $this->wpdb->insert_id;
+            $monitor_id = $this->wpdb->insert_id;
+
+            if ( ! empty( $lock_name ) ) {
+                $this->wpdb->get_var(
+                    $this->wpdb->prepare(
+                        'SELECT RELEASE_LOCK( %s )',
+                        $lock_name
+                    )
+                );
+            }
+
+            return $monitor_id;
         }
     }
-
     /**
      * Update site monitor increase retries.
      *

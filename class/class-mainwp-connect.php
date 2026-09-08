@@ -2092,7 +2092,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 $output['child_error_code'] = $error_code;
             }
 
-            if ( is_array( $information ) ) {
+            if ( is_array( $information ) && $website ) {
                 // Process to ensure compatibility with old and new Child versions.
                 $new_sync = isset( $information['support_advanced_sign'] );
                 $old_sync = ! $new_sync && ( isset( $information['mainwpdir'], $information['uniqueId'] ) || isset( $information['version'], $information['wpversion'], $information['wpe'] ) );

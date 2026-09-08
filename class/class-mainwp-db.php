@@ -4351,7 +4351,6 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             $this->table_name( 'wp_clients_fields' ),
             $this->table_name( 'wp_clients_field_values' ),
             $this->table_name( 'wp_clients_contacts' ),
-            $this->table_name( 'wp_actions' ),
             $this->table_name( 'monitors' ),
             $this->table_name( 'monitor_heartbeat' ),
             $this->table_name( 'monitor_stat_hourly' ),

@@ -75,22 +75,6 @@ return array(
             'linkedin'          => 'varchar(255) NOT NULL default ""',
         ),
     ),
-
-    'wp_actions'              => array(
-        'columns' => array(
-            'action_id'   => 'int(11) NOT NULL auto_increment',
-            'wpid'        => 'int(11) NOT NULL',
-            'object_id'   => 'varchar(20) NOT NULL',
-            'context'     => 'varchar(20) NOT NULL',
-            'action'      => 'varchar(100) NOT NULL',
-            'action_user' => 'text NOT NULL DEFAULT ""',
-            'created'     => 'int(11) NOT NULL DEFAULT 0',
-            'meta_data'   => 'text NOT NULL DEFAULT ""',
-            'dismiss'     => 'tinyint(1) NOT NULL DEFAULT 0',
-            'summary'     => 'varchar(255) NOT NULL default ""',
-        ),
-    ),
-
     'monitors'                => array(
         'columns' => array(
             'monitor_id'                     => 'int(11) NOT NULL auto_increment',

@@ -188,7 +188,7 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 $clientid = ! empty( $params['client_id'] ) ? $params['client_id'] : '';
 
                 $optimize_tbl     = apply_filters( 'mainwp_widget_sites_changes_optimize_view', false );
-                $insights_filters = $this->get_widget_insights_filters( $context, true );
+                $insights_filters = $this->get_widget_insights_filters( $context, ( $website ? $website->id : 0 ), $clientid, true );
                 static::render_logs_overview_top( $insights_filters, $optimize_tbl, $website, $clientid, $context );
 
                 MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' );
@@ -260,6 +260,19 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             $default_filter = true;
         }
 
+        $client_sites_ids = array();
+        if ( 'client' === $context ) {
+            $client_sites = MainWP_DB_Client::instance()->get_websites_by_client_ids( $clientid );
+            if ( is_array( $client_sites ) && ! empty( $client_sites ) ) {
+                $client_sites_ids = array_map(
+                    static function ( $site ) {
+                        return (int) $site->id;
+                    },
+                    $client_sites
+                );
+            }
+        }
+
         ?>
         <div id="mainwp-module-log-overview-sub-header">
             <div class="ui stackable grid">
@@ -287,15 +300,7 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                 if ( $website ) {
                                     $websites_ids = array( $website->id );
                                 } elseif ( 'client' === $context && ! empty( $clientid ) ) {
-                                    $client_sites = MainWP_DB_Client::instance()->get_websites_by_client_ids( $clientid );
-                                    if ( is_array( $client_sites ) && ! empty( $client_sites ) ) {
-                                        $websites_ids = array_map(
-                                            static function ( $site ) {
-                                                return (int) $site->id;
-                                            },
-                                            $client_sites
-                                        );
-                                    }
+                                    $websites_ids = $client_sites_ids;
                                 }
 
                                 $users = ( 'client' === $context && empty( $websites_ids ) ) ? array() : $manager->admin->get_all_users( $websites_ids );
@@ -351,14 +356,31 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                             <div class="default text"><?php esc_html_e( 'All Websites', 'mainwp' ); ?></div>
                             <div class="menu">
                                 <?php
-                                $wpsite_fields = array( 'id', 'name' );
-                                $websites      = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user_by_params( array( 'select_wp_fields' => $wpsite_fields ) ) );
-                                while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-                                    ?>
-                                    <div class="item" data-value="<?php echo esc_attr( $website->id ); ?>"><?php echo esc_html( MainWP_Utility::get_nice_url( stripslashes( $website->name ) ) ); ?></div>
-                                    <?php
+                                $client_sites_empty = false;
+                                $wpsite_fields      = array( 'id', 'name' );
+                                $params             = array( 'select_wp_fields' => $wpsite_fields );
+                                if ( 'client' === $context ) {
+                                    if ( empty( $client_sites_ids ) ) {
+                                        $client_sites_empty = true;
+                                    } else {
+                                        $params['include'] = $client_sites_ids;
+                                    }
                                 }
-                                MainWP_DB::free_result( $websites );
+
+                                if ( $client_sites_empty ) {
+                                    $websites = false;
+                                } else {
+                                    $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user_by_params( $params ) );
+                                }
+
+                                if ( $websites ) {
+                                    while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
+                                        ?>
+                                        <div class="item" data-value="<?php echo esc_attr( $website->id ); ?>"><?php echo esc_html( MainWP_Utility::get_nice_url( stripslashes( $website->name ) ) ); ?></div>
+                                        <?php
+                                    }
+                                    MainWP_DB::free_result( $websites );
+                                }
                                 ?>
                                 <div class="item" data-value="allsites"><?php esc_html_e( 'All Websites', 'mainwp' ); ?></div>
                             </div>
@@ -441,9 +463,11 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * Get insights filters.
      *
      * @param string $context Context filter.
+     * @param int    $site_id Site id.
+     * @param int    $client_id Client id.
      * @param bool   $save_filter To save filter.
      */
-    public function get_widget_insights_filters( $context, $save_filter = false ) { //phpcs:ignore -- NOSONAR - complex method.
+    public function get_widget_insights_filters( $context, $site_id = 0, $client_id = 0, $save_filter = false ) { //phpcs:ignore -- NOSONAR - complex method.
 
         $filters = array( 'user', 'sites', 'events' );
 
@@ -471,7 +495,7 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         $update_filter = false;
 
         if ( $get_saved ) {
-            $filters_saved = $this->get_or_set_widget_saved_filters( $context );
+            $filters_saved = $this->get_or_set_widget_saved_filters( $context, null, $site_id, $client_id );
             if ( ! is_array( $filters_saved ) ) {
                 $filters_saved = array();
             }
@@ -545,7 +569,9 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     'user_ids' => $filter_user_ids,
                     'sites'    => $filter_sites,
                     'events'   => $filter_events,
-                )
+                ),
+                $site_id,
+                $client_id
             );
         }
 
@@ -568,17 +594,25 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
     /**
      * Get or save the user's saved widget action log filters.
      *
-     * @param string     $context The widget context. Accepts 'individual', 'client', or 'operations'.
-     * @param array|null $filters Filters to save. Pass null to retrieve the saved filters.
+     * @param string     $context  The widget context. Accepts 'individual', 'client', or 'operations'.
+     * @param array|null $filters  Filters to save. Pass null to retrieve the saved filters.
+     * @param int        $site_id  The site ID used for the 'individual' context.
+     * @param int        $client_id The client ID used for the 'client' context.
      *
-     * @return mixed|false The saved filters when retrieving, or false when the context is invalid.
+     * @return mixed|false The saved filters when retrieving or saving, or false when the context is invalid.
      */
-    public function get_or_set_widget_saved_filters( $context, $filters = null ) {
-        if ( ! in_array( $context, array( 'individual', 'client', 'operations' ) ) ) {
+    public function get_or_set_widget_saved_filters( $context, $filters = null, $site_id = 0, $client_id = 0 ) {
+        if ( ! in_array( $context, array( 'individual', 'client', 'operations' ), true ) ) {
             return false;
         }
 
         $option = 'mainwp_widget_actions_logs_' . $context . '_filters_saved';
+
+        if ( 'individual' === $context ) {
+            $option .= '_' . intval( $site_id );
+        } elseif ( 'client' === $context ) {
+            $option .= '_' . intval( $client_id );
+        }
 
         if ( null === $filters ) {
             return get_user_option( $option );

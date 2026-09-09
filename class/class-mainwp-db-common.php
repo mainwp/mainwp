@@ -1215,7 +1215,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
                 return array(
                     'group_updated' => false,
                     'group_message' => 'Failed to update tags or invalid tag IDs.',
-                    'message'       => 'Site fields updated successfully, but group associations could not be updated.',
+                    'message'       => 'Group associations could not be updated.',
                     'success'       => false,
                     'site'          => $website->url,
                 );
@@ -1261,6 +1261,11 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
                 $tokens = array_map( 'trim', explode( ',', $groupids_string ) );
             }
         } elseif ( is_array( $groupids ) ) {
+            foreach ( $groupids as $groupid ) {
+                if ( ! is_string( $groupid ) && ! is_int( $groupid ) ) {
+                    return false;
+                }
+            }
             $tokens = array_map( 'trim', $groupids );
         } else {
             return false;
@@ -1319,7 +1324,9 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             return false;
         }
 
-        $context   = DB_HOST . ':' . DB_NAME . ':' . (int) $site_id;
+        global $wpdb;
+
+        $context   = DB_HOST . ':' . DB_NAME . ':' . $wpdb->prefix . ':' . (int) $site_id;
         $lock_name = 'mainwp_primary_monitor_' . md5( $context ); // phpcs:ignore -- NOSONAR - Broader transaction/locking across all group access paths is outside the scope of this change.
 
         $locked = $this->wpdb->get_var(

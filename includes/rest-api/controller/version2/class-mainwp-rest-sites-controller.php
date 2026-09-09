@@ -3124,7 +3124,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             $item   = $this->prepare_object_for_update( $request );
             $result = MainWP_DB_Common::instance()->rest_api_update_website( $website->id, $item );
             if ( is_array( $result ) ) {
-                foreach ( array( 'group_updated', 'group_message' ) as $field ) {
+                foreach ( array( 'group_updated', 'group_message', 'message' ) as $field ) {
                     if ( array_key_exists( $field, $result ) ) {
                         $resp_data[ $field ] = $result[ $field ];
                     }
@@ -3141,7 +3141,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                     $websites             = MainWP_DB::instance()->get_websites_for_current_user( $params );
                     $data                 = $websites ? current( $websites ) : array();
                     $resp_data['data']    = $this->prepare_site_item_for_response_context( $data, $request, 'view' );
-            } else {
+            } elseif ( empty( $resp_data['group_message'] ) && empty( $resp_data['message'] ) ) {
                 $resp_data['error'] = esc_html__( 'Update site failed. Please try again.', 'mainwp' );
             }
         } catch ( \Exception $e ) {

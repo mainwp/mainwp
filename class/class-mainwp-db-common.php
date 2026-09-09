@@ -1070,42 +1070,9 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         if ( isset( $data['groupids'] ) && is_string( $data['groupids'] ) ) {
             $group_update_success = true;
             $groupids_string      = trim( wp_unslash( $data['groupids'] ) );
-
-            if ( '' !== $groupids_string ) {
-                $tokens = array_map( 'trim', explode( ',', $groupids_string ) );
-
-                foreach ( $tokens as $token ) {
-                    if ( '' === $token || ! ctype_digit( $token ) || 0 === (int) $token ) {
-                        $group_update_success = false;
-                        break;
-                    }
-                }
-
-                if ( true === $group_update_success ) {
-                    $new_groupids = array_values(
-                        array_unique(
-                            array_map( 'absint', $tokens )
-                        )
-                    );
-
-                    $groups = $this->get_groups_for_current_user();
-
-                    if ( $groups ) {
-                        $allowed_groupids = array_map(
-                            function ( $group ) {
-                                return (int) $group->id;
-                            },
-                            $groups
-                        );
-
-                        // Reject IDs that the current user cannot access.
-                        if ( count( $new_groupids ) !== count( array_intersect( $new_groupids, $allowed_groupids ) ) ) {
-                            $group_update_success = false;
-                        }
-                    } else {
-                        $group_update_success = false;
-                    }
-                }
+            $new_groupids         = $this->validate_site_group_ids( $groupids_string );
+            if ( false === $new_groupids ) {
+                $group_update_success = false;
             }
         }
 
@@ -1268,6 +1235,69 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         return $response;
     }
 
+    /**
+     * Validate site group IDs.
+     *
+     * Accepts a comma-separated string or an array of group IDs,
+     * validates that all IDs are positive integers, removes duplicates,
+     * and ensures the current user has access to the requested groups.
+     *
+     * @param string|array $groupids Group IDs to validate.
+     *
+     * @return array|false Validated group IDs or false on validation failure.
+     */
+    public function validate_site_group_ids( $groupids ) {
+        $tokens = array();
+
+        // MWP-1741 - The add-site handler treats 1,abc as group ID 1 plus a new group named abc,
+        // while 0 can create a groupid = 0 association. It should enforce the same positive,
+        // permitted-ID validation as updates.
+        if ( is_string( $groupids ) ) {
+            $groupids_string = trim( wp_unslash( $groupids ) );
+            if ( '' !== $groupids_string ) {
+                $tokens = array_map( 'trim', explode( ',', $groupids_string ) );
+            }
+        } elseif ( is_array( $groupids ) ) {
+            $tokens = array_map( 'trim', $groupids );
+        } else {
+            return false;
+        }
+
+        foreach ( $tokens as $token ) {
+            if ( '' === $token || ! ctype_digit( $token ) || 0 === (int) $token ) {
+                return false;
+            }
+        }
+
+        $groupids = array_values(
+            array_unique(
+                array_map( 'absint', $tokens )
+            )
+        );
+
+        if ( empty( $groupids ) ) {
+            return array();
+        }
+
+        $groups = $this->get_groups_for_current_user();
+
+        if ( empty( $groups ) ) {
+            return false;
+        }
+
+        $allowed_groupids = array_map(
+            static function ( $group ) {
+                return (int) $group->id;
+            },
+            $groups
+        );
+
+        if ( count( $groupids ) !== count( array_intersect( $groupids, $allowed_groupids ) ) ) {
+            return false;
+        }
+
+        return $groupids;
+    }
 
     /**
      * Safely update the group associations for a site.
@@ -1286,8 +1316,8 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             return false;
         }
 
-        // phpcs:ignore -- NOSONAR - Broader transaction/locking across all group access paths is outside the scope of this change.
-        $lock_name = 'mainwp_site_group_update_' . (int) $site_id;
+        $context   = DB_HOST . ':' . DB_NAME . ':' . (int) $site_id;
+        $lock_name = 'mainwp_primary_monitor_' . md5( $context ); // phpcs:ignore -- NOSONAR - Broader transaction/locking across all group access paths is outside the scope of this change.
 
         $locked = $this->wpdb->get_var(
             $this->wpdb->prepare(

@@ -3040,6 +3040,17 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         $data                 = array(); //phpcs:ignore -- NOSONAR - not used data.
         $found_id             = 0;
         try {
+
+            if ( $request->has_param( 'groupids' ) && ! empty( $request['groupids'] ) && false === MainWP_DB_Common::instance()->validate_site_group_ids( $request['groupids'] ) ) {
+                return new \WP_Error(
+                    'rest_invalid_param',
+                    __( 'The groupids parameter must be a comma-separated string of positive integers.', 'mainwp' ),
+                    array(
+                        'status' => 400,
+                    )
+                );
+            }
+
             $item = $this->prepare_object_for_database( $request );
 
             if ( empty( $item['name'] ) && ! empty( $item['url'] ) ) {

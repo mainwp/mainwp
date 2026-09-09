@@ -1215,6 +1215,9 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
                 return array(
                     'group_updated' => false,
                     'group_message' => 'Failed to update tags or invalid tag IDs.',
+                    'message'       => 'Site fields updated successfully, but group associations could not be updated.',
+                    'success'       => false,
+                    'site'          => $website->url,
                 );
             }
 

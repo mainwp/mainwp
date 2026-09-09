@@ -217,7 +217,7 @@ class Test_Premium_Update_Registry extends WP_UnitTestCase {
     }
 
     /**
-     * check_request_update_premium(): single-item constraint and prefix support.
+     * check_request_update_premium(): current batch limit and prefix support.
      */
     public function test_check_request_update_premium() {
         $this->assertTrue( MainWP_Premium_Update::check_request_update_premium( 'yith-woocommerce-gift-cards-premium/init.php', 'plugin' ) );
@@ -226,9 +226,13 @@ class Test_Premium_Update_Registry extends WP_UnitTestCase {
         $this->assertFalse( MainWP_Premium_Update::check_request_update_premium( 'Avada', 'theme' ), 'Avada is detect-only.' );
         $this->assertFalse( MainWP_Premium_Update::check_request_update_premium( 'akismet/akismet.php', 'plugin' ) );
 
-        // The premium request route only ever handles a single item.
-        $this->assertFalse( MainWP_Premium_Update::check_request_update_premium( 'Divi,Extra', 'theme' ) );
-        $this->assertFalse( MainWP_Premium_Update::check_request_update_premium( 'yith-a-premium/init.php,yith-b-premium/init.php', 'plugin' ) );
+        // Preserve main's support for up to three items when a premium item matches.
+        $this->assertTrue( MainWP_Premium_Update::check_request_update_premium( 'Divi,Extra', 'theme' ) );
+        $this->assertTrue( MainWP_Premium_Update::check_request_update_premium( 'yith-a-premium/init.php,yith-b-premium/init.php', 'plugin' ) );
+        $this->assertTrue( MainWP_Premium_Update::check_request_update_premium( 'Divi,Extra,Avada', 'theme' ) );
+        $this->assertTrue( MainWP_Premium_Update::check_request_update_premium( 'yith-a-premium/init.php,akismet/akismet.php,hello.php', 'plugin' ) );
+        $this->assertFalse( MainWP_Premium_Update::check_request_update_premium( 'Divi,Extra,Avada,other-theme', 'theme' ) );
+        $this->assertFalse( MainWP_Premium_Update::check_request_update_premium( 'yith-a-premium/init.php,akismet/akismet.php,hello.php,other/other.php', 'plugin' ) );
     }
 
     /**

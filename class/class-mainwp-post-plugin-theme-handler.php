@@ -704,8 +704,9 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
         $website = MainWP_DB::instance()->get_website_by_id( $websiteId );
         try {
             $info = array(
-                'result'       => array(),
-                'result_error' => array(),
+                'result'         => array(),
+                'result_error'   => array(),
+                'result_started' => array(),
             );
 
             $result = MainWP_Updates_Handler::upgrade_plugin_theme_translation( $websiteId, sanitize_text_field( wp_unslash( $_POST['type'] ) ), $slugs ); // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -716,6 +717,22 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
                 }
                 if ( isset( $result['result_error'] ) ) {
                     $info['result_error'] = $result['result_error'];
+                }
+                if ( isset( $result['result_started'] ) ) {
+                    $info['result_started'] = $result['result_started'];
+                }
+            }
+
+            // MWP-1660: append a generic licensing hint to failures of known premium
+            // products; vendors only deliver update packages to licensed installs.
+            $item_type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+            if ( ( 'plugin' === $item_type || 'theme' === $item_type ) && ! empty( $info['result_error'] ) && is_array( $info['result_error'] ) ) {
+                $premium_ids      = MainWP_Premium_Update_Registry::get_filter_defaults( $item_type, 'detect' );
+                $premium_prefixes = MainWP_Premium_Update_Registry::get_prefixes( $item_type, 'detect' );
+                foreach ( $info['result_error'] as $err_slug => $err_msg ) {
+                    if ( is_string( $err_msg ) && MainWP_Premium_Update_Registry::slug_matches( urldecode( $err_slug ), $premium_ids, $premium_prefixes ) ) {
+                        $info['result_error'][ $err_slug ] = $err_msg . ' ' . esc_html__( 'Premium updates usually require an active license on the child site; check that first.', 'mainwp' );
+                    }
                 }
             }
 

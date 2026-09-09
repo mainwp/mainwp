@@ -97,6 +97,7 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
                     'methods'             => WP_REST_Server::EDITABLE,
                     'callback'            => array( $this, 'create_item' ),
                     'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                    'args'                => $this->get_endpoint_args_for_item_schema( WP_REST_Server::CREATABLE ),
                 ),
             )
         );
@@ -123,6 +124,7 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
                     'methods'             => WP_REST_Server::EDITABLE,
                     'callback'            => array( $this, 'update_item' ),
                     'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                    'args'                => $this->get_edit_cost_args(),
                 ),
             )
         );
@@ -290,6 +292,10 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
      * @return WP_Error|WP_REST_Response
      */
     public function create_item( $request ) {
+        // handle_rest_update_insert_item() reads a non-empty id as "update that row", and
+        // the body bag outranks anything the create route registers, so the id is cleared
+        // out of every bag before the handler can point a create at an existing cost.
+        $request->set_param( 'id', null );
         try {
             $resp_data = $this->handle_rest_update_insert_item( $request );
         } catch ( MainWP_Extra_Exception $e ) {
@@ -339,15 +345,21 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
         $selected_groups  = array();
         $selected_clients = array();
 
+        // The admin form persists all three lists and every reader unions the three
+        // columns, so a chain here would silently drop the second selector a caller sent.
         if ( isset( $request['sites'] ) && is_array( $request['sites'] ) ) {
             foreach ( wp_unslash( $request['sites'] ) as $selected ) {
                 $selected_sites[] = intval( $selected );
             }
-        } elseif ( isset( $request['groups'] ) && is_array( $request['groups'] ) ) {
+        }
+
+        if ( isset( $request['groups'] ) && is_array( $request['groups'] ) ) {
             foreach ( wp_unslash( $request['groups'] ) as $selected ) {
                 $selected_groups[] = intval( $selected );
             }
-        } elseif ( isset( $request['clients'] ) && is_array( $request['clients'] ) ) {
+        }
+
+        if ( isset( $request['clients'] ) && is_array( $request['clients'] ) ) {
             foreach ( wp_unslash( $request['clients'] ) as $selected ) {
                 $selected_clients[] = intval( $selected );
             }
@@ -406,12 +418,32 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
 
 
     /**
+     * Make the id in the path the id every parameter bag reports.
+     *
+     * WP_REST_Request ranks body and query params above URL params, so a body id would
+     * decide which cost a /costs/{id}/edit or /costs/{id}/remove call writes to, and a
+     * ?id= query param which cost the read routes return. The batch route carries no
+     * path id, so its items keep addressing themselves by the id in the item body.
+     * set_param() overwrites the key in every bag that already holds it.
+     *
+     * @param WP_REST_Request $request Full details about the request.
+     * @return void
+     */
+    protected function pin_id_to_path( $request ) {
+        $url_params = $request->get_url_params();
+        if ( isset( $url_params['id'] ) ) {
+            $request->set_param( 'id', (int) $url_params['id'] );
+        }
+    }
+
+    /**
      * Get site by.
      *
      * @param WP_REST_Request $request Full details about the request.
      * @return WP_Error|Object Item.
      */
     public function get_request_item( $request ) {
+        $this->pin_id_to_path( $request );
         $id   = $request['id'];
         $item = Cost_Tracker_DB::get_instance()->get_cost_tracker_by( 'id', $id );
         if ( empty( $item ) ) {
@@ -439,30 +471,6 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
             )
         );
     }
-
-    /**
-     * Adds new client.
-     *
-     * @param WP_REST_Request $request Full details about the request.
-     * @return WP_Error|WP_REST_Response
-     */
-    public function add_item( $request ) {
-        // get data.
-        $fields = $request->get_json_params();
-        try {
-            $data     = MainWP_Client_Handler::rest_api_add_client( $fields );
-            $response = new \WP_REST_Response( $data );
-            $response->set_status( 200 );
-        } catch ( \Exception $e ) {
-            return new WP_Error( $e->getCode(), $e->getMessage(), array( 'status' => 400 ) );
-        }
-
-        // get data.
-        $value = MainWP_DB_Client::instance()->get_wp_clients( $prepared_args );
-        return rest_ensure_response( $value );
-    }
-
-
 
     /**
      * Update item.
@@ -644,16 +652,6 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
     }
 
     /**
-     * Only return writable props from schema.
-     *
-     * @param  array $schema schema.
-     * @return bool
-     */
-    protected function filter_writable_props( $schema ) {
-        return empty( $schema['readonly'] );
-    }
-
-    /**
      * Get the query params for collections.
      *
      * @return array
@@ -772,7 +770,33 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
 
 
     /**
-     * Get the Tags schema, conforming to JSON Schema.
+     * Arguments registered by the edit route.
+     *
+     * The edit route identifies the cost by its URL segment, so the schema's id arg is
+     * dropped here rather than letting a body id point the update somewhere else. Schema
+     * defaults are dropped too: core injects arg defaults as request params, and
+     * handle_rest_update_insert_item() writes every field it reads, so a defaulted arg
+     * would overwrite a stored value the caller never sent.
+     *
+     * @return array
+     */
+    protected function get_edit_cost_args() {
+        $args = $this->get_endpoint_args_for_item_schema( WP_REST_Server::EDITABLE );
+        unset( $args['id'] );
+        foreach ( $args as &$arg ) {
+            unset( $arg['default'] );
+        }
+        unset( $arg );
+        return $args;
+    }
+
+    /**
+     * Get the costs schema, conforming to JSON Schema.
+     *
+     * The properties are named the way the wire names them, which is what
+     * handle_rest_update_insert_item() reads and what the docs document. Five of them
+     * used to carry their DB column name instead, so the args derived from this schema
+     * validated names no write path ever looked at.
      *
      * @since  5.2
      * @return array
@@ -783,144 +807,166 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
             'title'      => 'costs',
             'type'       => 'object',
             'properties' => array(
-                'id'             => array(
+                'id'                  => array(
                     'type'              => 'integer',
                     'description'       => __( 'Cost ID.', 'mainwp' ),
                     'sanitize_callback' => 'absint',
                     'validate_callback' => 'rest_validate_request_arg',
                     'context'           => array( 'view', 'edit' ),
+                    // The write routes take the cost from the path, and batch items from the
+                    // id arg get_batch_update_args() adds, so no route accepts it as input.
+                    'readonly'          => true,
                 ),
-                'name'           => array(
+                'name'                => array(
                     'type'              => 'string',
                     'description'       => __( 'Cost name.', 'mainwp' ),
                     'sanitize_callback' => 'sanitize_text_field',
-                    'validate_callback' => 'rest_validatze_request_arg',
+                    'validate_callback' => 'rest_validate_request_arg',
                     'context'           => array( 'view', 'edit' ),
                 ),
-                'url'            => array(
+                'url'                 => array(
                     'type'              => 'string',
                     'description'       => __( 'Cost url.', 'mainwp' ),
                     'sanitize_callback' => 'sanitize_url',
-                    'validate_callback' => 'rest_validatze_request_arg',
+                    'validate_callback' => 'rest_validate_request_arg',
                     'context'           => array( 'view', 'edit' ),
                 ),
-                'type'           => array(
+                'payment_type'        => array(
                     'type'              => 'string',
-                    'description'       => __( 'Cost type.', 'mainwp' ),
+                    'description'       => __( 'Payment type.', 'mainwp' ),
                     'sanitize_callback' => 'sanitize_text_field',
-                    'validate_callback' => 'rest_validatze_request_arg',
+                    'validate_callback' => 'rest_validate_request_arg',
                     'context'           => array( 'view', 'edit' ),
                 ),
-                'product_type'   => array(
+                'product_type'        => array(
                     'type'              => 'string',
                     'description'       => __( 'Product type.', 'mainwp' ),
                     'sanitize_callback' => 'sanitize_text_field',
-                    'validate_callback' => 'rest_validatze_request_arg',
+                    'validate_callback' => 'rest_validate_request_arg',
                     'context'           => array( 'view', 'edit' ),
                 ),
-                'slug'           => array(
+                'product_slug'        => array(
                     'type'              => 'string',
                     'description'       => __( 'Product slug.', 'mainwp' ),
                     'sanitize_callback' => 'sanitize_text_field',
-                    'validate_callback' => 'rest_validatze_request_arg',
+                    'validate_callback' => 'rest_validate_request_arg',
                     'context'           => array( 'view', 'edit' ),
                 ),
-                'license_type'   => array(
+                'license_type'        => array(
                     'type'              => 'string',
                     'description'       => __( 'License type.', 'mainwp' ),
                     'sanitize_callback' => 'sanitize_text_field',
-                    'validate_callback' => 'rest_validatze_request_arg',
+                    'validate_callback' => 'rest_validate_request_arg',
                     'context'           => array( 'view', 'edit' ),
                 ),
-                'cost_status'    => array(
+                'cost_tracker_status' => array(
                     'type'              => 'string',
                     'description'       => __( 'Cost status.', 'mainwp' ),
                     'sanitize_callback' => 'sanitize_text_field',
-                    'validate_callback' => 'rest_validatze_request_arg',
+                    'validate_callback' => 'rest_validate_request_arg',
                     'context'           => array( 'view', 'edit' ),
                 ),
-                'payment_method' => array(
+                'payment_method'      => array(
                     'type'              => 'string',
                     'description'       => __( 'Payment method.', 'mainwp' ),
                     'sanitize_callback' => 'sanitize_text_field',
-                    'validate_callback' => 'rest_validatze_request_arg',
+                    'validate_callback' => 'rest_validate_request_arg',
                     'context'           => array( 'view', 'edit' ),
                 ),
-                'price'          => array(
+                'price'               => array(
                     'type'              => 'number',
                     'description'       => __( 'Price.', 'mainwp' ),
                     'sanitize_callback' => 'sanitize_text_field',
-                    'validate_callback' => 'rest_validatze_request_arg',
+                    'validate_callback' => 'rest_validate_request_arg',
                     'context'           => array( 'view', 'edit' ),
                 ),
-                'renewal_type'   => array(
+                'renewal_type'        => array(
                     'type'              => 'string',
                     'description'       => __( 'Renewal type.', 'mainwp' ),
                     'sanitize_callback' => 'sanitize_text_field',
-                    'validate_callback' => 'rest_validatze_request_arg',
+                    'validate_callback' => 'rest_validate_request_arg',
                     'context'           => array( 'view', 'edit' ),
                 ),
-                'last_renewal'   => array(
-                    'type'              => 'integer',
-                    'description'       => __( 'Last renewal.', 'mainwp' ),
-                    'sanitize_callback' => 'absint',
-                    'validate_callback' => 'rest_validatze_request_arg',
+                // Read with strtotime(), and documented as any format it accepts, so an
+                // integer arg would reject every date string the write routes are given.
+                'last_renewal'        => array(
+                    'type'              => 'string',
+                    'description'       => __( 'Last renewal date, in any format strtotime() accepts.', 'mainwp' ),
+                    'sanitize_callback' => 'sanitize_text_field',
+                    'validate_callback' => 'rest_validate_request_arg',
                     'context'           => array( 'view', 'edit' ),
                 ),
-                'next_renewal'   => array(
+                'next_renewal'        => array(
                     'type'              => 'integer',
                     'description'       => __( 'Next renewal.', 'mainwp' ),
                     'sanitize_callback' => 'absint',
-                    'validate_callback' => 'rest_validatze_request_arg',
+                    'validate_callback' => 'rest_validate_request_arg',
                     'context'           => array( 'view', 'edit' ),
+                    // Derived by the handler and rendered as a date string on read, so a
+                    // read-then-write round trip must not be validated against the integer.
+                    'readonly'          => true,
                 ),
-                'last_alert'     => array(
+                'last_alert'          => array(
                     'type'              => 'integer',
                     'description'       => __( 'Last alert.', 'mainwp' ),
                     'sanitize_callback' => 'absint',
-                    'validate_callback' => 'rest_validatze_request_arg',
+                    'validate_callback' => 'rest_validate_request_arg',
                     'context'           => array( 'view', 'edit' ),
+                    // Derived by the handler and rendered as a date string on read, so a
+                    // read-then-write round trip must not be validated against the integer.
+                    'readonly'          => true,
                 ),
-                'cost_icon'      => array(
+                'icon_hidden'         => array(
                     'type'              => 'string',
                     'description'       => __( 'Cost icon.', 'mainwp' ),
                     'sanitize_callback' => 'sanitize_text_field',
-                    'validate_callback' => 'rest_validatze_request_arg',
+                    'validate_callback' => 'rest_validate_request_arg',
                     'context'           => array( 'view', 'edit' ),
                 ),
-                'cost_color'     => array(
+                'product_color'       => array(
                     'type'              => 'string',
                     'description'       => __( 'Cost color.', 'mainwp' ),
                     'sanitize_callback' => 'sanitize_text_field',
-                    'validate_callback' => 'rest_validatze_request_arg',
+                    'validate_callback' => 'rest_validate_request_arg',
                     'context'           => array( 'view', 'edit' ),
                 ),
-                'sites'          => array(
-                    'type'              => 'string',
+                // handle_rest_update_insert_item() requires one of these three to be an
+                // array of ids, so typing them as strings made every validated create fail.
+                'sites'               => array(
+                    'type'              => 'array',
                     'description'       => __( 'Sites IDs.', 'mainwp' ),
-                    'sanitize_callback' => 'sanitize_text_field',
-                    'validate_callback' => 'rest_validatze_request_arg',
+                    'items'             => array(
+                        'type' => 'integer',
+                    ),
+                    'sanitize_callback' => 'wp_parse_id_list',
+                    'validate_callback' => 'rest_validate_request_arg',
                     'context'           => array( 'view', 'edit' ),
                 ),
-                'groups'         => array(
-                    'type'              => 'string',
+                'groups'              => array(
+                    'type'              => 'array',
                     'description'       => __( 'Groups IDs.', 'mainwp' ),
-                    'sanitize_callback' => 'sanitize_text_field',
-                    'validate_callback' => 'rest_validatze_request_arg',
+                    'items'             => array(
+                        'type' => 'integer',
+                    ),
+                    'sanitize_callback' => 'wp_parse_id_list',
+                    'validate_callback' => 'rest_validate_request_arg',
                     'context'           => array( 'view', 'edit' ),
                 ),
-                'clients'        => array(
-                    'type'              => 'string',
+                'clients'             => array(
+                    'type'              => 'array',
                     'description'       => __( 'Clients IDs.', 'mainwp' ),
-                    'sanitize_callback' => 'sanitize_text_field',
-                    'validate_callback' => 'rest_validatze_request_arg',
+                    'items'             => array(
+                        'type' => 'integer',
+                    ),
+                    'sanitize_callback' => 'wp_parse_id_list',
+                    'validate_callback' => 'rest_validate_request_arg',
                     'context'           => array( 'view', 'edit' ),
                 ),
-                'note'           => array(
+                'note'                => array(
                     'type'              => 'string',
                     'description'       => __( 'Note.', 'mainwp' ),
                     'sanitize_callback' => 'sanitize_text_field',
-                    'validate_callback' => 'rest_validatze_request_arg',
+                    'validate_callback' => 'rest_validate_request_arg',
                     'context'           => array( 'view', 'edit' ),
                 ),
             ),

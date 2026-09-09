@@ -112,7 +112,9 @@ class Connector_Installer extends Log_Connector {
 
         $logs_args = array();
 
-        $action = $pAction;
+        $action   = $pAction;
+        $duration = 0;
+        $created  = 0;
 
         $args = array();
 
@@ -148,6 +150,13 @@ class Connector_Installer extends Log_Connector {
             $message = '%1$s';
 
         } elseif ( 'updated' === $action && ( in_array( $type, array( 'plugin', 'theme', 'trans' ) ) ) ) {
+            if ( isset( $data['duration'] ) ) {
+                $duration = $data['duration'];
+            }
+
+            if ( isset( $data['created'] ) ) {
+                $created = $data['created'];
+            }
 
             $updated_data = isset( $data['updated_data'] ) ? $data['updated_data'] : array();
 
@@ -201,6 +210,14 @@ class Connector_Installer extends Log_Connector {
         $count_bulk = count( $logs_args );
         foreach ( $logs_args as $args ) {
             $args['duration_bulk'] = $count_bulk;
+
+            if ( ! empty( $duration ) ) {
+                $args['duration'] = $duration;
+            }
+
+            if ( ! empty( $created ) ) {
+                $args['created'] = $created;
+            }
 
             $state = 1;
             if ( isset( $args['extra_info'] ) && is_array( $args['extra_info'] ) ) {

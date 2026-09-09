@@ -41,6 +41,8 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     const EXTENSION_UPDATES_CHECK_LOG_PRIORITY = 20260306;
     const EXECUTION_SYNC_LOG_PRIORITY          = 20260316;
     const EXECUTION_SYNC_DETAILS_LOG_PRIORITY  = 20260323;
+    const AUTO_UPDATES_LOG_PRIORITY            = 20260707;
+
 
     const DISABLED = - 1;
     const LOG      = 0;
@@ -386,6 +388,9 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     case 'extension-updates-check':
                         $this->log_action( '[Extension Updates Check] :: ' . $text, static::EXTENSION_UPDATES_CHECK_LOG_PRIORITY, $color );
                         break;
+                    case 'auto-updates':
+                        $this->log_action( '[Auto Updates] :: ' . $text, static::AUTO_UPDATES_LOG_PRIORITY );
+                        break;
                     default:
                         break;
                 }
@@ -729,13 +734,27 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @return mixed $data filtered data.
      */
     public function prepare_log_info( $data ) {
-        $patterns[0]    = '/user=([^\&]+)\&/';
-        $replacement[0] = 'user=xxxxxx&';
-        $patterns[1]    = '/alt_user=([^\&]+)\&/';
-        $replacement[1] = 'alt_user=xxxxxx&';
-        $patterns[2]    = '/\&server=([^\&]+)\&/';
-        $replacement[2] = '&server=xxxxxx&';
-        $data           = preg_replace( $patterns, $replacement, $data );
+        $patterns[]    = '/user=([^\&]+)\&/';
+        $replacement[] = 'user=xxxxxx&';
+        $patterns[]    = '/alt_user=([^\&]+)\&/';
+        $replacement[] = 'alt_user=xxxxxx&';
+        $patterns[]    = '/\&server=([^\&]+)\&/';
+        $replacement[] = '&server=xxxxxx&';
+        $patterns[]    = '/(^|[?&])data_signature=[^&]*/';
+        $replacement[] = '$1data_signature=xxxxxx';
+        $patterns[]    = '/(^|[?&])mainwpsignature=[^&]*/';
+        $replacement[] = '$mainwpsignature=xxxxxx';
+        $patterns[]    = '/(^|[?&])nonce=[^&]*/';
+        $replacement[] = '$nonce=xxxxxx';
+        $patterns[]    = '/(^|[?&])req_id=[^&]*/';
+        $replacement[] = '$req_id=xxxxxx';
+        $patterns[]    = '/(^|[?&])mainwpsignature_adv=[^&]*/';
+        $replacement[] = '$mainwpsignature_adv=xxxxxx';
+        $patterns[]    = '/(^|[?&])wp_http_user=[^&]*/';
+        $replacement[] = '$wp_http_user=xxxxxx';
+        $patterns[]    = '/(^|[?&])wp_http_pass=[^&]*/';
+        $replacement[] = '$wp_http_pass=xxxxxx';
+        $data          = preg_replace( $patterns, $replacement, $data );
         return $data;
     }
 
@@ -1080,8 +1099,9 @@ class MainWP_Logger { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         while ( $rows && ( $row  = MainWP_DB::fetch_object( $rows ) ) ) {
             $line = $row->log_content;
-            if ( 120 * 1024 < strlen( $line ) ) {
-                $line = '[Data row too long]';
+            if ( strlen( $line ) > 120 * KB_IN_BYTES ) {
+                $size_kb = round( strlen( $line ) / KB_IN_BYTES, 1 );
+                $line    = sprintf( '[Data row too long] :: [size=%s KB]', $size_kb );
             }
 
             $time = gmdate( $this->logDateFormat, MainWP_Utility::get_timestamp( $row->log_timestamp ) );

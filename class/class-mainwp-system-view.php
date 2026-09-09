@@ -237,6 +237,11 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         mainwp_add_translation( $mainwpTranslations, 'is_activated_parent', esc_html__( '%1 could not be deleted. This theme is parent theme for the currently active theme.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'is_activated_theme', esc_html__( '%1 could not be deleted. This theme is active theme.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Change score changed. Click to review changes.', esc_html__( 'Change score changed. Click to review changes.', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'No sites to import', esc_html__( 'No sites to import', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'No valid data rows were found in the import file.', esc_html__( 'No valid data rows were found in the import file.', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Congratulations!', esc_html__( 'Congratulations!', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'sites imported successfully.', esc_html__( 'sites imported successfully.', 'mainwp' ) );
+
         return $mainwpTranslations;
     }
 
@@ -465,6 +470,8 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
 
         static::mainwp_tmpfile_check();
 
+        static::render_extension_update_failure_notice();
+
         static::render_notice_config_warning();
 
         static::render_notice_multi_sites();
@@ -486,6 +493,45 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         static::check_rating_notice();
 
         static::render_browser_extensions_notice();
+
+    }
+
+    /**
+     * Render the repeated Add-on update-check failure notice.
+     */
+    public static function render_extension_update_failure_notice() {
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_extensions' ) ) {
+            return;
+        }
+
+        $notice_id = MainWP_System_Handler::instance()->get_extension_update_failure_notice_id();
+        if ( '' === $notice_id ) {
+            return;
+        }
+
+        $is_extensions_page = isset( $_GET['page'] ) && 'Extensions' === sanitize_text_field( wp_unslash( $_GET['page'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        if ( ! $is_extensions_page && ! MainWP_Utility::show_mainwp_message( 'notice', $notice_id ) ) {
+            return;
+        }
+        ?>
+        <div class="ui yellow message mainwp-extension-update-failure-notice" style="margin-bottom:0;">
+            <div class="header"><?php esc_html_e( 'Unable to check for Add-on updates', 'mainwp' ); ?></div>
+            <?php if ( $is_extensions_page ) : ?>
+                <p><?php esc_html_e( 'MainWP is unable to check one or more Add-ons for updates. Retry the check below.', 'mainwp' ); ?></p>
+                <button
+                    type="button"
+                    id="mainwp-extension-update-check-retry"
+                    class="ui mini yellow button"
+                    data-failed-text="<?php esc_attr_e( 'The update check is still failing. Make sure your MainWP Dashboard can connect to mainwp.com, then try again.', 'mainwp' ); ?>"
+                ><?php esc_html_e( 'Retry update checks', 'mainwp' ); ?></button>
+                <span id="mainwp-extension-update-check-retry-status" class="ui small red text" aria-live="polite"></span>
+            <?php else : ?>
+                <p><?php esc_html_e( 'MainWP is unable to check one or more Add-ons for updates. Open the Add-ons page to retry the check.', 'mainwp' ); ?></p>
+                <a class="ui mini yellow button" href="<?php echo esc_url( admin_url( 'admin.php?page=Extensions' ) ); ?>"><?php esc_html_e( 'Review Add-ons', 'mainwp' ); ?></a>
+                <i class="close icon mainwp-notice-dismiss" notice-id="<?php echo esc_attr( $notice_id ); ?>"></i>
+            <?php endif; ?>
+        </div>
+        <?php
     }
 
     /**
@@ -1049,7 +1095,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             if ( isset( $_GET['page'] ) && 'ManageClients' === $_GET['page'] && isset( $_GET['client_id'] ) && ! empty( $_GET['client_id'] ) ) {
                 $class_string .= ' mainwp-individual-client-overview ';
             }
-            if ( isset( $_GET['page'] ) && ( 'CostTrackerSettings' === $_GET['page'] || 'ServerInformation' === $_GET['page'] || 'ServerInformationCron' === $_GET['page'] || 'ErrorLog' === $_GET['page'] || 'ActionLogs' === $_GET['page'] || 'PluginPrivacy' === $_GET['page'] || 'Settings' === $_GET['page'] || 'SettingsAdvanced' === $_GET['page'] || 'SettingsMonitors' === $_GET['page'] || 'SettingsEmail' === $_GET['page'] || 'MainWPTools' === $_GET['page'] || 'SettingsInsights' === $_GET['page'] || 'SettingsApiBackups' === $_GET['page'] || 'MonitoringSettings' === $_GET['page'] ) ) {
+            if ( isset( $_GET['page'] ) && ( 'CostTrackerSettings' === $_GET['page'] || 'ServerInformation' === $_GET['page'] || 'ServerInformationCron' === $_GET['page'] || 'ErrorLog' === $_GET['page'] || 'ActionLogs' === $_GET['page'] || 'PluginPrivacy' === $_GET['page'] || 'Settings' === $_GET['page'] || 'SettingsAdvanced' === $_GET['page'] || 'SettingsMonitors' === $_GET['page'] || 'SettingsEmail' === $_GET['page'] || 'PremiumUpdates' === $_GET['page'] || 'MainWPTools' === $_GET['page'] || 'SettingsInsights' === $_GET['page'] || 'SettingsApiBackups' === $_GET['page'] || 'MonitoringSettings' === $_GET['page'] ) ) {
                 $class_string .= ' mainwp-individual-site-view ';
             }
             if ( isset( $_GET['page'] ) && 'CostTrackerAdd' !== $_GET['page'] && ( ( isset( $_GET['id'] ) && ! empty( $_GET['id'] ) ) || ( isset( $_GET['dashboard'] ) && ! empty( $_GET['dashboard'] ) ) || ( isset( $_GET['updateid'] ) && ! empty( $_GET['updateid'] ) ) || ( isset( $_GET['monitor_wpid'] ) && ! empty( $_GET['monitor_wpid'] ) ) || ( isset( $_GET['emailsettingsid'] ) && ! empty( $_GET['emailsettingsid'] ) ) || ( isset( $_GET['scanid'] ) && ! empty( $_GET['scanid'] ) ) ) ) {

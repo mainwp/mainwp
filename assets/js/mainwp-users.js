@@ -422,6 +422,10 @@ let mainwp_import_users_next = function () {
     if (import_user_stop_by_user)
         return;
 
+    if (!jQuery('[id^="user_import_csv_line_"]').length) {
+        return;
+    }
+
     import_user_current_line_number++;
 
     if (import_user_current_line_number > import_user_total_import) {

@@ -305,6 +305,7 @@ class MainWP_Notification_Template { // phpcs:ignore Generic.Classes.OpeningBrac
     public static function get_template_name_by_notification_type( $type = '' ) {
         $types = array(
             'daily_digest'              => 'emails/mainwp-daily-digest-email.php',
+            'auto_updates'              => 'emails/mainwp-auto-updates-notification-email.php',
             'uptime'                    => 'emails/mainwp-uptime-monitoring-email.php',
             'site_health'               => 'emails/mainwp-site-health-monitoring-email.php',
             'http_check'                => 'emails/mainwp-after-update-http-check-email.php',

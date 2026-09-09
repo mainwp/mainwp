@@ -1196,7 +1196,10 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * @return mixed bool|results.
      */
     public function add_client_field( $field ) {
-        if ( ! empty( $field['field_name'] ) && isset( $field['client_id'] ) ) {
+        // "0" is a name the column stores, so the write is refused only for a name that is missing
+        // or empty, not for every name PHP reads as falsy. A name that is not a string is refused
+        // outright: false is set and is not '', and it would reach the column as an empty name.
+        if ( isset( $field['field_name'] ) && is_string( $field['field_name'] ) && '' !== $field['field_name'] && isset( $field['client_id'] ) ) {
             if ( $this->get_client_fields_by( 'field_name', $field['field_name'], $field['client_id'] ) ) { // field name existed for the client can not create.
                 return false;
             }
@@ -1218,7 +1221,9 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * @return mixed|false field.
      */
     public function update_client_field( $field_id, $field ) {
-        if ( $field_id && ! empty( $field['field_name'] ) ) {
+        // Same as the add above: a rename to "0" is a rename, not a name left out, and a name that
+        // is not a string would be written over the stored name as an empty one.
+        if ( $field_id && isset( $field['field_name'] ) && is_string( $field['field_name'] ) && '' !== $field['field_name'] ) {
             $current = $this->get_client_fields_by( 'field_id', $field_id );
             if ( $current && $this->wpdb->update( $this->table_name( 'wp_clients_fields' ), $field, array( 'field_id' => $field_id ) ) ) {
                 return $this->get_client_fields_by( 'field_id', $current->field_id );
@@ -1274,7 +1279,13 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      */
     public function get_client_fields_by( $by = 'field_id', $value = null, $client_id = 0 ) {
 
-        if ( empty( $by ) || empty( $value ) ) {
+        // "0" is a name the column stores, so a falsy test here would make a field named "0" unfindable
+        // and let a second one be created under the same name. Only the name lookup takes that
+        // exception: every other column keeps refusing a falsy value, so a client_id of 0 stays "no
+        // client" instead of matching every general field.
+        $missing = 'field_name' === $by ? ( null === $value || '' === $value ) : empty( $value );
+
+        if ( empty( $by ) || $missing ) {
             return null;
         }
 
@@ -1377,6 +1388,13 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         if ( isset( $params['search'] ) && ! empty( $params['search'] ) ) {
             $search_term = $this->escape( htmlspecialchars( $params['search'] ) );
             $where      .= ' AND clients_fields.field_name LIKE "%' . $search_term . '%"';
+        }
+
+        // Handle exact field name. The value is queried as it is stored, with no bracket stripping, so
+        // the column collation decides equality the same way the unique index does. An empty string
+        // filters on an empty name; pass null to leave the filter off.
+        if ( isset( $params['field_name_exact'] ) && is_string( $params['field_name_exact'] ) ) {
+            $where .= $this->wpdb->prepare( ' AND clients_fields.field_name = %s', $params['field_name_exact'] );
         }
 
         // Handle client id.

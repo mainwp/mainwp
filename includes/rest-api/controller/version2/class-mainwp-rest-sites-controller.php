@@ -370,7 +370,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                     'methods'             => WP_REST_Server::CREATABLE,
                     'callback'            => array( $this, 'create_item' ),
                     'permission_callback' => array( $this, 'get_rest_permissions_check' ),
-                    'args'                => $this->get_endpoint_args_for_item_schema( WP_REST_Server::EDITABLE ),
+                    'args'                => $this->get_add_site_args(),
                 ),
             )
         );
@@ -383,6 +383,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                     'methods'             => WP_REST_Server::EDITABLE,
                     'callback'            => array( $this, 'update_item' ),
                     'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                    'args'                => $this->get_edit_site_args(),
                 ),
             )
         );
@@ -1766,9 +1767,9 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         $params = array(
             'wpid'        => $website->id,
             'where_extra' => ' AND dismiss = 0 ',
-            'order'       => ! empty( $args['order'] ) ? sanitize_text_field( wp_unslash( $args['order'] ) ) : '',
-            'order_by'    => ! empty( $args['orderby'] ) ? sanitize_text_field( wp_unslash( $args['orderby'] ) ) : '',
-            'source'      => ! empty( $request['source'] ) ? sanitize_text_field( wp_unslash( $request['source'] ) ) : 'wpadmin',
+            'order'       => ! empty( $args['order'] ) ? sanitize_text_field( $args['order'] ) : '',
+            'order_by'    => ! empty( $args['orderby'] ) ? sanitize_text_field( $args['orderby'] ) : '',
+            'source'      => ! empty( $request['source'] ) ? sanitize_text_field( $request['source'] ) : 'wpadmin',
         );
 
         if ( ! empty( $args['paged'] ) && ! empty( $args['items_per_page'] ) ) {
@@ -1781,8 +1782,8 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             $params['offset']   = 0;
         }
 
-        $params['actions']            = ! empty( $request['actions'] ) ? sanitize_text_field( wp_unslash( $request['actions'] ) ) : '';
-        $params['contexts']           = ! empty( $request['contexts'] ) ? sanitize_text_field( wp_unslash( $request['contexts'] ) ) : '';
+        $params['actions']            = ! empty( $request['actions'] ) ? sanitize_text_field( $request['actions'] ) : '';
+        $params['contexts']           = ! empty( $request['contexts'] ) ? sanitize_text_field( $request['contexts'] ) : '';
         $params['total_count']        = ! empty( $request['total_count'] ) ? mainwp_string_to_bool( $request['total_count'] ) : false;
         $params['optimize_view']      = ! empty( $request['optimize_view'] ) ? mainwp_string_to_bool( $request['optimize_view'] ) : false;
         $params['optimize_with_meta'] = ! empty( $request['optimize_with_meta'] ) ? mainwp_string_to_bool( $request['optimize_with_meta'] ) : false;
@@ -2665,7 +2666,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                 'force_use_ipv4'         => array(
                     'type'    => 'string',
                     'default' => '',
-                    'context' => array( 'view' ),
+                    'context' => array( 'view', 'edit' ),
                 ),
                 'ssl_version'            => array(
                     'type'    => 'string',
@@ -2689,6 +2690,250 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
 
 
     /**
+     * Arguments registered by the add route.
+     *
+     * @return array
+     */
+    protected function get_add_site_args() {
+        return array_merge( $this->get_endpoint_args_for_item_schema( WP_REST_Server::EDITABLE ), $this->get_add_site_extra_args() );
+    }
+
+    /**
+     * Get the args a batch create item is validated against.
+     *
+     * The add route registers the editable schema args plus the add-only extras,
+     * so a batch create item has to be held to that same set.
+     *
+     * @return array
+     */
+    public function get_batch_create_args() {
+        return $this->get_add_site_args();
+    }
+
+    /**
+     * Get the args a batch update item is validated against.
+     *
+     * @return array
+     */
+    public function get_batch_update_args() {
+        $args       = $this->get_edit_site_args();
+        $args['id'] = $this->get_batch_item_id_arg();
+        return $args;
+    }
+
+    /**
+     * Arguments registered by the edit route.
+     *
+     * The schema's id arg is the collection filter (wp_parse_id_list) and the edit
+     * route identifies the site by its URL segment, so id is dropped here. Schema
+     * defaults are dropped too: core injects arg defaults as request params, and
+     * prepare_object_for_update() treats every present field as a change, so a
+     * name-only edit would otherwise also write suspended = 0 and the update flags.
+     *
+     * @return array
+     */
+    protected function get_edit_site_args() {
+        $args = $this->get_endpoint_args_for_item_schema( WP_REST_Server::EDITABLE );
+        unset( $args['id'] );
+        foreach ( $args as &$arg ) {
+            unset( $arg['default'] );
+        }
+        unset( $arg );
+        return array_merge( $args, $this->get_edit_site_extra_args() );
+    }
+
+    /**
+     * Extra arguments accepted by the edit route.
+     *
+     * These are the documented update-only input spellings that prepare_object_for_update()
+     * reads. They are absent from the item schema, so core never type-checked them.
+     *
+     * @return array
+     */
+    protected function get_edit_site_extra_args() {
+        $args = array(
+            'adminname'             => array(
+                'description' => __( 'Site administrator username.', 'mainwp' ),
+                'type'        => 'string',
+            ),
+            'admin'                 => array(
+                'description' => __( 'Site administrator username, accepted alias of adminname.', 'mainwp' ),
+                'type'        => 'string',
+            ),
+            'uniqueid'              => array(
+                'description' => __( 'Unique security ID.', 'mainwp' ),
+                'type'        => 'string',
+            ),
+            'groupids'              => array(
+                'description' => __( 'Comma-separated tag IDs.', 'mainwp' ),
+                'type'        => 'string',
+            ),
+            'protocol'              => array(
+                'description' => __( 'Site protocol.', 'mainwp' ),
+                'type'        => 'string',
+                'enum'        => array( 'http', 'https' ),
+            ),
+            'sslversion'            => array(
+                'description' => __( 'SSL version.', 'mainwp' ),
+                'type'        => 'string',
+            ),
+            'disablehealthchecking' => array(
+                'description' => __( 'Disable health check.', 'mainwp' ),
+                'type'        => 'integer',
+                'enum'        => array( 0, 1 ),
+            ),
+            'healththreshold'       => array(
+                'description' => __( 'Health threshold.', 'mainwp' ),
+                'type'        => 'integer',
+            ),
+            'backup_before_upgrade' => array(
+                'description' => __( 'Backup before upgrade.', 'mainwp' ),
+                'type'        => 'integer',
+                'enum'        => array( 0, 1 ),
+            ),
+            'ignore_core_updates'   => array(
+                'description' => __( 'Ignore WordPress core updates.', 'mainwp' ),
+                'type'        => 'integer',
+                'enum'        => array( 0, 1 ),
+            ),
+            'ignore_plugin_updates' => array(
+                'description' => __( 'Ignore plugin updates.', 'mainwp' ),
+                'type'        => 'integer',
+                'enum'        => array( 0, 1 ),
+            ),
+            'ignore_theme_updates'  => array(
+                'description' => __( 'Ignore theme updates.', 'mainwp' ),
+                'type'        => 'integer',
+                'enum'        => array( 0, 1 ),
+            ),
+            'monitoring_emails'     => array(
+                'description' => __( 'Monitoring notification email addresses.', 'mainwp' ),
+                'type'        => 'string',
+            ),
+            'force_use_ipv4'        => $this->get_force_use_ipv4_arg(),
+        );
+
+        // The item schema types the is_ignore* columns as view strings, and the DB layer
+        // tests them for truthiness, so left as strings "false" would enable ignoring.
+        $aliases = array(
+            'is_ignoreCoreUpdates'   => 'ignore_core_updates',
+            'is_ignorePluginUpdates' => 'ignore_plugin_updates',
+            'is_ignoreThemeUpdates'  => 'ignore_theme_updates',
+        );
+        foreach ( $aliases as $alias => $documented ) {
+            $args[ $alias ] = array(
+                'description' => $args[ $documented ]['description'],
+                'type'        => 'integer',
+                'enum'        => array( 0, 1 ),
+            );
+        }
+
+        return $args;
+    }
+
+    /**
+     * Extra arguments accepted by the add route.
+     *
+     * These are consumed by prepare_object_for_database() but absent from
+     * the item schema, so core never type-checked them and an array value
+     * reached the string sanitizers and fataled the request. Registering them
+     * here types them without touching the published item schema.
+     *
+     * @return array
+     */
+    protected function get_add_site_extra_args() {
+        return array(
+            'admin'          => array(
+                'description' => __( 'Site administrator username.', 'mainwp' ),
+                'type'        => 'string',
+            ),
+            'adminpassword'  => array(
+                'description' => __( 'Site administrator password.', 'mainwp' ),
+                'type'        => 'string',
+            ),
+            'uniqueid'       => array(
+                'description' => __( 'Unique security ID.', 'mainwp' ),
+                'type'        => 'string',
+            ),
+            'groupids'       => array(
+                'description' => __( 'Comma-separated tag IDs.', 'mainwp' ),
+                'type'        => 'string',
+            ),
+            'ssl_verify'     => array(
+                'description'       => __( 'Verify the SSL certificate of the child site.', 'mainwp' ),
+                'type'              => 'boolean',
+                // rest_parse_request_arg validates before it sanitizes, so an explicit
+                // JSON null is a 400 instead of being coerced to false past the validator.
+                'sanitize_callback' => 'rest_parse_request_arg',
+                'validate_callback' => 'rest_validate_request_arg',
+            ),
+            'force_use_ipv4' => $this->get_force_use_ipv4_arg(),
+        );
+    }
+
+    /**
+     * The force_use_ipv4 argument the two input routes accept.
+     *
+     * The item schema types it as a view string, so a JSON boolean was refused even
+     * though OpenAPI documents one. The type order decides how core coerces the value:
+     * true / "1" / "0" match boolean first, while 2 and "2" fall through to integer and
+     * keep the "use the global setting" value the DB layer stores.
+     *
+     * @return array
+     */
+    protected function get_force_use_ipv4_arg() {
+        return array(
+            'description'       => __( 'Force IPv4: 0 to disable, 1 to force IPv4, 2 to use the global setting.', 'mainwp' ),
+            'type'              => array( 'boolean', 'integer', 'string' ),
+            // The DB layer only clamps values above 2, so without the enum -1 would be
+            // stored as sent and "yes" would silently become 0. Core compares the enum
+            // against the coerced value, so "1" and "true" still match true.
+            'enum'              => array( false, true, 2 ),
+            // Both callbacks re-word an enum rejection: sanitize_params() runs the
+            // sanitizer over every parameter bag while has_valid_params() only checks the
+            // highest-priority one, so a valid body value alongside an invalid query value
+            // is refused by the sanitizer and would otherwise carry core's wording.
+            // rest_validate_request_arg() does not call validate_callback itself, so
+            // neither closure recurses.
+            'validate_callback' => function ( $value, $request, $param ) {
+                return $this->force_use_ipv4_enum_error( rest_validate_request_arg( $value, $request, $param ), $param );
+            },
+            'sanitize_callback' => function ( $value, $request, $param ) {
+                $valid = $this->force_use_ipv4_enum_error( rest_validate_request_arg( $value, $request, $param ), $param );
+                if ( is_wp_error( $valid ) ) {
+                    return $valid;
+                }
+
+                return rest_sanitize_request_arg( $value, $request, $param );
+            },
+        );
+    }
+
+    /**
+     * Re-word a force_use_ipv4 enum rejection, passing anything else through.
+     *
+     * Core lists the enum with %l, which prints its false member as an empty string
+     * ("is not one of , 1, and 2"), so the rejection is worded in the values the route
+     * documents instead.
+     *
+     * @param true|WP_Error $result Result of validating the value.
+     * @param string        $param  Parameter name.
+     * @return true|WP_Error
+     */
+    private function force_use_ipv4_enum_error( $result, $param ) {
+        if ( is_wp_error( $result ) && 'rest_not_in_enum' === $result->get_error_code() ) {
+            return new WP_Error(
+                'rest_not_in_enum',
+                /* translators: %s: parameter name */
+                sprintf( __( '%s is not one of 0, 1, or 2.', 'mainwp' ), $param ),
+                array( 'status' => 400 )
+            );
+        }
+
+        return $result;
+    }
+
+    /**
      * Prepare a single order for create or update.
      *
      * @throws MainWP_Rest_Data_Exception When fails to set any item.
@@ -2696,18 +2941,30 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      * @return array
      */
     protected function prepare_object_for_database( $request ) {
-        $item_fields                   = array();
-        $item_fields['url']            = isset( $request['url'] ) ? sanitize_text_field( wp_unslash( $request['url'] ) ) : '';
-        $item_fields['name']           = isset( $request['name'] ) ? sanitize_text_field( wp_unslash( $request['name'] ) ) : '';
-        $item_fields['wpadmin']        = isset( $request['admin'] ) ? sanitize_text_field( wp_unslash( $request['admin'] ) ) : '';
-        $item_fields['adminpwd']       = isset( $request['adminpassword'] ) ? wp_unslash( $request['adminpassword'] ) : '';
-        $item_fields['unique_id']      = isset( $request['uniqueid'] ) ? sanitize_text_field( wp_unslash( $request['uniqueid'] ) ) : '';
-        $item_fields['ssl_verify']     = empty( $request['ssl_verify'] ) ? false : intval( $request['ssl_verify'] );
-        $item_fields['force_use_ipv4'] = isset( $request['force_use_ipv4'] ) && mainwp_string_to_bool( $request['force_use_ipv4'] ) ? 1 : 0;
-        $item_fields['http_user']      = isset( $request['http_user'] ) ? sanitize_text_field( wp_unslash( $request['http_user'] ) ) : '';
-        $item_fields['http_pass']      = isset( $request['http_pass'] ) ? wp_unslash( $request['http_pass'] ) : '';
-        $item_fields['groupids']       = isset( $request['groupids'] ) && ! empty( $request['groupids'] ) ? explode( ',', sanitize_text_field( wp_unslash( $request['groupids'] ) ) ) : array();
-        $item_fields['clientid']       = isset( $request['client_id'] ) && ! empty( $request['client_id'] ) ? intval( $request['client_id'] ) : 0;
+        $item_fields               = array();
+        $item_fields['url']        = isset( $request['url'] ) ? sanitize_text_field( $request['url'] ) : '';
+        $item_fields['name']       = isset( $request['name'] ) ? sanitize_text_field( $request['name'] ) : '';
+        $item_fields['wpadmin']    = isset( $request['admin'] ) ? sanitize_text_field( $request['admin'] ) : '';
+        $item_fields['adminpwd']   = isset( $request['adminpassword'] ) ? (string) $request['adminpassword'] : ''; // Cast only; sanitize_text_field() strips characters a password may legitimately hold.
+        $item_fields['unique_id']  = sanitize_text_field( $request['uniqueid'] ?? $request['uniqueId'] ?? '' ); // uniqueid is the documented input spelling, uniqueId is what the item schema registers on this route.
+        $item_fields['ssl_verify'] = empty( $request['ssl_verify'] ) ? false : intval( $request['ssl_verify'] );
+        // Omitted stays null: fetch_url() then reads the global mainwp_forceUseIPv4 option
+        // for the handshake, the same as the UI and the v1 add handler send, and
+        // add_website() leaves the column at its default.
+        $item_fields['force_use_ipv4'] = null;
+        if ( isset( $request['force_use_ipv4'] ) ) {
+            // The add route accepts 2 (use the global setting) and mainwp_string_to_bool()
+            // would collapse it to 0, so keep it before the boolean conversion.
+            if ( 2 === (int) $request['force_use_ipv4'] ) {
+                $item_fields['force_use_ipv4'] = 2;
+            } else {
+                $item_fields['force_use_ipv4'] = mainwp_string_to_bool( $request['force_use_ipv4'] ) ? 1 : 0;
+            }
+        }
+        $item_fields['http_user'] = isset( $request['http_user'] ) ? sanitize_text_field( $request['http_user'] ) : '';
+        $item_fields['http_pass'] = isset( $request['http_pass'] ) ? (string) $request['http_pass'] : ''; // Cast only, same reason as adminpwd.
+        $item_fields['groupids']  = isset( $request['groupids'] ) && ! empty( $request['groupids'] ) ? explode( ',', sanitize_text_field( $request['groupids'] ) ) : array();
+        $item_fields['clientid']  = isset( $request['client_id'] ) && ! empty( $request['client_id'] ) ? intval( $request['client_id'] ) : 0;
 
         /**
          * Filters an object before it is inserted via the REST API.
@@ -2750,13 +3007,23 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         );
 
         $data = array();
-        foreach ( $map_fields_update as $field ) {
+        // The value side is the documented input spelling; the item-schema spelling on
+        // the key side is accepted as a fallback, the same way prepare_object_for_database()
+        // accepts uniqueId.
+        foreach ( $map_fields_update as $schema_field => $field ) {
             if ( isset( $request[ $field ] ) ) {
                 $data[ $field ] = $request[ $field ];
+            } elseif ( isset( $request[ $schema_field ] ) ) {
+                $data[ $field ] = $request[ $schema_field ];
             }
         }
 
-        $data['client_id'] = isset( $request['client_id'] ) && ! empty( $request['client_id'] ) ? intval( $request['client_id'] ) : 0;
+        // rest_api_update_website() writes client_id whenever the key is set, so an
+        // unconditional entry here would unassign the client on every name-only edit.
+        // A sent 0 stays the explicit unassign.
+        if ( isset( $request['client_id'] ) ) {
+            $data['client_id'] = intval( $request['client_id'] );
+        }
 
         /**
          * Filters an object before it is inserted via the REST API.

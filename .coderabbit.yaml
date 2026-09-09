@@ -67,6 +67,9 @@ reviews:
         - Code with // phpcs:ignore comments has been reviewed
 
     # Security-critical: Database operations
+    - path: "class/class-mainwp-install.php"
+      instructions: |
+        [id: nosonar-no-ip-on-version-compare] `// NOSONAR - no ip.` on version_compare() lines targets SonarQube S1313 (dotted version strings misread as IPs); it is not a PHPCS suppression, has no sniff to name, and matches the file's sibling guards. Do not ask for it to be named or removed.
     - path: "class/class-mainwp-db*.php"
       instructions: |
         DATABASE SECURITY REVIEW:

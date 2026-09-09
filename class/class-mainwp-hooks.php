@@ -222,6 +222,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
         add_filter( 'mainwp_encrypt_key_value', array( &$this, 'hook_encrypt_key_value' ), 10, 4 );
         add_filter( 'mainwp_decrypt_key_value', array( &$this, 'hook_decrypt_key_value' ), 10, 3 );
         add_action( 'mainwp_delete_key_file', array( &$this, 'hook_delete_key_file' ), 10, 1 );
+        add_filter( 'mainwp_delete_key_file_result', array( &$this, 'hook_delete_key_file_result' ), 10, 2 );
         add_filter( 'mainwp_verify_ping_nonce', array( MainWP_Utility::class, 'hook_verify_ping_nonce' ), 10, 3 );
         add_action( 'mainwp_fetch_url_authed', array( MainWP_Actions_Handler::instance(), 'hook_mainwp_fetch_url_authed' ), 10, 5 );
 
@@ -871,8 +872,8 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      * Method hook_get_all_posts()
      * Hook to get posts from sites.
      *
-     * @param object $sites     Child Sites object.
-     * @param array  $post_data with values: keyword, dtsstart, dtsstop, status, maxRecords, post_type.
+     * @param object|array $sites     Child Sites object.
+     * @param array        $post_data with values: keyword, dtsstart, dtsstop, status, maxRecords, post_type.
      *
      * @return \stdClass $output All posts data array.
      *
@@ -882,7 +883,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      * @uses \MainWP\Dashboard\MainWP_Utility::map_site()
      */
-    public function hook_get_all_posts( $sites, $post_data = array() ) {
+    public function hook_get_all_posts( $sites, $post_data = array() ) {  // phpcs:ignore -- NOSONAR - complex.
 
         $dbwebsites = array();
 
@@ -890,9 +891,19 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
         $data[] = 'verify_certificate';
 
         if ( '' !== $sites ) {
-            foreach ( $sites as $v ) {
-                if ( MainWP_Utility::ctype_digit( $v ) ) {
-                    $website = MainWP_DB::instance()->get_website_by_id( $v );
+            foreach ( $sites as $site ) {
+                // Keep accepting the legacy list of scalar site IDs as well
+                // as the mapped website objects used by REST v2.
+                if ( is_object( $site ) ) {
+                    $site_id = isset( $site->id ) ? $site->id : '';
+                } elseif ( is_array( $site ) ) {
+                    $site_id = isset( $site['id'] ) ? $site['id'] : '';
+                } else {
+                    $site_id = $site;
+                }
+
+                if ( MainWP_Utility::ctype_digit( $site_id ) ) {
+                    $website = MainWP_DB::instance()->get_website_by_id( $site_id );
                     if ( empty( $website->sync_errors ) && ! MainWP_System_Utility::is_suspended_site( $website ) ) {
                         $dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data );
                     }
@@ -1761,7 +1772,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
     /**
      * Method hook_uptime_preload_data().
      *
-     * @param array  $websites Websites array.
+     * @param array $websites Websites array.
      *
      * @return void
      */
@@ -1992,6 +2003,19 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
     }
 
     /**
+     * Delete one exact key file and return only read-verified truth.
+     *
+     * @param mixed  $input_value Filter-chain initial value.
+     * @param string $key_file    Key file name.
+     *
+     * @return bool Whether exact absence was proved.
+     */
+    public function hook_delete_key_file_result( $input_value, $key_file ) {
+        unset( $input_value );
+        return MainWP_Keys_Manager::instance()->delete_key_file_with_result( $key_file );
+    }
+
+    /**
      * Method hook_get_lookup_items().
      *
      * @param bool   $false_val false value.
@@ -2081,7 +2105,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
     /**
      * Method hook_get_primary_backup_method.
      *
-     * @param mixed $inpval Hook input value.
+     * @param mixed     $inpval Hook input value.
      * @param int|false $siteid Optional Site ID; false for global method.
      *
      * @since 6.0.10.
@@ -2104,5 +2128,4 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
         }
         return $primaryBackup;
     }
-
 }

@@ -860,7 +860,7 @@ KEY idx_wpid_issub (wpid, issub)";
                 array( 'monitor_id' => $id )
             );
 
-            $output['saved'] = $saved ? true : false;
+            $output['saved'] = $saved;
 
             if ( ! empty( $lock_name ) ) {
                 $this->wpdb->get_var(

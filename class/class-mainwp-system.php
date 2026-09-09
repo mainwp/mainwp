@@ -64,7 +64,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * @var string The plugin current update version.
      */
-    private $check_ver_update = '0.0.6';
+    private $check_ver_update = '0.0.7';
 
     /**
      * Private variable to hold the plugin slug (mainwp/mainwp.php)
@@ -826,7 +826,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             update_option( 'mainwp_extensions_all_activation_cached', '' );
         }
 
-        if ( version_compare( $saved_ver, '0.0.6', '<' ) ) {
+        if ( version_compare( $saved_ver, '0.0.7', '<' ) ) {
             $this->handle_admin_perform_update( 'attempted_repair_primary_monitors' ); // init attempted repair.
         }
 

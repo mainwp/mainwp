@@ -444,6 +444,22 @@ class MainWP_Premium_Update_Registry { // phpcs:ignore Generic.Classes.OpeningBr
     }
 
     /**
+     * Read the canonical identifier from a list or keyed synced inventory.
+     *
+     * @param int|string $inventory_key Inventory array key.
+     * @param mixed      $info          Installed product data.
+     * @return string Valid identifier, or an empty string for malformed data.
+     */
+    public static function get_inventory_identifier( $inventory_key, $info ) {
+        if ( ! is_array( $info ) ) {
+            return '';
+        }
+        $identifier = is_string( $inventory_key ) && '' !== $inventory_key ? $inventory_key : ( isset( $info['slug'] ) && is_string( $info['slug'] ) ? $info['slug'] : '' );
+        $identifier = trim( $identifier );
+        return '' !== $identifier && preg_match( '/^[A-Za-z0-9\-_.\/]+$/', $identifier ) ? $identifier : '';
+    }
+
+    /**
      * User-defined custom identifiers (settings page).
      *
      * @return array[] Items: array( 'type' => 'plugin'|'theme', 'id' => string ).

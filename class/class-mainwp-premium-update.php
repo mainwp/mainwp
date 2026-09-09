@@ -87,8 +87,9 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             $prefixes = MainWP_Premium_Update_Registry::get_prefixes( 'plugin', 'detect' );
 
             if ( ( is_array( $premiums ) && ! empty( $premiums ) ) || ! empty( $prefixes ) ) {
-                foreach ( $updates as $info ) {
-                    if ( isset( $info['slug'] ) && MainWP_Premium_Update_Registry::slug_matches( $info['slug'], is_array( $premiums ) ? $premiums : array(), $prefixes ) ) {
+                foreach ( $updates as $inventory_key => $info ) {
+                    $identifier = MainWP_Premium_Update_Registry::get_inventory_identifier( $inventory_key, $info );
+                    if ( '' !== $identifier && MainWP_Premium_Update_Registry::slug_matches( $identifier, is_array( $premiums ) ? $premiums : array(), $prefixes ) ) {
                         return true;
                     }
                 }
@@ -109,8 +110,9 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             $prefixes = MainWP_Premium_Update_Registry::get_prefixes( 'theme', 'detect' );
 
             if ( ( is_array( $premiums ) && ! empty( $premiums ) ) || ! empty( $prefixes ) ) {
-                foreach ( $updates as $info ) {
-                    if ( ! isset( $info['slug'] ) ) {
+                foreach ( $updates as $inventory_key => $info ) {
+                    $identifier = MainWP_Premium_Update_Registry::get_inventory_identifier( $inventory_key, $info );
+                    if ( '' === $identifier ) {
                         continue;
                     }
                     // A theme updater only runs while its theme (or a child of it) is active,
@@ -121,7 +123,7 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                         && empty( $info['active'] ) && empty( $info['parent_active'] ) ) {
                         continue;
                     }
-                    if ( MainWP_Premium_Update_Registry::slug_matches( $info['slug'], is_array( $premiums ) ? $premiums : array(), $prefixes ) ) {
+                    if ( MainWP_Premium_Update_Registry::slug_matches( $identifier, is_array( $premiums ) ? $premiums : array(), $prefixes ) ) {
                         return true;
                     }
                 }

@@ -378,6 +378,54 @@ class Test_Premium_Update_Registry extends WP_UnitTestCase {
     }
 
     /**
+     * A suggestion saved from keyed inventory must match detection and requests.
+     */
+    public function test_saved_keyed_suggestions_match_premium_updates() {
+        $inventories = array(
+            array(
+                'id'     => 12,
+                'plugin' => array(
+                    'example-pro/example.php' => array( 'Name' => 'Example Pro' ),
+                ),
+                'theme'  => array(
+                    'example-theme' => array( 'Name' => 'Example Theme', 'parent_active' => 1 ),
+                ),
+            ),
+        );
+        $suggestions = MainWP_Settings_Premium_Updates::get_identifier_suggestions( $inventories );
+        $this->assertCount( 2, $suggestions );
+        $custom = array();
+        foreach ( $suggestions as $suggestion ) {
+            $custom[] = array( 'type' => $suggestion['type'], 'id' => $suggestion['identifier'] );
+        }
+        MainWP_Premium_Update_Registry::save_custom_entries( $custom );
+        foreach ( $suggestions as $suggestion ) {
+            $this->assertTrue( MainWP_Premium_Update::check_premium_updates( $inventories[0][ $suggestion['type'] ], $suggestion['type'] ) );
+            $this->assertTrue( MainWP_Premium_Update::check_request_update_premium( $suggestion['identifier'], $suggestion['type'] ) );
+        }
+        $this->assertFalse( MainWP_Premium_Update::check_premium_updates( array( 'example-theme' => array( 'active' => 0, 'parent_active' => 0 ) ), 'theme' ) );
+        $this->assertSame( 'example-pro/example.php', MainWP_Premium_Update_Registry::get_inventory_identifier( 'example-pro/example.php', array( 'slug' => 'conflicting/slug.php' ) ) );
+        $this->assertSame( '', MainWP_Premium_Update_Registry::get_inventory_identifier( 0, 'invalid-data' ) );
+        $this->assertSame( '', MainWP_Premium_Update_Registry::get_inventory_identifier( 'bad key', array( 'slug' => 'valid/slug.php' ) ) );
+    }
+
+    /**
+     * Inherited public methods must not dispatch to a child's private helpers.
+     */
+    public function test_suggestions_do_not_dispatch_to_subclass_private_helpers() {
+        $settings = new class() extends MainWP_Settings_Premium_Updates {
+            private static function get_identifier_exclusion_rules() {
+                throw new \RuntimeException( 'The subclass private helper must not run.' );
+            }
+        };
+        $suggestions = $settings::get_identifier_suggestions(
+            array( array( 'plugin' => array( array( 'slug' => 'example-pro/example.php', 'name' => '', 'Name' => '<b>Example Pro</b>' ) ) ) )
+        );
+        $this->assertCount( 1, $suggestions );
+        $this->assertSame( 'Example Pro', $suggestions[0]['name'] );
+    }
+
+    /**
      * Envelope parsing: valid envelope decodes; garbage and empty bodies yield null.
      */
     public function test_parse_mainwp_envelope() {

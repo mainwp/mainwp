@@ -519,7 +519,7 @@ class MainWP_Settings_Premium_Updates { // phpcs:ignore Generic.Classes.OpeningB
      */
     public static function get_identifier_suggestions( $site_inventories = null ) { // phpcs:ignore -- NOSONAR - inventory normalization and aggregation.
         $catalog = array();
-        $rules   = static::get_identifier_exclusion_rules();
+        $rules   = self::get_identifier_exclusion_rules();
         if ( null === $site_inventories ) {
             $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
             while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) { // phpcs:ignore Generic.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition -- iterating DB result.
@@ -527,7 +527,7 @@ class MainWP_Settings_Premium_Updates { // phpcs:ignore Generic.Classes.OpeningB
                     'plugin' => ! empty( $website->plugins ) ? json_decode( $website->plugins, true ) : array(),
                     'theme'  => ! empty( $website->themes ) ? json_decode( $website->themes, true ) : array(),
                 );
-                static::collect_identifier_suggestions( $catalog, $inventories, (string) $website->id, $rules );
+                self::collect_identifier_suggestions( $catalog, $inventories, (string) $website->id, $rules );
             }
             MainWP_DB::free_result( $websites );
         } else {
@@ -539,7 +539,7 @@ class MainWP_Settings_Premium_Updates { // phpcs:ignore Generic.Classes.OpeningB
                     continue;
                 }
                 $site_id = isset( $inventories['id'] ) ? (string) $inventories['id'] : 'site-' . $index;
-                static::collect_identifier_suggestions( $catalog, $inventories, $site_id, $rules );
+                self::collect_identifier_suggestions( $catalog, $inventories, $site_id, $rules );
             }
         }
 
@@ -619,28 +619,16 @@ class MainWP_Settings_Premium_Updates { // phpcs:ignore Generic.Classes.OpeningB
                     continue;
                 }
 
-                $identifier = is_string( $inventory_key ) && '' !== $inventory_key ? $inventory_key : ( isset( $info['slug'] ) && is_string( $info['slug'] ) ? $info['slug'] : '' );
-                $identifier = trim( $identifier );
-                if ( '' === $identifier || ! preg_match( '/^[A-Za-z0-9\-_.\/]+$/', $identifier ) ) {
+                $identifier = MainWP_Premium_Update_Registry::get_inventory_identifier( $inventory_key, $info );
+                if ( '' === $identifier ) {
                     continue;
                 }
                 $normalized_identifier = strtolower( $identifier );
-                if ( isset( $rules[ $type ]['exact'][ $normalized_identifier ] ) || static::identifier_matches_prefix( $normalized_identifier, $rules[ $type ]['prefixes'] ) ) {
+                if ( isset( $rules[ $type ]['exact'][ $normalized_identifier ] ) || self::identifier_matches_prefix( $normalized_identifier, $rules[ $type ]['prefixes'] ) ) {
                     continue;
                 }
 
-                $name = '';
-                foreach ( array( 'name', 'Name', 'title' ) as $name_key ) {
-                    if ( isset( $info[ $name_key ] ) && is_scalar( $info[ $name_key ] ) ) {
-                        $name = sanitize_text_field( wp_strip_all_tags( (string) $info[ $name_key ] ) );
-                        if ( '' !== $name ) {
-                            break;
-                        }
-                    }
-                }
-                if ( '' === $name ) {
-                    $name = $identifier;
-                }
+                $name = self::get_inventory_name( $info, $identifier );
 
                 $catalog_key = $type . '|' . $normalized_identifier;
                 if ( ! isset( $catalog[ $catalog_key ] ) ) {
@@ -656,6 +644,26 @@ class MainWP_Settings_Premium_Updates { // phpcs:ignore Generic.Classes.OpeningB
                 $catalog[ $catalog_key ]['site_ids'][ $site_id ] = true;
             }
         }
+    }
+
+    /**
+     * Resolve a synced product name, falling back to its identifier.
+     *
+     * @param array  $info       Installed product data.
+     * @param string $identifier Canonical product identifier.
+     * @return string Display name.
+     */
+    private static function get_inventory_name( $info, $identifier ) {
+        foreach ( array( 'name', 'Name', 'title' ) as $name_key ) {
+            if ( ! isset( $info[ $name_key ] ) || ! is_scalar( $info[ $name_key ] ) ) {
+                continue;
+            }
+            $name = sanitize_text_field( wp_strip_all_tags( (string) $info[ $name_key ] ) );
+            if ( '' !== $name ) {
+                return $name;
+            }
+        }
+        return $identifier;
     }
 
     /**
@@ -734,19 +742,20 @@ class MainWP_Settings_Premium_Updates { // phpcs:ignore Generic.Classes.OpeningB
                 }
                 $site_matched          = false;
                 $site_has_active_match = false;
-                foreach ( $items as $info ) {
-                    if ( ! isset( $info['slug'] ) || ! is_string( $info['slug'] ) ) {
+                foreach ( $items as $inventory_key => $info ) {
+                    $identifier = MainWP_Premium_Update_Registry::get_inventory_identifier( $inventory_key, $info );
+                    if ( '' === $identifier ) {
                         continue;
                     }
                     $matched = 'prefix' === $tracker['match']
-                        ? 0 === strncasecmp( $info['slug'], $tracker['id'], strlen( $tracker['id'] ) )
-                        : 0 === strcasecmp( $info['slug'], $tracker['id'] );
+                        ? 0 === strncasecmp( $identifier, $tracker['id'], strlen( $tracker['id'] ) )
+                        : 0 === strcasecmp( $identifier, $tracker['id'] );
                     if ( ! $matched ) {
                         continue;
                     }
                     $site_matched = true;
 
-                    $trackers[ $index ]['slugs'][ strtolower( $info['slug'] ) ] = true;
+                    $trackers[ $index ]['slugs'][ strtolower( $identifier ) ] = true;
 
                     if ( 'theme' === $tracker['type'] ) {
                         if ( ! empty( $info['active'] ) || ! empty( $info['parent_active'] ) ) {
@@ -756,8 +765,9 @@ class MainWP_Settings_Premium_Updates { // phpcs:ignore Generic.Classes.OpeningB
                         $site_has_active_match = true;
                     }
 
-                    if ( empty( $trackers[ $index ]['reported_name'] ) && ! empty( $info['name'] ) && 'exact' === $tracker['match'] ) {
-                        $trackers[ $index ]['reported_name'] = $info['name'];
+                    $reported_name = self::get_inventory_name( $info, '' );
+                    if ( empty( $trackers[ $index ]['reported_name'] ) && '' !== $reported_name && 'exact' === $tracker['match'] ) {
+                        $trackers[ $index ]['reported_name'] = $reported_name;
                     }
                 }
                 if ( $site_matched ) {

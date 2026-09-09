@@ -13,7 +13,7 @@
         "phpunit/phpunit": "^9.6",
         "szepeviktor/phpstan-wordpress": "^2.0",
         "wp-coding-standards/wpcs": "^3.0",
-        "yoast/phpunit-polyfills": "^2.0"
+        "yoast/phpunit-polyfills": "^4.0"
     },
     "autoload-dev": {
         "psr-4": {

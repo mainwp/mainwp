@@ -517,11 +517,14 @@ KEY idx_wpid_issub (wpid, issub)";
     /**
      * Repair sites that are missing their Primary Monitor.
      *
-     * @return int Number of Primary Monitors created.
+     * @param null|int $attempted Number of repair attempts, or null if no repair was attempted.
+     *
+     * @return array{found:int,created:int,attempted:int} Sites found, Primary Monitors created, and the next repair attempt count.
      */
-    public function repair_missing_primary_monitors() {
+    public function repair_missing_primary_monitors( $attempted = null ) {
         $site_ids = $this->get_sites_missing_primary_monitor();
         $created  = 0;
+        $found    = $site_ids ? count( $site_ids ) : 0;
         foreach ( $site_ids as $site_id ) {
             $data       = array(
                 'wpid'   => $site_id,
@@ -532,7 +535,26 @@ KEY idx_wpid_issub (wpid, issub)";
                 ++$created;
             }
         }
-        return $created;
+
+        if ( $found && null !== $attempted ) {
+            if ( $found > $created ) {
+                ++$attempted;
+            } else {
+                $attempted = 0;
+            }
+        } else {
+            $attempted = 0;
+        }
+
+        if ( $attempted > 3 ) {
+            $attempted = 0; // stop attempted.
+        }
+
+        return array(
+            'found'     => $found,
+            'created'   => $created,
+            'attempted' => $attempted,
+        );
     }
 
     /**
@@ -772,13 +794,19 @@ KEY idx_wpid_issub (wpid, issub)";
      * Update site monitor.
      *
      * @param array $data data.
+     * @param array $output Output info.
      *
      * @return object|null|false Database query results or null or false on failure.
      */
-    public function update_wp_monitor( $data ) { // phpcs:ignore -- NOSONAR - complexity.
+    public function update_wp_monitor( $data, &$output = array() ) { // phpcs:ignore -- NOSONAR - complexity.
         if ( ! is_array( $data ) ) {
             return false;
         }
+
+        if ( ! is_array( $output ) ) {
+            $output = array();
+        }
+
         $allowed_methods = MainWP_Uptime_Monitoring_Edit::get_allowed_methods();
 
         if ( isset( $data['method'] ) ) {
@@ -826,11 +854,13 @@ KEY idx_wpid_issub (wpid, issub)";
                 unset( $data['wpid'] );
             }
 
-            $this->wpdb->update(
+            $saved = $this->wpdb->update(
                 $this->table_name( 'monitors' ),
                 $data,
                 array( 'monitor_id' => $id )
             );
+
+            $output['saved'] = $saved ? true : false;
 
             if ( ! empty( $lock_name ) ) {
                 $this->wpdb->get_var(
@@ -891,6 +921,10 @@ KEY idx_wpid_issub (wpid, issub)";
             $this->wpdb->insert( $this->table_name( 'monitors' ), $data );
 
             $monitor_id = $this->wpdb->insert_id;
+
+            if ( $monitor_id ) {
+                $output['created'] = true;
+            }
 
             if ( ! empty( $lock_name ) ) {
                 $this->wpdb->get_var(

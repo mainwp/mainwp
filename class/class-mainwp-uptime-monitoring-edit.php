@@ -80,6 +80,10 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                 $message = __( 'Sub URL is currently in use. Unable to save the sub-monitor. Please try again.', 'mainwp' );
             } elseif ( 5 === $updated ) {
                 $message = __( 'Sub URL are empty. Unable to save the sub-monitor. Please try again.', 'mainwp' );
+            } elseif ( 6 === $updated ) {
+                $message = __( 'Unable to save the sub-monitor. Please try again.', 'mainwp' );
+            } elseif ( 7 === $updated ) {
+                $message = __( 'No changes were made to the sub-monitor.', 'mainwp' );
             }
 
             if ( ! empty( $message ) ) {
@@ -199,7 +203,7 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
 
                 $update = apply_filters( 'mainwp_uptime_monitoring_update_monitor_data', $update, $site_id, $bypass_cache_opt );
 
-                MainWP_DB_Uptime_Monitoring::instance()->update_wp_monitor( $update );
+                MainWP_DB_Uptime_Monitoring::instance()->update_wp_monitor( $update, $output );
 
                 if ( $site_id && empty( $update['issub'] ) ) {
                     MainWP_DB_Uptime_Monitoring::instance()->update_website_option( $site_id, 'bypass_cache', $bypass_cache_opt );
@@ -207,7 +211,21 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
 
                 MainWP_Uptime_Monitoring_Schedule::instance()->check_to_disable_schedule_individual_uptime_monitoring(); // required a check to sync the settings.
                 if ( $sub_editing ) {
-                    wp_safe_redirect( 'admin.php?page=managesites&id=' . $site_id . '&monitor_wpid=' . $site_id . '&message=1' );
+                    $msg = 6;
+
+                    if ( is_array( $output ) ) {
+                        if ( ! empty( $output['created'] ) ) {
+                            $msg = 1;
+                        } elseif ( isset( $output['saved'] ) ) {
+                            if ( false === $output['saved'] ) {
+                                $msg = 6;
+                            } else {
+                                $msg = 0 === $output['saved'] ? 7 : 1;
+                            }
+                        }
+                    }
+
+                    wp_safe_redirect( 'admin.php?page=managesites&id=' . $site_id . '&monitor_wpid=' . $site_id . '&message=' . $msg );
                     exit();
                 }
             } else {

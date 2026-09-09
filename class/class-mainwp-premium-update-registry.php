@@ -454,9 +454,17 @@ class MainWP_Premium_Update_Registry { // phpcs:ignore Generic.Classes.OpeningBr
         if ( ! is_array( $info ) ) {
             return '';
         }
-        $identifier = is_string( $inventory_key ) && '' !== $inventory_key ? $inventory_key : ( isset( $info['slug'] ) && is_string( $info['slug'] ) ? $info['slug'] : '' );
+        $identifier = '';
+        if ( is_string( $inventory_key ) && '' !== $inventory_key ) {
+            $identifier = $inventory_key;
+        } elseif ( isset( $info['slug'] ) && is_string( $info['slug'] ) ) {
+            $identifier = $info['slug'];
+        }
         $identifier = trim( $identifier );
-        return '' !== $identifier && preg_match( '/^[A-Za-z0-9\-_.\/]+$/', $identifier ) ? $identifier : '';
+        if ( '' === $identifier || ! preg_match( '/^[A-Za-z0-9\-_.\/]+$/', $identifier ) ) {
+            return '';
+        }
+        return $identifier;
     }
 
     /**

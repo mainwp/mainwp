@@ -348,7 +348,47 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                 </div>
                         </div>
                     </div>
-                    <?php if ( empty( $website ) ) { ?>
+                    <?php
+                    if ( empty( $website ) ) {
+                        $client_sites_empty = false;
+                        $wpsite_fields      = array( 'id', 'name' );
+                        $params             = array( 'select_wp_fields' => $wpsite_fields );
+                        if ( 'client' === $context ) {
+                            if ( empty( $client_sites_ids ) ) {
+                                $client_sites_empty = true;
+                            } else {
+                                $params['include'] = $client_sites_ids;
+                            }
+                        }
+
+                        $sites_list = array();
+                        if ( $client_sites_empty ) {
+                            $websites = false;
+                        } else {
+                            $websites   = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user_by_params( $params ) );
+                            if ( $websites ) {
+                                while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
+                                    $sites_list[ $website->id ] = $website->name;
+                                }
+                                MainWP_DB::free_result( $websites );
+                            }
+
+                            if ( ! empty( $sites_list ) && ! empty( $filter_sites ) ) {
+                                $site_ids       = array_map( 'intval', explode( ',', $filter_sites ) );
+                                $filtered_sites = array_filter(
+                                    $site_ids,
+                                    function ( $id ) use ( $sites_list ) {
+                                        return isset( $sites_list[ $id ] );
+                                    }
+                                );
+                                if ( ! empty( $filtered_sites ) ) {
+                                    $filter_sites = implode( ',', $filtered_sites );
+                                } else {
+                                    $filter_sites = '';
+                                }
+                            }
+                        }
+                        ?>
                     <div class="two wide middle aligned column">
                         <div id="mainwp-module-log-filter-sites" class="ui selection multiple fluid dropdown seg_sites">
                             <input type="hidden" value="<?php echo esc_attr( $filter_sites ); ?>">
@@ -356,30 +396,12 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                             <div class="default text"><?php esc_html_e( 'All Websites', 'mainwp' ); ?></div>
                             <div class="menu">
                                 <?php
-                                $client_sites_empty = false;
-                                $wpsite_fields      = array( 'id', 'name' );
-                                $params             = array( 'select_wp_fields' => $wpsite_fields );
-                                if ( 'client' === $context ) {
-                                    if ( empty( $client_sites_ids ) ) {
-                                        $client_sites_empty = true;
-                                    } else {
-                                        $params['include'] = $client_sites_ids;
-                                    }
-                                }
-
-                                if ( $client_sites_empty ) {
-                                    $websites = false;
-                                } else {
-                                    $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user_by_params( $params ) );
-                                }
-
-                                if ( $websites ) {
-                                    while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
+                                if ( $sites_list ) {
+                                    foreach ( $sites_list as $siteid => $name ) {
                                         ?>
-                                        <div class="item" data-value="<?php echo esc_attr( $website->id ); ?>"><?php echo esc_html( MainWP_Utility::get_nice_url( stripslashes( $website->name ) ) ); ?></div>
+                                        <div class="item" data-value="<?php echo esc_attr( $siteid ); ?>"><?php echo esc_html( MainWP_Utility::get_nice_url( stripslashes( $name ) ) ); ?></div>
                                         <?php
                                     }
-                                    MainWP_DB::free_result( $websites );
                                 }
                                 ?>
                                 <div class="item" data-value="allsites"><?php esc_html_e( 'All Websites', 'mainwp' ); ?></div>

@@ -288,22 +288,49 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         <div id="mainwp-module-log-filters-row" style="display:none">
             <div class="ui divider"></div>
                 <div class="ui stackable compact grid mini form">
-                    <?php if ( ! $optimize ) { ?>
+                    <?php
+                    if ( ! $optimize ) {
+                        $websites_ids = array();
+
+                        if ( $website ) {
+                            $websites_ids = array( (int) $website->id );
+                        } elseif ( 'client' === $context && ! empty( $clientid ) ) {
+                            $websites_ids = $client_sites_ids;
+                        }
+
+                        $users = ( 'client' === $context && empty( $websites_ids ) )
+                            ? array()
+                            : $manager->admin->get_all_users( $websites_ids );
+
+                        if ( ! empty( $filter_user_ids ) ) {
+                            if ( empty( $users ) ) {
+                                $filter_user_ids = '';
+                            } else {
+                                $users_ids       = array_map( 'intval', explode( ',', $filter_user_ids ) );
+                                $users           = array_map( 'intval', $users );
+                                $filter_user_ids = array_filter(
+                                    $users_ids,
+                                    function ( $id ) use ( $users ) {
+                                        return in_array( $id, $users, true );
+                                    }
+                                );
+
+                                if ( ! empty( $filter_user_ids ) ) {
+                                    $filter_user_ids = implode( ',', $filter_user_ids );
+                                } else {
+                                    $filter_user_ids = '';
+                                }
+                            }
+                        }
+
+                        ?>
                     <div class="two wide middle aligned column">
                         <div id="mainwp-module-log-filter-users" class="ui selection multiple fluid dropdown seg_users">
-                            <input type="hidden" value="<?php echo esc_attr( $filter_user_ids ); ?>">
+                            <input type="hidden" value="<?php echo esc_attr( $filtered_users ); ?>">
                             <i class="dropdown icon"></i>
                             <div class="default text"><?php esc_html_e( 'All users', 'mainwp' ); ?></div>
                             <div class="menu">
                                 <?php
-                                $websites_ids = array();
-                                if ( $website ) {
-                                    $websites_ids = array( $website->id );
-                                } elseif ( 'client' === $context && ! empty( $clientid ) ) {
-                                    $websites_ids = $client_sites_ids;
-                                }
-
-                                $users = ( 'client' === $context && empty( $websites_ids ) ) ? array() : $manager->admin->get_all_users( $websites_ids );
 
                                 foreach ( $users as $item ) {
                                     ?>
@@ -363,17 +390,17 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
                         $sites_list = array();
                         if ( $client_sites_empty ) {
-                            $websites = false;
+                            $filter_sites = '';
                         } else {
-                            $websites   = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user_by_params( $params ) );
+                            $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user_by_params( $params ) );
                             if ( $websites ) {
-                                while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
+                                while ( $website = MainWP_DB::fetch_object( $websites ) ) {
                                     $sites_list[ $website->id ] = $website->name;
                                 }
                                 MainWP_DB::free_result( $websites );
                             }
 
-                            if ( ! empty( $sites_list ) && ! empty( $filter_sites ) ) {
+                            if ( ! empty( $filter_sites ) ) {
                                 $site_ids       = array_map( 'intval', explode( ',', $filter_sites ) );
                                 $filtered_sites = array_filter(
                                     $site_ids,
@@ -488,8 +515,9 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @param int    $site_id Site id.
      * @param int    $client_id Client id.
      * @param bool   $save_filter To save filter.
+     * @param bool   $force_request_filter Whether to force filters from the request.
      */
-    public function get_widget_insights_filters( $context, $site_id = 0, $client_id = 0, $save_filter = false ) { //phpcs:ignore -- NOSONAR - complex method.
+    public function get_widget_insights_filters( $context, $site_id = 0, $client_id = 0, $save_filter = false, $force_request_filter = false ) { //phpcs:ignore -- NOSONAR - complex method.
 
         $filters = array( 'user', 'sites', 'events' );
 
@@ -516,7 +544,7 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
         $update_filter = false;
 
-        if ( $get_saved ) {
+        if ( $get_saved && ! $force_request_filter ) {
             $filters_saved = $this->get_or_set_widget_saved_filters( $context, null, $site_id, $client_id );
             if ( ! is_array( $filters_saved ) ) {
                 $filters_saved = array();

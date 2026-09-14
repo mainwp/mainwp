@@ -848,11 +848,11 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
 
         $insights_filters = array();
         $context          = 'operations';
-        $client_id = 0;
-        $site_id = 0;
+        $client_id        = 0;
+        $site_id          = 0;
         //phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( ! empty( $_POST['current_site_id'] ) ) {
-            $site_id = intval( $_POST['current_site_id'] );
+            $site_id                  = intval( $_POST['current_site_id'] );
             $insights_filters['wpid'] = $site_id;
             $context                  = 'individual';
         } elseif ( ! empty( $_POST['current_client_id'] ) ) {
@@ -902,7 +902,7 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
             }
         }
         $insights_filters['sources_conds'] = $sources_conds;
-        $others_filters                    = MainWP_Site_Actions::instance()->get_widget_insights_filters( $context, $site_id, $client_id ); // get ajax filters.
+        $others_filters                    = MainWP_Site_Actions::instance()->get_widget_insights_filters( $context, $site_id, $client_id, true ); // get ajax filters.
         if ( is_array( $others_filters ) ) {
             $insights_filters = array_merge( $others_filters, $insights_filters );
         }

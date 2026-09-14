@@ -1662,11 +1662,74 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $others = array(),
         &$output = array()
     ) {
+
+        /**
+         * Filter to mock the fetch_url_not_authed response before any HTTP request occurs.
+         *
+         * This filter fires early, before the HTTP request is performed, allowing
+         * tests to bypass child site communication entirely.
+         *
+         * SECURITY WARNING - TEST ONLY:
+         * This filter ONLY fires when ALL of the following conditions are met:
+         * 1. MAINWP_TESTING_MODE constant is defined and true.
+         * 2. A PHPUnit test harness constant is present (WP_TESTS_DOMAIN,
+         *    PHPUNIT_COMPOSER_INSTALL, or WP_TESTS_DIR).
+         *
+         * These checks prevent malicious code from defining MAINWP_TESTING_MODE
+         * in production to spoof child site responses.
+         *
+         * IMPORTANT: MAINWP_TESTING_MODE must ONLY be defined in the PHPUnit bootstrap
+         * file (tests/bootstrap.php). Defining it in production code, wp-config.php,
+         * or plugin files would create a security vulnerability allowing response
+         * spoofing.
+         *
+         * @since 6.2.1
+         *
+         * @param mixed       $pre_result          Return non-false to short-circuit the request and return this value.
+         * @param string      $url                 URL to fetch.
+         * @param string      $admin               Admin username or identifier.
+         * @param string      $what                Action being performed.
+         * @param array|null  $params              Request parameters.
+         * @param bool        $pForceFetch         Whether to force the fetch.
+         * @param bool|null   $verifyCertificate   Whether to verify the SSL certificate.
+         * @param string|null $http_user           HTTP authentication username.
+         * @param string|null $http_pass           HTTP authentication password.
+         * @param int         $sslVersion          SSL version.
+         * @param array       $others              Additional request options.
+         * @param array       $output              Output data passed by reference.
+         *
+         * @return mixed Array or other value to return early, false to proceed normally.
+         */
+        $is_phpunit_env = defined( 'WP_TESTS_DOMAIN' ) || defined( 'PHPUNIT_COMPOSER_INSTALL' ) || ( defined( 'WP_TESTS_DIR' ) && WP_TESTS_DIR );
+
+        if ( defined( 'MAINWP_TESTING_MODE' ) && MAINWP_TESTING_MODE && $is_phpunit_env ) {
+            $pre_result = apply_filters(
+                'mainwp_fetch_url_not_authed_pre',
+                false,
+                $url,
+                $admin,
+                $what,
+                $params,
+                $pForceFetch,
+                $verifyCertificate,
+                $http_user,
+                $http_pass,
+                $sslVersion,
+                $others,
+                $output
+            );
+
+            if ( false !== $pre_result ) {
+                return $pre_result;
+            }
+        }
+
         unset( $pForceFetch );
 
         if ( empty( $params ) ) {
             $params = array();
         }
+
 
         $postdata = static::get_post_data_not_authed( $url, $admin, $what, $params );
         $website  = null;

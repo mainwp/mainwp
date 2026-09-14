@@ -251,6 +251,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         add_filter( 'plugin_action_links', array( $this, 'hook_plugin_action_links' ), 10, 4 );
         add_action( 'admin_menu', array( &$this, 'admin_menu' ) );
         add_action( 'admin_print_styles', array( MainWP_System_View::get_class_name(), 'admin_print_styles' ) );
+        add_action( 'admin_init', array( $this, 'admin_init_update' ) );
 
         add_action( 'wp_logout', array( &$this, 'clear_sessions' ) );
 
@@ -970,6 +971,63 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         if ( ! current_user_can( 'update_core' ) ) {
             remove_action( 'admin_notices', 'update_nag', 3 );
+        }
+    }
+
+
+
+    /**
+     * Method admin_init_update()
+     */
+    public function admin_init_update() {
+        static::handle_admin_perform_update();
+    }
+
+    /**
+     * Method handle_admin_perform_update()
+     *
+     * @param string $action Init action.
+     */
+    public static function handle_admin_perform_update( $action = '' ) {
+
+        $update_actions = get_option( 'mainwp_admin_init_update_data' );
+
+        /**
+         * Filters the update actions.
+         *
+         * @param array  $update_actions The available update actions.
+         * @param string $action         The current update action.
+         *
+         * @since 6.2.1
+         *
+         * @return array The filtered update actions.
+         */
+        $update_actions = apply_filters( 'mainwp_admin_init_update_data', $update_actions, $action );
+
+        if ( ! empty( $action ) ) {
+            if ( ! is_array( $update_actions ) ) {
+                $update_actions = array();
+            }
+            if ( 'attempted_repair_primary_monitors' === $action ) {
+                $update_actions['attempted_repair_primary_monitors'] = 0;
+            }
+        }
+
+        if ( is_array( $update_actions ) ) {
+            $update = false;
+            if ( isset( $update_actions['attempted_repair_primary_monitors'] ) ) {
+                $result = MainWP_DB_Uptime_Monitoring::instance()->repair_missing_primary_monitors( null, $update_actions['attempted_repair_primary_monitors'] );
+                if ( is_array( $result ) && ! empty( $result['attempted'] ) ) {
+                    $update_actions['attempted_repair_primary_monitors'] = $result['attempted'];
+                } else {
+                    unset( $update_actions['attempted_repair_primary_monitors'] );
+                }
+                $update = true;
+            }
+
+            if ( $update ) {
+                MainWP_Utility::update_option( 'mainwp_admin_init_update_data', $update_actions );
+            }
         }
     }
 

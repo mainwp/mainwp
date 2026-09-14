@@ -306,12 +306,18 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                             if ( empty( $users ) ) {
                                 $filter_user_ids = '';
                             } else {
-                                $users_ids       = array_map( 'intval', explode( ',', $filter_user_ids ) );
-                                $users           = array_map( 'intval', $users );
+                                $users_ids       = explode( ',', $filter_user_ids );
+                                $valid_user_ids  = array_map(
+                                    static function ( $user ) {
+                                        return (int) $user['id'] . '-' . (int) $user['site_id'] . '-' . ( ! empty( $user['is_dashboard_user'] ) ? 1 : 0 );
+                                    },
+                                    $users
+                                );
+
                                 $filter_user_ids = array_filter(
                                     $users_ids,
-                                    function ( $id ) use ( $users ) {
-                                        return in_array( $id, $users, true );
+                                    function ( $id ) use ( $valid_user_ids ) {
+                                        return in_array( $id, $valid_user_ids, true );
                                     }
                                 );
 
@@ -326,7 +332,7 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         ?>
                     <div class="two wide middle aligned column">
                         <div id="mainwp-module-log-filter-users" class="ui selection multiple fluid dropdown seg_users">
-                            <input type="hidden" value="<?php echo esc_attr( $filtered_users ); ?>">
+                            <input type="hidden" value="<?php echo esc_attr( $filter_user_ids ); ?>">
                             <i class="dropdown icon"></i>
                             <div class="default text"><?php esc_html_e( 'All users', 'mainwp' ); ?></div>
                             <div class="menu">

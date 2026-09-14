@@ -836,13 +836,13 @@ KEY idx_wpid_issub (wpid, issub)";
 
 
     /**
-     * Repair sites that are `missing their Primary Monitor.
+     * Repair sites that are missing their Primary Monitor.
      *
      * @param null|int $site_id  Site ID to repair, or null to repair all sites.
      * @param null|int $attempted Number of repair attempts, or null if no repair was attempted.
-     * @param int      $limit    Maximum number of sites to process.
+     * @param int      $limit     Maximum number of sites to process in one batch.
      *
-     * @return array{found:int,created:int,attempted:int} Repair result.
+     * @return array{found:int,created:int,attempted:int,has_more:bool} Repair result.
      */
     public function repair_missing_primary_monitors( $site_id = null, $attempted = null, $limit = 50 ) {
         $site_ids = $this->get_sites_missing_primary_monitor( $site_id, $limit );
@@ -860,6 +860,12 @@ KEY idx_wpid_issub (wpid, issub)";
 
             if ( $created_id ) {
                 ++$created;
+
+                $opt_name = 'mainwp_failed_attempt_create_primary_monitor_for_wp_' . $current_site_id;
+
+                if ( get_option( $opt_name ) ) {
+                    delete_option( $opt_name );
+                }
             }
         }
 
@@ -869,14 +875,19 @@ KEY idx_wpid_issub (wpid, issub)";
                 'found'     => $found,
                 'created'   => $created,
                 'attempted' => 0,
+                'has_more'  => false,
             );
         }
 
+        /*
+         * A full batch that was completely successful should not count as a
+         * failed attempt. The caller can continue processing the next batch.
+         */
         if ( $found && null !== $attempted ) {
-            $attempted = $found > $created ? ++$attempted : 0;
-            $opt_name  = 'mainwp_failed_attempt_create_primary_monitor_for_wp_' . $current_site_id;
-            if ( get_option( $opt_name ) ) {
-                delete_option( $opt_name );
+            if ( $found > $created ) {
+                ++$attempted;
+            } else {
+                $attempted = 0;
             }
         } else {
             $attempted = 0;
@@ -890,6 +901,7 @@ KEY idx_wpid_issub (wpid, issub)";
             'found'     => $found,
             'created'   => $created,
             'attempted' => $attempted,
+            'has_more'  => $found === $limit,
         );
     }
 

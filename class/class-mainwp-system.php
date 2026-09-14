@@ -825,6 +825,10 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             update_option( 'mainwp_extensions_all_activation_cached', '' );
         }
 
+        if ( version_compare( $saved_ver, '0.0.7', '<' ) ) {
+            static::handle_admin_perform_update( 'attempted_repair_primary_monitors' ); // init attempted repair.
+        }
+
         MainWP_Utility::update_option( 'mainwp_update_check_version', $current_ver );
     }
 
@@ -1018,14 +1022,22 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         }
 
         $update = false;
+
         if ( isset( $update_actions['attempted_repair_primary_monitors'] ) ) {
-            $result = MainWP_DB_Uptime_Monitoring::instance()->repair_missing_primary_monitors( null, $update_actions['attempted_repair_primary_monitors'] );
-            if ( is_array( $result ) && ! empty( $result['attempted'] ) ) {
-                $update_actions['attempted_repair_primary_monitors'] = $result['attempted'];
-            } else {
-                unset( $update_actions['attempted_repair_primary_monitors'] );
+            $result = MainWP_DB_Uptime_Monitoring::instance()->repair_missing_primary_monitors(
+                null,
+                $update_actions['attempted_repair_primary_monitors']
+            );
+
+            if ( is_array( $result ) ) {
+                if ( ! empty( $result['has_more'] ) ) {
+                    $update_actions['attempted_repair_primary_monitors'] = $result['attempted'];
+                } else {
+                    unset( $update_actions['attempted_repair_primary_monitors'] );
+                }
+
+                $update = true;
             }
-            $update = true;
         }
 
         if ( $update ) {

@@ -834,18 +834,21 @@ KEY idx_wpid_issub (wpid, issub)";
         }
     }
 
+
     /**
-     * Repair sites that are missing their Primary Monitor.
+     * Repair sites that are `missing their Primary Monitor.
      *
      * @param null|int $site_id  Site ID to repair, or null to repair all sites.
      * @param null|int $attempted Number of repair attempts, or null if no repair was attempted.
+     * @param int      $limit    Maximum number of sites to process.
      *
-     * @return array{found:int,created:int,attempted:int} Sites found, Primary Monitors created, and the next repair attempt count.
+     * @return array{found:int,created:int,attempted:int} Repair result.
      */
-    public function repair_missing_primary_monitors( $site_id = null, $attempted = null ) {
-        $site_ids = $this->get_sites_missing_primary_monitor( $site_id );
-        $created  = 0;
-        $found    = $site_ids ? count( $site_ids ) : 0;
+    public function repair_missing_primary_monitors( $site_id = null, $attempted = null, $limit = 50 ) {
+        $site_ids = $this->get_sites_missing_primary_monitor( $site_id, $limit );
+
+        $created = 0;
+        $found   = count( $site_ids );
 
         foreach ( $site_ids as $current_site_id ) {
             $data = array(
@@ -857,10 +860,6 @@ KEY idx_wpid_issub (wpid, issub)";
 
             if ( $created_id ) {
                 ++$created;
-                $opt_name = 'mainwp_failed_attempt_create_primary_monitor_for_wp_' . $current_site_id;
-                if ( get_option( $opt_name ) ) {
-                    delete_option( $opt_name );
-                }
             }
         }
 
@@ -874,17 +873,17 @@ KEY idx_wpid_issub (wpid, issub)";
         }
 
         if ( $found && null !== $attempted ) {
-            if ( $found > $created ) {
-                ++$attempted;
-            } else {
-                $attempted = 0;
+            $attempted = $found > $created ? ++$attempted : 0;
+            $opt_name  = 'mainwp_failed_attempt_create_primary_monitor_for_wp_' . $current_site_id;
+            if ( get_option( $opt_name ) ) {
+                delete_option( $opt_name );
             }
         } else {
             $attempted = 0;
         }
 
         if ( $attempted > 3 ) {
-            $attempted = 0; // Stop attempting.
+            $attempted = 0;
         }
 
         return array(
@@ -898,10 +897,11 @@ KEY idx_wpid_issub (wpid, issub)";
      * Get site IDs that do not have a Primary Monitor.
      *
      * @param int|null $site_id Optional site ID to check.
+     * @param int      $limit    Maximum number of sites to process.
      *
      * @return array<int>
      */
-    public function get_sites_missing_primary_monitor( $site_id = null ) {
+    public function get_sites_missing_primary_monitor( $site_id = null, $limit = 50 ) {
         $sites_table    = $this->table_name( 'wp' );
         $monitors_table = $this->table_name( 'monitors' );
 
@@ -914,16 +914,22 @@ KEY idx_wpid_issub (wpid, issub)";
             );
         }
 
+        $limit = max( 1, min( 100, (int) $limit ) );
+
         return $this->wpdb->get_col(
-            "SELECT s.id
-            FROM {$sites_table} AS s
-            WHERE NOT EXISTS (
-                SELECT 1
-                FROM {$monitors_table} AS m
-                WHERE m.wpid = s.id
-                    AND m.suburl = ''
+            $this->wpdb->prepare(
+                "SELECT s.id
+                FROM {$sites_table} AS s " . // NOSONAR - table name is generated internally and safely escaped.
+                " WHERE NOT EXISTS (
+                    SELECT 1
+                    FROM {$monitors_table} AS m " . // NOSONAR - table name is generated internally and safely escaped.
+                    " WHERE m.wpid = s.id
+                        AND m.suburl = ''
+                )
+                {$where} " . // phpcs:ignore --NOSONAR -ok.
+                ' LIMIT %d',
+                $limit
             )
-            {$where}"
         );
     }
 

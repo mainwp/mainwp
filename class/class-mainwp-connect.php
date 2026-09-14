@@ -513,7 +513,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     'nonce'         => $data['nonce'],
                     'expires'       => $ts + 60,
                     'user'          => $website->adminname,
-                    'req_id'    => wp_generate_uuid4(),
+                    'req_id'        => wp_generate_uuid4(),
                 );
 
                 if ( ! empty( $alt_user ) ) {
@@ -661,7 +661,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     'nonce'         => $data['nonce'],
                     'expires'       => $ts + 60,
                     'user'          => $website->adminname,
-                    'req_id'    => wp_generate_uuid4(),
+                    'req_id'        => wp_generate_uuid4(),
                 );
                 $sign_value_v2 = wp_json_encode( $data_sign_v2 );
 
@@ -796,7 +796,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     'nonce'         => $nonce,
                     'expires'       => $ts + 60,
                     'user'          => $website->adminname,
-                    'req_id'    => wp_generate_uuid4(),
+                    'req_id'        => wp_generate_uuid4(),
                 );
 
                 if ( ! empty( $alt_user ) ) {
@@ -809,7 +809,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
                 if ( MainWP_Connect_Lib::is_use_fallback_sec_lib( $website ) ) {
                     $sign_success_v2 = MainWP_Connect_Lib::connect_sign( $sign_value_v2, $signature_v2, base64_decode( $website->privkey ), $website->id ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-                    $use_seclib   = true;
+                    $use_seclib      = true;
                 } elseif ( function_exists( 'openssl_verify' ) ) {
                     $alg             = MainWP_System_Utility::get_connect_sign_algorithm( $website );
                     $sign_success_v2 = static::connect_sign( $sign_value_v2, $signature_v2, base64_decode( $website->privkey ), $alg, $website->id ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
@@ -1703,20 +1703,22 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $is_phpunit_env = defined( 'WP_TESTS_DOMAIN' ) || defined( 'PHPUNIT_COMPOSER_INSTALL' ) || ( defined( 'WP_TESTS_DIR' ) && WP_TESTS_DIR );
 
         if ( defined( 'MAINWP_TESTING_MODE' ) && MAINWP_TESTING_MODE && $is_phpunit_env ) {
-            $pre_result = apply_filters(
+            $pre_result = apply_filters_ref_array(
                 'mainwp_fetch_url_not_authed_pre',
-                false,
-                $url,
-                $admin,
-                $what,
-                $params,
-                $pForceFetch,
-                $verifyCertificate,
-                $http_user,
-                $http_pass,
-                $sslVersion,
-                $others,
-                $output
+                array(
+                    false,
+                    $url,
+                    $admin,
+                    $what,
+                    $params,
+                    $pForceFetch,
+                    $verifyCertificate,
+                    $http_user,
+                    $http_pass,
+                    $sslVersion,
+                    $others,
+                    &$output,
+                )
             );
 
             if ( false !== $pre_result ) {
@@ -1729,7 +1731,6 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         if ( empty( $params ) ) {
             $params = array();
         }
-
 
         $postdata = static::get_post_data_not_authed( $url, $admin, $what, $params );
         $website  = null;

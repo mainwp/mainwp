@@ -64,7 +64,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * @var string The plugin current update version.
      */
-    private $check_ver_update = '0.0.5';
+    private $check_ver_update = '0.0.7';
 
     /**
      * Private variable to hold the plugin slug (mainwp/mainwp.php)

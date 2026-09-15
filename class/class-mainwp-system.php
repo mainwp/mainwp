@@ -799,7 +799,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             return;
         }
 
-        if ( version_compare( $saved_ver, '0.0.4', '<' ) ) {
+        if ( ! empty( $saved_ver ) && version_compare( $saved_ver, '0.0.4', '<' ) ) {
             $sched = wp_next_scheduled( 'mainwp_cronstats_action' );
             if ( ! empty( $sched ) ) {
                 wp_unschedule_event( $sched, 'mainwp_cronstats_action' );
@@ -808,7 +808,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             $wpdb->query( 'DELETE FROM ' . $wpdb->usermeta . ' WHERE meta_key = "mainwp_widgets_sorted_toplevel_page_mainwp_tab" OR meta_key="mainwp_settings_show_widgets"' );//phpcs:ignore -- safe.
         }
 
-        if ( version_compare( $saved_ver, '0.0.5', '<' ) ) {
+        if ( ! empty( $saved_ver ) && version_compare( $saved_ver, '0.0.5', '<' ) ) {
             $all_ext = MainWP_Extensions_View::get_available_extensions();
             foreach ( $all_ext as $slug => $info ) {
                 $data = MainWP_Api_Manager::instance()->get_activation_info( $slug );

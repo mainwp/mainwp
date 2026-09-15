@@ -902,7 +902,7 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
             }
         }
         $insights_filters['sources_conds'] = $sources_conds;
-        $others_filters                    = MainWP_Site_Actions::instance()->get_widget_insights_filters( $context, $site_id, $client_id, true ); // get ajax filters.
+        $others_filters                    = MainWP_Site_Actions::instance()->get_widget_insights_filters( $context, $site_id, $client_id, false, true ); // get ajax filters.
         if ( is_array( $others_filters ) ) {
             $insights_filters = array_merge( $others_filters, $insights_filters );
         }

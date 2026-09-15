@@ -1215,7 +1215,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
                 return array(
                     'group_updated' => false,
                     'group_message' => 'Failed to update tags or invalid tag IDs.',
-                    'message'       => 'Group associations could not be updated.',
+                    'message'       => 'Group associations could not be updated, but the other requested fields were saved.',
                     'success'       => false,
                     'site'          => $website->url,
                 );
@@ -1225,15 +1225,16 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         }
 
         $response = array(
-            'message' => 'Site updated successfully.',
-            'site'    => $website->url,
-            'success' => $success,
+            'site' => $website->url,
         );
 
         if ( null !== $group_update_success ) {
             $response['group_updated'] = true;
             $response['group_message'] = 'Tags updated successfully.';
         }
+
+        $response['message'] = $success ? 'Site updated successfully.' : 'Site update failed.';
+        $response['success'] = $success;
 
         return $response;
     }

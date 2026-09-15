@@ -879,29 +879,47 @@ KEY idx_wpid_issub (wpid, issub)";
             );
         }
 
+        // No sites remain to repair.
+        if ( 0 === $found ) {
+            return array(
+                'found'     => 0,
+                'created'   => 0,
+                'attempted' => 0,
+                'has_more'  => false,
+            );
+        }
+
+        $attempted = null === $attempted ? 0 : $attempted;
+
         /*
-         * A full batch that was completely successful should not count as a
-         * failed attempt. The caller can continue processing the next batch.
-         */
-        if ( $found && null !== $attempted ) {
-            if ( $found > $created ) {
-                ++$attempted;
-            } else {
-                $attempted = 0;
-            }
+        * Failed repairs count as an attempt.
+        */
+        if ( $found > $created ) {
+            ++$attempted;
         } else {
+            /*
+            * The current batch was completely successful.
+            * Reset the failed-attempt counter so the next batch gets
+            * its own retry allowance.
+            */
             $attempted = 0;
         }
 
-        if ( $attempted > 3 ) {
-            $attempted = 0;
+        /*
+        * Continue when there are more sites to process, or when the current
+        * batch contains failed sites that have not reached the retry limit.
+        */
+        $has_more = $found === $limit || $found > $created;
+
+        if ( $found > $created && $attempted >= 3 ) {
+            $has_more = false;
         }
 
         return array(
             'found'     => $found,
             'created'   => $created,
             'attempted' => $attempted,
-            'has_more'  => $found === $limit,
+            'has_more'  => $has_more,
         );
     }
 

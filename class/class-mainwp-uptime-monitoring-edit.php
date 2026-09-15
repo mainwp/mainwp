@@ -199,7 +199,11 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
 
                 $update = apply_filters( 'mainwp_uptime_monitoring_update_monitor_data', $update, $site_id, $bypass_cache_opt );
 
-                MainWP_DB_Uptime_Monitoring::instance()->update_wp_monitor( $update );
+                $success  = MainWP_DB_Uptime_Monitoring::instance()->update_wp_monitor( $update );
+                $opt_name = 'mainwp_failed_attempt_create_primary_monitor_for_wp_' . $site_id;
+                if ( $success && get_option( $opt_name ) ) {
+                    delete_option( $opt_name );
+                }
 
                 if ( $site_id && empty( $update['issub'] ) ) {
                     MainWP_DB_Uptime_Monitoring::instance()->update_website_option( $site_id, 'bypass_cache', $bypass_cache_opt );

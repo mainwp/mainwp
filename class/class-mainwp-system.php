@@ -793,11 +793,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      */
     public function hook_admin_update_check() {
         $current_ver = $this->check_ver_update;
-        $saved_ver   = get_option( 'mainwp_update_check_version', false );
-
-        if ( false === $saved_ver ) {
-            return;
-        }
+        $saved_ver   = get_option( 'mainwp_update_check_version', '' );
 
         if ( version_compare( $saved_ver, $current_ver, '=' ) ) {
             return;
@@ -1341,7 +1337,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @return array<string, array<int, mixed>> Command palette configuration.
      */
     private function get_command_palette_data() {
-        $registered_pages    = $this->get_command_palette_registered_pages();
+        $registered_pages     = $this->get_command_palette_registered_pages();
         $registered_page_urls = array();
 
         foreach ( $registered_pages as $slug => $page_data ) {

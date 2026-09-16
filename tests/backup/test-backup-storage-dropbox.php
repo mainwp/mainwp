@@ -236,6 +236,38 @@ class MainWP_Backup_Storage_Dropbox_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * A line break inside a credential must not leave the tail readable.
+	 *
+	 * @return void
+	 */
+	public function test_failed_request_redacts_newline_split_access_token() {
+		$tail     = str_repeat( 'B', 30 );
+		$provider = $this->make_provider( array( $this->token_response(), $this->response( 400, 'sl.' . str_repeat( 'A', 30 ) . "\n" . $tail ) ) );
+		try {
+			$provider->put_object( 'bad-key', 'bytes' );
+			$this->fail( 'Expected the upload to fail.' );
+		} catch ( \RuntimeException $e ) {
+			$this->assertSame( 'Storage request PUT bad-key returned HTTP 400: [redacted].', $e->getMessage() );
+			$this->assertStringNotContainsString( $tail, $e->getMessage() );
+		}
+	}
+
+	/**
+	 * A multi-line body of identifiers is the cause, not a credential.
+	 *
+	 * @return void
+	 */
+	public function test_failed_request_keeps_multiline_identifier_body_readable() {
+		$provider = $this->make_provider( array( $this->token_response(), $this->response( 400, "invalid_access_token\nexpired_access_token" ) ) );
+		try {
+			$provider->put_object( 'bad-key', 'bytes' );
+			$this->fail( 'Expected the upload to fail.' );
+		} catch ( \RuntimeException $e ) {
+			$this->assertSame( 'Storage request PUT bad-key returned HTTP 400: invalid_access_token expired_access_token.', $e->getMessage() );
+		}
+	}
+
+	/**
 	 * Removing markup must not turn benign fragments into a redacted token.
 	 *
 	 * @return void

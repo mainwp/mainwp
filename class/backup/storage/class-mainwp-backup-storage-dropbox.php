@@ -605,8 +605,14 @@ class MainWP_Backup_Storage_Dropbox implements MainWP_Backup_Storage_Provider { 
             // before trim() covers a PCRE failure returning null, which would
             // otherwise blank the diagnostic this path exists to carry.
             foreach ( $diagnostics as $key => $value ) {
-                // Include control and DEL bytes so a split credential cannot survive as two sub-40 halves.
-                $value               = preg_replace( '/sl\.[^\s]+|[A-Za-z0-9_\-\x00-\x1f\x7f]{40,}/', '[redacted]', (string) $value );
+                // An sl. prefix marks the rest of the run as credential, so it runs to
+                // the next real space and crosses any control byte, including a line
+                // break. The generic run keeps the non-whitespace control bytes, so a
+                // credential split by one cannot survive as two sub-40 halves, but not
+                // tab, LF, VT, FF or CR: a multi-line body of bare identifiers is
+                // diagnostic text, and redacting it whole would cost the operator the
+                // cause this path exists to report.
+                $value               = preg_replace( '/sl\.(?:[^\s]|[\x09-\x0d])+|[A-Za-z0-9_\-\x00-\x08\x0e-\x1f\x7f]{40,}/', '[redacted]', (string) $value );
                 $value               = preg_replace( '/[\x00-\x1f\x7f]/', ' ', $value );
                 $value               = str_replace( array( '<', '>', '&', '"', "'" ), '', $value );
                 $value               = preg_replace( '/\s+/', ' ', $value );

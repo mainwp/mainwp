@@ -61,6 +61,9 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
     const ERR_FILE_SKIPPED     = 'mainwp_backup_file_skipped';
     const ERR_TOO_MANY_SKIPPED = 'mainwp_backup_too_many_skipped';
 
+    // Snapshot record.
+    const ERR_SNAPSHOT_RECORD_FAILED = 'mainwp_backup_snapshot_record_failed';
+
     // Process.
     const ERR_STALLED           = 'mainwp_backup_stalled';
     const ERR_RETRY_EXHAUSTED   = 'mainwp_backup_retry_exhausted';
@@ -262,6 +265,8 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
             self::ERR_INCREMENTAL_BASE_MISSING   => esc_html__( 'The previous backup this incremental run depends on is no longer usable on the child site, so a full backup was run instead. The next incremental run will use the new full backup as its base.', 'mainwp' ),
             self::ERR_MANIFEST_TOO_LARGE         => esc_html__( 'The file list from the previous backup is too large to send to the child site, so a full backup was run instead. Sites with very large file counts may need full backups only.', 'mainwp' ),
+
+            self::ERR_SNAPSHOT_RECORD_FAILED     => esc_html__( 'The backup archive was downloaded, but the dashboard could not save its snapshot record, so this run was not kept. Check that the dashboard database can write to the backup snapshot table, then run the task again.', 'mainwp' ),
 
             self::ERR_MANIFEST_CHUNK_WRONG_PHASE => esc_html__( 'The file-list piece arrived outside of an active staging session on the child site. The transfer restarts from the beginning on the next attempt.', 'mainwp' ),
             self::ERR_MANIFEST_CHUNK_CORRUPT     => esc_html__( 'The transferred file list does not match its expected checksum on the child site and was discarded. The transfer runs again or the run falls back to a full backup.', 'mainwp' ),

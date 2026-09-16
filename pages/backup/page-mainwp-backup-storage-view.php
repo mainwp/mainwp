@@ -228,7 +228,7 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                         <label class="six wide column middle aligned"><?php esc_html_e( 'App key', 'mainwp' ); ?></label>
                         <div class="ten wide column">
                             <input type="text" id="mainwp-storage-dropbox-app-key" value="" autocomplete="off"/>
-                            <em><?php esc_html_e( 'Create a scoped app with the files.content.write and files.content.read permissions in the Dropbox App Console.', 'mainwp' ); ?></em>
+                            <em><?php esc_html_e( 'Create a scoped app with the files.content.write, files.content.read and files.metadata.read permissions in the Dropbox App Console.', 'mainwp' ); ?></em>
                         </div>
                     </div>
                     <div class="ui grid field">

@@ -1023,7 +1023,9 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                     $task = $_fresh_task;
                 }
 
-                $_resumable = ( (int) $task->completed < (int) $task->last_run )
+                // A failed snapshot insert must surface now, even when downloads classify as record_pending.
+                $_record_failed = $e instanceof MainWP_Exception && MainWP_Backup_Error_Codes::ERR_SNAPSHOT_RECORD_FAILED === $e->get_message_error_code();
+                $_resumable     = ( ! $_record_failed && (int) $task->completed < (int) $task->last_run )
                     ? MainWP_DB_Backup::instance()->is_backup_site_resumable_for_run( $task, $siteid )
                     : false;
                 if ( false !== $_resumable ) {

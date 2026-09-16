@@ -13,6 +13,7 @@ namespace MainWP\Dashboard\Tests;
 use MainWP\Dashboard\MainWP_Backup_Executor;
 use MainWP\Dashboard\MainWP_Backup_Error_Codes;
 use MainWP\Dashboard\MainWP_Backup_File_Manager;
+use MainWP\Dashboard\MainWP_Backup_Snapshots;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_DB_Backup;
 use MainWP\Dashboard\MainWP_Exception;
@@ -25,6 +26,20 @@ use MainWP\Dashboard\MainWP_Post_Backup_Handler;
 class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 
 	/**
+	 * Original snapshot singleton, restored after each test.
+	 *
+	 * @var MainWP_Backup_Snapshots|null
+	 */
+	private $snapshot_instance;
+
+	/**
+	 * Downloaded fixtures owned by snapshot failure tests.
+	 *
+	 * @var string[]
+	 */
+	private $snapshot_files = array();
+
+	/**
 	 * Set up: enable the legacy backup feature.
 	 *
 	 * @return void
@@ -32,6 +47,8 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 	public function setUp(): void {
 		parent::setUp();
 		update_option( 'mainwp_enableNativeBackups', 1 );
+		$property                = new \ReflectionProperty( MainWP_Backup_Snapshots::class, 'instance' );
+		$this->snapshot_instance = $property->getValue();
 	}
 
 	/**
@@ -40,6 +57,14 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 	 * @return void
 	 */
 	public function tearDown(): void {
+		$property = new \ReflectionProperty( MainWP_Backup_Snapshots::class, 'instance' );
+		$property->setValue( null, $this->snapshot_instance );
+		foreach ( $this->snapshot_files as $file ) {
+			if ( file_exists( $file ) ) {
+				unlink( $file );
+			}
+		}
+		$this->snapshot_files = array();
 		global $wpdb;
 		$wpdb->query( "DELETE FROM {$wpdb->prefix}mainwp_wp_backup_progress" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup.
 		delete_option( 'mainwp_enableNativeBackups' );
@@ -367,6 +392,158 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( 'full', $snapshot->archives[0]['role'] );
 		$this->assertSame( strlen( $content ), (int) $snapshot->archives[0]['size'] );
 		$this->assertFileExists( $snapshot->archives[0]['path'] );
+	}
+
+	/**
+	 * Isolate record failure from archive download and validation failures.
+	 *
+	 * @return string Archive bytes.
+	 */
+	private function mock_snapshot_record_failure() {
+		$property = new \ReflectionProperty( MainWP_Backup_Snapshots::class, 'instance' );
+		$property->setValue(
+			null,
+			new class() extends MainWP_Backup_Snapshots {
+				/**
+				 * Fail before a snapshot or its success action can be created.
+				 *
+				 * @param array $data Snapshot fields.
+				 * @return int Failed record id.
+				 */
+				public function record_snapshot( array $data ): int {
+					return 0;
+				}
+			}
+		);
+
+		$content = 'PK' . "\x03\x04" . str_repeat( 'x', 4092 );
+		add_filter(
+			'mainwp_download_to_file_pre',
+			function ( $pre, $url, $file ) use ( $content ) {
+				$this->snapshot_files[] = $file;
+				file_put_contents( $file, $content ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- test fixture.
+				return true;
+			},
+			10,
+			3
+		);
+		return $content;
+	}
+
+	/**
+	 * A full archive must remain available when its snapshot cannot be saved.
+	 *
+	 * @return void
+	 */
+	public function test_full_run_snapshot_record_failure_is_loud() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$content                = $this->mock_snapshot_record_failure();
+		$this->seed_download_ready_progress( $task->id, $site_id, strlen( $content ) );
+		$this->mock_child_action( 'delete_backup', array( 'result' => 'ok' ) );
+
+		try {
+			MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+			$this->fail( 'Expected snapshot record failure.' );
+		} catch ( MainWP_Exception $e ) {
+			$this->assertSame( 'mainwp_backup_snapshot_record_failed', $e->get_message_error_code() );
+			$this->assertSame( 'task id ' . $task->id . ', site id ' . $site_id, $e->get_message_extra() );
+		}
+
+		$this->assertSame( 0, did_action( 'mainwp_backup_snapshot_recorded' ) );
+		$this->assertNull( MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, (int) $task->id ) );
+		$this->assertCount( 1, $this->snapshot_files );
+		$this->assertFileExists( $this->snapshot_files[0] );
+		$this->assertSame( $content, file_get_contents( $this->snapshot_files[0] ) );
+	}
+
+	/**
+	 * Incremental completion must not report a zero snapshot id as success.
+	 *
+	 * @return void
+	 */
+	public function test_incremental_snapshot_record_failure_is_loud() {
+		list( $site_id, $task ) = $this->site_and_task( array( 'type' => 'incremental' ) );
+		$content                = $this->mock_snapshot_record_failure();
+		$this->give_site_real_privkey( $site_id );
+		$this->seed_progress( $task->id, $site_id, array( 'child_backup_task_id' => 'record-failure-' . $site_id ) );
+		$this->mock_child_action(
+			'backup_task_run',
+			array(
+				'task_id'   => 'record-failure-' . $site_id,
+				'phase'     => 'completed',
+				'artifacts' => array(
+					array(
+						'file' => 'uploads.part001.zip',
+						'size' => strlen( $content ),
+						'role' => 'part',
+					),
+				),
+			)
+		);
+
+		try {
+			MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+			$this->fail( 'Expected snapshot record failure.' );
+		} catch ( MainWP_Exception $e ) {
+			$this->assertSame( 'mainwp_backup_snapshot_record_failed', $e->get_message_error_code() );
+			$this->assertSame( 'task id ' . $task->id . ', site id ' . $site_id, $e->get_message_extra() );
+		}
+
+		$this->assertSame( 0, did_action( 'mainwp_backup_snapshot_recorded' ) );
+		$this->assertNull( MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, (int) $task->id ) );
+		$this->assertCount( 1, $this->snapshot_files );
+		$this->assertFileExists( $this->snapshot_files[0] );
+		$this->assertSame( $content, file_get_contents( $this->snapshot_files[0] ) );
+	}
+
+	/**
+	 * A known record failure must surface instead of yielding until the record TTL expires.
+	 *
+	 * @return void
+	 */
+	public function test_snapshot_record_failure_is_terminal_through_handler() {
+		$site_id = $this->create_test_site();
+		$user    = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$task    = MainWP_DB_Backup::instance()->add_backup_task( $user, 'Snapshot failure task', 'daily', 'full', '', (string) $site_id, '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0 );
+		$this->assertNotFalse( $task );
+		MainWP_DB_Backup::instance()->update_backup_task_with_values( (int) $task->id, array( 'last_run' => time() - 100 ) );
+		$task    = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$content = $this->mock_snapshot_record_failure();
+		$this->seed_download_ready_progress( $task->id, $site_id, strlen( $content ) );
+		MainWP_DB_Backup::instance()->update_backup_task_progress(
+			$task->id,
+			$site_id,
+			array(
+				'child_backup_task_id' => 'record-failure-handler',
+				'child_phase'          => 'completed',
+			)
+		);
+		$this->mock_child_action( 'delete_backup', array( 'result' => 'ok' ) );
+		$marks = array();
+		add_action(
+			'mainwp_backup_diag_site_mark',
+			function ( $task_id, $marked_site_id, $outcome, $detail ) use ( &$marks ) {
+				$marks[] = array( $outcome, $detail );
+			},
+			10,
+			4
+		);
+
+		MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, false );
+
+		$fresh    = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+		$this->assertSame( array( 'error' ), array_column( $marks, 0 ) );
+		$this->assertStringContainsString( 'mainwp_backup_snapshot_record_failed', $marks[0][1] );
+		$this->assertStringContainsString( MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_RECORD_FAILED ), $fresh->backup_errors );
+		$this->assertTrue( json_decode( $fresh->completed_sites, true )[ $site_id ] );
+		$this->assertSame( '', $progress->child_backup_task_id );
+		$this->assertSame( 'failed', $progress->child_phase );
+		$this->assertSame( 'record_pending', MainWP_DB_Backup::instance()->is_backup_site_resumable_for_run( $fresh, $site_id ) );
+		$this->assertSame( 0, did_action( 'mainwp_backup_snapshot_recorded' ) );
+		$this->assertNull( MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, (int) $task->id ) );
+		$this->assertCount( 1, $this->snapshot_files );
+		$this->assertFileExists( $this->snapshot_files[0] );
 	}
 
 	/**

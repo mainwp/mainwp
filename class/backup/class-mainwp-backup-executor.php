@@ -1426,7 +1426,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             $snapshot_type = 'files';
         }
 
-        $snapshots->record_snapshot(
+        $snapshot_id = $snapshots->record_snapshot(
             array(
                 'task_id'       => (int) $pTask->id,
                 'site_id'       => (int) $website->id,
@@ -1437,6 +1437,9 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 'woo_meta'      => static::woo_meta_from_progress( $progress ),
             )
         );
+        if ( $snapshot_id < 1 ) {
+            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_RECORD_FAILED, 'task id ' . (int) $pTask->id . ', site id ' . (int) $website->id ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+        }
     }
 
     /**
@@ -1563,6 +1566,10 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             );
         } else {
             $snapshot_id = (int) $latest->id;
+        }
+
+        if ( $snapshot_id < 1 ) {
+            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_RECORD_FAILED, 'task id ' . (int) $pTask->id . ', site id ' . (int) $website->id ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         }
 
         // Remote cleanup: every artifact except the manifest sidecar the

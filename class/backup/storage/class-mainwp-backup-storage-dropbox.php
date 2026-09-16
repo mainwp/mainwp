@@ -296,7 +296,7 @@ class MainWP_Backup_Storage_Dropbox implements MainWP_Backup_Storage_Provider { 
      * @return array Transport response.
      */
     private function content_request( string $endpoint, array $arg, ?string $body = null, array $extra_args = array() ) {
-        $headers = array( 'Dropbox-API-Arg' => (string) wp_json_encode( $arg ) );
+        $headers = array( 'Dropbox-API-Arg' => str_replace( "\x7f", '\u007f', (string) wp_json_encode( $arg ) ) );
         if ( null !== $body ) {
             $headers['Content-Type'] = 'application/octet-stream';
         }
@@ -564,7 +564,33 @@ class MainWP_Backup_Storage_Dropbox implements MainWP_Backup_Storage_Provider { 
     private function expect_status( $response, array $accepted, string $context ): void {
         $code = $this->status( $response );
         if ( ! in_array( $code, $accepted, true ) ) {
-            throw new \RuntimeException( esc_html( 'Storage request ' . $context . ' returned HTTP ' . $code . '.' ), (int) $code );
+            $body    = wp_remote_retrieve_body( $response );
+            $decoded = json_decode( $body, true );
+            $detail  = '';
+            if ( is_array( $decoded ) && isset( $decoded['error_summary'] ) && is_string( $decoded['error_summary'] ) ) {
+                $detail = $decoded['error_summary'];
+            } elseif ( JSON_ERROR_NONE !== json_last_error() && preg_match( '//u', $body ) && ! preg_match( '/^\s*[\[{"<]/', $body ) ) {
+                $detail = $body;
+            }
+
+            $diagnostics = array(
+                'detail'     => $detail,
+                'request_id' => (string) wp_remote_retrieve_header( $response, 'x-dropbox-request-id' ),
+            );
+            foreach ( $diagnostics as $key => $value ) {
+                $value               = preg_replace( '/[\x00-\x1f\x7f]/', '', $value );
+                $value               = preg_replace( '/sl\.[^\s]+|[A-Za-z0-9_-]{40,}/', '[redacted]', $value );
+                $diagnostics[ $key ] = mb_substr( trim( $value ), 0, 200 );
+            }
+
+            $message = 'Storage request ' . $context . ' returned HTTP ' . $code;
+            if ( '' !== $diagnostics['detail'] ) {
+                $message .= ': ' . $diagnostics['detail'];
+            }
+            if ( '' !== $diagnostics['request_id'] ) {
+                $message .= ' (Dropbox request id ' . $diagnostics['request_id'] . ')';
+            }
+            throw new \RuntimeException( esc_html( $message . '.' ), (int) $code );
         }
     }
 

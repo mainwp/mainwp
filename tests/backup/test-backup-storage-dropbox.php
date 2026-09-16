@@ -170,6 +170,116 @@ class MainWP_Backup_Storage_Dropbox_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Dropbox diagnostics identify a failed request without exposing credentials.
+	 *
+	 * @return void
+	 */
+	public function test_failed_request_includes_summary_and_request_id() {
+		$provider = $this->make_provider(
+			array(
+				$this->token_response(),
+				$this->response( 400, wp_json_encode( array( 'error_summary' => 'path/malformed_path/..' ) ), array( 'x-dropbox-request-id' => 'abc123' ) ),
+			)
+		);
+
+		try {
+			$provider->put_object( 'bad-key', 'bytes' );
+			$this->fail( 'Expected the upload to fail.' );
+		} catch ( \RuntimeException $e ) {
+			$this->assertSame( 400, $e->getCode() );
+			$this->assertSame( 'Storage request PUT bad-key returned HTTP 400: path/malformed_path/.. (Dropbox request id abc123).', $e->getMessage() );
+		}
+	}
+
+	/**
+	 * Plain-text failures can echo tokens and control bytes from a rejected call.
+	 *
+	 * @return void
+	 */
+	public function test_failed_request_redacts_tokens_and_strips_controls() {
+		$short_token = 'sl.short-secret';
+		$long_token  = str_repeat( 'Ab_9-', 8 );
+		$provider    = $this->make_provider(
+			array(
+				$this->token_response(),
+				$this->response( 400, "Error\x00 in call\x7f " . $short_token . ' ' . $long_token . ' <unsafe>' ),
+			)
+		);
+
+		try {
+			$provider->put_object( 'bad-key', 'bytes' );
+			$this->fail( 'Expected the upload to fail.' );
+		} catch ( \RuntimeException $e ) {
+			$this->assertSame( 'Storage request PUT bad-key returned HTTP 400: Error in call [redacted] [redacted] &lt;unsafe&gt;.', $e->getMessage() );
+			$this->assertStringNotContainsString( $short_token, $e->getMessage() );
+			$this->assertStringNotContainsString( $long_token, $e->getMessage() );
+		}
+	}
+
+	/**
+	 * Header-safe escaping must preserve the original Dropbox path.
+	 *
+	 * @return void
+	 */
+	public function test_put_object_escapes_del_in_api_arg() {
+		$provider = $this->make_provider( array( $this->token_response(), $this->response( 200, '{}' ) ) );
+		$key      = "archive\x7f.zip";
+		$this->assertTrue( $provider->put_object( $key, 'bytes' ) );
+		$header = $this->requests[1]['args']['headers']['Dropbox-API-Arg'];
+		$this->assertStringContainsString( '\u007f', $header );
+		$this->assertStringNotContainsString( "\x7f", $header );
+		$this->assertSame( '/mainwp-backups/' . $key, json_decode( $header, true )['path'] );
+	}
+
+	/**
+	 * Unusable bodies must preserve the existing generic error.
+	 *
+	 * @return void
+	 */
+	public function test_failed_request_without_usable_body_keeps_generic_message() {
+		foreach ( array( '', '{broken', '{"error_summary":42}', "\xff" ) as $body ) {
+			$provider = $this->make_provider( array( $this->token_response(), $this->response( 400, $body ) ) );
+			try {
+				$provider->put_object( 'bad-key', 'bytes' );
+				$this->fail( 'Expected the upload to fail.' );
+			} catch ( \RuntimeException $e ) {
+				$this->assertSame( 'Storage request PUT bad-key returned HTTP 400.', $e->getMessage() );
+			}
+		}
+	}
+
+	/**
+	 * A request id is worth keeping even when the body says nothing usable.
+	 *
+	 * @return void
+	 */
+	public function test_failed_request_keeps_request_id_without_body() {
+		$provider = $this->make_provider( array( $this->token_response(), $this->response( 400, '', array( 'x-dropbox-request-id' => 'abc123' ) ) ) );
+		try {
+			$provider->put_object( 'bad-key', 'bytes' );
+			$this->fail( 'Expected the upload to fail.' );
+		} catch ( \RuntimeException $e ) {
+			$this->assertSame( 'Storage request PUT bad-key returned HTTP 400 (Dropbox request id abc123).', $e->getMessage() );
+		}
+	}
+
+	/**
+	 * Redaction must happen before truncation can split a token.
+	 *
+	 * @return void
+	 */
+	public function test_failed_request_redacts_json_summary_before_capping_detail() {
+		$summary  = str_repeat( 'x ', 95 ) . str_repeat( 'secret', 10 ) . str_repeat( ' tail', 20 );
+		$provider = $this->make_provider( array( $this->token_response(), $this->response( 400, wp_json_encode( array( 'error_summary' => $summary ) ) ) ) );
+		try {
+			$provider->put_object( 'bad-key', 'bytes' );
+			$this->fail( 'Expected the upload to fail.' );
+		} catch ( \RuntimeException $e ) {
+			$this->assertSame( 'Storage request PUT bad-key returned HTTP 400: ' . str_repeat( 'x ', 95 ) . '[redacted].', $e->getMessage() );
+		}
+	}
+
+	/**
 	 * The minted token is cached: a second operation reuses it without a
 	 * second mint.
 	 *

@@ -217,6 +217,41 @@ class MainWP_Backup_Storage_Dropbox_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Redaction must cover both halves of credentials split by a control byte.
+	 *
+	 * @return void
+	 */
+	public function test_failed_request_redacts_control_split_tokens() {
+		foreach ( array( array( 'sl.AAAA', 'BBBB' ), array( str_repeat( 'A', 30 ), str_repeat( 'B', 30 ) ) ) as $halves ) {
+			$provider = $this->make_provider( array( $this->token_response(), $this->response( 400, $halves[0] . "\x01" . $halves[1] ) ) );
+			try {
+				$provider->put_object( 'bad-key', 'bytes' );
+				$this->fail( 'Expected the upload to fail.' );
+			} catch ( \RuntimeException $e ) {
+				$this->assertSame( 'Storage request PUT bad-key returned HTTP 400: [redacted].', $e->getMessage() );
+				$this->assertStringNotContainsString( str_replace( 'sl.', '', $halves[0] ), $e->getMessage() );
+				$this->assertStringNotContainsString( $halves[1], $e->getMessage() );
+			}
+		}
+	}
+
+	/**
+	 * Removing markup must not turn benign fragments into a redacted token.
+	 *
+	 * @return void
+	 */
+	public function test_failed_request_preserves_quote_separated_short_runs() {
+		$fragment = str_repeat( 'A', 30 );
+		$provider = $this->make_provider( array( $this->token_response(), $this->response( 400, $fragment . '"' . $fragment ) ) );
+		try {
+			$provider->put_object( 'bad-key', 'bytes' );
+			$this->fail( 'Expected the upload to fail.' );
+		} catch ( \RuntimeException $e ) {
+			$this->assertSame( 'Storage request PUT bad-key returned HTTP 400: ' . $fragment . $fragment . '.', $e->getMessage() );
+		}
+	}
+
+	/**
 	 * Header-safe escaping must preserve the original Dropbox path.
 	 *
 	 * @return void
@@ -453,6 +488,36 @@ class MainWP_Backup_Storage_Dropbox_Test extends \WP_UnitTestCase {
 		} catch ( \RuntimeException $e ) {
 			$this->assertSame( 409, $e->getCode() );
 			$this->assertSame( 'Storage request GET missing.zip returned HTTP 409: path/not_found/...', $e->getMessage() );
+			$this->assertFileDoesNotExist( $target );
+		} finally {
+			if ( file_exists( $target ) ) {
+				wp_delete_file( $target );
+			}
+		}
+	}
+
+	/**
+	 * A transport error must remove the partial download and still throw.
+	 *
+	 * @return void
+	 */
+	public function test_get_object_transport_failure_removes_partial_file() {
+		$target    = get_temp_dir() . 'mainwp-dropbox-transport-failure-' . uniqid() . '.bin';
+		$transport = function ( $url, $args ) {
+			if ( 'https://api.dropboxapi.com/oauth2/token' === $url ) {
+				return $this->token_response();
+			}
+			$this->assertTrue( $args['stream'] );
+			$this->assertSame( 7, file_put_contents( $args['filename'], 'partial' ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- test fixture.
+			return new \WP_Error( 'http_request_failed', 'Connection reset' );
+		};
+		$provider  = new MainWP_Backup_Storage_Dropbox( $this->settings(), $transport );
+
+		try {
+			$provider->get_object( 'k.bin', $target );
+			$this->fail( 'Expected the download to fail.' );
+		} catch ( \RuntimeException $e ) {
+			$this->assertSame( 'Storage request failed: Connection reset', $e->getMessage() );
 			$this->assertFileDoesNotExist( $target );
 		} finally {
 			if ( file_exists( $target ) ) {

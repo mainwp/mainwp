@@ -160,18 +160,25 @@ class MainWP_Backup_Storage_Dropbox implements MainWP_Backup_Storage_Provider { 
      *
      * @return bool
      *
-     * @throws \RuntimeException On transport or service errors.
+     * @throws \Throwable On transport or service errors, after removing a partial download.
      */
     public function get_object( string $key, string $local_path ): bool {
-        $response = $this->content_request(
-            '/2/files/download',
-            array( 'path' => $this->object_path( $key ) ),
-            null,
-            array(
-                'stream'   => true,
-                'filename' => $local_path,
-            )
-        );
+        try {
+            $response = $this->content_request(
+                '/2/files/download',
+                array( 'path' => $this->object_path( $key ) ),
+                null,
+                array(
+                    'stream'   => true,
+                    'filename' => $local_path,
+                )
+            );
+        } catch ( \Throwable $e ) {
+            if ( is_file( $local_path ) ) {
+                wp_delete_file( $local_path );
+            }
+            throw $e;
+        }
 
         if ( 200 !== $this->status( $response ) && is_file( $local_path ) ) {
             if ( is_readable( $local_path ) ) {
@@ -591,16 +598,18 @@ class MainWP_Backup_Storage_Dropbox implements MainWP_Backup_Storage_Provider { 
                 'detail'     => $detail,
                 'request_id' => is_scalar( $request_id ) ? (string) $request_id : '',
             );
+            // Redact before normalization can split credentials or join benign runs.
             // Markup characters are dropped rather than encoded: the message is
             // already esc_html'd at the throw and the list view escapes it again,
             // so an encoded entity would reach the tooltip as &amp;lt;. The cast
             // before trim() covers a PCRE failure returning null, which would
             // otherwise blank the diagnostic this path exists to carry.
             foreach ( $diagnostics as $key => $value ) {
+                // Include control and DEL bytes so a split credential cannot survive as two sub-40 halves.
+                $value               = preg_replace( '/sl\.[^\s]+|[A-Za-z0-9_\-\x00-\x1f\x7f]{40,}/', '[redacted]', (string) $value );
                 $value               = preg_replace( '/[\x00-\x1f\x7f]/', ' ', $value );
                 $value               = str_replace( array( '<', '>', '&', '"', "'" ), '', $value );
                 $value               = preg_replace( '/\s+/', ' ', $value );
-                $value               = preg_replace( '/sl\.[^\s]+|[A-Za-z0-9_-]{40,}/', '[redacted]', $value );
                 $diagnostics[ $key ] = mb_substr( trim( (string) $value ), 0, 200 );
             }
 

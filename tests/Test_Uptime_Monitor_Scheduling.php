@@ -13,6 +13,7 @@ use MainWP\Dashboard\MainWP_Uptime_Monitoring_Connect;
 use MainWP\Dashboard\MainWP_Uptime_Monitoring_Handle;
 use MainWP\Dashboard\MainWP_Uptime_Monitoring_Schedule;
 use MainWP\Dashboard\MainWP_System_Utility;
+use MainWP\Dashboard\MainWP_Notification_Settings;
 
 // phpcs:disable WordPress.Files.FileName.InvalidClassFileName
 
@@ -57,33 +58,46 @@ class Test_Uptime_Monitor_Scheduling extends \WP_UnitTestCase {
 	 */
 	protected $sent_notification_data = false;
 
+    /**
+     * Uptime status translation filter callback.
+     *
+     * @var callable|false
+     */
+    protected $uptime_status_translation_filter = false;
+
+
 	/**
 	 * Set up test fixtures.
 	 *
 	 * @return void
 	 */
 	public function setUp(): void {
-		parent::setUp();
+        parent::setUp();
 
-		add_filter( 'mainwp_wp_mail_to', array( $this, 'capture_uptime_notification' ), 10, 5 );
+        add_filter( 'mainwp_wp_mail_to', array( $this, 'capture_uptime_notification' ), 10, 5 );
 
-		$this->site_id = $this->create_test_site(
-			array(
-				'name' => 'Test Site',
-				'url'  => 'https://test-uptime-interval-scheduling.example.com/',
-			)
-		);
+        $this->uptime_status_translation_filter = function ( $translation, $text, $context ) {
+            if ( 'Uptime monitoring status' === $context ) {
+                return array(
+                    'UP'       => 'TEST_UP',
+                    'DOWN'     => 'TEST_DOWN',
+                    'PENDING'  => 'TEST_PENDING',
+                    'DISABLED' => 'TEST_DISABLED',
+                )[ $text ] ?? $translation;
+            }
+            return $translation;
+        };
 
-		$this->monitor_id = $this->create_test_monitor( $this->site_id );
-
-        $this->sub_monitor_id = $this->create_test_monitor(
-            $this->site_id,
-            array(
-                'suburl' => 'testsubpage'
-            )
+        add_filter(
+            'gettext_with_context',
+            $this->uptime_status_translation_filter,
+            10,
+            3
         );
 
-	}
+        $this->setup_teardown_test_data();
+
+    }
 
 	/**
 	 * Clean up test fixtures and generated uptime data.
@@ -95,24 +109,112 @@ class Test_Uptime_Monitor_Scheduling extends \WP_UnitTestCase {
 
 		remove_filter( 'mainwp_wp_mail_to', array( $this, 'capture_uptime_notification' ), 10 );
 
-		if ( $this->monitor_id ) {
-			MainWP_DB::instance()->delete_regular_process( false, $this->monitor_id, 'monitor', 'uptime_notification' );
-			MainWP_DB_Uptime_Monitoring::instance()->delete_monitor( array( 'monitor_id' => $this->monitor_id ) );
-		}
+        remove_filter(
+            'gettext_with_context',
+            $this->uptime_status_translation_filter,
+            10
+        );
 
-		if ( $this->site_id ) {
-			$wpdb->delete( $wpdb->prefix . 'mainwp_wp_sync', array( 'wpid' => $this->site_id ), array( '%d' ) );
-			$wpdb->delete( $wpdb->prefix . 'mainwp_wp_options', array( 'wpid' => $this->site_id ), array( '%d' ) );
-			$wpdb->delete( $wpdb->prefix . 'mainwp_wp', array( 'id' => $this->site_id ), array( '%d' ) );
-		}
-
-        if ( $this->sub_monitor_id ) {
-            MainWP_DB::instance()->delete_regular_process( false, $this->sub_monitor_id, 'monitor', 'uptime_notification' );
-            MainWP_DB_Uptime_Monitoring::instance()->delete_monitor( array( 'monitor_id' => $this->sub_monitor_id ) );
-        }
+        $this->setup_teardown_test_data( false );
 
 		parent::tearDown();
 	}
+
+
+    /**
+     * Set up or tear down test site and uptime monitor data.
+     *
+     * When setting up, creates a test site with a primary monitor and a
+     * sub-monitor. When tearing down, removes the associated scheduled
+     * processes, monitors, and test site database records.
+     *
+     * @param bool $up True to set up test data, false to tear it down.
+     *
+     * @return void
+     */
+    protected function setup_teardown_test_data( $up = true ) {
+        global $wpdb;
+
+        if ( $up ) {
+            $this->site_id = $this->create_test_site(
+                array(
+                    'name' => 'Test Site',
+                    'url'  => 'https://test-uptime-interval-scheduling.example.com/',
+                )
+            );
+
+            $this->monitor_id = $this->create_test_monitor( $this->site_id );
+
+            $this->sub_monitor_id = $this->create_test_monitor(
+                $this->site_id,
+                array(
+                    'suburl' => 'testsubpage',
+                )
+            );
+            return;
+
+        }
+
+        if ( $this->sub_monitor_id ) {
+            MainWP_DB::instance()->delete_regular_process(
+                false,
+                $this->sub_monitor_id,
+                'monitor',
+                'uptime_notification'
+            );
+
+            MainWP_DB_Uptime_Monitoring::instance()->delete_monitor(
+                array(
+                    'monitor_id' => $this->sub_monitor_id,
+                )
+            );
+
+        }
+
+        if ( $this->monitor_id ) {
+            MainWP_DB::instance()->delete_regular_process(
+                false,
+                $this->monitor_id,
+                'monitor',
+                'uptime_notification'
+            );
+
+            MainWP_DB_Uptime_Monitoring::instance()->delete_monitor(
+                array(
+                    'monitor_id' => $this->monitor_id,
+                )
+            );
+
+        }
+
+        if ( $this->site_id ) {
+
+            $wpdb->delete(
+                $wpdb->prefix . 'mainwp_wp_sync',
+                array( 'wpid' => $this->site_id ),
+                array( '%d' )
+            );
+
+            $wpdb->delete(
+                $wpdb->prefix . 'mainwp_wp_options',
+                array( 'wpid' => $this->site_id ),
+                array( '%d' )
+            );
+
+            $wpdb->delete(
+                $wpdb->prefix . 'mainwp_wp',
+                array( 'id' => $this->site_id ),
+                array( '%d' )
+            );
+
+        }
+
+        $this->sub_monitor_id = 0;
+        $this->monitor_id     = 0;
+        $this->site_id        = 0;
+    }
+
+
 
 
     /**
@@ -581,7 +683,6 @@ class Test_Uptime_Monitor_Scheduling extends \WP_UnitTestCase {
 		$this->assert_monitor_selected( $after_individual_interval, 'Expected the monitor to become due after its ten-minute individual interval.' );
 	}
 
-
     /**
      * Verifies that a DOWN uptime monitoring notification is sent with localized values.
      *
@@ -600,6 +701,17 @@ class Test_Uptime_Monitor_Scheduling extends \WP_UnitTestCase {
 		);
 
         $this->mark_monitor_started( $round_started_at );
+
+        $this->process_simulated_result( $this->get_monitor(), $settings, 0 );
+
+        $pending_monitor = $this->get_monitor();
+
+         $this->assertSame(
+            MainWP_Uptime_Monitoring_Connect::PENDING,
+            (int) $pending_monitor->last_status
+        );
+
+
         $this->process_simulated_result( $this->get_monitor(), $settings, 0, 1 );
 
         $down_monitor = $this->get_monitor();
@@ -658,9 +770,8 @@ class Test_Uptime_Monitor_Scheduling extends \WP_UnitTestCase {
 
         $site = MainWP_DB::instance()->get_website_by_id( $this->site_id );
 
-        $tokens_values = MainWP_System_Utility::get_tokens_site_values( $site, true );
-        $subject_expected = MainWP_System_Utility::replace_tokens_values( $email_settings['subject'], $tokens_values );
-        $heading_expected = MainWP_System_Utility::replace_tokens_values( $email_settings['heading'], $tokens_values );
+        $subject_expected = $this->get_expected_settings_field( $email_settings, 'subject', array('[site.name]' => $site->name, '[uptime.status]' => 'DOWN') );
+        $heading_expected = $this->get_expected_settings_field( $email_settings, 'heading', array('[site.name]' => $site->name, '[uptime.status]' => 'DOWN') );
 
         $this->assertSame(
             $subject_expected,
@@ -727,16 +838,9 @@ class Test_Uptime_Monitor_Scheduling extends \WP_UnitTestCase {
         );
 
         $site          = MainWP_DB::instance()->get_website_by_id( $this->site_id );
-        $tokens_values = MainWP_System_Utility::get_tokens_site_values( $site, true );
 
-        $subject_expected = MainWP_System_Utility::replace_tokens_values(
-            $email_settings['subject'],
-            $tokens_values
-        );
-        $heading_expected = MainWP_System_Utility::replace_tokens_values(
-            $email_settings['heading'],
-            $tokens_values
-        );
+        $subject_expected = $this->get_expected_settings_field( $email_settings, 'subject', array('[site.name]' => $site->name, '[uptime.status]' => 'UP') );
+        $heading_expected = $this->get_expected_settings_field( $email_settings, 'heading', array('[site.name]' => $site->name, '[uptime.status]' => 'UP') );
 
         $this->assertSame(
             $subject_expected,
@@ -749,6 +853,47 @@ class Test_Uptime_Monitor_Scheduling extends \WP_UnitTestCase {
             'Expected the localized heading to be included in the notification content.'
         );
 
+        $this->sent_notification = false;
+        $this->sent_notification_data = false;
+
+        $this->mark_monitor_started( $round_started_at );
+        $this->process_simulated_result( $this->get_monitor(), $settings, 0, 1 );
+
+        // Test DISABLED.
+        $this->send_pending_notification( $email_settings, true );
+    }
+
+    /**
+     * Get the expected settings field value with test values and translations applied.
+     *
+     * @param array  $settings      Settings values.
+     * @param string $field         Settings field name.
+     * @param array  $expected_values   Token replacement values.
+     *
+     * @return string Expected field value.
+     */
+	public function get_expected_settings_field( $settings, $field, $expected_values ) {
+
+        $value = is_array( $settings ) && isset( $settings[ $field ] ) ? $settings[ $field ] : '';
+
+        $expected = str_replace(
+            array_keys( $expected_values ),
+            array_values( $expected_values ),
+            $value
+        );
+
+        $test_translations = array(
+            'UP'       => 'TEST_UP',
+            'DOWN'     => 'TEST_DOWN',
+            'PENDING'  => 'TEST_PENDING',
+            'DISABLED' => 'TEST_DISABLED',
+        );
+
+        return str_replace(
+            array_keys( $test_translations ),
+            array_values( $test_translations ),
+            $expected
+        );
     }
 
 	/**
@@ -819,7 +964,7 @@ class Test_Uptime_Monitor_Scheduling extends \WP_UnitTestCase {
 		$objects = is_array( $object_sending ) ? $object_sending : array( $object_sending );
 
 		foreach ( $objects as $object ) {
-			if ( is_object( $object ) && isset( $object->monitor_id ) && $this->monitor_id === (int) $object->monitor_id ) {
+			if ( is_object( $object ) && isset( $object->monitor_id ) && $this->monitor_id === (int) $object->monitor_id && isset( $object->wpid ) && $this->site_id === (int) $object->wpid ) {
 				$this->sent_notification = $object;
                 $this->sent_notification_data = array(
                     'subject' => $subject,
@@ -924,6 +1069,23 @@ class Test_Uptime_Monitor_Scheduling extends \WP_UnitTestCase {
 		);
 	}
 
+    /**
+     * Save email notification settings for a site.
+     *
+     * @param int $site_id Website site ID.
+     * @param array $settings_emails Email notification settings.
+ *
+     *
+     * @return bool True if the settings were saved successfully, false otherwise.
+     */
+    protected function save_site_uptime_email_settings( $site_id, $settings_emails ) {
+        return MainWP_DB::instance()->update_website_option(
+            $site_id,
+            'settings_notification_emails',
+            wp_json_encode( $settings_emails )
+        );
+    }
+
 	/**
 	 * Start and send the pending uptime notification.
 	 *
@@ -931,7 +1093,7 @@ class Test_Uptime_Monitor_Scheduling extends \WP_UnitTestCase {
      *
 	 * @return void
 	 */
-	protected function send_pending_notification( $email_settings = array() ) {
+	protected function send_pending_notification( $email_settings = array(), $test_disabled = false ) {
 		$local_time   = mainwp_get_timestamp();
 		$process_init = MainWP_DB_Uptime_Monitoring::instance()->get_uptime_notification_to_start_send( 50 );
 		$started      = false;
@@ -955,12 +1117,57 @@ class Test_Uptime_Monitor_Scheduling extends \WP_UnitTestCase {
 
 		$this->assertTrue( $started, 'Expected the fixture notification process to be started.' );
 
-		$process_notices = MainWP_DB_Uptime_Monitoring::instance()->get_uptime_notification_to_continue_send(
-			array(
-				'limit'      => 3,
-				'monitor_id' => $this->monitor_id,
-			)
-		);
+        $subject_expected = '';
+        $heading_expected = '';
+
+        if( $test_disabled ){
+
+            MainWP_DB_Uptime_Monitoring::instance()->update_wp_monitor(
+                array(
+                    'monitor_id' => $this->monitor_id,
+                    'active'     => 0,
+                )
+            );
+
+            $settings_emails = array(
+                'uptime' => array(
+                    'disable'    => 0,
+                    'recipients' => 'admin-testing-uptime@local.com',
+                    'subject'    => 'Uptime Monitoring Alert from your MainWP Dashboard - [site.name] est [uptime.status]',
+                    'heading'    => 'Uptime Monitoring [site.name] est [uptime.status]',
+                )
+            );
+
+            $this->save_site_uptime_email_settings( $this->site_id, $settings_emails );
+
+            $site          = MainWP_DB::instance()->get_website_by_id( $this->site_id );
+            $subject_expected = $this->get_expected_settings_field( $email_settings, 'subject', array('[site.name]' => $site->name, '[uptime.status]' => 'DISABLED' ) );
+            $heading_expected = $this->get_expected_settings_field( $email_settings, 'heading', array('[site.name]' => $site->name, '[uptime.status]' => 'DISABLED' ) );
+        }
+
+        $process_notices = MainWP_DB_Uptime_Monitoring::instance()->get_uptime_notification_to_continue_send(
+            array(
+                'limit'      => 3,
+                'monitor_id' => $this->monitor_id,
+            )
+        );
+
+       if( $test_disabled ){
+            $uptime_notice = $process_notices  && is_array( $process_notices ) ? $process_notices[0] : false;
+            $email_settings = MainWP_Notification_Settings::get_site_email_settings( 'uptime', $uptime_notice );
+
+            $this->assertSame(
+                $subject_expected,
+                $email_settings['subject']
+            );
+
+            $this->assertSame(
+                $heading_expected,
+                $email_settings['heading']
+            );
+            return;
+        }
+
 		$this->assertNotEmpty( $process_notices, 'Expected a notification process ready to send.' );
 
         if ( empty( $email_settings ) ) {

@@ -1082,7 +1082,7 @@ KEY idx_wpid_issub (wpid, issub)";
             'SELECT he.*,mo.active FROM ' . $table_monitors . ' mo ' .
             ' LEFT JOIN ' . $table_monitor_heartbeat . ' he ' .
             ' ON mo.monitor_id = he.monitor_id ' .
-            ' WHERE mo.wpid = %d ' . $where . ' ORDER BY he.time DESC LIMIT 1',
+            ' WHERE mo.wpid = %d ' . $where . ' ORDER BY he.time DESC, he.heartbeat_id DESC LIMIT 1', // he.id DESC to Fix the case same time.
             $siteid
         );
         return $this->wpdb->get_row( $sql ); //phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- SQL from wpdb->prepare().

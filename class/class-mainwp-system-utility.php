@@ -1096,22 +1096,27 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         if ( is_array( $tokens_values ) && isset( $tokens_values['[uptime.status]'] ) ) {
             switch ( $tokens_values['[uptime.status]'] ) {
                 case 'UP':
-                    $tokens_values['[uptime.status]'] = __( 'Up', 'mainwp' );
+                    $tokens_values['[uptime.status]'] = _x( 'UP', 'Uptime monitoring status', 'mainwp' );
                     break;
+
                 case 'DOWN':
-                    $tokens_values['[uptime.status]'] = __( 'Down', 'mainwp' );
+                    $tokens_values['[uptime.status]'] = _x( 'DOWN', 'Uptime monitoring status', 'mainwp' );
                     break;
+
                 case 'PENDING':
-                    $tokens_values['[uptime.status]'] = __( 'Pending', 'mainwp' );
+                    $tokens_values['[uptime.status]'] = _x( 'PENDING', 'Uptime monitoring status', 'mainwp' );
                     break;
+
                 case 'DISABLED':
-                    $tokens_values['[uptime.status]'] = __( 'Disabled', 'mainwp' );
+                    $tokens_values['[uptime.status]'] = _x( 'DISABLED', 'Uptime monitoring status', 'mainwp' );
                     break;
+
                 default:
                     // No change.
                     break;
             }
         }
+
         return $tokens_values;
     }
 

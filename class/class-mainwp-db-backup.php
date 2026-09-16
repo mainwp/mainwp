@@ -923,6 +923,11 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * @return string|false 'record_pending' or false.
      */
     private function classify_record_pending( $task, $progress, $set_paths ) {
+        // Terminal record failures must prevent site re-drive and release the run-close guard.
+        if ( MainWP_Backup_Task_Phase::FAILED === $progress->child_phase ) {
+            return false;
+        }
+
         $newest_mtime = 0;
         foreach ( $set_paths as $path ) {
             clearstatcache( true, $path[0] );

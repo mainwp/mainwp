@@ -202,7 +202,7 @@ class MainWP_Backup_Storage_Dropbox_Test extends \WP_UnitTestCase {
 		$provider    = $this->make_provider(
 			array(
 				$this->token_response(),
-				$this->response( 400, "Error\x00 in call\x7f " . $short_token . ' ' . $long_token . ' <unsafe>' ),
+				$this->response( 400, "Error\x00 in call\nto API\r\nfunction\x7f " . $short_token . ' ' . $long_token . " <unsafe> & \"quoted\" 'text'" ),
 			)
 		);
 
@@ -210,7 +210,7 @@ class MainWP_Backup_Storage_Dropbox_Test extends \WP_UnitTestCase {
 			$provider->put_object( 'bad-key', 'bytes' );
 			$this->fail( 'Expected the upload to fail.' );
 		} catch ( \RuntimeException $e ) {
-			$this->assertSame( 'Storage request PUT bad-key returned HTTP 400: Error in call [redacted] [redacted] &lt;unsafe&gt;.', $e->getMessage() );
+			$this->assertSame( 'Storage request PUT bad-key returned HTTP 400: Error in call to API function [redacted] [redacted] unsafe quoted text.', $e->getMessage() );
 			$this->assertStringNotContainsString( $short_token, $e->getMessage() );
 			$this->assertStringNotContainsString( $long_token, $e->getMessage() );
 		}
@@ -237,7 +237,7 @@ class MainWP_Backup_Storage_Dropbox_Test extends \WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_failed_request_without_usable_body_keeps_generic_message() {
-		foreach ( array( '', '{broken', '{"error_summary":42}', "\xff" ) as $body ) {
+		foreach ( array( '', '{broken', '{"error_summary":42}', "\xff", "\xEF\xBB\xBF<?xml version=\"1.0\"?><error/>" ) as $body ) {
 			$provider = $this->make_provider( array( $this->token_response(), $this->response( 400, $body ) ) );
 			try {
 				$provider->put_object( 'bad-key', 'bytes' );
@@ -254,12 +254,14 @@ class MainWP_Backup_Storage_Dropbox_Test extends \WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_failed_request_keeps_request_id_without_body() {
-		$provider = $this->make_provider( array( $this->token_response(), $this->response( 400, '', array( 'x-dropbox-request-id' => 'abc123' ) ) ) );
-		try {
-			$provider->put_object( 'bad-key', 'bytes' );
-			$this->fail( 'Expected the upload to fail.' );
-		} catch ( \RuntimeException $e ) {
-			$this->assertSame( 'Storage request PUT bad-key returned HTTP 400 (Dropbox request id abc123).', $e->getMessage() );
+		foreach ( array( 'abc123', array( 'abc123', 'second-id' ), array( '<abc123>&"\'' ) ) as $request_id ) {
+			$provider = $this->make_provider( array( $this->token_response(), $this->response( 400, '', array( 'x-dropbox-request-id' => $request_id ) ) ) );
+			try {
+				$provider->put_object( 'bad-key', 'bytes' );
+				$this->fail( 'Expected the upload to fail.' );
+			} catch ( \RuntimeException $e ) {
+				$this->assertSame( 'Storage request PUT bad-key returned HTTP 400 (Dropbox request id abc123).', $e->getMessage() );
+			}
 		}
 	}
 
@@ -424,6 +426,37 @@ class MainWP_Backup_Storage_Dropbox_Test extends \WP_UnitTestCase {
 		} finally {
 			if ( file_exists( $target ) ) {
 				unlink( $target );
+			}
+		}
+	}
+
+	/**
+	 * Streamed error bodies must reach diagnostics and leave no partial download.
+	 *
+	 * @return void
+	 */
+	public function test_get_object_streamed_failure_includes_summary_and_removes_file() {
+		$target    = get_temp_dir() . 'mainwp-dropbox-failure-' . uniqid() . '.bin';
+		$transport = function ( $url, $args ) {
+			if ( 'https://api.dropboxapi.com/oauth2/token' === $url ) {
+				return $this->token_response();
+			}
+			$this->assertTrue( $args['stream'] );
+			file_put_contents( $args['filename'], wp_json_encode( array( 'error_summary' => 'path/not_found/..' ) ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- test fixture.
+			return $this->response( 409, null );
+		};
+		$provider  = new MainWP_Backup_Storage_Dropbox( $this->settings(), $transport );
+
+		try {
+			$provider->get_object( 'missing.zip', $target );
+			$this->fail( 'Expected the download to fail.' );
+		} catch ( \RuntimeException $e ) {
+			$this->assertSame( 409, $e->getCode() );
+			$this->assertSame( 'Storage request GET missing.zip returned HTTP 409: path/not_found/...', $e->getMessage() );
+			$this->assertFileDoesNotExist( $target );
+		} finally {
+			if ( file_exists( $target ) ) {
+				wp_delete_file( $target );
 			}
 		}
 	}

@@ -173,6 +173,16 @@ class MainWP_Backup_Storage_Dropbox implements MainWP_Backup_Storage_Provider { 
             )
         );
 
+        if ( 200 !== $this->status( $response ) && is_file( $local_path ) ) {
+            if ( is_readable( $local_path ) ) {
+                $body = file_get_contents( $local_path, false, null, 0, 1024 ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Read only the bounded local response body.
+                if ( false !== $body ) {
+                    $response['body'] = $body;
+                }
+            }
+            wp_delete_file( $local_path );
+        }
+
         $this->expect_status( $response, array( 200 ), 'GET ' . $key );
 
         return true;
@@ -569,18 +579,29 @@ class MainWP_Backup_Storage_Dropbox implements MainWP_Backup_Storage_Provider { 
             $detail  = '';
             if ( is_array( $decoded ) && isset( $decoded['error_summary'] ) && is_string( $decoded['error_summary'] ) ) {
                 $detail = $decoded['error_summary'];
-            } elseif ( JSON_ERROR_NONE !== json_last_error() && preg_match( '//u', $body ) && ! preg_match( '/^\s*[\[{"<]/', $body ) ) {
+            } elseif ( JSON_ERROR_NONE !== json_last_error() && preg_match( '//u', $body ) && ! preg_match( '/^(?:\xEF\xBB\xBF)?\s*[\[{"<]/', $body ) ) {
                 $detail = $body;
             }
 
+            $request_id = wp_remote_retrieve_header( $response, 'x-dropbox-request-id' );
+            if ( is_array( $request_id ) ) {
+                $request_id = reset( $request_id );
+            }
             $diagnostics = array(
                 'detail'     => $detail,
-                'request_id' => (string) wp_remote_retrieve_header( $response, 'x-dropbox-request-id' ),
+                'request_id' => is_scalar( $request_id ) ? (string) $request_id : '',
             );
+            // Markup characters are dropped rather than encoded: the message is
+            // already esc_html'd at the throw and the list view escapes it again,
+            // so an encoded entity would reach the tooltip as &amp;lt;. The cast
+            // before trim() covers a PCRE failure returning null, which would
+            // otherwise blank the diagnostic this path exists to carry.
             foreach ( $diagnostics as $key => $value ) {
-                $value               = preg_replace( '/[\x00-\x1f\x7f]/', '', $value );
+                $value               = preg_replace( '/[\x00-\x1f\x7f]/', ' ', $value );
+                $value               = str_replace( array( '<', '>', '&', '"', "'" ), '', $value );
+                $value               = preg_replace( '/\s+/', ' ', $value );
                 $value               = preg_replace( '/sl\.[^\s]+|[A-Za-z0-9_-]{40,}/', '[redacted]', $value );
-                $diagnostics[ $key ] = mb_substr( trim( $value ), 0, 200 );
+                $diagnostics[ $key ] = mb_substr( trim( (string) $value ), 0, 200 );
             }
 
             $message = 'Storage request ' . $context . ' returned HTTP ' . $code;

@@ -405,12 +405,20 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 			null,
 			new class() extends MainWP_Backup_Snapshots {
 				/**
+				 * Snapshot insert attempts.
+				 *
+				 * @var int
+				 */
+				public $record_attempts = 0;
+
+				/**
 				 * Fail before a snapshot or its success action can be created.
 				 *
 				 * @param array $data Snapshot fields.
 				 * @return int Failed record id.
 				 */
 				public function record_snapshot( array $data ): int {
+					++$this->record_attempts;
 					return 0;
 				}
 			}
@@ -539,10 +547,39 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 		$this->assertTrue( json_decode( $fresh->completed_sites, true )[ $site_id ] );
 		$this->assertSame( '', $progress->child_backup_task_id );
 		$this->assertSame( 'failed', $progress->child_phase );
-		$this->assertSame( 'record_pending', MainWP_DB_Backup::instance()->is_backup_site_resumable_for_run( $fresh, $site_id ) );
+		$this->assertFalse( MainWP_DB_Backup::instance()->is_backup_site_resumable_for_run( $fresh, $site_id ) );
+		$this->assertGreaterThanOrEqual( (int) $fresh->last_run, (int) $fresh->completed );
 		$this->assertSame( 0, did_action( 'mainwp_backup_snapshot_recorded' ) );
 		$this->assertNull( MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, (int) $task->id ) );
 		$this->assertCount( 1, $this->snapshot_files );
+		$this->assertFileExists( $this->snapshot_files[0] );
+	}
+
+	/**
+	 * A continuation must not retry a failed insert or append its error again.
+	 *
+	 * @return void
+	 */
+	public function test_snapshot_record_failure_is_not_retried_on_second_tick() {
+		$site_id = $this->create_test_site();
+		$user    = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$task    = MainWP_DB_Backup::instance()->add_backup_task( $user, 'Snapshot failure task', 'daily', 'full', '', (string) $site_id, '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0 );
+		$this->assertNotFalse( $task );
+		MainWP_DB_Backup::instance()->update_backup_task_with_values( (int) $task->id, array( 'last_run' => time() - 100 ) );
+		$task    = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$content = $this->mock_snapshot_record_failure();
+		$this->seed_download_ready_progress( $task->id, $site_id, strlen( $content ) );
+		$this->mock_child_action( 'delete_backup', array( 'result' => 'ok' ) );
+
+		MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, false );
+		$fresh = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$this->assertSame( 1, MainWP_Backup_Snapshots::instance()->record_attempts );
+
+		MainWP_Manage_Backups_Handler::execute_backup_task( $fresh, 1, false );
+		$fresh = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$this->assertSame( 1, MainWP_Backup_Snapshots::instance()->record_attempts );
+		$this->assertSame( 1, substr_count( $fresh->backup_errors, MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_RECORD_FAILED ) ) );
+		$this->assertGreaterThanOrEqual( (int) $fresh->last_run, (int) $fresh->completed );
 		$this->assertFileExists( $this->snapshot_files[0] );
 	}
 

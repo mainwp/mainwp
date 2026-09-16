@@ -1055,6 +1055,9 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                 $errorEntries[] = 'Site: <strong>' . MainWP_Utility::get_nice_url( $website->url ) . '</strong><br />' . $_error_output;
 
                 static::close_child_task_after_terminal_mark( (int) $task->id, (int) $siteid );
+                if ( $_record_failed ) {
+                    MainWP_DB_Backup::instance()->update_backup_task_progress( (int) $task->id, (int) $siteid, array( 'child_phase' => MainWP_Backup_Task_Phase::FAILED ) );
+                }
             } finally {
                 // A child request leaves PHP's execution limit at the bound it
                 // gave itself, so the bookkeeping and hashing that follow would

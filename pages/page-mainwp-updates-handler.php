@@ -1043,13 +1043,6 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
                 $undefined = true;
 
-                if ( ! empty( $result['upgrades_started'] ) && is_array( $result['upgrades_started'] ) ) {
-                    foreach ( $result['upgrades_started'] as $k => $v ) {
-                        $return_results['result_started'][ rawurlencode( $k ) ] = esc_html( $v );
-                    }
-                    return $return_results;
-                }
-
                 if ( isset( $result['upgrades_error'] ) ) {
                     foreach ( $result['upgrades_error'] as $k => $v ) {
                         $return_results['result_error'][ rawurlencode( $k ) ] = esc_html( $v );

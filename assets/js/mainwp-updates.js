@@ -1155,7 +1155,6 @@ let updatesoverview_plugins_upgrade_int_after_backup = function (pSlug, pWebsite
                     }
                     let done = false;
                     let bulk_errors = [];
-                    let res_started;
                     let _icon = '<i class="red times icon"></i>';
                     for (let sid of slugParts) {
                         let websiteHolder = jQuery('.plugins-bulk-updates[plugin_slug="' + sid + '"] tr[site_id="' + pWebsiteId + '"]');
@@ -1172,16 +1171,10 @@ let updatesoverview_plugins_upgrade_int_after_backup = function (pSlug, pWebsite
                         } else {
                             let res = response.result;
                             let res_error = response.result_error;
-                            res_started = response.result_started;
                             if (mainwp_get_result_entry(res, sid)) {
                                 lastResult = res;
                                 let _success_icon = `<i class="green check icon"></i>`;
                                 let success_icon = '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Update successful', 'mainwp') + '">' + _success_icon + '</span>';
-                                websiteHolder.attr('updated', 1);
-                                websiteHolder.find('td:last-child').html(success_icon + ' ' + mainwp_links_visit_site_and_admin('', pWebsiteId));
-                            } else if (res_started[sid]) {
-                                let _success_icon = `<i class="green check icon"></i>`;
-                                let success_icon = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Premium update started. Please wait a moment, then sync the data again.') + '">' + _success_icon + '</span>';
                                 websiteHolder.attr('updated', 1);
                                 websiteHolder.find('td:last-child').html(success_icon + ' ' + mainwp_links_visit_site_and_admin('', pWebsiteId));
                             } else if (res_error[sid]) {
@@ -1231,13 +1224,6 @@ let updatesoverview_plugins_upgrade_int_after_backup = function (pSlug, pWebsite
                             );
                         } else if (typeof mainwp_html_regression === "undefined" || mainwp_html_regression.use_after_updates !== "1") {
                             let success_icon = `<i class="green check icon"></i>`;
-                            if (
-                                res_started !== null &&
-                                typeof res_started === 'object' &&
-                                Object.keys(res_started).length > 0
-                            ) {
-                                success_icon = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Premium update started. Please wait a moment, then sync the data again.') + '">' + success_icon + '</span>';
-                            }
                             updatesoverview_plugins_upgrade_all_update_site_status(pWebsiteId, success_icon);
                         }
                     }

@@ -10,7 +10,9 @@
 namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Backup_Snapshots_View;
+use MainWP\Dashboard\MainWP_Backup_Storage_Destinations;
 use MainWP\Dashboard\MainWP_Backup_TestRestore_Scheduler;
+use MainWP\Dashboard\MainWP_DB;
 
 /**
  * Class MainWP_Backup_Snapshots_View_Test
@@ -511,5 +513,89 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 		$this->assertStringNotContainsString( 'Sandbox needs the CREATE privilege here', $capable, 'A capable host shows no notice.' );
 
 		delete_option( MainWP_Backup_TestRestore_Scheduler::CAPABILITY_OPTION );
+	}
+
+	/**
+	 * render() must scope the site id it reads off the query string the same
+	 * way the AJAX list handler scopes it per request (authorize_restore_site()),
+	 * or a caller could read another user's site by passing its id: with
+	 * multi-user armed, a site owned by someone else must fall back to "no
+	 * site selected" and never reach that site's destination names.
+	 *
+	 * @return void
+	 */
+	public function test_render_denies_site_the_current_user_cannot_edit() {
+		global $wpdb;
+
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		add_filter( 'mainwp_is_single_user', '__return_false' );
+
+		$owner    = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$stranger = self::factory()->user->create( array( 'role' => 'administrator' ) );
+
+		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
+			$wpdb->prefix . 'mainwp_wp',
+			array(
+				'userid'               => $owner,
+				'url'                  => 'https://denied-' . wp_generate_uuid4() . '.example.com/',
+				'name'                 => 'Denied test site',
+				'adminname'            => 'admin',
+				'pubkey'               => 'test-pubkey',
+				'privkey'              => 'test-privkey',
+				'ssl_version'          => 0,
+				'http_user'            => '',
+				'http_pass'            => '',
+				'suspended'            => 0,
+				'offline_check_result' => 1,
+				'client_id'            => 0,
+				'is_staging'           => 0,
+				'plugin_upgrades'      => '',
+				'theme_upgrades'       => '',
+				'translation_upgrades' => '',
+				'premium_upgrades'     => '',
+			)
+		);
+		$site_id = (int) $wpdb->insert_id;
+
+		$dest_id = MainWP_Backup_Storage_Destinations::instance()->add_destination(
+			array(
+				'provider' => 'local',
+				'name'     => 'Secret owner-only destination',
+			)
+		);
+
+		$backup_table = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
+			$backup_table,
+			array(
+				'userid'          => $owner,
+				'name'            => 'Denied site task ' . uniqid(),
+				'schedule'        => 'daily',
+				'type'            => 'full',
+				'exclude'         => '',
+				'sites'           => (string) $site_id,
+				'groups'          => '',
+				'subfolder'       => '',
+				'filename'        => '',
+				'completed_sites' => '',
+				'backup_errors'   => '',
+				'archiveFormat'   => 'site',
+				'template'        => 0,
+				'destinations'    => wp_json_encode( array( $dest_id ) ),
+			)
+		);
+
+		wp_set_current_user( $stranger );
+		$_GET['site_id'] = (string) $site_id;
+
+		ob_start();
+		MainWP_Backup_Snapshots_View::render();
+		$output = ob_get_clean();
+
+		unset( $_GET['site_id'] );
+		remove_filter( 'mainwp_is_single_user', '__return_false' );
+		delete_option( 'mainwp_enableNativeBackups' );
+
+		$this->assertStringNotContainsString( 'Secret owner-only destination', $output, 'A site the current user cannot edit must never reach the rendered destinations note.' );
 	}
 }

@@ -36,6 +36,17 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
 
         $site_id = isset( $_GET['site_id'] ) ? (int) $_GET['site_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display filter only.
 
+        // The AJAX list handler gates the same site per-request in
+        // authorize_restore_site(); this render path reaches the site's
+        // destination names too, so it needs the same per-site check rather
+        // than trusting a site id off the query string.
+        if ( $site_id > 0 ) {
+            $website = MainWP_DB::instance()->get_website_by_id( $site_id );
+            if ( ! MainWP_System_Utility::can_edit_website( $website ) || ! \mainwp_current_user_can( 'site', $site_id ) ) {
+                $site_id = 0;
+            }
+        }
+
         MainWP_Backup_Page::render_header( 'Snapshots' );
         static::render_restore_surface( $site_id, false );
         // render_top_header() opens .mainwp-content-wrap and only the footer

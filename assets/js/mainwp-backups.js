@@ -528,8 +528,14 @@ managebackups_run_now = function (el) {
             return;
         }
         restoreLink();
-        let message = response.status === 'completed' ? MainWP.I18n.t('Backup task completed.') :
-            (response.status === 'completed_with_errors' ? MainWP.I18n.t('Backup task completed with errors.') : MainWP.I18n.t('Backup task failed.'));
+        let message;
+        if (response.status === 'completed') {
+            message = MainWP.I18n.t('Backup task completed.');
+        } else if (response.status === 'completed_with_errors') {
+            message = MainWP.I18n.t('Backup task completed with errors.');
+        } else {
+            message = MainWP.I18n.t('Backup task failed.');
+        }
         jQuery('<div>').text(message).appendTo(content);
         if (response.errors) {
             jQuery('<div class="mainwp-red">').text(response.errors).appendTo(content);

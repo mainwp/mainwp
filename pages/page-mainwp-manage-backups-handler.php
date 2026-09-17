@@ -227,10 +227,11 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      *
      * @param int $task_id Task id.
      * @param int $started Owned run timestamp, or zero when no run is owned.
-     * @param int $click   Click timestamp while queued or adopting a close, otherwise zero.
+     * @param int  $click   Click timestamp while queued or adopting a close, otherwise zero.
+     * @param bool $retried Whether this call is the single re-entry after a mid-assembly claim.
      * @return array Task and site status, or error.
      */
-    public static function get_backup_task_run_status( int $task_id, int $started = 0, int $click = 0 ): array {
+    public static function get_backup_task_run_status( int $task_id, int $started = 0, int $click = 0, bool $retried = false ): array {
         $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
         if ( empty( $task ) || ! static::can_edit_backuptask( $task ) ) {
             return array( 'error' => esc_html__( 'Insufficient permissions. Is this task set by you?', 'mainwp' ) );
@@ -303,7 +304,13 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                 );
                 foreach ( MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( (int) $snapshot->id ) as $job ) {
                     ++$uploads['total'];
-                    $bucket = 'complete' === $job->status ? 'complete' : ( in_array( $job->status, array( 'failed_retryable', 'failed_permanent', 'credentials_invalid' ), true ) ? 'failed' : 'pending' );
+                    if ( 'complete' === $job->status ) {
+                        $bucket = 'complete';
+                    } elseif ( in_array( $job->status, array( 'failed_retryable', 'failed_permanent', 'credentials_invalid' ), true ) ) {
+                        $bucket = 'failed';
+                    } else {
+                        $bucket = 'pending';
+                    }
                     ++$uploads[ $bucket ];
                 }
             } elseif ( ( ! $open && ! $queued ) || 'failed' === ( $detail['status'] ?? '' ) ) {
@@ -336,11 +343,13 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         } elseif ( $complete > 0 ) {
             $status = count( $sites ) === $complete && '' === $errors ? 'completed' : 'completed_with_errors';
         }
-        if ( $owns_run && ! $saved ) {
+        if ( $owns_run && ! $saved && ! $retried ) {
             $current = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
             if ( $current && (int) $current->last_run !== $started ) {
-                // A new claim can replace progress while this response is being assembled.
-                return static::get_backup_task_run_status( $task_id, $started, $click );
+                // A new claim can replace progress while this response is being
+                // assembled. One re-entry is enough: last_run only moves forward,
+                // so the re-entry reads the saved copy of this run and returns.
+                return static::get_backup_task_run_status( $task_id, $started, $click, true );
             }
         }
         return array(

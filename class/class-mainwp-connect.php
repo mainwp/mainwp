@@ -513,7 +513,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     'nonce'         => $data['nonce'],
                     'expires'       => $ts + 60,
                     'user'          => $website->adminname,
-                    'req_id'    => wp_generate_uuid4(),
+                    'req_id'        => wp_generate_uuid4(),
                 );
 
                 if ( ! empty( $alt_user ) ) {
@@ -661,7 +661,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     'nonce'         => $data['nonce'],
                     'expires'       => $ts + 60,
                     'user'          => $website->adminname,
-                    'req_id'    => wp_generate_uuid4(),
+                    'req_id'        => wp_generate_uuid4(),
                 );
                 $sign_value_v2 = wp_json_encode( $data_sign_v2 );
 
@@ -796,7 +796,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     'nonce'         => $nonce,
                     'expires'       => $ts + 60,
                     'user'          => $website->adminname,
-                    'req_id'    => wp_generate_uuid4(),
+                    'req_id'        => wp_generate_uuid4(),
                 );
 
                 if ( ! empty( $alt_user ) ) {
@@ -809,7 +809,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
                 if ( MainWP_Connect_Lib::is_use_fallback_sec_lib( $website ) ) {
                     $sign_success_v2 = MainWP_Connect_Lib::connect_sign( $sign_value_v2, $signature_v2, base64_decode( $website->privkey ), $website->id ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-                    $use_seclib   = true;
+                    $use_seclib      = true;
                 } elseif ( function_exists( 'openssl_verify' ) ) {
                     $alg             = MainWP_System_Utility::get_connect_sign_algorithm( $website );
                     $sign_success_v2 = static::connect_sign( $sign_value_v2, $signature_v2, base64_decode( $website->privkey ), $alg, $website->id ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
@@ -1603,9 +1603,16 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
          */
         do_action( 'mainwp_fetch_url_authed', $website, $information, $what, $params, $others );
 
-        if ( is_array( $information ) && isset( $information['sync'] ) && ! empty( $information['sync'] ) ) {
-            MainWP_Sync::sync_information_array( $website, $information['sync'] );
-            unset( $information['sync'] );
+        if ( is_array( $information ) ) {
+            if ( isset( $information['sync'] ) && ! empty( $information['sync'] ) ) {
+                MainWP_Sync::sync_information_array( $website, $information['sync'] );
+                unset( $information['sync'] );
+            }
+
+            if ( isset( $information['sync_partial'] ) && ! empty( $information['sync_partial'] ) ) {
+                MainWP_Sync::sync_partial_information( $website, $information['sync_partial'] );
+                unset( $information['sync_partial'] );
+            }
         }
 
         if ( $updating_website ) {
@@ -2059,7 +2066,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         $thr_error = null;
 
-        if ( in_array( $what, array( 'installplugintheme', 'upgradeplugintheme', 'upgradetranslation', 'upgrade', 'stats', 'renew', 'reconnect' ), true ) ) {
+        if ( in_array( $what, array( 'installplugintheme', 'upgradeplugintheme', 'upgradetranslation', 'process_premium_updates', 'upgrade', 'stats', 'renew', 'reconnect' ), true ) ) {
             MainWP_Cache_Helper::invalidate_cache_group( MainWP_Cache_Helper::CGR_UPDATES );
             MainWP_Cache_Warm_Helper::invalidate_pages_by_site_actions( $what );
         }

@@ -1155,6 +1155,7 @@ let updatesoverview_plugins_upgrade_int_after_backup = function (pSlug, pWebsite
                     }
                     let done = false;
                     let bulk_errors = [];
+                    let res_started;
                     let _icon = '<i class="red times icon"></i>';
                     for (let sid of slugParts) {
                         let websiteHolder = jQuery('.plugins-bulk-updates[plugin_slug="' + sid + '"] tr[site_id="' + pWebsiteId + '"]');
@@ -1171,10 +1172,16 @@ let updatesoverview_plugins_upgrade_int_after_backup = function (pSlug, pWebsite
                         } else {
                             let res = response.result;
                             let res_error = response.result_error;
+                            res_started = response.result_started; // for backward compatibility.
                             if (mainwp_get_result_entry(res, sid)) {
                                 lastResult = res;
                                 let _success_icon = `<i class="green check icon"></i>`;
                                 let success_icon = '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Update successful', 'mainwp') + '">' + _success_icon + '</span>';
+                                websiteHolder.attr('updated', 1);
+                                websiteHolder.find('td:last-child').html(success_icon + ' ' + mainwp_links_visit_site_and_admin('', pWebsiteId));
+                            } else if (mainwp_get_result_entry(res_started, sid)) { // for backward compatibility.
+                                let _success_icon = `<i class="green check icon"></i>`;
+                                let success_icon = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Premium update started. Please wait a moment, then sync the data again.') + '">' + _success_icon + '</span>';
                                 websiteHolder.attr('updated', 1);
                                 websiteHolder.find('td:last-child').html(success_icon + ' ' + mainwp_links_visit_site_and_admin('', pWebsiteId));
                             } else if (res_error[sid]) {
@@ -1224,6 +1231,14 @@ let updatesoverview_plugins_upgrade_int_after_backup = function (pSlug, pWebsite
                             );
                         } else if (typeof mainwp_html_regression === "undefined" || mainwp_html_regression.use_after_updates !== "1") {
                             let success_icon = `<i class="green check icon"></i>`;
+                            // for backward compatibility.
+                            if (
+                                res_started !== null &&
+                                typeof res_started === 'object' &&
+                                Object.keys(res_started).length > 0
+                            ) {
+                                success_icon = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Premium update started. Please wait a moment, then sync the data again.') + '">' + success_icon + '</span>';
+                            }
                             updatesoverview_plugins_upgrade_all_update_site_status(pWebsiteId, success_icon);
                         }
                     }
@@ -3908,6 +3923,7 @@ let updatesoverview_upgrade_plugintheme_list_popup = function (what, pId, pSiteN
 
     let queue = list.slice();
     let lastResult = null;
+    let needsSync = false; // for backward compatibility.
 
     let processNext = function () {
         if (queue.length === 0) {
@@ -3922,8 +3938,15 @@ let updatesoverview_upgrade_plugintheme_list_popup = function (what, pId, pSiteN
                     const final_icon = `${success_icon} ${regression_final_icon}`;
                     updatesoverview_plugins_upgrade_all_update_site_status(pId, final_icon);
                 });
-                updatesoverview_plugins_upgrade_all_update_site_status(pId, `${success_icon} ${regression_icon_loading}`);
+                success_icon = `${success_icon} ${regression_icon_loading}`
+                if(needsSync){
+                    success_icon = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Premium update started. Please wait a moment, then sync the data again.') + '">' + success_icon + '</span>';
+                }
+                updatesoverview_plugins_upgrade_all_update_site_status(pId, success_icon);
             } else {
+                if(needsSync){
+                    success_icon = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Premium update started. Please wait a moment, then sync the data again.') + '">' + success_icon + '</span>';
+                }
                 updatesoverview_plugins_upgrade_all_update_site_status(pId, success_icon);
             }
             if (jQuery('.updates-regression-score-red-flag').length === 0) {
@@ -3947,7 +3970,7 @@ let updatesoverview_upgrade_plugintheme_list_popup = function (what, pId, pSiteN
             let res_error = response.result_error;
             let _icon = '<i class="red times icon"></i>';
             let hasError = false;
-
+            let res_started; // for backward compatibility.
             if (response.error) {
                 let extErr = getErrorMessageInfo(response.error, 'ui');
                 updatesoverview_plugins_upgrade_all_update_site_status(pId, extErr);
@@ -3962,6 +3985,11 @@ let updatesoverview_upgrade_plugintheme_list_popup = function (what, pId, pSiteN
                 jQuery('.updatesoverview-upgrade-status-wp[siteid="' + pId + '"]').html('<span class="mainwp-html-popup" data-position="left center" data-html="">' + _icon + '</span>');
                 mainwp_init_html_popup('.updatesoverview-upgrade-status-wp[siteid="' + pId + '"] .mainwp-html-popup', _error);
                 hasError = true;
+            } else {
+                res_started = response.result_started; // for backward compatibility.
+                if (mainwp_get_result_entry(res_started, item)) {
+                    needsSync = true;
+                }
             }
 
             if (!hasError) {

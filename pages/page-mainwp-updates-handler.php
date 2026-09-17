@@ -178,7 +178,7 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             }
         }
 
-        $output_array    = array(
+        $output_array = array(
             'old_version' => is_array( $information ) && isset( $information['old_version'] ) ? $information['old_version'] : '',
             'version'     => is_array( $information ) && isset( $information['version'] ) ? $information['version'] : '',
             'success'     => $success ? 1 : 0,
@@ -1042,6 +1042,18 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 }
 
                 $undefined = true;
+
+                // Keep this for backward compatibility.
+                if ( ! empty( $result['upgrades_started'] ) && is_array( $result['upgrades_started'] ) ) {
+                    foreach ( $result['upgrades_started'] as $k => $v ) {
+                        if ( empty( $v ) ) {
+                            $return_results['result_error'][ rawurlencode( $k ) ] = esc_html__( 'Premium action request failed. Please try again later.', 'mainwp' );
+                        } else {
+                            $return_results['result_started'][ rawurlencode( $k ) ] = esc_html( $v );
+                        }
+                    }
+                    return $return_results;
+                }
 
                 if ( isset( $result['upgrades_error'] ) ) {
                     foreach ( $result['upgrades_error'] as $k => $v ) {

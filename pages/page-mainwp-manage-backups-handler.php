@@ -752,13 +752,13 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      * @param integer $nrOfSites Number of Child Sites to perform the task on.
      * @param bool    $updateRun ture|false.
      * @param integer $run_grace_seconds Settle window for opening the run; 0
-     *                                   (every scheduled caller) keeps the
-     *                                   unconditional bump.
+     *                                   (every scheduled caller) allows stuck-run
+     *                                   recovery but refuses paused rows.
      *
      * @return mixed $errorOutput.
      *
      * @uses \MainWP\Dashboard\MainWP_Backup_Executor::backup_site()
-     * @uses \MainWP\Dashboard\MainWP_DB_Backup::update_backup_run()
+     * @uses \MainWP\Dashboard\MainWP_DB_Backup::claim_backup_run()
      * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_task_by_id()
      * @uses \MainWP\Dashboard\MainWP_DB_Backup::update_backup_task_with_values()
      * @uses \MainWP\Dashboard\MainWP_DB_Backup::update_completed_sites()

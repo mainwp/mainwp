@@ -202,12 +202,17 @@ class MainWP_Backup_Schedule_Cron_Test extends \WP_UnitTestCase {
 		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $id );
 		$this->assertSame( 0, (int) $task->paused );
 
+		MainWP_Manage_Backups_Handler::execute_backup_task( $task );
+
+		$last_run = (int) MainWP_DB_Backup::instance()->get_backup_task_by_id( $id )->last_run;
+		$this->assertGreaterThan( (int) $task->last_run, $last_run, 'The unpaused task must claim a run before testing the pause.' );
+
 		MainWP_DB_Backup::instance()->update_backup_task_with_values( $id, array( 'paused' => 1 ) );
 		$this->assertSame( 1, (int) MainWP_DB_Backup::instance()->get_backup_task_by_id( $id )->paused );
 
 		MainWP_Manage_Backups_Handler::execute_backup_task( $task );
 
-		$this->assertSame( (int) $task->last_run, (int) MainWP_DB_Backup::instance()->get_backup_task_by_id( $id )->last_run, 'A pause stored after the read must prevent the claim.' );
+		$this->assertSame( $last_run, (int) MainWP_DB_Backup::instance()->get_backup_task_by_id( $id )->last_run, 'A pause stored after the read must prevent the claim.' );
 	}
 
 	/**

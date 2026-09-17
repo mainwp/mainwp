@@ -7,8 +7,8 @@
  * closed, poisoning the poll's freshness check and reporting a successful
  * backup as failed. The claim makes the manual-path bump refusable: a
  * still-open run and a successful close inside the settle window both
- * refuse, while the scheduled cron path keeps today's unconditional bump
- * byte-identical - including its stuck-run recovery.
+ * refuse, while the scheduled cron path allows stuck-run recovery but
+ * refuses paused rows so a stale task object cannot bypass a pause.
  *
  * @package MainWP\Dashboard\Tests
  */
@@ -140,12 +140,10 @@ class MainWP_Backup_Run_Claim_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * With no settle window (the scheduled cron path never passes one)
-	 * the claim is today's unconditional bump - a stuck open run still
-	 * restarts, exactly as before. Pinning this is what keeps the claim
-	 * from wedging scheduled tasks whose previous run never closed.
+	 * With no settle window, an unpaused task can recover a stuck open run
+	 * so scheduled tasks are not blocked by a previous run that never closed.
 	 */
-	public function test_claim_backup_run_grace_zero_is_unconditional() {
+	public function test_claim_backup_run_grace_zero_recovers_stuck_open_run() {
 		$task = $this->task_in_state(
 			array(
 				'last_run'  => time() - 100,
@@ -153,10 +151,29 @@ class MainWP_Backup_Run_Claim_Test extends MainWP_Abilities_Test_Case {
 			)
 		);
 
-		$this->assertTrue( MainWP_DB_Backup::instance()->claim_backup_run( (int) $task->id, 0 ), 'The graceless claim must bump unconditionally, stuck-run recovery included.' );
+		$this->assertTrue( MainWP_DB_Backup::instance()->claim_backup_run( (int) $task->id, 0 ), 'A zero-grace claim must recover a stuck open run on an unpaused task.' );
 
 		$fresh = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
 		$this->assertGreaterThan( time() - 5, (int) $fresh->last_run );
+	}
+
+	/**
+	 * Stuck-run recovery must not bypass a stored pause.
+	 */
+	public function test_claim_backup_run_grace_zero_refuses_paused_task() {
+		$old_last_run = time() - 100;
+		$task         = $this->task_in_state(
+			array(
+				'last_run'  => $old_last_run,
+				'completed' => time() - 500,
+				'paused'    => 1,
+			)
+		);
+
+		$this->assertFalse( MainWP_DB_Backup::instance()->claim_backup_run( (int) $task->id, 0 ), 'A zero-grace claim must refuse a paused task.' );
+
+		$fresh = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$this->assertSame( $old_last_run, (int) $fresh->last_run, 'A refused claim must leave last_run untouched.' );
 	}
 
 	/**

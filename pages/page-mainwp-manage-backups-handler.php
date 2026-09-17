@@ -504,23 +504,18 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
     /**
      * Resolve the site ids a scheduled run may back up.
      *
-     * Direct sites pass through: that list is fixed at save time and was
-     * authorized then. Group members are diffed against the authorized
-     * snapshot - a site added to a group after the save is skipped with a
-     * notice (update_backup_notices() refuses the exact message twice, so
-     * continuation ticks do not accumulate it) until a re-save refreshes
-     * the snapshot. A task saved before the snapshot column existed
-     * adopts its live expansion once, keeping its behavior at that
-     * instant, and is stamped so the gate is live from then on.
+     * Resolution is read-only. Deleted sites and sites outside the authorized
+     * snapshot are returned separately for the run lane to record notices.
+     * A never-stamped legacy task resolves its live expansion; the run lane
+     * persists that snapshot before driving the sites.
      *
      * @param object $task Task row.
      * @param array  $stale_sites Deleted site ids omitted from the run.
+     * @param array  $unauthorized_sites Existing site ids outside the snapshot.
      *
      * @return int[] Site ids to run.
-     *
-     * @uses \MainWP\Dashboard\MainWP_DB_Backup::update_backup_notices()
      */
-    public static function resolve_task_run_sites( $task, &$stale_sites = array() ) {
+    public static function resolve_task_run_sites( $task, &$stale_sites = array(), &$unauthorized_sites = array() ) {
         // A run keeps the columns' either/or precedence: a task with groups
         // runs its groups' members; only a groupless task runs the sites
         // column (the pre-snapshot runner resolved selections the same way).
@@ -528,19 +523,12 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
 
         // Existence is checked unscoped: a scoped read would report a site the
         // owner lost access to as deleted and skip the scope-pause below.
-        $stale_sites = array();
-        $existing    = MainWP_DB::instance()->get_existing_website_ids( $expanded );
+        $stale_sites        = array();
+        $unauthorized_sites = array();
+        $existing           = MainWP_DB::instance()->get_existing_website_ids( $expanded );
         foreach ( $expanded as $key => $site_id ) {
             if ( ! in_array( (int) $site_id, $existing, true ) ) {
                 $stale_sites[] = $site_id;
-                MainWP_DB_Backup::instance()->update_backup_notices(
-                    $task->id,
-                    sprintf(
-                        /* translators: %d: deleted site id. */
-                        esc_html__( 'Site %d no longer exists and was skipped. Re-save the task to update its sites.', 'mainwp' ),
-                        $site_id
-                    ) . '<br />'
-                );
                 unset( $expanded[ $key ] );
             }
         }
@@ -554,7 +542,6 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         // so an empty-saved group can never lazily auto-authorize a member
         // added later (that would reopen the very bypass this snapshot closes).
         if ( ! isset( $task->authorized_sites ) || null === $task->authorized_sites ) {
-            MainWP_DB_Backup::instance()->update_backup_task_with_values( $task->id, array( 'authorized_sites' => implode( ',', $expanded ) ) );
             return $expanded;
         }
 
@@ -566,16 +553,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                 $run_sites[] = $site_id;
                 continue;
             }
-            $website = MainWP_DB::instance()->get_website_by_id( $site_id );
-            $label   = empty( $website ) ? ( 'Site ' . $site_id ) : ( $website->name . ' (' . $website->url . ')' );
-            MainWP_DB_Backup::instance()->update_backup_notices(
-                $task->id,
-                sprintf(
-                    /* translators: %s: site name and url. */
-                    esc_html__( '%s was added to a selected group after this task was last saved and was skipped. Re-save the task to include it.', 'mainwp' ),
-                    $label
-                ) . '<br />'
-            );
+            $unauthorized_sites[] = $site_id;
         }
 
         return $run_sites;
@@ -1030,7 +1008,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      *                                     recovery but refuses paused rows.
      * @param bool|null $claimed Actual atomic claim result, null when no claim was attempted.
      * @param int       $claimed_started Exact identity returned by a successful claim.
-     * @param bool      $manual_run Preserve the previous result for manual pollers.
+     * @param bool      $manual_run Legacy caller flag; preservation follows the previous run.
      *
      * @return mixed $errorOutput.
      *
@@ -1093,15 +1071,15 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      *                                     unconditional bump.
      * @param bool|null $claimed Actual atomic claim result.
      * @param int       $claimed_started Identity of the claimed run.
-     * @param bool      $manual_run Preserve the previous result for manual pollers.
+     * @param bool      $manual_run Legacy caller flag; preservation follows the previous run.
      *
      * @return mixed $errorOutput.
      */
     private static function execute_backup_task_run( $task, $nrOfSites = 0, $updateRun = true, $run_grace_seconds = 0, &$claimed = null, &$claimed_started = 0, $manual_run = false ) { // phpcs:ignore -- NOSONAR - not quite complex function.
 
-        if ( $updateRun && $manual_run ) {
+        if ( $updateRun ) {
             $previous = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
-            if ( $previous && (int) $previous->last_run > 0 && (int) $previous->completed >= (int) $previous->last_run ) {
+            if ( $previous && (int) $previous->last_run > 0 && (int) $previous->last_run_manually >= (int) $previous->last_run && (int) $previous->completed >= (int) $previous->last_run ) {
                 // The next claim reuses progress rows and clears errors; older polls still need their own result.
                 $saved = array(
                     'task'      => $previous,
@@ -1147,6 +1125,8 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
 
         $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
         if ( empty( $task ) || ( $updateRun && (int) $task->last_run !== $claimed_started ) ) {
+            $claimed         = false;
+            $claimed_started = 0;
             return false;
         }
         if ( $updateRun ) {
@@ -1169,8 +1149,34 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             $completed_sites = array();
         }
 
-        $stale_sites  = array();
-        $sites        = static::resolve_task_run_sites( $task, $stale_sites );
+        $stale_sites        = array();
+        $unauthorized_sites = array();
+        $sites              = static::resolve_task_run_sites( $task, $stale_sites, $unauthorized_sites );
+        if ( null === static::authorized_snapshot_ids( $task ) ) {
+            MainWP_DB_Backup::instance()->update_backup_task_with_values( $task->id, array( 'authorized_sites' => implode( ',', $sites ) ) );
+        }
+        foreach ( $stale_sites as $site_id ) {
+            MainWP_DB_Backup::instance()->update_backup_notices(
+                $task->id,
+                sprintf(
+                    /* translators: %d: deleted site id. */
+                    esc_html__( 'Site %d no longer exists and was skipped. Re-save the task to update its sites.', 'mainwp' ),
+                    $site_id
+                ) . '<br />'
+            );
+        }
+        foreach ( $unauthorized_sites as $site_id ) {
+            $website = MainWP_DB::instance()->get_website_by_id( $site_id );
+            $label   = empty( $website ) ? ( 'Site ' . $site_id ) : ( $website->name . ' (' . $website->url . ')' );
+            MainWP_DB_Backup::instance()->update_backup_notices(
+                $task->id,
+                sprintf(
+                    /* translators: %s: site name and url. */
+                    esc_html__( '%s is not in this task\'s authorized site list and was skipped. Re-save the task to include it.', 'mainwp' ),
+                    $label
+                ) . '<br />'
+            );
+        }
         $errorOutput  = null;
         $errorEntries = array();
         if ( empty( $sites ) && ! empty( $stale_sites ) ) {

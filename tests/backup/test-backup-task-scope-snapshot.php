@@ -183,8 +183,11 @@ class MainWP_Backup_Task_Scope_Snapshot_Test extends MainWP_Abilities_Test_Case 
 		$this->assertContains( (int) $site_a, $resolved, 'The snapshot-authorized site still runs.' );
 		$this->assertNotContains( (int) $site_b, $resolved, 'A site added to the group after the save must not run without an authorized re-save.' );
 
+		MainWP_DB_Backup::instance()->update_completed_sites( $task->id, array( $site_a => true ) );
+		MainWP_Manage_Backups_Handler::execute_backup_task( $task, 0, false );
+
 		$fresh = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
-		$this->assertStringContainsString( 'was added to a selected group after this task was last saved', (string) $fresh->backup_notices, 'The skipped site must be surfaced as a notice.' );
+		$this->assertStringContainsString( esc_html( 'is not in this task\'s authorized site list and was skipped. Re-save the task to include it.' ), (string) $fresh->backup_notices, 'The skipped site must be surfaced as a notice.' );
 	}
 
 	/**
@@ -202,13 +205,14 @@ class MainWP_Backup_Task_Scope_Snapshot_Test extends MainWP_Abilities_Test_Case 
 		$site_b = $this->create_test_site( array( 'userid' => $user ) );
 		$this->add_site_to_group( $site_b, 545454 );
 
+		MainWP_DB_Backup::instance()->update_completed_sites( $task->id, array( $site_a => true ) );
 		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
-		MainWP_Manage_Backups_Handler::resolve_task_run_sites( $task );
+		MainWP_Manage_Backups_Handler::execute_backup_task( $task, 0, false );
 		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
-		MainWP_Manage_Backups_Handler::resolve_task_run_sites( $task );
+		MainWP_Manage_Backups_Handler::execute_backup_task( $task, 0, false );
 
 		$fresh = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
-		$this->assertSame( 1, substr_count( (string) $fresh->backup_notices, 'was added to a selected group after this task was last saved' ), 'The drift notice must not accumulate across ticks.' );
+		$this->assertSame( 1, substr_count( (string) $fresh->backup_notices, esc_html( 'is not in this task\'s authorized site list and was skipped. Re-save the task to include it.' ) ), 'The drift notice must not accumulate across ticks.' );
 	}
 
 	/**
@@ -255,6 +259,16 @@ class MainWP_Backup_Task_Scope_Snapshot_Test extends MainWP_Abilities_Test_Case 
 
 		$this->assertContains( (int) $site_a, $resolved, 'A pre-migration task keeps its behavior on first run.' );
 		$this->assertContains( (int) $site_b, $resolved, 'A pre-migration task keeps its behavior on first run.' );
+
+		$this->assertNull( MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id )->authorized_sites, 'Resolution must leave the legacy snapshot untouched.' );
+		MainWP_DB_Backup::instance()->update_completed_sites(
+			$task->id,
+			array(
+				$site_a => true,
+				$site_b => true,
+			)
+		);
+		MainWP_Manage_Backups_Handler::execute_backup_task( $task, 0, false );
 
 		$fresh = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
 		$this->assertNotSame( '', (string) $fresh->authorized_sites, 'The first run stamps the snapshot so the gate is live afterwards.' );

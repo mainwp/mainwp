@@ -729,7 +729,7 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         if ( (int) $grace_seconds <= 0 ) {
             $claimed = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- the pause guard and run identity must be atomic with the claim.
                 $this->wpdb->prepare(
-                    'UPDATE ' . $this->table_name( 'wp_backup' ) . " SET last_run = GREATEST( %d, completed + 1 ), last = %d, completed_sites = '[]' WHERE id = %d AND paused = 0 AND last_run = %d AND completed = %d", // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted helper.
+                    'UPDATE ' . $this->table_name( 'wp_backup' ) . " SET last_run = GREATEST( %d, completed + 1, last_run + 1 ), last = %d, completed_sites = '[]' WHERE id = %d AND paused = 0 AND last_run = %d AND completed = %d", // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted helper.
                     $now,
                     $now,
                     $id,
@@ -751,11 +751,11 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             );
         }
 
-        // Changed rows, not matched rows: an identical same-second claim returns 0 and must be refused.
+        // Only a successful guarded UPDATE owns the new identity.
         if ( 1 !== (int) $claimed ) {
             return false;
         }
-        $claimed_started = max( $now, (int) $previous->completed + 1 );
+        $claimed_started = max( $now, (int) $previous->completed + 1, (int) $previous->last_run + 1 );
         return true;
     }
 
@@ -777,7 +777,7 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             if ( $started > 0 ) {
                 $where['last_run'] = $started;
             }
-            return $this->wpdb->update( $this->table_name( 'wp_backup' ), array( 'last_run_manually' => time() ), $where );
+            return $this->wpdb->update( $this->table_name( 'wp_backup' ), array( 'last_run_manually' => $started > 0 ? $started : time() ), $where );
         }
 
         return false;

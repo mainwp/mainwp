@@ -1381,11 +1381,10 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 				? MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id )
 				: MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, 0, time() );
 			$this->assertGreaterThan( 0, $owned );
-			if ( $initiate ) {
-				$this->assertSame( $owned, $result['started'], 'The caller must retain the identity its own UPDATE wrote.' );
-			} else {
-				$this->assertSame( 'run_not_found', $result['code'], 'A queued poll must not follow the superseding run.' );
-			}
+			$this->assertSame( 'queued', $result['status'], 'A superseded claim must leave either request queued.' );
+			$this->assertSame( 0, $result['started'] );
+			$this->assertGreaterThan( 0, $result['click'] );
+			$this->assertArrayNotHasKey( 'error', $result );
 			$after = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
 			$this->assertSame( $foreign, (int) $after->last_run );
 			$this->assertSame( 0, (int) $after->last_run_manually, 'The foreign run must not be stamped as manual.' );
@@ -1535,16 +1534,31 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * Only manual claims save the previous run for browser polls.
+	 * Distinguish the previous run's ownership from the replacing claim's lane.
 	 *
+	 * @return array Previous run types.
+	 */
+	public static function previous_run_types() {
+		return array(
+			'manual'    => array( true ),
+			'scheduled' => array( false ),
+		);
+	}
+
+	/**
+	 * A scheduled claim preserves only a previous manual run's poll result.
+	 *
+	 * @dataProvider previous_run_types
+	 * @param bool $manual Whether the previous run was manual.
 	 * @return void
 	 */
-	public function test_only_manual_claim_saves_previous_run_transient() {
+	public function test_scheduled_claim_preserves_previous_manual_run_only( $manual ) {
 		list( $site_id, $task ) = $this->arrange_manual_task();
 		$previous               = time() - 200;
 		$state                  = array(
-			'last_run'  => $previous,
-			'completed' => $previous + 10,
+			'last_run'          => $previous,
+			'completed'         => $previous + 10,
+			'last_run_manually' => $manual ? $previous : $previous - 100,
 		);
 		$key                    = 'mainwp_backup_run_' . $task->id . '_' . $previous;
 		delete_transient( $key );
@@ -1552,13 +1566,156 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 			MainWP_DB_Backup::instance()->update_backup_task_with_values( $task->id, $state );
 			$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
 			MainWP_Manage_Backups_Handler::execute_backup_task( $task );
-			$this->assertFalse( get_transient( $key ), 'Scheduled claims must not save a browser-poll transient.' );
-			MainWP_DB_Backup::instance()->update_backup_task_with_values( $task->id, $state );
-			MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
 			$saved = get_transient( $key );
-			$this->assertIsArray( $saved );
-			$this->assertSame( $previous, (int) $saved['task']->last_run );
+			if ( $manual ) {
+				$this->assertIsArray( $saved, 'Cron must preserve the previous manual run for its poller.' );
+				$this->assertSame( $previous, (int) $saved['task']->last_run );
+			} else {
+				$this->assertFalse( $saved, 'Cron must not copy a previous scheduled run, even with an older manual stamp.' );
+			}
 		} finally {
+			delete_transient( $key );
+		}
+	}
+
+	/**
+	 * A manual run's result survives a scheduled claim before its next poll.
+	 *
+	 * @return void
+	 */
+	public function test_closed_manual_run_remains_pollable_after_scheduled_claim() {
+		list( $site_id, $task ) = $this->arrange_manual_task();
+		$start                  = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
+		$this->assertSame( 'running', $start['status'] );
+
+		// The initiate only opens the run; the poll's continuation tick is what drives it
+		// to completion, so the manual run has to be closed before a claim can replace it.
+		$poll = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $start['started'], $start['click'] );
+		$this->assertSame( 'completed', $poll['status'] );
+
+		$task     = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, $task->id );
+		$this->assertGreaterThanOrEqual( $start['started'], (int) $task->completed );
+		$this->assertNotNull( $snapshot );
+		$key = 'mainwp_backup_run_' . $task->id . '_' . $start['started'];
+		try {
+			MainWP_Manage_Backups_Handler::execute_backup_task( $task );
+			$after = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+			$this->assertGreaterThan( $start['started'], (int) $after->last_run );
+			$result = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $start['started'] );
+			$this->assertArrayNotHasKey( 'error', $result );
+			$this->assertSame( 'completed', $result['status'] );
+			$this->assertSame( 'closed', $result['run_state'] );
+			$this->assertSame( $start['started'], $result['started'] );
+			$this->assertSame( (int) $snapshot->id, $result['sites'][0]['snapshot']['id'] );
+		} finally {
+			delete_transient( $key );
+		}
+	}
+
+	/**
+	 * An open run with progress must get a new identity even within one second.
+	 *
+	 * @return void
+	 */
+	public function test_same_second_scheduled_claim_advances_open_run_identity() {
+		list( $site_id, $task ) = $this->arrange_manual_task();
+		// Keep the logical run stamp ahead of the clock to avoid timing-dependent assertions.
+		$previous = time() + 10;
+		MainWP_DB_Backup::instance()->update_backup_task_with_values(
+			$task->id,
+			array(
+				'last_run'        => $previous,
+				'completed'       => $previous - 1,
+				'completed_sites' => wp_json_encode( array( $site_id => true ) ),
+			)
+		);
+		$started = 0;
+		$this->assertTrue( MainWP_DB_Backup::instance()->claim_backup_run( $task->id, 0, $started ) );
+		$after = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$this->assertSame( $previous + 1, $started );
+		$this->assertSame( $started, (int) $after->last_run );
+		$this->assertSame( '[]', $after->completed_sites );
+		MainWP_DB_Backup::instance()->update_backup_run_manually( $task->id, $started );
+		$this->assertSame( $started, (int) MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id )->last_run_manually );
+	}
+
+	/**
+	 * Poll resolution covers live, saved, missing and never-stamped results.
+	 *
+	 * @return array Poll modes.
+	 */
+	public static function read_only_poll_modes() {
+		return array(
+			'live'    => array( 'live' ),
+			'saved'   => array( 'saved' ),
+			'missing' => array( 'missing' ),
+			'legacy'  => array( 'legacy' ),
+		);
+	}
+
+	/**
+	 * Poll guards and result rendering must not write notices or snapshots.
+	 *
+	 * @dataProvider read_only_poll_modes
+	 * @param string $mode Poll mode.
+	 * @return void
+	 */
+	public function test_status_poll_resolution_does_not_write_task_row( $mode ) {
+		global $wpdb;
+		list( $site_id, $task ) = $this->arrange_manual_task();
+		$drifted                = $this->create_test_site( array( 'userid' => $task->userid ) );
+		$started                = time() - 100;
+		MainWP_DB_Backup::instance()->update_backup_task_with_values(
+			$task->id,
+			array(
+				'last_run'         => $started,
+				'completed'        => $started + 10,
+				'sites'            => $site_id . ',' . $drifted . ',999999',
+				'authorized_sites' => 'legacy' === $mode ? null : (string) $site_id,
+				'backup_notices'   => '',
+			)
+		);
+		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$key  = 'mainwp_backup_run_' . $task->id . '_' . ( $started - 100 );
+		delete_transient( $key );
+		if ( 'saved' === $mode ) {
+			$saved_task           = clone $task;
+			$saved_task->last_run = $started - 100;
+			$saved_task->sites    = $site_id . ',' . $drifted . ',999998';
+			set_transient(
+				$key,
+				array(
+					'task'      => $saved_task,
+					'progress'  => array(),
+					'snapshots' => array(),
+				),
+				DAY_IN_SECONDS
+			);
+		}
+		$writes = array();
+		$spy    = static function ( $query ) use ( &$writes, $wpdb ) {
+			if ( preg_match( '/^UPDATE\s+`?' . preg_quote( $wpdb->prefix . 'mainwp_wp_backup', '/' ) . '`?\s/i', $query ) ) {
+				$writes[] = $query;
+			}
+			return $query;
+		};
+		add_filter( 'query', $spy );
+		try {
+			$poll_started = in_array( $mode, array( 'saved', 'missing' ), true ) ? $started - 100 : $started;
+			$result       = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $poll_started );
+			$this->assertSame( array(), $writes, 'Status resolution must not update the live task, including before saved-run lookup.' );
+			$after = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+			$this->assertSame( '', $after->backup_notices );
+			$this->assertSame( $task->authorized_sites, $after->authorized_sites );
+			if ( 'missing' === $mode ) {
+				$this->assertSame( 'run_not_found', $result['code'] );
+			} else {
+				$this->assertArrayNotHasKey( 'error', $result );
+				$this->assertSame( array( 'saved' === $mode ? 999998 : 999999 ), $result['stale_sites'] );
+			}
+		} finally {
+			remove_filter( 'query', $spy );
 			delete_transient( $key );
 		}
 	}
@@ -1993,7 +2150,7 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 				'completed'         => $completed,
 				'backup_errors'     => $scenario['errors'],
 				'paused'            => $scenario['paused'],
-				'last_run_manually' => 0,
+				'last_run_manually' => $scenario['replaced'] ? $last_run : 0,
 			)
 		);
 		if ( $snapshot_id ) {

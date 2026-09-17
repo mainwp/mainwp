@@ -303,7 +303,12 @@ class MainWP_Backup_Storage_Dropbox_Test extends \WP_UnitTestCase {
 	 * @return array
 	 */
 	public static function redact_diagnostic_cases(): array {
-		$identifiers = array_map( static function ( $n ) { return 'ident_' . $n; }, range( 1, 20 ) );
+		$identifiers = array_map(
+			static function ( $n ) {
+				return 'ident_' . $n;
+			},
+			range( 1, 20 )
+		);
 		$sentence    = str_repeat( 'short words ', 17 ) . 'finish';
 
 		return array(

@@ -141,18 +141,20 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             );
         }
 
-        $started  = time();
-        $had_slot = false !== static::execute_backup_task( $task, 5, true, MainWP_Backup_Settings::get_manual_run_settle_seconds() );
-        MainWP_DB_Backup::instance()->update_backup_run_manually( $task_id );
+        $started = time();
+        static::execute_backup_task( $task, 5, true, MainWP_Backup_Settings::get_manual_run_settle_seconds() );
         MainWP_Post_Backup_Handler::kick_backup_continuation();
         $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
         if ( empty( $task ) ) {
             return array( 'error' => esc_html__( 'The backup task could not be started. Reload the page and try again.', 'mainwp' ) );
         }
+        if ( (int) $task->last_run >= $started ) {
+            MainWP_DB_Backup::instance()->update_backup_run_manually( $task_id );
+        }
         return array(
             'job_id'  => $task_id,
             'started' => (int) $task->last_run >= $started ? (int) $task->last_run : $started,
-            'status'  => $had_slot ? 'running' : 'queued',
+            'status'  => (int) $task->last_run >= $started ? 'running' : 'queued',
         );
     }
 
@@ -163,8 +165,15 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      * @return string Refusal message, or an empty string.
      */
     private static function manual_task_start_error( object $task ): string {
+        if ( ! empty( $task->paused ) ) {
+            return esc_html__( 'This task is paused. Resume it before running it.', 'mainwp' );
+        }
         if ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
             return esc_html__( 'Native backups are not enabled.', 'mainwp' );
+        }
+        $scope_error = static::authorize_task_scope( $task->sites, $task->groups );
+        if ( '' !== $scope_error ) {
+            return $scope_error;
         }
         foreach ( static::resolve_task_run_sites( $task ) as $site_id ) {
             if ( null !== MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $site_id ) ) {
@@ -186,10 +195,16 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         if ( empty( $task ) || ! static::can_edit_backuptask( $task ) ) {
             return array( 'error' => esc_html__( 'Insufficient permissions. Is this task set by you?', 'mainwp' ) );
         }
+        $scope_error = static::authorize_task_scope( $task->sites, $task->groups );
+        if ( '' !== $scope_error ) {
+            return array( 'error' => $scope_error );
+        }
         MainWP_Post_Backup_Handler::raise_backup_resource_limits();
         if ( (int) $task->completed < (int) $task->last_run ) {
             static::execute_backup_task( $task, 5, false );
             $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
+        } elseif ( (int) $task->completed >= $since - MainWP_Backup_Settings::get_manual_run_settle_seconds() ) {
+            $since = (int) $task->last_run;
         } elseif ( $since > (int) $task->last_run && $since <= time() ) {
             $error = static::manual_task_start_error( $task );
             if ( '' !== $error ) {

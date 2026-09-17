@@ -1364,6 +1364,101 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A paused task cannot open a manual run.
+	 *
+	 * @return void
+	 */
+	public function test_run_now_refuses_paused_task() {
+		global $wpdb;
+		list( $site_id, $task ) = $this->arrange_manual_task();
+		$wpdb->update( $wpdb->prefix . 'mainwp_wp_backup', array( 'paused' => 1 ), array( 'id' => $task->id ) );
+
+		$start = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
+		$this->assertSame( 'This task is paused. Resume it before running it.', $start['error'] );
+		$after = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$this->assertSame( $task->last_run, $after->last_run );
+		$this->assertSame( $task->completed, $after->completed );
+		$this->assertSame( $task->last_run_manually, $after->last_run_manually );
+		$this->assertGreaterThanOrEqual( (int) $after->last_run, (int) $after->completed );
+		$this->assertSame( array(), $this->child_calls );
+	}
+
+	/**
+	 * Pausing a queued task prevents its next poll from opening a run.
+	 *
+	 * @return void
+	 */
+	public function test_queued_run_status_refuses_paused_task() {
+		global $wpdb;
+		list( $site_id, $task ) = $this->arrange_manual_task();
+		update_option( 'mainwp_backup_max_concurrent', 1 );
+		$token = MainWP_Backup_Monitor::acquire_backup_slot( 1 );
+		$this->assertIsString( $token );
+		try {
+			$start = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
+			$this->assertSame( 'queued', $start['status'] );
+		} finally {
+			MainWP_Backup_Monitor::release_backup_slot( $token );
+			delete_option( 'mainwp_backup_max_concurrent' );
+		}
+		$wpdb->update( $wpdb->prefix . 'mainwp_wp_backup', array( 'paused' => 1 ), array( 'id' => $task->id ) );
+		$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $start['started'] );
+		$this->assertSame( 'This task is paused. Resume it before running it.', $status['error'] );
+		$after = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$this->assertSame( $task->last_run, $after->last_run );
+		$this->assertSame( $task->completed, $after->completed );
+		$this->assertSame( $task->last_run_manually, $after->last_run_manually );
+		$this->assertGreaterThanOrEqual( (int) $after->last_run, (int) $after->completed );
+		$this->assertSame( array(), $this->child_calls );
+	}
+
+	/**
+	 * A duplicate click follows the recently closed run without claiming another.
+	 *
+	 * @return void
+	 */
+	public function test_run_status_absorbs_duplicate_initiate_inside_settle_window() {
+		global $wpdb;
+		list( $site_id, $task ) = $this->arrange_manual_task();
+		$start                  = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
+		$done                   = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $start['started'] );
+		$this->assertSame( 'completed', $done['status'] );
+		$closed = time() - 5;
+		$wpdb->update(
+			$wpdb->prefix . 'mainwp_wp_backup',
+			array(
+				'last_run'          => $closed,
+				'completed'         => $closed,
+				'last_run_manually' => $closed,
+			),
+			array( 'id' => $task->id )
+		);
+		update_option( 'mainwp_backup_manual_settle_seconds', 60 );
+		try {
+			$calls     = $this->child_calls;
+			$duplicate = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
+			$this->assertSame( 'queued', $duplicate['status'] );
+			$this->assertGreaterThan( $closed, $duplicate['started'] );
+			$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $duplicate['started'] );
+			$this->assertSame( 'completed', $status['status'] );
+			$this->assertSame( $closed, $status['started'] );
+			$this->assertSame( $done['sites'][0]['snapshot']['id'], $status['sites'][0]['snapshot']['id'] );
+
+			MainWP_DB_Backup::instance()->update_backup_errors( $task->id, '<ol><li>Upload failed.</li></ol>' );
+			$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $duplicate['started'] );
+			$this->assertSame( 'completed_with_errors', $status['status'] );
+			$this->assertSame( 'Upload failed.', $status['errors'] );
+			$after = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+			$this->assertSame( $closed, (int) $after->last_run );
+			$this->assertSame( $closed, (int) $after->completed );
+			$this->assertSame( $closed, (int) $after->last_run_manually );
+			$this->assertSame( $calls, $this->child_calls );
+		} finally {
+			delete_option( 'mainwp_backup_manual_settle_seconds' );
+		}
+	}
+
+	/**
 	 * Another user's task cannot be started or polled in multi-user mode.
 	 *
 	 * @return void
@@ -1379,6 +1474,44 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		} finally {
 			remove_filter( 'mainwp_is_single_user', '__return_false' );
 		}
+	}
+
+	/**
+	 * Task ownership is not site access. The owner of a task whose site the
+	 * Team Control capability now denies must not be able to start it, and
+	 * must not read that site's name and url back out of the status payload -
+	 * the endpoint this lane replaced filtered its site list the same way.
+	 *
+	 * @return void
+	 */
+	public function test_run_now_refuses_a_site_the_owner_may_no_longer_access() {
+		list( $site_id, $task ) = $this->arrange_manual_task();
+
+		$deny = function ( $allowed, $cap_type, $cap ) use ( $site_id ) {
+			return ( 'site' === $cap_type && (int) $cap === (int) $site_id ) ? false : $allowed;
+		};
+		add_filter( 'mainwp_currentusercan', $deny, 10, 3 );
+		try {
+			$start = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
+			$this->assertArrayHasKey( 'error', $start );
+			$this->assertArrayNotHasKey( 'job_id', $start );
+
+			$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id );
+			$this->assertArrayHasKey( 'error', $status );
+			$this->assertArrayNotHasKey( 'sites', $status, 'A refused caller must not receive the site list.' );
+
+			$after = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+			$this->assertSame( (int) $task->last_run, (int) $after->last_run, 'A refused start must not open a run.' );
+			$this->assertSame( array(), $this->child_calls );
+		} finally {
+			remove_filter( 'mainwp_currentusercan', $deny, 10 );
+		}
+
+		// The same caller, with the capability restored, still gets through:
+		// the gate must refuse the denial, not the task.
+		$allowed = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id );
+		$this->assertArrayNotHasKey( 'error', $allowed );
+		$this->assertCount( 1, $allowed['sites'] );
 	}
 
 	/**

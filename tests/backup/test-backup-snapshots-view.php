@@ -557,6 +557,16 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 		);
 		$site_id = (int) $wpdb->insert_id;
 
+		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
+			$wpdb->prefix . 'mainwp_wp_sync',
+			array(
+				'wpid'        => $site_id,
+				'version'     => '5.0.0',
+				'sync_errors' => '',
+			)
+		);
+		$this->assertNotEmpty( MainWP_DB::instance()->get_website_by_id( $site_id ) );
+
 		$dest_id = MainWP_Backup_Storage_Destinations::instance()->add_destination(
 			array(
 				'provider' => 'local',
@@ -597,5 +607,108 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 		delete_option( 'mainwp_enableNativeBackups' );
 
 		$this->assertStringNotContainsString( 'Secret owner-only destination', $output, 'A site the current user cannot edit must never reach the rendered destinations note.' );
+	}
+
+	/**
+	 * Site capability restrictions hide destinations even from the site owner.
+	 *
+	 * @return void
+	 */
+	public function test_render_denies_site_capability_after_allowed_baseline() {
+		global $wpdb;
+
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		add_filter( 'mainwp_is_single_user', '__return_true' );
+
+		$owner = self::factory()->user->create( array( 'role' => 'administrator' ) );
+
+		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
+			$wpdb->prefix . 'mainwp_wp',
+			array(
+				'userid'               => $owner,
+				'url'                  => 'https://denied-' . wp_generate_uuid4() . '.example.com/',
+				'name'                 => 'Denied test site',
+				'adminname'            => 'admin',
+				'pubkey'               => 'test-pubkey',
+				'privkey'              => 'test-privkey',
+				'ssl_version'          => 0,
+				'http_user'            => '',
+				'http_pass'            => '',
+				'suspended'            => 0,
+				'offline_check_result' => 1,
+				'client_id'            => 0,
+				'is_staging'           => 0,
+				'plugin_upgrades'      => '',
+				'theme_upgrades'       => '',
+				'translation_upgrades' => '',
+				'premium_upgrades'     => '',
+			)
+		);
+		$site_id = (int) $wpdb->insert_id;
+
+		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
+			$wpdb->prefix . 'mainwp_wp_sync',
+			array(
+				'wpid'        => $site_id,
+				'version'     => '5.0.0',
+				'sync_errors' => '',
+			)
+		);
+		$this->assertNotEmpty( MainWP_DB::instance()->get_website_by_id( $site_id ) );
+
+		$dest_id = MainWP_Backup_Storage_Destinations::instance()->add_destination(
+			array(
+				'provider' => 'local',
+				'name'     => 'Secret owner-only destination',
+			)
+		);
+
+		$backup_table = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
+			$backup_table,
+			array(
+				'userid'          => $owner,
+				'name'            => 'Denied site task ' . uniqid(),
+				'schedule'        => 'daily',
+				'type'            => 'full',
+				'exclude'         => '',
+				'sites'           => (string) $site_id,
+				'groups'          => '',
+				'subfolder'       => '',
+				'filename'        => '',
+				'completed_sites' => '',
+				'backup_errors'   => '',
+				'archiveFormat'   => 'site',
+				'template'        => 0,
+				'destinations'    => wp_json_encode( array( $dest_id ) ),
+			)
+		);
+
+		wp_set_current_user( $owner );
+		$_GET['site_id'] = (string) $site_id;
+
+		$deny = function ( $allowed, $cap_type, $cap ) use ( $site_id ) {
+			if ( 'site' === $cap_type && (int) $cap === $site_id ) {
+				return false;
+			}
+			return $allowed;
+		};
+		try {
+			ob_start();
+			MainWP_Backup_Snapshots_View::render();
+			$output = ob_get_clean();
+			$this->assertStringContainsString( 'Secret owner-only destination', $output );
+
+			add_filter( 'mainwp_currentusercan', $deny, 10, 3 );
+			ob_start();
+			MainWP_Backup_Snapshots_View::render();
+			$output = ob_get_clean();
+			$this->assertStringNotContainsString( 'Secret owner-only destination', $output );
+		} finally {
+			unset( $_GET['site_id'] );
+			remove_filter( 'mainwp_currentusercan', $deny, 10 );
+			remove_filter( 'mainwp_is_single_user', '__return_true' );
+			delete_option( 'mainwp_enableNativeBackups' );
+		}
 	}
 }

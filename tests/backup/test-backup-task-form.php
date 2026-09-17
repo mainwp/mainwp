@@ -131,6 +131,7 @@ class MainWP_Backup_Task_Form_Test extends \WP_UnitTestCase {
 
 		$this->assertStringContainsString( 'value="incremental"', $output );
 		$this->assertStringContainsString( 'mainwp-backup-incremental-note', $output );
+		$this->assertStringContainsString( '<p>The first run of this task, including Run Now, makes a full backup automatically. Later runs back up only what changed.</p>', $output );
 	}
 
 	/**

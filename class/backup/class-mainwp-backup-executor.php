@@ -677,18 +677,20 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 }
                 $backupTaskProgress = MainWP_DB_Backup::instance()->get_backup_task_progress( $taskId, $website->id );
 
-                /** This action is documented in class/backup/class-mainwp-backup-executor.php */
-                do_action(
-                    'mainwp_native_backup_completed',
-                    (int) $website->id,
-                    $backupTaskProgress->child_backup_task_id,
-                    true,
-                    array(
-                        'type' => $type,
-                        'file' => isset( $temp['file'] ) ? $temp['file'] : '',
-                        'size' => $information['size'],
-                    )
-                );
+                if ( 'incremental' !== $type ) {
+                    /** This action is documented in class/backup/class-mainwp-backup-executor.php */
+                    do_action(
+                        'mainwp_native_backup_completed',
+                        (int) $website->id,
+                        $backupTaskProgress->child_backup_task_id,
+                        true,
+                        array(
+                            'type' => $type,
+                            'file' => isset( $temp['file'] ) ? $temp['file'] : '',
+                            'size' => $information['size'],
+                        )
+                    );
+                }
             } elseif ( 5 > $backupTaskProgress->attempts ) {
                 $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'attempts' => $backupTaskProgress->attempts + 1 ) );
                 return false;
@@ -704,7 +706,38 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         if ( isset( $information['error'] ) ) {
             throw new MainWP_Exception( esc_html( MainWP_Backup_Error_Codes::sanitize_message( $information['error'] ) ), null, isset( $information['error_code'] ) ? $information['error_code'] : '' ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         } elseif ( 'incremental' === $type && ! empty( $information['artifacts'] ) ) {
-            return static::finish_incremental_backup( $website, $pTask, $information['artifacts'], $backupTaskProgress );
+            try {
+                $result = static::finish_incremental_backup( $website, $pTask, $information['artifacts'], $backupTaskProgress );
+            } catch ( \Exception $e ) {
+                /** This action is documented in class/backup/class-mainwp-backup-executor.php */
+                do_action(
+                    'mainwp_native_backup_completed',
+                    (int) $website->id,
+                    $backupTaskProgress->child_backup_task_id,
+                    false,
+                    array(
+                        'error'      => $e->getMessage(),
+                        'error_code' => $e instanceof MainWP_Exception ? $e->get_message_error_code() : $e->getCode(),
+                    )
+                );
+                throw $e;
+            }
+            if ( false !== $result ) {
+                /** This action is documented in class/backup/class-mainwp-backup-executor.php */
+                do_action(
+                    'mainwp_native_backup_completed',
+                    (int) $website->id,
+                    $backupTaskProgress->child_backup_task_id,
+                    true,
+                    array(
+                        'type'        => $type,
+                        'file'        => '',
+                        'size'        => $information['size'] ?? 0,
+                        'snapshot_id' => $result['snapshot_id'],
+                    )
+                );
+            }
+            return $result;
         } elseif ( 'incremental' === $type && empty( $information['full'] ) && empty( $information['db'] ) ) {
             // A spine child completing an incremental run without artifacts
             // produced nothing downloadable.
@@ -1516,13 +1549,14 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
             $local = MainWP_Backup_File_Manager::normalize_filename( $run_dir . MainWP_Utility::sanitize_file_name( $remote ) );
 
-            $already_complete = file_exists( $local ) && (int) filesize( $local ) === $size && $size > 0;
+            $allow_empty      = 'tombstones' === $role && isset( $artifact['size'] ) && 0 === $size;
+            $already_complete = file_exists( $local ) && (int) filesize( $local ) === $size && ( $size > 0 || $allow_empty );
             if ( ! $already_complete ) {
                 if ( ! MainWP_Backup_File_Manager::acquire_download_lock( $local, $website->id, $pTask->id ) ) {
                     throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING, 'download lock held for ' . basename( $local ) ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
                 }
                 try {
-                    MainWP_Backup_File_Manager::download_backup_artifact( $website, $remote, $local, $size, $http_user_plain, $http_pass_plain );
+                    MainWP_Backup_File_Manager::download_backup_artifact( $website, $remote, $local, $size, $http_user_plain, $http_pass_plain, $allow_empty );
                     if ( in_array( $role, array( 'part', 'db', 'full' ), true ) ) {
                         MainWP_Backup_File_Manager::validate_backup_file( $local, $size );
                     } elseif ( (int) filesize( $local ) !== $size ) {
@@ -1831,16 +1865,18 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
         if ( isset( $information['error'] ) ) {
             throw new MainWP_Exception( esc_html( MainWP_Backup_Error_Codes::sanitize_message( $information['error'] ) ), null, isset( $information['error_code'] ) ? $information['error_code'] : '' ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-        } elseif ( 'db' === $pType && ! $information['db'] ) {
+        } elseif ( 'incremental' === $pType ) {
+            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+        } elseif ( 'db' === $pType && empty( $information['db'] ) ) {
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_DB_QUERY_FAILED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
-        } elseif ( 'full' === $pType && ! $information['full'] ) {
+        } elseif ( 'full' === $pType && empty( $information['full'] ) ) {
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         } elseif ( 'files' === $pType && empty( $information['full'] ) ) {
             // A child whose legacy backup action predates the files type
             // answers with nothing on either slot; failing loudly beats
             // reporting an empty success.
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
-        } elseif ( isset( $information['db'] ) || isset( $information['full'] ) ) {
+        } elseif ( ! empty( $information['db'] ) || ! empty( $information['full'] ) ) {
             if ( ! empty( $information['db'] ) ) {
                 $backup_result['url']  = $information['db'];
                 $backup_result['type'] = 'db';

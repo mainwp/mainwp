@@ -196,6 +196,7 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
      * @param int|false   $size            Expected size in bytes, false when unknown.
      * @param string|null $http_user       HTTP Basic Auth username (plaintext).
      * @param string|null $http_pass       HTTP Basic Auth password (plaintext).
+     * @param bool        $allow_empty     Allow an explicitly empty tombstones artifact.
      *
      * @throws MainWP_Exception On transfer failure, token failure, or hash mismatch.
      *
@@ -203,7 +204,7 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
      * @uses \MainWP\Dashboard\MainWP_Connect::download_to_file()
      * @uses \MainWP\Dashboard\MainWP_Connect::get_get_data_authed()
      */
-    public static function download_backup_artifact( object $website, string $remote_filename, string $local_file, $size, $http_user, $http_pass ): void {
+    public static function download_backup_artifact( object $website, string $remote_filename, string $local_file, $size, $http_user, $http_pass, bool $allow_empty = false ): void {
         // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber
         $escalated = false;
 
@@ -220,7 +221,7 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
                 // fires - a child can serve an empty body while its artifact
                 // is not yet servable, and announcing that as a download
                 // poisons the resume state with a vacuous success.
-                static::assert_download_landed( $local_file );
+                static::assert_download_landed( $local_file, $allow_empty && 0 === $size );
                 if ( ! MainWP_Backup_Monitor::confirm_native_lease() ) {
                     // The token path's hash makes this same call: the slot
                     // may already be re-owned by a process writing this same
@@ -271,7 +272,7 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
         // one. Outside a native lease scope this is a no-op.
         MainWP_Backup_Monitor::touch_native_leases( MainWP_Backup_Monitor::DEFAULT_SLOT_LEASE_SECONDS );
 
-        static::assert_download_landed( $local_file );
+        static::assert_download_landed( $local_file, $allow_empty && 0 === $size );
 
         if ( ! empty( $token_info['hash'] ) && file_exists( $local_file ) ) {
             $actual_hash = static::hash_artifact( $local_file );
@@ -367,14 +368,15 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
      * A zero-byte leftover is removed so the retry starts clean.
      *
      * @param string $local_file Absolute local target path.
+     * @param bool   $allow_empty Allow an explicitly empty tombstones artifact.
      *
      * @return void
      * @throws MainWP_Exception When no local file landed or it is empty.
      */
-    private static function assert_download_landed( string $local_file ): void {
+    private static function assert_download_landed( string $local_file, bool $allow_empty = false ): void {
         // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.Missing
         clearstatcache( true, $local_file );
-        if ( is_file( $local_file ) && filesize( $local_file ) > 0 ) {
+        if ( is_file( $local_file ) && ( filesize( $local_file ) > 0 || $allow_empty ) ) {
             return;
         }
         if ( file_exists( $local_file ) ) {

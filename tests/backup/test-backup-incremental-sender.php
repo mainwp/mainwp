@@ -16,6 +16,8 @@ namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Backup_Error_Codes;
 use MainWP\Dashboard\MainWP_Backup_Executor;
+use MainWP\Dashboard\MainWP_Backup_Monitor;
+use MainWP\Dashboard\MainWP_Manage_Backups_Handler;
 use MainWP\Dashboard\MainWP_Backup_Snapshots;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_DB_Backup;
@@ -1122,5 +1124,308 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( (int) $task->id );
 		$this->assertSame( '', (string) $task->backup_errors, 'The advisory note must not touch the failure channel.' );
 		$this->assertStringContainsString( 'incremental backup was unavailable', (string) $task->backup_notices, 'The advisory note must land in backup_notices.' );
+	}
+	/**
+	 * Create a real incremental task and stub its artifact-producing child.
+	 *
+	 * @param bool $base Whether a base already exists.
+	 * @param bool $empty_tombstones Serve an empty deletion list.
+	 * @param bool $empty_part Serve an empty archive part.
+	 * @return array Site, task and base ids.
+	 */
+	private function arrange_manual_task( $base = true, $empty_tombstones = false, $empty_part = false ) {
+		$user = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $user );
+		$site_id = $this->create_test_site( array( 'userid' => $user ) );
+		$this->give_site_real_privkey( $site_id );
+		$task = MainWP_DB_Backup::instance()->add_backup_task( $user, 'Native Run Now', 'manual', 'incremental', '', (string) $site_id, '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0 );
+		$this->assertNotFalse( $task );
+		$base_id = $base ? $this->record_base_snapshot( $site_id, $task->id ) : null;
+		if ( $base_id ) {
+			global $wpdb;
+			$wpdb->update( $wpdb->prefix . 'mainwp_wp_backup_snapshot', array( 'created' => time() - 100 ), array( 'id' => $base_id ) );
+		}
+		$artifacts = $this->arrange_remote_artifacts( ! $base );
+		foreach ( $artifacts as &$artifact ) {
+			if ( ( $empty_tombstones && 'tombstones' === $artifact['role'] ) || ( $empty_part && 'part' === $artifact['role'] ) ) {
+				$artifact['size']                        = 0;
+				$this->remote_files[ $artifact['file'] ] = '';
+			}
+		}
+		unset( $artifact );
+		$this->mock_artifact_downloads();
+		$this->mock_child_actions(
+			array(
+				'backup_preflight'   => $this->preflight_response(),
+				'backup_task_create' => array(
+					'task_id' => 'manual-' . $task->id,
+					'phase'   => 'queued',
+				),
+				'backup_task_run'    => array(
+					'phase'     => 'completed',
+					'artifacts' => $artifacts,
+				),
+				'delete_backup'      => array( 'result' => 'ok' ),
+				'backup_task_cancel' => array( 'result' => 'ok' ),
+			)
+		);
+		return array( $site_id, $task, $base_id );
+	}
+
+	/**
+	 * Run Now extends the chain and announces success after recording it.
+	 *
+	 * @return void
+	 */
+	public function test_run_now_records_chained_snapshot_before_success_event() {
+		list( $site_id, $task, $base_id ) = $this->arrange_manual_task();
+		$events                           = array();
+		add_action(
+			'mainwp_native_backup_completed',
+			function ( $site, $child, $success ) use ( &$events, $task ) {
+				$events[] = array( $success, MainWP_Backup_Snapshots::instance()->get_latest_complete( $site, $task->id )->id );
+			},
+			10,
+			3
+		);
+		$start = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
+		$this->assertSame( 'running', $start['status'] );
+		$this->assertGreaterThan( 0, MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id )->last_run_manually );
+		$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $start['started'] );
+		$this->assertSame( 'completed', $status['status'] );
+		$snapshot = $status['sites'][0]['snapshot'];
+		$this->assertSame( 'incremental', $snapshot['type'] );
+		$this->assertSame( $base_id, $snapshot['parent_id'] );
+		$this->assertSame( array( array( true, (string) $snapshot['id'] ) ), $events );
+		$this->assertSame(
+			array(
+				'total'    => 0,
+				'complete' => 0,
+				'failed'   => 0,
+				'pending'  => 0,
+			),
+			$status['sites'][0]['uploads']
+		);
+	}
+
+	/**
+	 * A fresh incremental task records the automatic full base.
+	 *
+	 * @return void
+	 */
+	public function test_run_now_without_base_records_full_snapshot() {
+		list( $site_id, $task ) = $this->arrange_manual_task( false );
+		$start                  = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
+		$this->assertSame( 'full', $this->last_call_params( 'backup_task_create' )['type'] );
+		$this->assertSame( '1', $this->last_call_params( 'backup_task_create' )['emit_manifest'] );
+		$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $start['started'] );
+		$this->assertSame( 'completed', $status['status'] );
+		$this->assertSame( 'full', $status['sites'][0]['snapshot']['type'] );
+		$this->assertNull( $status['sites'][0]['snapshot']['parent_id'] );
+		$this->assertSame( $site_id, $status['sites'][0]['id'] );
+	}
+
+	/**
+	 * Empty tombstones are valid when advertised as zero bytes.
+	 *
+	 * @return void
+	 */
+	public function test_empty_tombstones_download_records_snapshot() {
+		list( $site_id, $task ) = $this->arrange_manual_task( true, true );
+		$start                  = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
+		$status                 = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $start['started'] );
+		$this->assertSame( 'completed', $status['status'] );
+		$snapshot   = MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, (int) $task->id );
+		$tombstones = array_values(
+			array_filter(
+				$snapshot->archives,
+				static function ( $artifact ) {
+					return 'tombstones' === $artifact['role'];
+				}
+			)
+		);
+		$this->assertCount( 1, $tombstones );
+		$this->assertSame( 0, filesize( $tombstones[0]['path'] ) );
+	}
+
+	/**
+	 * A zero-byte part remains a failed download.
+	 *
+	 * @return void
+	 */
+	public function test_zero_byte_part_download_fails() {
+		list( $site_id, $task, $base_id ) = $this->arrange_manual_task( true, false, true );
+		$this->run_cycle( $site_id, $task );
+		$cycle = $this->run_cycle( $site_id, $task );
+		$this->assertInstanceOf( MainWP_Exception::class, $cycle['exception'] );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_DL_FILE_NOT_FOUND, $cycle['exception']->get_message_error_code() );
+		$this->assertSame( $base_id, (int) MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, $task->id )->id );
+	}
+
+	/**
+	 * A manifest walk failure retains its code and registry message.
+	 *
+	 * @return void
+	 */
+	public function test_manifest_walk_failure_stores_registry_message() {
+		list( $site_id, $task ) = $this->arrange_manual_task();
+		$this->mock_child_actions(
+			array(
+				'backup_task_run' => array(
+					'phase'      => 'failed',
+					'error'      => 'walk broke',
+					'error_code' => MainWP_Backup_Error_Codes::ERR_MANIFEST_WALK_FAILED,
+				),
+			)
+		);
+		$start = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
+		$task  = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$cycle = $this->run_cycle( $site_id, $task );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_MANIFEST_WALK_FAILED, $cycle['exception']->get_message_error_code() );
+		MainWP_Manage_Backups_Handler::execute_backup_task( $task, 5, false );
+		$task    = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$message = MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_MANIFEST_WALK_FAILED );
+		$this->assertStringContainsString( $message, $task->backup_errors );
+		$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $start['started'] );
+		$this->assertSame( 'failed', $status['status'] );
+		$this->assertSame( $message, $status['sites'][0]['error'] );
+		$this->assertNull( $status['sites'][0]['snapshot'] );
+	}
+
+	/**
+	 * Snapshot insert failure emits failure only.
+	 *
+	 * @return void
+	 */
+	public function test_incremental_record_failure_never_emits_success() {
+		list( $site_id, $task ) = $this->arrange_manual_task();
+		$property               = new \ReflectionProperty( MainWP_Backup_Snapshots::class, 'instance' );
+		$original               = $property->getValue();
+		$property->setValue(
+			null,
+			new class() extends MainWP_Backup_Snapshots {
+				/**
+				 * Refuse the snapshot insert.
+				 *
+				 * @param array $data Snapshot fields.
+				 * @return int Failed id.
+				 */
+				public function record_snapshot( array $data ): int {
+					return 0;
+				}
+			}
+		);
+		$events = array();
+		add_action(
+			'mainwp_native_backup_completed',
+			function ( $site, $child, $success, $meta ) use ( &$events ) {
+				$events[] = array( $success, $meta );
+			},
+			10,
+			4
+		);
+		try {
+			$this->run_cycle( $site_id, $task );
+			$cycle = $this->run_cycle( $site_id, $task );
+			$this->assertSame( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_RECORD_FAILED, $cycle['exception']->get_message_error_code() );
+			$this->assertCount( 1, $events );
+			$this->assertFalse( $events[0][0] );
+			$this->assertSame( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_RECORD_FAILED, $events[0][1]['error_code'] );
+			$this->assertSame( $cycle['exception']->getMessage(), $events[0][1]['error'] );
+		} finally {
+			$property->setValue( null, $original );
+		}
+	}
+
+	/**
+	 * Full capacity queues a click without contacting the child, then retries.
+	 *
+	 * @return void
+	 */
+	public function test_run_now_queues_at_capacity_then_status_opens_run() {
+		list( $site_id, $task ) = $this->arrange_manual_task();
+		update_option( 'mainwp_backup_max_concurrent', 1 );
+		$token = MainWP_Backup_Monitor::acquire_backup_slot( 1 );
+		$this->assertIsString( $token );
+		try {
+			$start = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
+			$this->assertSame( 'queued', $start['status'] );
+			$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $start['started'] );
+			$this->assertSame( 'queued', $status['status'] );
+			$this->assertSame( 'pending', $status['sites'][0]['status'] );
+			$this->assertSame( array(), $this->child_calls );
+		} finally {
+			MainWP_Backup_Monitor::release_backup_slot( $token );
+			delete_option( 'mainwp_backup_max_concurrent' );
+		}
+		$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $start['started'] );
+		$this->assertSame( 'running', $status['status'] );
+		$this->assertNotNull( $this->last_call_params( 'backup_task_create' ) );
+	}
+
+	/**
+	 * Another user's task cannot be started or polled in multi-user mode.
+	 *
+	 * @return void
+	 */
+	public function test_run_now_refuses_another_users_task() {
+		list( $site_id, $task ) = $this->arrange_manual_task();
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		add_filter( 'mainwp_is_single_user', '__return_false' );
+		try {
+			$this->assertArrayHasKey( 'error', MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id ) );
+			$this->assertArrayHasKey( 'error', MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id ) );
+			$this->assertSame( array(), $this->child_calls );
+		} finally {
+			remove_filter( 'mainwp_is_single_user', '__return_false' );
+		}
+	}
+
+	/**
+	 * Mid-phase progress is running; a completed child alone is not a snapshot.
+	 *
+	 * @return void
+	 */
+	public function test_run_status_reports_mid_phase_label_and_percent() {
+		list( $site_id, $task ) = $this->arrange_manual_task();
+		$this->mock_child_actions(
+			array(
+				'backup_task_run' => array(
+					'phase'    => 'dumping_db',
+					'progress' => array(
+						'files_processed' => 2,
+						'files_total'     => 4,
+						'current_file'    => 'table.sql',
+					),
+				),
+			)
+		);
+		$start  = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
+		$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $start['started'] );
+		$this->assertSame( 'running', $status['status'] );
+		$this->assertSame( 'running', $status['sites'][0]['status'] );
+		$this->assertNotEmpty( $status['sites'][0]['label'] );
+		$this->assertSame( 50, $status['sites'][0]['percent'] );
+		$this->assertSame( 'table.sql', $status['sites'][0]['current_file'] );
+		$this->assertNull( $status['sites'][0]['snapshot'] );
+	}
+
+	/**
+	 * A snapshot plus a run error reports partial success.
+	 *
+	 * @return void
+	 */
+	public function test_run_status_completed_with_errors_keeps_snapshot() {
+		list( $site_id, $task ) = $this->arrange_manual_task();
+		$start                  = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
+		$done                   = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $start['started'] );
+		$this->assertSame( 'completed', $done['status'] );
+		MainWP_DB_Backup::instance()->update_backup_errors( $task->id, '<ol><li>Upload failed.</li></ol>' );
+		MainWP_DB_Backup::instance()->update_backup_notices( $task->id, '<ol><li>Full base used.</li></ol>' );
+		$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $start['started'] );
+		$this->assertSame( 'completed_with_errors', $status['status'] );
+		$this->assertSame( 'Upload failed.', $status['errors'] );
+		$this->assertSame( 'Full base used.', $status['notices'] );
+		$this->assertSame( $done['sites'][0]['snapshot']['id'], $status['sites'][0]['snapshot']['id'] );
 	}
 }

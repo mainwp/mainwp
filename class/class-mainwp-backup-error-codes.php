@@ -92,6 +92,7 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
     // Incremental backups.
     const ERR_INCREMENTAL_BASE_MISSING = 'mainwp_backup_incremental_base_missing';
     const ERR_MANIFEST_TOO_LARGE       = 'mainwp_backup_manifest_too_large';
+    const ERR_MANIFEST_WALK_FAILED     = 'mainwp_backup_manifest_walk_failed';
 
     const ERR_MANIFEST_CHUNK_WRONG_PHASE = 'mainwp_backup_manifest_chunk_wrong_phase';
     const ERR_MANIFEST_CHUNK_CORRUPT     = 'mainwp_backup_manifest_chunk_corrupt';
@@ -264,6 +265,7 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
             self::ERR_DL_TOKEN_INVALID           => esc_html__( 'The download authorization was rejected by the child site as invalid, expired, or already used. Try the download again to get a fresh authorization.', 'mainwp' ),
 
             self::ERR_INCREMENTAL_BASE_MISSING   => esc_html__( 'The previous backup this incremental run depends on is no longer usable on the child site, so a full backup was run instead. The next incremental run will use the new full backup as its base.', 'mainwp' ),
+            self::ERR_MANIFEST_WALK_FAILED       => esc_html__( 'The file list for the incremental chain could not be built on the child site. Check the child site error log and disk space, then run the backup again.', 'mainwp' ),
             self::ERR_MANIFEST_TOO_LARGE         => esc_html__( 'The file list from the previous backup is too large to send to the child site, so a full backup was run instead. Sites with very large file counts may need full backups only.', 'mainwp' ),
 
             self::ERR_SNAPSHOT_RECORD_FAILED     => esc_html__( 'The backup archive was downloaded, but the dashboard could not save its snapshot record, so this run was not kept. Check that the dashboard database can write to the backup snapshot table, then run the task again.', 'mainwp' ),

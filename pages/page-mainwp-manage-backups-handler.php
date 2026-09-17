@@ -118,6 +118,165 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
     }
 
     /**
+     * Start or follow a manual run of a saved backup task.
+     *
+     * @param int $task_id Task id.
+     * @return array Job handle or error.
+     */
+    public static function run_backup_task_now( int $task_id ): array {
+        $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
+        if ( empty( $task ) || ! static::can_edit_backuptask( $task ) ) {
+            return array( 'error' => esc_html__( 'Insufficient permissions. Is this task set by you?', 'mainwp' ) );
+        }
+        $error = static::manual_task_start_error( $task );
+        if ( '' !== $error ) {
+            return array( 'error' => $error );
+        }
+        MainWP_Post_Backup_Handler::raise_backup_resource_limits();
+        if ( (int) $task->completed < (int) $task->last_run ) {
+            return array(
+                'job_id'  => $task_id,
+                'started' => (int) $task->last_run,
+                'status'  => 'running',
+            );
+        }
+
+        $started  = time();
+        $had_slot = false !== static::execute_backup_task( $task, 5, true, MainWP_Backup_Settings::get_manual_run_settle_seconds() );
+        MainWP_DB_Backup::instance()->update_backup_run_manually( $task_id );
+        MainWP_Post_Backup_Handler::kick_backup_continuation();
+        $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
+        if ( empty( $task ) ) {
+            return array( 'error' => esc_html__( 'The backup task could not be started. Reload the page and try again.', 'mainwp' ) );
+        }
+        return array(
+            'job_id'  => $task_id,
+            'started' => (int) $task->last_run >= $started ? (int) $task->last_run : $started,
+            'status'  => $had_slot ? 'running' : 'queued',
+        );
+    }
+
+    /**
+     * Check guards shared by initial and queued manual claims.
+     *
+     * @param object $task Task row.
+     * @return string Refusal message, or an empty string.
+     */
+    private static function manual_task_start_error( object $task ): string {
+        if ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
+            return esc_html__( 'Native backups are not enabled.', 'mainwp' );
+        }
+        foreach ( static::resolve_task_run_sites( $task ) as $site_id ) {
+            if ( null !== MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $site_id ) ) {
+                return esc_html__( 'A restore is in progress for this site. Try again once it finishes.', 'mainwp' );
+            }
+        }
+        return '';
+    }
+
+    /**
+     * Advance a saved task and report recorded snapshots for its sites.
+     *
+     * @param int $task_id Task id.
+     * @param int $since   Initiate timestamp, or zero for the current run.
+     * @return array Task and site status, or error.
+     */
+    public static function get_backup_task_run_status( int $task_id, int $since = 0 ): array {
+        $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
+        if ( empty( $task ) || ! static::can_edit_backuptask( $task ) ) {
+            return array( 'error' => esc_html__( 'Insufficient permissions. Is this task set by you?', 'mainwp' ) );
+        }
+        MainWP_Post_Backup_Handler::raise_backup_resource_limits();
+        if ( (int) $task->completed < (int) $task->last_run ) {
+            static::execute_backup_task( $task, 5, false );
+            $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
+        } elseif ( $since > (int) $task->last_run && $since <= time() ) {
+            $error = static::manual_task_start_error( $task );
+            if ( '' !== $error ) {
+                return array( 'error' => $error );
+            }
+            static::execute_backup_task( $task, 5, true, MainWP_Backup_Settings::get_manual_run_settle_seconds() );
+            $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
+        }
+        if ( empty( $task ) ) {
+            return array( 'error' => esc_html__( 'The backup task could not be started. Reload the page and try again.', 'mainwp' ) );
+        }
+
+        $open     = (int) $task->completed < (int) $task->last_run;
+        $queued   = ! $open && $since > (int) $task->last_run;
+        $cutoff   = $since > 0 ? $since : (int) $task->last_run;
+        $sites    = array();
+        $complete = 0;
+        $owns_run = 0 === $since || (int) $task->last_run >= $since;
+        $errors   = $owns_run ? MainWP_Post_Backup_Handler::humanize_backup_errors( $task->backup_errors ) : '';
+        $notices  = $owns_run ? MainWP_Post_Backup_Handler::humanize_backup_errors( $task->backup_notices ?? '' ) : '';
+        foreach ( static::resolve_task_run_sites( $task ) as $site_id ) {
+            $website  = MainWP_DB::instance()->get_website_by_id( $site_id );
+            $progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task_id, $site_id );
+            if ( $progress && (int) $progress->dtsFetched < max( $cutoff, (int) $task->last_run ) ) {
+                $progress = null;
+            }
+            $detail   = MainWP_Post_Backup_Handler::build_task_progress_response( $progress );
+            $snapshot = MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, $task_id );
+            if ( $snapshot && (int) $snapshot->created < $cutoff ) {
+                $snapshot = null;
+            }
+            $status  = $progress ? 'running' : 'pending';
+            $uploads = null;
+            if ( $snapshot ) {
+                ++$complete;
+                $status  = 'completed';
+                $uploads = array(
+                    'total'    => 0,
+                    'complete' => 0,
+                    'failed'   => 0,
+                    'pending'  => 0,
+                );
+                foreach ( MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( (int) $snapshot->id ) as $job ) {
+                    ++$uploads['total'];
+                    $bucket = 'complete' === $job->status ? 'complete' : ( in_array( $job->status, array( 'failed_retryable', 'failed_permanent', 'credentials_invalid' ), true ) ? 'failed' : 'pending' );
+                    ++$uploads[ $bucket ];
+                }
+            } elseif ( ( ! $open && ! $queued ) || 'failed' === ( $detail['status'] ?? '' ) ) {
+                $status = 'failed';
+            }
+            $sites[] = array(
+                'id'           => (int) $site_id,
+                'name'         => $website ? (string) $website->name : '',
+                'url'          => $website ? (string) $website->url : '',
+                'status'       => $status,
+                'phase'        => $detail['phase'] ?? '',
+                'label'        => $detail['label'] ?? '',
+                'percent'      => $detail['percent'] ?? null,
+                'current_file' => $detail['current_file'] ?? '',
+                'error'        => 'failed' === $status && $progress ? MainWP_Post_Backup_Handler::humanize_backup_errors( $progress->last_error ) : '',
+                'snapshot'     => $snapshot ? array(
+                    'id'        => (int) $snapshot->id,
+                    'type'      => $snapshot->type,
+                    'parent_id' => null === $snapshot->parent_id ? null : (int) $snapshot->parent_id,
+                    'created'   => (int) $snapshot->created,
+                ) : null,
+                'uploads'      => $uploads,
+            );
+        }
+        $status = 'failed';
+        if ( $open ) {
+            $status = 'running';
+        } elseif ( $queued ) {
+            $status = 'queued';
+        } elseif ( $complete > 0 ) {
+            $status = count( $sites ) === $complete && '' === $errors ? 'completed' : 'completed_with_errors';
+        }
+        return array(
+            'status'  => $status,
+            'started' => (int) $task->last_run,
+            'errors'  => $errors,
+            'notices' => $notices,
+            'sites'   => $sites,
+        );
+    }
+
+    /**
      * Can Edit Backup Task.
      *
      * @param object $task Backup task.
@@ -1049,9 +1208,11 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                 if ( null === $errorOutput ) {
                     $errorOutput = '';
                 }
-                $errorOutput   .= 'Site: <strong>' . MainWP_Utility::get_nice_url( $website->url ) . '</strong><br />';
-                $errorOutput   .= MainWP_Error_Helper::get_error_message( $e ) . '<br />';
-                $_error_output  = MainWP_Error_Helper::get_error_message( $e );
+                $errorOutput  .= 'Site: <strong>' . MainWP_Utility::get_nice_url( $website->url ) . '</strong><br />';
+                $_error_code   = $e instanceof MainWP_Exception ? $e->get_message_error_code() : '';
+                $_error_output = in_array( $_error_code, MainWP_Backup_Error_Codes::get_registered_codes(), true ) ? MainWP_Backup_Error_Codes::message( $_error_code ) : MainWP_Error_Helper::get_error_message( $e );
+                $errorOutput  .= $_error_output . '<br />';
+                MainWP_DB_Backup::instance()->update_backup_task_progress( (int) $task->id, (int) $siteid, array( 'last_error' => $_error_output ) );
                 $errorEntries[] = 'Site: <strong>' . MainWP_Utility::get_nice_url( $website->url ) . '</strong><br />' . $_error_output;
 
                 static::close_child_task_after_terminal_mark( (int) $task->id, (int) $siteid );

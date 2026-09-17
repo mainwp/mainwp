@@ -314,7 +314,8 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
             </div>
             <?php $incremental_note_style = isset( $task ) && 'incremental' === $task->type ? '' : 'style="display:none"'; ?>
             <div class="ui info message" id="mainwp-backup-incremental-note" <?php echo $incremental_note_style; //phpcs:ignore -- static attribute. ?>>
-                <?php esc_html_e( 'Incremental backups copy only the files that changed since the previous run in the chain and include a fresh database dump every time, so each run restores to its own point in time. The first run creates a full backup as the chain base. Sites running a MainWP Child version without incremental support receive a full backup on every run, with a note recorded on the task.', 'mainwp' ); ?>
+                <p><?php esc_html_e( 'Incremental backups copy only the files that changed since the previous run in the chain and include a fresh database dump every time, so each run restores to its own point in time. Sites running a MainWP Child version without incremental support receive a full backup on every run, with a note recorded on the task.', 'mainwp' ); ?></p>
+                <p><?php esc_html_e( 'The first run of this task, including Run Now, makes a full backup automatically. Later runs back up only what changed.', 'mainwp' ); ?></p>
             </div>
             <?php $files_note_style = isset( $task ) && 'files' === $task->type ? '' : 'style="display:none"'; ?>
             <div class="ui info message" id="mainwp-backup-files-note" <?php echo $files_note_style; //phpcs:ignore -- static attribute. ?>>

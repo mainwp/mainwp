@@ -77,6 +77,8 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         }
         if ( \mainwp_current_user_can( 'dashboard', 'run_backup_tasks' ) ) {
             $this->add_action( 'mainwp_backuptask_get_sites', array( &$this, 'mainwp_backuptask_get_sites' ) );
+            $this->add_action( 'mainwp_backuptask_run_now', array( &$this, 'mainwp_backuptask_run_now' ) );
+            $this->add_action( 'mainwp_backuptask_run_status', array( &$this, 'mainwp_backuptask_run_status' ) );
             $this->add_action( 'mainwp_backuptask_run_site', array( &$this, 'mainwp_backuptask_run_site' ) );
             $this->add_action( 'mainwp_backup_task_progress', array( &$this, 'mainwp_backup_task_progress' ) );
         }
@@ -715,7 +717,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
      *
      * @return void
      */
-    protected static function kick_backup_continuation() {
+    public static function kick_backup_continuation() {
         if ( ! wp_next_scheduled( 'mainwp_native_backup_continue_action' ) ) {
             wp_schedule_single_event( time(), 'mainwp_native_backup_continue_action' );
         }
@@ -1110,7 +1112,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
      *
      * @return string A flattened, space-separated message.
      */
-    protected static function humanize_backup_errors( $errors ) {
+    public static function humanize_backup_errors( $errors ) {
         $spaced = str_replace( array( '<br>', '<br/>', '<br />', '</li>', '<li>', '</ol>', '<ol>' ), ' ', (string) $errors );
         return trim( preg_replace( '/\s+/', ' ', wp_strip_all_tags( $spaced ) ) );
     }
@@ -1637,6 +1639,25 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         $this->secure_request( 'mainwp_pausebackup' );
 
         MainWP_Manage_Backups_Handler::pause_backup();
+    }
+
+    /**
+     * Start a native run of a saved backup task.
+     */
+    public function mainwp_backuptask_run_now() {
+        $this->secure_request( 'mainwp_backuptask_run_now' );
+        $task_id = isset( $_POST['task_id'] ) ? (int) $_POST['task_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
+        wp_send_json( MainWP_Manage_Backups_Handler::run_backup_task_now( $task_id ) );
+    }
+
+    /**
+     * Advance and report a native run of a saved backup task.
+     */
+    public function mainwp_backuptask_run_status() {
+        $this->secure_request( 'mainwp_backuptask_run_status' );
+        $task_id = isset( $_POST['task_id'] ) ? (int) $_POST['task_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
+        $since   = isset( $_POST['since'] ) ? (int) $_POST['since'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
+        wp_send_json( MainWP_Manage_Backups_Handler::get_backup_task_run_status( $task_id, $since ) );
     }
 
     /**

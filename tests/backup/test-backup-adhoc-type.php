@@ -161,4 +161,30 @@ class MainWP_Backup_Adhoc_Type_Test extends MainWP_Abilities_Test_Case {
 			$this->assertSame( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, $e->get_message_error_code() );
 		}
 	}
+	/**
+	 * Empty legacy replies never succeed for supported task types.
+	 *
+	 * @return void
+	 */
+	public function test_legacy_empty_reply_rejects_incremental_full_and_db() {
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		$site_id = $this->create_test_site();
+		$this->mock_child_actions(
+			array(
+				'backup_preflight' => $this->preflight_response(),
+				'backup'           => array(
+					'full' => false,
+					'db'   => false,
+				),
+			)
+		);
+		foreach ( array( 'incremental', 'full', 'db' ) as $type ) {
+			try {
+				MainWP_Backup_Executor::backup( $site_id, $type, '', '', 1, 1, 1, 1 );
+				$this->fail( 'An empty legacy reply must fail for ' . $type );
+			} catch ( MainWP_Exception $e ) {
+				$this->assertSame( 'db' === $type ? MainWP_Backup_Error_Codes::ERR_DB_QUERY_FAILED : MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, $e->get_message_error_code(), $type );
+			}
+		}
+	}
 }

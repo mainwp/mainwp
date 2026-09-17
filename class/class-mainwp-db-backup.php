@@ -691,8 +691,10 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * Method claim_backup_run()
      *
      * Open a new run by stamping last_run, refusably. With no settle
-     * window this is the plain unconditional bump the scheduled cron path
-     * has always used - including its recovery of a stuck open run. With
+     * window this is the scheduled cron path's stamp: it refuses a paused
+     * task in the same statement that opens the run, so a pause landing
+     * after the loop's re-read still takes effect, and it keeps recovering
+     * a stuck open run. With
      * a settle window (the on-demand path) the stamp is a single guarded
      * UPDATE that refuses when another driver already holds the run open,
      * or when the previous run closed successfully within the window - a
@@ -704,7 +706,7 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * same-second retry.
      *
      * @param mixed $id            Task ID.
-     * @param int   $grace_seconds Settle window in seconds; 0 bumps unconditionally.
+     * @param int   $grace_seconds Settle window in seconds; 0 allows unpaused open runs.
      *
      * @return bool True when this caller opened the run.
      *
@@ -716,7 +718,18 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         }
 
         if ( (int) $grace_seconds <= 0 ) {
-            return false !== $this->update_backup_run( $id );
+            $now     = time();
+            $claimed = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- the pause guard must be atomic with the claim.
+                $this->wpdb->prepare(
+                    'UPDATE ' . $this->table_name( 'wp_backup' ) . " SET last_run = GREATEST( %d, completed + 1 ), last = %d, completed_sites = '[]' WHERE id = %d AND paused = 0", // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted helper.
+                    $now,
+                    $now,
+                    $id
+                )
+            );
+
+            // Changed rows, not matched rows: an identical same-second claim returns 0 and must be refused.
+            return 1 === (int) $claimed;
         }
 
         $now     = time();

@@ -170,18 +170,11 @@ class MainWP_Backup_Schedule_Cron_Test extends \WP_UnitTestCase {
 			MainWP_DB_Backup::instance()->update_backup_task_with_values( $paused_id, array( 'paused' => 1 ) );
 		};
 
-		$enabled_before = get_option( 'mainwp_enableNativeBackups' );
-		update_option( 'mainwp_enableNativeBackups', 1 );
 		add_action( 'mainwp_backup_diag_run_close', $pause_next );
 		try {
-			MainWP_System_Cron_Jobs::instance()->cron_backups();
+			$this->run_cron_with_native_backups_enabled();
 		} finally {
 			remove_action( 'mainwp_backup_diag_run_close', $pause_next );
-			if ( false === $enabled_before ) {
-				delete_option( 'mainwp_enableNativeBackups' );
-			} else {
-				update_option( 'mainwp_enableNativeBackups', $enabled_before );
-			}
 		}
 
 		$this->assertContains( $executed_id, $task_ids, 'The first task must reach the run-close hook inside cron.' );
@@ -190,6 +183,75 @@ class MainWP_Backup_Schedule_Cron_Test extends \WP_UnitTestCase {
 		$this->assertSame( 1, (int) $paused_task->paused, 'The hook must pause the other task during execution.' );
 		$this->assertSame( 0, (int) $paused_task->last_run, 'A task paused mid-loop must not start.' );
 		$this->assertSame( $next_run, (int) $paused_task->next_run, 'A skipped task must retain its next_run.' );
+	}
+
+	/**
+	 * A stale unpaused object must not bypass a pause stored before the claim.
+	 *
+	 * @return void
+	 */
+	public function test_execute_skips_task_paused_after_row_read() {
+		$id   = $this->insert_task(
+			array(
+				'userid'         => self::factory()->user->create( array( 'role' => 'administrator' ) ),
+				'schedule'       => 'interval',
+				'interval_hours' => 1,
+				'next_run'       => time() - 60,
+			)
+		);
+		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $id );
+		$this->assertSame( 0, (int) $task->paused );
+
+		MainWP_DB_Backup::instance()->update_backup_task_with_values( $id, array( 'paused' => 1 ) );
+		$this->assertSame( 1, (int) MainWP_DB_Backup::instance()->get_backup_task_by_id( $id )->paused );
+
+		MainWP_Manage_Backups_Handler::execute_backup_task( $task );
+
+		$this->assertSame( (int) $task->last_run, (int) MainWP_DB_Backup::instance()->get_backup_task_by_id( $id )->last_run, 'A pause stored after the read must prevent the claim.' );
+	}
+
+	/**
+	 * Both due tasks must run so an early loop exit cannot mask the pause regression.
+	 *
+	 * @return void
+	 */
+	public function test_cron_runs_both_unpaused_due_tasks() {
+		$fields   = array(
+			'userid'         => self::factory()->user->create( array( 'role' => 'administrator' ) ),
+			'schedule'       => 'interval',
+			'interval_hours' => 1,
+			'next_run'       => time() - 60,
+		);
+		$task_ids = array( $this->insert_task( $fields ), $this->insert_task( $fields ) );
+		$due_ids  = array_map( 'intval', wp_list_pluck( MainWP_DB_Backup::instance()->get_backup_tasks_due_by_next_run(), 'id' ) );
+		foreach ( $task_ids as $task_id ) {
+			$this->assertContains( $task_id, $due_ids, 'Both tasks must be due before cron starts.' );
+		}
+
+		$this->run_cron_with_native_backups_enabled();
+
+		foreach ( $task_ids as $task_id ) {
+			$this->assertGreaterThan( 0, (int) MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id )->last_run, 'Cron must start each unpaused due task.' );
+		}
+	}
+
+	/**
+	 * Preserve the native-backups option so cron cases cannot affect each other.
+	 *
+	 * @return void
+	 */
+	private function run_cron_with_native_backups_enabled() {
+		$enabled_before = get_option( 'mainwp_enableNativeBackups' );
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		try {
+			MainWP_System_Cron_Jobs::instance()->cron_backups();
+		} finally {
+			if ( false === $enabled_before ) {
+				delete_option( 'mainwp_enableNativeBackups' );
+			} else {
+				update_option( 'mainwp_enableNativeBackups', $enabled_before );
+			}
+		}
 	}
 
 	/**

@@ -598,25 +598,8 @@ class MainWP_Backup_Storage_Dropbox implements MainWP_Backup_Storage_Provider { 
                 'detail'     => $detail,
                 'request_id' => is_scalar( $request_id ) ? (string) $request_id : '',
             );
-            // Redact before normalization can split credentials or join benign runs.
-            // Markup characters are dropped rather than encoded: the message is
-            // already esc_html'd at the throw and the list view escapes it again,
-            // so an encoded entity would reach the tooltip as &amp;lt;. The cast
-            // before trim() covers a PCRE failure returning null, which would
-            // otherwise blank the diagnostic this path exists to carry.
             foreach ( $diagnostics as $key => $value ) {
-                // An sl. prefix marks the rest of the run as credential, so it runs to
-                // the next real space and crosses any control byte, including a line
-                // break. The generic run keeps the non-whitespace control bytes, so a
-                // credential split by one cannot survive as two sub-40 halves, but not
-                // tab, LF, VT, FF or CR: a multi-line body of bare identifiers is
-                // diagnostic text, and redacting it whole would cost the operator the
-                // cause this path exists to report.
-                $value               = preg_replace( '/sl\.(?:[^\s]|[\x09-\x0d])+|[A-Za-z0-9_\-\x00-\x08\x0e-\x1f\x7f]{40,}/', '[redacted]', (string) $value );
-                $value               = preg_replace( '/[\x00-\x1f\x7f]/', ' ', $value );
-                $value               = str_replace( array( '<', '>', '&', '"', "'" ), '', $value );
-                $value               = preg_replace( '/\s+/', ' ', $value );
-                $diagnostics[ $key ] = mb_substr( trim( (string) $value ), 0, 200 );
+                $diagnostics[ $key ] = $this->redact_diagnostic( $value );
             }
 
             $message = 'Storage request ' . $context . ' returned HTTP ' . $code;
@@ -628,6 +611,35 @@ class MainWP_Backup_Storage_Dropbox implements MainWP_Backup_Storage_Provider { 
             }
             throw new \RuntimeException( esc_html( $message . '.' ), (int) $code );
         }
+    }
+
+    /**
+     * Redact credentials and normalize a diagnostic for display.
+     *
+     * @param string $value Diagnostic text.
+     *
+     * @return string
+     */
+    private function redact_diagnostic( string $value ): string {
+        // Redact before normalization can split credentials or join benign runs.
+        // Markup characters are dropped rather than encoded: the message is
+        // already esc_html'd at the throw and the list view escapes it again,
+        // so an encoded entity would reach the tooltip as &amp;lt;. The cast
+        // before trim() covers a PCRE failure returning null, which would
+        // otherwise blank the diagnostic this path exists to carry.
+        // An sl. prefix marks the rest of the run as credential, so it runs to
+        // the next real space and crosses any control byte, including a line
+        // break. The generic run keeps the non-whitespace control bytes, so a
+        // credential split by one cannot survive as two sub-40 halves, but not
+        // tab, LF, VT, FF or CR: a multi-line body of bare identifiers is
+        // diagnostic text, and redacting it whole would cost the operator the
+        // cause this path exists to report.
+        $value = preg_replace( '/sl\.(?:[^\s]|[\x09-\x0d])+|[A-Za-z0-9_\-\x00-\x08\x0e-\x1f\x7f]{40,}/', '[redacted]', $value );
+        $value = preg_replace( '/\bAuthorization[ ]*[:=][ ]*\K[^\x00-\x1f\x7f]*|\b(?:Bearer|Basic)\s+\K\S+|\b(?:access_token|refresh_token|id_token|token|client_secret|app_secret|secret|api_key|apikey|password|passwd|key)["\']?[ ]*[:=][ ]*["\']?\K(?:\[redacted\]|[^\s"\',&}\]])+/i', '[redacted]', $value );
+        $value = preg_replace( '/[\x00-\x1f\x7f]/', ' ', $value );
+        $value = str_replace( array( '<', '>', '&', '"', "'" ), '', $value );
+        $value = preg_replace( '/\s+/', ' ', $value );
+        return mb_substr( trim( (string) $value ), 0, 200 );
     }
 
     /**

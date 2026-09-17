@@ -64,8 +64,11 @@ class MainWP_Backup_S3_Signer { // phpcs:ignore Generic.Classes.OpeningBraceSame
         $path  = isset( $parts['path'] ) && '' !== $parts['path'] ? $parts['path'] : '/';
         $query = isset( $parts['query'] ) ? $parts['query'] : '';
 
-        $amz_date = gmdate( 'Ymd\THis\Z', call_user_func( $this->clock ) );
-        $scope    = gmdate( 'Ymd', call_user_func( $this->clock ) ) . '/' . $region . '/s3/aws4_request';
+        // One clock read: the date in x-amz-date and the credential scope must agree,
+        // and two reads straddling UTC midnight would sign with mismatched days.
+        $now      = call_user_func( $this->clock );
+        $amz_date = gmdate( 'Ymd\THis\Z', $now );
+        $scope    = gmdate( 'Ymd', $now ) . '/' . $region . '/s3/aws4_request';
 
         $send_headers                         = $headers;
         $send_headers['Host']                 = $host;
@@ -107,7 +110,7 @@ class MainWP_Backup_S3_Signer { // phpcs:ignore Generic.Classes.OpeningBraceSame
             )
         );
 
-        $signature = hash_hmac( 'sha256', $string_to_sign, $this->signing_key( $region, $secret_key ) );
+        $signature = hash_hmac( 'sha256', $string_to_sign, $this->signing_key( $region, $secret_key, $now ) );
 
         $send_headers['Authorization'] = sprintf(
             'AWS4-HMAC-SHA256 Credential=%s/%s,SignedHeaders=%s,Signature=%s',
@@ -140,8 +143,9 @@ class MainWP_Backup_S3_Signer { // phpcs:ignore Generic.Classes.OpeningBraceSame
         $path  = isset( $parts['path'] ) && '' !== $parts['path'] ? $parts['path'] : '/';
         $query = isset( $parts['query'] ) ? $parts['query'] : '';
 
-        $amz_date = gmdate( 'Ymd\THis\Z', call_user_func( $this->clock ) );
-        $scope    = gmdate( 'Ymd', call_user_func( $this->clock ) ) . '/' . $region . '/s3/aws4_request';
+        $now      = call_user_func( $this->clock );
+        $amz_date = gmdate( 'Ymd\THis\Z', $now );
+        $scope    = gmdate( 'Ymd', $now ) . '/' . $region . '/s3/aws4_request';
 
         $auth_params = array(
             'X-Amz-Algorithm'     => 'AWS4-HMAC-SHA256',
@@ -179,7 +183,7 @@ class MainWP_Backup_S3_Signer { // phpcs:ignore Generic.Classes.OpeningBraceSame
             )
         );
 
-        $signature = hash_hmac( 'sha256', $string_to_sign, $this->signing_key( $region, $secret_key ) );
+        $signature = hash_hmac( 'sha256', $string_to_sign, $this->signing_key( $region, $secret_key, $now ) );
 
         $scheme = isset( $parts['scheme'] ) ? $parts['scheme'] : 'https';
 
@@ -187,14 +191,15 @@ class MainWP_Backup_S3_Signer { // phpcs:ignore Generic.Classes.OpeningBraceSame
     }
 
     /**
-     * Derive the SigV4 signing key for today's date.
+     * Derive the SigV4 signing key for the request's date.
      *
      * @param string $region     Region for the credential scope.
      * @param string $secret_key Secret access key.
+     * @param int    $now        The request's single clock read, shared with its scope date.
      *
      * @return string Binary signing key.
      */
-    private function signing_key( $region, $secret_key ) {
+    private function signing_key( $region, $secret_key, $now ) {
         return hash_hmac(
             'sha256',
             'aws4_request',
@@ -204,7 +209,7 @@ class MainWP_Backup_S3_Signer { // phpcs:ignore Generic.Classes.OpeningBraceSame
                 hash_hmac(
                     'sha256',
                     $region,
-                    hash_hmac( 'sha256', gmdate( 'Ymd', call_user_func( $this->clock ) ), 'AWS4' . $secret_key, true ),
+                    hash_hmac( 'sha256', gmdate( 'Ymd', $now ), 'AWS4' . $secret_key, true ),
                     true
                 ),
                 true

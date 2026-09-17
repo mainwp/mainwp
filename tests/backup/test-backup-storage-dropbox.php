@@ -284,6 +284,74 @@ class MainWP_Backup_Storage_Dropbox_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Credentials are redacted before diagnostics are normalized and capped.
+	 *
+	 * @dataProvider redact_diagnostic_cases
+	 * @param string $input Diagnostic text.
+	 * @param string $expected Redacted text.
+	 * @return void
+	 */
+	public function test_redact_diagnostic_matrix( string $input, string $expected ) {
+		$provider = $this->make_provider( array() );
+		$method   = new \ReflectionMethod( $provider, 'redact_diagnostic' );
+		$this->assertSame( $expected, $method->invoke( $provider, $input ) );
+	}
+
+	/**
+	 * Credential formats and benign diagnostics.
+	 *
+	 * @return array
+	 */
+	public static function redact_diagnostic_cases(): array {
+		$identifiers = array_map( static function ( $n ) { return 'ident_' . $n; }, range( 1, 20 ) );
+		$sentence    = str_repeat( 'short words ', 17 ) . 'finish';
+
+		return array(
+			'sl token'           => array( 'sl.AAAA-bbb_ccc rest', '[redacted] rest' ),
+			'sl control'         => array( "sl.AAAA\x01BBBB", '[redacted]' ),
+			'long run'           => array( str_repeat( 'Ab_9-z', 10 ), '[redacted]' ),
+			'split long run'     => array( str_repeat( 'A', 30 ) . "\x01" . str_repeat( 'B', 30 ), '[redacted]' ),
+			'bearer'             => array( 'Bearer abc', 'Bearer [redacted]' ),
+			'basic'              => array( 'basic Zm9v', 'basic [redacted]' ),
+			'authorization'      => array( 'Authorization: Token xyz', 'Authorization: [redacted]' ),
+			'access token'       => array( 'access_token=abc&x=1', 'access_token=[redacted]x=1' ),
+			'quoted token'       => array( '"token":"abc","error":"e"', 'token:[redacted],error:e' ),
+			'client secret'      => array( 'client_secret = s3cret', 'client_secret = [redacted]' ),
+			'password'           => array( 'password: hunter2', 'password: [redacted]' ),
+			'malformed path'     => array( 'path/malformed_path/..', 'path/malformed_path/..' ),
+			'missing path'       => array( 'path/not_found/...', 'path/not_found/...' ),
+			'plain error'        => array( 'Error in call to API function "files/upload": request body: could not decode input as JSON', 'Error in call to API function files/upload: request body: could not decode input as JSON' ),
+			'request id'         => array( 'abc123', 'abc123' ),
+			'identifiers'        => array( implode( "\n", $identifiers ), implode( ' ', $identifiers ) ),
+			'token in sentence'  => array( 'the token was refused', 'the token was refused' ),
+			'bare token'         => array( 'token', 'token' ),
+			'short run'          => array( str_repeat( 'A', 39 ), str_repeat( 'A', 39 ) ),
+			'cap'                => array( $sentence, mb_substr( $sentence, 0, 200 ) ),
+			'control bytes'      => array( "Error\x00 in call\x7f", 'Error in call' ),
+			'authorization end'  => array( "AUTHORIZATION = X\nnext", 'AUTHORIZATION = [redacted] next' ),
+			'named long token'   => array( 'token=' . str_repeat( 'A', 60 ), 'token=[redacted]' ),
+			'named sl newline'   => array( "token=sl.AAAA\nBBBB", 'token=[redacted]' ),
+			'other named fields' => array( 'refresh_token=a id_token=b app_secret=c secret=d api_key=e apikey=f passwd=g key=h', 'refresh_token=[redacted] id_token=[redacted] app_secret=[redacted] secret=[redacted] api_key=[redacted] apikey=[redacted] passwd=[redacted] key=[redacted]' ),
+			'quoted mixed case'  => array( "'ToKeN'='abc',next", 'ToKeN=[redacted],next' ),
+		);
+	}
+
+	/**
+	 * A short credential in a JSON summary must not reach the exception.
+	 *
+	 * @return void
+	 */
+	public function test_failed_request_redacts_short_access_token_summary() {
+		$provider = $this->make_provider( array( $this->token_response(), $this->response( 400, '{"error_summary":"access_token=abc"}' ) ) );
+		try {
+			$provider->put_object( 'bad-key', 'bytes' );
+			$this->fail( 'Expected the upload to fail.' );
+		} catch ( \RuntimeException $e ) {
+			$this->assertSame( 'Storage request PUT bad-key returned HTTP 400: access_token=[redacted].', $e->getMessage() );
+		}
+	}
+
+	/**
 	 * Header-safe escaping must preserve the original Dropbox path.
 	 *
 	 * @return void

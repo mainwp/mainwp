@@ -714,7 +714,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         } elseif ( ( 'full' === $type || 'files' === $type ) && empty( $information['full'] ) ) {
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         } elseif ( isset( $information['db'] ) ) {
-            $hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
+            MainWP_System_Utility::get_wp_file_system();
 
             /**
              * WordPress filesystem instance.
@@ -1688,7 +1688,11 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
         $backup_result = array();
 
-        $website   = MainWP_DB::instance()->get_website_by_id( $pSiteId );
+        $website = MainWP_DB::instance()->get_website_by_id( $pSiteId );
+        if ( empty( $website ) ) {
+            throw new MainWP_Exception( esc_html__( 'Site not found.', 'mainwp' ) );
+        }
+
         $subfolder = str_replace( '%sitename%', MainWP_Utility::sanitize( $website->name ), $pSubfolder );
         $subfolder = str_replace( '%url%', MainWP_Utility::sanitize( MainWP_Utility::get_nice_url( $website->url ) ), $subfolder );
         $subfolder = str_replace( '%type%', $pType, $subfolder );

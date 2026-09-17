@@ -1675,6 +1675,10 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
         foreach ( $allTasks as $task ) {
             $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+            // The due query ran before this re-read; a task deleted in between has no row.
+            if ( empty( $task ) ) {
+                continue;
+            }
 
             if ( (int) $task->next_run > 0 ) {
                 if ( (int) $task->next_run > time() ) {

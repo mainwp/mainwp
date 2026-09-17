@@ -186,7 +186,7 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Path style addressing', 'mainwp' ); ?></label>
                         <div class="ten wide column ui toggle checkbox">
                             <input type="checkbox" id="mainwp-storage-path-style"/>
-                            <label><?php esc_html_e( 'Required by MinIO and some self-hosted services.', 'mainwp' ); ?></label>
+                            <label for="mainwp-storage-path-style"><?php esc_html_e( 'Required by MinIO and some self-hosted services.', 'mainwp' ); ?></label>
                         </div>
                     </div>
                     <div class="ui grid field">

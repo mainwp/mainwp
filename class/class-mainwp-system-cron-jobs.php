@@ -1679,6 +1679,10 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
             if ( empty( $task ) ) {
                 continue;
             }
+            // The due query's paused filter may be stale by the time this row is reached.
+            if ( ! empty( $task->paused ) ) {
+                continue;
+            }
 
             if ( (int) $task->next_run > 0 ) {
                 if ( (int) $task->next_run > time() ) {

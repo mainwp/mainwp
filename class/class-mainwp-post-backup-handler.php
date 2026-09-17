@@ -232,14 +232,18 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         $entries   = MainWP_Backup_Snapshot_Catalog::instance()->list_snapshots_for_site( $site_id );
         $multisite = MainWP_Backup_Monitor::child_is_multisite( $website );
         $rows      = array();
+
+        $destination_names = array();
+        foreach ( MainWP_Backup_Storage_Destinations::instance()->list_destinations() as $destination ) {
+            $destination_names[ (int) $destination->id ] = (string) $destination->name;
+        }
         foreach ( $entries as $entry ) {
             $uploads = array();
             foreach ( MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( (int) $entry['snapshot']->id ) as $job ) {
-                $destination = MainWP_Backup_Storage_Destinations::instance()->get_destination( (int) $job->destination_id );
-                $uploads[]   = array(
+                $uploads[] = array(
                     'destination_id' => (int) $job->destination_id,
                     /* translators: %d: storage destination ID. */
-                    'name'           => null !== $destination ? (string) $destination->name : sprintf( __( 'Destination #%d (removed)', 'mainwp' ), (int) $job->destination_id ),
+                    'name'           => $destination_names[ (int) $job->destination_id ] ?? sprintf( __( 'Destination #%d (removed)', 'mainwp' ), (int) $job->destination_id ),
                     'provider'       => (string) $job->provider,
                     'status'         => (string) $job->status,
                     'updated'        => (int) $job->updated,
@@ -275,8 +279,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         sort( $manual_ids, SORT_NUMERIC );
         $manual_destinations = array();
         foreach ( $manual_ids as $destination_id ) {
-            $destination           = MainWP_Backup_Storage_Destinations::instance()->get_destination( $destination_id );
-            $manual_destinations[] = null !== $destination ? (string) $destination->name : sprintf(
+            $manual_destinations[] = $destination_names[ $destination_id ] ?? sprintf(
                 /* translators: %d: storage destination ID. */
                 __( 'Destination #%d (removed)', 'mainwp' ),
                 $destination_id

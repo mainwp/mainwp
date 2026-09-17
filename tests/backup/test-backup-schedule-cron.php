@@ -140,6 +140,59 @@ class MainWP_Backup_Schedule_Cron_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * A pause during an earlier task must take effect before the next dispatch.
+	 *
+	 * @return void
+	 */
+	public function test_cron_skips_task_paused_during_an_earlier_task() {
+		$owner_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$next_run = time() - 60;
+		$fields   = array(
+			'userid'         => $owner_id,
+			'schedule'       => 'interval',
+			'interval_hours' => 1,
+			'next_run'       => $next_run,
+		);
+		$task_ids = array( $this->insert_task( $fields ), $this->insert_task( $fields ) );
+		$due_ids  = array_map( 'intval', wp_list_pluck( MainWP_DB_Backup::instance()->get_backup_tasks_due_by_next_run(), 'id' ) );
+		foreach ( $task_ids as $task_id ) {
+			$this->assertContains( $task_id, $due_ids, 'Both tasks must be due before cron starts.' );
+		}
+
+		$executed_id = 0;
+		$paused_id   = 0;
+		$pause_next  = static function ( $task_id ) use ( $task_ids, &$executed_id, &$paused_id ) {
+			if ( 0 !== $executed_id || ! in_array( $task_id, $task_ids, true ) ) {
+				return;
+			}
+			$executed_id = $task_id;
+			$paused_id   = $task_id === $task_ids[0] ? $task_ids[1] : $task_ids[0];
+			MainWP_DB_Backup::instance()->update_backup_task_with_values( $paused_id, array( 'paused' => 1 ) );
+		};
+
+		$enabled_before = get_option( 'mainwp_enableNativeBackups' );
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		add_action( 'mainwp_backup_diag_run_close', $pause_next );
+		try {
+			MainWP_System_Cron_Jobs::instance()->cron_backups();
+		} finally {
+			remove_action( 'mainwp_backup_diag_run_close', $pause_next );
+			if ( false === $enabled_before ) {
+				delete_option( 'mainwp_enableNativeBackups' );
+			} else {
+				update_option( 'mainwp_enableNativeBackups', $enabled_before );
+			}
+		}
+
+		$this->assertContains( $executed_id, $task_ids, 'The first task must reach the run-close hook inside cron.' );
+		$this->assertGreaterThan( 0, (int) MainWP_DB_Backup::instance()->get_backup_task_by_id( $executed_id )->last_run );
+		$paused_task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $paused_id );
+		$this->assertSame( 1, (int) $paused_task->paused, 'The hook must pause the other task during execution.' );
+		$this->assertSame( 0, (int) $paused_task->last_run, 'A task paused mid-loop must not start.' );
+		$this->assertSame( $next_run, (int) $paused_task->next_run, 'A skipped task must retain its next_run.' );
+	}
+
+	/**
 	 * Saving an interval task computes a next_run and clamps the hours.
 	 *
 	 * @return void

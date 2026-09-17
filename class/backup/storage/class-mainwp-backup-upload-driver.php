@@ -189,7 +189,8 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
     /**
      * Run pending uploads within one shared time budget on the
      * backups-continue cron lane. Stop after MAX_JOBS_PER_TICK attempts
-     * or a repeated job, so a parked job cannot spin within the tick.
+     * or a repeated acquisition, so a parked job cannot spin within the tick.
+     * A repeated acquisition ends the tick; jobs behind it wait for the next one.
      * A zero budget still allows one attempt to checkpoint.
      *
      * @param int      $budget_seconds Work budget for this tick.

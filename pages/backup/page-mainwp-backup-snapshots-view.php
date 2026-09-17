@@ -145,10 +145,13 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     <?php
                     $manual_ids = $site_id > 0 ? MainWP_DB_Backup::instance()->manual_backup_task_destinations( $site_id ) : array();
                     sort( $manual_ids, SORT_NUMERIC );
+                    $destination_names = array();
+                    foreach ( MainWP_Backup_Storage_Destinations::instance()->list_destinations() as $destination ) {
+                        $destination_names[ (int) $destination->id ] = (string) $destination->name;
+                    }
                     $manual_destinations = array();
                     foreach ( $manual_ids as $destination_id ) {
-                        $destination           = MainWP_Backup_Storage_Destinations::instance()->get_destination( $destination_id );
-                        $manual_destinations[] = null !== $destination ? (string) $destination->name : sprintf(
+                        $manual_destinations[] = $destination_names[ $destination_id ] ?? sprintf(
                             /* translators: %d: storage destination ID. */
                             __( 'Destination #%d (removed)', 'mainwp' ),
                             $destination_id
@@ -479,7 +482,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                                 if ( snap.uploads && snap.uploads.length ) {
                                     var complete = snap.uploads.filter( function ( upload ) { return 'complete' === upload.status; } ).length;
                                     var summary = '<?php /* translators: 1: completed uploads, 2: total uploads. */ echo esc_js( esc_html__( '%1$d of %2$d uploaded', 'mainwp' ) ); ?>'.replace( '%1$d', complete ).replace( '%2$d', snap.uploads.length );
-                                    sourceCell += ' <a href="#" class="mainwp-snapshot-uploads-toggle" data-snapshot-id="' + escAttr( snap.id ) + '"><small>' + summary + '</small></a>';
+                                    sourceCell += ' <a href="#" class="mainwp-snapshot-uploads-toggle"><small>' + summary + '</small></a>';
                                 }
                             }
                             return sourceCell;

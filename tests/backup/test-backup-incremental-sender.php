@@ -1191,7 +1191,7 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		$start = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
 		$this->assertSame( 'running', $start['status'] );
 		$this->assertGreaterThan( 0, MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id )->last_run_manually );
-		$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $start['started'] );
+		$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $start['started'], $start['click'] );
 		$this->assertSame( 'completed', $status['status'] );
 		$snapshot = $status['sites'][0]['snapshot'];
 		$this->assertSame( 'incremental', $snapshot['type'] );
@@ -1218,7 +1218,7 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		$start                  = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
 		$this->assertSame( 'full', $this->last_call_params( 'backup_task_create' )['type'] );
 		$this->assertSame( '1', $this->last_call_params( 'backup_task_create' )['emit_manifest'] );
-		$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $start['started'] );
+		$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $start['started'], $start['click'] );
 		$this->assertSame( 'completed', $status['status'] );
 		$this->assertSame( 'full', $status['sites'][0]['snapshot']['type'] );
 		$this->assertNull( $status['sites'][0]['snapshot']['parent_id'] );
@@ -1233,7 +1233,7 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	public function test_empty_tombstones_download_records_snapshot() {
 		list( $site_id, $task ) = $this->arrange_manual_task( true, true );
 		$start                  = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
-		$status                 = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $start['started'] );
+		$status                 = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $start['started'], $start['click'] );
 		$this->assertSame( 'completed', $status['status'] );
 		$snapshot   = MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, (int) $task->id );
 		$tombstones = array_values(
@@ -1286,7 +1286,7 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		$task    = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
 		$message = MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_MANIFEST_WALK_FAILED );
 		$this->assertStringContainsString( $message, $task->backup_errors );
-		$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $start['started'] );
+		$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $start['started'], $start['click'] );
 		$this->assertSame( 'failed', $status['status'] );
 		$this->assertSame( $message, $status['sites'][0]['error'] );
 		$this->assertNull( $status['sites'][0]['snapshot'] );
@@ -1338,6 +1338,187 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Manual ownership cases. Timestamps are offsets from the test's clock;
+	 * null means the zero sentinel. Claims count the actual SQL attempts.
+	 *
+	 * @return array Matrix rows.
+	 */
+	public static function manual_run_ownership_cases() {
+		$defaults  = array(
+			'last_run'  => -10,
+			'completed' => -5,
+			'started'   => null,
+			'click'     => 0,
+			'errors'    => '',
+			'paused'    => 0,
+			'held'      => false,
+			'initiate'  => false,
+			'snapshot'  => false,
+			'claims'    => 0,
+			'advanced'  => false,
+			'status'    => 'failed',
+		);
+		$scenarios = array(
+			'1 never run'          => array(
+				'last_run'  => null,
+				'completed' => null,
+				'click'     => null,
+			),
+			'2 open owned run'     => array(
+				'completed' => -20,
+				'started'   => -10,
+				'click'     => null,
+				'status'    => 'running',
+				'advanced'  => true,
+			),
+			'3 open other run'     => array(
+				'completed' => -20,
+				'started'   => -30,
+				'click'     => null,
+				'snapshot'  => true,
+			),
+			'4 owned clean close'  => array(
+				'started'  => -10,
+				'click'    => null,
+				'snapshot' => true,
+				'status'   => 'completed',
+			),
+			'5 scheduler close'    => array(
+				'last_run' => -300,
+				'click'    => -900,
+				'snapshot' => true,
+				'claims'   => 1,
+				'status'   => 'queued',
+			),
+			'6 old clean close'    => array(
+				'last_run'  => -200,
+				'completed' => -100,
+				'claims'    => 1,
+				'advanced'  => true,
+				'status'    => 'running',
+			),
+			'7 failed close'       => array(
+				'errors'   => 'Upload failed.',
+				'claims'   => 1,
+				'advanced' => true,
+				'status'   => 'running',
+			),
+			'8 held slot'          => array(
+				'held'     => true,
+				'initiate' => true,
+				'snapshot' => true,
+				'status'   => 'queued',
+			),
+			'9 paused'             => array(
+				'paused' => 1,
+				'status' => 'refused',
+			),
+			'10 same second close' => array(
+				'last_run'  => 0,
+				'completed' => 0,
+				'initiate'  => true,
+				'snapshot'  => true,
+				'claims'    => 1,
+				'status'    => 'completed',
+			),
+		);
+		foreach ( $scenarios as $name => $scenario ) {
+			$scenarios[ $name ] = array( array_merge( $defaults, $scenario ) );
+		}
+		return $scenarios;
+	}
+
+	/**
+	 * Each click either owns an exact run, waits for a slot, or reports no run.
+	 *
+	 * @dataProvider manual_run_ownership_cases
+	 * @param array $scenario Task state, request identity and expected effects.
+	 * @return void
+	 */
+	public function test_manual_run_ownership_matrix( array $scenario ) {
+		global $wpdb;
+		list( $site_id, $task, $snapshot_id ) = $this->arrange_manual_task( $scenario['snapshot'] );
+		$now                                  = time();
+		$last_run                             = null === $scenario['last_run'] ? 0 : $now + $scenario['last_run'];
+		$completed                            = null === $scenario['completed'] ? 0 : $now + $scenario['completed'];
+		$started                              = null === $scenario['started'] ? 0 : $now + $scenario['started'];
+		$click                                = null === $scenario['click'] ? 0 : $now + $scenario['click'];
+		MainWP_DB_Backup::instance()->update_backup_task_with_values(
+			$task->id,
+			array(
+				'last_run'          => $last_run,
+				'completed'         => $completed,
+				'backup_errors'     => $scenario['errors'],
+				'paused'            => $scenario['paused'],
+				'last_run_manually' => 0,
+			)
+		);
+		if ( $snapshot_id ) {
+			$wpdb->update( $wpdb->prefix . 'mainwp_wp_backup_snapshot', array( 'created' => $last_run ), array( 'id' => $snapshot_id ) );
+		}
+		$claims = array();
+		$spy    = function ( $query ) use ( &$claims, $wpdb ) {
+			if ( str_starts_with( $query, 'UPDATE ' . $wpdb->prefix . 'mainwp_wp_backup SET last_run = GREATEST(' ) ) {
+				$claims[] = $query;
+			}
+			return $query;
+		};
+		$token  = false;
+		update_option( 'mainwp_backup_manual_settle_seconds', 60 );
+		update_option( 'mainwp_backup_max_concurrent', 1 );
+		add_filter( 'query', $spy );
+		try {
+			if ( $scenario['held'] ) {
+				$token = MainWP_Backup_Monitor::acquire_backup_slot( 1 );
+				$this->assertIsString( $token );
+			}
+			if ( $scenario['initiate'] ) {
+				$start = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
+				$this->assertArrayNotHasKey( 'error', $start );
+				$this->assertSame( $scenario['held'] ? 'queued' : 'running', $start['status'] );
+				$started = $start['started'];
+				$click   = $start['click'];
+				$this->assertSame( $scenario['held'] ? 0 : $last_run, $started );
+			}
+			$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $started, $click );
+			if ( 'refused' === $scenario['status'] ) {
+				$this->assertSame( 'This task is paused. Resume it before running it.', $status['error'] );
+				$this->assertArrayNotHasKey( 'sites', $status );
+			} else {
+				$this->assertSame( $scenario['status'], $status['status'] );
+				if ( 'completed' === $scenario['status'] ) {
+					$this->assertSame( (int) $snapshot_id, $status['sites'][0]['snapshot']['id'] );
+				} else {
+					$this->assertNull( $status['sites'][0]['snapshot'] );
+				}
+				if ( 'queued' === $scenario['status'] ) {
+					$this->assertSame( 0, $status['started'] );
+					$this->assertSame( $click, $status['click'] );
+					$this->assertSame( 'pending', $status['sites'][0]['status'] );
+					$this->assertSame( '', $status['errors'] );
+				}
+			}
+			$this->assertCount( $scenario['claims'], $claims, 'The claim SQL must only run in claim rows.' );
+			$this->assertSame( $scenario['advanced'], ! empty( $this->child_calls ), 'Only an owned continuation or a new claim may contact the child.' );
+			$after = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+			if ( $scenario['claims'] > 0 && $scenario['advanced'] ) {
+				$this->assertGreaterThan( $last_run, (int) $after->last_run );
+				$this->assertGreaterThan( 0, (int) $after->last_run_manually );
+			} else {
+				$this->assertSame( $last_run, (int) $after->last_run );
+				$this->assertSame( 0, (int) $after->last_run_manually, 'A refused claim or adoption must not stamp a manual start.' );
+			}
+		} finally {
+			remove_filter( 'query', $spy );
+			if ( is_string( $token ) ) {
+				MainWP_Backup_Monitor::release_backup_slot( $token );
+			}
+			delete_option( 'mainwp_backup_max_concurrent' );
+			delete_option( 'mainwp_backup_manual_settle_seconds' );
+		}
+	}
+
+	/**
 	 * Full capacity queues a click without contacting the child, then retries.
 	 *
 	 * @return void
@@ -1350,7 +1531,7 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		try {
 			$start = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
 			$this->assertSame( 'queued', $start['status'] );
-			$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $start['started'] );
+			$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $start['started'], $start['click'] );
 			$this->assertSame( 'queued', $status['status'] );
 			$this->assertSame( 'pending', $status['sites'][0]['status'] );
 			$this->assertSame( array(), $this->child_calls );
@@ -1358,7 +1539,7 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 			MainWP_Backup_Monitor::release_backup_slot( $token );
 			delete_option( 'mainwp_backup_max_concurrent' );
 		}
-		$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $start['started'] );
+		$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $start['started'], $start['click'] );
 		$this->assertSame( 'running', $status['status'] );
 		$this->assertNotNull( $this->last_call_params( 'backup_task_create' ) );
 	}
@@ -1402,7 +1583,7 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 			delete_option( 'mainwp_backup_max_concurrent' );
 		}
 		$wpdb->update( $wpdb->prefix . 'mainwp_wp_backup', array( 'paused' => 1 ), array( 'id' => $task->id ) );
-		$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $start['started'] );
+		$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $start['started'], $start['click'] );
 		$this->assertSame( 'This task is paused. Resume it before running it.', $status['error'] );
 		$after = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
 		$this->assertSame( $task->last_run, $after->last_run );
@@ -1421,7 +1602,7 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		global $wpdb;
 		list( $site_id, $task ) = $this->arrange_manual_task();
 		$start                  = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
-		$done                   = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $start['started'] );
+		$done                   = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $start['started'], $start['click'] );
 		$this->assertSame( 'completed', $done['status'] );
 		$closed = time() - 5;
 		$wpdb->update(
@@ -1433,26 +1614,34 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 			),
 			array( 'id' => $task->id )
 		);
+		MainWP_DB_Backup::instance()->update_backup_task_progress( $task->id, $site_id, array( 'dtsFetched' => $closed ) );
+		$wpdb->update( $wpdb->prefix . 'mainwp_wp_backup_snapshot', array( 'created' => $closed ), array( 'id' => $done['sites'][0]['snapshot']['id'] ) );
 		update_option( 'mainwp_backup_manual_settle_seconds', 60 );
 		try {
 			$calls     = $this->child_calls;
 			$duplicate = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
-			$this->assertSame( 'queued', $duplicate['status'] );
-			$this->assertGreaterThan( $closed, $duplicate['started'] );
-			$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $duplicate['started'] );
+			$this->assertSame( 'running', $duplicate['status'] );
+			$this->assertSame( $closed, $duplicate['started'] );
+			$this->assertSame( 0, $duplicate['click'] );
+			$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $duplicate['started'], $duplicate['click'] );
 			$this->assertSame( 'completed', $status['status'] );
 			$this->assertSame( $closed, $status['started'] );
 			$this->assertSame( $done['sites'][0]['snapshot']['id'], $status['sites'][0]['snapshot']['id'] );
 
-			MainWP_DB_Backup::instance()->update_backup_errors( $task->id, '<ol><li>Upload failed.</li></ol>' );
-			$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $duplicate['started'] );
-			$this->assertSame( 'completed_with_errors', $status['status'] );
-			$this->assertSame( 'Upload failed.', $status['errors'] );
 			$after = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
 			$this->assertSame( $closed, (int) $after->last_run );
 			$this->assertSame( $closed, (int) $after->completed );
 			$this->assertSame( $closed, (int) $after->last_run_manually );
 			$this->assertSame( $calls, $this->child_calls );
+
+			MainWP_DB_Backup::instance()->update_backup_errors( $task->id, '<ol><li>Upload failed.</li></ol>' );
+			$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, 0, time() );
+			$this->assertSame( 'running', $status['status'] );
+			$this->assertGreaterThan( $closed, $status['started'] );
+			$this->assertSame( 0, $status['click'] );
+			$after = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+			$this->assertGreaterThan( $closed, (int) $after->last_run_manually );
+			$this->assertGreaterThan( count( $calls ), count( $this->child_calls ) );
 		} finally {
 			delete_option( 'mainwp_backup_manual_settle_seconds' );
 		}
@@ -1515,6 +1704,80 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * The gate checks group members in the saved scope, not ignored selections.
+	 *
+	 * @return void
+	 */
+	public function test_run_now_ignores_inaccessible_sites_outside_group_run_scope() {
+		global $wpdb;
+		list( $site_id, $task ) = $this->arrange_manual_task();
+		$ignored_site           = $this->create_test_site( array( 'userid' => get_current_user_id() ) );
+		$new_member             = $this->create_test_site( array( 'userid' => get_current_user_id() ) );
+		$group_id               = 939393;
+		$deny                   = function ( $allowed, $cap_type, $cap ) use ( $ignored_site, $new_member ) {
+			return 'site' === $cap_type && in_array( (int) $cap, array( (int) $ignored_site, (int) $new_member ), true ) ? false : $allowed;
+		};
+		add_filter( 'mainwp_currentusercan', $deny, 10, 3 );
+		try {
+			foreach ( array( $site_id, $new_member ) as $member ) {
+				$wpdb->insert(
+					$wpdb->prefix . 'mainwp_wp_group',
+					array(
+						'wpid'    => $member,
+						'groupid' => $group_id,
+					)
+				);
+			}
+			MainWP_DB_Backup::instance()->update_backup_task_with_values(
+				$task->id,
+				array(
+					'sites'            => (string) $ignored_site,
+					'groups'           => (string) $group_id,
+					'authorized_sites' => (string) $site_id,
+				)
+			);
+			$this->assertFalse( \mainwp_current_user_can( 'site', $ignored_site ) );
+			$this->assertFalse( \mainwp_current_user_can( 'site', $new_member ) );
+			$start = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
+			$this->assertSame( 'running', $start['status'] );
+			$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $start['started'], $start['click'] );
+			$this->assertSame( 'completed', $status['status'] );
+			$this->assertSame( array( (int) $site_id ), array_column( $status['sites'], 'id' ) );
+		} finally {
+			remove_filter( 'mainwp_currentusercan', $deny, 10 );
+			$wpdb->delete( $wpdb->prefix . 'mainwp_wp_group', array( 'groupid' => $group_id ) );
+		}
+	}
+
+	/**
+	 * A continuation closes an open run when the owner's scope was revoked.
+	 *
+	 * @return void
+	 */
+	public function test_rescope_pause_closes_an_open_run() {
+		list( $site_id, $task ) = $this->arrange_manual_task();
+		$start                  = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
+		$task                   = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$this->assertLessThan( (int) $task->last_run, (int) $task->completed );
+		$calls = $this->child_calls;
+		$deny  = function () {
+			return array();
+		};
+		add_filter( 'mainwp_currentuserallowedaccesssites', $deny );
+		try {
+			$this->assertSame( 'narrowed', MainWP_Manage_Backups_Handler::resolve_task_scope_pause( $task ) );
+			$this->assertFalse( MainWP_Manage_Backups_Handler::execute_backup_task( $task, 5, false ) );
+			$after = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+			$this->assertSame( 1, (int) $after->paused );
+			$this->assertSame( (int) $task->last_run, (int) $after->completed );
+			$this->assertSame( $start['started'], (int) $after->last_run );
+			$this->assertSame( $calls, $this->child_calls );
+		} finally {
+			remove_filter( 'mainwp_currentuserallowedaccesssites', $deny );
+		}
+	}
+
+	/**
 	 * Mid-phase progress is running; a completed child alone is not a snapshot.
 	 *
 	 * @return void
@@ -1534,7 +1797,7 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 			)
 		);
 		$start  = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
-		$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $start['started'] );
+		$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $start['started'], $start['click'] );
 		$this->assertSame( 'running', $status['status'] );
 		$this->assertSame( 'running', $status['sites'][0]['status'] );
 		$this->assertNotEmpty( $status['sites'][0]['label'] );
@@ -1551,11 +1814,11 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	public function test_run_status_completed_with_errors_keeps_snapshot() {
 		list( $site_id, $task ) = $this->arrange_manual_task();
 		$start                  = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
-		$done                   = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $start['started'] );
+		$done                   = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $start['started'], $start['click'] );
 		$this->assertSame( 'completed', $done['status'] );
 		MainWP_DB_Backup::instance()->update_backup_errors( $task->id, '<ol><li>Upload failed.</li></ol>' );
 		MainWP_DB_Backup::instance()->update_backup_notices( $task->id, '<ol><li>Full base used.</li></ol>' );
-		$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $start['started'] );
+		$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $start['started'], $start['click'] );
 		$this->assertSame( 'completed_with_errors', $status['status'] );
 		$this->assertSame( 'Upload failed.', $status['errors'] );
 		$this->assertSame( 'Full base used.', $status['notices'] );

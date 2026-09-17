@@ -1656,8 +1656,9 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
     public function mainwp_backuptask_run_status() {
         $this->secure_request( 'mainwp_backuptask_run_status' );
         $task_id = isset( $_POST['task_id'] ) ? (int) $_POST['task_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
-        $since   = isset( $_POST['since'] ) ? (int) $_POST['since'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
-        wp_send_json( MainWP_Manage_Backups_Handler::get_backup_task_run_status( $task_id, $since ) );
+        $started = isset( $_POST['started'] ) ? (int) $_POST['started'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
+        $click   = isset( $_POST['click'] ) ? (int) $_POST['click'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
+        wp_send_json( MainWP_Manage_Backups_Handler::get_backup_task_run_status( $task_id, $started, $click ) );
     }
 
     /**

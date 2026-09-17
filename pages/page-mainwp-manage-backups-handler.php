@@ -137,24 +137,45 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             return array(
                 'job_id'  => $task_id,
                 'started' => (int) $task->last_run,
+                'click'   => 0,
                 'status'  => 'running',
             );
         }
 
-        $started = time();
-        static::execute_backup_task( $task, 5, true, MainWP_Backup_Settings::get_manual_run_settle_seconds() );
+        $run = static::claim_manual_task_run( $task, time() );
         MainWP_Post_Backup_Handler::kick_backup_continuation();
-        $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
-        if ( empty( $task ) ) {
+        return isset( $run['error'] ) ? $run : array_merge( array( 'job_id' => $task_id ), $run );
+    }
+
+    /**
+     * Resolve a manual claim without confusing a slot refusal with a clean close.
+     *
+     * @param object $task  Task row, refreshed after the attempt.
+     * @param int    $click Original click timestamp.
+     * @return array Run identity and status, or error.
+     */
+    private static function claim_manual_task_run( object &$task, int $click ): array {
+        $task_id         = (int) $task->id;
+        $previous_run    = (int) $task->last_run;
+        $claim_attempted = false;
+        $settle          = MainWP_Backup_Settings::get_manual_run_settle_seconds();
+        static::execute_backup_task( $task, 5, true, $settle, $claim_attempted );
+        $refreshed = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
+        if ( empty( $refreshed ) ) {
             return array( 'error' => esc_html__( 'The backup task could not be started. Reload the page and try again.', 'mainwp' ) );
         }
-        if ( (int) $task->last_run >= $started ) {
+        $task    = $refreshed;
+        $started = 0;
+        if ( $claim_attempted && (int) $task->last_run > $previous_run ) {
+            $started = (int) $task->last_run;
             MainWP_DB_Backup::instance()->update_backup_run_manually( $task_id );
+        } elseif ( $claim_attempted && (int) $task->last_run > 0 && (int) $task->completed >= (int) $task->last_run && '' === (string) $task->backup_errors && (int) $task->last_run <= $click && (int) $task->completed >= $click - $settle ) {
+            $started = (int) $task->last_run;
         }
         return array(
-            'job_id'  => $task_id,
-            'started' => (int) $task->last_run >= $started ? (int) $task->last_run : $started,
-            'status'  => (int) $task->last_run >= $started ? 'running' : 'queued',
+            'started' => $started,
+            'click'   => $started > 0 ? 0 : $click,
+            'status'  => $started > 0 ? 'running' : 'queued',
         );
     }
 
@@ -171,11 +192,11 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         if ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
             return esc_html__( 'Native backups are not enabled.', 'mainwp' );
         }
-        $scope_error = static::authorize_task_scope( $task->sites, $task->groups );
-        if ( '' !== $scope_error ) {
-            return $scope_error;
-        }
         foreach ( static::resolve_task_run_sites( $task ) as $site_id ) {
+            $website = MainWP_DB::instance()->get_website_by_id( $site_id );
+            if ( empty( $website ) || ! MainWP_System_Utility::can_edit_website( $website ) || ! \mainwp_current_user_can( 'site', $site_id ) ) {
+                return esc_html__( 'You are not allowed to run backups for one or more of this task\'s sites.', 'mainwp' );
+            }
             if ( null !== MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $site_id ) ) {
                 return esc_html__( 'A restore is in progress for this site. Try again once it finishes.', 'mainwp' );
             }
@@ -187,53 +208,56 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      * Advance a saved task and report recorded snapshots for its sites.
      *
      * @param int $task_id Task id.
-     * @param int $since   Initiate timestamp, or zero for the current run.
+     * @param int $started Owned run timestamp, or zero when no run is owned.
+     * @param int $click   Click timestamp while waiting for a slot, otherwise zero.
      * @return array Task and site status, or error.
      */
-    public static function get_backup_task_run_status( int $task_id, int $since = 0 ): array {
+    public static function get_backup_task_run_status( int $task_id, int $started = 0, int $click = 0 ): array {
         $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
         if ( empty( $task ) || ! static::can_edit_backuptask( $task ) ) {
             return array( 'error' => esc_html__( 'Insufficient permissions. Is this task set by you?', 'mainwp' ) );
         }
-        $scope_error = static::authorize_task_scope( $task->sites, $task->groups );
-        if ( '' !== $scope_error ) {
-            return array( 'error' => $scope_error );
+        $error = static::manual_task_start_error( $task );
+        if ( '' !== $error ) {
+            return array( 'error' => $error );
         }
         MainWP_Post_Backup_Handler::raise_backup_resource_limits();
-        if ( (int) $task->completed < (int) $task->last_run ) {
+        if ( (int) $task->completed < (int) $task->last_run && ( 0 === $started || (int) $task->last_run === $started ) ) {
+            $started = (int) $task->last_run;
+            $click   = 0;
             static::execute_backup_task( $task, 5, false );
             $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
-        } elseif ( (int) $task->completed >= $since - MainWP_Backup_Settings::get_manual_run_settle_seconds() ) {
-            $since = (int) $task->last_run;
-        } elseif ( $since > (int) $task->last_run && $since <= time() ) {
-            $error = static::manual_task_start_error( $task );
-            if ( '' !== $error ) {
-                return array( 'error' => $error );
+        } elseif ( $started > 0 && (int) $task->last_run === $started ) {
+            $click = 0;
+        } elseif ( $click > 0 && $click <= time() ) {
+            $run = static::claim_manual_task_run( $task, $click );
+            if ( isset( $run['error'] ) ) {
+                return $run;
             }
-            static::execute_backup_task( $task, 5, true, MainWP_Backup_Settings::get_manual_run_settle_seconds() );
-            $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
+            $started = $run['started'];
+            $click   = $run['click'];
         }
         if ( empty( $task ) ) {
             return array( 'error' => esc_html__( 'The backup task could not be started. Reload the page and try again.', 'mainwp' ) );
         }
 
-        $open     = (int) $task->completed < (int) $task->last_run;
-        $queued   = ! $open && $since > (int) $task->last_run;
-        $cutoff   = $since > 0 ? $since : (int) $task->last_run;
+        $owns_run = 0 === $started || (int) $task->last_run === $started;
+        $queued   = 0 === $started && $click > 0 && $click <= time();
+        $open     = $owns_run && ! $queued && (int) $task->completed < (int) $task->last_run;
+        $cutoff   = $started > 0 ? $started : (int) $task->last_run;
         $sites    = array();
         $complete = 0;
-        $owns_run = 0 === $since || (int) $task->last_run >= $since;
-        $errors   = $owns_run ? MainWP_Post_Backup_Handler::humanize_backup_errors( $task->backup_errors ) : '';
-        $notices  = $owns_run ? MainWP_Post_Backup_Handler::humanize_backup_errors( $task->backup_notices ?? '' ) : '';
+        $errors   = $owns_run && ! $queued ? MainWP_Post_Backup_Handler::humanize_backup_errors( $task->backup_errors ) : '';
+        $notices  = $owns_run && ! $queued ? MainWP_Post_Backup_Handler::humanize_backup_errors( $task->backup_notices ?? '' ) : '';
         foreach ( static::resolve_task_run_sites( $task ) as $site_id ) {
             $website  = MainWP_DB::instance()->get_website_by_id( $site_id );
             $progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task_id, $site_id );
-            if ( $progress && (int) $progress->dtsFetched < max( $cutoff, (int) $task->last_run ) ) {
+            if ( ! $owns_run || $queued || ( $progress && (int) $progress->dtsFetched < max( $cutoff, (int) $task->last_run ) ) ) {
                 $progress = null;
             }
             $detail   = MainWP_Post_Backup_Handler::build_task_progress_response( $progress );
             $snapshot = MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, $task_id );
-            if ( $snapshot && (int) $snapshot->created < $cutoff ) {
+            if ( ! $owns_run || $queued || ( $snapshot && (int) $snapshot->created < $cutoff ) ) {
                 $snapshot = null;
             }
             $status  = $progress ? 'running' : 'pending';
@@ -284,7 +308,8 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         }
         return array(
             'status'  => $status,
-            'started' => (int) $task->last_run,
+            'started' => $started,
+            'click'   => $click,
             'errors'  => $errors,
             'notices' => $notices,
             'sites'   => $sites,
@@ -622,7 +647,13 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      * @return void
      */
     public static function pause_task_for_rescope( $task, $reason ) {
-        MainWP_DB_Backup::instance()->update_backup_task_with_values( $task->id, array( 'paused' => 1 ) );
+        MainWP_DB_Backup::instance()->update_backup_task_with_values(
+            $task->id,
+            array(
+                'paused'    => 1,
+                'completed' => max( (int) $task->completed, (int) $task->last_run ),
+            )
+        );
         MainWP_DB_Backup::instance()->update_backup_notices(
             $task->id,
             esc_html__( 'This task was paused because its owner\'s site access changed or could not be confirmed. Re-save the task to confirm its scope, then resume it.', 'mainwp' ) . '<br />'
@@ -928,6 +959,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      * @param integer $run_grace_seconds Settle window for opening the run; 0
      *                                   (every scheduled caller) allows stuck-run
      *                                   recovery but refuses paused rows.
+     * @param bool    $claim_attempted Whether execution reached the run claim.
      *
      * @return mixed $errorOutput.
      *
@@ -947,7 +979,9 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      * @uses  \MainWP\Dashboard\MainWP_Utility::get_nice_url()
      * @uses  \MainWP\Dashboard\MainWP_Utility::sanitize()
      */
-    public static function execute_backup_task( $task, $nrOfSites = 0, $updateRun = true, $run_grace_seconds = 0 ) { // phpcs:ignore -- NOSONAR - not quite complex function.
+    public static function execute_backup_task( $task, $nrOfSites = 0, $updateRun = true, $run_grace_seconds = 0, &$claim_attempted = null ) { // phpcs:ignore -- NOSONAR - not quite complex function.
+
+        $claim_attempted = false;
 
         // The owner's live authorization gates every scheduled entry
         // (start and continuation lanes both land here) before a slot is
@@ -969,6 +1003,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             // is bounded and stamps the slot row, so a driver that dies
             // mid-run frees its slot in minutes instead of two hours.
             MainWP_Backup_Monitor::begin_native_lease( $slot_token );
+            $claim_attempted = (bool) $updateRun;
             return static::execute_backup_task_run( $task, $nrOfSites, $updateRun, $run_grace_seconds );
         } finally {
             MainWP_Backup_Monitor::end_native_lease( $slot_token );

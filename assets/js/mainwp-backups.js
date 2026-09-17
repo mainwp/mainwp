@@ -468,7 +468,8 @@ managebackups_run_now = function (el) {
     });
 
     let taskId = el.attr('task_id');
-    let since = 0;
+    let started = 0;
+    let click = 0;
     let failures = 0;
     let rows = {};
     let waiting = jQuery('<div>').appendTo(content);
@@ -480,6 +481,12 @@ managebackups_run_now = function (el) {
     let startFailed = function (error) {
         restoreLink();
         appendToDiv(content, mainwp_backup_error_html(error || MainWP.I18n.t('The backup task could not be started. Reload the page and try again.')));
+    };
+    let statusFailed = function (error) {
+        waiting.empty();
+        el.parent().find('.backup_run_loading').hide();
+        jQuery('#managebackups-task-status-close').prop('value', MainWP.I18n.t('Close'));
+        appendToDiv(content, mainwp_backup_error_html(error || MainWP.I18n.t('The backup status could not be read. The backup may still be running. Reload the page to check its status.')));
     };
     let schedulePoll = function () {
         manageBackupsPollTimer = setTimeout(poll, 3000);
@@ -532,16 +539,18 @@ managebackups_run_now = function (el) {
         }
     };
     let poll = function () {
-        jQuery.post(ajaxurl, mainwp_secure_data({action: 'mainwp_backuptask_run_status', task_id: taskId, since: since}), function (response) {
+        jQuery.post(ajaxurl, mainwp_secure_data({action: 'mainwp_backuptask_run_status', task_id: taskId, started: started, click: click}), function (response) {
             failures = 0;
             if (!response || response.error || !response.status) {
-                startFailed(response && response.error);
+                statusFailed(response && response.error);
                 return;
             }
+            started = response.started;
+            click = response.click;
             render(response);
         }, 'json').fail(function () {
             if (++failures >= 3) {
-                startFailed();
+                statusFailed();
             } else {
                 schedulePoll();
             }
@@ -552,7 +561,8 @@ managebackups_run_now = function (el) {
             startFailed(response && response.error);
             return;
         }
-        since = response.started;
+        started = response.started;
+        click = response.click;
         render(response);
     }, 'json').fail(function () {
         startFailed();

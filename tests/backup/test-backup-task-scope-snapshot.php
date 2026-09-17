@@ -86,6 +86,48 @@ class MainWP_Backup_Task_Scope_Snapshot_Test extends MainWP_Abilities_Test_Case 
 	}
 
 	/**
+	 * Group expansion retains a member the current user can no longer access.
+	 */
+	public function test_restricted_group_member_refuses_manual_and_pauses_execution() {
+		$user = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $user );
+		$allowed_site    = $this->create_test_site( array( 'userid' => $user ) );
+		$restricted_site = $this->create_test_site( array( 'userid' => $user ) );
+		$this->add_site_to_group( $allowed_site, 575757 );
+		$this->add_site_to_group( $restricted_site, 575757 );
+		$task = $this->create_task( '', '575757' );
+		MainWP_Manage_Backups_Handler::stamp_task_scope_snapshot( $task->id, '', '575757' );
+		$task    = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$allowed = static function () use ( $allowed_site ) {
+			return array( $allowed_site );
+		};
+		add_filter( 'mainwp_currentuserallowedaccesssites', $allowed );
+		try {
+			$this->assertContains( $restricted_site, MainWP_Manage_Backups_Handler::resolve_task_run_sites( $task ) );
+			$this->assertArrayHasKey( 'error', MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id ) );
+			$this->assertFalse( MainWP_Manage_Backups_Handler::execute_backup_task( $task ) );
+			$after = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+			$this->assertSame( 1, (int) $after->paused );
+			$this->assertSame( (int) $task->last_run, (int) $after->last_run );
+		} finally {
+			remove_filter( 'mainwp_currentuserallowedaccesssites', $allowed );
+		}
+	}
+
+	/**
+	 * Missing sync data must not remove a site's group membership.
+	 */
+	public function test_group_expansion_keeps_site_without_sync_row() {
+		global $wpdb;
+		$user = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $user );
+		$site_id = $this->create_test_site( array( 'userid' => $user ) );
+		$this->add_site_to_group( $site_id, 585858 );
+		$wpdb->delete( $wpdb->prefix . 'mainwp_wp_sync', array( 'wpid' => $site_id ) );
+		$this->assertSame( array( $site_id ), MainWP_Manage_Backups_Handler::expand_task_site_ids( '', '585858' ) );
+	}
+
+	/**
 	 * The expansion helper resolves direct sites and group members into one
 	 * deduplicated id list - the same expansion authorize_task_scope()
 	 * checks, so the snapshot is by construction the authorized set.

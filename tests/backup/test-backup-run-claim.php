@@ -55,6 +55,81 @@ class MainWP_Backup_Run_Claim_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Claim modes both preserve the boolean contract and return the exact stamp.
+	 *
+	 * @return array Grace windows.
+	 */
+	public static function claim_grace_windows() {
+		return array(
+			'scheduled' => array( 0 ),
+			'manual'    => array( 15 ),
+		);
+	}
+
+	/**
+	 * The returned identity includes the same-second close adjustment.
+	 *
+	 * @dataProvider claim_grace_windows
+	 * @param int $grace_seconds Claim window.
+	 */
+	public function test_claim_returns_exact_same_second_identity( $grace_seconds ) {
+		$closed  = time() + 10;
+		$task    = $this->task_in_state(
+			array(
+				'last_run'      => $closed,
+				'completed'     => $closed,
+				'backup_errors' => 'Retry.',
+			)
+		);
+		$started = 0;
+		$this->assertTrue( MainWP_DB_Backup::instance()->claim_backup_run( $task->id, $grace_seconds, $started ) );
+		$this->assertSame( $closed + 1, $started );
+		$this->assertSame( $started, (int) MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id )->last_run );
+	}
+
+	/**
+	 * A changed close between read and UPDATE refuses instead of guessing identity.
+	 *
+	 * @dataProvider claim_grace_windows
+	 * @param int $grace_seconds Claim window.
+	 */
+	public function test_claim_refuses_changed_row_before_update( $grace_seconds ) {
+		global $wpdb;
+		$task       = $this->task_in_state(
+			array(
+				'last_run'  => time() - 100,
+				'completed' => time() - 90,
+			)
+		);
+		$closed     = time() + 10;
+		$interleave = static function ( $query ) use ( &$interleave, $wpdb, $task, $closed ) {
+			if ( str_starts_with( $query, 'UPDATE ' . $wpdb->prefix . 'mainwp_wp_backup SET last_run = GREATEST(' ) ) {
+				remove_filter( 'query', $interleave );
+				$wpdb->update(
+					$wpdb->prefix . 'mainwp_wp_backup',
+					array(
+						'completed'     => $closed,
+						'backup_errors' => 'Retry.',
+					),
+					array( 'id' => $task->id )
+				);
+			}
+			return $query;
+		};
+		$started    = 123;
+		add_filter( 'query', $interleave );
+		try {
+			$this->assertFalse( MainWP_DB_Backup::instance()->claim_backup_run( $task->id, $grace_seconds, $started ) );
+			$this->assertSame( 0, $started );
+			$after = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+			$this->assertSame( (int) $task->last_run, (int) $after->last_run );
+			$this->assertSame( $closed, (int) $after->completed );
+		} finally {
+			remove_filter( 'query', $interleave );
+		}
+	}
+
+	/**
 	 * An idle task whose last close is old claims normally: the run opens
 	 * with a fresh last_run and a reset per-run site list.
 	 */

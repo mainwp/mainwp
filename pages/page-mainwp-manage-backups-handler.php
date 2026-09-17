@@ -169,13 +169,13 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         $claimed      = null;
         $started      = 0;
         $settle       = MainWP_Backup_Settings::get_manual_run_settle_seconds();
-        static::execute_backup_task( $task, 5, true, $settle, $claimed, $started );
+        static::execute_backup_task( $task, 5, true, max( 1, $settle ), $claimed, $started, true );
         $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
         if ( empty( $task ) ) {
             return array( 'error' => esc_html__( 'The backup task could not be started. Reload the page and try again.', 'mainwp' ) );
         }
         if ( true === $claimed ) {
-            MainWP_DB_Backup::instance()->update_backup_run_manually( $task_id );
+            MainWP_DB_Backup::instance()->update_backup_run_manually( $task_id, $started );
             return array(
                 'started' => $started,
                 'click'   => 0,
@@ -206,7 +206,11 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         if ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
             return esc_html__( 'Native backups are not enabled.', 'mainwp' );
         }
-        foreach ( static::resolve_task_run_sites( $task, $stale_sites ) as $site_id ) {
+        $sites = static::resolve_task_run_sites( $task, $stale_sites );
+        if ( empty( $sites ) && ! empty( $stale_sites ) ) {
+            return esc_html__( 'No existing sites remain in this backup task. Re-save the task to select sites.', 'mainwp' );
+        }
+        foreach ( $sites as $site_id ) {
             $website = MainWP_DB::instance()->get_website_by_id( $site_id );
             if ( empty( $website ) || ! MainWP_System_Utility::can_edit_website( $website ) || ! \mainwp_current_user_can( 'site', $site_id ) ) {
                 return esc_html__( 'You are not allowed to run backups for one or more of this task\'s sites.', 'mainwp' );
@@ -254,7 +258,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         $saved = false;
         if ( $started > 0 && (int) $task->last_run !== $started ) {
             $saved = get_transient( 'mainwp_backup_run_' . $task_id . '_' . $started );
-            if ( ! is_array( $saved ) ) {
+            if ( ! is_array( $saved ) || ! isset( $saved['task'] ) || ! is_object( $saved['task'] ) || ! isset( $saved['progress'], $saved['snapshots'] ) ) {
                 return array(
                     'error' => esc_html__( 'The result for this backup run is no longer available. Reload the page to see the latest run.', 'mainwp' ),
                     'code'  => 'run_not_found',
@@ -444,9 +448,10 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      *
      * @return int[] Site ids.
      *
-     * @uses \MainWP\Dashboard\MainWP_DB::get_websites_by_group_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_table_name()
      */
     public static function expand_task_site_ids( $sites, $groups ) {
+        global $wpdb;
         $site_ids = array();
 
         foreach ( explode( ',', (string) $sites ) as $site_id ) {
@@ -459,9 +464,12 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             if ( (int) $group_id <= 0 ) {
                 continue;
             }
-            $group_sites = MainWP_DB::instance()->get_websites_by_group_id( (int) $group_id );
-            foreach ( (array) $group_sites as $group_site ) {
-                $site_ids[] = (int) $group_site->id;
+            // Keep all membership ids; the resolvers check existence and authorization separately.
+            $group_sites = $wpdb->get_col( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- unscoped membership lookup must not depend on wp_sync.
+                $wpdb->prepare( 'SELECT wpid FROM %i WHERE groupid = %d', MainWP_DB::instance()->get_table_name( 'wp_group' ), (int) $group_id )
+            );
+            foreach ( (array) $group_sites as $site_id ) {
+                $site_ids[] = (int) $site_id;
             }
         }
 
@@ -525,6 +533,14 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         foreach ( $expanded as $key => $site_id ) {
             if ( ! in_array( (int) $site_id, $existing, true ) ) {
                 $stale_sites[] = $site_id;
+                MainWP_DB_Backup::instance()->update_backup_notices(
+                    $task->id,
+                    sprintf(
+                        /* translators: %d: deleted site id. */
+                        esc_html__( 'Site %d no longer exists and was skipped. Re-save the task to update its sites.', 'mainwp' ),
+                        $site_id
+                    ) . '<br />'
+                );
                 unset( $expanded[ $key ] );
             }
         }
@@ -1013,7 +1029,8 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      *                                     (every scheduled caller) allows stuck-run
      *                                     recovery but refuses paused rows.
      * @param bool|null $claimed Actual atomic claim result, null when no claim was attempted.
-     * @param int       $claimed_started Run identity read immediately after a successful claim.
+     * @param int       $claimed_started Exact identity returned by a successful claim.
+     * @param bool      $manual_run Preserve the previous result for manual pollers.
      *
      * @return mixed $errorOutput.
      *
@@ -1033,7 +1050,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      * @uses  \MainWP\Dashboard\MainWP_Utility::get_nice_url()
      * @uses  \MainWP\Dashboard\MainWP_Utility::sanitize()
      */
-    public static function execute_backup_task( $task, $nrOfSites = 0, $updateRun = true, $run_grace_seconds = 0, &$claimed = null, &$claimed_started = 0 ) { // phpcs:ignore -- NOSONAR - not quite complex function.
+    public static function execute_backup_task( $task, $nrOfSites = 0, $updateRun = true, $run_grace_seconds = 0, &$claimed = null, &$claimed_started = 0, $manual_run = false ) { // phpcs:ignore -- NOSONAR - not quite complex function.
 
         $claimed         = null;
         $claimed_started = 0;
@@ -1058,7 +1075,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             // is bounded and stamps the slot row, so a driver that dies
             // mid-run frees its slot in minutes instead of two hours.
             MainWP_Backup_Monitor::begin_native_lease( $slot_token );
-            return static::execute_backup_task_run( $task, $nrOfSites, $updateRun, $run_grace_seconds, $claimed, $claimed_started );
+            return static::execute_backup_task_run( $task, $nrOfSites, $updateRun, $run_grace_seconds, $claimed, $claimed_started, $manual_run );
         } finally {
             MainWP_Backup_Monitor::end_native_lease( $slot_token );
             MainWP_Backup_Monitor::release_backup_slot( $slot_token );
@@ -1076,12 +1093,13 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      *                                     unconditional bump.
      * @param bool|null $claimed Actual atomic claim result.
      * @param int       $claimed_started Identity of the claimed run.
+     * @param bool      $manual_run Preserve the previous result for manual pollers.
      *
      * @return mixed $errorOutput.
      */
-    private static function execute_backup_task_run( $task, $nrOfSites = 0, $updateRun = true, $run_grace_seconds = 0, &$claimed = null, &$claimed_started = 0 ) { // phpcs:ignore -- NOSONAR - not quite complex function.
+    private static function execute_backup_task_run( $task, $nrOfSites = 0, $updateRun = true, $run_grace_seconds = 0, &$claimed = null, &$claimed_started = 0, $manual_run = false ) { // phpcs:ignore -- NOSONAR - not quite complex function.
 
-        if ( $updateRun ) {
+        if ( $updateRun && $manual_run ) {
             $previous = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
             if ( $previous && (int) $previous->last_run > 0 && (int) $previous->completed >= (int) $previous->last_run ) {
                 // The next claim reuses progress rows and clears errors; older polls still need their own result.
@@ -1102,7 +1120,9 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                     set_transient( 'mainwp_backup_run_' . $previous->id . '_' . $previous->last_run, $saved, DAY_IN_SECONDS );
                 }
             }
-            $claimed = MainWP_DB_Backup::instance()->claim_backup_run( $task->id, $run_grace_seconds );
+        }
+        if ( $updateRun ) {
+            $claimed = MainWP_DB_Backup::instance()->claim_backup_run( $task->id, $run_grace_seconds, $claimed_started );
             if ( ! $claimed ) {
                 // Another driver already owns this run, or it closed
                 // successfully within the settle window: yield without
@@ -1123,8 +1143,13 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                 do_action( 'mainwp_backup_diag_run_reinit', (int) $task->id, 'claim_refused', (int) $task->last_run, (int) $task->completed );
                 return false;
             }
-            $claimed_task    = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
-            $claimed_started = (int) $claimed_task->last_run;
+        }
+
+        $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+        if ( empty( $task ) || ( $updateRun && (int) $task->last_run !== $claimed_started ) ) {
+            return false;
+        }
+        if ( $updateRun ) {
             // Start each run with a clean error slate so the Manage Backups list
             // reflects only the latest run, never a stale error from a past one.
             // Continue-loop ticks pass $updateRun = false, so per-site errors
@@ -1133,8 +1158,6 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             MainWP_DB_Backup::instance()->update_backup_errors( $task->id, '' );
             MainWP_DB_Backup::instance()->update_backup_notices( $task->id, '' );
         }
-
-        $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
 
         $completed_sites = $task->completed_sites;
 
@@ -1146,9 +1169,14 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             $completed_sites = array();
         }
 
-        $sites        = static::resolve_task_run_sites( $task );
+        $stale_sites  = array();
+        $sites        = static::resolve_task_run_sites( $task, $stale_sites );
         $errorOutput  = null;
         $errorEntries = array();
+        if ( empty( $sites ) && ! empty( $stale_sites ) ) {
+            $errorOutput    = esc_html__( 'No existing sites remain in this backup task. Re-save the task to select sites.', 'mainwp' );
+            $errorEntries[] = $errorOutput;
+        }
 
         $lastStartNotification = $task->lastStartNotificationSent;
         if ( $updateRun && ( 1 === get_option( 'mainwp_notificationOnBackupStart' ) ) && ( $lastStartNotification < $task->last_run ) ) {

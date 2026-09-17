@@ -1338,6 +1338,269 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Exercise both manual entry points after a successful claim is superseded.
+	 *
+	 * @return array Request modes.
+	 */
+	public static function superseded_claim_requests() {
+		return array(
+			'initiate'    => array( true ),
+			'queued poll' => array( false ),
+		);
+	}
+
+	/**
+	 * A zero-grace claim after our UPDATE must not become our run identity.
+	 *
+	 * @dataProvider superseded_claim_requests
+	 * @param bool $initiate Whether this is the first request.
+	 * @return void
+	 */
+	public function test_successful_manual_claim_does_not_adopt_foreign_run( $initiate ) {
+		global $wpdb;
+		list( $site_id, $task ) = $this->arrange_manual_task();
+		$owned                  = 0;
+		$foreign                = 0;
+		$interleave             = function ( $query ) use ( &$interleave, &$owned, &$foreign, $wpdb, $task ) {
+			if ( ! str_starts_with( $query, 'UPDATE ' . $wpdb->prefix . 'mainwp_wp_backup SET last_run = GREATEST(' ) ) {
+				return $query;
+			}
+			remove_filter( 'query', $interleave );
+			$this->assertSame( 1, $wpdb->query( $query ), 'The manual claim must succeed before the competing claim.' );
+			$owned = (int) MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id )->last_run;
+			// Cross the timestamp boundary so zero-grace recovery advances the still-open run.
+			sleep( 1 );
+			$this->assertTrue( MainWP_DB_Backup::instance()->claim_backup_run( $task->id, 0, $foreign ) );
+			$this->assertGreaterThan( $owned, $foreign );
+			// Return the successful UPDATE's affected-row count after the interleaving.
+			return 'SELECT 1';
+		};
+		add_filter( 'query', $interleave );
+		try {
+			$result = $initiate
+				? MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id )
+				: MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, 0, time() );
+			$this->assertGreaterThan( 0, $owned );
+			if ( $initiate ) {
+				$this->assertSame( $owned, $result['started'], 'The caller must retain the identity its own UPDATE wrote.' );
+			} else {
+				$this->assertSame( 'run_not_found', $result['code'], 'A queued poll must not follow the superseding run.' );
+			}
+			$after = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+			$this->assertSame( $foreign, (int) $after->last_run );
+			$this->assertSame( 0, (int) $after->last_run_manually, 'The foreign run must not be stamped as manual.' );
+			$this->assertSame( array(), $this->child_calls, 'The superseded caller must not drive the foreign run.' );
+		} finally {
+			remove_filter( 'query', $interleave );
+		}
+	}
+
+	/**
+	 * Deletion between the claim and row refresh returns a controlled error.
+	 *
+	 * @return void
+	 */
+	public function test_manual_claim_handles_task_deleted_after_update() {
+		global $wpdb;
+		list( $site_id, $task ) = $this->arrange_manual_task();
+		$interleave             = function ( $query ) use ( &$interleave, $wpdb, $task ) {
+			if ( str_starts_with( $query, 'UPDATE ' . $wpdb->prefix . 'mainwp_wp_backup SET last_run = GREATEST(' ) ) {
+				remove_filter( 'query', $interleave );
+				$this->assertSame( 1, $wpdb->query( $query ) );
+				$wpdb->delete( $wpdb->prefix . 'mainwp_wp_backup', array( 'id' => $task->id ) );
+				return 'SELECT 1';
+			}
+			return $query;
+		};
+		add_filter( 'query', $interleave );
+		try {
+			$result = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
+			$this->assertArrayHasKey( 'error', $result );
+			$this->assertSame( array(), $this->child_calls );
+		} finally {
+			remove_filter( 'query', $interleave );
+		}
+	}
+
+	/**
+	 * Zero settle time must not let a stale manual caller recover an open run.
+	 *
+	 * @return void
+	 */
+	public function test_zero_settle_manual_claim_refuses_foreign_open_run() {
+		list( $site_id, $task ) = $this->arrange_manual_task();
+		MainWP_DB_Backup::instance()->update_backup_task_with_values(
+			$task->id,
+			array(
+				'last_run'        => time() - 10,
+				'completed'       => 0,
+				'completed_sites' => '[123]',
+			)
+		);
+		update_option( 'mainwp_backup_manual_settle_seconds', 0 );
+		try {
+			$claim  = new \ReflectionMethod( MainWP_Manage_Backups_Handler::class, 'claim_manual_task_run' );
+			$result = $claim->invokeArgs( null, array( &$task, time(), true ) );
+			$this->assertSame( 'queued', $result['status'] );
+			$this->assertSame( 0, $result['started'] );
+			$this->assertSame( '[123]', $task->completed_sites );
+		} finally {
+			delete_option( 'mainwp_backup_manual_settle_seconds' );
+		}
+	}
+
+	/**
+	 * Cleanup Errors cannot turn a recorded snapshot into a failure event.
+	 *
+	 * @return void
+	 */
+	public function test_incremental_cleanup_error_emits_success_once() {
+		list( $site_id, $task, $base_id ) = $this->arrange_manual_task();
+		$events                           = array();
+		$cleanup_snapshot                 = 0;
+		$fail                             = function ( $result, $website, $what ) use ( &$cleanup_snapshot, $task ) {
+			if ( 'delete_backup' === $what ) {
+				$latest           = MainWP_Backup_Snapshots::instance()->get_latest_complete( (int) $website->id, (int) $task->id );
+				$cleanup_snapshot = (int) $latest->id;
+				throw new \Error( 'Remote cleanup broke.' );
+			}
+			return $result;
+		};
+		$capture                          = static function ( $site, $child, $success ) use ( &$events ) {
+			$events[] = $success;
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $fail, 20, 3 );
+		add_action( 'mainwp_native_backup_completed', $capture, 10, 3 );
+		try {
+			$this->run_cycle( $site_id, $task );
+			$cycle = $this->run_cycle( $site_id, $task );
+			$this->assertNull( $cycle['exception'] );
+			$this->assertGreaterThan( $base_id, $cleanup_snapshot, 'Cleanup must run after the new snapshot is recorded.' );
+			$this->assertSame( array( true ), $events );
+		} finally {
+			remove_filter( 'mainwp_fetch_url_authed_pre', $fail, 20 );
+			remove_action( 'mainwp_native_backup_completed', $capture, 10 );
+		}
+	}
+
+	/**
+	 * A fully deleted selection refuses Run Now and records a scheduled failure.
+	 *
+	 * @return void
+	 */
+	public function test_fully_stale_task_cannot_close_without_errors() {
+		list( $site_id, $task ) = $this->arrange_manual_task();
+		$stale_id               = 999999;
+		$this->assertEmpty( MainWP_DB::instance()->get_website_by_id( $stale_id ) );
+		MainWP_DB_Backup::instance()->update_backup_task_with_values(
+			$task->id,
+			array(
+				'sites'            => (string) $stale_id,
+				'authorized_sites' => (string) $stale_id,
+			)
+		);
+		$this->assertArrayHasKey( 'error', MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id ) );
+		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$this->assertFalse( MainWP_Manage_Backups_Handler::execute_backup_task( $task ) );
+		$after = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$this->assertStringContainsString( 'No existing sites remain', $after->backup_errors );
+		$this->assertStringContainsString( 'Site ' . $stale_id . ' no longer exists', $after->backup_notices );
+		$this->assertSame( array(), $this->child_calls );
+	}
+
+	/**
+	 * Scheduled runs keep a deduplicated notice for each deleted selection.
+	 *
+	 * @return void
+	 */
+	public function test_scheduled_partial_stale_task_records_notice() {
+		list( $site_id, $task ) = $this->arrange_manual_task();
+		$stale_id               = 999999;
+		MainWP_DB_Backup::instance()->update_backup_task_with_values(
+			$task->id,
+			array(
+				'sites'            => $site_id . ',' . $stale_id,
+				'authorized_sites' => $site_id . ',' . $stale_id,
+			)
+		);
+		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		MainWP_Manage_Backups_Handler::execute_backup_task( $task );
+		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		MainWP_Manage_Backups_Handler::execute_backup_task( $task, 5, false );
+		MainWP_Manage_Backups_Handler::resolve_task_run_sites( $task );
+		$after = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$this->assertSame( 1, substr_count( $after->backup_notices, 'Site ' . $stale_id . ' no longer exists' ) );
+		$this->assertSame( '', $after->backup_errors );
+		$this->assertGreaterThanOrEqual( (int) $after->last_run, (int) $after->completed );
+	}
+
+	/**
+	 * Only manual claims save the previous run for browser polls.
+	 *
+	 * @return void
+	 */
+	public function test_only_manual_claim_saves_previous_run_transient() {
+		list( $site_id, $task ) = $this->arrange_manual_task();
+		$previous               = time() - 200;
+		$state                  = array(
+			'last_run'  => $previous,
+			'completed' => $previous + 10,
+		);
+		$key                    = 'mainwp_backup_run_' . $task->id . '_' . $previous;
+		delete_transient( $key );
+		try {
+			MainWP_DB_Backup::instance()->update_backup_task_with_values( $task->id, $state );
+			$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+			MainWP_Manage_Backups_Handler::execute_backup_task( $task );
+			$this->assertFalse( get_transient( $key ), 'Scheduled claims must not save a browser-poll transient.' );
+			MainWP_DB_Backup::instance()->update_backup_task_with_values( $task->id, $state );
+			MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
+			$saved = get_transient( $key );
+			$this->assertIsArray( $saved );
+			$this->assertSame( $previous, (int) $saved['task']->last_run );
+		} finally {
+			delete_transient( $key );
+		}
+	}
+
+	/**
+	 * Incomplete transient payloads return run_not_found instead of a PHP error.
+	 *
+	 * @return void
+	 */
+	public function test_malformed_saved_run_returns_run_not_found() {
+		list( $site_id, $task ) = $this->arrange_manual_task();
+		$started                = time() - 100;
+		$key                    = 'mainwp_backup_run_' . $task->id . '_' . $started;
+		$invalid                = array(
+			array(),
+			array(
+				'task'      => 'invalid',
+				'progress'  => array(),
+				'snapshots' => array(),
+			),
+			array(
+				'task'      => $task,
+				'snapshots' => array(),
+			),
+			array(
+				'task'     => $task,
+				'progress' => array(),
+			),
+		);
+		try {
+			foreach ( $invalid as $saved ) {
+				set_transient( $key, $saved, DAY_IN_SECONDS );
+				$result = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $started );
+				$this->assertSame( 'run_not_found', $result['code'] );
+				$this->assertArrayNotHasKey( 'sites', $result );
+			}
+		} finally {
+			delete_transient( $key );
+		}
+	}
+
+	/**
 	 * A deleted selection must not block the remaining authorized sites.
 	 *
 	 * @return void
@@ -1737,7 +2000,9 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 			$wpdb->update( $wpdb->prefix . 'mainwp_wp_backup_snapshot', array( 'created' => $last_run ), array( 'id' => $snapshot_id ) );
 		}
 		if ( $scenario['replaced'] ) {
-			MainWP_Manage_Backups_Handler::execute_backup_task( MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id ), 5, true, 0 );
+			$claimed = null;
+			$owned   = 0;
+			MainWP_Manage_Backups_Handler::execute_backup_task( MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id ), 5, true, 0, $claimed, $owned, true );
 			$this->child_calls = array();
 		}
 		$claims = array();

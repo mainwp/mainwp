@@ -707,43 +707,56 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      *
      * @param mixed $id            Task ID.
      * @param int   $grace_seconds Settle window in seconds; 0 allows unpaused open runs.
+     * @param int   $claimed_started Exact timestamp written by this claim, or zero on refusal.
      *
      * @return bool True when this caller opened the run.
      *
      * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      */
-    public function claim_backup_run( $id, $grace_seconds = 0 ) {
+    public function claim_backup_run( $id, $grace_seconds = 0, &$claimed_started = 0 ) {
+        $claimed_started = 0;
         if ( ! MainWP_Utility::ctype_digit( $id ) ) {
             return false;
         }
 
+        $previous = $this->get_backup_task_by_id( $id );
+        if ( empty( $previous ) ) {
+            return false;
+        }
+        $now = time();
+
+        // Compare both stamps so GREATEST uses the close we read. A lost race refuses the claim.
         if ( (int) $grace_seconds <= 0 ) {
-            $now     = time();
-            $claimed = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- the pause guard must be atomic with the claim.
+            $claimed = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- the pause guard and run identity must be atomic with the claim.
                 $this->wpdb->prepare(
-                    'UPDATE ' . $this->table_name( 'wp_backup' ) . " SET last_run = GREATEST( %d, completed + 1 ), last = %d, completed_sites = '[]' WHERE id = %d AND paused = 0", // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted helper.
+                    'UPDATE ' . $this->table_name( 'wp_backup' ) . " SET last_run = GREATEST( %d, completed + 1 ), last = %d, completed_sites = '[]' WHERE id = %d AND paused = 0 AND last_run = %d AND completed = %d", // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted helper.
                     $now,
                     $now,
-                    $id
+                    $id,
+                    $previous->last_run,
+                    $previous->completed
                 )
             );
-
-            // Changed rows, not matched rows: an identical same-second claim returns 0 and must be refused.
-            return 1 === (int) $claimed;
+        } else {
+            $claimed = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- the atomic claim gate; must hit the DB engine.
+                $this->wpdb->prepare(
+                    'UPDATE ' . $this->table_name( 'wp_backup' ) . " SET last_run = GREATEST( %d, completed + 1 ), last = %d, completed_sites = '[]' WHERE id = %d AND paused = 0 AND completed >= last_run AND ( completed < %d OR backup_errors <> '' ) AND last_run = %d AND completed = %d", // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted helper.
+                    $now,
+                    $now,
+                    $id,
+                    $now - (int) $grace_seconds,
+                    $previous->last_run,
+                    $previous->completed
+                )
+            );
         }
 
-        $now     = time();
-        $claimed = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- the atomic claim gate; must hit the DB engine.
-            $this->wpdb->prepare(
-                'UPDATE ' . $this->table_name( 'wp_backup' ) . " SET last_run = GREATEST( %d, completed + 1 ), last = %d, completed_sites = '[]' WHERE id = %d AND completed >= last_run AND ( completed < %d OR backup_errors <> '' )", // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted helper.
-                $now,
-                $now,
-                $id,
-                $now - (int) $grace_seconds
-            )
-        );
-
-        return 1 === (int) $claimed;
+        // Changed rows, not matched rows: an identical same-second claim returns 0 and must be refused.
+        if ( 1 !== (int) $claimed ) {
+            return false;
+        }
+        $claimed_started = max( $now, (int) $previous->completed + 1 );
+        return true;
     }
 
     /**
@@ -752,14 +765,19 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * Update backup run manually.
      *
      * @param mixed $id Task ID.
+     * @param int   $started Restrict the stamp to this run when supplied.
      *
      * @return int|false The number of rows updated, or false on error.
      *
      * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      */
-    public function update_backup_run_manually( $id ) {
+    public function update_backup_run_manually( $id, $started = 0 ) {
         if ( MainWP_Utility::ctype_digit( $id ) ) {
-            return $this->wpdb->update( $this->table_name( 'wp_backup' ), array( 'last_run_manually' => time() ), array( 'id' => $id ) );
+            $where = array( 'id' => $id );
+            if ( $started > 0 ) {
+                $where['last_run'] = $started;
+            }
+            return $this->wpdb->update( $this->table_name( 'wp_backup' ), array( 'last_run_manually' => time() ), $where );
         }
 
         return false;

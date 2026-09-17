@@ -1726,9 +1726,28 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	public function test_snapshots_list_includes_uploads_and_manual_destinations() {
 		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
 		$destinations = MainWP_Backup_Storage_Destinations::instance();
-		$dest_a       = $destinations->add_destination( array( 'provider' => 'local', 'name' => 'Archive & storage' ) );
-		$dest_b       = $destinations->add_destination( array( 'provider' => 's3', 'name' => 'Removed archive' ) );
-		$snapshot_id  = $this->make_chain_snapshot( null, 'db', array( array( 'file' => 'db.sql', 'role' => 'db' ) ) );
+		$dest_a       = $destinations->add_destination(
+			array(
+				'provider' => 'local',
+				'name'     => 'Archive & storage',
+			)
+		);
+		$dest_b       = $destinations->add_destination(
+			array(
+				'provider' => 's3',
+				'name'     => 'Removed archive',
+			)
+		);
+		$snapshot_id  = $this->make_chain_snapshot(
+			null,
+			'db',
+			array(
+				array(
+					'file' => 'db.sql',
+					'role' => 'db',
+				),
+			)
+		);
 		$store        = MainWP_Backup_Upload_Job_Store::instance();
 		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_a, $dest_b ) );
 		$jobs = $store->get_jobs_for_snapshot( $snapshot_id );
@@ -1788,7 +1807,16 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	 */
 	public function test_snapshots_list_response_bootstrap_empty_when_idle() {
 		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
-		$snapshot_id = $this->make_chain_snapshot( null, 'db', array( array( 'file' => 'db.sql', 'role' => 'db' ) ) );
+		$snapshot_id = $this->make_chain_snapshot(
+			null,
+			'db',
+			array(
+				array(
+					'file' => 'db.sql',
+					'role' => 'db',
+				),
+			)
+		);
 
 		$nonce                = wp_create_nonce( 'mainwp_restore_snapshot_list' );
 		$_POST['security']    = $nonce;

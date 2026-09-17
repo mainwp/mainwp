@@ -126,8 +126,18 @@ class MainWP_Backup_Snapshots_Local_Note_Test extends \WP_UnitTestCase {
 	 */
 	public function test_note_names_destinations_when_configured() {
 		$destinations = MainWP_Backup_Storage_Destinations::instance();
-		$dest_a       = $destinations->add_destination( array( 'provider' => 'local', 'name' => 'Z & archive' ) );
-		$dest_b       = $destinations->add_destination( array( 'provider' => 'local', 'name' => 'A archive' ) );
+		$dest_a       = $destinations->add_destination(
+			array(
+				'provider' => 'local',
+				'name'     => 'Z & archive',
+			)
+		);
+		$dest_b       = $destinations->add_destination(
+			array(
+				'provider' => 'local',
+				'name'     => 'A archive',
+			)
+		);
 		$this->insert_scheduled_task( (string) $this->site_id, array( $dest_b, $dest_a ) );
 
 		$out = $this->render_surface();
@@ -144,7 +154,12 @@ class MainWP_Backup_Snapshots_Local_Note_Test extends \WP_UnitTestCase {
 	 */
 	public function test_note_names_removed_destination() {
 		$destinations = MainWP_Backup_Storage_Destinations::instance();
-		$dest_id      = $destinations->add_destination( array( 'provider' => 'local', 'name' => 'Removed archive' ) );
+		$dest_id      = $destinations->add_destination(
+			array(
+				'provider' => 'local',
+				'name'     => 'Removed archive',
+			)
+		);
 		$this->insert_scheduled_task( (string) $this->site_id, array( $dest_id ) );
 		$destinations->delete_destination( $dest_id );
 

@@ -336,7 +336,7 @@ class MainWP_Backup_Upload_Driver_Test extends \WP_UnitTestCase {
 	public function test_two_local_destinations_complete_in_one_tick() {
 		list( $dest_a, $base_a ) = $this->make_local_destination();
 		list( $dest_b, $base_b ) = $this->make_local_destination();
-		$task_id                = $this->insert_task( array( $dest_a, $dest_b ) );
+		$task_id                 = $this->insert_task( array( $dest_a, $dest_b ) );
 		MainWP_Backup_Upload_Driver::instance()->init();
 		$snapshot_id = $this->make_snapshot( $this->standard_files(), $task_id );
 
@@ -373,8 +373,8 @@ class MainWP_Backup_Upload_Driver_Test extends \WP_UnitTestCase {
 	 */
 	public function test_tick_stops_after_maximum_jobs() {
 		list( $dest_id ) = $this->make_local_destination();
-		$store          = MainWP_Backup_Upload_Job_Store::instance();
-		$snapshots      = array();
+		$store           = MainWP_Backup_Upload_Job_Store::instance();
+		$snapshots       = array();
 		for ( $i = 0; $i <= MainWP_Backup_Upload_Driver::MAX_JOBS_PER_TICK; ++$i ) {
 			$snapshot_id = $this->make_snapshot( $this->standard_files() );
 			$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );

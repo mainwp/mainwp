@@ -2004,8 +2004,9 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 				'last_run' => -300,
 				'click'    => -900,
 				'snapshot' => true,
-				'claims'   => 1,
-				'status'   => 'queued',
+				'claims'   => 0,
+				'status'   => 'completed',
+				'adopted'  => true,
 			),
 			'6 old clean close'                            => array(
 				'last_run'  => -200,
@@ -2039,9 +2040,12 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 				'status'    => 'completed',
 			),
 			'11 queued then scheduler opens'               => array(
-				'completed' => -20,
-				'click'     => -30,
-				'status'    => 'queued',
+				'last_run'     => -200,
+				'completed'    => -300,
+				'click'        => -230,
+				'snapshot'     => true,
+				'status'       => 'queued',
+				'close_errors' => '',
 			),
 			'12 failed claim with foreign advance'         => array(
 				'last_run'  => -200,
@@ -2098,6 +2102,13 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 				'task_denied' => true,
 				'status'      => 'refused',
 			),
+			'21 queued then foreign run closes with errors' => array(
+				'last_run'     => -200,
+				'completed'    => -300,
+				'click'        => -230,
+				'status'       => 'queued',
+				'close_errors' => 'Upload failed.',
+			),
 		);
 		foreach ( $scenarios as $name => $scenario ) {
 			$scenarios[ $name ] = array( array_merge( $defaults, $scenario ) );
@@ -2114,13 +2125,13 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	 * | 2 | Poll owns open last_run | Continue that run | A new claim |
 	 * | 3 | Poll identity differs, no saved row | Missing run | Other run's snapshot |
 	 * | 4 | Poll owns clean close | Its snapshot | Reopening |
-	 * | 5 | Queued click predates scheduler close | Queued after refused claim | Scheduler result |
+	 * | 5 | Queued click predates scheduler run, now closed cleanly | Adoption | A second claim |
 	 * | 6 | Queued click, old clean close | Open on successful claim | Adoption |
 	 * | 7 | Queued click, failed close | Open on successful claim | Debouncing errors |
 	 * | 8 | Initiate at capacity, recent close | Queued | Adoption without claim attempt |
 	 * | 9 | Paused | Refusal on both endpoints | Claim or site data |
 	 * | 10 | Initiate, same-second clean close | Completed with identity and click | Manual stamp |
-	 * | 11 | Queued click, scheduler opens later | Queued | Scheduler continuation |
+	 * | 11 | Queued click, scheduler opens later | Queued while open, adopt clean close | Live foreign progress or a new run |
 	 * | 12 | Foreign advance before failed claim | Queued | Manual stamp or ownership |
 	 * | 13 | A's successful close, B now open | A's saved snapshot | B's state |
 	 * | 14 | A's failed close, B now open | A's saved errors | Empty failure reason |
@@ -2130,6 +2141,7 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	 * | 18 | Initiate, never run, slot available | Open on successful claim | Queued |
 	 * | 19 | Queued click, recent clean close, free slot | Queued after refused claim | Adopting the old close |
 	 * | 20 | Task belongs to another user | Refusal on both endpoints | Claim or site data |
+	 * | 21 | Queued click, foreign run closes with errors | Claim own run after close | Adopting the failed run |
 	 *
 	 * @dataProvider manual_run_ownership_cases
 	 * @param array $scenario Task state, request identity and expected effects.
@@ -2213,6 +2225,12 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 				$this->assertArrayNotHasKey( 'sites', $status );
 			} else {
 				$this->assertSame( $scenario['status'], $status['status'] );
+				if ( ! empty( $scenario['adopted'] ) ) {
+					$this->assertSame( $last_run, $status['started'] );
+					$this->assertSame( $click, $status['click'] );
+					$this->assertGreaterThan( 0, $status['click'] );
+					$this->assertSame( 'closed', $status['run_state'] );
+				}
 				if ( $scenario['replaced'] ) {
 					$this->assertSame( 'closed', $status['run_state'] );
 					$this->assertSame( $scenario['errors'], $status['errors'] );
@@ -2244,6 +2262,37 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 			} else {
 				$this->assertSame( $scenario['race'] ? $now + 1 : $last_run, (int) $after->last_run );
 				$this->assertSame( 0, (int) $after->last_run_manually, 'A refused claim or adoption must not stamp a manual start.' );
+			}
+			if ( isset( $scenario['close_errors'] ) ) {
+				MainWP_DB_Backup::instance()->update_backup_task_with_values(
+					$task->id,
+					array(
+						'completed'     => $last_run + 1,
+						'backup_errors' => $scenario['close_errors'],
+					)
+				);
+				$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, 0, $click );
+				$after  = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+				if ( '' === $scenario['close_errors'] ) {
+					$this->assertSame( 'completed', $status['status'] );
+					$this->assertSame( 'closed', $status['run_state'] );
+					$this->assertSame( $last_run, $status['started'] );
+					$this->assertSame( $click, $status['click'] );
+					$this->assertGreaterThan( 0, $status['click'] );
+					$this->assertSame( (int) $snapshot_id, $status['sites'][0]['snapshot']['id'] );
+					$this->assertSame( $last_run, (int) $after->last_run );
+					$this->assertSame( 0, (int) $after->last_run_manually );
+					$this->assertCount( 0, $claims );
+					$this->assertSame( array(), $this->child_calls );
+				} else {
+					$this->assertSame( 'running', $status['status'] );
+					$this->assertGreaterThan( $last_run, $status['started'] );
+					$this->assertSame( $status['started'], (int) $after->last_run );
+					$this->assertSame( $status['started'], (int) $after->last_run_manually );
+					$this->assertSame( 0, $status['click'] );
+					$this->assertCount( 1, $claims );
+					$this->assertNotEmpty( $this->child_calls );
+				}
 			}
 		} finally {
 			remove_filter( 'query', $spy );

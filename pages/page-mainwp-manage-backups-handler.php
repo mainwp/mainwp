@@ -225,8 +225,8 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
     /**
      * Advance a saved task and report recorded snapshots for its sites.
      *
-     * @param int $task_id Task id.
-     * @param int $started Owned run timestamp, or zero when no run is owned.
+     * @param int  $task_id Task id.
+     * @param int  $started Owned run timestamp, or zero when no run is owned.
      * @param int  $click   Click timestamp while queued or adopting a close, otherwise zero.
      * @param bool $retried Whether this call is the single re-entry after a mid-assembly claim.
      * @return array Task and site status, or error.
@@ -245,6 +245,9 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             static::execute_backup_task( $task, 5, false );
             $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
         } elseif ( 0 === $started && $click > 0 && $click <= time() && (int) $task->completed >= (int) $task->last_run ) {
+            if ( (int) $task->last_run >= $click && '' === (string) $task->backup_errors ) {
+                return static::get_backup_task_run_status( $task_id, (int) $task->last_run, $click );
+            }
             $run = static::claim_manual_task_run( $task, $click );
             if ( isset( $run['error'] ) ) {
                 return $run;

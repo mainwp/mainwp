@@ -2841,6 +2841,31 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
     }
 
     /**
+     * Ids among the given ones that still have a site row, ignoring the
+     * current user's access scope.
+     *
+     * A task's saved site list can outlive a deleted site. Callers that must
+     * tell "deleted" from "no longer allowed" need existence alone: every
+     * other site read applies the allowed-sites filter, which would report a
+     * scope narrowing as a missing site and defeat the scope-pause gate.
+     *
+     * @param int[] $ids Site ids.
+     *
+     * @return int[] Ids that have a row.
+     */
+    public function get_existing_website_ids( $ids ) {
+        $ids = array_values( array_filter( array_map( 'intval', (array) $ids ) ) );
+        if ( empty( $ids ) ) {
+            return array();
+        }
+        $table_name   = esc_sql( $this->table_name( 'wp' ) );
+        $placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+        $sql          = "SELECT id FROM {$table_name} WHERE id IN ({$placeholders})";
+
+        return array_map( 'intval', $this->wpdb->get_col( $this->wpdb->prepare( $sql, ...$ids ) ) ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- table name escaped, ids are integer placeholders.
+    }
+
+    /**
      * Get child sites by groups IDs.
      *
      * @param array $ids    Groups IDs.

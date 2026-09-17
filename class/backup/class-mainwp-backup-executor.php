@@ -706,9 +706,10 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         if ( isset( $information['error'] ) ) {
             throw new MainWP_Exception( esc_html( MainWP_Backup_Error_Codes::sanitize_message( $information['error'] ) ), null, isset( $information['error_code'] ) ? $information['error_code'] : '' ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         } elseif ( 'incremental' === $type && ! empty( $information['artifacts'] ) ) {
+            $snapshot_recorded = false;
             try {
-                $result = static::finish_incremental_backup( $website, $pTask, $information['artifacts'], $backupTaskProgress );
-            } catch ( \Exception $e ) {
+                $result = static::finish_incremental_backup( $website, $pTask, $information['artifacts'], $backupTaskProgress, $snapshot_recorded );
+            } catch ( \Throwable $e ) {
                 /** This action is documented in class/backup/class-mainwp-backup-executor.php */
                 do_action(
                     'mainwp_native_backup_completed',
@@ -722,7 +723,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 );
                 throw $e;
             }
-            if ( false !== $result ) {
+            if ( false !== $result && $snapshot_recorded ) {
                 /** This action is documented in class/backup/class-mainwp-backup-executor.php */
                 do_action(
                     'mainwp_native_backup_completed',
@@ -1505,13 +1506,14 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @param object $pTask     Scheduled task.
      * @param array  $artifacts Role-tagged artifact list from the child.
      * @param object $progress  Progress row (carries the child task id).
+     * @param bool   $snapshot_recorded Whether this invocation recorded the snapshot.
      *
      * @throws MainWP_Exception When an artifact cannot be downloaded or fails validation.
      *
      * @return array|false Backup result with the snapshot id, false when the run stopped without recording one.
      */
     // phpcs:ignore Squiz.Commenting.FunctionCommentThrowTag.Missing -- registry factory throws are MainWP_Exception, documented above.
-    protected static function finish_incremental_backup( $website, $pTask, $artifacts, $progress ) { // phpcs:ignore -- NOSONAR - download loop with per-role validation.
+    protected static function finish_incremental_backup( $website, $pTask, $artifacts, $progress, &$snapshot_recorded = false ) { // phpcs:ignore -- NOSONAR - download loop with per-role validation.
         MainWP_System_Utility::get_wp_file_system();
 
         /**
@@ -1605,6 +1607,8 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         if ( $snapshot_id < 1 ) {
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_RECORD_FAILED, 'task id ' . (int) $pTask->id . ', site id ' . (int) $website->id ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         }
+
+        $snapshot_recorded = ! $already_saved;
 
         // Remote cleanup: every artifact except the manifest sidecar the
         // next incremental diffs against. Best effort - a leftover file on

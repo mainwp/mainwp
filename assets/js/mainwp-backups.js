@@ -491,8 +491,13 @@ managebackups_run_now = function (el) {
     let schedulePoll = function () {
         manageBackupsPollTimer = setTimeout(poll, 3000);
     };
+    let staleReported = false;
     let render = function (response) {
         waiting.text(response.status === 'queued' ? MainWP.I18n.t('Waiting for a free backup slot...') : '');
+        if (!staleReported && response.stale_sites && response.stale_sites.length > 0) {
+            staleReported = true;
+            jQuery('<div>').text(MainWP.I18n.t('%d site(s) listed in this task no longer exist on the Dashboard and were skipped. Edit the task to remove them.').replace('%d', response.stale_sites.length)).appendTo(content);
+        }
         (response.sites || []).forEach(function (site) {
             if (!rows[site.id]) {
                 let row = jQuery('<div>').appendTo(content);

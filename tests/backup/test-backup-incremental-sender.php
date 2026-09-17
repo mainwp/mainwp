@@ -1338,6 +1338,198 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A deleted selection must not block the remaining authorized sites.
+	 *
+	 * @return void
+	 */
+	public function test_run_now_skips_deleted_site_and_reports_its_id() {
+		list( $site_id, $task ) = $this->arrange_manual_task();
+		$stale_id               = 999999;
+		$this->assertEmpty( MainWP_DB::instance()->get_website_by_id( $stale_id ) );
+		MainWP_DB_Backup::instance()->update_backup_task_with_values(
+			$task->id,
+			array(
+				'sites'            => $site_id . ',' . $stale_id,
+				'authorized_sites' => $site_id . ',' . $stale_id,
+			)
+		);
+		$allowed = static function () use ( $site_id ) {
+			return array( $site_id );
+		};
+		add_filter( 'mainwp_currentuserallowedaccesssites', $allowed );
+		try {
+			$start = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
+			$this->assertSame( 'running', $start['status'] );
+			$this->assertSame( array( $stale_id ), $start['stale_sites'] );
+			$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $start['started'], $start['click'] );
+			$this->assertSame( 'completed', $status['status'] );
+			$this->assertSame( array( $stale_id ), $status['stale_sites'] );
+			$this->assertSame( array( $site_id ), array_column( $status['sites'], 'id' ) );
+		} finally {
+			remove_filter( 'mainwp_currentuserallowedaccesssites', $allowed );
+		}
+	}
+
+	/**
+	 * A site the owner can no longer access still exists, so it is a refusal
+	 * for the per-site gate, never a stale id the run may skip.
+	 *
+	 * @return void
+	 */
+	public function test_run_now_refuses_restricted_site_instead_of_skipping_it() {
+		list( $site_id, $task ) = $this->arrange_manual_task();
+		$restricted             = $this->create_test_site( array( 'userid' => get_current_user_id() ) );
+		MainWP_DB_Backup::instance()->update_backup_task_with_values(
+			$task->id,
+			array(
+				'sites'            => $site_id . ',' . $restricted,
+				'authorized_sites' => $site_id . ',' . $restricted,
+			)
+		);
+		$allowed = static function () use ( $site_id ) {
+			return array( $site_id );
+		};
+		add_filter( 'mainwp_currentuserallowedaccesssites', $allowed );
+		try {
+			$start = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
+			$this->assertArrayHasKey( 'error', $start );
+			$this->assertArrayNotHasKey( 'stale_sites', $start );
+		} finally {
+			remove_filter( 'mainwp_currentuserallowedaccesssites', $allowed );
+		}
+	}
+
+	/**
+	 * A stale caller must close the run that opened since its read.
+	 *
+	 * @return void
+	 */
+	public function test_rescope_pause_rereads_run_before_closing() {
+		list( $site_id, $task ) = $this->arrange_manual_task();
+		$start                  = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
+		MainWP_Manage_Backups_Handler::pause_task_for_rescope( $task, 'narrowed' );
+		$after = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$this->assertSame( $start['started'], (int) $after->completed );
+	}
+
+	/**
+	 * Engine errors must announce failure before propagating to the caller.
+	 *
+	 * @return void
+	 */
+	public function test_incremental_finish_error_emits_failure() {
+		list( $site_id, $task ) = $this->arrange_manual_task();
+		$property               = new \ReflectionProperty( MainWP_Backup_Snapshots::class, 'instance' );
+		$original               = $property->getValue();
+		$property->setValue(
+			null,
+			new class() extends MainWP_Backup_Snapshots {
+				/**
+				 * Model a programming error in the finish path.
+				 *
+				 * @param array $data Snapshot fields.
+				 * @return never
+				 * @throws \Error The injected failure.
+				 */
+				public function record_snapshot( array $data ): int {
+					throw new \Error( 'Snapshot finish broke.' );
+				}
+			}
+		);
+		$events  = array();
+		$capture = static function ( $site, $child, $success, $meta ) use ( &$events ) {
+			$events[] = array( $success, $meta['error'] ?? '' );
+		};
+		add_action( 'mainwp_native_backup_completed', $capture, 10, 4 );
+		try {
+			$this->run_cycle( $site_id, $task );
+			try {
+				$this->run_cycle( $site_id, $task );
+				$this->fail( 'The finish Error must propagate.' );
+			} catch ( \Error $error ) {
+				$this->assertSame( 'Snapshot finish broke.', $error->getMessage() );
+			}
+			$this->assertSame( array( array( false, 'Snapshot finish broke.' ) ), $events );
+		} finally {
+			$property->setValue( null, $original );
+			remove_action( 'mainwp_native_backup_completed', $capture, 10 );
+		}
+	}
+
+	/**
+	 * Reusing a recorded snapshot must not announce another successful backup.
+	 *
+	 * @return void
+	 */
+	public function test_incremental_resume_recorded_snapshot_emits_success_once() {
+		list( $site_id, $task ) = $this->arrange_manual_task();
+		$events                 = array();
+		$capture                = static function ( $site, $child, $success ) use ( &$events ) {
+			if ( $success ) {
+				$events[] = $child;
+			}
+		};
+		add_action( 'mainwp_native_backup_completed', $capture, 10, 3 );
+		try {
+			$this->run_cycle( $site_id, $task );
+			$first = $this->run_cycle( $site_id, $task );
+			$this->assertNull( $first['exception'] );
+			$this->assertCount( 1, $events );
+			$resume = $this->run_cycle( $site_id, $task );
+			$this->assertNull( $resume['exception'] );
+			$this->assertSame( $first['result']['snapshot_id'], $resume['result']['snapshot_id'] );
+			$this->assertCount( 1, $events );
+		} finally {
+			remove_action( 'mainwp_native_backup_completed', $capture, 10 );
+		}
+	}
+
+	/**
+	 * The second site's terminal error must not reuse the first site's result.
+	 *
+	 * @return void
+	 */
+	public function test_terminal_site_error_has_its_own_schedule_hook_payload() {
+		list( $site_id, $task ) = $this->arrange_manual_task();
+		$second                 = $this->create_test_site( array( 'userid' => (int) $task->userid ) );
+		$this->give_site_real_privkey( $second );
+		MainWP_DB_Backup::instance()->update_backup_task_with_values(
+			$task->id,
+			array(
+				'sites'            => $site_id . ',' . $second,
+				'authorized_sites' => $site_id . ',' . $second,
+				'last_run'         => time() - 10,
+				'completed'        => 0,
+			)
+		);
+		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$this->run_cycle( $site_id, $task );
+		$fail    = static function ( $result, $website, $what ) use ( $second ) {
+			if ( (int) $website->id === $second && 'backup_task_create' === $what ) {
+				return array(
+					'error'      => 'walk broke',
+					'error_code' => MainWP_Backup_Error_Codes::ERR_MANIFEST_WALK_FAILED,
+				);
+			}
+			return $result;
+		};
+		$events  = array();
+		$capture = static function ( $website, $options, $result ) use ( &$events ) {
+			$events[ (int) $website->id ] = $result;
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $fail, 20, 3 );
+		add_action( 'mainwp_managesite_schedule_backup', $capture, 10, 3 );
+		try {
+			MainWP_Manage_Backups_Handler::execute_backup_task( $task, 5, false );
+			$this->assertArrayHasKey( 'snapshot_id', $events[ $site_id ] );
+			$this->assertSame( MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_MANIFEST_WALK_FAILED ), $events[ $second ] );
+		} finally {
+			remove_filter( 'mainwp_fetch_url_authed_pre', $fail, 20 );
+			remove_action( 'mainwp_managesite_schedule_backup', $capture, 10 );
+		}
+	}
+
+	/**
 	 * Manual ownership cases. Timestamps are offsets from the test's clock;
 	 * null means the zero sentinel. Claims count the actual SQL attempts.
 	 *
@@ -1345,81 +1537,146 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public static function manual_run_ownership_cases() {
 		$defaults  = array(
-			'last_run'  => -10,
-			'completed' => -5,
-			'started'   => null,
-			'click'     => 0,
-			'errors'    => '',
-			'paused'    => 0,
-			'held'      => false,
-			'initiate'  => false,
-			'snapshot'  => false,
-			'claims'    => 0,
-			'advanced'  => false,
-			'status'    => 'failed',
+			'last_run'    => -10,
+			'completed'   => -5,
+			'started'     => null,
+			'click'       => 0,
+			'errors'      => '',
+			'paused'      => 0,
+			'held'        => false,
+			'initiate'    => false,
+			'snapshot'    => false,
+			'claims'      => 0,
+			'advanced'    => false,
+			'status'      => 'failed',
+			'race'        => false,
+			'replaced'    => false,
+			'denied'      => false,
+			'task_denied' => false,
 		);
 		$scenarios = array(
-			'1 never run'          => array(
+			'1 never run'                                  => array(
 				'last_run'  => null,
 				'completed' => null,
 				'click'     => null,
 			),
-			'2 open owned run'     => array(
+			'2 open owned run'                             => array(
 				'completed' => -20,
 				'started'   => -10,
 				'click'     => null,
 				'status'    => 'running',
 				'advanced'  => true,
 			),
-			'3 open other run'     => array(
+			'3 open other run'                             => array(
+				'status'    => 'missing',
 				'completed' => -20,
 				'started'   => -30,
 				'click'     => null,
 				'snapshot'  => true,
 			),
-			'4 owned clean close'  => array(
+			'4 owned clean close'                          => array(
 				'started'  => -10,
 				'click'    => null,
 				'snapshot' => true,
 				'status'   => 'completed',
 			),
-			'5 scheduler close'    => array(
+			'5 scheduler close'                            => array(
 				'last_run' => -300,
 				'click'    => -900,
 				'snapshot' => true,
 				'claims'   => 1,
 				'status'   => 'queued',
 			),
-			'6 old clean close'    => array(
+			'6 old clean close'                            => array(
 				'last_run'  => -200,
 				'completed' => -100,
 				'claims'    => 1,
 				'advanced'  => true,
 				'status'    => 'running',
 			),
-			'7 failed close'       => array(
+			'7 failed close'                               => array(
 				'errors'   => 'Upload failed.',
 				'claims'   => 1,
 				'advanced' => true,
 				'status'   => 'running',
 			),
-			'8 held slot'          => array(
+			'8 held slot'                                  => array(
 				'held'     => true,
 				'initiate' => true,
 				'snapshot' => true,
 				'status'   => 'queued',
 			),
-			'9 paused'             => array(
+			'9 paused'                                     => array(
 				'paused' => 1,
 				'status' => 'refused',
 			),
-			'10 same second close' => array(
+			'10 same second close'                         => array(
 				'last_run'  => 0,
 				'completed' => 0,
 				'initiate'  => true,
 				'snapshot'  => true,
 				'claims'    => 1,
 				'status'    => 'completed',
+			),
+			'11 queued then scheduler opens'               => array(
+				'completed' => -20,
+				'click'     => -30,
+				'status'    => 'queued',
+			),
+			'12 failed claim with foreign advance'         => array(
+				'last_run'  => -200,
+				'completed' => -100,
+				'initiate'  => true,
+				'race'      => true,
+				'claims'    => 1,
+				'status'    => 'queued',
+			),
+			'13 A closes successfully then B opens'        => array(
+				'started'  => -10,
+				'click'    => null,
+				'snapshot' => true,
+				'replaced' => true,
+				'status'   => 'completed',
+			),
+			'14 A closes with errors then B opens'         => array(
+				'started'  => -10,
+				'click'    => null,
+				'errors'   => 'Upload failed.',
+				'replaced' => true,
+			),
+			'15 duplicate adopts recent close at initiate' => array(
+				'initiate' => true,
+				'snapshot' => true,
+				'claims'   => 1,
+				'status'   => 'completed',
+			),
+			'16 unauthorized site'                         => array(
+				'denied' => true,
+				'status' => 'refused',
+			),
+			'17 initiate follows open run'                 => array(
+				'completed' => -20,
+				'initiate'  => true,
+				'advanced'  => true,
+				'status'    => 'running',
+			),
+			'18 initiate opens new run'                    => array(
+				'last_run'  => null,
+				'completed' => null,
+				'initiate'  => true,
+				'claims'    => 1,
+				'advanced'  => true,
+				'status'    => 'completed',
+			),
+
+			'19 queued click with recent close'            => array(
+				'snapshot' => true,
+				'claims'   => 1,
+				'status'   => 'queued',
+			),
+			'20 unauthorized task'                         => array(
+				'task_denied' => true,
+				'status'      => 'refused',
 			),
 		);
 		foreach ( $scenarios as $name => $scenario ) {
@@ -1429,7 +1686,30 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * Each click either owns an exact run, waits for a slot, or reports no run.
+	 * Ownership must survive slot refusals and another driver's writes.
+	 *
+	 * | Row | Input | Accept | Refuse |
+	 * | --- | --- | --- | --- |
+	 * | 1 | No run and no click | Failed, no result | Inventing ownership |
+	 * | 2 | Poll owns open last_run | Continue that run | A new claim |
+	 * | 3 | Poll identity differs, no saved row | Missing run | Other run's snapshot |
+	 * | 4 | Poll owns clean close | Its snapshot | Reopening |
+	 * | 5 | Queued click predates scheduler close | Queued after refused claim | Scheduler result |
+	 * | 6 | Queued click, old clean close | Open on successful claim | Adoption |
+	 * | 7 | Queued click, failed close | Open on successful claim | Debouncing errors |
+	 * | 8 | Initiate at capacity, recent close | Queued | Adoption without claim attempt |
+	 * | 9 | Paused | Refusal on both endpoints | Claim or site data |
+	 * | 10 | Initiate, same-second clean close | Completed with identity and click | Manual stamp |
+	 * | 11 | Queued click, scheduler opens later | Queued | Scheduler continuation |
+	 * | 12 | Foreign advance before failed claim | Queued | Manual stamp or ownership |
+	 * | 13 | A's successful close, B now open | A's saved snapshot | B's state |
+	 * | 14 | A's failed close, B now open | A's saved errors | Empty failure reason |
+	 * | 15 | Duplicate initiate inside settle window | Completed with identity and click | Running with click zero |
+	 * | 16 | Site capability denied | Refusal on both endpoints | Claim or site data |
+	 * | 17 | Initiate finds open run | Follow its identity | A new claim |
+	 * | 18 | Initiate, never run, slot available | Open on successful claim | Queued |
+	 * | 19 | Queued click, recent clean close, free slot | Queued after refused claim | Adopting the old close |
+	 * | 20 | Task belongs to another user | Refusal on both endpoints | Claim or site data |
 	 *
 	 * @dataProvider manual_run_ownership_cases
 	 * @param array $scenario Task state, request identity and expected effects.
@@ -1456,10 +1736,17 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		if ( $snapshot_id ) {
 			$wpdb->update( $wpdb->prefix . 'mainwp_wp_backup_snapshot', array( 'created' => $last_run ), array( 'id' => $snapshot_id ) );
 		}
+		if ( $scenario['replaced'] ) {
+			MainWP_Manage_Backups_Handler::execute_backup_task( MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id ), 5, true, 0 );
+			$this->child_calls = array();
+		}
 		$claims = array();
-		$spy    = function ( $query ) use ( &$claims, $wpdb ) {
+		$spy    = function ( $query ) use ( &$claims, $wpdb, $scenario, $task, $now ) {
 			if ( str_starts_with( $query, 'UPDATE ' . $wpdb->prefix . 'mainwp_wp_backup SET last_run = GREATEST(' ) ) {
 				$claims[] = $query;
+				if ( $scenario['race'] ) {
+					$wpdb->update( $wpdb->prefix . 'mainwp_wp_backup', array( 'last_run' => $now + 1 ), array( 'id' => $task->id ) );
+				}
 			}
 			return $query;
 		};
@@ -1467,7 +1754,18 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		update_option( 'mainwp_backup_manual_settle_seconds', 60 );
 		update_option( 'mainwp_backup_max_concurrent', 1 );
 		add_filter( 'query', $spy );
+		$deny = static function ( $allowed, $type ) use ( $scenario ) {
+			return $scenario['denied'] && 'site' === $type ? false : $allowed;
+		};
+		add_filter( 'mainwp_currentusercan', $deny, 10, 2 );
+		if ( $scenario['task_denied'] ) {
+			wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+			add_filter( 'mainwp_is_single_user', '__return_false' );
+		}
 		try {
+			if ( 'refused' === $scenario['status'] ) {
+				$this->assertArrayHasKey( 'error', MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id ) );
+			}
 			if ( $scenario['held'] ) {
 				$token = MainWP_Backup_Monitor::acquire_backup_slot( 1 );
 				$this->assertIsString( $token );
@@ -1475,19 +1773,34 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 			if ( $scenario['initiate'] ) {
 				$start = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
 				$this->assertArrayNotHasKey( 'error', $start );
-				$this->assertSame( $scenario['held'] ? 'queued' : 'running', $start['status'] );
+				$this->assertSame( $scenario['claims'] && $scenario['advanced'] ? 'running' : $scenario['status'], $start['status'] );
 				$started = $start['started'];
 				$click   = $start['click'];
-				$this->assertSame( $scenario['held'] ? 0 : $last_run, $started );
+				if ( ! $scenario['advanced'] ) {
+					$this->assertSame( 'queued' === $scenario['status'] ? 0 : $last_run, $started );
+					$this->assertGreaterThan( 0, $click );
+				}
 			}
 			$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $started, $click );
 			if ( 'refused' === $scenario['status'] ) {
-				$this->assertSame( 'This task is paused. Resume it before running it.', $status['error'] );
+				$this->assertArrayHasKey( 'error', $status );
+				$this->assertArrayNotHasKey( 'sites', $status );
+			} elseif ( 'missing' === $scenario['status'] ) {
+				$this->assertSame( 'run_not_found', $status['code'] );
+				$this->assertArrayHasKey( 'error', $status );
 				$this->assertArrayNotHasKey( 'sites', $status );
 			} else {
 				$this->assertSame( $scenario['status'], $status['status'] );
+				if ( $scenario['replaced'] ) {
+					$this->assertSame( 'closed', $status['run_state'] );
+					$this->assertSame( $scenario['errors'], $status['errors'] );
+				}
 				if ( 'completed' === $scenario['status'] ) {
-					$this->assertSame( (int) $snapshot_id, $status['sites'][0]['snapshot']['id'] );
+					if ( $snapshot_id ) {
+						$this->assertSame( (int) $snapshot_id, $status['sites'][0]['snapshot']['id'] );
+					} else {
+						$this->assertNotNull( $status['sites'][0]['snapshot'] );
+					}
 				} else {
 					$this->assertNull( $status['sites'][0]['snapshot'] );
 				}
@@ -1504,12 +1817,19 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 			if ( $scenario['claims'] > 0 && $scenario['advanced'] ) {
 				$this->assertGreaterThan( $last_run, (int) $after->last_run );
 				$this->assertGreaterThan( 0, (int) $after->last_run_manually );
+			} elseif ( $scenario['replaced'] ) {
+				$this->assertGreaterThan( $last_run, (int) $after->last_run );
 			} else {
-				$this->assertSame( $last_run, (int) $after->last_run );
+				$this->assertSame( $scenario['race'] ? $now + 1 : $last_run, (int) $after->last_run );
 				$this->assertSame( 0, (int) $after->last_run_manually, 'A refused claim or adoption must not stamp a manual start.' );
 			}
 		} finally {
 			remove_filter( 'query', $spy );
+			remove_filter( 'mainwp_currentusercan', $deny, 10 );
+			if ( $scenario['task_denied'] ) {
+				remove_filter( 'mainwp_is_single_user', '__return_false' );
+				wp_set_current_user( (int) $task->userid );
+			}
 			if ( is_string( $token ) ) {
 				MainWP_Backup_Monitor::release_backup_slot( $token );
 			}
@@ -1620,9 +1940,9 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		try {
 			$calls     = $this->child_calls;
 			$duplicate = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
-			$this->assertSame( 'running', $duplicate['status'] );
+			$this->assertSame( 'completed', $duplicate['status'] );
 			$this->assertSame( $closed, $duplicate['started'] );
-			$this->assertSame( 0, $duplicate['click'] );
+			$this->assertGreaterThan( 0, $duplicate['click'] );
 			$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $duplicate['started'], $duplicate['click'] );
 			$this->assertSame( 'completed', $status['status'] );
 			$this->assertSame( $closed, $status['started'] );

@@ -1859,7 +1859,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             $websiteid = intval( $_GET['scanid'] );
 
             $scanwebsite = MainWP_DB::instance()->get_website_by_id( $websiteid );
-            if ( MainWP_System_Utility::can_edit_website( $scanwebsite ) ) {
+            if ( MainWP_System_Utility::can_edit_website( $scanwebsite ) && \mainwp_current_user_can( 'site', $websiteid ) ) {
                 static::render_scan_site( $scanwebsite );
 
                 return;
@@ -1870,7 +1870,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             $websiteid = intval( $_GET['dashboard'] );
 
             $dashboardWebsite = MainWP_DB::instance()->get_website_by_id_params( $websiteid, array( 'view_fields' => array( 'child_monitor_data' ) ) );
-            if ( MainWP_System_Utility::can_edit_website( $dashboardWebsite ) ) {
+            if ( MainWP_System_Utility::can_edit_website( $dashboardWebsite ) && \mainwp_current_user_can( 'site', $websiteid ) ) {
                 static::render_dashboard( $dashboardWebsite );
 
                 return;
@@ -1880,7 +1880,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         if ( isset( $_GET['updateid'] ) ) {
             $websiteid      = intval( $_GET['updateid'] );
             $updatesWebsite = MainWP_DB::instance()->get_website_by_id( $websiteid );
-            if ( MainWP_System_Utility::can_edit_website( $updatesWebsite ) ) {
+            if ( MainWP_System_Utility::can_edit_website( $updatesWebsite ) && \mainwp_current_user_can( 'site', $websiteid ) ) {
                 static::render_updates( $updatesWebsite );
                 return;
             }

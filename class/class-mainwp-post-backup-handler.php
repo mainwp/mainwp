@@ -233,6 +233,19 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         $multisite = MainWP_Backup_Monitor::child_is_multisite( $website );
         $rows      = array();
         foreach ( $entries as $entry ) {
+            $uploads = array();
+            foreach ( MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( (int) $entry['snapshot']->id ) as $job ) {
+                $destination = MainWP_Backup_Storage_Destinations::instance()->get_destination( (int) $job->destination_id );
+                $uploads[]   = array(
+                    'destination_id' => (int) $job->destination_id,
+                    /* translators: %d: storage destination ID. */
+                    'name'           => null !== $destination ? (string) $destination->name : sprintf( __( 'Destination #%d (removed)', 'mainwp' ), (int) $job->destination_id ),
+                    'provider'       => (string) $job->provider,
+                    'status'         => (string) $job->status,
+                    'updated'        => (int) $job->updated,
+                    'last_error'     => mb_substr( (string) $job->last_error, 0, 200 ),
+                );
+            }
             $archives   = isset( $entry['snapshot']->archives ) && is_array( $entry['snapshot']->archives ) ? $entry['snapshot']->archives : array();
             $size_bytes = (int) array_sum( array_column( $archives, 'size' ) );
             $rows[]     = array(
@@ -243,6 +256,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                 'age_days'           => max( 0, (int) floor( ( time() - (int) $entry['snapshot']->created ) / DAY_IN_SECONDS ) ),
                 'status'             => (string) $entry['snapshot']->status,
                 'offsite_state'      => isset( $entry['snapshot']->offsite_state ) ? (string) $entry['snapshot']->offsite_state : '',
+                'uploads'            => $uploads,
                 'source'             => (string) $entry['source'],
                 'restorable'         => (bool) $entry['restorable'],
                 'restore_reason'     => (string) $entry['restore_reason'],
@@ -257,6 +271,17 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         // on-demand backup carries on in the background.
         $active_job  = MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $site_id );
         $manual_task = MainWP_DB_Backup::instance()->get_manual_backup_task( $site_id );
+        $manual_ids  = MainWP_DB_Backup::instance()->manual_backup_task_destinations( $site_id );
+        sort( $manual_ids, SORT_NUMERIC );
+        $manual_destinations = array();
+        foreach ( $manual_ids as $destination_id ) {
+            $destination           = MainWP_Backup_Storage_Destinations::instance()->get_destination( $destination_id );
+            $manual_destinations[] = null !== $destination ? (string) $destination->name : sprintf(
+                /* translators: %d: storage destination ID. */
+                __( 'Destination #%d (removed)', 'mainwp' ),
+                $destination_id
+            );
+        }
 
         wp_send_json(
             array(
@@ -264,7 +289,8 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                 'multisite'             => $multisite,
                 'site_has_woocommerce'  => MainWP_Utility::site_has_woocommerce( (int) $website->id ),
                 'site_url'              => (string) $website->url,
-                'local_only'            => empty( MainWP_DB_Backup::instance()->manual_backup_task_destinations( $site_id ) ),
+                'local_only'            => empty( $manual_ids ),
+                'manual_destinations'   => $manual_destinations,
                 'active_restore_job_id' => null !== $active_job ? (int) $active_job->id : 0,
                 'manual_backup_running' => ! empty( $manual_task ) && (int) $manual_task->completed < (int) $manual_task->last_run,
             )

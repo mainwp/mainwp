@@ -142,9 +142,28 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     </button>
                     <span id="mainwp-native-backup-now-status" class="mainwp-native-backup-now-status" aria-live="polite" style="margin-left: 1em; color: var(--mainwp-text-color, inherit);"></span>
                 </div>
-                    <?php $backup_now_local_only = $site_id > 0 && empty( MainWP_DB_Backup::instance()->manual_backup_task_destinations( $site_id ) ); ?>
-                <div id="mainwp-native-backup-now-note" class="mainwp-native-backup-now-note" data-local-only="<?php echo $backup_now_local_only ? '1' : '0'; ?>" style="margin-top: .5em; opacity: .8;<?php echo $backup_now_local_only ? '' : ' display: none;'; ?>">
-                    <i class="info circle icon"></i><?php esc_html_e( 'No backup destination is configured for this site, so this backup will be kept on the dashboard.', 'mainwp' ); ?>
+                    <?php
+                    $manual_ids = $site_id > 0 ? MainWP_DB_Backup::instance()->manual_backup_task_destinations( $site_id ) : array();
+                    sort( $manual_ids, SORT_NUMERIC );
+                    $manual_destinations = array();
+                    foreach ( $manual_ids as $destination_id ) {
+                        $destination           = MainWP_Backup_Storage_Destinations::instance()->get_destination( $destination_id );
+                        $manual_destinations[] = null !== $destination ? (string) $destination->name : sprintf(
+                            /* translators: %d: storage destination ID. */
+                            __( 'Destination #%d (removed)', 'mainwp' ),
+                            $destination_id
+                        );
+                    }
+                    $backup_now_local_only = $site_id > 0 && empty( $manual_ids );
+                    $destinations_note     = sprintf(
+                        /* translators: %s: comma-separated storage destination names. */
+                        __( 'Back Up Now saves this backup to the destinations of the scheduled backup tasks that include this site: %s.', 'mainwp' ),
+                        implode( ', ', $manual_destinations )
+                    );
+                    ?>
+                <div id="mainwp-native-backup-now-note" class="mainwp-native-backup-now-note" data-local-only="<?php echo $backup_now_local_only ? '1' : '0'; ?>" style="margin-top: .5em; opacity: .8;<?php echo $site_id > 0 ? '' : ' display: none;'; ?>">
+                    <i class="info circle icon"></i><span class="mainwp-backup-local-note"<?php echo $backup_now_local_only ? '' : ' style="display: none;"'; ?>><?php esc_html_e( 'No backup destination is configured for this site, so this backup will be kept on the dashboard.', 'mainwp' ); ?></span>
+                    <span class="mainwp-backup-destinations-note"<?php echo $backup_now_local_only ? ' style="display: none;"' : ''; ?>><?php echo esc_html( $destinations_note ); ?></span>
                 </div>
                 <?php endif; ?>
             </div>
@@ -286,7 +305,22 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 'remote_chunked': '<?php echo esc_js( esc_html__( 'Cloud storage', 'mainwp' ) ); ?>',
                 'unavailable': '<?php echo esc_js( esc_html__( 'Removed by retention', 'mainwp' ) ); ?>'
             };
-            var offsiteVerifiedLabel = '<?php echo esc_js( esc_html__( 'Offsite Verified', 'mainwp' ) ); ?>';
+            var offsiteLabels = {
+                verified: [ 'green', '<?php echo esc_js( esc_html__( 'Offsite Verified', 'mainwp' ) ); ?>' ],
+                pending: [ 'blue', '<?php echo esc_js( esc_html__( 'Uploading', 'mainwp' ) ); ?>' ],
+                partial: [ 'orange', '<?php echo esc_js( esc_html__( 'Partially uploaded', 'mainwp' ) ); ?>' ],
+                failed: [ 'red', '<?php echo esc_js( esc_html__( 'Upload failed', 'mainwp' ) ); ?>' ]
+            };
+            var uploadLabels = {
+                pending: [ 'grey', '<?php echo esc_js( esc_html__( 'Waiting to upload', 'mainwp' ) ); ?>' ],
+                chunking: [ 'blue', '<?php echo esc_js( esc_html__( 'Uploading', 'mainwp' ) ); ?>' ],
+                uploading: [ 'blue', '<?php echo esc_js( esc_html__( 'Uploading', 'mainwp' ) ); ?>' ],
+                submitting: [ 'blue', '<?php echo esc_js( esc_html__( 'Uploading', 'mainwp' ) ); ?>' ],
+                complete: [ 'green', '<?php echo esc_js( esc_html__( 'Uploaded', 'mainwp' ) ); ?>' ],
+                failed_retryable: [ 'orange', '<?php echo esc_js( esc_html__( 'Upload failed, will retry', 'mainwp' ) ); ?>' ],
+                failed_permanent: [ 'red', '<?php echo esc_js( esc_html__( 'Upload failed', 'mainwp' ) ); ?>' ],
+                credentials_invalid: [ 'red', '<?php echo esc_js( esc_html__( 'Re-enter credentials', 'mainwp' ) ); ?>' ]
+            };
             var testRestoreLabels = {
                 'pass': '<?php echo esc_js( esc_html__( 'Test-restored', 'mainwp' ) ); ?>',
                 'fail': '<?php echo esc_js( esc_html__( 'Test-restore failed', 'mainwp' ) ); ?>',
@@ -437,8 +471,16 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         "data": null,
                         "render": function ( data, type, snap ) {
                             var sourceCell = sourceLabels[ snap.source ] || escAttr( snap.source );
-                            if ( 'display' === type && 'verified' === snap.offsite_state ) {
-                                sourceCell += ' <span class="ui mini green label">' + offsiteVerifiedLabel + '</span>';
+                            if ( 'display' === type ) {
+                                var offsite = offsiteLabels[ snap.offsite_state ];
+                                if ( offsite ) {
+                                    sourceCell += ' <span class="ui mini ' + offsite[0] + ' label">' + offsite[1] + '</span>';
+                                }
+                                if ( snap.uploads && snap.uploads.length ) {
+                                    var complete = snap.uploads.filter( function ( upload ) { return 'complete' === upload.status; } ).length;
+                                    var summary = '<?php /* translators: 1: completed uploads, 2: total uploads. */ echo esc_js( esc_html__( '%1$d of %2$d uploaded', 'mainwp' ) ); ?>'.replace( '%1$d', complete ).replace( '%2$d', snap.uploads.length );
+                                    sourceCell += ' <a href="#" class="mainwp-snapshot-uploads-toggle" data-snapshot-id="' + escAttr( snap.id ) + '"><small>' + summary + '</small></a>';
+                                }
                             }
                             return sourceCell;
                         }
@@ -481,6 +523,25 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 }
             } );
 
+            $( '#mainwp-restore-snapshots-table' ).on( 'click', '.mainwp-snapshot-uploads-toggle', function ( event ) {
+                event.preventDefault();
+                var row = snapshotsTable.row( $( this ).closest( 'tr' ) );
+                if ( row.child.isShown() ) {
+                    row.child.hide();
+                    return;
+                }
+                var details = '<div class="ui mini divided list">';
+                ( row.data().uploads || [] ).forEach( function ( upload ) {
+                    var label = uploadLabels[ upload.status ] || [ 'grey', escAttr( upload.status ) ];
+                    details += '<div class="item">' + escAttr( upload.name ) + ' (' + escAttr( upload.provider ) + ') <span class="ui mini ' + label[0] + ' label">' + label[1] + '</span>';
+                    if ( [ 'failed_retryable', 'failed_permanent', 'credentials_invalid' ].indexOf( upload.status ) !== -1 && upload.last_error ) {
+                        details += ' ' + escAttr( upload.last_error );
+                    }
+                    details += '</div>';
+                } );
+                row.child( details + '</div>' ).show();
+            } );
+
             // The search stack is global to the page, so scope the callback to
             // this table. Filtering runs before the row nodes exist, so it reads
             // the snapshot's source off the row data rather than a row class.
@@ -513,7 +574,10 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     siteIsMultisite = !! response.multisite;
                     siteHasWooCommerce = !! response.site_has_woocommerce;
                     currentSiteUrl = response.site_url || '';
-                    $( '#mainwp-native-backup-now-note' ).attr( 'data-local-only', response.local_only ? '1' : '0' ).toggle( !! response.local_only );
+                    var backupNote = $( '#mainwp-native-backup-now-note' ).attr( 'data-local-only', response.local_only ? '1' : '0' ).toggle( siteId > 0 );
+                    backupNote.find( '.mainwp-backup-local-note' ).toggle( !! response.local_only );
+                    var destinationsNote = '<?php /* translators: %s: comma-separated storage destination names. */ echo esc_js( esc_html__( 'Back Up Now saves this backup to the destinations of the scheduled backup tasks that include this site: %s.', 'mainwp' ) ); ?>'.replace( '%s', function () { return escAttr( ( response.manual_destinations || [] ).join( ', ' ) ); } );
+                    backupNote.find( '.mainwp-backup-destinations-note' ).html( destinationsNote ).toggle( ! response.local_only );
 
                     setSnapshotsPlaceholder( snapshotsPlaceholders.empty );
                     snapshotsTable.clear();

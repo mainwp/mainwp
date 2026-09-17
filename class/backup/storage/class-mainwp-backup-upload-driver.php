@@ -38,6 +38,13 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
     const DEFAULT_BUDGET_SECONDS = 240;
 
     /**
+     * Maximum jobs attempted in one tick.
+     *
+     * @var int
+     */
+    const MAX_JOBS_PER_TICK = 10;
+
+    /**
      * Instance variable class.
      *
      * @static
@@ -180,8 +187,10 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
     }
 
     /**
-     * Acquire and run one pending upload job within a time budget. Rides
-     * the backups-continue cron lane.
+     * Run pending uploads within one shared time budget on the
+     * backups-continue cron lane. Stop after MAX_JOBS_PER_TICK attempts
+     * or a repeated job, so a parked job cannot spin within the tick.
+     * A zero budget still allows one attempt to checkpoint.
      *
      * @param int      $budget_seconds Work budget for this tick.
      * @param int|null $now            Clock override for tests.
@@ -189,25 +198,34 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
      * @return void
      */
     public function process_pending_jobs( int $budget_seconds = self::DEFAULT_BUDGET_SECONDS, ?int $now = null ): void {
-        $now   = null === $now ? time() : $now;
-        $store = MainWP_Backup_Upload_Job_Store::instance();
-        $token = uniqid( 'upload_', true );
-
+        $deadline      = microtime( true ) + $budget_seconds;
+        $store         = MainWP_Backup_Upload_Job_Store::instance();
         $lease_seconds = max( 300, $budget_seconds + 60 );
+        $attempted     = array();
+        $job_count     = 0;
 
-        $job = $store->acquire_next_job( $token, $lease_seconds, $now );
-        if ( null === $job ) {
-            return;
-        }
+        do {
+            $iteration_now = null === $now ? time() : $now;
+            $token         = uniqid( 'upload_', true );
+            $job           = $store->acquire_next_job( $token, $lease_seconds, $iteration_now );
+            if ( null === $job ) {
+                return;
+            }
 
-        $this->lock_token    = $token;
-        $this->lease_seconds = $lease_seconds;
-        try {
-            $this->run_job( $job, microtime( true ) + $budget_seconds, $now );
-        } finally {
-            $this->lock_token = null;
-            $store->release_lock( (int) $job->id, $token );
-        }
+            $this->lock_token    = $token;
+            $this->lease_seconds = $lease_seconds;
+            try {
+                if ( isset( $attempted[ (int) $job->id ] ) ) {
+                    return;
+                }
+                $attempted[ (int) $job->id ] = true;
+                ++$job_count;
+                $this->run_job( $job, $deadline, $iteration_now );
+            } finally {
+                $this->lock_token = null;
+                $store->release_lock( (int) $job->id, $token );
+            }
+        } while ( $job_count < self::MAX_JOBS_PER_TICK && microtime( true ) < $deadline );
     }
 
     /**

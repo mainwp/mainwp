@@ -30,6 +30,35 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Upload progress has distinct row and destination labels.
+	 */
+	public function test_upload_status_labels_and_details_present() {
+		$output = $this->render_page();
+		foreach ( array( 'Offsite Verified', 'Uploading', 'Partially uploaded', 'Upload failed', 'Waiting to upload', 'Uploaded', 'Upload failed, will retry', 'Re-enter credentials', '%1$d of %2$d uploaded' ) as $label ) {
+			$this->assertStringContainsString( $label, $output );
+		}
+		$this->assertStringContainsString( 'mainwp-snapshot-uploads-toggle', $output );
+		$this->assertStringContainsString( 'ui mini divided list', $output );
+		$this->assertStringContainsString( 'escAttr( upload.name )', $output );
+		$this->assertStringContainsString( 'escAttr( upload.provider )', $output );
+		$this->assertStringContainsString( 'escAttr( upload.last_error )', $output );
+	}
+
+	/**
+	 * The initial note and AJAX refresh explain inherited destinations.
+	 */
+	public function test_backup_now_destination_note_copy_present() {
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		$output = $this->render_page();
+		delete_option( 'mainwp_enableNativeBackups' );
+
+		$this->assertStringContainsString( 'No backup destination is configured for this site, so this backup will be kept on the dashboard.', $output );
+		$this->assertStringContainsString( 'Back Up Now saves this backup to the destinations of the scheduled backup tasks that include this site:', $output );
+		$this->assertStringContainsString( 'response.manual_destinations', $output );
+		$this->assertStringContainsString( 'response.local_only', $output );
+	}
+
+	/**
 	 * The cancel button stays available while the restore runs on the
 	 * site - the child-side cancel makes that window safe to offer.
 	 *

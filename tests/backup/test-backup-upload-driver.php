@@ -331,6 +331,65 @@ class MainWP_Backup_Upload_Driver_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * A scheduled snapshot reaches both local destinations in one tick.
+	 */
+	public function test_two_local_destinations_complete_in_one_tick() {
+		list( $dest_a, $base_a ) = $this->make_local_destination();
+		list( $dest_b, $base_b ) = $this->make_local_destination();
+		$task_id                = $this->insert_task( array( $dest_a, $dest_b ) );
+		MainWP_Backup_Upload_Driver::instance()->init();
+		$snapshot_id = $this->make_snapshot( $this->standard_files(), $task_id );
+
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+
+		$jobs = MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $snapshot_id );
+		$this->assertSame( array( 'complete', 'complete' ), array_column( $jobs, 'status' ) );
+		$this->assertFileExists( $base_a . '/4/' . $snapshot_id . '/manifest.json' );
+		$this->assertFileExists( $base_b . '/4/' . $snapshot_id . '/manifest.json' );
+		$this->assertSame( '', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id )->offsite_state );
+	}
+
+	/**
+	 * An expired budget permits one checkpoint attempt, leaving later jobs pending.
+	 */
+	public function test_zero_budget_attempts_only_one_job() {
+		list( $dest_a ) = $this->make_local_destination();
+		list( $dest_b ) = $this->make_local_destination();
+		$snapshot_id    = $this->make_snapshot( $this->standard_files() );
+		$store          = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_a, $dest_b ) );
+
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 0, time() );
+
+		$jobs = $store->get_jobs_for_snapshot( $snapshot_id );
+		$this->assertSame( array( 'chunking', 'pending' ), array_column( $jobs, 'status' ) );
+		$this->assertNotEmpty( $jobs[0]->checkpoint['artifacts'] );
+		$this->assertEmpty( $jobs[1]->checkpoint );
+		$this->assertSame( array( '', '' ), array_column( $jobs, 'locked_by' ) );
+	}
+
+	/**
+	 * A large queue cannot monopolize the continuation lane.
+	 */
+	public function test_tick_stops_after_maximum_jobs() {
+		list( $dest_id ) = $this->make_local_destination();
+		$store          = MainWP_Backup_Upload_Job_Store::instance();
+		$snapshots      = array();
+		for ( $i = 0; $i <= MainWP_Backup_Upload_Driver::MAX_JOBS_PER_TICK; ++$i ) {
+			$snapshot_id = $this->make_snapshot( $this->standard_files() );
+			$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+			$snapshots[] = $snapshot_id;
+		}
+
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+
+		foreach ( $snapshots as $index => $snapshot_id ) {
+			$expected = $index < MainWP_Backup_Upload_Driver::MAX_JOBS_PER_TICK ? 'complete' : 'pending';
+			$this->assertSame( $expected, $store->get_jobs_for_snapshot( $snapshot_id )[0]->status, 'Unexpected status for queued job ' . $index );
+		}
+	}
+
+	/**
 	 * A task without destinations enqueues nothing.
 	 *
 	 * @return void
@@ -1344,6 +1403,8 @@ class MainWP_Backup_Upload_Driver_Test extends \WP_UnitTestCase {
 		}
 
 		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_PENDING, $job->status, 'A failed initial index save must leave the job pending for the next tick, not complete it.' );
+		$this->assertSame( 1, $failing->calls, 'A parked job must not be attempted twice within one tick.' );
+		$this->assertSame( '', $job->locked_by, 'The repeated acquisition must release its lock.' );
 		$this->assertEmpty( $job->checkpoint['artifacts'] ?? array(), 'The unpersisted checkpoint must stay empty; the job must not have completed over it.' );
 	}
 

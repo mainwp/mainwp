@@ -395,6 +395,56 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A scheduled database backup records its downloaded database archive.
+	 */
+	public function test_completed_db_run_records_snapshot() {
+		list( $site_id, $task ) = $this->site_and_task( array( 'type' => 'db' ) );
+		$content                = 'PK' . "\x03\x04" . str_repeat( 'x', 4092 );
+		$this->seed_download_ready_progress( $task->id, $site_id, strlen( $content ) );
+		MainWP_DB_Backup::instance()->update_backup_task_progress(
+			$task->id,
+			$site_id,
+			array(
+				'fetchResult'          => wp_json_encode(
+					array(
+						'full' => false,
+						'db'   => 'backup-db.sql.zip',
+						'size' => strlen( $content ),
+					)
+				),
+				'downloadedDB'         => '',
+				'downloadedDBComplete' => 0,
+			)
+		);
+		$this->mock_child_action( 'delete_backup', array( 'result' => 'ok' ) );
+		add_filter(
+			'mainwp_download_to_file_pre',
+			function ( $pre, $url, $file ) use ( $content ) {
+				$this->snapshot_files[] = $file;
+				file_put_contents( $file, $content ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- test fixture.
+				return true;
+			},
+			10,
+			3
+		);
+
+		$result   = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, (int) $task->id );
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+
+		$this->assertNotFalse( $result );
+		$this->assertNotNull( $snapshot, 'A completed database run must record a snapshot row.' );
+		$this->assertSame( 'db', $snapshot->type );
+		$this->assertCount( 1, $snapshot->archives );
+		$this->assertSame( 'db', $snapshot->archives[0]['role'] );
+		$this->assertSame( strlen( $content ), (int) $snapshot->archives[0]['size'] );
+		$this->assertSame( 1, (int) $progress->downloadedDBComplete );
+		$this->assertSame( $progress->downloadedDB, $snapshot->archives[0]['path'] );
+		$this->assertSame( 0, (int) $progress->downloadedFULLComplete );
+		$this->assertFileExists( $snapshot->archives[0]['path'] );
+	}
+
+	/**
 	 * Isolate record failure from archive download and validation failures.
 	 *
 	 * @return string Archive bytes.

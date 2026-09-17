@@ -13,7 +13,10 @@ use MainWP\Dashboard\MainWP_Backup_Restore_Job_Store;
 use MainWP\Dashboard\MainWP_Backup_Restore_Orchestrator;
 use MainWP\Dashboard\MainWP_Backup_Restore_Transfer_Driver;
 use MainWP\Dashboard\MainWP_Backup_Snapshots;
+use MainWP\Dashboard\MainWP_Backup_Storage_Destinations;
+use MainWP\Dashboard\MainWP_Backup_Upload_Job_Store;
 use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_DB_Backup;
 use MainWP\Dashboard\MainWP_Exception;
 use MainWP\Dashboard\MainWP_Post_Backup_Handler;
 
@@ -1718,10 +1721,74 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
+	 * The list exposes upload progress and inherited destination names, even after deletion.
+	 */
+	public function test_snapshots_list_includes_uploads_and_manual_destinations() {
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$destinations = MainWP_Backup_Storage_Destinations::instance();
+		$dest_a       = $destinations->add_destination( array( 'provider' => 'local', 'name' => 'Archive & storage' ) );
+		$dest_b       = $destinations->add_destination( array( 'provider' => 's3', 'name' => 'Removed archive' ) );
+		$snapshot_id  = $this->make_chain_snapshot( null, 'db', array( array( 'file' => 'db.sql', 'role' => 'db' ) ) );
+		$store        = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_a, $dest_b ) );
+		$jobs = $store->get_jobs_for_snapshot( $snapshot_id );
+		$store->fail_permanent( (int) $jobs[1]->id, '<error>' . str_repeat( 'é', 210 ) );
+		$store->enqueue_delete_job( $snapshot_id, $dest_a, array() );
+		$destinations->delete_destination( $dest_b );
+
+		$website = MainWP_DB::instance()->get_website_by_id( $this->site_id );
+		$task    = MainWP_DB_Backup::instance()->ensure_manual_backup_task( $website );
+		MainWP_DB_Backup::instance()->update_backup_task_with_values(
+			(int) $task->id,
+			array(
+				'template'     => 0,
+				'schedule'     => 'daily',
+				'destinations' => wp_json_encode( array( $dest_b, $dest_a ) ),
+			)
+		);
+
+		$nonce                = wp_create_nonce( 'mainwp_restore_snapshot_list' );
+		$_POST['security']    = $nonce;
+		$_REQUEST['security'] = $nonce;
+		$_POST['site_id']     = (string) $this->site_id;
+		try {
+			$response = $this->invoke_ajax_handler( 'mainwp_restore_snapshot_list' );
+		} finally {
+			unset( $_POST['security'], $_REQUEST['security'], $_POST['site_id'] );
+		}
+
+		$removed_name = 'Destination #' . $dest_b . ' (removed)';
+		$this->assertFalse( $response['local_only'] );
+		$this->assertSame( array( 'Archive & storage', $removed_name ), $response['manual_destinations'] );
+		$rows = array_column( $response['snapshots'], null, 'id' );
+		$this->assertArrayHasKey( $snapshot_id, $rows );
+		$uploads = $rows[ $snapshot_id ]['uploads'];
+		$this->assertCount( 2, $uploads, 'Delete jobs must not appear as uploads.' );
+		$this->assertSame(
+			array(
+				'destination_id' => $dest_a,
+				'name'           => 'Archive & storage',
+				'provider'       => 'local',
+				'status'         => 'pending',
+				'updated'        => (int) $store->get_job( (int) $jobs[0]->id )->updated,
+				'last_error'     => '',
+			),
+			$uploads[0]
+		);
+		$this->assertSame( $dest_b, $uploads[1]['destination_id'] );
+		$this->assertSame( $removed_name, $uploads[1]['name'] );
+		$this->assertSame( 's3', $uploads[1]['provider'] );
+		$this->assertSame( 'failed_permanent', $uploads[1]['status'] );
+		$this->assertIsInt( $uploads[1]['updated'] );
+		$this->assertSame( '<error>' . str_repeat( 'é', 193 ), $uploads[1]['last_error'] );
+	}
+
+	/**
 	 * With nothing running, the bootstrap fields read empty.
 	 */
 	public function test_snapshots_list_response_bootstrap_empty_when_idle() {
 		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$snapshot_id = $this->make_chain_snapshot( null, 'db', array( array( 'file' => 'db.sql', 'role' => 'db' ) ) );
 
 		$nonce                = wp_create_nonce( 'mainwp_restore_snapshot_list' );
 		$_POST['security']    = $nonce;
@@ -1737,6 +1804,10 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$this->assertIsArray( $response );
 		$this->assertSame( 0, (int) ( $response['active_restore_job_id'] ?? -1 ) );
 		$this->assertFalse( (bool) ( $response['manual_backup_running'] ?? true ) );
+		$this->assertTrue( $response['local_only'] );
+		$this->assertSame( array(), $response['manual_destinations'] );
+		$rows = array_column( $response['snapshots'], null, 'id' );
+		$this->assertSame( array(), $rows[ $snapshot_id ]['uploads'] );
 	}
 
 	/**

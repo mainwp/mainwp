@@ -15,6 +15,7 @@ namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_Backup_Snapshots_View;
+use MainWP\Dashboard\MainWP_Backup_Storage_Destinations;
 
 /**
  * Class MainWP_Backup_Snapshots_Local_Note_Test
@@ -113,20 +114,43 @@ class MainWP_Backup_Snapshots_Local_Note_Test extends \WP_UnitTestCase {
 
 		$this->assertStringContainsString( 'mainwp-native-backup-now-note', $out );
 		$this->assertStringContainsString( 'data-local-only="1"', $out );
+		$this->assertMatchesRegularExpression( '/id="mainwp-native-backup-now-note"[^>]*style="margin-top: \.5em; opacity: \.8;"/', $out );
+		$this->assertStringContainsString( '<span class="mainwp-backup-local-note">No backup destination is configured for this site, so this backup will be kept on the dashboard.</span>', $out );
 	}
 
 	/**
 	 * With a scheduled task carrying a destination, the on-demand backup
-	 * uploads offsite, so the note renders hidden (local-only flagged off).
+	 * names the inherited destinations while the local-only flag stays off.
 	 *
 	 * @return void
 	 */
-	public function test_note_hidden_when_destination_configured() {
-		$this->insert_scheduled_task( (string) $this->site_id, array( 3 ) );
+	public function test_note_names_destinations_when_configured() {
+		$destinations = MainWP_Backup_Storage_Destinations::instance();
+		$dest_a       = $destinations->add_destination( array( 'provider' => 'local', 'name' => 'Z & archive' ) );
+		$dest_b       = $destinations->add_destination( array( 'provider' => 'local', 'name' => 'A archive' ) );
+		$this->insert_scheduled_task( (string) $this->site_id, array( $dest_b, $dest_a ) );
 
 		$out = $this->render_surface();
 
 		$this->assertStringContainsString( 'mainwp-native-backup-now-note', $out );
 		$this->assertStringContainsString( 'data-local-only="0"', $out );
+		$this->assertMatchesRegularExpression( '/id="mainwp-native-backup-now-note"[^>]*style="margin-top: \.5em; opacity: \.8;"/', $out );
+		$this->assertStringContainsString( '<span class="mainwp-backup-local-note" style="display: none;">', $out );
+		$this->assertStringContainsString( '<span class="mainwp-backup-destinations-note">Back Up Now saves this backup to the destinations of the scheduled backup tasks that include this site: Z &amp; archive, A archive.</span>', $out );
+	}
+
+	/**
+	 * A stale destination reference remains visible in the inherited list.
+	 */
+	public function test_note_names_removed_destination() {
+		$destinations = MainWP_Backup_Storage_Destinations::instance();
+		$dest_id      = $destinations->add_destination( array( 'provider' => 'local', 'name' => 'Removed archive' ) );
+		$this->insert_scheduled_task( (string) $this->site_id, array( $dest_id ) );
+		$destinations->delete_destination( $dest_id );
+
+		$out = $this->render_surface();
+
+		$this->assertStringContainsString( 'data-local-only="0"', $out );
+		$this->assertStringContainsString( 'include this site: Destination #' . $dest_id . ' (removed).', $out );
 	}
 }

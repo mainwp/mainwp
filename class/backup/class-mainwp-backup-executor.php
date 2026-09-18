@@ -2332,7 +2332,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
             $cache[ $key ] = array();
             $cutoff        = time() - $max_age_days * DAY_IN_SECONDS;
-            foreach ( $rows as $row ) {
+            foreach ( (array) $rows as $row ) {
                 $cache[ $key ][ (int) $row->site_id ] = (int) $row->created >= $cutoff && ( ! $require_offsite || 'verified' === (string) $row->offsite_state );
             }
         }

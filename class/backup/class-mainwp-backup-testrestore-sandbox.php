@@ -126,12 +126,12 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         $this->created_db = true;
         $this->mysqli->select_db( $this->db_name );
 
+        $this->protect_parent();
+
         if ( ! wp_mkdir_p( $this->temp_dir ) ) {
             $this->tear_down();
             throw new MainWP_Exception( esc_html__( 'The test-restore sandbox could not create its working directory.', 'mainwp' ), 'mkdir: ' . $this->temp_dir, self::ERR_UNSUPPORTED );
         }
-
-        $this->protect_parent();
     }
 
     /**
@@ -155,14 +155,34 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         );
         foreach ( $protection as $name => $contents ) {
             $file = $parent . '/' . $name;
-            // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local protection; an unreadable deny rule requires repair or refusal below.
+            if ( is_link( $file ) || ( file_exists( $file ) && ! is_file( $file ) ) ) {
+                if ( '.htaccess' === $name ) {
+                    $this->tear_down();
+                    throw new MainWP_Exception( esc_html__( 'The test-restore sandbox could not protect its working directory.', 'mainwp' ), 'sandbox protection: ' . $file . ' is not a regular file', self::ERR_UNSUPPORTED );
+                }
+                continue;
+            }
+            if ( '.htaccess' === $name && file_exists( $file ) && ! is_readable( $file ) ) {
+                // The web server enforces the deny rule; a read failure does not prove it is missing.
+                // Refusing here would disable verified restores for CAPABILITY_TTL.
+                continue;
+            }
+            // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local protection; repair a missing or permissive deny rule.
             if ( ! file_exists( $file ) || ( '.htaccess' === $name && false === stripos( (string) @file_get_contents( $file ), 'deny from all' ) ) ) {
+                error_clear_last();
                 // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents, WordPress.PHP.NoSilencedErrors.Discouraged -- verify deny-rule persistence below; index.php remains best effort.
                 @file_put_contents( $file, $contents );
+                $write_error = error_get_last();
                 // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local protection; unreadable protection must fail closed.
-                if ( '.htaccess' === $name && false === stripos( (string) @file_get_contents( $file ), 'deny from all' ) ) {
+                $readback = '.htaccess' === $name ? @file_get_contents( $file ) : '';
+                if ( '.htaccess' === $name && ( ! is_string( $readback ) || false === stripos( $readback, 'deny from all' ) ) ) {
+                    $error  = $write_error ?? error_get_last();
+                    $detail = 'sandbox protection: ' . $parent;
+                    if ( ! empty( $error['message'] ) ) {
+                        $detail .= ': ' . $error['message'];
+                    }
                     $this->tear_down();
-                    throw new MainWP_Exception( esc_html__( 'The test-restore sandbox could not protect its working directory.', 'mainwp' ), 'sandbox protection: ' . $parent, self::ERR_UNSUPPORTED );
+                    throw new MainWP_Exception( esc_html__( 'The test-restore sandbox could not protect its working directory.', 'mainwp' ), $detail, self::ERR_UNSUPPORTED );
                 }
             }
         }

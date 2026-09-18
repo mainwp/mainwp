@@ -314,6 +314,7 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 		$parent    = dirname( untrailingslashit( $sandbox->temp_dir() ) );
 		$alias_dir = untrailingslashit( $sandbox->temp_dir() ) . '-phar';
 		$method    = new \ReflectionMethod( $sandbox, 'phar_readable_path' );
+		$method->setAccessible( true );
 		$this->assertTrue( rename( $this->clean_tar(), $path ) );
 		$this->assertTrue( wp_mkdir_p( $parent ) );
 		$this->assertSame( 7, file_put_contents( $alias_dir, 'blocked' ) );
@@ -409,6 +410,7 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 			$this->assertTrue( chmod( $htaccess, 0444 ) );
 			clearstatcache( true, $htaccess );
 			$this->assertFalse( is_writable( $htaccess ), 'The fixture must prevent deny-rule repair.' );
+			$this->assertTrue( is_readable( $htaccess ), 'The fixture must remain readable.' );
 			$threw = false;
 			try {
 				$sandbox->bring_up();
@@ -416,12 +418,218 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 				$threw = true;
 				$this->assertSame( MainWP_Backup_TestRestore_Sandbox::ERR_UNSUPPORTED, $e->get_message_error_code() );
 				$this->assertSame( 'The test-restore sandbox could not protect its working directory.', $e->getMessage() );
+				$this->assertStringContainsString( 'file_put_contents(' . $htaccess . '):', $e->get_message_extra( false ) );
 			}
 			$this->assertTrue( $threw, 'An uncorrectable deny rule must be reported as unsupported.' );
 			$this->assertSame( 'allow from all', file_get_contents( $htaccess ) );
 			$this->assertDirectoryDoesNotExist( $sandbox->temp_dir() );
 		} finally {
 			chmod( $htaccess, 0644 );
+			$sandbox->tear_down();
+		}
+	}
+
+	/**
+	 * Refusing a symlink must preserve the target bytes.
+	 *
+	 * @return void
+	 */
+	public function test_bring_up_refuses_symlinked_parent_htaccess() {
+		$upload_dir = function ( $upload ) {
+			$upload['basedir'] = $this->dir;
+			return $upload;
+		};
+		add_filter( 'upload_dir', $upload_dir );
+		try {
+			$sandbox = new MainWP_Backup_TestRestore_Sandbox();
+		} finally {
+			remove_filter( 'upload_dir', $upload_dir );
+		}
+
+		$parent   = dirname( untrailingslashit( $sandbox->temp_dir() ) );
+		$htaccess = $parent . '/.htaccess';
+		$this->assertTrue( wp_mkdir_p( $parent ) );
+		$target = $this->dir . '/credential.php';
+		$bytes  = '<?php $credential = "retained";';
+		$this->assertSame( strlen( $bytes ), file_put_contents( $target, $bytes ) );
+		$this->assertTrue( symlink( $target, $htaccess ) );
+		try {
+			$threw = false;
+			try {
+				$sandbox->bring_up();
+			} catch ( MainWP_Exception $e ) {
+				$threw = true;
+				$this->assertSame( MainWP_Backup_TestRestore_Sandbox::ERR_UNSUPPORTED, $e->get_message_error_code() );
+				$this->assertStringContainsString( $htaccess . ' is not a regular file', $e->get_message_extra( false ) );
+			}
+			$this->assertTrue( $threw, 'A non-regular protection path must be refused.' );
+			$this->assertSame( $bytes, file_get_contents( $target ) );
+			$this->assertTrue( is_link( $htaccess ) );
+		} finally {
+			$sandbox->tear_down();
+		}
+	}
+
+	/**
+	 * A directory must fail the regular-file guard explicitly.
+	 *
+	 * @return void
+	 */
+	public function test_bring_up_refuses_directory_parent_htaccess() {
+		$upload_dir = function ( $upload ) {
+			$upload['basedir'] = $this->dir;
+			return $upload;
+		};
+		add_filter( 'upload_dir', $upload_dir );
+		try {
+			$sandbox = new MainWP_Backup_TestRestore_Sandbox();
+		} finally {
+			remove_filter( 'upload_dir', $upload_dir );
+		}
+
+		$parent   = dirname( untrailingslashit( $sandbox->temp_dir() ) );
+		$htaccess = $parent . '/.htaccess';
+		$this->assertTrue( wp_mkdir_p( $parent ) );
+		$this->assertTrue( wp_mkdir_p( $htaccess ) );
+		try {
+			$threw = false;
+			try {
+				$sandbox->bring_up();
+			} catch ( MainWP_Exception $e ) {
+				$threw = true;
+				$this->assertSame( MainWP_Backup_TestRestore_Sandbox::ERR_UNSUPPORTED, $e->get_message_error_code() );
+				$this->assertStringContainsString( $htaccess . ' is not a regular file', $e->get_message_extra( false ) );
+			}
+			$this->assertTrue( $threw, 'A non-regular protection path must be refused.' );
+		} finally {
+			$sandbox->tear_down();
+		}
+	}
+
+	/**
+	 * PHP read permissions do not establish whether the web server denies access.
+	 *
+	 * @return void
+	 */
+	public function test_bring_up_preserves_unreadable_parent_htaccess() {
+		$upload_dir = function ( $upload ) {
+			$upload['basedir'] = $this->dir;
+			return $upload;
+		};
+		add_filter( 'upload_dir', $upload_dir );
+		try {
+			$sandbox = new MainWP_Backup_TestRestore_Sandbox();
+		} finally {
+			remove_filter( 'upload_dir', $upload_dir );
+		}
+
+		$parent   = dirname( untrailingslashit( $sandbox->temp_dir() ) );
+		$htaccess = $parent . '/.htaccess';
+		$this->assertTrue( wp_mkdir_p( $parent ) );
+		$this->assertSame( 13, file_put_contents( $htaccess, 'deny from all' ) );
+		$this->assertTrue( touch( $htaccess, 1000000000 ) );
+		try {
+			$this->assertTrue( chmod( $htaccess, 0000 ) );
+			clearstatcache( true, $htaccess );
+			if ( is_readable( $htaccess ) ) {
+				$this->markTestSkipped( 'The process can read chmod 000 protection files.' );
+			}
+			$sandbox->bring_up();
+			$this->assertDirectoryExists( $sandbox->temp_dir() );
+			$this->assertFileExists( $parent . '/index.php' );
+			$this->assertTrue( chmod( $htaccess, 0644 ) );
+			clearstatcache( true, $htaccess );
+			$this->assertSame( 'deny from all', file_get_contents( $htaccess ) );
+			$this->assertSame( 1000000000, filemtime( $htaccess ), 'Unreadable protection must not be rewritten.' );
+		} finally {
+			chmod( $htaccess, 0644 );
+			$sandbox->tear_down();
+		}
+	}
+
+	/**
+	 * Protection refusal must happen before the extraction root is created.
+	 *
+	 * @return void
+	 */
+	public function test_bring_up_protects_parent_before_extraction_root() {
+		$upload_dir = function ( $upload ) {
+			$upload['basedir'] = $this->dir;
+			return $upload;
+		};
+		add_filter( 'upload_dir', $upload_dir );
+		try {
+			$sandbox = new class() extends MainWP_Backup_TestRestore_Sandbox {
+				/**
+				 * Whether the extraction root existed before cleanup.
+				 *
+				 * @var bool|null
+				 */
+				public $root_before_cleanup = null;
+
+				/**
+				 * Observe the root before normal teardown can remove it.
+				 *
+				 * @return void
+				 */
+				public function tear_down(): void {
+					$this->root_before_cleanup = is_dir( $this->temp_dir() );
+					parent::tear_down();
+				}
+			};
+		} finally {
+			remove_filter( 'upload_dir', $upload_dir );
+		}
+
+		$parent   = dirname( untrailingslashit( $sandbox->temp_dir() ) );
+		$htaccess = $parent . '/.htaccess';
+		$this->assertTrue( wp_mkdir_p( $parent ) );
+		$this->assertTrue( wp_mkdir_p( $htaccess ) );
+		try {
+			$threw = false;
+			try {
+				$sandbox->bring_up();
+			} catch ( MainWP_Exception $e ) {
+				$threw = true;
+				$this->assertSame( MainWP_Backup_TestRestore_Sandbox::ERR_UNSUPPORTED, $e->get_message_error_code() );
+				$this->assertStringContainsString( $htaccess . ' is not a regular file', $e->get_message_extra( false ) );
+			}
+			$this->assertTrue( $threw, 'A non-regular protection path must be refused.' );
+			$this->assertFalse( $sandbox->root_before_cleanup, 'The extraction root must not exist when protection refuses.' );
+			$this->assertDirectoryDoesNotExist( $sandbox->temp_dir() );
+		} finally {
+			$sandbox->tear_down();
+		}
+	}
+
+	/**
+	 * The best-effort index write must not follow a dangling symlink.
+	 *
+	 * @return void
+	 */
+	public function test_bring_up_preserves_dangling_index_symlink() {
+		$upload_dir = function ( $upload ) {
+			$upload['basedir'] = $this->dir;
+			return $upload;
+		};
+		add_filter( 'upload_dir', $upload_dir );
+		try {
+			$sandbox = new MainWP_Backup_TestRestore_Sandbox();
+		} finally {
+			remove_filter( 'upload_dir', $upload_dir );
+		}
+
+		$parent   = dirname( untrailingslashit( $sandbox->temp_dir() ) );
+		$htaccess = $parent . '/.htaccess';
+		$this->assertTrue( wp_mkdir_p( $parent ) );
+		$target = $this->dir . '/missing-index.php';
+		$this->assertTrue( symlink( $target, $parent . '/index.php' ) );
+		try {
+			$sandbox->bring_up();
+			$this->assertFileDoesNotExist( $target );
+			$this->assertTrue( is_link( $parent . '/index.php' ) );
+			$this->assertSame( 'deny from all', file_get_contents( $htaccess ) );
+		} finally {
 			$sandbox->tear_down();
 		}
 	}

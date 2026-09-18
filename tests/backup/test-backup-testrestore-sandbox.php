@@ -194,6 +194,110 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Dotted dashboard names work on both sides of Phar's filename limit.
+	 *
+	 * @return void
+	 */
+	public function test_tar_with_long_dotted_name_extracts() {
+		$path    = $this->dir . '/s23-full-bogdan3.mystagingwebsite.com-September-17-2026-23-55.tar';
+		$long    = substr( $path, 0, -4 ) . 'x.tar';
+		$sandbox = new MainWP_Backup_TestRestore_Sandbox();
+		$this->assertTrue( rename( $this->clean_tar(), $path ) );
+		$sandbox->bring_up();
+
+		try {
+			$sandbox->extract_files( $path );
+			$this->assertSame( 1, $sandbox->temp_file_count() );
+			$this->assertSame( hash( 'sha256', 'good-bytes' ), $sandbox->sentinel_sha256( 'good.txt' ) );
+			$this->assertDirectoryDoesNotExist( untrailingslashit( $sandbox->temp_dir() ) . '-phar', 'The requested plain-tar name has a 49-byte tail and needs no alias.' );
+
+			$this->assertTrue( rename( $path, $long ) );
+			$this->assertTrue( unlink( $sandbox->temp_dir() . 'good.txt' ) );
+			$sandbox->extract_files( $long );
+			$this->assertSame( 1, $sandbox->temp_file_count() );
+			$this->assertSame( hash( 'sha256', 'good-bytes' ), $sandbox->sentinel_sha256( 'good.txt' ) );
+			$this->assertFileExists( untrailingslashit( $sandbox->temp_dir() ) . '-phar/' . substr( sha1( basename( $long ) ), 0, 12 ) . '.tar', 'A 50-byte tail needs a short alias.' );
+		} finally {
+			$sandbox->tear_down();
+		}
+	}
+
+	/**
+	 * Compressed tar SQL members must return their bytes, not an empty stream.
+	 *
+	 * @return void
+	 */
+	public function test_tar_gz_with_long_dotted_name_reads_sql_member() {
+		$short = $this->dir . '/dump.tar';
+		$path  = $this->dir . '/s23-full-bogdan3.mystagingwebsite.com-September-17-2026-23-55.tar.gz';
+		$sql   = "CREATE TABLE restored (id int);\nINSERT INTO restored VALUES (1);\n";
+		$phar  = new \PharData( $short );
+		$phar->addFromString( 'database.sql', $sql );
+		$phar->compress( \Phar::GZ );
+		unset( $phar );
+		$this->assertTrue( rename( $short . '.gz', $path ) );
+		$sandbox = new MainWP_Backup_TestRestore_Sandbox();
+		$method  = new \ReflectionMethod( $sandbox, 'read_sql_dump' );
+		$method->setAccessible( true );
+
+		try {
+			$this->assertSame( strlen( $sql ), $sandbox->decompressed_sql_dump_bytes( $path, 1048576 ), 'The size guard must measure the SQL member through the alias.' );
+			$this->assertSame( $sql, $method->invoke( $sandbox, $path ) );
+			$this->assertSame( 0, $sandbox->temp_file_count(), 'Reading a SQL member must not count the alias as an extracted file.' );
+		} finally {
+			$sandbox->tear_down();
+		}
+	}
+
+	/**
+	 * An alias must not make an empty archive pass the driver's file count.
+	 *
+	 * @return void
+	 */
+	public function test_empty_long_named_tar_extracts_nothing() {
+		$short = $this->clean_tar();
+		$path  = $this->dir . '/s23-full-bogdan3.mystagingwebsite.com-September-17-2026-23-55-00.tar';
+		$phar  = new \PharData( $short );
+		$phar->delete( 'good.txt' );
+		unset( $phar );
+		$this->assertTrue( rename( $short, $path ) );
+		$sandbox = new MainWP_Backup_TestRestore_Sandbox();
+		$sandbox->bring_up();
+
+		try {
+			$sandbox->extract_files( $path );
+			$this->assertSame( 0, $sandbox->temp_file_count() );
+			$this->assertFileExists( untrailingslashit( $sandbox->temp_dir() ) . '-phar/' . substr( sha1( basename( $path ) ), 0, 12 ) . '.tar' );
+		} finally {
+			$sandbox->tear_down();
+		}
+	}
+
+	/**
+	 * Tear-down must remove aliases as well as the extraction directory.
+	 *
+	 * @return void
+	 */
+	public function test_alias_dir_removed_on_tear_down() {
+		$path = $this->dir . '/s23-full-bogdan3.mystagingwebsite.com-September-17-2026-23-55-00.tar';
+		$this->assertTrue( rename( $this->clean_tar(), $path ) );
+		$sandbox = new MainWP_Backup_TestRestore_Sandbox();
+		$sandbox->bring_up();
+		$alias_dir = untrailingslashit( $sandbox->temp_dir() ) . '-phar';
+
+		try {
+			$sandbox->extract_files( $path );
+			$this->assertDirectoryExists( $alias_dir );
+		} finally {
+			$sandbox->tear_down();
+		}
+		$this->assertDirectoryDoesNotExist( $alias_dir );
+		$this->assertDirectoryDoesNotExist( $sandbox->temp_dir() );
+		$this->assertFileExists( $path, 'Tear-down must preserve the staged archive.' );
+		$sandbox->tear_down();
+	}
+
+	/**
 	 * extract_tar()'s per-entry loop cannot be exercised end-to-end with a
 	 * live traversal fixture: PharData::addFromString('../evil.txt', ...)
 	 * does not throw, but the resulting archive's entries never surface

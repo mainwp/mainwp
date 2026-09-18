@@ -295,6 +295,10 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         if ( '' !== $this->temp_dir && is_dir( $this->temp_dir ) ) {
             $this->remove_dir( $this->temp_dir );
         }
+        $alias_dir = untrailingslashit( $this->temp_dir ) . '-phar/';
+        if ( '' !== $this->temp_dir && is_dir( $alias_dir ) ) {
+            $this->remove_dir( $alias_dir );
+        }
     }
 
     /**
@@ -597,7 +601,7 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
 
     /**
      * Read the uncompressed size of the first matching tar member from its
-     * header, without decompressing the archive body.
+     * header, decompressing compressed tars to disk first.
      *
      * @param string $path   Tar path (tar/tar.gz/tar.bz2).
      * @param string $suffix Member suffix to match (e.g. '.sql').
@@ -610,7 +614,7 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
             return 0;
         }
         try {
-            $phar     = new \PharData( $path );
+            $phar     = new \PharData( $this->phar_readable_path( $path ) );
             $iterator = new \RecursiveIteratorIterator( $phar );
             foreach ( $iterator as $file ) {
                 if ( MainWP_Utility::ends_with( $file->getFilename(), $suffix ) ) {
@@ -706,7 +710,7 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         }
 
         try {
-            $phar     = new \PharData( $path );
+            $phar     = new \PharData( $this->phar_readable_path( $path ) );
             $iterator = new \RecursiveIteratorIterator( $phar );
             foreach ( $iterator as $file ) {
                 if ( MainWP_Utility::ends_with( $file->getFilename(), $suffix ) ) {
@@ -766,7 +770,7 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         }
 
         try {
-            $phar     = new \PharData( $path );
+            $phar     = new \PharData( $this->phar_readable_path( $path ) );
             $iterator = new \RecursiveIteratorIterator( $phar );
             foreach ( $iterator as $file ) {
                 $name = $iterator->getSubPathname();
@@ -778,6 +782,91 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         } catch ( \Throwable $e ) {
             throw new MainWP_Exception( esc_html__( 'A backup archive could not be extracted.', 'mainwp' ), 'tar extract: ' . $e->getMessage(), self::ERR_APPLY );
         }
+    }
+
+    /**
+     * Give PharData a short, uncompressed tar path it can read reliably.
+     *
+     * @param string $path Staged archive path.
+     *
+     * @throws \RuntimeException When an alias cannot be prepared.
+     *
+     * @return string Readable archive path.
+     */
+    private function phar_readable_path( string $path ): string {
+        $basename = basename( $path );
+        $gzip     = MainWP_Utility::ends_with( strtolower( $basename ), '.tar.gz' );
+        $bzip     = MainWP_Utility::ends_with( strtolower( $basename ), '.tar.bz2' );
+        $dot      = strpos( $basename, '.' );
+
+        // Phar scans from the first dot and refuses a tail of 50 or more bytes.
+        if ( ! $gzip && ! $bzip && ( ! MainWP_Utility::ends_with( strtolower( $basename ), '.tar' ) || false === $dot || strlen( $basename ) - $dot < 50 ) ) {
+            return $path;
+        }
+
+        // An alias inside temp_dir would count as a successfully extracted file.
+        $alias_dir = untrailingslashit( $this->temp_dir ) . '-phar/';
+        $alias     = $alias_dir . substr( sha1( $basename ), 0, 12 ) . '.tar';
+        if ( is_file( $alias ) && filesize( $alias ) > 0 ) {
+            return $alias;
+        }
+        if ( ! wp_mkdir_p( $alias_dir ) ) {
+            throw new \RuntimeException( 'Could not create tar alias directory.' );
+        }
+
+        if ( ! $gzip && ! $bzip ) {
+            if ( @link( $path, $alias ) || copy( $path, $alias ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- filesystems without hard links use the copy fallback.
+                return $alias;
+            }
+            wp_delete_file( $alias );
+            throw new \RuntimeException( 'Could not alias archive: ' . $basename );
+        }
+
+        // PHP 8.4 can return empty entry streams from compressed PharData tars.
+        $open  = $gzip ? 'gzopen' : 'bzopen';
+        $read  = $gzip ? 'gzread' : 'bzread';
+        $close = $gzip ? 'gzclose' : 'bzclose';
+        if ( ! function_exists( $open ) || ! function_exists( $read ) || ! function_exists( $close ) ) {
+            throw new \RuntimeException( 'Decompression extension missing for: ' . $basename );
+        }
+        $in = $open( $path, 'r' );
+        if ( false === $in ) {
+            throw new \RuntimeException( 'Could not read compressed archive: ' . $basename );
+        }
+        $out = fopen( $alias . '.tmp', 'wb' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- streaming decompression keeps archive bytes out of memory.
+        if ( false === $out ) {
+            $close( $in );
+            throw new \RuntimeException( 'Could not write tar alias: ' . $basename );
+        }
+
+        $complete = false;
+        try {
+            while ( true ) {
+                $chunk = $read( $in, 262144 );
+                if ( false === $chunk ) {
+                    throw new \RuntimeException( 'Could not decompress archive: ' . $basename );
+                }
+                if ( '' === $chunk ) {
+                    break;
+                }
+                if ( strlen( $chunk ) !== fwrite( $out, $chunk ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions -- streaming decompression.
+                    throw new \RuntimeException( 'Could not write tar alias: ' . $basename );
+                }
+            }
+            $complete = true;
+        } finally {
+            $close( $in );
+            fclose( $out ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- paired with the decompression output stream.
+            if ( ! $complete ) {
+                wp_delete_file( $alias . '.tmp' );
+            }
+        }
+
+        if ( ! rename( $alias . '.tmp', $alias ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions -- only complete decompression results may be reused.
+            wp_delete_file( $alias . '.tmp' );
+            throw new \RuntimeException( 'Could not finish tar alias: ' . $basename );
+        }
+        return $alias;
     }
 
     /**

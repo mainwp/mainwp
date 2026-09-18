@@ -431,7 +431,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $data              = array();
             $data['user']      = $website->adminname;
             $data['function']  = $what;
-            $data['nonce']     = wp_rand( 0, 9999 );
+            $data['nonce']     = wp_rand();
             $data['mainwpver'] = MainWP_System::$version;
 
             $params_filter = apply_filters( 'mainwp_pre_fetch_authed_data', false, $params, $what, $website, $verify_signature );
@@ -616,7 +616,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $data             = array();
             $data['user']     = $website->adminname;
             $data['function'] = $compat_what;
-            $data['nonce']    = wp_rand( 0, 9999 );
+            $data['nonce']    = wp_rand();
 
             $sign_value = $compat_what . $data['nonce']; // compatible format.
 
@@ -731,7 +731,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $sign_success = null;
             $alg          = false;
             $use_seclib   = false;
-            $nonce        = wp_rand( 0, 9999 );
+            $nonce        = wp_rand();
 
             /**
              * Current user global.

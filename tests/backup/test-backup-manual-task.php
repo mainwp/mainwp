@@ -70,7 +70,7 @@ class MainWP_Backup_Manual_Task_Test extends MainWP_Abilities_Test_Case {
 		$locks   = 0;
 		$busy    = static function ( $sql ) use ( &$lookups, &$locks ) {
 			if ( str_contains( $sql, "schedule = 'manual'" ) && 1 === ++$lookups ) {
-				return 'SELECT NULL WHERE 0';
+				return 'SELECT NULL FROM DUAL WHERE 0';
 			}
 			if ( str_contains( $sql, 'GET_LOCK(' ) ) {
 				++$locks;

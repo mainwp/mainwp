@@ -780,7 +780,9 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @return array{files:string[],blobs:array<string,string>}
      */
     private function scope_event_files( array $event_files, ?array $allowed, array $tasks ): array {
-        $event_files = array_values( array_filter( $event_files, static fn( $file ) => 0 !== filesize( $file ) ) );
+        // A file can vanish between the glob and this read, and the stat cache can be stale within a request.
+        clearstatcache();
+        $event_files = array_values( array_filter( $event_files, static fn( $file ) => is_file( $file ) && 0 !== filesize( $file ) ) );
         if ( null === $allowed ) {
             return array(
                 'files' => $event_files,

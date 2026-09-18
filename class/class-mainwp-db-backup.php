@@ -1217,7 +1217,7 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
 
         return $this->wpdb->query(
             $this->wpdb->prepare(
-                'UPDATE ' . esc_sql( $this->table_name( 'wp_backup' ) ) . " SET backup_notices = CONCAT( COALESCE( backup_notices, '' ), %s ) WHERE id = %d AND ( backup_notices IS NULL OR backup_notices NOT LIKE BINARY %s )",
+                'UPDATE ' . esc_sql( $this->table_name( 'wp_backup' ) ) . " SET backup_notices = CONCAT( COALESCE( backup_notices, '' ), %s ) WHERE id = %d AND ( backup_notices IS NULL OR backup_notices NOT LIKE CAST( %s AS BINARY ) )",
                 $notices,
                 $id,
                 '%' . $this->wpdb->esc_like( $notices ) . '%'

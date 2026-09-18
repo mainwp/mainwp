@@ -70,8 +70,8 @@ use MainWP\Dashboard\MainWP_DB_Client;
  * test classes outside MainWP_Abilities_Test_Case share the one
  * implementation.
  */
-// phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- shared guard beside the base case, both loaded from the bootstrap.
 trait MainWP_Capability_Bypass_Guard {
+// phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- shared guard beside the base case, both loaded from the bootstrap.
 
 	/**
 	 * Whether a bypass constant is defined for this process.
@@ -135,6 +135,7 @@ abstract class MainWP_Abilities_Test_Case extends WP_UnitTestCase { //phpcs:igno
 	public function setUp(): void {
 		parent::setUp();
 
+		// The updates indicator memoises the recent-backup map per request; a test process is one request.
 		$cache = new \ReflectionProperty( \MainWP\Dashboard\MainWP_Backup_Executor::class, 'recent_native_backup_maps' );
 		$cache->setValue( null, array() );
 
@@ -474,7 +475,6 @@ abstract class MainWP_Abilities_Test_Case extends WP_UnitTestCase { //phpcs:igno
 		add_filter(
 			'mainwp_run_update_result',
 			function ( $result, $site_id, $types = array() ) use ( $successes, $failures ) {
-				unset( $types );
 				if ( in_array( $site_id, $successes, true ) ) {
 					// Return null to let the real execution proceed.
 					return null;
@@ -511,7 +511,6 @@ abstract class MainWP_Abilities_Test_Case extends WP_UnitTestCase { //phpcs:igno
 		add_filter(
 			'mainwp_fetch_url_authed_pre',
 			function ( $result, $website, $what, $params ) use ( $site_id, $response ) {
-				unset( $what, $params );
 				if ( (int) $website->id === $site_id ) {
 					return $response;
 				}
@@ -809,7 +808,7 @@ abstract class MainWP_Abilities_Test_Case extends WP_UnitTestCase { //phpcs:igno
 		// Check if option exists.
 		$exists = $wpdb->get_var(
 			$wpdb->prepare(
-				'SELECT COUNT(*) FROM ' . esc_sql( $table ) . ' WHERE wpid = %d AND name = %s',
+				"SELECT COUNT(*) FROM {$table} WHERE wpid = %d AND name = %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name built from $wpdb->prefix.
 				$site_id,
 				$option
 			)

@@ -547,6 +547,49 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * A device symlink must be refused promptly without reading its endless stream.
+	 *
+	 * @return void
+	 */
+	public function test_protect_parent_refuses_symlink_to_dev_zero_promptly() {
+		if ( ! is_readable( '/dev/zero' ) ) {
+			$this->markTestSkipped( '/dev/zero is not readable on this runner.' );
+		}
+		$upload_dir = function ( $upload ) {
+			$upload['basedir'] = $this->dir;
+			return $upload;
+		};
+		add_filter( 'upload_dir', $upload_dir );
+		try {
+			$sandbox = new MainWP_Backup_TestRestore_Sandbox();
+		} finally {
+			remove_filter( 'upload_dir', $upload_dir );
+		}
+
+		$parent   = dirname( untrailingslashit( $sandbox->temp_dir() ) );
+		$htaccess = $parent . '/.htaccess';
+		$this->assertTrue( wp_mkdir_p( $parent ) );
+		$this->assertTrue( symlink( '/dev/zero', $htaccess ) );
+		$method = new \ReflectionMethod( $sandbox, 'protect_parent' );
+		$method->setAccessible( true );
+		try {
+			$threw   = false;
+			$started = microtime( true );
+			try {
+				$method->invoke( $sandbox );
+			} catch ( MainWP_Exception $e ) {
+				$threw = true;
+				$this->assertSame( MainWP_Backup_TestRestore_Sandbox::ERR_UNSUPPORTED, $e->get_message_error_code() );
+				$this->assertStringContainsString( $htaccess . ' is not a regular file', $e->get_message_extra( false ) );
+			}
+			$this->assertLessThan( 1.0, microtime( true ) - $started, 'Device refusal must return within one second.' );
+			$this->assertTrue( $threw, 'A protection symlink to /dev/zero must be refused.' );
+		} finally {
+			$sandbox->tear_down();
+		}
+	}
+
+	/**
 	 * A directory must fail the regular-file guard explicitly.
 	 *
 	 * @return void

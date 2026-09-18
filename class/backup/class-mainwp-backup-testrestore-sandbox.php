@@ -157,10 +157,12 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
             $file = $parent . '/' . $name;
             // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- a missing protection file has no stat data.
             $stat = @stat( $file );
+            // Accept foreign paths that already deny: refusal disables the whole lane for CAPABILITY_TTL.
+            // Snapshot-style backups give even a legitimate .htaccess a link count above one.
             if ( is_link( $file ) || ( file_exists( $file ) && ( ! is_file( $file ) || ( false !== $stat && $stat['nlink'] > 1 ) ) ) ) {
                 if ( '.htaccess' === $name ) {
                     // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- accept an existing deny rule without writing through a foreign path.
-                    if ( false !== stripos( (string) @file_get_contents( $file ), 'deny from all' ) ) {
+                    if ( is_file( $file ) && false !== stripos( (string) @file_get_contents( $file, false, null, 0, 8192 ), 'deny from all' ) ) {
                         continue;
                     }
                     $this->tear_down();

@@ -225,6 +225,43 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Corrupt compressed bytes must discredit the backup, not the host.
+	 *
+	 * @return void
+	 */
+	public function test_corrupt_tar_gz_is_apply_error() {
+		$raw = gzencode( file_get_contents( $this->clean_tar() ) );
+		$this->assertNotFalse( $raw );
+		$middle         = intdiv( strlen( $raw ), 2 );
+		$raw[ $middle ] = chr( ord( $raw[ $middle ] ) ^ 255 );
+		$path           = $this->dir . '/corrupt.tar.gz';
+		$this->assertSame( strlen( $raw ), file_put_contents( $path, $raw ) );
+		$in = gzopen( $path, 'r' );
+		$this->assertNotFalse( $in );
+		try {
+			$this->assertFalse( @gzread( $in, 262144 ), 'The fixture must fail decompression before tar parsing.' ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- corruption intentionally triggers a zlib warning.
+		} finally {
+			gzclose( $in );
+		}
+
+		$sandbox = new MainWP_Backup_TestRestore_Sandbox();
+		$sandbox->bring_up();
+		try {
+			$threw = false;
+			try {
+				@$sandbox->extract_files( $path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- corruption intentionally triggers a zlib warning.
+			} catch ( MainWP_Exception $e ) {
+				$threw = true;
+				$this->assertSame( MainWP_Backup_TestRestore_Sandbox::ERR_APPLY, $e->get_message_error_code() );
+			}
+			$this->assertTrue( $threw, 'Corrupt gzip bytes must report an apply error.' );
+			$this->assertSame( 0, $sandbox->temp_file_count() );
+		} finally {
+			$sandbox->tear_down();
+		}
+	}
+
+	/**
 	 * Parent protection must cover extracted files and sibling aliases.
 	 *
 	 * @return void

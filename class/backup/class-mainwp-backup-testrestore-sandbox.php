@@ -467,12 +467,11 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
      *            decompressed to disk and long names are aliased there; the
      *            extra cost is disk space, not whole-dump memory.
      *
-     * A format whose extension is missing here reports zero; read_sql_dump()
-     * then raises ERR_UNSUPPORTED before import_database() ever runs.
-     *
      * @param string $path    Staged dump artifact.
      * @param int    $ceiling Size above which the caller will refuse the dump;
      *                        streaming formats stop counting once past it.
+     *
+     * @throws MainWP_Exception When archive decompression or alias preparation fails.
      *
      * @return int Decompressed size in bytes, or a value above $ceiling when it
      *             cannot be trusted or streaming stopped early.
@@ -832,7 +831,14 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
             throw new MainWP_Exception( esc_html__( 'The test-restore sandbox could not create its archive directory.', 'mainwp' ), 'tar alias mkdir: ' . $basename, self::ERR_UNSUPPORTED );
         }
 
+        // Budget each slab separately so decompression leaves the reserve for other uploads.
+        $space_reserve = 64 * MB_IN_BYTES;
+        $space_slab    = 64 * MB_IN_BYTES;
         if ( ! $gzip && ! $bzip ) {
+            $free = function_exists( 'disk_free_space' ) ? disk_free_space( $alias_dir ) : false;
+            if ( is_float( $free ) && $free < filesize( $path ) + $space_reserve ) {
+                throw new MainWP_Exception( esc_html__( 'There is not enough free space to test this backup here.', 'mainwp' ), 'tar alias free space: ' . $basename, self::ERR_UNSUPPORTED );
+            }
             if ( @link( $path, $alias ) || copy( $path, $alias ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- filesystems without hard links use the copy fallback.
                 return $alias;
             }
@@ -847,14 +853,13 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         if ( ! function_exists( $open ) || ! function_exists( $read ) || ! function_exists( $close ) ) {
             throw new MainWP_Exception( $gzip ? esc_html__( 'The test-restore sandbox needs the zlib extension to read this backup.', 'mainwp' ) : esc_html__( 'The test-restore sandbox needs the bzip2 extension to read this backup.', 'mainwp' ), 'tar decompression extension missing: ' . $basename, self::ERR_UNSUPPORTED );
         }
-        // Reserve expansion room before creating a second on-disk copy.
         $free = function_exists( 'disk_free_space' ) ? disk_free_space( $alias_dir ) : false;
-        if ( is_float( $free ) && $free < 4 * filesize( $path ) ) {
+        if ( is_float( $free ) && $free < $space_reserve + $space_slab ) {
             throw new MainWP_Exception( esc_html__( 'There is not enough free space to test this backup here.', 'mainwp' ), 'tar alias free space: ' . $basename, self::ERR_UNSUPPORTED );
         }
         $in = $open( $path, 'r' );
         if ( false === $in ) {
-            throw new MainWP_Exception( esc_html__( 'The test-restore sandbox could not read this compressed archive.', 'mainwp' ), 'tar alias read: ' . $basename, self::ERR_UNSUPPORTED );
+            throw new MainWP_Exception( esc_html__( 'The test-restore sandbox could not read this compressed archive.', 'mainwp' ), 'tar alias read: ' . $basename, self::ERR_APPLY );
         }
         $out = fopen( $alias . '.tmp', 'wb' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- streaming decompression keeps archive bytes out of memory.
         if ( false === $out ) {
@@ -864,12 +869,12 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
 
         $complete         = false;
         $written          = 0;
-        $next_space_check = 64 * MB_IN_BYTES;
+        $next_space_check = $space_slab;
         try {
             while ( true ) {
-                $chunk = $read( $in, 262144 );
+                $chunk = $read( $in, min( 262144, $next_space_check - $written ) );
                 if ( false === $chunk ) {
-                    throw new MainWP_Exception( esc_html__( 'The test-restore sandbox could not decompress this archive.', 'mainwp' ), 'tar alias decompress: ' . $basename, self::ERR_UNSUPPORTED );
+                    throw new MainWP_Exception( esc_html__( 'The test-restore sandbox could not decompress this archive.', 'mainwp' ), 'tar alias decompress: ' . $basename, self::ERR_APPLY );
                 }
                 if ( '' === $chunk ) {
                     break;
@@ -879,12 +884,11 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
                 }
                 $written += strlen( $chunk );
                 if ( $written >= $next_space_check ) {
-                    // Leave headroom for other uploads while limiting filesystem probes.
                     $free = function_exists( 'disk_free_space' ) ? disk_free_space( $alias_dir ) : false;
-                    if ( is_float( $free ) && $free < 64 * MB_IN_BYTES ) {
+                    if ( is_float( $free ) && $free < $space_reserve + $space_slab ) {
                         throw new MainWP_Exception( esc_html__( 'There is not enough free space to test this backup here.', 'mainwp' ), 'tar alias free space: ' . $basename, self::ERR_UNSUPPORTED );
                     }
-                    $next_space_check += 64 * MB_IN_BYTES;
+                    $next_space_check += $space_slab;
                 }
             }
             $complete = true;

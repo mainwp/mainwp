@@ -265,7 +265,7 @@ class MainWP_Backup_TestRestore_Driver { // phpcs:ignore Generic.Classes.Opening
      * @param MainWP_Backup_TestRestore_Sandbox $sandbox   Sandbox that will read the dump.
      * @param string                            $dump_path Staged dump artifact.
      *
-     * @throws MainWP_Exception When the dump exceeds the configured cap.
+     * @throws MainWP_Exception When the dump exceeds the configured cap or archive decompression or alias preparation fails.
      *
      * @return void
      */

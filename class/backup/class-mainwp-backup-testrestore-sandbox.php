@@ -38,8 +38,8 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
     const ERR_UNSUPPORTED = 'mainwp_sandbox_unsupported';
 
     /**
-     * Bytes of a protection file protect_parent() will read. A deny rule sits in
-     * the first line of every .htaccess anyone writes; the cap is what keeps a
+     * Bytes of a protection file protect_parent() will read. A deny rule sits
+     * near the start of an .htaccess anyone writes; the cap is what keeps a
      * multi-megabyte file from the OOM fatal that leaks a scratch database.
      */
     private const PROTECTION_READ_BYTES = 8192;
@@ -217,13 +217,14 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
     /**
      * Whether a readable regular file carries a deny rule in its first 8 KB.
      *
-     * The is_file() gate and the read cap are both load-bearing: a device or
-     * FIFO at this path would otherwise hang or exhaust the process, and a fat
-     * regular file would exhaust it. Neither failure is catchable, and both
-     * strand the scratch database bring_up() has already created. The match
-     * is line-anchored so a commented-out rule does not pass, and accepts
-     * Apache 2.4's Require all denied so an operator's directive is not
-     * flattened into deny from all.
+     * The is_file() gate and the read cap are both load-bearing, for different
+     * shapes: the gate is what keeps a FIFO from blocking the request in open(),
+     * and the cap is what bounds a device or a fat regular file. Neither failure
+     * is catchable, and both strand the scratch database bring_up() has already
+     * created. The match takes a whole directive line, so a commented-out rule
+     * and a host list that merely starts with "all" (deny from all-granted) do
+     * not pass, and accepts Apache 2.4's Require all denied so an operator's
+     * directive is not flattened into deny from all.
      *
      * @param string $file Protection path.
      *
@@ -235,7 +236,7 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         }
         // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- bounded local read; failure cannot establish a deny rule.
         $contents = @file_get_contents( $file, false, null, 0, self::PROTECTION_READ_BYTES );
-        return is_string( $contents ) && 1 === preg_match( '/^[ \t]*(?:deny[ \t]+from[ \t]+all|require[ \t]+all[ \t]+denied)\b/mi', $contents );
+        return is_string( $contents ) && 1 === preg_match( '/^[ \t]*(?:deny[ \t]+from[ \t]+all|require[ \t]+all[ \t]+denied)[ \t]*\r?$/mi', $contents );
     }
 
     /**
@@ -429,9 +430,14 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
                 'reason'  => '',
             );
         } catch ( \Throwable $e ) {
+            // The reason is cached for CAPABILITY_TTL and shown to the operator, so it
+            // carries the debug detail: without it a month-long lockout says only that
+            // the working directory could not be protected, naming neither the path nor
+            // which shape refused. The one surfacing template escapes what it renders.
+            $detail = $e instanceof MainWP_Exception ? trim( (string) $e->get_message_extra( false ) ) : '';
             return array(
                 'capable' => false,
-                'reason'  => $e->getMessage(),
+                'reason'  => '' === $detail ? $e->getMessage() : $e->getMessage() . ' (' . $detail . ')',
             );
         } finally {
             $sandbox->tear_down();

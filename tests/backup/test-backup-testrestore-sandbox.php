@@ -400,6 +400,9 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 			'large'      => "deny from all\n" . str_repeat( "# x\n", 5000 ),
 			'directives' => "Deny from all\n# Retain this directive.\nOptions -Indexes\n",
 			'credential' => '<?php $credential = "retained";',
+			'host-list'  => "Deny from all-granted\n",
+			'ifmodule'   => "<IfModule mod_authz_core.c>\n\tRequire all denied\n</IfModule>\n",
+			'sibling'    => "Require all denied\nRequire all granted\n",
 		);
 
 		$bytes    = $payloads[ $content ] ?? '';
@@ -583,18 +586,25 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 	 * - FOREIGN: is_link true (any target, including dangling), OR exists and not a regular file
 	 *   (directory, FIFO, char/block device), OR a regular file with nlink > 1. Reason strings,
 	 *   in this priority: "is a symlink", "has multiple hard links", "is not a regular file".
-	 *   The plugin never writes through a FOREIGN path.
+	 *   The plugin never writes through a FOREIGN protection file. The classification is
+	 *   per file, not per directory: a symlinked test-restore parent resolves before
+	 *   `.htaccess` is ever looked at, and is not this guard's to catch.
 	 * - OWN: exists, is a regular file, nlink == 1, not a symlink.
 	 *
 	 * Deny-rule match (RULE): applied to at most the first 8192 bytes, read only when
 	 * is_file() is true (a directory, FIFO or device is never opened), regex
-	 * `/^[ \t]*(?:deny[ \t]+from[ \t]+all|require[ \t]+all[ \t]+denied)\b/mi`.
-	 * A commented-out line (`# deny from all`) does not match. Apache 2.4's
+	 * `/^[ \t]*(?:deny[ \t]+from[ \t]+all|require[ \t]+all[ \t]+denied)[ \t]*\r?$/mi`.
+	 * The directive has to be the whole line, so a commented-out rule (`# deny from all`)
+	 * does not match and neither does a host list that starts with the word (`Deny from
+	 * all-granted`, which Apache parses as a hostname restriction, or `Deny from all # why`,
+	 * which Apache rejects outright: "No comments are allowed here"). Apache 2.4's
 	 * `Require all denied` matches: it is a deny rule and overwriting it flattened an operator directive.
 	 *
 	 * Outcomes: WRITE (write contents, then read back the first 8 KB and require RULE, else refuse),
 	 * ACCEPT (rule seen, no write), SKIP (no read, no write), REFUSE (tear_down, then throw
-	 * ERR_UNSUPPORTED "sandbox protection: <file> <reason>"; costs CAPABILITY_TTL, one month).
+	 * ERR_UNSUPPORTED; the classification refusal reads "sandbox protection: <file> <reason>"
+	 * and the failed-repair refusal reads "sandbox protection: <parent>: <write errno>";
+	 * either costs CAPABILITY_TTL, one month).
 	 *
 	 * ## .htaccess
 	 *
@@ -612,9 +622,12 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 	 * | 10 | unreadable (chmod 0000, non-root) | OWN | SKIP | recorded pushback; web server enforces it |
 	 * | 11 | rule at offset 9200 of a 9214-byte file (past the 8 KB cap) | OWN | WRITE | cap is deliberate: overwrite is the plugin repairing its own file |
 	 * | 12 | rule at offset 0 of a 20014-byte file | OWN | ACCEPT | bounded read still sees it |
+	 * | 12a | `Deny from all-granted` (a host list, not a global deny) | OWN | WRITE | the directive must be the whole line |
+	 * | 12b | `Require all denied` inside `<IfModule mod_authz_core.c>` | OWN | ACCEPT | no deny if the module is absent; recorded pushback, the text check is defense in depth |
+	 * | 12c | `Require all denied` then `Require all granted` | OWN | ACCEPT | 2.4's implicit `<RequireAny>` lets the grant win; same recorded pushback |
 	 * | 13 | directory | FOREIGN | REFUSE | is not a regular file; no read |
 	 * | 14 | FIFO | FOREIGN | REFUSE | is not a regular file; no read (never opened) |
-	 * | 15 | symlink to `/dev/zero` | FOREIGN | REFUSE | is a symlink; no read; returns within 1 s |
+	 * | 15 | symlink to `/dev/zero` | FOREIGN | REFUSE | is a symlink; no read; returns within 1 s. The timing pins the cap, not the is_file() gate: with the cap in place a device read returns 8192 bytes either way. The FIFO rows are what pin the gate. |
 	 * | 16 | dangling symlink | FOREIGN | REFUSE | is a symlink |
 	 * | 17 | symlink to a directory | FOREIGN | REFUSE | is a symlink |
 	 * | 18 | symlink to a FIFO | FOREIGN | REFUSE | is a symlink; no read |
@@ -640,7 +653,7 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 	 *
 	 * Known and deliberate, not built for:
 	 * - The 8 KB cap. Measured: a rule at offset 9200 in a 9214-byte file is not accepted, a rule at offset 0 in a 20014-byte file is. 8 KB of directives ahead of a deny line is not a shape anyone writes; the cap is what keeps a fat regular file from the OOM fatal that leaks a scratch database per tick.
-	 * - The is_file()-to-read TOCTOU: swapping a regular file for a FIFO between the check and the read reproduces the round-3 hang. Closing it needs O_NONBLOCK + fstat on a descriptor; an attacker who already has uploads write does not need to win this race.
+	 * - The is_file()-to-read TOCTOU: swapping a regular file for a FIFO between the check and the read reproduces the round-3 hang. Closing it needs O_NONBLOCK + fstat on a descriptor; an attacker who already has uploads write does not need to win this race. The same swap between the classification block and file_put_contents() has the same two outcomes on the write side, follow a symlink or block opening a FIFO, and is accepted on the same grounds.
 	 * - A regular file on a hung mount is not this guard's to handle.
 	 *
 	 * @return array
@@ -659,6 +672,9 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 			'#10 own unreadable'               => array( 'htaccess:own:unreadable', 'skip', '', 'untouched' ),
 			'#11 own rule past cap'            => array( 'htaccess:own:late', 'write', '', 'deny' ),
 			'#12 own large rule first'         => array( 'htaccess:own:large', 'accept', '', 'untouched' ),
+			'#12a own deny from host list'     => array( 'htaccess:own:host-list', 'write', '', 'deny' ),
+			'#12b own IfModule denied'         => array( 'htaccess:own:ifmodule', 'accept', '', 'untouched' ),
+			'#12c own denied then granted'     => array( 'htaccess:own:sibling', 'accept', '', 'untouched' ),
 			'#13 directory'                    => array( 'htaccess:directory:empty', 'refuse', 'is not a regular file', 'untouched' ),
 			'#14 FIFO'                         => array( 'htaccess:fifo:empty', 'refuse', 'is not a regular file', 'untouched' ),
 			'#15 symlink to dev zero'          => array( 'htaccess:symlink:zero', 'refuse', 'is a symlink', 'untouched' ),
@@ -691,6 +707,34 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 			'#32 index directory'              => array( 'index:directory:empty', 'skip', '', 'untouched' ),
 			'#32 index FIFO'                   => array( 'index:fifo:empty', 'skip', '', 'untouched' ),
 		);
+	}
+
+	/**
+	 * A month-long lockout has to say which shape refused, not just that one did.
+	 *
+	 * @return void
+	 */
+	public function test_probe_capability_reason_names_the_refusing_shape() {
+		$parent = $this->dir . '/mainwp/test-restore';
+		$this->assertTrue( wp_mkdir_p( $parent ) );
+		$this->assertSame( 14, file_put_contents( $this->dir . '/operator-file', 'allow from all' ) );
+		$this->assertTrue( symlink( $this->dir . '/operator-file', $parent . '/.htaccess' ) );
+
+		$upload_dir = function ( $upload ) {
+			$upload['basedir'] = $this->dir;
+			return $upload;
+		};
+		add_filter( 'upload_dir', $upload_dir );
+		try {
+			$probe = MainWP_Backup_TestRestore_Sandbox::probe_capability();
+		} finally {
+			remove_filter( 'upload_dir', $upload_dir );
+			unlink( $parent . '/.htaccess' );
+		}
+
+		$this->assertFalse( $probe['capable'] );
+		$this->assertStringContainsString( 'The test-restore sandbox could not protect its working directory.', $probe['reason'] );
+		$this->assertStringContainsString( $parent . '/.htaccess is a symlink', $probe['reason'] );
 	}
 
 	/**

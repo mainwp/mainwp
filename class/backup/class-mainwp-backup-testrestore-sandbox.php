@@ -40,10 +40,12 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
 
     /**
      * Bytes of a protection file a deny rule has to appear within. The read takes
-     * one byte more, which is what tells a file that ends at the cap from one the
-     * cap cut in half. A deny rule sits near the start of an .htaccess anyone
-     * writes; the cap is what keeps a multi-megabyte file from the OOM fatal that
-     * leaks a scratch database.
+     * two bytes more: the first tells a file that ends at the cap from one the
+     * cap cut in half, the second is the LF of a CRLF whose CR lands on byte
+     * 8193, without which a complete rule ending exactly at the cap is dropped.
+     * A deny rule sits near the start of an .htaccess anyone writes; the cap is
+     * what keeps a multi-megabyte file from the OOM fatal that leaks a scratch
+     * database.
      */
     private const PROTECTION_READ_BYTES = 8192;
 
@@ -226,16 +228,46 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
      * is catchable, and both strand the scratch database bring_up() has already
      * created.
      *
-     * A match has to be a complete directive line, and the read goes one byte
-     * past the cap so a line the cap cut in half can be dropped: `$` matches end
-     * of subject as well as end of line, so a truncated "Deny from all-granted"
-     * would otherwise read as a whole "Deny from all". Measured against Apache's
-     * own parser, "Deny from all" takes further host arguments and still denies
-     * everything, a `#` anywhere in the argument list is "No comments are allowed
-     * here" rather than a comment, and a first argument of "all-granted" or
-     * "all.example.com" is a hostname restriction that denies nothing. Apache
-     * 2.4's "Require all denied" is accepted too, so the repair does not flatten
-     * an operator's 2.4 directive into a 2.2 one.
+     * A match has to be a complete logical line, read the way Apache reads
+     * one. The read goes two bytes past the cap so a line the cap cut in half
+     * can be dropped: `$` matches end of subject as well as end of line, so a
+     * severed "Deny from all-granted" would otherwise read as a whole
+     * "Deny from all". One extra byte was not enough: a complete rule whose
+     * content ends at byte 8192 has its CRLF at 8193-8194, and a read that
+     * stops at the CR finds no newline and drops a valid line.
+     *
+     * Apache joins a physical line ending in a backslash to the next one, and
+     * the join inserts nothing: the backslash, any spaces or tabs after it and
+     * the line ending disappear, whitespace on either side stays. Measured with
+     * discriminators rather than inferred: `Order \\` + `Deny,Allow` reports
+     * "unknown order" for the single token `\Deny,Allow` where an inserted
+     * space would report "takes one argument", so a double backslash still
+     * continues and leaves one literal; `Deny from all\` + `example.com` is
+     * the host `allexample.com`, and `Deny from al\` + `l` denies everything.
+     * A continued comment or `Allow` line swallows the deny that follows it,
+     * which is what a hand-edit leaves behind, so the text is unfolded before
+     * anything else and the sever trim runs on the unfolded text: a logical
+     * line whose partner lies outside the window has no newline after it and
+     * is dropped whatever its first half says. A backslash on the last line of
+     * the file continues nothing and stays a literal token, which the unfold
+     * pattern reproduces because it needs a line ending after the backslash.
+     *
+     * Apache dequotes every token, the directive name included, so
+     * `Deny from "all"`, `'Deny' from all` and `Require "all" denied` are the
+     * rules they look like (`Require "bogus" denied` fails on the provider
+     * `bogus`, which only happens if the quotes are gone before the lookup).
+     * Recognised tokens are separated by spaces or tabs and are either bare or
+     * wholly quoted. A bare token keeps its quote characters (`al"l"` is a
+     * host), a `#` anywhere in the arguments is "No comments are allowed here"
+     * even inside quotes, and a quoted token glued to the next word or left
+     * unterminated is not matched: Apache reads both, the conservative outcome
+     * here is a rewrite of an owned file or a refusal of a foreign one.
+     *
+     * "Deny from all" takes further host arguments and still denies everything,
+     * while a first argument of "all-granted" or "all.example.com" is a host
+     * restriction that denies nothing. Apache 2.4's "Require all denied" is
+     * accepted too, so the repair does not flatten an operator's 2.4 directive
+     * into a 2.2 one.
      *
      * @param string $file Protection path.
      *
@@ -246,15 +278,20 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
             return false;
         }
         // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- bounded local read; failure cannot establish a deny rule.
-        $contents = @file_get_contents( $file, false, null, 0, self::PROTECTION_READ_BYTES + 1 );
+        $contents = @file_get_contents( $file, false, null, 0, self::PROTECTION_READ_BYTES + 2 );
         if ( ! is_string( $contents ) ) {
             return false;
         }
-        if ( strlen( $contents ) > self::PROTECTION_READ_BYTES ) {
+        $over     = strlen( $contents ) > self::PROTECTION_READ_BYTES;
+        $contents = preg_replace( '/\\\\[ \t]*\r?\n/', '', $contents );
+        if ( null === $contents ) {
+            return false;
+        }
+        if ( $over ) {
             $last     = strrpos( $contents, "\n" );
             $contents = false === $last ? '' : substr( $contents, 0, $last );
         }
-        return 1 === preg_match( '/^[ \t]*(?:deny[ \t]+from[ \t]+all(?:[ \t]++[^#\s]++)*+|require[ \t]+all[ \t]+denied)[ \t]*\r?$/mi', $contents );
+        return 1 === preg_match( '/^[ \t]*(?:(?:deny|"deny"|\'deny\')[ \t]+(?:from|"from"|\'from\')[ \t]+(?:all|"all"|\'all\')(?:[ \t]++[^#\s]++)*+|(?:require|"require"|\'require\')[ \t]+(?:all|"all"|\'all\')[ \t]+(?:denied|"denied"|\'denied\'))[ \t]*\r?$/mi', $contents );
     }
 
     /**

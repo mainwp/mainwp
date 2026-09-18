@@ -354,7 +354,7 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * Each filesystem shape must preserve operator files or produce the specified refusal.
+	 * Each filesystem and directive shape must preserve operator files or produce the specified refusal.
 	 *
 	 * @dataProvider protect_parent_matrix
 	 *
@@ -387,26 +387,45 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 		$linked   = in_array( $shape, array( 'symlink', 'hardlink' ), true );
 		$storage  = $linked ? $target : $file;
 		$payloads = array(
-			'empty'      => '',
-			'deny'       => 'deny from all',
-			'mixed'      => "# Existing protection\nDeNy FrOm AlL\n",
-			'require'    => 'Require all denied',
-			'comment'    => "# deny from all\nRequire all granted\n",
-			'rule-allow' => "deny from all\nallow from all\n",
-			'permissive' => 'allow from all',
-			'unwritable' => 'allow from all',
-			'unreadable' => 'deny from all',
-			'late'       => str_repeat( "# x\n", 2300 ) . "deny from all\n",
-			'large'      => "deny from all\n" . str_repeat( "# x\n", 5000 ),
-			'directives' => "Deny from all\n# Retain this directive.\nOptions -Indexes\n",
-			'credential' => '<?php $credential = "retained";',
-			'host-list'  => "Deny from all-granted\n",
-			'ifmodule'   => "<IfModule mod_authz_core.c>\n\tRequire all denied\n</IfModule>\n",
-			'sibling'    => "Require all denied\nRequire all granted\n",
-			'multi-host' => "Deny from all example.com\n",
+			'empty'          => '',
+			'deny'           => 'deny from all',
+			'mixed'          => "# Existing protection\nDeNy FrOm AlL\n",
+			'require'        => 'Require all denied',
+			'comment'        => "# deny from all\nRequire all granted\n",
+			'rule-allow'     => "deny from all\nallow from all\n",
+			'permissive'     => 'allow from all',
+			'unwritable'     => 'allow from all',
+			'unreadable'     => 'deny from all',
+			'late'           => str_repeat( "# x\n", 2300 ) . "deny from all\n",
+			'large'          => "deny from all\n" . str_repeat( "# x\n", 5000 ),
+			'directives'     => "Deny from all\n# Retain this directive.\nOptions -Indexes\n",
+			'credential'     => '<?php $credential = "retained";',
+			'host-list'      => "Deny from all-granted\n",
+			'ifmodule'       => "<IfModule mod_authz_core.c>\n\tRequire all denied\n</IfModule>\n",
+			'sibling'        => "Require all denied\nRequire all granted\n",
+			'multi-host'     => "Deny from all example.com\n",
 			// 8179 spaces put byte 8192 immediately after "all", so a read capped at
 			// 8192 would see a whole "Deny from all" line where the file has a host list.
-			'boundary'   => str_repeat( ' ', 8179 ) . "Deny from all-granted\n",
+			'boundary'       => str_repeat( ' ', 8179 ) . "Deny from all-granted\n",
+			'cont-allow'     => "Order Deny,Allow\nAllow from all \\\nDeny from all\n",
+			'cont-comment'   => "# disabled for now \\\nDeny from all\n",
+			'cont-split'     => "Deny from \\\nall\n",
+			'cont-double'    => "Deny from \\\\\nall\n",
+			'cont-glued'     => "Deny from all\\\nexample.com\n",
+			'cont-word'      => "Deny from al\\\nl\n",
+			'cont-ws-crlf'   => "Deny from \\ \t\r\nall\r\n",
+			'cont-eof'       => 'Deny from all \\',
+			'cont-eof-bare'  => 'Deny from \\',
+			'cont-severed'   => str_repeat( ' ', 8177 ) . "Deny from all \\\nexample.com\n",
+			'quoted-dq'      => "Deny from \"all\"\n",
+			'quoted-sq'      => "Deny from 'all'\n",
+			'quoted-require' => "Require \"all\" denied\n",
+			'quoted-name'    => "\"Deny\" 'from' all\n",
+			'quoted-partial' => "Deny from al\"l\"\n",
+			'quoted-hash'    => "Deny from all \"#\"\n",
+			'quoted-glued'   => "Require \"all\"denied\n",
+			'crlf-cap'       => str_repeat( ' ', 8179 ) . "Deny from all\r\n# tail\n",
+			'lf-cap'         => str_repeat( ' ', 8179 ) . "Deny from all\n# tail\n",
 		);
 
 		$bytes    = $payloads[ $content ] ?? '';
@@ -583,7 +602,7 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * # protect_parent() input matrix (sprint 7)
+	 * # protect_parent() input matrix (77 cases)
 	 *
 	 * Path classification, evaluated with lstat first (is_link), then stat:
 	 * - MISSING: is_link false, file_exists false.
@@ -597,11 +616,13 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 	 *
 	 * Deny-rule match (RULE): applied to at most the first 8192 bytes, read only when
 	 * is_file() is true (a directory, FIFO or device is never opened), regex
-	 * `/^[ \t]*(?:deny[ \t]+from[ \t]+all(?:[ \t]++[^#\s]++)*+|require[ \t]+all[ \t]+denied)[ \t]*\r?$/mi`.
-	 * The read takes one byte past the cap and drops a line the cap cut in half, because
-	 * `$` matches end of subject as well as end of line and a severed `Deny from all-granted`
-	 * would otherwise read as a whole rule (row 12e).
-	 * The directive has to be a complete line. Checked against Apache's own parser
+	 * `/^[ \t]*(?:(?:deny|"deny"|'deny')[ \t]+(?:from|"from"|'from')[ \t]+(?:all|"all"|'all')(?:[ \t]++[^#\s]++)*+|(?:require|"require"|'require')[ \t]+(?:all|"all"|'all')[ \t]+(?:denied|"denied"|'denied'))[ \t]*\r?$/mi`.
+	 * The read takes two bytes past the cap so content ending at byte 8192 retains its
+	 * CRLF at bytes 8193-8194 (rows 50-50a); one extra byte would lose that complete line.
+	 * The sever trim runs after unfolding: `$` also matches end of subject, so a severed
+	 * `Deny from all-granted` must not read as a whole rule (row 12e), nor may a continuation
+	 * whose partner lies outside the window (rows 42-42a). The LF neighbour also matches (row 51).
+	 * The directive has to be a complete line. Checked against Apache 2.4.67's own parser
 	 * (`apachectl -t` over a config file with mpm_prefork, authz_core, access_compat,
 	 * authz_host and unixd loaded): `Deny from all` takes further host arguments and still
 	 * denies everything, so `Deny from all example.com` matches (row 12d); a `#` anywhere in
@@ -611,6 +632,29 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 	 * nothing, so neither matches. A commented-out rule (`# deny from all`) does not match.
 	 * Apache 2.4's `Require all denied` matches: it is a deny rule and overwriting it
 	 * flattened an operator directive.
+	 *
+	 * Continuation: a trailing backslash, any spaces/tabs after it, and LF or CRLF disappear;
+	 * nothing is inserted, while whitespace before the backslash and on the next line stays.
+	 * Measured: `Order \\` + `Deny,Allow` reports "unknown order" for `\Deny,Allow`, not
+	 * "order takes one argument"; `Deny from all\` + `example.com` is the host `allexample.com`,
+	 * while `Deny from al\` + `l` denies all. A double backslash still continues and leaves one:
+	 * `Require \\` + `all denied` reports "Unknown Authz provider: \all", and `Deny from \\`
+	 * + `all` names the host `\all`. Spaces or a tab after the backslash and CRLF still continue.
+	 * `Allow from all \` + `Deny from all` is one permissive Allow; `# disabled for now \`
+	 * swallows a following deny into the comment; `Deny from \` + `all` denies all.
+	 * At EOF without a newline, the backslash stays literal: `Order Deny,Allow \` reports
+	 * "takes one argument", `Deny from all \` denies with an extra host, and `Deny from \`
+	 * names only the host `\`. Unfolding before trimming drops a severed logical line even
+	 * if its physical prefix says `Deny from all \`; this is the deliberate cap of rows 11 and 25.
+	 *
+	 * Quoting: recognised tokens are separated by spaces/tabs, bare or wholly wrapped in
+	 * matching single or double quotes, including directive names. Measured: `"Require" bogus denied`,
+	 * `Require "bogus" denied` and `Require 'bogus' denied` all report "Unknown Authz provider: bogus".
+	 * `Order "Deny,Allow"` and `Deny "from" all` parse; `Deny "frum" all` reports "must be followed
+	 * by 'from'", and `Require all "bogus"` reports "must be 'granted' or 'denied'".
+	 * A bare token can contain quotes: `Deny from al"l"` names the host `al"l"`, not `all`.
+	 * Host arguments after `all` remain opaque runs excluding `#`: `Deny from all "#"` and
+	 * `Deny from all "x#y"` both report "No comments are allowed here", just like bare forms.
 	 *
 	 * Outcomes: WRITE (write contents, then read back the first 8 KB and require RULE, else refuse),
 	 * ACCEPT (rule seen, no write), SKIP (no read, no write), REFUSE (tear_down, then throw
@@ -641,7 +685,7 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 	 * | 12e | `Deny from all-granted` with byte 8192 landing right after `all` | OWN | WRITE | the read drops the line the cap cut in half |
 	 * | 13 | directory | FOREIGN | REFUSE | is not a regular file; no read |
 	 * | 14 | FIFO | FOREIGN | REFUSE | is not a regular file; no read (never opened) |
-	 * | 15 | symlink to `/dev/zero` | FOREIGN | REFUSE | is a symlink; no read; returns within 1 s. The timing pins the cap, not the is_file() gate: with the cap in place a device read returns 8192 bytes either way. The FIFO rows are what pin the gate. |
+	 * | 15 | symlink to `/dev/zero` | FOREIGN | REFUSE | is a symlink; no read; returns within 1 s. The timing pins the cap, not the is_file() gate: with the cap in place a device read returns 8194 bytes either way. The FIFO rows are what pin the gate. |
 	 * | 16 | dangling symlink | FOREIGN | REFUSE | is a symlink |
 	 * | 17 | symlink to a directory | FOREIGN | REFUSE | is a symlink |
 	 * | 18 | symlink to a FIFO | FOREIGN | REFUSE | is a symlink; no read |
@@ -656,6 +700,35 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 	 * | 27 | hard link to regular permissive file | FOREIGN | REFUSE | has multiple hard links |
 	 * | 28 | hard link to regular empty file | FOREIGN | REFUSE | |
 	 * | 29 | hard link to unreadable regular file (non-root) | FOREIGN | SKIP | as row 24 |
+	 * | 33 | continued Allow followed by deny | OWN | WRITE | one permissive Allow |
+	 * | 33a | symlink to continued Allow followed by deny | FOREIGN | REFUSE | is a symlink; one permissive Allow |
+	 * | 34 | continued comment followed by deny | OWN | WRITE | deny swallowed into the comment |
+	 * | 34a | symlink to continued comment followed by deny | FOREIGN | REFUSE | is a symlink; deny swallowed into the comment |
+	 * | 35 | `Deny from \` + `all` | OWN | ACCEPT | joined directive denies all |
+	 * | 35a | symlink to `Deny from \` + `all` | FOREIGN | ACCEPT | joined directive denies all |
+	 * | 36 | `Deny from \\` + `all` | OWN | WRITE | host `\all` |
+	 * | 36a | symlink to `Deny from \\` + `all` | FOREIGN | REFUSE | is a symlink; host `\all` |
+	 * | 37 | `Deny from all\` + `example.com` | OWN | WRITE | host `allexample.com`; no inserted space |
+	 * | 38 | `Deny from al\` + `l` | OWN | ACCEPT | joined `all` denies; no inserted space |
+	 * | 39 | `Deny from \` then space, tab, CRLF and `all` | OWN | ACCEPT | trailing whitespace and CRLF still continue |
+	 * | 40 | `Deny from all \` at EOF | OWN | ACCEPT | literal extra host; no continuation |
+	 * | 41 | `Deny from \` at EOF | OWN | WRITE | only the literal host `\` |
+	 * | 42 | continued deny ending at 8192, LF at 8193, partner beyond window | OWN | WRITE | severed logical line is dropped |
+	 * | 42a | symlink to continued deny ending at 8192, LF at 8193, partner beyond window | FOREIGN | REFUSE | is a symlink; severed logical line is dropped |
+	 * | 43 | `Deny from "all"` | OWN | ACCEPT | dequoted `all` |
+	 * | 43a | symlink to `Deny from "all"` | FOREIGN | ACCEPT | dequoted `all` |
+	 * | 44 | `Deny from 'all'` | OWN | ACCEPT | dequoted `all` |
+	 * | 45 | `Require "all" denied` | OWN | ACCEPT | dequoted provider |
+	 * | 45a | symlink to `Require "all" denied` | FOREIGN | ACCEPT | dequoted provider |
+	 * | 46 | `"Deny" 'from' all` | OWN | ACCEPT | directive name and `from` dequoted |
+	 * | 47 | `Deny from al"l"` | OWN | WRITE | host `al"l"` |
+	 * | 47a | symlink to `Deny from al"l"` | FOREIGN | REFUSE | is a symlink; host `al"l"` |
+	 * | 48 | `Deny from all "#"` | OWN | WRITE | quoted `#` still causes a syntax error |
+	 * | 48a | symlink to `Deny from all "#"` | FOREIGN | REFUSE | is a symlink; quoted `#` still causes a syntax error |
+	 * | 49 | `Require "all"denied` | OWN | WRITE | Apache denies; deliberately outside the whitespace-separated grammar |
+	 * | 50 | content ends at 8192, CR at 8193, LF at 8194 | OWN | ACCEPT | complete deny; +1 read rejected it |
+	 * | 50a | symlink to content ends at 8192, CR at 8193, LF at 8194 | FOREIGN | ACCEPT | complete deny; +1 read rejected it |
+	 * | 51 | content ends at 8192, LF at 8193 | OWN | ACCEPT | complete deny; LF neighbour |
 	 *
 	 * ## index.php
 	 *
@@ -669,6 +742,8 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 	 * - The 8 KB cap. Measured: a rule at offset 9200 in a 9214-byte file is not accepted, a rule at offset 0 in a 20014-byte file is. 8 KB of directives ahead of a deny line is not a shape anyone writes; the cap is what keeps a fat regular file from the OOM fatal that leaks a scratch database per tick. The cap cutting a line in half is handled rather than accepted, row 12e.
 	 * - The is_file()-to-read TOCTOU: swapping a regular file for a FIFO between the check and the read reproduces the round-3 hang. Closing it needs O_NONBLOCK + fstat on a descriptor; an attacker who already has uploads write does not need to win this race. The same swap between the classification block and file_put_contents() has the same two outcomes on the write side, follow a symlink or block opening a FIFO, and is accepted on the same grounds.
 	 * - A regular file on a hung mount is not this guard's to handle.
+	 * - Quoted tokens followed by text without whitespace. Measured: `Require "all"denied` and `Deny from "all"x` parse as separate words in Apache; both deny, but this grammar deliberately does not match them (row 49).
+	 * - Unterminated quotes. Measured: `Order "Deny,Allow` parses because the quote runs to the end of the line; this grammar requires a closing quote.
 	 *
 	 * @return array
 	 */
@@ -722,6 +797,35 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 			'#32 index hardlink'               => array( 'index:hardlink:credential', 'skip', '', 'untouched' ),
 			'#32 index directory'              => array( 'index:directory:empty', 'skip', '', 'untouched' ),
 			'#32 index FIFO'                   => array( 'index:fifo:empty', 'skip', '', 'untouched' ),
+			'#33 own cont-allow'               => array( 'htaccess:own:cont-allow', 'write', '', 'deny' ),
+			'#33a symlink cont-allow'          => array( 'htaccess:symlink:cont-allow', 'refuse', 'is a symlink', 'untouched' ),
+			'#34 own cont-comment'             => array( 'htaccess:own:cont-comment', 'write', '', 'deny' ),
+			'#34a symlink cont-comment'        => array( 'htaccess:symlink:cont-comment', 'refuse', 'is a symlink', 'untouched' ),
+			'#35 own cont-split'               => array( 'htaccess:own:cont-split', 'accept', '', 'untouched' ),
+			'#35a symlink cont-split'          => array( 'htaccess:symlink:cont-split', 'accept', '', 'untouched' ),
+			'#36 own cont-double'              => array( 'htaccess:own:cont-double', 'write', '', 'deny' ),
+			'#36a symlink cont-double'         => array( 'htaccess:symlink:cont-double', 'refuse', 'is a symlink', 'untouched' ),
+			'#37 own cont-glued'               => array( 'htaccess:own:cont-glued', 'write', '', 'deny' ),
+			'#38 own cont-word'                => array( 'htaccess:own:cont-word', 'accept', '', 'untouched' ),
+			'#39 own cont-ws-crlf'             => array( 'htaccess:own:cont-ws-crlf', 'accept', '', 'untouched' ),
+			'#40 own cont-eof'                 => array( 'htaccess:own:cont-eof', 'accept', '', 'untouched' ),
+			'#41 own cont-eof-bare'            => array( 'htaccess:own:cont-eof-bare', 'write', '', 'deny' ),
+			'#42 own cont-severed'             => array( 'htaccess:own:cont-severed', 'write', '', 'deny' ),
+			'#42a symlink cont-severed'        => array( 'htaccess:symlink:cont-severed', 'refuse', 'is a symlink', 'untouched' ),
+			'#43 own quoted-dq'                => array( 'htaccess:own:quoted-dq', 'accept', '', 'untouched' ),
+			'#43a symlink quoted-dq'           => array( 'htaccess:symlink:quoted-dq', 'accept', '', 'untouched' ),
+			'#44 own quoted-sq'                => array( 'htaccess:own:quoted-sq', 'accept', '', 'untouched' ),
+			'#45 own quoted-require'           => array( 'htaccess:own:quoted-require', 'accept', '', 'untouched' ),
+			'#45a symlink quoted-require'      => array( 'htaccess:symlink:quoted-require', 'accept', '', 'untouched' ),
+			'#46 own quoted-name'              => array( 'htaccess:own:quoted-name', 'accept', '', 'untouched' ),
+			'#47 own quoted-partial'           => array( 'htaccess:own:quoted-partial', 'write', '', 'deny' ),
+			'#47a symlink quoted-partial'      => array( 'htaccess:symlink:quoted-partial', 'refuse', 'is a symlink', 'untouched' ),
+			'#48 own quoted-hash'              => array( 'htaccess:own:quoted-hash', 'write', '', 'deny' ),
+			'#48a symlink quoted-hash'         => array( 'htaccess:symlink:quoted-hash', 'refuse', 'is a symlink', 'untouched' ),
+			'#49 own quoted-glued'             => array( 'htaccess:own:quoted-glued', 'write', '', 'deny' ),
+			'#50 own crlf-cap'                 => array( 'htaccess:own:crlf-cap', 'accept', '', 'untouched' ),
+			'#50a symlink crlf-cap'            => array( 'htaccess:symlink:crlf-cap', 'accept', '', 'untouched' ),
+			'#51 own lf-cap'                   => array( 'htaccess:own:lf-cap', 'accept', '', 'untouched' ),
 		);
 	}
 

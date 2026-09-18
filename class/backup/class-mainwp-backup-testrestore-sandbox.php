@@ -38,6 +38,13 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
     const ERR_UNSUPPORTED = 'mainwp_sandbox_unsupported';
 
     /**
+     * Bytes of a protection file protect_parent() will read. A deny rule sits in
+     * the first line of every .htaccess anyone writes; the cap is what keeps a
+     * multi-megabyte file from the OOM fatal that leaks a scratch database.
+     */
+    private const PROTECTION_READ_BYTES = 8192;
+
+    /**
      * Error code for a backup whose bytes will not reconstitute (a dump
      * that fails to decompress or import, an unreadable archive).
      */
@@ -137,6 +144,11 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
     /**
      * Keep extracted files and sibling archive aliases under the same deny rule.
      *
+     * Four outcomes, one per matrix row in the sandbox test: write a missing or
+     * permissive file the plugin owns, accept a path that already carries a deny
+     * rule, skip an unreadable file or an existing index.php, or refuse a path the
+     * plugin does not own (symlink, hard link, non-regular file) that does not deny.
+     *
      * Refusal also makes probe_capability(), via bring_up(), report the host
      * incapable: the scheduler's ensure_capable() caches that for CAPABILITY_TTL,
      * so an unwritable uploads parent stops verified restores until expiry,
@@ -154,47 +166,76 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
             'index.php' => '',
         );
         foreach ( $protection as $name => $contents ) {
-            $file = $parent . '/' . $name;
+            $file    = $parent . '/' . $name;
+            $is_link = is_link( $file );
             // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- a missing protection file has no stat data.
-            $stat = @stat( $file );
+            $stat    = @stat( $file );
+            $exists  = file_exists( $file );
+            $regular = is_file( $file );
+            $why     = '';
+            if ( $is_link ) {
+                $why = 'is a symlink';
+            } elseif ( $regular && false !== $stat && $stat['nlink'] > 1 ) {
+                $why = 'has multiple hard links';
+            } elseif ( $exists && ! $regular ) {
+                $why = 'is not a regular file';
+            }
+
+            if ( 'index.php' === $name && ( $exists || $is_link ) ) {
+                continue;
+            }
+            // The web server enforces protection; unreadability does not prove the rule is missing.
+            if ( '.htaccess' === $name && $regular && ! is_readable( $file ) ) {
+                continue;
+            }
             // Accept foreign paths that already deny: refusal disables the whole lane for CAPABILITY_TTL.
             // Snapshot-style backups give even a legitimate .htaccess a link count above one.
-            if ( is_link( $file ) || ( file_exists( $file ) && ( ! is_file( $file ) || ( false !== $stat && $stat['nlink'] > 1 ) ) ) ) {
-                if ( '.htaccess' === $name ) {
-                    // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- accept an existing deny rule without writing through a foreign path.
-                    if ( is_file( $file ) && false !== stripos( (string) @file_get_contents( $file, false, null, 0, 8192 ), 'deny from all' ) ) {
-                        continue;
-                    }
-                    $why = is_link( $file ) ? 'is a symlink' : ( is_file( $file ) ? 'has multiple hard links' : 'is not a regular file' );
-                    $this->tear_down();
-                    throw new MainWP_Exception( esc_html__( 'The test-restore sandbox could not protect its working directory.', 'mainwp' ), 'sandbox protection: ' . $file . ' ' . $why, self::ERR_UNSUPPORTED );
-                }
+            if ( '.htaccess' === $name && $this->has_protection_rule( $file ) ) {
                 continue;
             }
-            if ( '.htaccess' === $name && file_exists( $file ) && ! is_readable( $file ) ) {
-                // The web server enforces the deny rule; a read failure does not prove it is missing.
-                // Refusing here would disable verified restores for CAPABILITY_TTL.
-                continue;
+            if ( '' !== $why ) {
+                $this->tear_down();
+                throw new MainWP_Exception( esc_html__( 'The test-restore sandbox could not protect its working directory.', 'mainwp' ), 'sandbox protection: ' . $file . ' ' . $why, self::ERR_UNSUPPORTED );
             }
-            // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local protection; repair a missing or permissive deny rule.
-            if ( ! file_exists( $file ) || ( '.htaccess' === $name && false === stripos( (string) @file_get_contents( $file ), 'deny from all' ) ) ) {
-                error_clear_last();
-                // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents, WordPress.PHP.NoSilencedErrors.Discouraged -- verify deny-rule persistence below; index.php remains best effort.
-                @file_put_contents( $file, $contents );
-                $write_error = error_get_last();
-                // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local protection; unreadable protection must fail closed.
-                $readback = '.htaccess' === $name ? @file_get_contents( $file ) : '';
-                if ( '.htaccess' === $name && ( ! is_string( $readback ) || false === stripos( $readback, 'deny from all' ) ) ) {
-                    $error  = $write_error ?? error_get_last();
-                    $detail = 'sandbox protection: ' . $parent;
-                    if ( ! empty( $error['message'] ) ) {
-                        $detail .= ': ' . $error['message'];
-                    }
-                    $this->tear_down();
-                    throw new MainWP_Exception( esc_html__( 'The test-restore sandbox could not protect its working directory.', 'mainwp' ), $detail, self::ERR_UNSUPPORTED );
+
+            error_clear_last();
+            // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents, WordPress.PHP.NoSilencedErrors.Discouraged -- verify deny-rule persistence below; index.php remains best effort.
+            @file_put_contents( $file, $contents );
+            $write_error = error_get_last();
+            if ( '.htaccess' === $name && ! $this->has_protection_rule( $file ) ) {
+                $error  = $write_error ?? error_get_last();
+                $detail = 'sandbox protection: ' . $parent;
+                if ( ! empty( $error['message'] ) ) {
+                    $detail .= ': ' . $error['message'];
                 }
+                $this->tear_down();
+                throw new MainWP_Exception( esc_html__( 'The test-restore sandbox could not protect its working directory.', 'mainwp' ), $detail, self::ERR_UNSUPPORTED );
             }
         }
+    }
+
+    /**
+     * Whether a readable regular file carries a deny rule in its first 8 KB.
+     *
+     * The is_file() gate and the read cap are both load-bearing: a device or
+     * FIFO at this path would otherwise hang or exhaust the process, and a fat
+     * regular file would exhaust it. Neither failure is catchable, and both
+     * strand the scratch database bring_up() has already created. The match
+     * is line-anchored so a commented-out rule does not pass, and accepts
+     * Apache 2.4's Require all denied so an operator's directive is not
+     * flattened into deny from all.
+     *
+     * @param string $file Protection path.
+     *
+     * @return bool
+     */
+    private function has_protection_rule( string $file ): bool {
+        if ( ! is_file( $file ) || ! is_readable( $file ) ) {
+            return false;
+        }
+        // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- bounded local read; failure cannot establish a deny rule.
+        $contents = @file_get_contents( $file, false, null, 0, self::PROTECTION_READ_BYTES );
+        return is_string( $contents ) && 1 === preg_match( '/^[ \t]*(?:deny[ \t]+from[ \t]+all|require[ \t]+all[ \t]+denied)\b/mi', $contents );
     }
 
     /**

@@ -354,11 +354,18 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * A permissive parent must not expose restored backup data.
+	 * Each filesystem shape must preserve operator files or produce the specified refusal.
+	 *
+	 * @dataProvider protect_parent_matrix
+	 *
+	 * @param string $fixture     File, shape and contents marker.
+	 * @param string $outcome     Expected write, accept, skip or refuse.
+	 * @param string $reason      Refusal detail substring.
+	 * @param string $final_state Expected contents or preservation.
 	 *
 	 * @return void
 	 */
-	public function test_bring_up_repairs_permissive_parent_htaccess() {
+	public function test_protect_parent_matrix( string $fixture, string $outcome, string $reason, string $final_state ): void {
 		$upload_dir = function ( $upload ) {
 			$upload['basedir'] = $this->dir;
 			return $upload;
@@ -370,300 +377,320 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 			remove_filter( 'upload_dir', $upload_dir );
 		}
 
-		$parent = dirname( untrailingslashit( $sandbox->temp_dir() ) );
-		$this->assertTrue( wp_mkdir_p( $parent ) );
-		$this->assertSame( 14, file_put_contents( $parent . '/.htaccess', 'allow from all' ) );
-		try {
-			$sandbox->bring_up();
-			$this->assertStringContainsString( 'deny from all', strtolower( file_get_contents( $parent . '/.htaccess' ) ) );
-			$this->assertFileExists( $parent . '/index.php' );
-		} finally {
-			$sandbox->tear_down();
-		}
-	}
-
-	/**
-	 * Failed protection repair must disqualify the host rather than expose backups.
-	 *
-	 * @return void
-	 */
-	public function test_bring_up_uncorrectable_parent_htaccess_is_unsupported() {
-		if ( function_exists( 'posix_geteuid' ) && 0 === posix_geteuid() ) {
-			$this->markTestSkipped( 'Root can overwrite read-only protection files.' );
-		}
-		$upload_dir = function ( $upload ) {
-			$upload['basedir'] = $this->dir;
-			return $upload;
-		};
-		add_filter( 'upload_dir', $upload_dir );
-		try {
-			$sandbox = new MainWP_Backup_TestRestore_Sandbox();
-		} finally {
-			remove_filter( 'upload_dir', $upload_dir );
-		}
+		list( $name, $shape, $content ) = explode( ':', $fixture );
 
 		$parent   = dirname( untrailingslashit( $sandbox->temp_dir() ) );
 		$htaccess = $parent . '/.htaccess';
-		$this->assertTrue( wp_mkdir_p( $parent ) );
-		$this->assertSame( 14, file_put_contents( $htaccess, 'allow from all' ) );
-		try {
-			$this->assertTrue( chmod( $htaccess, 0444 ) );
-			clearstatcache( true, $htaccess );
-			$this->assertFalse( is_writable( $htaccess ), 'The fixture must prevent deny-rule repair.' );
-			$this->assertTrue( is_readable( $htaccess ), 'The fixture must remain readable.' );
-			$threw = false;
-			try {
-				$sandbox->bring_up();
-			} catch ( MainWP_Exception $e ) {
-				$threw = true;
-				$this->assertSame( MainWP_Backup_TestRestore_Sandbox::ERR_UNSUPPORTED, $e->get_message_error_code() );
-				$this->assertSame( 'The test-restore sandbox could not protect its working directory.', $e->getMessage() );
-				$this->assertStringContainsString( 'file_put_contents(' . $htaccess . '):', $e->get_message_extra( false ) );
-			}
-			$this->assertTrue( $threw, 'An uncorrectable deny rule must be reported as unsupported.' );
-			$this->assertSame( 'allow from all', file_get_contents( $htaccess ) );
-			$this->assertDirectoryDoesNotExist( $sandbox->temp_dir() );
-		} finally {
-			chmod( $htaccess, 0644 );
-			$sandbox->tear_down();
-		}
-	}
+		$index    = $parent . '/index.php';
+		$file     = 'index' === $name ? $index : $htaccess;
+		$target   = 'zero' === $content ? '/dev/zero' : $parent . '/operator-file';
+		$linked   = in_array( $shape, array( 'symlink', 'hardlink' ), true );
+		$storage  = $linked ? $target : $file;
+		$payloads = array(
+			'empty'      => '',
+			'deny'       => 'deny from all',
+			'mixed'      => "# Existing protection\nDeNy FrOm AlL\n",
+			'require'    => 'Require all denied',
+			'comment'    => "# deny from all\nRequire all granted\n",
+			'rule-allow' => "deny from all\nallow from all\n",
+			'permissive' => 'allow from all',
+			'unwritable' => 'allow from all',
+			'unreadable' => 'deny from all',
+			'late'       => str_repeat( "# x\n", 2300 ) . "deny from all\n",
+			'large'      => "deny from all\n" . str_repeat( "# x\n", 5000 ),
+			'directives' => "Deny from all\n# Retain this directive.\nOptions -Indexes\n",
+			'credential' => '<?php $credential = "retained";',
+		);
 
-	/**
-	 * Refusing a symlink must preserve the target bytes.
-	 *
-	 * @return void
-	 */
-	public function test_bring_up_refuses_symlinked_parent_htaccess() {
-		$upload_dir = function ( $upload ) {
-			$upload['basedir'] = $this->dir;
-			return $upload;
-		};
-		add_filter( 'upload_dir', $upload_dir );
-		try {
-			$sandbox = new MainWP_Backup_TestRestore_Sandbox();
-		} finally {
-			remove_filter( 'upload_dir', $upload_dir );
-		}
-
-		$parent   = dirname( untrailingslashit( $sandbox->temp_dir() ) );
-		$htaccess = $parent . '/.htaccess';
-		$this->assertTrue( wp_mkdir_p( $parent ) );
-		$target = $this->dir . '/credential.php';
-		$bytes  = '<?php $credential = "retained";';
-		$this->assertSame( strlen( $bytes ), file_put_contents( $target, $bytes ) );
-		$this->assertTrue( symlink( $target, $htaccess ) );
-		try {
-			$threw = false;
-			try {
-				$sandbox->bring_up();
-			} catch ( MainWP_Exception $e ) {
-				$threw = true;
-				$this->assertSame( MainWP_Backup_TestRestore_Sandbox::ERR_UNSUPPORTED, $e->get_message_error_code() );
-				$this->assertStringContainsString( $htaccess . ' is a symlink', $e->get_message_extra( false ) );
-			}
-			$this->assertTrue( $threw, 'A non-regular protection path must be refused.' );
-			$this->assertSame( $bytes, file_get_contents( $target ) );
-			$this->assertTrue( is_link( $htaccess ) );
-		} finally {
-			$sandbox->tear_down();
-		}
-	}
-
-	/**
-	 * Refusing a hard link must preserve the target bytes.
-	 *
-	 * @return void
-	 */
-	public function test_bring_up_refuses_hardlinked_parent_htaccess() {
-		$upload_dir = function ( $upload ) {
-			$upload['basedir'] = $this->dir;
-			return $upload;
-		};
-		add_filter( 'upload_dir', $upload_dir );
-		try {
-			$sandbox = new MainWP_Backup_TestRestore_Sandbox();
-		} finally {
-			remove_filter( 'upload_dir', $upload_dir );
-		}
-
-		$parent   = dirname( untrailingslashit( $sandbox->temp_dir() ) );
-		$htaccess = $parent . '/.htaccess';
-		$this->assertTrue( wp_mkdir_p( $parent ) );
-		$target = $this->dir . '/credential.php';
-		$bytes  = '<?php $credential = "retained";';
-		$this->assertSame( strlen( $bytes ), file_put_contents( $target, $bytes ) );
-		try {
-			if ( ! @link( $target, $htaccess ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- skip filesystems that cannot create hard links.
-				$this->markTestSkipped( 'The filesystem cannot create hard links.' );
-			}
-			$threw = false;
-			try {
-				$sandbox->bring_up();
-			} catch ( MainWP_Exception $e ) {
-				$threw = true;
-				$this->assertSame( MainWP_Backup_TestRestore_Sandbox::ERR_UNSUPPORTED, $e->get_message_error_code() );
-				$this->assertStringContainsString( $htaccess . ' has multiple hard links', $e->get_message_extra( false ) );
-			}
-			$this->assertTrue( $threw, 'A hard-linked protection path must be refused.' );
-			$this->assertSame( $bytes, file_get_contents( $target ) );
-		} finally {
-			$sandbox->tear_down();
-		}
-	}
-
-	/**
-	 * A symlink to an existing deny rule must remain unchanged and allow bring-up.
-	 *
-	 * @return void
-	 */
-	public function test_bring_up_preserves_symlinked_parent_htaccess_with_deny_rule() {
-		$upload_dir = function ( $upload ) {
-			$upload['basedir'] = $this->dir;
-			return $upload;
-		};
-		add_filter( 'upload_dir', $upload_dir );
-		try {
-			$sandbox = new MainWP_Backup_TestRestore_Sandbox();
-		} finally {
-			remove_filter( 'upload_dir', $upload_dir );
-		}
-
-		$parent   = dirname( untrailingslashit( $sandbox->temp_dir() ) );
-		$htaccess = $parent . '/.htaccess';
-		$this->assertTrue( wp_mkdir_p( $parent ) );
-		$target = $this->dir . '/deny-rule';
-		$bytes  = "Deny from all\n# Retain this directive.\nOptions -Indexes\n";
-		$this->assertSame( strlen( $bytes ), file_put_contents( $target, $bytes ) );
-		$this->assertTrue( symlink( $target, $htaccess ) );
-		try {
-			$sandbox->bring_up();
-			$this->assertDirectoryExists( $sandbox->temp_dir() );
-			$this->assertTrue( is_link( $htaccess ) );
-			$this->assertSame( $bytes, file_get_contents( $target ) );
-		} finally {
-			$sandbox->tear_down();
-		}
-	}
-
-	/**
-	 * A device symlink must be refused promptly without reading its endless stream.
-	 *
-	 * @return void
-	 */
-	public function test_protect_parent_refuses_symlink_to_dev_zero_promptly() {
-		if ( ! is_readable( '/dev/zero' ) ) {
-			$this->markTestSkipped( '/dev/zero is not readable on this runner.' );
-		}
-		$upload_dir = function ( $upload ) {
-			$upload['basedir'] = $this->dir;
-			return $upload;
-		};
-		add_filter( 'upload_dir', $upload_dir );
-		try {
-			$sandbox = new MainWP_Backup_TestRestore_Sandbox();
-		} finally {
-			remove_filter( 'upload_dir', $upload_dir );
-		}
-
-		$parent   = dirname( untrailingslashit( $sandbox->temp_dir() ) );
-		$htaccess = $parent . '/.htaccess';
-		$this->assertTrue( wp_mkdir_p( $parent ) );
-		$this->assertTrue( symlink( '/dev/zero', $htaccess ) );
-		$method = new \ReflectionMethod( $sandbox, 'protect_parent' );
+		$bytes    = $payloads[ $content ] ?? '';
+		$cleanup  = null;
+		$alarm    = false;
+		$modified = null;
+		$method   = new \ReflectionMethod( $sandbox, 'protect_parent' );
 		$method->setAccessible( true );
+
 		try {
-			$threw   = false;
+			$this->assertTrue( wp_mkdir_p( $parent ) );
+			// A pre-existing root proves refusals clean up and accepted protection preserves it.
+			$this->assertTrue( wp_mkdir_p( $sandbox->temp_dir() ) );
+			if ( 'fifo' === $shape || 'fifo' === $content ) {
+				if ( ! function_exists( 'posix_mkfifo' ) || ! function_exists( 'pcntl_async_signals' ) ) {
+					$this->markTestSkipped( 'FIFO coverage requires posix_mkfifo and pcntl_async_signals.' );
+				}
+				$previous_async   = pcntl_async_signals( true );
+				$previous_handler = pcntl_signal_get_handler( SIGALRM );
+				pcntl_signal(
+					SIGALRM,
+					static function () {
+						throw new \RuntimeException( 'Protection opened a FIFO and exceeded five seconds.' );
+					},
+					false
+				);
+				// An accidental FIFO read would otherwise hang the suite.
+				pcntl_alarm( 5 );
+				$alarm = true;
+			}
+			if ( 'zero' === $content && ! is_readable( '/dev/zero' ) ) {
+				$this->markTestSkipped( '/dev/zero is not readable on this runner.' );
+			}
+
+			// phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.parentFound -- the fixture contract names the protection parent.
+			$builder = function ( $parent, $htaccess, $index ) use ( $shape, $content, $name, $storage, $target, $bytes ) {
+				$file = 'index' === $name ? $index : $htaccess;
+				if ( 'directory' === $shape || 'directory' === $content ) {
+					$this->assertTrue( wp_mkdir_p( $storage ) );
+				} elseif ( 'fifo' === $shape || 'fifo' === $content ) {
+					$this->assertTrue( posix_mkfifo( $storage, 0600 ) );
+				} elseif ( 'missing' !== $shape && ! in_array( $content, array( 'dangling', 'zero' ), true ) ) {
+					$length = 'late' === $content ? 9214 : ( 'large' === $content ? 20014 : strlen( $bytes ) );
+					$this->assertSame( $length, file_put_contents( $storage, $bytes ) );
+				}
+				if ( 'symlink' === $shape ) {
+					$this->assertTrue( symlink( $target, $file ) );
+				} elseif ( 'hardlink' === $shape && ! @link( $target, $file ) ) {
+					$this->markTestSkipped( 'The filesystem cannot create hard links.' );
+				}
+				if ( 'blocked-parent' === $content ) {
+					$this->assertSame( 13, file_put_contents( $htaccess, 'deny from all' ) );
+				}
+				return static function () use ( $parent, $file, $storage, $shape, $content ) {
+					if ( 'blocked-parent' === $content ) {
+						chmod( $parent, 0755 );
+					}
+					if ( in_array( $content, array( 'unreadable', 'unwritable' ), true ) ) {
+						chmod( $storage, 0644 );
+					}
+					// rrmdir follows directory symlinks, so remove the fixture link first.
+					if ( 'symlink' === $shape && is_link( $file ) ) {
+						unlink( $file );
+					}
+				};
+			};
+			$cleanup = $builder( $parent, $htaccess, $index );
+
+			if ( file_exists( $file ) && 'zero' !== $content ) {
+				$this->assertTrue( touch( $file, 1000000000 ) );
+				$modified = 1000000000;
+			}
+			$link_before = is_link( $file ) ? lstat( $file ) : null;
+			if ( in_array( $content, array( 'unreadable', 'unwritable', 'blocked-parent' ), true ) ) {
+				$mode_path = 'blocked-parent' === $content ? $parent : $storage;
+				$mode      = 'unreadable' === $content ? 0000 : ( 'unwritable' === $content ? 0444 : 0555 );
+				$this->assertTrue( chmod( $mode_path, $mode ) );
+				clearstatcache();
+				if ( 'unreadable' === $content && is_readable( $file ) ) {
+					$this->markTestSkipped( 'The process can read chmod 000 protection files.' );
+				}
+				if ( 'unreadable' !== $content && is_writable( $mode_path ) ) {
+					$this->markTestSkipped( 'The process can write read-only protection fixtures.' );
+				}
+				if ( 'unwritable' === $content ) {
+					$this->assertFalse( is_writable( $file ), 'The fixture must prevent deny-rule repair.' );
+					$this->assertTrue( is_readable( $file ), 'The fixture must remain readable.' );
+				}
+			}
+
+			$caught  = null;
 			$started = microtime( true );
 			try {
 				$method->invoke( $sandbox );
 			} catch ( MainWP_Exception $e ) {
-				$threw = true;
-				$this->assertSame( MainWP_Backup_TestRestore_Sandbox::ERR_UNSUPPORTED, $e->get_message_error_code() );
-				$this->assertStringContainsString( $htaccess . ' is a symlink', $e->get_message_extra( false ) );
+				$caught = $e;
 			}
-			$this->assertLessThan( 1.0, microtime( true ) - $started, 'Device refusal must return within one second.' );
-			$this->assertTrue( $threw, 'A protection symlink to /dev/zero must be refused.' );
+			$elapsed = microtime( true ) - $started;
+			if ( 'zero' === $content ) {
+				// A reverted bound could kill PHP here: PHPUnit reports a dead runner, not a red test.
+				$this->assertLessThan( 1.0, $elapsed, 'Device refusal must return within one second.' );
+			}
+			if ( 'refuse' === $outcome ) {
+				$this->assertInstanceOf( MainWP_Exception::class, $caught );
+				$this->assertSame( MainWP_Backup_TestRestore_Sandbox::ERR_UNSUPPORTED, $caught->get_message_error_code() );
+				$this->assertSame( 'The test-restore sandbox could not protect its working directory.', $caught->getMessage() );
+				$this->assertStringContainsString( $reason, $caught->get_message_extra( false ) );
+				if ( 'unwritable' === $content ) {
+					$this->assertStringStartsWith( 'sandbox protection: ' . $parent . ': ', $caught->get_message_extra( false ) );
+					$this->assertStringContainsString( 'file_put_contents(' . $htaccess . '):', $caught->get_message_extra( false ) );
+				} else {
+					$this->assertSame( 'sandbox protection: ' . $file . ' ' . $reason, $caught->get_message_extra( false ) );
+				}
+				$this->assertDirectoryDoesNotExist( $sandbox->temp_dir() );
+				$this->assertFileDoesNotExist( $index );
+			} else {
+				$this->assertNull( $caught, 'Protection must not refuse this matrix row.' );
+				$this->assertDirectoryExists( $sandbox->temp_dir() );
+				if ( 'htaccess' === $name ) {
+					$this->assertFileExists( $index );
+					$this->assertSame( '', file_get_contents( $index ) );
+				} else {
+					$this->assertSame( 'deny from all', file_get_contents( $htaccess ) );
+				}
+			}
+
+			if ( in_array( $content, array( 'unreadable', 'unwritable' ), true ) ) {
+				$this->assertTrue( chmod( $storage, 0644 ) );
+			}
+			clearstatcache( true, $file );
+			if ( 'deny' === $final_state ) {
+				$this->assertSame( 'deny from all', file_get_contents( $file ) );
+			} elseif ( 'empty index' === $final_state ) {
+				$this->assertFileExists( $index );
+				$this->assertSame( '', file_get_contents( $index ) );
+			} elseif ( 'index absent' === $final_state ) {
+				$this->assertFileDoesNotExist( $index );
+			} else {
+				$this->assertSame( 'untouched', $final_state );
+				if ( null !== $modified ) {
+					$this->assertSame( $modified, filemtime( $file ), 'Protection must not rewrite an existing file.' );
+				}
+				if ( is_file( $storage ) ) {
+					$this->assertSame( $bytes, file_get_contents( $storage ), 'Operator bytes must survive.' );
+				}
+			}
+			if ( 'symlink' === $shape ) {
+				$this->assertTrue( is_link( $file ) );
+				$this->assertSame( $target, readlink( $file ) );
+				$this->assertSame( $link_before['mtime'], lstat( $file )['mtime'] );
+				if ( 'dangling' === $content ) {
+					$this->assertFileDoesNotExist( $target );
+				}
+			} elseif ( 'hardlink' === $shape ) {
+				$this->assertSame( 2, stat( $file )['nlink'] );
+				$this->assertSame( fileinode( $target ), fileinode( $file ) );
+			}
+			if ( 'directory' === $shape || 'directory' === $content ) {
+				$this->assertDirectoryExists( $storage );
+			} elseif ( 'fifo' === $shape || 'fifo' === $content ) {
+				$this->assertSame( 'fifo', filetype( $storage ) );
+			}
 		} finally {
+			if ( $alarm ) {
+				pcntl_alarm( 0 );
+				pcntl_signal( SIGALRM, $previous_handler );
+				pcntl_async_signals( $previous_async );
+			}
+			if ( null !== $cleanup ) {
+				$cleanup();
+			}
 			$sandbox->tear_down();
 		}
 	}
 
 	/**
-	 * A directory must fail the regular-file guard explicitly.
+	 * # protect_parent() input matrix (sprint 7)
 	 *
-	 * @return void
-	 */
-	public function test_bring_up_refuses_directory_parent_htaccess() {
-		$upload_dir = function ( $upload ) {
-			$upload['basedir'] = $this->dir;
-			return $upload;
-		};
-		add_filter( 'upload_dir', $upload_dir );
-		try {
-			$sandbox = new MainWP_Backup_TestRestore_Sandbox();
-		} finally {
-			remove_filter( 'upload_dir', $upload_dir );
-		}
-
-		$parent   = dirname( untrailingslashit( $sandbox->temp_dir() ) );
-		$htaccess = $parent . '/.htaccess';
-		$this->assertTrue( wp_mkdir_p( $parent ) );
-		$this->assertTrue( wp_mkdir_p( $htaccess ) );
-		try {
-			$threw = false;
-			try {
-				$sandbox->bring_up();
-			} catch ( MainWP_Exception $e ) {
-				$threw = true;
-				$this->assertSame( MainWP_Backup_TestRestore_Sandbox::ERR_UNSUPPORTED, $e->get_message_error_code() );
-				$this->assertStringContainsString( $htaccess . ' is not a regular file', $e->get_message_extra( false ) );
-			}
-			$this->assertTrue( $threw, 'A non-regular protection path must be refused.' );
-		} finally {
-			$sandbox->tear_down();
-		}
-	}
-
-	/**
-	 * PHP read permissions do not establish whether the web server denies access.
+	 * Path classification, evaluated with lstat first (is_link), then stat:
+	 * - MISSING: is_link false, file_exists false.
+	 * - FOREIGN: is_link true (any target, including dangling), OR exists and not a regular file
+	 *   (directory, FIFO, char/block device), OR a regular file with nlink > 1. Reason strings,
+	 *   in this priority: "is a symlink", "has multiple hard links", "is not a regular file".
+	 *   The plugin never writes through a FOREIGN path.
+	 * - OWN: exists, is a regular file, nlink == 1, not a symlink.
 	 *
-	 * @return void
+	 * Deny-rule match (RULE): applied to at most the first 8192 bytes, read only when
+	 * is_file() is true (a directory, FIFO or device is never opened), regex
+	 * `/^[ \t]*(?:deny[ \t]+from[ \t]+all|require[ \t]+all[ \t]+denied)\b/mi`.
+	 * A commented-out line (`# deny from all`) does not match. Apache 2.4's
+	 * `Require all denied` matches: it is a deny rule and overwriting it flattened an operator directive.
+	 *
+	 * Outcomes: WRITE (write contents, then read back the first 8 KB and require RULE, else refuse),
+	 * ACCEPT (rule seen, no write), SKIP (no read, no write), REFUSE (tear_down, then throw
+	 * ERR_UNSUPPORTED "sandbox protection: <file> <reason>"; costs CAPABILITY_TTL, one month).
+	 *
+	 * ## .htaccess
+	 *
+	 * | # | shape | class | outcome | reason / note |
+	 * |---|-------|-------|---------|---------------|
+	 * | 1 | missing | MISSING | WRITE | |
+	 * | 2 | empty regular file | OWN | WRITE | |
+	 * | 3 | exactly `deny from all` | OWN | ACCEPT | mtime untouched |
+	 * | 4 | mixed case `DeNy FrOm AlL` after a comment line | OWN | ACCEPT | |
+	 * | 5 | `Require all denied` only | OWN | ACCEPT | NEW: was overwritten (Aikido row 2) |
+	 * | 6 | only `# deny from all` (commented) above `Require all granted` | OWN | WRITE | NEW: was accepted by substring (Aikido row 1) |
+	 * | 7 | `deny from all` then `allow from all` | OWN | ACCEPT | text check is defense in depth, not the only control |
+	 * | 8 | `allow from all` (permissive) | OWN | WRITE | existing test |
+	 * | 9 | permissive and not writable (chmod 0444, non-root) | OWN | REFUSE | read-back lacks rule; detail carries the write errno; existing test |
+	 * | 10 | unreadable (chmod 0000, non-root) | OWN | SKIP | recorded pushback; web server enforces it |
+	 * | 11 | rule at offset 9200 of a 9214-byte file (past the 8 KB cap) | OWN | WRITE | cap is deliberate: overwrite is the plugin repairing its own file |
+	 * | 12 | rule at offset 0 of a 20014-byte file | OWN | ACCEPT | bounded read still sees it |
+	 * | 13 | directory | FOREIGN | REFUSE | is not a regular file; no read |
+	 * | 14 | FIFO | FOREIGN | REFUSE | is not a regular file; no read (never opened) |
+	 * | 15 | symlink to `/dev/zero` | FOREIGN | REFUSE | is a symlink; no read; returns within 1 s |
+	 * | 16 | dangling symlink | FOREIGN | REFUSE | is a symlink |
+	 * | 17 | symlink to a directory | FOREIGN | REFUSE | is a symlink |
+	 * | 18 | symlink to a FIFO | FOREIGN | REFUSE | is a symlink; no read |
+	 * | 19 | symlink to regular file holding the rule | FOREIGN | ACCEPT | recorded pushback; link untouched |
+	 * | 20 | symlink to regular file with `Require all denied` | FOREIGN | ACCEPT | |
+	 * | 21 | symlink to regular file with only a commented-out rule | FOREIGN | REFUSE | NEW: was accepted by substring |
+	 * | 22 | symlink to regular permissive file | FOREIGN | REFUSE | is a symlink; target untouched |
+	 * | 23 | symlink to regular empty file | FOREIGN | REFUSE | |
+	 * | 24 | symlink to unreadable regular file (non-root) | FOREIGN | SKIP | NEW: was refused by accident ((string) false); same reasoning as row 10, and the plugin still never writes |
+	 * | 25 | symlink to regular file, rule past the 8 KB cap | FOREIGN | REFUSE | cap is deliberate (recorded) |
+	 * | 26 | hard link (nlink 2) to regular file holding the rule | FOREIGN | ACCEPT | snapshot-style backups produce this legitimately |
+	 * | 27 | hard link to regular permissive file | FOREIGN | REFUSE | has multiple hard links |
+	 * | 28 | hard link to regular empty file | FOREIGN | REFUSE | |
+	 * | 29 | hard link to unreadable regular file (non-root) | FOREIGN | SKIP | as row 24 |
+	 *
+	 * ## index.php
+	 *
+	 * | # | shape | class | outcome |
+	 * |---|-------|-------|---------|
+	 * | 30 | missing | MISSING | WRITE (best effort: no read-back, no refusal) |
+	 * | 31 | any regular file, any contents, readable or not | OWN | SKIP |
+	 * | 32 | symlink (incl. dangling), hard link, directory, FIFO | FOREIGN | SKIP |
+	 *
+	 * Known and deliberate, not built for:
+	 * - The 8 KB cap. Measured: a rule at offset 9200 in a 9214-byte file is not accepted, a rule at offset 0 in a 20014-byte file is. 8 KB of directives ahead of a deny line is not a shape anyone writes; the cap is what keeps a fat regular file from the OOM fatal that leaks a scratch database per tick.
+	 * - The is_file()-to-read TOCTOU: swapping a regular file for a FIFO between the check and the read reproduces the round-3 hang. Closing it needs O_NONBLOCK + fstat on a descriptor; an attacker who already has uploads write does not need to win this race.
+	 * - A regular file on a hung mount is not this guard's to handle.
+	 *
+	 * @return array
 	 */
-	public function test_bring_up_preserves_unreadable_parent_htaccess() {
-		$upload_dir = function ( $upload ) {
-			$upload['basedir'] = $this->dir;
-			return $upload;
-		};
-		add_filter( 'upload_dir', $upload_dir );
-		try {
-			$sandbox = new MainWP_Backup_TestRestore_Sandbox();
-		} finally {
-			remove_filter( 'upload_dir', $upload_dir );
-		}
-
-		$parent   = dirname( untrailingslashit( $sandbox->temp_dir() ) );
-		$htaccess = $parent . '/.htaccess';
-		$this->assertTrue( wp_mkdir_p( $parent ) );
-		$this->assertSame( 13, file_put_contents( $htaccess, 'deny from all' ) );
-		$this->assertTrue( touch( $htaccess, 1000000000 ) );
-		try {
-			$this->assertTrue( chmod( $htaccess, 0000 ) );
-			clearstatcache( true, $htaccess );
-			if ( is_readable( $htaccess ) ) {
-				$this->markTestSkipped( 'The process can read chmod 000 protection files.' );
-			}
-			$sandbox->bring_up();
-			$this->assertDirectoryExists( $sandbox->temp_dir() );
-			$this->assertFileExists( $parent . '/index.php' );
-			$this->assertTrue( chmod( $htaccess, 0644 ) );
-			clearstatcache( true, $htaccess );
-			$this->assertSame( 'deny from all', file_get_contents( $htaccess ) );
-			$this->assertSame( 1000000000, filemtime( $htaccess ), 'Unreadable protection must not be rewritten.' );
-		} finally {
-			chmod( $htaccess, 0644 );
-			$sandbox->tear_down();
-		}
+	public static function protect_parent_matrix(): array {
+		return array(
+			'#1 missing htaccess'              => array( 'htaccess:missing:empty', 'write', '', 'deny' ),
+			'#2 own empty'                     => array( 'htaccess:own:empty', 'write', '', 'deny' ),
+			'#3 own deny from all'             => array( 'htaccess:own:deny', 'accept', '', 'untouched' ),
+			'#4 own mixed case after comment'  => array( 'htaccess:own:mixed', 'accept', '', 'untouched' ),
+			'#5 own Require all denied'        => array( 'htaccess:own:require', 'accept', '', 'untouched' ),
+			'#6 own commented deny'            => array( 'htaccess:own:comment', 'write', '', 'deny' ),
+			'#7 own deny then allow'           => array( 'htaccess:own:rule-allow', 'accept', '', 'untouched' ),
+			'#8 own permissive'                => array( 'htaccess:own:permissive', 'write', '', 'deny' ),
+			'#9 own unwritable'                => array( 'htaccess:own:unwritable', 'refuse', 'Permission denied', 'untouched' ),
+			'#10 own unreadable'               => array( 'htaccess:own:unreadable', 'skip', '', 'untouched' ),
+			'#11 own rule past cap'            => array( 'htaccess:own:late', 'write', '', 'deny' ),
+			'#12 own large rule first'         => array( 'htaccess:own:large', 'accept', '', 'untouched' ),
+			'#13 directory'                    => array( 'htaccess:directory:empty', 'refuse', 'is not a regular file', 'untouched' ),
+			'#14 FIFO'                         => array( 'htaccess:fifo:empty', 'refuse', 'is not a regular file', 'untouched' ),
+			'#15 symlink to dev zero'          => array( 'htaccess:symlink:zero', 'refuse', 'is a symlink', 'untouched' ),
+			'#16 dangling symlink'             => array( 'htaccess:symlink:dangling', 'refuse', 'is a symlink', 'untouched' ),
+			'#17 symlink to directory'         => array( 'htaccess:symlink:directory', 'refuse', 'is a symlink', 'untouched' ),
+			'#18 symlink to FIFO'              => array( 'htaccess:symlink:fifo', 'refuse', 'is a symlink', 'untouched' ),
+			'#19 symlink with deny directives' => array( 'htaccess:symlink:directives', 'accept', '', 'untouched' ),
+			'#20 symlink Require all denied'   => array( 'htaccess:symlink:require', 'accept', '', 'untouched' ),
+			'#21 symlink commented deny'       => array( 'htaccess:symlink:comment', 'refuse', 'is a symlink', 'untouched' ),
+			'#22 symlink permissive'           => array( 'htaccess:symlink:permissive', 'refuse', 'is a symlink', 'untouched' ),
+			'#22 symlink credential bytes'     => array( 'htaccess:symlink:credential', 'refuse', 'is a symlink', 'untouched' ),
+			'#23 symlink empty'                => array( 'htaccess:symlink:empty', 'refuse', 'is a symlink', 'untouched' ),
+			'#24 symlink unreadable'           => array( 'htaccess:symlink:unreadable', 'skip', '', 'untouched' ),
+			'#25 symlink rule past cap'        => array( 'htaccess:symlink:late', 'refuse', 'is a symlink', 'untouched' ),
+			'#26 hardlink deny'                => array( 'htaccess:hardlink:deny', 'accept', '', 'untouched' ),
+			'#27 hardlink permissive'          => array( 'htaccess:hardlink:permissive', 'refuse', 'has multiple hard links', 'untouched' ),
+			'#27 hardlink credential bytes'    => array( 'htaccess:hardlink:credential', 'refuse', 'has multiple hard links', 'untouched' ),
+			'#28 hardlink empty'               => array( 'htaccess:hardlink:empty', 'refuse', 'has multiple hard links', 'untouched' ),
+			'#29 hardlink unreadable'          => array( 'htaccess:hardlink:unreadable', 'skip', '', 'untouched' ),
+			'#30 missing index'                => array( 'index:missing:empty', 'write', '', 'empty index' ),
+			'#30 best effort index failure'    => array( 'index:missing:blocked-parent', 'write', '', 'index absent' ),
+			'#31 own empty index'              => array( 'index:own:empty', 'skip', '', 'untouched' ),
+			'#31 own nonempty index'           => array( 'index:own:credential', 'skip', '', 'untouched' ),
+			'#31 own unreadable index'         => array( 'index:own:unreadable', 'skip', '', 'untouched' ),
+			'#32 index symlink'                => array( 'index:symlink:credential', 'skip', '', 'untouched' ),
+			'#32 index dangling symlink'       => array( 'index:symlink:dangling', 'skip', '', 'untouched' ),
+			'#32 index directory symlink'      => array( 'index:symlink:directory', 'skip', '', 'untouched' ),
+			'#32 index FIFO symlink'           => array( 'index:symlink:fifo', 'skip', '', 'untouched' ),
+			'#32 index hardlink'               => array( 'index:hardlink:credential', 'skip', '', 'untouched' ),
+			'#32 index directory'              => array( 'index:directory:empty', 'skip', '', 'untouched' ),
+			'#32 index FIFO'                   => array( 'index:fifo:empty', 'skip', '', 'untouched' ),
+		);
 	}
 
 	/**
@@ -716,38 +743,6 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 			$this->assertTrue( $threw, 'A non-regular protection path must be refused.' );
 			$this->assertFalse( $sandbox->root_before_cleanup, 'The extraction root must not exist when protection refuses.' );
 			$this->assertDirectoryDoesNotExist( $sandbox->temp_dir() );
-		} finally {
-			$sandbox->tear_down();
-		}
-	}
-
-	/**
-	 * The best-effort index write must not follow a dangling symlink.
-	 *
-	 * @return void
-	 */
-	public function test_bring_up_preserves_dangling_index_symlink() {
-		$upload_dir = function ( $upload ) {
-			$upload['basedir'] = $this->dir;
-			return $upload;
-		};
-		add_filter( 'upload_dir', $upload_dir );
-		try {
-			$sandbox = new MainWP_Backup_TestRestore_Sandbox();
-		} finally {
-			remove_filter( 'upload_dir', $upload_dir );
-		}
-
-		$parent   = dirname( untrailingslashit( $sandbox->temp_dir() ) );
-		$htaccess = $parent . '/.htaccess';
-		$this->assertTrue( wp_mkdir_p( $parent ) );
-		$target = $this->dir . '/missing-index.php';
-		$this->assertTrue( symlink( $target, $parent . '/index.php' ) );
-		try {
-			$sandbox->bring_up();
-			$this->assertFileDoesNotExist( $target );
-			$this->assertTrue( is_link( $parent . '/index.php' ) );
-			$this->assertSame( 'deny from all', file_get_contents( $htaccess ) );
 		} finally {
 			$sandbox->tear_down();
 		}

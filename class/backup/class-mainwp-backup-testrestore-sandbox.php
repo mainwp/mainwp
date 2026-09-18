@@ -43,9 +43,11 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
      * two bytes more: the first tells a file that ends at the cap from one the
      * cap cut in half, the second is the LF of a CRLF whose CR lands on byte
      * 8193, without which a complete rule ending exactly at the cap is dropped.
-     * A deny rule sits near the start of an .htaccess anyone writes; the cap is
-     * what keeps a multi-megabyte file from the OOM fatal that leaks a scratch
-     * database.
+     * Those two bytes make the bound nominal rather than exact: a rule whose
+     * content ends at 8193 with its newline at 8194 is also read whole and
+     * accepted, which is the harmless direction. A deny rule sits near the
+     * start of an .htaccess anyone writes; the cap is what keeps a
+     * multi-megabyte file from the OOM fatal that leaks a scratch database.
      */
     private const PROTECTION_READ_BYTES = 8192;
 
@@ -237,13 +239,30 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
      * stops at the CR finds no newline and drops a valid line.
      *
      * Apache joins a physical line ending in a backslash to the next one, and
-     * the join inserts nothing: the backslash, any spaces or tabs after it and
-     * the line ending disappear, whitespace on either side stays. Measured with
-     * discriminators rather than inferred: `Order \\` + `Deny,Allow` reports
-     * "unknown order" for the single token `\Deny,Allow` where an inserted
-     * space would report "takes one argument", so a double backslash still
-     * continues and leaves one literal; `Deny from all\` + `example.com` is
-     * the host `allexample.com`, and `Deny from al\` + `l` denies everything.
+     * the join inserts nothing: the backslash and the line ending disappear,
+     * whitespace on either side stays. Only a backslash sitting immediately
+     * before LF or CRLF continues; one space or tab after it and the line
+     * stands on its own. Measured with discriminators rather than inferred,
+     * because a syntax check alone cannot tell the two readings apart:
+     * `# x \` + `ThisIsNotADirective` parses, so the bogus directive was
+     * swallowed into the comment, while `# x \` + a space + the same line
+     * reports "Invalid command 'ThisIsNotADirective'"; `ServerTokens \` +
+     * `Prod` parses and `ServerTokens \` + a space + `Prod` reports
+     * "ServerTokens takes 1 argument". `Order \\` + `Deny,Allow` reports
+     * "unknown order" where an inserted space would report "takes one
+     * argument"; `Deny from all\` + `example.com` is the host
+     * `allexample.com`, and `Deny from al\` + `l` denies everything.
+     *
+     * Apache re-reads the joined buffer after every append, so the unfold runs
+     * to a fixed point rather than once: `# x \\` followed by an empty line
+     * joins to `# x \`, which still ends in a backslash and swallows the line
+     * after it too. Measured: `# x \\` + an empty line + `ThisIsNotADirective`
+     * parses, the same with one backslash does not, and a second bogus
+     * directive after it still errors, so the swallow is one line rather than
+     * an early abort. The loop is bounded by the read: the worst shape that
+     * fits, 4097 backslashes then 4097 newlines, converges in 4098 passes and
+     * about a millisecond.
+     *
      * A continued comment or `Allow` line swallows the deny that follows it,
      * which is what a hand-edit leaves behind, so the text is unfolded before
      * anything else and the sever trim runs on the unfolded text: a logical
@@ -282,11 +301,14 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         if ( ! is_string( $contents ) ) {
             return false;
         }
-        $over     = strlen( $contents ) > self::PROTECTION_READ_BYTES;
-        $contents = preg_replace( '/\\\\[ \t]*\r?\n/', '', $contents );
-        if ( null === $contents ) {
-            return false;
-        }
+        $over = strlen( $contents ) > self::PROTECTION_READ_BYTES;
+        do {
+            $before   = $contents;
+            $contents = preg_replace( '/\\\\\r?\n/', '', $contents );
+            if ( null === $contents ) {
+                return false;
+            }
+        } while ( $contents !== $before );
         if ( $over ) {
             $last     = strrpos( $contents, "\n" );
             $contents = false === $last ? '' : substr( $contents, 0, $last );

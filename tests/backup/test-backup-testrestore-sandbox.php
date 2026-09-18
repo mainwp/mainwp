@@ -414,6 +414,10 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 			'cont-glued'     => "Deny from all\\\nexample.com\n",
 			'cont-word'      => "Deny from al\\\nl\n",
 			'cont-ws-crlf'   => "Deny from \\ \t\r\nall\r\n",
+			'cont-crlf'      => "Deny from \\\r\nall\r\n",
+			'cont-cmt-ws'    => "# disabled for now \\ \nDeny from all\n",
+			'cont-dbl-blank' => "# x \\\\\n\nDeny from all\n",
+			'cont-allow-dbl' => "Allow from all \\\\\n\nDeny from all\n",
 			'cont-eof'       => 'Deny from all \\',
 			'cont-eof-bare'  => 'Deny from \\',
 			'cont-severed'   => str_repeat( ' ', 8177 ) . "Deny from all \\\nexample.com\n",
@@ -602,7 +606,7 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * # protect_parent() input matrix (77 cases)
+	 * # protect_parent() input matrix (84 cases)
 	 *
 	 * Path classification, evaluated with lstat first (is_link), then stat:
 	 * - MISSING: is_link false, file_exists false.
@@ -614,7 +618,7 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 	 *   `.htaccess` is ever looked at, and is not this guard's to catch.
 	 * - OWN: exists, is a regular file, nlink == 1, not a symlink.
 	 *
-	 * Deny-rule match (RULE): applied to at most the first 8192 bytes, read only when
+	 * Deny-rule match (RULE): applied to a nominal first 8192 bytes, read only when
 	 * is_file() is true (a directory, FIFO or device is never opened), regex
 	 * `/^[ \t]*(?:(?:deny|"deny"|'deny')[ \t]+(?:from|"from"|'from')[ \t]+(?:all|"all"|'all')(?:[ \t]++[^#\s]++)*+|(?:require|"require"|'require')[ \t]+(?:all|"all"|'all')[ \t]+(?:denied|"denied"|'denied'))[ \t]*\r?$/mi`.
 	 * The read takes two bytes past the cap so content ending at byte 8192 retains its
@@ -631,15 +635,33 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 	 * argument of `all-granted` or `all.example.com` is a hostname restriction that denies
 	 * nothing, so neither matches. A commented-out rule (`# deny from all`) does not match.
 	 * Apache 2.4's `Require all denied` matches: it is a deny rule and overwriting it
-	 * flattened an operator directive.
+	 * flattened an operator directive. A UTF-8 BOM is not skipped either: measured,
+	 * a BOM before `Order Deny,Allow` reports `Invalid command '\xef\xbb\xbfOrder'`, so a
+	 * BOM-prefixed deny is not a deny and rejecting it is the right answer, not a gap.
 	 *
-	 * Continuation: a trailing backslash, any spaces/tabs after it, and LF or CRLF disappear;
-	 * nothing is inserted, while whitespace before the backslash and on the next line stays.
-	 * Measured: `Order \\` + `Deny,Allow` reports "unknown order" for `\Deny,Allow`, not
-	 * "order takes one argument"; `Deny from all\` + `example.com` is the host `allexample.com`,
-	 * while `Deny from al\` + `l` denies all. A double backslash still continues and leaves one:
-	 * `Require \\` + `all denied` reports "Unknown Authz provider: \all", and `Deny from \\`
-	 * + `all` names the host `\all`. Spaces or a tab after the backslash and CRLF still continue.
+	 * Continuation: a backslash sitting immediately before LF or CRLF disappears with its line
+	 * ending and nothing is inserted, while whitespace before the backslash and on the next
+	 * line stays. One space or tab between the backslash and the line ending and the line does
+	 * NOT continue, which a bare syntax check cannot tell apart, so it was settled with two
+	 * independent discriminators: `# x \` + `ThisIsNotADirective` parses (the bogus directive
+	 * was swallowed into the comment) while `# x \` + a space + the same line reports "Invalid
+	 * command 'ThisIsNotADirective'"; `ServerTokens \` + `Prod` parses while `ServerTokens \`
+	 * + a space + `Prod` reports "ServerTokens takes 1 argument". A tab behaves as the space
+	 * does, CRLF continues as LF does (rows 39, 52). The earlier `Order Deny,Allow \` + a space
+	 * reading was not a discriminator: that line is already two arguments, so "order takes one
+	 * argument" comes out either way.
+	 *
+	 * Apache re-reads the joined buffer after every append, so a doubled backslash whose partner
+	 * line is empty continues twice, which is why the unfold runs to a fixed point. Measured:
+	 * `# x \\` + an empty line + `ThisIsNotADirective` parses, the same with one backslash
+	 * reports "Invalid command", and a second bogus directive after it still errors, so the
+	 * swallow is one line rather than an early abort (rows 54, 55). The loop is bounded by the
+	 * read: 4097 backslashes then 4097 newlines, the worst shape that fits, converges in 4098
+	 * passes and about a millisecond.
+	 *
+	 * Other measurements: `Order \\` + `Deny,Allow` reports "unknown order" for `\Deny,Allow`,
+	 * not "order takes one argument", so the join inserts nothing; `Deny from all\` +
+	 * `example.com` is the host `allexample.com`, while `Deny from al\` + `l` denies all.
 	 * `Allow from all \` + `Deny from all` is one permissive Allow; `# disabled for now \`
 	 * swallows a following deny into the comment; `Deny from \` + `all` denies all.
 	 * At EOF without a newline, the backslash stays literal: `Order Deny,Allow \` reports
@@ -685,7 +707,7 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 	 * | 12e | `Deny from all-granted` with byte 8192 landing right after `all` | OWN | WRITE | the read drops the line the cap cut in half |
 	 * | 13 | directory | FOREIGN | REFUSE | is not a regular file; no read |
 	 * | 14 | FIFO | FOREIGN | REFUSE | is not a regular file; no read (never opened) |
-	 * | 15 | symlink to `/dev/zero` | FOREIGN | REFUSE | is a symlink; no read; returns within 1 s. The timing pins the cap, not the is_file() gate: with the cap in place a device read returns 8194 bytes either way. The FIFO rows are what pin the gate. |
+	 * | 15 | symlink to `/dev/zero` | FOREIGN | REFUSE | is a symlink, so the refusal lands before any read and the sub-second assertion is a smoke check on that, not on the cap: `is_file('/dev/zero')` is false, so the device is never opened whatever the cap says. Rows 11 and 25 are what pin the cap, and the FIFO rows pin the is_file() gate. |
 	 * | 16 | dangling symlink | FOREIGN | REFUSE | is a symlink |
 	 * | 17 | symlink to a directory | FOREIGN | REFUSE | is a symlink |
 	 * | 18 | symlink to a FIFO | FOREIGN | REFUSE | is a symlink; no read |
@@ -710,7 +732,8 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 	 * | 36a | symlink to `Deny from \\` + `all` | FOREIGN | REFUSE | is a symlink; host `\all` |
 	 * | 37 | `Deny from all\` + `example.com` | OWN | WRITE | host `allexample.com`; no inserted space |
 	 * | 38 | `Deny from al\` + `l` | OWN | ACCEPT | joined `all` denies; no inserted space |
-	 * | 39 | `Deny from \` then space, tab, CRLF and `all` | OWN | ACCEPT | trailing whitespace and CRLF still continue |
+	 * | 39 | `Deny from \` then space, tab, CRLF and `all` | OWN | WRITE | a space after the backslash ends the line, so Apache reads the host `\` and then an invalid `all` |
+	 * | 39a | symlink to `Deny from \` then space, tab, CRLF and `all` | FOREIGN | REFUSE | is a symlink; not a deny either way |
 	 * | 40 | `Deny from all \` at EOF | OWN | ACCEPT | literal extra host; no continuation |
 	 * | 41 | `Deny from \` at EOF | OWN | WRITE | only the literal host `\` |
 	 * | 42 | continued deny ending at 8192, LF at 8193, partner beyond window | OWN | WRITE | severed logical line is dropped |
@@ -729,6 +752,12 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 	 * | 50 | content ends at 8192, CR at 8193, LF at 8194 | OWN | ACCEPT | complete deny; +1 read rejected it |
 	 * | 50a | symlink to content ends at 8192, CR at 8193, LF at 8194 | FOREIGN | ACCEPT | complete deny; +1 read rejected it |
 	 * | 51 | content ends at 8192, LF at 8193 | OWN | ACCEPT | complete deny; LF neighbour |
+	 * | 52 | `Deny from \` + CRLF + `all` | OWN | ACCEPT | CRLF continues where a space does not |
+	 * | 53 | `# disabled for now \` then a space, then `Deny from all` | OWN | ACCEPT | no continuation, so the deny is a real one |
+	 * | 53a | symlink to the same | FOREIGN | ACCEPT | no continuation, so the deny is a real one |
+	 * | 54 | `# x \\` + an empty line + `Deny from all` | OWN | WRITE | the buffer is re-read, so the doubled backslash swallows the deny |
+	 * | 54a | symlink to the same | FOREIGN | REFUSE | is a symlink; the deny is swallowed |
+	 * | 55 | `Allow from all \\` + an empty line + `Deny from all` | OWN | WRITE | one permissive Allow after two joins |
 	 *
 	 * ## index.php
 	 *
@@ -807,7 +836,14 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 			'#36a symlink cont-double'         => array( 'htaccess:symlink:cont-double', 'refuse', 'is a symlink', 'untouched' ),
 			'#37 own cont-glued'               => array( 'htaccess:own:cont-glued', 'write', '', 'deny' ),
 			'#38 own cont-word'                => array( 'htaccess:own:cont-word', 'accept', '', 'untouched' ),
-			'#39 own cont-ws-crlf'             => array( 'htaccess:own:cont-ws-crlf', 'accept', '', 'untouched' ),
+			'#39 own cont-ws-crlf'             => array( 'htaccess:own:cont-ws-crlf', 'write', '', 'deny' ),
+			'#39a symlink cont-ws-crlf'        => array( 'htaccess:symlink:cont-ws-crlf', 'refuse', 'is a symlink', 'untouched' ),
+			'#52 own cont-crlf'                => array( 'htaccess:own:cont-crlf', 'accept', '', 'untouched' ),
+			'#53 own cont-cmt-ws'              => array( 'htaccess:own:cont-cmt-ws', 'accept', '', 'untouched' ),
+			'#53a symlink cont-cmt-ws'         => array( 'htaccess:symlink:cont-cmt-ws', 'accept', '', 'untouched' ),
+			'#54 own cont-dbl-blank'           => array( 'htaccess:own:cont-dbl-blank', 'write', '', 'deny' ),
+			'#54a symlink cont-dbl-blank'      => array( 'htaccess:symlink:cont-dbl-blank', 'refuse', 'is a symlink', 'untouched' ),
+			'#55 own cont-allow-dbl'           => array( 'htaccess:own:cont-allow-dbl', 'write', '', 'deny' ),
 			'#40 own cont-eof'                 => array( 'htaccess:own:cont-eof', 'accept', '', 'untouched' ),
 			'#41 own cont-eof-bare'            => array( 'htaccess:own:cont-eof-bare', 'write', '', 'deny' ),
 			'#42 own cont-severed'             => array( 'htaccess:own:cont-severed', 'write', '', 'deny' ),

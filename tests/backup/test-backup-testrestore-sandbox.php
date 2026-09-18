@@ -471,6 +471,82 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Refusing a hard link must preserve the target bytes.
+	 *
+	 * @return void
+	 */
+	public function test_bring_up_refuses_hardlinked_parent_htaccess() {
+		$upload_dir = function ( $upload ) {
+			$upload['basedir'] = $this->dir;
+			return $upload;
+		};
+		add_filter( 'upload_dir', $upload_dir );
+		try {
+			$sandbox = new MainWP_Backup_TestRestore_Sandbox();
+		} finally {
+			remove_filter( 'upload_dir', $upload_dir );
+		}
+
+		$parent   = dirname( untrailingslashit( $sandbox->temp_dir() ) );
+		$htaccess = $parent . '/.htaccess';
+		$this->assertTrue( wp_mkdir_p( $parent ) );
+		$target = $this->dir . '/credential.php';
+		$bytes  = '<?php $credential = "retained";';
+		$this->assertSame( strlen( $bytes ), file_put_contents( $target, $bytes ) );
+		try {
+			if ( ! @link( $target, $htaccess ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- skip filesystems that cannot create hard links.
+				$this->markTestSkipped( 'The filesystem cannot create hard links.' );
+			}
+			$threw = false;
+			try {
+				$sandbox->bring_up();
+			} catch ( MainWP_Exception $e ) {
+				$threw = true;
+				$this->assertSame( MainWP_Backup_TestRestore_Sandbox::ERR_UNSUPPORTED, $e->get_message_error_code() );
+				$this->assertStringContainsString( $htaccess . ' is not a regular file', $e->get_message_extra( false ) );
+			}
+			$this->assertTrue( $threw, 'A hard-linked protection path must be refused.' );
+			$this->assertSame( $bytes, file_get_contents( $target ) );
+		} finally {
+			$sandbox->tear_down();
+		}
+	}
+
+	/**
+	 * A symlink to an existing deny rule must remain unchanged and allow bring-up.
+	 *
+	 * @return void
+	 */
+	public function test_bring_up_preserves_symlinked_parent_htaccess_with_deny_rule() {
+		$upload_dir = function ( $upload ) {
+			$upload['basedir'] = $this->dir;
+			return $upload;
+		};
+		add_filter( 'upload_dir', $upload_dir );
+		try {
+			$sandbox = new MainWP_Backup_TestRestore_Sandbox();
+		} finally {
+			remove_filter( 'upload_dir', $upload_dir );
+		}
+
+		$parent   = dirname( untrailingslashit( $sandbox->temp_dir() ) );
+		$htaccess = $parent . '/.htaccess';
+		$this->assertTrue( wp_mkdir_p( $parent ) );
+		$target = $this->dir . '/deny-rule';
+		$bytes  = "Deny from all\n# Retain this directive.\nOptions -Indexes\n";
+		$this->assertSame( strlen( $bytes ), file_put_contents( $target, $bytes ) );
+		$this->assertTrue( symlink( $target, $htaccess ) );
+		try {
+			$sandbox->bring_up();
+			$this->assertDirectoryExists( $sandbox->temp_dir() );
+			$this->assertTrue( is_link( $htaccess ) );
+			$this->assertSame( $bytes, file_get_contents( $target ) );
+		} finally {
+			$sandbox->tear_down();
+		}
+	}
+
+	/**
 	 * A directory must fail the regular-file guard explicitly.
 	 *
 	 * @return void

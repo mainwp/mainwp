@@ -155,8 +155,14 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         );
         foreach ( $protection as $name => $contents ) {
             $file = $parent . '/' . $name;
-            if ( is_link( $file ) || ( file_exists( $file ) && ! is_file( $file ) ) ) {
+            // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- a missing protection file has no stat data.
+            $stat = @stat( $file );
+            if ( is_link( $file ) || ( file_exists( $file ) && ( ! is_file( $file ) || ( false !== $stat && $stat['nlink'] > 1 ) ) ) ) {
                 if ( '.htaccess' === $name ) {
+                    // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- accept an existing deny rule without writing through a foreign path.
+                    if ( false !== stripos( (string) @file_get_contents( $file ), 'deny from all' ) ) {
+                        continue;
+                    }
                     $this->tear_down();
                     throw new MainWP_Exception( esc_html__( 'The test-restore sandbox could not protect its working directory.', 'mainwp' ), 'sandbox protection: ' . $file . ' is not a regular file', self::ERR_UNSUPPORTED );
                 }

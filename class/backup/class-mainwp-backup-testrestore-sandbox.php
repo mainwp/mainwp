@@ -26,8 +26,9 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
 
     // Every exception below carries an esc_html__()-wrapped user message plus a
     // debug detail and a stable error code; the latter two are for logging and
-    // matching, never echoed, so the sniff that wants every throw argument
-    // escaped does not apply.
+    // matching, so the sniff that wants every throw argument escaped does not
+    // apply at the throw. probe_capability() is the one place a detail reaches an
+    // operator, and the template that renders its reason escapes it there.
     // phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped
 
     /**
@@ -221,10 +222,18 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
      * shapes: the gate is what keeps a FIFO from blocking the request in open(),
      * and the cap is what bounds a device or a fat regular file. Neither failure
      * is catchable, and both strand the scratch database bring_up() has already
-     * created. The match takes a whole directive line, so a commented-out rule
-     * and a host list that merely starts with "all" (deny from all-granted) do
-     * not pass, and accepts Apache 2.4's Require all denied so an operator's
-     * directive is not flattened into deny from all.
+     * created.
+     *
+     * A match has to be a complete directive line, and the read goes one byte
+     * past the cap so a line the cap cut in half can be dropped: `$` matches end
+     * of subject as well as end of line, so a truncated "Deny from all-granted"
+     * would otherwise read as a whole "Deny from all". Measured against Apache's
+     * own parser, "Deny from all" takes further host arguments and still denies
+     * everything, a `#` anywhere in the argument list is "No comments are allowed
+     * here" rather than a comment, and a first argument of "all-granted" or
+     * "all.example.com" is a hostname restriction that denies nothing. Apache
+     * 2.4's "Require all denied" is accepted too, so the repair does not flatten
+     * an operator's 2.4 directive into a 2.2 one.
      *
      * @param string $file Protection path.
      *
@@ -235,8 +244,15 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
             return false;
         }
         // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- bounded local read; failure cannot establish a deny rule.
-        $contents = @file_get_contents( $file, false, null, 0, self::PROTECTION_READ_BYTES );
-        return is_string( $contents ) && 1 === preg_match( '/^[ \t]*(?:deny[ \t]+from[ \t]+all|require[ \t]+all[ \t]+denied)[ \t]*\r?$/mi', $contents );
+        $contents = @file_get_contents( $file, false, null, 0, self::PROTECTION_READ_BYTES + 1 );
+        if ( ! is_string( $contents ) ) {
+            return false;
+        }
+        if ( strlen( $contents ) > self::PROTECTION_READ_BYTES ) {
+            $last     = strrpos( $contents, "\n" );
+            $contents = false === $last ? '' : substr( $contents, 0, $last );
+        }
+        return 1 === preg_match( '/^[ \t]*(?:deny[ \t]+from[ \t]+all(?:[ \t]++[^#\s]++)*+|require[ \t]+all[ \t]+denied)[ \t]*\r?$/mi', $contents );
     }
 
     /**

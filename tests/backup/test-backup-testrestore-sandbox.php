@@ -403,6 +403,10 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 			'host-list'  => "Deny from all-granted\n",
 			'ifmodule'   => "<IfModule mod_authz_core.c>\n\tRequire all denied\n</IfModule>\n",
 			'sibling'    => "Require all denied\nRequire all granted\n",
+			'multi-host' => "Deny from all example.com\n",
+			// 8179 spaces put byte 8192 immediately after "all", so a read capped at
+			// 8192 would see a whole "Deny from all" line where the file has a host list.
+			'boundary'   => str_repeat( ' ', 8179 ) . "Deny from all-granted\n",
 		);
 
 		$bytes    = $payloads[ $content ] ?? '';
@@ -593,12 +597,20 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 	 *
 	 * Deny-rule match (RULE): applied to at most the first 8192 bytes, read only when
 	 * is_file() is true (a directory, FIFO or device is never opened), regex
-	 * `/^[ \t]*(?:deny[ \t]+from[ \t]+all|require[ \t]+all[ \t]+denied)[ \t]*\r?$/mi`.
-	 * The directive has to be the whole line, so a commented-out rule (`# deny from all`)
-	 * does not match and neither does a host list that starts with the word (`Deny from
-	 * all-granted`, which Apache parses as a hostname restriction, or `Deny from all # why`,
-	 * which Apache rejects outright: "No comments are allowed here"). Apache 2.4's
-	 * `Require all denied` matches: it is a deny rule and overwriting it flattened an operator directive.
+	 * `/^[ \t]*(?:deny[ \t]+from[ \t]+all(?:[ \t]++[^#\s]++)*+|require[ \t]+all[ \t]+denied)[ \t]*\r?$/mi`.
+	 * The read takes one byte past the cap and drops a line the cap cut in half, because
+	 * `$` matches end of subject as well as end of line and a severed `Deny from all-granted`
+	 * would otherwise read as a whole rule (row 12e).
+	 * The directive has to be a complete line. Checked against Apache's own parser
+	 * (`apachectl -t` over a config file with mpm_prefork, authz_core, access_compat,
+	 * authz_host and unixd loaded): `Deny from all` takes further host arguments and still
+	 * denies everything, so `Deny from all example.com` matches (row 12d); a `#` anywhere in
+	 * the argument list is "No comments are allowed here", a syntax error rather than a
+	 * comment, so `Deny from all # why` and `Deny from all foo#bar` do not match; and a first
+	 * argument of `all-granted` or `all.example.com` is a hostname restriction that denies
+	 * nothing, so neither matches. A commented-out rule (`# deny from all`) does not match.
+	 * Apache 2.4's `Require all denied` matches: it is a deny rule and overwriting it
+	 * flattened an operator directive.
 	 *
 	 * Outcomes: WRITE (write contents, then read back the first 8 KB and require RULE, else refuse),
 	 * ACCEPT (rule seen, no write), SKIP (no read, no write), REFUSE (tear_down, then throw
@@ -625,6 +637,8 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 	 * | 12a | `Deny from all-granted` (a host list, not a global deny) | OWN | WRITE | the directive must be the whole line |
 	 * | 12b | `Require all denied` inside `<IfModule mod_authz_core.c>` | OWN | ACCEPT | no deny if the module is absent; recorded pushback, the text check is defense in depth |
 	 * | 12c | `Require all denied` then `Require all granted` | OWN | ACCEPT | 2.4's implicit `<RequireAny>` lets the grant win; same recorded pushback |
+	 * | 12d | `Deny from all example.com` (further host arguments) | OWN | ACCEPT | a standalone `all` argument still denies everything |
+	 * | 12e | `Deny from all-granted` with byte 8192 landing right after `all` | OWN | WRITE | the read drops the line the cap cut in half |
 	 * | 13 | directory | FOREIGN | REFUSE | is not a regular file; no read |
 	 * | 14 | FIFO | FOREIGN | REFUSE | is not a regular file; no read (never opened) |
 	 * | 15 | symlink to `/dev/zero` | FOREIGN | REFUSE | is a symlink; no read; returns within 1 s. The timing pins the cap, not the is_file() gate: with the cap in place a device read returns 8192 bytes either way. The FIFO rows are what pin the gate. |
@@ -652,7 +666,7 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 	 * | 32 | symlink (incl. dangling), hard link, directory, FIFO | FOREIGN | SKIP |
 	 *
 	 * Known and deliberate, not built for:
-	 * - The 8 KB cap. Measured: a rule at offset 9200 in a 9214-byte file is not accepted, a rule at offset 0 in a 20014-byte file is. 8 KB of directives ahead of a deny line is not a shape anyone writes; the cap is what keeps a fat regular file from the OOM fatal that leaks a scratch database per tick.
+	 * - The 8 KB cap. Measured: a rule at offset 9200 in a 9214-byte file is not accepted, a rule at offset 0 in a 20014-byte file is. 8 KB of directives ahead of a deny line is not a shape anyone writes; the cap is what keeps a fat regular file from the OOM fatal that leaks a scratch database per tick. The cap cutting a line in half is handled rather than accepted, row 12e.
 	 * - The is_file()-to-read TOCTOU: swapping a regular file for a FIFO between the check and the read reproduces the round-3 hang. Closing it needs O_NONBLOCK + fstat on a descriptor; an attacker who already has uploads write does not need to win this race. The same swap between the classification block and file_put_contents() has the same two outcomes on the write side, follow a symlink or block opening a FIFO, and is accepted on the same grounds.
 	 * - A regular file on a hung mount is not this guard's to handle.
 	 *
@@ -675,6 +689,8 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 			'#12a own deny from host list'     => array( 'htaccess:own:host-list', 'write', '', 'deny' ),
 			'#12b own IfModule denied'         => array( 'htaccess:own:ifmodule', 'accept', '', 'untouched' ),
 			'#12c own denied then granted'     => array( 'htaccess:own:sibling', 'accept', '', 'untouched' ),
+			'#12d own deny with host args'     => array( 'htaccess:own:multi-host', 'accept', '', 'untouched' ),
+			'#12e own rule cut at the cap'     => array( 'htaccess:own:boundary', 'write', '', 'deny' ),
 			'#13 directory'                    => array( 'htaccess:directory:empty', 'refuse', 'is not a regular file', 'untouched' ),
 			'#14 FIFO'                         => array( 'htaccess:fifo:empty', 'refuse', 'is not a regular file', 'untouched' ),
 			'#15 symlink to dev zero'          => array( 'htaccess:symlink:zero', 'refuse', 'is a symlink', 'untouched' ),

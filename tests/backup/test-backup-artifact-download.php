@@ -39,6 +39,14 @@ class MainWP_Backup_Artifact_Download_Test extends MainWP_Abilities_Test_Case {
 			if ( file_exists( $file ) ) {
 				unlink( $file );
 			}
+			// The token-flow test nests its file in a per-run test-dl-* dir; left behind, those pile up under the reused site ids and trip other suites' teardowns.
+			$dir = dirname( $file );
+			if ( str_contains( $dir, '/test-dl-' ) && is_dir( $dir ) ) {
+				if ( file_exists( $dir . '/index.php' ) ) {
+					unlink( $dir . '/index.php' ); // The sink's directory guard.
+				}
+				rmdir( $dir );
+			}
 		}
 		$this->local_files = array();
 		parent::tearDown();

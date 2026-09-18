@@ -138,7 +138,11 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         );
         foreach ( $protection as $name => $contents ) {
             if ( ! file_exists( $parent . '/' . $name ) ) {
-                file_put_contents( $parent . '/' . $name, $contents ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- parent protection also covers sibling archive aliases.
+                $protected = file_put_contents( $parent . '/' . $name, $contents ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- parent protection also covers sibling archive aliases.
+                if ( false === $protected && '.htaccess' === $name && ! file_exists( $parent . '/' . $name ) ) {
+                    $this->tear_down();
+                    throw new MainWP_Exception( esc_html__( 'The test-restore sandbox could not protect its working directory.', 'mainwp' ), 'sandbox protection: ' . $parent, self::ERR_UNSUPPORTED );
+                }
             }
         }
     }
@@ -822,8 +826,10 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         }
 
         // An alias inside temp_dir would count as a successfully extracted file.
-        $alias_dir = untrailingslashit( $this->temp_dir ) . '-phar/';
-        $alias     = $alias_dir . substr( sha1( $basename ), 0, 12 ) . '.tar';
+        $alias_dir     = untrailingslashit( $this->temp_dir ) . '-phar/';
+        $resolved_path = realpath( $path );
+        $alias_key     = wp_normalize_path( false === $resolved_path ? $path : $resolved_path );
+        $alias         = $alias_dir . substr( sha1( $alias_key ), 0, 12 ) . '.tar';
         if ( is_file( $alias ) && filesize( $alias ) > 0 ) {
             return $alias;
         }
@@ -835,11 +841,14 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         $space_reserve = 64 * MB_IN_BYTES;
         $space_slab    = 64 * MB_IN_BYTES;
         if ( ! $gzip && ! $bzip ) {
+            if ( @link( $path, $alias ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- filesystems without hard links use the copy fallback.
+                return $alias;
+            }
             $free = function_exists( 'disk_free_space' ) ? disk_free_space( $alias_dir ) : false;
             if ( is_float( $free ) && $free < filesize( $path ) + $space_reserve ) {
                 throw new MainWP_Exception( esc_html__( 'There is not enough free space to test this backup here.', 'mainwp' ), 'tar alias free space: ' . $basename, self::ERR_UNSUPPORTED );
             }
-            if ( @link( $path, $alias ) || copy( $path, $alias ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- filesystems without hard links use the copy fallback.
+            if ( copy( $path, $alias ) ) {
                 return $alias;
             }
             wp_delete_file( $alias );
@@ -859,7 +868,7 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         }
         $in = $open( $path, 'r' );
         if ( false === $in ) {
-            throw new MainWP_Exception( esc_html__( 'The test-restore sandbox could not read this compressed archive.', 'mainwp' ), 'tar alias read: ' . $basename, self::ERR_APPLY );
+            throw new MainWP_Exception( esc_html__( 'The test-restore sandbox could not read this compressed archive.', 'mainwp' ), 'tar alias read: ' . $basename, self::ERR_UNSUPPORTED );
         }
         $out = fopen( $alias . '.tmp', 'wb' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- streaming decompression keeps archive bytes out of memory.
         if ( false === $out ) {
@@ -872,6 +881,7 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         $next_space_check = $space_slab;
         try {
             while ( true ) {
+                // Cap the read to the slab remainder so no checkpoint can be stepped over.
                 $chunk = $read( $in, min( 262144, $next_space_check - $written ) );
                 if ( false === $chunk ) {
                     throw new MainWP_Exception( esc_html__( 'The test-restore sandbox could not decompress this archive.', 'mainwp' ), 'tar alias decompress: ' . $basename, self::ERR_APPLY );

@@ -239,7 +239,10 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 		$in = gzopen( $path, 'r' );
 		$this->assertNotFalse( $in );
 		try {
-			$this->assertFalse( @gzread( $in, 262144 ), 'The fixture must fail decompression before tar parsing.' ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- corruption intentionally triggers a zlib warning.
+			do {
+				$chunk = @gzread( $in, 262144 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- corruption intentionally triggers a zlib warning.
+			} while ( false !== $chunk && '' !== $chunk );
+			$this->assertFalse( $chunk, 'The fixture must fail decompression before tar parsing.' );
 		} finally {
 			gzclose( $in );
 		}
@@ -313,7 +316,7 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 			$sandbox->extract_files( $long );
 			$this->assertSame( 1, $sandbox->temp_file_count() );
 			$this->assertSame( hash( 'sha256', 'good-bytes' ), $sandbox->sentinel_sha256( 'good.txt' ) );
-			$this->assertFileExists( untrailingslashit( $sandbox->temp_dir() ) . '-phar/' . substr( sha1( basename( $long ) ), 0, 12 ) . '.tar', 'A 50-byte tail needs a short alias.' );
+			$this->assertFileExists( untrailingslashit( $sandbox->temp_dir() ) . '-phar/' . substr( sha1( wp_normalize_path( realpath( $long ) ) ), 0, 12 ) . '.tar', 'A 50-byte tail needs a short alias.' );
 		} finally {
 			$sandbox->tear_down();
 		}
@@ -364,7 +367,7 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 		try {
 			$sandbox->extract_files( $path );
 			$this->assertSame( 0, $sandbox->temp_file_count() );
-			$this->assertFileExists( untrailingslashit( $sandbox->temp_dir() ) . '-phar/' . substr( sha1( basename( $path ) ), 0, 12 ) . '.tar' );
+			$this->assertFileExists( untrailingslashit( $sandbox->temp_dir() ) . '-phar/' . substr( sha1( wp_normalize_path( realpath( $path ) ) ), 0, 12 ) . '.tar' );
 		} finally {
 			$sandbox->tear_down();
 		}

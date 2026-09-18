@@ -39,9 +39,11 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
     const ERR_UNSUPPORTED = 'mainwp_sandbox_unsupported';
 
     /**
-     * Bytes of a protection file protect_parent() will read. A deny rule sits
-     * near the start of an .htaccess anyone writes; the cap is what keeps a
-     * multi-megabyte file from the OOM fatal that leaks a scratch database.
+     * Bytes of a protection file a deny rule has to appear within. The read takes
+     * one byte more, which is what tells a file that ends at the cap from one the
+     * cap cut in half. A deny rule sits near the start of an .htaccess anyone
+     * writes; the cap is what keeps a multi-megabyte file from the OOM fatal that
+     * leaks a scratch database.
      */
     private const PROTECTION_READ_BYTES = 8192;
 

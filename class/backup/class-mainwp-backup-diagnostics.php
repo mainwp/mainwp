@@ -706,6 +706,7 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
         }
     }
 
+    // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.Missing -- export failures are caught and returned as an empty path.
     /**
      * Stream the fallback so retention-sized event directories do not have
      * to fit in memory alongside the encoded bundle.
@@ -716,6 +717,7 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @return string Written path, or an empty string on failure.
      */
     private function write_json_bundle( string $path, array $sections, array $events ): string {
+        // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.Missing
         // phpcs:disable WordPress.WP.AlternativeFunctions -- streaming local diagnostics.
         $output = fopen( $path, 'wb' );
         if ( false === $output ) {
@@ -723,20 +725,27 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
         }
         $complete = false;
         try {
-            $write = static function ( string $value ) use ( $output ) {
+            $encode = static function ( $value ): string {
+                $json = wp_json_encode( $value );
+                if ( false === $json ) {
+                    throw new \RuntimeException( 'Could not encode the diagnostics bundle.' );
+                }
+                return $json;
+            };
+            $write  = static function ( string $value ) use ( $output ) {
                 if ( strlen( $value ) !== fwrite( $output, $value ) ) {
                     throw new \RuntimeException( 'Could not write the diagnostics bundle.' );
                 }
             };
             $write( '{' );
             foreach ( $sections as $name => $data ) {
-                $write( wp_json_encode( (string) $name ) . ':' . wp_json_encode( $data ) . ',' );
+                $write( $encode( (string) $name ) . ':' . $encode( $data ) . ',' );
             }
             $has_events = ! empty( $events['files'] ) || ! empty( $events['blobs'] );
             $write( '"events":' . ( $has_events ? '{' : '[]' ) );
             $separator = '';
             foreach ( $events['files'] as $event_file ) {
-                $write( $separator . wp_json_encode( basename( $event_file ) ) . ':[' );
+                $write( $separator . $encode( basename( $event_file ) ) . ':[' );
                 $separator = ',';
                 $handle    = fopen( $event_file, 'rb' );
                 if ( false !== $handle ) {
@@ -745,7 +754,7 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
                         while ( false !== ( $line = fgets( $handle ) ) ) { // phpcs:ignore WordPress.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition
                             $line = rtrim( $line, "\n" );
                             if ( $line ) {
-                                $write( $line_separator . wp_json_encode( $line ) );
+                                $write( $line_separator . $encode( $line ) );
                                 $line_separator = ',';
                             }
                         }
@@ -756,7 +765,7 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 $write( ']' );
             }
             foreach ( $events['blobs'] as $name => $content ) {
-                $write( $separator . wp_json_encode( (string) $name ) . ':[' );
+                $write( $separator . $encode( (string) $name ) . ':[' );
                 $separator      = ',';
                 $line_separator = '';
                 $offset         = 0;
@@ -766,7 +775,7 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
                     $end  = false === $end ? $length : $end;
                     $line = substr( $content, $offset, $end - $offset );
                     if ( $line ) {
-                        $write( $line_separator . wp_json_encode( $line ) );
+                        $write( $line_separator . $encode( $line ) );
                         $line_separator = ',';
                     }
                     $offset = $end + 1;
@@ -774,6 +783,9 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 $write( ']' );
             }
             $write( $has_events ? '}}' : '}' );
+            if ( ! fflush( $output ) ) {
+                throw new \RuntimeException( 'Could not flush the diagnostics bundle.' );
+            }
             $complete = true;
         } catch ( \Throwable $e ) {
             return '';

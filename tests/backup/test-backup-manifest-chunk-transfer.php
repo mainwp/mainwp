@@ -18,6 +18,69 @@ use MainWP\Dashboard\MainWP_DB;
 class MainWP_Backup_Manifest_Chunk_Transfer_Test extends MainWP_Abilities_Test_Case {
 
 	/**
+	 * A gap response cannot confirm the final hash or issue the manifest token.
+	 */
+	public function test_realign_at_manifest_size_fails() {
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			static function () {
+				return array(
+					'bytes_received' => 100,
+					'error_code'     => 'mainwp_restore_chunk_gap',
+				);
+			}
+		);
+		$outcome = $this->push( str_repeat( 'x', 100 ), 100 );
+		$this->assertFalse( $outcome['ok'] );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_MANIFEST_CHUNK_SEND_FAILED, $outcome['error_code'] );
+		$this->assertStringContainsString( 'acknowledged bytes outside the transferred range', $outcome['error'] );
+	}
+
+	/**
+	 * The final acknowledgement may equal the manifest size.
+	 */
+	public function test_ok_at_manifest_size_completes() {
+		$calls = 0;
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			static function () use ( &$calls ) {
+				++$calls;
+				return array(
+					'bytes_received' => 100,
+					'mtoken'         => 'complete-token',
+				);
+			}
+		);
+		$outcome = $this->push( str_repeat( 'x', 100 ), 100 );
+		$this->assertTrue( $outcome['ok'] );
+		$this->assertSame( 'complete-token', $outcome['mtoken'] );
+		$this->assertSame( 1, $calls );
+	}
+
+	/**
+	 * An acknowledgement at the sent chunk boundary permits the next chunk.
+	 */
+	public function test_ok_at_sent_chunk_boundary_advances() {
+		$offsets = array();
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			static function ( $pre, $website, $what, $params ) use ( &$offsets ) {
+				$offsets[] = $params['offset'];
+				return array(
+					'bytes_received' => $params['offset'] + 50,
+					'mtoken'         => 'complete-token',
+				);
+			},
+			10,
+			4
+		);
+		$outcome = $this->push( str_repeat( 'x', 100 ), 50 );
+		$this->assertTrue( $outcome['ok'] );
+		$this->assertSame( array( 0, 50 ), $offsets );
+		$this->assertSame( 'complete-token', $outcome['mtoken'] );
+	}
+
+	/**
 	 * Child acknowledgements must stay within the permitted byte range.
 	 */
 	public function test_ok_beyond_manifest_size_fails() {

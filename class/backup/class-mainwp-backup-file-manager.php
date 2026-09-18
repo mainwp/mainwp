@@ -206,10 +206,9 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
      */
     public static function download_backup_artifact( object $website, string $remote_filename, string $local_file, $size, $http_user, $http_pass, bool $allow_empty = false ): void {
         // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber
-        $refreshing = true;
-        $progress   = static function ( $file ) use ( $local_file, &$refreshing ) {
-            if ( $refreshing && $file === $local_file ) {
-                $refreshing = static::refresh_download_lock( $local_file );
+        $progress = static function ( $file ) use ( $local_file ) {
+            if ( $file === $local_file ) {
+                static::refresh_download_lock( $local_file );
             }
         };
         add_action( 'mainwp_download_to_file_progress', $progress );
@@ -619,7 +618,7 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
      * cannot replace the lock between the ownership check and the write.
      *
      * @param string $local_file Download target path.
-     * @return bool Whether this process still owns the lock.
+     * @return bool False when ownership is lost or the refresh cannot be written.
      */
     private static function refresh_download_lock( string $local_file ): bool {
         $lock_file = $local_file . '.downloading';
@@ -645,7 +644,12 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
                     return false;
                 }
                 $data['started'] = time();
-                file_put_contents( $lock_file, wp_json_encode( $data ) );
+                $payload         = wp_json_encode( $data );
+                $temp_file       = $lock_file . '.tmp';
+                if ( false === $payload || strlen( $payload ) !== @file_put_contents( $temp_file, $payload ) || ! @rename( $temp_file, $lock_file ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors -- a failed refresh must preserve the live sidecar.
+                    wp_delete_file( $temp_file );
+                    return false;
+                }
                 return true;
             } finally {
                 flock( $mutex, LOCK_UN );

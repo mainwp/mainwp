@@ -89,6 +89,8 @@ class MainWP_Download_Lock_Test extends MainWP_Abilities_Test_Case {
 		$filter = function () use ( $file, $lock ) {
 			$data            = json_decode( file_get_contents( $lock ), true );
 			$data['started'] = time() - 120;
+			unlink( $lock );
+			do_action( 'mainwp_download_to_file_progress', $file, 50 );
 			file_put_contents( $lock, wp_json_encode( $data ) );
 			do_action( 'mainwp_download_to_file_progress', $file, 100 );
 			$renewed = json_decode( file_get_contents( $lock ), true );
@@ -111,6 +113,37 @@ class MainWP_Download_Lock_Test extends MainWP_Abilities_Test_Case {
 			MainWP_Backup_File_Manager::release_download_lock( $file );
 		}
 		$this->assertFileExists( $lock, 'Releasing the old token must preserve the replacement.' );
+	}
+
+	/**
+	 * A failed temporary write must leave the owned sidecar intact.
+	 */
+	public function test_failed_refresh_write_preserves_sidecar() {
+		$file = $this->dir . 'unwritable-refresh.zip';
+		$lock = $file . '.downloading';
+		$temp = $lock . '.tmp';
+		$this->assertTrue( MainWP_Backup_File_Manager::acquire_download_lock( $file, 42, 7 ) );
+		$data            = json_decode( file_get_contents( $lock ), true );
+		$data['started'] = time() - 120;
+		$original        = wp_json_encode( $data );
+		file_put_contents( $lock, $original );
+		file_put_contents( $temp, 'blocked' );
+		chmod( $temp, 0400 );
+		try {
+			if ( is_writable( $temp ) ) {
+				$this->markTestSkipped( 'The test process bypasses file permissions.' );
+			}
+			$refresh = new \ReflectionMethod( MainWP_Backup_File_Manager::class, 'refresh_download_lock' );
+			$this->assertFalse( $refresh->invoke( null, $file ) );
+			$this->assertSame( $original, file_get_contents( $lock ) );
+			$this->assertFileDoesNotExist( $temp );
+		} finally {
+			if ( file_exists( $temp ) ) {
+				chmod( $temp, 0600 );
+				unlink( $temp );
+			}
+			MainWP_Backup_File_Manager::release_download_lock( $file );
+		}
 	}
 
 	/**

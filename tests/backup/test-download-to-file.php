@@ -74,23 +74,68 @@ class MainWP_Download_To_File_Test extends MainWP_Backup_Test_Case {
 	 * Backup downloads must honor the child's configured TLS policy.
 	 */
 	public function test_site_tls_settings_apply_to_download_request() {
-		$captured = null;
-		$filter   = static function ( $options ) use ( &$captured ) {
+		$captured        = null;
+		$filter          = static function ( $options ) use ( &$captured ) {
 			$captured = $options;
 			return $options;
 		};
-		$website  = (object) array(
-			'verify_certificate' => 0,
-			'ssl_version'        => CURL_SSLVERSION_TLSv1_2,
-		);
+		$original_verify = get_option( 'mainwp_sslVerifyCertificate' );
+		$url             = static::fixture_url( '/200?size=4096' );
+		$http_version    = function ( $value, $site_id, $request_url ) use ( $url ) {
+			$this->assertSame( 42, $site_id );
+			$this->assertSame( $url, $request_url );
+			return CURL_HTTP_VERSION_1_1;
+		};
+		$resolve         = function ( $value, $site_id, $site_url ) use ( $url ) {
+			$this->assertSame( 42, $site_id );
+			$this->assertSame( $url, $site_url );
+			return array( 'example.test:443:127.0.0.1' );
+		};
 		add_filter( 'mainwp_download_to_file_curl_options', $filter );
+		add_filter( 'mainwp_curl_http_version', $http_version, 10, 3 );
+		add_filter( 'mainwp_curl_curlopt_resolve', $resolve, 10, 3 );
 		try {
-			MainWP_Connect::download_to_file( static::fixture_url( '/200?size=4096' ), $this->temp_download_path(), 4096, null, null, $website );
-			$this->assertFalse( $captured[ CURLOPT_SSL_VERIFYPEER ] );
-			$this->assertFalse( $captured[ CURLOPT_SSL_VERIFYHOST ] );
-			$this->assertSame( CURL_SSLVERSION_TLSv1_2, $captured[ CURLOPT_SSLVERSION ] );
+			$cases = array(
+				array( 0, 1, false, 0 ),
+				array( 2, 1, true, 0 ),
+				array( 2, 0, false, 0 ),
+				array( null, 1, true, 0 ),
+				array( null, 0, false, 0 ),
+				array( 0, 0, false, 1 ),
+			);
+			foreach ( $cases as list( $certificate, $global_verify, $expected, $ipv4 ) ) {
+				update_option( 'mainwp_sslVerifyCertificate', $global_verify );
+				$website = (object) array(
+					'id'             => 42,
+					'url'            => $url,
+					'ssl_version'    => CURL_SSLVERSION_TLSv1_2,
+					'force_use_ipv4' => $ipv4,
+				);
+				if ( null !== $certificate ) {
+					$website->verify_certificate = $certificate;
+				}
+				MainWP_Connect::download_to_file( $url, $this->temp_download_path(), 4096, null, null, $website );
+				$this->assertSame( $expected, $captured[ CURLOPT_SSL_VERIFYPEER ] );
+				$this->assertSame( $expected ? 2 : false, $captured[ CURLOPT_SSL_VERIFYHOST ] );
+				$this->assertSame( CURL_SSLVERSION_TLSv1_2, $captured[ CURLOPT_SSLVERSION ] );
+				$this->assertSame( CURL_HTTP_VERSION_1_1, $captured[ CURLOPT_HTTP_VERSION ] );
+				$this->assertSame( array( 'example.test:443:127.0.0.1' ), $captured[ CURLOPT_RESOLVE ] );
+				$this->assertFalse( $captured[ CURLOPT_DNS_USE_GLOBAL_CACHE ] );
+				if ( $ipv4 ) {
+					$this->assertSame( CURL_IPRESOLVE_V4, $captured[ CURLOPT_IPRESOLVE ] );
+				} else {
+					$this->assertArrayNotHasKey( CURLOPT_IPRESOLVE, $captured );
+				}
+			}
 		} finally {
 			remove_filter( 'mainwp_download_to_file_curl_options', $filter );
+			remove_filter( 'mainwp_curl_http_version', $http_version );
+			remove_filter( 'mainwp_curl_curlopt_resolve', $resolve );
+			if ( false === $original_verify ) {
+				delete_option( 'mainwp_sslVerifyCertificate' );
+			} else {
+				update_option( 'mainwp_sslVerifyCertificate', $original_verify );
+			}
 		}
 	}
 
@@ -110,6 +155,26 @@ class MainWP_Download_To_File_Test extends MainWP_Backup_Test_Case {
 			$this->assertSame( $file, $events[0][0] );
 			$this->assertGreaterThan( 0, $events[0][1] );
 			$this->assertLessThanOrEqual( 65536, $events[0][1] );
+		} finally {
+			remove_action( 'mainwp_download_to_file_progress', $listener );
+		}
+	}
+
+	/**
+	 * Optional progress listeners cannot interrupt or corrupt the transfer.
+	 */
+	public function test_throwing_progress_listener_does_not_interrupt_download() {
+		$file     = $this->temp_download_path();
+		$calls    = 0;
+		$listener = static function () use ( &$calls ) {
+			++$calls;
+			throw new \RuntimeException( 'Listener failed.' );
+		};
+		add_action( 'mainwp_download_to_file_progress', $listener );
+		try {
+			MainWP_Connect::download_to_file( static::fixture_url( '/200?size=65536' ), $file, 65536 );
+			$this->assertSame( 1, $calls );
+			$this->assertSame( static::fixture_content( 65536 ), file_get_contents( $file ) );
 		} finally {
 			remove_action( 'mainwp_download_to_file_progress', $listener );
 		}

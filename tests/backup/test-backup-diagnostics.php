@@ -28,6 +28,25 @@ use MainWP\Dashboard\MainWP_Manage_Backups_Handler;
 class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 
 	/**
+	 * Encoding failures must not leave a corrupt bundle available for download.
+	 */
+	public function test_json_fallback_rejects_unencodable_section() {
+		$writer = new \ReflectionMethod( MainWP_Backup_Diagnostics::class, 'write_json_bundle' );
+		$path   = $this->diag_dir . '/invalid-bundle.json';
+		$result = $writer->invoke(
+			MainWP_Backup_Diagnostics::instance(),
+			$path,
+			array( 'env' => array( 'invalid' => INF ) ),
+			array(
+				'files' => array(),
+				'blobs' => array(),
+			)
+		);
+		$this->assertSame( '', $result );
+		$this->assertFileDoesNotExist( $path );
+	}
+
+	/**
 	 * Streaming must preserve the fallback's original JSON encoding and shape.
 	 */
 	public function test_json_fallback_matches_two_file_payload() {

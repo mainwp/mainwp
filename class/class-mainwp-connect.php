@@ -2463,6 +2463,27 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $options[ CURLOPT_SSL_VERIFYHOST ] = $verify ? 2 : false;
             $options[ CURLOPT_SSL_VERIFYPEER ] = $verify;
             $options[ CURLOPT_SSLVERSION ]     = isset( $website->ssl_version ) ? (int) $website->ssl_version : CURL_SSLVERSION_DEFAULT;
+
+            $http_version = apply_filters( 'mainwp_curl_http_version', false, $website->id, $url );
+            if ( false !== $http_version ) {
+                $options[ CURLOPT_HTTP_VERSION ] = $http_version;
+            }
+            $curlopt_resolve = false;
+            if ( is_object( $website ) && property_exists( $website, 'id' ) ) {
+                $curlopt_resolve = apply_filters( 'mainwp_curl_curlopt_resolve', false, $website->id, $website->url );
+            }
+            if ( is_array( $curlopt_resolve ) && ! empty( $curlopt_resolve ) ) {
+                $options[ CURLOPT_RESOLVE ]              = $curlopt_resolve;
+                $options[ CURLOPT_DNS_USE_GLOBAL_CACHE ] = false;
+            }
+            $force_ipv4 = isset( $website->force_use_ipv4 ) ? (int) $website->force_use_ipv4 : null;
+            $use_ipv4   = 1 === $force_ipv4;
+            if ( null === $force_ipv4 || 2 === $force_ipv4 ) {
+                $use_ipv4 = 1 === (int) get_option( 'mainwp_forceUseIPv4' );
+            }
+            if ( $use_ipv4 && defined( 'CURLOPT_IPRESOLVE' ) && defined( 'CURL_IPRESOLVE_V4' ) ) {
+                $options[ CURLOPT_IPRESOLVE ] = CURL_IPRESOLVE_V4;
+            }
         }
         /**
          * Allow download transport options to follow site-specific policies.
@@ -2471,7 +2492,9 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
          * @param object|null $website Child site, when supplied.
          */
         $options = apply_filters( 'mainwp_download_to_file_curl_options', $options, $website );
-        curl_setopt_array( $ch, $options );
+        foreach ( $options as $option => $value ) {
+            curl_setopt( $ch, $option, $value );
+        }
 
         if ( $requested_offset > 0 ) {
             curl_setopt( $ch, CURLOPT_HTTPHEADER, array( 'Range: bytes=' . $requested_offset . '-' ) );
@@ -2554,7 +2577,11 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                          * @param string $file Local download path.
                          * @param int $bytes_so_far Bytes stored, including a resumed prefix.
                          */
-                        do_action( 'mainwp_download_to_file_progress', $file, $state->bytes );
+                        try {
+                            do_action( 'mainwp_download_to_file_progress', $file, $state->bytes );
+                        } catch ( \Throwable $e ) {
+                            // A listener failure must not interrupt the transfer or bypass handle cleanup.
+                        }
                     }
                 }
                 return ( false === $written ) ? -1 : $written;

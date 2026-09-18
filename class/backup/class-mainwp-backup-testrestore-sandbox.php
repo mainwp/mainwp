@@ -248,10 +248,12 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
      * swallowed into the comment, while `# x \` + a space + the same line
      * reports "Invalid command 'ThisIsNotADirective'"; `ServerTokens \` +
      * `Prod` parses and `ServerTokens \` + a space + `Prod` reports
-     * "ServerTokens takes 1 argument". `Order \\` + `Deny,Allow` reports
-     * "unknown order" where an inserted space would report "takes one
-     * argument"; `Deny from all\` + `example.com` is the host
-     * `allexample.com`, and `Deny from al\` + `l` denies everything.
+     * "ServerTokens takes 1 argument". That the join inserts nothing is the
+     * `Order \\` + `Deny,Allow` case, which reports "unknown order" where an
+     * inserted space would report "takes one argument". The consequences follow
+     * from it rather than discriminating on their own: `Deny from all\` +
+     * `example.com` is the host `allexample.com`, and `Deny from al\` + `l`
+     * denies everything.
      *
      * Apache re-reads the joined buffer after every append, so the unfold runs
      * to a fixed point rather than once: `# x \\` followed by an empty line

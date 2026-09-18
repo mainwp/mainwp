@@ -529,10 +529,12 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 			}
 			$elapsed = microtime( true ) - $started;
 			if ( 'zero' === $content ) {
-				// A smoke check on the refusal, not on the cap: this path is a symlink, so it
-				// refuses before any read, and is_file() is false for a device anyway. Rows 11
-				// and 25 are what pin the cap. The timer stays because an unbounded device read
-				// would kill PHP here, and PHPUnit reports that as a dead runner, not a red test.
+				// A smoke check on the refusal, not on the cap. The guard reads through a symlink
+				// on purpose, which is how the other `a` rows reach ACCEPT, so what keeps this
+				// device unopened is is_file() being false for it, not the path being a link.
+				// Rows 11 and 25 are what pin the cap. The timer stays because an unbounded
+				// device read would kill PHP here, and PHPUnit reports that as a dead runner
+				// rather than a red test.
 				$this->assertLessThan( 1.0, $elapsed, 'Device refusal must return within one second.' );
 			}
 			if ( 'refuse' === $outcome ) {
@@ -643,8 +645,11 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 	 * `Invalid command '\xef\xbb\xbfOrder'`, so a BOM-prefixed deny is not a deny there and
 	 * rejecting it is the right answer rather than a gap. Apache consumes a leading BOM
 	 * under WIN32, which was not measured here, so do not read this as platform
-	 * independent. Either way the syntax error fails the whole `.htaccess`, so the
-	 * directory serves 500s and a foreign path still costs the month.
+	 * independent. On this platform the syntax error should fail the whole `.htaccess` and
+	 * leave the directory serving 500s, which is expected from the parse result rather than
+	 * observed through a running server. Where the BOM is consumed there is no syntax error
+	 * at all and the rule works, so the rejection there is a plain false reject. The one
+	 * platform-independent part is the price: a foreign path costs the month either way.
 	 *
 	 * Continuation: a backslash sitting immediately before LF or CRLF disappears with its line
 	 * ending and nothing is inserted, while whitespace before the backslash and on the next
@@ -671,12 +676,15 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 	 * `example.com` is the host `allexample.com`, while `Deny from al\` + `l` denies all.
 	 * `Allow from all \` + `Deny from all` is one permissive Allow; `# disabled for now \`
 	 * swallows a following deny into the comment; `Deny from \` + `all` denies all.
-	 * At EOF without a newline, the backslash stays literal. The case that actually runs is
+	 * At EOF without a newline, the backslash stays literal. The case that runs is
 	 * `run-eof.sh c8_tok_bs_eof`, `ServerTokens Prod \` with the backslash as the file's last
-	 * byte, which reports "takes one argument"; the `Deny`/`Order` forms need a `<Directory>`
-	 * block and so cannot sit at EOF at all. Inside the block the same rule gives
-	 * `Deny from all \` an extra literal host, and leaves `Deny from \` naming only `\`. Unfolding before trimming drops a severed logical line even
-	 * if its physical prefix says `Deny from all \`; this is the deliberate cap of rows 11 and 25.
+	 * byte, which reports "takes one argument". The `Deny` and `Order` forms cannot be the
+	 * last line of the oracle's main config, because they need a `<Directory>` block that
+	 * would have to close after them; an `.htaccess` is already directory context, so there
+	 * they are ordinary last lines, which is what row 40 tests. The same rule gives
+	 * `Deny from all \` an extra literal host and leaves `Deny from \` naming only `\`.
+	 * Unfolding before trimming drops a severed logical line even if its physical prefix
+	 * says `Deny from all \`; this is the deliberate cap of rows 11 and 25.
 	 *
 	 * Quoting: recognised tokens are separated by spaces/tabs, bare or wholly wrapped in
 	 * matching single or double quotes, including directive names. Measured: `"Require" bogus denied`,
@@ -716,7 +724,7 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 	 * | 12e | `Deny from all-granted` with byte 8192 landing right after `all` | OWN | WRITE | the read drops the line the cap cut in half |
 	 * | 13 | directory | FOREIGN | REFUSE | is not a regular file; no read |
 	 * | 14 | FIFO | FOREIGN | REFUSE | is not a regular file; no read (never opened) |
-	 * | 15 | symlink to `/dev/zero` | FOREIGN | REFUSE | is a symlink, so the refusal lands before any read and the sub-second assertion is a smoke check on that, not on the cap: `is_file('/dev/zero')` is false, so the device is never opened whatever the cap says. Rows 11 and 25 are what pin the cap, and the FIFO rows pin the is_file() gate. |
+	 * | 15 | symlink to `/dev/zero` | FOREIGN | REFUSE | is a symlink. The guard still reads through a symlink first, which is how the other `a` rows reach ACCEPT, so what keeps the device unopened is `is_file('/dev/zero')` being false, not the link. The sub-second assertion is a smoke check on that, not on the cap; rows 11 and 25 pin the cap and the FIFO rows pin the is_file() gate. |
 	 * | 16 | dangling symlink | FOREIGN | REFUSE | is a symlink |
 	 * | 17 | symlink to a directory | FOREIGN | REFUSE | is a symlink |
 	 * | 18 | symlink to a FIFO | FOREIGN | REFUSE | is a symlink; no read |

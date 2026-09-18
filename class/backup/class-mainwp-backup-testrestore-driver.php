@@ -255,9 +255,11 @@ class MainWP_Backup_TestRestore_Driver { // phpcs:ignore Generic.Classes.Opening
      * read, when the dump's decompressed size exceeds the configured cap.
      * import_database() buffers the entire decompressed dump in memory to
      * replay it, so the size that matters is the decompressed size, measured
-     * per format the sandbox can read (gzip ISIZE, zip/tar member headers, a
-     * ceiling-bounded bzip2 stream) rather than the much smaller compressed
-     * footprint. The measurement never buffers the whole dump, so the guard
+     * per format the sandbox can read (zip member headers and ceiling-bounded
+     * gzip/bzip2 streams) rather than the much smaller compressed footprint.
+     * Tar member measurement first decompresses compressed tars to disk and
+     * aliases long names there, costing disk space rather than whole-dump
+     * memory. The measurement never buffers the whole dump, so the guard
      * itself cannot cause the OOM it exists to prevent.
      *
      * @param MainWP_Backup_TestRestore_Sandbox $sandbox   Sandbox that will read the dump.

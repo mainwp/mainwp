@@ -194,6 +194,66 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * A host that cannot create an alias must not discredit the backup.
+	 *
+	 * @return void
+	 */
+	public function test_tar_gz_alias_directory_failure_is_unsupported() {
+		$short = $this->clean_tar();
+		$phar  = new \PharData( $short );
+		$phar->compress( \Phar::GZ );
+		unset( $phar );
+		$sandbox = new MainWP_Backup_TestRestore_Sandbox();
+		$sandbox->bring_up();
+		$alias_dir = untrailingslashit( $sandbox->temp_dir() ) . '-phar';
+
+		try {
+			$this->assertSame( 7, file_put_contents( $alias_dir, 'blocked' ) );
+			$threw = false;
+			try {
+				$sandbox->extract_files( $short . '.gz' );
+			} catch ( MainWP_Exception $e ) {
+				$threw = true;
+				$this->assertSame( MainWP_Backup_TestRestore_Sandbox::ERR_UNSUPPORTED, $e->get_message_error_code() );
+			}
+			$this->assertTrue( $threw, 'An unavailable alias directory must be reported as unsupported.' );
+			$this->assertSame( 0, $sandbox->temp_file_count() );
+		} finally {
+			wp_delete_file( $alias_dir );
+			$sandbox->tear_down();
+		}
+	}
+
+	/**
+	 * Parent protection must cover extracted files and sibling aliases.
+	 *
+	 * @return void
+	 */
+	public function test_bring_up_protects_test_restore_parent() {
+		$upload_dir = function ( $upload ) {
+			$upload['basedir'] = $this->dir;
+			return $upload;
+		};
+		add_filter( 'upload_dir', $upload_dir );
+		try {
+			$sandbox = new MainWP_Backup_TestRestore_Sandbox();
+		} finally {
+			remove_filter( 'upload_dir', $upload_dir );
+		}
+
+		try {
+			$sandbox->bring_up();
+			$parent = $this->dir . '/mainwp/test-restore';
+			$this->assertFileExists( $parent . '/.htaccess' );
+			$this->assertSame( 'deny from all', file_get_contents( $parent . '/.htaccess' ) );
+			$this->assertFileExists( $parent . '/index.php' );
+			$this->assertSame( '', file_get_contents( $parent . '/index.php' ) );
+		} finally {
+			$sandbox->tear_down();
+		}
+	}
+
+	/**
 	 * Dotted dashboard names work on both sides of Phar's filename limit.
 	 *
 	 * @return void

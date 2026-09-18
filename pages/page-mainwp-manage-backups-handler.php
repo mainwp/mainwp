@@ -1091,8 +1091,8 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
 
         if ( $updateRun ) {
             $previous = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
-            if ( $previous && (int) $previous->last_run > 0 && (int) $previous->last_run_manually >= (int) $previous->last_run && (int) $previous->completed >= (int) $previous->last_run ) {
-                // The next claim reuses progress rows and clears errors; older polls still need their own result.
+            if ( $previous && (int) $previous->last_run > 0 && (int) $previous->completed >= (int) $previous->last_run ) {
+                // Pollers can adopt scheduled runs too; every closed result must survive the next claim clearing progress and errors.
                 $saved = array(
                     'task'      => $previous,
                     'progress'  => array(),

@@ -1546,13 +1546,13 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * A scheduled claim preserves only a previous manual run's poll result.
+	 * Pollers may own either run type when a scheduled claim replaces it.
 	 *
 	 * @dataProvider previous_run_types
 	 * @param bool $manual Whether the previous run was manual.
 	 * @return void
 	 */
-	public function test_scheduled_claim_preserves_previous_manual_run_only( $manual ) {
+	public function test_scheduled_claim_preserves_previous_closed_run( $manual ) {
 		list( $site_id, $task ) = $this->arrange_manual_task();
 		$previous               = time() - 200;
 		$state                  = array(
@@ -1567,12 +1567,8 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 			$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
 			MainWP_Manage_Backups_Handler::execute_backup_task( $task );
 			$saved = get_transient( $key );
-			if ( $manual ) {
-				$this->assertIsArray( $saved, 'Cron must preserve the previous manual run for its poller.' );
-				$this->assertSame( $previous, (int) $saved['task']->last_run );
-			} else {
-				$this->assertFalse( $saved, 'Cron must not copy a previous scheduled run, even with an older manual stamp.' );
-			}
+			$this->assertIsArray( $saved, 'Cron must preserve every closed run for its poller.' );
+			$this->assertSame( $previous, (int) $saved['task']->last_run );
 		} finally {
 			delete_transient( $key );
 		}
@@ -2109,6 +2105,14 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 				'status'       => 'queued',
 				'close_errors' => 'Upload failed.',
 			),
+			'22 scheduler close then replacing claim'      => array(
+				'started'   => -10,
+				'click'     => null,
+				'snapshot'  => true,
+				'replaced'  => true,
+				'scheduler' => true,
+				'status'    => 'completed',
+			),
 		);
 		foreach ( $scenarios as $name => $scenario ) {
 			$scenarios[ $name ] = array( array_merge( $defaults, $scenario ) );
@@ -2142,6 +2146,7 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	 * | 19 | Queued click, recent clean close, free slot | Queued after refused claim | Adopting the old close |
 	 * | 20 | Task belongs to another user | Refusal on both endpoints | Claim or site data |
 	 * | 21 | Queued click, foreign run closes with errors | Claim own run after close | Adopting the failed run |
+	 * | 22 | Closed scheduler run, replacing claim | Saved snapshot | Missing run |
 	 *
 	 * @dataProvider manual_run_ownership_cases
 	 * @param array $scenario Task state, request identity and expected effects.
@@ -2162,7 +2167,7 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 				'completed'         => $completed,
 				'backup_errors'     => $scenario['errors'],
 				'paused'            => $scenario['paused'],
-				'last_run_manually' => $scenario['replaced'] ? $last_run : 0,
+				'last_run_manually' => ! empty( $scenario['scheduler'] ) ? $last_run - 100 : ( $scenario['replaced'] ? $last_run : 0 ),
 			)
 		);
 		if ( $snapshot_id ) {
@@ -2172,6 +2177,12 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 			$claimed = null;
 			$owned   = 0;
 			MainWP_Manage_Backups_Handler::execute_backup_task( MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id ), 5, true, 0, $claimed, $owned, true );
+			if ( ! empty( $scenario['scheduler'] ) ) {
+				$saved = get_transient( 'mainwp_backup_run_' . $task->id . '_' . $last_run );
+				$this->assertIsArray( $saved );
+				$this->assertSame( $last_run, (int) $saved['task']->last_run );
+				$this->assertLessThan( $last_run, (int) $saved['task']->last_run_manually );
+			}
 			$this->child_calls = array();
 		}
 		$claims = array();

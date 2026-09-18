@@ -294,6 +294,139 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Early alias callers need protection even when alias directory creation fails.
+	 *
+	 * @return void
+	 */
+	public function test_phar_readable_path_protects_parent_before_alias_directory() {
+		$upload_dir = function ( $upload ) {
+			$upload['basedir'] = $this->dir;
+			return $upload;
+		};
+		add_filter( 'upload_dir', $upload_dir );
+		try {
+			$sandbox = new MainWP_Backup_TestRestore_Sandbox();
+		} finally {
+			remove_filter( 'upload_dir', $upload_dir );
+		}
+
+		$path      = $this->dir . '/s23-full-bogdan3.mystagingwebsite.com-September-17-2026-23-55-00.tar';
+		$parent    = dirname( untrailingslashit( $sandbox->temp_dir() ) );
+		$alias_dir = untrailingslashit( $sandbox->temp_dir() ) . '-phar';
+		$method    = new \ReflectionMethod( $sandbox, 'phar_readable_path' );
+		$this->assertTrue( rename( $this->clean_tar(), $path ) );
+		$this->assertTrue( wp_mkdir_p( $parent ) );
+		$this->assertSame( 7, file_put_contents( $alias_dir, 'blocked' ) );
+
+		try {
+			$this->assertFileDoesNotExist( $parent . '/.htaccess' );
+			$threw = false;
+			try {
+				$method->invoke( $sandbox, $path );
+			} catch ( MainWP_Exception $e ) {
+				$threw = true;
+				$this->assertSame( MainWP_Backup_TestRestore_Sandbox::ERR_UNSUPPORTED, $e->get_message_error_code() );
+				$this->assertSame( 'The test-restore sandbox could not create its archive directory.', $e->getMessage() );
+			}
+			$this->assertTrue( $threw, 'The blocked alias directory must fail after parent protection.' );
+			$this->assertDirectoryDoesNotExist( $alias_dir );
+			$this->assertSame( 'deny from all', file_get_contents( $parent . '/.htaccess' ) );
+			$this->assertSame( '', file_get_contents( $parent . '/index.php' ) );
+			$this->assertDirectoryDoesNotExist( $sandbox->temp_dir() );
+
+			$this->assertTrue( unlink( $alias_dir ) );
+			$deny_rule = "# Existing protection\nDeNy FrOm AlL\n";
+			$this->assertSame( strlen( $deny_rule ), file_put_contents( $parent . '/.htaccess', $deny_rule ) );
+			$this->assertSame( 8, file_put_contents( $parent . '/index.php', 'retained' ) );
+			$this->assertTrue( touch( $parent . '/.htaccess', 1000000000 ) );
+			$this->assertFileExists( $method->invoke( $sandbox, $path ) );
+			$this->assertSame( $deny_rule, file_get_contents( $parent . '/.htaccess' ) );
+			clearstatcache( true, $parent . '/.htaccess' );
+			$this->assertSame( 1000000000, filemtime( $parent . '/.htaccess' ), 'A valid deny rule must not be rewritten.' );
+			$this->assertSame( 'retained', file_get_contents( $parent . '/index.php' ) );
+		} finally {
+			if ( is_file( $alias_dir ) ) {
+				wp_delete_file( $alias_dir );
+			}
+			$sandbox->tear_down();
+		}
+	}
+
+	/**
+	 * A permissive parent must not expose restored backup data.
+	 *
+	 * @return void
+	 */
+	public function test_bring_up_repairs_permissive_parent_htaccess() {
+		$upload_dir = function ( $upload ) {
+			$upload['basedir'] = $this->dir;
+			return $upload;
+		};
+		add_filter( 'upload_dir', $upload_dir );
+		try {
+			$sandbox = new MainWP_Backup_TestRestore_Sandbox();
+		} finally {
+			remove_filter( 'upload_dir', $upload_dir );
+		}
+
+		$parent = dirname( untrailingslashit( $sandbox->temp_dir() ) );
+		$this->assertTrue( wp_mkdir_p( $parent ) );
+		$this->assertSame( 14, file_put_contents( $parent . '/.htaccess', 'allow from all' ) );
+		try {
+			$sandbox->bring_up();
+			$this->assertStringContainsString( 'deny from all', strtolower( file_get_contents( $parent . '/.htaccess' ) ) );
+			$this->assertFileExists( $parent . '/index.php' );
+		} finally {
+			$sandbox->tear_down();
+		}
+	}
+
+	/**
+	 * Failed protection repair must disqualify the host rather than expose backups.
+	 *
+	 * @return void
+	 */
+	public function test_bring_up_uncorrectable_parent_htaccess_is_unsupported() {
+		if ( function_exists( 'posix_geteuid' ) && 0 === posix_geteuid() ) {
+			$this->markTestSkipped( 'Root can overwrite read-only protection files.' );
+		}
+		$upload_dir = function ( $upload ) {
+			$upload['basedir'] = $this->dir;
+			return $upload;
+		};
+		add_filter( 'upload_dir', $upload_dir );
+		try {
+			$sandbox = new MainWP_Backup_TestRestore_Sandbox();
+		} finally {
+			remove_filter( 'upload_dir', $upload_dir );
+		}
+
+		$parent   = dirname( untrailingslashit( $sandbox->temp_dir() ) );
+		$htaccess = $parent . '/.htaccess';
+		$this->assertTrue( wp_mkdir_p( $parent ) );
+		$this->assertSame( 14, file_put_contents( $htaccess, 'allow from all' ) );
+		try {
+			$this->assertTrue( chmod( $htaccess, 0444 ) );
+			clearstatcache( true, $htaccess );
+			$this->assertFalse( is_writable( $htaccess ), 'The fixture must prevent deny-rule repair.' );
+			$threw = false;
+			try {
+				$sandbox->bring_up();
+			} catch ( MainWP_Exception $e ) {
+				$threw = true;
+				$this->assertSame( MainWP_Backup_TestRestore_Sandbox::ERR_UNSUPPORTED, $e->get_message_error_code() );
+				$this->assertSame( 'The test-restore sandbox could not protect its working directory.', $e->getMessage() );
+			}
+			$this->assertTrue( $threw, 'An uncorrectable deny rule must be reported as unsupported.' );
+			$this->assertSame( 'allow from all', file_get_contents( $htaccess ) );
+			$this->assertDirectoryDoesNotExist( $sandbox->temp_dir() );
+		} finally {
+			chmod( $htaccess, 0644 );
+			$sandbox->tear_down();
+		}
+	}
+
+	/**
 	 * Dotted dashboard names work on both sides of Phar's filename limit.
 	 *
 	 * @return void

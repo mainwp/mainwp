@@ -131,15 +131,36 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
             throw new MainWP_Exception( esc_html__( 'The test-restore sandbox could not create its working directory.', 'mainwp' ), 'mkdir: ' . $this->temp_dir, self::ERR_UNSUPPORTED );
         }
 
-        $parent     = dirname( untrailingslashit( $this->temp_dir ) );
+        $this->protect_parent();
+    }
+
+    /**
+     * Keep extracted files and sibling archive aliases under the same deny rule.
+     *
+     * Refusal also makes probe_capability(), via bring_up(), report the host
+     * incapable: the scheduler's ensure_capable() caches that for CAPABILITY_TTL,
+     * so an unwritable uploads parent stops verified restores until expiry,
+     * rather than marking just one snapshot as unable to test.
+     *
+     * @throws MainWP_Exception When the parent cannot deny access to backup data.
+     *
+     * @return void
+     */
+    private function protect_parent(): void {
+        $parent = dirname( untrailingslashit( $this->temp_dir ) );
+        wp_mkdir_p( $parent );
         $protection = array(
             '.htaccess' => 'deny from all',
             'index.php' => '',
         );
         foreach ( $protection as $name => $contents ) {
-            if ( ! file_exists( $parent . '/' . $name ) ) {
-                $protected = file_put_contents( $parent . '/' . $name, $contents ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- parent protection also covers sibling archive aliases.
-                if ( false === $protected && '.htaccess' === $name && ! file_exists( $parent . '/' . $name ) ) {
+            $file = $parent . '/' . $name;
+            // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local protection; an unreadable deny rule requires repair or refusal below.
+            if ( ! file_exists( $file ) || ( '.htaccess' === $name && false === stripos( (string) @file_get_contents( $file ), 'deny from all' ) ) ) {
+                // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents, WordPress.PHP.NoSilencedErrors.Discouraged -- verify deny-rule persistence below; index.php remains best effort.
+                @file_put_contents( $file, $contents );
+                // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local protection; unreadable protection must fail closed.
+                if ( '.htaccess' === $name && false === stripos( (string) @file_get_contents( $file ), 'deny from all' ) ) {
                     $this->tear_down();
                     throw new MainWP_Exception( esc_html__( 'The test-restore sandbox could not protect its working directory.', 'mainwp' ), 'sandbox protection: ' . $parent, self::ERR_UNSUPPORTED );
                 }
@@ -833,6 +854,7 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         if ( is_file( $alias ) && filesize( $alias ) > 0 ) {
             return $alias;
         }
+        $this->protect_parent();
         if ( ! wp_mkdir_p( $alias_dir ) ) {
             throw new MainWP_Exception( esc_html__( 'The test-restore sandbox could not create its archive directory.', 'mainwp' ), 'tar alias mkdir: ' . $basename, self::ERR_UNSUPPORTED );
         }

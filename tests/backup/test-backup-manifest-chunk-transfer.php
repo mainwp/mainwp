@@ -278,19 +278,21 @@ class MainWP_Backup_Manifest_Chunk_Transfer_Test extends MainWP_Abilities_Test_C
 	 * in-memory buffer, optionally failing scripted call numbers.
 	 *
 	 * @param array $fail_calls Call numbers (1-based) that throw transport errors.
+	 * @param array $lost_responses Call numbers that append successfully before losing their response.
 	 *
 	 * @return object Buffer holder with public $bytes.
 	 */
-	private function mock_receiver( $fail_calls = array() ) {
+	private function mock_receiver( $fail_calls = array(), $lost_responses = array() ) {
 		$state = new \stdClass();
 
 		$state->bytes  = '';
+		$state->ready  = false;
 		$state->mtoken = 'tok0123456789abc';
 		$call_no       = 0;
 
 		add_filter(
 			'mainwp_fetch_url_authed_pre',
-			function ( $result, $website, $what, $params ) use ( $state, $fail_calls, &$call_no ) {
+			function ( $result, $website, $what, $params ) use ( $state, $fail_calls, $lost_responses, &$call_no ) {
 				unset( $website );
 				if ( 'backup_manifest_chunk' !== $what ) {
 					return $result;
@@ -321,6 +323,15 @@ class MainWP_Backup_Manifest_Chunk_Transfer_Test extends MainWP_Abilities_Test_C
 					);
 				}
 				$state->bytes .= $raw;
+				if ( ! empty( $params['final'] ) ) {
+					$state->ready = hash_equals( $params['total_sha256'], hash( 'sha256', $state->bytes ) );
+					if ( ! $state->ready ) {
+						return array( 'error' => 'Manifest hash mismatch.' );
+					}
+				}
+				if ( in_array( $call_no, $lost_responses, true ) ) {
+					throw new \MainWP\Dashboard\MainWP_Exception( 'cURL error 52: response lost after append' );
+				}
 				return array(
 					'result'         => 'ok',
 					'mtoken'         => $state->mtoken,
@@ -400,6 +411,108 @@ class MainWP_Backup_Manifest_Chunk_Transfer_Test extends MainWP_Abilities_Test_C
 
 		$post_failure = $this->calls[1];
 		$this->assertSame( MainWP_Backup_Manifest_Chunk_Transfer::CHUNK_MIN_BYTES, strlen( base64_decode( $post_failure['chunk_b64'] ) ), 'The chunk size halves after a transport failure.' );
+	}
+
+	/**
+	 * A known session may have appended the larger chunk before its reply was lost.
+	 */
+	public function test_lost_append_response_accepts_larger_duplicate_ack() {
+		$chunk   = 2 * MainWP_Backup_Manifest_Chunk_Transfer::CHUNK_MIN_BYTES;
+		$content = str_repeat( 'a', 3 * $chunk );
+		$state   = $this->mock_receiver( array(), array( 2 ) );
+
+		$outcome = $this->push( $content, $chunk );
+
+		$this->assertTrue( $outcome['ok'] );
+		$this->assertSame( $state->mtoken, $outcome['mtoken'] );
+		$this->assertSame( $content, $state->bytes );
+		$this->assertTrue( $state->ready );
+		$this->assertCount( 5, $this->calls );
+		$this->assertSame( $state->mtoken, $this->calls[1]['mtoken'] );
+		$this->assertSame( $chunk, $this->calls[1]['offset'] );
+		$this->assertSame( $chunk, $this->calls[2]['offset'] );
+		$this->assertSame( $chunk, strlen( base64_decode( $this->calls[1]['chunk_b64'] ) ) );
+		$this->assertSame( MainWP_Backup_Manifest_Chunk_Transfer::CHUNK_MIN_BYTES, strlen( base64_decode( $this->calls[2]['chunk_b64'] ) ) );
+		$this->assertSame( 2 * $chunk, $this->calls[3]['offset'] );
+	}
+
+	/**
+	 * The child verifies the final hash before losing the reply; its duplicate ack carries the token.
+	 */
+	public function test_lost_final_response_accepts_duplicate_completion() {
+		$chunk   = 2 * MainWP_Backup_Manifest_Chunk_Transfer::CHUNK_MIN_BYTES;
+		$content = str_repeat( 'f', 2 * $chunk );
+		$state   = $this->mock_receiver( array(), array( 2 ) );
+
+		$outcome = $this->push( $content, $chunk );
+
+		$this->assertTrue( $outcome['ok'] );
+		$this->assertSame( $state->mtoken, $outcome['mtoken'] );
+		$this->assertSame( $content, $state->bytes );
+		$this->assertTrue( $state->ready );
+		$this->assertCount( 3, $this->calls );
+		$this->assertSame( 1, $this->calls[1]['final'] );
+		$this->assertSame( hash( 'sha256', $content ), $this->calls[1]['total_sha256'] );
+		$this->assertSame( 0, $this->calls[2]['final'] );
+		$this->assertSame( $chunk, $this->calls[2]['offset'] );
+		$this->assertSame( MainWP_Backup_Manifest_Chunk_Transfer::CHUNK_MIN_BYTES, strlen( base64_decode( $this->calls[2]['chunk_b64'] ) ) );
+	}
+
+	/**
+	 * A gap response is not the child's duplicate acknowledgement and cannot confirm completion.
+	 */
+	public function test_realign_at_size_after_lost_final_response_is_rejected() {
+		$chunk   = 2 * MainWP_Backup_Manifest_Chunk_Transfer::CHUNK_MIN_BYTES;
+		$content = str_repeat( 'r', 2 * $chunk );
+		$state   = $this->mock_receiver( array(), array( 2 ) );
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			function ( $response ) use ( $state ) {
+				if ( 3 === count( $this->calls ) ) {
+					return array(
+						'error_code'     => 'mainwp_restore_chunk_gap',
+						'bytes_received' => strlen( $state->bytes ),
+					);
+				}
+				return $response;
+			},
+			11
+		);
+
+		$outcome = $this->push( $content, $chunk );
+
+		$this->assertFalse( $outcome['ok'] );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_MANIFEST_CHUNK_SEND_FAILED, $outcome['error_code'] );
+		$this->assertStringContainsString( 'acknowledged bytes outside the transferred range', $outcome['error'] );
+		$this->assertSame( '', $outcome['mtoken'] );
+		$this->assertTrue( $state->ready );
+		$this->assertCount( 3, $this->calls );
+	}
+
+	/**
+	 * A successful duplicate acknowledgement must not relax bounds at the next offset.
+	 */
+	public function test_lost_response_exception_is_limited_to_retry_offset() {
+		$chunk   = 2 * MainWP_Backup_Manifest_Chunk_Transfer::CHUNK_MIN_BYTES;
+		$content = str_repeat( 'b', 3 * $chunk );
+		$this->mock_receiver( array(), array( 2 ) );
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			function ( $response ) use ( $content ) {
+				if ( 4 === count( $this->calls ) ) {
+					$response['bytes_received'] = strlen( $content );
+				}
+				return $response;
+			},
+			11
+		);
+
+		$outcome = $this->push( $content, $chunk );
+
+		$this->assertFalse( $outcome['ok'] );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_MANIFEST_CHUNK_SEND_FAILED, $outcome['error_code'] );
+		$this->assertStringContainsString( 'acknowledged bytes outside the transferred range', $outcome['error'] );
+		$this->assertCount( 4, $this->calls );
 	}
 
 	/**

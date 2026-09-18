@@ -63,6 +63,7 @@ class MainWP_Backup_Manifest_Chunk_Transfer implements MainWP_Backup_Chunk_Trans
         $mtoken                = '';
         $last_realign          = -1;
         $nonadvancing_realigns = 0;
+        $retrying_offset       = false;
 
         while ( $offset < $size ) {
             $read = min( $chunk_bytes, $size - $offset );
@@ -78,12 +79,19 @@ class MainWP_Backup_Manifest_Chunk_Transfer implements MainWP_Backup_Chunk_Trans
                 if ( $chunk_bytes <= self::CHUNK_MIN_BYTES ) {
                     return $this->failure( $outcome['error'] );
                 }
-                $chunk_bytes = max( self::CHUNK_MIN_BYTES, (int) ( $chunk_bytes / 2 ) );
+                $chunk_bytes     = max( self::CHUNK_MIN_BYTES, (int) ( $chunk_bytes / 2 ) );
+                $retrying_offset = true;
                 continue;
             }
-            if ( in_array( $outcome['result'], array( 'realign', 'ok' ), true ) && ( $outcome['bytes_received'] < 0 || $outcome['bytes_received'] > $size || ( 'realign' === $outcome['result'] && $outcome['bytes_received'] === $size ) || ( 'ok' === $outcome['result'] && $outcome['bytes_received'] > $offset + strlen( $raw ) ) ) ) {
+            $has_ack         = in_array( $outcome['result'], array( 'realign', 'ok' ), true );
+            $invalid_bounds  = $outcome['bytes_received'] < 0 || $outcome['bytes_received'] > $size;
+            $invalid_realign = 'realign' === $outcome['result'] && $outcome['bytes_received'] === $size;
+            // A lost response may hide an append larger than the reduced retry chunk.
+            $invalid_ok = 'ok' === $outcome['result'] && ! $retrying_offset && $outcome['bytes_received'] > $offset + strlen( $raw );
+            if ( $has_ack && ( $invalid_bounds || $invalid_realign || $invalid_ok ) ) {
                 return $this->failure( esc_html__( 'The child site acknowledged bytes outside the transferred range.', 'mainwp' ) );
             }
+            $retrying_offset = false;
             if ( 'realign' === $outcome['result'] ) {
                 $nonadvancing_realigns = $outcome['bytes_received'] <= $last_realign ? $nonadvancing_realigns + 1 : 0;
                 if ( $nonadvancing_realigns >= 3 ) {

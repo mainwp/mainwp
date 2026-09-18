@@ -1903,11 +1903,11 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             if ( MainWP_System_Utility::can_edit_website( $website ) && \mainwp_current_user_can( 'site', $websiteid ) ) {
                 $updated       = static::update_site_emails_settings_handle( $website );
                 $updated_templ = MainWP_Notification_Template::instance()->handle_template_file_action();
-            }
-            if ( ! empty( $_GET['edit-email'] ) ) {
-                // Edit email settings show in separated page in site settings.
-                static::render_email_settings( $website, $updated, $updated_templ, true );
-                return;
+                if ( ! empty( $_GET['edit-email'] ) ) {
+                    // Edit email settings show in separated page in site settings.
+                    static::render_email_settings( $website, $updated, $updated_templ, true );
+                    return;
+                }
             }
         }
 

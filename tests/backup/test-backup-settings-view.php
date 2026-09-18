@@ -18,7 +18,51 @@ use MainWP\Dashboard\MainWP_Keys_Manager;
 /**
  * Class MainWP_Backup_Settings_View_Test
  */
-class MainWP_Backup_Settings_View_Test extends \WP_UnitTestCase {
+class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
+
+	/**
+	 * A refused passphrase must not change how the other settings save.
+	 */
+	public function test_settings_passphrase_minimum_preserves_blob_and_other_saves() {
+		wp_set_current_user( $this->factory->user->create( array( 'role' => 'administrator' ) ) );
+		$enc               = MainWP_Backup_Encryption::instance();
+		$original          = $enc->set_recovery_passphrase( 'original recovery passphrase' );
+		$_POST['submit']   = '1';
+		$_POST['wp_nonce'] = wp_create_nonce( 'Settings' );
+		$_POST['mainwp_options_backupEncryptionPassphrase'] = ' 12345678901 ';
+		$_POST['mainwp_options_backupOnServer']             = '3';
+		$_POST['mainwp_options_enableBackupEncryption']     = '1';
+		try {
+			$this->assertTrue( MainWP_Backup_Settings::handle_settings_post() );
+			$this->assertTrue( MainWP_Backup_Settings::recovery_passphrase_was_rejected() );
+			$this->assertSame( $original, $enc->get_recovery_blob() );
+			$this->assertSame( 3, (int) get_option( 'mainwp_backupsOnServer' ) );
+			$this->assertTrue( $enc->is_enabled_setting() );
+			$_POST['mainwp_options_backupEncryptionPassphrase'] = '123456789012';
+			$this->assertTrue( MainWP_Backup_Settings::handle_settings_post() );
+			$this->assertFalse( MainWP_Backup_Settings::recovery_passphrase_was_rejected() );
+			$this->assertNotSame( $original, $enc->get_recovery_blob() );
+			$this->assertSame( $enc->load_kek(), $enc->recover_kek( '123456789012', $enc->get_recovery_blob() ) );
+		} finally {
+			unset( $_POST['submit'], $_POST['wp_nonce'], $_POST['mainwp_options_backupEncryptionPassphrase'], $_POST['mainwp_options_backupOnServer'], $_POST['mainwp_options_enableBackupEncryption'] );
+			delete_option( 'mainwp_backupsOnServer' );
+		}
+	}
+
+	/**
+	 * The redirect flag must explain why the passphrase was not saved.
+	 */
+	public function test_settings_renders_short_passphrase_error() {
+		$_GET['backup_recovery_passphrase_rejected'] = '1';
+		ob_start();
+		try {
+			MainWP_Backup_Settings_View::render_settings();
+		} finally {
+			$output = ob_get_clean();
+			unset( $_GET['backup_recovery_passphrase_rejected'] );
+		}
+		$this->assertStringContainsString( 'The recovery passphrase must be at least 12 characters.', $output );
+	}
 
 	/**
 	 * Reset the on-demand retention option between tests.

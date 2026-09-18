@@ -2346,10 +2346,10 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $local_size = 0;
         }
 
-        if ( false !== $expected_size ) {
+        if ( false !== $expected_size && 'already_complete' !== $result ) {
             $final_size = $wp_filesystem->exists( $file ) ? (int) $wp_filesystem->size( $file ) : 0;
             $tolerance  = (int) max( 1, floor( $expected_size * 0.01 ) );
-            if ( abs( $final_size - $expected_size ) > $tolerance ) {
+            if ( $final_size < $expected_size || $final_size - $expected_size > $tolerance ) {
                 $too_small = $final_size < $expected_size;
                 if ( ! $too_small && $wp_filesystem->exists( $file ) ) {
                     $wp_filesystem->delete( $file ); // Oversized files are unusable for resume.
@@ -2380,7 +2380,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @param mixed     $http_user     htaccess username.
      * @param mixed     $http_pass     htaccess password.
      *
-     * @return string 'done' when the response was handled, 'restart' when the caller should retry from scratch.
+     * @return string 'done' when handled, 'already_complete' when a 416 confirms the local total, or 'restart' to retry from scratch.
      * @throws MainWP_Exception When the transfer fails.
      */
     private static function perform_download_request( $url, $file, $expected_size, $local_size, $http_user, $http_pass ) { // phpcs:ignore -- NOSONAR - complex.
@@ -2558,7 +2558,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 }
             }
             $mode = static::decide_download_mode( 416, $requested_offset, $content_range, $local_size, $expected_size );
-            return ( 'already_complete' === $mode ) ? 'done' : 'restart';
+            return ( 'already_complete' === $mode ) ? 'already_complete' : 'restart';
         }
 
         if ( 200 !== $status && 206 !== $status ) {

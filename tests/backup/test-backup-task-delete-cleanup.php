@@ -161,18 +161,19 @@ class MainWP_Backup_Task_Delete_Cleanup_Test extends \WP_UnitTestCase {
 		update_option( MainWP_Backup_Diagnostics::OPTION_ENABLED, '0' );
 		MainWP_Backup_Diagnostics::instance()->init();
 
-		$dir = trailingslashit( $this->diag_dir );
-		file_put_contents( $dir . '7-101.jsonl', "{}\n" ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
-		file_put_contents( $dir . '7-102-child.jsonl', "{}\n" ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
-		file_put_contents( $dir . '70-101.jsonl', "{}\n" ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
-		file_put_contents( $dir . 'terminal-101.jsonl', "{}\n" ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+		$dir   = trailingslashit( $this->diag_dir );
+		$files = array();
+		foreach ( array( '7-101', '7-102-child', '70-101', 'terminal-101' ) as $run_key ) {
+			$files[ $run_key ] = $dir . \MainWP\Dashboard\MainWP_System_Utility::get_private_filename( MainWP_Backup_Diagnostics::SUBDIR, $run_key, 'events' ) . '.jsonl';
+			file_put_contents( $files[ $run_key ], wp_json_encode( array( 'run_key' => $run_key ) ) . "\n" ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+		}
 
 		do_action( 'mainwp_backup_task_snapshots_purged', 7, array() );
 
-		$this->assertFileDoesNotExist( $dir . '7-101.jsonl', 'The deleted task\'s diagnostics files must be purged.' );
-		$this->assertFileDoesNotExist( $dir . '7-102-child.jsonl', 'All of the deleted task\'s run files must be purged.' );
-		$this->assertFileExists( $dir . '70-101.jsonl', 'A task id sharing a prefix must keep its files.' );
-		$this->assertFileExists( $dir . 'terminal-101.jsonl', 'Non-task-keyed files must survive.' );
+		$this->assertFileDoesNotExist( $files['7-101'], 'The deleted task\'s diagnostics files must be purged.' );
+		$this->assertFileDoesNotExist( $files['7-102-child'], 'All of the deleted task\'s run files must be purged.' );
+		$this->assertFileExists( $files['70-101'], 'A task id sharing a prefix must keep its files.' );
+		$this->assertFileExists( $files['terminal-101'], 'Non-task-keyed files must survive.' );
 	}
 
 	/**

@@ -547,7 +547,7 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
         }
 
             // going to retired.
-        if ( MainWP_Backup_Settings::is_native_backups_enabled() && get_option( 'mainwp_backup_before_upgrade' ) === 1 ) {
+        if ( MainWP_Backup_Settings::is_native_backups_enabled() && (int) get_option( 'mainwp_backup_before_upgrade' ) === 1 ) {
             $sitesCheckCompleted = get_option( 'mainwp_automaticUpdate_backupChecks' );
             if ( ! is_array( $sitesCheckCompleted ) ) {
                 $sitesCheckCompleted = array();

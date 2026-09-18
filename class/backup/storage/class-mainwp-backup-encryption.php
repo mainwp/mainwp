@@ -46,6 +46,13 @@ class MainWP_Backup_Encryption { // phpcs:ignore Generic.Classes.OpeningBraceSam
     const RECOVERY_OPTION = 'mainwp_backup_recovery_kek';
 
     /**
+     * Short recovery passphrases leave the exported key vulnerable to guessing.
+     *
+     * @var int
+     */
+    const MIN_PASSPHRASE_LENGTH = 12;
+
+    /**
      * PBKDF2 hash algorithm for passphrase derivation.
      *
      * @var string
@@ -227,8 +234,12 @@ class MainWP_Backup_Encryption { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @param string $passphrase The operator passphrase.
      *
      * @return array The self-describing recovery blob that was stored.
+     * @throws \InvalidArgumentException When the trimmed passphrase is too short.
      */
     public function set_recovery_passphrase( $passphrase ) {
+        if ( mb_strlen( trim( (string) $passphrase ), 'UTF-8' ) < self::MIN_PASSPHRASE_LENGTH ) {
+            throw new \InvalidArgumentException( esc_html__( 'The recovery passphrase must be at least 12 characters.', 'mainwp' ) );
+        }
         $kek          = $this->get_or_create_kek();
         $salt         = random_bytes( 16 );
         $recovery_key = hash_pbkdf2( static::PBKDF2_ALGO, (string) $passphrase, $salt, static::PBKDF2_ITERATIONS, MainWP_Backup_Archive_Cipher::KEY_LEN, true );

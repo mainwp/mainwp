@@ -250,7 +250,8 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
     private function plan_entry( object $snapshot, array $archive, array $remote ): array {
         $file       = isset( $archive['file'] ) ? (string) $archive['file'] : '';
         $local_path = isset( $archive['path'] ) ? (string) $archive['path'] : '';
-        $has_local  = '' !== $local_path && file_exists( $local_path );
+        $flat_name  = basename( $file ) === $file;
+        $has_local  = $flat_name && '' !== $local_path && file_exists( $local_path );
 
         $source          = 'unavailable';
         $remote_key      = '';
@@ -258,7 +259,7 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
         $candidates      = array();
         if ( $has_local ) {
             $source = 'local';
-        } elseif ( isset( $remote[ $file ] ) ) {
+        } elseif ( $flat_name && isset( $remote[ $file ] ) ) {
             $source          = $remote[ $file ]['chunked'] ? 'remote_chunked' : 'remote';
             $remote_key      = $remote[ $file ]['key'];
             $expected_sha256 = isset( $remote[ $file ]['sha256'] ) ? (string) $remote[ $file ]['sha256'] : '';

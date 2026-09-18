@@ -957,7 +957,7 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function test_invalid_downloaded_file_not_marked_complete() {
 		list( $site_id, $task ) = $this->site_and_task();
-		$this->seed_download_ready_progress( $task->id, $site_id, 52 );
+		$this->seed_download_ready_progress( $task->id, $site_id, strlen( '<html><body>Fatal error on child site</body></html>' ) );
 		$this->mock_child_action( 'delete_backup', array( 'result' => 'ok' ) );
 
 		add_filter(

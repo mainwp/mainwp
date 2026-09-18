@@ -306,6 +306,14 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
             $checkpoint = $job->checkpoint;
             if ( empty( $checkpoint['artifacts'] ) ) {
                 $checkpoint = $this->new_checkpoint( $snapshot );
+                if ( empty( $checkpoint['artifacts'] ) ) {
+                    $error = 'The snapshot has no eligible artifacts to upload.';
+                    if ( $store->fail_permanent( (int) $job->id, $error, $this->lock_token ) ) {
+                        $this->cleanup_staging( $job );
+                        $this->fire_upload_failed( $job, $destination, $error );
+                    }
+                    return;
+                }
                 if ( ! $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token ) ) {
                     // The artifact index is what a later restore reads to locate
                     // the offsite copies. A refused fenced write - transient DB
@@ -415,7 +423,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
         $threshold = (int) apply_filters( 'mainwp_backup_upload_whole_file_threshold', MainWP_Backup_Chunker::small_file_threshold() );
 
         $artifacts = array();
-        foreach ( $snapshot->archives as $entry ) {
+        foreach ( (array) $snapshot->archives as $entry ) {
             if ( empty( $entry['path'] ) ) {
                 continue;
             }

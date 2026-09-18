@@ -36,6 +36,13 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     private static bool $encryption_forced_off = false;
 
     /**
+     * The redirect needs to preserve a passphrase refusal for the settings banner.
+     *
+     * @var bool
+     */
+    private static bool $recovery_passphrase_rejected = false;
+
+    /**
      * Method get_class_name()
      *
      * Get Class Name.
@@ -241,6 +248,15 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     }
 
     /**
+     * Let the save handler carry the refusal through its redirect.
+     *
+     * @return bool Whether the last save rejected a short passphrase.
+     */
+    public static function recovery_passphrase_was_rejected(): bool {
+        return self::$recovery_passphrase_rejected;
+    }
+
+    /**
      * Method handle_settings_post()
      *
      * Update Child Site Settings.
@@ -251,7 +267,8 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
      */
     public static function handle_settings_post(): bool {
-        self::$encryption_forced_off = false;
+        self::$encryption_forced_off        = false;
+        self::$recovery_passphrase_rejected = false;
         if ( MainWP_System_Utility::is_admin() ) {
             if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'Settings' ) ) {
                 if ( isset( $_POST['mainwp_options_backupOnServer'] ) && 0 < $_POST['mainwp_options_backupOnServer'] ) {
@@ -310,7 +327,11 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 $encryption     = MainWP_Backup_Encryption::instance();
                 $enc_passphrase = isset( $_POST['mainwp_options_backupEncryptionPassphrase'] ) ? (string) wp_unslash( $_POST['mainwp_options_backupEncryptionPassphrase'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- used verbatim as key material, never stored or rendered.
                 if ( '' !== trim( $enc_passphrase ) ) {
-                    $encryption->set_recovery_passphrase( $enc_passphrase );
+                    try {
+                        $encryption->set_recovery_passphrase( $enc_passphrase );
+                    } catch ( \InvalidArgumentException $e ) {
+                        self::$recovery_passphrase_rejected = true;
+                    }
                 }
                 $enableEncryption = ( isset( $_POST['mainwp_options_enableBackupEncryption'] ) && ! empty( $_POST['mainwp_options_enableBackupEncryption'] ) ) ? 1 : 0;
                 if ( $enableEncryption && empty( $encryption->get_recovery_blob() ) ) {

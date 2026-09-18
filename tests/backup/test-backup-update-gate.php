@@ -26,6 +26,55 @@ use MainWP\Dashboard\MainWP_Updates_Overview;
 class MainWP_Backup_Update_Gate_Test extends MainWP_Abilities_Test_Case {
 
 	/**
+	 * Bulk rendering must match the gate's newest-snapshot policy with one query.
+	 */
+	public function test_recent_backup_map_matches_single_site_and_reuses_query() {
+		$recent = $this->create_test_site();
+		$stale  = $this->create_test_site();
+		$none   = $this->create_test_site();
+		$shadow = $this->create_test_site();
+		$this->record_native_snapshot( $recent, array( 'offsite_state' => 'verified' ) );
+		$this->record_native_snapshot( $recent, array( 'type' => 'files' ) );
+		$this->record_native_snapshot( $stale, array( 'created' => time() - 8 * DAY_IN_SECONDS ) );
+		$this->record_native_snapshot( $shadow, array( 'offsite_state' => 'verified' ) );
+		$this->record_native_snapshot( $shadow );
+		$ids     = array( $recent, $stale, $none, $shadow );
+		$queries = 0;
+		$table   = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+		$count   = static function ( $sql ) use ( &$queries, $table ) {
+			if ( str_contains( $sql, $table ) ) {
+				++$queries;
+			}
+			return $sql;
+		};
+		add_filter( 'query', $count );
+		try {
+			foreach ( array( false, true ) as $offsite ) {
+				$queries = 0;
+				$map     = MainWP_Backup_Executor::get_recent_native_backup_map( $ids, 7, $offsite );
+				$this->assertSame( 1, $queries );
+				$this->assertSame(
+					array(
+						$recent => true,
+						$stale  => false,
+						$none   => false,
+						$shadow => ! $offsite,
+					),
+					$map
+				);
+				$queries = 0;
+				$this->assertSame( $map, MainWP_Backup_Executor::get_recent_native_backup_map( $ids, 7, $offsite ) );
+				$this->assertSame( 0, $queries );
+				foreach ( $ids as $id ) {
+					$this->assertSame( MainWP_Backup_Executor::has_recent_native_backup( $id, 7, $offsite ), $map[ $id ] );
+				}
+			}
+		} finally {
+			remove_filter( 'query', $count );
+		}
+	}
+
+	/**
 	 * Set up: enable native backups so the evaluator's native-snapshot path
 	 * and the badge indicator are both live for these cases.
 	 *
@@ -33,6 +82,8 @@ class MainWP_Backup_Update_Gate_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function set_up() {
 		parent::set_up();
+		$cache = new \ReflectionProperty( MainWP_Backup_Executor::class, 'recent_native_backup_maps' );
+		$cache->setValue( null, array() );
 		update_option( 'mainwp_enableNativeBackups', 1 );
 	}
 

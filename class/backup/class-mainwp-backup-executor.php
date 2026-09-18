@@ -25,6 +25,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
     /**
+     * Backup indicators share a query for each policy during the request.
+     *
+     * @var array
+     */
+    private static $recent_native_backup_maps = array();
+
+    /**
      * Website option holding the active ad-hoc backup task handle.
      *
      * @var string
@@ -2300,6 +2307,44 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         }
 
         return false;
+    }
+
+    /**
+     * Avoid one snapshot query per row when rendering backup indicators.
+     *
+     * @param int[] $site_ids        Site ids, or an empty array for all sites.
+     * @param int   $max_age_days    Freshness window.
+     * @param bool  $require_offsite Whether the newest eligible snapshot must be verified offsite.
+     *
+     * @return array<int,bool> Request-scoped backup availability by site.
+     */
+    public static function get_recent_native_backup_map( array $site_ids, int $max_age_days, bool $require_offsite = false ): array {
+        global $wpdb;
+        $cache = &self::$recent_native_backup_maps;
+
+        $key = $max_age_days . '|' . (int) $require_offsite;
+        if ( ! isset( $cache[ $key ] ) ) {
+            $table = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+            // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- internal table; no input in SQL; one query per policy per request.
+            $rows = $wpdb->get_results(
+                "SELECT s.site_id, s.created, s.offsite_state FROM {$table} s INNER JOIN (SELECT MAX(id) AS id FROM {$table} WHERE status = 'complete' AND type <> 'files' GROUP BY site_id) latest ON s.id = latest.id"
+            );
+            // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+            $cache[ $key ] = array();
+            $cutoff        = time() - $max_age_days * DAY_IN_SECONDS;
+            foreach ( $rows as $row ) {
+                $cache[ $key ][ (int) $row->site_id ] = (int) $row->created >= $cutoff && ( ! $require_offsite || 'verified' === (string) $row->offsite_state );
+            }
+        }
+        if ( empty( $site_ids ) ) {
+            return $cache[ $key ];
+        }
+
+        $result = array();
+        foreach ( $site_ids as $site_id ) {
+            $result[ (int) $site_id ] = $cache[ $key ][ (int) $site_id ] ?? false;
+        }
+        return $result;
     }
 
     /**

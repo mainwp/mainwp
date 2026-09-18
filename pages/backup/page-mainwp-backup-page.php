@@ -216,6 +216,9 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         static::$subPages = apply_filters( 'mainwp_getsubpages_backups', $sub_pages );
         if ( isset( static::$subPages ) && is_array( static::$subPages ) ) {
             foreach ( static::$subPages as $subPage ) {
+                if ( ! is_array( $subPage ) || empty( $subPage['slug'] ) || ! isset( $subPage['title'], $subPage['callback'] ) || ! is_callable( $subPage['callback'] ) ) {
+                    continue;
+                }
                 if ( MainWP_Menu::is_disable_menu_item( 3, 'ManageBackups' . $subPage['slug'] ) ) {
                     continue;
                 }
@@ -260,6 +263,9 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                     <?php
                     if ( isset( static::$subPages ) && is_array( static::$subPages ) ) {
                         foreach ( static::$subPages as $subPage ) {
+                            if ( ! is_array( $subPage ) || empty( $subPage['slug'] ) || ! isset( $subPage['title'], $subPage['callback'] ) || ! is_callable( $subPage['callback'] ) ) {
+                                continue;
+                            }
                             if ( MainWP_Menu::is_disable_menu_item( 3, 'ManageBackups' . $subPage['slug'] ) ) {
                                     continue;
                             }
@@ -506,6 +512,9 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
 
         if ( isset( static::$subPages ) && is_array( static::$subPages ) ) {
             foreach ( static::$subPages as $subPage ) {
+                if ( ! is_array( $subPage ) || empty( $subPage['slug'] ) || ! isset( $subPage['title'], $subPage['callback'] ) || ! is_callable( $subPage['callback'] ) ) {
+                    continue;
+                }
                 if ( MainWP_Menu::is_disable_menu_item( 3, 'ManageBackups' . $subPage['slug'] ) ) {
                         continue;
                 }

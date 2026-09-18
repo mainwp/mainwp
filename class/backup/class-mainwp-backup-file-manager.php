@@ -751,7 +751,7 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
             $actual    = (int) filesize( $file );
             $expected  = (int) $expected_size;
             $allowance = (int) max( 1, floor( $expected * $tolerance ) );
-            if ( abs( $actual - $expected ) > $allowance ) {
+            if ( $actual < $expected || $actual - $expected > $allowance ) {
                 $code = $actual < $expected ? MainWP_Backup_Error_Codes::ERR_FILE_TOO_SMALL : MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT;
                 throw new MainWP_Exception(
                     MainWP_Backup_Error_Codes::message( $code ),

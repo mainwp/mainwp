@@ -27,6 +27,8 @@ class MainWP_Updates_Native_Backup_Indicator_Test extends MainWP_Abilities_Test_
 	 */
 	public function setUp(): void {
 		parent::setUp();
+		$cache = new \ReflectionProperty( \MainWP\Dashboard\MainWP_Backup_Executor::class, 'recent_native_backup_maps' );
+		$cache->setValue( null, array() );
 		update_option( 'mainwp_enableNativeBackups', 1 );
 	}
 

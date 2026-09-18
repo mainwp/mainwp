@@ -1889,9 +1889,10 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         if ( ( isset( $_GET['action'] ) && 'add_submonitor' === $_GET['action'] ) || ! empty( $_GET['sub_monitor_id'] ) ) {
             $websiteid = isset( $_GET['monitor_wpid'] ) ? intval( $_GET['monitor_wpid'] ) : 0;
             $website   = MainWP_DB::instance()->get_website_by_id( $websiteid );
-            // Show modal.
-            static::render_monitor_site( $website );
-            return;
+            if ( MainWP_System_Utility::can_edit_website( $website ) && \mainwp_current_user_can( 'site', $websiteid ) ) {
+                static::render_monitor_site( $website );
+                return;
+            }
         }
 
         if ( ! empty( $_GET['emailsettingsid'] ) ) {

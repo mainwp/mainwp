@@ -349,7 +349,7 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
         <script type="text/javascript">
         jQuery( function () {
             let feedbackZone = function ( message, color ) {
-                jQuery( '#mainwp-storage-message-zone' ).attr( 'class', 'ui ' + color + ' message' ).html( message ).show();
+                jQuery( '#mainwp-storage-message-zone' ).attr( 'class', 'ui ' + color + ' message' ).text( message ).show();
             };
 
             let collectSettings = function () {
@@ -541,7 +541,7 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                     confirmed: confirmed ? 1 : 0
                 } ), function ( response ) {
                     if ( response && response.tasks && response.tasks.length ) {
-                        mainwp_confirm( '<?php echo esc_js( __( 'These backup tasks upload to this destination:', 'mainwp' ) ); ?>' + ' ' + response.tasks.join( ', ' ) + '. ' + '<?php echo esc_js( __( 'Deleting it removes the destination from those tasks and stops pending uploads. Delete anyway?', 'mainwp' ) ); ?>', function () {
+                        mainwp_confirm( '<?php echo esc_js( __( 'These backup tasks upload to this destination:', 'mainwp' ) ); ?>' + ' ' + jQuery( '<div>' ).text( response.tasks.join( ', ' ) ).html() + '. ' + '<?php echo esc_js( __( 'Deleting it removes the destination from those tasks and stops pending uploads. Delete anyway?', 'mainwp' ) ); ?>', function () {
                             deleteDestination( id, true );
                         } );
                     } else if ( response && response.error ) {

@@ -77,7 +77,7 @@ class MainWP_Manage_Sites_Backup_View { // phpcs:ignore Generic.Classes.OpeningB
      *
      * @param mixed $website Child Site info.
      *
-     * @return string Backup Site html.
+     * @return void
      */
     public static function render_backup_site( &$website ) {
         if ( ! \mainwp_current_user_can( 'dashboard', 'execute_backups' ) ) {

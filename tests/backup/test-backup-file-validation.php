@@ -19,7 +19,21 @@ use MainWP\Dashboard\MainWP_Exception;
 /**
  * Class MainWP_Backup_File_Validation_Test
  */
-class MainWP_Backup_File_Validation_Test extends \WP_UnitTestCase {
+class MainWP_Backup_File_Validation_Test extends MainWP_Abilities_Test_Case {
+
+	/**
+	 * A single missing byte still means the archive is incomplete.
+	 */
+	public function test_one_byte_short_is_refused_and_kept_for_resume() {
+		$file = $this->scratch_file( '.zip', "PK\x03\x04" . str_repeat( 'x', 996 ) );
+		try {
+			MainWP_Backup_File_Manager::validate_backup_file( $file, 1001 );
+			$this->fail( 'A short archive must be refused.' );
+		} catch ( MainWP_Exception $e ) {
+			$this->assertSame( \MainWP\Dashboard\MainWP_Backup_Error_Codes::ERR_FILE_TOO_SMALL, $e->get_message_error_code() );
+		}
+		$this->assertFileExists( $file );
+	}
 
 	/**
 	 * Files to clean up.

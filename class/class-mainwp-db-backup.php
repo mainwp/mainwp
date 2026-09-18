@@ -473,6 +473,26 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
     }
 
     /**
+     * Preserve schedule edits made after a cron reader loaded the task.
+     *
+     * @param int $id          Task id.
+     * @param int $observed    Previously read next_run.
+     * @param int $replacement Computed next_run.
+     *
+     * @return int|false Rows updated, or false on error.
+     */
+    public function update_backup_task_next_run( $id, $observed, $replacement ) {
+        return $this->wpdb->update(
+            $this->table_name( 'wp_backup' ),
+            array( 'next_run' => $replacement ),
+            array(
+                'id'       => $id,
+                'next_run' => $observed,
+            )
+        );
+    }
+
+    /**
      * Method get_manual_backup_task()
      *
      * Fetch the per-site hidden on-demand ("manual") backup task, if it
@@ -519,10 +539,17 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         $task    = $this->get_manual_backup_task( $site_id );
 
         if ( empty( $task ) ) {
-            // Hold a short lock so a double-click cannot create two rows.
-            $lock_key = 'mwp_manual_backup_task_' . $site_id;
-            if ( false === get_transient( $lock_key ) ) {
-                set_transient( $lock_key, 1, 10 );
+            // The lock must serialize inserts across separate requests. A 0
+            // means another request holds it and will insert; NULL means the
+            // server could not take a named lock at all (some proxies and
+            // managed databases refuse GET_LOCK), and refusing there would
+            // stop manual backups entirely, so that case inserts unlocked.
+            $lock_key = $this->wpdb->prefix . 'mwp_manual_backup_task_' . $site_id;
+            $locked   = $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT GET_LOCK( %s, 5 )', $lock_key ) );
+            if ( null !== $locked && 1 !== (int) $locked ) {
+                return $this->get_manual_backup_task( $site_id );
+            }
+            try {
                 $task = $this->get_manual_backup_task( $site_id );
                 if ( empty( $task ) ) {
                     $created = $this->add_backup_task(
@@ -554,7 +581,8 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
                         $this->update_backup_task_with_values( (int) $created->id, array( 'authorized_sites' => (string) $site_id ) );
                     }
                 }
-                delete_transient( $lock_key );
+            } finally {
+                $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT RELEASE_LOCK( %s )', $lock_key ) );
             }
             $task = $this->get_manual_backup_task( $site_id );
         }
@@ -1186,13 +1214,14 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             return $this->wpdb->update( $this->table_name( 'wp_backup' ), array( 'backup_notices' => '' ), array( 'id' => $id ) );
         }
 
-        $task     = $this->get_backup_task_by_id( $id );
-        $existing = empty( $task ) ? '' : (string) $task->backup_notices;
-        if ( '' !== $existing && false !== strpos( $existing, $notices ) ) {
-            return 0;
-        }
-
-        return $this->wpdb->update( $this->table_name( 'wp_backup' ), array( 'backup_notices' => $existing . $notices ), array( 'id' => $id ) );
+        return $this->wpdb->query(
+            $this->wpdb->prepare(
+                'UPDATE ' . esc_sql( $this->table_name( 'wp_backup' ) ) . " SET backup_notices = CONCAT( COALESCE( backup_notices, '' ), %s ) WHERE id = %d AND ( backup_notices IS NULL OR backup_notices NOT LIKE %s )",
+                $notices,
+                $id,
+                '%' . $this->wpdb->esc_like( $notices ) . '%'
+            )
+        );
     }
 
     /**

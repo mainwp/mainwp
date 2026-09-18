@@ -112,7 +112,7 @@ class MainWP_Download_To_File_Test extends MainWP_Backup_Test_Case {
 		$content = static::fixture_content( 4096 );
 		file_put_contents( $file, $content );
 
-		// Expected size differs slightly (within 1% tolerance) so a resume is attempted.
+		// The stale expected size forces a resume; the matching 416 confirms completion.
 		MainWP_Connect::download_to_file( static::fixture_url( '/206?size=4096' ), $file, 4100 );
 
 		$this->assertSame( $content, file_get_contents( $file ) );

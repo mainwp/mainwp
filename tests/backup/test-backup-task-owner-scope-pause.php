@@ -23,6 +23,40 @@ use MainWP\Dashboard\MainWP_Manage_Backups_Handler;
 class MainWP_Backup_Task_Owner_Scope_Pause_Test extends MainWP_Abilities_Test_Case {
 
 	/**
+	 * A resave restoring scope must win over a stale caller's pause decision.
+	 */
+	public function test_rescope_pause_rechecks_reloaded_task() {
+		$owner  = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$site_a = $this->create_test_site( array( 'userid' => $owner ) );
+		$site_b = $this->create_test_site( array( 'userid' => $owner ) );
+		$task   = $this->create_task( $owner, $site_a . ',' . $site_b );
+		$db     = MainWP_DB_Backup::instance();
+		$db->update_backup_task_with_values(
+			$task->id,
+			array(
+				'authorized_sites' => $task->sites,
+				'last_run'         => 100,
+				'completed'        => 50,
+			)
+		);
+		$this->restrict_user_sites( $owner, array( $site_a ) );
+		$stale = $db->get_backup_task_by_id( $task->id );
+		$this->assertSame( 'narrowed', MainWP_Manage_Backups_Handler::resolve_task_scope_pause( $stale ) );
+		$db->update_backup_task_with_values(
+			$task->id,
+			array(
+				'sites'            => (string) $site_a,
+				'authorized_sites' => (string) $site_a,
+			)
+		);
+		MainWP_Manage_Backups_Handler::pause_task_for_rescope( $stale, 'narrowed' );
+		$fresh = $db->get_backup_task_by_id( $task->id );
+		$this->assertSame( 0, (int) $fresh->paused );
+		$this->assertSame( 50, (int) $fresh->completed );
+		$this->assertEmpty( $fresh->backup_notices );
+	}
+
+	/**
 	 * Group ids inserted by a test, cleaned in tear_down.
 	 *
 	 * @var int[]

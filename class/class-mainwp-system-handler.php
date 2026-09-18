@@ -699,6 +699,9 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                     // encryption itself could not be armed - surface that on the next render.
                     $msg .= '&backup_encryption_forced_off=1';
                 }
+                if ( MainWP_Backup_Settings::recovery_passphrase_was_rejected() ) {
+                    $msg .= '&backup_recovery_passphrase_rejected=1';
+                }
 
                 // Redirect to the correct page based on the nonce.
                 $url_page = 'admin.php?page=Settings' . $msg;

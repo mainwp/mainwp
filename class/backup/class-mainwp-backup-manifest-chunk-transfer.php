@@ -59,8 +59,10 @@ class MainWP_Backup_Manifest_Chunk_Transfer implements MainWP_Backup_Chunk_Trans
             return $this->failure( esc_html__( 'The file list from the previous backup is empty or unreadable.', 'mainwp' ) );
         }
 
-        $offset = 0;
-        $mtoken = '';
+        $offset                = 0;
+        $mtoken                = '';
+        $last_realign          = 0;
+        $nonadvancing_realigns = 0;
 
         while ( $offset < $size ) {
             $read = min( $chunk_bytes, $size - $offset );
@@ -80,7 +82,12 @@ class MainWP_Backup_Manifest_Chunk_Transfer implements MainWP_Backup_Chunk_Trans
                 continue;
             }
             if ( 'realign' === $outcome['result'] ) {
-                $offset = $outcome['bytes_received'];
+                $nonadvancing_realigns = $outcome['bytes_received'] <= $last_realign ? $nonadvancing_realigns + 1 : 0;
+                if ( $nonadvancing_realigns >= 3 ) {
+                    return $this->failure( esc_html__( 'The child site repeatedly realigned the file-list transfer without making progress.', 'mainwp' ) );
+                }
+                $last_realign = $outcome['bytes_received'];
+                $offset       = $outcome['bytes_received'];
                 continue;
             }
             if ( 'error' === $outcome['result'] ) {
@@ -94,7 +101,8 @@ class MainWP_Backup_Manifest_Chunk_Transfer implements MainWP_Backup_Chunk_Trans
                 // An ok answer that confirmed no new bytes would loop forever.
                 return $this->failure( esc_html__( 'The child site acknowledged the file-list transfer without storing any of it.', 'mainwp' ) );
             }
-            $offset = $outcome['bytes_received'];
+            $offset                = $outcome['bytes_received'];
+            $nonadvancing_realigns = 0;
         }
 
         return array(

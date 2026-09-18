@@ -635,12 +635,14 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 MainWP_Utility::update_option( 'mainwp_show_language_updates', $val );
                 $val = ( ! isset( $_POST['mainwp_disable_update_confirmations'] ) ? 0 : intval( $_POST['mainwp_disable_update_confirmations'] ) );
                 MainWP_Utility::update_option( 'mainwp_disable_update_confirmations', $val );
-                $val = ( ! isset( $_POST['mainwp_backup_before_upgrade'] ) ? 0 : 1 );
-                MainWP_Utility::update_option( 'mainwp_backup_before_upgrade', $val );
-                $val = ( ! isset( $_POST['mainwp_backup_before_upgrade_days'] ) ? 7 : intval( $_POST['mainwp_backup_before_upgrade_days'] ) );
-                MainWP_Utility::update_option( 'mainwp_backup_before_upgrade_days', $val );
-                $val = ( ! isset( $_POST['mainwp_backup_before_upgrade_require_offsite'] ) ? 0 : 1 );
-                MainWP_Utility::update_option( 'mainwp_backup_before_upgrade_require_offsite', $val );
+                if ( isset( $_POST['mainwp_backup_before_upgrade_section'] ) ) {
+                    $val = ( ! isset( $_POST['mainwp_backup_before_upgrade'] ) ? 0 : 1 );
+                    MainWP_Utility::update_option( 'mainwp_backup_before_upgrade', $val );
+                    $val = ( ! isset( $_POST['mainwp_backup_before_upgrade_days'] ) ? 7 : intval( $_POST['mainwp_backup_before_upgrade_days'] ) );
+                    MainWP_Utility::update_option( 'mainwp_backup_before_upgrade_days', $val );
+                    $val = ( ! isset( $_POST['mainwp_backup_before_upgrade_require_offsite'] ) ? 0 : 1 );
+                    MainWP_Utility::update_option( 'mainwp_backup_before_upgrade_require_offsite', $val );
+                }
 
                 if ( is_plugin_active( 'mainwp-comments-extension/mainwp-comments-extension.php' ) ) {
                     MainWP_Utility::update_option( 'mainwp_maximumComments', isset( $_POST['mainwp_maximumComments'] ) ? intval( $_POST['mainwp_maximumComments'] ) : 50 );
@@ -1110,6 +1112,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                         </div>
                     </div>
                     <?php if ( ( $enableNativeBackups && empty( $primaryBackup ) ) || ( empty( $enableNativeBackups ) && ! empty( $primaryBackup ) ) ) { ?>
+                    <input type="hidden" name="mainwp_backup_before_upgrade_section" value="1" />
                     <div class="ui grid field mainwp-parent-toggle settings-field-indicator-wrapper settings-field-indicator-updates">
                         <label class="six wide column middle aligned">
                         <?php

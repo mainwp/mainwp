@@ -415,7 +415,7 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         $found = false;
         while ( $row = $tables->fetch_row() ) { // phpcs:ignore WordPress.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition -- standard mysqli row walk.
             // phpcs:ignore WordPress.DB.RestrictedClasses.mysql__mysqli_query, WordPress.DB.PreparedSQL.NotPrepared -- table name from SHOW TABLES on the scratch database.
-            $count = $this->mysqli->query( 'SELECT COUNT(*) FROM `' . $row[0] . '`' );
+            $count = $this->mysqli->query( 'SELECT COUNT(*) FROM `' . str_replace( '`', '``', $row[0] ) . '`' );
             if ( $count instanceof \mysqli_result ) {
                 $value = $count->fetch_row();
                 $count->free();

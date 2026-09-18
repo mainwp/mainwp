@@ -23,7 +23,30 @@ use MainWP\Dashboard\MainWP_Post_Backup_Handler;
 /**
  * Class MainWP_Backup_Manual_Task_Test
  */
-class MainWP_Backup_Manual_Task_Test extends \WP_UnitTestCase {
+class MainWP_Backup_Manual_Task_Test extends MainWP_Abilities_Test_Case {
+
+	/**
+	 * A request that cannot own the insert lock must leave the task absent.
+	 */
+	public function test_busy_manual_task_lock_does_not_insert() {
+		$lock_queries = 0;
+		$busy         = static function ( $sql ) use ( &$lock_queries ) {
+			if ( str_contains( $sql, 'GET_LOCK(' ) ) {
+				++$lock_queries;
+				return 'SELECT 0';
+			}
+			return $sql;
+		};
+		add_filter( 'query', $busy );
+		try {
+			$task = MainWP_DB_Backup::instance()->ensure_manual_backup_task( $this->website() );
+		} finally {
+			remove_filter( 'query', $busy );
+		}
+		$this->assertEmpty( $task );
+		$this->assertSame( 1, $lock_queries );
+		$this->assertNull( MainWP_DB_Backup::instance()->get_manual_backup_task( $this->site_id ) );
+	}
 
 	/**
 	 * Fake site id base; no real website row is required because

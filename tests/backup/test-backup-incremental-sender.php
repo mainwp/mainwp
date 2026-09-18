@@ -1823,7 +1823,25 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	public function test_rescope_pause_rereads_run_before_closing() {
 		list( $site_id, $task ) = $this->arrange_manual_task();
 		$start                  = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
-		MainWP_Manage_Backups_Handler::pause_task_for_rescope( $task, 'narrowed' );
+		$restricted             = $this->create_test_site( array( 'userid' => get_current_user_id() ) );
+		MainWP_DB_Backup::instance()->update_backup_task_with_values(
+			$task->id,
+			array(
+				'sites'            => $site_id . ',' . $restricted,
+				'authorized_sites' => $site_id . ',' . $restricted,
+			)
+		);
+		$allowed = static function () use ( $site_id ) {
+			return array( $site_id );
+		};
+		add_filter( 'mainwp_currentuserallowedaccesssites', $allowed );
+		try {
+			$reloaded = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+			$this->assertSame( 'narrowed', MainWP_Manage_Backups_Handler::resolve_task_scope_pause( $reloaded ) );
+			MainWP_Manage_Backups_Handler::pause_task_for_rescope( $task, 'narrowed' );
+		} finally {
+			remove_filter( 'mainwp_currentuserallowedaccesssites', $allowed );
+		}
 		$after = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
 		$this->assertSame( $start['started'], (int) $after->completed );
 	}

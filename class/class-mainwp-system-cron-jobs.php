@@ -1761,7 +1761,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         $calculator = new MainWP_Backup_Schedule_Calculator( wp_timezone(), time() );
         $next_run   = $calculator->compute_next_run( $task, (int) $task->last_run );
 
-        MainWP_DB_Backup::instance()->update_backup_task_with_values( $task->id, array( 'next_run' => $next_run ) );
+        MainWP_DB_Backup::instance()->update_backup_task_next_run( $task->id, (int) $task->next_run, $next_run );
     }
 
     /**
@@ -1793,7 +1793,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
             $next_run = $calculator->compute_next_run( $task, empty( $task->last_run ) ? null : (int) $task->last_run );
 
             if ( $next_run !== (int) $task->next_run ) {
-                MainWP_DB_Backup::instance()->update_backup_task_with_values( $task->id, array( 'next_run' => $next_run ) );
+                MainWP_DB_Backup::instance()->update_backup_task_next_run( $task->id, (int) $task->next_run, $next_run );
             }
         }
     }

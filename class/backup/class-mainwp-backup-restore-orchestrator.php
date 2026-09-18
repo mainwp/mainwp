@@ -970,7 +970,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             $phase = isset( $payload['phase'] ) ? (string) $payload['phase'] : '';
             if ( 'completed' === $phase ) {
                 $checkpoint                 = $job->checkpoint;
-                $checkpoint['verification'] = isset( $payload['sub_state']['verification'] ) ? $payload['sub_state']['verification'] : array();
+                $checkpoint['verification'] = isset( $payload['sub_state']['verification'] ) && is_array( $payload['sub_state']['verification'] ) ? $payload['sub_state']['verification'] : array();
                 // Carry the order-preservation outcome (customers and stock
                 // re-applied) alongside verification so the dashboard reports
                 // what was kept rather than hiding it.
@@ -1024,6 +1024,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         $reachable = $this->site_responds( $website );
 
         $checkpoint                                  = $job->checkpoint;
+        $checkpoint['verification']                  = isset( $checkpoint['verification'] ) && is_array( $checkpoint['verification'] ) ? $checkpoint['verification'] : array();
         $checkpoint['verification']['site_responds'] = $reachable;
         $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
 

@@ -593,7 +593,7 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * (unwritable directory, encoding failure, filesystem error) is
      * swallowed: diagnostics must never break the pipeline it observes.
      *
-     * @param string $run_key Run grouping key; becomes the file name.
+     * @param string $run_key Run grouping key used to derive a private filename.
      * @param string $kind    Event kind.
      * @param int    $site_id Child site id, 0 when not applicable.
      * @param int    $task_id Backup task id, 0 when not applicable.
@@ -622,7 +622,7 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 return;
             }
 
-            $file = $dir . sanitize_file_name( $run_key ) . '.jsonl';
+            $file = $dir . MainWP_System_Utility::get_private_filename( self::SUBDIR, $run_key, 'events' ) . '.jsonl';
 
             // phpcs:disable WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors.Discouraged -- locked append on the hot path; failures are silent by design.
             $handle = @fopen( $file, 'ab' );
@@ -704,8 +704,21 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
             $payload           = $sections;
             $payload['events'] = array();
             foreach ( $events['files'] as $event_file ) {
-                $lines                                        = (string) file_get_contents( $event_file ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- bounded local read.
-                $payload['events'][ basename( $event_file ) ] = array_values( array_filter( explode( "\n", $lines ) ) );
+                $payload['events'][ basename( $event_file ) ] = array();
+                $handle                                       = fopen( $event_file, 'rb' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- stream local diagnostics.
+                if ( false === $handle ) {
+                    continue;
+                }
+                try {
+                    while ( false !== ( $line = fgets( $handle ) ) ) { // phpcs:ignore WordPress.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition
+                        $line = rtrim( $line, "\n" );
+                        if ( $line ) {
+                            $payload['events'][ basename( $event_file ) ][] = $line;
+                        }
+                    }
+                } finally {
+                    fclose( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- stream local diagnostics.
+                }
             }
             foreach ( $events['blobs'] as $name => $content ) {
                 $payload['events'][ $name ] = array_values( array_filter( explode( "\n", $content ) ) );
@@ -777,14 +790,13 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
         $allowed_tasks = array_map( static fn( $task ) => (int) $task['id'], $tasks );
         $by_run_key    = $this->restore_run_key_sites();
 
-        // record() names files with sanitize_file_name(), which trims the
-        // leading underscore, so the shared stream is on disk as "global".
+        // Scope is carried in the event because private filenames are opaque.
         $global_key = sanitize_file_name( '_global' );
 
         $files = array();
         $blobs = array();
         foreach ( $event_files as $event_file ) {
-            $run_key = basename( $event_file, '.jsonl' );
+            $run_key = $this->event_file_run_key( $event_file );
             if ( $global_key === $run_key ) {
                 $blobs[ basename( $event_file ) ] = $this->filter_event_lines( $event_file, $allowed, $allowed_tasks );
                 continue;
@@ -812,9 +824,7 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
         $rows = (array) $wpdb->get_results( 'SELECT id, site_id, child_task_id FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery -- known internal table, no user input.
 
-        // Keyed by the on-disk file name, which record() ran through
-        // sanitize_file_name(), so a child task id carrying a trimmed
-        // character still matches its file.
+        // Match the normalized run keys read from the event metadata.
         $map = array();
         foreach ( $rows as $row ) {
             $map[ sanitize_file_name( 'restore-' . (int) $row['id'] ) ] = (int) $row['site_id'];
@@ -830,7 +840,7 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * The site id a name-scoped run key belongs to, or null when the key
      * does not name one.
      *
-     * @param string $run_key Run key (the event file's base name).
+     * @param string $run_key Run key from the event metadata.
      *
      * @return int|null Site id, or null when unresolvable.
      */
@@ -862,29 +872,62 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @return string The kept lines, newline separated.
      */
     private function filter_event_lines( string $file, array $allowed_sites, array $allowed_tasks ): string {
-        $lines = explode( "\n", (string) file_get_contents( $file ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- bounded local read.
+        $handle = fopen( $file, 'rb' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- stream local diagnostics.
+        if ( false === $handle ) {
+            return '';
+        }
 
         $kept = array();
-        foreach ( $lines as $line ) {
-            if ( '' === trim( $line ) ) {
-                continue;
+        try {
+            while ( false !== ( $line = fgets( $handle ) ) ) { // phpcs:ignore WordPress.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition
+                $line = rtrim( $line, "\n" );
+                if ( '' === trim( $line ) ) {
+                    continue;
+                }
+                $event = json_decode( $line, true );
+                if ( ! is_array( $event ) ) {
+                    continue;
+                }
+                $site_id = isset( $event['site_id'] ) ? (int) $event['site_id'] : 0;
+                $task_id = isset( $event['task_id'] ) ? (int) $event['task_id'] : 0;
+                if ( 0 !== $site_id && ! in_array( $site_id, $allowed_sites, true ) ) {
+                    continue;
+                }
+                if ( 0 !== $task_id && ! in_array( $task_id, $allowed_tasks, true ) ) {
+                    continue;
+                }
+                $kept[] = $line;
             }
-            $event = json_decode( $line, true );
-            if ( ! is_array( $event ) ) {
-                continue;
-            }
-            $site_id = isset( $event['site_id'] ) ? (int) $event['site_id'] : 0;
-            $task_id = isset( $event['task_id'] ) ? (int) $event['task_id'] : 0;
-            if ( 0 !== $site_id && ! in_array( $site_id, $allowed_sites, true ) ) {
-                continue;
-            }
-            if ( 0 !== $task_id && ! in_array( $task_id, $allowed_tasks, true ) ) {
-                continue;
-            }
-            $kept[] = $line;
+        } finally {
+            fclose( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- stream local diagnostics.
         }
 
         return implode( "\n", $kept );
+    }
+
+    /**
+     * Recover the scope identifier without exposing it in the filename.
+     *
+     * @param string $file Event file path.
+     *
+     * @return string Run key, or empty when unreadable.
+     */
+    private function event_file_run_key( string $file ): string {
+        $handle = fopen( $file, 'rb' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- stream local diagnostics.
+        if ( false === $handle ) {
+            return '';
+        }
+        try {
+            while ( false !== ( $line = fgets( $handle ) ) ) { // phpcs:ignore WordPress.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition
+                $event = json_decode( $line, true );
+                if ( is_array( $event ) && isset( $event['run_key'] ) ) {
+                    return sanitize_file_name( (string) $event['run_key'] );
+                }
+            }
+        } finally {
+            fclose( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- stream local diagnostics.
+        }
+        return '';
     }
 
     /**
@@ -1105,8 +1148,7 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
     /**
      * Delete a deleted task's event files. Task-scoped run keys all start
-     * with "<task_id>-" (poll, preflight), so the glob is anchored on that
-     * prefix; the shared _global, terminal-*, and restore-* streams carry
+     * with "<task_id>-" (poll, preflight); the shared _global, terminal-*, and restore-* streams carry
      * events for other tasks and stay. Runs off
      * mainwp_backup_task_snapshots_purged, which both task-delete paths
      * fire.
@@ -1127,8 +1169,8 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 return;
             }
 
-            foreach ( (array) glob( $dir . $task_id . '-*.jsonl' ) as $file ) {
-                if ( is_file( $file ) ) {
+            foreach ( (array) glob( $dir . '*.jsonl' ) as $file ) {
+                if ( is_file( $file ) && str_starts_with( $this->event_file_run_key( $file ), $task_id . '-' ) ) {
                     wp_delete_file( $file );
                 }
             }

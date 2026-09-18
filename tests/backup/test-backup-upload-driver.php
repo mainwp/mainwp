@@ -27,7 +27,29 @@ use MainWP\Dashboard\MainWP_DB;
 /**
  * Class MainWP_Backup_Upload_Driver_Test
  */
-class MainWP_Backup_Upload_Driver_Test extends \WP_UnitTestCase {
+class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
+
+	/**
+	 * Empty and malformed artifact lists must never verify an offsite copy.
+	 */
+	public function test_empty_or_scalar_archives_fail_permanently() {
+		global $wpdb;
+		list( $dest_id ) = $this->make_local_destination();
+		$driver          = MainWP_Backup_Upload_Driver::instance();
+		$build           = new \ReflectionMethod( $driver, 'new_checkpoint' );
+		foreach ( array( array(), 'x' ) as $archives ) {
+			$this->assertSame( array(), $build->invoke( $driver, (object) array( 'archives' => $archives ) )['artifacts'] );
+			$snapshot_id = $this->record_bare_snapshot();
+			$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ), array( 'archives' => wp_json_encode( $archives ) ), array( 'id' => $snapshot_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- malformed persisted fixture.
+			$store = MainWP_Backup_Upload_Job_Store::instance();
+			$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+			$driver->process_pending_jobs( 240 );
+			$jobs = $store->get_jobs_for_snapshot( $snapshot_id );
+			$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_PERMANENT, $jobs[0]->status );
+			$this->assertStringContainsString( 'no eligible artifacts', $jobs[0]->last_error );
+			$this->assertNotSame( 'verified', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id )->offsite_state );
+		}
+	}
 
 	/**
 	 * Temp dirs created during a test, removed in tear_down.

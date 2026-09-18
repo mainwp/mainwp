@@ -275,7 +275,7 @@ class Connector_Backup extends Log_Connector {
         $this->log(
             $message,
             $args,
-            (int) $event['site_id'],
+            isset( $event['site_id'] ) ? (int) $event['site_id'] : 0,
             'backup',
             'upload_failed',
             0

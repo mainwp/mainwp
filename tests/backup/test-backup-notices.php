@@ -29,6 +29,32 @@ use MainWP\Dashboard\MainWP_Post_Backup_Handler;
 class MainWP_Backup_Notices_Test extends MainWP_Abilities_Test_Case {
 
 	/**
+	 * An append arriving just before our write must not be overwritten.
+	 */
+	public function test_notice_append_preserves_concurrent_message() {
+		$db          = MainWP_DB_Backup::instance();
+		$task        = $this->create_task_row( $this->create_test_site() );
+		$interleaved = false;
+		$append      = static function ( $sql ) use ( &$append, &$interleaved, $db, $task ) {
+			if ( str_starts_with( $sql, 'UPDATE' ) && str_contains( $sql, 'backup_notices' ) ) {
+				remove_filter( 'query', $append );
+				$interleaved = true;
+				$db->update_backup_notices( $task->id, 'Concurrent 100%_notice. ' );
+			}
+			return $sql;
+		};
+		add_filter( 'query', $append );
+		try {
+			$this->assertSame( 1, $db->update_backup_notices( $task->id, 'Our message.' ) );
+		} finally {
+			remove_filter( 'query', $append );
+		}
+		$this->assertTrue( $interleaved );
+		$this->assertSame( 'Concurrent 100%_notice. Our message.', $db->get_backup_task_by_id( $task->id )->backup_notices );
+		$this->assertSame( 0, $db->update_backup_notices( $task->id, 'Concurrent 100%_notice. ' ) );
+	}
+
+	/**
 	 * Set up: enable native backups.
 	 *
 	 * @return void

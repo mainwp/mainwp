@@ -19,7 +19,47 @@ use MainWP\Dashboard\MainWP_System_Cron_Jobs;
 /**
  * Class MainWP_Backup_Schedule_Cron_Test
  */
-class MainWP_Backup_Schedule_Cron_Test extends \WP_UnitTestCase {
+class MainWP_Backup_Schedule_Cron_Test extends MainWP_Abilities_Test_Case {
+
+	/**
+	 * An interleaved schedule save must survive either cron recomputation path.
+	 */
+	public function test_next_run_recomputation_preserves_concurrent_schedule_save() {
+		$db = MainWP_DB_Backup::instance();
+		foreach ( array( 'advance', 'recompute' ) as $mode ) {
+			$id          = $this->insert_task(
+				array(
+					'userid'         => get_current_user_id(),
+					'next_run'       => time() - 60,
+					'last_run'       => time(),
+					'interval_hours' => 1,
+				)
+			);
+			$saved_next  = time() + 5 * DAY_IN_SECONDS;
+			$interleaved = false;
+			$save        = static function ( $sql ) use ( &$save, &$interleaved, $db, $id, $saved_next ) {
+				if ( str_starts_with( $sql, 'UPDATE' ) && str_contains( $sql, 'mainwp_wp_backup' ) && str_contains( $sql, '`next_run`' ) ) {
+					remove_filter( 'query', $save );
+					$interleaved = true;
+					$db->update_backup_task_with_values( $id, array( 'next_run' => $saved_next ) );
+				}
+				return $sql;
+			};
+			add_filter( 'query', $save );
+			try {
+				if ( 'advance' === $mode ) {
+					MainWP_System_Cron_Jobs::instance()->maybe_advance_backup_next_run( $id, 0 );
+				} else {
+					MainWP_System_Cron_Jobs::instance()->recompute_backup_next_runs();
+				}
+			} finally {
+				remove_filter( 'query', $save );
+			}
+			$this->assertTrue( $interleaved, $mode );
+			$this->assertSame( $saved_next, (int) $db->get_backup_task_by_id( $id )->next_run, $mode );
+			$db->update_backup_task_with_values( $id, array( 'interval_hours' => 0 ) );
+		}
+	}
 
 	/**
 	 * Clean fixture rows and request state.

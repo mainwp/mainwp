@@ -28,6 +28,16 @@ use MainWP\Dashboard\MainWP_Manage_Backups_Handler;
 class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 
 	/**
+	 * Keep fixture lookups tied to the private filename contract.
+	 *
+	 * @param string $run_key Run identifier.
+	 * @return string Event filename.
+	 */
+	private function event_filename( $run_key ) {
+		return \MainWP\Dashboard\MainWP_System_Utility::get_private_filename( MainWP_Backup_Diagnostics::SUBDIR, $run_key, 'events' ) . '.jsonl';
+	}
+
+	/**
 	 * Scratch diagnostics directory for the test.
 	 *
 	 * @var string
@@ -201,7 +211,8 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 
 		$files = (array) glob( $this->diag_dir . '/*.jsonl' );
 		$this->assertCount( 1, $files );
-		$this->assertSame( '42-7-bk123.jsonl', basename( $files[0] ) );
+		$this->assertSame( $this->event_filename( '42-7-bk123' ), basename( $files[0] ) );
+		$this->assertNotSame( '42-7-bk123.jsonl', basename( $files[0] ) );
 	}
 
 	/**
@@ -1009,7 +1020,7 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 		$this->assertIsArray( $tasks );
 		$this->assertContains( 'Diagnostics export test task', array_column( $tasks, 'name' ) );
 
-		$events = (string) $zip->getFromName( 'events/1-' . $site_id . '-bkx.jsonl' );
+		$events = (string) $zip->getFromName( 'events/' . $this->event_filename( '1-' . $site_id . '-bkx' ) );
 		$this->assertStringContainsString( 'dumping_db', $events );
 		$zip->close();
 	}
@@ -1114,9 +1125,9 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 		$sites    = json_decode( (string) $zip->getFromName( 'sites.json' ), true );
 		$tasks    = json_decode( (string) $zip->getFromName( 'tasks.json' ), true );
 		$progress = json_decode( (string) $zip->getFromName( 'progress.json' ), true );
-		$global   = (string) $zip->getFromName( 'events/' . sanitize_file_name( '_global' ) . '.jsonl' );
-		$kept     = $zip->locateName( 'events/terminal-' . $site_allowed . '.jsonl' );
-		$dropped  = $zip->locateName( 'events/terminal-' . $site_denied . '.jsonl' );
+		$global   = (string) $zip->getFromName( 'events/' . $this->event_filename( '_global' ) );
+		$kept     = $zip->locateName( 'events/' . $this->event_filename( 'terminal-' . $site_allowed ) );
+		$dropped  = $zip->locateName( 'events/' . $this->event_filename( 'terminal-' . $site_denied ) );
 		$zip->close();
 
 		$site_ids = array_map( 'intval', array_column( (array) $sites, 'id' ) );
@@ -1275,7 +1286,7 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 		// download path to serve it, so the scratch-dir filter is lifted here.
 		remove_filter( 'mainwp_backup_diagnostics_dir', array( $this, 'filter_diag_dir' ) );
 		$real_dir = MainWP_Backup_Diagnostics::instance()->diagnostics_dir();
-		copy( $this->diag_dir . '/exporturl.jsonl', $real_dir . 'exporturl.jsonl' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+		copy( $this->diag_dir . '/' . $this->event_filename( 'exporturl' ), $real_dir . $this->event_filename( 'exporturl' ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
 
 		$response = $this->invoke_export_handler();
 

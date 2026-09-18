@@ -706,6 +706,10 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         if ( empty( $task ) ) {
             return;
         }
+        $reason = static::resolve_task_scope_pause( $task );
+        if ( null === $reason ) {
+            return;
+        }
         MainWP_DB_Backup::instance()->update_backup_task_with_values(
             $task->id,
             array(

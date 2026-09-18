@@ -18,6 +18,59 @@ use MainWP\Dashboard\MainWP_DB;
 class MainWP_Backup_Manifest_Chunk_Transfer_Test extends MainWP_Abilities_Test_Case {
 
 	/**
+	 * A stuck receiver must terminate without exhausting a request worker.
+	 */
+	public function test_nonadvancing_realigns_fail_after_three_attempts() {
+		$calls = 0;
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			static function () use ( &$calls ) {
+				++$calls;
+				if ( $calls > 6 ) {
+					return array( 'error' => 'Test receiver safety stop.' );
+				}
+				return array(
+					'error_code'     => 'mainwp_restore_chunk_gap',
+					'bytes_received' => 0,
+				);
+			}
+		);
+		$outcome = $this->push( str_repeat( 'x', 100 ), 50 );
+		$this->assertFalse( $outcome['ok'] );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_MANIFEST_CHUNK_SEND_FAILED, $outcome['error_code'] );
+		$this->assertSame( 3, $calls );
+	}
+
+	/**
+	 * Progress resets the retry allowance and the sender follows the new offset.
+	 */
+	public function test_advancing_realigns_reset_retry_count() {
+		$offsets = array( 0, 0, 10, 10, 10, 20 );
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			function ( $result, $website, $what, $params ) use ( &$offsets ) {
+				$this->calls[] = $params;
+				if ( $offsets ) {
+					return array(
+						'error_code'     => 'mainwp_restore_chunk_gap',
+						'bytes_received' => array_shift( $offsets ),
+					);
+				}
+				return array(
+					'bytes_received' => 100,
+					'mtoken'         => 'complete-token',
+				);
+			},
+			10,
+			4
+		);
+		$outcome = $this->push( str_repeat( 'x', 100 ), 100 );
+		$this->assertTrue( $outcome['ok'] );
+		$this->assertSame( array( 0, 0, 0, 10, 10, 10, 20 ), array_column( $this->calls, 'offset' ) );
+		$this->assertSame( 'complete-token', $outcome['mtoken'] );
+	}
+
+	/**
 	 * Captured chunk calls.
 	 *
 	 * @var array

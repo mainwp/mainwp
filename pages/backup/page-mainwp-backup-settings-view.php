@@ -197,6 +197,7 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
         // Read-only render flag carried through the settings-save redirect, same mechanism as the
         // existing message=saved flag: it never gates anything, it only decides whether a warning shows.
         $encryptionForcedOff = isset( $_GET['backup_encryption_forced_off'] ) && '1' === sanitize_text_field( wp_unslash( $_GET['backup_encryption_forced_off'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        $passphraseRejected  = isset( $_GET['backup_recovery_passphrase_rejected'] ) && '1' === sanitize_text_field( wp_unslash( $_GET['backup_recovery_passphrase_rejected'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
         ?>
         <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="0">
             <label class="six wide column middle aligned">
@@ -223,6 +224,11 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
         <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?>>
             <label class="six wide column middle aligned"><?php esc_html_e( 'Backup recovery passphrase', 'mainwp' ); ?></label>
             <div class="ten wide column">
+                <?php if ( $passphraseRejected ) : ?>
+                <div class="ui small red message" style="margin-top: 1em;">
+                    <?php esc_html_e( 'The recovery passphrase must be at least 12 characters.', 'mainwp' ); ?>
+                </div>
+                <?php endif; ?>
                 <input type="password" autocomplete="new-password" name="mainwp_options_backupEncryptionPassphrase" id="mainwp_options_backupEncryptionPassphrase" value="" placeholder="<?php echo $hasRecoveryPassphrase ? esc_attr__( 'A recovery passphrase is set; enter a new one to change it', 'mainwp' ) : esc_attr__( 'Set a recovery passphrase', 'mainwp' ); ?>"/>
                 <div class="ui small message" style="margin-top: 1em;">
                     <?php esc_html_e( 'This passphrase recovers your encrypted backups if the dashboard and its key file are lost. Store it somewhere safe and separate from the dashboard. A long, unique passphrase (20 characters or more) is strongly recommended. Leave blank to keep the current one.', 'mainwp' ); ?>

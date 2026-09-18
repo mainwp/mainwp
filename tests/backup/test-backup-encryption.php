@@ -19,7 +19,30 @@ use MainWP\Dashboard\MainWP_Keys_Manager;
 /**
  * Class MainWP_Backup_Encryption_Test
  */
-class MainWP_Backup_Encryption_Test extends \WP_UnitTestCase {
+class MainWP_Backup_Encryption_Test extends MainWP_Abilities_Test_Case {
+
+	/**
+	 * Rejected passphrases must leave the existing recovery key usable.
+	 */
+	public function test_recovery_passphrase_minimum_preserves_existing_blob() {
+		$enc      = MainWP_Backup_Encryption::instance();
+		$original = $enc->set_recovery_passphrase( 'original recovery passphrase' );
+		$kek      = $enc->load_kek();
+		foreach ( array( '12345678901', ' 12345678901 ', str_repeat( 'é', 11 ) ) as $short ) {
+			try {
+				$enc->set_recovery_passphrase( $short );
+				$this->fail( 'An eleven-character passphrase must be refused.' );
+			} catch ( \InvalidArgumentException $e ) {
+				$this->assertSame( 'The recovery passphrase must be at least 12 characters.', $e->getMessage() );
+			}
+			$this->assertSame( $original, $enc->get_recovery_blob() );
+			$this->assertSame( $kek, $enc->load_kek() );
+		}
+		$accepted = $enc->set_recovery_passphrase( '123456789012' );
+		$this->assertSame( $accepted, $enc->get_recovery_blob() );
+		$this->assertNotSame( $original, $accepted );
+		$this->assertSame( $kek, $enc->recover_kek( '123456789012', $accepted ) );
+	}
 
 	/**
 	 * Remove any KEK key file and options so each test starts clean.

@@ -165,8 +165,9 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
                     if ( is_file( $file ) && false !== stripos( (string) @file_get_contents( $file, false, null, 0, 8192 ), 'deny from all' ) ) {
                         continue;
                     }
+                    $why = is_link( $file ) ? 'is a symlink' : ( is_file( $file ) ? 'has multiple hard links' : 'is not a regular file' );
                     $this->tear_down();
-                    throw new MainWP_Exception( esc_html__( 'The test-restore sandbox could not protect its working directory.', 'mainwp' ), 'sandbox protection: ' . $file . ' is not a regular file', self::ERR_UNSUPPORTED );
+                    throw new MainWP_Exception( esc_html__( 'The test-restore sandbox could not protect its working directory.', 'mainwp' ), 'sandbox protection: ' . $file . ' ' . $why, self::ERR_UNSUPPORTED );
                 }
                 continue;
             }

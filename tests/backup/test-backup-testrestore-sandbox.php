@@ -460,7 +460,7 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 			} catch ( MainWP_Exception $e ) {
 				$threw = true;
 				$this->assertSame( MainWP_Backup_TestRestore_Sandbox::ERR_UNSUPPORTED, $e->get_message_error_code() );
-				$this->assertStringContainsString( $htaccess . ' is not a regular file', $e->get_message_extra( false ) );
+				$this->assertStringContainsString( $htaccess . ' is a symlink', $e->get_message_extra( false ) );
 			}
 			$this->assertTrue( $threw, 'A non-regular protection path must be refused.' );
 			$this->assertSame( $bytes, file_get_contents( $target ) );
@@ -503,7 +503,7 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 			} catch ( MainWP_Exception $e ) {
 				$threw = true;
 				$this->assertSame( MainWP_Backup_TestRestore_Sandbox::ERR_UNSUPPORTED, $e->get_message_error_code() );
-				$this->assertStringContainsString( $htaccess . ' is not a regular file', $e->get_message_extra( false ) );
+				$this->assertStringContainsString( $htaccess . ' has multiple hard links', $e->get_message_extra( false ) );
 			}
 			$this->assertTrue( $threw, 'A hard-linked protection path must be refused.' );
 			$this->assertSame( $bytes, file_get_contents( $target ) );
@@ -580,7 +580,7 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 			} catch ( MainWP_Exception $e ) {
 				$threw = true;
 				$this->assertSame( MainWP_Backup_TestRestore_Sandbox::ERR_UNSUPPORTED, $e->get_message_error_code() );
-				$this->assertStringContainsString( $htaccess . ' is not a regular file', $e->get_message_extra( false ) );
+				$this->assertStringContainsString( $htaccess . ' is a symlink', $e->get_message_extra( false ) );
 			}
 			$this->assertLessThan( 1.0, microtime( true ) - $started, 'Device refusal must return within one second.' );
 			$this->assertTrue( $threw, 'A protection symlink to /dev/zero must be refused.' );

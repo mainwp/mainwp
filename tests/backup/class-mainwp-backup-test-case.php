@@ -33,6 +33,17 @@ abstract class MainWP_Backup_Test_Case extends \WP_UnitTestCase {
 	protected static $server_port = 0;
 
 	/**
+	 * Each test represents a new request for backup indicator caching.
+	 *
+	 * @return void
+	 */
+	public function setUp(): void {
+		parent::setUp();
+		$cache = new \ReflectionProperty( \MainWP\Dashboard\MainWP_Backup_Executor::class, 'recent_native_backup_maps' );
+		$cache->setValue( null, array() );
+	}
+
+	/**
 	 * Start the fixture server once for the test class.
 	 *
 	 * @return void

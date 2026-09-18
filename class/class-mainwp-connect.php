@@ -2257,6 +2257,11 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * confirms the partial response; error response bodies never reach the
      * backup file, and the transfer aborts on stalls and timeouts.
      *
+     * The size check here guards the transfer. A 416 whose total matches
+     * the local file confirms completion even if the child's expected size
+     * is larger: the server's total is authoritative about the file it holds.
+     * Callers that require the child-reported size validate it themselves.
+     *
      * @param mixed $url Download URL.
      * @param mixed $file File to download to.
      * @param bool  $size Expected total file size in bytes, false when unknown.

@@ -70,7 +70,8 @@ use MainWP\Dashboard\MainWP_DB_Client;
  * test classes outside MainWP_Abilities_Test_Case share the one
  * implementation.
  */
-trait MainWP_Capability_Bypass_Guard { // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- shared guard beside the base case, both loaded from the bootstrap.
+// phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- shared guard beside the base case, both loaded from the bootstrap.
+trait MainWP_Capability_Bypass_Guard {
 
 	/**
 	 * Whether a bypass constant is defined for this process.
@@ -103,21 +104,21 @@ abstract class MainWP_Abilities_Test_Case extends WP_UnitTestCase { //phpcs:igno
 	 *
 	 * @var array
 	 */
-	protected $created_sync_job_ids = [];
+	protected $created_sync_job_ids = array();
 
 	/**
 	 * Track created update job IDs for cleanup.
 	 *
 	 * @var array
 	 */
-	protected $created_update_job_ids = [];
+	protected $created_update_job_ids = array();
 
 	/**
 	 * Track created batch job IDs for cleanup.
 	 *
 	 * @var array
 	 */
-	protected $created_batch_job_ids = [];
+	protected $created_batch_job_ids = array();
 
 	/**
 	 * Whether abilities have been initialized for tests.
@@ -134,10 +135,13 @@ abstract class MainWP_Abilities_Test_Case extends WP_UnitTestCase { //phpcs:igno
 	public function setUp(): void {
 		parent::setUp();
 
+		$cache = new \ReflectionProperty( \MainWP\Dashboard\MainWP_Backup_Executor::class, 'recent_native_backup_maps' );
+		$cache->setValue( null, array() );
+
 		// Reset job ID tracking.
-		$this->created_sync_job_ids   = [];
-		$this->created_update_job_ids = [];
-		$this->created_batch_job_ids  = [];
+		$this->created_sync_job_ids   = array();
+		$this->created_update_job_ids = array();
+		$this->created_batch_job_ids  = array();
 
 		// Ensure abilities are registered (only once across all tests).
 		if ( ! self::$abilities_initialized && function_exists( 'wp_get_ability' ) ) {
@@ -192,17 +196,17 @@ abstract class MainWP_Abilities_Test_Case extends WP_UnitTestCase { //phpcs:igno
 		// Clean up job transients created during tests.
 		foreach ( $this->created_sync_job_ids as $job_id ) {
 			delete_transient( 'mainwp_sync_job_' . $job_id );
-			wp_clear_scheduled_hook( 'mainwp_process_sync_job', [ $job_id ] );
+			wp_clear_scheduled_hook( 'mainwp_process_sync_job', array( $job_id ) );
 		}
 
 		foreach ( $this->created_update_job_ids as $job_id ) {
 			delete_transient( 'mainwp_update_job_' . $job_id );
-			wp_clear_scheduled_hook( 'mainwp_process_update_job', [ $job_id ] );
+			wp_clear_scheduled_hook( 'mainwp_process_update_job', array( $job_id ) );
 		}
 
 		foreach ( $this->created_batch_job_ids as $job_id ) {
 			delete_transient( 'mainwp_batch_job_' . $job_id );
-			wp_clear_scheduled_hook( 'mainwp_process_batch_job', [ $job_id ] );
+			wp_clear_scheduled_hook( 'mainwp_process_batch_job', array( $job_id ) );
 		}
 
 		// Remove any mock filters.
@@ -225,7 +229,7 @@ abstract class MainWP_Abilities_Test_Case extends WP_UnitTestCase { //phpcs:igno
 	 *                    'version' (stored in sync table) as convenience keys.
 	 * @return int Site ID.
 	 */
-	protected function create_test_site( array $args = [] ): int {
+	protected function create_test_site( array $args = array() ): int {
 		global $wpdb;
 
 		// Extract values that go to other tables (not columns in mainwp_wp).
@@ -239,7 +243,7 @@ abstract class MainWP_Abilities_Test_Case extends WP_UnitTestCase { //phpcs:igno
 		// Defaults for mainwp_wp table columns only.
 		// Use current user ID if available, otherwise use 1.
 		$current_user_id = get_current_user_id();
-		$defaults        = [
+		$defaults        = array(
 			'userid'               => $current_user_id > 0 ? $current_user_id : 1,
 			'url'                  => 'https://test-' . wp_generate_uuid4() . '.example.com/',
 			'name'                 => 'Test Site',
@@ -259,10 +263,10 @@ abstract class MainWP_Abilities_Test_Case extends WP_UnitTestCase { //phpcs:igno
 			'theme_upgrades'       => '',
 			'translation_upgrades' => '',
 			'premium_upgrades'     => '',
-		];
+		);
 
 		// Format specifiers matching the column types.
-		$formats = [
+		$formats = array(
 			'userid'               => '%d',
 			'url'                  => '%s',
 			'name'                 => '%s',
@@ -280,12 +284,12 @@ abstract class MainWP_Abilities_Test_Case extends WP_UnitTestCase { //phpcs:igno
 			'theme_upgrades'       => '%s',
 			'translation_upgrades' => '%s',
 			'premium_upgrades'     => '%s',
-		];
+		);
 
 		$data = array_merge( $defaults, $args );
 
 		// Build format array in same order as data keys.
-		$format_array = [];
+		$format_array = array();
 		foreach ( array_keys( $data ) as $key ) {
 			$format_array[] = $formats[ $key ] ?? '%s';
 		}
@@ -304,10 +308,10 @@ abstract class MainWP_Abilities_Test_Case extends WP_UnitTestCase { //phpcs:igno
 		// Create sync record with version and sync_errors.
 		$this->create_test_site_sync(
 			$site_id,
-			[
+			array(
 				'version'     => $version,
 				'sync_errors' => $sync_errors,
-			]
+			)
 		);
 
 		return $site_id;
@@ -322,14 +326,14 @@ abstract class MainWP_Abilities_Test_Case extends WP_UnitTestCase { //phpcs:igno
 	 * @param array $args    Optional. Sync properties to override defaults.
 	 * @return void
 	 */
-	protected function create_test_site_sync( int $site_id, array $args = [] ): void {
+	protected function create_test_site_sync( int $site_id, array $args = array() ): void {
 		global $wpdb;
 
-		$defaults = [
+		$defaults = array(
 			'wpid'        => $site_id,
 			'version'     => '5.0.0',
 			'sync_errors' => '',
-		];
+		);
 
 		$data = array_merge( $defaults, $args );
 
@@ -339,7 +343,7 @@ abstract class MainWP_Abilities_Test_Case extends WP_UnitTestCase { //phpcs:igno
 		$wpdb->insert(
 			$wpdb->prefix . 'mainwp_wp_sync',
 			$data,
-			[ '%d', '%s', '%s' ]
+			array( '%d', '%s', '%s' )
 		);
 	}
 
@@ -349,7 +353,7 @@ abstract class MainWP_Abilities_Test_Case extends WP_UnitTestCase { //phpcs:igno
 	 * @return int User ID.
 	 */
 	protected function set_current_user_as_admin(): int {
-		$user_id = $this->factory->user->create( [ 'role' => 'administrator' ] );
+		$user_id = $this->factory->user->create( array( 'role' => 'administrator' ) );
 		wp_set_current_user( $user_id );
 
 		// Grant MainWP API access if required.
@@ -366,7 +370,7 @@ abstract class MainWP_Abilities_Test_Case extends WP_UnitTestCase { //phpcs:igno
 	 * @return int User ID.
 	 */
 	protected function set_current_user_as_subscriber(): int {
-		$user_id = $this->factory->user->create( [ 'role' => 'subscriber' ] );
+		$user_id = $this->factory->user->create( array( 'role' => 'subscriber' ) );
 		wp_set_current_user( $user_id );
 
 		return $user_id;
@@ -395,7 +399,7 @@ abstract class MainWP_Abilities_Test_Case extends WP_UnitTestCase { //phpcs:igno
 
 		$wpdb->insert(
 			$table,
-			[
+			array(
 				'user_id'         => $user_id,
 				'description'     => 'Test API Key',
 				'permissions'     => $permissions,
@@ -404,14 +408,14 @@ abstract class MainWP_Abilities_Test_Case extends WP_UnitTestCase { //phpcs:igno
 				'truncated_key'   => substr( $consumer_key, -7 ),
 				'enabled'         => 1,
 				'last_access'     => current_time( 'mysql' ),
-			],
-			[ '%d', '%s', '%s', '%s', '%s', '%s', '%d', '%s' ]
+			),
+			array( '%d', '%s', '%s', '%s', '%s', '%s', '%d', '%s' )
 		);
 
-		return [
+		return array(
 			'consumer_key'    => $consumer_key,
 			'consumer_secret' => $consumer_secret,
-		];
+		);
 	}
 
 	/**
@@ -430,7 +434,7 @@ abstract class MainWP_Abilities_Test_Case extends WP_UnitTestCase { //phpcs:igno
 	protected function mock_sync_failure( string $error_code, string $error_message, $site_ids = null ): void {
 		// Normalize to array if single ID provided.
 		if ( null !== $site_ids && ! is_array( $site_ids ) ) {
-			$site_ids = [ $site_ids ];
+			$site_ids = array( $site_ids );
 		}
 
 		add_filter(
@@ -469,7 +473,8 @@ abstract class MainWP_Abilities_Test_Case extends WP_UnitTestCase { //phpcs:igno
 	protected function mock_partial_update_result( array $successes, array $failures ): void {
 		add_filter(
 			'mainwp_run_update_result',
-			function ( $result, $site_id, $types = [] ) use ( $successes, $failures ) {
+			function ( $result, $site_id, $types = array() ) use ( $successes, $failures ) {
+				unset( $types );
 				if ( in_array( $site_id, $successes, true ) ) {
 					// Return null to let the real execution proceed.
 					return null;
@@ -506,6 +511,7 @@ abstract class MainWP_Abilities_Test_Case extends WP_UnitTestCase { //phpcs:igno
 		add_filter(
 			'mainwp_fetch_url_authed_pre',
 			function ( $result, $website, $what, $params ) use ( $site_id, $response ) {
+				unset( $what, $params );
 				if ( (int) $website->id === $site_id ) {
 					return $response;
 				}
@@ -553,7 +559,7 @@ abstract class MainWP_Abilities_Test_Case extends WP_UnitTestCase { //phpcs:igno
 	 * @param array  $input        Input parameters for the ability.
 	 * @return mixed Ability execution result.
 	 */
-	protected function execute_ability( string $ability_name, array $input = [] ) {
+	protected function execute_ability( string $ability_name, array $input = array() ) {
 		if ( ! function_exists( 'wp_get_ability' ) ) {
 			return new \WP_Error( 'abilities_unavailable', 'Abilities API not available.' );
 		}
@@ -617,10 +623,10 @@ abstract class MainWP_Abilities_Test_Case extends WP_UnitTestCase { //phpcs:igno
 
 		$wpdb->update(
 			$wpdb->prefix . 'mainwp_wp',
-			[ 'plugins' => wp_json_encode( $plugins ) ],
-			[ 'id' => $site_id ],
-			[ '%s' ],
-			[ '%d' ]
+			array( 'plugins' => wp_json_encode( $plugins ) ),
+			array( 'id' => $site_id ),
+			array( '%s' ),
+			array( '%d' )
 		);
 	}
 
@@ -641,10 +647,10 @@ abstract class MainWP_Abilities_Test_Case extends WP_UnitTestCase { //phpcs:igno
 
 		$wpdb->update(
 			$wpdb->prefix . 'mainwp_wp',
-			[ 'plugin_upgrades' => wp_json_encode( $upgrades ) ],
-			[ 'id' => $site_id ],
-			[ '%s' ],
-			[ '%d' ]
+			array( 'plugin_upgrades' => wp_json_encode( $upgrades ) ),
+			array( 'id' => $site_id ),
+			array( '%s' ),
+			array( '%d' )
 		);
 	}
 
@@ -665,10 +671,10 @@ abstract class MainWP_Abilities_Test_Case extends WP_UnitTestCase { //phpcs:igno
 
 		$wpdb->update(
 			$wpdb->prefix . 'mainwp_wp',
-			[ 'themes' => wp_json_encode( $themes ) ],
-			[ 'id' => $site_id ],
-			[ '%s' ],
-			[ '%d' ]
+			array( 'themes' => wp_json_encode( $themes ) ),
+			array( 'id' => $site_id ),
+			array( '%s' ),
+			array( '%d' )
 		);
 	}
 
@@ -689,10 +695,10 @@ abstract class MainWP_Abilities_Test_Case extends WP_UnitTestCase { //phpcs:igno
 
 		$wpdb->update(
 			$wpdb->prefix . 'mainwp_wp',
-			[ 'theme_upgrades' => wp_json_encode( $upgrades ) ],
-			[ 'id' => $site_id ],
-			[ '%s' ],
-			[ '%d' ]
+			array( 'theme_upgrades' => wp_json_encode( $upgrades ) ),
+			array( 'id' => $site_id ),
+			array( '%s' ),
+			array( '%d' )
 		);
 	}
 
@@ -711,10 +717,10 @@ abstract class MainWP_Abilities_Test_Case extends WP_UnitTestCase { //phpcs:igno
 
 		$wpdb->update(
 			$wpdb->prefix . 'mainwp_wp',
-			[ 'ignored_plugins' => wp_json_encode( $ignored ) ],
-			[ 'id' => $site_id ],
-			[ '%s' ],
-			[ '%d' ]
+			array( 'ignored_plugins' => wp_json_encode( $ignored ) ),
+			array( 'id' => $site_id ),
+			array( '%s' ),
+			array( '%d' )
 		);
 	}
 
@@ -733,10 +739,10 @@ abstract class MainWP_Abilities_Test_Case extends WP_UnitTestCase { //phpcs:igno
 
 		$wpdb->update(
 			$wpdb->prefix . 'mainwp_wp',
-			[ 'ignored_themes' => wp_json_encode( $ignored ) ],
-			[ 'id' => $site_id ],
-			[ '%s' ],
-			[ '%d' ]
+			array( 'ignored_themes' => wp_json_encode( $ignored ) ),
+			array( 'id' => $site_id ),
+			array( '%s' ),
+			array( '%d' )
 		);
 	}
 
@@ -756,10 +762,10 @@ abstract class MainWP_Abilities_Test_Case extends WP_UnitTestCase { //phpcs:igno
 
 		$wpdb->update(
 			$wpdb->prefix . 'mainwp_wp',
-			[ 'translation_upgrades' => wp_json_encode( $upgrades ) ],
-			[ 'id' => $site_id ],
-			[ '%s' ],
-			[ '%d' ]
+			array( 'translation_upgrades' => wp_json_encode( $upgrades ) ),
+			array( 'id' => $site_id ),
+			array( '%s' ),
+			array( '%d' )
 		);
 	}
 
@@ -777,10 +783,10 @@ abstract class MainWP_Abilities_Test_Case extends WP_UnitTestCase { //phpcs:igno
 
 		$wpdb->update(
 			$wpdb->prefix . 'mainwp_wp',
-			[ 'wp_upgrades' => wp_json_encode( $upgrades ) ],
-			[ 'id' => $site_id ],
-			[ '%s' ],
-			[ '%d' ]
+			array( 'wp_upgrades' => wp_json_encode( $upgrades ) ),
+			array( 'id' => $site_id ),
+			array( '%s' ),
+			array( '%d' )
 		);
 	}
 
@@ -803,7 +809,7 @@ abstract class MainWP_Abilities_Test_Case extends WP_UnitTestCase { //phpcs:igno
 		// Check if option exists.
 		$exists = $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$table} WHERE wpid = %d AND name = %s",
+				'SELECT COUNT(*) FROM ' . esc_sql( $table ) . ' WHERE wpid = %d AND name = %s',
 				$site_id,
 				$option
 			)
@@ -814,23 +820,23 @@ abstract class MainWP_Abilities_Test_Case extends WP_UnitTestCase { //phpcs:igno
 		if ( $exists ) {
 			$wpdb->update(
 				$table,
-				[ 'value' => $serialized ],
-				[
+				array( 'value' => $serialized ),
+				array(
 					'wpid' => $site_id,
 					'name' => $option,
-				],
-				[ '%s' ],
-				[ '%d', '%s' ]
+				),
+				array( '%s' ),
+				array( '%d', '%s' )
 			);
 		} else {
 			$wpdb->insert(
 				$table,
-				[
+				array(
 					'wpid'  => $site_id,
 					'name'  => $option,
 					'value' => $serialized,
-				],
-				[ '%d', '%s', '%s' ]
+				),
+				array( '%d', '%s', '%s' )
 			);
 		}
 	}
@@ -843,12 +849,12 @@ abstract class MainWP_Abilities_Test_Case extends WP_UnitTestCase { //phpcs:igno
 	 *                    the client with tags via a site relationship.
 	 * @return int Client ID.
 	 */
-	protected function create_test_client( array $args = [] ): int {
+	protected function create_test_client( array $args = array() ): int {
 		// Extract groups before passing to update_client (not a valid column).
-		$groups = $args['groups'] ?? [];
+		$groups = $args['groups'] ?? array();
 		unset( $args['groups'] );
 
-		$defaults = [
+		$defaults = array(
 			'name'             => 'Test Client ' . wp_generate_uuid4(),
 			'client_email'     => 'test-' . wp_generate_uuid4() . '@example.com',
 			'client_phone'     => '',
@@ -865,7 +871,7 @@ abstract class MainWP_Abilities_Test_Case extends WP_UnitTestCase { //phpcs:igno
 			'client_twitter'   => '',
 			'client_instagram' => '',
 			'client_linkedin'  => '',
-		];
+		);
 
 		$data = array_merge( $defaults, $args );
 
@@ -877,10 +883,10 @@ abstract class MainWP_Abilities_Test_Case extends WP_UnitTestCase { //phpcs:igno
 		// Clients are linked to tags indirectly through their associated sites.
 		if ( ! empty( $groups ) ) {
 			$site_id = $this->create_test_site(
-				[
+				array(
 					'name'      => 'Site for ' . $data['name'],
 					'client_id' => $client_id,
-				]
+				)
 			);
 			foreach ( $groups as $group_id ) {
 				$this->assign_site_to_tag( $site_id, (int) $group_id );
@@ -903,11 +909,11 @@ abstract class MainWP_Abilities_Test_Case extends WP_UnitTestCase { //phpcs:igno
 		global $wpdb;
 		$wpdb->insert(
 			$wpdb->prefix . 'mainwp_wp_group',
-			[
+			array(
 				'wpid'    => $site_id,
 				'groupid' => $tag_id,
-			],
-			[ '%d', '%d' ]
+			),
+			array( '%d', '%d' )
 		);
 	}
 
@@ -927,7 +933,7 @@ abstract class MainWP_Abilities_Test_Case extends WP_UnitTestCase { //phpcs:igno
 	 * @param array $args Optional. Tag properties to override defaults.
 	 * @return int Tag ID.
 	 */
-	protected function create_test_tag( array $args = [] ): int {
+	protected function create_test_tag( array $args = array() ): int {
 		$defaults = array(
 			'name'  => 'Test Tag ' . wp_generate_uuid4(),
 			'color' => '#3498db',

@@ -29,6 +29,18 @@ use MainWP\Dashboard\MainWP_Post_Backup_Handler;
 class MainWP_Backup_Notices_Test extends MainWP_Abilities_Test_Case {
 
 	/**
+	 * Site names that differ by case must retain their separate notices.
+	 */
+	public function test_notice_deduplication_is_case_sensitive() {
+		$db   = MainWP_DB_Backup::instance();
+		$task = $this->create_task_row( $this->create_test_site() );
+		$this->assertSame( 1, $db->update_backup_notices( $task->id, 'Site.com failed. ' ) );
+		$this->assertSame( 1, $db->update_backup_notices( $task->id, 'site.com failed. ' ) );
+		$this->assertSame( 'Site.com failed. site.com failed. ', $db->get_backup_task_by_id( $task->id )->backup_notices );
+		$this->assertSame( 0, $db->update_backup_notices( $task->id, 'Site.com failed. ' ) );
+	}
+
+	/**
 	 * An append arriving just before our write must not be overwritten.
 	 */
 	public function test_notice_append_preserves_concurrent_message() {

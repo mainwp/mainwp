@@ -61,7 +61,7 @@ class MainWP_Backup_Manifest_Chunk_Transfer implements MainWP_Backup_Chunk_Trans
 
         $offset                = 0;
         $mtoken                = '';
-        $last_realign          = 0;
+        $last_realign          = -1;
         $nonadvancing_realigns = 0;
 
         while ( $offset < $size ) {
@@ -86,7 +86,7 @@ class MainWP_Backup_Manifest_Chunk_Transfer implements MainWP_Backup_Chunk_Trans
                 if ( $nonadvancing_realigns >= 3 ) {
                     return $this->failure( esc_html__( 'The child site repeatedly realigned the file-list transfer without making progress.', 'mainwp' ) );
                 }
-                $last_realign = $outcome['bytes_received'];
+                $last_realign = max( $last_realign, $outcome['bytes_received'] );
                 $offset       = $outcome['bytes_received'];
                 continue;
             }

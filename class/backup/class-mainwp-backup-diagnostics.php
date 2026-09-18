@@ -780,6 +780,7 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @return array{files:string[],blobs:array<string,string>}
      */
     private function scope_event_files( array $event_files, ?array $allowed, array $tasks ): array {
+        $event_files = array_values( array_filter( $event_files, static fn( $file ) => 0 !== filesize( $file ) ) );
         if ( null === $allowed ) {
             return array(
                 'files' => $event_files,
@@ -1170,7 +1171,11 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
             }
 
             foreach ( (array) glob( $dir . '*.jsonl' ) as $file ) {
-                if ( is_file( $file ) && str_starts_with( $this->event_file_run_key( $file ), $task_id . '-' ) ) {
+                if ( ! is_file( $file ) ) {
+                    continue;
+                }
+                $run_key = $this->event_file_run_key( $file );
+                if ( str_starts_with( $run_key, $task_id . '-' ) || ( '' === $run_key && 0 === filesize( $file ) ) ) {
                     wp_delete_file( $file );
                 }
             }

@@ -82,8 +82,6 @@ class MainWP_Backup_Update_Gate_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function set_up() {
 		parent::set_up();
-		$cache = new \ReflectionProperty( MainWP_Backup_Executor::class, 'recent_native_backup_maps' );
-		$cache->setValue( null, array() );
 		update_option( 'mainwp_enableNativeBackups', 1 );
 	}
 

@@ -446,7 +446,7 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
                 'error' => sprintf(
                     /* translators: %s: connection test error detail. */
                     esc_html__( 'Connection test failed: %s', 'mainwp' ),
-                    esc_html( (string) $test['error'] )
+                    (string) $test['error']
                 ),
             );
         }

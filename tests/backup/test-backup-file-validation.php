@@ -19,7 +19,14 @@ use MainWP\Dashboard\MainWP_Exception;
 /**
  * Class MainWP_Backup_File_Validation_Test
  */
-class MainWP_Backup_File_Validation_Test extends MainWP_Abilities_Test_Case {
+class MainWP_Backup_File_Validation_Test extends \WP_UnitTestCase {
+
+	/**
+	 * Files to clean up.
+	 *
+	 * @var string[]
+	 */
+	private $files = array();
 
 	/**
 	 * A single missing byte still means the archive is incomplete.
@@ -34,13 +41,6 @@ class MainWP_Backup_File_Validation_Test extends MainWP_Abilities_Test_Case {
 		}
 		$this->assertFileExists( $file );
 	}
-
-	/**
-	 * Files to clean up.
-	 *
-	 * @var string[]
-	 */
-	private $files = array();
 
 	/**
 	 * Clean up scratch files.

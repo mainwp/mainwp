@@ -696,12 +696,11 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      * refuses the exact message twice, so re-evaluated ticks (a resume
      * without a re-save) do not accumulate it.
      *
-     * @param object $task   Task row.
-     * @param string $reason Pause reason from resolve_task_scope_pause().
+     * @param object $task Task row; scope is checked again after reloading.
      *
      * @return void
      */
-    public static function pause_task_for_rescope( $task, $reason ) {
+    public static function pause_task_for_rescope( $task ) {
         $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
         if ( empty( $task ) ) {
             return;
@@ -1054,7 +1053,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         // held, a run is claimed, or a notification can fire.
         $pause_reason = static::resolve_task_scope_pause( $task );
         if ( null !== $pause_reason ) {
-            static::pause_task_for_rescope( $task, $pause_reason );
+            static::pause_task_for_rescope( $task );
             return false;
         }
 

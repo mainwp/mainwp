@@ -167,6 +167,8 @@ class MainWP_Backup_Task_Delete_Cleanup_Test extends \WP_UnitTestCase {
 			$files[ $run_key ] = $dir . \MainWP\Dashboard\MainWP_System_Utility::get_private_filename( MainWP_Backup_Diagnostics::SUBDIR, $run_key, 'events' ) . '.jsonl';
 			file_put_contents( $files[ $run_key ], wp_json_encode( array( 'run_key' => $run_key ) ) . "\n" ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
 		}
+		$empty_file = $dir . \MainWP\Dashboard\MainWP_System_Utility::get_private_filename( MainWP_Backup_Diagnostics::SUBDIR, 'empty', 'events' ) . '.jsonl';
+		file_put_contents( $empty_file, '' );
 
 		do_action( 'mainwp_backup_task_snapshots_purged', 7, array() );
 
@@ -174,6 +176,7 @@ class MainWP_Backup_Task_Delete_Cleanup_Test extends \WP_UnitTestCase {
 		$this->assertFileDoesNotExist( $files['7-102-child'], 'All of the deleted task\'s run files must be purged.' );
 		$this->assertFileExists( $files['70-101'], 'A task id sharing a prefix must keep its files.' );
 		$this->assertFileExists( $files['terminal-101'], 'Non-task-keyed files must survive.' );
+		$this->assertFileDoesNotExist( $empty_file, 'A failed append must not leave an empty event file indefinitely.' );
 	}
 
 	/**

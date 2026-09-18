@@ -49,7 +49,7 @@ class MainWP_Backup_Task_Owner_Scope_Pause_Test extends MainWP_Abilities_Test_Ca
 				'authorized_sites' => (string) $site_a,
 			)
 		);
-		MainWP_Manage_Backups_Handler::pause_task_for_rescope( $stale, 'narrowed' );
+		MainWP_Manage_Backups_Handler::pause_task_for_rescope( $stale );
 		$fresh = $db->get_backup_task_by_id( $task->id );
 		$this->assertSame( 0, (int) $fresh->paused );
 		$this->assertSame( 50, (int) $fresh->completed );

@@ -546,43 +546,44 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             // stop manual backups entirely, so that case inserts unlocked.
             $lock_key = $this->wpdb->prefix . 'mwp_manual_backup_task_' . $site_id;
             $locked   = $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT GET_LOCK( %s, 5 )', $lock_key ) );
-            if ( null !== $locked && 1 !== (int) $locked ) {
-                return $this->get_manual_backup_task( $site_id );
-            }
-            try {
-                $task = $this->get_manual_backup_task( $site_id );
-                if ( empty( $task ) ) {
-                    $created = $this->add_backup_task(
-                        (int) $website->userid,
-                        'On-demand backup',
-                        'manual',
-                        'full',
-                        '',                // exclude.
-                        (string) $site_id, // sites.
-                        '',                // groups.
-                        '',                // subfolder.
-                        '',                // filename.
-                        1,                 // template: hidden from the schedule list.
-                        1,                 // excludebackup.
-                        1,                 // excludecache.
-                        0,                 // excludenonwp.
-                        0,                 // excludezip.
-                        'site',            // archiveFormat: follow the site's format.
-                        0,                 // maximumFileDescriptorsOverride.
-                        1,                 // maximumFileDescriptorsAuto.
-                        150,               // maximumFileDescriptors.
-                        0                  // loadFilesBeforeZip.
-                    );
-                    if ( ! empty( $created ) ) {
-                        // Stamp the authorized-site snapshot at create so
-                        // the row never reads as a pre-migration legacy
-                        // task: its single site is by construction what
-                        // the authorized on-demand caller requested.
-                        $this->update_backup_task_with_values( (int) $created->id, array( 'authorized_sites' => (string) $site_id ) );
+            if ( null === $locked || 1 === (int) $locked ) {
+                try {
+                    $task = $this->get_manual_backup_task( $site_id );
+                    if ( empty( $task ) ) {
+                        $created = $this->add_backup_task(
+                            (int) $website->userid,
+                            'On-demand backup',
+                            'manual',
+                            'full',
+                            '',                // exclude.
+                            (string) $site_id, // sites.
+                            '',                // groups.
+                            '',                // subfolder.
+                            '',                // filename.
+                            1,                 // template: hidden from the schedule list.
+                            1,                 // excludebackup.
+                            1,                 // excludecache.
+                            0,                 // excludenonwp.
+                            0,                 // excludezip.
+                            'site',            // archiveFormat: follow the site's format.
+                            0,                 // maximumFileDescriptorsOverride.
+                            1,                 // maximumFileDescriptorsAuto.
+                            150,               // maximumFileDescriptors.
+                            0                  // loadFilesBeforeZip.
+                        );
+                        if ( ! empty( $created ) ) {
+                            // Stamp the authorized-site snapshot at create so
+                            // the row never reads as a pre-migration legacy
+                            // task: its single site is by construction what
+                            // the authorized on-demand caller requested.
+                            $this->update_backup_task_with_values( (int) $created->id, array( 'authorized_sites' => (string) $site_id ) );
+                        }
+                    }
+                } finally {
+                    if ( 1 === (int) $locked ) {
+                        $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT RELEASE_LOCK( %s )', $lock_key ) );
                     }
                 }
-            } finally {
-                $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT RELEASE_LOCK( %s )', $lock_key ) );
             }
             $task = $this->get_manual_backup_task( $site_id );
         }
@@ -1216,7 +1217,7 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
 
         return $this->wpdb->query(
             $this->wpdb->prepare(
-                'UPDATE ' . esc_sql( $this->table_name( 'wp_backup' ) ) . " SET backup_notices = CONCAT( COALESCE( backup_notices, '' ), %s ) WHERE id = %d AND ( backup_notices IS NULL OR backup_notices NOT LIKE %s )",
+                'UPDATE ' . esc_sql( $this->table_name( 'wp_backup' ) ) . " SET backup_notices = CONCAT( COALESCE( backup_notices, '' ), %s ) WHERE id = %d AND ( backup_notices IS NULL OR backup_notices NOT LIKE BINARY %s )",
                 $notices,
                 $id,
                 '%' . $this->wpdb->esc_like( $notices ) . '%'

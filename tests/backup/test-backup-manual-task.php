@@ -43,9 +43,55 @@ class MainWP_Backup_Manual_Task_Test extends MainWP_Abilities_Test_Case {
 		} finally {
 			remove_filter( 'query', $busy );
 		}
-		$this->assertEmpty( $task );
+		$this->assertFalse( $task );
 		$this->assertSame( 1, $lock_queries );
 		$this->assertNull( MainWP_DB_Backup::instance()->get_manual_backup_task( $this->site_id ) );
+	}
+
+	/**
+	 * A task appearing during the lock wait still needs this run's settings.
+	 */
+	public function test_busy_manual_task_lock_refreshes_task_found_after_wait() {
+		$db   = MainWP_DB_Backup::instance();
+		$task = $db->ensure_manual_backup_task( $this->website() );
+		$db->update_backup_task_with_values(
+			$task->id,
+			array(
+				'destinations'     => '[999]',
+				'retention_count'  => 1,
+				'next_run'         => 123,
+				'paused'           => 1,
+				'max_chain_length' => 5,
+			)
+		);
+		$this->insert_scheduled_task( (string) $this->site_id, array( 3, 5 ) );
+		update_option( 'mainwp_on_demand_retention_count', 11 );
+		$lookups = 0;
+		$locks   = 0;
+		$busy    = static function ( $sql ) use ( &$lookups, &$locks ) {
+			if ( str_contains( $sql, "schedule = 'manual'" ) && 1 === ++$lookups ) {
+				return 'SELECT NULL WHERE 0';
+			}
+			if ( str_contains( $sql, 'GET_LOCK(' ) ) {
+				++$locks;
+				return 'SELECT 0';
+			}
+			return $sql;
+		};
+		add_filter( 'query', $busy );
+		try {
+			$fresh = $db->ensure_manual_backup_task( $this->website() );
+		} finally {
+			remove_filter( 'query', $busy );
+		}
+		$this->assertSame( 1, $locks );
+		$this->assertIsObject( $fresh );
+		$this->assertSame( (int) $task->id, (int) $fresh->id );
+		$this->assertSame( array( 3, 5 ), json_decode( $fresh->destinations, true ) );
+		$this->assertSame( 11, (int) $fresh->retention_count );
+		$this->assertSame( 0, (int) $fresh->next_run );
+		$this->assertSame( 0, (int) $fresh->paused );
+		$this->assertSame( 0, (int) $fresh->max_chain_length );
 	}
 
 	/**

@@ -38,14 +38,38 @@ class MainWP_Backup_Manifest_Chunk_Transfer_Test extends MainWP_Abilities_Test_C
 		$outcome = $this->push( str_repeat( 'x', 100 ), 50 );
 		$this->assertFalse( $outcome['ok'] );
 		$this->assertSame( MainWP_Backup_Error_Codes::ERR_MANIFEST_CHUNK_SEND_FAILED, $outcome['error_code'] );
-		$this->assertSame( 3, $calls );
+		$this->assertSame( 4, $calls );
+	}
+
+	/**
+	 * Revisiting an earlier offset must not replenish the retry budget.
+	 */
+	public function test_oscillating_realigns_fail_without_progress() {
+		$calls = 0;
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			static function () use ( &$calls ) {
+				++$calls;
+				if ( $calls > 6 ) {
+					return array( 'error' => 'Test receiver safety stop.' );
+				}
+				return array(
+					'error_code'     => 'mainwp_restore_chunk_gap',
+					'bytes_received' => $calls % 2 ? 1000 : 0,
+				);
+			}
+		);
+		$outcome = $this->push( str_repeat( 'x', 2000 ), 1000 );
+		$this->assertFalse( $outcome['ok'] );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_MANIFEST_CHUNK_SEND_FAILED, $outcome['error_code'] );
+		$this->assertSame( 4, $calls );
 	}
 
 	/**
 	 * Progress resets the retry allowance and the sender follows the new offset.
 	 */
 	public function test_advancing_realigns_reset_retry_count() {
-		$offsets = array( 0, 0, 10, 10, 10, 20 );
+		$offsets = array( 0, 0, 0, 10, 10, 10, 20 );
 		add_filter(
 			'mainwp_fetch_url_authed_pre',
 			function ( $result, $website, $what, $params ) use ( &$offsets ) {
@@ -66,8 +90,34 @@ class MainWP_Backup_Manifest_Chunk_Transfer_Test extends MainWP_Abilities_Test_C
 		);
 		$outcome = $this->push( str_repeat( 'x', 100 ), 100 );
 		$this->assertTrue( $outcome['ok'] );
-		$this->assertSame( array( 0, 0, 0, 10, 10, 10, 20 ), array_column( $this->calls, 'offset' ) );
+		$this->assertSame( array( 0, 0, 0, 0, 10, 10, 10, 20 ), array_column( $this->calls, 'offset' ) );
 		$this->assertSame( 'complete-token', $outcome['mtoken'] );
+	}
+
+	/**
+	 * Losing the child buffer once must allow the transfer to resume at zero.
+	 */
+	public function test_initial_zero_realign_allows_subsequent_progress() {
+		$calls = 0;
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			static function () use ( &$calls ) {
+				if ( 1 === ++$calls ) {
+					return array(
+						'error_code'     => 'mainwp_restore_chunk_gap',
+						'bytes_received' => 0,
+					);
+				}
+				return array(
+					'bytes_received' => 100,
+					'mtoken'         => 'complete-token',
+				);
+			}
+		);
+		$outcome = $this->push( str_repeat( 'x', 100 ), 100 );
+		$this->assertTrue( $outcome['ok'] );
+		$this->assertSame( 'complete-token', $outcome['mtoken'] );
+		$this->assertSame( 2, $calls );
 	}
 
 	/**

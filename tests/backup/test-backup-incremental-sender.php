@@ -1838,7 +1838,7 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		try {
 			$reloaded = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
 			$this->assertSame( 'narrowed', MainWP_Manage_Backups_Handler::resolve_task_scope_pause( $reloaded ) );
-			MainWP_Manage_Backups_Handler::pause_task_for_rescope( $task, 'narrowed' );
+			MainWP_Manage_Backups_Handler::pause_task_for_rescope( $task );
 		} finally {
 			remove_filter( 'mainwp_currentuserallowedaccesssites', $allowed );
 		}

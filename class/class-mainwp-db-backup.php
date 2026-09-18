@@ -296,7 +296,7 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * @param mixed $loadFilesBeforeZip             Load files before Zip.
      * @param mixed $zip_force_override             Keep Zip over the large-site guardrail (1) instead of auto-switching to tar.gz (0).
      *
-     * @return int|false The number of rows added, or false on error.
+     * @return object|false The created task row, or false on error.
      *
      * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      * @uses \MainWP\Dashboard\MainWP_Utility::remove_preslash_spaces()

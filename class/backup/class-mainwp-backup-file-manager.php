@@ -206,92 +206,105 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
      */
     public static function download_backup_artifact( object $website, string $remote_filename, string $local_file, $size, $http_user, $http_pass, bool $allow_empty = false ): void {
         // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber
-        $escalated = false;
+        $refreshing = true;
+        $progress   = static function ( $file ) use ( $local_file, &$refreshing ) {
+            if ( $refreshing && $file === $local_file ) {
+                $refreshing = static::refresh_download_lock( $local_file );
+            }
+        };
+        add_action( 'mainwp_download_to_file_progress', $progress );
+        try {
+            $escalated = false;
 
-        if ( ! MainWP_Backup_Monitor::child_supports_download_token( $website ) ) {
-            try {
-                MainWP_Connect::download_to_file(
-                    MainWP_Connect::get_get_data_authed( $website, $remote_filename, 'fdl' ),
-                    $local_file,
-                    $size,
-                    $http_user,
-                    $http_pass
-                );
-                // Ordering: this check must run BEFORE the downloaded action
-                // fires - a child can serve an empty body while its artifact
-                // is not yet servable, and announcing that as a download
-                // poisons the resume state with a vacuous success.
-                static::assert_download_landed( $local_file, $allow_empty && 0 === $size );
-                if ( ! MainWP_Backup_Monitor::confirm_native_lease() ) {
-                    // The token path's hash makes this same call: the slot
-                    // may already be re-owned by a process writing this same
-                    // path, so bytes that landed outside the slot cannot be
-                    // announced as a download.
+            if ( ! MainWP_Backup_Monitor::child_supports_download_token( $website ) ) {
+                try {
+                    MainWP_Connect::download_to_file(
+                        MainWP_Connect::get_get_data_authed( $website, $remote_filename, 'fdl' ),
+                        $local_file,
+                        $size,
+                        $http_user,
+                        $http_pass,
+                        $website
+                    );
+                    // Ordering: this check must run BEFORE the downloaded action
+                    // fires - a child can serve an empty body while its artifact
+                    // is not yet servable, and announcing that as a download
+                    // poisons the resume state with a vacuous success.
+                    static::assert_download_landed( $local_file, $allow_empty && 0 === $size );
+                    if ( ! MainWP_Backup_Monitor::confirm_native_lease() ) {
+                        // The token path's hash makes this same call: the slot
+                        // may already be re-owned by a process writing this same
+                        // path, so bytes that landed outside the slot cannot be
+                        // announced as a download.
+                        wp_delete_file( $local_file );
+                        throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_SLOT_LOST ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+                    }
+                    static::fire_downloaded_action( $website, $local_file, false );
+                    return;
+                } catch ( MainWP_Exception $e ) {
+                    $extra        = (string) $e->get_message_extra( false );
+                    $auth_refused = false !== strpos( $extra, 'HTTP 401' ) || false !== strpos( $extra, 'HTTP 403' );
+                    if ( ! $auth_refused ) {
+                        throw $e;
+                    }
+                    // The child refused a tokenless download: it has ratcheted
+                    // onto tokens while this dashboard's capability flag is
+                    // empty (a fresh install reconnected to a known child).
+                    // Escalate to the token path; a success below stamps the
+                    // capability so the next download skips this detour.
+                    $escalated = true;
+                }
+            }
+
+            // Fail closed: a token failure on a capability-advertising child
+            // propagates - downgrading to a token-less download here would
+            // defeat the authorization entirely.
+            $token_info = static::fetch_download_token( $website, $remote_filename );
+
+            for ( $attempt = 0; ; $attempt++ ) {
+                $url = MainWP_Connect::get_get_data_authed( $website, $remote_filename, 'fdl', false, array( 'dltoken' => $token_info['token'] ) );
+                try {
+                    MainWP_Connect::download_to_file( $url, $local_file, $size, $http_user, $http_pass, $website );
+                    break;
+                } catch ( MainWP_Exception $e ) {
+                    $extra          = (string) $e->get_message_extra( false );
+                    $token_rejected = false !== strpos( $extra, 'HTTP 401' ) || false !== strpos( $extra, 'HTTP 403' );
+                    if ( ! $token_rejected || $attempt >= static::MAX_TOKEN_RETRIES ) {
+                        throw $e;
+                    }
+                    $token_info = static::fetch_download_token( $website, $remote_filename );
+                }
+            }
+
+            // The transfer's own lease is spent by the time it returns, and
+            // hashing a multi-gigabyte artifact has no transport filter to renew
+            // one. Outside a native lease scope this is a no-op.
+            MainWP_Backup_Monitor::touch_native_leases( MainWP_Backup_Monitor::DEFAULT_SLOT_LEASE_SECONDS );
+
+            static::assert_download_landed( $local_file, $allow_empty && 0 === $size );
+
+            if ( ! empty( $token_info['hash'] ) && file_exists( $local_file ) ) {
+                static::refresh_download_lock( $local_file );
+                $actual_hash = static::hash_artifact( $local_file );
+                if ( ! hash_equals( (string) $token_info['hash'], $actual_hash ) ) {
                     wp_delete_file( $local_file );
-                    throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_SLOT_LOST ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+                    // phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped; the hashes are hex digests.
+                    throw MainWP_Backup_Error_Codes::exception(
+                        MainWP_Backup_Error_Codes::ERR_HASH_MISMATCH,
+                        'expected ' . $token_info['hash'] . ', got ' . $actual_hash
+                    );
+                    // phpcs:enable WordPress.Security.EscapeOutput.ExceptionNotEscaped
                 }
-                static::fire_downloaded_action( $website, $local_file, false );
-                return;
-            } catch ( MainWP_Exception $e ) {
-                $extra        = (string) $e->get_message_extra( false );
-                $auth_refused = false !== strpos( $extra, 'HTTP 401' ) || false !== strpos( $extra, 'HTTP 403' );
-                if ( ! $auth_refused ) {
-                    throw $e;
-                }
-                // The child refused a tokenless download: it has ratcheted
-                // onto tokens while this dashboard's capability flag is
-                // empty (a fresh install reconnected to a known child).
-                // Escalate to the token path; a success below stamps the
-                // capability so the next download skips this detour.
-                $escalated = true;
             }
-        }
 
-        // Fail closed: a token failure on a capability-advertising child
-        // propagates - downgrading to a token-less download here would
-        // defeat the authorization entirely.
-        $token_info = static::fetch_download_token( $website, $remote_filename );
-
-        for ( $attempt = 0; ; $attempt++ ) {
-            $url = MainWP_Connect::get_get_data_authed( $website, $remote_filename, 'fdl', false, array( 'dltoken' => $token_info['token'] ) );
-            try {
-                MainWP_Connect::download_to_file( $url, $local_file, $size, $http_user, $http_pass );
-                break;
-            } catch ( MainWP_Exception $e ) {
-                $extra          = (string) $e->get_message_extra( false );
-                $token_rejected = false !== strpos( $extra, 'HTTP 401' ) || false !== strpos( $extra, 'HTTP 403' );
-                if ( ! $token_rejected || $attempt >= static::MAX_TOKEN_RETRIES ) {
-                    throw $e;
-                }
-                $token_info = static::fetch_download_token( $website, $remote_filename );
+            if ( $escalated ) {
+                MainWP_DB::instance()->update_website_option( $website, 'download_token_support', '1' );
             }
+
+            static::fire_downloaded_action( $website, $local_file, true );
+        } finally {
+            remove_action( 'mainwp_download_to_file_progress', $progress );
         }
-
-        // The transfer's own lease is spent by the time it returns, and
-        // hashing a multi-gigabyte artifact has no transport filter to renew
-        // one. Outside a native lease scope this is a no-op.
-        MainWP_Backup_Monitor::touch_native_leases( MainWP_Backup_Monitor::DEFAULT_SLOT_LEASE_SECONDS );
-
-        static::assert_download_landed( $local_file, $allow_empty && 0 === $size );
-
-        if ( ! empty( $token_info['hash'] ) && file_exists( $local_file ) ) {
-            $actual_hash = static::hash_artifact( $local_file );
-            if ( ! hash_equals( (string) $token_info['hash'], $actual_hash ) ) {
-                wp_delete_file( $local_file );
-                // phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped; the hashes are hex digests.
-                throw MainWP_Backup_Error_Codes::exception(
-                    MainWP_Backup_Error_Codes::ERR_HASH_MISMATCH,
-                    'expected ' . $token_info['hash'] . ', got ' . $actual_hash
-                );
-                // phpcs:enable WordPress.Security.EscapeOutput.ExceptionNotEscaped
-            }
-        }
-
-        if ( $escalated ) {
-            MainWP_DB::instance()->update_website_option( $website, 'download_token_support', '1' );
-        }
-
-        static::fire_downloaded_action( $website, $local_file, true );
     }
 
     // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag -- the registry factory throws MainWP_Exception.
@@ -341,6 +354,7 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
             }
             hash_update( $context, $chunk );
             if ( time() >= $next_tick ) {
+                static::refresh_download_lock( $local_file );
                 MainWP_Backup_Monitor::touch_native_leases( MainWP_Backup_Monitor::DEFAULT_SLOT_LEASE_SECONDS );
                 $next_tick = time() + static::HASH_LEASE_TICK_SECONDS;
             }
@@ -598,6 +612,48 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
         }
 
         return false;
+    }
+
+    /**
+     * Renew only our token, under the reclaim mutex so a stale observation
+     * cannot replace the lock between the ownership check and the write.
+     *
+     * @param string $local_file Download target path.
+     * @return bool Whether this process still owns the lock.
+     */
+    private static function refresh_download_lock( string $local_file ): bool {
+        $lock_file = $local_file . '.downloading';
+        $owned     = static::$owned_download_locks[ $lock_file ] ?? '';
+        if ( '' === $owned ) {
+            return false;
+        }
+        // phpcs:disable WordPress.WP.AlternativeFunctions -- local sidecar IO shares the reclaim mutex.
+        $mutex = fopen( $lock_file . '.reclaim', 'c' );
+        if ( false === $mutex ) {
+            return true;
+        }
+        try {
+            if ( ! flock( $mutex, LOCK_EX | LOCK_NB ) ) {
+                return true;
+            }
+            try {
+                if ( ! file_exists( $lock_file ) ) {
+                    return false;
+                }
+                $data = json_decode( (string) file_get_contents( $lock_file ), true );
+                if ( ! is_array( $data ) || ! isset( $data['token'] ) || ! hash_equals( $owned, (string) $data['token'] ) ) {
+                    return false;
+                }
+                $data['started'] = time();
+                file_put_contents( $lock_file, wp_json_encode( $data ) );
+                return true;
+            } finally {
+                flock( $mutex, LOCK_UN );
+            }
+        } finally {
+            fclose( $mutex );
+        }
+        // phpcs:enable WordPress.WP.AlternativeFunctions
     }
 
     /**

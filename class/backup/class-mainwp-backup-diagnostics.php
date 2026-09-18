@@ -700,37 +700,91 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 return $path;
             }
 
-            // No ZipArchive on this host: one plain JSON document instead.
-            $payload           = $sections;
-            $payload['events'] = array();
-            foreach ( $events['files'] as $event_file ) {
-                $payload['events'][ basename( $event_file ) ] = array();
-                $handle                                       = fopen( $event_file, 'rb' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- stream local diagnostics.
-                if ( false === $handle ) {
-                    continue;
-                }
-                try {
-                    while ( false !== ( $line = fgets( $handle ) ) ) { // phpcs:ignore WordPress.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition
-                        $line = rtrim( $line, "\n" );
-                        if ( $line ) {
-                            $payload['events'][ basename( $event_file ) ][] = $line;
-                        }
-                    }
-                } finally {
-                    fclose( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- stream local diagnostics.
-                }
-            }
-            foreach ( $events['blobs'] as $name => $content ) {
-                $payload['events'][ $name ] = array_values( array_filter( explode( "\n", $content ) ) );
-            }
-            $path = $base . '.json';
-            if ( false === file_put_contents( $path, wp_json_encode( $payload ) ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions -- local bundle write.
-                return '';
-            }
-            return $path;
+            return $this->write_json_bundle( $base . '.json', $sections, $events );
         } catch ( \Throwable $e ) {
             return '';
         }
+    }
+
+    /**
+     * Stream the fallback so retention-sized event directories do not have
+     * to fit in memory alongside the encoded bundle.
+     *
+     * @param string $path Destination path.
+     * @param array  $sections Non-event bundle sections.
+     * @param array  $events Scoped event files and filtered blobs.
+     * @return string Written path, or an empty string on failure.
+     */
+    private function write_json_bundle( string $path, array $sections, array $events ): string {
+        // phpcs:disable WordPress.WP.AlternativeFunctions -- streaming local diagnostics.
+        $output = fopen( $path, 'wb' );
+        if ( false === $output ) {
+            return '';
+        }
+        $complete = false;
+        try {
+            $write = static function ( string $value ) use ( $output ) {
+                if ( strlen( $value ) !== fwrite( $output, $value ) ) {
+                    throw new \RuntimeException( 'Could not write the diagnostics bundle.' );
+                }
+            };
+            $write( '{' );
+            foreach ( $sections as $name => $data ) {
+                $write( wp_json_encode( (string) $name ) . ':' . wp_json_encode( $data ) . ',' );
+            }
+            $has_events = ! empty( $events['files'] ) || ! empty( $events['blobs'] );
+            $write( '"events":' . ( $has_events ? '{' : '[]' ) );
+            $separator = '';
+            foreach ( $events['files'] as $event_file ) {
+                $write( $separator . wp_json_encode( basename( $event_file ) ) . ':[' );
+                $separator = ',';
+                $handle    = fopen( $event_file, 'rb' );
+                if ( false !== $handle ) {
+                    try {
+                        $line_separator = '';
+                        while ( false !== ( $line = fgets( $handle ) ) ) { // phpcs:ignore WordPress.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition
+                            $line = rtrim( $line, "\n" );
+                            if ( $line ) {
+                                $write( $line_separator . wp_json_encode( $line ) );
+                                $line_separator = ',';
+                            }
+                        }
+                    } finally {
+                        fclose( $handle );
+                    }
+                }
+                $write( ']' );
+            }
+            foreach ( $events['blobs'] as $name => $content ) {
+                $write( $separator . wp_json_encode( (string) $name ) . ':[' );
+                $separator      = ',';
+                $line_separator = '';
+                $offset         = 0;
+                $length         = strlen( $content );
+                while ( $offset < $length ) {
+                    $end  = strpos( $content, "\n", $offset );
+                    $end  = false === $end ? $length : $end;
+                    $line = substr( $content, $offset, $end - $offset );
+                    if ( $line ) {
+                        $write( $line_separator . wp_json_encode( $line ) );
+                        $line_separator = ',';
+                    }
+                    $offset = $end + 1;
+                }
+                $write( ']' );
+            }
+            $write( $has_events ? '}}' : '}' );
+            $complete = true;
+        } catch ( \Throwable $e ) {
+            return '';
+        } finally {
+            fclose( $output );
+            if ( ! $complete ) {
+                wp_delete_file( $path );
+            }
+        }
+        return $path;
+        // phpcs:enable WordPress.WP.AlternativeFunctions
     }
 
     /**

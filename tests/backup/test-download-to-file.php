@@ -71,6 +71,51 @@ class MainWP_Download_To_File_Test extends MainWP_Backup_Test_Case {
 	}
 
 	/**
+	 * Backup downloads must honor the child's configured TLS policy.
+	 */
+	public function test_site_tls_settings_apply_to_download_request() {
+		$captured = null;
+		$filter   = static function ( $options ) use ( &$captured ) {
+			$captured = $options;
+			return $options;
+		};
+		$website  = (object) array(
+			'verify_certificate' => 0,
+			'ssl_version'        => CURL_SSLVERSION_TLSv1_2,
+		);
+		add_filter( 'mainwp_download_to_file_curl_options', $filter );
+		try {
+			MainWP_Connect::download_to_file( static::fixture_url( '/200?size=4096' ), $this->temp_download_path(), 4096, null, null, $website );
+			$this->assertFalse( $captured[ CURLOPT_SSL_VERIFYPEER ] );
+			$this->assertFalse( $captured[ CURLOPT_SSL_VERIFYHOST ] );
+			$this->assertSame( CURL_SSLVERSION_TLSv1_2, $captured[ CURLOPT_SSLVERSION ] );
+		} finally {
+			remove_filter( 'mainwp_download_to_file_curl_options', $filter );
+		}
+	}
+
+	/**
+	 * A short transfer needs one heartbeat, not one per cURL write.
+	 */
+	public function test_download_progress_reports_stored_bytes_once() {
+		$file     = $this->temp_download_path();
+		$events   = array();
+		$listener = static function ( $path, $bytes ) use ( &$events ) {
+			$events[] = array( $path, $bytes );
+		};
+		add_action( 'mainwp_download_to_file_progress', $listener, 10, 2 );
+		try {
+			MainWP_Connect::download_to_file( static::fixture_url( '/200?size=65536' ), $file, 65536 );
+			$this->assertCount( 1, $events );
+			$this->assertSame( $file, $events[0][0] );
+			$this->assertGreaterThan( 0, $events[0][1] );
+			$this->assertLessThanOrEqual( 65536, $events[0][1] );
+		} finally {
+			remove_action( 'mainwp_download_to_file_progress', $listener );
+		}
+	}
+
+	/**
 	 * A resume request appends the confirmed partial response without
 	 * duplicating bytes.
 	 *

@@ -28,6 +28,35 @@ use MainWP\Dashboard\MainWP_Manage_Backups_Handler;
 class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 
 	/**
+	 * Streaming must preserve the fallback's original JSON encoding and shape.
+	 */
+	public function test_json_fallback_matches_two_file_payload() {
+		$files = array( $this->diag_dir . '/one.jsonl', $this->diag_dir . '/two.jsonl' );
+		file_put_contents( $files[0], "{\"run_key\":\"1-2\"}\n\n0\n" );
+		file_put_contents( $files[1], "{\"message\":\"quote \\\" slash /\"}\r\nlast line" );
+		$sections           = array(
+			'env'   => array( 'version' => 'test' ),
+			'tasks' => array(),
+		);
+		$events             = array(
+			'files' => $files,
+			'blobs' => array( 'global.jsonl' => "first\n\n0\nlast\n" ),
+		);
+		$expected           = $sections;
+		$expected['events'] = array();
+		foreach ( $files as $file ) {
+			$expected['events'][ basename( $file ) ] = array_values( array_filter( explode( "\n", file_get_contents( $file ) ) ) );
+		}
+		$expected['events']['global.jsonl'] = array( 'first', 'last' );
+		$writer                             = new \ReflectionMethod( MainWP_Backup_Diagnostics::class, 'write_json_bundle' );
+		$path                               = $this->diag_dir . '/bundle.json';
+		$this->assertSame( $path, $writer->invoke( MainWP_Backup_Diagnostics::instance(), $path, $sections, $events ) );
+		$actual = file_get_contents( $path );
+		$this->assertSame( wp_json_encode( $expected ), $actual );
+		$this->assertSame( wp_json_encode( json_decode( wp_json_encode( $expected ), true ) ), $actual );
+	}
+
+	/**
 	 * Keep fixture lookups tied to the private filename contract.
 	 *
 	 * @param string $run_key Run identifier.

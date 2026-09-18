@@ -17,7 +17,7 @@ use MainWP\Dashboard\MainWP_Backup_File_Manager;
 /**
  * Class MainWP_Download_Lock_Test
  */
-class MainWP_Download_Lock_Test extends \WP_UnitTestCase {
+class MainWP_Download_Lock_Test extends MainWP_Abilities_Test_Case {
 
 	/**
 	 * Working directory for lock files.
@@ -66,6 +66,51 @@ class MainWP_Download_Lock_Test extends \WP_UnitTestCase {
 		$this->assertSame( 42, $data['site_id'] );
 		$this->assertSame( 7, $data['task_id'] );
 		$this->assertGreaterThan( 0, $data['started'] );
+	}
+
+	/**
+	 * Transfer heartbeats renew our sidecar but cannot overwrite a new owner.
+	 */
+	public function test_download_progress_refreshes_only_owned_lock() {
+		$file    = $this->dir . 'heartbeat.zip';
+		$lock    = $file . '.downloading';
+		$site_id = $this->create_test_site();
+		$website = \MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( $site_id );
+		$key     = openssl_pkey_new(
+			array(
+				'private_key_bits' => 2048,
+				'private_key_type' => OPENSSL_KEYTYPE_RSA,
+			)
+		);
+		openssl_pkey_export( $key, $pem );
+		$website->privkey                = base64_encode( $pem );
+		$website->download_token_support = '0';
+		$this->assertTrue( MainWP_Backup_File_Manager::acquire_download_lock( $file, $site_id, 7 ) );
+		$filter = function () use ( $file, $lock ) {
+			$data            = json_decode( file_get_contents( $lock ), true );
+			$data['started'] = time() - 120;
+			file_put_contents( $lock, wp_json_encode( $data ) );
+			do_action( 'mainwp_download_to_file_progress', $file, 100 );
+			$renewed = json_decode( file_get_contents( $lock ), true );
+			$this->assertGreaterThan( $data['started'], $renewed['started'] );
+			$this->assertSame( $data['token'], $renewed['token'] );
+			$data['token'] = 'replacement-owner';
+			file_put_contents( $lock, wp_json_encode( $data ) );
+			do_action( 'mainwp_download_to_file_progress', $file, 200 );
+			$this->assertSame( $data, json_decode( file_get_contents( $lock ), true ) );
+			file_put_contents( $file, 'downloaded bytes' );
+			return true;
+		};
+		$before = has_action( 'mainwp_download_to_file_progress' );
+		add_filter( 'mainwp_download_to_file_pre', $filter );
+		try {
+			MainWP_Backup_File_Manager::download_backup_artifact( $website, 'heartbeat.zip', $file, false, null, null );
+			$this->assertSame( $before, has_action( 'mainwp_download_to_file_progress' ) );
+		} finally {
+			remove_filter( 'mainwp_download_to_file_pre', $filter );
+			MainWP_Backup_File_Manager::release_download_lock( $file );
+		}
+		$this->assertFileExists( $lock, 'Releasing the old token must preserve the replacement.' );
 	}
 
 	/**

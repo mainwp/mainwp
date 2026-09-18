@@ -2262,18 +2262,19 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * is larger: the server's total is authoritative about the file it holds.
      * Callers that require the child-reported size validate it themselves.
      *
-     * @param mixed $url Download URL.
-     * @param mixed $file File to download to.
-     * @param bool  $size Expected total file size in bytes, false when unknown.
-     * @param null  $http_user htaccess username.
-     * @param null  $http_pass htaccess password.
+     * @param mixed       $url Download URL.
+     * @param mixed       $file File to download to.
+     * @param bool        $size Expected total file size in bytes, false when unknown.
+     * @param null        $http_user htaccess username.
+     * @param null        $http_pass htaccess password.
+     * @param object|null $website Child site TLS settings; null uses cURL defaults.
      *
      * @throws MainWP_Exception Exception message.
      *
      * @uses \MainWP\Dashboard\MainWP_Exception
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
      */
-    public static function download_to_file( $url, $file, $size = false, $http_user = null, $http_pass = null ) { // phpcs:ignore -- NOSONAR - complex.
+    public static function download_to_file( $url, $file, $size = false, $http_user = null, $http_pass = null, $website = null ) { // phpcs:ignore -- NOSONAR - complex.
 
         $hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
 
@@ -2338,7 +2339,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         }
 
         for ( $attempt = 1; $attempt <= 2; $attempt++ ) {
-            $result = static::perform_download_request( $url, $file, $expected_size, $local_size, $http_user, $http_pass );
+            $result = static::perform_download_request( $url, $file, $expected_size, $local_size, $http_user, $http_pass, $website );
 
             if ( 'restart' !== $result ) {
                 break;
@@ -2378,17 +2379,18 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * Partial bytes from an interrupted valid transfer are kept on disk so
      * the next attempt can resume; error bodies are discarded.
      *
-     * @param string    $url           Download URL.
-     * @param string    $file          Local target file.
-     * @param int|false $expected_size Expected total size, false when unknown.
-     * @param int       $local_size    Local size used as the resume offset.
-     * @param mixed     $http_user     htaccess username.
-     * @param mixed     $http_pass     htaccess password.
+     * @param string      $url           Download URL.
+     * @param string      $file          Local target file.
+     * @param int|false   $expected_size Expected total size, false when unknown.
+     * @param int         $local_size    Local size used as the resume offset.
+     * @param mixed       $http_user     htaccess username.
+     * @param mixed       $http_pass     htaccess password.
+     * @param object|null $website     Child site TLS settings; null uses cURL defaults.
      *
      * @return string 'done' when handled, 'already_complete' when a 416 confirms the local total, or 'restart' to retry from scratch.
      * @throws MainWP_Exception When the transfer fails.
      */
-    private static function perform_download_request( $url, $file, $expected_size, $local_size, $http_user, $http_pass ) { // phpcs:ignore -- NOSONAR - complex.
+    private static function perform_download_request( $url, $file, $expected_size, $local_size, $http_user, $http_pass, $website ) { // phpcs:ignore -- NOSONAR - complex.
         $agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 
         $requested_offset = ( false !== $expected_size && $local_size > 0 && $local_size < $expected_size ) ? $local_size : 0;
@@ -2407,12 +2409,14 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             }
         }
 
-        $response_headers = array();
-        $state            = new \stdClass();
-        $state->fp        = null;
-        $state->mode      = null;
-        $state->discard   = false;
-        $state->exception = null;
+        $response_headers     = array();
+        $state                = new \stdClass();
+        $state->fp            = null;
+        $state->mode          = null;
+        $state->discard       = false;
+        $state->exception     = null;
+        $state->bytes         = 0;
+        $state->last_progress = 0;
 
         /**
          * Filter the transfer limits for backup file downloads.
@@ -2440,14 +2444,34 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             )
         );
 
-        curl_setopt( $ch, CURLOPT_HEADER, false );
-        curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
-        curl_setopt( $ch, CURLOPT_ENCODING, 'none' );
-        curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
-        curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, (int) $timeouts['connect_timeout'] );
-        curl_setopt( $ch, CURLOPT_TIMEOUT, (int) $timeouts['timeout'] );
-        curl_setopt( $ch, CURLOPT_LOW_SPEED_LIMIT, (int) $timeouts['low_speed_limit'] );
-        curl_setopt( $ch, CURLOPT_LOW_SPEED_TIME, (int) $timeouts['low_speed_time'] );
+        $options = array(
+            CURLOPT_HEADER          => false,
+            CURLOPT_USERAGENT       => $agent,
+            CURLOPT_ENCODING        => 'none',
+            CURLOPT_FOLLOWLOCATION  => true,
+            CURLOPT_CONNECTTIMEOUT  => (int) $timeouts['connect_timeout'],
+            CURLOPT_TIMEOUT         => (int) $timeouts['timeout'],
+            CURLOPT_LOW_SPEED_LIMIT => (int) $timeouts['low_speed_limit'],
+            CURLOPT_LOW_SPEED_TIME  => (int) $timeouts['low_speed_time'],
+        );
+        if ( null !== $website ) {
+            $verify_certificate = isset( $website->verify_certificate ) ? (int) $website->verify_certificate : null;
+            $verify             = 1 === $verify_certificate;
+            if ( null === $verify_certificate || 2 === $verify_certificate ) {
+                $verify = false === get_option( 'mainwp_sslVerifyCertificate' ) || 1 === (int) get_option( 'mainwp_sslVerifyCertificate' );
+            }
+            $options[ CURLOPT_SSL_VERIFYHOST ] = $verify ? 2 : false;
+            $options[ CURLOPT_SSL_VERIFYPEER ] = $verify;
+            $options[ CURLOPT_SSLVERSION ]     = isset( $website->ssl_version ) ? (int) $website->ssl_version : CURL_SSLVERSION_DEFAULT;
+        }
+        /**
+         * Allow download transport options to follow site-specific policies.
+         *
+         * @param array       $options cURL transport options.
+         * @param object|null $website Child site, when supplied.
+         */
+        $options = apply_filters( 'mainwp_download_to_file_curl_options', $options, $website );
+        curl_setopt_array( $ch, $options );
 
         if ( $requested_offset > 0 ) {
             curl_setopt( $ch, CURLOPT_HTTPHEADER, array( 'Range: bytes=' . $requested_offset . '-' ) );
@@ -2506,8 +2530,9 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                         return strlen( $data );
                     }
 
-                    $state->mode = $mode;
-                    $state->fp   = fopen( $file, $mode . 'b' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- streaming large downloads.
+                    $state->bytes = 'a' === $mode ? $local_size : 0;
+                    $state->mode  = $mode;
+                    $state->fp    = fopen( $file, $mode . 'b' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- streaming large downloads.
                     if ( false === $state->fp ) {
                         $state->exception = new MainWP_Exception(
                             esc_html__( 'Could not open the local backup file for writing. Check disk space and permissions on the dashboard backup directory.', 'mainwp' ),
@@ -2519,6 +2544,19 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 }
 
                 $written = fwrite( $state->fp, $data ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fwrite -- streaming large downloads.
+                if ( false !== $written ) {
+                    $state->bytes += $written;
+                    if ( time() - $state->last_progress >= 60 ) {
+                        $state->last_progress = time();
+                        /**
+                         * Keep download ownership live while bytes are arriving.
+                         *
+                         * @param string $file Local download path.
+                         * @param int $bytes_so_far Bytes stored, including a resumed prefix.
+                         */
+                        do_action( 'mainwp_download_to_file_progress', $file, $state->bytes );
+                    }
+                }
                 return ( false === $written ) ? -1 : $written;
             }
         );

@@ -18,6 +18,63 @@ use MainWP\Dashboard\MainWP_DB;
 class MainWP_Backup_Manifest_Chunk_Transfer_Test extends MainWP_Abilities_Test_Case {
 
 	/**
+	 * Child acknowledgements must stay within the permitted byte range.
+	 */
+	public function test_ok_beyond_manifest_size_fails() {
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			static function () {
+				return array(
+					'bytes_received' => 101,
+					'mtoken'         => 'test-token',
+				);
+			}
+		);
+		$outcome = $this->push( str_repeat( 'x', 100 ), 100 );
+		$this->assertFalse( $outcome['ok'] );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_MANIFEST_CHUNK_SEND_FAILED, $outcome['error_code'] );
+		$this->assertStringContainsString( 'acknowledged bytes outside the transferred range', $outcome['error'] );
+	}
+
+	/**
+	 * Child acknowledgements must stay within the permitted byte range.
+	 */
+	public function test_ok_beyond_sent_chunk_fails() {
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			static function () {
+				return array(
+					'bytes_received' => 51,
+					'mtoken'         => 'test-token',
+				);
+			}
+		);
+		$outcome = $this->push( str_repeat( 'x', 100 ), 50 );
+		$this->assertFalse( $outcome['ok'] );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_MANIFEST_CHUNK_SEND_FAILED, $outcome['error_code'] );
+		$this->assertStringContainsString( 'acknowledged bytes outside the transferred range', $outcome['error'] );
+	}
+
+	/**
+	 * Child acknowledgements must stay within the permitted byte range.
+	 */
+	public function test_negative_realign_fails() {
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			static function () {
+				return array(
+					'bytes_received' => -1,
+					'error_code'     => 'mainwp_restore_chunk_gap',
+				);
+			}
+		);
+		$outcome = $this->push( str_repeat( 'x', 100 ), 50 );
+		$this->assertFalse( $outcome['ok'] );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_MANIFEST_CHUNK_SEND_FAILED, $outcome['error_code'] );
+		$this->assertStringContainsString( 'acknowledged bytes outside the transferred range', $outcome['error'] );
+	}
+
+	/**
 	 * A stuck receiver must terminate without exhausting a request worker.
 	 */
 	public function test_nonadvancing_realigns_fail_after_three_attempts() {

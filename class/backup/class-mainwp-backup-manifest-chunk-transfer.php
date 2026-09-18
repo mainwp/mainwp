@@ -81,6 +81,9 @@ class MainWP_Backup_Manifest_Chunk_Transfer implements MainWP_Backup_Chunk_Trans
                 $chunk_bytes = max( self::CHUNK_MIN_BYTES, (int) ( $chunk_bytes / 2 ) );
                 continue;
             }
+            if ( in_array( $outcome['result'], array( 'realign', 'ok' ), true ) && ( $outcome['bytes_received'] < 0 || $outcome['bytes_received'] > $size || ( 'ok' === $outcome['result'] && $outcome['bytes_received'] > $offset + strlen( $raw ) ) ) ) {
+                return $this->failure( esc_html__( 'The child site acknowledged bytes outside the transferred range.', 'mainwp' ) );
+            }
             if ( 'realign' === $outcome['result'] ) {
                 $nonadvancing_realigns = $outcome['bytes_received'] <= $last_realign ? $nonadvancing_realigns + 1 : 0;
                 if ( $nonadvancing_realigns >= 3 ) {

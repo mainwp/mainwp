@@ -529,7 +529,10 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 			}
 			$elapsed = microtime( true ) - $started;
 			if ( 'zero' === $content ) {
-				// A reverted bound could kill PHP here: PHPUnit reports a dead runner, not a red test.
+				// A smoke check on the refusal, not on the cap: this path is a symlink, so it
+				// refuses before any read, and is_file() is false for a device anyway. Rows 11
+				// and 25 are what pin the cap. The timer stays because an unbounded device read
+				// would kill PHP here, and PHPUnit reports that as a dead runner, not a red test.
 				$this->assertLessThan( 1.0, $elapsed, 'Device refusal must return within one second.' );
 			}
 			if ( 'refuse' === $outcome ) {
@@ -635,9 +638,13 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 	 * argument of `all-granted` or `all.example.com` is a hostname restriction that denies
 	 * nothing, so neither matches. A commented-out rule (`# deny from all`) does not match.
 	 * Apache 2.4's `Require all denied` matches: it is a deny rule and overwriting it
-	 * flattened an operator directive. A UTF-8 BOM is not skipped either: measured,
-	 * a BOM before `Order Deny,Allow` reports `Invalid command '\xef\xbb\xbfOrder'`, so a
-	 * BOM-prefixed deny is not a deny and rejecting it is the right answer, not a gap.
+	 * flattened an operator directive. A UTF-8 BOM is not skipped on this platform:
+	 * measured on Unix, a BOM before `Order Deny,Allow` reports
+	 * `Invalid command '\xef\xbb\xbfOrder'`, so a BOM-prefixed deny is not a deny there and
+	 * rejecting it is the right answer rather than a gap. Apache consumes a leading BOM
+	 * under WIN32, which was not measured here, so do not read this as platform
+	 * independent. Either way the syntax error fails the whole `.htaccess`, so the
+	 * directory serves 500s and a foreign path still costs the month.
 	 *
 	 * Continuation: a backslash sitting immediately before LF or CRLF disappears with its line
 	 * ending and nothing is inserted, while whitespace before the backslash and on the next
@@ -664,9 +671,11 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 	 * `example.com` is the host `allexample.com`, while `Deny from al\` + `l` denies all.
 	 * `Allow from all \` + `Deny from all` is one permissive Allow; `# disabled for now \`
 	 * swallows a following deny into the comment; `Deny from \` + `all` denies all.
-	 * At EOF without a newline, the backslash stays literal: `Order Deny,Allow \` reports
-	 * "takes one argument", `Deny from all \` denies with an extra host, and `Deny from \`
-	 * names only the host `\`. Unfolding before trimming drops a severed logical line even
+	 * At EOF without a newline, the backslash stays literal. The case that actually runs is
+	 * `run-eof.sh c8_tok_bs_eof`, `ServerTokens Prod \` with the backslash as the file's last
+	 * byte, which reports "takes one argument"; the `Deny`/`Order` forms need a `<Directory>`
+	 * block and so cannot sit at EOF at all. Inside the block the same rule gives
+	 * `Deny from all \` an extra literal host, and leaves `Deny from \` naming only `\`. Unfolding before trimming drops a severed logical line even
 	 * if its physical prefix says `Deny from all \`; this is the deliberate cap of rows 11 and 25.
 	 *
 	 * Quoting: recognised tokens are separated by spaces/tabs, bare or wholly wrapped in
@@ -773,6 +782,7 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 	 * - A regular file on a hung mount is not this guard's to handle.
 	 * - Quoted tokens followed by text without whitespace. Measured: `Require "all"denied` and `Deny from "all"x` parse as separate words in Apache; both deny, but this grammar deliberately does not match them (row 49).
 	 * - Unterminated quotes. Measured: `Order "Deny,Allow` parses because the quote runs to the end of the line; this grammar requires a closing quote.
+	 * - A bare CR inside a directive line. Apache treats it as whitespace: measured, `Order Deny,Allow<CR>x` reports "order takes one argument" where `Order Deny,Allowx` reports "unknown order", so `<CR>Deny from all`, `Deny from all<CR>-granted` and `Deny<CR>from<CR>all` all deny in Apache and are rejected here. Refuse-too-much only, never accept-too-much, identical at the review base, and it needs a lone CR in the middle of a line of an otherwise LF file. Recorded under `cr-inside-a-line-is-not-treated-as-whitespace`; it belongs in the next re-derivation of the grammar as its own dimension, not in a character class.
 	 *
 	 * @return array
 	 */

@@ -225,10 +225,10 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
      * Whether a readable regular file carries a deny rule in its first 8 KB.
      *
      * The is_file() gate and the read cap are both load-bearing, for different
-     * shapes: the gate is what keeps a FIFO from blocking the request in open(),
-     * and the cap is what bounds a device or a fat regular file. Neither failure
-     * is catchable, and both strand the scratch database bring_up() has already
-     * created.
+     * shapes: the gate is what keeps a FIFO from blocking the request in open()
+     * and is also what excludes a device, since is_file() is false for one, and
+     * the cap is what bounds a fat regular file. Neither failure is catchable,
+     * and both strand the scratch database bring_up() has already created.
      *
      * A match has to be a complete logical line, read the way Apache reads
      * one. The read goes two bytes past the cap so a line the cap cut in half

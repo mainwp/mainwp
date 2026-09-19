@@ -186,10 +186,10 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             );
         }
 
-        $click    = time();
-        $baseline = (int) $task->last_run;
-        // Same-second clicks share a key harmlessly because they store the same baseline.
-        $baseline_key = 'mainwp_backup_click_' . $task_id . '_' . get_current_user_id() . '_' . $click;
+        $click         = time();
+        $baseline      = (int) $task->last_run;
+        $initiation_id = wp_generate_uuid4();
+        $baseline_key  = 'mainwp_backup_click_' . $task_id . '_' . get_current_user_id() . '_' . $initiation_id;
         set_transient(
             $baseline_key,
             array(
@@ -198,7 +198,8 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             ),
             30 * MINUTE_IN_SECONDS
         );
-        $run = static::claim_manual_task_run( $task, $click, $baseline );
+        $run                  = static::claim_manual_task_run( $task, $click, $baseline );
+        $run['initiation_id'] = $initiation_id;
         if ( 'queued' !== ( $run['status'] ?? '' ) ) {
             delete_transient( $baseline_key );
         }

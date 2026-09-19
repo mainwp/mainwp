@@ -8,7 +8,20 @@
  * @package MainWP\Dashboard\Tests
  */
 
-namespace MainWP\Dashboard\Tests;
+namespace MainWP\Dashboard;
+
+/**
+ * Hosts without hard links must exercise exclusive publication too.
+ *
+ * @param string $target Source pathname.
+ * @param string $link Destination pathname.
+ * @return bool
+ */
+function link( $target, $link ) {
+	return Tests\MainWP_Download_Lock_Test::$disable_hard_links ? false : \link( $target, $link ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- delegates to the real filesystem unless fallback coverage is requested.
+}
+
+namespace MainWP\Dashboard\Tests; // phpcs:ignore Universal.Namespaces.OneDeclarationPerFile.MultipleFound -- the filesystem or clock stub must share the production namespace.
 
 use MainWP\Dashboard\MainWP_Backup_File_Manager;
 
@@ -17,7 +30,14 @@ use MainWP\Dashboard\MainWP_Backup_File_Manager;
 /**
  * Class MainWP_Download_Lock_Test
  */
-class MainWP_Download_Lock_Test extends MainWP_Abilities_Test_Case {
+class MainWP_Download_Lock_Test extends MainWP_Abilities_Test_Case { // phpcs:ignore Universal.Files.SeparateFunctionsFromOO.Mixed, Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- the switchable stub belongs with its regression tests.
+
+	/**
+	 * Force hosts with hard links to cover the fallback.
+	 *
+	 * @var bool
+	 */
+	public static $disable_hard_links = false;
 
 	/**
 	 * Working directory for lock files.
@@ -43,11 +63,77 @@ class MainWP_Download_Lock_Test extends MainWP_Abilities_Test_Case {
 	 * @return void
 	 */
 	public function tear_down() {
+		self::$disable_hard_links = false;
 		foreach ( glob( $this->dir . '*' ) ?: array() as $left_over ) {
 			unlink( $left_over );
 		}
 		rmdir( $this->dir );
 		parent::tear_down();
+	}
+
+	/**
+	 * Unsupported hard links must still permit exactly one owner and release.
+	 */
+	public function test_fallback_publication_acquires_exclusively_and_releases() {
+		self::$disable_hard_links = true;
+		$file                     = $this->dir . 'fallback.zip';
+		$lock                     = $file . '.downloading';
+		$this->assertTrue( MainWP_Backup_File_Manager::acquire_download_lock( $file, 42, 7 ) );
+		$data = json_decode( file_get_contents( $lock ), true );
+		$this->assertIsArray( $data );
+		$this->assertNotEmpty( $data['token'] );
+		$this->assertSame( 42, $data['site_id'] );
+		$this->assertSame( 7, $data['task_id'] );
+		$this->assertFalse( MainWP_Backup_File_Manager::acquire_download_lock( $file, 43, 8 ) );
+		$this->assertSame( $data, json_decode( file_get_contents( $lock ), true ) );
+		MainWP_Backup_File_Manager::release_download_lock( $file );
+		$this->assertFileDoesNotExist( $lock );
+	}
+
+	/**
+	 * A fallback writer without the reclaim mutex cannot safely publish an empty pathname.
+	 */
+	public function test_fallback_refuses_publication_while_mutex_held() {
+		self::$disable_hard_links = true;
+		$file                     = $this->dir . 'fallback-contended.zip';
+		$lock                     = $file . '.downloading';
+		$mutex                    = fopen( $lock . '.reclaim', 'c' );
+		$this->assertTrue( flock( $mutex, LOCK_EX | LOCK_NB ) );
+		try {
+			$this->assertFalse( MainWP_Backup_File_Manager::acquire_download_lock( $file, 42, 7 ) );
+			$this->assertFileDoesNotExist( $lock );
+		} finally {
+			flock( $mutex, LOCK_UN );
+			fclose( $mutex );
+		}
+		$this->assertTrue( MainWP_Backup_File_Manager::acquire_download_lock( $file, 42, 7 ) );
+		MainWP_Backup_File_Manager::release_download_lock( $file );
+	}
+
+	/**
+	 * An owner releasing after the existence check must not cause false contention.
+	 */
+	public function test_vanished_lock_retries_exclusive_acquisition() {
+		$file = $this->dir . 'vanished.zip';
+		$lock = $file . '.downloading';
+		$this->assertTrue( MainWP_Backup_File_Manager::acquire_download_lock( $file, 42, 7 ) );
+		$released = false;
+		$release  = function ( $path ) use ( $file, $lock, &$released ) {
+			if ( ! $released && str_starts_with( $path, $lock . '.' ) && str_ends_with( $path, '.tmp' ) ) {
+				$released = true;
+				MainWP_Backup_File_Manager::release_download_lock( $file );
+			}
+			return $path;
+		};
+		add_filter( 'wp_delete_file', $release );
+		try {
+			$this->assertTrue( MainWP_Backup_File_Manager::acquire_download_lock( $file, 43, 8 ) );
+			$this->assertTrue( $released );
+			$this->assertSame( 43, json_decode( file_get_contents( $lock ), true )['site_id'] );
+		} finally {
+			remove_filter( 'wp_delete_file', $release );
+			MainWP_Backup_File_Manager::release_download_lock( $file );
+		}
 	}
 
 	/**
@@ -492,13 +578,14 @@ class MainWP_Download_Lock_Test extends MainWP_Abilities_Test_Case {
 		$this->assertFileExists( $fresh );
 	}
 	/**
-	 * Contenders must never observe an unpublished or partial token.
+	 * Hard links expose complete payloads; fallback empty windows rely on the reclaim mutex.
 	 */
-	public function test_lock_publication_exposes_only_complete_payloads() {
-		$file         = $this->dir . 'publication.zip';
-		$lock         = $file . '.downloading';
-		$observations = 0;
-		$observe      = function ( $value ) use ( $lock, &$observations ) {
+	public function test_link_publication_exposes_only_complete_payloads() {
+		self::$disable_hard_links = false;
+		$file                     = $this->dir . 'publication.zip';
+		$lock                     = $file . '.downloading';
+		$observations             = 0;
+		$observe                  = function ( $value ) use ( $lock, &$observations ) {
 			if ( file_exists( $lock ) ) {
 				$data = json_decode( file_get_contents( $lock ), true );
 				$this->assertIsArray( $data, 'A visible lock must already contain complete JSON.' );

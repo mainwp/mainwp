@@ -1655,14 +1655,15 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
      */
     public function mainwp_backuptask_run_status() {
         $this->secure_request( 'mainwp_backuptask_run_status' );
-        $task_id      = isset( $_POST['task_id'] ) ? (int) $_POST['task_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
-        $started      = isset( $_POST['started'] ) ? (int) $_POST['started'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
-        $click        = isset( $_POST['click'] ) ? (int) $_POST['click'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
-        $baseline_key = 'mainwp_backup_click_' . $task_id . '_' . get_current_user_id() . '_' . $click;
-        $stored       = get_transient( $baseline_key );
-        $baseline     = is_array( $stored ) && ( $stored['click'] ?? null ) === $click ? (int) $stored['baseline'] : null;
-        $response     = MainWP_Manage_Backups_Handler::get_backup_task_run_status( $task_id, $started, $click, false, $baseline );
-        if ( 'queued' !== ( $response['status'] ?? '' ) ) {
+        $task_id       = isset( $_POST['task_id'] ) ? (int) $_POST['task_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
+        $started       = isset( $_POST['started'] ) ? (int) $_POST['started'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
+        $click         = isset( $_POST['click'] ) ? (int) $_POST['click'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
+        $initiation_id = isset( $_POST['initiation_id'] ) && is_string( $_POST['initiation_id'] ) ? wp_unslash( $_POST['initiation_id'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- UUID validation below rejects malformed tokens without altering their identity.
+        $baseline_key  = 36 === strlen( $initiation_id ) && wp_is_uuid( $initiation_id, 4 ) ? 'mainwp_backup_click_' . $task_id . '_' . get_current_user_id() . '_' . $initiation_id : '';
+        $stored        = '' !== $baseline_key ? get_transient( $baseline_key ) : false;
+        $baseline      = is_array( $stored ) && ( $stored['click'] ?? null ) === $click ? (int) $stored['baseline'] : null;
+        $response      = MainWP_Manage_Backups_Handler::get_backup_task_run_status( $task_id, $started, $click, false, $baseline );
+        if ( '' !== $baseline_key && 'queued' !== ( $response['status'] ?? '' ) ) {
             delete_transient( $baseline_key );
         }
         wp_send_json( $response );

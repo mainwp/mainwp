@@ -477,6 +477,7 @@ managebackups_run_now = function (el) {
     let started = 0;
     let click = 0;
     let baseline = null;
+    let initiationId = '';
     let failures = 0;
     let queuedSince = null;
     let closedSince = null;
@@ -610,7 +611,7 @@ managebackups_run_now = function (el) {
             render(lastResponse);
             return;
         }
-        jQuery.post(ajaxurl, mainwp_secure_data({action: 'mainwp_backuptask_run_status', task_id: taskId, started: started, click: click, baseline: baseline}), function (response) {
+        jQuery.post(ajaxurl, mainwp_secure_data({action: 'mainwp_backuptask_run_status', task_id: taskId, started: started, click: click, baseline: baseline, initiation_id: initiationId}), function (response) {
             if (generation !== manageBackupsPollGeneration) {
                 return;
             }
@@ -645,6 +646,7 @@ managebackups_run_now = function (el) {
         started = response.started;
         click = response.click;
         baseline = response.baseline ?? null;
+        initiationId = response.initiation_id ?? '';
         render(response);
     }, 'json').fail(function () {
         if (generation !== manageBackupsPollGeneration) {

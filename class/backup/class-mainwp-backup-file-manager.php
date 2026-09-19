@@ -31,6 +31,13 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
     const MAX_TOKEN_RETRIES = 2;
 
     /**
+     * Incomplete payloads need time to settle before crash recovery can reclaim them.
+     *
+     * @var int
+     */
+    const LOCK_PUBLICATION_GRACE_SECONDS = 60;
+
+    /**
      * Bytes read per hash_update() when verifying a downloaded artifact.
      *
      * @var int
@@ -561,7 +568,7 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
      * Publication prefers an exclusive hard link to a complete payload, so
      * processes racing the same missing lock cannot both acquire: one wins and
      * the loser re-reads the winner's live lock. Hosts without hard links use
-     * exclusive creation, with a 60-second grace period for incomplete writes.
+     * exclusive creation under the reclaim mutex to protect incomplete writes.
      * Stale-lock removal goes through reclaim_stale_lock(), which
      * re-validates staleness under a
      * per-path mutex - a contender that observed the OLD stale lock can
@@ -607,20 +614,33 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
                 }
                 clearstatcache( true, $lock_file );
                 if ( ! file_exists( $lock_file ) ) {
-                    // Exclusive creation preserves ownership when the filesystem cannot publish hard links.
-                    $handle = @fopen( $lock_file, 'x' ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- another writer may win after the existence check.
-                    if ( false !== $handle ) {
+                    // The mutex prevents reclamation while the exclusive pathname has an incomplete payload.
+                    $mutex = @fopen( $lock_file . '.reclaim', 'c' ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- an unserialized fallback cannot safely publish.
+                    if ( false !== $mutex ) {
                         try {
-                            $written = fwrite( $handle, $payload );
+                            if ( flock( $mutex, LOCK_EX | LOCK_NB ) ) {
+                                try {
+                                    $handle = @fopen( $lock_file, 'x' ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- another writer may win after the existence check.
+                                    if ( false !== $handle ) {
+                                        try {
+                                            $written = fwrite( $handle, $payload );
+                                        } finally {
+                                            fclose( $handle );
+                                        }
+                                        if ( strlen( $payload ) !== $written ) {
+                                            wp_delete_file( $lock_file );
+                                            return false;
+                                        }
+                                        static::$owned_download_locks[ $lock_file ] = $token;
+                                        return true;
+                                    }
+                                } finally {
+                                    flock( $mutex, LOCK_UN );
+                                }
+                            }
                         } finally {
-                            fclose( $handle );
+                            fclose( $mutex );
                         }
-                        if ( strlen( $payload ) !== $written ) {
-                            wp_delete_file( $lock_file );
-                            return false;
-                        }
-                        static::$owned_download_locks[ $lock_file ] = $token;
-                        return true;
                     }
                 }
             } finally {
@@ -637,8 +657,12 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
             if ( ! is_array( $data ) ) {
                 // An empty lock may be a writer mid-publication until its age no longer explains a live writer.
                 clearstatcache( true, $lock_file );
-                $mtime = @filemtime( $lock_file ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- a vanished file must refuse reclamation.
-                $stale = false !== $mtime && time() - $mtime > 60;
+                $mtime = @filemtime( $lock_file ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- the previous owner may have released the lock.
+                if ( false === $mtime ) {
+                    // Acquisition can retry a vanished lock; reclamation must refuse an unstatable file to avoid deleting a replacement.
+                    continue;
+                }
+                $stale = time() - $mtime > static::LOCK_PUBLICATION_GRACE_SECONDS;
             }
             if ( ! $stale ) {
                 return false;
@@ -712,9 +736,9 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
      *
      * The mutex file is never deleted: removing it while another process
      * holds its descriptor would let a third contender open a NEW inode
-     * at the same path and bypass the serialization. It is zero bytes,
-     * only ever appears after a crash left a stale lock, and does not
-     * match the '*.downloading' cleanup glob.
+     * at the same path and bypass the serialization. Normal cleanup checks
+     * and fallback publication also create this zero-byte mutex, which
+     * does not match the '*.downloading' cleanup glob.
      *
      * @param string      $lock_file Lock file path.
      * @param string|null $mutex_file Shared mutex path for a publication sidecar.
@@ -745,7 +769,7 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
                     // An empty lock may be a writer mid-publication until its age no longer explains a live writer.
                     clearstatcache( true, $lock_file );
                     $mtime = @filemtime( $lock_file ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- a vanished file must refuse reclamation.
-                    $stale = false !== $mtime && time() - $mtime > 60;
+                    $stale = false !== $mtime && time() - $mtime > static::LOCK_PUBLICATION_GRACE_SECONDS;
                 }
                 if ( ! $stale ) {
                     return false;

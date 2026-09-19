@@ -450,46 +450,53 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
      * @return void
      */
     private static function guard_sql_statement( string $statement, string $db_name ): void {
-        $tokens   = self::sql_dump_tokens( $statement, true );
-        $window   = array();
-        $first    = '';
-        $position = 0;
-        $refused  = '';
+        $tokens  = self::sql_dump_tokens( $statement, true );
+        $window  = array();
+        $leading = array();
+        $refused = '';
         foreach ( $tokens as $token ) {
             $keyword = strtoupper( $token );
-            if ( 0 === $position ) {
-                $first = $keyword;
-                if ( in_array( $first, array( 'USE', 'GRANT', 'REVOKE' ), true ) ) {
-                    $refused = $first;
-                }
-            } elseif ( 1 === $position ) {
-                $pair = $first . ' ' . $keyword;
-                if ( in_array( $pair, array( 'CREATE DATABASE', 'CREATE SCHEMA', 'DROP DATABASE', 'DROP SCHEMA', 'ALTER DATABASE', 'ALTER SCHEMA', 'CREATE USER', 'DROP USER', 'SET PASSWORD', 'LOAD DATA', 'LOAD XML', 'CREATE TRIGGER', 'CREATE PROCEDURE', 'CREATE FUNCTION', 'CREATE EVENT' ), true ) ) {
-                    $refused = $pair;
-                }
+            if ( count( $leading ) < 3 ) {
+                $leading[] = $keyword;
             }
-            ++$position;
             $window[] = $token;
-            if ( count( $window ) > 4 ) {
+            if ( count( $window ) > 3 ) {
                 array_shift( $window );
             }
             $count = count( $window );
-            if ( 'SELECT' === $first && $count >= 2 && 'INTO' === strtoupper( $window[ $count - 2 ] ) && in_array( $keyword, array( 'OUTFILE', 'DUMPFILE' ), true ) ) {
+            if ( $count >= 2 && 'INTO' === strtoupper( $window[ $count - 2 ] ) && in_array( $keyword, array( 'OUTFILE', 'DUMPFILE' ), true ) ) {
+                // nosec The concatenation builds the refusal label reported to the user, not a query.
                 $refused = 'SELECT INTO ' . $keyword;
             }
-            if ( 4 === $count && in_array( strtoupper( $window[0] ), array( 'INTO', 'FROM', 'UPDATE', 'TABLE', 'JOIN' ), true )
-                && '.' === $window[2]
-                && preg_match( '/^(?:`(?:[^`]|``)+`|[a-zA-Z0-9_$]+)$/D', $window[1] )
-                && preg_match( '/^(?:`(?:[^`]|``)+`|[a-zA-Z0-9_$]+)$/D', $window[3] )
-                && str_replace( '``', '`', trim( $window[1], '`' ) ) !== $db_name ) {
-                $refused = strtoupper( $window[0] ) . ' cross-schema';
+            if ( 3 === $count && '.' === $window[1]
+                && ! ctype_digit( $window[0] ) && ! ctype_digit( $window[2] )
+                && preg_match( '/^(?:`(?:[^`]|``)+`|[a-zA-Z0-9_$\x80-\xff]+)$/D', $window[0] )
+                && preg_match( '/^(?:`(?:[^`]|``)+`|[a-zA-Z0-9_$\x80-\xff]+)$/D', $window[2] ) ) {
+                $schema = '`' === $window[0][0] ? str_replace( '``', '`', substr( $window[0], 1, -1 ) ) : $window[0];
+                if ( $schema !== $db_name ) {
+                    $refused = $leading[0] . ' cross-schema';
+                }
             }
         }
+        $first  = $leading[0] ?? '';
+        $second = $leading[1] ?? '';
+        $third  = $leading[2] ?? '';
+        // Session settings can change quoting rules and invalidate the tokenizer's assumptions.
+        $allowed = in_array( $first, array( 'INSERT', 'REPLACE', 'BEGIN', 'COMMIT' ), true )
+            || ( in_array( $first, array( 'DROP', 'CREATE' ), true ) && ( 'TABLE' === $second || ( 'TEMPORARY' === $second && 'TABLE' === $third ) ) )
+            || ( 'ALTER' === $first && 'TABLE' === $second )
+            || ( in_array( $first, array( 'LOCK', 'UNLOCK' ), true ) && 'TABLES' === $second )
+            || ( 'START' === $first && 'TRANSACTION' === $second )
+            || ( 'SET' === $first && ( 'NAMES' === $second || ( 'CHARACTER' === $second && 'SET' === $third ) ) );
+        if ( ! $allowed ) {
+            $refused = $first;
+        }
         if ( '' !== $refused ) {
+            // A refused statement says something about the backup, not about the host, so it fails the restore rather than reporting the host cannot test.
             throw new MainWP_Exception(
                 sprintf( esc_html__( 'The backup database dump contains a statement the test restore will not run: %s.', 'mainwp' ), $refused ),
                 $refused,
-                self::ERR_UNSUPPORTED
+                self::ERR_APPLY
             );
         }
     }
@@ -961,7 +968,7 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
                 $stat = $zip->statIndex( $i );
                 if ( ! is_array( $stat ) || ! isset( $stat['size'] ) ) {
                     $zip->close();
-                    throw new MainWP_Exception( esc_html__( 'A backup archive could not be read.', 'mainwp' ), 'zip stat entry: ' . $name, self::ERR_UNSUPPORTED );
+                    throw new MainWP_Exception( esc_html__( 'A backup archive could not be read.', 'mainwp' ), 'zip stat entry: ' . $name, self::ERR_APPLY );
                 }
                 $size += (int) $stat['size'];
             }
@@ -992,7 +999,7 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
                 if ( $this->is_sql_dump_member( $file->getFilename() ) ) {
                     $member_size = $file->getSize();
                     if ( false === $member_size ) {
-                        throw new MainWP_Exception( esc_html__( 'A backup archive could not be read.', 'mainwp' ), 'tar stat entry', self::ERR_UNSUPPORTED );
+                        throw new MainWP_Exception( esc_html__( 'A backup archive could not be read.', 'mainwp' ), 'tar stat entry', self::ERR_APPLY );
                     }
                     $size += (int) $member_size;
                 }
@@ -1001,7 +1008,7 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
             // The unsizable-member refusal above carries which member failed; the generic wrap below would lose it.
             throw $e;
         } catch ( \Throwable $e ) {
-            throw new MainWP_Exception( esc_html__( 'A backup archive could not be read.', 'mainwp' ), 'tar member size', self::ERR_UNSUPPORTED );
+            throw new MainWP_Exception( esc_html__( 'A backup archive could not be read.', 'mainwp' ), 'tar member size', self::ERR_APPLY );
         }
         return $size;
     }

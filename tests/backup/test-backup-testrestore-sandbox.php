@@ -1159,36 +1159,111 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 			'escaped double quote' => array( 'INSERT INTO wp_posts VALUES ("a\\";b");', array( 'INSERT INTO wp_posts VALUES ("a\\";b")' ), '' ),
 			'doubled double quote' => array( 'INSERT INTO wp_posts VALUES ("a"";b");', array( 'INSERT INTO wp_posts VALUES ("a"";b")' ), '' ),
 			'doubled backtick'     => array( 'CREATE TABLE `a``;b` (id int);', array( 'CREATE TABLE `a``;b` (id int)' ), '' ),
-			'dash comment'         => array( "-- ignored ; USE other\nSELECT 1;", array( "-- ignored ; USE other\nSELECT 1" ), '' ),
-			'hash comment'         => array( "# ignored ; USE other\nSELECT 1;", array( "# ignored ; USE other\nSELECT 1" ), '' ),
-			'block comment'        => array( '/* ignored ; USE other */ SELECT 1;', array( '/* ignored ; USE other */ SELECT 1' ), '' ),
-			'version conditional'  => array( '/*!40101 SET x=1 */;', array( '/*!40101 SET x=1 */' ), '' ),
-			'version value'        => array( "/*!40101 SET x='a;b' */; SELECT 1;", array( "/*!40101 SET x='a;b' */", 'SELECT 1' ), '' ),
+			'dash comment'         => array( "-- ignored ; USE other\nSELECT 1;", array( "-- ignored ; USE other\nSELECT 1" ), 'SELECT' ),
+			'hash comment'         => array( "# ignored ; USE other\nSELECT 1;", array( "# ignored ; USE other\nSELECT 1" ), 'SELECT' ),
+			'block comment'        => array( '/* ignored ; USE other */ SELECT 1;', array( '/* ignored ; USE other */ SELECT 1' ), 'SELECT' ),
+			'version conditional'  => array( '/*!40101 SET x=1 */;', array( '/*!40101 SET x=1 */' ), 'SET' ),
+			'version value'        => array( "/*!40101 SET x='a;b' */; SELECT 1;", array( "/*!40101 SET x='a;b' */", 'SELECT 1' ), 'SET' ),
 			'use database'         => array( 'USE `other`;', array( 'USE `other`' ), 'USE' ),
 			'lowercase use'        => array( 'use other;', array( 'use other' ), 'USE' ),
 			'comment before use'   => array( '/* prefix */ USE other;', array( '/* prefix */ USE other' ), 'USE' ),
 			'conditional use'      => array( '/*!40101 USE other */;', array( '/*!40101 USE other */' ), 'USE' ),
-			'split keyword'        => array( 'DROP /* reason */ DATABASE other;', array( 'DROP /* reason */ DATABASE other' ), 'DROP DATABASE' ),
-			'foreign schema'       => array( 'INSERT INTO otherdb.wp_users VALUES (1);', array( 'INSERT INTO otherdb.wp_users VALUES (1)' ), 'INTO cross-schema' ),
-			'quoted foreign'       => array( 'INSERT INTO `otherdb`.`wp_users` VALUES (1);', array( 'INSERT INTO `otherdb`.`wp_users` VALUES (1)' ), 'INTO cross-schema' ),
+			'split keyword'        => array( 'DROP /* reason */ DATABASE other;', array( 'DROP /* reason */ DATABASE other' ), 'DROP' ),
+			'foreign schema'       => array( 'INSERT INTO otherdb.wp_users VALUES (1);', array( 'INSERT INTO otherdb.wp_users VALUES (1)' ), 'INSERT cross-schema' ),
+			'quoted foreign'       => array( 'INSERT INTO `otherdb`.`wp_users` VALUES (1);', array( 'INSERT INTO `otherdb`.`wp_users` VALUES (1)' ), 'INSERT cross-schema' ),
 			'quoted scratch'       => array( 'INSERT INTO `mainwp_tr_matrix`.`wp_posts` VALUES (1);', array( 'INSERT INTO `mainwp_tr_matrix`.`wp_posts` VALUES (1)' ), '' ),
 			'unquoted scratch'     => array( 'INSERT INTO mainwp_tr_matrix.wp_posts VALUES (1);', array( 'INSERT INTO mainwp_tr_matrix.wp_posts VALUES (1)' ), '' ),
 			'unqualified table'    => array( 'INSERT INTO `wp_posts` VALUES (1);', array( 'INSERT INTO `wp_posts` VALUES (1)' ), '' ),
 			'literal use'          => array( "INSERT INTO wp_posts VALUES ('USE other; INSERT INTO otherdb.wp_users');", array( "INSERT INTO wp_posts VALUES ('USE other; INSERT INTO otherdb.wp_users')" ), '' ),
-			'trailing semicolons'  => array( 'SELECT 1;;;', array( 'SELECT 1' ), '' ),
+			'trailing semicolons'  => array( 'SELECT 1;;;', array( 'SELECT 1' ), 'SELECT' ),
 			'comments only'        => array( '-- comment;', array(), '' ),
-			'foreign from'         => array( 'DELETE FROM otherdb.wp_posts;', array( 'DELETE FROM otherdb.wp_posts' ), 'FROM cross-schema' ),
-			'foreign update'       => array( 'UPDATE otherdb.wp_posts SET id=1;', array( 'UPDATE otherdb.wp_posts SET id=1' ), 'UPDATE cross-schema' ),
-			'foreign table'        => array( 'DROP TABLE otherdb.wp_posts;', array( 'DROP TABLE otherdb.wp_posts' ), 'TABLE cross-schema' ),
-			'foreign join'         => array( 'SELECT * FROM wp_posts JOIN otherdb.wp_users;', array( 'SELECT * FROM wp_posts JOIN otherdb.wp_users' ), 'JOIN cross-schema' ),
+			'foreign from'         => array( 'DELETE FROM otherdb.wp_posts;', array( 'DELETE FROM otherdb.wp_posts' ), 'DELETE' ),
+			'foreign update'       => array( 'UPDATE otherdb.wp_posts SET id=1;', array( 'UPDATE otherdb.wp_posts SET id=1' ), 'UPDATE' ),
+			'foreign table'        => array( 'DROP TABLE otherdb.wp_posts;', array( 'DROP TABLE otherdb.wp_posts' ), 'DROP cross-schema' ),
+			'foreign join'         => array( 'SELECT * FROM wp_posts JOIN otherdb.wp_users;', array( 'SELECT * FROM wp_posts JOIN otherdb.wp_users' ), 'SELECT' ),
 		);
 		foreach ( array( 'CREATE DATABASE', 'CREATE SCHEMA', 'DROP DATABASE', 'DROP SCHEMA', 'ALTER DATABASE', 'ALTER SCHEMA', 'GRANT', 'REVOKE', 'CREATE USER', 'DROP USER', 'SET PASSWORD', 'LOAD DATA', 'LOAD XML', 'CREATE TRIGGER', 'CREATE PROCEDURE', 'CREATE FUNCTION', 'CREATE EVENT' ) as $keyword ) {
-			$cases[ $keyword ] = array( $keyword . ' private_site_data;', array( $keyword . ' private_site_data' ), $keyword );
+			$cases[ $keyword ] = array( $keyword . ' private_site_data;', array( $keyword . ' private_site_data' ), strtok( $keyword, ' ' ) );
 		}
 		foreach ( array( 'OUTFILE', 'DUMPFILE' ) as $target ) {
 			$sql              = "SELECT 'private_site_data' INTO " . $target . " '/tmp/dump'";
-			$cases[ $target ] = array( $sql . ';', array( $sql ), 'SELECT INTO ' . $target );
+			$cases[ $target ] = array( $sql . ';', array( $sql ), 'SELECT' );
 		}
+
+		$refused_sql = array(
+			"PREPARE p FROM 'DROP TABLE `other`.`wp_users`'" => 'PREPARE',
+			'EXECUTE p'                                    => 'EXECUTE',
+			'DEALLOCATE PREPARE p'                         => 'DEALLOCATE',
+			'CALL p()'                                     => 'CALL',
+			"SET SESSION sql_mode='ANSI_QUOTES'"           => 'SET',
+			"SET SESSION sql_mode='NO_BACKSLASH_ESCAPES'"  => 'SET',
+			'SET @x = 1'                                   => 'SET',
+			'DROP TABLE IF EXISTS `other`.`t`'             => 'DROP cross-schema',
+			'CREATE TABLE IF NOT EXISTS `other`.`t` (id INT)' => 'CREATE cross-schema',
+			'RENAME TABLE t TO other.t'                    => 'RENAME',
+			'CREATE TABLE a LIKE other.t'                  => 'CREATE cross-schema',
+			'TRUNCATE other.t'                             => 'TRUNCATE',
+			'TRUNCATE TABLE other.t'                       => 'TRUNCATE',
+			'CREATE VIEW other.v AS SELECT 1'              => 'CREATE',
+			"ALTER USER CURRENT_USER() IDENTIFIED BY 'p'"  => 'ALTER',
+			'RENAME USER a TO b'                           => 'RENAME',
+			'DELETE FROM other.t'                          => 'DELETE',
+			'SELECT 1'                                     => 'SELECT',
+			"WITH x AS (SELECT 1 AS a) SELECT a INTO OUTFILE '/tmp/x' FROM x" => 'WITH',
+			'DROP TABLE mainwp_tr_matrix.a, other.b'       => 'DROP cross-schema',
+			'UPDATE IGNORE other.t SET a=1'                => 'UPDATE',
+			'INSERT other.t VALUES (1)'                    => 'INSERT cross-schema',
+			'REPLACE other.t VALUES (1)'                   => 'REPLACE cross-schema',
+			'INSERT INTO t (a) SELECT a FROM other.u'      => 'INSERT cross-schema',
+			'/*!40000 DROP TABLE IF EXISTS `other`.`x` */' => 'DROP cross-schema',
+			'INSERT LOW_PRIORITY IGNORE INTO other.t VALUES (1)' => 'INSERT cross-schema',
+			'LOCK TABLES wp_posts WRITE, other.t WRITE'    => 'LOCK cross-schema',
+			'ALTER TABLE wp_posts ADD FOREIGN KEY (id) REFERENCES other.t (id)' => 'ALTER cross-schema',
+			'INSERT INTO `mainwp_tr_matrix```.`t` VALUES (1)' => 'INSERT cross-schema',
+			'INSERT INTO `MAINWP_TR_MATRIX`.`t` VALUES (1)' => 'INSERT cross-schema',
+			'INSERT INTO `other`.`123` VALUES (1)'         => 'INSERT cross-schema',
+			'INSERT INTO `123`.`t` VALUES (1)'             => 'INSERT cross-schema',
+			"INSERT INTO t SELECT 1 INTO OUTFILE '/tmp/x'" => 'SELECT INTO OUTFILE',
+			"INSERT INTO t SELECT 1 INTO DUMPFILE '/tmp/x'" => 'SELECT INTO DUMPFILE',
+		);
+		foreach ( $refused_sql as $sql => $refusal ) {
+			$cases[ $sql ] = array( $sql . ';', array( $sql ), $refusal );
+		}
+		$accepted_sql = array(
+			'DROP TABLE IF EXISTS `wp_posts`',
+			'DROP TABLE IF EXISTS mainwp_tr_matrix.t',
+			'DROP TEMPORARY TABLE IF EXISTS `mainwp_tr_matrix`.`t`',
+			'CREATE TEMPORARY TABLE IF NOT EXISTS `wp_posts` (id INT)',
+			'CREATE TABLE `wp_posts` (id INT, price DECIMAL(10,2) DEFAULT 0.00)',
+			"INSERT INTO `wp_posts` (`a`) VALUES ('x.y')",
+			"INSERT INTO wp_posts VALUES ('USE other; DROP TABLE x')",
+			'INSERT wp_posts VALUES (1)',
+			'INSERT IGNORE INTO wp_posts VALUES (1)',
+			'INSERT LOW_PRIORITY IGNORE wp_posts VALUES (1)',
+			'INSERT DELAYED INTO wp_posts VALUES (1)',
+			'INSERT HIGH_PRIORITY INTO wp_posts VALUES (1)',
+			'REPLACE wp_posts VALUES (1)',
+			'REPLACE LOW_PRIORITY INTO wp_posts VALUES (1)',
+			'REPLACE DELAYED wp_posts VALUES (1)',
+			'LOCK TABLES `wp_posts` WRITE',
+			'UNLOCK TABLES',
+			'SET NAMES utf8mb4',
+			'/*!40101 SET NAMES utf8mb4 */',
+			'SET CHARACTER SET utf8mb4',
+			'ALTER TABLE `wp_posts` DISABLE KEYS',
+			'START TRANSACTION',
+			'BEGIN',
+			'COMMIT',
+			"-- ignored ; USE other\nINSERT INTO wp_posts VALUES (1)",
+			"# ignored ; USE other\nINSERT INTO wp_posts VALUES (1)",
+			'/* ignored ; USE other */ INSERT INTO wp_posts VALUES (1)',
+		);
+		foreach ( $accepted_sql as $sql ) {
+			$cases[ $sql ] = array( $sql . ';', array( $sql ), '' );
+		}
+		$cases['allowed trailing semicolons'] = array( 'INSERT INTO wp_posts VALUES (1);;;', array( 'INSERT INTO wp_posts VALUES (1)' ), '' );
+		$cases['dash without whitespace']     = array( 'INSERT INTO wp_posts VALUES (1--2); USE other;', array( 'INSERT INTO wp_posts VALUES (1--2)', 'USE other' ), 'USE' );
+		$cases['unterminated block comment']  = array( 'INSERT INTO wp_posts VALUES (1); /* USE other;', array( 'INSERT INTO wp_posts VALUES (1)' ), '' );
 
 		$split = new \ReflectionMethod( MainWP_Backup_TestRestore_Sandbox::class, 'split_sql_dump' );
 		$guard = new \ReflectionMethod( MainWP_Backup_TestRestore_Sandbox::class, 'guard_sql_statement' );
@@ -1210,7 +1285,7 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 				$this->assertNull( $caught, $label );
 			} else {
 				$this->assertInstanceOf( MainWP_Exception::class, $caught, $label );
-				$this->assertSame( MainWP_Backup_TestRestore_Sandbox::ERR_UNSUPPORTED, $caught->get_message_error_code(), $label );
+				$this->assertSame( MainWP_Backup_TestRestore_Sandbox::ERR_APPLY, $caught->get_message_error_code(), $label );
 				$this->assertSame( $refusal, $caught->get_message_extra( false ), $label );
 				$this->assertSame( 'The backup database dump contains a statement the test restore will not run: ' . $refusal . '.', $caught->getMessage(), $label );
 			}

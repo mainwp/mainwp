@@ -313,8 +313,10 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             case MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT:
                 $child_action = ! empty( $job->pre_snapshot_task_id ) ? 'backup_task_cancel' : '';
                 break;
-            case MainWP_Backup_Restore_Job_Store::STATUS_PENDING:
             case MainWP_Backup_Restore_Job_Store::STATUS_PREFLIGHT:
+                $child_action = 'backup_task_cancel';
+                break;
+            case MainWP_Backup_Restore_Job_Store::STATUS_PENDING:
             case MainWP_Backup_Restore_Job_Store::STATUS_STAGING:
             case MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE:
                 break;
@@ -330,10 +332,19 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 $this->request_child_cancel( $job );
             } elseif ( 'backup_task_cancel' === $child_action ) {
                 $website = $this->website( $job );
-                try {
-                    MainWP_Connect::fetch_url_authed( $website, 'backup_task_cancel', array( 'task_id' => $job->pre_snapshot_task_id ), false, false, false );
-                } finally {
-                    $this->release_pre_snapshot_handle( $website, (string) $job->pre_snapshot_task_id );
+                $task_id = (string) $job->pre_snapshot_task_id;
+                if ( MainWP_Backup_Restore_Job_Store::STATUS_PREFLIGHT === $job->status ) {
+                    // The site handle can exist before the worker records the pre-snapshot phase.
+                    $raw     = MainWP_DB::instance()->get_website_option( (int) $website->id, MainWP_Backup_Executor::ADHOC_TASK_OPTION );
+                    $handle  = json_decode( (string) $raw, true );
+                    $task_id = is_array( $handle ) && isset( $handle['task_id'] ) && is_scalar( $handle['task_id'] ) ? (string) $handle['task_id'] : '';
+                }
+                if ( '' !== $task_id ) {
+                    try {
+                        MainWP_Connect::fetch_url_authed( $website, 'backup_task_cancel', array( 'task_id' => $task_id ), false, false, false );
+                    } finally {
+                        $this->release_pre_snapshot_handle( $website, $task_id );
+                    }
                 }
             }
         } catch ( \Throwable $e ) {
@@ -775,8 +786,10 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             if ( 'failed' === $phase || '' === $phase ) {
                 $error      = is_array( $payload ) && isset( $payload['error'] ) ? (string) $payload['error'] : esc_html__( 'The pre-restore safety backup failed.', 'mainwp' );
                 $error_code = is_array( $payload ) && isset( $payload['error_code'] ) ? (string) $payload['error_code'] : '';
-                // Like success, failure must release the handle so the next restore cannot reuse a terminal task.
-                $this->release_pre_snapshot_handle( $website, (string) $job->pre_snapshot_task_id );
+                // An unreadable answer keeps the handle because the child task may still be running.
+                if ( 'failed' === $phase || ( is_array( $payload ) && isset( $payload['error'] ) ) ) {
+                    $this->release_pre_snapshot_handle( $website, (string) $job->pre_snapshot_task_id );
+                }
                 $this->record_failure( $job, $error, false, $error_code );
                 return;
             }

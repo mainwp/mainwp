@@ -52,8 +52,11 @@ class MainWP_Backup_Sweeper_Exemption_Test extends MainWP_Abilities_Test_Case {
 
 		foreach ( $this->fixture_dirs as $dir ) {
 			if ( is_dir( $dir ) ) {
-				array_map( 'unlink', glob( $dir . '/*' ) ?: array() ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test cleanup.
-				rmdir( $dir ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- test cleanup.
+				// The shared uploads tree carries snapshot-* directories from earlier runs, and site ids are reused; unlink() on one is a fatal.
+				array_map( 'unlink', array_filter( glob( $dir . '/*' ) ?: array(), 'is_file' ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test cleanup.
+				if ( ! glob( $dir . '/*' ) ) {
+					rmdir( $dir ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- test cleanup.
+				}
 			}
 		}
 		$this->fixture_dirs = array();

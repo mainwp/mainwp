@@ -1051,6 +1051,28 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
+	 * An unreadable response cannot establish that the child task stopped.
+	 */
+	public function test_pre_snapshot_unreadable_response_preserves_handle() {
+		$cases = array(
+			'unreadable response' => array( '<html>Unavailable</html>', false ),
+			'error payload'       => array( array( 'error' => 'Task not found.' ), true ),
+		);
+		foreach ( $cases as $label => $case ) {
+			list( $payload, $cleared )          = $case;
+			$this->responses['backup_task_run'] = $payload;
+			$handle                             = wp_json_encode( array( 'task_id' => 'task-7-pre' ) );
+			MainWP_DB::instance()->update_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION, $handle );
+
+			$job = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT, array( 'pre_snapshot_task_id' => 'task-7-pre' ) );
+			$job = $this->tick( $job );
+
+			$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT, $job->status, $label );
+			$this->assertSame( $cleared ? null : $handle, MainWP_DB::instance()->get_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION ), $label );
+		}
+	}
+
+	/**
 	 * A child response can arrive after another backup replaces the handle.
 	 *
 	 * @return array
@@ -1208,7 +1230,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		if ( '' !== $action ) {
 			$expected_calls[] = array(
 				'what'   => $action,
-				'params' => array( 'task_id' => 'backup_task_cancel' === $action ? $snapshot_task_id : $child_task_id ),
+				'params' => array( 'task_id' => 'backup_task_cancel' === $action ? ( 'preflight' === $status ? json_decode( $handle_before, true )['task_id'] : $snapshot_task_id ) : $child_task_id ),
 			);
 		}
 		$this->assertSame( $expected_calls, $this->calls );
@@ -1236,7 +1258,11 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	public static function cancel_job_matrix() {
 		return array(
 			'pending with task ids'          => array( 'pending', 'task-9-restore', 'task-7-pre', false, '', false, 'cancelled', 'own', 'unchanged' ),
-			'preflight with task ids'        => array( 'preflight', 'task-9-restore', 'task-7-pre', false, '', false, 'cancelled', 'own', 'unchanged' ),
+			'preflight with task ids'        => array( 'preflight', 'task-9-restore', 'task-7-pre', false, 'backup_task_cancel', true, 'cancelled', 'own', 'cleared' ),
+			'preflight no handle'            => array( 'preflight', 'task-9-restore', 'task-7-pre', false, '', false, 'cancelled', 'none', 'unchanged' ),
+			'preflight handle before phase'  => array( 'preflight', '', '', false, 'backup_task_cancel', true, 'cancelled', 'own', 'cleared' ),
+			'preflight child throws'         => array( 'preflight', '', '', true, 'backup_task_cancel', true, 'cancelled', 'own', 'cleared' ),
+			'preflight undecodable handle'   => array( 'preflight', '', '', false, '', false, 'cancelled', 'undecodable', 'unchanged' ),
 			'staging with task ids'          => array( 'staging', 'task-9-restore', 'task-7-pre', false, '', false, 'cancelled', 'own', 'unchanged' ),
 			'failed_retryable with task ids' => array( 'failed_retryable', 'task-9-restore', 'task-7-pre', false, '', false, 'cancelled', 'own', 'unchanged' ),
 			'transferring with task id'      => array( 'transferring', 'task-9-restore', 'task-7-pre', false, 'restore_task_cancel', false, 'cancelled', 'own', 'unchanged' ),

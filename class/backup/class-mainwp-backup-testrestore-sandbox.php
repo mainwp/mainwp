@@ -947,7 +947,11 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
                 $zip->close();
                 throw new MainWP_Exception( esc_html__( 'A backup archive contains an unsafe file path and cannot be extracted.', 'mainwp' ), 'zip traversal entry: ' . $name, self::ERR_APPLY );
             }
-            $total += $zip->statIndex( $i )['size'];
+            // statIndex() answers false on an entry whose header will not read;
+            // extractTo() refuses the archive a moment later, so the guard only
+            // has to avoid indexing that false and losing the real error.
+            $stat   = $zip->statIndex( $i );
+            $total += is_array( $stat ) && isset( $stat['size'] ) ? (int) $stat['size'] : 0;
             if ( is_float( $free ) && $free < $total + 64 * MB_IN_BYTES ) {
                 $zip->close();
                 throw new MainWP_Exception( esc_html__( 'The test-restore sandbox does not have enough free space to extract the archive.', 'mainwp' ), 'zip extract free space: ' . basename( $path ), self::ERR_UNSUPPORTED );

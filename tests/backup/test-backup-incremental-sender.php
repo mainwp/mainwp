@@ -1595,6 +1595,64 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A late error prevents a clean snapshot of the closed run.
+	 *
+	 * @return void
+	 */
+	public function test_closed_run_snapshot_gate_rejects_late_errors() {
+		global $wpdb;
+		list( $site_id, $task ) = $this->arrange_manual_task();
+		$closed_last_run        = time() - 200;
+		$key                    = 'mainwp_backup_run_' . $task->id . '_' . $closed_last_run;
+		foreach ( array( false, true ) as $late_write ) {
+			MainWP_DB_Backup::instance()->update_backup_task_with_values(
+				$task->id,
+				array(
+					'last_run'      => $closed_last_run,
+					'completed'     => $closed_last_run + 10,
+					'backup_errors' => '',
+				)
+			);
+			$task   = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+			$select = 'SELECT * FROM ' . $wpdb->prefix . 'mainwp_wp_backup WHERE id= ' . $task->id;
+			$reads  = 0;
+			$spy    = function ( $query ) use ( &$spy, &$reads, $select, $late_write, $task ) {
+				if ( trim( $query ) === $select ) {
+					++$reads;
+					// The second task read follows the per-site progress and snapshot loop.
+					if ( 2 === $reads ) {
+						remove_filter( 'query', $spy );
+						if ( $late_write ) {
+							MainWP_DB_Backup::instance()->update_backup_task_with_values(
+								$task->id,
+								array( 'backup_errors' => 'Lease-lost driver flushed a late error.' )
+							);
+						}
+					}
+				}
+				return $query;
+			};
+			delete_transient( $key );
+			add_filter( 'query', $spy );
+			try {
+				MainWP_Manage_Backups_Handler::execute_backup_task( $task );
+				$this->assertSame( 2, $reads, 'The spy must reach the closed-run snapshot re-read.' );
+				$saved = get_transient( $key );
+				if ( $late_write ) {
+					$this->assertFalse( $saved, 'A late error must prevent saving a clean closed-run snapshot.' );
+				} else {
+					$this->assertIsArray( $saved );
+					$this->assertSame( $closed_last_run, (int) $saved['task']->last_run );
+					$this->assertSame( $task->backup_errors, $saved['task']->backup_errors );
+				}
+			} finally {
+				remove_filter( 'query', $spy );
+				delete_transient( $key );
+			}
+		}
+	}
+
+	/**
 	 * A manual run's result survives a scheduled claim before its next poll.
 	 *
 	 * @return void

@@ -1200,8 +1200,16 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                         $saved['snapshots'][ $site_id ] = $snapshot;
                     }
                 }
+                // A driver that lost its lease still writes its errors before it
+                // returns, so an error can land after another driver stamped the
+                // close. last_run and completed do not move when it does, which is
+                // why the error and notice text is part of the gate and why the
+                // re-read row, not the one the loop above walked, is what gets saved.
                 $current = MainWP_DB_Backup::instance()->get_backup_task_by_id( $previous->id );
-                if ( $current && (int) $current->last_run === (int) $previous->last_run && (int) $current->completed >= (int) $current->last_run ) {
+                if ( $current && (int) $current->last_run === (int) $previous->last_run && (int) $current->completed >= (int) $current->last_run
+                    && (string) $current->backup_errors === (string) $previous->backup_errors
+                    && (string) $current->backup_notices === (string) $previous->backup_notices ) {
+                    $saved['task'] = $current;
                     set_transient( 'mainwp_backup_run_' . $previous->id . '_' . $previous->last_run, $saved, DAY_IN_SECONDS );
                 }
             }

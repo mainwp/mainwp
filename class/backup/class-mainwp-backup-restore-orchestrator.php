@@ -325,7 +325,17 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 $this->request_child_cancel( $job );
             } elseif ( MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT === $job->status && ! empty( $job->pre_snapshot_task_id ) ) {
                 $website = $this->website( $job );
-                MainWP_Connect::fetch_url_authed( $website, 'backup_task_cancel', array( 'task_id' => $job->pre_snapshot_task_id ), false, false, false );
+                try {
+                    MainWP_Connect::fetch_url_authed( $website, 'backup_task_cancel', array( 'task_id' => $job->pre_snapshot_task_id ), false, false, false );
+                } finally {
+                    // trigger_backup() reads this handle before it creates
+                    // anything, so a cancelled safety backup must not leave it
+                    // behind for the next restore to adopt - the site would be
+                    // handed a task id it has just cancelled. The completion
+                    // path clears it for the same reason. Whether the site
+                    // confirmed or not, the dashboard has abandoned the task.
+                    MainWP_DB::instance()->update_website_option( $website, MainWP_Backup_Executor::ADHOC_TASK_OPTION, '' );
+                }
             }
         } catch ( \Throwable $e ) {
             do_action( 'mainwp_log_info', sprintf( 'Restore job %d: the site did not confirm cancelling its child task: %s', (int) $job->id, $e->getMessage() ) );

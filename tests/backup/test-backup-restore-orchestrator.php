@@ -9,6 +9,7 @@
 namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Backup_Error_Codes;
+use MainWP\Dashboard\MainWP_Backup_Executor;
 use MainWP\Dashboard\MainWP_Backup_Restore_Job_Store;
 use MainWP\Dashboard\MainWP_Backup_Restore_Orchestrator;
 use MainWP\Dashboard\MainWP_Backup_Restore_Transfer_Driver;
@@ -189,6 +190,9 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 				);
 				if ( isset( $this->responses[ $what ] ) ) {
 					$scripted = $this->responses[ $what ];
+					if ( $scripted instanceof \Throwable ) {
+						throw $scripted;
+					}
 					return is_array( $scripted ) && isset( $scripted[0] ) && is_array( $scripted[0] )
 						? array_shift( $this->responses[ $what ] )
 						: $scripted;
@@ -1068,17 +1072,91 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
-	 * Cancel is allowed before the child task starts, and refused once
-	 * the dashboard-side verify began (the child's work is done).
+	 * Entry status controls child cancellation, marker cleanup, and refusal.
+	 *
+	 * @dataProvider cancel_job_matrix
+	 *
+	 * @param string $status          Entry status.
+	 * @param string $child_task_id    Restore task id, or empty.
+	 * @param string $snapshot_task_id Backup task id, or empty.
+	 * @param bool   $child_throws     Whether the child call throws.
+	 * @param string $action          Expected child action, or empty for none.
+	 * @param bool   $marker_cleared   Whether the ad-hoc marker must be cleared.
+	 * @param string $outcome          Return value or refusal message fragment.
 	 */
-	public function test_cancel_window() {
-		$early = $this->make_job();
-		$this->orchestrator->cancel_job( (int) $early->id );
-		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED, MainWP_Backup_Restore_Job_Store::instance()->get_job( (int) $early->id )->status );
+	public function test_cancel_job_matrix( $status, $child_task_id, $snapshot_task_id, $child_throws, $action, $marker_cleared, $outcome ) {
+		$store  = MainWP_Backup_Restore_Job_Store::instance();
+		$job    = $this->make_job();
+		$job_id = (int) $job->id;
+		$this->assertTrue(
+			$store->set_status(
+				$job_id,
+				$status,
+				array(
+					'child_task_id'        => $child_task_id,
+					'pre_snapshot_task_id' => $snapshot_task_id,
+				)
+			)
+		);
+		MainWP_DB::instance()->update_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION, 'task-7-pre' );
+		$this->assertSame( 'task-7-pre', MainWP_DB::instance()->get_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION ) );
 
-		$late = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_VERIFYING, array( 'child_task_id' => 'task-9-restore' ) );
-		$this->expectException( MainWP_Exception::class );
-		$this->orchestrator->cancel_job( (int) $late->id );
+		if ( $child_throws ) {
+			$this->responses[ $action ] = new \Error( 'Child cancellation failed.' );
+		}
+
+		$result = null;
+		try {
+			$result = $this->orchestrator->cancel_job( $job_id );
+		} catch ( MainWP_Exception $exception ) {
+			$result = $exception;
+		}
+
+		if ( 'cancelled' === $outcome ) {
+			$this->assertSame( 'cancelled', $result );
+			$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED, $store->get_job( $job_id )->status );
+		} else {
+			$this->assertInstanceOf( MainWP_Exception::class, $result );
+			$this->assertStringContainsString( $outcome, $result->getMessage() );
+			$this->assertSame( $status, $store->get_job( $job_id )->status );
+		}
+
+		$expected_calls = array();
+		if ( '' !== $action ) {
+			$expected_calls[] = array(
+				'what'   => $action,
+				'params' => array( 'task_id' => 'backup_task_cancel' === $action ? $snapshot_task_id : $child_task_id ),
+			);
+		}
+		$this->assertSame( $expected_calls, $this->calls );
+		$marker = MainWP_DB::instance()->get_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION );
+		if ( $marker_cleared ) {
+			// The clear writes an empty string; the option read answers null for it.
+			$this->assertEmpty( $marker );
+		} else {
+			$this->assertSame( 'task-7-pre', $marker );
+		}
+	}
+
+	/**
+	 * Cancellation cases outside the running-job confirmation protocol.
+	 *
+	 * @return array
+	 */
+	public static function cancel_job_matrix() {
+		return array(
+			'pending with task ids'          => array( 'pending', 'task-9-restore', 'task-7-pre', false, '', false, 'cancelled' ),
+			'staging with task ids'          => array( 'staging', 'task-9-restore', 'task-7-pre', false, '', false, 'cancelled' ),
+			'failed_retryable with task ids' => array( 'failed_retryable', 'task-9-restore', 'task-7-pre', false, '', false, 'cancelled' ),
+			'transferring with task id'      => array( 'transferring', 'task-9-restore', 'task-7-pre', false, 'restore_task_cancel', false, 'cancelled' ),
+			'transferring without task id'   => array( 'transferring', '', 'task-7-pre', false, '', false, 'cancelled' ),
+			'pre_snapshot with task id'      => array( 'pre_snapshot', 'task-9-restore', 'task-7-pre', false, 'backup_task_cancel', true, 'cancelled' ),
+			'pre_snapshot without task id'   => array( 'pre_snapshot', 'task-9-restore', '', false, '', false, 'cancelled' ),
+			'pre_snapshot child throws'      => array( 'pre_snapshot', 'task-9-restore', 'task-7-pre', true, 'backup_task_cancel', true, 'cancelled' ),
+			'verifying refuses'              => array( 'verifying', 'task-9-restore', 'task-7-pre', false, '', false, 'finished its work' ),
+			'completed refuses'              => array( 'completed', 'task-9-restore', 'task-7-pre', false, '', false, 'finished its work' ),
+			'failed_permanent refuses'       => array( 'failed_permanent', 'task-9-restore', 'task-7-pre', false, '', false, 'finished its work' ),
+		);
 	}
 
 	/**
@@ -1104,19 +1182,6 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		}
 		$this->assertNotNull( $cancel );
 		$this->assertSame( 'task-9-restore', $cancel['params']['task_id'] );
-	}
-
-	/**
-	 * The pre-snapshot backup must not keep running after its restore is cancelled.
-	 */
-	public function test_cancel_pre_snapshot_cancels_child_backup_task() {
-		$job = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT, array( 'pre_snapshot_task_id' => 'task-7-pre' ) );
-		$this->orchestrator->cancel_job( (int) $job->id );
-
-		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED, MainWP_Backup_Restore_Job_Store::instance()->get_job( (int) $job->id )->status );
-		$cancel = array_values( array_filter( $this->calls, static fn( $call ) => 'backup_task_cancel' === $call['what'] ) );
-		$this->assertCount( 1, $cancel );
-		$this->assertSame( 'task-7-pre', $cancel[0]['params']['task_id'] );
 	}
 
 	/**

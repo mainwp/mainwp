@@ -282,6 +282,65 @@ class MainWP_Backup_Cloud_Delete_Driver_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * A false provider result must leave the object eligible for retry.
+	 *
+	 * @dataProvider false_delete_cases
+	 * @param bool $sweep Whether the failed key is found by the prefix sweep.
+	 * @return void
+	 */
+	public function test_false_delete_backs_off_without_advancing_checkpoint( $sweep ) {
+		list( $dest_id ) = $this->make_local_destination();
+		$key             = '5/980011/manifest.json';
+		$this->enqueue_delete( 980011, $dest_id, '5/980011/', $sweep ? array() : array( $key ) );
+
+		$provider = $this->createMock( \MainWP\Dashboard\MainWP_Backup_Storage_Provider::class );
+		$provider->expects( $this->once() )->method( 'delete_object' )->with( $key )->willReturn( false );
+		$provider->method( 'list_objects' )->willReturn(
+			array(
+				'objects'    => array( array( 'key' => $key ) ),
+				'truncated'  => false,
+				'next_token' => null,
+			)
+		);
+		$destination  = MainWP_Backup_Storage_Destinations::instance()->get_destination( $dest_id );
+		$destinations = $this->createMock( MainWP_Backup_Storage_Destinations::class );
+		$destinations->method( 'get_destination' )->with( $dest_id )->willReturn( $destination );
+		$destinations->method( 'make_provider' )->willReturn( $provider );
+		$instance = new \ReflectionProperty( MainWP_Backup_Storage_Destinations::class, 'instance' );
+		$original = $instance->getValue();
+		$instance->setValue( null, $destinations );
+
+		try {
+			$now = time();
+			MainWP_Backup_Cloud_Delete_Driver::instance()->process_pending_delete_jobs( 60, $now );
+			$job = MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( 980011, 'delete' )[0];
+			$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_RETRYABLE, $job->status );
+			$this->assertSame( 1, (int) $job->attempt_count );
+			$this->assertStringContainsString( $key, $job->last_error );
+			$this->assertSame( $now + 300, (int) $job->next_retry_at );
+			$this->assertSame( 0, $job->checkpoint['cursor'] );
+			$this->assertFalse( $job->checkpoint['swept'] );
+			if ( ! $sweep ) {
+				$this->assertFalse( $job->checkpoint['keys'][0]['deleted'] );
+			}
+		} finally {
+			$instance->setValue( null, $original );
+		}
+	}
+
+	/**
+	 * Both deletion paths must preserve failed work.
+	 *
+	 * @return array
+	 */
+	public static function false_delete_cases() {
+		return array(
+			'checkpoint' => array( false ),
+			'sweep'      => array( true ),
+		);
+	}
+
+	/**
 	 * A deleted destination fails the job permanently; its objects are
 	 * unreachable anyway.
 	 *

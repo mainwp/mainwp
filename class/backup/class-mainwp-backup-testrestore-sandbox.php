@@ -939,11 +939,18 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
             throw new MainWP_Exception( esc_html__( 'A backup archive could not be opened.', 'mainwp' ), 'zip open: ' . basename( $path ), self::ERR_APPLY );
         }
 
+        $total = 0;
+        $free  = function_exists( 'disk_free_space' ) ? disk_free_space( $this->temp_dir ) : false;
         for ( $i = 0; $i < $zip->numFiles; $i++ ) {
             $name = (string) $zip->getNameIndex( $i );
             if ( $this->has_unsafe_entry_name( $name ) ) {
                 $zip->close();
                 throw new MainWP_Exception( esc_html__( 'A backup archive contains an unsafe file path and cannot be extracted.', 'mainwp' ), 'zip traversal entry: ' . $name, self::ERR_APPLY );
+            }
+            $total += $zip->statIndex( $i )['size'];
+            if ( is_float( $free ) && $free < $total + 64 * MB_IN_BYTES ) {
+                $zip->close();
+                throw new MainWP_Exception( esc_html__( 'The test-restore sandbox does not have enough free space to extract the archive.', 'mainwp' ), 'zip extract free space: ' . basename( $path ), self::ERR_UNSUPPORTED );
             }
         }
 
@@ -969,13 +976,21 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         try {
             $phar     = new \PharData( $readable );
             $iterator = new \RecursiveIteratorIterator( $phar );
+            $total    = 0;
+            $free     = function_exists( 'disk_free_space' ) ? disk_free_space( $this->temp_dir ) : false;
             foreach ( $iterator as $file ) {
                 $name = $iterator->getSubPathname();
                 if ( $this->has_unsafe_entry_name( $name ) ) {
                     throw new MainWP_Exception( esc_html__( 'A backup archive contains an unsafe file path and cannot be extracted.', 'mainwp' ), 'tar traversal entry: ' . $name, self::ERR_APPLY );
                 }
+                $total += $file->getSize();
+                if ( is_float( $free ) && $free < $total + 64 * MB_IN_BYTES ) {
+                    throw new MainWP_Exception( esc_html__( 'The test-restore sandbox does not have enough free space to extract the archive.', 'mainwp' ), 'tar extract free space: ' . basename( $path ), self::ERR_UNSUPPORTED );
+                }
             }
             $phar->extractTo( untrailingslashit( $this->temp_dir ), null, true );
+        } catch ( MainWP_Exception $e ) {
+            throw $e;
         } catch ( \Throwable $e ) {
             throw new MainWP_Exception( esc_html__( 'A backup archive could not be extracted.', 'mainwp' ), 'tar extract: ' . $e->getMessage(), self::ERR_APPLY );
         }

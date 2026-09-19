@@ -318,16 +318,17 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             throw new MainWP_Exception( esc_html__( 'The restore finished its work on the site and can no longer be cancelled. Use the rollback once it completes or fails.', 'mainwp' ) );
         }
 
-        // A restore in the transferring phase already created a child task to
-        // receive chunks. Ask the child to drop it so a cancelled job does not
-        // leave a half-streamed task open. This is best-effort: the dashboard
-        // cancels the job regardless of how the child answers.
-        if ( MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING === $job->status && ! empty( $job->child_task_id ) ) {
-            try {
+        // Child tasks must not outlive their owner, but an unreachable child
+        // must not prevent the dashboard from cancelling its job.
+        try {
+            if ( MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING === $job->status && ! empty( $job->child_task_id ) ) {
                 $this->request_child_cancel( $job );
-            } catch ( \Throwable $e ) {
-                do_action( 'mainwp_log_info', sprintf( 'Restore job %d: the site did not confirm cancelling its transfer task: %s', (int) $job->id, $e->getMessage() ) );
+            } elseif ( MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT === $job->status && ! empty( $job->pre_snapshot_task_id ) ) {
+                $website = $this->website( $job );
+                MainWP_Connect::fetch_url_authed( $website, 'backup_task_cancel', array( 'task_id' => $job->pre_snapshot_task_id ), false, false, false );
             }
+        } catch ( \Throwable $e ) {
+            do_action( 'mainwp_log_info', sprintf( 'Restore job %d: the site did not confirm cancelling its child task: %s', (int) $job->id, $e->getMessage() ) );
         }
 
         MainWP_Backup_Restore_Transfer_Driver::instance()->cleanup_staging( $job_id );

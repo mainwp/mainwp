@@ -134,6 +134,8 @@ class MainWP_Backup_Cloud_Delete_Driver { // phpcs:ignore Generic.Classes.Openin
      * @param float  $deadline Monotonic deadline from microtime(true).
      * @param int    $now      Wall-clock for retry scheduling.
      *
+     * @throws \RuntimeException When a provider refuses a delete, handled as a job failure.
+     *
      * @return void
      */
     private function run_job( object $job, float $deadline, int $now ): void {
@@ -175,7 +177,9 @@ class MainWP_Backup_Cloud_Delete_Driver { // phpcs:ignore Generic.Classes.Openin
                 }
 
                 if ( empty( $keys[ $i ]['deleted'] ) && ! empty( $keys[ $i ]['key'] ) ) {
-                    $provider->delete_object( (string) $keys[ $i ]['key'] );
+                    if ( false === $provider->delete_object( (string) $keys[ $i ]['key'] ) ) {
+                        throw new \RuntimeException( esc_html( 'Could not delete object: ' . $keys[ $i ]['key'] ) );
+                    }
                 }
 
                 $checkpoint['keys'][ $i ]['deleted'] = true;
@@ -210,6 +214,8 @@ class MainWP_Backup_Cloud_Delete_Driver { // phpcs:ignore Generic.Classes.Openin
      * @param MainWP_Backup_Storage_Provider $provider   Destination provider.
      * @param float                          $deadline   Monotonic deadline.
      *
+     * @throws \RuntimeException When a provider refuses a delete.
+     *
      * @return bool True when the sweep finished; false on deadline.
      */
     private function sweep_prefix( object $job, array $checkpoint, MainWP_Backup_Storage_Provider $provider, float $deadline ): bool {
@@ -230,7 +236,9 @@ class MainWP_Backup_Cloud_Delete_Driver { // phpcs:ignore Generic.Classes.Openin
                 if ( microtime( true ) >= $deadline ) {
                     return false;
                 }
-                $provider->delete_object( (string) $object['key'] );
+                if ( false === $provider->delete_object( (string) $object['key'] ) ) {
+                    throw new \RuntimeException( esc_html( 'Could not delete object: ' . $object['key'] ) );
+                }
             }
 
             $token = isset( $page['next_token'] ) ? $page['next_token'] : null;

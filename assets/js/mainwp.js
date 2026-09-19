@@ -3968,7 +3968,7 @@ globalThis.mainwp_backup_error_html = function (pError) {
     let severity = mainwp_backup_error_severity(pError);
     let cssClass = severity == 'warning' ? 'ui yellow text' : 'ui red text mainwp-red';
     let label = severity == 'warning' ? __('WARNING') : __('ERROR');
-    return '<span class="' + cssClass + '">' + label + ': ' + getErrorMessage(pError) + '</span>';
+    return jQuery('<span>').addClass(cssClass).text(label + ': ' + getErrorMessage(pError)).prop('outerHTML');
 };
 
 globalThis.getErrorMessageInfo = function (repError, outputType) { // NOSONAR - complex.

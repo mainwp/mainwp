@@ -13,7 +13,20 @@
  * @package MainWP\Dashboard\Tests
  */
 
-namespace MainWP\Dashboard\Tests;
+namespace MainWP\Dashboard;
+
+/**
+ * Extraction limits need deterministic capacity without filling the host disk.
+ *
+ * @param string $directory Directory to measure.
+ * @return float|false
+ */
+function disk_free_space( $directory ) {
+	$free = Tests\MainWP_Backup_TestRestore_Sandbox_Test::$free_space;
+	return null === $free ? \disk_free_space( $directory ) : $free;
+}
+
+namespace MainWP\Dashboard\Tests; // phpcs:ignore Universal.Namespaces.OneDeclarationPerFile.MultipleFound -- the filesystem stub must share the production namespace.
 
 use MainWP\Dashboard\MainWP_Backup_TestRestore_Sandbox;
 use MainWP\Dashboard\MainWP_Exception;
@@ -21,7 +34,15 @@ use MainWP\Dashboard\MainWP_Exception;
 /**
  * Class MainWP_Backup_TestRestore_Sandbox_Test
  */
-class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
+class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs:ignore Universal.Files.SeparateFunctionsFromOO.Mixed, Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- the switchable stub belongs with its regression tests.
+
+	/**
+	 * Null preserves the host capacity outside capacity tests.
+	 *
+	 * @var float|false|null
+	 */
+	public static $free_space = null;
+
 
 	/**
 	 * Scratch dir for archive fixtures.
@@ -37,7 +58,8 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 	 */
 	public function set_up() {
 		parent::set_up();
-		$this->dir = sys_get_temp_dir() . '/mainwp-tr-sandbox-' . uniqid();
+		self::$free_space = null;
+		$this->dir        = sys_get_temp_dir() . '/mainwp-tr-sandbox-' . uniqid();
 		mkdir( $this->dir ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
 	}
 
@@ -47,6 +69,7 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 	 * @return void
 	 */
 	public function tear_down() {
+		self::$free_space = null;
 		$this->rrmdir( $this->dir );
 		parent::tear_down();
 	}
@@ -191,6 +214,69 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase {
 		} finally {
 			$sandbox->tear_down();
 		}
+	}
+
+	/**
+	 * Every member must fit while leaving the reserve available to other uploads.
+	 *
+	 * @dataProvider extraction_space_cases
+	 * @param string     $format Archive format.
+	 * @param float|bool $free Free bytes, or false when unavailable.
+	 * @param bool       $refused Whether extraction must stop.
+	 * @return void
+	 */
+	public function test_extraction_space_guard( $format, $free, $refused ) {
+		$path = 'zip' === $format ? $this->clean_zip() : $this->clean_tar();
+		if ( 'zip' === $format ) {
+			$archive = new \ZipArchive();
+			$archive->open( $path );
+		} else {
+			$archive = new \PharData( $path );
+		}
+		$archive->addFromString( 'second.txt', 'more-bytes' );
+		if ( 'zip' === $format ) {
+			$archive->close();
+		}
+		unset( $archive );
+		$sandbox = new MainWP_Backup_TestRestore_Sandbox();
+		$sandbox->bring_up();
+		self::$free_space = $free;
+
+		try {
+			$threw = false;
+			try {
+				$sandbox->extract_files( $path );
+			} catch ( MainWP_Exception $e ) {
+				$threw = true;
+				$this->assertSame( MainWP_Backup_TestRestore_Sandbox::ERR_UNSUPPORTED, $e->get_message_error_code() );
+				$this->assertStringContainsString( 'does not have enough free space to extract the archive', $e->getMessage() );
+			}
+			$this->assertSame( $refused, $threw );
+			$this->assertSame( $refused ? 0 : 2, $sandbox->temp_file_count() );
+			if ( ! $refused ) {
+				$this->assertSame( hash( 'sha256', 'more-bytes' ), $sandbox->sentinel_sha256( 'second.txt' ) );
+			}
+		} finally {
+			self::$free_space = null;
+			$sandbox->tear_down();
+		}
+	}
+
+	/**
+	 * Two ten-byte members distinguish total expansion from a per-member limit.
+	 *
+	 * @return array
+	 */
+	public static function extraction_space_cases() {
+		$boundary = (float) ( 64 * MB_IN_BYTES + 20 );
+		return array(
+			'zip short'       => array( 'zip', $boundary - 1, true ),
+			'tar short'       => array( 'tar', $boundary - 1, true ),
+			'zip boundary'    => array( 'zip', $boundary, false ),
+			'tar boundary'    => array( 'tar', $boundary, false ),
+			'zip unavailable' => array( 'zip', false, false ),
+			'tar unavailable' => array( 'tar', false, false ),
+		);
 	}
 
 	/**

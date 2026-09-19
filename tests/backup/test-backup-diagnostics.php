@@ -1198,6 +1198,42 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Missing site ids must never grant unrestricted export access.
+	 *
+	 * @dataProvider empty_site_lookup_cases
+	 * @param array|null $site_ids Site query result.
+	 * @return void
+	 */
+	public function test_export_scope_is_empty_when_site_lookup_is_empty( $site_ids ) {
+		global $wpdb;
+		$original     = $wpdb;
+		$wpdb         = $this->getMockBuilder( \wpdb::class )->disableOriginalConstructor()->onlyMethods( array( 'get_col' ) )->getMock(); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- isolate the failed lookup without breaking the test database.
+		$wpdb->prefix = $original->prefix;
+		// MainWP_DB pings the handle before it hands out a table name, and a mock with no dbh takes the pre-mysqli branch.
+		$wpdb->dbh = $original->dbh;
+		$wpdb->expects( $this->once() )->method( 'get_col' )->willReturn( $site_ids );
+
+		try {
+			$scope = new \ReflectionMethod( MainWP_Backup_Diagnostics::class, 'export_scope_site_ids' );
+			$this->assertSame( array(), $scope->invoke( MainWP_Backup_Diagnostics::instance() ) );
+		} finally {
+			$wpdb = $original; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- restore the database for subsequent tests.
+		}
+	}
+
+	/**
+	 * Empty and failed lookups share the same closed scope.
+	 *
+	 * @return array
+	 */
+	public static function empty_site_lookup_cases() {
+		return array(
+			'empty'  => array( array() ),
+			'failed' => array( null ),
+		);
+	}
+
+	/**
 	 * With no recorded events there is nothing worth exporting.
 	 *
 	 * @return void

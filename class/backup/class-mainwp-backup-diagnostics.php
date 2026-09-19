@@ -816,6 +816,10 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
         $site_ids = (array) $wpdb->get_col( 'SELECT id FROM ' . MainWP_DB::instance()->get_table_name( 'wp' ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery -- id list of a known internal table, no user input.
 
+        if ( empty( $site_ids ) ) {
+            return array();
+        }
+
         $allowed = array();
         foreach ( $site_ids as $site_id ) {
             $site_id = (int) $site_id;

@@ -1107,6 +1107,19 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
+	 * The pre-snapshot backup must not keep running after its restore is cancelled.
+	 */
+	public function test_cancel_pre_snapshot_cancels_child_backup_task() {
+		$job = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT, array( 'pre_snapshot_task_id' => 'task-7-pre' ) );
+		$this->orchestrator->cancel_job( (int) $job->id );
+
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED, MainWP_Backup_Restore_Job_Store::instance()->get_job( (int) $job->id )->status );
+		$cancel = array_values( array_filter( $this->calls, static fn( $call ) => 'backup_task_cancel' === $call['what'] ) );
+		$this->assertCount( 1, $cancel );
+		$this->assertSame( 'task-7-pre', $cancel[0]['params']['task_id'] );
+	}
+
+	/**
 	 * A child mid-slice reports busy; instead of blocking the request on
 	 * retries, the cancel is recorded as an intent the cron lane applies
 	 * between slices. The job stays running until the child confirms.

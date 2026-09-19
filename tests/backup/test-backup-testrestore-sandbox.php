@@ -1143,6 +1143,81 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 	}
 
 	/**
+	 * Dump syntax must not hide a statement that can reach outside the scratch database.
+	 *
+	 * @return void
+	 */
+	public function test_sql_statement_guard_matrix() {
+		$scratch = 'mainwp_tr_matrix';
+		$cases   = array(
+			'plain statements'     => array( 'CREATE TABLE wp_posts (id int); INSERT INTO wp_posts VALUES (1);', array( 'CREATE TABLE wp_posts (id int)', 'INSERT INTO wp_posts VALUES (1)' ), '' ),
+			'single quoted value'  => array( "INSERT INTO wp_posts VALUES ('a;b');", array( "INSERT INTO wp_posts VALUES ('a;b')" ), '' ),
+			'double quoted value'  => array( 'INSERT INTO wp_posts VALUES ("a;b");', array( 'INSERT INTO wp_posts VALUES ("a;b")' ), '' ),
+			'backtick identifier'  => array( 'CREATE TABLE `a;b` (id int);', array( 'CREATE TABLE `a;b` (id int)' ), '' ),
+			'escaped quote'        => array( "INSERT INTO wp_posts VALUES ('a\\';b');", array( "INSERT INTO wp_posts VALUES ('a\\';b')" ), '' ),
+			'doubled quote'        => array( "INSERT INTO wp_posts VALUES ('a'';b');", array( "INSERT INTO wp_posts VALUES ('a'';b')" ), '' ),
+			'escaped double quote' => array( 'INSERT INTO wp_posts VALUES ("a\\";b");', array( 'INSERT INTO wp_posts VALUES ("a\\";b")' ), '' ),
+			'doubled double quote' => array( 'INSERT INTO wp_posts VALUES ("a"";b");', array( 'INSERT INTO wp_posts VALUES ("a"";b")' ), '' ),
+			'doubled backtick'     => array( 'CREATE TABLE `a``;b` (id int);', array( 'CREATE TABLE `a``;b` (id int)' ), '' ),
+			'dash comment'         => array( "-- ignored ; USE other\nSELECT 1;", array( "-- ignored ; USE other\nSELECT 1" ), '' ),
+			'hash comment'         => array( "# ignored ; USE other\nSELECT 1;", array( "# ignored ; USE other\nSELECT 1" ), '' ),
+			'block comment'        => array( '/* ignored ; USE other */ SELECT 1;', array( '/* ignored ; USE other */ SELECT 1' ), '' ),
+			'version conditional'  => array( '/*!40101 SET x=1 */;', array( '/*!40101 SET x=1 */' ), '' ),
+			'version value'        => array( "/*!40101 SET x='a;b' */; SELECT 1;", array( "/*!40101 SET x='a;b' */", 'SELECT 1' ), '' ),
+			'use database'         => array( 'USE `other`;', array( 'USE `other`' ), 'USE' ),
+			'lowercase use'        => array( 'use other;', array( 'use other' ), 'USE' ),
+			'comment before use'   => array( '/* prefix */ USE other;', array( '/* prefix */ USE other' ), 'USE' ),
+			'conditional use'      => array( '/*!40101 USE other */;', array( '/*!40101 USE other */' ), 'USE' ),
+			'split keyword'        => array( 'DROP /* reason */ DATABASE other;', array( 'DROP /* reason */ DATABASE other' ), 'DROP DATABASE' ),
+			'foreign schema'       => array( 'INSERT INTO otherdb.wp_users VALUES (1);', array( 'INSERT INTO otherdb.wp_users VALUES (1)' ), 'INTO cross-schema' ),
+			'quoted foreign'       => array( 'INSERT INTO `otherdb`.`wp_users` VALUES (1);', array( 'INSERT INTO `otherdb`.`wp_users` VALUES (1)' ), 'INTO cross-schema' ),
+			'quoted scratch'       => array( 'INSERT INTO `mainwp_tr_matrix`.`wp_posts` VALUES (1);', array( 'INSERT INTO `mainwp_tr_matrix`.`wp_posts` VALUES (1)' ), '' ),
+			'unquoted scratch'     => array( 'INSERT INTO mainwp_tr_matrix.wp_posts VALUES (1);', array( 'INSERT INTO mainwp_tr_matrix.wp_posts VALUES (1)' ), '' ),
+			'unqualified table'    => array( 'INSERT INTO `wp_posts` VALUES (1);', array( 'INSERT INTO `wp_posts` VALUES (1)' ), '' ),
+			'literal use'          => array( "INSERT INTO wp_posts VALUES ('USE other; INSERT INTO otherdb.wp_users');", array( "INSERT INTO wp_posts VALUES ('USE other; INSERT INTO otherdb.wp_users')" ), '' ),
+			'trailing semicolons'  => array( 'SELECT 1;;;', array( 'SELECT 1' ), '' ),
+			'comments only'        => array( '-- comment;', array(), '' ),
+			'foreign from'         => array( 'DELETE FROM otherdb.wp_posts;', array( 'DELETE FROM otherdb.wp_posts' ), 'FROM cross-schema' ),
+			'foreign update'       => array( 'UPDATE otherdb.wp_posts SET id=1;', array( 'UPDATE otherdb.wp_posts SET id=1' ), 'UPDATE cross-schema' ),
+			'foreign table'        => array( 'DROP TABLE otherdb.wp_posts;', array( 'DROP TABLE otherdb.wp_posts' ), 'TABLE cross-schema' ),
+			'foreign join'         => array( 'SELECT * FROM wp_posts JOIN otherdb.wp_users;', array( 'SELECT * FROM wp_posts JOIN otherdb.wp_users' ), 'JOIN cross-schema' ),
+		);
+		foreach ( array( 'CREATE DATABASE', 'CREATE SCHEMA', 'DROP DATABASE', 'DROP SCHEMA', 'ALTER DATABASE', 'ALTER SCHEMA', 'GRANT', 'REVOKE', 'CREATE USER', 'DROP USER', 'SET PASSWORD', 'LOAD DATA', 'LOAD XML', 'CREATE TRIGGER', 'CREATE PROCEDURE', 'CREATE FUNCTION', 'CREATE EVENT' ) as $keyword ) {
+			$cases[ $keyword ] = array( $keyword . ' private_site_data;', array( $keyword . ' private_site_data' ), $keyword );
+		}
+		foreach ( array( 'OUTFILE', 'DUMPFILE' ) as $target ) {
+			$sql              = "SELECT 'private_site_data' INTO " . $target . " '/tmp/dump'";
+			$cases[ $target ] = array( $sql . ';', array( $sql ), 'SELECT INTO ' . $target );
+		}
+
+		$split = new \ReflectionMethod( MainWP_Backup_TestRestore_Sandbox::class, 'split_sql_dump' );
+		$guard = new \ReflectionMethod( MainWP_Backup_TestRestore_Sandbox::class, 'guard_sql_statement' );
+		$split->setAccessible( true );
+		$guard->setAccessible( true );
+		foreach ( $cases as $label => $case ) {
+			list( $sql, $expected, $refusal ) = $case;
+			$statements                       = iterator_to_array( $split->invoke( null, $sql ), false );
+			$this->assertSame( $expected, $statements, $label );
+			$caught = null;
+			try {
+				foreach ( $statements as $statement ) {
+					$guard->invoke( null, $statement, $scratch );
+				}
+			} catch ( MainWP_Exception $e ) {
+				$caught = $e;
+			}
+			if ( '' === $refusal ) {
+				$this->assertNull( $caught, $label );
+			} else {
+				$this->assertInstanceOf( MainWP_Exception::class, $caught, $label );
+				$this->assertSame( MainWP_Backup_TestRestore_Sandbox::ERR_UNSUPPORTED, $caught->get_message_error_code(), $label );
+				$this->assertSame( $refusal, $caught->get_message_extra( false ), $label );
+				$this->assertSame( 'The backup database dump contains a statement the test restore will not run: ' . $refusal . '.', $caught->getMessage(), $label );
+			}
+		}
+	}
+
+	/**
 	 * Dump readers join all SQL members and size guards count their stored bytes.
 	 *
 	 * @dataProvider sql_dump_archive_cases

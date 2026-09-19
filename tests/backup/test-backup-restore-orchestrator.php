@@ -1027,6 +1027,30 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
+	 * Failure must release its own handle without displacing a newer backup.
+	 *
+	 * @dataProvider pre_snapshot_completion_handles
+	 *
+	 * @param string $handle_task_id Persisted task id when the child fails.
+	 * @param bool   $cleared        Whether the failed task owns the handle.
+	 */
+	public function test_pre_snapshot_failure_releases_only_owned_handle( $handle_task_id, $cleared ) {
+		$this->responses['backup_task_run'] = array(
+			'task_id' => 'task-7-pre',
+			'phase'   => 'failed',
+			'error'   => 'Safety backup failed.',
+		);
+		$handle                             = wp_json_encode( array( 'task_id' => $handle_task_id ) );
+		MainWP_DB::instance()->update_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION, $handle );
+
+		$job = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT, array( 'pre_snapshot_task_id' => 'task-7-pre' ) );
+		$job = $this->tick( $job );
+
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
+		$this->assertSame( $cleared ? null : $handle, MainWP_DB::instance()->get_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION ) );
+	}
+
+	/**
 	 * A child response can arrive after another backup replaces the handle.
 	 *
 	 * @return array
@@ -1212,9 +1236,11 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	public static function cancel_job_matrix() {
 		return array(
 			'pending with task ids'          => array( 'pending', 'task-9-restore', 'task-7-pre', false, '', false, 'cancelled', 'own', 'unchanged' ),
+			'preflight with task ids'        => array( 'preflight', 'task-9-restore', 'task-7-pre', false, '', false, 'cancelled', 'own', 'unchanged' ),
 			'staging with task ids'          => array( 'staging', 'task-9-restore', 'task-7-pre', false, '', false, 'cancelled', 'own', 'unchanged' ),
 			'failed_retryable with task ids' => array( 'failed_retryable', 'task-9-restore', 'task-7-pre', false, '', false, 'cancelled', 'own', 'unchanged' ),
 			'transferring with task id'      => array( 'transferring', 'task-9-restore', 'task-7-pre', false, 'restore_task_cancel', false, 'cancelled', 'own', 'unchanged' ),
+			'transferring child throws'      => array( 'transferring', 'task-9-restore', 'task-7-pre', true, 'restore_task_cancel', false, 'cancelled', 'own', 'unchanged' ),
 			'transferring without task id'   => array( 'transferring', '', 'task-7-pre', false, '', false, 'cancelled', 'own', 'unchanged' ),
 			'pre_snapshot with task id'      => array( 'pre_snapshot', 'task-9-restore', 'task-7-pre', false, 'backup_task_cancel', true, 'cancelled', 'own', 'cleared' ),
 			'pre_snapshot foreign handle'    => array( 'pre_snapshot', 'task-9-restore', 'task-7-pre', false, 'backup_task_cancel', false, 'cancelled', 'foreign', 'unchanged' ),
@@ -1222,6 +1248,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			'pre_snapshot undecodable'       => array( 'pre_snapshot', 'task-9-restore', 'task-7-pre', false, 'backup_task_cancel', false, 'cancelled', 'undecodable', 'unchanged' ),
 			'pre_snapshot without task id'   => array( 'pre_snapshot', 'task-9-restore', '', false, '', false, 'cancelled', 'own', 'unchanged' ),
 			'pre_snapshot child throws'      => array( 'pre_snapshot', 'task-9-restore', 'task-7-pre', true, 'backup_task_cancel', true, 'cancelled', 'own', 'cleared' ),
+			'already cancelled refuses'      => array( 'cancelled', 'task-9-restore', 'task-7-pre', false, '', false, 'The restore is already cancelled.', 'own', 'unchanged' ),
 			'verifying refuses'              => array( 'verifying', 'task-9-restore', 'task-7-pre', false, '', false, 'finished its work', 'own', 'unchanged' ),
 			'completed refuses'              => array( 'completed', 'task-9-restore', 'task-7-pre', false, '', false, 'finished its work', 'own', 'unchanged' ),
 			'failed_permanent refuses'       => array( 'failed_permanent', 'task-9-restore', 'task-7-pre', false, '', false, 'finished its work', 'own', 'unchanged' ),

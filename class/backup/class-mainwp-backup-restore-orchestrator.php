@@ -314,9 +314,12 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 $child_action = ! empty( $job->pre_snapshot_task_id ) ? 'backup_task_cancel' : '';
                 break;
             case MainWP_Backup_Restore_Job_Store::STATUS_PENDING:
+            case MainWP_Backup_Restore_Job_Store::STATUS_PREFLIGHT:
             case MainWP_Backup_Restore_Job_Store::STATUS_STAGING:
             case MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE:
                 break;
+            case MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED:
+                throw new MainWP_Exception( esc_html__( 'The restore is already cancelled.', 'mainwp' ) );
             default:
                 throw new MainWP_Exception( esc_html__( 'The restore finished its work on the site and can no longer be cancelled. Use the rollback once it completes or fails.', 'mainwp' ) );
         }
@@ -772,6 +775,8 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             if ( 'failed' === $phase || '' === $phase ) {
                 $error      = is_array( $payload ) && isset( $payload['error'] ) ? (string) $payload['error'] : esc_html__( 'The pre-restore safety backup failed.', 'mainwp' );
                 $error_code = is_array( $payload ) && isset( $payload['error_code'] ) ? (string) $payload['error_code'] : '';
+                // Like success, failure must release the handle so the next restore cannot reuse a terminal task.
+                $this->release_pre_snapshot_handle( $website, (string) $job->pre_snapshot_task_id );
                 $this->record_failure( $job, $error, false, $error_code );
                 return;
             }

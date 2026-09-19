@@ -1640,11 +1640,11 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * A late error prevents a clean snapshot of the closed run.
+	 * A late error is carried by the closed-run snapshot, not dropped with it.
 	 *
 	 * @return void
 	 */
-	public function test_closed_run_snapshot_gate_rejects_late_errors() {
+	public function test_closed_run_snapshot_carries_late_errors() {
 		global $wpdb;
 		list( $site_id, $task ) = $this->arrange_manual_task();
 		$closed_last_run        = time() - 200;
@@ -1683,11 +1683,13 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 				MainWP_Manage_Backups_Handler::execute_backup_task( $task );
 				$this->assertSame( 2, $reads, 'The spy must reach the closed-run snapshot re-read.' );
 				$saved = get_transient( $key );
+				$this->assertIsArray( $saved, 'The closed run must be saved whether or not a late error landed.' );
+				$this->assertSame( $closed_last_run, (int) $saved['task']->last_run );
 				if ( $late_write ) {
-					$this->assertFalse( $saved, 'A late error must prevent saving a clean closed-run snapshot.' );
+					// The re-read row is what gets saved, so the poller reads the
+					// error instead of run_not_found.
+					$this->assertSame( 'Lease-lost driver flushed a late error.', $saved['task']->backup_errors );
 				} else {
-					$this->assertIsArray( $saved );
-					$this->assertSame( $closed_last_run, (int) $saved['task']->last_run );
 					$this->assertSame( $task->backup_errors, $saved['task']->backup_errors );
 				}
 			} finally {

@@ -336,21 +336,161 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         }
 
         try {
-            // phpcs:ignore WordPress.DB.RestrictedClasses.mysql__mysqli_multi_query, WordPress.DB.PreparedSQL.NotPrepared -- replaying a backup dump into the isolated scratch database, not $wpdb.
-            $started = $this->mysqli->multi_query( $sql );
-            if ( $started ) {
-                do {
-                    $result = $this->mysqli->store_result();
-                    if ( $result instanceof \mysqli_result ) {
-                        $result->free();
-                    }
-                } while ( $this->mysqli->more_results() && $this->mysqli->next_result() );
-            }
-            if ( false === $started || 0 !== $this->mysqli->errno ) {
-                throw new MainWP_Exception( esc_html__( 'The backup database dump did not import cleanly.', 'mainwp' ), 'import: ' . $this->mysqli->error, self::ERR_APPLY );
+            foreach ( self::split_sql_dump( $sql ) as $statement ) {
+                self::guard_sql_statement( $statement, $this->db_name );
+                // phpcs:ignore WordPress.DB.RestrictedClasses.mysql__mysqli_query, WordPress.DB.PreparedSQL.NotPrepared -- dump statements cannot use placeholders; the guard limits their scope.
+                $result = $this->mysqli->query( $statement );
+                if ( false === $result || 0 !== $this->mysqli->errno ) {
+                    throw new MainWP_Exception( esc_html__( 'The backup database dump did not import cleanly.', 'mainwp' ), 'import: ' . $this->mysqli->error, self::ERR_APPLY );
+                }
+                if ( $result instanceof \mysqli_result ) {
+                    $result->free();
+                }
             }
         } catch ( \mysqli_sql_exception $e ) {
             throw new MainWP_Exception( esc_html__( 'The backup database dump did not import cleanly.', 'mainwp' ), 'import: ' . $e->getMessage(), self::ERR_APPLY );
+        }
+    }
+
+    /**
+     * Quoted values and comments must not supply statement boundaries or keywords.
+     *
+     * @param string $sql             SQL bytes.
+     * @param bool   $executable_only Exclude whitespace and expand executable comments.
+     *
+     * @return \Generator
+     */
+    private static function sql_dump_tokens( string $sql, bool $executable_only = false ): \Generator {
+        $length = strlen( $sql );
+        for ( $i = 0; $i < $length; ) {
+            $start = $i;
+            $char  = $sql[ $i++ ];
+            if ( ctype_space( $char ) ) {
+                if ( ! $executable_only ) {
+                    yield $char;
+                }
+                continue;
+            }
+            if ( '#' === $char || ( '-' === $char && $i < $length && '-' === $sql[ $i ] && ( $i + 1 === $length || ord( $sql[ $i + 1 ] ) <= 32 ) ) ) {
+                while ( $i < $length && "\n" !== $sql[ $i ] && "\r" !== $sql[ $i ] ) {
+                    ++$i;
+                }
+                if ( ! $executable_only ) {
+                    yield substr( $sql, $start, $i - $start );
+                }
+                continue;
+            }
+            if ( '/' === $char && $i < $length && '*' === $sql[ $i ] ) {
+                $end = strpos( $sql, '*/', $i + 1 );
+                $end = false === $end ? $length : $end;
+                $i   = min( $length, $end + 2 );
+                if ( ! $executable_only ) {
+                    yield substr( $sql, $start, $i - $start );
+                } elseif ( isset( $sql[ $start + 2 ] ) && '!' === $sql[ $start + 2 ] ) {
+                    // MySQL executes these bodies, so hiding their keywords would bypass the guard.
+                    $body = preg_replace( '/^\d{5,6}\s*/', '', substr( $sql, $start + 3, $end - $start - 3 ) );
+                    yield from self::sql_dump_tokens( $body, true );
+                }
+                continue;
+            }
+            if ( "'" === $char || '"' === $char || '`' === $char ) {
+                while ( $i < $length ) {
+                    $next = $sql[ $i++ ];
+                    if ( '\\' === $next && '`' !== $char && $i < $length ) {
+                        ++$i;
+                    } elseif ( $char === $next ) {
+                        if ( $i < $length && $char === $sql[ $i ] ) {
+                            ++$i;
+                        } else {
+                            break;
+                        }
+                    }
+                }
+            } elseif ( ctype_alnum( $char ) || '_' === $char || '$' === $char || ord( $char ) >= 128 ) {
+                while ( $i < $length && ( ctype_alnum( $sql[ $i ] ) || '_' === $sql[ $i ] || '$' === $sql[ $i ] || ord( $sql[ $i ] ) >= 128 ) ) {
+                    ++$i;
+                }
+            }
+            yield substr( $sql, $start, $i - $start );
+        }
+    }
+
+    /**
+     * Only unquoted semicolons can separate queries sent to the server.
+     *
+     * @param string $sql Dump bytes.
+     *
+     * @return \Generator
+     */
+    private static function split_sql_dump( string $sql ): \Generator {
+        $statement = '';
+        foreach ( self::sql_dump_tokens( $sql ) as $token ) {
+            if ( ';' !== $token ) {
+                $statement .= $token;
+                continue;
+            }
+            if ( self::sql_dump_tokens( $statement, true )->valid() ) {
+                yield trim( $statement );
+            }
+            $statement = '';
+        }
+        if ( self::sql_dump_tokens( $statement, true )->valid() ) {
+            yield trim( $statement );
+        }
+    }
+
+    /**
+     * Selecting a scratch database does not restrict the dashboard user's grants.
+     *
+     * @param string $statement SQL statement.
+     * @param string $db_name   Scratch database name.
+     *
+     * @throws MainWP_Exception When a statement can escape the scratch database.
+     *
+     * @return void
+     */
+    private static function guard_sql_statement( string $statement, string $db_name ): void {
+        $tokens   = self::sql_dump_tokens( $statement, true );
+        $window   = array();
+        $first    = '';
+        $position = 0;
+        $refused  = '';
+        foreach ( $tokens as $token ) {
+            $keyword = strtoupper( $token );
+            if ( 0 === $position ) {
+                $first = $keyword;
+                if ( in_array( $first, array( 'USE', 'GRANT', 'REVOKE' ), true ) ) {
+                    $refused = $first;
+                }
+            } elseif ( 1 === $position ) {
+                $pair = $first . ' ' . $keyword;
+                if ( in_array( $pair, array( 'CREATE DATABASE', 'CREATE SCHEMA', 'DROP DATABASE', 'DROP SCHEMA', 'ALTER DATABASE', 'ALTER SCHEMA', 'CREATE USER', 'DROP USER', 'SET PASSWORD', 'LOAD DATA', 'LOAD XML', 'CREATE TRIGGER', 'CREATE PROCEDURE', 'CREATE FUNCTION', 'CREATE EVENT' ), true ) ) {
+                    $refused = $pair;
+                }
+            }
+            ++$position;
+            $window[] = $token;
+            if ( count( $window ) > 4 ) {
+                array_shift( $window );
+            }
+            $count = count( $window );
+            if ( 'SELECT' === $first && $count >= 2 && 'INTO' === strtoupper( $window[ $count - 2 ] ) && in_array( $keyword, array( 'OUTFILE', 'DUMPFILE' ), true ) ) {
+                $refused = 'SELECT INTO ' . $keyword;
+            }
+            if ( 4 === $count && in_array( strtoupper( $window[0] ), array( 'INTO', 'FROM', 'UPDATE', 'TABLE', 'JOIN' ), true )
+                && '.' === $window[2]
+                && preg_match( '/^(?:`(?:[^`]|``)+`|[a-zA-Z0-9_$]+)$/D', $window[1] )
+                && preg_match( '/^(?:`(?:[^`]|``)+`|[a-zA-Z0-9_$]+)$/D', $window[3] )
+                && str_replace( '``', '`', trim( $window[1], '`' ) ) !== $db_name ) {
+                $refused = strtoupper( $window[0] ) . ' cross-schema';
+            }
+        }
+        if ( '' !== $refused ) {
+            throw new MainWP_Exception(
+                sprintf( esc_html__( 'The backup database dump contains a statement the test restore will not run: %s.', 'mainwp' ), $refused ),
+                $refused,
+                self::ERR_UNSUPPORTED
+            );
         }
     }
 
@@ -543,10 +683,13 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
             foreach ( $session as $sql ) {
                 // phpcs:ignore WordPress.DB.RestrictedClasses.mysql__mysqli_query, WordPress.DB.PreparedSQL.NotPrepared -- fixed session statements on the dedicated sandbox connection.
                 if ( false === $this->mysqli->query( $sql ) ) {
-                    throw new MainWP_Exception( esc_html__( 'The test-restore sandbox could not apply the restore session.', 'mainwp' ), 'restore session: ' . $this->mysqli->error, self::ERR_UNSUPPORTED );
+                    $error = $this->mysqli->error;
+                    $this->tear_down();
+                    throw new MainWP_Exception( esc_html__( 'The test-restore sandbox could not apply the restore session.', 'mainwp' ), 'restore session: ' . $error, self::ERR_UNSUPPORTED );
                 }
             }
         } catch ( \mysqli_sql_exception $e ) {
+            $this->tear_down();
             throw new MainWP_Exception( esc_html__( 'The test-restore sandbox could not apply the restore session.', 'mainwp' ), 'restore session: ' . $e->getMessage(), self::ERR_UNSUPPORTED );
         }
     }
@@ -638,12 +781,13 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
     private function read_sql_dump( string $path ): string {
         $ext = MainWP_Backup_File_Manager::get_real_extension( $path );
 
-        if ( '.sql' === $ext ) {
-            return (string) file_get_contents( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local staged artifact.
+        // The child's guard can arrive on a lone dump as well as an archive member.
+        if ( '.sql' === $ext || MainWP_Utility::ends_with( $path, '.sql.php' ) ) {
+            return $this->strip_sql_dump_guard( $path, (string) file_get_contents( $path ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local staged artifact.
         }
 
         if ( '.gz' === $ext || '.bz2' === $ext ) {
-            return $this->decompress_bytes( $path, $ext );
+            return $this->strip_sql_dump_guard( substr( $path, 0, -strlen( $ext ) ), $this->decompress_bytes( $path, $ext ) );
         }
 
         if ( '.zip' === $ext || '.sql.zip' === $ext ) {
@@ -687,7 +831,7 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
     public function decompressed_sql_dump_bytes( string $path, int $ceiling ): int {
         $ext = MainWP_Backup_File_Manager::get_real_extension( $path );
 
-        if ( '.sql' === $ext ) {
+        if ( '.sql' === $ext || MainWP_Utility::ends_with( $path, '.sql.php' ) ) {
             return (int) filesize( $path );
         }
         if ( '.gz' === $ext ) {
@@ -792,8 +936,14 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
      *
      * @param string $path Zip path.
      *
-     * @return int Uncompressed size, or zero when unreadable (read_sql_dump
-     *             surfaces the real error at import time).
+     * @throws MainWP_Exception When a dump member cannot be sized.
+     *
+     * @return int Uncompressed size, or zero when the extension is missing or
+     *             the archive will not open (read_sql_dump surfaces the real
+     *             error at import time). A member the directory cannot size is
+     *             refused rather than counted as zero, because zero understates
+     *             the archive and lets the memory cap pass on a dump nobody can
+     *             measure.
      */
     private function archive_member_size_zip( string $path ): int {
         if ( ! class_exists( '\ZipArchive' ) ) {
@@ -808,8 +958,12 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         for ( $i = 0; $i < $zip->numFiles; $i++ ) {
             $name = (string) $zip->getNameIndex( $i );
             if ( $this->is_sql_dump_member( $name ) ) {
-                $stat  = $zip->statIndex( $i );
-                $size += ( is_array( $stat ) && isset( $stat['size'] ) ) ? (int) $stat['size'] : 0;
+                $stat = $zip->statIndex( $i );
+                if ( ! is_array( $stat ) || ! isset( $stat['size'] ) ) {
+                    $zip->close();
+                    throw new MainWP_Exception( esc_html__( 'A backup archive could not be read.', 'mainwp' ), 'zip stat entry: ' . $name, self::ERR_UNSUPPORTED );
+                }
+                $size += (int) $stat['size'];
             }
         }
         $zip->close();
@@ -821,10 +975,9 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
      *
      * @param string $path Tar path (tar/tar.gz/tar.bz2).
      *
-     * @throws MainWP_Exception When the host cannot prepare a readable alias.
+     * @throws MainWP_Exception When the archive cannot be prepared or sized.
      *
-     * @return int Member size, or zero for an unreadable archive (read_sql_dump
-     *             surfaces the archive error at import time).
+     * @return int Member size, or zero when the archive extension is unavailable.
      */
     private function archive_member_size_tar( string $path ): int {
         if ( ! class_exists( '\PharData' ) ) {
@@ -837,11 +990,18 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
             $iterator = new \RecursiveIteratorIterator( $phar );
             foreach ( $iterator as $file ) {
                 if ( $this->is_sql_dump_member( $file->getFilename() ) ) {
-                    $size += (int) $file->getSize();
+                    $member_size = $file->getSize();
+                    if ( false === $member_size ) {
+                        throw new MainWP_Exception( esc_html__( 'A backup archive could not be read.', 'mainwp' ), 'tar stat entry', self::ERR_UNSUPPORTED );
+                    }
+                    $size += (int) $member_size;
                 }
             }
+        } catch ( MainWP_Exception $e ) {
+            // The unsizable-member refusal above carries which member failed; the generic wrap below would lose it.
+            throw $e;
         } catch ( \Throwable $e ) {
-            return 0;
+            throw new MainWP_Exception( esc_html__( 'A backup archive could not be read.', 'mainwp' ), 'tar member size', self::ERR_UNSUPPORTED );
         }
         return $size;
     }

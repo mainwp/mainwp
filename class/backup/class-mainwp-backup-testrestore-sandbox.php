@@ -139,6 +139,7 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         }
         $this->created_db = true;
         $this->mysqli->select_db( $this->db_name );
+        $this->apply_restore_session();
 
         $this->protect_parent();
 
@@ -524,6 +525,33 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
     }
 
     /**
+     * Apply the child restore engine's replay session to the sandbox connection.
+     *
+     * @throws MainWP_Exception When the replay session cannot be applied.
+     *
+     * @return void
+     */
+    private function apply_restore_session(): void {
+        // Match the child restore session: strict global modes can reject defaults
+        // the real restore accepts, causing a false test-restore failure.
+        $session = array(
+            "SET SESSION sql_mode = 'ALLOW_INVALID_DATES,NO_AUTO_VALUE_ON_ZERO'",
+            'SET FOREIGN_KEY_CHECKS=0',
+            'SET UNIQUE_CHECKS=0',
+        );
+        try {
+            foreach ( $session as $sql ) {
+                // phpcs:ignore WordPress.DB.RestrictedClasses.mysql__mysqli_query, WordPress.DB.PreparedSQL.NotPrepared -- fixed session statements on the dedicated sandbox connection.
+                if ( false === $this->mysqli->query( $sql ) ) {
+                    throw new MainWP_Exception( esc_html__( 'The test-restore sandbox could not apply the restore session.', 'mainwp' ), 'restore session: ' . $this->mysqli->error, self::ERR_UNSUPPORTED );
+                }
+            }
+        } catch ( \mysqli_sql_exception $e ) {
+            throw new MainWP_Exception( esc_html__( 'The test-restore sandbox could not apply the restore session.', 'mainwp' ), 'restore session: ' . $e->getMessage(), self::ERR_UNSUPPORTED );
+        }
+    }
+
+    /**
      * Open the dedicated connection to the same server $wpdb uses.
      *
      * @throws MainWP_Exception When the connection cannot be opened.
@@ -619,10 +647,10 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         }
 
         if ( '.zip' === $ext || '.sql.zip' === $ext ) {
-            return $this->read_member_from_zip( $path, '.sql' );
+            return $this->read_member_from_zip( $path );
         }
 
-        return $this->read_member_from_tar( $path, '.sql' );
+        return $this->read_member_from_tar( $path );
     }
 
     /**
@@ -669,9 +697,9 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
             return $this->bz2_decompressed_size( $path, $ceiling );
         }
         if ( '.zip' === $ext || '.sql.zip' === $ext ) {
-            return $this->archive_member_size_zip( $path, '.sql' );
+            return $this->archive_member_size_zip( $path );
         }
-        return $this->archive_member_size_tar( $path, '.sql' );
+        return $this->archive_member_size_tar( $path );
     }
 
     /**
@@ -760,16 +788,14 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
     }
 
     /**
-     * Read the uncompressed size of the first matching zip member from the
-     * central directory, without decompressing it.
+     * Sum the uncompressed sizes of all SQL dump members in the zip directory.
      *
-     * @param string $path   Zip path.
-     * @param string $suffix Member suffix to match (e.g. '.sql').
+     * @param string $path Zip path.
      *
      * @return int Uncompressed size, or zero when unreadable (read_sql_dump
      *             surfaces the real error at import time).
      */
-    private function archive_member_size_zip( string $path, string $suffix ): int {
+    private function archive_member_size_zip( string $path ): int {
         if ( ! class_exists( '\ZipArchive' ) ) {
             return 0;
         }
@@ -781,10 +807,9 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         $size = 0;
         for ( $i = 0; $i < $zip->numFiles; $i++ ) {
             $name = (string) $zip->getNameIndex( $i );
-            if ( MainWP_Utility::ends_with( $name, $suffix ) ) {
-                $stat = $zip->statIndex( $i );
-                $size = ( is_array( $stat ) && isset( $stat['size'] ) ) ? (int) $stat['size'] : 0;
-                break;
+            if ( $this->is_sql_dump_member( $name ) ) {
+                $stat  = $zip->statIndex( $i );
+                $size += ( is_array( $stat ) && isset( $stat['size'] ) ) ? (int) $stat['size'] : 0;
             }
         }
         $zip->close();
@@ -792,34 +817,33 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
     }
 
     /**
-     * Read the uncompressed size of the first matching tar member from its
-     * header, decompressing compressed tars to disk first.
+     * Sum the sizes of all SQL dump members, decompressing tars to disk first.
      *
-     * @param string $path   Tar path (tar/tar.gz/tar.bz2).
-     * @param string $suffix Member suffix to match (e.g. '.sql').
+     * @param string $path Tar path (tar/tar.gz/tar.bz2).
      *
      * @throws MainWP_Exception When the host cannot prepare a readable alias.
      *
      * @return int Member size, or zero for an unreadable archive (read_sql_dump
      *             surfaces the archive error at import time).
      */
-    private function archive_member_size_tar( string $path, string $suffix ): int {
+    private function archive_member_size_tar( string $path ): int {
         if ( ! class_exists( '\PharData' ) ) {
             return 0;
         }
         $readable = $this->phar_readable_path( $path );
+        $size     = 0;
         try {
             $phar     = new \PharData( $readable );
             $iterator = new \RecursiveIteratorIterator( $phar );
             foreach ( $iterator as $file ) {
-                if ( MainWP_Utility::ends_with( $file->getFilename(), $suffix ) ) {
-                    return (int) $file->getSize();
+                if ( $this->is_sql_dump_member( $file->getFilename() ) ) {
+                    $size += (int) $file->getSize();
                 }
             }
         } catch ( \Throwable $e ) {
             return 0;
         }
-        return 0;
+        return $size;
     }
 
     /**
@@ -854,16 +878,42 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
     }
 
     /**
-     * Read the first member matching a suffix from a zip archive.
+     * Whether an archive member contains plain or guarded SQL.
      *
-     * @param string $path   Zip path.
-     * @param string $suffix File suffix to match (e.g. '.sql').
+     * @param string $name Archive member name.
+     *
+     * @return bool
+     */
+    private function is_sql_dump_member( string $name ): bool {
+        return MainWP_Utility::ends_with( $name, '.sql' ) || MainWP_Utility::ends_with( $name, '.sql.php' );
+    }
+
+    /**
+     * Remove the child's leading PHP guard, preserving all following bytes.
+     *
+     * @param string $name Archive member name.
+     * @param string $body Member contents.
+     *
+     * @return string
+     */
+    private function strip_sql_dump_guard( string $name, string $body ): string {
+        $guard = '<?php exit(); ?>';
+        if ( MainWP_Utility::ends_with( $name, '.sql.php' ) && 0 === strpos( $body, $guard ) ) {
+            return substr( $body, strlen( $guard ) );
+        }
+        return $body;
+    }
+
+    /**
+     * Read every SQL dump member in zip archive index order.
+     *
+     * @param string $path Zip path.
      *
      * @throws MainWP_Exception On a missing extension or unreadable archive.
      *
      * @return string
      */
-    private function read_member_from_zip( string $path, string $suffix ): string {
+    private function read_member_from_zip( string $path ): string {
         if ( ! class_exists( '\ZipArchive' ) ) {
             throw new MainWP_Exception( esc_html__( 'The test-restore sandbox needs the zip extension to read this backup.', 'mainwp' ), 'ZipArchive missing', self::ERR_UNSUPPORTED );
         }
@@ -873,51 +923,65 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
             throw new MainWP_Exception( esc_html__( 'A backup archive could not be opened.', 'mainwp' ), 'zip open: ' . basename( $path ), self::ERR_APPLY );
         }
 
+        $sql = '';
         for ( $i = 0; $i < $zip->numFiles; $i++ ) {
             $name = (string) $zip->getNameIndex( $i );
-            if ( MainWP_Utility::ends_with( $name, $suffix ) ) {
+            if ( $this->is_sql_dump_member( $name ) ) {
                 $body = $zip->getFromIndex( $i );
-                $zip->close();
                 if ( false === $body ) {
+                    $zip->close();
                     throw new MainWP_Exception( esc_html__( 'A backup archive member could not be read.', 'mainwp' ), 'zip read: ' . $name, self::ERR_APPLY );
                 }
-                return (string) $body;
+                $body = $this->strip_sql_dump_guard( $name, $body );
+                if ( '' !== $body ) {
+                    $sql .= ( '' !== $sql && "\n" !== substr( $sql, -1 ) ? "\n" : '' ) . $body;
+                }
             }
         }
 
         $zip->close();
-        throw new MainWP_Exception( esc_html__( 'The backup archive did not contain a database dump.', 'mainwp' ), 'no ' . $suffix . ' in ' . basename( $path ), self::ERR_APPLY );
+        if ( '' !== $sql ) {
+            return $sql;
+        }
+        throw new MainWP_Exception( esc_html__( 'The backup archive did not contain a database dump.', 'mainwp' ), 'no .sql in ' . basename( $path ), self::ERR_APPLY );
     }
 
     /**
-     * Read the first member matching a suffix from a tar archive.
+     * Read every SQL dump member from a tar archive.
      *
-     * @param string $path   Tar path (tar/tar.gz/tar.bz2).
-     * @param string $suffix File suffix to match (e.g. '.sql').
+     * @param string $path Tar path (tar/tar.gz/tar.bz2).
      *
      * @throws MainWP_Exception On a missing extension or unreadable archive.
      *
      * @return string
      */
-    private function read_member_from_tar( string $path, string $suffix ): string {
+    private function read_member_from_tar( string $path ): string {
         if ( ! class_exists( '\PharData' ) ) {
             throw new MainWP_Exception( esc_html__( 'The test-restore sandbox needs the phar extension to read this backup.', 'mainwp' ), 'PharData missing', self::ERR_UNSUPPORTED );
         }
 
         $readable = $this->phar_readable_path( $path );
+        $sql      = '';
         try {
             $phar     = new \PharData( $readable );
             $iterator = new \RecursiveIteratorIterator( $phar );
             foreach ( $iterator as $file ) {
-                if ( MainWP_Utility::ends_with( $file->getFilename(), $suffix ) ) {
-                    return (string) file_get_contents( $file->getPathname() ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- reading a phar stream member.
+                if ( $this->is_sql_dump_member( $file->getFilename() ) ) {
+                    $body = (string) file_get_contents( $file->getPathname() ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- reading a phar stream member.
+                    $body = $this->strip_sql_dump_guard( $file->getFilename(), $body );
+                    if ( '' !== $body ) {
+                        $sql .= ( '' !== $sql && "\n" !== substr( $sql, -1 ) ? "\n" : '' ) . $body;
+                    }
                 }
             }
         } catch ( \Throwable $e ) {
             throw new MainWP_Exception( esc_html__( 'A backup archive could not be opened.', 'mainwp' ), 'tar open: ' . $e->getMessage(), self::ERR_APPLY );
         }
 
-        throw new MainWP_Exception( esc_html__( 'The backup archive did not contain a database dump.', 'mainwp' ), 'no ' . $suffix . ' in ' . basename( $path ), self::ERR_APPLY );
+        if ( '' !== $sql ) {
+            return $sql;
+        }
+        throw new MainWP_Exception( esc_html__( 'The backup archive did not contain a database dump.', 'mainwp' ), 'no .sql in ' . basename( $path ), self::ERR_APPLY );
     }
 
     /**

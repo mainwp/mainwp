@@ -249,16 +249,14 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
     }
 
     /**
-     * Cancel a restore job.
+     * Cancel a restore job, deferring a busy running child to the cron lane.
      *
-     * Before the child task starts the cancel is dashboard-only. While
-     * the child task is running, the child is asked to cancel first and
-     * the job is only marked cancelled once the child confirmed - so a
-     * cancelled job never hides a still-running child task. A child
-     * mid-slice answers busy; instead of blocking the request on
-     * retries, the cancel is recorded as an intent the cron lane
-     * applies between slices. Once the dashboard-side verify began the
-     * child's work is done and the offer becomes a rollback instead.
+     * Running restores require child confirmation and cannot be cancelled
+     * after verification begins. Earlier phases tolerate child call failures.
+     * The ad-hoc backup handle is shared by all jobs for a site, so cancellation
+     * releases it only when its task id matches this job's pre-snapshot task.
+     * A mismatched handle may belong to a newer live backup and must stay intact.
+     * Missing, empty, or undecodable handles are left untouched.
      *
      * @param int $job_id Job id.
      *
@@ -307,34 +305,32 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             return 'cancelled';
         }
 
-        $cancellable = array(
-            MainWP_Backup_Restore_Job_Store::STATUS_PENDING,
-            MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT,
-            MainWP_Backup_Restore_Job_Store::STATUS_STAGING,
-            MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING,
-            MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE,
-        );
-        if ( ! in_array( $job->status, $cancellable, true ) ) {
-            throw new MainWP_Exception( esc_html__( 'The restore finished its work on the site and can no longer be cancelled. Use the rollback once it completes or fails.', 'mainwp' ) );
+        $child_action = '';
+        switch ( $job->status ) {
+            case MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING:
+                $child_action = ! empty( $job->child_task_id ) ? 'restore_task_cancel' : '';
+                break;
+            case MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT:
+                $child_action = ! empty( $job->pre_snapshot_task_id ) ? 'backup_task_cancel' : '';
+                break;
+            case MainWP_Backup_Restore_Job_Store::STATUS_PENDING:
+            case MainWP_Backup_Restore_Job_Store::STATUS_STAGING:
+            case MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE:
+                break;
+            default:
+                throw new MainWP_Exception( esc_html__( 'The restore finished its work on the site and can no longer be cancelled. Use the rollback once it completes or fails.', 'mainwp' ) );
         }
 
-        // Child tasks must not outlive their owner, but an unreachable child
-        // must not prevent the dashboard from cancelling its job.
+        // An unreachable child must not prevent cancellation before restore execution.
         try {
-            if ( MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING === $job->status && ! empty( $job->child_task_id ) ) {
+            if ( 'restore_task_cancel' === $child_action ) {
                 $this->request_child_cancel( $job );
-            } elseif ( MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT === $job->status && ! empty( $job->pre_snapshot_task_id ) ) {
+            } elseif ( 'backup_task_cancel' === $child_action ) {
                 $website = $this->website( $job );
                 try {
                     MainWP_Connect::fetch_url_authed( $website, 'backup_task_cancel', array( 'task_id' => $job->pre_snapshot_task_id ), false, false, false );
                 } finally {
-                    // trigger_backup() reads this handle before it creates
-                    // anything, so a cancelled safety backup must not leave it
-                    // behind for the next restore to adopt - the site would be
-                    // handed a task id it has just cancelled. The completion
-                    // path clears it for the same reason. Whether the site
-                    // confirmed or not, the dashboard has abandoned the task.
-                    MainWP_DB::instance()->update_website_option( $website, MainWP_Backup_Executor::ADHOC_TASK_OPTION, '' );
+                    $this->release_pre_snapshot_handle( $website, (string) $job->pre_snapshot_task_id );
                 }
             }
         } catch ( \Throwable $e ) {
@@ -346,6 +342,34 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             throw new MainWP_Exception( esc_html__( 'The restore reached its final state while the cancellation was confirmed and no longer needs cancelling.', 'mainwp' ) );
         }
         return 'cancelled';
+    }
+
+    /**
+     * Release an owned safety-backup handle so later restores cannot adopt it.
+     *
+     * The option is per site: a newer backup can replace it while a child call
+     * is in flight. Only a matching task id establishes ownership for release.
+     *
+     * @param object $website Website object.
+     * @param string $task_id Job's pre-snapshot task id.
+     *
+     * @return bool Whether the matching handle was cleared.
+     */
+    private function release_pre_snapshot_handle( object $website, string $task_id ): bool {
+        $db     = MainWP_DB::instance();
+        $raw    = $db->get_website_option( (int) $website->id, MainWP_Backup_Executor::ADHOC_TASK_OPTION );
+        $handle = json_decode( (string) $raw, true );
+        if ( ! is_array( $handle ) || ! isset( $handle['task_id'] ) || ! is_scalar( $handle['task_id'] ) ) {
+            return false;
+        }
+
+        $handle_task_id = (string) $handle['task_id'];
+        if ( '' === $handle_task_id || $handle_task_id !== (string) $task_id ) {
+            return false;
+        }
+
+        $db->update_website_option( $website, MainWP_Backup_Executor::ADHOC_TASK_OPTION, '' );
+        return true;
     }
 
     /**
@@ -736,12 +760,11 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 $checkpoint['pre_snapshot_artifacts'] = $artifacts;
                 $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
 
-                // Release the ad-hoc handle: a completed safety backup left
-                // persisted would short-circuit the NEXT restore's
-                // trigger_backup() into reusing this stale task - and a
-                // later success would prune an artifact another job still
-                // counts on for rollback.
-                MainWP_DB::instance()->update_website_option( $website, MainWP_Backup_Executor::ADHOC_TASK_OPTION, '' );
+                // A persisted handle would short-circuit the NEXT restore's
+                // trigger_backup() into reusing this finished task, and its
+                // later success would prune an artifact this job still counts
+                // on for rollback.
+                $this->release_pre_snapshot_handle( $website, (string) $job->pre_snapshot_task_id );
 
                 $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_STAGING, array(), $this->lock_token );
                 return;

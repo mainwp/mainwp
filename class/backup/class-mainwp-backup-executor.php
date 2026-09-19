@@ -1538,6 +1538,8 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
         $run_dir = $dir . 'snapshot-' . MainWP_Utility::sanitize_file_name( (string) $progress->child_backup_task_id ) . '/';
         $wp_filesystem->mkdir( $run_dir, 0750 );
+        // Native backup starts revisit the site directory to recover crashed downloads and sweep orphan mutexes.
+        MainWP_Backup_File_Manager::cleanup_stale_download_locks( $dir );
 
         $http_user_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_user );
         $http_pass_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_pass );

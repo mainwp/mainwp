@@ -38,6 +38,13 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
     const LOCK_PUBLICATION_GRACE_SECONDS = 60;
 
     /**
+     * One create plus one retry per cause (reclaimed stale lock, vanished lock); further contention refuses.
+     *
+     * @var int
+     */
+    const LOCK_ACQUIRE_ATTEMPTS = 3;
+
+    /**
      * Bytes read per hash_update() when verifying a downloaded artifact.
      *
      * @var int
@@ -583,7 +590,7 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
     public static function acquire_download_lock( string $local_file, int $site_id, int $task_id ): bool {
         $lock_file = $local_file . '.downloading';
 
-        for ( $attempt = 0; $attempt < 2; $attempt++ ) {
+        for ( $attempt = 0; $attempt < static::LOCK_ACQUIRE_ATTEMPTS; $attempt++ ) {
             $token     = strtolower( wp_generate_password( 12, false ) );
             $temp_file = $lock_file . '.' . wp_generate_uuid4() . '.tmp';
             // phpcs:disable WordPress.WP.AlternativeFunctions -- publish complete local payloads atomically on the same filesystem.
@@ -734,11 +741,11 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
      * create and silently invalidates it, and both end up believing they
      * own the artifact.
      *
-     * The mutex file is never deleted: removing it while another process
+     * This method never deletes the mutex: removing it while another process
      * holds its descriptor would let a third contender open a NEW inode
-     * at the same path and bypass the serialization. Normal cleanup checks
-     * and fallback publication also create this zero-byte mutex, which
-     * does not match the '*.downloading' cleanup glob.
+     * at the same path and bypass the serialization. Release also leaves
+     * the mutex in place. Only cleanup_stale_download_locks() sweeps orphan
+     * mutexes after the lock TTL, under an exclusive nonblocking flock.
      *
      * @param string      $lock_file Lock file path.
      * @param string|null $mutex_file Shared mutex path for a publication sidecar.
@@ -843,9 +850,19 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
     /**
      * Method cleanup_stale_download_locks()
      *
-     * Remove stale download lock files left behind by crashed processes.
+     * Remove stale download lock files left behind by crashed processes in
+     * the site directory and its immediate snapshot-* run subdirectories.
      * Runs at backup start so an interrupted run never blocks future runs
      * for longer than the lock TTL.
+     *
+     * Orphan reclaim mutexes are removed only when their own mtime is older
+     * than HOUR_IN_SECONDS and the lock is absent before and after clearing
+     * the stat cache under an exclusive nonblocking flock. The age excludes
+     * live transfers older than the lock TTL; the flock excludes current
+     * mutex holders, and the second existence check preserves a new lock.
+     * A fallback-host acquirer that opened the mutex microseconds before
+     * unlink may retain the old inode. Its exclusive create and
+     * LOCK_PUBLICATION_GRACE_SECONDS protect publication, not that mutex.
      *
      * @param string $dir Directory holding backup files.
      *
@@ -853,14 +870,51 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
      */
     public static function cleanup_stale_download_locks( string $dir ): void {
         foreach ( array( '*.downloading', '*.downloading.tmp', '*.downloading.*.tmp' ) as $pattern ) {
-            $locks = glob( rtrim( $dir, '/' ) . '/' . $pattern );
-            if ( ! is_array( $locks ) ) {
-                continue;
-            }
+            $site_locks = glob( rtrim( $dir, '/' ) . '/' . $pattern );
+            $run_locks  = glob( rtrim( $dir, '/' ) . '/snapshot-*/' . $pattern );
+            $locks      = array_merge(
+                is_array( $site_locks ) ? $site_locks : array(),
+                is_array( $run_locks ) ? $run_locks : array()
+            );
             foreach ( $locks as $lock_file ) {
                 // Refresh sidecars share the owner's mutex so cleanup cannot race a live refresh.
                 $owner_file = preg_replace( '/(\.downloading)(?:\.tmp|\.[^.]+\.tmp)$/', '$1', $lock_file );
                 static::reclaim_stale_lock( $lock_file, $owner_file . '.reclaim' );
+            }
+        }
+
+        $site_mutexes = glob( rtrim( $dir, '/' ) . '/*.downloading.reclaim' );
+        $run_mutexes  = glob( rtrim( $dir, '/' ) . '/snapshot-*/*.downloading.reclaim' );
+        $mutexes      = array_merge(
+            is_array( $site_mutexes ) ? $site_mutexes : array(),
+            is_array( $run_mutexes ) ? $run_mutexes : array()
+        );
+        foreach ( $mutexes as $mutex_file ) {
+            $lock_file = substr( $mutex_file, 0, -strlen( '.reclaim' ) );
+            clearstatcache( true, $lock_file );
+            if ( file_exists( $lock_file ) ) {
+                continue;
+            }
+            $mutex = @fopen( $mutex_file, 'r' ); // phpcs:ignore WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors -- a concurrent sweep may have removed the mutex.
+            if ( false === $mutex ) {
+                continue;
+            }
+            try {
+                if ( ! flock( $mutex, LOCK_EX | LOCK_NB ) ) {
+                    continue;
+                }
+                try {
+                    clearstatcache( true, $mutex_file );
+                    $mtime = @filemtime( $mutex_file ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- an unstatable mutex must be preserved.
+                    clearstatcache( true, $lock_file );
+                    if ( false !== $mtime && time() - $mtime > HOUR_IN_SECONDS && ! file_exists( $lock_file ) ) {
+                        wp_delete_file( $mutex_file );
+                    }
+                } finally {
+                    flock( $mutex, LOCK_UN );
+                }
+            } finally {
+                fclose( $mutex ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- paired with the fopen above.
             }
         }
     }

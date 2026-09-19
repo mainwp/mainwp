@@ -992,6 +992,53 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
+	 * Completion must preserve a newer backup's site-wide handle.
+	 *
+	 * @dataProvider pre_snapshot_completion_handles
+	 *
+	 * @param string $handle_task_id Persisted task id when the child completes.
+	 * @param bool   $cleared        Whether completion owns the handle.
+	 */
+	public function test_pre_snapshot_completion_releases_only_owned_handle( $handle_task_id, $cleared ) {
+		$this->responses['backup_task_run'] = array(
+			'task_id'   => 'task-7-pre',
+			'phase'     => 'completed',
+			'artifacts' => array(
+				array(
+					'file' => 'backup-pre.tar.gz',
+					'size' => 1234,
+					'role' => 'full',
+				),
+			),
+		);
+		$handle                             = wp_json_encode( array( 'task_id' => $handle_task_id ) );
+		MainWP_DB::instance()->update_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION, $handle );
+
+		$job = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT, array( 'pre_snapshot_task_id' => 'task-7-pre' ) );
+		$job = $this->tick( $job );
+
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_STAGING, $job->status );
+		$this->assertSame( $this->responses['backup_task_run']['artifacts'], $job->checkpoint['pre_snapshot_artifacts'] );
+		$remaining = MainWP_DB::instance()->get_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION );
+		$this->assertSame( $cleared ? null : $handle, $remaining );
+		if ( ! $cleared ) {
+			$this->assertSame( $handle_task_id, json_decode( $remaining, true )['task_id'] );
+		}
+	}
+
+	/**
+	 * A child response can arrive after another backup replaces the handle.
+	 *
+	 * @return array
+	 */
+	public static function pre_snapshot_completion_handles() {
+		return array(
+			'own handle'     => array( 'task-7-pre', true ),
+			'foreign handle' => array( 'task-8-other', false ),
+		);
+	}
+
+	/**
 	 * Initiation refuses while another restore is active for the site.
 	 */
 	public function test_initiate_refuses_second_active_restore() {
@@ -1072,7 +1119,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
-	 * Entry status controls child cancellation, marker cleanup, and refusal.
+	 * Cancellation releases only the handle owned by the pre-snapshot task.
 	 *
 	 * @dataProvider cancel_job_matrix
 	 *
@@ -1083,8 +1130,11 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	 * @param string $action          Expected child action, or empty for none.
 	 * @param bool   $marker_cleared   Whether the ad-hoc marker must be cleared.
 	 * @param string $outcome          Return value or refusal message fragment.
+	 * @param string $handle_state     Persisted handle fixture before cancellation.
+	 * @param string $handle_after     Expected handle disposition: unchanged or cleared.
 	 */
-	public function test_cancel_job_matrix( $status, $child_task_id, $snapshot_task_id, $child_throws, $action, $marker_cleared, $outcome ) {
+	public function test_cancel_job_matrix( $status, $child_task_id, $snapshot_task_id, $child_throws, $action, $marker_cleared, $outcome, $handle_state, $handle_after ) {
+		global $wpdb;
 		$store  = MainWP_Backup_Restore_Job_Store::instance();
 		$job    = $this->make_job();
 		$job_id = (int) $job->id;
@@ -1098,8 +1148,17 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 				)
 			)
 		);
-		MainWP_DB::instance()->update_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION, 'task-7-pre' );
-		$this->assertSame( 'task-7-pre', MainWP_DB::instance()->get_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION ) );
+		$handles       = array(
+			'none'        => null,
+			'own'         => wp_json_encode( array( 'task_id' => 'task-7-pre' ) ),
+			'foreign'     => wp_json_encode( array( 'task_id' => 'task-8-other' ) ),
+			'undecodable' => '{invalid-json',
+		);
+		$handle_before = $handles[ $handle_state ];
+		if ( null !== $handle_before ) {
+			MainWP_DB::instance()->update_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION, $handle_before );
+		}
+		$this->assertSame( $handle_before, MainWP_DB::instance()->get_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION ) );
 
 		if ( $child_throws ) {
 			$this->responses[ $action ] = new \Error( 'Child cancellation failed.' );
@@ -1133,8 +1192,15 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		if ( $marker_cleared ) {
 			// The clear writes an empty string; the option read answers null for it.
 			$this->assertEmpty( $marker );
-		} else {
-			$this->assertSame( 'task-7-pre', $marker );
+		}
+		$this->assertSame( 'cleared' === $handle_after ? null : $handle_before, $marker );
+		if ( 'foreign' === $handle_state ) {
+			$this->assertSame( 'task-8-other', json_decode( $marker, true )['task_id'] );
+		}
+		if ( 'none' === $handle_state ) {
+			// The getter also returns null for an empty value, so check row absence.
+			$count = $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . MainWP_DB::instance()->get_table_name( 'wp_options' ) . ' WHERE wpid = %d AND name = %s', $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION ) ); // phpcs:ignore WordPress.DB -- verify no option was inserted.
+			$this->assertSame( 0, (int) $count, 'Cancelling without a handle must not create an option row.' );
 		}
 	}
 
@@ -1145,17 +1211,20 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	 */
 	public static function cancel_job_matrix() {
 		return array(
-			'pending with task ids'          => array( 'pending', 'task-9-restore', 'task-7-pre', false, '', false, 'cancelled' ),
-			'staging with task ids'          => array( 'staging', 'task-9-restore', 'task-7-pre', false, '', false, 'cancelled' ),
-			'failed_retryable with task ids' => array( 'failed_retryable', 'task-9-restore', 'task-7-pre', false, '', false, 'cancelled' ),
-			'transferring with task id'      => array( 'transferring', 'task-9-restore', 'task-7-pre', false, 'restore_task_cancel', false, 'cancelled' ),
-			'transferring without task id'   => array( 'transferring', '', 'task-7-pre', false, '', false, 'cancelled' ),
-			'pre_snapshot with task id'      => array( 'pre_snapshot', 'task-9-restore', 'task-7-pre', false, 'backup_task_cancel', true, 'cancelled' ),
-			'pre_snapshot without task id'   => array( 'pre_snapshot', 'task-9-restore', '', false, '', false, 'cancelled' ),
-			'pre_snapshot child throws'      => array( 'pre_snapshot', 'task-9-restore', 'task-7-pre', true, 'backup_task_cancel', true, 'cancelled' ),
-			'verifying refuses'              => array( 'verifying', 'task-9-restore', 'task-7-pre', false, '', false, 'finished its work' ),
-			'completed refuses'              => array( 'completed', 'task-9-restore', 'task-7-pre', false, '', false, 'finished its work' ),
-			'failed_permanent refuses'       => array( 'failed_permanent', 'task-9-restore', 'task-7-pre', false, '', false, 'finished its work' ),
+			'pending with task ids'          => array( 'pending', 'task-9-restore', 'task-7-pre', false, '', false, 'cancelled', 'own', 'unchanged' ),
+			'staging with task ids'          => array( 'staging', 'task-9-restore', 'task-7-pre', false, '', false, 'cancelled', 'own', 'unchanged' ),
+			'failed_retryable with task ids' => array( 'failed_retryable', 'task-9-restore', 'task-7-pre', false, '', false, 'cancelled', 'own', 'unchanged' ),
+			'transferring with task id'      => array( 'transferring', 'task-9-restore', 'task-7-pre', false, 'restore_task_cancel', false, 'cancelled', 'own', 'unchanged' ),
+			'transferring without task id'   => array( 'transferring', '', 'task-7-pre', false, '', false, 'cancelled', 'own', 'unchanged' ),
+			'pre_snapshot with task id'      => array( 'pre_snapshot', 'task-9-restore', 'task-7-pre', false, 'backup_task_cancel', true, 'cancelled', 'own', 'cleared' ),
+			'pre_snapshot foreign handle'    => array( 'pre_snapshot', 'task-9-restore', 'task-7-pre', false, 'backup_task_cancel', false, 'cancelled', 'foreign', 'unchanged' ),
+			'pre_snapshot no handle'         => array( 'pre_snapshot', 'task-9-restore', 'task-7-pre', false, 'backup_task_cancel', false, 'cancelled', 'none', 'unchanged' ),
+			'pre_snapshot undecodable'       => array( 'pre_snapshot', 'task-9-restore', 'task-7-pre', false, 'backup_task_cancel', false, 'cancelled', 'undecodable', 'unchanged' ),
+			'pre_snapshot without task id'   => array( 'pre_snapshot', 'task-9-restore', '', false, '', false, 'cancelled', 'own', 'unchanged' ),
+			'pre_snapshot child throws'      => array( 'pre_snapshot', 'task-9-restore', 'task-7-pre', true, 'backup_task_cancel', true, 'cancelled', 'own', 'cleared' ),
+			'verifying refuses'              => array( 'verifying', 'task-9-restore', 'task-7-pre', false, '', false, 'finished its work', 'own', 'unchanged' ),
+			'completed refuses'              => array( 'completed', 'task-9-restore', 'task-7-pre', false, '', false, 'finished its work', 'own', 'unchanged' ),
+			'failed_permanent refuses'       => array( 'failed_permanent', 'task-9-restore', 'task-7-pre', false, '', false, 'finished its work', 'own', 'unchanged' ),
 		);
 	}
 

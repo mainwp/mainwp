@@ -376,6 +376,42 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 	}
 
 	/**
+	 * The child replay session accepts zero-date defaults even on strict hosts.
+	 *
+	 * @return void
+	 */
+	public function test_restore_session_imports_zero_date_default() {
+		$path    = $this->dir . '/zero-date.sql';
+		$sql     = "CREATE TABLE t ( d datetime NOT NULL DEFAULT '0000-00-00 00:00:00' );";
+		$sandbox = new MainWP_Backup_TestRestore_Sandbox();
+		$this->assertSame( strlen( $sql ), file_put_contents( $path, $sql ) );
+
+		try {
+			$sandbox->bring_up();
+			$property = new \ReflectionProperty( $sandbox, 'mysqli' );
+			$property->setAccessible( true );
+			$connection = $property->getValue( $sandbox );
+			$this->assertInstanceOf( \mysqli::class, $connection ); // phpcs:ignore WordPress.DB.RestrictedClasses.mysql__mysqli -- the sandbox uses a dedicated mysqli connection.
+			// phpcs:ignore WordPress.DB.RestrictedClasses.mysql__mysqli_query -- inspect the dedicated scratch connection, not the live WordPress session.
+			$result = $connection->query( 'SELECT @@SESSION.sql_mode, @@SESSION.foreign_key_checks, @@SESSION.unique_checks' );
+			$this->assertInstanceOf( \mysqli_result::class, $result );
+			$session = $result->fetch_row();
+			$result->free();
+			$this->assertIsArray( $session );
+			$modes = explode( ',', $session[0] );
+			sort( $modes );
+			$this->assertSame( array( 'ALLOW_INVALID_DATES', 'NO_AUTO_VALUE_ON_ZERO' ), $modes, 'Compare exact modes independently of the server output order.' );
+			$this->assertSame( 0, (int) $session[1], 'Foreign key checks must match the child replay session.' );
+			$this->assertSame( 0, (int) $session[2], 'Unique checks must match the child replay session.' );
+
+			$sandbox->import_database( $path );
+			$this->assertSame( 1, $sandbox->table_count(), 'The zero-date table must import cleanly.' );
+		} finally {
+			$sandbox->tear_down();
+		}
+	}
+
+	/**
 	 * Parent protection must cover extracted files and sibling aliases.
 	 *
 	 * @return void
@@ -1104,6 +1140,101 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 		} finally {
 			$sandbox->tear_down();
 		}
+	}
+
+	/**
+	 * Dump readers join all SQL members and size guards count their stored bytes.
+	 *
+	 * @dataProvider sql_dump_archive_cases
+	 *
+	 * @param string      $format   Archive format.
+	 * @param array       $members  Member names and contents in insertion order.
+	 * @param string|null $expected Expected SQL, or null for an empty dump.
+	 * @param int         $bytes    Total uncompressed dump member bytes.
+	 *
+	 * @return void
+	 */
+	public function test_sql_dump_archive_matrix( $format, $members, $expected, $bytes ) {
+		$path = $this->dir . '/dbBackup-123.sql_.' . $format;
+		if ( 'zip' === $format ) {
+			$archive = new \ZipArchive();
+			$this->assertTrue( $archive->open( $path, \ZipArchive::CREATE ) );
+			foreach ( $members as $name => $body ) {
+				$this->assertTrue( $archive->addFromString( $name, $body ) );
+			}
+			$this->assertTrue( $archive->close() );
+		} else {
+			$archive = new \PharData( $path );
+			foreach ( $members as $name => $body ) {
+				$archive->addFromString( $name, $body );
+			}
+			unset( $archive );
+		}
+
+		$sandbox = new MainWP_Backup_TestRestore_Sandbox();
+		$method  = new \ReflectionMethod( $sandbox, 'read_sql_dump' );
+		$method->setAccessible( true );
+		try {
+			$this->assertSame( $bytes, $sandbox->decompressed_sql_dump_bytes( $path, 1048576 ), 'Count every matching member, including guard bytes, and exclude unrelated files.' );
+			if ( null === $expected ) {
+				$caught = null;
+				try {
+					$method->invoke( $sandbox, $path );
+				} catch ( MainWP_Exception $e ) {
+					$caught = $e;
+				}
+				$this->assertInstanceOf( MainWP_Exception::class, $caught );
+				$this->assertSame( MainWP_Backup_TestRestore_Sandbox::ERR_APPLY, $caught->get_message_error_code() );
+				$this->assertSame( 'The backup archive did not contain a database dump.', $caught->getMessage() );
+				$this->assertSame( 'no .sql in ' . basename( $path ), $caught->get_message_extra( false ) );
+			} else {
+				$this->assertSame( $expected, $method->invoke( $sandbox, $path ), 'Preserve member order and SQL whitespace, remove each guard, and separate statements.' );
+			}
+		} finally {
+			$sandbox->tear_down();
+		}
+	}
+
+	/**
+	 * The child packages a completion marker alongside guarded per-table files.
+	 *
+	 * @return array
+	 */
+	public static function sql_dump_archive_cases() {
+		$guard    = '<?php exit(); ?>';
+		$first    = "\n\nCREATE TABLE restored (id int);";
+		$next     = 'INSERT INTO restored VALUES (1);';
+		$split    = array(
+			'dbBackup-123.sql'                 => '',
+			'dbBackup-123-a_table.sql.php'     => $guard . $first,
+			'dbBackup-123-z_table.sql.php'     => $guard . $next,
+			'dbBackup-123-ignored.sql.php.tmp' => 'unfinished dump',
+			'notes.txt'                        => 'not SQL',
+		);
+		$bytes    = 2 * strlen( $guard ) + strlen( $first ) + strlen( $next );
+		$plain    = array( 'dbBackup-123.sql' => $next );
+		$empty    = array( 'dbBackup-123.sql' => '' );
+		$multiple = array(
+			'first.sql' => $first,
+			'next.sql'  => $next,
+		);
+		$reverse  = array(
+			'dbBackup-123.sql'             => '',
+			'dbBackup-123-z_table.sql.php' => $guard . $first,
+			'dbBackup-123-a_table.sql.php' => $guard . $next,
+		);
+		return array(
+			'split zip and summed size'  => array( 'zip', $split, $first . "\n" . $next, $bytes ),
+			'split tar and summed size'  => array( 'tar', $split, $first . "\n" . $next, $bytes ),
+			'zip index order'            => array( 'zip', $reverse, $first . "\n" . $next, $bytes ),
+			'plain zip unchanged'        => array( 'zip', $plain, $next, strlen( $next ) ),
+			'plain tar unchanged'        => array( 'tar', $plain, $next, strlen( $next ) ),
+			'empty zip marker'           => array( 'zip', $empty, null, 0 ),
+			'empty tar marker'           => array( 'tar', $empty, null, 0 ),
+			'guard following newlines'   => array( 'zip', array( 'dbBackup-123-a.sql.php' => $guard . "\r\n\n" . $next ), "\r\n\n" . $next, strlen( $guard . "\r\n\n" . $next ) ),
+			'guard only has no SQL'      => array( 'zip', array( 'dbBackup-123-a.sql.php' => $guard ), null, strlen( $guard ) ),
+			'multiple plain SQL members' => array( 'zip', $multiple, $first . "\n" . $next, strlen( $first . $next ) ),
+		);
 	}
 
 	/**

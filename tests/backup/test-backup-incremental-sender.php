@@ -762,6 +762,51 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A native download sweeps orphan mutexes left by earlier runs in the site directory.
+	 */
+	public function test_native_completion_sweeps_aged_orphan_download_mutex() {
+		$site_id = $this->create_test_site();
+		$this->give_site_real_privkey( $site_id );
+		$this->record_base_snapshot( $site_id );
+		$artifacts = $this->arrange_remote_artifacts();
+		$this->mock_artifact_downloads();
+		$this->mock_child_actions(
+			array(
+				'backup_preflight'   => $this->preflight_response(),
+				'backup_task_create' => array(
+					'task_id' => 'child-task-1',
+					'phase'   => 'queued',
+				),
+				'backup_task_run'    => array(
+					'task_id'   => 'child-task-1',
+					'phase'     => 'completed',
+					'file'      => 'files.list',
+					'size'      => 40,
+					'artifacts' => $artifacts,
+				),
+				'delete_backup'      => array( 'result' => 'ok' ),
+			)
+		);
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$task    = $this->make_task( $website );
+		$dir     = MainWP_System_Utility::get_mainwp_specific_dir( $site_id );
+		wp_mkdir_p( $dir );
+		$orphan = $dir . 'previous.zip.downloading.reclaim';
+		file_put_contents( $orphan, '' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+		touch( $orphan, time() - 2 * HOUR_IN_SECONDS );
+		try {
+			$this->assertFileExists( $orphan );
+			$this->assertFalse( $this->run_cycle( $site_id, $task )['result'], 'Cycle one creates the child task.' );
+			$cycle = $this->run_cycle( $site_id, $task );
+			$this->assertNull( $cycle['exception'] );
+			$this->assertIsArray( $cycle['result'] );
+			$this->assertFileDoesNotExist( $orphan );
+		} finally {
+			wp_delete_file( $orphan );
+		}
+	}
+
+	/**
 	 * A completed forced-full base run (artifacts carry the archive and
 	 * the manifest) records a full snapshot with no parent.
 	 *
@@ -3024,7 +3069,7 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 			);
 			$this->assertSame( 'completed', $status['status'] );
 			$this->assertSame( $closed + 2, $status['started'] );
-			$this->assertFalse( get_transient( $keys[0] ) );
+			$this->assertSame( $closed, get_transient( $keys[0] )['baseline'] );
 			$this->assertSame( $closed + 2, get_transient( $keys[1] )['baseline'] );
 			$this->assertSame( array(), $this->child_calls );
 		} finally {
@@ -3033,6 +3078,74 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 			foreach ( $keys as $key ) {
 				delete_transient( $key );
 			}
+		}
+	}
+
+	/**
+	 * A lost first non-queued status response must not cause a second run.
+	 *
+	 * @return void
+	 */
+	public function test_lost_first_non_queued_status_response_retains_baseline_until_acknowledged() {
+		list( $site_id, $task ) = $this->arrange_manual_task();
+		update_option( 'mainwp_backup_max_concurrent', 1 );
+		update_option( 'mainwp_backup_manual_settle_seconds', 60 );
+		$token = MainWP_Backup_Monitor::acquire_backup_slot( 1 );
+		$this->assertIsString( $token );
+		$key = '';
+		try {
+			$start = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
+			$this->assertSame( 'queued', $start['status'] );
+			$this->assertSame( 0, $start['started'] );
+			$key    = 'mainwp_backup_click_' . $task->id . '_' . get_current_user_id() . '_' . $start['initiation_id'];
+			$stored = array(
+				'baseline' => $start['baseline'],
+				'click'    => $start['click'],
+			);
+			$this->assertSame( $stored, get_transient( $key ) );
+			MainWP_Backup_Monitor::release_backup_slot( $token );
+			$token   = null;
+			$request = array(
+				'task_id'       => $task->id,
+				'started'       => 0,
+				'click'         => $start['click'],
+				'initiation_id' => $start['initiation_id'],
+			);
+			$lost    = $this->poll_manual_task_endpoint( $request );
+			$this->assertSame( 'running', $lost['status'] );
+			$this->assertGreaterThan( $stored['baseline'], $lost['started'] );
+			$this->assertSame( $stored, get_transient( $key ), 'The client has not received the run identity yet.' );
+			$this->assertCount( 1, $this->all_call_params( 'backup_task_create' ) );
+
+			// Finish independently of the client, which still has the queued handle.
+			$running = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+			MainWP_Manage_Backups_Handler::execute_backup_task( $running, 5, false );
+			$closed = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+			$this->assertGreaterThanOrEqual( $lost['started'], (int) $closed->completed );
+			$calls            = $this->child_calls;
+			self::$fixed_time = (int) $closed->completed + 61;
+
+			$retry = $this->poll_manual_task_endpoint( $request );
+			$this->assertSame( 'completed', $retry['status'] );
+			$this->assertSame( $lost['started'], $retry['started'], 'The retry must adopt the original run after the settle window.' );
+			$this->assertSame( $stored, get_transient( $key ) );
+			$this->assertSame( $lost['started'], (int) MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id )->last_run );
+			$this->assertSame( $calls, $this->child_calls, 'The retry must not start another child task.' );
+
+			$request['started'] = $retry['started'];
+			$acknowledged       = $this->poll_manual_task_endpoint( $request );
+			$this->assertSame( 'completed', $acknowledged['status'] );
+			$this->assertSame( $lost['started'], $acknowledged['started'] );
+			$this->assertFalse( get_transient( $key ), 'Receipt of the run identity releases the baseline.' );
+			$this->assertSame( $calls, $this->child_calls );
+		} finally {
+			self::$fixed_time = null;
+			if ( null !== $token ) {
+				MainWP_Backup_Monitor::release_backup_slot( $token );
+			}
+			delete_transient( $key );
+			delete_option( 'mainwp_backup_max_concurrent' );
+			delete_option( 'mainwp_backup_manual_settle_seconds' );
 		}
 	}
 
@@ -3090,7 +3203,7 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 				$this->assertSame( 'valid' === $case ? 'completed' : 'queued', $status['status'], $case );
 				$this->assertSame( 'valid' === $case ? $closed : 0, $status['started'], $case );
 				if ( 'valid' === $case ) {
-					$this->assertFalse( get_transient( $key ), 'Settled clicks must not remain reusable.' );
+					$this->assertSame( 1, get_transient( $key )['baseline'], 'An unacknowledged response must retain its baseline.' );
 				}
 			}
 			$this->assertSame( array(), $this->child_calls );

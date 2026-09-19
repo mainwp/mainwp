@@ -137,6 +137,58 @@ class MainWP_Download_Lock_Test extends MainWP_Abilities_Test_Case { // phpcs:ig
 	}
 
 	/**
+	 * Reclaiming a stale lock and observing a vanished replacement each need a retry.
+	 */
+	public function test_acquire_retries_after_stale_reclaim_and_vanished_lock() {
+		self::$disable_hard_links = true;
+		$file                     = $this->dir . 'two-retries.zip';
+		$lock                     = $file . '.downloading';
+		file_put_contents( $lock, wp_json_encode( array( 'started' => time() - 2 * HOUR_IN_SECONDS ) ) );
+		$attempts = 0;
+		$vanished = false;
+		$replace  = function ( $password ) use ( $lock, &$attempts ) {
+			++$attempts;
+			if ( 2 === $attempts ) {
+				$this->assertFileDoesNotExist( $lock, 'Attempt one must reclaim the stale lock.' );
+				file_put_contents(
+					$lock,
+					wp_json_encode(
+						array(
+							'started' => time(),
+							'token'   => 'racing-owner',
+						)
+					)
+				);
+			}
+			return $password;
+		};
+		$release  = function ( $path ) use ( $lock, &$attempts, &$vanished ) {
+			if ( 2 === $attempts && ! $vanished && str_starts_with( $path, $lock . '.' ) && str_ends_with( $path, '.tmp' ) ) {
+				$this->assertFileExists( $lock, 'The replacement must block attempt two before it vanishes.' );
+				unlink( $lock );
+				$vanished = true;
+			}
+			return $path;
+		};
+		add_filter( 'random_password', $replace );
+		add_filter( 'wp_delete_file', $release );
+		try {
+			$this->assertTrue( MainWP_Backup_File_Manager::acquire_download_lock( $file, 42, 7 ) );
+			$this->assertTrue( $vanished );
+			$this->assertSame( 3, $attempts );
+			$data = json_decode( file_get_contents( $lock ), true );
+			$this->assertSame( 42, $data['site_id'] );
+			$this->assertSame( 7, $data['task_id'] );
+			$this->assertNotEmpty( $data['token'] );
+		} finally {
+			remove_filter( 'random_password', $replace );
+			remove_filter( 'wp_delete_file', $release );
+			self::$disable_hard_links = false;
+			MainWP_Backup_File_Manager::release_download_lock( $file );
+		}
+	}
+
+	/**
 	 * Acquiring a lock creates the lock file with its metadata.
 	 *
 	 * @return void
@@ -332,6 +384,103 @@ class MainWP_Download_Lock_Test extends MainWP_Abilities_Test_Case { // phpcs:ig
 			$this->assertFileDoesNotExist( $temp );
 			$this->assertFileExists( $lock . '.reclaim' );
 		}
+	}
+
+	/**
+	 * An orphan mutex can be swept only after its own mtime passes the lock TTL.
+	 */
+	public function test_cleanup_removes_orphan_mutex_older_than_ttl() {
+		$mutex_file = $this->dir . 'orphan.zip.downloading.reclaim';
+		file_put_contents( $mutex_file, '' );
+		touch( $mutex_file, time() - 2 * HOUR_IN_SECONDS );
+
+		MainWP_Backup_File_Manager::cleanup_stale_download_locks( $this->dir );
+
+		$this->assertFileDoesNotExist( $mutex_file );
+	}
+
+	/**
+	 * Site cleanup reaches stale locks and orphan mutexes in immediate snapshot directories.
+	 */
+	public function test_cleanup_sweeps_snapshot_download_locks_and_mutexes() {
+		$run_dir = $this->dir . 'snapshot-abc/';
+		mkdir( $run_dir );
+		$lock  = $run_dir . 'stale.zip.downloading';
+		$old   = $run_dir . 'old.zip.downloading.reclaim';
+		$young = $run_dir . 'young.zip.downloading.reclaim';
+		try {
+			file_put_contents( $lock, wp_json_encode( array( 'started' => time() - 2 * HOUR_IN_SECONDS ) ) );
+			file_put_contents( $old, '' );
+			touch( $old, time() - 2 * HOUR_IN_SECONDS );
+			file_put_contents( $young, '' );
+
+			MainWP_Backup_File_Manager::cleanup_stale_download_locks( $this->dir );
+
+			$this->assertFileDoesNotExist( $lock );
+			$this->assertFileDoesNotExist( $old );
+			$this->assertFileExists( $young );
+		} finally {
+			foreach ( glob( $run_dir . '*' ) ?: array() as $left_over ) {
+				unlink( $left_over );
+			}
+			rmdir( $run_dir );
+		}
+	}
+
+	/**
+	 * An old mutex stays while its lock exists and becomes eligible once it is orphaned.
+	 */
+	public function test_cleanup_keeps_mutex_while_lock_exists() {
+		$lock       = $this->dir . 'live.zip.downloading';
+		$mutex_file = $lock . '.reclaim';
+		file_put_contents( $lock, wp_json_encode( array( 'started' => time() ) ) );
+		file_put_contents( $mutex_file, '' );
+		touch( $mutex_file, time() - 2 * HOUR_IN_SECONDS );
+
+		MainWP_Backup_File_Manager::cleanup_stale_download_locks( $this->dir );
+		$this->assertFileExists( $lock );
+		$this->assertFileExists( $mutex_file );
+
+		unlink( $lock );
+		MainWP_Backup_File_Manager::cleanup_stale_download_locks( $this->dir );
+		$this->assertFileDoesNotExist( $mutex_file );
+	}
+
+	/**
+	 * A young orphan stays until its own mtime passes the lock TTL.
+	 */
+	public function test_cleanup_keeps_orphan_mutex_younger_than_ttl() {
+		$mutex_file = $this->dir . 'young.zip.downloading.reclaim';
+		file_put_contents( $mutex_file, '' );
+		touch( $mutex_file, time() - 60 );
+
+		MainWP_Backup_File_Manager::cleanup_stale_download_locks( $this->dir );
+		$this->assertFileExists( $mutex_file );
+
+		touch( $mutex_file, time() - 2 * HOUR_IN_SECONDS );
+		MainWP_Backup_File_Manager::cleanup_stale_download_locks( $this->dir );
+		$this->assertFileDoesNotExist( $mutex_file );
+	}
+
+	/**
+	 * An old orphan stays while a separate file handle holds its flock.
+	 */
+	public function test_cleanup_keeps_orphan_mutex_while_flocked() {
+		$mutex_file = $this->dir . 'held.zip.downloading.reclaim';
+		file_put_contents( $mutex_file, '' );
+		touch( $mutex_file, time() - 2 * HOUR_IN_SECONDS );
+		$mutex = fopen( $mutex_file, 'c' );
+		$this->assertTrue( flock( $mutex, LOCK_EX | LOCK_NB ) );
+		try {
+			MainWP_Backup_File_Manager::cleanup_stale_download_locks( $this->dir );
+			$this->assertFileExists( $mutex_file );
+		} finally {
+			flock( $mutex, LOCK_UN );
+			fclose( $mutex );
+		}
+
+		MainWP_Backup_File_Manager::cleanup_stale_download_locks( $this->dir );
+		$this->assertFileDoesNotExist( $mutex_file );
 	}
 
 	/**

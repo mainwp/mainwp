@@ -1652,6 +1652,9 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
 
     /**
      * Advance and report a native run of a saved backup task.
+     *
+     * A response can be lost, so retain the click baseline until the client sends
+     * a positive started identity to acknowledge receipt; otherwise its TTL applies.
      */
     public function mainwp_backuptask_run_status() {
         $this->secure_request( 'mainwp_backuptask_run_status' );
@@ -1663,7 +1666,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         $stored        = '' !== $baseline_key ? get_transient( $baseline_key ) : false;
         $baseline      = is_array( $stored ) && ( $stored['click'] ?? null ) === $click ? (int) $stored['baseline'] : null;
         $response      = MainWP_Manage_Backups_Handler::get_backup_task_run_status( $task_id, $started, $click, false, $baseline );
-        if ( '' !== $baseline_key && 'queued' !== ( $response['status'] ?? '' ) ) {
+        if ( '' !== $baseline_key && $started > 0 ) {
             delete_transient( $baseline_key );
         }
         wp_send_json( $response );

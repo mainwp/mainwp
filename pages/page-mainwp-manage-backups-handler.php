@@ -120,6 +120,47 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
     /**
      * Start or follow a manual run of a saved backup task.
      *
+     * Identity movement permits adoption; a recent manual stamp also permits debounce.
+     * Rows correspond to the manual_run_ownership_cases test provider.
+     *
+     * | Row | Entry and inputs | Expected outcome |
+     * | --- | --- | --- |
+     * | 1 | Poll, no run or click | Failed, unowned |
+     * | 2 | Poll owns an open run | Continue it without claiming |
+     * | 3 | Poll owns superseded run, no saved copy | run_not_found |
+     * | 4 | Poll owns a clean close | Completed with its snapshot |
+     * | 5 | Poll, closed identity beyond baseline, no errors, snapshot | Adopt, completed |
+     * | 6 | Poll, closed identity equals baseline, settle expired | Claim, running |
+     * | 7 | Poll, closed run has errors | Claim again, running |
+     * | 8 | Initiate, slot refused, identity unchanged | Queued with baseline |
+     * | 9 | Either entry, paused task | Refuse |
+     * | 10 | Initiate, same-second scheduled clean close before click, slot refused | Queued, never adopt baseline |
+     * | 11 | Poll, identity beyond baseline still open | Queued; adopt only after clean close with snapshot |
+     * | 12 | Initiate, claim refused after foreign open | Queued, no manual stamp |
+     * | 13 | Poll owns superseded clean run, saved copy | Its saved snapshot |
+     * | 14 | Poll owns superseded failed run, saved copy | Its saved errors |
+     * | 15 | Initiate, recent manual close at baseline, claim refused | Adopt, completed |
+     * | 16 | Either entry, site not editable | Refuse |
+     * | 17 | Initiate, run already open | Running, started = last_run, no adoption |
+     * | 18 | Initiate, claim succeeds | Running; next poll completes |
+     * | 19 | Poll, manual close at baseline within settle | Adopt, completed |
+     * | 20 | Either entry, task not editable | Refuse |
+     * | 21 | Poll, identity beyond baseline closes with errors | Claim again, never adopt |
+     * | 22 | Poll owns superseded scheduled run, saved copy | Its saved snapshot |
+     * | 23 | Either entry, task missing | Refuse |
+     * | 24 | Either entry, native backups disabled | Refuse |
+     * | 25 | Either entry, zero sites with stale ids | Stale-sites error; scheduled run records it |
+     * | 26 | Either entry, empty group without stale ids | Edit-and-select-sites error; scheduled run records it |
+     * | 27 | Either entry, restore in progress | Refuse |
+     * | 28 | Poll, no baseline in old handle | Claim again, never adopt |
+     * | 29 | Initiate, refused claim after clean close beyond baseline | Adopt with snapshot |
+     * | 30 | Poll, clean close beyond baseline without snapshot | Claim again, never adopt |
+     * | 31 | Initiate, claim and close within call | Running; manual stamp precedes first site call |
+     * | 32 | Poll during close before error flush, no snapshot | Queued, never adopt |
+     * | 33 | Poll, clean close beyond baseline, only stale snapshot | Claim again, never adopt |
+     * | 34 | Poll, scheduled clean close at baseline within settle | Queued, never adopt |
+     * | 35 | Poll, manual close at baseline older than settle | Claim again, running |
+     *
      * @param int $task_id Task id.
      * @return array Job handle or error.
      */
@@ -144,7 +185,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             );
         }
 
-        $run = static::claim_manual_task_run( $task, time(), true );
+        $run = static::claim_manual_task_run( $task, time(), (int) $task->last_run );
         MainWP_Post_Backup_Handler::kick_backup_continuation();
         return isset( $run['error'] ) ? $run : array_merge(
             array(
@@ -158,38 +199,66 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
     /**
      * Resolve a manual claim without confusing a slot refusal with a clean close.
      *
-     * @param object $task  Task row, refreshed after the attempt.
-     * @param int    $click Original click timestamp.
-     * @param bool   $adopt_closed Whether this is the initial click, eligible for debounce.
+     * @param object   $task  Task row, refreshed after the attempt.
+     * @param int      $click Original click timestamp.
+     * @param int|null $baseline Run identity before the click; null disables adoption.
      * @return array Run identity and status, or error.
      */
-    private static function claim_manual_task_run( object &$task, int $click, bool $adopt_closed = false ): array {
-        $task_id      = (int) $task->id;
-        $previous_run = (int) $task->last_run;
-        $claimed      = null;
-        $started      = 0;
-        $settle       = MainWP_Backup_Settings::get_manual_run_settle_seconds();
+    private static function claim_manual_task_run( object &$task, int $click, ?int $baseline = null ): array {
+        $task_id = (int) $task->id;
+        $claimed = null;
+        $started = 0;
+        $settle  = MainWP_Backup_Settings::get_manual_run_settle_seconds();
         static::execute_backup_task( $task, 5, true, max( 1, $settle ), $claimed, $started, true );
         $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
         if ( empty( $task ) ) {
             return array( 'error' => esc_html__( 'The backup task could not be started. Reload the page and try again.', 'mainwp' ) );
         }
         if ( true === $claimed ) {
-            MainWP_DB_Backup::instance()->update_backup_run_manually( $task_id, $started );
             return array(
                 'started' => $started,
                 'click'   => 0,
                 'status'  => 'running',
             );
         }
-        if ( $adopt_closed && false === $claimed && $previous_run > 0 && (int) $task->last_run === $previous_run && (int) $task->completed >= $previous_run && '' === (string) $task->backup_errors && $previous_run <= $click && (int) $task->completed >= $click - $settle ) {
-            return static::get_backup_task_run_status( $task_id, $previous_run, $click );
+        if ( false === $claimed && static::can_adopt_closed_task_run( $task, $baseline, $click ) ) {
+            return static::get_backup_task_run_status( $task_id, (int) $task->last_run, $click, false, $baseline );
         }
         return array(
-            'started' => 0,
-            'click'   => $click,
-            'status'  => 'queued',
+            'started'  => 0,
+            'click'    => $click,
+            'status'   => 'queued',
+            'baseline' => $baseline,
         );
+    }
+
+    /**
+     * A manual stamp permits debounce of the same recent run; scheduled closes
+     * require identity movement so a pre-click scheduled run cannot consume the click.
+     *
+     * @param object   $task Task row.
+     * @param int|null $baseline Run identity before the click; null disables adoption.
+     * @param int      $click Original click timestamp.
+     * @return bool Whether this closed run can satisfy the queued click.
+     */
+    private static function can_adopt_closed_task_run( object $task, ?int $baseline, int $click ): bool {
+        if ( null === $baseline || (int) $task->last_run < $baseline || (int) $task->completed < (int) $task->last_run || '' !== (string) $task->backup_errors ) {
+            return false;
+        }
+        if ( (int) $task->last_run === $baseline && ( (int) $task->last_run_manually !== (int) $task->last_run || (int) $task->completed < $click - MainWP_Backup_Settings::get_manual_run_settle_seconds() ) ) {
+            return false;
+        }
+        $sites = static::resolve_task_run_sites( $task );
+        if ( empty( $sites ) ) {
+            return false;
+        }
+        foreach ( $sites as $site_id ) {
+            $snapshot = MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, $task->id );
+            if ( ! $snapshot || (int) $snapshot->created < (int) $task->last_run ) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -207,8 +276,10 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             return esc_html__( 'Native backups are not enabled.', 'mainwp' );
         }
         $sites = static::resolve_task_run_sites( $task, $stale_sites );
-        if ( empty( $sites ) && ! empty( $stale_sites ) ) {
-            return esc_html__( 'No existing sites remain in this backup task. Re-save the task to select sites.', 'mainwp' );
+        if ( empty( $sites ) ) {
+            return ! empty( $stale_sites )
+                ? esc_html__( 'No existing sites remain in this backup task. Re-save the task to select sites.', 'mainwp' )
+                : esc_html__( 'No sites are selected for this backup task. Edit the task and select sites.', 'mainwp' );
         }
         foreach ( $sites as $site_id ) {
             $website = MainWP_DB::instance()->get_website_by_id( $site_id );
@@ -225,13 +296,14 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
     /**
      * Advance a saved task and report recorded snapshots for its sites.
      *
-     * @param int  $task_id Task id.
-     * @param int  $started Owned run timestamp, or zero when no run is owned.
-     * @param int  $click   Click timestamp while queued or adopting a close, otherwise zero.
-     * @param bool $retried Whether this call is the single re-entry after a mid-assembly claim.
+     * @param int      $task_id Task id.
+     * @param int      $started Owned run timestamp, or zero when no run is owned.
+     * @param int      $click   Click timestamp while queued or adopting a close, otherwise zero.
+     * @param bool     $retried Whether this call is the single re-entry after a mid-assembly claim.
+     * @param int|null $baseline Run identity before the click; null disables adoption.
      * @return array Task and site status, or error.
      */
-    public static function get_backup_task_run_status( int $task_id, int $started = 0, int $click = 0, bool $retried = false ): array {
+    public static function get_backup_task_run_status( int $task_id, int $started = 0, int $click = 0, bool $retried = false, ?int $baseline = null ): array {
         $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
         if ( empty( $task ) || ! static::can_edit_backuptask( $task ) ) {
             return array( 'error' => esc_html__( 'Insufficient permissions. Is this task set by you?', 'mainwp' ) );
@@ -245,10 +317,10 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             static::execute_backup_task( $task, 5, false );
             $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
         } elseif ( 0 === $started && $click > 0 && $click <= time() && (int) $task->completed >= (int) $task->last_run ) {
-            if ( (int) $task->last_run >= $click && '' === (string) $task->backup_errors ) {
-                return static::get_backup_task_run_status( $task_id, (int) $task->last_run, $click );
+            if ( static::can_adopt_closed_task_run( $task, $baseline, $click ) ) {
+                return static::get_backup_task_run_status( $task_id, (int) $task->last_run, $click, false, $baseline );
             }
-            $run = static::claim_manual_task_run( $task, $click );
+            $run = static::claim_manual_task_run( $task, $click, $baseline );
             if ( isset( $run['error'] ) ) {
                 return $run;
             }
@@ -352,7 +424,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                 // A new claim can replace progress while this response is being
                 // assembled. One re-entry is enough: last_run only moves forward,
                 // so the re-entry reads the saved copy of this run and returns.
-                return static::get_backup_task_run_status( $task_id, $started, $click, true );
+                return static::get_backup_task_run_status( $task_id, $started, $click, true, $baseline );
             }
         }
         return array(
@@ -361,6 +433,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             'stale_sites' => $stale_sites,
             'started'     => $started,
             'click'       => $click,
+            'baseline'    => $baseline,
             'errors'      => $errors,
             'notices'     => $notices,
             'sites'       => $sites,
@@ -1023,7 +1096,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      *                                     recovery but refuses paused rows.
      * @param bool|null $claimed Actual atomic claim result, null when no claim was attempted.
      * @param int       $claimed_started Exact identity returned by a successful claim.
-     * @param bool      $manual_run Legacy caller flag; preservation follows the previous run.
+     * @param bool      $manual_run Stamp the claimed identity as manual before any site work.
      *
      * @return mixed $errorOutput.
      *
@@ -1086,7 +1159,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      *                                     unconditional bump.
      * @param bool|null $claimed Actual atomic claim result.
      * @param int       $claimed_started Identity of the claimed run.
-     * @param bool      $manual_run Legacy caller flag; preservation follows the previous run.
+     * @param bool      $manual_run Stamp the claimed identity as manual before any site work.
      *
      * @return mixed $errorOutput.
      */
@@ -1144,6 +1217,9 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             $claimed_started = 0;
             return false;
         }
+        if ( $updateRun && $manual_run ) {
+            MainWP_DB_Backup::instance()->update_backup_run_manually( $task->id, $claimed_started );
+        }
         if ( $updateRun ) {
             // Start each run with a clean error slate so the Manage Backups list
             // reflects only the latest run, never a stale error from a past one.
@@ -1194,8 +1270,10 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         }
         $errorOutput  = null;
         $errorEntries = array();
-        if ( empty( $sites ) && ! empty( $stale_sites ) ) {
-            $errorOutput    = esc_html__( 'No existing sites remain in this backup task. Re-save the task to select sites.', 'mainwp' );
+        if ( empty( $sites ) ) {
+            $errorOutput    = ! empty( $stale_sites )
+                ? esc_html__( 'No existing sites remain in this backup task. Re-save the task to select sites.', 'mainwp' )
+                : esc_html__( 'No sites are selected for this backup task. Edit the task and select sites.', 'mainwp' );
             $errorEntries[] = $errorOutput;
         }
 
@@ -1901,7 +1979,6 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_task_by_id()
      * @uses \MainWP\Dashboard\MainWP_Manage_Backups_Handler::can_edit_backuptask()
      * @uses \MainWP\Dashboard\MainWP_Manage_Backups_Handler::resolve_task_site_ids()
-     * @uses \MainWP\Dashboard\MainWP_DB_Backup::update_backup_run_manually()
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
      * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
      */
@@ -1927,7 +2004,6 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         }
 
         $remoteDestinations = apply_filters( 'mainwp_backuptask_remotedestinations', array(), $backupTask );
-        MainWP_DB_Backup::instance()->update_backup_run_manually( $pTaskId );
 
         return array(
             'sites'              => $allSites,

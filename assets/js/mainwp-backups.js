@@ -453,6 +453,10 @@ let managebackups_render_task_phase = function (siteId, progress) {
     }
 };
 managebackups_run_now = function (el) {
+    const POLL_INTERVAL_MS = 3000;
+    const QUEUED_NOTICE_MS = 2 * 60 * 1000;
+    const QUEUED_LIMIT_MS = 15 * 60 * 1000;
+    const UPLOAD_LIMIT_MS = 10 * 60 * 1000;
     el = jQuery(el);
     clearTimeout(manageBackupsPollTimer);
     el.hide();
@@ -470,7 +474,11 @@ managebackups_run_now = function (el) {
     let taskId = el.attr('task_id');
     let started = 0;
     let click = 0;
+    let baseline = null;
     let failures = 0;
+    let queuedSince = null;
+    let closedSince = null;
+    let lastResponse = null;
     let rows = {};
     let waiting = jQuery('<div>').appendTo(content);
     let restoreLink = function () {
@@ -489,15 +497,35 @@ managebackups_run_now = function (el) {
         appendToDiv(content, mainwp_backup_error_html(error || MainWP.I18n.t('The backup status could not be read. The backup may still be running. Reload the page to check its status.')));
     };
     let schedulePoll = function () {
-        manageBackupsPollTimer = setTimeout(poll, 3000);
+        manageBackupsPollTimer = setTimeout(poll, POLL_INTERVAL_MS);
     };
-    let staleReported = false;
-    let render = function (response) {
-        waiting.text(response.status === 'queued' ? MainWP.I18n.t('Waiting for a free backup slot...') : '');
-        if (!staleReported && response.stale_sites && response.stale_sites.length > 0) {
-            staleReported = true;
-            jQuery('<div>').text(MainWP.I18n.t('%d site(s) listed in this task no longer exist on the Dashboard and were skipped. Edit the task to remove them.').replace('%d', response.stale_sites.length)).appendTo(content);
+    let queuedExpired = function () {
+        if (queuedSince === null || Date.now() - queuedSince < QUEUED_LIMIT_MS) {
+            return false;
         }
+        restoreLink();
+        waiting.text(MainWP.I18n.t('The backup could not get a free slot. The task was not run. Try again later.'));
+        return true;
+    };
+    let render = function (response) {
+        lastResponse = response;
+        let queued = response.status === 'queued' && Number(started) === 0 && click > 0;
+        queuedSince = queued ? (queuedSince ?? Date.now()) : null;
+        if (queuedExpired()) {
+            return;
+        }
+        waiting.text(response.status === 'queued' ? MainWP.I18n.t('Waiting for a free backup slot...') : '');
+        if (queued && Date.now() - queuedSince >= QUEUED_NOTICE_MS) {
+            waiting.text(MainWP.I18n.t('Still waiting for a free backup slot. Elapsed wait: %d minutes.').replace('%d', Math.floor((Date.now() - queuedSince) / 60000)));
+        }
+        let closed = response.status === 'completed' || response.status === 'completed_with_errors';
+        if (closed && closedSince === null) {
+            closedSince = Date.now();
+        }
+        let uploadsPending = closed && (response.sites || []).some(function (site) {
+            return site.uploads && site.uploads.pending > 0;
+        });
+        let uploadsExpired = uploadsPending && Date.now() - closedSince >= UPLOAD_LIMIT_MS;
         (response.sites || []).forEach(function (site) {
             if (!rows[site.id]) {
                 let row = jQuery('<div>').appendTo(content);
@@ -514,7 +542,15 @@ managebackups_run_now = function (el) {
             if (site.status === 'completed') {
                 let label = MainWP.I18n.t('Snapshot recorded') + ' (' + site.snapshot.type + ')';
                 if (site.uploads && site.uploads.total > 0) {
-                    label += ' — ' + MainWP.I18n.t('%1$d of %2$d uploaded').replace('%1$d', site.uploads.complete).replace('%2$d', site.uploads.total);
+                    if (uploadsExpired && site.uploads.pending > 0) {
+                        label += ' — ' + MainWP.I18n.t('Remaining uploads continue in the background. Check the Snapshots page for their state.');
+                    } else {
+                        label += ' — ' + MainWP.I18n.t('%1$d of %2$d uploaded').replace('%1$d', site.uploads.complete).replace('%2$d', site.uploads.total);
+                    }
+                    if (site.uploads.failed > 0) {
+                        label += ' — ' + MainWP.I18n.t('%d upload(s) failed.').replace('%d', site.uploads.failed);
+                        row.label.addClass('mainwp-red');
+                    }
                 }
                 row.label.text(label);
                 row.bar.progress('set percent', 100);
@@ -523,7 +559,7 @@ managebackups_run_now = function (el) {
                 row.bar.hide();
             }
         });
-        if (response.status === 'running' || response.status === 'queued') {
+        if (response.status === 'running' || response.status === 'queued' || (uploadsPending && !uploadsExpired)) {
             schedulePoll();
             return;
         }
@@ -543,14 +579,22 @@ managebackups_run_now = function (el) {
         if (response.notices) {
             jQuery('<div>').text(response.notices).appendTo(content);
         }
-        if (response.status === 'completed') {
+        if (response.status === 'completed' && !uploadsPending) {
             manageBackupsPollTimer = setTimeout(function () {
                 mainwpPopup('#managebackups-task-status-box').close(true);
             }, 3000);
         }
     };
     let poll = function () {
-        jQuery.post(ajaxurl, mainwp_secure_data({action: 'mainwp_backuptask_run_status', task_id: taskId, started: started, click: click}), function (response) {
+        // A status request can claim a slot, so enforce the wait limit before posting.
+        if (queuedExpired()) {
+            return;
+        }
+        if (closedSince !== null && Date.now() - closedSince >= UPLOAD_LIMIT_MS) {
+            render(lastResponse);
+            return;
+        }
+        jQuery.post(ajaxurl, mainwp_secure_data({action: 'mainwp_backuptask_run_status', task_id: taskId, started: started, click: click, baseline: baseline}), function (response) {
             failures = 0;
             if (!response || response.error || !response.status) {
                 statusFailed(response && response.error);
@@ -558,6 +602,7 @@ managebackups_run_now = function (el) {
             }
             started = response.started;
             click = response.click;
+            baseline = response.baseline ?? baseline;
             render(response);
         }, 'json').fail(function () {
             if (++failures >= 3) {
@@ -574,6 +619,7 @@ managebackups_run_now = function (el) {
         }
         started = response.started;
         click = response.click;
+        baseline = response.baseline ?? null;
         render(response);
     }, 'json').fail(function () {
         startFailed();

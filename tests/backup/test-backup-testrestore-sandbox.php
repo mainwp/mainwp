@@ -146,54 +146,91 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 	}
 
 	/**
-	 * A zip archive whose entry name attempts to escape the sandbox temp
-	 * dir via a '..' segment is refused before extraction: nothing is
-	 * written anywhere, not even the archive's other, clean entry.
+	 * ZIP extraction either lands both members or refuses without adding a tree.
+	 *
+	 * @dataProvider zip_extraction_cases
+	 *
+	 * @param string      $fixture Archive or destination fault.
+	 * @param float|bool  $free    Free bytes, or false when unavailable.
+	 * @param string|null $error  Expected error code, or null on success.
+	 * @param string|null $detail Expected refusal detail, or null on success.
 	 *
 	 * @return void
 	 */
-	public function test_zip_traversal_entry_is_refused_and_extracts_nothing() {
-		$path    = $this->malicious_zip();
+	public function test_zip_extraction_matrix( $fixture, $free, $error, $detail ) {
+		$path = 'unsafe' === $fixture ? $this->malicious_zip() : $this->clean_zip();
+		if ( 'unsafe' !== $fixture ) {
+			$archive = new \ZipArchive();
+			$this->assertTrue( $archive->open( $path ) );
+			$this->assertTrue( $archive->addFromString( 'second.txt', 'more-bytes' ) );
+			$this->assertTrue( $archive->close() );
+		}
+		if ( 'open-failure' === $fixture ) {
+			$this->assertSame( 9, file_put_contents( $path, 'not a zip' ) );
+		}
+
 		$sandbox = new MainWP_Backup_TestRestore_Sandbox();
 		$sandbox->bring_up();
+		self::$free_space = $free;
 
 		try {
-			$threw = false;
-			try {
-				$sandbox->extract_files( $path );
-			} catch ( MainWP_Exception $e ) {
-				$threw = true;
-				$this->assertSame( MainWP_Backup_TestRestore_Sandbox::ERR_APPLY, $e->get_message_error_code(), 'A traversal entry must report the apply error code.' );
+			if ( 'extract-failure' === $fixture ) {
+				// A directory blocks the first file even when the runner can bypass permissions.
+				$this->assertTrue( mkdir( $sandbox->temp_dir() . 'good.txt' ) );
 			}
-			$this->assertTrue( $threw, 'A zip carrying a traversal entry must be refused.' );
+			$before = scandir( $sandbox->temp_dir() );
+			$this->assertNotFalse( $before );
+			$caught = null;
+			try {
+				if ( 'extract-failure' === $fixture ) {
+					// The destination collision intentionally emits an extractor warning.
+					@$sandbox->extract_files( $path );
+				} else {
+					$sandbox->extract_files( $path );
+				}
+			} catch ( MainWP_Exception $e ) {
+				$caught = $e;
+			}
 
-			$this->assertSame( 0, $sandbox->temp_file_count(), 'Nothing extracts once a traversal entry is found, including the archive\'s clean member.' );
-
-			$escaped = dirname( untrailingslashit( $sandbox->temp_dir() ) ) . '/evil.txt';
-			$this->assertFileDoesNotExist( $escaped, 'The traversal entry must never land outside the sandbox temp dir.' );
+			$this->assertSame( $error, null === $caught ? null : $caught->get_message_error_code() );
+			$this->assertSame( $detail, null === $caught ? null : $caught->get_message_extra( false ) );
+			if ( null === $error ) {
+				$this->assertSame( 2, $sandbox->temp_file_count() );
+				$this->assertSame( hash( 'sha256', 'good-bytes' ), $sandbox->sentinel_sha256( 'good.txt' ) );
+				$this->assertSame( hash( 'sha256', 'more-bytes' ), $sandbox->sentinel_sha256( 'second.txt' ) );
+			} else {
+				$this->assertSame( 0, $sandbox->temp_file_count(), 'Refused archives must leave no extracted files.' );
+				$this->assertSame( $before, scandir( $sandbox->temp_dir() ), 'Refused archives must add no directories.' );
+				if ( 'extract-failure' === $fixture ) {
+					$this->assertSame( array( '.', '..' ), scandir( $sandbox->temp_dir() . 'good.txt' ) );
+				}
+			}
+			if ( 'unsafe' === $fixture ) {
+				$escaped = dirname( untrailingslashit( $sandbox->temp_dir() ) ) . '/evil.txt';
+				$this->assertFileDoesNotExist( $escaped );
+			}
 		} finally {
+			self::$free_space = null;
 			$sandbox->tear_down();
 		}
 	}
 
 	/**
-	 * A clean zip still extracts normally: the traversal guard does not
-	 * disturb a well-formed archive.
+	 * Two ten-byte members distinguish total expansion from a per-member limit.
 	 *
-	 * @return void
+	 * @return array
 	 */
-	public function test_clean_zip_still_extracts() {
-		$path    = $this->clean_zip();
-		$sandbox = new MainWP_Backup_TestRestore_Sandbox();
-		$sandbox->bring_up();
-
-		try {
-			$sandbox->extract_files( $path );
-			$this->assertSame( 1, $sandbox->temp_file_count() );
-			$this->assertSame( hash( 'sha256', 'good-bytes' ), $sandbox->sentinel_sha256( 'good.txt' ) );
-		} finally {
-			$sandbox->tear_down();
-		}
+	public static function zip_extraction_cases() {
+		$boundary = (float) ( 64 * MB_IN_BYTES + 20 );
+		return array(
+			'clean archive'         => array( 'clean', $boundary + 1024, null, null ),
+			'unsafe entry'          => array( 'unsafe', $boundary + 1024, MainWP_Backup_TestRestore_Sandbox::ERR_APPLY, 'zip traversal entry: ../evil.txt' ),
+			'exact boundary'        => array( 'clean', $boundary, null, null ),
+			'one byte short'        => array( 'clean', $boundary - 1, MainWP_Backup_TestRestore_Sandbox::ERR_UNSUPPORTED, 'zip extract free space: clean.zip' ),
+			'capacity unavailable'  => array( 'clean', false, null, null ),
+			'open returns error'    => array( 'open-failure', $boundary + 1024, MainWP_Backup_TestRestore_Sandbox::ERR_APPLY, 'zip open: clean.zip' ),
+			'extract returns false' => array( 'extract-failure', $boundary + 1024, MainWP_Backup_TestRestore_Sandbox::ERR_APPLY, 'zip extract: clean.zip' ),
+		);
 	}
 
 	/**
@@ -220,23 +257,14 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 	 * Every member must fit while leaving the reserve available to other uploads.
 	 *
 	 * @dataProvider extraction_space_cases
-	 * @param string     $format Archive format.
 	 * @param float|bool $free Free bytes, or false when unavailable.
 	 * @param bool       $refused Whether extraction must stop.
 	 * @return void
 	 */
-	public function test_extraction_space_guard( $format, $free, $refused ) {
-		$path = 'zip' === $format ? $this->clean_zip() : $this->clean_tar();
-		if ( 'zip' === $format ) {
-			$archive = new \ZipArchive();
-			$archive->open( $path );
-		} else {
-			$archive = new \PharData( $path );
-		}
+	public function test_extraction_space_guard( $free, $refused ) {
+		$path    = $this->clean_tar();
+		$archive = new \PharData( $path );
 		$archive->addFromString( 'second.txt', 'more-bytes' );
-		if ( 'zip' === $format ) {
-			$archive->close();
-		}
 		unset( $archive );
 		$sandbox = new MainWP_Backup_TestRestore_Sandbox();
 		$sandbox->bring_up();
@@ -270,12 +298,9 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 	public static function extraction_space_cases() {
 		$boundary = (float) ( 64 * MB_IN_BYTES + 20 );
 		return array(
-			'zip short'       => array( 'zip', $boundary - 1, true ),
-			'tar short'       => array( 'tar', $boundary - 1, true ),
-			'zip boundary'    => array( 'zip', $boundary, false ),
-			'tar boundary'    => array( 'tar', $boundary, false ),
-			'zip unavailable' => array( 'zip', false, false ),
-			'tar unavailable' => array( 'tar', false, false ),
+			'tar short'       => array( $boundary - 1, true ),
+			'tar boundary'    => array( $boundary, false ),
+			'tar unavailable' => array( false, false ),
 		);
 	}
 

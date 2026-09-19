@@ -166,8 +166,6 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      * @return array Job handle or error.
      */
     public static function run_backup_task_now( int $task_id ): array {
-        $baseline_key = 'mainwp_backup_click_' . $task_id . '_' . get_current_user_id();
-        delete_transient( $baseline_key );
         $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
         if ( empty( $task ) || ! static::can_edit_backuptask( $task ) ) {
             return array( 'error' => esc_html__( 'Insufficient permissions. Is this task set by you?', 'mainwp' ) );
@@ -190,13 +188,15 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
 
         $click    = time();
         $baseline = (int) $task->last_run;
+        // Same-second clicks share a key harmlessly because they store the same baseline.
+        $baseline_key = 'mainwp_backup_click_' . $task_id . '_' . get_current_user_id() . '_' . $click;
         set_transient(
             $baseline_key,
             array(
                 'baseline' => $baseline,
                 'click'    => $click,
             ),
-            15 * MINUTE_IN_SECONDS
+            30 * MINUTE_IN_SECONDS
         );
         $run = static::claim_manual_task_run( $task, $click, $baseline );
         if ( 'queued' !== ( $run['status'] ?? '' ) ) {

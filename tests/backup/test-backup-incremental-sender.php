@@ -879,7 +879,7 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 			$state->bytes .= base64_decode( $params['chunk_b64'] );
 			return array(
 				'result'         => 'ok',
-				'mtoken'         => 'tok0123456789abc',
+				'mtoken'         => 'tok0123456789abc', // gitleaks:allow -- fixed manifest-transfer token for the mock child, never a credential.
 				'bytes_received' => strlen( $state->bytes ),
 			);
 		};
@@ -2882,13 +2882,81 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( $done['sites'][0]['snapshot']['id'], $status['sites'][0]['snapshot']['id'] );
 	}
 	/**
+	 * A second tab must not erase the first click's evidence for adopting a closed run.
+	 */
+	public function test_two_clicks_keep_separate_baselines_for_adoption() {
+		list( $site_id, $task ) = $this->arrange_manual_task( true );
+		$closed                 = time() - 120;
+		MainWP_DB_Backup::instance()->update_backup_task_with_values(
+			$task->id,
+			array(
+				'last_run'          => $closed,
+				'completed'         => $closed + 1,
+				'last_run_manually' => 0,
+				'backup_errors'     => '',
+			)
+		);
+		update_option( 'mainwp_backup_max_concurrent', 1 );
+		$token = MainWP_Backup_Monitor::acquire_backup_slot( 1 );
+		$this->assertIsString( $token );
+		$keys = array();
+		try {
+			$first = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
+			$this->assertSame( 'queued', $first['status'] );
+			while ( time() === $first['click'] ) {
+				usleep( 10000 );
+			}
+			$second = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
+			$this->assertSame( 'queued', $second['status'] );
+			$this->assertNotSame( $first['click'], $second['click'] );
+			foreach ( array( $first, $second ) as $handle ) {
+				$key    = 'mainwp_backup_click_' . $task->id . '_' . get_current_user_id() . '_' . $handle['click'];
+				$keys[] = $key;
+				$this->assertSame(
+					array(
+						'baseline' => $closed,
+						'click'    => $handle['click'],
+					),
+					get_transient( $key )
+				);
+				$expires = (int) get_option( '_transient_timeout_' . $key );
+				$this->assertGreaterThanOrEqual( $handle['click'] + 30 * MINUTE_IN_SECONDS, $expires );
+				$this->assertLessThanOrEqual( time() + 30 * MINUTE_IN_SECONDS, $expires );
+			}
+			MainWP_DB_Backup::instance()->update_backup_task_with_values(
+				$task->id,
+				array(
+					'last_run'  => $closed + 2,
+					'completed' => $closed + 3,
+				)
+			);
+			$status = $this->poll_manual_task_endpoint(
+				array(
+					'task_id' => $task->id,
+					'started' => 0,
+					'click'   => $first['click'],
+				)
+			);
+			$this->assertSame( 'completed', $status['status'] );
+			$this->assertSame( $closed + 2, $status['started'] );
+			$this->assertFalse( get_transient( $keys[0] ) );
+			$this->assertSame( $closed, get_transient( $keys[1] )['baseline'] );
+			$this->assertSame( array(), $this->child_calls );
+		} finally {
+			MainWP_Backup_Monitor::release_backup_slot( $token );
+			foreach ( $keys as $key ) {
+				delete_transient( $key );
+			}
+		}
+	}
+
+	/**
 	 * A posted identity cannot substitute for this user's pending click.
 	 */
 	public function test_poll_rejects_absent_or_stale_stored_baseline() {
 		list( $site_id, $task ) = $this->arrange_manual_task( true );
 		$closed                 = time() - 120;
 		$click                  = time();
-		$key                    = 'mainwp_backup_click_' . $task->id . '_' . get_current_user_id();
 		MainWP_DB_Backup::instance()->update_backup_task_with_values(
 			$task->id,
 			array(
@@ -2904,20 +2972,21 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		try {
 			$start = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
 			$this->assertSame( 'queued', $start['status'] );
+			$key = 'mainwp_backup_click_' . $task->id . '_' . get_current_user_id() . '_' . $start['click'];
 			$this->assertSame( $closed, get_transient( $key )['baseline'] );
 			$this->assertSame( $start['click'], get_transient( $key )['click'] );
 			$click = $start['click'];
 			foreach ( array( 'absent', 'expired', 'other_click', 'other_user', 'stored_baseline', 'valid' ) as $case ) {
 				delete_transient( $key );
 				if ( 'absent' !== $case ) {
-					$stored_key = 'other_user' === $case ? $key . '9' : $key;
+					$stored_key = 'other_user' === $case ? 'mainwp_backup_click_' . $task->id . '_' . ( get_current_user_id() + 1 ) . '_' . $click : $key;
 					set_transient(
 						$stored_key,
 						array(
 							'baseline' => 'stored_baseline' === $case ? $closed : 1,
 							'click'    => 'other_click' === $case ? $click - 1 : $click,
 						),
-						15 * MINUTE_IN_SECONDS
+						30 * MINUTE_IN_SECONDS
 					);
 					if ( 'expired' === $case ) {
 						update_option( '_transient_timeout_' . $key, time() - 1 );
@@ -2941,7 +3010,7 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		} finally {
 			MainWP_Backup_Monitor::release_backup_slot( $token );
 			delete_transient( $key );
-			delete_transient( $key . '9' );
+			delete_transient( 'mainwp_backup_click_' . $task->id . '_' . ( get_current_user_id() + 1 ) . '_' . $click );
 		}
 	}
 

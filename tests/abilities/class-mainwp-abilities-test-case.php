@@ -70,8 +70,8 @@ use MainWP\Dashboard\MainWP_DB_Client;
  * test classes outside MainWP_Abilities_Test_Case share the one
  * implementation.
  */
-trait MainWP_Capability_Bypass_Guard {
 // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- shared guard beside the base case, both loaded from the bootstrap.
+trait MainWP_Capability_Bypass_Guard {
 
 	/**
 	 * Whether a bypass constant is defined for this process.

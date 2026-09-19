@@ -1658,7 +1658,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         $task_id      = isset( $_POST['task_id'] ) ? (int) $_POST['task_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
         $started      = isset( $_POST['started'] ) ? (int) $_POST['started'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
         $click        = isset( $_POST['click'] ) ? (int) $_POST['click'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
-        $baseline_key = 'mainwp_backup_click_' . $task_id . '_' . get_current_user_id();
+        $baseline_key = 'mainwp_backup_click_' . $task_id . '_' . get_current_user_id() . '_' . $click;
         $stored       = get_transient( $baseline_key );
         $baseline     = is_array( $stored ) && ( $stored['click'] ?? null ) === $click ? (int) $stored['baseline'] : null;
         $response     = MainWP_Manage_Backups_Handler::get_backup_task_run_status( $task_id, $started, $click, false, $baseline );

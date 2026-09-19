@@ -558,10 +558,12 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
      * expiry alone covers crash recovery on every platform, so no process
      * checks are used.
      *
-     * Publication uses an exclusive hard link to a complete payload, so
+     * Publication prefers an exclusive hard link to a complete payload, so
      * processes racing the same missing lock cannot both acquire: one wins and
-     * the loser re-reads the winner's live lock. Stale-lock removal goes
-     * through reclaim_stale_lock(), which re-validates staleness under a
+     * the loser re-reads the winner's live lock. Hosts without hard links use
+     * exclusive creation, with a 60-second grace period for incomplete writes.
+     * Stale-lock removal goes through reclaim_stale_lock(), which
+     * re-validates staleness under a
      * per-path mutex - a contender that observed the OLD stale lock can
      * never delete the FRESH lock a concurrent winner just created.
      *
@@ -599,9 +601,27 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
                 if ( strlen( $payload ) !== $written ) {
                     return false;
                 }
-                if ( @link( $temp_file, $lock_file ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors -- an existing target is normal contention.
+                if ( function_exists( 'link' ) && @link( $temp_file, $lock_file ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors -- an existing target is normal contention.
                     static::$owned_download_locks[ $lock_file ] = $token;
                     return true;
+                }
+                clearstatcache( true, $lock_file );
+                if ( ! file_exists( $lock_file ) ) {
+                    // Exclusive creation preserves ownership when the filesystem cannot publish hard links.
+                    $handle = @fopen( $lock_file, 'x' ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- another writer may win after the existence check.
+                    if ( false !== $handle ) {
+                        try {
+                            $written = fwrite( $handle, $payload );
+                        } finally {
+                            fclose( $handle );
+                        }
+                        if ( strlen( $payload ) !== $written ) {
+                            wp_delete_file( $lock_file );
+                            return false;
+                        }
+                        static::$owned_download_locks[ $lock_file ] = $token;
+                        return true;
+                    }
                 }
             } finally {
                 wp_delete_file( $temp_file );
@@ -613,7 +633,13 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
             // per-path mutex) and the exclusive create retried, so only
             // one of several racers wins the recreate.
             $data  = json_decode( (string) @file_get_contents( $lock_file ), true ); // phpcs:ignore WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors -- local lock file; a racer may delete it between publication and this read.
-            $stale = ! is_array( $data ) || ( time() - (int) ( isset( $data['started'] ) ? $data['started'] : 0 ) ) > HOUR_IN_SECONDS;
+            $stale = is_array( $data ) && ( time() - (int) ( isset( $data['started'] ) ? $data['started'] : 0 ) ) > HOUR_IN_SECONDS;
+            if ( ! is_array( $data ) ) {
+                // An empty lock may be a writer mid-publication until its age no longer explains a live writer.
+                clearstatcache( true, $lock_file );
+                $mtime = @filemtime( $lock_file ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- a vanished file must refuse reclamation.
+                $stale = false !== $mtime && time() - $mtime > 60;
+            }
             if ( ! $stale ) {
                 return false;
             }
@@ -690,14 +716,15 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
      * only ever appears after a crash left a stale lock, and does not
      * match the '*.downloading' cleanup glob.
      *
-     * @param string $lock_file Lock file path.
+     * @param string      $lock_file Lock file path.
+     * @param string|null $mutex_file Shared mutex path for a publication sidecar.
      *
      * @return bool True when the stale lock is gone and the caller may
      *              retry the exclusive create; false when the lock is
      *              live again or another process is reclaiming it.
      */
-    private static function reclaim_stale_lock( string $lock_file ): bool {
-        $mutex = @fopen( $lock_file . '.reclaim', 'c' ); // phpcs:ignore WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors -- flock target; creation failure degrades to refusing the reclaim.
+    private static function reclaim_stale_lock( string $lock_file, ?string $mutex_file = null ): bool {
+        $mutex = @fopen( $mutex_file ?? $lock_file . '.reclaim', 'c' ); // phpcs:ignore WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors -- flock target; creation failure degrades to refusing the reclaim.
         if ( false === $mutex ) {
             return false; // Cannot serialize the takeover; treat as contended.
         }
@@ -713,7 +740,13 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
                 // Re-read under the mutex: only the exact still-stale state
                 // may be deleted, never a fresh lock a winner just wrote.
                 $data  = json_decode( (string) @file_get_contents( $lock_file ), true ); // phpcs:ignore WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors -- local lock file.
-                $stale = ! is_array( $data ) || ( time() - (int) ( isset( $data['started'] ) ? $data['started'] : 0 ) ) > HOUR_IN_SECONDS;
+                $stale = is_array( $data ) && ( time() - (int) ( isset( $data['started'] ) ? $data['started'] : 0 ) ) > HOUR_IN_SECONDS;
+                if ( ! is_array( $data ) ) {
+                    // An empty lock may be a writer mid-publication until its age no longer explains a live writer.
+                    clearstatcache( true, $lock_file );
+                    $mtime = @filemtime( $lock_file ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- a vanished file must refuse reclamation.
+                    $stale = false !== $mtime && time() - $mtime > 60;
+                }
                 if ( ! $stale ) {
                     return false;
                 }
@@ -795,18 +828,15 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
      * @return void
      */
     public static function cleanup_stale_download_locks( string $dir ): void {
-        $locks = glob( rtrim( $dir, '/' ) . '/*.downloading' );
-        if ( ! is_array( $locks ) ) {
-            return;
-        }
-        foreach ( $locks as $lock_file ) {
-            $data  = json_decode( (string) file_get_contents( $lock_file ), true ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local lock file.
-            $stale = ! is_array( $data ) || ( time() - (int) ( isset( $data['started'] ) ? $data['started'] : 0 ) ) > HOUR_IN_SECONDS;
-            if ( $stale ) {
-                // Through the same serialized reclaim as acquire: a raw
-                // pathname delete here could land after a reclaimer's fresh
-                // exclusive create and silently invalidate its new lock.
-                static::reclaim_stale_lock( $lock_file );
+        foreach ( array( '*.downloading', '*.downloading.tmp', '*.downloading.*.tmp' ) as $pattern ) {
+            $locks = glob( rtrim( $dir, '/' ) . '/' . $pattern );
+            if ( ! is_array( $locks ) ) {
+                continue;
+            }
+            foreach ( $locks as $lock_file ) {
+                // Refresh sidecars share the owner's mutex so cleanup cannot race a live refresh.
+                $owner_file = preg_replace( '/(\.downloading)(?:\.tmp|\.[^.]+\.tmp)$/', '$1', $lock_file );
+                static::reclaim_stale_lock( $lock_file, $owner_file . '.reclaim' );
             }
         }
     }

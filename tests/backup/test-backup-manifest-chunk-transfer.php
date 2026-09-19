@@ -287,7 +287,7 @@ class MainWP_Backup_Manifest_Chunk_Transfer_Test extends MainWP_Abilities_Test_C
 
 		$state->bytes  = '';
 		$state->ready  = false;
-		$state->mtoken = 'tok0123456789abc';
+		$state->mtoken = 'tok0123456789abc'; // gitleaks:allow -- fixed manifest-transfer token for the mock child, never a credential.
 		$call_no       = 0;
 
 		add_filter(

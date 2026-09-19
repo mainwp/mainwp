@@ -184,15 +184,68 @@ class MainWP_Download_Lock_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * A corrupt lock file counts as stale.
+	 * A corrupt lock must age past the publication grace period before replacement.
 	 *
 	 * @return void
 	 */
 	public function test_corrupt_lock_is_replaced() {
 		$file = $this->dir . 'backup.zip';
 		file_put_contents( $file . '.downloading', 'not json at all' );
+		touch( $file . '.downloading', time() - 61 );
 
 		$this->assertTrue( MainWP_Backup_File_Manager::acquire_download_lock( $file, 42, 7 ) );
+	}
+
+	/**
+	 * A contender must allow an exclusive creator time to finish publication.
+	 */
+	public function test_empty_lock_requires_publication_grace_before_reclaim() {
+		$file = $this->dir . 'empty.zip';
+		$lock = $file . '.downloading';
+		file_put_contents( $lock, '' );
+		$this->assertFalse( MainWP_Backup_File_Manager::acquire_download_lock( $file, 42, 7 ) );
+		$this->assertFalse( $this->reclaim( $lock ) );
+		$this->assertSame( '', file_get_contents( $lock ) );
+
+		touch( $lock, time() - 61 );
+		$this->assertTrue( $this->reclaim( $lock ) );
+		$this->assertFileDoesNotExist( $lock );
+		file_put_contents( $lock, '' );
+		touch( $lock, time() - 61 );
+		$this->assertTrue( MainWP_Backup_File_Manager::acquire_download_lock( $file, 42, 7 ) );
+		$this->assertSame( 42, json_decode( file_get_contents( $lock ), true )['site_id'] );
+	}
+
+	/**
+	 * Crashed publication sidecars must not accumulate or cost a live writer its file.
+	 */
+	public function test_cleanup_sidecars_preserves_live_writers_and_mutexes() {
+		$lock = $this->dir . 'sidecar.zip.downloading';
+		foreach ( array( '.tmp', '.' . wp_generate_uuid4() . '.tmp' ) as $suffix ) {
+			$temp = $lock . $suffix;
+			file_put_contents( $temp, '' );
+			MainWP_Backup_File_Manager::cleanup_stale_download_locks( $this->dir );
+			$this->assertFileExists( $temp );
+			touch( $temp, time() - 61 );
+			$mutex = fopen( $lock . '.reclaim', 'c' );
+			flock( $mutex, LOCK_EX );
+			try {
+				MainWP_Backup_File_Manager::cleanup_stale_download_locks( $this->dir );
+				$this->assertFileExists( $temp );
+			} finally {
+				flock( $mutex, LOCK_UN );
+				fclose( $mutex );
+			}
+			MainWP_Backup_File_Manager::cleanup_stale_download_locks( $this->dir );
+			$this->assertFileDoesNotExist( $temp );
+			file_put_contents( $temp, wp_json_encode( array( 'started' => time() ) ) );
+			MainWP_Backup_File_Manager::cleanup_stale_download_locks( $this->dir );
+			$this->assertFileExists( $temp );
+			file_put_contents( $temp, wp_json_encode( array( 'started' => time() - 2 * HOUR_IN_SECONDS ) ) );
+			MainWP_Backup_File_Manager::cleanup_stale_download_locks( $this->dir );
+			$this->assertFileDoesNotExist( $temp );
+			$this->assertFileExists( $lock . '.reclaim' );
+		}
 	}
 
 	/**

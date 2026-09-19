@@ -505,11 +505,13 @@ managebackups_run_now = function (el) {
         manageBackupsPollTimer = setTimeout(poll, POLL_INTERVAL_MS);
     };
     let queuedExpired = function () {
-        if ((lastResponse && lastResponse.run_open) || queuedSince === null || Date.now() - queuedSince < QUEUED_LIMIT_MS) {
+        if (queuedSince === null || Date.now() - queuedSince < QUEUED_LIMIT_MS) {
             return false;
         }
         restoreLink();
-        waiting.text(MainWP.I18n.t('The backup could not get a free slot. The task was not run. Try again later.'));
+        waiting.text(lastResponse && lastResponse.run_open
+            ? MainWP.I18n.t('Another run of this task is already in progress. This click did not start a new run. Check the task status later.')
+            : MainWP.I18n.t('The backup could not get a free slot. The task was not run. Try again later.'));
         return true;
     };
     let render = function (response) {

@@ -558,8 +558,8 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
      * expiry alone covers crash recovery on every platform, so no process
      * checks are used.
      *
-     * The create is exclusive (fopen 'x'), so two processes racing the
-     * same missing lock cannot both acquire: exactly one create wins and
+     * Publication uses an exclusive hard link to a complete payload, so
+     * processes racing the same missing lock cannot both acquire: one wins and
      * the loser re-reads the winner's live lock. Stale-lock removal goes
      * through reclaim_stale_lock(), which re-validates staleness under a
      * per-path mutex - a contender that observed the OLD stale lock can
@@ -575,9 +575,14 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
         $lock_file = $local_file . '.downloading';
 
         for ( $attempt = 0; $attempt < 2; $attempt++ ) {
-            $handle = @fopen( $lock_file, 'x' ); // phpcs:ignore WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors -- exclusive create IS the lock; failure-to-create is the expected contended case.
-            if ( false !== $handle ) {
-                $token   = strtolower( wp_generate_password( 12, false ) );
+            $token     = strtolower( wp_generate_password( 12, false ) );
+            $temp_file = $lock_file . '.' . wp_generate_uuid4() . '.tmp';
+            // phpcs:disable WordPress.WP.AlternativeFunctions -- publish complete local payloads atomically on the same filesystem.
+            $handle = @fopen( $temp_file, 'x' ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- an unwritable sibling must refuse acquisition.
+            if ( false === $handle ) {
+                return false;
+            }
+            try {
                 $payload = (string) wp_json_encode(
                     array(
                         'started' => time(),
@@ -586,21 +591,28 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
                         'token'   => $token,
                     )
                 );
-                $written = fwrite( $handle, $payload ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- paired with the exclusive fopen above.
-                fclose( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- paired with the exclusive fopen above.
+                try {
+                    $written = fwrite( $handle, $payload );
+                } finally {
+                    fclose( $handle );
+                }
                 if ( strlen( $payload ) !== $written ) {
-                    wp_delete_file( $lock_file );
                     return false;
                 }
-                static::$owned_download_locks[ $lock_file ] = $token;
-                return true;
+                if ( @link( $temp_file, $lock_file ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors -- an existing target is normal contention.
+                    static::$owned_download_locks[ $lock_file ] = $token;
+                    return true;
+                }
+            } finally {
+                wp_delete_file( $temp_file );
             }
+            // phpcs:enable WordPress.WP.AlternativeFunctions
 
             // The lock exists: a live one refuses this caller; a stale or
             // corrupt one is reclaimed (re-validated and removed under the
             // per-path mutex) and the exclusive create retried, so only
             // one of several racers wins the recreate.
-            $data  = json_decode( (string) @file_get_contents( $lock_file ), true ); // phpcs:ignore WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors -- local lock file; a racer may delete it between the fopen and this read.
+            $data  = json_decode( (string) @file_get_contents( $lock_file ), true ); // phpcs:ignore WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors -- local lock file; a racer may delete it between publication and this read.
             $stale = ! is_array( $data ) || ( time() - (int) ( isset( $data['started'] ) ? $data['started'] : 0 ) ) > HOUR_IN_SECONDS;
             if ( ! $stale ) {
                 return false;
@@ -629,9 +641,10 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
         // phpcs:disable WordPress.WP.AlternativeFunctions -- local sidecar IO shares the reclaim mutex.
         $mutex = fopen( $lock_file . '.reclaim', 'c' );
         if ( false === $mutex ) {
-            return true;
+            return false;
         }
         try {
+            // Contention means active management; an unopened mutex verifies nothing.
             if ( ! flock( $mutex, LOCK_EX | LOCK_NB ) ) {
                 return true;
             }
@@ -738,16 +751,33 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
 
         $owned = isset( static::$owned_download_locks[ $lock_file ] ) ? static::$owned_download_locks[ $lock_file ] : '';
         if ( '' !== $owned ) {
-            $data       = json_decode( (string) file_get_contents( $lock_file ), true ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local lock file.
-            $lock_token = is_array( $data ) && isset( $data['token'] ) ? (string) $data['token'] : '';
             unset( static::$owned_download_locks[ $lock_file ] );
-            if ( ! hash_equals( $lock_token, $owned ) ) {
-                // The token on disk is not ours: another process stale-replaced
-                // the lock, or a reclaimer exclusive-created the replacement and
-                // has not written its token yet (empty/unparseable on disk).
-                // Deleting either would free a lock this process no longer owns.
+            // phpcs:disable WordPress.WP.AlternativeFunctions -- ownership checks must serialize with stale replacement.
+            $mutex = @fopen( $lock_file . '.reclaim', 'c' ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- an unserialized delete could remove a new owner's lock.
+            if ( false === $mutex ) {
                 return;
             }
+            try {
+                if ( ! flock( $mutex, LOCK_EX ) ) {
+                    return;
+                }
+                try {
+                    if ( ! file_exists( $lock_file ) ) {
+                        return;
+                    }
+                    $data       = json_decode( (string) file_get_contents( $lock_file ), true );
+                    $lock_token = is_array( $data ) && isset( $data['token'] ) ? (string) $data['token'] : '';
+                    if ( hash_equals( $lock_token, $owned ) ) {
+                        wp_delete_file( $lock_file );
+                    }
+                } finally {
+                    flock( $mutex, LOCK_UN );
+                }
+            } finally {
+                fclose( $mutex );
+            }
+            return;
+            // phpcs:enable WordPress.WP.AlternativeFunctions
         }
 
         wp_delete_file( $lock_file );

@@ -1655,12 +1655,17 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
      */
     public function mainwp_backuptask_run_status() {
         $this->secure_request( 'mainwp_backuptask_run_status' );
-        $task_id  = isset( $_POST['task_id'] ) ? (int) $_POST['task_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
-        $started  = isset( $_POST['started'] ) ? (int) $_POST['started'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
-        $click    = isset( $_POST['click'] ) ? (int) $_POST['click'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
-        $baseline = isset( $_POST['baseline'] ) && is_scalar( $_POST['baseline'] ) ? sanitize_text_field( wp_unslash( (string) $_POST['baseline'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
-        $baseline = ctype_digit( $baseline ) ? (int) $baseline : null;
-        wp_send_json( MainWP_Manage_Backups_Handler::get_backup_task_run_status( $task_id, $started, $click, false, $baseline ) );
+        $task_id      = isset( $_POST['task_id'] ) ? (int) $_POST['task_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
+        $started      = isset( $_POST['started'] ) ? (int) $_POST['started'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
+        $click        = isset( $_POST['click'] ) ? (int) $_POST['click'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
+        $baseline_key = 'mainwp_backup_click_' . $task_id . '_' . get_current_user_id();
+        $stored       = get_transient( $baseline_key );
+        $baseline     = is_array( $stored ) && ( $stored['click'] ?? null ) === $click ? (int) $stored['baseline'] : null;
+        $response     = MainWP_Manage_Backups_Handler::get_backup_task_run_status( $task_id, $started, $click, false, $baseline );
+        if ( 'queued' !== ( $response['status'] ?? '' ) ) {
+            delete_transient( $baseline_key );
+        }
+        wp_send_json( $response );
     }
 
     /**

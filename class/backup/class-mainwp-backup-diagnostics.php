@@ -679,7 +679,7 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
             $allowed_sites = $this->export_scope_site_ids();
             $sections      = $this->bundle_sections( $dir, $allowed_sites );
             $events        = $this->scope_event_files( $event_files, $allowed_sites, $sections['tasks'] );
-            $base          = $dir . 'diagnostics-bundle-' . gmdate( 'Ymd-His' );
+            $base          = $dir . MainWP_System_Utility::get_private_filename( self::SUBDIR, wp_generate_uuid4(), 'bundle' );
 
             if ( class_exists( \ZipArchive::class ) ) {
                 $path = $base . '.zip';
@@ -1272,7 +1272,11 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
             if ( is_string( $custom ) && '' !== $custom ) {
                 return trailingslashit( $custom );
             }
-            return trailingslashit( MainWP_System_Utility::get_mainwp_sub_dir( self::SUBDIR ) );
+            $dir = trailingslashit( MainWP_System_Utility::get_mainwp_sub_dir( self::SUBDIR ) );
+            if ( ! file_exists( $dir . 'index.php' ) ) {
+                MainWP_System_Utility::touch( $dir . 'index.php' );
+            }
+            return $dir;
         } catch ( \Throwable $e ) {
             return '';
         }

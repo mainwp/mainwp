@@ -438,6 +438,7 @@ managebackups_exclude_folder = function (pElement) {
 };
 
 let manageBackupsPollTimer = null;
+let manageBackupsPollGeneration = 0;
 
 // Render the recorded phase and percent in the site's existing progress bar.
 let managebackups_render_task_phase = function (siteId, progress) {
@@ -453,6 +454,7 @@ let managebackups_render_task_phase = function (siteId, progress) {
     }
 };
 managebackups_run_now = function (el) {
+    const generation = ++manageBackupsPollGeneration;
     const POLL_INTERVAL_MS = 3000;
     const QUEUED_NOTICE_MS = 2 * 60 * 1000;
     const QUEUED_LIMIT_MS = 15 * 60 * 1000;
@@ -497,10 +499,13 @@ managebackups_run_now = function (el) {
         appendToDiv(content, mainwp_backup_error_html(error || MainWP.I18n.t('The backup status could not be read. The backup may still be running. Reload the page to check its status.')));
     };
     let schedulePoll = function () {
+        if (generation !== manageBackupsPollGeneration) {
+            return;
+        }
         manageBackupsPollTimer = setTimeout(poll, POLL_INTERVAL_MS);
     };
     let queuedExpired = function () {
-        if (queuedSince === null || Date.now() - queuedSince < QUEUED_LIMIT_MS) {
+        if ((lastResponse && lastResponse.run_open) || queuedSince === null || Date.now() - queuedSince < QUEUED_LIMIT_MS) {
             return false;
         }
         restoreLink();
@@ -508,6 +513,9 @@ managebackups_run_now = function (el) {
         return true;
     };
     let render = function (response) {
+        if (generation !== manageBackupsPollGeneration) {
+            return;
+        }
         lastResponse = response;
         let queued = response.status === 'queued' && Number(started) === 0 && click > 0;
         queuedSince = queued ? (queuedSince ?? Date.now()) : null;
@@ -581,11 +589,17 @@ managebackups_run_now = function (el) {
         }
         if (response.status === 'completed' && !uploadsPending) {
             manageBackupsPollTimer = setTimeout(function () {
+                if (generation !== manageBackupsPollGeneration) {
+                    return;
+                }
                 mainwpPopup('#managebackups-task-status-box').close(true);
             }, 3000);
         }
     };
     let poll = function () {
+        if (generation !== manageBackupsPollGeneration) {
+            return;
+        }
         // A status request can claim a slot, so enforce the wait limit before posting.
         if (queuedExpired()) {
             return;
@@ -595,6 +609,9 @@ managebackups_run_now = function (el) {
             return;
         }
         jQuery.post(ajaxurl, mainwp_secure_data({action: 'mainwp_backuptask_run_status', task_id: taskId, started: started, click: click, baseline: baseline}), function (response) {
+            if (generation !== manageBackupsPollGeneration) {
+                return;
+            }
             failures = 0;
             if (!response || response.error || !response.status) {
                 statusFailed(response && response.error);
@@ -605,6 +622,9 @@ managebackups_run_now = function (el) {
             baseline = response.baseline ?? baseline;
             render(response);
         }, 'json').fail(function () {
+            if (generation !== manageBackupsPollGeneration) {
+                return;
+            }
             if (++failures >= 3) {
                 statusFailed();
             } else {
@@ -613,6 +633,9 @@ managebackups_run_now = function (el) {
         });
     };
     jQuery.post(ajaxurl, mainwp_secure_data({action: 'mainwp_backuptask_run_now', task_id: taskId}), function (response) {
+        if (generation !== manageBackupsPollGeneration) {
+            return;
+        }
         if (!response || response.error || !response.job_id) {
             startFailed(response && response.error);
             return;
@@ -622,6 +645,9 @@ managebackups_run_now = function (el) {
         baseline = response.baseline ?? null;
         render(response);
     }, 'json').fail(function () {
+        if (generation !== manageBackupsPollGeneration) {
+            return;
+        }
         startFailed();
     });
 };

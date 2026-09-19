@@ -1900,7 +1900,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             $website       = MainWP_DB::instance()->get_website_by_id( $websiteid, false, array( 'settings_notification_emails' ) );
             $updated       = false;
             $updated_templ = false;
-            if ( MainWP_System_Utility::can_edit_website( $website ) && \mainwp_current_user_can( 'site', $websiteid ) ) {
+            if ( MainWP_System_Utility::can_edit_website( $website ) && \mainwp_current_user_can( 'site', $websiteid ) && \mainwp_current_user_can( 'dashboard', 'edit_sites' ) ) {
                 $updated       = static::update_site_emails_settings_handle( $website );
                 $updated_templ = MainWP_Notification_Template::instance()->handle_template_file_action();
                 if ( ! empty( $_GET['edit-email'] ) ) {

@@ -2881,4 +2881,132 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( 'Full base used.', $status['notices'] );
 		$this->assertSame( $done['sites'][0]['snapshot']['id'], $status['sites'][0]['snapshot']['id'] );
 	}
+	/**
+	 * A posted identity cannot substitute for this user's pending click.
+	 */
+	public function test_poll_rejects_absent_or_stale_stored_baseline() {
+		list( $site_id, $task ) = $this->arrange_manual_task( true );
+		$closed                 = time() - 120;
+		$click                  = time();
+		$key                    = 'mainwp_backup_click_' . $task->id . '_' . get_current_user_id();
+		MainWP_DB_Backup::instance()->update_backup_task_with_values(
+			$task->id,
+			array(
+				'last_run'          => $closed,
+				'completed'         => $closed + 1,
+				'last_run_manually' => 0,
+				'backup_errors'     => '',
+			)
+		);
+		update_option( 'mainwp_backup_max_concurrent', 1 );
+		$token = MainWP_Backup_Monitor::acquire_backup_slot( 1 );
+		$this->assertIsString( $token );
+		try {
+			$start = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
+			$this->assertSame( 'queued', $start['status'] );
+			$this->assertSame( $closed, get_transient( $key )['baseline'] );
+			$this->assertSame( $start['click'], get_transient( $key )['click'] );
+			$click = $start['click'];
+			foreach ( array( 'absent', 'expired', 'other_click', 'other_user', 'stored_baseline', 'valid' ) as $case ) {
+				delete_transient( $key );
+				if ( 'absent' !== $case ) {
+					$stored_key = 'other_user' === $case ? $key . '9' : $key;
+					set_transient(
+						$stored_key,
+						array(
+							'baseline' => 'stored_baseline' === $case ? $closed : 1,
+							'click'    => 'other_click' === $case ? $click - 1 : $click,
+						),
+						15 * MINUTE_IN_SECONDS
+					);
+					if ( 'expired' === $case ) {
+						update_option( '_transient_timeout_' . $key, time() - 1 );
+					}
+				}
+				$status = $this->poll_manual_task_endpoint(
+					array(
+						'task_id'  => $task->id,
+						'started'  => 0,
+						'click'    => $click,
+						'baseline' => 1,
+					)
+				);
+				$this->assertSame( 'valid' === $case ? 'completed' : 'queued', $status['status'], $case );
+				$this->assertSame( 'valid' === $case ? $closed : 0, $status['started'], $case );
+				if ( 'valid' === $case ) {
+					$this->assertFalse( get_transient( $key ), 'Settled clicks must not remain reusable.' );
+				}
+			}
+			$this->assertSame( array(), $this->child_calls );
+		} finally {
+			MainWP_Backup_Monitor::release_backup_slot( $token );
+			delete_transient( $key );
+			delete_transient( $key . '9' );
+		}
+	}
+
+	/**
+	 * Exercise the request boundary because client baselines are untrusted there.
+	 *
+	 * @param array $post Request fields.
+	 * @return array Decoded response.
+	 */
+	private function poll_manual_task_endpoint( array $post ): array {
+		$original_post        = $_POST;
+		$original_request     = $_REQUEST;
+		$_POST                = $post;
+		$nonce                = wp_create_nonce( 'mainwp_backuptask_run_status' );
+		$_POST['security']    = $nonce;
+		$_REQUEST['security'] = $nonce;
+		$throw                = static function () {
+			return static function () {
+				throw new \RuntimeException( 'wp_die' );
+			};
+		};
+		add_filter( 'wp_doing_ajax', '__return_true' );
+		add_filter( 'wp_die_ajax_handler', $throw );
+		ob_start();
+		try {
+			\MainWP\Dashboard\MainWP_Post_Backup_Handler::instance()->mainwp_backuptask_run_status();
+		} catch ( \RuntimeException $e ) {
+			$this->assertSame( 'wp_die', $e->getMessage() );
+		} finally {
+			$raw = ob_get_clean();
+			remove_filter( 'wp_die_ajax_handler', $throw );
+			remove_filter( 'wp_doing_ajax', '__return_true' );
+			$_POST    = $original_post;
+			$_REQUEST = $original_request;
+		}
+		return json_decode( $raw, true );
+	}
+
+	/**
+	 * Continuation must not append the opening error on every tick.
+	 */
+	public function test_empty_site_error_is_written_only_on_opening_tick() {
+		list( $site_id, $task ) = $this->arrange_manual_task( false );
+		MainWP_DB_Backup::instance()->update_backup_task_with_values(
+			$task->id,
+			array(
+				'sites'  => '',
+				'groups' => '',
+			)
+		);
+		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		MainWP_Manage_Backups_Handler::execute_backup_task( $task );
+		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$this->assertSame( 1, substr_count( $task->backup_errors, 'No sites are selected' ) );
+		$opening_errors = $task->backup_errors;
+		MainWP_DB_Backup::instance()->update_backup_task_with_values(
+			$task->id,
+			array(
+				'completed'       => 0,
+				'completed_sites' => wp_json_encode( array( $site_id => true ) ),
+			)
+		);
+		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		MainWP_Manage_Backups_Handler::execute_backup_task( $task, 5, false );
+		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$this->assertSame( $opening_errors, $task->backup_errors );
+	}
 }

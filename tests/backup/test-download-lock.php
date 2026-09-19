@@ -438,4 +438,72 @@ class MainWP_Download_Lock_Test extends MainWP_Abilities_Test_Case {
 		$this->assertFileDoesNotExist( $stale );
 		$this->assertFileExists( $fresh );
 	}
+	/**
+	 * Contenders must never observe an unpublished or partial token.
+	 */
+	public function test_lock_publication_exposes_only_complete_payloads() {
+		$file         = $this->dir . 'publication.zip';
+		$lock         = $file . '.downloading';
+		$observations = 0;
+		$observe      = function ( $value ) use ( $lock, &$observations ) {
+			if ( file_exists( $lock ) ) {
+				$data = json_decode( file_get_contents( $lock ), true );
+				$this->assertIsArray( $data, 'A visible lock must already contain complete JSON.' );
+				$this->assertNotEmpty( $data['token'] ?? '', 'A visible lock must identify its owner.' );
+				++$observations;
+			}
+			return $value;
+		};
+		add_filter( 'random_password', $observe );
+		add_filter( 'wp_delete_file', $observe );
+		try {
+			$this->assertTrue( MainWP_Backup_File_Manager::acquire_download_lock( $file, 42, 7 ) );
+			$this->assertFalse( MainWP_Backup_File_Manager::acquire_download_lock( $file, 42, 7 ) );
+			$this->assertGreaterThan( 0, $observations );
+			$this->assertSame( array(), glob( $lock . '.*.tmp' ) );
+		} finally {
+			remove_filter( 'random_password', $observe );
+			remove_filter( 'wp_delete_file', $observe );
+			MainWP_Backup_File_Manager::release_download_lock( $file );
+		}
+	}
+
+	/**
+	 * A replacement owner must survive, and an owned delete must hold the reclaim mutex.
+	 */
+	public function test_release_serializes_deletion_and_preserves_replacement() {
+		$file = $this->dir . 'serialized.zip';
+		$lock = $file . '.downloading';
+		$this->assertTrue( MainWP_Backup_File_Manager::acquire_download_lock( $file, 42, 7 ) );
+		$checked = false;
+		$observe = function ( $path ) use ( $lock, &$checked ) {
+			if ( $lock === $path ) {
+				$mutex = fopen( $lock . '.reclaim', 'c' );
+				try {
+					$this->assertFalse( flock( $mutex, LOCK_EX | LOCK_NB ), 'Release must exclude a concurrent reclaimer until deletion finishes.' );
+					$checked = true;
+				} finally {
+					fclose( $mutex );
+				}
+			}
+			return $path;
+		};
+		add_filter( 'wp_delete_file', $observe );
+		try {
+			MainWP_Backup_File_Manager::release_download_lock( $file );
+			$this->assertTrue( $checked );
+		} finally {
+			remove_filter( 'wp_delete_file', $observe );
+		}
+		$this->assertTrue( MainWP_Backup_File_Manager::acquire_download_lock( $file, 42, 7 ) );
+		$replacement = wp_json_encode(
+			array(
+				'started' => time(),
+				'token'   => 'replacement',
+			)
+		);
+		file_put_contents( $lock, $replacement );
+		MainWP_Backup_File_Manager::release_download_lock( $file );
+		$this->assertSame( $replacement, file_get_contents( $lock ) );
+	}
 }

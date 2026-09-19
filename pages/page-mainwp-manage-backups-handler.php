@@ -120,7 +120,8 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
     /**
      * Start or follow a manual run of a saved backup task.
      *
-     * Identity movement permits adoption; a recent manual stamp also permits debounce.
+     * Identity movement past the baseline permits adoption; at the baseline, only
+     * the operator's own manual close inside the settle window permits debounce.
      * Rows correspond to the manual_run_ownership_cases test provider.
      *
      * | Row | Entry and inputs | Expected outcome |
@@ -165,6 +166,8 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      * @return array Job handle or error.
      */
     public static function run_backup_task_now( int $task_id ): array {
+        $baseline_key = 'mainwp_backup_click_' . $task_id . '_' . get_current_user_id();
+        delete_transient( $baseline_key );
         $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
         if ( empty( $task ) || ! static::can_edit_backuptask( $task ) ) {
             return array( 'error' => esc_html__( 'Insufficient permissions. Is this task set by you?', 'mainwp' ) );
@@ -185,7 +188,20 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             );
         }
 
-        $run = static::claim_manual_task_run( $task, time(), (int) $task->last_run );
+        $click    = time();
+        $baseline = (int) $task->last_run;
+        set_transient(
+            $baseline_key,
+            array(
+                'baseline' => $baseline,
+                'click'    => $click,
+            ),
+            15 * MINUTE_IN_SECONDS
+        );
+        $run = static::claim_manual_task_run( $task, $click, $baseline );
+        if ( 'queued' !== ( $run['status'] ?? '' ) ) {
+            delete_transient( $baseline_key );
+        }
         MainWP_Post_Backup_Handler::kick_backup_continuation();
         return isset( $run['error'] ) ? $run : array_merge(
             array(
@@ -229,12 +245,13 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             'click'    => $click,
             'status'   => 'queued',
             'baseline' => $baseline,
+            'run_open' => (int) $task->completed < (int) $task->last_run,
         );
     }
 
     /**
      * A manual stamp permits debounce of the same recent run; scheduled closes
-     * require identity movement so a pre-click scheduled run cannot consume the click.
+     * require identity movement past the baseline.
      *
      * @param object   $task Task row.
      * @param int|null $baseline Run identity before the click; null disables adoption.
@@ -434,6 +451,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             'started'     => $started,
             'click'       => $click,
             'baseline'    => $baseline,
+            'run_open'    => (int) $task->completed < (int) $task->last_run,
             'errors'      => $errors,
             'notices'     => $notices,
             'sites'       => $sites,
@@ -1270,7 +1288,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         }
         $errorOutput  = null;
         $errorEntries = array();
-        if ( empty( $sites ) ) {
+        if ( $updateRun && empty( $sites ) ) {
             $errorOutput    = ! empty( $stale_sites )
                 ? esc_html__( 'No existing sites remain in this backup task. Re-save the task to select sites.', 'mainwp' )
                 : esc_html__( 'No sites are selected for this backup task. Edit the task and select sites.', 'mainwp' );

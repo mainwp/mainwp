@@ -2264,7 +2264,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      *
      * @param mixed       $url Download URL.
      * @param mixed       $file File to download to.
-     * @param bool        $size Expected total file size in bytes, false when unknown.
+     * @param int|false   $size Expected total file size in bytes, false when unknown.
      * @param null        $http_user htaccess username.
      * @param null        $http_pass htaccess password.
      * @param object|null $website Child site TLS settings; null uses cURL defaults.

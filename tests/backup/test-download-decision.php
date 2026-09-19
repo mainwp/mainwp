@@ -184,6 +184,29 @@ class MainWP_Download_Decision_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Resume answered with 416 whose total matches the local file but not the
+	 * advertised size: the child holds a smaller artifact than promised, so the
+	 * download restarts instead of being accepted as complete.
+	 *
+	 * @return void
+	 */
+	public function test_resume_416_total_below_expected_size_returns_write_mode() {
+		$range = array( 'total' => 1024 );
+		$this->assertSame( 'w', MainWP_Connect::decide_download_mode( 416, 1024, $range, 1024, 4096 ) );
+	}
+
+	/**
+	 * Resume answered with 416 and no advertised size: the server total is the
+	 * only authority, so a matching local file is complete.
+	 *
+	 * @return void
+	 */
+	public function test_resume_416_local_equals_total_without_expected_size_returns_already_complete() {
+		$range = array( 'total' => 1024 );
+		$this->assertSame( 'already_complete', MainWP_Connect::decide_download_mode( 416, 1024, $range, 1024, false ) );
+	}
+
+	/**
 	 * Resume answered with 416 and no parsable Content-Range restarts.
 	 *
 	 * @return void

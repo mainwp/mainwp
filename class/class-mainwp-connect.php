@@ -2207,7 +2207,11 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $sent_range = $requested_offset > 0;
 
         if ( 416 === $http_status ) {
-            if ( is_array( $content_range ) && isset( $content_range['total'] ) && $local_size === $content_range['total'] ) {
+            // A range is only requested while the local file is shorter than the
+            // advertised size, so a 416 total that matches the local file but not
+            // the advertised size is a smaller artifact than promised, not a finished
+            // download. Restarting lets the final size check report it.
+            if ( is_array( $content_range ) && isset( $content_range['total'] ) && $local_size === $content_range['total'] && ( false === $expected_size || $local_size === $expected_size ) ) {
                 return 'already_complete';
             }
             return 'w';

@@ -12,6 +12,7 @@
 
 namespace MainWP\Dashboard\Tests;
 
+use MainWP\Dashboard\MainWP_Backup_Error_Codes;
 use MainWP\Dashboard\MainWP_Connect;
 use MainWP\Dashboard\MainWP_Exception;
 
@@ -212,20 +213,24 @@ class MainWP_Download_To_File_Test extends MainWP_Backup_Test_Case {
 	}
 
 	/**
-	 * A 416 whose reported total matches the local file size means the file
-	 * is already complete; the partial-file content is kept untouched.
+	 * A 416 whose reported total matches the local file but falls short of the
+	 * advertised size is a smaller artifact than promised, not a finished
+	 * download: the transfer restarts and the final size check refuses it
+	 * instead of announcing an undersized file as complete.
 	 *
 	 * @return void
 	 */
-	public function test_416_with_matching_total_treats_file_as_complete() {
+	public function test_416_with_total_below_advertised_size_is_refused() {
 		$file    = $this->temp_download_path();
 		$content = static::fixture_content( 4096 );
 		file_put_contents( $file, $content );
 
-		// The stale expected size forces a resume; the matching 416 confirms completion.
-		MainWP_Connect::download_to_file( static::fixture_url( '/206?size=4096' ), $file, 4100 );
-
-		$this->assertSame( $content, file_get_contents( $file ) );
+		try {
+			MainWP_Connect::download_to_file( static::fixture_url( '/206?size=4096' ), $file, 4100 );
+			$this->fail( 'Expected the undersized artifact to be refused.' );
+		} catch ( MainWP_Exception $e ) {
+			$this->assertSame( MainWP_Backup_Error_Codes::ERR_FILE_TOO_SMALL, $e->get_message_error_code() );
+		}
 	}
 
 	/**

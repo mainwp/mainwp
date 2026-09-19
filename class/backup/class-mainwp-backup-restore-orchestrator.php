@@ -334,10 +334,11 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 $website = $this->website( $job );
                 $task_id = (string) $job->pre_snapshot_task_id;
                 if ( MainWP_Backup_Restore_Job_Store::STATUS_PREFLIGHT === $job->status ) {
-                    // The site handle can exist before the worker records the pre-snapshot phase.
+                    // A handle this restore did not create belongs to another lane.
                     $raw     = MainWP_DB::instance()->get_website_option( (int) $website->id, MainWP_Backup_Executor::ADHOC_TASK_OPTION );
                     $handle  = json_decode( (string) $raw, true );
-                    $task_id = is_array( $handle ) && isset( $handle['task_id'] ) && is_scalar( $handle['task_id'] ) ? (string) $handle['task_id'] : '';
+                    $owned   = is_array( $handle ) && isset( $handle['owner'] ) && is_scalar( $handle['owner'] ) && (string) $job->id === (string) $handle['owner'];
+                    $task_id = $owned && isset( $handle['task_id'] ) && is_scalar( $handle['task_id'] ) ? (string) $handle['task_id'] : '';
                 }
                 if ( '' !== $task_id ) {
                     try {
@@ -716,7 +717,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         }
 
         if ( ! empty( $job->checkpoint['options']['pre_snapshot'] ) ) {
-            $task_id = MainWP_Backup_Executor::trigger_backup( (int) $job->site_id, 'full' );
+            $task_id = MainWP_Backup_Executor::trigger_backup( (int) $job->site_id, 'full', (string) $job->id );
             $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT, array( 'pre_snapshot_task_id' => $task_id ), $this->lock_token );
             return;
         }

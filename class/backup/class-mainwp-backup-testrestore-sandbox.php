@@ -468,6 +468,15 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
                 // nosec The concatenation builds the refusal label reported to the user, not a query.
                 $refused = 'SELECT INTO ' . $keyword;
             }
+            if ( $count >= 2 && 'DIRECTORY' === $keyword && in_array( strtoupper( $window[ $count - 2 ] ), array( 'DATA', 'INDEX' ), true ) ) {
+                $refused = strtoupper( $window[ $count - 2 ] ) . ' DIRECTORY';
+            }
+            if ( $count >= 2 && '=' === $token && 'CONNECTION' === strtoupper( $window[ $count - 2 ] ) ) {
+                $refused = 'CONNECTION';
+            }
+            if ( $count >= 2 && '(' === $token && 'LOAD_FILE' === strtoupper( $window[ $count - 2 ] ) ) {
+                $refused = 'LOAD_FILE';
+            }
             if ( 3 === $count && '.' === $window[1]
                 && ! ctype_digit( $window[0] ) && ! ctype_digit( $window[2] )
                 && preg_match( '/^(?:`(?:[^`]|``)+`|[a-zA-Z0-9_$\x80-\xff]+)$/D', $window[0] )
@@ -481,13 +490,12 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         $first  = $leading[0] ?? '';
         $second = $leading[1] ?? '';
         $third  = $leading[2] ?? '';
-        // Session settings can change quoting rules and invalidate the tokenizer's assumptions.
+        // The connection charset is pinned in connect(); a dump must not change the parser's view of a string.
         $allowed = in_array( $first, array( 'INSERT', 'REPLACE', 'BEGIN', 'COMMIT' ), true )
             || ( in_array( $first, array( 'DROP', 'CREATE' ), true ) && ( 'TABLE' === $second || ( 'TEMPORARY' === $second && 'TABLE' === $third ) ) )
             || ( 'ALTER' === $first && 'TABLE' === $second )
             || ( in_array( $first, array( 'LOCK', 'UNLOCK' ), true ) && 'TABLES' === $second )
-            || ( 'START' === $first && 'TRANSACTION' === $second )
-            || ( 'SET' === $first && ( 'NAMES' === $second || ( 'CHARACTER' === $second && 'SET' === $third ) ) );
+            || ( 'START' === $first && 'TRANSACTION' === $second );
         if ( ! $allowed ) {
             $refused = $first;
         }
@@ -726,6 +734,18 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         if ( false === $ok ) {
             $detail = mysqli_connect_error(); // phpcs:ignore WordPress.DB.RestrictedFunctions.mysql_mysqli_connect_error -- reading the sandbox connection error string for the log.
             throw new MainWP_Exception( esc_html__( 'The test-restore sandbox could not connect to the database server.', 'mainwp' ), 'connect: ' . $detail, self::ERR_UNSUPPORTED );
+        }
+
+        // The tokenizer's escape handling assumes a single-byte-safe charset that the dump must not be able to change.
+        try {
+            $charset_ok = $mysqli->set_charset( 'utf8mb4' );
+        } catch ( \mysqli_sql_exception $e ) {
+            $mysqli->close();
+            throw new MainWP_Exception( esc_html__( 'The test-restore sandbox could not connect to the database server.', 'mainwp' ), 'set_charset: ' . $e->getMessage(), self::ERR_UNSUPPORTED );
+        }
+        if ( ! $charset_ok ) {
+            $mysqli->close();
+            throw new MainWP_Exception( esc_html__( 'The test-restore sandbox could not connect to the database server.', 'mainwp' ), 'set_charset utf8mb4 failed', self::ERR_UNSUPPORTED );
         }
 
         return $mysqli;

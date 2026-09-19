@@ -1967,11 +1967,12 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      *
      * @param int    $site_id Child site ID.
      * @param string $type    full|db Type of backup.
+     * @param string $owner   Owner identifier for cancellation ownership.
      *
      * @return string Task handle for resumable children.
      * @throws MainWP_Exception When the backup cannot be started.
      */
-    public static function trigger_backup( int $site_id, string $type = 'full' ): string {
+    public static function trigger_backup( int $site_id, string $type = 'full', string $owner = '' ): string {
         // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber
         if ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_LEGACY_DISABLED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
@@ -2051,6 +2052,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     'task_id' => $task_id,
                     'type'    => $type,
                     'started' => time(),
+                    'owner'   => $owner,
                 )
             )
         );

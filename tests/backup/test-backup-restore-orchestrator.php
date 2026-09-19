@@ -1196,8 +1196,19 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		);
 		$handles       = array(
 			'none'        => null,
-			'own'         => wp_json_encode( array( 'task_id' => 'task-7-pre' ) ),
-			'foreign'     => wp_json_encode( array( 'task_id' => 'task-8-other' ) ),
+			'own'         => wp_json_encode(
+				array(
+					'task_id' => 'task-7-pre',
+					'owner'   => (string) $job_id,
+				)
+			),
+			'foreign'     => wp_json_encode(
+				array(
+					'task_id' => 'task-8-other',
+					'owner'   => (string) ( $job_id + 1 ),
+				)
+			),
+			'legacy'      => wp_json_encode( array( 'task_id' => 'task-7-pre' ) ),
 			'undecodable' => '{invalid-json',
 		);
 		$handle_before = $handles[ $handle_state ];
@@ -1261,6 +1272,8 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			'preflight with task ids'        => array( 'preflight', 'task-9-restore', 'task-7-pre', false, 'backup_task_cancel', true, 'cancelled', 'own', 'cleared' ),
 			'preflight no handle'            => array( 'preflight', 'task-9-restore', 'task-7-pre', false, '', false, 'cancelled', 'none', 'unchanged' ),
 			'preflight handle before phase'  => array( 'preflight', '', '', false, 'backup_task_cancel', true, 'cancelled', 'own', 'cleared' ),
+			'preflight foreign owner'        => array( 'preflight', '', '', false, '', false, 'cancelled', 'foreign', 'unchanged' ),
+			'preflight legacy handle'        => array( 'preflight', '', '', false, '', false, 'cancelled', 'legacy', 'unchanged' ),
 			'preflight child throws'         => array( 'preflight', '', '', true, 'backup_task_cancel', true, 'cancelled', 'own', 'cleared' ),
 			'preflight undecodable handle'   => array( 'preflight', '', '', false, '', false, 'cancelled', 'undecodable', 'unchanged' ),
 			'staging with task ids'          => array( 'staging', 'task-9-restore', 'task-7-pre', false, '', false, 'cancelled', 'own', 'unchanged' ),

@@ -376,12 +376,9 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * A restore that keeps killing its worker (reclaimed past the
-	 * ceiling) is routed to fail_permanent instead of being handed out
-	 * again, since a hard fatal never reaches fail_retryable to bound it
-	 * via attempt_count.
+	 * The store leaves over-ceiling jobs for orchestrator cleanup without claiming them.
 	 */
-	public function test_reclaim_ceiling_routes_job_to_fail_permanent() {
+	public function test_reclaim_ceiling_leaves_job_findable_without_claiming() {
 		$job_id = $this->store->create_job( 8801, 42, array() );
 
 		$now = 1000000;
@@ -399,19 +396,17 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 		$this->assertNull( $this->store->acquire_next_job( 'token-final', 300, $now ), 'A job over the reclaim ceiling must not be acquired again.' );
 
 		$final = $this->store->get_job( $job_id );
-		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT, $final->status );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_PENDING, $final->status );
+		$found = $this->store->find_jobs_over_reclaim_ceiling( $this->store::active_statuses(), $now, $job_id );
+		$this->assertCount( 1, $found );
+		$this->assertEquals( $final, $found[0] );
+		$this->assertIsArray( $found[0]->checkpoint );
 	}
 
 	/**
-	 * A foreground progress poll passes the job id it is advancing so it
-	 * only ever advances that restore (the acquire_next_job docblock's
-	 * own contract). The reclaim-ceiling sweep must honor that scoping:
-	 * polling job X must never fail-permanent an unrelated job Y sitting
-	 * over the ceiling for a different site. The unscoped background/CLI
-	 * drainer, which takes any runnable job, sweeps every over-ceiling
-	 * job as before.
+	 * Finding expired jobs honors the poll scope and never changes either row.
 	 */
-	public function test_scoped_poll_does_not_reclaim_fail_a_different_over_ceiling_job() {
+	public function test_scoped_poll_finds_only_its_over_ceiling_jobs() {
 		$job_x = $this->store->create_job( 8801, 42, array() );
 		$job_y = $this->store->create_job( 9901, 43, array() );
 
@@ -426,8 +421,7 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 			$this->assertNotNull( $reclaimed, "Reclaim {$i} of Y must still be handed out below the ceiling." );
 		}
 
-		// Y now sits at the ceiling with an expired lease - eligible for
-		// the sweep on the very next acquire call.
+		// Y must remain findable for cleanup once its final lease expires.
 		$now += 301;
 
 		// A scoped foreground poll for job X must not touch Y, even
@@ -439,13 +433,15 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 			'A job_id-scoped poll must never fail-permanent an unrelated job.'
 		);
 
-		// The unscoped background/CLI drainer sweeps every over-ceiling job.
-		$this->store->acquire_next_job( 'token-drain', 300, $now );
-		$this->assertSame(
-			MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT,
-			$this->store->get_job( $job_y )->status,
-			'The unscoped drainer must fail-permanent an over-ceiling job.'
-		);
+		$this->assertNull( $this->store->acquire_next_job( 'token-y-poll', 300, $now, $job_y ) );
+		$this->assertNull( $this->store->acquire_next_job( 'token-drain', 300, $now ) );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_PENDING, $this->store->get_job( $job_y )->status );
+		$statuses = $this->store::active_statuses();
+		$this->assertSame( array(), $this->store->find_jobs_over_reclaim_ceiling( $statuses, $now, $job_x ) );
+		$scoped = $this->store->find_jobs_over_reclaim_ceiling( $statuses, $now, $job_y );
+		$this->assertCount( 1, $scoped );
+		$this->assertSame( $job_y, (int) $scoped[0]->id );
+		$this->assertEquals( $scoped, $this->store->find_jobs_over_reclaim_ceiling( $statuses, $now ) );
 	}
 
 	/**
@@ -507,9 +503,10 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * The reclaim-ceiling sweep is not defeated by a slow holder renewing
-	 * between the sweep's SELECT and its terminal write (F8): because the
-	 * expired lease cannot be renewed, the over-ceiling job is still failed.
+	 * The reclaim ceiling is not defeated by a slow holder renewing between
+	 * the orchestrator's over-ceiling read and its terminal write (F8):
+	 * because the expired lease cannot be renewed, the job stays unclaimed
+	 * and findable for the orchestrator to fail.
 	 */
 	public function test_reclaim_ceiling_not_rescued_by_expired_renew() {
 		$job_id = $this->store->create_job( 8801, 42, array() );
@@ -527,7 +524,9 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 		$this->assertFalse( $this->store->renew_lease( $job_id, 'token-' . MainWP_Backup_Restore_Job_Store::RECLAIM_CEILING, 300, $now ), 'A renewal on the expired over-ceiling lease must be refused.' );
 
 		$this->assertNull( $this->store->acquire_next_job( 'token-sweep', 300, $now ), 'The over-ceiling job is not handed out.' );
-		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT, $this->store->get_job( $job_id )->status, 'The sweep still permanently fails it.' );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_PENDING, $this->store->get_job( $job_id )->status, 'The store leaves the terminal verdict to the orchestrator.' );
+		$found = $this->store->find_jobs_over_reclaim_ceiling( $this->store::active_statuses(), $now, $job_id );
+		$this->assertCount( 1, $found, 'The orchestrator can still find it to fail it.' );
 	}
 
 	/**

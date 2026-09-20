@@ -668,6 +668,55 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Refusing another chunk preserves acknowledged progress without a failure.
+	 */
+	public function test_transfer_stops_before_chunk_when_callback_refuses() {
+		$staged = $this->dir . '/payload.zip';
+		file_put_contents( $staged, str_repeat( 'A', 700 ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+		$plan   = array(
+			array(
+				'role'        => 'db',
+				'file'        => 'payload.zip',
+				'size'        => 700,
+				'sha256'      => hash_file( 'sha256', $staged ),
+				'staged_path' => $staged,
+				'adopt_only'  => false,
+			),
+		);
+		$cursor = array( 'chunk_bytes' => 300 );
+		$checks = 0;
+		$result = $this->driver->transfer_artifacts(
+			(object) array( 'id' => 1 ),
+			'task-1-x',
+			$plan,
+			$cursor,
+			microtime( true ) + 60,
+			function () use ( &$checks ): bool {
+				return ++$checks < 2;
+			}
+		);
+
+		$this->assertSame(
+			array(
+				'done'      => false,
+				'error'     => null,
+				'retryable' => false,
+			),
+			$result
+		);
+		$this->assertSame( 2, $checks );
+		$this->assertCount( 1, $this->driver->sent );
+		$this->assertSame( 300, $cursor['offset'] );
+		$this->assertSame( 0, $cursor['artifact_index'] );
+		$this->assertSame( array( 0 ), array_column( $this->driver->sent, 'offset' ) );
+
+		$result = $this->driver->transfer_artifacts( (object) array( 'id' => 1 ), 'task-1-x', $plan, $cursor, microtime( true ) + 60 );
+		$this->assertTrue( $result['done'] );
+		$this->assertNull( $result['error'] );
+		$this->assertSame( array( 0, 300, 600 ), array_column( $this->driver->sent, 'offset' ) );
+	}
+
+	/**
 	 * A gap response realigns the offset to what the child holds.
 	 */
 	public function test_gap_response_realigns_offset() {

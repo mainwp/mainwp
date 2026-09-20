@@ -1108,19 +1108,20 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
     /**
      * Push staged artifacts to the child as verified chunks.
      *
-     * @param object $website  Website object.
-     * @param string $task_id  Child restore task id.
-     * @param array  $plan     Staged plan entries.
-     * @param array  $cursor   Transfer cursor (by reference):
-     *                         { artifact_index, offset, chunk_bytes,
-     *                         floor_fails, ok_streak, ceiling_bytes,
-     *                         ceiling_soft, ceiling_streak_count,
-     *                         ceiling_cleared_bytes, good_bytes }.
-     * @param float  $deadline Slice deadline (epoch).
+     * @param object        $website         Website object.
+     * @param string        $task_id         Child restore task id.
+     * @param array         $plan            Staged plan entries.
+     * @param array         $cursor          Transfer cursor (by reference):
+     *                                      { artifact_index, offset, chunk_bytes,
+     *                                      floor_fails, ok_streak, ceiling_bytes,
+     *                                      ceiling_soft, ceiling_streak_count,
+     *                                      ceiling_cleared_bytes, good_bytes }.
+     * @param float         $deadline        Slice deadline (epoch).
+     * @param callable|null $should_continue Whether another chunk may be sent; called without arguments.
      *
      * @return array { done: bool, error: string|null, retryable: bool }
      */
-    public function transfer_artifacts( object $website, string $task_id, array $plan, array &$cursor, float $deadline ): array { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- chunk loop with realign, adaptive sizing, and floor retries.
+    public function transfer_artifacts( object $website, string $task_id, array $plan, array &$cursor, float $deadline, ?callable $should_continue = null ): array { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- chunk loop with realign, adaptive sizing, and floor retries.
         $cursor = array_merge(
             array(
                 'artifact_index'        => 0,
@@ -1160,6 +1161,14 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
             $size = (int) filesize( $entry['staged_path'] );
             $raw  = (string) file_get_contents( $entry['staged_path'], false, null, $cursor['offset'], max( 1, min( $cursor['chunk_bytes'], $size - $cursor['offset'] ) ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- bounded read of the staged artifact.
             $last = $cursor['offset'] + strlen( $raw ) >= $size;
+
+            if ( null !== $should_continue && ! $should_continue() ) {
+                return array(
+                    'done'      => false,
+                    'error'     => null,
+                    'retryable' => false,
+                );
+            }
 
             $diag_start = microtime( true );
             $outcome    = $this->send_chunk( $website, $task_id, $entry, $cursor['offset'], $raw, $last );

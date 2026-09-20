@@ -1195,6 +1195,121 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
+	 * Reclaim failures release owned handles before the event, even without a site.
+	 *
+	 * @dataProvider reclaim_failure_handles
+	 *
+	 * @param bool $owned   Whether this job owns the site's handle.
+	 * @param bool $deleted Whether the site was deleted after the job was created.
+	 */
+	public function test_reclaim_ceiling_releases_owned_handle_before_failure_hook( $owned, $deleted ) {
+		$store  = MainWP_Backup_Restore_Job_Store::instance();
+		$job    = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT, array( 'pre_snapshot_task_id' => 'task-7-pre' ) );
+		$handle = wp_json_encode(
+			array(
+				'task_id' => 'task-7-pre',
+				'owner'   => (string) ( $owned ? $job->id : $job->id + 1 ),
+			)
+		);
+		MainWP_DB::instance()->update_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION, $handle );
+		$this->expire_job_at_reclaim_ceiling( (int) $job->id );
+		if ( $deleted ) {
+			MainWP_DB::instance()->remove_website( $this->site_id );
+		}
+		$events   = array();
+		$listener = function ( $event ) use ( &$events, $store ) {
+			$events[] = array(
+				'job_id' => $event['job_id'],
+				'status' => $store->get_job( $event['job_id'] )->status,
+				'handle' => MainWP_DB::instance()->get_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION ),
+			);
+		};
+		add_action( 'mainwp_backup_restore_failed', $listener );
+		try {
+			$this->orchestrator->process_pending_restore_jobs( 30 );
+			$this->orchestrator->process_pending_restore_jobs( 30 );
+		} finally {
+			remove_action( 'mainwp_backup_restore_failed', $listener );
+		}
+
+		$fresh = $store->get_job( (int) $job->id );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT, $fresh->status );
+		$this->assertStringContainsString( sprintf( 'Reclaimed %d times', $store::RECLAIM_CEILING ), $fresh->last_error );
+		$this->assertSame( '', $fresh->checkpoint['last_error_code'] );
+		$this->assertSame(
+			array(
+				array(
+					'job_id' => (int) $job->id,
+					'status' => MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT,
+					'handle' => $owned ? null : $handle,
+				),
+			),
+			$events
+		);
+		$this->assertSame( $owned ? null : $handle, MainWP_DB::instance()->get_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION ) );
+		$this->assertSame( array(), $this->calls );
+	}
+
+	/**
+	 * Ownership is checked on the same site's handle, including adopted task ids.
+	 *
+	 * @return array
+	 */
+	public static function reclaim_failure_handles() {
+		return array(
+			'owned handle'  => array( true, false ),
+			'foreign owner' => array( false, false ),
+			'deleted site'  => array( true, true ),
+		);
+	}
+
+	/**
+	 * A foreground poll must not fail another site's expired restore.
+	 */
+	public function test_scoped_poll_fails_only_its_over_ceiling_job() {
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+		$job   = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT );
+		$other = $store->create_job( $this->create_test_site(), 5, array( 'restore_id' => 'other-restore' ) );
+		$this->expire_job_at_reclaim_ceiling( (int) $job->id );
+		$this->expire_job_at_reclaim_ceiling( $other );
+		$events   = array();
+		$listener = function ( $event ) use ( &$events ) {
+			$events[] = $event['job_id'];
+		};
+		add_action( 'mainwp_backup_restore_failed', $listener );
+		try {
+			$this->orchestrator->process_pending_restore_jobs( 30, (int) $job->id );
+		} finally {
+			remove_action( 'mainwp_backup_restore_failed', $listener );
+		}
+
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT, $store->get_job( (int) $job->id )->status );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_PENDING, $store->get_job( $other )->status );
+		$this->assertSame( array( (int) $job->id ), $events );
+		$found = $store->find_jobs_over_reclaim_ceiling( $store::active_statuses(), time(), $other );
+		$this->assertCount( 1, $found );
+		$this->assertSame( $other, (int) $found[0]->id );
+		$this->assertNull( $store->acquire_next_job( 'over-ceiling', 300, null, $other ) );
+	}
+
+	/**
+	 * Simulate dead workers without waiting for wall-clock leases to expire.
+	 *
+	 * @param int $job_id Job to leave at the reclaim ceiling with an expired lease.
+	 */
+	private function expire_job_at_reclaim_ceiling( int $job_id ): void {
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+		$now   = time() - ( $store::RECLAIM_CEILING + 2 ) * 301;
+		$this->assertNotNull( $store->acquire_next_job( 'initial-' . $job_id, 300, $now, $job_id ) );
+		for ( $i = 1; $i <= $store::RECLAIM_CEILING; ++$i ) {
+			$now      += 301;
+			$reclaimed = $store->acquire_next_job( 'reclaim-' . $job_id . '-' . $i, 300, $now, $job_id );
+			$this->assertNotNull( $reclaimed );
+			$this->assertSame( $i, (int) $reclaimed->reclaim_count );
+		}
+	}
+
+	/**
 	 * Exhausting retries does not authorize releasing another lane's handle.
 	 */
 	public function test_pre_snapshot_permanent_failure_preserves_foreign_owner_handle() {
@@ -1326,8 +1441,9 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	 * @param string       $outcome          Return value or refusal message fragment.
 	 * @param string       $handle_state     Persisted handle fixture before cancellation.
 	 * @param string       $handle_after     Expected handle disposition: unchanged or cleared.
+	 * @param string       $child_answer     Child cancellation answer.
 	 */
-	public function test_cancel_job_matrix( $status, $child_task_id, $snapshot_task_id, $child_throws, $action, $marker_cleared, $outcome, $handle_state, $handle_after ) {
+	public function test_cancel_job_matrix( $status, $child_task_id, $snapshot_task_id, $child_throws, $action, $marker_cleared, $outcome, $handle_state, $handle_after, $child_answer = 'ok' ) {
 		global $wpdb;
 		$store  = MainWP_Backup_Restore_Job_Store::instance();
 		$job    = $this->make_job();
@@ -1377,6 +1493,12 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$this->assertSame( $handle_before, MainWP_DB::instance()->get_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION ) );
 
 		$actions = '' === $action ? array() : (array) $action;
+		foreach ( $actions as $child_action ) {
+			$this->responses[ $child_action ] = array(
+				'result' => in_array( $child_answer, array( 'completed', 'failed' ), true ) ? 'already_terminal' : $child_answer,
+				'phase'  => $child_answer,
+			);
+		}
 		if ( $child_throws ) {
 			$this->responses[ $actions[0] ] = new \Error( 'Child cancellation failed.' );
 		}
@@ -1391,6 +1513,11 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		if ( 'cancelled' === $outcome ) {
 			$this->assertSame( 'cancelled', $result );
 			$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED, $store->get_job( $job_id )->status );
+		} elseif ( 'cancel_pending' === $outcome ) {
+			$this->assertSame( 'cancel_pending', $result );
+			$fresh = $store->get_job( $job_id );
+			$this->assertSame( $status, $fresh->status );
+			$this->assertTrue( $fresh->checkpoint['cancel_intent'] );
 		} else {
 			$this->assertInstanceOf( MainWP_Exception::class, $result );
 			$this->assertStringContainsString( $outcome, $result->getMessage() );
@@ -1422,7 +1549,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
-	 * Cancellation cases outside the running-job confirmation protocol.
+	 * Cancellation decisions share the busy rule across child-task phases.
 	 *
 	 * @return array
 	 */
@@ -1441,6 +1568,10 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			'failed_retryable with task ids'  => array( 'failed_retryable', 'task-9-restore', 'task-7-pre', false, 'backup_task_cancel', true, 'cancelled', 'own', 'cleared' ),
 			'failed_retryable owned handle'   => array( 'failed_retryable', '', 'task-7-pre', false, 'backup_task_cancel', true, 'cancelled', 'own', 'cleared' ),
 			'failed_retryable foreign handle' => array( 'failed_retryable', '', 'task-7-pre', false, '', false, 'cancelled', 'foreign', 'unchanged' ),
+			'transferring busy child'         => array( 'transferring', 'task-9-restore', 'task-7-pre', false, 'restore_task_cancel', false, 'cancel_pending', 'own', 'unchanged', 'busy' ),
+			'running busy child'              => array( 'running', 'task-9-restore', 'task-7-pre', false, 'restore_task_cancel', false, 'cancel_pending', 'own', 'unchanged', 'busy' ),
+			'transferring completed child'    => array( 'transferring', 'task-9-restore', 'task-7-pre', false, array( 'restore_task_cancel', 'backup_task_cancel' ), true, 'cancelled', 'own', 'cleared', 'completed' ),
+			'transferring failed child'       => array( 'transferring', 'task-9-restore', 'task-7-pre', false, array( 'restore_task_cancel', 'backup_task_cancel' ), true, 'cancelled', 'own', 'cleared', 'failed' ),
 			'transferring with task id'       => array( 'transferring', 'task-9-restore', 'task-7-pre', false, 'restore_task_cancel', false, 'cancelled', 'foreign', 'unchanged' ),
 			'transferring with owned handle'  => array( 'transferring', 'task-9-restore', 'task-7-pre', false, array( 'restore_task_cancel', 'backup_task_cancel' ), true, 'cancelled', 'own', 'cleared' ),
 			'transferring child throws'       => array( 'transferring', 'task-9-restore', 'task-7-pre', true, array( 'restore_task_cancel', 'backup_task_cancel' ), true, 'cancelled', 'own', 'cleared' ),
@@ -1602,6 +1733,133 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			}
 		}
 		$this->assertSame( 1, $cancel_calls, 'The busy child is asked once; the intent covers the rest.' );
+	}
+
+	/**
+	 * A transfer cancel must be durable before the owned backup is cancelled.
+	 */
+	public function test_transferring_cancel_intent_stops_before_transfer() {
+		$store  = MainWP_Backup_Restore_Job_Store::instance();
+		$job    = $this->make_job(
+			array( 'cancel_intent' => true ),
+			MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING,
+			array(
+				'child_task_id'        => 'task-9-restore',
+				'pre_snapshot_task_id' => 'task-7-pre',
+			)
+		);
+		$handle = wp_json_encode(
+			array(
+				'task_id' => 'task-7-pre',
+				'owner'   => (string) $job->id,
+			)
+		);
+		MainWP_DB::instance()->update_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION, $handle );
+		$this->responses['restore_task_cancel'] = array( 'result' => 'ok' );
+		$statuses                               = array();
+		$observer                               = function ( $pre, $website, $what ) use ( &$statuses, $store, $job ) {
+			if ( 'backup_task_cancel' === $what ) {
+				$statuses[] = $store->get_job( (int) $job->id )->status;
+			}
+			return $pre;
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $observer, 20, 3 );
+		try {
+			$job = $this->tick( $job );
+		} finally {
+			remove_filter( 'mainwp_fetch_url_authed_pre', $observer, 20 );
+		}
+
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED, $job->status );
+		$this->assertSame( array( MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED ), $statuses );
+		$this->assertNull( MainWP_DB::instance()->get_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION ) );
+		$this->assertSame( array( 'restore_task_cancel', 'backup_task_cancel' ), array_column( $this->calls, 'what' ) );
+		$this->assertNotContains( 'restore_artifact_chunk', array_column( $this->calls, 'what' ) );
+	}
+
+	/**
+	 * A cancel arriving during a chunk must be applied before the next send.
+	 */
+	public function test_transferring_cancel_after_first_chunk_stops_and_releases_handle() {
+		$store  = MainWP_Backup_Restore_Job_Store::instance();
+		$job    = $this->make_job(
+			array(
+				'plan'     => $this->staged_plan_fixture(),
+				'transfer' => array( 'chunk_bytes' => 4 ),
+			),
+			MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING,
+			array(
+				'child_task_id'        => 'task-9-restore',
+				'pre_snapshot_task_id' => 'task-7-pre',
+			)
+		);
+		$handle = wp_json_encode(
+			array(
+				'task_id' => 'task-7-pre',
+				'owner'   => (string) $job->id,
+			)
+		);
+		MainWP_DB::instance()->update_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION, $handle );
+		$chunks = 0;
+		$child  = function ( $pre, $website, $what, $params ) use ( &$chunks, $store, $job ) {
+			if ( 'restore_artifact_chunk' !== $what ) {
+				return $pre;
+			}
+			++$chunks;
+			if ( 1 === $chunks ) {
+				$this->assertTrue( $store->arm_cancel_intent( (int) $job->id ) );
+			}
+			return array(
+				'result'         => 'ok',
+				'bytes_received' => (int) $params['offset'] + strlen( base64_decode( $params['chunk_b64'] ) ),
+			);
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $child, 20, 4 );
+		try {
+			$job = $this->tick( $job );
+		} finally {
+			remove_filter( 'mainwp_fetch_url_authed_pre', $child, 20 );
+		}
+
+		$this->assertSame( 1, $chunks );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED, $job->status );
+		$this->assertSame( 4, $job->checkpoint['transfer']['offset'] );
+		$this->assertSame( array( 'restore_artifact_chunk', 'restore_task_cancel', 'backup_task_cancel' ), array_column( $this->calls, 'what' ) );
+		$this->assertNull( MainWP_DB::instance()->get_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION ) );
+	}
+
+	/**
+	 * Both the entry checkpoint and a cancel arriving after it block transfer.
+	 *
+	 * @dataProvider transferring_intent_reads
+	 *
+	 * @param bool $stale Whether run_job receives a row read before the intent.
+	 */
+	public function test_transferring_busy_child_keeps_cancel_intent( $stale ) {
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+		$job   = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING, array( 'child_task_id' => 'task-9-restore' ) );
+		$this->assertTrue( $store->arm_cancel_intent( (int) $job->id ) );
+		$this->responses['restore_task_cancel'] = array( 'result' => 'busy' );
+
+		$this->orchestrator->run_job( $stale ? $job : $store->get_job( (int) $job->id ), microtime( true ) + 30 );
+
+		$fresh = $store->get_job( (int) $job->id );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING, $fresh->status );
+		$this->assertTrue( $fresh->checkpoint['cancel_intent'] );
+		$this->assertSame( array( 'restore_task_cancel' ), array_column( $this->calls, 'what' ) );
+		$this->assertNotContains( 'restore_artifact_chunk', array_column( $this->calls, 'what' ) );
+	}
+
+	/**
+	 * The transfer phase must re-read an intent missed by the entry check.
+	 *
+	 * @return array
+	 */
+	public static function transferring_intent_reads() {
+		return array(
+			'entry intent' => array( false ),
+			'late intent'  => array( true ),
+		);
 	}
 
 	/**

@@ -1158,6 +1158,19 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
                 );
             }
 
+            // filesize() on a missing staged file answers false, which casts to
+            // the same 0 a genuinely empty artifact has, and the zero-byte
+            // exception below would then accept the child's empty ack for an
+            // artifact that was never staged. Refuse here instead, or the
+            // failure resurfaces on the child as a hash mismatch.
+            if ( ! is_file( $entry['staged_path'] ) ) {
+                return array(
+                    'done'      => false,
+                    'error'     => esc_html__( 'The staged artifact is missing from the dashboard.', 'mainwp' ),
+                    'retryable' => false,
+                );
+            }
+
             $size = (int) filesize( $entry['staged_path'] );
             $raw  = (string) file_get_contents( $entry['staged_path'], false, null, $cursor['offset'], max( 1, min( $cursor['chunk_bytes'], $size - $cursor['offset'] ) ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- bounded read of the staged artifact.
             $last = $cursor['offset'] + strlen( $raw ) >= $size;

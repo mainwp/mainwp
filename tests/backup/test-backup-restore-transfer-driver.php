@@ -879,6 +879,42 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * A staged artifact that is missing reads back as size 0, which must not
+	 * pass for an empty artifact: the child would create an empty file and the
+	 * failure would resurface later as a hash mismatch.
+	 */
+	public function test_missing_staged_artifact_is_not_an_empty_artifact() {
+		$plan = array(
+			array(
+				'role'        => 'tombstones',
+				'file'        => 'tombstones.list',
+				'size'        => 0,
+				'sha256'      => hash( 'sha256', '' ),
+				'staged_path' => $this->dir . '/never-staged.list',
+				'adopt_only'  => false,
+			),
+		);
+
+		$this->driver->chunk_script = array(
+			array(
+				'result'         => 'ok',
+				'bytes_received' => 0,
+				'error'          => null,
+				'retryable'      => false,
+			),
+		);
+
+		$cursor = array();
+		$result = $this->driver->transfer_artifacts( (object) array( 'id' => 1 ), 'task-1-x', $plan, $cursor, microtime( true ) + 60 );
+
+		$this->assertFalse( $result['done'] );
+		$this->assertStringContainsString( 'staged artifact is missing', $result['error'] );
+		$this->assertFalse( $result['retryable'] );
+		$this->assertSame( 0, $cursor['artifact_index'] );
+		$this->assertSame( array(), $this->driver->sent, 'A missing staged artifact must not reach the child at all.' );
+	}
+
+	/**
 	 * The mainwp_backup_restore_chunk_size filter sets the starting chunk
 	 * size for a fresh cursor: the first chunk crosses the wire at the
 	 * filtered size and the cursor carries it forward.

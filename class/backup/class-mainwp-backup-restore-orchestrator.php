@@ -495,6 +495,10 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         }
 
         if ( 'completed' === $outcome ) {
+            // A crash before the intent clears must not resume chunk transfers.
+            if ( ! $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, array(), $this->lock_token ) ) {
+                return false;
+            }
             $fresh = $store->get_job( (int) $job->id );
             if ( null !== $fresh ) {
                 $checkpoint = $fresh->checkpoint;
@@ -684,6 +688,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             if ( null === $job ) {
                 return;
             }
+            $status = $job->status;
         }
 
         switch ( $status ) {

@@ -255,7 +255,9 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * after verification begins. Earlier phases tolerate child call failures.
      * Status determines whether the child restore task needs cancellation.
      * The ad-hoc backup handle is shared by all jobs for a site, so only its
-     * owner may cancel and release it, regardless of the job's current phase.
+     * owner may cancel and release it, regardless of the job's current phase,
+     * and only once this job's own cancellation is durable: releasing first
+     * would strand a still-active job without the safety backup it owns.
      * Missing, empty, or undecodable handles are left untouched.
      *
      * @param int $job_id Job id.
@@ -302,11 +304,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             if ( ! $store->cancel_job( $job_id ) ) {
                 throw new MainWP_Exception( esc_html__( 'The restore reached its final state while the cancellation was confirmed and no longer needs cancelling.', 'mainwp' ) );
             }
-            try {
-                $this->cancel_owned_pre_snapshot_handle( $job );
-            } catch ( \Throwable $e ) {
-                do_action( 'mainwp_log_info', sprintf( 'Restore job %d: the site did not confirm cancelling its child task: %s', (int) $job->id, $e->getMessage() ) );
-            }
+            $this->cancel_owned_pre_snapshot_handle( $job );
             return 'cancelled';
         }
 
@@ -329,12 +327,8 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
 
         // An unreachable child must not prevent cancellation before restore execution.
         try {
-            try {
-                if ( 'restore_task_cancel' === $child_action ) {
-                    $this->request_child_cancel( $job );
-                }
-            } finally {
-                $this->cancel_owned_pre_snapshot_handle( $job );
+            if ( 'restore_task_cancel' === $child_action ) {
+                $this->request_child_cancel( $job );
             }
         } catch ( \Throwable $e ) {
             do_action( 'mainwp_log_info', sprintf( 'Restore job %d: the site did not confirm cancelling its child task: %s', (int) $job->id, $e->getMessage() ) );
@@ -344,35 +338,45 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         if ( ! $store->cancel_job( $job_id ) ) {
             throw new MainWP_Exception( esc_html__( 'The restore reached its final state while the cancellation was confirmed and no longer needs cancelling.', 'mainwp' ) );
         }
+        $this->cancel_owned_pre_snapshot_handle( $job );
         return 'cancelled';
     }
 
     /**
      * Cancel and release the safety-backup handle this job owns, if any.
      *
-     * The option is per site: another lane's handle must stay intact. An
-     * absent handle means the task is terminal or already released. Release
-     * runs in a finally so an unreachable child cannot leave the handle set.
+     * Every caller runs this only after the job's own cancellation is
+     * durable, so the handle is never given up by a job that is still
+     * active. The option is per site: another lane's handle must stay
+     * intact, and an absent handle means the task is terminal or already
+     * released. Release runs in a finally so an unreachable child cannot
+     * leave the handle set, and the whole thing is best effort: a site
+     * that cannot be reached must not turn a completed cancellation into
+     * a failure the caller reports.
      *
      * @param object $job Job row.
      *
      * @return void
      */
     private function cancel_owned_pre_snapshot_handle( object $job ): void {
-        $website = $this->website( $job );
-        // A handle this restore did not create belongs to another lane;
-        // an absent handle means the task is terminal or already released.
-        $raw    = MainWP_DB::instance()->get_website_option( (int) $website->id, MainWP_Backup_Executor::ADHOC_TASK_OPTION );
-        $handle = json_decode( (string) $raw, true );
-        $owner  = (string) $job->id;
-        $owned  = is_array( $handle ) && isset( $handle['task_id'], $handle['owner'] ) && is_scalar( $handle['task_id'] ) && '' !== (string) $handle['task_id'] && is_scalar( $handle['owner'] ) && $owner === (string) $handle['owner'];
-        if ( $owned ) {
-            $task_id = (string) $handle['task_id'];
-            try {
-                MainWP_Connect::fetch_url_authed( $website, 'backup_task_cancel', array( 'task_id' => $task_id ), false, false, false );
-            } finally {
-                $this->release_pre_snapshot_handle( $website, $task_id, $owner );
+        try {
+            $website = $this->website( $job );
+            // A handle this restore did not create belongs to another lane;
+            // an absent handle means the task is terminal or already released.
+            $raw    = MainWP_DB::instance()->get_website_option( (int) $website->id, MainWP_Backup_Executor::ADHOC_TASK_OPTION );
+            $handle = json_decode( (string) $raw, true );
+            $owner  = (string) $job->id;
+            $owned  = is_array( $handle ) && isset( $handle['task_id'], $handle['owner'] ) && is_scalar( $handle['task_id'] ) && '' !== (string) $handle['task_id'] && is_scalar( $handle['owner'] ) && $owner === (string) $handle['owner'];
+            if ( $owned ) {
+                $task_id = (string) $handle['task_id'];
+                try {
+                    MainWP_Connect::fetch_url_authed( $website, 'backup_task_cancel', array( 'task_id' => $task_id ), false, false, false );
+                } finally {
+                    $this->release_pre_snapshot_handle( $website, $task_id, $owner );
+                }
             }
+        } catch ( \Throwable $e ) {
+            do_action( 'mainwp_log_info', sprintf( 'Restore job %d: the site did not confirm cancelling its safety backup: %s', (int) $job->id, $e->getMessage() ) );
         }
     }
 
@@ -509,11 +513,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         // ok / already failed: the child confirmed - cancel the job.
         MainWP_Backup_Restore_Transfer_Driver::instance()->cleanup_staging( (int) $job->id );
         if ( $store->cancel_job( (int) $job->id, $this->lock_token ) ) {
-            try {
-                $this->cancel_owned_pre_snapshot_handle( $job );
-            } catch ( \Throwable $e ) {
-                do_action( 'mainwp_log_info', sprintf( 'Restore job %d: the site did not confirm cancelling its child task: %s', (int) $job->id, $e->getMessage() ) );
-            }
+            $this->cancel_owned_pre_snapshot_handle( $job );
         }
         return false;
     }

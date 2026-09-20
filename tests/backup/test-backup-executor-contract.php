@@ -38,6 +38,10 @@ class MainWP_Backup_Executor_Contract_Test extends MainWP_Abilities_Test_Case {
 	 * @return void
 	 */
 	public function tearDown(): void {
+		global $wpdb;
+		// The shared teardown drops the site rows but not their options, and
+		// wp_options has no cascade, so handle rows would outlive their site.
+		$wpdb->query( $wpdb->prepare( 'DELETE FROM ' . MainWP_DB::instance()->get_table_name( 'wp_options' ) . ' WHERE name = %s', MainWP_Backup_Executor::ADHOC_TASK_OPTION ) ); // phpcs:ignore WordPress.DB -- test cleanup.
 		delete_option( 'mainwp_enableNativeBackups' );
 		parent::tearDown();
 	}

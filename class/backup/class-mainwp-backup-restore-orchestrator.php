@@ -253,9 +253,9 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      *
      * Running restores require child confirmation and cannot be cancelled
      * after verification begins. Earlier phases tolerate child call failures.
-     * The ad-hoc backup handle is shared by all jobs for a site, so cancellation
-     * releases it only when its task id matches this job's pre-snapshot task.
-     * A mismatched handle may belong to a newer live backup and must stay intact.
+     * Status determines whether the child restore task needs cancellation.
+     * The ad-hoc backup handle is shared by all jobs for a site, so only its
+     * owner may cancel and release it, regardless of the job's current phase.
      * Missing, empty, or undecodable handles are left untouched.
      *
      * @param int $job_id Job id.
@@ -312,8 +312,6 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 break;
             case MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT:
             case MainWP_Backup_Restore_Job_Store::STATUS_PREFLIGHT:
-                $child_action = 'backup_task_cancel';
-                break;
             case MainWP_Backup_Restore_Job_Store::STATUS_PENDING:
             case MainWP_Backup_Restore_Job_Store::STATUS_STAGING:
             case MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE:
@@ -326,9 +324,11 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
 
         // An unreachable child must not prevent cancellation before restore execution.
         try {
-            if ( 'restore_task_cancel' === $child_action ) {
-                $this->request_child_cancel( $job );
-            } elseif ( 'backup_task_cancel' === $child_action ) {
+            try {
+                if ( 'restore_task_cancel' === $child_action ) {
+                    $this->request_child_cancel( $job );
+                }
+            } finally {
                 $website = $this->website( $job );
                 // A handle this restore did not create belongs to another lane;
                 // an absent handle means the task is terminal or already released.
@@ -786,11 +786,14 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             if ( 'failed' === $phase || '' === $phase ) {
                 $error      = is_array( $payload ) && isset( $payload['error'] ) ? (string) $payload['error'] : esc_html__( 'The pre-restore safety backup failed.', 'mainwp' );
                 $error_code = is_array( $payload ) && isset( $payload['error_code'] ) ? (string) $payload['error_code'] : '';
-                // An unreadable answer keeps the handle because the child task may still be running.
                 if ( 'failed' === $phase || ( is_array( $payload ) && isset( $payload['error'] ) ) ) {
                     $this->release_pre_snapshot_handle( $website, (string) $job->pre_snapshot_task_id, (string) $job->id );
+                    $this->record_failure( $job, $error, false, $error_code );
+                } else {
+                    // The child task is still running: a shapeless envelope is a
+                    // transport hiccup. Keep polling within the attempt budget.
+                    $this->record_failure( $job, $error, true, '' );
                 }
-                $this->record_failure( $job, $error, false, $error_code );
                 return;
             }
         }
@@ -1221,6 +1224,13 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 // the verdict (and its event below) is not this worker's to
                 // record anymore.
                 return;
+            }
+
+            // The owner is terminal and no other lane may release its handle.
+            // A running child task finishes on its own; until then it refuses
+            // the next restore's create, which the orchestrator already retries.
+            if ( ! empty( $job->pre_snapshot_task_id ) ) {
+                $this->release_pre_snapshot_handle( $this->website( $job ), (string) $job->pre_snapshot_task_id, (string) $job->id );
             }
 
             /**

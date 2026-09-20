@@ -8,6 +8,7 @@
 
 namespace MainWP\Dashboard\Tests;
 
+use MainWP\Dashboard\MainWP_Backup_Backoff;
 use MainWP\Dashboard\MainWP_Backup_Error_Codes;
 use MainWP\Dashboard\MainWP_Backup_Executor;
 use MainWP\Dashboard\MainWP_Backup_Restore_Job_Store;
@@ -1060,28 +1061,88 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 
 	/**
 	 * An unreadable response cannot establish that the child task stopped.
+	 *
+	 * @dataProvider pre_snapshot_answer_shapes
+	 *
+	 * @param mixed  $payload  Child response.
+	 * @param int    $attempts Prior failures.
+	 * @param string $status   Expected failure status.
+	 * @param bool   $cleared  Whether the handle must be released.
 	 */
-	public function test_pre_snapshot_unreadable_response_preserves_handle() {
-		$cases = array(
-			'unreadable response' => array( '<html>Unavailable</html>', false ),
-			'error payload'       => array( array( 'error' => 'Task not found.' ), true ),
+	public function test_pre_snapshot_answer_shapes( $payload, $attempts, $status, $cleared ) {
+		$this->responses['backup_task_run'] = $payload;
+		$job                                = $this->make_job(
+			array(),
+			MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT,
+			array(
+				'pre_snapshot_task_id' => 'task-7-pre',
+				'attempt_count'        => $attempts,
+			)
 		);
-		foreach ( $cases as $label => $case ) {
-			list( $payload, $cleared )          = $case;
-			$this->responses['backup_task_run'] = $payload;
-			$job                                = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT, array( 'pre_snapshot_task_id' => 'task-7-pre' ) );
-			$handle                             = wp_json_encode(
-				array(
-					'task_id' => 'task-7-pre',
-					'owner'   => (string) $job->id,
-				)
-			);
-			MainWP_DB::instance()->update_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION, $handle );
-			$job = $this->tick( $job );
+		$handle                             = wp_json_encode(
+			array(
+				'task_id' => 'task-7-pre',
+				'owner'   => (string) $job->id,
+			)
+		);
+		MainWP_DB::instance()->update_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION, $handle );
+		$job = $this->tick( $job );
 
-			$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT, $job->status, $label );
-			$this->assertSame( $cleared ? null : $handle, MainWP_DB::instance()->get_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION ), $label );
+		$this->assertSame( $status, $job->status );
+		$this->assertSame( $cleared ? null : $handle, MainWP_DB::instance()->get_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION ) );
+		if ( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE === $status ) {
+			$this->assertSame( 1, (int) $job->attempt_count );
+			$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT, $job->checkpoint['resume_status'] );
 		}
+	}
+
+	/**
+	 * The fetch stub bypasses scalar coercion, so both shapes need coverage.
+	 *
+	 * @return array
+	 */
+	public static function pre_snapshot_answer_shapes() {
+		return array(
+			'unreadable response' => array( '<html>Unavailable</html>', 0, 'failed_retryable', false ),
+			'coerced response'    => array( array( 'fetch_url_output' => 'Service Unavailable' ), 0, 'failed_retryable', false ),
+			'error payload'       => array( array( 'error' => 'Task not found.' ), 0, 'failed_permanent', true ),
+			'failed phase'        => array(
+				array(
+					'phase' => 'failed',
+					'error' => 'x',
+				),
+				0,
+				'failed_permanent',
+				true,
+			),
+			'attempts exhausted'  => array( array( 'fetch_url_output' => 'Service Unavailable' ), MainWP_Backup_Backoff::MAX_ATTEMPTS - 1, 'failed_permanent', true ),
+		);
+	}
+
+	/**
+	 * Exhausting retries does not authorize releasing another lane's handle.
+	 */
+	public function test_pre_snapshot_permanent_failure_preserves_foreign_owner_handle() {
+		$this->responses['backup_task_run'] = array( 'fetch_url_output' => 'Service Unavailable' );
+		$job                                = $this->make_job(
+			array(),
+			MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT,
+			array(
+				'pre_snapshot_task_id' => 'task-7-pre',
+				'attempt_count'        => MainWP_Backup_Backoff::MAX_ATTEMPTS - 1,
+			)
+		);
+		$handle                             = wp_json_encode(
+			array(
+				'task_id' => 'task-7-pre',
+				'owner'   => (string) ( $job->id + 1 ),
+			)
+		);
+		MainWP_DB::instance()->update_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION, $handle );
+		$job = $this->tick( $job );
+
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
+		$this->assertSame( $handle, MainWP_DB::instance()->get_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION ) );
 	}
 
 	/**
@@ -1181,21 +1242,26 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	 *
 	 * @dataProvider cancel_job_matrix
 	 *
-	 * @param string $status          Entry status.
-	 * @param string $child_task_id    Restore task id, or empty.
-	 * @param string $snapshot_task_id Backup task id, or empty.
-	 * @param bool   $child_throws     Whether the child call throws.
-	 * @param string $action          Expected child action, or empty for none.
-	 * @param bool   $marker_cleared   Whether the ad-hoc marker must be cleared.
-	 * @param string $outcome          Return value or refusal message fragment.
-	 * @param string $handle_state     Persisted handle fixture before cancellation.
-	 * @param string $handle_after     Expected handle disposition: unchanged or cleared.
+	 * @param string       $status           Entry status.
+	 * @param string       $child_task_id    Restore task id, or empty.
+	 * @param string       $snapshot_task_id Backup task id, or empty.
+	 * @param bool         $child_throws     Whether the child call throws.
+	 * @param string|array $action           Expected child actions in order, or empty for none.
+	 * @param bool         $marker_cleared   Whether the ad-hoc marker must be cleared.
+	 * @param string       $outcome          Return value or refusal message fragment.
+	 * @param string       $handle_state     Persisted handle fixture before cancellation.
+	 * @param string       $handle_after     Expected handle disposition: unchanged or cleared.
 	 */
 	public function test_cancel_job_matrix( $status, $child_task_id, $snapshot_task_id, $child_throws, $action, $marker_cleared, $outcome, $handle_state, $handle_after ) {
 		global $wpdb;
 		$store  = MainWP_Backup_Restore_Job_Store::instance();
 		$job    = $this->make_job();
 		$job_id = (int) $job->id;
+		if ( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE === $status ) {
+			$checkpoint                  = $job->checkpoint;
+			$checkpoint['resume_status'] = MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT;
+			$this->assertTrue( $store->save_checkpoint( $job_id, $checkpoint ) );
+		}
 		$this->assertTrue(
 			$store->set_status(
 				$job_id,
@@ -1235,8 +1301,9 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		}
 		$this->assertSame( $handle_before, MainWP_DB::instance()->get_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION ) );
 
+		$actions = '' === $action ? array() : (array) $action;
 		if ( $child_throws ) {
-			$this->responses[ $action ] = new \Error( 'Child cancellation failed.' );
+			$this->responses[ $actions[0] ] = new \Error( 'Child cancellation failed.' );
 		}
 
 		$result = null;
@@ -1256,10 +1323,10 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		}
 
 		$expected_calls = array();
-		if ( '' !== $action ) {
+		foreach ( $actions as $expected_action ) {
 			$expected_calls[] = array(
-				'what'   => $action,
-				'params' => array( 'task_id' => 'backup_task_cancel' === $action ? json_decode( $handle_before, true )['task_id'] : $child_task_id ),
+				'what'   => $expected_action,
+				'params' => array( 'task_id' => 'backup_task_cancel' === $expected_action ? json_decode( $handle_before, true )['task_id'] : $child_task_id ),
 			);
 		}
 		$this->assertSame( $expected_calls, $this->calls );
@@ -1286,32 +1353,35 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	 */
 	public static function cancel_job_matrix() {
 		return array(
-			'pending with task ids'          => array( 'pending', 'task-9-restore', 'task-7-pre', false, '', false, 'cancelled', 'own', 'unchanged' ),
-			'preflight with task ids'        => array( 'preflight', 'task-9-restore', 'task-7-pre', false, 'backup_task_cancel', true, 'cancelled', 'own', 'cleared' ),
-			'preflight no handle'            => array( 'preflight', 'task-9-restore', 'task-7-pre', false, '', false, 'cancelled', 'none', 'unchanged' ),
-			'preflight handle before phase'  => array( 'preflight', '', '', false, 'backup_task_cancel', true, 'cancelled', 'own', 'cleared' ),
-			'preflight foreign owner'        => array( 'preflight', '', '', false, '', false, 'cancelled', 'foreign', 'unchanged' ),
-			'preflight adopted handle'       => array( 'preflight', '', 'task-7-pre', false, '', false, 'cancelled', 'adopted', 'unchanged' ),
-			'preflight legacy handle'        => array( 'preflight', '', '', false, '', false, 'cancelled', 'legacy', 'unchanged' ),
-			'preflight child throws'         => array( 'preflight', '', '', true, 'backup_task_cancel', true, 'cancelled', 'own', 'cleared' ),
-			'preflight undecodable handle'   => array( 'preflight', '', '', false, '', false, 'cancelled', 'undecodable', 'unchanged' ),
-			'staging with task ids'          => array( 'staging', 'task-9-restore', 'task-7-pre', false, '', false, 'cancelled', 'own', 'unchanged' ),
-			'failed_retryable with task ids' => array( 'failed_retryable', 'task-9-restore', 'task-7-pre', false, '', false, 'cancelled', 'own', 'unchanged' ),
-			'transferring with task id'      => array( 'transferring', 'task-9-restore', 'task-7-pre', false, 'restore_task_cancel', false, 'cancelled', 'own', 'unchanged' ),
-			'transferring child throws'      => array( 'transferring', 'task-9-restore', 'task-7-pre', true, 'restore_task_cancel', false, 'cancelled', 'own', 'unchanged' ),
-			'transferring without task id'   => array( 'transferring', '', 'task-7-pre', false, '', false, 'cancelled', 'own', 'unchanged' ),
-			'pre_snapshot with task id'      => array( 'pre_snapshot', 'task-9-restore', 'task-7-pre', false, 'backup_task_cancel', true, 'cancelled', 'own', 'cleared' ),
-			'pre_snapshot foreign handle'    => array( 'pre_snapshot', 'task-9-restore', 'task-7-pre', false, '', false, 'cancelled', 'foreign', 'unchanged' ),
-			'pre_snapshot adopted handle'    => array( 'pre_snapshot', 'task-9-restore', 'task-7-pre', false, '', false, 'cancelled', 'adopted', 'unchanged' ),
-			'pre_snapshot no handle'         => array( 'pre_snapshot', 'task-9-restore', 'task-7-pre', false, '', false, 'cancelled', 'none', 'unchanged' ),
-			'pre_snapshot legacy'            => array( 'pre_snapshot', 'task-9-restore', 'task-7-pre', false, '', false, 'cancelled', 'legacy', 'unchanged' ),
-			'pre_snapshot undecodable'       => array( 'pre_snapshot', 'task-9-restore', 'task-7-pre', false, '', false, 'cancelled', 'undecodable', 'unchanged' ),
-			'pre_snapshot without task id'   => array( 'pre_snapshot', 'task-9-restore', '', false, 'backup_task_cancel', true, 'cancelled', 'own', 'cleared' ),
-			'pre_snapshot child throws'      => array( 'pre_snapshot', 'task-9-restore', 'task-7-pre', true, 'backup_task_cancel', true, 'cancelled', 'own', 'cleared' ),
-			'already cancelled refuses'      => array( 'cancelled', 'task-9-restore', 'task-7-pre', false, '', false, 'The restore is already cancelled.', 'own', 'unchanged' ),
-			'verifying refuses'              => array( 'verifying', 'task-9-restore', 'task-7-pre', false, '', false, 'finished its work', 'own', 'unchanged' ),
-			'completed refuses'              => array( 'completed', 'task-9-restore', 'task-7-pre', false, '', false, 'finished its work', 'own', 'unchanged' ),
-			'failed_permanent refuses'       => array( 'failed_permanent', 'task-9-restore', 'task-7-pre', false, '', false, 'finished its work', 'own', 'unchanged' ),
+			'pending with task ids'           => array( 'pending', 'task-9-restore', 'task-7-pre', false, 'backup_task_cancel', true, 'cancelled', 'own', 'cleared' ),
+			'preflight with task ids'         => array( 'preflight', 'task-9-restore', 'task-7-pre', false, 'backup_task_cancel', true, 'cancelled', 'own', 'cleared' ),
+			'preflight no handle'             => array( 'preflight', 'task-9-restore', 'task-7-pre', false, '', false, 'cancelled', 'none', 'unchanged' ),
+			'preflight handle before phase'   => array( 'preflight', '', '', false, 'backup_task_cancel', true, 'cancelled', 'own', 'cleared' ),
+			'preflight foreign owner'         => array( 'preflight', '', '', false, '', false, 'cancelled', 'foreign', 'unchanged' ),
+			'preflight adopted handle'        => array( 'preflight', '', 'task-7-pre', false, '', false, 'cancelled', 'adopted', 'unchanged' ),
+			'preflight legacy handle'         => array( 'preflight', '', '', false, '', false, 'cancelled', 'legacy', 'unchanged' ),
+			'preflight child throws'          => array( 'preflight', '', '', true, 'backup_task_cancel', true, 'cancelled', 'own', 'cleared' ),
+			'preflight undecodable handle'    => array( 'preflight', '', '', false, '', false, 'cancelled', 'undecodable', 'unchanged' ),
+			'staging with task ids'           => array( 'staging', 'task-9-restore', 'task-7-pre', false, 'backup_task_cancel', true, 'cancelled', 'own', 'cleared' ),
+			'failed_retryable with task ids'  => array( 'failed_retryable', 'task-9-restore', 'task-7-pre', false, 'backup_task_cancel', true, 'cancelled', 'own', 'cleared' ),
+			'failed_retryable owned handle'   => array( 'failed_retryable', '', 'task-7-pre', false, 'backup_task_cancel', true, 'cancelled', 'own', 'cleared' ),
+			'failed_retryable foreign handle' => array( 'failed_retryable', '', 'task-7-pre', false, '', false, 'cancelled', 'foreign', 'unchanged' ),
+			'transferring with task id'       => array( 'transferring', 'task-9-restore', 'task-7-pre', false, 'restore_task_cancel', false, 'cancelled', 'foreign', 'unchanged' ),
+			'transferring with owned handle'  => array( 'transferring', 'task-9-restore', 'task-7-pre', false, array( 'restore_task_cancel', 'backup_task_cancel' ), true, 'cancelled', 'own', 'cleared' ),
+			'transferring child throws'       => array( 'transferring', 'task-9-restore', 'task-7-pre', true, array( 'restore_task_cancel', 'backup_task_cancel' ), true, 'cancelled', 'own', 'cleared' ),
+			'transferring without task id'    => array( 'transferring', '', 'task-7-pre', false, 'backup_task_cancel', true, 'cancelled', 'own', 'cleared' ),
+			'pre_snapshot with task id'       => array( 'pre_snapshot', 'task-9-restore', 'task-7-pre', false, 'backup_task_cancel', true, 'cancelled', 'own', 'cleared' ),
+			'pre_snapshot foreign handle'     => array( 'pre_snapshot', 'task-9-restore', 'task-7-pre', false, '', false, 'cancelled', 'foreign', 'unchanged' ),
+			'pre_snapshot adopted handle'     => array( 'pre_snapshot', 'task-9-restore', 'task-7-pre', false, '', false, 'cancelled', 'adopted', 'unchanged' ),
+			'pre_snapshot no handle'          => array( 'pre_snapshot', 'task-9-restore', 'task-7-pre', false, '', false, 'cancelled', 'none', 'unchanged' ),
+			'pre_snapshot legacy'             => array( 'pre_snapshot', 'task-9-restore', 'task-7-pre', false, '', false, 'cancelled', 'legacy', 'unchanged' ),
+			'pre_snapshot undecodable'        => array( 'pre_snapshot', 'task-9-restore', 'task-7-pre', false, '', false, 'cancelled', 'undecodable', 'unchanged' ),
+			'pre_snapshot without task id'    => array( 'pre_snapshot', 'task-9-restore', '', false, 'backup_task_cancel', true, 'cancelled', 'own', 'cleared' ),
+			'pre_snapshot child throws'       => array( 'pre_snapshot', 'task-9-restore', 'task-7-pre', true, 'backup_task_cancel', true, 'cancelled', 'own', 'cleared' ),
+			'already cancelled refuses'       => array( 'cancelled', 'task-9-restore', 'task-7-pre', false, '', false, 'The restore is already cancelled.', 'own', 'unchanged' ),
+			'verifying refuses'               => array( 'verifying', 'task-9-restore', 'task-7-pre', false, '', false, 'finished its work', 'own', 'unchanged' ),
+			'completed refuses'               => array( 'completed', 'task-9-restore', 'task-7-pre', false, '', false, 'finished its work', 'own', 'unchanged' ),
+			'failed_permanent refuses'        => array( 'failed_permanent', 'task-9-restore', 'task-7-pre', false, '', false, 'finished its work', 'own', 'unchanged' ),
 		);
 	}
 

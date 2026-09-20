@@ -166,7 +166,7 @@ class MainWP_Backup_Executor_Contract_Test extends MainWP_Abilities_Test_Case {
 			)
 		);
 
-		$task_id = MainWP_Backup_Executor::trigger_backup( $site_id, 'full' );
+		$task_id = MainWP_Backup_Executor::trigger_backup( $site_id, 'full', 'job-9' );
 
 		$this->assertSame( 'task-1749600000-adhoc1', $task_id );
 
@@ -175,6 +175,7 @@ class MainWP_Backup_Executor_Contract_Test extends MainWP_Abilities_Test_Case {
 		$this->assertIsArray( $persisted );
 		$this->assertSame( 'task-1749600000-adhoc1', $persisted['task_id'] );
 		$this->assertSame( 'full', $persisted['type'] );
+		$this->assertSame( 'job-9', $persisted['owner'] );
 	}
 
 	/**
@@ -206,6 +207,82 @@ class MainWP_Backup_Executor_Contract_Test extends MainWP_Abilities_Test_Case {
 
 		$this->assertSame( 'task-live', $task_id );
 		$this->assertNotContains( 'backup_task_create', $called, 'An active ad-hoc task must be reused, not recreated.' );
+	}
+
+	/**
+	 * Ownership prevents one lane from adopting another lane's active task.
+	 *
+	 * @dataProvider trigger_backup_adoption_matrix
+	 *
+	 * @param array  $handle Persisted handle fixture.
+	 * @param string $owner Requesting lane's identity.
+	 * @param string $expect Expected result: resume, refuse, or create.
+	 *
+	 * @return void
+	 */
+	public function test_trigger_backup_adoption_matrix( $handle, $owner, $expect ) {
+		$site_id = $this->create_test_site();
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$before  = wp_json_encode( $handle );
+		MainWP_DB::instance()->update_website_option( $website, MainWP_Backup_Executor::ADHOC_TASK_OPTION, $before );
+		$this->mock_child_action( 'backup_preflight', array( 'task_spine' => 1 ) );
+		$this->mock_child_action(
+			'backup_task_create',
+			array(
+				'task_id' => 'task-new',
+				'phase'   => 'queued',
+			)
+		);
+
+		$called = array();
+		$this->record_child_actions( $called );
+
+		if ( 'refuse' === $expect ) {
+			try {
+				MainWP_Backup_Executor::trigger_backup( $site_id, 'full', $owner );
+				$this->fail( 'Expected an already-running exception.' );
+			} catch ( MainWP_Exception $e ) {
+				$this->assertSame( \MainWP\Dashboard\MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING, $e->get_message_error_code() );
+			}
+		} else {
+			$task_id = MainWP_Backup_Executor::trigger_backup( $site_id, 'full', $owner );
+			$this->assertSame( 'create' === $expect ? 'task-new' : 'task-live', $task_id );
+		}
+
+		$after = MainWP_DB::instance()->get_website_option( $website, MainWP_Backup_Executor::ADHOC_TASK_OPTION );
+		if ( 'create' === $expect ) {
+			$this->assertCount( 1, array_keys( $called, 'backup_task_create', true ) );
+			$persisted = json_decode( $after, true );
+			$this->assertSame( 'task-new', $persisted['task_id'] );
+			$this->assertSame( $owner, $persisted['owner'] );
+		} else {
+			$this->assertNotContains( 'backup_task_create', $called );
+			$this->assertSame( $before, $after );
+		}
+	}
+
+	/**
+	 * The auto-update lane retains its identity on handles predating the owner field.
+	 *
+	 * @return array
+	 */
+	public static function trigger_backup_adoption_matrix() {
+		$young = array(
+			'task_id' => 'task-live',
+			'type'    => 'full',
+			'started' => time() - 60,
+		);
+		$old   = array_replace( $young, array( 'started' => time() - MainWP_Backup_Executor::ADHOC_TASK_ABANDON_SECONDS - 1 ) );
+
+		return array(
+			'own handle resumes'                      => array( $young + array( 'owner' => 'job-9' ), 'job-9', 'resume' ),
+			'legacy handle resumes for the auto-update lane' => array( $young, '', 'resume' ),
+			'auto-update handle refused to a restore' => array( $young + array( 'owner' => '' ), 'job-9', 'refuse' ),
+			'restore handle refused to the auto-update lane' => array( $young + array( 'owner' => 'job-9' ), '', 'refuse' ),
+			'other restore refused'                   => array( $young + array( 'owner' => 'job-8' ), 'job-9', 'refuse' ),
+			'abandoned foreign handle replaced'       => array( $old + array( 'owner' => 'job-8' ), 'job-9', 'create' ),
+			'same owner past the bound still resumes' => array( $old + array( 'owner' => 'job-9' ), 'job-9', 'resume' ),
+		);
 	}
 
 	/**

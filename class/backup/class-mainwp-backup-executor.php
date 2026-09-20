@@ -39,6 +39,14 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     const ADHOC_TASK_OPTION = 'adhoc_backup_task';
 
     /**
+     * The option has no heartbeat; use the same two-hour window as
+     * MainWP_Backup_Monitor gives a running marker without a lease.
+     *
+     * @var int
+     */
+    const ADHOC_TASK_ABANDON_SECONDS = 2 * HOUR_IN_SECONDS;
+
+    /**
      * Prefix written into child_backup_task_id while a create request to
      * the child is in flight, so concurrent drivers of the same run see
      * the slot is spoken for before the round trip returns. Real child
@@ -1967,10 +1975,11 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      *
      * @param int    $site_id Child site ID.
      * @param string $type    full|db Type of backup.
-     * @param string $owner   Owner identifier for cancellation ownership.
+     * @param string $owner   Restore job id, or '' for the auto-update lane.
      *
      * @return string Task handle for resumable children.
      * @throws MainWP_Exception When the backup cannot be started.
+     * @throws MainWP_Exception When another lane owns a handle within the abandonment window.
      */
     public static function trigger_backup( int $site_id, string $type = 'full', string $owner = '' ): string {
         // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber
@@ -2000,8 +2009,12 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
         $persisted = static::read_adhoc_task( $website );
         if ( ! empty( $persisted['task_id'] ) && ( empty( $persisted['type'] ) || $persisted['type'] === $type ) ) {
-            // An ad-hoc task is already in flight; resume it instead of colliding on the child.
-            return $persisted['task_id'];
+            if ( (string) ( $persisted['owner'] ?? '' ) === $owner ) {
+                return $persisted['task_id'];
+            }
+            if ( time() - (int) ( $persisted['started'] ?? 0 ) <= static::ADHOC_TASK_ABANDON_SECONDS ) {
+                throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+            }
         }
 
         if ( 1 === (int) $website->maximumFileDescriptorsOverride ) {

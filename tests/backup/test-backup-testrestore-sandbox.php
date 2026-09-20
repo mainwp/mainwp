@@ -1191,6 +1191,7 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 		}
 
 		$refused_sql = array(
+			"'<b>x</b>' INTO wp_posts"                     => "'<B>X</B>'",
 			"PREPARE p FROM 'DROP TABLE `other`.`wp_users`'" => 'PREPARE',
 			'EXECUTE p'                                    => 'EXECUTE',
 			'DEALLOCATE PREPARE p'                         => 'DEALLOCATE',
@@ -1205,6 +1206,8 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 			"CREATE TABLE `t` (id INT) DATA DIRECTORY='/var/www/html/wp-content/uploads'" => 'DATA DIRECTORY',
 			"CREATE TABLE `t` (id INT) INDEX DIRECTORY='/var/www/html'" => 'INDEX DIRECTORY',
 			"CREATE TABLE `t` (id INT) ENGINE=FEDERATED CONNECTION='mysql://u:p@host/db/tbl'" => 'CONNECTION',
+			"CREATE TABLE `t` (id INT) ENGINE=FEDERATED CONNECTION 'mysql://u:p@host/db/tbl'" => 'CONNECTION',
+			'CREATE TABLE `t` (id INT) ENGINE=FEDERATED CONNECTION "mysql://u:p@host/db/tbl"' => 'CONNECTION',
 			"INSERT INTO `t` VALUES (LOAD_FILE('/etc/passwd'))" => 'LOAD_FILE',
 			'DROP TABLE IF EXISTS `other`.`t`'             => 'DROP cross-schema',
 			'CREATE TABLE IF NOT EXISTS `other`.`t` (id INT)' => 'CREATE cross-schema',
@@ -1245,6 +1248,7 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 			'CREATE TABLE `wp_posts` (id INT, price DECIMAL(10,2) DEFAULT 0.00)',
 			'CREATE TABLE `t` (data INT)',
 			'CREATE TABLE `t` (connection INT)',
+			"CREATE TABLE `t` (connection VARCHAR(20) DEFAULT 'x')",
 			"INSERT INTO `t` VALUES ('LOAD_FILE(1)')",
 			"INSERT INTO `wp_posts` (`a`) VALUES ('x.y')",
 			"INSERT INTO wp_posts VALUES ('USE other; DROP TABLE x')",
@@ -1295,7 +1299,7 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 				$this->assertInstanceOf( MainWP_Exception::class, $caught, $label );
 				$this->assertSame( MainWP_Backup_TestRestore_Sandbox::ERR_APPLY, $caught->get_message_error_code(), $label );
 				$this->assertSame( $refusal, $caught->get_message_extra( false ), $label );
-				$this->assertSame( 'The backup database dump contains a statement the test restore will not run: ' . $refusal . '.', $caught->getMessage(), $label );
+				$this->assertSame( 'The backup database dump contains a statement the test restore will not run: ' . esc_html( $refusal ) . '.', $caught->getMessage(), $label );
 			}
 		}
 	}

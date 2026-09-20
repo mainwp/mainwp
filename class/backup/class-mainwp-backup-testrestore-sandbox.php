@@ -450,10 +450,24 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
      * @return void
      */
     private static function guard_sql_statement( string $statement, string $db_name ): void {
-        $tokens  = self::sql_dump_tokens( $statement, true );
-        $window  = array();
-        $leading = array();
-        $refused = '';
+        $tokens        = self::sql_dump_tokens( $statement, true );
+        $window        = array();
+        $leading       = array();
+        $refused       = '';
+        $refusal_rules = array(
+            'INTO'       => array(
+                'OUTFILE'  => 'SELECT INTO OUTFILE',
+                'DUMPFILE' => 'SELECT INTO DUMPFILE',
+            ),
+            'DATA'       => array( 'DIRECTORY' => 'DATA DIRECTORY' ),
+            'INDEX'      => array( 'DIRECTORY' => 'INDEX DIRECTORY' ),
+            'CONNECTION' => array(
+                '=' => 'CONNECTION',
+                "'" => 'CONNECTION',
+                '"' => 'CONNECTION',
+            ),
+            'LOAD_FILE'  => array( '(' => 'LOAD_FILE' ),
+        );
         foreach ( $tokens as $token ) {
             $keyword = strtoupper( $token );
             if ( count( $leading ) < 3 ) {
@@ -463,26 +477,17 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
             if ( count( $window ) > 3 ) {
                 array_shift( $window );
             }
-            $count = count( $window );
-            if ( $count >= 2 && 'INTO' === strtoupper( $window[ $count - 2 ] ) && in_array( $keyword, array( 'OUTFILE', 'DUMPFILE' ), true ) ) {
-                // nosec The concatenation builds the refusal label reported to the user, not a query.
-                $refused = 'SELECT INTO ' . $keyword;
-            }
-            if ( $count >= 2 && 'DIRECTORY' === $keyword && in_array( strtoupper( $window[ $count - 2 ] ), array( 'DATA', 'INDEX' ), true ) ) {
-                $refused = strtoupper( $window[ $count - 2 ] ) . ' DIRECTORY';
-            }
-            if ( $count >= 2 && '=' === $token && 'CONNECTION' === strtoupper( $window[ $count - 2 ] ) ) {
-                $refused = 'CONNECTION';
-            }
-            if ( $count >= 2 && '(' === $token && 'LOAD_FILE' === strtoupper( $window[ $count - 2 ] ) ) {
-                $refused = 'LOAD_FILE';
-            }
+            $count    = count( $window );
+            $previous = $count >= 2 ? strtoupper( $window[ $count - 2 ] ) : '';
+            $follower = in_array( $token[0], array( "'", '"' ), true ) ? $token[0] : $keyword;
+            $refused  = $refusal_rules[ $previous ][ $follower ] ?? $refused;
             if ( 3 === $count && '.' === $window[1]
                 && ! ctype_digit( $window[0] ) && ! ctype_digit( $window[2] )
                 && preg_match( '/^(?:`(?:[^`]|``)+`|[a-zA-Z0-9_$\x80-\xff]+)$/D', $window[0] )
                 && preg_match( '/^(?:`(?:[^`]|``)+`|[a-zA-Z0-9_$\x80-\xff]+)$/D', $window[2] ) ) {
                 $schema = '`' === $window[0][0] ? str_replace( '``', '`', substr( $window[0], 1, -1 ) ) : $window[0];
                 if ( $schema !== $db_name ) {
+                    // nosec The concatenation builds the refusal label reported to the user, not a query.
                     $refused = $leading[0] . ' cross-schema';
                 }
             }
@@ -502,7 +507,7 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         if ( '' !== $refused ) {
             // A refused statement says something about the backup, not about the host, so it fails the restore rather than reporting the host cannot test.
             throw new MainWP_Exception(
-                sprintf( esc_html__( 'The backup database dump contains a statement the test restore will not run: %s.', 'mainwp' ), $refused ),
+                sprintf( esc_html__( 'The backup database dump contains a statement the test restore will not run: %s.', 'mainwp' ), esc_html( $refused ) ),
                 $refused,
                 self::ERR_APPLY
             );

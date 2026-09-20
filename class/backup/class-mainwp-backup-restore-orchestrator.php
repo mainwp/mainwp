@@ -311,8 +311,6 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 $child_action = ! empty( $job->child_task_id ) ? 'restore_task_cancel' : '';
                 break;
             case MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT:
-                $child_action = ! empty( $job->pre_snapshot_task_id ) ? 'backup_task_cancel' : '';
-                break;
             case MainWP_Backup_Restore_Job_Store::STATUS_PREFLIGHT:
                 $child_action = 'backup_task_cancel';
                 break;
@@ -332,19 +330,18 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 $this->request_child_cancel( $job );
             } elseif ( 'backup_task_cancel' === $child_action ) {
                 $website = $this->website( $job );
-                $task_id = (string) $job->pre_snapshot_task_id;
-                if ( MainWP_Backup_Restore_Job_Store::STATUS_PREFLIGHT === $job->status ) {
-                    // A handle this restore did not create belongs to another lane.
-                    $raw     = MainWP_DB::instance()->get_website_option( (int) $website->id, MainWP_Backup_Executor::ADHOC_TASK_OPTION );
-                    $handle  = json_decode( (string) $raw, true );
-                    $owned   = is_array( $handle ) && isset( $handle['owner'] ) && is_scalar( $handle['owner'] ) && (string) $job->id === (string) $handle['owner'];
-                    $task_id = $owned && isset( $handle['task_id'] ) && is_scalar( $handle['task_id'] ) ? (string) $handle['task_id'] : '';
-                }
-                if ( '' !== $task_id ) {
+                // A handle this restore did not create belongs to another lane;
+                // an absent handle means the task is terminal or already released.
+                $raw    = MainWP_DB::instance()->get_website_option( (int) $website->id, MainWP_Backup_Executor::ADHOC_TASK_OPTION );
+                $handle = json_decode( (string) $raw, true );
+                $owner  = (string) $job->id;
+                $owned  = is_array( $handle ) && isset( $handle['task_id'], $handle['owner'] ) && is_scalar( $handle['task_id'] ) && '' !== (string) $handle['task_id'] && is_scalar( $handle['owner'] ) && $owner === (string) $handle['owner'];
+                if ( $owned ) {
+                    $task_id = (string) $handle['task_id'];
                     try {
                         MainWP_Connect::fetch_url_authed( $website, 'backup_task_cancel', array( 'task_id' => $task_id ), false, false, false );
                     } finally {
-                        $this->release_pre_snapshot_handle( $website, $task_id );
+                        $this->release_pre_snapshot_handle( $website, $task_id, $owner );
                     }
                 }
             }
@@ -363,14 +360,15 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * Release an owned safety-backup handle so later restores cannot adopt it.
      *
      * The option is per site: a newer backup can replace it while a child call
-     * is in flight. Only a matching task id establishes ownership for release.
+     * is in flight, and another lane may own the same task id.
      *
      * @param object $website Website object.
      * @param string $task_id Job's pre-snapshot task id.
+     * @param string $owner   Restore job id as a string.
      *
      * @return bool Whether the matching handle was cleared.
      */
-    private function release_pre_snapshot_handle( object $website, string $task_id ): bool {
+    private function release_pre_snapshot_handle( object $website, string $task_id, string $owner ): bool {
         $db     = MainWP_DB::instance();
         $raw    = $db->get_website_option( (int) $website->id, MainWP_Backup_Executor::ADHOC_TASK_OPTION );
         $handle = json_decode( (string) $raw, true );
@@ -379,7 +377,8 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         }
 
         $handle_task_id = (string) $handle['task_id'];
-        if ( '' === $handle_task_id || $handle_task_id !== (string) $task_id ) {
+        $handle_owner   = $handle['owner'] ?? '';
+        if ( '' === $handle_task_id || $handle_task_id !== $task_id || ! is_scalar( $handle_owner ) || (string) $handle_owner !== $owner ) {
             return false;
         }
 
@@ -779,7 +778,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 // trigger_backup() into reusing this finished task, and its
                 // later success would prune an artifact this job still counts
                 // on for rollback.
-                $this->release_pre_snapshot_handle( $website, (string) $job->pre_snapshot_task_id );
+                $this->release_pre_snapshot_handle( $website, (string) $job->pre_snapshot_task_id, (string) $job->id );
 
                 $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_STAGING, array(), $this->lock_token );
                 return;
@@ -789,7 +788,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 $error_code = is_array( $payload ) && isset( $payload['error_code'] ) ? (string) $payload['error_code'] : '';
                 // An unreadable answer keeps the handle because the child task may still be running.
                 if ( 'failed' === $phase || ( is_array( $payload ) && isset( $payload['error'] ) ) ) {
-                    $this->release_pre_snapshot_handle( $website, (string) $job->pre_snapshot_task_id );
+                    $this->release_pre_snapshot_handle( $website, (string) $job->pre_snapshot_task_id, (string) $job->id );
                 }
                 $this->record_failure( $job, $error, false, $error_code );
                 return;

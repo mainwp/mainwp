@@ -1064,12 +1064,13 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	 *
 	 * @dataProvider pre_snapshot_answer_shapes
 	 *
-	 * @param mixed  $payload  Child response.
-	 * @param int    $attempts Prior failures.
-	 * @param string $status   Expected failure status.
-	 * @param bool   $cleared  Whether the handle must be released.
+	 * @param mixed  $payload    Child response.
+	 * @param int    $attempts   Prior failures.
+	 * @param string $status     Expected failure status.
+	 * @param bool   $cleared    Whether the handle must be released.
+	 * @param string $last_error Expected stored message.
 	 */
-	public function test_pre_snapshot_answer_shapes( $payload, $attempts, $status, $cleared ) {
+	public function test_pre_snapshot_answer_shapes( $payload, $attempts, $status, $cleared, $last_error ) {
 		$this->responses['backup_task_run'] = $payload;
 		$job                                = $this->make_job(
 			array(),
@@ -1089,6 +1090,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$job = $this->tick( $job );
 
 		$this->assertSame( $status, $job->status );
+		$this->assertSame( $last_error, $job->last_error );
 		$this->assertSame( $cleared ? null : $handle, MainWP_DB::instance()->get_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION ) );
 		if ( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE === $status ) {
 			$this->assertSame( 1, (int) $job->attempt_count );
@@ -1102,11 +1104,13 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	 * @return array
 	 */
 	public static function pre_snapshot_answer_shapes() {
+		$unreadable = 'The site did not send a readable answer about the safety backup. The backup may still be running, so MainWP will try again.';
 		return array(
-			'unreadable response' => array( '<html>Unavailable</html>', 0, 'failed_retryable', false ),
-			'coerced response'    => array( array( 'fetch_url_output' => 'Service Unavailable' ), 0, 'failed_retryable', false ),
-			'error payload'       => array( array( 'error' => 'Task not found.' ), 0, 'failed_permanent', true ),
-			'failed phase'        => array(
+			'unreadable response'  => array( '<html>Unavailable</html>', 0, 'failed_retryable', false, $unreadable ),
+			'coerced response'     => array( array( 'fetch_url_output' => 'Service Unavailable' ), 0, 'failed_retryable', false, $unreadable ),
+			'error payload'        => array( array( 'error' => 'Task not found.' ), 0, 'failed_permanent', true, 'Task not found.' ),
+			'failed without error' => array( array( 'phase' => 'failed' ), 0, 'failed_permanent', true, 'The pre-restore safety backup failed.' ),
+			'failed phase'         => array(
 				array(
 					'phase' => 'failed',
 					'error' => 'x',
@@ -1114,8 +1118,76 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 				0,
 				'failed_permanent',
 				true,
+				'x',
 			),
-			'attempts exhausted'  => array( array( 'fetch_url_output' => 'Service Unavailable' ), MainWP_Backup_Backoff::MAX_ATTEMPTS - 1, 'failed_permanent', true ),
+			'attempts exhausted'   => array( array( 'fetch_url_output' => 'Service Unavailable' ), MainWP_Backup_Backoff::MAX_ATTEMPTS - 1, 'failed_permanent', true, $unreadable ),
+		);
+	}
+
+	/**
+	 * Terminal failure survives site deletion and releases before its event.
+	 *
+	 * @dataProvider terminal_failure_sites
+	 *
+	 * @param bool $deleted Whether the site was deleted while its job remained.
+	 */
+	public function test_terminal_failure_releases_before_hook_even_with_deleted_site( $deleted ) {
+		$this->responses['backup_task_run'] = array( 'fetch_url_output' => 'Service Unavailable' );
+		$job                                = $this->make_job(
+			array(),
+			MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT,
+			array(
+				'pre_snapshot_task_id' => 'task-7-pre',
+				'attempt_count'        => MainWP_Backup_Backoff::MAX_ATTEMPTS - 1,
+			)
+		);
+		$handle                             = wp_json_encode(
+			array(
+				'task_id' => 'task-7-pre',
+				'owner'   => (string) $job->id,
+			)
+		);
+		MainWP_DB::instance()->update_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION, $handle );
+		if ( $deleted ) {
+			MainWP_DB::instance()->remove_website( $this->site_id );
+			$this->assertEmpty( MainWP_DB::instance()->get_website_by_id( $this->site_id ) );
+		}
+
+		$events   = array();
+		$listener = function ( $event ) use ( &$events ) {
+			$events[] = array(
+				'job_id' => $event['job_id'],
+				'handle' => MainWP_DB::instance()->get_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION ),
+			);
+		};
+		add_action( 'mainwp_backup_restore_failed', $listener );
+		try {
+			$this->orchestrator->process_pending_restore_jobs( 30, (int) $job->id );
+		} finally {
+			remove_action( 'mainwp_backup_restore_failed', $listener );
+		}
+
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT, MainWP_Backup_Restore_Job_Store::instance()->get_job( (int) $job->id )->status );
+		$this->assertSame(
+			array(
+				array(
+					'job_id' => (int) $job->id,
+					'handle' => null,
+				),
+			),
+			$events
+		);
+	}
+
+	/**
+	 * Both a surviving site and an orphaned job must publish the failure.
+	 *
+	 * @return array
+	 */
+	public static function terminal_failure_sites() {
+		return array(
+			'existing site' => array( false ),
+			'deleted site'  => array( true ),
 		);
 	}
 
@@ -1411,6 +1483,86 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
+	 * Release is shared: this matrix pins ownership in both confirmed cancel lanes.
+	 *
+	 * @dataProvider running_cancel_handles
+	 *
+	 * @param string $handle_state Owned, foreign, or absent handle.
+	 * @param bool   $throws       Whether cancelling the backup throws.
+	 * @param bool   $cron         Whether cron applies a recorded intent.
+	 */
+	public function test_running_cancel_releases_only_owned_handle( $handle_state, $throws, $cron ) {
+		global $wpdb;
+		$this->responses['restore_task_cancel'] = array(
+			'result' => 'ok',
+			'phase'  => 'failed',
+		);
+		$job                                    = $this->make_job(
+			$cron ? array( 'cancel_intent' => true ) : array(),
+			MainWP_Backup_Restore_Job_Store::STATUS_RUNNING,
+			array(
+				'child_task_id'        => 'task-9-restore',
+				'pre_snapshot_task_id' => 'task-7-pre',
+			)
+		);
+		$handle                                 = null;
+		if ( 'none' !== $handle_state ) {
+			$handle = wp_json_encode(
+				array(
+					'task_id' => 'task-7-pre',
+					'owner'   => (string) ( 'own' === $handle_state ? $job->id : $job->id + 1 ),
+				)
+			);
+			MainWP_DB::instance()->update_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION, $handle );
+		}
+		if ( $throws ) {
+			$this->responses['backup_task_cancel'] = new \Error( 'Child cancellation failed.' );
+		}
+
+		if ( $cron ) {
+			$job = $this->tick( $job );
+		} else {
+			$this->assertSame( 'cancelled', $this->orchestrator->cancel_job( (int) $job->id ) );
+			$job = MainWP_Backup_Restore_Job_Store::instance()->get_job( (int) $job->id );
+		}
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED, $job->status );
+		$this->assertSame( 'own' === $handle_state ? null : $handle, MainWP_DB::instance()->get_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION ) );
+		$expected = array(
+			array(
+				'what'   => 'restore_task_cancel',
+				'params' => array( 'task_id' => 'task-9-restore' ),
+			),
+		);
+		if ( 'own' === $handle_state ) {
+			$expected[] = array(
+				'what'   => 'backup_task_cancel',
+				'params' => array( 'task_id' => 'task-7-pre' ),
+			);
+		}
+		$this->assertSame( $expected, $this->calls );
+		if ( 'none' === $handle_state ) {
+			$count = $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . MainWP_DB::instance()->get_table_name( 'wp_options' ) . ' WHERE wpid = %d AND name = %s', $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION ) ); // phpcs:ignore WordPress.DB -- verify no option was inserted.
+			$this->assertSame( 0, (int) $count );
+		}
+	}
+
+	/**
+	 * Running confirmation has its own matrix because release is shared with cron.
+	 *
+	 * @return array
+	 */
+	public static function running_cancel_handles() {
+		return array(
+			'owned handle'         => array( 'own', false, false ),
+			'foreign handle'       => array( 'foreign', false, false ),
+			'no handle'            => array( 'none', false, false ),
+			'backup cancel throws' => array( 'own', true, false ),
+			'cron owned handle'    => array( 'own', false, true ),
+			'cron foreign handle'  => array( 'foreign', false, true ),
+		);
+	}
+
+	/**
 	 * A child mid-slice reports busy; instead of blocking the request on
 	 * retries, the cancel is recorded as an intent the cron lane applies
 	 * between slices. The job stays running until the child confirms.
@@ -1423,8 +1575,18 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 
 		$job = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, array( 'child_task_id' => 'task-9-restore' ) );
 
+		$handle = wp_json_encode(
+			array(
+				'task_id' => 'task-7-pre',
+				'owner'   => (string) $job->id,
+			)
+		);
+		MainWP_DB::instance()->update_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION, $handle );
+
 		$outcome = $this->orchestrator->cancel_job( (int) $job->id );
 		$this->assertSame( 'cancel_pending', $outcome );
+		$this->assertSame( $handle, MainWP_DB::instance()->get_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION ) );
+		$this->assertNotContains( 'backup_task_cancel', array_column( $this->calls, 'what' ) );
 
 		$fresh = MainWP_Backup_Restore_Job_Store::instance()->get_job( (int) $job->id );
 		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, $fresh->status );

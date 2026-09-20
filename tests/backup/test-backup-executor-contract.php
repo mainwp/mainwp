@@ -217,14 +217,13 @@ class MainWP_Backup_Executor_Contract_Test extends MainWP_Abilities_Test_Case {
 	 * @param array  $handle Persisted handle fixture.
 	 * @param string $owner Requesting lane's identity.
 	 * @param string $expect Expected result: resume, refuse, or create.
+	 * @param int    $age    Handle age in seconds at the start of the call.
 	 *
 	 * @return void
 	 */
-	public function test_trigger_backup_adoption_matrix( $handle, $owner, $expect ) {
+	public function test_trigger_backup_adoption_matrix( $handle, $owner, $expect, $age = 60 ) {
 		$site_id = $this->create_test_site();
 		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
-		$before  = wp_json_encode( $handle );
-		MainWP_DB::instance()->update_website_option( $website, MainWP_Backup_Executor::ADHOC_TASK_OPTION, $before );
 		$this->mock_child_action( 'backup_preflight', array( 'task_spine' => 1 ) );
 		$this->mock_child_action(
 			'backup_task_create',
@@ -237,15 +236,34 @@ class MainWP_Backup_Executor_Contract_Test extends MainWP_Abilities_Test_Case {
 		$called = array();
 		$this->record_child_actions( $called );
 
-		if ( 'refuse' === $expect ) {
+		// Providers run before the tests. Date the handle here, and retry a
+		// boundary measurement only if the call crossed a wall-clock second.
+		for ( $attempt = 0; $attempt < 3; ++$attempt ) {
+			$now               = time();
+			$handle['started'] = $now - $age;
+			$before            = wp_json_encode( $handle );
+			MainWP_DB::instance()->update_website_option( $website, MainWP_Backup_Executor::ADHOC_TASK_OPTION, $before );
+			$called  = array();
+			$error   = null;
+			$task_id = null;
 			try {
-				MainWP_Backup_Executor::trigger_backup( $site_id, 'full', $owner );
-				$this->fail( 'Expected an already-running exception.' );
+				$task_id = MainWP_Backup_Executor::trigger_backup( $site_id, 'full', $owner );
 			} catch ( MainWP_Exception $e ) {
-				$this->assertSame( \MainWP\Dashboard\MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING, $e->get_message_error_code() );
+				$error = $e;
 			}
+			$finished = time();
+			if ( MainWP_Backup_Executor::ADHOC_TASK_ABANDON_SECONDS !== $age || $now === $finished ) {
+				break;
+			}
+		}
+		if ( MainWP_Backup_Executor::ADHOC_TASK_ABANDON_SECONDS === $age ) {
+			$this->assertSame( $now, $finished, 'The boundary check must complete within the fixture second.' );
+		}
+		if ( 'refuse' === $expect ) {
+			$this->assertInstanceOf( MainWP_Exception::class, $error, 'Expected an already-running exception.' );
+			$this->assertSame( \MainWP\Dashboard\MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING, $error->get_message_error_code() );
 		} else {
-			$task_id = MainWP_Backup_Executor::trigger_backup( $site_id, 'full', $owner );
+			$this->assertNull( $error );
 			$this->assertSame( 'create' === $expect ? 'task-new' : 'task-live', $task_id );
 		}
 
@@ -270,9 +288,7 @@ class MainWP_Backup_Executor_Contract_Test extends MainWP_Abilities_Test_Case {
 		$young = array(
 			'task_id' => 'task-live',
 			'type'    => 'full',
-			'started' => time() - 60,
 		);
-		$old   = array_replace( $young, array( 'started' => time() - MainWP_Backup_Executor::ADHOC_TASK_ABANDON_SECONDS - 1 ) );
 
 		return array(
 			'own handle resumes'                      => array( $young + array( 'owner' => 'job-9' ), 'job-9', 'resume' ),
@@ -280,8 +296,9 @@ class MainWP_Backup_Executor_Contract_Test extends MainWP_Abilities_Test_Case {
 			'auto-update handle refused to a restore' => array( $young + array( 'owner' => '' ), 'job-9', 'refuse' ),
 			'restore handle refused to the auto-update lane' => array( $young + array( 'owner' => 'job-9' ), '', 'refuse' ),
 			'other restore refused'                   => array( $young + array( 'owner' => 'job-8' ), 'job-9', 'refuse' ),
-			'abandoned foreign handle replaced'       => array( $old + array( 'owner' => 'job-8' ), 'job-9', 'create' ),
-			'same owner past the bound still resumes' => array( $old + array( 'owner' => 'job-9' ), 'job-9', 'resume' ),
+			'foreign handle at the bound refused'     => array( $young + array( 'owner' => 'job-8' ), 'job-9', 'refuse', MainWP_Backup_Executor::ADHOC_TASK_ABANDON_SECONDS ),
+			'abandoned foreign handle replaced'       => array( $young + array( 'owner' => 'job-8' ), 'job-9', 'create', MainWP_Backup_Executor::ADHOC_TASK_ABANDON_SECONDS + 1 ),
+			'same owner past the bound still resumes' => array( $young + array( 'owner' => 'job-9' ), 'job-9', 'resume', MainWP_Backup_Executor::ADHOC_TASK_ABANDON_SECONDS + 1 ),
 		);
 	}
 

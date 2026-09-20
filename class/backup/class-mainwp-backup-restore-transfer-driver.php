@@ -1267,7 +1267,9 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
                 );
             }
 
-            if ( $outcome['bytes_received'] <= $cursor['offset'] ) {
+            // An empty artifact still needs its final request to create and verify the child file.
+            $empty_artifact_ack = 0 === $size && 0 === $cursor['offset'] && '' === $raw && 0 === $outcome['bytes_received'];
+            if ( $outcome['bytes_received'] <= $cursor['offset'] && ! $empty_artifact_ack ) {
                 // An ok ack that confirmed no new bytes would loop forever.
                 return array(
                     'done'      => false,

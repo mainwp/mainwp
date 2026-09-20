@@ -831,6 +831,54 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Empty tombstones still need a final chunk so the child creates the file.
+	 */
+	public function test_zero_byte_artifact_completes_with_zero_byte_ack() {
+		$staged = $this->dir . '/tombstones.list';
+		file_put_contents( $staged, '' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+
+		$plan = array(
+			array(
+				'role'        => 'tombstones',
+				'file'        => 'tombstones.list',
+				'size'        => 0,
+				'sha256'      => hash( 'sha256', '' ),
+				'staged_path' => $staged,
+				'adopt_only'  => false,
+			),
+		);
+
+		$this->driver->chunk_script = array(
+			array(
+				'result'         => 'ok',
+				'bytes_received' => 0,
+				'error'          => null,
+				'retryable'      => false,
+			),
+		);
+
+		$cursor = array();
+		$result = $this->driver->transfer_artifacts( (object) array( 'id' => 1 ), 'task-1-x', $plan, $cursor, microtime( true ) + 60 );
+
+		$this->assertNull( $result['error'] );
+		$this->assertTrue( $result['done'] );
+		$this->assertFalse( $result['retryable'] );
+		$this->assertSame( 1, $cursor['artifact_index'] );
+		$this->assertSame( 0, $cursor['offset'] );
+		$this->assertSame(
+			array(
+				array(
+					'file'   => 'tombstones.list',
+					'offset' => 0,
+					'bytes'  => 0,
+					'last'   => true,
+				),
+			),
+			$this->driver->sent
+		);
+	}
+
+	/**
 	 * The mainwp_backup_restore_chunk_size filter sets the starting chunk
 	 * size for a fresh cursor: the first chunk crosses the wire at the
 	 * filtered size and the cursor carries it forward.

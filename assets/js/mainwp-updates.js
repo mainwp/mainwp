@@ -1396,6 +1396,7 @@ let updatesoverview_plugins_upgrade_int_after_backup = function (pSlug, pWebsite
             error: function (xhr) {
                 this.tryCount++;
                 if (this.tryCount >= this.retryLimit) {
+                    mainwpVars.errorCount++;
                     this.endError();
                     return;
                 }
@@ -1882,6 +1883,7 @@ let updatesoverview_themes_upgrade_int = function (slug, websiteId, bulkMode, la
         error: function (xhr) {
             this.tryCount++;
             if (this.tryCount >= this.retryLimit) {
+                mainwpVars.errorCount++;
                 this.endError();
                 return;
             }
@@ -2381,6 +2383,7 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
                             if (response.error) {
                                 result = getErrorMessage(response.error);
                                 pErrorMessage = result;
+                                mainwpVars.errorCount++;
                             } else {
                                 let res = response.result;
                                 if (mainwp_get_result_entry(res, sid)) {
@@ -2467,6 +2470,7 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
             error: function (xhr) {
                 this.tryCount++;
                 if (this.tryCount >= this.retryLimit) {
+                    mainwpVars.errorCount++;
                     this.endError();
                     return;
                 }
@@ -2541,6 +2545,7 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
                             if (response.error) {
                                 result = getErrorMessage(response.error);
                                 pErrorMessage = result;
+                                mainwpVars.errorCount++;
                             }
                             else {
                                 let res = response.result;   // result is an object
@@ -2620,6 +2625,7 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
             error: function (xhr) {
                 this.tryCount++;
                 if (this.tryCount >= this.retryLimit) {
+                    mainwpVars.errorCount++;
                     this.endError();
                     return;
                 }
@@ -2798,6 +2804,7 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
                             if (response.error) {
                                 result = getErrorMessage(response.error);
                                 pErrorMessage = result;
+                                mainwpVars.errorCount++;
                             } else {
                                 let res = response.result;
                                 if (mainwp_get_result_entry(res, sid)) {

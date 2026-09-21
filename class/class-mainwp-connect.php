@@ -263,9 +263,9 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         );
 
         $hidden_data = '[hidden response data]';
-        $raw_body    = is_string( $data ) ? $data : '';
+        $hide_raw    = (bool) apply_filters( 'mainwp_hide_raw_connection_response_data', true );
 
-        if ( ( false === $ip || $ip === $host || ! static::validate_ip( $ip ) ) && apply_filters( 'mainwp_hide_raw_connection_response_data', true ) ) { // Failed to resolve hostname.
+        if ( ( false === $ip || $ip === $host || ! static::validate_ip( $ip ) ) && $hide_raw ) { // Failed to resolve hostname.
             $data = $hidden_data;
         }
 
@@ -283,7 +283,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             array(
                 'http_status' => $http_status,
                 'headers'     => $resp_headers,
-                'body'        => ( '[hidden response data]' === $raw_body ) ? '' : $raw_body,
+                'body'        => $hide_raw ? '' : ( is_string( $data ) ? $data : '' ),
                 'resolved_ip' => $ip,
                 'error'       => $out['error'],
             )
@@ -2075,11 +2075,8 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         $raw_response = isset( $others['raw_response'] ) && 'yes' === $others['raw_response'] ? true : false;
 
-        $hidden_data = '[hidden response data]';
-
-        if ( ! apply_filters( 'mainwp_hide_raw_connection_response_data', true ) ) {
-            $hidden_data = $data;
-        }
+        $hide_raw    = (bool) apply_filters( 'mainwp_hide_raw_connection_response_data', true );
+        $hidden_data = $hide_raw ? '[hidden response data]' : $data;
 
         if ( ! is_array( $output ) ) {
             $output = array();
@@ -2089,18 +2086,17 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         $output['http_status'] = (int) $http_status;
 
-        $raw_body = is_string( $data ) ? $data : '';
-        $output   = MainWP_Connect_Failure_Ux::enrich_output(
+        $output = MainWP_Connect_Failure_Ux::enrich_output(
             $output,
             array(
                 'http_status' => $http_status,
                 'headers'     => isset( $resp_headers ) ? $resp_headers : '',
-                'body'        => $raw_body,
+                'body'        => $hide_raw ? '' : ( is_string( $data ) ? $data : '' ),
                 'resolved_ip' => $ip,
                 'error'       => $err,
             )
         );
-        if ( ! empty( $output['response_readable'] ) ) {
+        if ( ! $hide_raw && ! empty( $output['response_readable'] ) ) {
             $output['fetch_data'] = $output['response_readable'];
         }
 

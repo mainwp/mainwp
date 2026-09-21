@@ -42,6 +42,42 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Hide filter: empty body still keeps status, headers, IP, and User-Agent.
+	 */
+	public function test_hidden_body_is_not_leaked_into_failure_ux(): void {
+		set_transient(
+			'mainwp_public_dashboard_ip_data',
+			array(
+				'value'           => '203.0.113.10',
+				'status'          => 'pass',
+				'community_value' => 'Detected',
+			),
+			HOUR_IN_SECONDS
+		);
+		$_SERVER['SERVER_ADDR'] = '10.0.0.1';
+
+		$secret  = '<html><title>leaked child html</title><p>uniqueId=should-not-appear</p></html>';
+		$details = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::build_details(
+			array(
+				'http_status' => 403,
+				'headers'     => "HTTP/1.1 403 Forbidden\r\ncf-ray: abc\r\nserver: cloudflare\r\n",
+				'body'        => '',
+				'resolved_ip' => '104.21.12.34',
+			)
+		);
+		$html = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::render_html( $details );
+
+		$this->assertSame( '', $details['response']['body'] );
+		$this->assertStringContainsString( 'Status: 403', $details['response']['text'] );
+		$this->assertStringContainsString( 'cf-ray: abc', $details['response']['headers'] );
+		$this->assertStringContainsString( 'User-Agent MainWP sends', $html );
+		$this->assertStringContainsString( 'Dashboard outbound IP (allowlist this)', $html );
+		$this->assertStringNotContainsString( 'leaked child html', $html );
+		$this->assertStringNotContainsString( $secret, $html );
+		$this->assertStringNotContainsString( 'should-not-appear', $html );
+	}
+
+	/**
 	 * Readable response never presents hidden placeholder as the body.
 	 */
 	public function test_readable_response_skips_hidden_placeholder(): void {

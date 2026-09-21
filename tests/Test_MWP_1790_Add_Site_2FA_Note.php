@@ -22,7 +22,7 @@ class Test_MWP_1790_Add_Site_2FA_Note extends \WP_UnitTestCase {
 		\MainWP\Dashboard\MainWP_Manage_Sites::render_connection_2fa_note();
 		$html = ob_get_clean();
 
-		$this->assertStringContainsString( 'ui info message', $html );
+		$this->assertStringContainsString( 'ui blue message', $html );
 		$this->assertStringContainsString( 'two-factor authentication (2FA) does not apply to MainWP connections', $html );
 		$this->assertStringContainsString( 'administrator username and password', $html );
 		$this->assertStringContainsString( 'Unique Security ID', $html );

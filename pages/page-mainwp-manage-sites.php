@@ -848,7 +848,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      */
     public static function render_connection_2fa_note() {
         ?>
-        <div class="ui info message">
+        <div class="ui blue message">
             <?php esc_html_e( 'WordPress admin login two-factor authentication (2FA) does not apply to MainWP connections. MainWP authenticates with the administrator username and password and/or Unique Security ID configured on the Child site, not the WordPress login 2FA challenge.', 'mainwp' ); ?>
         </div>
         <?php

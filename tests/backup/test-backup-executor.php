@@ -1618,6 +1618,8 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 		} catch ( MainWP_Exception $e ) {
 			$this->assertSame( MainWP_Backup_Error_Codes::ERR_MUTEX_WRITE_FAILED, $e->get_message_error_code() );
 			$this->assertNull( $e->get_message_extra( false ) );
+			$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+			$this->assertEmpty( $progress->fetchResult, 'A persistent mutex write refusal must not become a cached fetch result.' );
 		}
 	}
 

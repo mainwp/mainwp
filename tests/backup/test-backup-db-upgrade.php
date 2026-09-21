@@ -1754,21 +1754,22 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 			$this->assertSame( $repaired, MainWP_Install::instance()->repair_backup_site_unique_keys() );
 			$this->assertSame( $repaired, $this->index_exists( $table, 'uniq_active_site' ) );
 			if ( ! $repaired ) {
+				$recorded = get_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_REASONS );
+				$this->assertSame( array( $table ), array_keys( $recorded ) );
+				$this->assertSame( array( array( 'code' => 'progressed_duplicates' ) ), $recorded[ $table ]['reasons'] );
+				$this->assertSame( 1, $recorded[ $table ]['site_count'] );
 				$this->assertSame(
 					array(
-						$table => array(
-							'table'  => $table,
-							'reason' => 'progressed_duplicates',
-							'sites'  => array(
-								array(
-									'site_id' => 889901,
-									'job_ids' => array_reverse( array_slice( $ids, 0, 2 ) ),
-								),
-							),
+						array(
+							'site_id'   => 889901,
+							'job_ids'   => array_reverse( array_slice( $ids, 0, 2 ) ),
+							'job_count' => 2,
 						),
 					),
-					get_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_REASONS )
+					$recorded[ $table ]['sites']
 				);
+				$this->assertSame( 1, $recorded[ $table ]['attempts'] );
+				$this->assertGreaterThan( 0, $recorded[ $table ]['first_seen'] );
 				$this->assertSame( array(), $messages );
 				$priority->setValue( $logger, MainWP_Logger::WARNING );
 				$this->assertFalse( MainWP_Install::instance()->repair_backup_site_unique_keys() );
@@ -1852,15 +1853,11 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 			$before = $wpdb->get_results( $wpdb->prepare( "SHOW INDEX FROM {$table} WHERE Key_name = %s", $key ), ARRAY_A ); // phpcs:ignore WordPress.DB -- test probe.
 			delete_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_PENDING );
 			$this->assertFalse( MainWP_Install::instance()->repair_backup_site_unique_keys() );
-			$this->assertSame(
-				array(
-					$table => array(
-						'table'  => $table,
-						'reason' => 'malformed_index',
-					),
-				),
-				get_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_REASONS )
-			);
+			$recorded = get_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_REASONS );
+			$this->assertSame( array( $table ), array_keys( $recorded ) );
+			$this->assertSame( array( array( 'code' => 'malformed_index' ) ), $recorded[ $table ]['reasons'] );
+			$this->assertArrayNotHasKey( 'reason', $recorded[ $table ] );
+			$this->assertArrayNotHasKey( 'error', $recorded[ $table ] );
 			$this->assertSame( array(), $messages );
 			$priority->setValue( $logger, MainWP_Logger::WARNING );
 			$this->assertFalse( MainWP_Install::instance()->repair_backup_site_unique_keys() );
@@ -1919,9 +1916,9 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 				$recorded = get_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_REASONS );
 				$this->assertSame( array( $table ), array_keys( $recorded ) );
 				$this->assertSame( $table, $recorded[ $table ]['table'] );
-				$this->assertSame( 'add_unique_failed', $recorded[ $table ]['reason'] );
+				$this->assertSame( 'add_unique_failed', $recorded[ $table ]['reasons'][0]['code'] );
 				// The engine's own message is what makes the deferral actionable.
-				$this->assertStringContainsString( 'mainwp_site_repair_forced_failure', $recorded[ $table ]['error'] );
+				$this->assertStringContainsString( 'mainwp_site_repair_forced_failure', $recorded[ $table ]['reasons'][0]['error'] );
 				$this->assertCount( 1, $messages );
 				$this->assertStringContainsString( "Backup identity repair deferred for {$table}: failed to add unique key uniq_active_site:", $messages[0] );
 				$this->assertStringContainsString( 'mainwp_site_repair_forced_failure', $messages[0] );
@@ -1957,6 +1954,282 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		return array(
 			'failed ADD' => array( true ),
 			'absent key' => array( false ),
+		);
+	}
+
+	/**
+	 * Database failures must remain visible when later queries clear last_error.
+	 *
+	 * @dataProvider site_identity_statement_failures
+	 * @param string $suffix    Table suffix.
+	 * @param string $code      Reason code.
+	 * @param string $statement Failing SQL prefix, with a table placeholder.
+	 * @param bool   $no_change Whether cancellation loses its row predicate.
+	 */
+	public function test_site_identity_repair_statement_diagnostics( $suffix, $code, $statement, $no_change = false ) {
+		global $wpdb;
+		$table    = MainWP_DB::instance()->get_table_name( $suffix );
+		$restore  = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$column   = 'wp_backup' === $suffix ? 'manual_site_id' : 'active_site_id';
+		$logger   = MainWP_Logger::instance();
+		$priority = new \ReflectionProperty( $logger, 'logPriority' );
+		$priority->setAccessible( true );
+		$previous = $priority->getValue( $logger );
+		$priority->setValue( $logger, MainWP_Logger::WARNING );
+		$messages = array();
+		$capture  = static function ( $text ) use ( &$messages ) {
+			$messages[] = $text;
+		};
+		$block    = static function ( $query ) use ( $table, $statement, $no_change ) {
+			if ( str_starts_with( $query, sprintf( $statement, $table ) ) ) {
+				return $no_change ? "UPDATE {$table} SET status = 'cancelled' WHERE 1 = 0" : 'SELECT mainwp_site_statement_forced_failure';
+			}
+			return $query;
+		};
+		add_filter( 'mainwp_log_do_to_db', '__return_true' );
+		add_action( 'mainwp_before_log_data', $capture );
+		try {
+			delete_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_REASONS );
+			if ( 'add_column_failed' === $code ) {
+				$this->assertNotFalse( $wpdb->query( "ALTER TABLE {$table} DROP COLUMN {$column}" ) ); // phpcs:ignore WordPress.DB -- test fixture.
+			}
+			if ( 'pristine_cancel_failed' === $code ) {
+				for ( $i = 0; $i < 2; ++$i ) {
+					$this->assertSame(
+						1,
+						$wpdb->insert(
+							$restore,
+							array(
+								'site_id'     => 889902,
+								'snapshot_id' => 42,
+								'status'      => 'pending',
+								'checkpoint'  => '[]',
+							)
+						)
+					); // phpcs:ignore WordPress.DB -- test fixture.
+				}
+			}
+			add_filter( 'query', $block );
+			$this->assertFalse( MainWP_Install::instance()->repair_backup_site_unique_keys() );
+			$recorded = get_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_REASONS );
+			$this->assertSame( array( $table ), array_keys( $recorded ) );
+			$this->assertCount( 1, $recorded[ $table ]['reasons'] );
+			$this->assertSame( $code, $recorded[ $table ]['reasons'][0]['code'] );
+			$this->assertArrayNotHasKey( 'reason', $recorded[ $table ] );
+			$this->assertArrayNotHasKey( 'error', $recorded[ $table ] );
+			$this->assertSame( 1, $recorded[ $table ]['attempts'] );
+			$this->assertGreaterThan( 0, $recorded[ $table ]['first_seen'] );
+			$this->assertGreaterThan( 0, (int) get_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_PENDING ) );
+			$this->assertCount( 1, $messages );
+			$this->assertStringContainsString( "Backup identity repair deferred for {$table}:", $messages[0] );
+			if ( $no_change ) {
+				$this->assertArrayNotHasKey( 'error', $recorded[ $table ]['reasons'][0] );
+			} else {
+				$this->assertStringContainsString( 'mainwp_site_statement_forced_failure', $recorded[ $table ]['reasons'][0]['error'] );
+				$this->assertStringContainsString( 'mainwp_site_statement_forced_failure', $messages[0] );
+			}
+			remove_filter( 'query', $block );
+			$this->assertTrue( MainWP_Install::instance()->repair_backup_site_unique_keys() );
+			$this->assertFalse( get_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_REASONS ) );
+		} finally {
+			remove_filter( 'query', $block );
+			$wpdb->delete( $restore, array( 'site_id' => 889902 ) ); // phpcs:ignore WordPress.DB -- DDL can commit fixture rows.
+			MainWP_Install::instance()->repair_backup_site_unique_keys();
+			remove_action( 'mainwp_before_log_data', $capture );
+			remove_filter( 'mainwp_log_do_to_db', '__return_true' );
+			$priority->setValue( $logger, $previous );
+			foreach ( $messages as $message ) {
+				$wpdb->delete( MainWP_DB::instance()->get_table_name( 'action_log' ), array( 'log_content' => $message ) ); // phpcs:ignore WordPress.DB -- test cleanup.
+				$wpdb->delete( MainWP_DB::instance()->get_table_name( 'action_log' ), array( 'log_content' => 'CRON :: ' . $message ) ); // phpcs:ignore WordPress.DB -- test cleanup.
+			}
+			self::commit_transaction();
+		}
+	}
+
+	/**
+	 * Failure paths that previously armed the marker without a reason.
+	 *
+	 * @return array Table, code, SQL prefix, and optional lost cancellation predicate.
+	 */
+	public static function site_identity_statement_failures() {
+		return array(
+			'manual column'    => array( 'wp_backup', 'add_column_failed', 'ALTER TABLE %s ADD COLUMN manual_site_id' ),
+			'restore column'   => array( 'wp_backup_restore_job', 'add_column_failed', 'ALTER TABLE %s ADD COLUMN active_site_id' ),
+			'active select'    => array( 'wp_backup_restore_job', 'active_rows_select_failed', 'SELECT * FROM %s WHERE status IN' ),
+			'manual dedupe'    => array( 'wp_backup', 'manual_dedupe_failed', 'UPDATE %s task INNER JOIN' ),
+			'manual backfill'  => array( 'wp_backup', 'manual_backfill_failed', 'UPDATE %s task LEFT JOIN' ),
+			'pristine cancel'  => array( 'wp_backup_restore_job', 'pristine_cancel_failed', "UPDATE %s SET status = 'cancelled'" ),
+			'cancel race'      => array( 'wp_backup_restore_job', 'pristine_cancel_failed', "UPDATE %s SET status = 'cancelled'", true ),
+			'restore backfill' => array( 'wp_backup_restore_job', 'restore_backfill_failed', 'UPDATE %s SET active_site_id = CASE' ),
+		);
+	}
+
+	/**
+	 * Retry history belongs to each table even when its blocking condition changes.
+	 */
+	public function test_site_identity_repair_merges_retry_history_per_table() {
+		global $wpdb;
+		$backup   = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		$restore  = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$attempt  = 1;
+		$logger   = MainWP_Logger::instance();
+		$priority = new \ReflectionProperty( $logger, 'logPriority' );
+		$priority->setAccessible( true );
+		$previous = $priority->getValue( $logger );
+		$priority->setValue( $logger, MainWP_Logger::WARNING );
+		$messages = array();
+		$capture  = static function ( $text ) use ( &$messages ) {
+			$messages[] = $text;
+		};
+		$block    = static function ( $query ) use ( $backup, $restore, &$attempt ) {
+			if ( ( 1 === $attempt && str_starts_with( $query, "UPDATE {$backup} task INNER JOIN" ) ) ||
+				( 1 === $attempt && str_starts_with( $query, "SELECT * FROM {$restore} WHERE status IN" ) ) ||
+				( 2 === $attempt && str_starts_with( $query, "UPDATE {$restore} SET active_site_id = CASE" ) ) ) {
+				return 'SELECT mainwp_site_retry_forced_failure';
+			}
+			return $query;
+		};
+		add_filter( 'mainwp_log_do_to_db', '__return_true' );
+		add_action( 'mainwp_before_log_data', $capture );
+		try {
+			delete_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_REASONS );
+			add_filter( 'query', $block );
+			$this->assertFalse( MainWP_Install::instance()->repair_backup_site_unique_keys() );
+			$first = get_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_REASONS );
+			$this->assertSame( array( $backup, $restore ), array_keys( $first ) );
+			$this->assertSame( 'manual_dedupe_failed', $first[ $backup ]['reasons'][0]['code'] );
+			$this->assertSame( 'active_rows_select_failed', $first[ $restore ]['reasons'][0]['code'] );
+			$this->assertSame( 1, $first[ $restore ]['attempts'] );
+			$first[ $restore ]['first_seen'] = time() - HOUR_IN_SECONDS;
+			update_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_REASONS, $first );
+			$attempt = 2;
+			$this->assertFalse( MainWP_Install::instance()->repair_backup_site_unique_keys() );
+			$second = get_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_REASONS );
+			$this->assertSame( array( $restore ), array_keys( $second ) );
+			$this->assertSame( $first[ $restore ]['first_seen'], $second[ $restore ]['first_seen'] );
+			$this->assertSame( 2, $second[ $restore ]['attempts'] );
+			$this->assertCount( 1, $second[ $restore ]['reasons'] );
+			$this->assertSame( 'restore_backfill_failed', $second[ $restore ]['reasons'][0]['code'] );
+			$this->assertStringContainsString( 'mainwp_site_retry_forced_failure', $second[ $restore ]['reasons'][0]['error'] );
+			remove_filter( 'query', $block );
+			$this->assertTrue( MainWP_Install::instance()->repair_backup_site_unique_keys() );
+			$this->assertFalse( get_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_REASONS ) );
+			$this->assertFalse( get_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_PENDING ) );
+		} finally {
+			remove_filter( 'query', $block );
+			MainWP_Install::instance()->repair_backup_site_unique_keys();
+			remove_action( 'mainwp_before_log_data', $capture );
+			remove_filter( 'mainwp_log_do_to_db', '__return_true' );
+			$priority->setValue( $logger, $previous );
+			foreach ( $messages as $message ) {
+				$wpdb->delete( MainWP_DB::instance()->get_table_name( 'action_log' ), array( 'log_content' => $message ) ); // phpcs:ignore WordPress.DB -- test cleanup.
+				$wpdb->delete( MainWP_DB::instance()->get_table_name( 'action_log' ), array( 'log_content' => 'CRON :: ' . $message ) ); // phpcs:ignore WordPress.DB -- test cleanup.
+			}
+			self::commit_transaction();
+		}
+	}
+
+	/**
+	 * Row deferrals must not hide bad indexes or grow the durable sample without bounds.
+	 *
+	 * @dataProvider site_identity_duplicate_samples
+	 * @param int  $site_count Number of duplicate sites.
+	 * @param int  $job_count  Progressed jobs per site.
+	 * @param bool $malformed Whether a foreign same-name index exists.
+	 */
+	public function test_site_identity_repair_duplicate_diagnostics( $site_count, $job_count, $malformed ) {
+		global $wpdb;
+		$table    = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$ids      = array();
+		$adds     = 0;
+		$logger   = MainWP_Logger::instance();
+		$priority = new \ReflectionProperty( $logger, 'logPriority' );
+		$priority->setAccessible( true );
+		$previous = $priority->getValue( $logger );
+		$priority->setValue( $logger, MainWP_Logger::WARNING );
+		$messages = array();
+		$capture  = static function ( $text ) use ( &$messages ) {
+			$messages[] = $text;
+		};
+		$probe    = static function ( $query ) use ( $table, &$adds ) {
+			if ( str_starts_with( $query, "ALTER TABLE {$table} ADD UNIQUE KEY uniq_active_site" ) ) {
+				++$adds;
+			}
+			return $query;
+		};
+		add_filter( 'mainwp_log_do_to_db', '__return_true' );
+		add_action( 'mainwp_before_log_data', $capture );
+		try {
+			$this->assertNotFalse( $wpdb->query( "ALTER TABLE {$table} DROP INDEX uniq_active_site" ) ); // phpcs:ignore WordPress.DB -- test fixture.
+			if ( $malformed ) {
+				$this->assertNotFalse( $wpdb->query( "ALTER TABLE {$table} ADD INDEX uniq_active_site (active_site_id)" ) ); // phpcs:ignore WordPress.DB -- test fixture.
+			}
+			for ( $site = 889910; $site < 889910 + $site_count; ++$site ) {
+				for ( $job = 0; $job < $job_count; ++$job ) {
+					$this->assertSame(
+						1,
+						$wpdb->insert(
+							$table,
+							array(
+								'site_id'     => $site,
+								'snapshot_id' => 42,
+								'status'      => 'running',
+								'checkpoint'  => '[]',
+							)
+						)
+					); // phpcs:ignore WordPress.DB -- test fixture.
+					$ids[ $site ][] = (int) $wpdb->insert_id;
+				}
+			}
+			delete_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_REASONS );
+			add_filter( 'query', $probe );
+			$this->assertFalse( MainWP_Install::instance()->repair_backup_site_unique_keys() );
+			$this->assertSame( 0, $adds );
+			$recorded = get_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_REASONS );
+			$this->assertSame( array( $table ), array_keys( $recorded ) );
+			$codes = array_column( $recorded[ $table ]['reasons'], 'code' );
+			sort( $codes );
+			$this->assertSame( $malformed ? array( 'malformed_index', 'progressed_duplicates' ) : array( 'progressed_duplicates' ), $codes );
+			foreach ( $recorded[ $table ]['reasons'] as $reason ) {
+				$this->assertArrayNotHasKey( 'error', $reason );
+			}
+			$this->assertSame( $site_count, $recorded[ $table ]['site_count'] );
+			$this->assertCount( min( 25, $site_count ), $recorded[ $table ]['sites'] );
+			foreach ( $recorded[ $table ]['sites'] as $sample ) {
+				$this->assertSame( $job_count, $sample['job_count'] );
+				$this->assertSame( array_slice( array_reverse( $ids[ $sample['site_id'] ] ), 0, 20 ), $sample['job_ids'] );
+			}
+			$this->assertCount( $site_count + (int) $malformed, $messages );
+		} finally {
+			remove_filter( 'query', $probe );
+			foreach ( array_keys( $ids ) as $site ) {
+				$wpdb->delete( $table, array( 'site_id' => $site ) ); // phpcs:ignore WordPress.DB -- DDL can commit fixture rows.
+			}
+			if ( $malformed && $this->index_exists( $table, 'uniq_active_site' ) ) {
+				$wpdb->query( "ALTER TABLE {$table} DROP INDEX uniq_active_site" ); // phpcs:ignore WordPress.DB -- test cleanup.
+			}
+			MainWP_Install::instance()->repair_backup_site_unique_keys();
+			remove_action( 'mainwp_before_log_data', $capture );
+			remove_filter( 'mainwp_log_do_to_db', '__return_true' );
+			$priority->setValue( $logger, $previous );
+			foreach ( $messages as $message ) {
+				$wpdb->delete( MainWP_DB::instance()->get_table_name( 'action_log' ), array( 'log_content' => $message ) ); // phpcs:ignore WordPress.DB -- test cleanup.
+				$wpdb->delete( MainWP_DB::instance()->get_table_name( 'action_log' ), array( 'log_content' => 'CRON :: ' . $message ) ); // phpcs:ignore WordPress.DB -- test cleanup.
+			}
+			self::commit_transaction();
+		}
+	}
+
+	/**
+	 * Both sample limits apply independently of index diagnostics.
+	 *
+	 * @return array Site count, progressed job count, and malformed index flag.
+	 */
+	public static function site_identity_duplicate_samples() {
+		return array(
+			'duplicates and malformed index' => array( 1, 2, true ),
+			'job sample cap'                 => array( 1, 25, false ),
+			'site sample cap'                => array( 26, 2, false ),
 		);
 	}
 }

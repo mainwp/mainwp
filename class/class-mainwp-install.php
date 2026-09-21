@@ -952,10 +952,11 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      * @return bool Whether both backfills and unique keys are complete.
      */
     public function repair_backup_site_unique_keys(): bool {
-        $suppress = $this->wpdb->suppress_errors();
-        $repaired = true;
-        $reasons  = array();
-        $schemas  = array(
+        $previous_reasons = get_site_option( self::BACKUP_SITE_UNIQ_KEYS_REPAIR_REASONS, array() );
+        $suppress         = $this->wpdb->suppress_errors();
+        $repaired         = true;
+        $reasons          = array();
+        $schemas          = array(
             'wp_backup'             => array( 'manual_site_id', 'uniq_manual_site' ),
             'wp_backup_restore_job' => array( 'active_site_id', 'uniq_active_site' ),
         );
@@ -967,16 +968,47 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
                 $key    = $schema[1];
                 $exists = $this->wpdb->get_var( $this->wpdb->prepare( "SHOW COLUMNS FROM {$table} LIKE %s", $column ) ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL introspection; table name escaped via esc_sql.
                 if ( empty( $exists ) && false === $this->wpdb->query( "ALTER TABLE {$table} ADD COLUMN {$column} bigint unsigned NULL" ) ) { // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL statement; table name escaped via esc_sql.
+                    $error                          = $this->wpdb->last_error;
+                    $reasons[ $table ]['reasons'][] = array(
+                        'code'  => 'add_column_failed',
+                        'error' => $error,
+                    );
+                    MainWP_Logger::instance()->warning( sprintf( 'Backup identity repair deferred for %s: failed to add column %s: %s', $table, $column, $error ) );
                     $repaired = false;
                     continue;
+                }
+
+                // Row repair can defer independently of a foreign same-name index.
+                $has_index   = $this->wpdb->get_results( $this->wpdb->prepare( "SHOW INDEX FROM {$table} WHERE Key_name = %s", $key ) ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL introspection; table name escaped via esc_sql.
+                $valid_index = 1 === count( (array) $has_index ) && 0 === (int) $has_index[0]->Non_unique && 1 === (int) $has_index[0]->Seq_in_index && $column === $has_index[0]->Column_name;
+                if ( ! $valid_index && ! empty( $has_index ) ) {
+                    $reasons[ $table ]['reasons'][] = array( 'code' => 'malformed_index' );
+                    MainWP_Logger::instance()->warning( sprintf( 'Backup identity repair deferred for %s: malformed same-name index %s.', $table, $key ) );
+                    $repaired = false;
                 }
 
                 if ( 'wp_backup' === $suffix ) {
                     // Clear duplicate identities first so a retry also works with the key installed.
                     $cleared = $this->wpdb->query( "UPDATE {$table} task INNER JOIN {$table} older ON older.template = 1 AND older.schedule = 'manual' AND older.sites REGEXP '^[0-9]+$' AND CAST(older.sites AS UNSIGNED) = CAST(task.sites AS UNSIGNED) AND older.id < task.id SET task.manual_site_id = NULL WHERE task.template = 1 AND task.schedule = 'manual' AND task.sites REGEXP '^[0-9]+$'" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- one-time dedupe; table name escaped via esc_sql.
-                    $filled  = false;
+                    if ( false === $cleared ) {
+                        $error                          = $this->wpdb->last_error;
+                        $reasons[ $table ]['reasons'][] = array(
+                            'code'  => 'manual_dedupe_failed',
+                            'error' => $error,
+                        );
+                        MainWP_Logger::instance()->warning( sprintf( 'Backup identity repair deferred for %s: failed to deduplicate manual rows: %s', $table, $error ) );
+                    }
+                    $filled = false;
                     if ( false !== $cleared ) {
                         $filled = $this->wpdb->query( "UPDATE {$table} task LEFT JOIN {$table} older ON older.template = 1 AND older.schedule = 'manual' AND older.sites REGEXP '^[0-9]+$' AND CAST(older.sites AS UNSIGNED) = CAST(task.sites AS UNSIGNED) AND older.id < task.id SET task.manual_site_id = CAST(task.sites AS UNSIGNED) WHERE task.template = 1 AND task.schedule = 'manual' AND task.sites REGEXP '^[0-9]+$' AND older.id IS NULL" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- one-time dedupe; table name escaped via esc_sql.
+                        if ( false === $filled ) {
+                            $error                          = $this->wpdb->last_error;
+                            $reasons[ $table ]['reasons'][] = array(
+                                'code'  => 'manual_backfill_failed',
+                                'error' => $error,
+                            );
+                            MainWP_Logger::instance()->warning( sprintf( 'Backup identity repair deferred for %s: failed to backfill manual identities: %s', $table, $error ) );
+                        }
                     }
                 } else {
                     $statuses     = MainWP_Backup_Restore_Job_Store::active_statuses();
@@ -998,6 +1030,12 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
                         )
                     );
                     if ( null === $rows || '' !== $this->wpdb->last_error ) {
+                        $error                          = $this->wpdb->last_error;
+                        $reasons[ $table ]['reasons'][] = array(
+                            'code'  => 'active_rows_select_failed',
+                            'error' => $error,
+                        );
+                        MainWP_Logger::instance()->warning( sprintf( 'Backup identity repair deferred for %s: failed to select active restore rows: %s', $table, $error ) );
                         $repaired = false;
                         continue;
                     }
@@ -1019,12 +1057,19 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
                             }
                         }
                         if ( count( $progressed ) > 1 ) {
-                            $reasons[ $table ]['table']   = $table;
-                            $reasons[ $table ]['reason']  = 'progressed_duplicates';
-                            $reasons[ $table ]['sites'][] = array(
-                                'site_id' => (int) $jobs[0]->site_id,
-                                'job_ids' => array_map( 'intval', wp_list_pluck( $progressed, 'id' ) ),
-                            );
+                            if ( ! isset( $reasons[ $table ]['site_count'] ) ) {
+                                $reasons[ $table ]['reasons'][]  = array( 'code' => 'progressed_duplicates' );
+                                $reasons[ $table ]['site_count'] = 0;
+                                $reasons[ $table ]['sites']      = array();
+                            }
+                            ++$reasons[ $table ]['site_count'];
+                            if ( count( $reasons[ $table ]['sites'] ) < 25 ) {
+                                $reasons[ $table ]['sites'][] = array(
+                                    'site_id'   => (int) $jobs[0]->site_id,
+                                    'job_ids'   => array_map( 'intval', wp_list_pluck( array_slice( $progressed, 0, 20 ), 'id' ) ),
+                                    'job_count' => count( $progressed ),
+                                );
+                            }
                             MainWP_Logger::instance()->warning( sprintf( 'Backup identity repair deferred for %s: blocked by progressed duplicate jobs; site_id=%d; job_ids=%s.', $table, $jobs[0]->site_id, implode( ',', wp_list_pluck( $progressed, 'id' ) ) ) );
                             $cleared = false;
                             continue;
@@ -1043,6 +1088,13 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
                                 )
                             );
                             if ( 1 !== $changed ) {
+                                $error  = $this->wpdb->last_error;
+                                $reason = array( 'code' => 'pristine_cancel_failed' );
+                                if ( '' !== $error ) {
+                                    $reason['error'] = $error;
+                                }
+                                $reasons[ $table ]['reasons'][] = $reason;
+                                MainWP_Logger::instance()->warning( sprintf( 'Backup identity repair deferred for %s: failed to cancel pristine restore job %d: %s', $table, $job->id, '' !== $error ? $error : 'row no longer matched the pristine state.' ) );
                                 $cleared = false;
                             }
                         }
@@ -1055,6 +1107,14 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
                                 $statuses
                             )
                         );
+                        if ( false === $filled ) {
+                            $error                          = $this->wpdb->last_error;
+                            $reasons[ $table ]['reasons'][] = array(
+                                'code'  => 'restore_backfill_failed',
+                                'error' => $error,
+                            );
+                            MainWP_Logger::instance()->warning( sprintf( 'Backup identity repair deferred for %s: failed to backfill restore identities: %s', $table, $error ) );
+                        }
                     }
                 }
                 if ( false === $cleared || false === $filled ) {
@@ -1063,31 +1123,21 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
                 }
 
                 // dbDelta reports planned changes even when an ALTER fails; verify before clearing the retry marker.
-                $has_index    = $this->wpdb->get_results( $this->wpdb->prepare( "SHOW INDEX FROM {$table} WHERE Key_name = %s", $key ) ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL introspection; table name escaped via esc_sql.
-                $alter_failed = false;
-                $alter_error  = '';
                 if ( empty( $has_index ) ) {
                     $alter_failed = false === $this->wpdb->query( "ALTER TABLE {$table} ADD UNIQUE KEY {$key} ({$column})" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL statement; table name escaped via esc_sql.
-                    if ( $alter_failed ) {
-                        $alter_error = $this->wpdb->last_error;
+                    $alter_error  = $this->wpdb->last_error;
+                    $has_index    = $this->wpdb->get_results( $this->wpdb->prepare( "SHOW INDEX FROM {$table} WHERE Key_name = %s", $key ) ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL introspection; table name escaped via esc_sql.
+                    $valid_index  = 1 === count( (array) $has_index ) && 0 === (int) $has_index[0]->Non_unique && 1 === (int) $has_index[0]->Seq_in_index && $column === $has_index[0]->Column_name;
+                    if ( $alter_failed || ! $valid_index ) {
+                        $reason = array( 'code' => 'add_unique_failed' );
+                        if ( '' !== $alter_error ) {
+                            $reason['error'] = $alter_error;
+                        }
+                        $reasons[ $table ]['reasons'][] = $reason;
+                        MainWP_Logger::instance()->warning( sprintf( 'Backup identity repair deferred for %s: failed to add unique key %s: %s', $table, $key, $alter_error ) );
                     }
-                    $has_index = $this->wpdb->get_results( $this->wpdb->prepare( "SHOW INDEX FROM {$table} WHERE Key_name = %s", $key ) ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL introspection; table name escaped via esc_sql.
                 }
-                // A foreign same-name index must remain untouched and keep the retry armed.
-                $valid_index = 1 === count( (array) $has_index ) && 0 === (int) $has_index[0]->Non_unique && 1 === (int) $has_index[0]->Seq_in_index && $column === $has_index[0]->Column_name;
-                if ( ! $valid_index && ! empty( $has_index ) ) {
-                    // Merge, never overwrite: a table can be blocked by duplicates and a bad key at once.
-                    $reasons[ $table ]['table']  = $table;
-                    $reasons[ $table ]['reason'] = 'malformed_index';
-                    MainWP_Logger::instance()->warning( sprintf( 'Backup identity repair deferred for %s: malformed same-name index %s.', $table, $key ) );
-                }
-                if ( ! $valid_index && $alter_failed ) {
-                    $reasons[ $table ]['table']  = $table;
-                    $reasons[ $table ]['reason'] = 'add_unique_failed';
-                    $reasons[ $table ]['error']  = $alter_error;
-                    MainWP_Logger::instance()->warning( sprintf( 'Backup identity repair deferred for %s: failed to add unique key %s: %s', $table, $key, $alter_error ) );
-                }
-                $repaired = $valid_index && $repaired;
+                $repaired = empty( $reasons[ $table ] ) && $repaired;
             }
         } finally {
             $this->wpdb->suppress_errors( $suppress );
@@ -1097,7 +1147,15 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             delete_site_option( self::BACKUP_SITE_UNIQ_KEYS_REPAIR_PENDING );
             delete_site_option( self::BACKUP_SITE_UNIQ_KEYS_REPAIR_REASONS );
         } else {
-            update_site_option( self::BACKUP_SITE_UNIQ_KEYS_REPAIR_PENDING, time() );
+            $now = time();
+            foreach ( $reasons as $table => &$entry ) {
+                $previous            = is_array( $previous_reasons ) && isset( $previous_reasons[ $table ] ) && is_array( $previous_reasons[ $table ] ) ? $previous_reasons[ $table ] : array();
+                $entry['table']      = $table;
+                $entry['first_seen'] = $previous['first_seen'] ?? $now;
+                $entry['attempts']   = (int) ( $previous['attempts'] ?? 0 ) + 1;
+            }
+            unset( $entry );
+            update_site_option( self::BACKUP_SITE_UNIQ_KEYS_REPAIR_PENDING, $now );
             update_site_option( self::BACKUP_SITE_UNIQ_KEYS_REPAIR_REASONS, $reasons );
         }
         return $repaired;

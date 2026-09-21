@@ -207,34 +207,31 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * Location query secrets are redacted; useful non-secret keys stay visible.
+	 * Location diagnostics keep scheme, host, and path; query and fragment are dropped.
 	 */
 	public function test_location_header_redacts_sensitive_query_params(): void {
 		$headers = "HTTP/1.1 302 Found\r\nLocation: https://sso.example.test/callback?token=qa-secret&code=qa-code&page=sites&foo=bar\r\nserver: cloudflare\r\n";
 		$summary = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_headers( $headers );
 
-		$this->assertStringContainsString( 'location: https://sso.example.test/callback?', $summary );
-		$this->assertStringContainsString( 'page=sites', $summary );
-		$this->assertStringContainsString( 'foo=bar', $summary );
-		$this->assertStringContainsString( 'token=[redacted]', $summary );
-		$this->assertStringContainsString( 'code=[redacted]', $summary );
+		$this->assertStringContainsString( 'location: https://sso.example.test/callback', $summary );
+		$this->assertStringNotContainsString( '?', $summary );
+		$this->assertStringNotContainsString( 'page=sites', $summary );
+		$this->assertStringNotContainsString( 'foo=bar', $summary );
+		$this->assertStringNotContainsString( 'token=', $summary );
 		$this->assertStringNotContainsString( 'qa-secret', $summary );
 		$this->assertStringNotContainsString( 'qa-code', $summary );
 	}
 
 	/**
-	 * Location redaction is case-insensitive and handles URL-encoded names/values.
+	 * Location drops mixed-case, URL-encoded, unknown, and fragment-only secrets.
 	 */
 	public function test_location_header_redacts_mixed_case_and_urlencoded_values(): void {
 		$headers = "HTTP/1.1 302 Found\r\nLocation: https://idp.example.test/cb?TOKEN=qa-secret&Key=qa-code&Nonce=qa-nonce&State=qa-state&Signature=qa-sig&rp_key=qa-reset\r\n";
 		$summary = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_headers( $headers );
 
-		$this->assertStringContainsString( 'TOKEN=[redacted]', $summary );
-		$this->assertStringContainsString( 'Key=[redacted]', $summary );
-		$this->assertStringContainsString( 'Nonce=[redacted]', $summary );
-		$this->assertStringContainsString( 'State=[redacted]', $summary );
-		$this->assertStringContainsString( 'Signature=[redacted]', $summary );
-		$this->assertStringContainsString( 'rp_key=[redacted]', $summary );
+		$this->assertSame( 'https://idp.example.test/cb', \MainWP\Dashboard\MainWP_Connect_Failure_Ux::redact_url( 'https://idp.example.test/cb?TOKEN=qa-secret&Key=qa-code' ) );
+		$this->assertStringContainsString( 'location: https://idp.example.test/cb', $summary );
+		$this->assertStringNotContainsString( 'TOKEN=', $summary );
 		$this->assertStringNotContainsString( 'qa-secret', $summary );
 		$this->assertStringNotContainsString( 'qa-code', $summary );
 		$this->assertStringNotContainsString( 'qa-nonce', $summary );
@@ -244,8 +241,8 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 
 		$encoded = "Location: https://idp.example.test/cb?t%6Fken=qa%2Dsecret&code=qa%2Dcode\r\n";
 		$enc_sum = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_headers( $encoded );
-		$this->assertStringContainsString( 't%6Fken=[redacted]', $enc_sum );
-		$this->assertStringContainsString( 'code=[redacted]', $enc_sum );
+		$this->assertStringContainsString( 'location: https://idp.example.test/cb', $enc_sum );
+		$this->assertStringNotContainsString( 't%6Fken', $enc_sum );
 		$this->assertStringNotContainsString( 'qa-secret', $enc_sum );
 		$this->assertStringNotContainsString( 'qa%2Dsecret', $enc_sum );
 		$this->assertStringNotContainsString( 'qa-code', $enc_sum );
@@ -253,7 +250,54 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * Hidden body still keeps Location, with secrets stripped, for stored/copied diagnostics.
+	 * Unknown Location params and fragment-only secrets are stripped, not denylisted.
+	 */
+	public function test_location_strips_unknown_query_and_fragment_secrets(): void {
+		$ux = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::class;
+
+		$this->assertSame( 'https://sso.example.test/authorize', $ux::redact_url( 'https://sso.example.test/authorize?ticket=secret#token' ) );
+		$this->assertSame( 'https://idp.example.test/saml', $ux::redact_url( 'https://idp.example.test/saml?SAMLResponse=qa-saml-blob' ) );
+		$this->assertSame( 'https://idp.example.test/cb', $ux::redact_url( 'https://idp.example.test/cb#SAMLResponse=qa-fragment' ) );
+		$this->assertSame( 'https://sso.example.test:8443/authorize', $ux::redact_url( 'https://user:pass@sso.example.test:8443/authorize?ticket=secret' ) );
+		$this->assertSame( '/authorize', $ux::redact_url( '/authorize?ticket=secret#token' ) );
+
+		$headers = "HTTP/1.1 302 Found\r\nLocation: https://sso.example.test/authorize?ticket=secret#token\r\n";
+		$details = $ux::build_details(
+			array(
+				'http_status' => 302,
+				'headers'     => $headers,
+				'body'        => '',
+			)
+		);
+		$html     = $ux::render_html( $details );
+		$text     = $ux::format_text( $details );
+		$enriched = $ux::enrich_output(
+			array(),
+			array(
+				'http_status' => 302,
+				'headers'     => $headers,
+				'body'        => '',
+			)
+		);
+
+		foreach ( array( $details['response']['text'], $html, $text, $enriched['response_readable'], $enriched['failure_ux'], $enriched['failure_ux_text'], $enriched['response_headers'] ) as $surface ) {
+			$this->assertStringContainsString( 'https://sso.example.test/authorize', $surface );
+			$this->assertStringNotContainsString( 'ticket=', $surface );
+			$this->assertStringNotContainsString( 'secret', $surface );
+			$this->assertStringNotContainsString( '#token', $surface );
+			$this->assertStringNotContainsString( '?', $surface );
+		}
+
+		$fragment_headers = "HTTP/1.1 302 Found\r\nLocation: https://idp.example.test/cb#SAMLResponse=qa-fragment\r\n";
+		$fragment_snip    = $ux::summarize_headers( $fragment_headers );
+		$this->assertStringContainsString( 'location: https://idp.example.test/cb', $fragment_snip );
+		$this->assertStringNotContainsString( 'SAMLResponse', $fragment_snip );
+		$this->assertStringNotContainsString( 'qa-fragment', $fragment_snip );
+		$this->assertStringNotContainsString( '#', $fragment_snip );
+	}
+
+	/**
+	 * Hidden body still keeps Location host/path, with query/fragment removed.
 	 */
 	public function test_hidden_body_still_redacts_location_in_failure_surfaces(): void {
 		$headers = "HTTP/1.1 302 Found\r\nLocation: https://login.example.test/wp-login.php?action=rp&key=qa-secret&rp_key=qa-code&redirect_to=/wp-admin/\r\n";
@@ -276,9 +320,9 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 		);
 
 		foreach ( array( $details['response']['text'], $html, $text, $enriched['response_readable'], $enriched['failure_ux'], $enriched['failure_ux_text'], $enriched['response_headers'] ) as $surface ) {
-			$this->assertStringContainsString( 'wp-login.php', $surface );
-			$this->assertStringContainsString( 'action=rp', $surface );
-			$this->assertStringContainsString( 'redirect_to=/wp-admin/', $surface );
+			$this->assertStringContainsString( 'https://login.example.test/wp-login.php', $surface );
+			$this->assertStringNotContainsString( 'action=rp', $surface );
+			$this->assertStringNotContainsString( 'redirect_to=', $surface );
 			$this->assertStringNotContainsString( 'qa-secret', $surface );
 			$this->assertStringNotContainsString( 'qa-code', $surface );
 		}

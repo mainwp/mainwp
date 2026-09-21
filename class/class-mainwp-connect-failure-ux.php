@@ -665,9 +665,10 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
     }
 
     /**
-     * Redact sensitive query and fragment values in a URL (Location and similar).
+     * Strip a Location / redirect URL to scheme, host, port, and path.
      *
-     * Host, path, and non-sensitive query keys remain for troubleshooting.
+     * Query, fragment, and userinfo are dropped so unknown secrets cannot
+     * leak through a denylist.
      *
      * @param string $url URL or relative Location value.
      *
@@ -680,24 +681,16 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
         $parts = function_exists( 'wp_parse_url' ) ? wp_parse_url( $url ) : parse_url( $url );
         if ( ! is_array( $parts ) ) {
-            return self::redact_query_string( $url );
-        }
-
-        if ( ! empty( $parts['pass'] ) ) {
-            $parts['pass'] = 'redacted';
-        }
-        if ( isset( $parts['query'] ) ) {
-            $parts['query'] = self::redact_query_string( $parts['query'] );
-        }
-        if ( isset( $parts['fragment'] ) && false !== strpos( $parts['fragment'], '=' ) ) {
-            $parts['fragment'] = self::redact_query_string( $parts['fragment'] );
+            return substr( $url, 0, strcspn( $url, '?#' ) );
         }
 
         return self::rebuild_url( $parts );
     }
 
     /**
-     * Rebuild a URL from parse_url / wp_parse_url parts.
+     * Rebuild a Location URL from parse_url / wp_parse_url parts.
+     *
+     * Only scheme, hostname, port, and path are emitted.
      *
      * @param array $parts URL parts.
      *
@@ -713,27 +706,13 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             $url .= $parts['scheme'] . ':';
         }
         if ( ! empty( $parts['host'] ) ) {
-            $url .= '//';
-            if ( ! empty( $parts['user'] ) ) {
-                $url .= $parts['user'];
-                if ( isset( $parts['pass'] ) && '' !== $parts['pass'] ) {
-                    $url .= ':' . $parts['pass'];
-                }
-                $url .= '@';
-            }
-            $url .= $parts['host'];
+            $url .= '//' . $parts['host'];
             if ( ! empty( $parts['port'] ) ) {
                 $url .= ':' . $parts['port'];
             }
         }
         if ( isset( $parts['path'] ) ) {
             $url .= $parts['path'];
-        }
-        if ( isset( $parts['query'] ) && '' !== $parts['query'] ) {
-            $url .= '?' . $parts['query'];
-        }
-        if ( isset( $parts['fragment'] ) && '' !== $parts['fragment'] ) {
-            $url .= '#' . $parts['fragment'];
         }
 
         return $url;

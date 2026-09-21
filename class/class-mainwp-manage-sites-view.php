@@ -2068,8 +2068,9 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
                     if ( isset( $information['error'] ) && '' !== $information['error'] ) {
                         $err        = urldecode( $information['error'] );
+                        $_error     = MainWP_Utility::esc_content( $err );
                         $error_code = isset( $information['error_code'] ) ? sanitize_text_field( wp_unslash( $information['error_code'] ) ) : '';
-                        $_error     = MainWP_Error_Helper::get_connect_failure_message( new MainWP_Exception( $err, '', $error_code ), $output );
+                        $_error     = MainWP_Error_Helper::get_connect_failure_message( new MainWP_Exception( $_error, '', $error_code ), $output );
                     } elseif ( isset( $information['register'] ) && 'OK' === $information['register'] ) {
 
                         $en_pk_data = MainWP_Encrypt_Data_Lib::instance()->encrypt_privkey( $privkey, $website->id, true );
@@ -2325,7 +2326,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 );
 
                 if ( isset( $information['error'] ) && '' !== $information['error'] ) {
-                    $err = urldecode( $information['error'] );
+                    $err = MainWP_Utility::esc_content( urldecode( $information['error'] ) );
                     if ( is_array( $output ) ) {
                         if ( ! empty( $output['error_category'] ) ) {
                             $error_category = $output['error_category'];

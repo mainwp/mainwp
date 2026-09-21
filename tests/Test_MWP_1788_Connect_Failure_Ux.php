@@ -348,6 +348,60 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Comma- and space-containing secrets stay fully redacted in body and headers.
+	 */
+	public function test_delimiter_containing_secrets_are_fully_redacted(): void {
+		$body = 'Welcome plugin_password=qa,secret csrf_token=qa space-token page=sites';
+		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( $body );
+		$this->assertStringContainsString( 'plugin_password=[redacted]', $text );
+		$this->assertStringContainsString( 'csrf_token=[redacted]', $text );
+		$this->assertStringContainsString( 'page=sites', $text );
+		$this->assertStringNotContainsString( 'qa,secret', $text );
+		$this->assertStringNotContainsString( ',secret', $text );
+		$this->assertStringNotContainsString( 'qa space-token', $text );
+
+		$json = '{"plugin_password":"qa, secret","csrf_token":"qa space-token","page":"sites"}';
+		$json_text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( $json );
+		$this->assertStringContainsString( '"plugin_password"=[redacted]', $json_text );
+		$this->assertStringContainsString( '"csrf_token"=[redacted]', $json_text );
+		$this->assertStringContainsString( '"page":"sites"', $json_text );
+		$this->assertStringNotContainsString( 'qa, secret', $json_text );
+		$this->assertStringNotContainsString( 'qa space-token', $json_text );
+
+		$headers = "HTTP/1.1 401 Unauthorized\r\nwww-authenticate: Bearer plugin_password=\"qa,secret\"\r\nLocation: https://sso.example.test/cb?plugin_password=qa,secret&page=sites\r\n";
+		$details = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::build_details(
+			array(
+				'http_status' => 401,
+				'headers'     => $headers,
+				'body'        => $body,
+			)
+		);
+		$html     = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::render_html( $details );
+		$text_ux  = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::format_text( $details );
+		$enriched = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::enrich_output(
+			array(),
+			array(
+				'http_status' => 401,
+				'headers'     => $headers,
+				'body'        => $body,
+			)
+		);
+
+		foreach ( array( $details['response']['text'], $html, $text_ux, $enriched['response_readable'], $enriched['failure_ux'], $enriched['failure_ux_text'] ) as $surface ) {
+			$this->assertStringContainsString( 'page=sites', $surface );
+			$this->assertStringNotContainsString( 'qa,secret', $surface );
+			$this->assertStringNotContainsString( ',secret', $surface );
+			$this->assertStringNotContainsString( 'qa space-token', $surface );
+		}
+
+		$header_snip = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_headers( $headers );
+		$this->assertStringContainsString( 'www-authenticate:', $header_snip );
+		$this->assertStringContainsString( 'plugin_password=[redacted]', $header_snip );
+		$this->assertStringNotContainsString( 'qa,secret', $header_snip );
+		$this->assertStringNotContainsString( ',secret', $header_snip );
+	}
+
+	/**
 	 * Failed DNS hostnames are not shown as the Cloudflare/proxy edge IP.
 	 */
 	public function test_unresolved_hostname_is_not_labeled_as_edge_ip(): void {

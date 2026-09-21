@@ -742,6 +742,10 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
     /**
      * Redact likely secrets from diagnostic text.
      *
+     * Quoted values keep their closer so commas, spaces, and similar
+     * characters stay inside the secret. Unquoted values include those
+     * characters and stop at the next name= / name: pair.
+     *
      * @param string $text Text.
      *
      * @return string
@@ -762,8 +766,8 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             $text = $with_urls;
         }
 
-        $redacted = preg_replace_callback(
-            '/([\'"]?)([A-Za-z_][A-Za-z0-9_\-]*)\1\s*[:=]\s*([\'"]?)([^\'"\s&;#,]+)\3/',
+        $quoted = preg_replace_callback(
+            '/([\'"]?)([A-Za-z_][A-Za-z0-9_\-]*)\1\s*[:=]\s*([\'"])((?:\\\\.|(?!\3).)*)\3/',
             static function ( $match ) {
                 if ( MainWP_Connect_Failure_Ux::is_sensitive_param( $match[2] ) ) {
                     return $match[1] . $match[2] . $match[1] . '=[redacted]';
@@ -772,8 +776,22 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             },
             $text
         );
+        if ( is_string( $quoted ) ) {
+            $text = $quoted;
+        }
 
-        return is_string( $redacted ) ? $redacted : $text;
+        $unquoted = preg_replace_callback(
+            '/(?<![A-Za-z0-9_\-])([A-Za-z_][A-Za-z0-9_\-]*)\s*[:=]\s*(?![\'"])(.+?)(?=(?:\s+|&|;|#)[A-Za-z_][A-Za-z0-9_\-]*\s*[:=]|$)/s',
+            static function ( $match ) {
+                if ( MainWP_Connect_Failure_Ux::is_sensitive_param( $match[1] ) ) {
+                    return $match[1] . '=[redacted]';
+                }
+                return $match[0];
+            },
+            $text
+        );
+
+        return is_string( $unquoted ) ? $unquoted : $text;
     }
 
     /**

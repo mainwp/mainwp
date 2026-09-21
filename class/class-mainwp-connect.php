@@ -268,9 +268,6 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         if ( 28 === $errno ) {
             return 'operation';
         }
-        if ( false !== strpos( $err_text, 'operation timed out' ) ) {
-            return 'operation';
-        }
         if ( false !== strpos( $err_text, 'timed out' ) ) {
             return 'operation';
         }
@@ -291,7 +288,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      *
      * @return MainWP_Exception
      */
-    private static function new_timeout_exception( $kind, &$output ) {
+    protected static function new_timeout_exception( $kind, &$output ) {
         if ( 'gateway' !== $kind && 'connect' !== $kind ) {
             $kind = 'operation';
         }
@@ -330,15 +327,6 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $postdata = array( 'test' => 'yes' );
 
         $ch = curl_init();
-        if ( false === $ch ) {
-            return array(
-                'host'           => '',
-                'httpCode'       => 0,
-                'httpCodeString' => '',
-                'httpVersion'    => false,
-                'error'          => 'cURL could not be initialized.',
-            );
-        }
 
         $proxy = new \WP_HTTP_Proxy();
         if ( $proxy->is_enabled() && $proxy->send_through_proxy( $url ) ) {
@@ -1377,10 +1365,6 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             }
 
             $ch = curl_init();
-            if ( false === $ch ) {
-                MainWP_Logger::instance()->debug( 'fetch_urls_authed :: curl_init failed' );
-                continue;
-            }
 
             $proxy = new \WP_HTTP_Proxy();
             if ( $proxy->is_enabled() && $proxy->send_through_proxy( $url ) ) {
@@ -2104,17 +2088,6 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $fetch_track_id = MainWP_Execution_Helper::execute_call_track( 'start_point', $website, $postdata );
 
         $ch = curl_init();
-        if ( false === $ch ) {
-            if ( ! is_array( $output ) ) {
-                $output = array();
-            }
-            $output['error_category'] = 'http_error';
-            $output['error_code']     = 'curl_init_failed';
-            $output['error_message']  = 'cURL could not be initialized.';
-            $thr_error                = new MainWP_Exception( 'HTTPERROR', 'cURL could not be initialized.' ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-            $thr_error->set_data( '' );
-            throw $thr_error;
-        }
 
         $proxy = new \WP_HTTP_Proxy();
         if ( $proxy->is_enabled() && $proxy->send_through_proxy( $url ) ) {

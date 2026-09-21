@@ -745,6 +745,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                             <input type="checkbox" id="mainwp-unique-security-id-checkbox-field"><label><?php esc_html_e( 'Unique Security ID', 'mainwp' ); ?></label>
                                         </div>
                                     </div>
+                                    <?php MainWP_Manage_Sites::render_connection_unique_security_id_note(); ?>
                                     <div class="ui hidden divider"></div>
                                     <div class="ui fluid segment accordion" id="mainwp-connection-authentication-accordion" style="margin-top:1em">
                                         <div class="title">
@@ -760,7 +761,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                             <span class="ui text"><?php esc_html_e( 'Use the sliders to control the fields shown:', 'mainwp' ); ?></span>
                                             <div class="ui bulleted small list">
                                                 <div class="item"><?php esc_html_e( 'Password On: Displays the Password field.', 'mainwp' ); ?></div>
-                                                <div class="item"><?php esc_html_e( 'Security Key On: Displays the Security Key field.', 'mainwp' ); ?></div>
+                                                <div class="item"><?php esc_html_e( 'Unique Security ID On: Displays the Unique Security ID field.', 'mainwp' ); ?></div>
                                                 <div class="item"><?php esc_html_e( 'Both On: Displays both fields.', 'mainwp' ); ?></div>
                                                 <div class="item"><?php esc_html_e( 'Both Off: Hides both fields.', 'mainwp' ); ?></div>
                                             </div>
@@ -776,6 +777,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                     <div class="field" id="mainwp-unique-security-id-field" style="display:none" >
                                         <label for="mainwp_managesites_add_uniqueId"><?php esc_html_e( 'Did you generate unique security ID on the site? If yes, copy it here, if not, leave this field blank. ', 'mainwp' ); ?> <span class="ui red small text"><?php esc_html_e( '(Required if enabled)', 'mainwp' ); ?></span></label>
                                         <input type="text" id="mainwp_managesites_add_uniqueId" name="mainwp_managesites_add_uniqueId" value="" />
+                                        <span class="ui small text"><?php esc_html_e( 'Copy this from the child site under Settings > MainWP Child. Required only when Require Unique Security ID is enabled there.', 'mainwp' ); ?></span>
                                     </div>
                                     <div class="ui hidden divider"></div>
                                     <div class="field">

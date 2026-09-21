@@ -1564,6 +1564,64 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A transient mutex write failure gets the same-run persistence window.
+	 *
+	 * @return void
+	 */
+	public function test_first_mutex_write_refusal_stamps_and_yields() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$this->mock_child_action( 'backup_preflight', array( 'task_spine' => 1 ) );
+		$this->mock_child_action(
+			'backup_task_create',
+			array(
+				'error'      => 'Could not acquire the backup lock.',
+				'error_code' => 'mainwp_backup_mutex_write_failed',
+			)
+		);
+
+		$result   = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+
+		$this->assertFalse( $result, 'The first mutex write refusal must yield for a same-run retry.' );
+		$this->assertGreaterThan( 0, (int) $progress->foreign_refused_since, 'The mutex write refusal must start the persistence clock.' );
+		$this->assertSame( 0, (int) $progress->dtsFetched, 'The create window must reset so the next cycle retries.' );
+	}
+
+	/**
+	 * Persistent mutex write failures must surface once the retry window ends.
+	 *
+	 * @return void
+	 */
+	public function test_persistent_mutex_write_refusal_surfaces() {
+		$last_run               = time() - MainWP_Backup_Executor::FOREIGN_REFUSAL_SURFACE_SECONDS - 60;
+		list( $site_id, $task ) = $this->site_and_task( array( 'last_run' => $last_run ) );
+		$this->seed_progress(
+			$task->id,
+			$site_id,
+			array(
+				'dtsFetched'            => $last_run - 1,
+				'foreign_refused_since' => time() - MainWP_Backup_Executor::FOREIGN_REFUSAL_SURFACE_SECONDS - 30,
+			)
+		);
+		$this->mock_child_action( 'backup_preflight', array( 'task_spine' => 1 ) );
+		$this->mock_child_action(
+			'backup_task_create',
+			array(
+				'error'      => 'Could not acquire the backup lock.',
+				'error_code' => 'mainwp_backup_mutex_write_failed',
+			)
+		);
+
+		try {
+			MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+			$this->fail( 'Expected the persistent mutex write refusal to propagate.' );
+		} catch ( MainWP_Exception $e ) {
+			$this->assertSame( MainWP_Backup_Error_Codes::ERR_MUTEX_WRITE_FAILED, $e->get_message_error_code() );
+			$this->assertNull( $e->get_message_extra( false ) );
+		}
+	}
+
+	/**
 	 * Live drill 2026-07-13: after the first refusal yielded, the next cycle
 	 * skipped the create branch because dtsFetched was still fresh instead of
 	 * retrying the child task create. A refusal-yielded row must hand the create

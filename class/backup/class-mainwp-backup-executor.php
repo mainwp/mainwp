@@ -498,6 +498,37 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING, self::EXTRA_FOREIGN_ALREADY_RUNNING ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
             }
 
+            // A failed mutex write previously surfaced as ERR_ALREADY_RUNNING
+            // and received this same-run retry window. Without it, a transient
+            // database failure would wait until the next schedule, with no
+            // automatic retry for a manual backup.
+            $refused_write_failed = isset( $information['error'] )
+                && isset( $information['error_code'] )
+                && MainWP_Backup_Error_Codes::ERR_MUTEX_WRITE_FAILED === $information['error_code'];
+
+            if ( $refused_write_failed ) {
+                $current       = MainWP_DB_Backup::instance()->get_backup_task_progress( $taskId, $website->id );
+                $refused_since = ( $current && (int) $current->foreign_refused_since >= (int) $pTask->last_run )
+                    ? (int) $current->foreign_refused_since
+                    : 0;
+
+                if ( 0 === $refused_since ) {
+                    MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'foreign_refused_since' => time() ) );
+                    static::reset_create_window_if_mine( $taskId, (int) $website->id, $creating_marker );
+                    /** This action is documented in pages/page-mainwp-manage-backups-handler.php */
+                    do_action( 'mainwp_backup_diag_run_reinit', (int) $taskId, 'mutex_write_refusal_pending', (int) $pTask->last_run, isset( $pTask->completed ) ? (int) $pTask->completed : 0 );
+                    return false;
+                }
+
+                if ( ( time() - $refused_since ) < self::FOREIGN_REFUSAL_SURFACE_SECONDS ) {
+                    static::reset_create_window_if_mine( $taskId, (int) $website->id, $creating_marker );
+                    return false;
+                }
+
+                static::clear_creating_marker_if_mine( $taskId, (int) $website->id, $creating_marker );
+                throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_MUTEX_WRITE_FAILED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+            }
+
             if ( empty( $information['error'] ) ) {
                 if ( empty( $information['task_id'] ) || ! is_string( $information['task_id'] ) ) {
                     static::clear_creating_marker_if_mine( $taskId, (int) $website->id, $creating_marker );

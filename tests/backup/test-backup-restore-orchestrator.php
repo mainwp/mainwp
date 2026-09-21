@@ -350,7 +350,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
-	 * A lock refusal without a code remains a permanent argument error.
+	 * A lock refusal without a code remains permanent.
 	 */
 	public function test_staging_uncoded_lock_failure_is_permanent() {
 		$this->responses['restore_task_create'] = array(

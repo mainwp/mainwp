@@ -997,13 +997,20 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $has_import_data = ! empty( $_POST['mainwp_client_import_add'] );
         // phpcs:enable WordPress.Security.NonceVerification.Missing
         if ( $has_import_data && check_admin_referer( 'mainwp-admin-nonce' ) ) {
-            static::render_import_client_modal();
+            $result = static::render_import_client_modal();
         }
         ?>
         <div class="ui padded segment"  id="mainwp-import-clients">
             <form method="POST" action="" enctype="multipart/form-data" id="mainwp_client_import_form" class="ui form">
                 <div>
-                            <?php $el_id_mes_zn_1 = 'mainwp-message-zone'; ?>
+                    <?php
+                    if ( ! empty( $result ) && is_wp_error( $result ) ) {
+                        ?>
+                        <div class="ui message yellow"><i class="close icon"></i> <?php echo esc_html( $result->get_error_message() ); ?></div>
+                        <?php
+                    }
+                    $el_id_mes_zn_1 = 'mainwp-message-zone';
+                    ?>
                     <div id="<?php echo esc_attr( $el_id_mes_zn_1 ); ?>" class="ui message" style="display:none"></div>
                     <h3 class="ui dividing header">
                         <?php echo esc_html( $title_page ); ?>
@@ -1039,14 +1046,27 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * Method render_import_client_modal()
      *
      * Render HTML import client modal.
+     *
+     * @return mixed Result.
      */
     public static function render_import_client_modal() {
+        $import_client_data = false;
+        $has_file_upload = isset( $_FILES['mainwp_client_import_file_bulkupload'] ) && isset( $_FILES['mainwp_client_import_file_bulkupload']['error'] ) && UPLOAD_ERR_OK === $_FILES['mainwp_client_import_file_bulkupload']['error'];  // phpcs:ignore -- NOSONAR
+        if ( $has_file_upload ) {
+            $import_client_data = static::handle_client_import_files();
+        }
+        if ( ! is_array( $import_client_data ) || empty( $import_client_data['data'] ) || ! is_array( $import_client_data['data'] ) ) {
+            return new \WP_Error(
+                'client_import_failed',
+                __( 'Failed to import client data. Please try again.', 'mainwp' )
+            );
+        }
         ?>
         <div class="ui large modal mainwp-qsw-import-client-modal" id="mainwp-import-client-modal" >
             <i class="close icon"></i>
             <div class="header"><?php esc_html_e( 'Import Clients', 'mainwp' ); ?></div>
             <div class="scrolling content">
-                <?php static::render_import_client_row_modal(); ?>
+                <?php static::render_import_client_row_modal( $import_client_data ); ?>
             </div>
             <div class="actions">
                 <div class="ui two column grid">
@@ -1068,54 +1088,54 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             } );
         </script>
         <?php
+
+        return true;
     }
 
     /**
      * Method render_import_client_row_modal()
      *
      * Render row HTML import client.
+     *
+     * @return mixed Result or WP_Error.
      */
-    public static function render_import_client_row_modal() {
-        ?>
-        <div id="mainwp-importing-clients" class="ui active dimmer">
-            <div class="ui double text loader"><?php esc_html_e( 'Importing...', 'mainwp' ); ?></div>
-        </div>
-        <div class="ui message" id="mainwp-import-clients-status-message">
-            <i class="notched circle loading icon"></i> <?php echo esc_html__( 'Importing...', 'mainwp' ); ?>
-        </div>
-        <?php
-        $has_file_upload = isset( $_FILES['mainwp_client_import_file_bulkupload'] ) && isset( $_FILES['mainwp_client_import_file_bulkupload']['error'] ) && UPLOAD_ERR_OK === $_FILES['mainwp_client_import_file_bulkupload']['error'];  // phpcs:ignore -- NOSONAR
+    public static function render_import_client_row_modal( $client_data = array() ) { // phpcs:ignore -- NOSONAR -complex.
 
-        if ( $has_file_upload ) {
-            $import_client_data = static::handle_client_import_files();
-            if ( ! empty( $import_client_data ) && is_array( $import_client_data ) ) {
-                $row         = 0;
-                $header_line = trim( $import_client_data['header_line'] );
-                foreach ( $import_client_data['data'] as $val_client_data ) {
-                    $encoded  = wp_json_encode( $val_client_data );
-                    $original = implode(
-                        ', ',
-                        array_map(
-                            function ( $item ) {
-                                return is_array( $item ) ? implode( ';', $item ) : $item;
-                            },
-                            $val_client_data
-                        )
-                    );
-                    ?>
-                    <input type="hidden" id="mainwp_manageclients_import_csv_line_<?php echo esc_attr( $row + 1 ); ?>" value="" encoded-data="<?php echo esc_attr( $encoded ); ?>" original="<?php echo esc_attr( $original ); ?>"/>
-                    <?php
-                    ++$row;
-                }
+        if ( is_array( $client_data ) && ! empty( $client_data['data'] ) && is_array( $client_data['data'] ) ) {
+            ?>
+            <div id="mainwp-importing-clients" class="ui active dimmer">
+                <div class="ui double text loader"><?php esc_html_e( 'Importing...', 'mainwp' ); ?></div>
+            </div>
+            <div class="ui message" id="mainwp-import-clients-status-message">
+                <i class="notched circle loading icon"></i> <?php echo esc_html__( 'Importing...', 'mainwp' ); ?>
+            </div>
+            <?php
+            $row         = 0;
+            $header_line = trim( $client_data['header_line'] );
+            foreach ( $client_data['data'] as $val_client_data ) {
+                $encoded  = wp_json_encode( $val_client_data );
+                $original = implode(
+                    ', ',
+                    array_map(
+                        function ( $item ) {
+                            return is_array( $item ) ? implode( ';', $item ) : $item;
+                        },
+                        $val_client_data
+                    )
+                );
                 ?>
-                <input type="hidden" id="mainwp_manageclients_do_import" value="1"/>
-                <input type="hidden" id="mainwp_manageclients_total_import" value="<?php echo esc_attr( $row ); ?>"/>
-                <div class="mainwp_manageclients_import_listing" id="mainwp_manageclients_import_logging">
-                    <span class="log ui medium text"><?php echo esc_html( $header_line ) . '<br/>'; ?></span>
-                </div>
-                <div class="mainwp_manageclients_import_listing" id="mainwp_manageclients_import_fail_logging" style="display: none;"><?php echo esc_html( $header_line ); ?> </div>
+                <input type="hidden" id="mainwp_manageclients_import_csv_line_<?php echo esc_attr( $row + 1 ); ?>" value="" encoded-data="<?php echo esc_attr( $encoded ); ?>" original="<?php echo esc_attr( $original ); ?>"/>
                 <?php
+                ++$row;
             }
+            ?>
+            <input type="hidden" id="mainwp_manageclients_do_import" value="1"/>
+            <input type="hidden" id="mainwp_manageclients_total_import" value="<?php echo esc_attr( $row ); ?>"/>
+            <div class="mainwp_manageclients_import_listing" id="mainwp_manageclients_import_logging">
+                <span class="log ui medium text"><?php echo esc_html( $header_line ) . '<br/>'; ?></span>
+            </div>
+            <div class="mainwp_manageclients_import_listing" id="mainwp_manageclients_import_fail_logging" style="display: none;"><?php echo esc_html( $header_line ); ?> </div>
+            <?php
         }
     }
 
@@ -1130,8 +1150,18 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @return array Import data.
      */
     public static function handle_client_import_files() {  // phpcs:ignore -- NOSONAR
-        $tmp_path = isset( $_FILES['mainwp_client_import_file_bulkupload']['tmp_name'] ) ? sanitize_text_field( wp_unslash( $_FILES['mainwp_client_import_file_bulkupload']['tmp_name'] ) ) : '';  // phpcs:ignore WordPress.Security.NonceVerification.Missing -- NOSONAR
-        MainWP_System_Utility::get_wp_file_system();
+
+        if ( isset( $_FILES['mainwp_client_import_file_bulkupload']['error'] ) && UPLOAD_ERR_OK !== $_FILES['mainwp_client_import_file_bulkupload']['error'] ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- NOSONAR
+            return false;
+        }
+
+        $tmp_path = isset( $_FILES['mainwp_client_import_file_bulkupload']['tmp_name'] ) ? $_FILES['mainwp_client_import_file_bulkupload']['tmp_name'] : '';  // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- NOSONAR
+
+        if ( ! is_uploaded_file( $tmp_path ) ) {
+            return false;
+        }
+
+        $hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
         //phpcs:enable
         /**
          * WordPress files system object.
@@ -1140,12 +1170,21 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
          */
         global $wp_filesystem;
 
-        $content = $wp_filesystem->get_contents( $tmp_path );
+        $lines = array();
+        $header_line = '';
 
-        // to compatible with EOL on OSs.
-        $content        = str_replace( "\r\n", "\r", $content );
-        $content        = str_replace( "\n", "\r", $content );
-        $lines          = explode( "\r", $content );
+        if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
+            $content = $wp_filesystem->get_contents( $tmp_path );
+            if ( ! empty( $content ) ) {
+                // to compatible with EOL on OSs.
+                $content = str_replace( "\r\n", "\r", $content );
+                $content = str_replace( "\n", "\r", $content );
+                $lines   = explode( "\r", $content );
+            }
+        } else {
+            return false;
+        }
+
         $import_data    = array();
         $default_values = array(
             'client.name'              => '',
@@ -1496,8 +1535,8 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         }
 
         // compatible with quick setup.
-        if ( isset( $_FILES['mainwp_client_image_uploader'] ) && isset( $_FILES['mainwp_client_image_uploader']['error']['client_field'] ) && UPLOAD_ERR_OK === $_FILES['mainwp_client_image_uploader']['error']['client_field'] ) { // phpcs:ignore WordPress.Security.NonceVerification
-            $output = MainWP_System_Utility::handle_upload_image( 'client-images', $_FILES['mainwp_client_image_uploader'], 'client_field' ); // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        if ( isset( $_FILES['mainwp_client_image_uploader']['error']['client_field'] ) && UPLOAD_ERR_OK === $_FILES['mainwp_client_image_uploader']['error']['client_field'] ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+            $output = MainWP_System_Utility::handle_upload_image( 'client-images', $_FILES['mainwp_client_image_uploader'], 'client_field' ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             if ( is_array( $output ) && isset( $output['filename'] ) && ! empty( $output['filename'] ) ) {
                 $client_image = $output['filename'];
             }

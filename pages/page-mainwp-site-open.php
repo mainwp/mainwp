@@ -109,7 +109,7 @@ class MainWP_Site_Open { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
 
         if ( isset( $_GET['openUrl'] ) && 'yes' === $_GET['openUrl'] ) {
 
-            $postdata                  = MainWP_Connect::get_get_data_authed( $website, 'index.php', 'where', true );
+            $postdata                  = MainWP_Connect::get_get_data_authed( $website, 'index.php', 'where', true, array( 'verify_signature' => true ) );
             $postdata['open_location'] = $location; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
             ?>
             <div class="ui segment" style="padding: 25rem">
@@ -191,7 +191,7 @@ class MainWP_Site_Open { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
         } else {
             if ( ! isset( $params['verify_signature'] ) ) {
                 $params['verify_signature'] = true; // enable for open site.
-            }           
+            }
             $action_url = MainWP_Connect::get_get_data_authed( $website, ( null === $location || '' === $location ) ? 'index.php' : $location, 'where', false, $params, MainWP_Site_Url_Corrector::browser_target_url( $website ) );
         }
 
@@ -284,7 +284,7 @@ class MainWP_Site_Open { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
             $url  = MainWP_Site_Url_Corrector::browser_target_url( $website );
             $url .= ( '/' !== substr( $url, - 1 ) ? '/' : '' );
 
-            $postdata         = MainWP_Connect::get_get_data_authed( $website, $file, 'f', true );
+            $postdata         = MainWP_Connect::get_get_data_authed( $website, $file, 'f', true, array( 'verify_signature' => true ) );
             $postdata['size'] = $size;
             ?>
             <form method="POST" action="<?php echo esc_url( $url ); ?>" id="redirectForm">
@@ -332,7 +332,7 @@ class MainWP_Site_Open { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Co
             $url  = MainWP_Site_Url_Corrector::browser_target_url( $website );
             $url .= ( '/' !== substr( $url, - 1 ) ? '/' : '' );
 
-            $postdata                  = MainWP_Connect::get_get_data_authed( $website, 'index.php', 'where', true );
+            $postdata                  = MainWP_Connect::get_get_data_authed( $website, 'index.php', 'where', true, array( 'verify_signature' => true ) );
             $postdata['open_location'] = $open_location; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
             ?>
             <form method="POST" action="<?php echo esc_url( $url ); ?>" id="redirectForm">

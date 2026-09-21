@@ -30,13 +30,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 class MainWP_Premium_Update_Registry { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
     /**
-     * Option name for the registry kill switch (default on).
-     *
-     * @var string
-     */
-    const OPTION_ENABLED = 'mainwp_premium_updates_registry_enabled';
-
-    /**
      * Option name for user-defined custom identifiers.
      *
      * Stored as an array of items: array( 'type' => 'plugin'|'theme', 'id' => string ).
@@ -53,18 +46,6 @@ class MainWP_Premium_Update_Registry { // phpcs:ignore Generic.Classes.OpeningBr
      */
     public static function get_class_name() {
         return __CLASS__;
-    }
-
-    /**
-     * Whether the built-in registry is enabled.
-     *
-     * When disabled, premium-update checks fall back to the exact pre-registry
-     * behavior (legacy hardcoded lists + the inline 'yith-' substring check).
-     *
-     * @return bool
-     */
-    public static function is_enabled() {
-        return 1 === (int) get_option( static::OPTION_ENABLED, 1 );
     }
 
     /**
@@ -463,6 +444,30 @@ class MainWP_Premium_Update_Registry { // phpcs:ignore Generic.Classes.OpeningBr
     }
 
     /**
+     * Read the canonical identifier from a list or keyed synced inventory.
+     *
+     * @param int|string $inventory_key Inventory array key.
+     * @param mixed      $info          Installed product data.
+     * @return string Valid identifier, or an empty string for malformed data.
+     */
+    public static function get_inventory_identifier( $inventory_key, $info ) {
+        if ( ! is_array( $info ) ) {
+            return '';
+        }
+        $identifier = '';
+        if ( is_string( $inventory_key ) && '' !== $inventory_key ) {
+            $identifier = $inventory_key;
+        } elseif ( isset( $info['slug'] ) && is_string( $info['slug'] ) ) {
+            $identifier = $info['slug'];
+        }
+        $identifier = trim( $identifier );
+        if ( '' === $identifier || ! preg_match( '/^[A-Za-z0-9\-_.\/]+$/', $identifier ) ) {
+            return '';
+        }
+        return $identifier;
+    }
+
+    /**
      * User-defined custom identifiers (settings page).
      *
      * @return array[] Items: array( 'type' => 'plugin'|'theme', 'id' => string ).
@@ -604,60 +609,4 @@ class MainWP_Premium_Update_Registry { // phpcs:ignore Generic.Classes.OpeningBr
         return false;
     }
 
-    /**
-     * Legacy hardcoded detection list (pre-registry), used verbatim when the
-     * registry kill switch is off so behavior reverts to the previous release.
-     *
-     * @return string[]
-     */
-    public static function get_legacy_detect_plugins() {
-        return array(
-            'ithemes-security-pro/ithemes-security-pro.php',
-            'monarch/monarch.php',
-            'cornerstone/cornerstone.php',
-            'updraftplus/updraftplus.php',
-            'wp-all-import-pro/wp-all-import-pro.php',
-            'bbq-pro/bbq-pro.php',
-            'seedprod-coming-soon-pro-5/seedprod-coming-soon-pro-5.php',
-            'oxygen/functions.php',
-            'elementor-pro/elementor-pro.php',
-            'bbpowerpack/bb-powerpack.php',
-            'bb-ultimate-addon/bb-ultimate-addon.php',
-            'webarx/webarx.php',
-            'leco-client-portal/leco-client-portal.php',
-            'elementor-extras/elementor-extras.php',
-            'wp-schema-pro/wp-schema-pro.php',
-            'convertpro/convertpro.php',
-            'astra-addon/astra-addon.php',
-            'astra-portfolio/astra-portfolio.php',
-            'astra-pro-sites/astra-pro-sites.php',
-            'custom-facebook-feed-pro/custom-facebook-feed.php',
-            'convertpro/convertpro.php',
-            'convertpro-addon/convertpro-addon.php',
-            'wp-schema-pro/wp-schema-pro.php',
-            'ultimate-elementor/ultimate-elementor.php',
-            'gp-premium/gp-premium.php',
-            'flying-press/flying-press.php',
-            'wp-rocket/wp-rocket.php',
-            'fluentformpro/fluentformpro.php',
-            'fluentform-signature/fluentform-signature.php',
-            'fluentcampaign-pro/fluentcampaign-pro.php',
-            'fluent-support-pro/fluent-support-pro.php',
-            'ninja-tables-pro/ninja-tables-pro.php',
-            'fluent-booking-pro/fluent-booking-pro.php',
-            'wp-social-ninja-pro/wp-social-ninja-pro.php',
-            'wp-payment-form-pro/wp-payment-form-pro.php',
-        );
-    }
-
-    /**
-     * Legacy hardcoded request list (pre-registry), used when the kill switch is off.
-     *
-     * @return string[]
-     */
-    public static function get_legacy_request_plugins() {
-        return array(
-            'yith-woocommerce-request-a-quote-premium/init.php',
-        );
-    }
 }

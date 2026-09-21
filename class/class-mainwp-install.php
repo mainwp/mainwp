@@ -58,6 +58,11 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     protected $option_db_key = 'mainwp_db_version';
 
     /**
+     * Network-scoped like mainwp_db_version, so every blog on a multisite sees the pending repair.
+     */
+    const BACKUP_PROGRESS_INDEX_REPAIR_PENDING = 'mainwp_backup_progress_index_repair_pending';
+
+    /**
      * Private static variable to hold the single instance of the class.
      *
      * @static
@@ -129,6 +134,10 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         }
 
         if ( $currentVersion === $this->mainwp_db_version ) {
+            // The index repair keeps its own marker so a failed DROP is retried at
+            // most hourly, without holding the DB version back and re-running every
+            // older migration on each load.
+            $this->maybe_retry_backup_progress_index_repair();
             $this->maybe_retry_backup_progress_unique_key();
             return;
         }
@@ -643,7 +652,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             $wp_table   = esc_sql( $this->table_name( 'wp' ) );
             foreach ( $sslColumns as $col ) {
                 $col = esc_sql( $col );
-                // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Column name escaped via esc_sql, table name escaped separately.
+                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Column name escaped via esc_sql, table name escaped separately.
                 $this->wpdb->query( "ALTER TABLE {$wp_table} DROP COLUMN {$col}" );
             }
         }
@@ -662,7 +671,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
 
             foreach ( $rankColumns as $rankColumn ) {
                 $rankColumn = esc_sql( $rankColumn );
-                // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Column name escaped via esc_sql, table name escaped separately.
+                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Column name escaped via esc_sql, table name escaped separately.
                 $this->wpdb->query( "ALTER TABLE {$wp_table} DROP COLUMN {$rankColumn}" );
             }
 
@@ -670,7 +679,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             $wp_sync_table = esc_sql( $this->table_name( 'wp_sync' ) );
             foreach ( $syncColumns as $column ) {
                 $column = esc_sql( $column );
-                // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Column name escaped via esc_sql, table name escaped separately.
+                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Column name escaped via esc_sql, table name escaped separately.
                 $this->wpdb->query( "ALTER TABLE {$wp_sync_table} DROP COLUMN {$column}" );
             }
         }
@@ -680,14 +689,14 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             $delColumns = array( 'offline_checks' );
             foreach ( $delColumns as $column ) {
                 $column = esc_sql( $column );
-                // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Column name escaped via esc_sql, table name escaped separately.
+                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Column name escaped via esc_sql, table name escaped separately.
                 $this->wpdb->query( "ALTER TABLE {$wp_table} DROP COLUMN {$column}" );
             }
             $delColumns  = array( 'heatMap' );
             $users_table = esc_sql( $this->table_name( 'users' ) );
             foreach ( $delColumns as $column ) {
                 $column = esc_sql( $column );
-                // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Column name escaped via esc_sql, table name escaped separately.
+                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Column name escaped via esc_sql, table name escaped separately.
                 $this->wpdb->query( "ALTER TABLE {$users_table} DROP COLUMN {$column}" );
             }
         }
@@ -697,7 +706,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             $delColumns = array( 'offlineChecksOnlineNotification' );
             foreach ( $delColumns as $column ) {
                 $column = esc_sql( $column );
-                // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Column name escaped via esc_sql, table name escaped separately.
+                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Column name escaped via esc_sql, table name escaped separately.
                 $this->wpdb->query( "ALTER TABLE {$users_table} DROP COLUMN {$column}" );
             }
         }
@@ -706,15 +715,20 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         if ( version_compare( $currentVersion, '8.53', '<=' ) ) {
             $wp_options_table         = esc_sql( $this->table_name( 'wp_options' ) );
             $wp_settings_backup_table = esc_sql( $this->table_name( 'wp_settings_backup' ) );
-            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name escaped via esc_sql.
+            // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name escaped via esc_sql.
             $this->wpdb->query( "ALTER TABLE {$wp_options_table} ADD opt_id int NOT NULL AUTO_INCREMENT PRIMARY KEY" );
-            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name escaped via esc_sql.
+            // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name escaped via esc_sql.
             $this->wpdb->query( "ALTER TABLE {$wp_settings_backup_table} ADD set_id int NOT NULL AUTO_INCREMENT PRIMARY KEY" );
-            // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name escaped via esc_sql.
+            // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name escaped via esc_sql.
             $this->wpdb->query( "ALTER TABLE {$wp_sync_table} ADD sync_id int NOT NULL AUTO_INCREMENT PRIMARY KEY" );
         }
 
         $this->update_optimize_indexes_55( $currentVersion );
+
+        // dbDelta never drops an index, so the stray unique key needs an explicit migration.
+        if ( version_compare( $currentVersion, '9.0.2.4', '<' ) ) { // NOSONAR - no ip.
+            $this->repair_backup_progress_index();
+        }
 
         // dbDelta index additions on existing tables are unreliable, so the
         // next_run index and the widened upload job unique key are added
@@ -807,6 +821,105 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     }
 
     /**
+     * Retry a pending backup progress index repair, no more than once an hour.
+     *
+     * A DB user without ALTER never clears the marker, so an unthrottled retry
+     * would run two SHOW INDEX plus a failing ALTER on every single request.
+     *
+     * @return bool True when a repair attempt was made.
+     */
+    public function maybe_retry_backup_progress_index_repair() {
+        $pending = (int) get_site_option( self::BACKUP_PROGRESS_INDEX_REPAIR_PENDING );
+        if ( empty( $pending ) || time() - $pending < HOUR_IN_SECONDS ) {
+            return false;
+        }
+
+        $this->repair_backup_progress_index();
+
+        return true;
+    }
+
+    /**
+     * Run the backup progress index repair and remember whether it still needs a retry.
+     *
+     * @return bool True when the repair is confirmed complete.
+     */
+    public function repair_backup_progress_index() {
+        // The retry from install() runs outside post_update()'s suppression; a
+        // persistently failing ALTER must not log or print on every request.
+        $suppress = $this->wpdb->suppress_errors();
+        $repaired = $this->drop_backup_progress_unique_index();
+        $this->wpdb->suppress_errors( $suppress );
+        if ( $repaired ) {
+            delete_site_option( self::BACKUP_PROGRESS_INDEX_REPAIR_PENDING );
+        } else {
+            // A timestamp, not a formatted date: the retry throttle compares it against time().
+            update_site_option( self::BACKUP_PROGRESS_INDEX_REPAIR_PENDING, time() );
+        }
+        return $repaired;
+    }
+
+    /**
+     * Drop a stray unique index on the backup progress task_id column.
+     *
+     * Fresh installs made between DB 8.53 and the schema fix created
+     * wp_backup_progress with UNIQUE (task_id). Progress rows are per task and
+     * per site, so a task covering two or more sites could never insert its
+     * second row. dbDelta never drops an index, so the stray key has to go here.
+     *
+     * @return bool True when no such key remains, false when one survived a failed DROP.
+     */
+    public function drop_backup_progress_unique_index() {
+        $table = $this->table_name( 'wp_backup_progress' );
+        $keys  = $this->find_backup_progress_task_id_unique_keys();
+        if ( null === $keys ) {
+            return false;
+        }
+
+        foreach ( $keys as $key_name ) {
+            $this->wpdb->query( "ALTER TABLE {$table} DROP INDEX `{$key_name}`" ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL statement; table name is a hardcoded internal identifier, key name comes from SHOW INDEX and is allowlisted below.
+        }
+
+        // suppress_errors() hides a failed DROP, so the table is the only source of truth.
+        return array() === $this->find_backup_progress_task_id_unique_keys();
+    }
+
+    /**
+     * Names of the unique keys on the backup progress table that cover task_id alone.
+     *
+     * A composite unique key over task_id and wp_id is legitimate and is left out.
+     *
+     * @return array|null Key names, or null when the lookup itself failed and nothing can be concluded.
+     */
+    protected function find_backup_progress_task_id_unique_keys() {
+        $table = $this->table_name( 'wp_backup_progress' );
+
+        // suppress_errors() is on in post_update(), so a failed SHOW INDEX looks like an empty index list; last_error is the only tell.
+        $this->wpdb->last_error = '';
+        $indexes                = $this->wpdb->get_results( "SHOW INDEX FROM {$table} WHERE Non_unique = 0", ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL introspection; table name is a hardcoded internal identifier, no user input involved.
+        if ( '' !== $this->wpdb->last_error ) {
+            return null;
+        }
+
+        $key_columns = array();
+        foreach ( (array) $indexes as $index ) {
+            if ( 'PRIMARY' === $index['Key_name'] ) {
+                continue;
+            }
+            $key_columns[ $index['Key_name'] ][] = $index['Column_name'];
+        }
+
+        $keys = array();
+        foreach ( $key_columns as $key_name => $columns ) {
+            if ( array( 'task_id' ) === $columns && preg_match( '/^[A-Za-z0-9_]+$/', $key_name ) ) {
+                $keys[] = $key_name;
+            }
+        }
+
+        return $keys;
+    }
+
+    /**
      * Method pre_update_tables()
      *
      * Handle pre update tables.
@@ -825,7 +938,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
 
         if ( version_compare( $currentVersion, '8.98', '<=' ) ) {
             $wp_table         = esc_sql( $this->table_name( 'wp' ) );
-            $existing_columns = $this->wpdb->get_col( "SHOW COLUMNS FROM {$wp_table}", 0 ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL introspection; table name is a hardcoded internal identifier escaped via esc_sql(), no user input involved.
+            $existing_columns = $this->wpdb->get_col( "SHOW COLUMNS FROM {$wp_table}", 0 ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL introspection; table name is a hardcoded internal identifier escaped via esc_sql(), no user input involved.
             foreach ( array( 'backups', 'note_lastupdate', 'pages' ) as $column ) {
                 if ( in_array( $column, $existing_columns, true ) ) {
                     $this->wpdb->query( 'ALTER TABLE ' . $wp_table . ' DROP COLUMN ' . esc_sql( $column ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL statement; table and column names are hardcoded internal identifiers escaped via esc_sql(), no user input involved.
@@ -1067,14 +1180,14 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             $wp_sync_table = esc_sql( $this->table_name( 'wp_sync' ) );
             foreach ( $wpSyncColumns as $wpSyncColumn ) {
                 $wpSyncColumn = esc_sql( $wpSyncColumn );
-                // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Column name escaped via esc_sql, table name escaped separately.
+                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Column name escaped via esc_sql, table name escaped separately.
                 $rslts = $this->wpdb->get_results( "SELECT id,{$wpSyncColumn} FROM {$wp_table}", ARRAY_A );
                 if ( empty( $rslts ) ) {
                     continue;
                 }
 
                 foreach ( $rslts as $rslt ) {
-                    // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name escaped via esc_sql and query uses proper prepare.
+                    // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Table name escaped via esc_sql and query uses proper prepare.
                     $exists = $this->wpdb->get_results( $this->wpdb->prepare( "SELECT wpid FROM {$wp_sync_table} WHERE wpid = %d", $rslt['id'] ), ARRAY_A );
                     if ( empty( $exists ) ) {
                         $this->wpdb->insert(
@@ -1090,7 +1203,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
                 }
 
                 $suppress = $this->wpdb->suppress_errors();
-                // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Column name escaped via esc_sql, table name escaped separately.
+                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Column name escaped via esc_sql, table name escaped separately.
                 $this->wpdb->query( "ALTER TABLE {$wp_table} DROP COLUMN {$wpSyncColumn}" );
                 $this->wpdb->suppress_errors( $suppress );
             }
@@ -1106,7 +1219,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             );
             foreach ( $optionColumns as $optionColumn ) {
                 $optionColumn = esc_sql( $optionColumn );
-                // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Column name escaped via esc_sql, table name escaped separately.
+                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Column name escaped via esc_sql, table name escaped separately.
                 $rslts = $this->wpdb->get_results( "SELECT id,{$optionColumn} FROM {$wp_table}", ARRAY_A );
                 if ( empty( $rslts ) ) {
                     continue;
@@ -1117,7 +1230,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
                 }
 
                 $suppress = $this->wpdb->suppress_errors();
-                // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Column name escaped via esc_sql, table name escaped separately.
+                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Column name escaped via esc_sql, table name escaped separately.
                 $this->wpdb->query( "ALTER TABLE {$wp_table} DROP COLUMN {$optionColumn}" );
                 $this->wpdb->suppress_errors( $suppress );
             }

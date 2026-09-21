@@ -62,10 +62,6 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             return false;
         }
 
-        if ( ! MainWP_Premium_Update_Registry::is_enabled() ) {
-            return static::legacy_check_premium_updates( $updates, $type );
-        }
-
         if ( 'plugin' === $type ) {
 
             $premiums = MainWP_Premium_Update_Registry::get_filter_defaults( 'plugin', 'detect' );
@@ -91,8 +87,9 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             $prefixes = MainWP_Premium_Update_Registry::get_prefixes( 'plugin', 'detect' );
 
             if ( ( is_array( $premiums ) && ! empty( $premiums ) ) || ! empty( $prefixes ) ) {
-                foreach ( $updates as $info ) {
-                    if ( isset( $info['slug'] ) && MainWP_Premium_Update_Registry::slug_matches( $info['slug'], is_array( $premiums ) ? $premiums : array(), $prefixes ) ) {
+                foreach ( $updates as $inventory_key => $info ) {
+                    $identifier = MainWP_Premium_Update_Registry::get_inventory_identifier( $inventory_key, $info );
+                    if ( '' !== $identifier && MainWP_Premium_Update_Registry::slug_matches( $identifier, is_array( $premiums ) ? $premiums : array(), $prefixes ) ) {
                         return true;
                     }
                 }
@@ -113,8 +110,9 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             $prefixes = MainWP_Premium_Update_Registry::get_prefixes( 'theme', 'detect' );
 
             if ( ( is_array( $premiums ) && ! empty( $premiums ) ) || ! empty( $prefixes ) ) {
-                foreach ( $updates as $info ) {
-                    if ( ! isset( $info['slug'] ) ) {
+                foreach ( $updates as $inventory_key => $info ) {
+                    $identifier = MainWP_Premium_Update_Registry::get_inventory_identifier( $inventory_key, $info );
+                    if ( '' === $identifier ) {
                         continue;
                     }
                     // A theme updater only runs while its theme (or a child of it) is active,
@@ -125,52 +123,7 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                         && empty( $info['active'] ) && empty( $info['parent_active'] ) ) {
                         continue;
                     }
-                    if ( MainWP_Premium_Update_Registry::slug_matches( $info['slug'], is_array( $premiums ) ? $premiums : array(), $prefixes ) ) {
-                        return true;
-                    }
-                }
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Pre-registry detection behavior, used verbatim when the registry kill switch is off.
-     *
-     * @param array $updates Array of installed items reported by the child site.
-     * @param mixed $type Type of update.
-     *
-     * @return boolean true|false.
-     */
-    private static function legacy_check_premium_updates( $updates, $type ) { // phpcs:ignore -- NOSONAR - complex.
-        if ( 'plugin' === $type ) {
-
-            $premiums = MainWP_Premium_Update_Registry::get_legacy_detect_plugins();
-
-            /** This filter is documented in class/class-mainwp-premium-update.php */
-            $premiums = apply_filters( 'mainwp_detect_premiums_updates', $premiums );
-
-            /** This filter is documented in class/class-mainwp-premium-update.php */
-            $premiums = apply_filters( 'mainwp_detect_premium_plugins_update', $premiums );
-
-            if ( is_array( $premiums ) && ! empty( $premiums ) ) {
-                foreach ( $updates as $info ) {
-                    if ( isset( $info['slug'] ) && ( in_array( $info['slug'], $premiums ) || false !== strpos( $info['slug'], 'yith-' ) ) ) {
-                        return true;
-                    }
-                }
-            }
-        } elseif ( 'theme' === $type ) {
-
-            $premiums = array();
-
-            /** This filter is documented in class/class-mainwp-premium-update.php */
-            $premiums = apply_filters( 'mainwp_detect_premium_themes_update', $premiums );
-
-            if ( is_array( $premiums ) && ! empty( $premiums ) ) {
-                foreach ( $updates as $info ) {
-                    if ( isset( $info['slug'] ) && in_array( $info['slug'], $premiums ) ) {
+                    if ( MainWP_Premium_Update_Registry::slug_matches( $identifier, is_array( $premiums ) ? $premiums : array(), $prefixes ) ) {
                         return true;
                     }
                 }
@@ -186,13 +139,13 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @param mixed $website Child Site info.
      * @param mixed $what stats|upgradeplugintheme What function to perform.
      * @param mixed $params plugin|theme Update Type.
+     * @param mixed $output Output result.
      *
      * @return mixed $request_update
      */
-    public static function maybe_request_premium_updates( $website, $what, $params ) { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function maybe_request_premium_updates( $website, $what, $params, &$output ) { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         self::$last_request_response = null;
 
-        $request_update = false;
         if ( 'stats' === $what || ( 'upgradeplugintheme' === $what && isset( $params['type'] ) ) ) {
 
             $update_type = '';
@@ -228,13 +181,13 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 static::try_to_detect_premiums_update( $website, 'theme' );
             }
 
-            if ( 'upgradeplugintheme' === $what && ( 'plugin' === $update_type || 'theme' === $update_type ) && static::check_request_update_premium( $params['list'], $update_type ) ) {
-                static::request_premiums_update( $website, $update_type, $params['list'] );
-                $request_update = true;
+            if ( 'upgradeplugintheme' === $what && ( 'plugin' === $update_type || 'theme' === $update_type ) && ( static::check_request_update_premium( $params['list'], $update_type ) || static::check_premium_updates( explode( ',', $params['list'] ), $update_type ) ) ) {
+                $output = static::request_premiums_update( $website, $update_type, $params['list'] );
+                return true;
             }
         }
 
-        return $request_update;
+        return false;
     }
 
     /**
@@ -255,12 +208,8 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             return false;
         }
 
-        if ( 1 < count( $updates ) ) {
+        if ( 3 < count( $updates ) ) {
             return false;
-        }
-
-        if ( ! MainWP_Premium_Update_Registry::is_enabled() ) {
-            return static::legacy_check_request_update_premium( $updates, $type );
         }
 
         if ( 'plugin' === $type ) {
@@ -301,46 +250,6 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             foreach ( $updates as $slug ) {
                 if ( ! empty( $slug ) && MainWP_Premium_Update_Registry::slug_matches( $slug, is_array( $update_premiums ) ? $update_premiums : array(), $prefixes ) ) {
                     return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Pre-registry request-route behavior, used verbatim when the registry kill switch is off.
-     *
-     * @param array  $updates Exploded list of updates.
-     * @param string $type Type of update. plugin|theme.
-     *
-     * @return bool true|false.
-     */
-    private static function legacy_check_request_update_premium( $updates, $type ) { // phpcs:ignore -- NOSONAR - complex.
-        if ( 'plugin' === $type ) {
-
-            $update_premiums = MainWP_Premium_Update_Registry::get_legacy_request_plugins();
-
-            /** This filter is documented in class/class-mainwp-premium-update.php */
-            $update_premiums = apply_filters( 'mainwp_request_update_premium_plugins', $update_premiums );
-
-            if ( is_array( $update_premiums ) && ! empty( $update_premiums ) ) {
-                foreach ( $updates as $slug ) {
-                    if ( ! empty( $slug ) && in_array( $slug, $update_premiums ) ) {
-                        return true;
-                    }
-                }
-            }
-        } elseif ( 'theme' === $type ) {
-
-            $update_premiums = array();
-
-            /** This filter is documented in class/class-mainwp-premium-update.php */
-            $update_premiums = apply_filters( 'mainwp_request_update_premium_themes', $update_premiums );
-            if ( is_array( $update_premiums ) && ! empty( $update_premiums ) ) {
-                foreach ( $updates as $slug ) {
-                    if ( ! empty( $slug ) && in_array( $slug, $update_premiums ) ) {
-                        return true;
-                    }
                 }
             }
         }
@@ -421,20 +330,20 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @param mixed $website Child Site.
      * @param array $params Other params.
      *
-     * @return mixed null|array information.
+     * @return mixed false|array information.
      */
     public static function handle_premium_update_actions( $website, $params = array() ) {
         if ( ! is_array( $params ) ) {
-            return null;
+            return false;
         }
         MainWP_Logger::instance()->debug( 'Request premium update :: [siteid=' . $website->id . '] :: [type=' . $params['premium_type'] . '] :: [perform=' . $params['premium_perform'] . ']' );
-        $result = null;
         try {
-            $result = MainWP_Connect::fetch_url_authed( $website, 'process_premium_updates', $params, false, false, true, null, true );
+            return MainWP_Connect::fetch_url_authed( $website, 'process_premium_updates', $params, false, false, true, null, true );
         } catch ( \Exception $e ) {
             // Just ignore.
+            $err = $e->getMessage(); //phpcs:ignore -- NOSONAR -for debug.
         }
-        return $result;
+        return false;
     }
 
     /**
@@ -525,19 +434,18 @@ class MainWP_Premium_Update { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @param mixed $type Type of update, plugin|theme.
      * @param mixed $list_items list of plugins & themes installed.
      *
-     * @return mixed null|true.
+     * @return mixed
      */
     public static function request_premiums_update( $website, $type, $list_items ) {
         if ( ! in_array( $type, array( 'plugin', 'theme' ) ) ) {
-            return null;
+            return false;
         }
         $params = array(
             'premium_type'    => $type,
             'premium_perform' => 'premium_update',
             'list'            => $list_items,
         );
-        static::handle_premium_update_actions( $website, $params );
-        return true;
+        return static::handle_premium_update_actions( $website, $params );
     }
 
     /**

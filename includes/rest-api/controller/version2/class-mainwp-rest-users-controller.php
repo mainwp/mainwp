@@ -1768,39 +1768,10 @@ class MainWP_Rest_Users_Controller extends MainWP_REST_Controller { //phpcs:igno
      * Get request body.
      *
      * @param WP_REST_Request $request Full details about the request.
-     * @return array|WP_Error
+     * @return array|WP_Error Body data, or an empty_body error when nothing usable was sent.
      */
-    private function get_request_body( $request ) {  // phpcs:ignore -- NOSONAR - complex.
-        // Get request body filed.
-        $body = $request->get_body_params();
-        if ( ! empty( $body ) && is_array( $body ) ) {
-            return $body;
-        }
-
-        // Get request body from body.
-        $body = $request->get_json_params();
-        if ( ! empty( $body ) && is_array( $body ) ) {
-            return $body;
-        }
-
-        // Get request body from raw.
-        $body = $request->get_body();
-        if ( ! empty( $body ) && is_string( $body ) ) {
-            $body = json_decode( $body, true );
-            if ( ! is_array( $body ) ) {
-                return new WP_Error(
-                    'invalid_json',
-                    __( 'Request body contains invalid JSON.', 'mainwp' ),
-                    array( 'status' => 400 )
-                );
-            }
-            return $body;
-        }
-        // Return error.
-        return new WP_Error(
-            'empty_body',
-            __( 'Request body is empty.', 'mainwp' ),
-        );
+    private function get_request_body( $request ) {
+        return $this->get_request_body_data( $request );
     }
 
     /**

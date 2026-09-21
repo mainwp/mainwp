@@ -7,6 +7,7 @@
 
 use MainWP\Dashboard\MainWP_Premium_Update;
 use MainWP\Dashboard\MainWP_Premium_Update_Registry;
+use MainWP\Dashboard\MainWP_Settings_Premium_Updates;
 
 /**
  * Class Test_Premium_Update_Registry
@@ -18,21 +19,11 @@ class Test_Premium_Update_Registry extends WP_UnitTestCase {
      */
     public function set_up() {
         parent::set_up();
-        delete_option( MainWP_Premium_Update_Registry::OPTION_ENABLED );
         delete_option( MainWP_Premium_Update_Registry::OPTION_CUSTOM );
         remove_all_filters( 'mainwp_detect_premium_plugins_update' );
         remove_all_filters( 'mainwp_detect_premium_themes_update' );
         remove_all_filters( 'mainwp_request_update_premium_plugins' );
         remove_all_filters( 'mainwp_request_update_premium_themes' );
-    }
-
-    /**
-     * Registry defaults to enabled.
-     */
-    public function test_registry_enabled_by_default() {
-        $this->assertTrue( MainWP_Premium_Update_Registry::is_enabled() );
-        update_option( MainWP_Premium_Update_Registry::OPTION_ENABLED, 0 );
-        $this->assertFalse( MainWP_Premium_Update_Registry::is_enabled() );
     }
 
     /**
@@ -226,7 +217,7 @@ class Test_Premium_Update_Registry extends WP_UnitTestCase {
     }
 
     /**
-     * check_request_update_premium(): single-item constraint and prefix support.
+     * check_request_update_premium(): current batch limit and prefix support.
      */
     public function test_check_request_update_premium() {
         $this->assertTrue( MainWP_Premium_Update::check_request_update_premium( 'yith-woocommerce-gift-cards-premium/init.php', 'plugin' ) );
@@ -235,50 +226,13 @@ class Test_Premium_Update_Registry extends WP_UnitTestCase {
         $this->assertFalse( MainWP_Premium_Update::check_request_update_premium( 'Avada', 'theme' ), 'Avada is detect-only.' );
         $this->assertFalse( MainWP_Premium_Update::check_request_update_premium( 'akismet/akismet.php', 'plugin' ) );
 
-        // The premium request route only ever handles a single item.
-        $this->assertFalse( MainWP_Premium_Update::check_request_update_premium( 'Divi,Extra', 'theme' ) );
-        $this->assertFalse( MainWP_Premium_Update::check_request_update_premium( 'yith-a-premium/init.php,yith-b-premium/init.php', 'plugin' ) );
-    }
-
-    /**
-     * Kill switch reverts to the exact pre-registry behavior.
-     */
-    public function test_kill_switch_reverts_to_legacy_behavior() {
-        update_option( MainWP_Premium_Update_Registry::OPTION_ENABLED, 0 );
-
-        // Registry-added theme entries are inert.
-        $this->assertFalse(
-            MainWP_Premium_Update::check_premium_updates(
-                array(
-                    array(
-                        'slug'   => 'Divi',
-                        'active' => 1,
-                    ),
-                ),
-                'theme'
-            )
-        );
-
-        // The historical substring hack still detects YITH plugins.
-        $this->assertTrue(
-            MainWP_Premium_Update::check_premium_updates(
-                array( array( 'slug' => 'yith-woocommerce-wishlist-premium/init.php' ) ),
-                'plugin'
-            )
-        );
-
-        // The legacy hardcoded list applies verbatim, including entries the registry removed.
-        $this->assertTrue(
-            MainWP_Premium_Update::check_premium_updates(
-                array( array( 'slug' => 'elementor-extras/elementor-extras.php' ) ),
-                'plugin'
-            )
-        );
-
-        // Legacy request list still contains only the single YITH entry.
-        $this->assertTrue( MainWP_Premium_Update::check_request_update_premium( 'yith-woocommerce-request-a-quote-premium/init.php', 'plugin' ) );
-        $this->assertFalse( MainWP_Premium_Update::check_request_update_premium( 'yith-woocommerce-gift-cards-premium/init.php', 'plugin' ) );
-        $this->assertFalse( MainWP_Premium_Update::check_request_update_premium( 'Divi', 'theme' ) );
+        // Preserve main's support for up to three items when a premium item matches.
+        $this->assertTrue( MainWP_Premium_Update::check_request_update_premium( 'Divi,Extra', 'theme' ) );
+        $this->assertTrue( MainWP_Premium_Update::check_request_update_premium( 'yith-a-premium/init.php,yith-b-premium/init.php', 'plugin' ) );
+        $this->assertTrue( MainWP_Premium_Update::check_request_update_premium( 'Divi,Extra,Avada', 'theme' ) );
+        $this->assertTrue( MainWP_Premium_Update::check_request_update_premium( 'yith-a-premium/init.php,akismet/akismet.php,hello.php', 'plugin' ) );
+        $this->assertFalse( MainWP_Premium_Update::check_request_update_premium( 'Divi,Extra,Avada,other-theme', 'theme' ) );
+        $this->assertFalse( MainWP_Premium_Update::check_request_update_premium( 'yith-a-premium/init.php,akismet/akismet.php,hello.php,other/other.php', 'plugin' ) );
     }
 
     /**
@@ -326,6 +280,149 @@ class Test_Premium_Update_Registry extends WP_UnitTestCase {
             )
         );
         $this->assertTrue( MainWP_Premium_Update::check_request_update_premium( 'my-premium/my-premium.php', 'plugin' ) );
+    }
+
+    /**
+     * Identifier suggestions normalize synced inventory formats, aggregate site
+     * counts, and exclude products which are already supported or custom-added.
+     */
+    public function test_identifier_suggestions_from_synced_inventories() {
+        MainWP_Premium_Update_Registry::save_custom_entries(
+            array(
+                array(
+                    'type' => 'plugin',
+                    'id'   => 'custom-pro/custom.php',
+                ),
+            )
+        );
+
+        $suggestions = MainWP_Settings_Premium_Updates::get_identifier_suggestions(
+            array(
+                array(
+                    'id'     => 11,
+                    'plugin' => array(
+                        array(
+                            'slug' => 'gravityforms/gravityforms.php',
+                            'name' => 'Gravity Forms',
+                        ),
+                        array(
+                            'slug' => 'gravityforms/gravityforms.php',
+                            'name' => 'Duplicate on the same site',
+                        ),
+                        array(
+                            'slug' => 'divi-builder/divi-builder.php',
+                            'name' => 'Divi Builder',
+                        ),
+                        array(
+                            'slug' => 'yith-woocommerce-wishlist-premium/init.php',
+                            'name' => 'YITH Wishlist Premium',
+                        ),
+                        array(
+                            'slug' => 'bad slug/plugin.php',
+                            'name' => 'Invalid identifier',
+                        ),
+                        'missing-slug' => 'not-an-array',
+                    ),
+                    'theme'  => array(
+                        array(
+                            'slug' => 'shared-product',
+                            'name' => 'Shared Theme',
+                        ),
+                        array(
+                            'slug' => 'premium-theme',
+                        ),
+                    ),
+                ),
+                array(
+                    'id'     => 12,
+                    'plugin' => array(
+                        'GRAVITYFORMS/GRAVITYFORMS.PHP' => array(
+                            'Name' => 'Gravity Forms Pro',
+                        ),
+                        'shared-product' => array(
+                            'slug' => 'wrong/nested-slug.php',
+                            'Name' => 'Shared Plugin',
+                        ),
+                        'custom-pro/custom.php' => array(
+                            'Name' => 'Already Custom',
+                        ),
+                    ),
+                    'theme'  => array(
+                        'premium-theme' => array(
+                            'title' => 'Premium Theme',
+                        ),
+                        'Divi' => array(
+                            'name' => 'Divi',
+                        ),
+                    ),
+                ),
+            )
+        );
+
+        $indexed = array();
+        foreach ( $suggestions as $suggestion ) {
+            $indexed[ $suggestion['type'] . '|' . strtolower( $suggestion['identifier'] ) ] = $suggestion;
+        }
+
+        $this->assertCount( 4, $indexed );
+        $this->assertSame( 2, $indexed['plugin|gravityforms/gravityforms.php']['sites'], 'Case variants aggregate and duplicate rows count once per site.' );
+        $this->assertSame( 'Gravity Forms', $indexed['plugin|gravityforms/gravityforms.php']['name'] );
+        $this->assertSame( 'Premium Theme', $indexed['theme|premium-theme']['name'], 'A later display name replaces an identifier fallback.' );
+        $this->assertSame( 2, $indexed['theme|premium-theme']['sites'] );
+        $this->assertArrayHasKey( 'plugin|shared-product', $indexed, 'Associative inventory keys take precedence over nested slugs.' );
+        $this->assertArrayHasKey( 'theme|shared-product', $indexed, 'The same identifier remains distinct across product types.' );
+        $this->assertArrayNotHasKey( 'plugin|divi-builder/divi-builder.php', $indexed );
+        $this->assertArrayNotHasKey( 'plugin|yith-woocommerce-wishlist-premium/init.php', $indexed );
+        $this->assertArrayNotHasKey( 'plugin|custom-pro/custom.php', $indexed );
+        $this->assertArrayNotHasKey( 'plugin|wrong/nested-slug.php', $indexed );
+    }
+
+    /**
+     * A suggestion saved from keyed inventory must match detection and requests.
+     */
+    public function test_saved_keyed_suggestions_match_premium_updates() {
+        $inventories = array(
+            array(
+                'id'     => 12,
+                'plugin' => array(
+                    'example-pro/example.php' => array( 'Name' => 'Example Pro' ),
+                ),
+                'theme'  => array(
+                    'example-theme' => array( 'Name' => 'Example Theme', 'parent_active' => 1 ),
+                ),
+            ),
+        );
+        $suggestions = MainWP_Settings_Premium_Updates::get_identifier_suggestions( $inventories );
+        $this->assertCount( 2, $suggestions );
+        $custom = array();
+        foreach ( $suggestions as $suggestion ) {
+            $custom[] = array( 'type' => $suggestion['type'], 'id' => $suggestion['identifier'] );
+        }
+        MainWP_Premium_Update_Registry::save_custom_entries( $custom );
+        foreach ( $suggestions as $suggestion ) {
+            $this->assertTrue( MainWP_Premium_Update::check_premium_updates( $inventories[0][ $suggestion['type'] ], $suggestion['type'] ) );
+            $this->assertTrue( MainWP_Premium_Update::check_request_update_premium( $suggestion['identifier'], $suggestion['type'] ) );
+        }
+        $this->assertFalse( MainWP_Premium_Update::check_premium_updates( array( 'example-theme' => array( 'active' => 0, 'parent_active' => 0 ) ), 'theme' ) );
+        $this->assertSame( 'example-pro/example.php', MainWP_Premium_Update_Registry::get_inventory_identifier( 'example-pro/example.php', array( 'slug' => 'conflicting/slug.php' ) ) );
+        $this->assertSame( '', MainWP_Premium_Update_Registry::get_inventory_identifier( 0, 'invalid-data' ) );
+        $this->assertSame( '', MainWP_Premium_Update_Registry::get_inventory_identifier( 'bad key', array( 'slug' => 'valid/slug.php' ) ) );
+    }
+
+    /**
+     * Inherited public methods must not dispatch to a child's private helpers.
+     */
+    public function test_suggestions_do_not_dispatch_to_subclass_private_helpers() {
+        $settings = new class() extends MainWP_Settings_Premium_Updates {
+            private static function get_identifier_exclusion_rules() {
+                throw new \RuntimeException( 'The subclass private helper must not run.' );
+            }
+        };
+        $suggestions = $settings::get_identifier_suggestions(
+            array( array( 'plugin' => array( array( 'slug' => 'example-pro/example.php', 'name' => '', 'Name' => '<b>Example Pro</b>' ) ) ) )
+        );
+        $this->assertCount( 1, $suggestions );
+        $this->assertSame( 'Example Pro', $suggestions[0]['name'] );
     }
 
     /**

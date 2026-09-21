@@ -76,7 +76,7 @@ class MainWP_System_Monitor {
     /**
      * Create DB table.
      *
-     * @param $installed  Installed db version.
+     * @param string|false $installed Installed DB version, or false before the first install.
      */
     private static function install_db( $installed ) {
 
@@ -96,19 +96,19 @@ class MainWP_System_Monitor {
                 severity varchar(20) NOT NULL DEFAULT 'info',
                 payload longtext NULL,
                 checked_at bigint(20) unsigned NOT NULL,
-                KEY monitor_check_entity (
-                    monitor,
-                    check_name,
-                    entity
-                ),
+                KEY monitor_check_entity (monitor,check_name,entity),
                 KEY monitor (monitor),
                 KEY severity (severity),
                 KEY issue_code (issue_code)";
 
+        // dbDelta splits definitions on newlines, so a key spanning lines or a
+        // PRIMARY KEY appended to the last KEY line gets re-emitted as broken
+        // ALTER statements on every run. One definition per line, two spaces
+        // before the primary key column list.
         if ( empty( $installed ) ) {
-            $sql .= ', PRIMARY KEY (id)';
+            $sql .= ",\n                PRIMARY KEY  (id)";
         }
-        $sql .= " ) {$charset_collate}; ";
+        $sql .= "\n            ) {$charset_collate};";
 
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 

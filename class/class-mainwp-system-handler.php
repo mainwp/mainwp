@@ -1371,7 +1371,7 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      *
      * @uses \MainWP\Dashboard\MainWP_Api_Manager::set_activation_info()
      */
-    public function deactivate_extension( $ext_key, $dashboard_only = true ) {
+    public function deactivate_extension( $ext_key, $dashboard_only = false ) {
         // try to deactivate license.
         if ( ! $dashboard_only ) {
             $mainwp_api_key = MainWP_Api_Manager_Key::instance()->get_decrypt_master_api_key();

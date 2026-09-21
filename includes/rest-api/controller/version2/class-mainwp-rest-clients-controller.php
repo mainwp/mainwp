@@ -770,10 +770,12 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
 
         $data = array();
         foreach ( $fields as $field ) {
+            // A stored "0" is reported as the value it is, not as an empty one. field_id is cast
+            // because wpdb answers every column as a string and the schema declares an integer.
             $record = array(
-                'field_id'    => (int) $field->field_id ? $field->field_id : 0,
-                'name'        => $field->field_name ? $field->field_name : '',
-                'description' => $field->field_desc ? $field->field_desc : '',
+                'field_id'    => isset( $field->field_id ) ? (int) $field->field_id : 0,
+                'name'        => isset( $field->field_name ) ? $field->field_name : '',
+                'description' => isset( $field->field_desc ) ? $field->field_desc : '',
             );
             $data[] = $this->filter_response_data_by_allowed_fields( $record, 'field_view' );
         }
@@ -810,25 +812,54 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
      */
     public function create_client_fields( $request ) {
         // Get request body.
-        $body = $request->get_body_params();
-        if ( empty( $body ) ) {
-            return new WP_Error(
-                'empty_body',
-                __( 'Request body is empty.', 'mainwp' ),
-            );
+        $body = $this->get_request_body( $request );
+        if ( is_wp_error( $body ) ) {
+            return $body;
         }
 
-        // Validate request body.
-        if ( empty( $body['name'] ) || empty( $body['description'] ) ) {
-            return new WP_Error(
-                'empty_name',
-                __( 'Name and description are required.', 'mainwp' ),
-            );
+        $invalid = $this->validate_client_field_values( $body );
+        if ( is_wp_error( $invalid ) ) {
+            return $invalid;
+        }
+
+        // Validate request body. "0" is a value the column stores, so a required value is one whose
+        // key was sent carrying something other than whitespace, not one that passes a falsy test.
+        // validate_client_field_values() has already refused a key sent as anything but a string.
+        foreach ( array( 'name', 'description' ) as $required ) {
+            if ( ! isset( $body[ $required ] ) || '' === trim( $body[ $required ] ) ) {
+                return new WP_Error(
+                    'empty_name',
+                    __( 'Name and description are required.', 'mainwp' ),
+                    array( 'status' => 400 )
+                );
+            }
         }
 
         $client_id = 0;
         $name      = sanitize_text_field( wp_unslash( $body['name'] ) );
         $desc      = sanitize_text_field( wp_unslash( $body['description'] ) );
+
+        // field_name is varchar(191), so a longer name is truncated by wpdb before the unique index sees
+        // it and the duplicate lookup, which queries the untruncated name, would not recognise the refusal.
+        // A body read as raw JSON skips the registered maxLength, so the limit is enforced here as well.
+        if ( mb_strlen( $name ) > 191 ) {
+            return new WP_Error(
+                'invalid_field_value',
+                __( 'Name must be 191 characters or fewer.', 'mainwp' ),
+                array( 'status' => 400 )
+            );
+        }
+
+        // field_desc is varchar(255), so a longer description is either refused by the write or stored
+        // truncated depending on the server's strict mode, and neither answers what the caller sent.
+        // A body read as raw JSON skips the registered maxLength, so the limit is enforced here as well.
+        if ( mb_strlen( $desc ) > 255 ) {
+            return new WP_Error(
+                'invalid_field_value',
+                __( 'Description must be 255 characters or fewer.', 'mainwp' ),
+                array( 'status' => 400 )
+            );
+        }
 
         $field = MainWP_DB_Client::instance()->add_client_field(
             array(
@@ -839,17 +870,25 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
         );
 
         if ( ! $field ) {
+            // add_client_field() returns false for a name it refuses to store as well as for a failed
+            // insert, so a name left empty by sanitizing or already taken stays a client error and
+            // everything else is a server failure.
+            $taken        = $this->client_field_name_taken( $name, $client_id );
+            $caller_fault = ( '' === $name || $taken );
+
             return new WP_Error(
                 'create_field_failed',
-                __( 'Create client field failed.', 'mainwp' ),
+                $caller_fault ? __( 'Create client field failed.', 'mainwp' ) : __( 'Creating the client field failed.', 'mainwp' ),
+                array( 'status' => $caller_fault ? 400 : 500 )
             );
         }
 
-        // Prepare response data.
+        // Prepare response data. A stored "0" is reported as the value it is, not as an empty one.
+        // field_id is cast because wpdb answers every column as a string and the schema declares an integer.
         $data = array(
-            'field_id'    => (int) $field->field_id ? $field->field_id : 0,
-            'name'        => $field->field_name ? $field->field_name : '',
-            'description' => $field->field_desc ? $field->field_desc : '',
+            'field_id'    => isset( $field->field_id ) ? (int) $field->field_id : 0,
+            'name'        => isset( $field->field_name ) ? $field->field_name : '',
+            'description' => isset( $field->field_desc ) ? $field->field_desc : '',
         );
 
         return rest_ensure_response(
@@ -877,33 +916,73 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
             return new WP_Error(
                 'invalid_field_id',
                 __( 'Invalid client field.', 'mainwp' ),
+                array( 'status' => 404 )
             );
         }
 
         // Get request body.
-        $body = $request->get_json_params();
-        if ( empty( $body ) ) {
+        $body = $this->get_request_body( $request );
+        if ( is_wp_error( $body ) ) {
+            return $body;
+        }
+
+        $invalid = $this->validate_client_field_values( $body );
+        if ( is_wp_error( $invalid ) ) {
+            return $invalid;
+        }
+
+        // Only a key left out, or sent with nothing but whitespace, keeps the stored value. The add
+        // route reads a value the same way, and sanitizing trims whitespace away, so a value tested
+        // untrimmed here would sanitize down to an empty string the DB layer refuses. "0" is a value
+        // the column stores, and a falsy test would drop it and answer that the edit succeeded.
+        $name = isset( $body['name'] ) && '' !== trim( $body['name'] ) ? sanitize_text_field( wp_unslash( $body['name'] ) ) : $field->field_name;
+        $desc = isset( $body['description'] ) && '' !== trim( $body['description'] ) ? sanitize_text_field( wp_unslash( $body['description'] ) ) : $field->field_desc;
+
+        // field_name is varchar(191), so a longer name is truncated by wpdb before the unique index sees
+        // it and the duplicate lookup, which queries the untruncated name, would not recognise the refusal.
+        // A body read as raw JSON skips the registered maxLength, so the limit is enforced here as well.
+        if ( mb_strlen( $name ) > 191 ) {
             return new WP_Error(
-                'empty_body',
-                __( 'Request body is empty.', 'mainwp' ),
+                'invalid_field_value',
+                __( 'Name must be 191 characters or fewer.', 'mainwp' ),
+                array( 'status' => 400 )
             );
         }
 
-        $name = ! empty( $body['name'] ) ? sanitize_text_field( wp_unslash( $body['name'] ) ) : $field->field_name;
-        $desc = ! empty( $body['description'] ) ? sanitize_text_field( wp_unslash( $body['description'] ) ) : $field->field_desc;
-
-        $updated = MainWP_DB_Client::instance()->update_client_field(
-            $field->field_id,
-            array(
-                'field_name' => $name,
-                'field_desc' => $desc,
-            )
-        );
-        if ( ! $updated ) {
+        // field_desc is varchar(255), so a longer description is either refused by the write or stored
+        // truncated depending on the server's strict mode, and neither answers what the caller sent.
+        // A body read as raw JSON skips the registered maxLength, so the limit is enforced here as well.
+        if ( mb_strlen( $desc ) > 255 ) {
             return new WP_Error(
-                'update_field_failed',
-                __( 'Field already exists, try different field name.', 'mainwp' ),
+                'invalid_field_value',
+                __( 'Description must be 255 characters or fewer.', 'mainwp' ),
+                array( 'status' => 400 )
             );
+        }
+
+        // $wpdb->update() reports no changed rows for an edit that stores the values already there, and
+        // the DB layer cannot tell that apart from a failure, so an edit that changes nothing is not run.
+        if ( $name !== $field->field_name || $desc !== $field->field_desc ) {
+            $updated = MainWP_DB_Client::instance()->update_client_field(
+                $field->field_id,
+                array(
+                    'field_name' => $name,
+                    'field_desc' => $desc,
+                )
+            );
+            if ( ! $updated ) {
+                // The DB layer refuses a name left empty by sanitizing, and the unique index on
+                // (client_id, field_name) refuses a rename onto a name another field of this client
+                // already owns. Both are the caller's fault; anything else is the write itself failing.
+                $owned        = $this->client_field_name_taken( $name, $field->client_id, $field->field_id );
+                $caller_fault = ( '' === $name || $owned );
+
+                return new WP_Error(
+                    'update_field_failed',
+                    $caller_fault ? __( 'Field already exists, try different field name.', 'mainwp' ) : __( 'Updating the client field failed.', 'mainwp' ),
+                    array( 'status' => $caller_fault ? 400 : 500 )
+                );
+            }
         }
 
         return rest_ensure_response(
@@ -959,17 +1038,24 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
      * @return array
      */
     public function edit_client_fields_allowed_fields() {
+        // WordPress only runs the type check its own sanitizer carries, and a registered
+        // sanitize_callback replaces it, so without an explicit validate_callback a JSON 42 or true
+        // would reach the handler already cast to text by sanitize_text_field().
         return array(
             'name'        => array(
                 'required'          => false,
                 'type'              => 'string',
+                'maxLength'         => 191,
                 'sanitize_callback' => 'sanitize_text_field',
+                'validate_callback' => 'rest_validate_request_arg',
                 'description'       => __( 'Field name.', 'mainwp' ),
             ),
             'description' => array(
                 'required'          => false,
                 'type'              => 'string',
+                'maxLength'         => 255,
                 'sanitize_callback' => 'sanitize_text_field',
+                'validate_callback' => 'rest_validate_request_arg',
                 'description'       => __( 'Field description.', 'mainwp' ),
             ),
         );
@@ -978,20 +1064,26 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
     /**
      * Create client fields allowed fields.
      *
-     * @return WP_Error|WP_REST_Response
+     * @return array
      */
     public function create_client_fields_allowed_fields() {
+        // See edit_client_fields_allowed_fields(): the registered sanitizer displaces the type check
+        // WordPress would otherwise run, so the declared type needs its own validate_callback.
         return array(
             'name'        => array(
                 'required'          => true,
                 'type'              => 'string',
+                'maxLength'         => 191,
                 'sanitize_callback' => 'sanitize_text_field',
+                'validate_callback' => 'rest_validate_request_arg',
                 'description'       => __( 'Field name.', 'mainwp' ),
             ),
             'description' => array(
                 'required'          => true,
                 'type'              => 'string',
+                'maxLength'         => 255,
                 'sanitize_callback' => 'sanitize_text_field',
+                'validate_callback' => 'rest_validate_request_arg',
                 'description'       => __( 'Field description.', 'mainwp' ),
             ),
         );
@@ -1051,6 +1143,107 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
     }
 
     /**
+     * Get request body.
+     *
+     * @param WP_REST_Request $request Full details about the request.
+     *
+     * @return array|WP_Error Body payload, or an error when the request carries none.
+     */
+    private function get_request_body( $request ) {
+        // Get request body from form-encoded senders.
+        $body = $request->get_body_params();
+        if ( ! empty( $body ) && is_array( $body ) ) {
+            return $body;
+        }
+
+        // Get request body from JSON senders.
+        $body = $request->get_json_params();
+        if ( ! empty( $body ) && is_array( $body ) ) {
+            return $body;
+        }
+
+        // Get request body from raw, for JSON sent without the JSON content type.
+        $body = $request->get_body();
+        if ( ! empty( $body ) && is_string( $body ) ) {
+            $body = json_decode( $body, true );
+            if ( is_array( $body ) && ! empty( $body ) ) {
+                return $body;
+            }
+        }
+
+        return new WP_Error(
+            'empty_body',
+            __( 'Request body is empty.', 'mainwp' ),
+            array( 'status' => 400 )
+        );
+    }
+
+    /**
+     * Validate the client field text values carried by a request body.
+     *
+     * @param array $body Request body.
+     *
+     * @return WP_Error|true Error when a value cannot be stored as text.
+     */
+    private function validate_client_field_values( $body ) {
+        foreach ( array( 'name', 'description' ) as $key ) {
+            // A body read as raw JSON skips the registered sanitizers, so a value that is not already
+            // text reaches sanitize_text_field() and is stored as a cast of itself or as an empty
+            // string, wiping what it meant to set. A key sent as null counts as sent, not as omitted.
+            if ( array_key_exists( $key, $body ) && ! is_string( $body[ $key ] ) ) {
+                return new WP_Error(
+                    'invalid_field_value',
+                    __( 'Name and description must be text values.', 'mainwp' ),
+                    array( 'status' => 400 )
+                );
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Whether a client already has a field stored under the given name.
+     *
+     * @param string $name       Field name as the handler sanitized it before the write.
+     * @param int    $client_id  Client the field belongs to.
+     * @param int    $exclude_id Field id to skip, for a rename that keeps its own name.
+     *
+     * @uses MainWP_DB_Client::instance()->get_client_fields_by_params()
+     *
+     * @return bool
+     */
+    private function client_field_name_taken( $name, $client_id, $exclude_id = 0 ) {
+        // A field_name lookup strips [ and ] from the value it queries with while the stored name keeps
+        // them, and a PHP comparison would call two names that differ only in case distinct while the
+        // column collation and the unique index call them the same. The match is left to the database
+        // on the stored value so this answer agrees with the index that refused the write.
+        $client_id = (int) $client_id;
+        $fields    = MainWP_DB_Client::instance()->get_client_fields_by_params(
+            array(
+                'client_id'        => $client_id,
+                'field_name_exact' => (string) $name,
+            )
+        );
+
+        if ( ! is_array( $fields ) ) {
+            return false;
+        }
+
+        foreach ( $fields as $existing ) {
+            // Client 0 holds the general fields this route writes, and 0 is not a value the query filters
+            // on, so the owner check happens here.
+            if ( (int) $existing->client_id !== $client_id || (int) $existing->field_id === (int) $exclude_id ) {
+                continue;
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * Get client field request id or name
      *
      * @param WP_REST_Request $request Full details about the request.
@@ -1064,11 +1257,12 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
         $decoded     = rawurldecode( (string) $raw );
         $field_value = trim( sanitize_text_field( wp_unslash( $decoded ) ) );
 
-        if ( empty( $field_value ) ) {
+        if ( '' === $field_value ) {
             return false;
         }
 
-        // Get client field by id.
+        // Get client field by id. A digit-only segment is an id, so "0" and any other all-digit name is
+        // addressable by its own id only, never by name.
         if ( ctype_digit( $field_value ) ) {
             return MainWP_DB_Client::instance()->get_client_fields_by( 'field_id', (int) $field_value );
         }

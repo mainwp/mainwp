@@ -884,6 +884,14 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
     public function update_global_monitoring_settings( $request ) {
         // Get request body.
         $body = $request->get_json_params();
+
+        // A JSON scalar or list body carries none of the settings keys: array_intersect_key() below
+        // fatals on the scalar, and the list would intersect down to nothing and answer as a
+        // successful no-op, so both are treated as no body at all.
+        if ( ! is_array( $body ) || ( array() !== $body && array_keys( $body ) === range( 0, count( $body ) - 1 ) ) ) {
+            $body = array();
+        }
+
         if ( empty( $body ) ) {
             return new WP_Error(
                 'empty_body',
@@ -901,8 +909,25 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
             );
         }
 
+        // Reject a key the route does not declare. get_sanitized_settings_params() drops it, so a
+        // misspelled setting would otherwise reach the processor as an empty settings array and
+        // answer as a successful no-op. The individual route reports the same mistake through its
+        // schema, so it gets the same error code here.
+        $unknown_keys = array_diff( array_keys( $body ), array_keys( $this->get_global_monitor_settings_allowed_fields() ) );
+        if ( ! empty( $unknown_keys ) ) {
+            return new WP_Error(
+                'rest_additional_properties_forbidden',
+                sprintf(
+                    /* translators: %s: comma separated list of request body keys the route does not accept. */
+                    __( 'Unknown settings: %s.', 'mainwp' ),
+                    implode( ', ', $unknown_keys )
+                ),
+                array( 'status' => 400 )
+            );
+        }
+
         // Process global monitoring settings update.
-        $result = $this->process_global_monitoring_settings_update( $body );
+        $result = $this->process_global_monitoring_settings_update( $this->get_sanitized_settings_params( $request, $body ) );
         if ( is_wp_error( $result ) ) {
             return $result;
         }
@@ -939,10 +964,18 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
         // Get request body.
         $body = $request->get_json_params();
 
+        // A JSON scalar or list body carries none of the settings keys: array_intersect_key() below
+        // fatals on the scalar, and the list would intersect down to nothing and answer as a
+        // successful no-op, so both are treated as no body at all.
+        if ( ! is_array( $body ) || ( array() !== $body && array_keys( $body ) === range( 0, count( $body ) - 1 ) ) ) {
+            $body = array();
+        }
+
         if ( empty( $body ) ) {
             return new WP_Error(
                 'empty_body',
                 __( 'Request body is empty.', 'mainwp' ),
+                array( 'status' => 400 )
             );
         }
 
@@ -955,15 +988,20 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
             );
         }
 
-        // Validate request body against schema.
+        // Validate request body against schema. The schema has to see the raw body: the sanitized
+        // params keep only the keys the route registered, so a misspelled key would be filtered out
+        // before additionalProperties could reject it.
         $schema = $this->get_monitor_settings_schema(); // Get default schema.
         $valid  = rest_validate_value_from_schema( $body, $schema, 'body' );
         if ( is_wp_error( $valid ) ) {
+            // A schema error carries no status of its own and REST falls back to 500 for one that
+            // has none, which is the wrong answer for a body the caller got wrong.
+            $valid->add_data( array( 'status' => 400 ) );
             return $valid;
         }
 
         // Sanitize request body.
-        $data = rest_sanitize_value_from_schema( $body, $schema );
+        $data = rest_sanitize_value_from_schema( $this->get_sanitized_settings_params( $request, $body ), $schema );
 
         // Process individual monitor settings update.
         $result = $this->process_individual_monitor_settings_update( $monitor, $data );
@@ -1055,6 +1093,28 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
                 ),
             )
         );
+    }
+
+    /**
+     * Get the settings the request carries, as the registered callbacks sanitized them.
+     *
+     * @param WP_REST_Request $request Full details about the request.
+     * @param array           $body    Raw request body.
+     *
+     * @return array Sanitized settings, keyed by the keys the body carried.
+     */
+    private function get_sanitized_settings_params( $request, $body ) {
+        // The registered sanitize_callbacks produce the request params, so the persisted value is
+        // read from there rather than from the raw body; WordPress currently writes the sanitized
+        // value back into the JSON body too, but that is internal to sanitize_params(), not a
+        // contract. get_params() also carries auth, query and route params, so keep only the
+        // settings keys the route declares and only the ones this body actually sent. It merges in
+        // the reverse of get_parameter_order(), so a JSON body value beats a query parameter of the
+        // same name rather than the other way round.
+        $allowed = $this->get_global_monitor_settings_allowed_fields();
+        $params  = array_intersect_key( $request->get_params(), $allowed );
+
+        return array_intersect_key( $params, $body );
     }
 
     /**

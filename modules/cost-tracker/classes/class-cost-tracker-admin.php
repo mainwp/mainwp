@@ -89,6 +89,8 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
         add_filter( 'mainwp_module_cost_tracker_get_default_cost_fields', array( $this, 'hook_get_default_cost_fields' ), 10, 2 );
         add_filter( 'mainwp_module_cost_tracker_get_next_renewal', array( $this, 'hook_get_next_renewal' ), 10, 3 );
         add_action( 'mainwp_delete_site', array( $this, 'hook_delete_site' ), 10, 3 );
+        add_action( 'mainwp_client_deleted', array( $this, 'hook_delete_client' ) );
+        add_action( 'mainwp_site_tag_action', array( $this, 'hook_site_tag_action' ), 10, 2 );
         add_filter( 'mainwp_module_cost_tracker_get_total_cost', array( $this, 'hook_get_total_cost' ), 10, 2 );
     }
 
@@ -127,6 +129,55 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
                 'item_name'    => 'cost',
                 'object_id'    => $site->id,
                 'object_names' => array( 'site' ),
+            )
+        );
+    }
+
+    /**
+     * Method hook_delete_client()
+     *
+     * Prunes the cost lookup rows of a deleted client. Left behind, they keep matching the
+     * client filter on the Costs page long after the client is gone.
+     *
+     * @param mixed $client client object.
+     *
+     * @return bool result.
+     */
+    public function hook_delete_client( $client ) {
+        if ( empty( $client ) || empty( $client->client_id ) ) {
+            return false;
+        }
+        return MainWP_DB::instance()->delete_lookup_items(
+            'object_id',
+            array(
+                'item_name'    => 'cost',
+                'object_id'    => $client->client_id,
+                'object_names' => array( 'client' ),
+            )
+        );
+    }
+
+    /**
+     * Method hook_site_tag_action()
+     *
+     * Prunes the cost lookup rows of a deleted tag. The hook also fires on create and update,
+     * which leave the rows alone.
+     *
+     * @param mixed  $group  tag object.
+     * @param string $action tag action.
+     *
+     * @return bool result.
+     */
+    public function hook_site_tag_action( $group, $action ) {
+        if ( 'deleted' !== $action || empty( $group ) || empty( $group->id ) ) {
+            return false;
+        }
+        return MainWP_DB::instance()->delete_lookup_items(
+            'object_id',
+            array(
+                'item_name'    => 'cost',
+                'object_id'    => $group->id,
+                'object_names' => array( 'tag' ),
             )
         );
     }
@@ -760,14 +811,78 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
     }
 
     /**
+     * Extract the scalar fields of an imported cost.
+     *
+     * @param array $cost Decoded cost object.
+     *
+     * @return array|false Fields for the DB write, or false when one of them carries a shape
+     *                     that cannot be stored.
+     */
+    private static function import_cost_fields( $cost ) {
+        // Coercing instead of refusing stored a price of 1 for [ 5 ] and a last renewal of
+        // 2026 for '2026-01-15', neither of which the admin pasted.
+        $spec = array(
+            'url'            => 'url',
+            'type'           => 'text',
+            'product_type'   => 'text',
+            'license_type'   => 'text',
+            'price'          => 'float',
+            'payment_method' => 'text',
+            'renewal_type'   => 'text',
+            'last_renewal'   => 'int',
+            'cost_status'    => 'text',
+        );
+
+        $fields = array();
+
+        foreach ( $spec as $field => $kind ) {
+            $value = isset( $cost[ $field ] ) ? $cost[ $field ] : null;
+
+            if ( 'float' === $kind || 'int' === $kind ) {
+                if ( null === $value ) {
+                    $fields[ $field ] = 0;
+                    continue;
+                }
+                if ( 'int' === $kind ) {
+                    // is_numeric() lets 1700000000.9 and '1e9' through, and intval() would
+                    // quietly turn them into a renewal timestamp nobody pasted.
+                    if ( ! is_int( $value ) && ! ( is_string( $value ) && preg_match( '/^-?\d+$/', $value ) ) ) {
+                        return false;
+                    }
+                    $fields[ $field ] = (int) $value;
+                    continue;
+                }
+                if ( ! is_numeric( $value ) ) {
+                    return false;
+                }
+                $fields[ $field ] = floatval( $value );
+                continue;
+            }
+
+            if ( null === $value ) {
+                $fields[ $field ] = '';
+                continue;
+            }
+
+            if ( ! is_string( $value ) ) {
+                return false;
+            }
+
+            $fields[ $field ] = 'url' === $kind ? esc_url_raw( $value ) : sanitize_text_field( $value );
+        }
+
+        return $fields;
+    }
+
+    /**
      * AJAX handler for importing cost tracker entries.
      *
-     * @return void
+     * @return never wp_send_json_*() exits.
      */
     public static function ajax_import_cost() { //phpcs:ignore -- NOSONAR - complex method.
         MainWP_Post_Handler::instance()->secure_request( 'mainwp_cost_tracker_import_cost' );
 
-        if ( ! isset( $_POST['encoded_data'] ) ) {
+        if ( ! isset( $_POST['encoded_data'] ) || ! is_string( $_POST['encoded_data'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- secure_request() verifies the nonce above.
             return wp_send_json_error(
                 array(
                     'message' => esc_html__( 'No cost data provided', 'mainwp' ),
@@ -775,10 +890,11 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
             );
         }
 
-        $encoded_data  = wp_unslash( $_POST['encoded_data'] );
+        $encoded_data  = wp_unslash( $_POST['encoded_data'] ); // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- nonce verified by secure_request() above; a JSON string, and each decoded field is type-checked and sanitized below before use.
         $cost_data_raw = json_decode( $encoded_data, true );
 
-        if ( null === $cost_data_raw || ! is_array( $cost_data_raw ) ) {
+        // The decoded fields feed string functions, so a non-object cost shape is refused here.
+        if ( ! is_array( $cost_data_raw ) || ! isset( $cost_data_raw['cost'] ) || ! is_array( $cost_data_raw['cost'] ) ) {
             return wp_send_json_error(
                 array(
                     'message' => esc_html__( 'Invalid cost data format', 'mainwp' ),
@@ -786,7 +902,7 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
             );
         }
 
-        $cost_name = isset( $cost_data_raw['cost']['name'] ) ? sanitize_text_field( $cost_data_raw['cost']['name'] ) : '';
+        $cost_name = isset( $cost_data_raw['cost']['name'] ) && is_string( $cost_data_raw['cost']['name'] ) ? sanitize_text_field( $cost_data_raw['cost']['name'] ) : '';
 
         if ( empty( $cost_name ) ) {
             return wp_send_json_error(
@@ -796,38 +912,48 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
             );
         }
 
-        $cost_data = array(
-            'name'           => $cost_name,
-            'url'            => isset( $cost_data_raw['cost']['url'] ) ? esc_url( $cost_data_raw['cost']['url'] ) : '',
-            'type'           => isset( $cost_data_raw['cost']['type'] ) ? sanitize_text_field( $cost_data_raw['cost']['type'] ) : '',
-            'product_type'   => isset( $cost_data_raw['cost']['product_type'] ) ? sanitize_text_field( $cost_data_raw['cost']['product_type'] ) : '',
-            'license_type'   => isset( $cost_data_raw['cost']['license_type'] ) ? sanitize_text_field( $cost_data_raw['cost']['license_type'] ) : '',
-            'price'          => isset( $cost_data_raw['cost']['price'] ) ? floatval( $cost_data_raw['cost']['price'] ) : 0,
-            'payment_method' => isset( $cost_data_raw['cost']['payment_method'] ) ? sanitize_text_field( $cost_data_raw['cost']['payment_method'] ) : '',
-            'renewal_type'   => isset( $cost_data_raw['cost']['renewal_type'] ) ? sanitize_text_field( $cost_data_raw['cost']['renewal_type'] ) : '',
-            'last_renewal'   => isset( $cost_data_raw['cost']['last_renewal'] ) ? intval( $cost_data_raw['cost']['last_renewal'] ) : 0,
-            'cost_status'    => isset( $cost_data_raw['cost']['cost_status'] ) ? sanitize_text_field( $cost_data_raw['cost']['cost_status'] ) : '',
-        );
+        $cost_fields = static::import_cost_fields( $cost_data_raw['cost'] );
+
+        if ( false === $cost_fields ) {
+            return wp_send_json_error(
+                array(
+                    'message' => esc_html__( 'Invalid cost data format', 'mainwp' ),
+                )
+            );
+        }
+
+        $cost_data = array_merge( array( 'name' => $cost_name ), $cost_fields );
+
+        $select_sites = $cost_data_raw['cost']['select_sites'] ?? array();
+
+        if ( ! is_array( $select_sites ) ) {
+            return wp_send_json_error(
+                array(
+                    'message' => esc_html__( 'Invalid cost data format', 'mainwp' ),
+                )
+            );
+        }
 
         $selected_sites = array();
 
-        if ( isset( $cost_data_raw['cost']['select_sites'] ) && is_array( $cost_data_raw['cost']['select_sites'] ) ) {
-            foreach ( $cost_data_raw['cost']['select_sites'] as $url ) {
-                $url = esc_url( trim( $url ) );
-                if ( empty( $url ) ) {
-                    continue;
-                }
+        foreach ( $select_sites as $url ) {
+            if ( ! is_string( $url ) ) {
+                continue;
+            }
+            $url = esc_url_raw( trim( $url ) );
+            if ( empty( $url ) ) {
+                continue;
+            }
 
-                if ( '/' !== substr( $url, -1 ) ) {
-                    $url .= '/';
-                }
+            if ( '/' !== substr( $url, -1 ) ) {
+                $url .= '/';
+            }
 
-                $website = MainWP_DB::instance()->get_websites_by_url( $url );
-                $site_id = ! empty( $website ) ? current( $website )->id : null;
+            $website = MainWP_DB::instance()->get_websites_by_url( $url );
+            $site_id = ! empty( $website ) ? current( $website )->id : null;
 
-                if ( ! empty( $site_id ) ) {
-                    $selected_sites[] = $site_id;
-                }
+            if ( ! empty( $site_id ) ) {
+                $selected_sites[] = $site_id;
             }
         }
 

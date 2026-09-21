@@ -2040,13 +2040,12 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     }
                 }
             }
-
+            $output = new \stdClass();
             if ( ! empty( $dbwebsites ) ) {
                 $post_data      = array(
                     'new_user'      => base64_encode( wp_json_encode( $user_to_add ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
                     'send_password' => ( isset( $_POST['send_password'] ) ? intval( $_POST['send_password'] ) : '' ),
                 );
-                $output         = new \stdClass();
                 $output->ok     = array();
                 $output->errors = array();
 
@@ -2152,20 +2151,37 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $errors = array();
         if ( isset( $_FILES['import_user_file_bulkupload']['error'] ) && UPLOAD_ERR_OK === $_FILES['import_user_file_bulkupload']['error'] ) {
-            if ( isset( $_FILES['import_user_file_bulkupload']['tmp_name'] ) && is_uploaded_file( $_FILES['import_user_file_bulkupload']['tmp_name'] ) ) {
-                $tmp_path = isset( $_FILES['import_user_file_bulkupload']['tmp_name'] ) ? sanitize_text_field( wp_unslash( $_FILES['import_user_file_bulkupload']['tmp_name'] ) ) : '';
-                MainWP_System_Utility::get_wp_file_system();
-                // phpcs:enable
-                /**
-                 * WordPress files system object.
-                 *
-                 * @global object
-                 */
-                global $wp_filesystem;
+            $upld_success = false;
+            if ( isset( $_FILES['import_user_file_bulkupload']['tmp_name'] ) ) {
+                $tmp_path = $_FILES['import_user_file_bulkupload']['tmp_name'];
+                if ( is_uploaded_file( $tmp_path ) ) {
+                    $upld_success = true;
+                }
+            }
 
-                $content = $wp_filesystem->get_contents( $tmp_path );
-                $lines   = explode( "\r\n", $content );
+            if ( ! $upld_success ) {
+                $errors[] = esc_html__( 'File could not be uploaded. Temporary file cold not be created. Please make sure that the tmpfile() PHP function is enabled on your server.', 'mainwp' );
+            } else {
+                    $lines = array();
 
+                    $hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
+
+                    // phpcs:enable
+                    /**
+                     * WordPress files system object.
+                     *
+                     * @global object
+                     */
+                    global $wp_filesystem;
+
+                if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
+                        $content = $wp_filesystem->get_contents( $tmp_path );
+                    if ( is_string( $content ) ) {
+                        $lines = explode( "\r\n", $content );
+                    }
+                }
+                $header_line      = '';
+                $valid_rows_count = 0;
                 if ( is_array( $lines ) && ! empty( $lines ) ) {
                     $i = 0;
                     // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -2185,7 +2201,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
                         $items = str_getcsv( $line, ',' );
 
-                        if ( 3 > count( $items ) ) {
+                        if ( 10 > count( $items ) ) {
                             continue;
                         }
 
@@ -2204,15 +2220,17 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         $encoded     = wp_json_encode( $import_data );
                         ?>
                         <input type="hidden" id="user_import_csv_line_<?php echo intval( $i + 1 ); ?>" original-line="<?php echo esc_attr( sanitize_text_field( $line ) ); ?>" encoded-data="<?php echo esc_html( $encoded ); ?>" />
-                        <?php
-                        ++$i;
+                            <?php
+                            ++$i;
+                            ++$valid_rows_count;
                     }
                     $header_line = trim( $header_line );
-                    ?>
-                    <div class="ui modal" id="mainwp-import-users-modal">
-                    <i class="close icon"></i>
-                        <div class="header"><?php esc_html_e( 'Importing new users and add them to your sites.', 'mainwp' ); ?></div>
-                        <div class="scrolling content">
+                    if ( $valid_rows_count ) {
+                        ?>
+                        <div class="ui modal" id="mainwp-import-users-modal">
+                        <i class="close icon"></i>
+                            <div class="header"><?php esc_html_e( 'Importing new users and add them to your sites.', 'mainwp' ); ?></div>
+                            <div class="scrolling content">
                             <?php
                             /**
                              * Action: mainwp_import_users_modal_top
@@ -2223,51 +2241,51 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                              */
                             do_action( 'mainwp_import_users_modal_top' );
                             ?>
-                            <div id="MainWPBulkUploadUserLoading" style="display: none;"><i class="ui active inline loader tiny"></i> <?php esc_html_e( 'Importing Users', 'mainwp' ); ?></div>
-                            <input type="hidden" id="import_user_do_import" value="1"/>
-                            <input type="hidden" id="import_user_total_import" value="<?php echo esc_attr( $i ); ?>"/>
-                            <p>
-                                <div class="import_user_import_listing" id="import_user_import_logging">
-                                    <pre class="log"><?php echo esc_html( $header_line ) . "\n"; ?></pre>
+                                <div id="MainWPBulkUploadUserLoading" style="display: none;"><i class="ui active inline loader tiny"></i> <?php esc_html_e( 'Importing Users', 'mainwp' ); ?></div>
+                                <input type="hidden" id="import_user_do_import" value="1"/>
+                                <input type="hidden" id="import_user_total_import" value="<?php echo esc_attr( $i ); ?>"/>
+                                <p>
+                                    <div class="import_user_import_listing" id="import_user_import_logging">
+                                        <pre class="log"><?php echo esc_html( $header_line ) . "\n"; ?></pre>
+                                    </div>
+                                </p>
+                                <div id="import_user_import_failed_rows" style="display: none;">
+                                    <span><?php echo esc_html( $header_line ); ?></span>
                                 </div>
-                            </p>
-                            <div id="import_user_import_failed_rows" style="display: none;">
-                                <span><?php echo esc_html( $header_line ); ?></span>
+                                <?php
+                                /**
+                                 * Action: mainwp_import_users_modal_bottom
+                                 *
+                                 * Fires on the bottom of the Import Users modal.
+                                 *
+                                 * @since 4.1
+                                 */
+                                do_action( 'mainwp_import_users_modal_bottom' );
+                                ?>
                             </div>
+                            <div class="actions">
+                                <input type="button" name="import_user_btn_import" id="import_user_btn_import" class="ui basic button" value="<?php esc_attr_e( 'Pause', 'mainwp' ); ?>"/>
+                                <input type="button" name="import_user_btn_save_csv" id="import_user_btn_save_csv" style="display:none;" class="ui basic green button" value="<?php esc_attr_e( 'Save failed', 'mainwp' ); ?>"/>
+                            </div>
+                        </div>
+                            <script type="text/javascript">
+                                jQuery( document ).ready( function () {
+                                    jQuery( "#mainwp-import-users-modal" ).modal( {
+                                        closable: false,
+                                        onHide: function() {
+                                            mainwp_forceReload('admin.php?page=BulkImportUsers');
+                                        }
+                                    } ).modal( 'show' );
+                                } );
+                            </script>
+
                             <?php
-                            /**
-                             * Action: mainwp_import_users_modal_bottom
-                             *
-                             * Fires on the bottom of the Import Users modal.
-                             *
-                             * @since 4.1
-                             */
-                            do_action( 'mainwp_import_users_modal_bottom' );
-                            ?>
-                        </div>
-                        <div class="actions">
-                            <input type="button" name="import_user_btn_import" id="import_user_btn_import" class="ui basic button" value="<?php esc_attr_e( 'Pause', 'mainwp' ); ?>"/>
-                            <input type="button" name="import_user_btn_save_csv" id="import_user_btn_save_csv" style="display:none;" class="ui basic green button" value="<?php esc_attr_e( 'Save failed', 'mainwp' ); ?>"/>
-                        </div>
-                    </div>
-                        <script type="text/javascript">
-                            jQuery( document ).ready( function () {
-                                jQuery( "#mainwp-import-users-modal" ).modal( {
-                                    closable: false,
-                                    onHide: function() {
-                                        mainwp_forceReload('admin.php?page=BulkImportUsers');
-                                    }
-                                } ).modal( 'show' );
-                            } );
-                        </script>
-
-                    <?php
-
+                    } else {
+                        $errors[] = esc_html__( 'No valid data rows found. Please make sure the import file is formatted correctly.', 'mainwp' );
+                    }
                 } else {
                     $errors[] = esc_html__( 'Invalid data. Please make sure that the Import file has been formated properly.', 'mainwp' );
                 }
-            } else {
-                $errors[] = esc_html__( 'File could not be uploaded. Temporary file cold not be created. Please make sure that the tmpfile() PHP function is enabled on your server.', 'mainwp' );
             }
         } else {
             $errors[] = esc_html__( 'File could not be uploaded. Please try again. If process keeps failing, please review MainWP Knowledgebase, and if you still have issues, please let us know in the MainWP Community.', 'mainwp' );

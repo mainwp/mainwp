@@ -1402,6 +1402,8 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		$upload_job_table = MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' );
 		$this->assertTrue( $this->index_exists( $upload_job_table, 'uniq_snap_dest_kind' ), 'Fresh install must create the kind-widened upload-job unique key.' );
 
+		$this->assertSame( '9.0.2.24', get_site_option( 'mainwp_db_version' ), 'Fresh install must preserve the merged native-backups db version.' );
+
 		$property = new \ReflectionProperty( MainWP_Install::class, 'mainwp_db_version' );
 		$property->setAccessible( true );
 		$this->assertSame(
@@ -1413,5 +1415,110 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		$this->assertSame( 'yes', get_option( 'mainwp_run_quick_setup' ), 'Fresh install must queue the quick-setup wizard.' );
 		$this->assertNotFalse( get_option( 'mainwp_enableNativeBackups' ), 'Fresh install must write the native-backups flag explicitly.' );
 		$this->assertSame( 0, (int) get_option( 'mainwp_enableNativeBackups' ), 'Fresh install must default native backups to disabled.' );
+	}
+
+	/**
+	 * Upgrading from before 9.0.2.4 must run main's index repair.
+	 *
+	 * @return void
+	 */
+	public function test_install_runs_backup_progress_index_repair_on_upgrade() {
+		$installer = new class() extends MainWP_Install {
+			/**
+			 * Recorded repairs.
+			 *
+			 * @var array
+			 */
+			public $calls = array();
+
+			/**
+			 * Record the migration's repair without changing indexes.
+			 *
+			 * @return bool
+			 */
+			public function repair_backup_progress_index() {
+				$this->calls[] = 'repair_backup_progress_index';
+				return true;
+			}
+		};
+
+		$this->with_real_tables(
+			function () use ( $installer ) {
+				update_site_option( 'mainwp_db_version', '9.0.2.3' );
+				$installer->install();
+			}
+		);
+
+		$this->assertSame( array( 'repair_backup_progress_index' ), $installer->calls );
+		$this->assertSame( '9.0.2.24', get_site_option( 'mainwp_db_version' ) );
+	}
+
+	/**
+	 * A current installation retries main's index repair before the branch's key repair.
+	 *
+	 * @return void
+	 */
+	public function test_install_retries_index_repair_before_unique_key_on_current_version() {
+		$installer     = new class() extends MainWP_Install {
+			/**
+			 * Recorded repairs in execution order.
+			 *
+			 * @var array
+			 */
+			public $calls = array();
+
+			/**
+			 * Record the retry and retain its pending-marker check.
+			 *
+			 * @return bool
+			 */
+			public function maybe_retry_backup_progress_index_repair() {
+				$this->calls[] = 'maybe_retry_backup_progress_index_repair';
+				return parent::maybe_retry_backup_progress_index_repair();
+			}
+
+			/**
+			 * Record the repair without changing indexes.
+			 *
+			 * @return bool
+			 */
+			public function repair_backup_progress_index() {
+				$this->calls[] = 'repair_backup_progress_index';
+				return true;
+			}
+
+			/**
+			 * Record the branch's subsequent retry.
+			 *
+			 * @return bool
+			 */
+			public function maybe_retry_backup_progress_unique_key() {
+				$this->calls[] = 'maybe_retry_backup_progress_unique_key';
+				return true;
+			}
+		};
+		$saved_pending = get_site_option( MainWP_Install::BACKUP_PROGRESS_INDEX_REPAIR_PENDING );
+
+		try {
+			update_site_option( 'mainwp_db_version', '9.0.2.24' );
+			update_site_option( MainWP_Install::BACKUP_PROGRESS_INDEX_REPAIR_PENDING, time() - 2 * HOUR_IN_SECONDS );
+			$installer->install();
+
+			$this->assertSame(
+				array(
+					'maybe_retry_backup_progress_index_repair',
+					'repair_backup_progress_index',
+					'maybe_retry_backup_progress_unique_key',
+				),
+				$installer->calls,
+				'The current-version path must retry both repairs in merge order.'
+			);
+		} finally {
+			if ( false === $saved_pending ) {
+				delete_site_option( MainWP_Install::BACKUP_PROGRESS_INDEX_REPAIR_PENDING );
+			} else {
+				update_site_option( MainWP_Install::BACKUP_PROGRESS_INDEX_REPAIR_PENDING, $saved_pending );
+			}
+		}
 	}
 }

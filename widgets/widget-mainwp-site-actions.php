@@ -566,6 +566,26 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             }
             $filter_user_ids = isset( $filters_saved['user_ids'] ) && ! empty( $filters_saved['user_ids'] ) ? $filters_saved['user_ids'] : '';
 
+            // Fix legacy user filter values.
+            if ( ! empty( $filter_user_ids ) ) {
+                $filter_user_ids = implode(
+                    ',',
+                    array_map(
+                        static function ( $user_id ) {
+                            $parts = explode( '-', trim( $user_id ) );
+
+                            if ( 3 === count( $parts ) && is_numeric( $parts[1] ) && '1' === $parts[2] ) {
+                                $parts[1] = 'xxx';
+                                return implode( '-', $parts );
+                            }
+
+                            return trim( $user_id );
+                        },
+                        explode( ',', $filter_user_ids )
+                    )
+                );
+            }
+
             $filter_sites  = isset( $filters_saved['sites'] ) && ! empty( $filters_saved['sites'] ) ? $filters_saved['sites'] : '';
             $filter_events = isset( $filters_saved['events'] ) && ! empty( $filters_saved['events'] ) ? $filters_saved['events'] : '';
 

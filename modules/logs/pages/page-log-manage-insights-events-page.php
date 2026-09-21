@@ -330,8 +330,29 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
             $filter_groups_ids = isset( $filters_saved['groups_ids'] ) && ! empty( $filters_saved['groups_ids'] ) ? $filters_saved['groups_ids'] : '';
             $filter_client_ids = isset( $filters_saved['client_ids'] ) && ! empty( $filters_saved['client_ids'] ) ? $filters_saved['client_ids'] : false;
             $filter_user_ids   = isset( $filters_saved['user_ids'] ) && ! empty( $filters_saved['user_ids'] ) ? $filters_saved['user_ids'] : '';
-            $filter_dtsstart   = isset( $filters_saved['dtsstart'] ) && ! empty( $filters_saved['dtsstart'] ) ? $filters_saved['dtsstart'] : '';
-            $filter_dtsstop    = isset( $filters_saved['dtsstop'] ) && ! empty( $filters_saved['dtsstop'] ) ? $filters_saved['dtsstop'] : '';
+
+            // Fix legacy user filter values.
+            if ( ! empty( $filter_user_ids ) ) {
+                $filter_user_ids = implode(
+                    ',',
+                    array_map(
+                        static function ( $user_id ) {
+                            $parts = explode( '-', trim( $user_id ) );
+
+                            if ( 3 === count( $parts ) && is_numeric( $parts[1] ) && '1' === $parts[2] ) {
+                                $parts[1] = 'xxx';
+                                return implode( '-', $parts );
+                            }
+
+                            return trim( $user_id );
+                        },
+                        explode( ',', $filter_user_ids )
+                    )
+                );
+            }
+
+            $filter_dtsstart = isset( $filters_saved['dtsstart'] ) && ! empty( $filters_saved['dtsstart'] ) ? $filters_saved['dtsstart'] : '';
+            $filter_dtsstop  = isset( $filters_saved['dtsstop'] ) && ! empty( $filters_saved['dtsstop'] ) ? $filters_saved['dtsstop'] : '';
 
             $filter_source = isset( $filters_saved['source'] ) && ! empty( $filters_saved['source'] ) ? $filters_saved['source'] : '';
             $filter_sites  = isset( $filters_saved['sites'] ) && ! empty( $filters_saved['sites'] ) ? $filters_saved['sites'] : '';

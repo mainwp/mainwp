@@ -328,6 +328,17 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
     }
 
     /**
+     * Effective MainWP child request timeout, in seconds.
+     *
+     * This is the plugin CURLOPT_TIMEOUT, not PHP default_socket_timeout.
+     *
+     * @return string
+     */
+    public static function get_child_request_timeout() {
+        return (string) MainWP_Connect::resolve_child_request_timeout( '' );
+    }
+
+    /**
      *  Method get_php_version()
      *
      * Get PHP Version.
@@ -874,6 +885,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
             'mainwp_maximumSyncRequests'                  => esc_html__( 'Maximum simultaneous sync requests', 'mainwp' ),
             'mainwp_maximumInstallUpdateRequests'         => esc_html__( 'Maximum simultaneous install and update requests', 'mainwp' ),
             'mainwp_maximum_uptime_monitoring_requests'   => esc_html__( 'Maximum simultaneous uptime monitoring requests (Default: 10)', 'mainwp' ),
+            'mainwp_child_request_timeout'                => esc_html__( 'Child request timeout', 'mainwp' ),
             'mainwp_auto_purge_cache'                     => esc_html__( 'Cache control enabled', 'mainwp' ),
         );
 
@@ -922,6 +934,9 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
                     break;
                 case 'mainwp_maximum_uptime_monitoring_requests':
                     $value = ( false === $value ) ? 10 : $value;
+                    break;
+                case 'mainwp_child_request_timeout':
+                    $value = static::get_child_request_timeout() . ' ' . esc_html__( 'seconds', 'mainwp' );
                     break;
                 case 'is_enable_automatic_check_uptime_monitoring':
                     $value = ! empty( $value ) ? esc_html__( 'Yes', 'mainwp' ) : esc_html__( 'No', 'mainwp' );
@@ -1014,7 +1029,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
                 'title'    => esc_html__( 'Low cURL timeout', 'mainwp' ),
                 'detail'   => sprintf(
                     /* translators: 1: detected timeout, 2: recommended timeout */
-                    esc_html__( 'Detected %1$s seconds. MainWP recommends at least %2$s seconds.', 'mainwp' ),
+                    esc_html__( 'Detected %1$s seconds for PHP default_socket_timeout. MainWP recommends at least %2$s seconds. This is the PHP setting, not the MainWP child request timeout.', 'mainwp' ),
                     (string) static::get_curl_timeout(),
                     '300'
                 ),

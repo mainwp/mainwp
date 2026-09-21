@@ -917,6 +917,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             'maximumSyncRequests'              => ( get_option( 'mainwp_maximumSyncRequests' ) === false ) ? 8 : get_option( 'mainwp_maximumSyncRequests' ),
             'maximumInstallUpdateRequests'     => ( get_option( 'mainwp_maximumInstallUpdateRequests' ) === false ) ? 3 : get_option( 'mainwp_maximumInstallUpdateRequests' ),
             'maximumUptimeMonitoringRequests'  => (int) get_option( 'mainwp_maximum_uptime_monitoring_requests', 10 ),
+            'siteRemovalTimeout'               => MainWP_Connect::get_site_removal_ajax_timeout_ms(),
             '_wpnonce'                         => wp_create_nonce( 'mainwp-admin-nonce' ),
             'quickThemeChangeNonce'            => wp_create_nonce( 'mainwp_quick_theme_change' ),
             'demoMode'                         => MainWP_Demo_Handle::is_demo_mode() ? 1 : 0,

@@ -299,6 +299,8 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 $sync_errors = esc_html__( 'HTTP error', 'mainwp' ) . ( ! empty( $e->get_message_extra() ) ? ' - ' . $e->get_message_extra() : '' );
             } elseif ( $e->getMessage() === 'NOMAINWP' ) {
                 $sync_errors = MainWP_Error_Helper::get_error_not_detected_connect();
+            } elseif ( 'TIMEOUT' === $e->getMessage() ) {
+                $sync_errors = MainWP_Error_Helper::get_error_message( $e );
             }
 
             MainWP_Logger::instance()->log_execution_time( 'sync :: [siteid=' . $pWebsite->id . ']' );

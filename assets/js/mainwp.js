@@ -97,10 +97,18 @@ let mainwp_get_remove_calback = function (side_id) {
             id: side_id
         });
 
+        let siteRemovalTimeout = 360000;
+        if (typeof mainwpParams !== 'undefined' && mainwpParams.siteRemovalTimeout) {
+            let parsedRemovalTimeout = parseInt(mainwpParams.siteRemovalTimeout, 10);
+            if (parsedRemovalTimeout > 360000) {
+                siteRemovalTimeout = parsedRemovalTimeout;
+            }
+        }
+
         jQuery.ajax({
             url: ajaxurl,
             data: data,
-            timeout: 180000, // 3 minutes. Slightly longer than the PHP server timeout (2 minutes).
+            timeout: siteRemovalTimeout, // 6 minutes by default. Longer than the PHP deactivate cap (5 minutes). Grows when that cap is above 360 seconds.
             method: 'POST',
             success: function (response) {
 
@@ -512,6 +520,22 @@ globalThis.mainwp_js_get_error_not_detected_connect = function (jsonStr, what, e
     }
     return MainWP.I18n.t('MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests.  If you continue experiencing this issue, check the MainWP Community for help.');
 }
+
+globalThis.mainwp_js_request_timeout_message = function (kind) {
+    let operation = 'The child site request timed out. You can raise the Child request timeout in Settings → Advanced Settings. This is not a missing MainWP Child plugin.';
+    let connect = 'The connection to the child site timed out before it opened. Use Test Connection to check whether the site is reachable. This is not a missing MainWP Child plugin.';
+    let gateway = 'The child site request timed out at a gateway or proxy. This is not a missing MainWP Child plugin. Changing the Child request timeout does not fix this response.';
+    let text = operation;
+    if ('gateway' === kind) {
+        text = gateway;
+    } else if ('connect' === kind) {
+        text = connect;
+    }
+    if (globalThis.MainWP && MainWP.I18n && typeof MainWP.I18n.t === 'function') {
+        return MainWP.I18n.t(text);
+    }
+    return text;
+};
 
 globalThis.mainwp_get_reconnect_error = function (response, siteId) { // NOSONAR - complexity.
     if ('reconnect_failed' === response) {
@@ -1869,6 +1893,9 @@ let mainwp_managesites_add = function () {
             errors.push(MainWP.I18n.t('This site can not be reached! Please use the Test Connection feature and see if the positive response will be returned. For additional help, please review this <a href="https://docs.mainwp.com/troubleshooting/potential-issues/">Knowledgebase document</a>, and if you still have issues, please let us know in the <a href="https://managers.mainwp.com/c/community-support/5">MainWP Community</a>.')); // NOSONAR - noopener - open safe.
         } else if (response == 'NOMAINWP') {
             errors.push(mainwp_js_get_error_not_detected_connect());
+        } else if (response == 'TIMEOUT') {
+            let timeoutKind = res_things && res_things.timeout_kind ? res_things.timeout_kind : 'operation';
+            errors.push(mainwp_js_request_timeout_message(timeoutKind));
         } else if (response.substring(0, 5) == 'ERROR') {
             if (response.length == 5) {
                 errors.push(MainWP.I18n.t('Undefined error occurred. Please try again. If the issue does not resolve, please review this <a href="https://docs.mainwp.com/troubleshooting/potential-issues/">Knowledgebase document</a>, and if you still have issues, please let us know in the <a href="https://managers.mainwp.com/c/community-support/5">MainWP Community</a>.')); // NOSONAR - noopener - open safe.
@@ -3898,6 +3925,14 @@ globalThis.getErrorMessage = function (pError, msgOnly) { // NOSONAR - complex.
         return MainWP.I18n.t('HTTP error') + '! ' + pError.extra;
     } else if (pError.message == 'NOMAINWP' || pError == 'NOMAINWP') {
         return mainwp_js_get_error_not_detected_connect();
+    } else if (pError.message == 'TIMEOUT' || pError == 'TIMEOUT') {
+        let timeoutKind = 'operation';
+        if (pError && pError.timeout_kind) {
+            timeoutKind = pError.timeout_kind;
+        } else if (pError && pError.errorCode) {
+            timeoutKind = pError.errorCode;
+        }
+        return mainwp_js_request_timeout_message(timeoutKind);
     } else if (pError.message == 'ERROR') {
         return 'ERROR' + ((pError.extra != '') && (pError.extra != undefined) ? ': ' + pError.extra : '');
     } else if (pError.message == 'WPERROR') {
@@ -3936,6 +3971,10 @@ globalThis.getErrorMessageInfo = function (repError, outputType) { // NOSONAR - 
 
         if (repError.message == 'NOMAINWP' || repError == 'NOMAINWP') {
             msg = mainwp_js_get_error_not_detected_connect();
+        }
+
+        if (repError.message == 'TIMEOUT' || repError == 'TIMEOUT') {
+            msg = getErrorMessage(repError);
         }
 
         if (msg != '') {

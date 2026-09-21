@@ -2103,6 +2103,8 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     $_error = 'HTTP error' . ( null !== $e->get_message_extra() ? ' - ' . $e->get_message_extra() : '' );
                 } elseif ( 'NOMAINWP' === $e->getMessage() ) {
                     $_error = MainWP_Error_Helper::get_error_not_detected_connect(); // phpcs:ignore WordPress.Security.EscapeOutput
+                } elseif ( 'TIMEOUT' === $e->getMessage() ) {
+                    $_error = MainWP_Error_Helper::get_error_message( $e );
                 }
             }
 
@@ -2509,6 +2511,10 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     $error = 'HTTP error' . ( null !== $e->get_message_extra() ? ' - ' . $e->get_message_extra() : '' );
                 } elseif ( 'NOMAINWP' === $e->getMessage() ) {
                     $error = MainWP_Error_Helper::get_error_not_detected_connect();
+                } elseif ( 'TIMEOUT' === $e->getMessage() ) {
+                    $error          = MainWP_Error_Helper::get_error_message( $e );
+                    $error_category = 'request_timeout';
+                    $error_code     = 'request_timeout';
                 } else {
                     $error = $e->getMessage();
                 }

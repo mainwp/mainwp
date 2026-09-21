@@ -104,6 +104,10 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
             } catch ( MainWP_Exception $e ) {
                 $ret['response']  = $e->getMessage();
                 $ret['resp_data'] = $e->get_data();
+                if ( 'TIMEOUT' === $e->getMessage() ) {
+                    $ret['timeout_kind'] = $e->get_message_error_code();
+                    $ret['resp_data']    = '';
+                }
             }
         }
         $ret['check_me'] = ( isset( $_POST['check_me'] ) ? intval( $_POST['check_me'] ) : null );
@@ -352,6 +356,9 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
             $error = is_array( $info ) && isset( $info['error'] ) ? $info['error'] : '';
             if ( 'NOMAINWP' === $error ) {
                 $error = esc_html__( 'Be sure to deactivate the child plugin on the child site to avoid potential security issues.', 'mainwp' );
+            } elseif ( 'TIMEOUT' === $error ) {
+                $timeout_kind = is_array( $info ) && isset( $info['timeout_kind'] ) ? $info['timeout_kind'] : 'operation';
+                $error        = MainWP_Error_Helper::get_timeout_error_message( $timeout_kind );
             }
             if ( '' !== $error ) {
                 throw new MainWP_Extra_Exception( 'mainwp_remove_site_error', $error ); //phpcs:ignore -- ok.
@@ -382,6 +389,9 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
 
             if ( 'NOMAINWP' === $error ) {
                 $error = esc_html__( 'Be sure to deactivate the child plugin on the child site to avoid potential security issues.', 'mainwp' );
+            } elseif ( 'TIMEOUT' === $error ) {
+                $timeout_kind = is_array( $result ) && isset( $result['timeout_kind'] ) ? $result['timeout_kind'] : 'operation';
+                $error        = MainWP_Error_Helper::get_timeout_error_message( $timeout_kind );
             }
 
             $resp = array(
@@ -443,6 +453,9 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
                     );
                 } catch ( MainWP_Exception $e ) {
                     $information['error'] = $e->getMessage();
+                    if ( 'TIMEOUT' === $e->getMessage() ) {
+                        $information['timeout_kind'] = $e->get_message_error_code();
+                    }
                 }
             } else {
                 $information['removed'] = true;

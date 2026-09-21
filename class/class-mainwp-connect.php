@@ -243,7 +243,9 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         if ( false !== strpos( $body, 'wsidchk' ) ) {
             return '';
         }
-        if ( false !== strpos( $body, '<mainwp>' ) ) {
+        // A partial `<mainwp` fragment is not a Child envelope. Only a body the
+        // success parser would accept suppresses TIMEOUT.
+        if ( static::body_has_complete_mainwp_envelope( $data ) ) {
             return '';
         }
 
@@ -278,6 +280,122 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             return 'gateway';
         }
         return '';
+    }
+
+    /**
+     * Whether the body is a complete Child envelope.
+     *
+     * Matches the `<mainwp>...</mainwp>` parser used by fetch_url_site(). An
+     * opening tag without the closing tag is not complete.
+     *
+     * @param mixed $data Response body.
+     *
+     * @return bool
+     */
+    public static function body_has_complete_mainwp_envelope( $data ) {
+        if ( ! is_string( $data ) || '' === $data ) {
+            return false;
+        }
+        return 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data );
+    }
+
+    /**
+     * Child-envelope body whose decoded error is the timeout message.
+     *
+     * Batch handlers only special-case a mainwp envelope or a missing plugin.
+     * This lets them show the timeout copy without a new handler argument.
+     * The message has no URL, IP, or Location.
+     *
+     * @param string $kind operation, connect, or gateway.
+     *
+     * @return string Envelope, or empty when encoding fails.
+     */
+    public static function timeout_batch_handler_body( $kind ) {
+        return static::handler_error_envelope( MainWP_Error_Helper::get_timeout_error_message( $kind ) );
+    }
+
+    /**
+     * Build a mainwp envelope containing a single error string.
+     *
+     * @param string $message Error text. Must not include a URL, IP, or Location.
+     *
+     * @return string
+     */
+    public static function handler_error_envelope( $message ) {
+        $payload = wp_json_encode(
+            array(
+                'error' => $message,
+            )
+        );
+        if ( ! is_string( $payload ) || '' === $payload ) {
+            return '';
+        }
+        return '<mainwp>' . base64_encode( $payload ) . '</mainwp>'; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- same encoding Child responses already use.
+    }
+
+    /**
+     * Data passed to a fetch_urls_authed handler.
+     *
+     * A complete envelope is left unchanged. A timeout-shaped result with no
+     * complete envelope becomes a timeout error envelope. Anything else is
+     * returned as received.
+     *
+     * @param mixed $data        Response body.
+     * @param mixed $curl_errno  cURL error number captured before curl_close.
+     * @param mixed $err         cURL error string.
+     * @param mixed $http_status HTTP status.
+     *
+     * @return mixed
+     */
+    public static function batch_handler_response_data( $data, $curl_errno, $err, $http_status ) {
+        if ( static::body_has_complete_mainwp_envelope( $data ) ) {
+            return $data;
+        }
+        $kind = static::child_request_timeout_kind( $curl_errno, $err, $http_status, $data );
+        if ( '' === $kind ) {
+            return $data;
+        }
+        $envelope = static::timeout_batch_handler_body( $kind );
+        if ( '' === $envelope ) {
+            return $data;
+        }
+        return $envelope;
+    }
+
+    /**
+     * Result returned by try_visit() when curl_init() does not return a handle.
+     *
+     * No IP is included. Callers treat a non-empty error as a failed visit.
+     *
+     * @return array
+     */
+    public static function try_visit_curl_init_failure() {
+        return array(
+            'host'           => '',
+            'httpCode'       => 0,
+            'httpCodeString' => '',
+            'httpVersion'    => false,
+            'error'          => 'cURL could not be initialized.',
+        );
+    }
+
+    /**
+     * Throw the fetch_url_site() failure for an unusable curl handle.
+     *
+     * @param array $output Fetch output.
+     *
+     * @throws MainWP_Exception HTTPERROR with an empty body. The extra is the fixed init message, not a URL or IP.
+     */
+    public static function throw_fetch_url_site_curl_init_failure( &$output ) {
+        if ( ! is_array( $output ) ) {
+            $output = array();
+        }
+        $output['error_category'] = 'http_error';
+        $output['error_code']     = 'curl_init_failed';
+        $output['error_message']  = 'cURL could not be initialized.';
+        $thr_error                = new MainWP_Exception( 'HTTPERROR', 'cURL could not be initialized.' ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+        $thr_error->set_data( '' );
+        throw $thr_error;
     }
 
     /**
@@ -327,6 +445,10 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $postdata = array( 'test' => 'yes' );
 
         $ch = curl_init();
+        // Active lesson L-20260921-connect-failure-ip-guards: do not call curl_setopt on a failed init (PHP 8 TypeError).
+        if ( ! static::is_valid_curl_handle( $ch ) ) {
+            return static::try_visit_curl_init_failure();
+        }
 
         $proxy = new \WP_HTTP_Proxy();
         if ( $proxy->is_enabled() && $proxy->send_through_proxy( $url ) ) {
@@ -1365,6 +1487,17 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             }
 
             $ch = curl_init();
+            // Active lesson L-20260921-connect-failure-ip-guards: do not call curl_setopt on a failed init (PHP 8 TypeError).
+            if ( ! static::is_valid_curl_handle( $ch ) ) {
+                MainWP_Logger::instance()->debug( 'fetch_urls_authed :: curl_init failed' );
+                if ( null !== $handler ) {
+                    $init_body = static::handler_error_envelope( 'cURL could not be initialized.' );
+                    if ( '' !== $init_body ) {
+                        call_user_func_array( $handler, array( $init_body, $website, &$output, $params ) );
+                    }
+                }
+                continue;
+            }
 
             $proxy = new \WP_HTTP_Proxy();
             if ( $proxy->is_enabled() && $proxy->send_through_proxy( $url ) ) {
@@ -1480,8 +1613,11 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 curl_multi_exec( $mh, $running );
                 curl_multi_select( $mh );
                 while ( $info = curl_multi_info_read( $mh ) ) {
-                    $data     = curl_multi_getcontent( $info['handle'] );
-                    $contains = ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) );
+                    $data         = curl_multi_getcontent( $info['handle'] );
+                    $batch_err    = curl_error( $info['handle'] );
+                    $batch_errno  = (int) curl_errno( $info['handle'] );
+                    $batch_status = (int) curl_getinfo( $info['handle'], CURLINFO_HTTP_CODE );
+                    $contains     = static::body_has_complete_mainwp_envelope( $data );
                     curl_multi_remove_handle( $mh, $info['handle'] );
 
                     $rid = static::get_resource_id( $info['handle'] );
@@ -1509,8 +1645,9 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     }
 
                     if ( null !== $handler ) {
-                        $site = &$handleToWebsite[ static::get_resource_id( $info['handle'] ) ];
-                        call_user_func_array( $handler, array( $data, $site, &$output, $params ) );
+                        $site         = &$handleToWebsite[ static::get_resource_id( $info['handle'] ) ];
+                        $handler_data = static::batch_handler_response_data( $data, $batch_errno, $batch_err, $batch_status );
+                        call_user_func_array( $handler, array( $handler_data, $site, &$output, $params ) );
                     }
 
                     unset( $handleToWebsite[ static::get_resource_id( $info['handle'] ) ] );
@@ -1527,11 +1664,15 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             }
         } else {
             foreach ( $requestHandles as $ch ) {
-                $data = curl_exec( $ch );
+                $data         = curl_exec( $ch );
+                $batch_err    = curl_error( $ch );
+                $batch_errno  = (int) curl_errno( $ch );
+                $batch_status = (int) curl_getinfo( $ch, CURLINFO_HTTP_CODE );
 
                 if ( null !== $handler ) {
-                    $site = &$handleToWebsite[ static::get_resource_id( $ch ) ];
-                    call_user_func_array( $handler, array( $data, $site, &$output, $params ) );
+                    $site         = &$handleToWebsite[ static::get_resource_id( $ch ) ];
+                    $handler_data = static::batch_handler_response_data( $data, $batch_errno, $batch_err, $batch_status );
+                    call_user_func_array( $handler, array( $handler_data, $site, &$output, $params ) );
                 }
             }
         }
@@ -2088,6 +2229,10 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $fetch_track_id = MainWP_Execution_Helper::execute_call_track( 'start_point', $website, $postdata );
 
         $ch = curl_init();
+        // Active lesson L-20260921-connect-failure-ip-guards: do not call curl_setopt on a failed init (PHP 8 TypeError).
+        if ( ! static::is_valid_curl_handle( $ch ) ) {
+            static::throw_fetch_url_site_curl_init_failure( $output );
+        }
 
         $proxy = new \WP_HTTP_Proxy();
         if ( $proxy->is_enabled() && $proxy->send_through_proxy( $url ) ) {

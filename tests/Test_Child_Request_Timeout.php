@@ -137,4 +137,66 @@ class Test_Child_Request_Timeout extends \WP_UnitTestCase {
 		update_option( MainWP_Connect::CHILD_REQUEST_TIMEOUT_OPTION, 500 );
 		$this->assertSame( 560000, MainWP_Connect::get_site_removal_ajax_timeout_ms() );
 	}
+
+	public function test_partial_mainwp_body_is_timeout_and_complete_envelope_is_not(): void {
+		$partial = '<mainwp>truncated-without-close';
+		$this->assertFalse( MainWP_Connect::body_has_complete_mainwp_envelope( $partial ) );
+		$this->assertSame( 'gateway', MainWP_Connect::child_request_timeout_kind( 0, '', 524, $partial ) );
+		$this->assertSame( 'TIMEOUT', MainWP_Connect::child_fetch_else_code( $partial, '', 524, 0 ) );
+		$this->assertSame( 'operation', MainWP_Connect::child_request_timeout_kind( 28, 'Operation timed out after 300000 milliseconds with 0 bytes received', 0, $partial ) );
+
+		$complete = '<mainwp>abc</mainwp>';
+		$this->assertTrue( MainWP_Connect::body_has_complete_mainwp_envelope( $complete ) );
+		$this->assertSame( '', MainWP_Connect::child_request_timeout_kind( 0, '', 524, $complete ) );
+		$this->assertSame( '', MainWP_Connect::child_request_timeout_kind( 28, 'Operation timed out after 300000 milliseconds with 0 bytes received', 200, $complete ) );
+	}
+
+	public function test_curl_init_failure_paths_omit_ip_and_url(): void {
+		$this->assertFalse( MainWP_Connect::is_valid_curl_handle( false ) );
+
+		$visit = MainWP_Connect::try_visit_curl_init_failure();
+		$this->assertSame( 'cURL could not be initialized.', $visit['error'] );
+		$this->assertSame( '', $visit['host'] );
+		$this->assertArrayNotHasKey( 'ip', $visit );
+		$this->assertStringNotContainsString( 'http', strtolower( $visit['error'] ) );
+
+		$init_body = MainWP_Connect::handler_error_envelope( 'cURL could not be initialized.' );
+		$this->assertTrue( MainWP_Connect::body_has_complete_mainwp_envelope( $init_body ) );
+		$this->assertStringNotContainsString( 'http', strtolower( $init_body ) );
+
+		$output = null;
+		$thrown = false;
+		try {
+			MainWP_Connect::throw_fetch_url_site_curl_init_failure( $output );
+		} catch ( MainWP_Exception $e ) {
+			$thrown = true;
+			$this->assertSame( 'HTTPERROR', $e->getMessage() );
+			$this->assertSame( '', $e->get_data() );
+			$this->assertStringNotContainsString( 'http', strtolower( (string) $e->get_message_extra( false ) ) );
+		}
+		$this->assertTrue( $thrown );
+		$this->assertSame( 'curl_init_failed', $output['error_code'] );
+	}
+
+	public function test_batch_timeout_becomes_timeout_envelope_and_complete_body_is_kept(): void {
+		$gateway = MainWP_Connect::batch_handler_response_data( '<html>timeout page</html>', 0, '', 522 );
+		$this->assertTrue( MainWP_Connect::body_has_complete_mainwp_envelope( $gateway ) );
+		$this->assertSame( 1, preg_match( '/<mainwp>(.*)<\/mainwp>/', $gateway, $parts ) );
+		$decoded = json_decode( base64_decode( $parts[1] ), true );
+		$this->assertIsArray( $decoded );
+		$this->assertStringContainsString( 'does not fix this response', $decoded['error'] );
+		$this->assertStringNotContainsString( 'http', strtolower( $decoded['error'] ) );
+		$this->assertStringNotContainsString( 'NOMAINWP', $decoded['error'] );
+
+		$operation = MainWP_Connect::batch_handler_response_data( false, 28, 'Operation timed out after 300000 milliseconds with 0 bytes received', 0 );
+		$this->assertSame( 1, preg_match( '/<mainwp>(.*)<\/mainwp>/', $operation, $op_parts ) );
+		$op_decoded = json_decode( base64_decode( $op_parts[1] ), true );
+		$this->assertStringContainsString( 'Settings → Advanced Settings', $op_decoded['error'] );
+
+		$complete = '<mainwp>abc</mainwp>';
+		$this->assertSame( $complete, MainWP_Connect::batch_handler_response_data( $complete, 28, 'Operation timed out after 300000 milliseconds with 0 bytes received', 504 ) );
+
+		$missing = '<html><body>MainWP Child plugin is not installed.</body></html>';
+		$this->assertSame( $missing, MainWP_Connect::batch_handler_response_data( $missing, 0, '', 200 ) );
+	}
 }

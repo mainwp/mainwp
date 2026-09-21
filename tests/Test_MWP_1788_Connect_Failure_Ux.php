@@ -422,6 +422,22 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Empty outbound IP uses the failure-UX fallback, not Status warning copy.
+	 */
+	public function test_empty_outbound_ip_uses_unavailable_copy(): void {
+		$html = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::render_html(
+			\MainWP\Dashboard\MainWP_Connect_Failure_Ux::build_details(
+				array(
+					'http_status'      => 403,
+					'skip_outbound_ip' => true,
+				)
+			)
+		);
+		$this->assertStringContainsString( 'Unavailable. Check Info → Server for Public Dashboard IP, or ask your host.', $html );
+		$this->assertStringNotContainsString( 'Unavailable. Contact your host if the Server IP is local or private.', $html );
+	}
+
+	/**
 	 * Successful Test Connection context can skip the outbound-IP lookup.
 	 */
 	public function test_skip_outbound_ip_avoids_lookup_on_success_context(): void {

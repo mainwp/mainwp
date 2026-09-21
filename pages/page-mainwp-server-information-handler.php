@@ -2552,7 +2552,11 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
      */
     public static function get_dashboard_outbound_ip() {
         $data = static::get_public_dashboard_ip_data();
-        return isset( $data['value'] ) ? (string) $data['value'] : '';
+        if ( isset( $data['status'], $data['value'] ) && 'pass' === $data['status'] && static::is_public_ip_address( (string) $data['value'] ) ) {
+            return (string) $data['value'];
+        }
+
+        return '';
     }
 
     /**

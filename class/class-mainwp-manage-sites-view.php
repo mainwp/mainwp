@@ -1986,6 +1986,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             $success    = false;
             $_error     = '';
             $error_code = '';
+            $output     = array();
             try {
                 if ( $sync_first ) {
                     $success = MainWP_Sync::sync_site( $website, true );
@@ -2060,13 +2061,16 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         $website->verify_certificate,
                         MainWP_Credential_Storage::decrypt_credential( $website->http_user ),
                         MainWP_Credential_Storage::decrypt_credential( $website->http_pass ),
-                        $website->ssl_version
+                        $website->ssl_version,
+                        array(),
+                        $output
                     );
 
                     if ( isset( $information['error'] ) && '' !== $information['error'] ) {
                         $err        = urldecode( $information['error'] );
                         $_error     = MainWP_Utility::esc_content( $err );
                         $error_code = isset( $information['error_code'] ) ? sanitize_text_field( wp_unslash( $information['error_code'] ) ) : '';
+                        $_error     = MainWP_Error_Helper::get_connect_failure_message( new MainWP_Exception( $err, '', $error_code ), $output );
                     } elseif ( isset( $information['register'] ) && 'OK' === $information['register'] ) {
 
                         $en_pk_data = MainWP_Encrypt_Data_Lib::instance()->encrypt_privkey( $privkey, $website->id, true );
@@ -2100,7 +2104,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     }
                 }
             } catch ( MainWP_Exception $e ) {
-                $_error = MainWP_Error_Helper::get_connect_failure_message( $e );
+                $_error = MainWP_Error_Helper::get_connect_failure_message( $e, $output );
             }
 
             /**

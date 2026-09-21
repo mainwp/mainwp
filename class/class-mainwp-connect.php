@@ -278,12 +278,17 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         $out['error'] = ( '' === $err && false === $found ? 'Invalid host.' : $err );
 
+        $response_body = '';
+        if ( ! $hide_raw && is_string( $data ) ) {
+            $response_body = $data;
+        }
+
         $out = MainWP_Connect_Failure_Ux::enrich_output(
             $out,
             array(
                 'http_status'      => $http_status,
                 'headers'          => $resp_headers,
-                'body'             => $hide_raw ? '' : ( is_string( $data ) ? $data : '' ),
+                'body'             => $response_body,
                 'resolved_ip'      => $ip,
                 'error'            => $out['error'],
                 'skip_outbound_ip' => ( '' === $out['error'] && 200 === (int) $http_status ),
@@ -2091,10 +2096,15 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         $output['http_status'] = (int) $http_status;
 
+        $response_body = '';
+        if ( ! $hide_raw && is_string( $data ) ) {
+            $response_body = $data;
+        }
+
         $failure_context = array(
             'http_status' => $http_status,
             'headers'     => $resp_headers,
-            'body'        => $hide_raw ? '' : ( is_string( $data ) ? $data : '' ),
+            'body'        => $response_body,
             'resolved_ip' => $resolved_ip,
             'error'       => $err,
         );

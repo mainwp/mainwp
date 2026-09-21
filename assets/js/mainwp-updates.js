@@ -1784,6 +1784,7 @@ let updatesoverview_themes_upgrade_int = function (slug, websiteId, bulkMode, la
                         if (!done && pBulkMode)
                             updatesoverview_themes_upgrade_all_update_site_status(pWebsiteId, extErr);
                         websiteHolder.find('td:last-child').html(extErr);
+                        mainwpVars.errorCount++;
                     } else {
                         let res = response.result;
                         let res_error = response.result_error;

@@ -19,7 +19,7 @@ class Test_MWP_1790_Add_Site_2FA_Note extends \WP_UnitTestCase {
 	 */
 	public function test_connection_2fa_note_explains_login_2fa_does_not_block_mainwp(): void {
 		ob_start();
-		\MainWP_Manage_Sites::render_connection_2fa_note();
+		\MainWP\Dashboard\MainWP_Manage_Sites::render_connection_2fa_note();
 		$html = ob_get_clean();
 
 		$this->assertStringContainsString( 'ui info message', $html );

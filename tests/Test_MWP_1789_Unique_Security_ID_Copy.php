@@ -22,7 +22,7 @@ class Test_MWP_1789_Unique_Security_ID_Copy extends \WP_UnitTestCase {
 		\MainWP\Dashboard\MainWP_Manage_Sites::render_connection_unique_security_id_note();
 		$html = ob_get_clean();
 
-		$this->assertStringContainsString( 'ui info message', $html );
+		$this->assertStringContainsString( 'ui blue message', $html );
 		$this->assertStringContainsString( 'Administrator password only, Unique Security ID only, or both are valid', $html );
 		$this->assertStringContainsString( 'Settings > MainWP Child', $html );
 		$this->assertStringContainsString( 'Require Unique Security ID', $html );

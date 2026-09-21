@@ -811,7 +811,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      */
     public static function render_connection_unique_security_id_note() {
         ?>
-        <div class="ui info message">
+        <div class="ui blue message">
             <?php esc_html_e( 'Administrator password only, Unique Security ID only, or both are valid, depending on how MainWP Child is configured. Generate or create a new Unique Security ID on the child site under Settings > MainWP Child: enable Require Unique Security ID and click Save Settings.', 'mainwp' ); ?>
         </div>
         <?php

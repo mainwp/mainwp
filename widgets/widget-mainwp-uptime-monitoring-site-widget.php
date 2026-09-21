@@ -246,7 +246,7 @@ class MainWP_Uptime_Monitoring_Site_Widget {
 
         static::render_top_widget();
         if ( MainWP_Utility::show_mainwp_message( 'notice', 'failed-attempt-create-primary-monitor-' . $site_id ) ) {
-            $opt_name = 'mainwp_failed_attempt_create_primary_monitor_for_wp_' . $site_id;
+            $opt_name = 'mainwp_primary_monitor_repair_attempts_for_wp_' . $site_id;
             if ( get_option( $opt_name ) ) {
 
                 $settings_url = add_query_arg(

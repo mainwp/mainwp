@@ -202,7 +202,7 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                 $success = MainWP_DB_Uptime_Monitoring::instance()->update_wp_monitor( $update );
 
                 if ( $site_id && empty( $update['issub'] ) ) {
-                    $opt_name = 'mainwp_failed_attempt_create_primary_monitor_for_wp_' . $site_id;
+                    $opt_name = 'mainwp_primary_monitor_repair_attempts_for_wp_' . $site_id;
                     if ( $success ) {
                         delete_option( $opt_name );
                     }

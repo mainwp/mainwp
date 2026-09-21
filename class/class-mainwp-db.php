@@ -3326,7 +3326,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                     )
                 );
 
-                $opt_name = 'mainwp_failed_attempt_create_primary_monitor_for_wp_' . $websiteid;
+                $opt_name = 'mainwp_primary_monitor_repair_attempts_for_wp_' . $websiteid;
 
                 if ( ! $success ) {
                     update_option( $opt_name, 1 );

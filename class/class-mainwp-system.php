@@ -64,7 +64,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * @var string The plugin current update version.
      */
-    private $check_ver_update = '0.0.7';
+    private $check_ver_update = '0.0.8';
 
     /**
      * Private variable to hold the plugin slug (mainwp/mainwp.php)
@@ -821,7 +821,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             update_option( 'mainwp_extensions_all_activation_cached', '' );
         }
 
-        if ( version_compare( $saved_ver, '0.0.7', '<' ) ) {
+        if ( version_compare( $saved_ver, '0.0.8', '<' ) ) {
             static::handle_admin_perform_update( 'attempted_repair_primary_monitors' ); // init attempted repair.
         }
 
@@ -1009,7 +1009,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 $update_actions = array();
             }
             if ( 'attempted_repair_primary_monitors' === $action ) {
-                $update_actions['attempted_repair_primary_monitors'] = 0;
+                $update_actions['attempted_repair_primary_monitors'] = 1;
             }
         }
 
@@ -1020,18 +1020,9 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $update = false;
 
         if ( isset( $update_actions['attempted_repair_primary_monitors'] ) ) {
-            $result = MainWP_DB_Uptime_Monitoring::instance()->repair_missing_primary_monitors(
-                null,
-                $update_actions['attempted_repair_primary_monitors']
-            );
-
-            if ( is_array( $result ) ) {
-                if ( ! empty( $result['has_more'] ) ) {
-                    $update_actions['attempted_repair_primary_monitors'] = $result['attempted'];
-                } else {
-                    unset( $update_actions['attempted_repair_primary_monitors'] );
-                }
-
+            $result = MainWP_DB_Uptime_Monitoring::instance()->repair_missing_primary_monitors();
+            if ( is_array( $result ) && empty( $result['has_more'] ) ) {
+                unset( $update_actions['attempted_repair_primary_monitors'] );
                 $update = true;
             }
         }

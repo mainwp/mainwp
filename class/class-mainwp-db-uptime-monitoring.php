@@ -839,13 +839,105 @@ KEY idx_wpid_issub (wpid, issub)";
      * Repair sites that are missing their Primary Monitor.
      *
      * @param null|int $site_id  Site ID to repair, or null to repair all sites.
-     * @param null|int $attempted Number of repair attempts, or null if no repair was attempted.
      * @param int      $limit     Maximum number of sites to process in one batch.
      *
-     * @return array{found:int,created:int,attempted:int,has_more:bool} Repair result.
+     * @return array{found:int,created:int,has_more:bool} Repair result.
      */
-    public function repair_missing_primary_monitors( $site_id = null, $attempted = null, $limit = 50 ) {
-        $site_ids = $this->get_sites_missing_primary_monitor( $site_id, $limit );
+    public function repair_missing_primary_monitors( $site_id = null, $limit = 50 ) {
+        /*
+        * A specific site repair does not use the retry counter.
+        */
+        if ( null !== $site_id ) {
+            $site_ids = $this->get_sites_missing_primary_monitor( $site_id, $limit );
+
+            $created = 0;
+            $found   = count( $site_ids );
+
+            foreach ( $site_ids as $current_site_id ) {
+                $data = array(
+                    'wpid'   => $current_site_id,
+                    'suburl' => '',
+                );
+
+                $created_id = $this->update_wp_monitor( $data );
+
+                if ( $created_id ) {
+                    ++$created;
+
+                    $opt_name = 'mainwp_primary_monitor_repair_attempts_for_wp_' . $current_site_id;
+
+                    if ( get_option( $opt_name ) ) {
+                        delete_option( $opt_name );
+                    }
+                }
+            }
+
+            return array(
+                'found'    => $found,
+                'created'  => $created,
+                'has_more' => false,
+            );
+        }
+
+        /*
+        * Get enough missing sites to fill the batch after excluding sites
+        * that have already reached the retry limit.
+        *
+        * The failed-attempt counter is stored per site so one permanently
+        * failing site cannot prevent other sites from being repaired.
+        */
+        $site_ids    = array();
+        $fetch_limit = $limit;
+        $count       = count( $site_ids );
+
+        while ( $count < $limit ) {
+            $candidate_ids = $this->get_sites_missing_primary_monitor( null, $fetch_limit );
+
+            if ( empty( $candidate_ids ) ) {
+                break;
+            }
+
+            $site_ids = array();
+
+            foreach ( $candidate_ids as $current_site_id ) {
+                $opt_name = 'mainwp_primary_monitor_repair_attempts_for_wp_' . $current_site_id;
+                $attempts = (int) get_option( $opt_name, 0 );
+
+                /*
+                * Do not retry a site that has already failed the maximum
+                * number of times.
+                */
+                if ( $attempts >= 3 ) {
+                    continue;
+                }
+
+                $site_ids[] = $current_site_id;
+
+                if ( count( $site_ids ) >= $limit ) {
+                    break;
+                }
+            }
+
+            /*
+            * If the query returned fewer candidates than requested, there
+            * are no more sites to scan.
+            */
+            if ( count( $candidate_ids ) < $fetch_limit ) {
+                break;
+            }
+
+            /*
+            * Increase the fetch size to compensate for sites that have
+            * reached the retry limit and were skipped.
+            */
+            $skipped = count( $candidate_ids ) - count( $site_ids );
+
+            if ( $skipped > 0 ) {
+                $fetch_limit += $skipped;
+            }
+
+            $count = count( $site_ids );
+        }
 
         $created = 0;
         $found   = count( $site_ids );
@@ -858,70 +950,42 @@ KEY idx_wpid_issub (wpid, issub)";
 
             $created_id = $this->update_wp_monitor( $data );
 
+            $opt_name = 'mainwp_primary_monitor_repair_attempts_for_wp_' . $current_site_id;
+
             if ( $created_id ) {
                 ++$created;
 
-                $opt_name = 'mainwp_failed_attempt_create_primary_monitor_for_wp_' . $current_site_id;
-
+                /*
+                * The monitor was successfully created, so remove any
+                * previous failure counter.
+                */
                 if ( get_option( $opt_name ) ) {
                     delete_option( $opt_name );
                 }
+            } else {
+                /*
+                * Count failures per site. Once a site reaches 3 failures,
+                * it will be skipped by subsequent repair batches.
+                */
+                $attempts = (int) get_option( $opt_name, 0 );
+                update_option( $opt_name, $attempts + 1 );
             }
         }
 
-        // A specific site repair does not use the retry/attempt counter.
-        if ( null !== $site_id ) {
-            return array(
-                'found'     => $found,
-                'created'   => $created,
-                'attempted' => 0,
-                'has_more'  => false,
-            );
-        }
-
-        // No sites remain to repair.
-        if ( 0 === $found ) {
-            return array(
-                'found'     => 0,
-                'created'   => 0,
-                'attempted' => 0,
-                'has_more'  => false,
-            );
-        }
-
-        $attempted = null === $attempted ? 0 : $attempted;
-
         /*
-        * Failed repairs count as an attempt.
+        * There are still eligible sites to repair when the batch was full.
+        * Failed sites that reached the retry limit are excluded from the
+        * next batch, allowing the remaining sites to continue.
         */
-        if ( $found > $created ) {
-            ++$attempted;
-        } else {
-            /*
-            * The current batch was completely successful.
-            * Reset the failed-attempt counter so the next batch gets
-            * its own retry allowance.
-            */
-            $attempted = 0;
-        }
-
-        /*
-        * Continue when there are more sites to process, or when the current
-        * batch contains failed sites that have not reached the retry limit.
-        */
-        $has_more = $found === $limit || $found > $created;
-
-        if ( $found > $created && $attempted >= 3 ) {
-            $has_more = false;
-        }
+        $has_more = $found === $limit;
 
         return array(
-            'found'     => $found,
-            'created'   => $created,
-            'attempted' => $attempted,
-            'has_more'  => $has_more,
+            'found'    => $found,
+            'created'  => $created,
+            'has_more' => $has_more,
         );
     }
+
 
     /**
      * Get site IDs that do not have a Primary Monitor.

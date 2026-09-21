@@ -15,6 +15,7 @@ namespace MainWP\Dashboard\Tests;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_DB_Backup;
 use MainWP\Dashboard\MainWP_Install;
+use MainWP\Dashboard\MainWP_Logger;
 
 /**
  * Class MainWP_Backup_DB_Upgrade_Test
@@ -1671,18 +1672,23 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 	 */
 	public static function restore_repair_matrix() {
 		return array(
-			'no active rows'      => array( array(), null, true ),
-			'one active row'      => array( array( array() ), 0, true ),
-			'all pristine'        => array( array( array( 'checkpoint' => '' ), array( 'checkpoint' => '[]' ), array() ), 2, true ),
-			'newer progressed'    => array( array( array(), array( 'status' => 'running' ) ), 1, true ),
-			'older progressed'    => array( array( array( 'status' => 'failed_retryable' ), array() ), 0, true ),
-			'child handle'        => array( array( array( 'child_task_id' => 'child-1' ), array() ), 0, true ),
-			'snapshot handle'     => array( array( array(), array( 'pre_snapshot_task_id' => 'snapshot-1' ) ), 1, true ),
-			'lease owner'         => array( array( array( 'locked_by' => 'worker-1' ), array() ), 0, true ),
-			'lease deadline'      => array( array( array( 'locked_until' => 123 ), array() ), 0, true ),
-			'checkpoint progress' => array( array( array( 'checkpoint' => '{"phase":"staging"}' ), array() ), 0, true ),
-			'invalid checkpoint'  => array( array( array( 'checkpoint' => 'invalid' ), array() ), 0, true ),
-			'two progressed'      => array( array( array( 'status' => 'running' ), array( 'child_task_id' => 'child-2' ), array() ), null, false ),
+			'no active rows'       => array( array(), null, true ),
+			'one active row'       => array( array( array() ), 0, true ),
+			'all pristine'         => array( array( array(), array() ), 1, true ),
+			'newer progressed'     => array( array( array(), array( 'status' => 'running' ) ), 1, true ),
+			'older progressed'     => array( array( array( 'status' => 'failed_retryable' ), array() ), 0, true ),
+			'child handle'         => array( array( array( 'child_task_id' => 'child-1' ), array() ), 0, true ),
+			'snapshot handle'      => array( array( array(), array( 'pre_snapshot_task_id' => 'snapshot-1' ) ), 1, true ),
+			'lease owner'          => array( array( array( 'locked_by' => 'worker-1' ), array() ), 0, true ),
+			'lease deadline'       => array( array( array( 'locked_until' => 123 ), array() ), 0, true ),
+			'negative lease'       => array( array( array( 'locked_until' => -1 ), array() ), 1, true ),
+			'transfer progress'    => array( array( array( 'checkpoint' => '{"transfer":{"offset":12}}' ), array() ), 0, true ),
+			'resume status'        => array( array( array( 'checkpoint' => '{"resume_status":"staging"}' ), array() ), 0, true ),
+			'failure transfer'     => array( array( array( 'checkpoint' => '{"last_failure_transfer":[]}' ), array() ), 0, true ),
+			'non-array checkpoint' => array( array( array( 'checkpoint' => 'null' ), array() ), 0, true ),
+			'empty checkpoint'     => array( array( array( 'checkpoint' => '' ), array() ), 0, true ),
+			'invalid checkpoint'   => array( array( array( 'checkpoint' => 'invalid' ), array() ), 0, true ),
+			'two progressed'       => array( array( array( 'status' => 'running' ), array( 'child_task_id' => 'child-2' ), array() ), null, false ),
 		);
 	}
 
@@ -1696,8 +1702,19 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 	 */
 	public function test_restore_site_repair_matrix( $fixtures, $keep, $repaired ) {
 		global $wpdb;
-		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
-		$ids   = array();
+		$table    = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$ids      = array();
+		$logger   = MainWP_Logger::instance();
+		$priority = new \ReflectionProperty( $logger, 'logPriority' );
+		$priority->setAccessible( true );
+		$previous = $priority->getValue( $logger );
+		$priority->setValue( $logger, MainWP_Logger::WARNING );
+		$messages = array();
+		$capture  = static function ( $text ) use ( &$messages ) {
+			$messages[] = $text;
+		};
+		add_filter( 'mainwp_log_do_to_db', '__return_true' );
+		add_action( 'mainwp_before_log_data', $capture );
 		try {
 			$wpdb->query( "ALTER TABLE {$table} DROP INDEX uniq_active_site" ); // phpcs:ignore WordPress.DB -- test fixture.
 			foreach ( $fixtures as $fixture ) {
@@ -1710,7 +1727,20 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 								'site_id'     => 889901,
 								'snapshot_id' => 42,
 								'status'      => 'pending',
-								'checkpoint'  => '{}',
+								'checkpoint'  => wp_json_encode(
+									array(
+										'restore_id' => 'repair01',
+										'sub_type'   => 'db',
+										'plan'       => array( array( 'snapshot_id' => 42 ) ),
+										'options'    => array(
+											'pre_snapshot' => false,
+											'file_rollback' => false,
+											'preserve_orders' => false,
+											'woo_order_since' => 0,
+										),
+										'transfer'   => array(),
+									)
+								),
 							),
 							$fixture
 						)
@@ -1723,6 +1753,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 			$this->assertSame( $repaired, MainWP_Install::instance()->repair_backup_site_unique_keys() );
 			$this->assertSame( $repaired, $this->index_exists( $table, 'uniq_active_site' ) );
 			if ( ! $repaired ) {
+				$this->assertContains( sprintf( 'Backup identity repair deferred for %s: blocked by progressed duplicate jobs; site_id=889901; job_ids=%s.', $table, implode( ',', array_reverse( array_slice( $ids, 0, 2 ) ) ) ), $messages );
 				$this->assertGreaterThan( 0, (int) get_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_PENDING ) );
 				$this->assertSame( $before, $wpdb->get_results( "SELECT * FROM {$table} WHERE site_id = 889901 ORDER BY id", ARRAY_A ) ); // phpcs:ignore WordPress.DB -- test probe.
 				return;
@@ -1745,6 +1776,13 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 				}
 			}
 		} finally {
+			remove_action( 'mainwp_before_log_data', $capture );
+			remove_filter( 'mainwp_log_do_to_db', '__return_true' );
+			$priority->setValue( $logger, $previous );
+			foreach ( $messages as $message ) {
+				$wpdb->delete( MainWP_DB::instance()->get_table_name( 'action_log' ), array( 'log_content' => $message ) ); // phpcs:ignore WordPress.DB -- test cleanup.
+				$wpdb->delete( MainWP_DB::instance()->get_table_name( 'action_log' ), array( 'log_content' => 'CRON :: ' . $message ) ); // phpcs:ignore WordPress.DB -- test cleanup.
+			}
 			$wpdb->query( "DELETE FROM {$table} WHERE site_id = 889901" ); // phpcs:ignore WordPress.DB -- test cleanup.
 			MainWP_Install::instance()->repair_backup_site_unique_keys();
 			self::commit_transaction();
@@ -1777,17 +1815,36 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 	 */
 	public function test_site_identity_repair_rejects_foreign_index( $suffix, $key, $definition ) {
 		global $wpdb;
-		$table = MainWP_DB::instance()->get_table_name( $suffix );
+		$table    = MainWP_DB::instance()->get_table_name( $suffix );
+		$logger   = MainWP_Logger::instance();
+		$priority = new \ReflectionProperty( $logger, 'logPriority' );
+		$priority->setAccessible( true );
+		$previous = $priority->getValue( $logger );
+		$priority->setValue( $logger, MainWP_Logger::WARNING );
+		$messages = array();
+		$capture  = static function ( $text ) use ( &$messages ) {
+			$messages[] = $text;
+		};
+		add_filter( 'mainwp_log_do_to_db', '__return_true' );
+		add_action( 'mainwp_before_log_data', $capture );
 		try {
 			$this->assertNotFalse( $wpdb->query( "ALTER TABLE {$table} DROP INDEX {$key}, ADD {$definition}" ) ); // phpcs:ignore WordPress.DB -- test fixture.
 			$before = $wpdb->get_results( $wpdb->prepare( "SHOW INDEX FROM {$table} WHERE Key_name = %s", $key ), ARRAY_A ); // phpcs:ignore WordPress.DB -- test probe.
 			delete_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_PENDING );
 			$this->assertFalse( MainWP_Install::instance()->repair_backup_site_unique_keys() );
+			$this->assertContains( sprintf( 'Backup identity repair deferred for %s: malformed same-name index %s.', $table, $key ), $messages );
 			$this->assertGreaterThan( 0, (int) get_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_PENDING ) );
 			$after = $wpdb->get_results( $wpdb->prepare( "SHOW INDEX FROM {$table} WHERE Key_name = %s", $key ), ARRAY_A ); // phpcs:ignore WordPress.DB -- test probe.
 			$this->assertSame( array_column( $before, 'Column_name' ), array_column( $after, 'Column_name' ) );
 			$this->assertSame( array_column( $before, 'Non_unique' ), array_column( $after, 'Non_unique' ) );
 		} finally {
+			remove_action( 'mainwp_before_log_data', $capture );
+			remove_filter( 'mainwp_log_do_to_db', '__return_true' );
+			$priority->setValue( $logger, $previous );
+			foreach ( $messages as $message ) {
+				$wpdb->delete( MainWP_DB::instance()->get_table_name( 'action_log' ), array( 'log_content' => $message ) ); // phpcs:ignore WordPress.DB -- test cleanup.
+				$wpdb->delete( MainWP_DB::instance()->get_table_name( 'action_log' ), array( 'log_content' => 'CRON :: ' . $message ) ); // phpcs:ignore WordPress.DB -- test cleanup.
+			}
 			$wpdb->query( "ALTER TABLE {$table} DROP INDEX {$key}" ); // phpcs:ignore WordPress.DB -- test cleanup.
 			MainWP_Install::instance()->repair_backup_site_unique_keys();
 			self::commit_transaction();

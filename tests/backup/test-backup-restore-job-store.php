@@ -637,7 +637,7 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 			if ( 'cancel_job' === $terminal ) {
 				$this->assertSame( 'retry', $this->store->get_job( $id )->last_error );
 			}
-			$this->assertSame( 'cancel_job' === $terminal, $this->store->cancel_job( $id ), 'A terminal row only acknowledges its existing status.' );
+			$this->assertFalse( $this->store->cancel_job( $id ), 'Only the first terminal writer succeeds.' );
 		}
 	}
 
@@ -744,6 +744,29 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 		$this->assertGreaterThan( 0, $this->store->create_job( 77904, 43, array() ) );
 		$this->assertFalse( $this->store->set_status( $id, 'running' ) );
 		$this->assertSame( 'cancelled', $this->store->get_job( $id )->status );
+	}
+
+	/**
+	 * The source-status fence also applies when the site has no sibling job.
+	 */
+	public function test_set_status_refuses_active_write_onto_lone_cancelled_row() {
+		$id = $this->store->create_job( 77904, 42, array() );
+		$this->assertTrue( $this->store->cancel_job( $id ) );
+		$this->assertFalse( $this->store->set_status( $id, 'running' ) );
+		$this->assertSame( 'cancelled', $this->store->get_job( $id )->status );
+		$this->assertNull( $this->store->get_job( $id )->active_site_id );
+	}
+
+	/**
+	 * Repeating a terminal write cannot acknowledge another writer's transition.
+	 */
+	public function test_set_status_tokenless_terminal_noop_returns_false() {
+		foreach ( array( 'completed', 'cancelled', 'failed_permanent' ) as $status ) {
+			$id = $this->store->create_job( 77904, 42, array() );
+			$this->assertTrue( $this->store->set_status( $id, $status ) );
+			$this->assertFalse( $this->store->set_status( $id, $status ), $status );
+			$this->assertSame( $status, $this->store->get_job( $id )->status );
+		}
 	}
 
 	/**

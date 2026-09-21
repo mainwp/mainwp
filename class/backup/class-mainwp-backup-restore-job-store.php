@@ -415,8 +415,9 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
      * - Active -> active or terminal: write; a supplied token must match.
      * - Terminal -> active or terminal: no write, with or without a token.
      * - Changed row: true. Query failure or missing row: false.
-     * - Unchanged row, token supplied: true only while that token still owns it.
-     * - Unchanged row, no token: true only if its status already matches.
+     * - Unchanged row, terminal destination: false; only the winning writer succeeds.
+     * - Unchanged row, active destination: a supplied token must still own it;
+     *   without a token, true only if its status already matches.
      *
      * @param int         $job_id     Job id.
      * @param string      $status     New status.
@@ -469,7 +470,10 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
         if ( false === $changed || 1 === $changed ) {
             return 1 === $changed;
         }
-        // Resolve an unchanged write from the current row, including same-second no-ops.
+        if ( ! $active ) {
+            return false;
+        }
+        // Resolve an unchanged active write, including same-second no-ops.
         $current = $this->get_job( $job_id );
         if ( null === $current ) {
             return false;

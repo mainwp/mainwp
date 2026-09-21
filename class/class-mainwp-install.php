@@ -980,7 +980,10 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
                     // - All duplicates pristine: keep the highest id.
                     // - Exactly one progressed row: keep it; cancel only pristine siblings.
                     // - Two or more progressed rows: leave the site untouched and defer this table.
-                    // Pristine means pending, no handles or lease, and an empty checkpoint.
+                    // Pristine means pending, no handles or owner, no positive lease deadline,
+                    // and a decoded array containing only initial checkpoint keys with empty transfer.
+                    // Any extra key (including resume_status or last_failure_transfer), non-empty
+                    // transfer, or undecodable/non-array checkpoint counts as progress.
                     // The unique key is hardening, not worth terminalizing a live restore for.
                     $rows = $this->wpdb->get_results(
                         $this->wpdb->prepare(
@@ -1003,12 +1006,14 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
                         }
                         $progressed = array();
                         foreach ( $jobs as $job ) {
-                            $checkpoint = '' === (string) $job->checkpoint ? array() : json_decode( $job->checkpoint, true );
-                            if ( 'pending' !== $job->status || '' !== (string) $job->child_task_id || '' !== (string) $job->pre_snapshot_task_id || '' !== (string) $job->locked_by || 0 !== (int) $job->locked_until || array() !== $checkpoint ) {
+                            $checkpoint   = json_decode( $job->checkpoint, true );
+                            $initial_keys = array_fill_keys( array( 'restore_id', 'sub_type', 'plan', 'options', 'transfer' ), true );
+                            if ( 'pending' !== $job->status || '' !== (string) $job->child_task_id || '' !== (string) $job->pre_snapshot_task_id || '' !== (string) $job->locked_by || 0 < (int) $job->locked_until || ! is_array( $checkpoint ) || ! empty( $checkpoint['transfer'] ) || ! empty( array_diff_key( $checkpoint, $initial_keys ) ) ) {
                                 $progressed[] = $job;
                             }
                         }
                         if ( count( $progressed ) > 1 ) {
+                            MainWP_Logger::instance()->warning( sprintf( 'Backup identity repair deferred for %s: blocked by progressed duplicate jobs; site_id=%d; job_ids=%s.', $table, $jobs[0]->site_id, implode( ',', wp_list_pluck( $progressed, 'id' ) ) ) );
                             $cleared = false;
                             continue;
                         }
@@ -1019,7 +1024,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
                             }
                             $changed = $this->wpdb->query(
                                 $this->wpdb->prepare(
-                                    "UPDATE {$table} SET status = 'cancelled', active_site_id = NULL, locked_until = 0, locked_by = '', last_error = %s WHERE id = %d AND status = 'pending' AND child_task_id = '' AND pre_snapshot_task_id = '' AND locked_by = '' AND locked_until = 0 AND checkpoint = %s", // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- trusted table; recheck pristine state so a worker that progressed after the SELECT is not cancelled.
+                                    "UPDATE {$table} SET status = 'cancelled', active_site_id = NULL, locked_until = 0, locked_by = '', last_error = %s WHERE id = %d AND status = 'pending' AND child_task_id = '' AND pre_snapshot_task_id = '' AND locked_by = '' AND locked_until <= 0 AND checkpoint = %s", // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- trusted table; recheck pristine state so a worker that progressed after the SELECT is not cancelled.
                                     'Superseded by the active restore uniqueness repair.',
                                     $job->id,
                                     $job->checkpoint
@@ -1053,7 +1058,10 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
                 }
                 // A foreign same-name index must remain untouched and keep the retry armed.
                 $valid_index = 1 === count( (array) $has_index ) && 0 === (int) $has_index[0]->Non_unique && 1 === (int) $has_index[0]->Seq_in_index && $column === $has_index[0]->Column_name;
-                $repaired    = $valid_index && $repaired;
+                if ( ! $valid_index && ! empty( $has_index ) ) {
+                    MainWP_Logger::instance()->warning( sprintf( 'Backup identity repair deferred for %s: malformed same-name index %s.', $table, $key ) );
+                }
+                $repaired = $valid_index && $repaired;
             }
         } finally {
             $this->wpdb->suppress_errors( $suppress );

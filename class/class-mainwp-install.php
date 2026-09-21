@@ -43,6 +43,11 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     const BACKUP_SITE_UNIQ_KEYS_REPAIR_PENDING = 'mainwp_backup_site_uniq_keys_repair_pending';
 
     /**
+     * Latest site-identity repair blockers, keyed by table, for support diagnostics.
+     */
+    const BACKUP_SITE_UNIQ_KEYS_REPAIR_REASONS = 'mainwp_backup_site_uniq_keys_repair_reasons';
+
+    /**
      * MySQL advisory lock name serializing the wp_backup_progress duplicate
      * collapse.
      *
@@ -949,6 +954,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     public function repair_backup_site_unique_keys(): bool {
         $suppress = $this->wpdb->suppress_errors();
         $repaired = true;
+        $reasons  = array();
         $schemas  = array(
             'wp_backup'             => array( 'manual_site_id', 'uniq_manual_site' ),
             'wp_backup_restore_job' => array( 'active_site_id', 'uniq_active_site' ),
@@ -1013,6 +1019,12 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
                             }
                         }
                         if ( count( $progressed ) > 1 ) {
+                            $reasons[ $table ]['table']   = $table;
+                            $reasons[ $table ]['reason']  = 'progressed_duplicates';
+                            $reasons[ $table ]['sites'][] = array(
+                                'site_id' => (int) $jobs[0]->site_id,
+                                'job_ids' => array_map( 'intval', wp_list_pluck( $progressed, 'id' ) ),
+                            );
                             MainWP_Logger::instance()->warning( sprintf( 'Backup identity repair deferred for %s: blocked by progressed duplicate jobs; site_id=%d; job_ids=%s.', $table, $jobs[0]->site_id, implode( ',', wp_list_pluck( $progressed, 'id' ) ) ) );
                             $cleared = false;
                             continue;
@@ -1051,15 +1063,29 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
                 }
 
                 // dbDelta reports planned changes even when an ALTER fails; verify before clearing the retry marker.
-                $has_index = $this->wpdb->get_results( $this->wpdb->prepare( "SHOW INDEX FROM {$table} WHERE Key_name = %s", $key ) ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL introspection; table name escaped via esc_sql.
+                $has_index    = $this->wpdb->get_results( $this->wpdb->prepare( "SHOW INDEX FROM {$table} WHERE Key_name = %s", $key ) ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL introspection; table name escaped via esc_sql.
+                $alter_failed = false;
+                $alter_error  = '';
                 if ( empty( $has_index ) ) {
-                    $this->wpdb->query( "ALTER TABLE {$table} ADD UNIQUE KEY {$key} ({$column})" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL statement; table name escaped via esc_sql.
+                    $alter_failed = false === $this->wpdb->query( "ALTER TABLE {$table} ADD UNIQUE KEY {$key} ({$column})" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL statement; table name escaped via esc_sql.
+                    if ( $alter_failed ) {
+                        $alter_error = $this->wpdb->last_error;
+                    }
                     $has_index = $this->wpdb->get_results( $this->wpdb->prepare( "SHOW INDEX FROM {$table} WHERE Key_name = %s", $key ) ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL introspection; table name escaped via esc_sql.
                 }
                 // A foreign same-name index must remain untouched and keep the retry armed.
                 $valid_index = 1 === count( (array) $has_index ) && 0 === (int) $has_index[0]->Non_unique && 1 === (int) $has_index[0]->Seq_in_index && $column === $has_index[0]->Column_name;
                 if ( ! $valid_index && ! empty( $has_index ) ) {
+                    // Merge, never overwrite: a table can be blocked by duplicates and a bad key at once.
+                    $reasons[ $table ]['table']  = $table;
+                    $reasons[ $table ]['reason'] = 'malformed_index';
                     MainWP_Logger::instance()->warning( sprintf( 'Backup identity repair deferred for %s: malformed same-name index %s.', $table, $key ) );
+                }
+                if ( ! $valid_index && $alter_failed ) {
+                    $reasons[ $table ]['table']  = $table;
+                    $reasons[ $table ]['reason'] = 'add_unique_failed';
+                    $reasons[ $table ]['error']  = $alter_error;
+                    MainWP_Logger::instance()->warning( sprintf( 'Backup identity repair deferred for %s: failed to add unique key %s: %s', $table, $key, $alter_error ) );
                 }
                 $repaired = $valid_index && $repaired;
             }
@@ -1069,8 +1095,10 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
 
         if ( $repaired ) {
             delete_site_option( self::BACKUP_SITE_UNIQ_KEYS_REPAIR_PENDING );
+            delete_site_option( self::BACKUP_SITE_UNIQ_KEYS_REPAIR_REASONS );
         } else {
             update_site_option( self::BACKUP_SITE_UNIQ_KEYS_REPAIR_PENDING, time() );
+            update_site_option( self::BACKUP_SITE_UNIQ_KEYS_REPAIR_REASONS, $reasons );
         }
         return $repaired;
     }

@@ -1708,7 +1708,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		$priority = new \ReflectionProperty( $logger, 'logPriority' );
 		$priority->setAccessible( true );
 		$previous = $priority->getValue( $logger );
-		$priority->setValue( $logger, MainWP_Logger::WARNING );
+		$priority->setValue( $logger, MainWP_Logger::DISABLED );
 		$messages = array();
 		$capture  = static function ( $text ) use ( &$messages ) {
 			$messages[] = $text;
@@ -1750,14 +1750,34 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 			}
 			$before = $wpdb->get_results( "SELECT * FROM {$table} WHERE site_id = 889901 ORDER BY id", ARRAY_A ); // phpcs:ignore WordPress.DB -- test probe.
 			delete_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_PENDING );
+			update_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_REASONS, array( 'stale' ) );
 			$this->assertSame( $repaired, MainWP_Install::instance()->repair_backup_site_unique_keys() );
 			$this->assertSame( $repaired, $this->index_exists( $table, 'uniq_active_site' ) );
 			if ( ! $repaired ) {
+				$this->assertSame(
+					array(
+						$table => array(
+							'table'  => $table,
+							'reason' => 'progressed_duplicates',
+							'sites'  => array(
+								array(
+									'site_id' => 889901,
+									'job_ids' => array_reverse( array_slice( $ids, 0, 2 ) ),
+								),
+							),
+						),
+					),
+					get_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_REASONS )
+				);
+				$this->assertSame( array(), $messages );
+				$priority->setValue( $logger, MainWP_Logger::WARNING );
+				$this->assertFalse( MainWP_Install::instance()->repair_backup_site_unique_keys() );
 				$this->assertContains( sprintf( 'Backup identity repair deferred for %s: blocked by progressed duplicate jobs; site_id=889901; job_ids=%s.', $table, implode( ',', array_reverse( array_slice( $ids, 0, 2 ) ) ) ), $messages );
 				$this->assertGreaterThan( 0, (int) get_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_PENDING ) );
 				$this->assertSame( $before, $wpdb->get_results( "SELECT * FROM {$table} WHERE site_id = 889901 ORDER BY id", ARRAY_A ) ); // phpcs:ignore WordPress.DB -- test probe.
 				return;
 			}
+			$this->assertFalse( get_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_REASONS ) );
 			$this->assertFalse( get_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_PENDING ) );
 			foreach ( $ids as $offset => $id ) {
 				$row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d", $id ) ); // phpcs:ignore WordPress.DB -- test probe.
@@ -1820,7 +1840,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		$priority = new \ReflectionProperty( $logger, 'logPriority' );
 		$priority->setAccessible( true );
 		$previous = $priority->getValue( $logger );
-		$priority->setValue( $logger, MainWP_Logger::WARNING );
+		$priority->setValue( $logger, MainWP_Logger::DISABLED );
 		$messages = array();
 		$capture  = static function ( $text ) use ( &$messages ) {
 			$messages[] = $text;
@@ -1831,6 +1851,18 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 			$this->assertNotFalse( $wpdb->query( "ALTER TABLE {$table} DROP INDEX {$key}, ADD {$definition}" ) ); // phpcs:ignore WordPress.DB -- test fixture.
 			$before = $wpdb->get_results( $wpdb->prepare( "SHOW INDEX FROM {$table} WHERE Key_name = %s", $key ), ARRAY_A ); // phpcs:ignore WordPress.DB -- test probe.
 			delete_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_PENDING );
+			$this->assertFalse( MainWP_Install::instance()->repair_backup_site_unique_keys() );
+			$this->assertSame(
+				array(
+					$table => array(
+						'table'  => $table,
+						'reason' => 'malformed_index',
+					),
+				),
+				get_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_REASONS )
+			);
+			$this->assertSame( array(), $messages );
+			$priority->setValue( $logger, MainWP_Logger::WARNING );
 			$this->assertFalse( MainWP_Install::instance()->repair_backup_site_unique_keys() );
 			$this->assertContains( sprintf( 'Backup identity repair deferred for %s: malformed same-name index %s.', $table, $key ), $messages );
 			$this->assertGreaterThan( 0, (int) get_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_PENDING ) );
@@ -1849,5 +1881,82 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 			MainWP_Install::instance()->repair_backup_site_unique_keys();
 			self::commit_transaction();
 		}
+	}
+
+	/**
+	 * A failed ADD reports its database error; an absent key repaired normally stays quiet.
+	 *
+	 * @dataProvider site_identity_add_results
+	 * @param bool $fail Whether to fail the ADD statement.
+	 */
+	public function test_site_identity_repair_add_unique_diagnostics( $fail ) {
+		global $wpdb;
+		$table    = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$logger   = MainWP_Logger::instance();
+		$priority = new \ReflectionProperty( $logger, 'logPriority' );
+		$priority->setAccessible( true );
+		$previous = $priority->getValue( $logger );
+		$priority->setValue( $logger, MainWP_Logger::WARNING );
+		$messages = array();
+		$capture  = static function ( $text ) use ( &$messages ) {
+			$messages[] = $text;
+		};
+		$block    = static function ( $query ) use ( $table, $fail ) {
+			if ( $fail && 0 === strpos( $query, "ALTER TABLE {$table} ADD UNIQUE KEY uniq_active_site" ) ) {
+				return 'SELECT mainwp_site_repair_forced_failure';
+			}
+			return $query;
+		};
+		add_filter( 'mainwp_log_do_to_db', '__return_true' );
+		add_action( 'mainwp_before_log_data', $capture );
+		try {
+			$this->assertNotFalse( $wpdb->query( "ALTER TABLE {$table} DROP INDEX uniq_active_site" ) ); // phpcs:ignore WordPress.DB -- test fixture.
+			delete_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_REASONS );
+			add_filter( 'query', $block );
+			$this->assertSame( ! $fail, MainWP_Install::instance()->repair_backup_site_unique_keys() );
+			$this->assertSame( ! $fail, $this->index_exists( $table, 'uniq_active_site' ) );
+			if ( $fail ) {
+				$recorded = get_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_REASONS );
+				$this->assertSame( array( $table ), array_keys( $recorded ) );
+				$this->assertSame( $table, $recorded[ $table ]['table'] );
+				$this->assertSame( 'add_unique_failed', $recorded[ $table ]['reason'] );
+				// The engine's own message is what makes the deferral actionable.
+				$this->assertStringContainsString( 'mainwp_site_repair_forced_failure', $recorded[ $table ]['error'] );
+				$this->assertCount( 1, $messages );
+				$this->assertStringContainsString( "Backup identity repair deferred for {$table}: failed to add unique key uniq_active_site:", $messages[0] );
+				$this->assertStringContainsString( 'mainwp_site_repair_forced_failure', $messages[0] );
+			} else {
+				$this->assertFalse( get_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_REASONS ) );
+				$this->assertSame( array(), $messages );
+			}
+			remove_filter( 'query', $block );
+			$this->assertTrue( MainWP_Install::instance()->repair_backup_site_unique_keys() );
+			$this->assertFalse( get_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_REASONS ) );
+			$this->assertFalse( get_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_PENDING ) );
+		} finally {
+			remove_filter( 'query', $block );
+			remove_action( 'mainwp_before_log_data', $capture );
+			remove_filter( 'mainwp_log_do_to_db', '__return_true' );
+			$priority->setValue( $logger, $previous );
+			foreach ( $messages as $message ) {
+				$wpdb->delete( MainWP_DB::instance()->get_table_name( 'action_log' ), array( 'log_content' => $message ) ); // phpcs:ignore WordPress.DB -- test cleanup.
+				$wpdb->delete( MainWP_DB::instance()->get_table_name( 'action_log' ), array( 'log_content' => 'CRON :: ' . $message ) ); // phpcs:ignore WordPress.DB -- test cleanup.
+			}
+			MainWP_Install::instance()->repair_backup_site_unique_keys();
+			self::commit_transaction();
+		}
+	}
+
+	/**
+	 * A failed ADD UNIQUE must be diagnosed; an absent key on a normal first
+	 * run must stay silent.
+	 *
+	 * @return array ADD UNIQUE failure and normal absent-key cases.
+	 */
+	public static function site_identity_add_results() {
+		return array(
+			'failed ADD' => array( true ),
+			'absent key' => array( false ),
+		);
 	}
 }

@@ -1609,7 +1609,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 unset( $information['sync'] );
             }
 
-            if ( isset( $information['sync_partial'] ) && ! empty( $information['sync_partial'] ) ) {
+            if ( isset( $information['sync_partial'] ) && is_array( $information['sync_partial'] ) && ! empty( $information['sync_partial'] ) ) {
                 MainWP_Sync::sync_partial_information( $website, $information['sync_partial'] );
                 unset( $information['sync_partial'] );
             }

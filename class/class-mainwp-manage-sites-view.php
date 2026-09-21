@@ -2325,7 +2325,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 );
 
                 if ( isset( $information['error'] ) && '' !== $information['error'] ) {
-                    $error = MainWP_Utility::esc_content( $information['error'] );
+                    $err = urldecode( $information['error'] );
                     if ( is_array( $output ) ) {
                         if ( ! empty( $output['error_category'] ) ) {
                             $error_category = $output['error_category'];
@@ -2337,6 +2337,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                             $error_code = $output['error_code'];
                         }
                     }
+                    $error = MainWP_Error_Helper::get_connect_failure_message( new MainWP_Exception( $err, '', $error_code ), $output );
                 } elseif ( isset( $information['register'] ) && 'OK' === $information['register'] ) {
                     $reported_site_url = isset( $information['siteurl'] ) ? trim( wp_unslash( $information['siteurl'] ) ) : '';
 

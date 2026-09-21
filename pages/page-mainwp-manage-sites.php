@@ -719,6 +719,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                 <div class="sub header"></div>
                             </div>
                         </h2>
+                        <div id="mainwp-test-connection-details" class="mainwp-connect-failure-ux-wrap"></div>
                     </div>
                 </div>
                 <div class="actions">

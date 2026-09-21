@@ -2546,6 +2546,16 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
     }
 
     /**
+     * Dashboard outbound IP to allowlist (Public Dashboard IP from Status).
+     *
+     * @return string
+     */
+    public static function get_dashboard_outbound_ip() {
+        $data = static::get_public_dashboard_ip_data();
+        return isset( $data['value'] ) ? (string) $data['value'] : '';
+    }
+
+    /**
      * Get public dashboard IP data.
      *
      * @return array<string,string>

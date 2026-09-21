@@ -56,7 +56,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      */
     public static function try_visit( $url, $ssl_verifyhost = null, $http_user = null, $http_pass = null, $sslVersion = 0, $forceUseIPv4 = null, $no_body = false ) { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
-        $agent    = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
+        $agent    = MainWP_Connect_Failure_Ux::get_user_agent();
         $postdata = array( 'test' => 'yes' );
 
         $ch = curl_init();
@@ -126,6 +126,9 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         curl_setopt( $ch, CURLOPT_HTTPHEADER, $headers );
         curl_setopt( $ch, CURLOPT_REFERER, get_option( 'siteurl' ) );
+
+        $resp_headers = '';
+        static::capture_response_headers( $ch, $resp_headers );
 
         $force_use_ipv4 = false;
         if ( null !== $forceUseIPv4 ) {
@@ -260,6 +263,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         );
 
         $hidden_data = '[hidden response data]';
+        $raw_body    = is_string( $data ) ? $data : '';
 
         if ( ( false === $ip || $ip === $host || ! static::validate_ip( $ip ) ) && apply_filters( 'mainwp_hide_raw_connection_response_data', true ) ) { // Failed to resolve hostname.
             $data = $hidden_data;
@@ -274,7 +278,39 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         $out['error'] = ( '' === $err && false === $found ? 'Invalid host.' : $err );
 
+        $out = MainWP_Connect_Failure_Ux::enrich_output(
+            $out,
+            array(
+                'http_status' => $http_status,
+                'headers'     => $resp_headers,
+                'body'        => ( '[hidden response data]' === $raw_body ) ? '' : $raw_body,
+                'resolved_ip' => $ip,
+                'error'       => $out['error'],
+            )
+        );
+
         return $out;
+    }
+
+    /**
+     * Capture response headers on a cURL handle without changing the request.
+     *
+     * @param resource|\CurlHandle $ch      cURL handle.
+     * @param string               $headers Captured header text.
+     *
+     * @return void
+     */
+    public static function capture_response_headers( $ch, &$headers ) {
+        $headers = '';
+        curl_setopt(
+            $ch,
+            CURLOPT_HEADERFUNCTION,
+            static function ( $curl, $header_line ) use ( &$headers ) {
+                unset( $curl );
+                $headers .= $header_line;
+                return strlen( $header_line );
+            }
+        );
     }
 
 
@@ -1810,7 +1846,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             }
         }
 
-        $agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
+        $agent = MainWP_Connect_Failure_Ux::get_user_agent();
 
         if ( ! empty( $website ) ) {
             MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'Request to [' . $url . '] [' . MainWP_Utility::value_to_string( $postdata, 1 ) . ']' );
@@ -1878,6 +1914,9 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
         curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
         curl_setopt( $ch, CURLOPT_ENCODING, 'none' );
+
+        $resp_headers = '';
+        static::capture_response_headers( $ch, $resp_headers );
 
         if ( ! empty( $http_user ) && ! empty( $http_pass ) ) {
             $http_pass = stripslashes( $http_pass );
@@ -2050,6 +2089,21 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         $output['http_status'] = (int) $http_status;
 
+        $raw_body = is_string( $data ) ? $data : '';
+        $output   = MainWP_Connect_Failure_Ux::enrich_output(
+            $output,
+            array(
+                'http_status' => $http_status,
+                'headers'     => isset( $resp_headers ) ? $resp_headers : '',
+                'body'        => $raw_body,
+                'resolved_ip' => $ip,
+                'error'       => $err,
+            )
+        );
+        if ( ! empty( $output['response_readable'] ) ) {
+            $output['fetch_data'] = $output['response_readable'];
+        }
+
         MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'http status: [' . $http_status . '] err: [' . $err . ']' );
         if ( '400' === $http_status ) {
             MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'post data: [' . MainWP_Utility::value_to_string( $postdata, 1 ) . ']' );
@@ -2135,7 +2189,16 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         }
 
         if ( null !== $thr_error ) {
-            $thr_error->set_data( $hidden_data ); // to compatible.
+            $readable = ! empty( $output['response_readable'] ) ? $output['response_readable'] : $hidden_data;
+            $thr_error->set_data(
+                array(
+                    'text'        => $readable,
+                    'http_status' => (int) $http_status,
+                    'headers'     => isset( $output['response_headers'] ) ? $output['response_headers'] : '',
+                    'body'        => isset( $output['response_body'] ) ? $output['response_body'] : '',
+                    'resolved_ip' => $ip,
+                )
+            );
             throw $thr_error;
         }
     }

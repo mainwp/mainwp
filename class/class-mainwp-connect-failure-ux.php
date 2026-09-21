@@ -681,7 +681,7 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
         $parts = function_exists( 'wp_parse_url' ) ? wp_parse_url( $url ) : parse_url( $url );
         if ( ! is_array( $parts ) ) {
-            return substr( $url, 0, strcspn( $url, '?#' ) );
+            return '';
         }
 
         return self::rebuild_url( $parts );

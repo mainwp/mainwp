@@ -260,6 +260,7 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 		$this->assertSame( 'https://idp.example.test/cb', $ux::redact_url( 'https://idp.example.test/cb#SAMLResponse=qa-fragment' ) );
 		$this->assertSame( 'https://sso.example.test:8443/authorize', $ux::redact_url( 'https://user:pass@sso.example.test:8443/authorize?ticket=secret' ) );
 		$this->assertSame( '/authorize', $ux::redact_url( '/authorize?ticket=secret#token' ) );
+		$this->assertSame( '', $ux::redact_url( 'https://user:password@example.test:99999/path' ) );
 
 		$headers = "HTTP/1.1 302 Found\r\nLocation: https://sso.example.test/authorize?ticket=secret#token\r\n";
 		$details = $ux::build_details(
@@ -294,6 +295,10 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 		$this->assertStringNotContainsString( 'SAMLResponse', $fragment_snip );
 		$this->assertStringNotContainsString( 'qa-fragment', $fragment_snip );
 		$this->assertStringNotContainsString( '#', $fragment_snip );
+
+		$unparsed = $ux::summarize_headers( "HTTP/1.1 302 Found\r\nLocation: https://user:password@example.test:99999/path\r\n" );
+		$this->assertStringNotContainsString( 'password', $unparsed );
+		$this->assertStringNotContainsString( 'user:', $unparsed );
 	}
 
 	/**

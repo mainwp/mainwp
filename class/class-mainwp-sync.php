@@ -710,7 +710,8 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 $error = true;
                 if ( $pAllowDisconnect ) {
                     $sync_errors                      = esc_html__( 'Undefined error! Please, reinstall the MainWP Child plugin on the child site.', 'mainwp' );
-                    $sync_errors                     .= MainWP_Connect_Failure_Ux::render_html( MainWP_Connect_Failure_Ux::from_exception( null, $fetch_output ) );
+                    $undefined_output                 = ( isset( $information['fetch_url_output'] ) && is_array( $information['fetch_url_output'] ) ) ? $information['fetch_url_output'] : array();
+                    $sync_errors                     .= MainWP_Connect_Failure_Ux::render_html( MainWP_Connect_Failure_Ux::from_exception( null, $undefined_output ) );
                     $websiteSyncValues['sync_errors'] = $sync_errors;
                     $_error                           = $sync_errors;
                 }

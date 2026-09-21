@@ -165,14 +165,27 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
         if ( is_array( $ip ) ) {
             $parts = array();
             foreach ( $ip as $item ) {
-                if ( is_string( $item ) && '' !== $item ) {
+                if ( self::is_ip_address( $item ) ) {
                     $parts[] = $item;
                 }
             }
             return implode( ', ', $parts );
         }
 
-        return is_scalar( $ip ) ? (string) $ip : '';
+        $value = is_scalar( $ip ) ? (string) $ip : '';
+
+        return self::is_ip_address( $value ) ? $value : '';
+    }
+
+    /**
+     * Whether a value is a usable IP (not a failed gethostbyname() hostname).
+     *
+     * @param mixed $value Candidate IP.
+     *
+     * @return bool
+     */
+    public static function is_ip_address( $value ) {
+        return is_string( $value ) && '' !== $value && false !== filter_var( $value, FILTER_VALIDATE_IP );
     }
 
     /**
@@ -750,10 +763,10 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
         }
 
         $redacted = preg_replace_callback(
-            '/([A-Za-z_][A-Za-z0-9_\-]*)\s*[:=]\s*[^\s&;#]+/',
+            '/([\'"]?)([A-Za-z_][A-Za-z0-9_\-]*)\1\s*[:=]\s*([\'"]?)([^\'"\s&;#,]+)\3/',
             static function ( $match ) {
-                if ( MainWP_Connect_Failure_Ux::is_sensitive_param( $match[1] ) ) {
-                    return $match[1] . '=[redacted]';
+                if ( MainWP_Connect_Failure_Ux::is_sensitive_param( $match[2] ) ) {
+                    return $match[1] . $match[2] . $match[1] . '=[redacted]';
                 }
                 return $match[0];
             },

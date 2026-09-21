@@ -2068,8 +2068,9 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             curl_close( $ch );
         }
 
-        $host = wp_parse_url( $real_url, PHP_URL_HOST );
-        $ip   = gethostbyname( $host );
+        $host        = wp_parse_url( $real_url, PHP_URL_HOST );
+        $ip          = gethostbyname( $host );
+        $resolved_ip = ( is_string( $ip ) && false !== filter_var( $ip, FILTER_VALIDATE_IP ) ) ? $ip : '';
 
         MainWP_Execution_Helper::execute_call_track( 'end_point', $website, $postdata, $fetch_track_id, 'fetch site' );
 
@@ -2094,7 +2095,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             'http_status' => $http_status,
             'headers'     => $resp_headers,
             'body'        => $hide_raw ? '' : ( is_string( $data ) ? $data : '' ),
-            'resolved_ip' => $ip,
+            'resolved_ip' => $resolved_ip,
             'error'       => $err,
         );
 
@@ -2194,7 +2195,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     'http_status' => (int) $http_status,
                     'headers'     => isset( $output['response_headers'] ) ? $output['response_headers'] : '',
                     'body'        => isset( $output['response_body'] ) ? $output['response_body'] : '',
-                    'resolved_ip' => $ip,
+                    'resolved_ip' => $resolved_ip,
                 )
             );
             throw $thr_error;

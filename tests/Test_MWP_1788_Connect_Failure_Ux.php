@@ -297,15 +297,25 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 		$this->assertTrue( \MainWP\Dashboard\MainWP_Connect_Failure_Ux::is_sensitive_param( 'user_password' ) );
 		$this->assertFalse( \MainWP\Dashboard\MainWP_Connect_Failure_Ux::is_sensitive_param( 'page' ) );
 
-		$body = 'Welcome csrf_token=qa-csrf-secret site_api_key=qa-api-key page=sites';
+		$body = 'Welcome csrf_token=qa-csrf-secret site_api_key=qa-api-key plugin_password=qa-plugin-secret page=sites';
 		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( $body );
 		$this->assertStringContainsString( 'csrf_token=[redacted]', $text );
 		$this->assertStringContainsString( 'site_api_key=[redacted]', $text );
+		$this->assertStringContainsString( 'plugin_password=[redacted]', $text );
 		$this->assertStringContainsString( 'page=sites', $text );
 		$this->assertStringNotContainsString( 'qa-csrf-secret', $text );
 		$this->assertStringNotContainsString( 'qa-api-key', $text );
+		$this->assertStringNotContainsString( 'qa-plugin-secret', $text );
 
-		$headers = "HTTP/1.1 302 Found\r\nLocation: https://sso.example.test/cb?csrf_token=qa-csrf-secret&page=sites\r\n";
+		$json = '{"csrf_token":"qa-csrf-secret","plugin_password":"qa-plugin-secret","page":"sites"}';
+		$json_text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( $json );
+		$this->assertStringContainsString( '"csrf_token"=[redacted]', $json_text );
+		$this->assertStringContainsString( '"plugin_password"=[redacted]', $json_text );
+		$this->assertStringContainsString( '"page":"sites"', $json_text );
+		$this->assertStringNotContainsString( 'qa-csrf-secret', $json_text );
+		$this->assertStringNotContainsString( 'qa-plugin-secret', $json_text );
+
+		$headers = "HTTP/1.1 302 Found\r\nLocation: https://sso.example.test/cb?csrf_token=qa-csrf-secret&plugin_password=qa-plugin-secret&page=sites\r\nwww-authenticate: Bearer plugin_password=qa-plugin-secret\r\n";
 		$details = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::build_details(
 			array(
 				'http_status' => 302,
@@ -328,7 +338,33 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 			$this->assertStringContainsString( 'page=sites', $surface );
 			$this->assertStringNotContainsString( 'qa-csrf-secret', $surface );
 			$this->assertStringNotContainsString( 'qa-api-key', $surface );
+			$this->assertStringNotContainsString( 'qa-plugin-secret', $surface );
 		}
+
+		$header_snip = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_headers( $headers );
+		$this->assertStringContainsString( 'www-authenticate:', $header_snip );
+		$this->assertStringContainsString( 'plugin_password=[redacted]', $header_snip );
+		$this->assertStringNotContainsString( 'qa-plugin-secret', $header_snip );
+	}
+
+	/**
+	 * Failed DNS hostnames are not shown as the Cloudflare/proxy edge IP.
+	 */
+	public function test_unresolved_hostname_is_not_labeled_as_edge_ip(): void {
+		$this->assertSame( '', \MainWP\Dashboard\MainWP_Connect_Failure_Ux::format_ip_list( 'child.example.test' ) );
+		$this->assertSame( '104.21.12.34', \MainWP\Dashboard\MainWP_Connect_Failure_Ux::format_ip_list( '104.21.12.34' ) );
+		$this->assertSame( '104.21.12.34', \MainWP\Dashboard\MainWP_Connect_Failure_Ux::format_ip_list( array( 'child.example.test', '104.21.12.34' ) ) );
+
+		$html = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::render_html(
+			\MainWP\Dashboard\MainWP_Connect_Failure_Ux::build_details(
+				array(
+					'http_status' => 403,
+					'resolved_ip' => 'child.example.test',
+				)
+			)
+		);
+		$this->assertStringNotContainsString( 'child.example.test', $html );
+		$this->assertStringNotContainsString( 'Cloudflare/proxy edge IP (do not allowlist this as the Dashboard IP)', $html );
 	}
 
 	/**

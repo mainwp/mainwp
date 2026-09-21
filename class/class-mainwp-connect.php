@@ -140,14 +140,14 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     /**
      * Browser wait for site removal.
      *
-     * Default is 360000 ms. When the deactivate cap is above 360 seconds, the
+     * Default is 360000 ms. When the deactivate cap is 360 seconds or more, the
      * browser waits 60 seconds longer than that cap.
      *
      * @return int Milliseconds.
      */
     public static function get_site_removal_ajax_timeout_ms() {
         $php_seconds = static::resolve_child_request_timeout( 'deactivate' );
-        if ( $php_seconds > 360 ) {
+        if ( $php_seconds >= 360 ) {
             return ( $php_seconds + 60 ) * 1000;
         }
         return self::SITE_REMOVAL_AJAX_TIMEOUT_MS;
@@ -445,7 +445,6 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $postdata = array( 'test' => 'yes' );
 
         $ch = curl_init();
-        // Active lesson L-20260921-connect-failure-ip-guards: do not call curl_setopt on a failed init (PHP 8 TypeError).
         if ( ! static::is_valid_curl_handle( $ch ) ) {
             return static::try_visit_curl_init_failure();
         }
@@ -1487,7 +1486,6 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             }
 
             $ch = curl_init();
-            // Active lesson L-20260921-connect-failure-ip-guards: do not call curl_setopt on a failed init (PHP 8 TypeError).
             if ( ! static::is_valid_curl_handle( $ch ) ) {
                 MainWP_Logger::instance()->debug( 'fetch_urls_authed :: curl_init failed' );
                 if ( null !== $handler ) {
@@ -1495,6 +1493,9 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     if ( '' !== $init_body ) {
                         call_user_func_array( $handler, array( $init_body, $website, &$output, $params ) );
                     }
+                }
+                if ( null !== $_org_params ) {
+                    $params = $_org_params;
                 }
                 continue;
             }
@@ -2229,7 +2230,6 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $fetch_track_id = MainWP_Execution_Helper::execute_call_track( 'start_point', $website, $postdata );
 
         $ch = curl_init();
-        // Active lesson L-20260921-connect-failure-ip-guards: do not call curl_setopt on a failed init (PHP 8 TypeError).
         if ( ! static::is_valid_curl_handle( $ch ) ) {
             static::throw_fetch_url_site_curl_init_failure( $output );
         }

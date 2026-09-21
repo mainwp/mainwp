@@ -108,7 +108,7 @@ let mainwp_get_remove_calback = function (side_id) {
         jQuery.ajax({
             url: ajaxurl,
             data: data,
-            timeout: siteRemovalTimeout, // 6 minutes by default. Longer than the PHP deactivate cap (5 minutes). Grows when that cap is above 360 seconds.
+            timeout: siteRemovalTimeout, // 6 minutes by default. Longer than the PHP deactivate cap (5 minutes). Grows when that cap is 360 seconds or more.
             method: 'POST',
             success: function (response) {
 

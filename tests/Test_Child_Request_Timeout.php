@@ -134,6 +134,9 @@ class Test_Child_Request_Timeout extends \WP_UnitTestCase {
 		update_option( MainWP_Connect::CHILD_REQUEST_TIMEOUT_OPTION, 350 );
 		$this->assertSame( 360000, MainWP_Connect::get_site_removal_ajax_timeout_ms() );
 
+		update_option( MainWP_Connect::CHILD_REQUEST_TIMEOUT_OPTION, 360 );
+		$this->assertSame( 420000, MainWP_Connect::get_site_removal_ajax_timeout_ms() );
+
 		update_option( MainWP_Connect::CHILD_REQUEST_TIMEOUT_OPTION, 500 );
 		$this->assertSame( 560000, MainWP_Connect::get_site_removal_ajax_timeout_ms() );
 	}

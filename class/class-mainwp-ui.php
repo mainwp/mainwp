@@ -3323,6 +3323,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                             </div>
                         </div>
                     </div>
+                    <?php MainWP_Manage_Sites::render_connection_2fa_note(); ?>
                     <div id="mainwp-administrator-password-field">
                         <input type="password" id="fake-disable-autofill" style="display:none;" name="fake-disable-autofill" />
                         <div class="ui grid field">

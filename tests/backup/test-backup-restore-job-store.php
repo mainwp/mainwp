@@ -10,6 +10,7 @@ namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Backup_Restore_Job_Store;
 use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_Install;
 
 /**
  * Class MainWP_Backup_Restore_Job_Store_Test
@@ -588,5 +589,142 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 		$this->assertTrue( $this->store->save_checkpoint( $job_id, array( 'cursor' => 'unfenced' ) ), 'A tokenless checkpoint write is not fenced.' );
 		$this->assertTrue( $this->store->cancel_job( $job_id ), 'A tokenless cancel lands while another lane holds the lease.' );
 		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED, $this->store->get_job( $job_id )->status );
+	}
+	/**
+	 * Every declared status must agree with the per-site uniqueness identity.
+	 */
+	public function test_set_status_maintains_active_site_identity_for_every_status() {
+		$constants = ( new \ReflectionClass( MainWP_Backup_Restore_Job_Store::class ) )->getConstants();
+		$site_id   = 77000;
+		foreach ( $constants as $name => $status ) {
+			if ( ! str_starts_with( $name, 'STATUS_' ) ) {
+				continue;
+			}
+			++$site_id;
+			$id = $this->store->create_job( $site_id, 42, array() );
+			$this->assertGreaterThan( 0, $id, $status );
+			$this->assertSame( $site_id, (int) $this->store->get_job( $id )->active_site_id );
+			$this->assertTrue( $this->store->set_status( $id, $status ), $status );
+			$row = $this->store->get_job( $id );
+			$this->assertSame( $status, $row->status );
+			if ( in_array( $status, MainWP_Backup_Restore_Job_Store::active_statuses(), true ) ) {
+				$this->assertSame( $site_id, (int) $row->active_site_id, $status );
+			} else {
+				$this->assertNull( $row->active_site_id, $status );
+			}
+		}
+	}
+
+	/**
+	 * Lifecycle helpers must preserve the same invariant as direct status writes.
+	 */
+	public function test_restore_lifecycle_helpers_maintain_active_site_identity() {
+		foreach ( array( 'complete_job', 'cancel_job', 'fail_permanent' ) as $terminal ) {
+			$id = $this->store->create_job( 77801, 42, array() );
+			$this->assertGreaterThan( 0, $id );
+			$job = $this->store->acquire_next_job( 'identity-owner', 300, null, $id );
+			$this->assertNotNull( $job );
+			$this->assertSame( 77801, (int) $job->active_site_id );
+			$this->assertTrue( $this->store->save_checkpoint( $id, array( 'phase' => 'staging' ), 'identity-owner' ) );
+			$this->assertTrue( $this->store->arm_cancel_intent( $id ) );
+			$this->assertTrue( $this->store->fail_retryable( $id, 'retry', 1, time() + 60, 'identity-owner' ) );
+			$this->assertSame( 77801, (int) $this->store->get_job( $id )->active_site_id );
+			$this->assertFalse( $this->store->set_status( $id, 'cancelled', array(), 'lost-owner' ) );
+			$this->assertSame( 77801, (int) $this->store->get_job( $id )->active_site_id );
+			$result = 'fail_permanent' === $terminal ? $this->store->fail_permanent( $id, 'permanent' ) : $this->store->$terminal( $id );
+			$this->assertTrue( $result, $terminal );
+			$this->assertNull( $this->store->get_job( $id )->active_site_id, $terminal );
+			if ( 'cancel_job' === $terminal ) {
+				$this->assertSame( 'retry', $this->store->get_job( $id )->last_error );
+			}
+			$this->assertFalse( $this->store->cancel_job( $id ), 'A second terminal writer must still be refused.' );
+		}
+	}
+
+	/**
+	 * A stale NOT EXISTS result cannot bypass the unique key.
+	 */
+	public function test_create_job_duplicate_key_race_returns_zero() {
+		global $wpdb;
+		$this->assertGreaterThan( 0, $this->store->create_job( 77901, 42, array() ) );
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$raced = false;
+		$race  = function ( $query ) use ( $table, &$raced ) {
+			if ( str_starts_with( $query, 'INSERT INTO ' . $table ) ) {
+				$raced = true;
+				return strstr( $query, ' WHERE NOT EXISTS', true );
+			}
+			return $query;
+		};
+		add_filter( 'query', $race );
+		try {
+			$this->assertSame( 0, $this->store->create_job( 77901, 43, array() ) );
+		} finally {
+			remove_filter( 'query', $race );
+		}
+		$this->assertTrue( $raced );
+		$this->assertSame( 1, (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table} WHERE site_id = 77901" ) ); // phpcs:ignore WordPress.DB -- test probe.
+	}
+
+	/**
+	 * An upgrade keeps the oldest active job and preserves terminal history.
+	 */
+	public function test_install_deduplicates_active_restore_site_identity() {
+		global $wpdb;
+		$table   = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$version = get_site_option( 'mainwp_db_version' );
+		$ids     = array();
+		try {
+			$wpdb->query( "ALTER TABLE {$table} DROP INDEX uniq_active_site, DROP COLUMN active_site_id" ); // phpcs:ignore WordPress.DB -- test fixture.
+			foreach ( array( 'completed', 'running', 'pending', 'failed_retryable', 'cancelled' ) as $status ) {
+				$row = array(
+					'site_id'     => 77902,
+					'snapshot_id' => 42,
+					'status'      => $status,
+					'checkpoint'  => '{}',
+				);
+				$this->assertSame( 1, $wpdb->insert( $table, $row ) ); // phpcs:ignore WordPress.DB -- test fixture.
+				$ids[] = (int) $wpdb->insert_id;
+			}
+			update_site_option( 'mainwp_db_version', '9.0.2.24' );
+			MainWP_Install::instance()->install();
+			foreach ( $ids as $index => $id ) {
+				$row = $this->store->get_job( $id );
+				$this->assertNotNull( $row );
+				if ( 1 === $index ) {
+					$this->assertSame( 'running', $row->status );
+					$this->assertSame( 77902, (int) $row->active_site_id );
+				} else {
+					$this->assertNull( $row->active_site_id );
+					$this->assertSame( 0 === $index ? 'completed' : 'cancelled', $row->status );
+					if ( 2 === $index || 3 === $index ) {
+						$this->assertSame( 'Superseded by the active restore uniqueness repair.', $row->last_error );
+					}
+				}
+			}
+			$this->assertNotEmpty( $wpdb->get_results( "SHOW INDEX FROM {$table} WHERE Key_name = 'uniq_active_site' AND Non_unique = 0" ) ); // phpcs:ignore WordPress.DB -- test probe.
+		} finally {
+			$wpdb->query( "DELETE FROM {$table} WHERE site_id = 77902" ); // phpcs:ignore WordPress.DB -- test cleanup.
+			MainWP_Install::instance()->repair_backup_site_unique_keys();
+			update_site_option( 'mainwp_db_version', $version );
+			self::commit_transaction();
+		}
+	}
+
+	/**
+	 * An engine failure must not look like an occupied site.
+	 */
+	public function test_create_job_keeps_database_errors_distinct_from_duplicates() {
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$fail  = static function ( $query ) use ( $table ) {
+			return str_starts_with( $query, 'INSERT INTO ' . $table ) ? str_replace( 'snapshot_id', 'missing_snapshot_column', $query ) : $query;
+		};
+		add_filter( 'query', $fail );
+		try {
+			$this->assertSame( -1, $this->store->create_job( 77903, 42, array() ) );
+		} finally {
+			remove_filter( 'query', $fail );
+		}
+		$this->assertNull( $this->store->get_active_job_for_site( 77903 ) );
 	}
 }

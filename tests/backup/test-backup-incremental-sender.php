@@ -71,6 +71,14 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	protected $manifest_fixture;
 
 	/**
+	 * A failed clock-dependent test must not pin the next test's clock.
+	 */
+	public function set_up() {
+		parent::set_up();
+		self::$fixed_time = null;
+	}
+
+	/**
 	 * Enable native backups and reset capture state.
 	 *
 	 * @return void

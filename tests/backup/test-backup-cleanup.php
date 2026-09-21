@@ -101,7 +101,9 @@ class MainWP_Backup_Cleanup_Test extends MainWP_Abilities_Test_Case {
 			0,
 			1,
 			150,
-			0
+			0,
+			0,
+			$this->site_id
 		);
 
 		$task = MainWP_DB_Backup::instance()->get_manual_backup_task( $this->site_id );

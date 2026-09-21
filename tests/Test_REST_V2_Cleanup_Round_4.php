@@ -262,6 +262,37 @@ class Test_REST_V2_Cleanup_Round_4 extends \WP_Test_REST_TestCase {
 	}
 
 	/**
+	 * Names of the unique keys on the backup progress table that cover task_id alone.
+	 *
+	 * Mirrors MainWP_Install::find_backup_progress_task_id_unique_keys(): a composite
+	 * unique key over task_id and wp_id also reports a task_id row, so the whole column
+	 * list of a key has to match.
+	 *
+	 * @return array
+	 */
+	protected function progress_task_id_only_unique_keys(): array {
+		global $wpdb;
+		$table = $this->progress_table();
+
+		$key_columns = array();
+		foreach ( (array) $wpdb->get_results( "SHOW INDEX FROM {$table} WHERE Non_unique = 0", ARRAY_A ) as $index ) {
+			if ( 'PRIMARY' === $index['Key_name'] ) {
+				continue;
+			}
+			$key_columns[ $index['Key_name'] ][] = $index['Column_name'];
+		}
+
+		$keys = array();
+		foreach ( $key_columns as $key_name => $columns ) {
+			if ( array( 'task_id' ) === $columns ) {
+				$keys[] = $key_name;
+			}
+		}
+
+		return $keys;
+	}
+
+	/**
 	 * Drop one index from the backup progress table, ignoring a missing key.
 	 *
 	 * @param string $key_name Index name.
@@ -291,8 +322,7 @@ class Test_REST_V2_Cleanup_Round_4 extends \WP_Test_REST_TestCase {
 		$repaired = \MainWP\Dashboard\MainWP_Install::instance()->drop_backup_progress_unique_index();
 
 		$this->assertTrue( $repaired );
-		$unique_on_task_id = $wpdb->get_col( "SHOW INDEX FROM {$table} WHERE Non_unique = 0 AND Column_name = 'task_id'", 2 );
-		$this->assertSame( [], $unique_on_task_id );
+		$this->assertSame( [], $this->progress_task_id_only_unique_keys() );
 
 		if ( $had_lookup_key ) {
 			$this->assertSame( [ 'task_id' ], $this->progress_key_columns( 'idx_task_id' ), 'the non-unique lookup key must survive' );

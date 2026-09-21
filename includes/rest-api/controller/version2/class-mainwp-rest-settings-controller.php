@@ -1654,6 +1654,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             return new WP_Error(
                 'rest_invalid_param',
                 /* translators: %s: Error message */ sprintf( __( 'Update backup settings error: %s', 'mainwp' ), $e->getMessage() ),
+                array( 'status' => 500 )
             );
         }
 

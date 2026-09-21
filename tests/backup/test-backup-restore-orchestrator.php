@@ -2700,4 +2700,75 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			)
 		);
 	}
+	/**
+	 * Only a matching stored value may be swapped; missing rows stay missing.
+	 */
+	public function test_compare_and_swap_website_option_requires_matching_value() {
+		$db   = MainWP_DB::instance();
+		$name = MainWP_Backup_Executor::ADHOC_TASK_OPTION;
+		$this->assertFalse( $db->compare_and_swap_website_option( $this->site_id, $name, 'missing', 'new' ) );
+		$db->update_website_option( $this->site_id, $name, 'old' );
+		$this->assertFalse( $db->compare_and_swap_website_option( $this->site_id, $name, 'different', 'new' ) );
+		$this->assertSame( 'old', $db->get_website_option( $this->site_id, $name ) );
+		$this->assertTrue( $db->compare_and_swap_website_option( $this->site_id, $name, 'old', 'new' ) );
+		$this->assertSame( 'new', $db->get_website_option( $this->site_id, $name ) );
+		$this->assertFalse( $db->compare_and_swap_website_option( $this->site_id, $name, 'new', 'new' ) );
+	}
+
+	/**
+	 * Releasing the owned handle must report that the matching value was cleared.
+	 */
+	public function test_release_pre_snapshot_handle_clears_matching_value() {
+		$db      = MainWP_DB::instance();
+		$website = $db->get_website_by_id( $this->site_id );
+		$handle  = array(
+			'task_id' => 'safety-task',
+			'owner'   => '42',
+		);
+		$db->update_website_option( $website, MainWP_Backup_Executor::ADHOC_TASK_OPTION, wp_json_encode( $handle ) );
+		$release = new \ReflectionMethod( MainWP_Backup_Restore_Orchestrator::class, 'release_pre_snapshot_handle' );
+		$this->assertTrue( $release->invoke( $this->orchestrator, $website, 'safety-task', '42' ) );
+		global $wpdb;
+		// wpdb::get_var() reads an empty value back as null, so read the row.
+		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT value FROM ' . $db->get_table_name( 'wp_options' ) . ' WHERE wpid = %d AND name = %s', $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION ) ); // phpcs:ignore WordPress.DB -- test probe.
+		$this->assertNotNull( $row, 'the option row must survive the release' );
+		$this->assertSame( '', $row->value );
+	}
+
+	/**
+	 * Even the same task and owner can have a newer handle that must survive.
+	 */
+	public function test_release_pre_snapshot_handle_preserves_concurrent_replacement() {
+		$db                = MainWP_DB::instance();
+		$website           = $db->get_website_by_id( $this->site_id );
+		$name              = MainWP_Backup_Executor::ADHOC_TASK_OPTION;
+		$handle            = array(
+			'task_id' => 'safety-task',
+			'owner'   => '42',
+			'started' => 1,
+		);
+		$old               = wp_json_encode( $handle );
+		$handle['started'] = 2;
+		$new               = wp_json_encode( $handle );
+		$db->update_website_option( $website, $name, $old );
+		$table = $db->get_table_name( 'wp_options' );
+		$raced = false;
+		$race  = function ( $query ) use ( &$race, &$raced, $table, $db, $website, $name, $new ) {
+			if ( str_starts_with( $query, 'UPDATE ' ) && str_contains( $query, $table ) && str_contains( $query, $name ) ) {
+				remove_filter( 'query', $race );
+				$raced = true;
+				$db->update_website_option( $website, $name, $new );
+			}
+			return $query;
+		};
+		add_filter( 'query', $race );
+		try {
+			$release = new \ReflectionMethod( MainWP_Backup_Restore_Orchestrator::class, 'release_pre_snapshot_handle' );
+			$this->assertFalse( $release->invoke( $this->orchestrator, $website, 'safety-task', '42' ) );
+		} finally {
+			remove_filter( 'query', $race );
+		}
+		$this->assertTrue( $raced, 'The replacement must land after the read and before the swap.' );
+		$this->assertSame( $new, $db->get_website_option( $website, $name ) );
+	}
 }

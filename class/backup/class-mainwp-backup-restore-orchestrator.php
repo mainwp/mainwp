@@ -401,8 +401,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             return false;
         }
 
-        $db->update_website_option( $website, MainWP_Backup_Executor::ADHOC_TASK_OPTION, '' );
-        return true;
+        return $db->compare_and_swap_website_option( (int) $website->id, MainWP_Backup_Executor::ADHOC_TASK_OPTION, (string) $raw, '' );
     }
 
     /**

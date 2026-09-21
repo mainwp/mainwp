@@ -1402,7 +1402,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		$upload_job_table = MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' );
 		$this->assertTrue( $this->index_exists( $upload_job_table, 'uniq_snap_dest_kind' ), 'Fresh install must create the kind-widened upload-job unique key.' );
 
-		$this->assertSame( '9.0.2.24', get_site_option( 'mainwp_db_version' ), 'Fresh install must preserve the merged native-backups db version.' );
+		$this->assertSame( '9.0.2.25', get_site_option( 'mainwp_db_version' ), 'Fresh install must preserve the merged native-backups db version.' );
 
 		$property = new \ReflectionProperty( MainWP_Install::class, 'mainwp_db_version' );
 		$property->setAccessible( true );
@@ -1449,8 +1449,8 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 			}
 		);
 
-		$this->assertSame( array( 'repair_backup_progress_index' ), $installer->calls );
-		$this->assertSame( '9.0.2.24', get_site_option( 'mainwp_db_version' ) );
+		$this->assertSame( array( 'repair_backup_progress_index', 'repair_backup_progress_index' ), $installer->calls );
+		$this->assertSame( '9.0.2.25', get_site_option( 'mainwp_db_version' ) );
 	}
 
 	/**
@@ -1500,7 +1500,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		$saved_pending = get_site_option( MainWP_Install::BACKUP_PROGRESS_INDEX_REPAIR_PENDING );
 
 		try {
-			update_site_option( 'mainwp_db_version', '9.0.2.24' );
+			update_site_option( 'mainwp_db_version', '9.0.2.25' );
 			update_site_option( MainWP_Install::BACKUP_PROGRESS_INDEX_REPAIR_PENDING, time() - 2 * HOUR_IN_SECONDS );
 			$installer->install();
 
@@ -1519,6 +1519,148 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 			} else {
 				update_site_option( MainWP_Install::BACKUP_PROGRESS_INDEX_REPAIR_PENDING, $saved_pending );
 			}
+		}
+	}
+	/**
+	 * Failed markerless drops survive upgrades from 9.0.2.20.
+	 */
+	public function test_install_repairs_markerless_progress_key_from_90220() {
+		$this->assert_markerless_progress_key_repaired( '9.0.2.20' );
+	}
+
+	/**
+	 * The previous shipped version also missed the markerless cohort.
+	 */
+	public function test_install_repairs_markerless_progress_key_from_90224() {
+		$this->assert_markerless_progress_key_repaired( '9.0.2.24' );
+	}
+
+	/**
+	 * Both keys must coexist before the upgrade to catch first-column matching.
+	 *
+	 * @param string $version Stored version before repair.
+	 */
+	private function assert_markerless_progress_key_repaired( $version ) {
+		global $wpdb;
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_progress' );
+		$wpdb->query( "DELETE FROM {$table}" ); // phpcs:ignore WordPress.DB -- test cleanup.
+		$this->assertTrue( $this->index_exists( $table, 'uniq_task_wp' ) );
+		$this->assertNotFalse( $wpdb->query( "ALTER TABLE {$table} ADD UNIQUE KEY task_id (task_id)" ) ); // phpcs:ignore WordPress.DB -- test fixture.
+		delete_site_option( MainWP_Install::BACKUP_PROGRESS_INDEX_REPAIR_PENDING );
+		delete_site_option( MainWP_Install::BACKUP_PROGRESS_UNIQ_KEY_REPAIR_PENDING );
+
+		$this->with_real_tables(
+			function () use ( $version ) {
+				update_site_option( 'mainwp_db_version', $version );
+				MainWP_Install::instance()->install();
+			}
+		);
+		$this->assertFalse( $this->index_exists( $table, 'task_id' ) );
+		$this->assertTrue( $this->index_exists( $table, 'uniq_task_wp' ) );
+		$property = new \ReflectionProperty( MainWP_Install::class, 'mainwp_db_version' );
+		$this->assertSame( $property->getValue( MainWP_Install::instance() ), get_site_option( 'mainwp_db_version' ) );
+		$this->assertNotNull( MainWP_DB_Backup::instance()->add_backup_task_progress( self::DEDUPE_TASK_ID, 88001, array() ) );
+		$this->assertNotNull( MainWP_DB_Backup::instance()->add_backup_task_progress( self::DEDUPE_TASK_ID, 88002, array() ) );
+		$this->assertSame( 2, (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE task_id = %d", self::DEDUPE_TASK_ID ) ) ); // phpcs:ignore WordPress.DB -- test probe.
+	}
+
+	/**
+	 * Duplicate manual tasks keep their ids because snapshots reference them.
+	 */
+	public function test_install_backfills_manual_site_identity_and_keeps_duplicate_rows() {
+		global $wpdb;
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		$ids   = array();
+		try {
+			$wpdb->query( "ALTER TABLE {$table} DROP INDEX uniq_manual_site, DROP COLUMN manual_site_id" ); // phpcs:ignore WordPress.DB -- test fixture.
+			foreach ( array( array( '88001', 'manual', 1 ), array( '088001', 'manual', 1 ), array( '88001', 'daily', 0 ), array( '88001,88002', 'manual', 1 ), array( '88002', 'manual', 1 ) ) as $fixture ) {
+				$this->assertSame(
+					1,
+					$wpdb->insert( // phpcs:ignore WordPress.DB -- test fixture.
+						$table,
+						array(
+							'userid'   => 1,
+							'name'     => 'Manual identity migration',
+							'sites'    => $fixture[0],
+							'schedule' => $fixture[1],
+							'template' => $fixture[2],
+						)
+					)
+				);
+				$ids[] = (int) $wpdb->insert_id;
+			}
+			$this->with_real_tables(
+				function () {
+					update_site_option( 'mainwp_db_version', '9.0.2.24' );
+					MainWP_Install::instance()->install();
+				}
+			);
+			$this->assertTrue( $this->index_exists( $table, 'uniq_manual_site' ) );
+			foreach ( $ids as $index => $id ) {
+				$row = MainWP_DB_Backup::instance()->get_backup_task_by_id( $id );
+				$this->assertNotNull( $row );
+				if ( 0 === $index || 4 === $index ) {
+					$this->assertSame( 0 === $index ? 88001 : 88002, (int) $row->manual_site_id );
+				} else {
+					$this->assertNull( $row->manual_site_id );
+				}
+			}
+			$this->assertSame( $ids[0], (int) MainWP_DB_Backup::instance()->get_manual_backup_task( 88001 )->id );
+		} finally {
+			foreach ( $ids as $id ) {
+				$wpdb->delete( $table, array( 'id' => $id ), array( '%d' ) ); // phpcs:ignore WordPress.DB -- test cleanup.
+			}
+			MainWP_Install::instance()->repair_backup_site_unique_keys();
+			if ( false === $this->saved_db_version ) {
+				delete_site_option( 'mainwp_db_version' );
+			} else {
+				update_site_option( 'mainwp_db_version', $this->saved_db_version );
+			}
+			self::commit_transaction();
+		}
+	}
+
+	/**
+	 * A failed ALTER must remain retryable after the version advances.
+	 */
+	public function test_site_identity_key_repair_retries_failed_alters_on_current_version() {
+		global $wpdb;
+		$backup  = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		$restore = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$block   = static function ( $query ) {
+			if ( str_starts_with( $query, 'ALTER TABLE ' ) && ( str_contains( $query, 'ADD UNIQUE KEY uniq_manual_site' ) || str_contains( $query, 'ADD UNIQUE KEY uniq_active_site' ) ) ) {
+				return 'SELECT 1';
+			}
+			return $query;
+		};
+		try {
+			$wpdb->query( "ALTER TABLE {$backup} DROP INDEX uniq_manual_site" ); // phpcs:ignore WordPress.DB -- test fixture.
+			$wpdb->query( "ALTER TABLE {$restore} DROP INDEX uniq_active_site" ); // phpcs:ignore WordPress.DB -- test fixture.
+			add_filter( 'query', $block );
+			$this->assertFalse( MainWP_Install::instance()->repair_backup_site_unique_keys() );
+			$this->assertGreaterThan( 0, (int) get_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_PENDING ) );
+			$property = new \ReflectionProperty( MainWP_Install::class, 'mainwp_db_version' );
+			update_site_option( 'mainwp_db_version', $property->getValue( MainWP_Install::instance() ) );
+			remove_filter( 'query', $block );
+
+			MainWP_Install::instance()->install();
+			$this->assertFalse( $this->index_exists( $backup, 'uniq_manual_site' ), 'A recent failed repair must be throttled.' );
+			$this->assertFalse( $this->index_exists( $restore, 'uniq_active_site' ) );
+
+			update_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_PENDING, time() - 2 * HOUR_IN_SECONDS );
+			MainWP_Install::instance()->install();
+			$this->assertTrue( $this->index_exists( $backup, 'uniq_manual_site' ) );
+			$this->assertTrue( $this->index_exists( $restore, 'uniq_active_site' ) );
+			$this->assertFalse( get_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_PENDING ) );
+		} finally {
+			remove_filter( 'query', $block );
+			MainWP_Install::instance()->repair_backup_site_unique_keys();
+			if ( false === $this->saved_db_version ) {
+				delete_site_option( 'mainwp_db_version' );
+			} else {
+				update_site_option( 'mainwp_db_version', $this->saved_db_version );
+			}
+			self::commit_transaction();
 		}
 	}
 }

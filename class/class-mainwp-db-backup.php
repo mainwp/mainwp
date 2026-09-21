@@ -295,6 +295,7 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * @param mixed $maximumFileDescriptors         Maximum file descriptors.
      * @param mixed $loadFilesBeforeZip             Load files before Zip.
      * @param mixed $zip_force_override             Keep Zip over the large-site guardrail (1) instead of auto-switching to tar.gz (0).
+     * @param mixed $manual_site_id                 Site identity for hidden on-demand tasks; NULL for scheduled tasks.
      *
      * @return object|false The created task row, or false on error.
      *
@@ -321,7 +322,8 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         $maximumFileDescriptorsAuto,
         $maximumFileDescriptors,
         $loadFilesBeforeZip,
-        $zip_force_override = 0
+        $zip_force_override = 0,
+        $manual_site_id = null
     ) {
 
         // to fix null value.
@@ -359,6 +361,7 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
                 'maximumFileDescriptorsAuto'     => $maximumFileDescriptorsAuto,
                 'maximumFileDescriptors'         => $maximumFileDescriptors,
                 'zip_force_override'             => $zip_force_override,
+                'manual_site_id'                 => $manual_site_id,
             );
 
             if ( $this->wpdb->insert( $this->table_name( 'wp_backup' ), $values ) ) {
@@ -496,8 +499,8 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * Method get_manual_backup_task()
      *
      * Fetch the per-site hidden on-demand ("manual") backup task, if it
-     * exists. The manual task is identified by template = 1, schedule =
-     * 'manual', and a single-site sites value.
+     * exists. The unique site identity keeps concurrent requests attached
+     * to the same task and snapshot history.
      *
      * @param int $site_id Child site id.
      *
@@ -508,8 +511,8 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
 
         return $this->wpdb->get_row(
             $this->wpdb->prepare(
-                'SELECT * FROM ' . esc_sql( $this->table_name( 'wp_backup' ) ) . " WHERE template = 1 AND schedule = 'manual' AND sites = %s LIMIT 1",
-                (string) $site_id
+                'SELECT * FROM ' . esc_sql( $this->table_name( 'wp_backup' ) ) . ' WHERE manual_site_id = %d LIMIT 1',
+                $site_id
             ),
             OBJECT
         );
@@ -539,51 +542,41 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         $task    = $this->get_manual_backup_task( $site_id );
 
         if ( empty( $task ) ) {
-            // The lock must serialize inserts across separate requests. A 0
-            // means another request holds it and will insert; NULL means the
-            // server could not take a named lock at all (some proxies and
-            // managed databases refuse GET_LOCK), and refusing there would
-            // stop manual backups entirely, so that case inserts unlocked.
-            $lock_key = $this->wpdb->prefix . 'mwp_manual_backup_task_' . $site_id;
-            $locked   = $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT GET_LOCK( %s, 5 )', $lock_key ) );
-            if ( null === $locked || 1 === (int) $locked ) {
-                try {
-                    $task = $this->get_manual_backup_task( $site_id );
-                    if ( empty( $task ) ) {
-                        $created = $this->add_backup_task(
-                            (int) $website->userid,
-                            'On-demand backup',
-                            'manual',
-                            'full',
-                            '',                // exclude.
-                            (string) $site_id, // sites.
-                            '',                // groups.
-                            '',                // subfolder.
-                            '',                // filename.
-                            1,                 // template: hidden from the schedule list.
-                            1,                 // excludebackup.
-                            1,                 // excludecache.
-                            0,                 // excludenonwp.
-                            0,                 // excludezip.
-                            'site',            // archiveFormat: follow the site's format.
-                            0,                 // maximumFileDescriptorsOverride.
-                            1,                 // maximumFileDescriptorsAuto.
-                            150,               // maximumFileDescriptors.
-                            0                  // loadFilesBeforeZip.
-                        );
-                        if ( ! empty( $created ) ) {
-                            // Stamp the authorized-site snapshot at create so
-                            // the row never reads as a pre-migration legacy
-                            // task: its single site is by construction what
-                            // the authorized on-demand caller requested.
-                            $this->update_backup_task_with_values( (int) $created->id, array( 'authorized_sites' => (string) $site_id ) );
-                        }
-                    }
-                } finally {
-                    if ( 1 === (int) $locked ) {
-                        $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT RELEASE_LOCK( %s )', $lock_key ) );
-                    }
-                }
+            $suppress = $this->wpdb->suppress_errors();
+            try {
+                $created   = $this->add_backup_task(
+                    (int) $website->userid,
+                    'On-demand backup',
+                    'manual',
+                    'full',
+                    '',
+                    (string) $site_id,
+                    '',
+                    '',
+                    '',
+                    1,
+                    1,
+                    1,
+                    0,
+                    0,
+                    'site',
+                    0,
+                    1,
+                    150,
+                    0,
+                    0,
+                    $site_id
+                );
+                $duplicate = false === $created && str_contains( $this->wpdb->last_error, 'Duplicate entry' ) && str_contains( $this->wpdb->last_error, 'uniq_manual_site' );
+            } finally {
+                $this->wpdb->suppress_errors( $suppress );
+            }
+            if ( false === $created && ! $duplicate ) {
+                return false;
+            }
+            if ( ! empty( $created ) ) {
+                // The on-demand caller authorized this one site at creation.
+                $this->update_backup_task_with_values( (int) $created->id, array( 'authorized_sites' => (string) $site_id ) );
             }
             $task = $this->get_manual_backup_task( $site_id );
         }

@@ -53,7 +53,8 @@ class MainWP_Download_Lock_Test extends MainWP_Abilities_Test_Case { // phpcs:ig
 	 */
 	public function set_up() {
 		parent::set_up();
-		$this->dir = get_temp_dir() . 'mainwp-lock-tests-' . uniqid() . '/';
+		self::$disable_hard_links = false;
+		$this->dir                = get_temp_dir() . 'mainwp-lock-tests-' . uniqid() . '/';
 		mkdir( $this->dir, 0777, true );
 	}
 

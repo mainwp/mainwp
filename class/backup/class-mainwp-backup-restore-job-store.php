@@ -97,10 +97,8 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
      * Create a restore job, refusing a duplicate while one is already
      * active for the site.
      *
-     * The conditional INSERT writes a row only when no active job exists
-     * for the site, so a racing double-submit cannot persist two pending
-     * restores. The NOT EXISTS subquery reads a different alias from the
-     * insert target, so the engine accepts reading the table it writes.
+     * The unique site identity closes the race between the NOT EXISTS
+     * check and a concurrent insert.
      *
      * @param int   $site_id     Child site id.
      * @param int   $snapshot_id Snapshot id.
@@ -115,15 +113,17 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
         $statuses     = self::active_statuses();
         $placeholders = implode( ',', array_fill( 0, count( $statuses ), '%s' ) );
 
-        $result = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- the atomic create gate; must hit the DB engine.
+        $suppress = $this->wpdb->suppress_errors();
+        $result   = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- the atomic create gate; must hit the DB engine.
             $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- replacements and placeholders come from the same counted array.
-                'INSERT INTO ' . $this->table() . ' ( site_id, snapshot_id, status, checkpoint, created, updated ) SELECT %d, %d, %s, %s, %d, %d FROM DUAL WHERE NOT EXISTS ( SELECT 1 FROM ' . $this->table() . " WHERE site_id = %d AND status IN ( {$placeholders} ) LIMIT 1 )", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- placeholder list built from a counted array; table name from trusted helper.
-                array_merge( array( $site_id, $snapshot_id, self::STATUS_PENDING, wp_json_encode( $checkpoint ), $now, $now, $site_id ), $statuses )
+                'INSERT INTO ' . $this->table() . ' ( site_id, active_site_id, snapshot_id, status, checkpoint, created, updated ) SELECT %d, %d, %d, %s, %s, %d, %d FROM DUAL WHERE NOT EXISTS ( SELECT 1 FROM ' . $this->table() . " WHERE site_id = %d AND status IN ( {$placeholders} ) LIMIT 1 )", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- placeholder list built from a counted array; table name from trusted helper.
+                array_merge( array( $site_id, $site_id, $snapshot_id, self::STATUS_PENDING, wp_json_encode( $checkpoint ), $now, $now, $site_id ), $statuses )
             )
         );
 
+        $this->wpdb->suppress_errors( $suppress );
         if ( false === $result ) {
-            return -1; // A real engine failure, not a suppressed duplicate.
+            return str_contains( $this->wpdb->last_error, 'Duplicate entry' ) && str_contains( $this->wpdb->last_error, 'uniq_active_site' ) ? 0 : -1;
         }
         return 1 === (int) $result ? (int) $this->wpdb->insert_id : 0;
     }
@@ -418,15 +418,52 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
      *              refused it because the lease was lost.
      */
     public function set_status( int $job_id, string $status, array $extra = array(), ?string $lock_token = null ): bool {
-        $row = array_merge( array( 'status' => $status ), $extra );
-        if ( ! in_array( $status, array( self::STATUS_FAILED_RETRYABLE, self::STATUS_FAILED_PERMANENT ), true ) && ! array_key_exists( 'last_error', $row ) ) {
+        $row = array_merge( $extra, array( 'status' => $status ) );
+        unset( $row['active_site_id'] );
+        if ( ! in_array( $status, array( self::STATUS_FAILED_RETRYABLE, self::STATUS_FAILED_PERMANENT, self::STATUS_CANCELLED ), true ) && ! array_key_exists( 'last_error', $row ) ) {
             // A job moving forward has outlived its recorded failure;
             // leaving the message in place keeps it displaying through
             // every later phase.
             $row['last_error'] = '';
         }
-        $format = array_fill( 0, count( $row ), '%s' );
-        return $this->update_job( $job_id, $row, $format, $lock_token );
+        $active         = in_array( $status, self::active_statuses(), true );
+        $row['updated'] = time();
+        $set            = array();
+        $values         = array();
+        foreach ( $row as $column => $value ) {
+            $set[] = '`' . str_replace( '`', '``', $column ) . '` = ' . ( null === $value ? 'NULL' : ( is_int( $value ) ? '%d' : '%s' ) );
+            if ( null !== $value ) {
+                $values[] = $value;
+            }
+        }
+        $set[]    = 'active_site_id = ' . ( $active ? 'site_id' : 'NULL' );
+        $values[] = $job_id;
+        $guard    = '';
+        if ( ! $active ) {
+            // Preserve the first terminal writer's result and release its site in the same write.
+            $statuses = self::active_statuses();
+            $guard    = ' AND status IN ( ' . implode( ',', array_fill( 0, count( $statuses ), '%s' ) ) . ' )';
+            $values   = array_merge( $values, $statuses );
+        }
+        if ( null !== $lock_token ) {
+            $guard   .= ' AND locked_by = %s';
+            $values[] = $lock_token;
+        }
+        $changed = $this->wpdb->query(
+            $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- placeholder list and bind array grow together.
+                'UPDATE ' . $this->table() . ' SET ' . implode( ', ', $set ) . " WHERE id = %d{$guard}", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- the fence is a fixed SQL fragment; its value binds via placeholder.
+                $values
+            )
+        );
+        if ( ! $active || false === $changed || 1 === $changed ) {
+            return 1 === $changed;
+        }
+        if ( null === $lock_token ) {
+            return true;
+        }
+        // An unchanged same-second write still succeeds while its lease is held.
+        $holder = $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT locked_by FROM ' . $this->table() . ' WHERE id = %d', $job_id ) );
+        return $holder === $lock_token;
     }
 
     /**
@@ -446,17 +483,16 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
      *              refused it because the lease was lost.
      */
     public function fail_retryable( int $job_id, string $error, int $attempt_count, int $next_retry_at, ?string $lock_token = null ): bool {
-        return $this->update_job(
+        return $this->set_status(
             $job_id,
+            self::STATUS_FAILED_RETRYABLE,
             array(
-                'status'        => self::STATUS_FAILED_RETRYABLE,
                 'last_error'    => $error,
                 'attempt_count' => $attempt_count,
                 'next_retry_at' => $next_retry_at,
                 'locked_until'  => 0,
                 'locked_by'     => '',
             ),
-            array( '%s', '%s', '%d', '%d', '%d', '%s' ),
             $lock_token
         );
     }
@@ -473,10 +509,10 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
      *              token) and the write was refused.
      */
     public function fail_permanent( int $job_id, string $error, ?string $lock_token = null ): bool {
-        return $this->terminal_update(
+        return $this->set_status(
             $job_id,
+            self::STATUS_FAILED_PERMANENT,
             array(
-                'status'       => self::STATUS_FAILED_PERMANENT,
                 'last_error'   => $error,
                 'locked_until' => 0,
                 'locked_by'    => '',
@@ -496,10 +532,10 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
      *              token) and the write was refused.
      */
     public function complete_job( int $job_id, ?string $lock_token = null ): bool {
-        return $this->terminal_update(
+        return $this->set_status(
             $job_id,
+            self::STATUS_COMPLETED,
             array(
-                'status'       => self::STATUS_COMPLETED,
                 'last_error'   => '',
                 'locked_until' => 0,
                 'locked_by'    => '',
@@ -520,10 +556,10 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
      *              token) and the write was refused.
      */
     public function cancel_job( int $job_id, ?string $lock_token = null ): bool {
-        return $this->terminal_update(
+        return $this->set_status(
             $job_id,
+            self::STATUS_CANCELLED,
             array(
-                'status'       => self::STATUS_CANCELLED,
                 'locked_until' => 0,
                 'locked_by'    => '',
             ),

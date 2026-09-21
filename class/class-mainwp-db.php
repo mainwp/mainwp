@@ -1118,6 +1118,23 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
 
     /**
+     * Prevent a stale owner from overwriting a newer option value.
+     *
+     * @param int    $website_id Child site id.
+     * @param string $name       Option name.
+     * @param string $expected   Previously read value.
+     * @param string $value      Replacement value.
+     *
+     * @return bool Whether exactly one row changed.
+     */
+    public function compare_and_swap_website_option( int $website_id, string $name, string $expected, string $value ): bool {
+        $table_name = esc_sql( $this->table_name( 'wp_options' ) );
+        return 1 === $this->wpdb->query(
+            $this->wpdb->prepare( "UPDATE {$table_name} SET value = %s WHERE wpid = %d AND name = %s AND value = %s", $value, $website_id, $name, $expected ) // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd.
+        );
+    }
+
+    /**
      * Remove child site options.
      *
      * @param object $website Child site object.

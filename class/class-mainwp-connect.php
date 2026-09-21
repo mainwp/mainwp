@@ -302,6 +302,9 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      */
     public static function capture_response_headers( $ch, &$headers ) {
         $headers = '';
+        if ( ! static::is_valid_curl_handle( $ch ) ) {
+            return;
+        }
         curl_setopt(
             $ch,
             CURLOPT_HEADERFUNCTION,
@@ -2090,7 +2093,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $output,
             array(
                 'http_status' => $http_status,
-                'headers'     => isset( $resp_headers ) ? $resp_headers : '',
+                'headers'     => $resp_headers,
                 'body'        => $hide_raw ? '' : ( is_string( $data ) ? $data : '' ),
                 'resolved_ip' => $ip,
                 'error'       => $err,

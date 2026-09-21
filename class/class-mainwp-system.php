@@ -1023,8 +1023,8 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             $result = MainWP_DB_Uptime_Monitoring::instance()->repair_missing_primary_monitors();
             if ( is_array( $result ) && empty( $result['has_more'] ) ) {
                 unset( $update_actions['attempted_repair_primary_monitors'] );
-                $update = true;
             }
+            $update = true;
         }
 
         if ( $update ) {

@@ -880,64 +880,12 @@ KEY idx_wpid_issub (wpid, issub)";
         }
 
         /*
-        * Get enough missing sites to fill the batch after excluding sites
-        * that have already reached the retry limit.
+        * Get sites that are missing a Primary Monitor.
         *
-        * The failed-attempt counter is stored per site so one permanently
-        * failing site cannot prevent other sites from being repaired.
+        * get_sites_missing_primary_monitor() excludes sites that have
+        * already reached the maximum retry limit.
         */
-        $site_ids    = array();
-        $fetch_limit = $limit;
-        $count       = count( $site_ids );
-
-        while ( $count < $limit ) {
-            $candidate_ids = $this->get_sites_missing_primary_monitor( null, $fetch_limit );
-
-            if ( empty( $candidate_ids ) ) {
-                break;
-            }
-
-            $site_ids = array();
-
-            foreach ( $candidate_ids as $current_site_id ) {
-                $opt_name = 'mainwp_primary_monitor_repair_attempts_for_wp_' . $current_site_id;
-                $attempts = (int) get_option( $opt_name, 0 );
-
-                /*
-                * Do not retry a site that has already failed the maximum
-                * number of times.
-                */
-                if ( $attempts >= 3 ) {
-                    continue;
-                }
-
-                $site_ids[] = $current_site_id;
-
-                if ( count( $site_ids ) >= $limit ) {
-                    break;
-                }
-            }
-
-            /*
-            * If the query returned fewer candidates than requested, there
-            * are no more sites to scan.
-            */
-            if ( count( $candidate_ids ) < $fetch_limit ) {
-                break;
-            }
-
-            /*
-            * Increase the fetch size to compensate for sites that have
-            * reached the retry limit and were skipped.
-            */
-            $skipped = count( $candidate_ids ) - count( $site_ids );
-
-            if ( $skipped > 0 ) {
-                $fetch_limit += $skipped;
-            }
-
-            $count = count( $site_ids );
-        }
+        $site_ids = $this->get_sites_missing_primary_monitor( null, $limit );
 
         $created = 0;
         $found   = count( $site_ids );
@@ -965,7 +913,7 @@ KEY idx_wpid_issub (wpid, issub)";
             } else {
                 /*
                 * Count failures per site. Once a site reaches 3 failures,
-                * it will be skipped by subsequent repair batches.
+                * it will be excluded from subsequent repair batches.
                 */
                 $attempts = (int) get_option( $opt_name, 0 );
                 update_option( $opt_name, $attempts + 1 );
@@ -973,16 +921,13 @@ KEY idx_wpid_issub (wpid, issub)";
         }
 
         /*
-        * There are still eligible sites to repair when the batch was full.
-        * Failed sites that reached the retry limit are excluded from the
-        * next batch, allowing the remaining sites to continue.
+        * Continue while the batch was full. Failed sites that reach the
+        * retry limit are excluded from subsequent batches.
         */
-        $has_more = $found === $limit;
-
         return array(
             'found'    => $found,
             'created'  => $created,
-            'has_more' => $has_more,
+            'has_more' => $found === $limit,
         );
     }
 
@@ -998,6 +943,7 @@ KEY idx_wpid_issub (wpid, issub)";
     public function get_sites_missing_primary_monitor( $site_id = null, $limit = 50 ) {
         $sites_table    = $this->table_name( 'wp' );
         $monitors_table = $this->table_name( 'monitors' );
+        $options_table  = esc_sql( $this->wpdb->options );
 
         $where = '';
 
@@ -1010,22 +956,46 @@ KEY idx_wpid_issub (wpid, issub)";
 
         $limit = max( 1, min( 100, (int) $limit ) );
 
+        /*
+        * For the general repair process, exclude sites that have already
+        * reached the maximum number of repair attempts.
+        *
+        * A specific site repair is not subject to the retry limit.
+        */
+        $retry_where = '';
+
+        if ( null === $site_id ) {
+            $retry_where = "
+                AND (
+                    ra.option_id IS NULL
+                    OR CAST( ra.option_value AS UNSIGNED ) < 3
+                )";
+        }
+
         return $this->wpdb->get_col(
             $this->wpdb->prepare(
                 "SELECT s.id
                 FROM {$sites_table} AS s " . // NOSONAR - table name is generated internally and safely escaped.
-                " WHERE NOT EXISTS (
+                " LEFT JOIN {$options_table} AS ra " . // NOSONAR - table name is generated internally and safely escaped.
+                " ON ra.option_name = CONCAT(
+                    'mainwp_primary_monitor_repair_attempts_for_wp_',
+                    s.id
+                )
+                WHERE NOT EXISTS (
                     SELECT 1
                     FROM {$monitors_table} AS m " . // NOSONAR - table name is generated internally and safely escaped.
                     " WHERE m.wpid = s.id
                         AND m.suburl = ''
                 )
-                {$where} " . // phpcs:ignore --NOSONAR -ok.
-                ' LIMIT %d',
+                {$retry_where}
+                {$where}
+                ORDER BY s.id ASC
+                LIMIT %d",
                 $limit
             )
         );
     }
+
 
     /**
      * Update site monitor increase retries.

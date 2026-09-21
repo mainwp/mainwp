@@ -94,6 +94,23 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
     );
 
     /**
+     * Parameter-name suffixes treated as sensitive (csrf_token, api_key, …).
+     *
+     * @var array<int,string>
+     */
+    const SENSITIVE_PARAM_SUFFIXES = array(
+        'token',
+        'code',
+        'key',
+        'nonce',
+        'secret',
+        'signature',
+        'password',
+        'passwd',
+        'pwd',
+    );
+
+    /**
      * Markers that mean Cloudflare, another WAF, or a similar edge block.
      *
      * @var array<int,string>
@@ -337,11 +354,12 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
         $resolved_ip = self::format_ip_list( isset( $context['resolved_ip'] ) ? $context['resolved_ip'] : '' );
         $response    = self::summarize_response( $http_status, $headers, $body );
         $waf_likely  = self::is_waf_likely( $http_status, $headers . "\n" . $response['headers'], $body . "\n" . $response['body'] );
+        $lookup_ip   = empty( $context['skip_outbound_ip'] );
 
         return array(
             'http_status'           => $http_status,
             'waf_likely'            => $waf_likely,
-            'dashboard_outbound_ip' => self::get_dashboard_outbound_ip(),
+            'dashboard_outbound_ip' => $lookup_ip ? self::get_dashboard_outbound_ip() : '',
             'user_agent'            => self::get_user_agent(),
             'resolved_ip'           => $resolved_ip,
             'resolved_ip_label'     => esc_html__( 'Cloudflare/proxy edge IP', 'mainwp' ),
@@ -590,8 +608,7 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             return true;
         }
 
-        $suffixes = array( 'token', 'code', 'key', 'nonce', 'secret', 'signature', 'password', 'passwd', 'pwd' );
-        foreach ( $suffixes as $suffix ) {
+        foreach ( self::SENSITIVE_PARAM_SUFFIXES as $suffix ) {
             $needle = '_' . $suffix;
             $len    = strlen( $needle );
             if ( strlen( $name ) > $len && substr( $name, -$len ) === $needle ) {
@@ -732,12 +749,16 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             $text = $with_urls;
         }
 
-        $names = array();
-        foreach ( self::SENSITIVE_PARAM_NAMES as $name ) {
-            $names[] = preg_quote( $name, '/' );
-        }
-        $pattern  = '/\b(' . implode( '|', $names ) . ')\s*[:=]\s*[^\s&;#]+/i';
-        $redacted = preg_replace( $pattern, '$1=[redacted]', $text );
+        $redacted = preg_replace_callback(
+            '/([A-Za-z_][A-Za-z0-9_\-]*)\s*[:=]\s*[^\s&;#]+/',
+            static function ( $match ) {
+                if ( MainWP_Connect_Failure_Ux::is_sensitive_param( $match[1] ) ) {
+                    return $match[1] . '=[redacted]';
+                }
+                return $match[0];
+            },
+            $text
+        );
 
         return is_string( $redacted ) ? $redacted : $text;
     }

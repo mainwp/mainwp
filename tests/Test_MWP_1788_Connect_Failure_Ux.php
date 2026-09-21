@@ -289,6 +289,62 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Suffix-named secrets match is_sensitive_param() on body, Location, and stored UX.
+	 */
+	public function test_suffix_param_names_are_redacted_like_is_sensitive_param(): void {
+		$this->assertTrue( \MainWP\Dashboard\MainWP_Connect_Failure_Ux::is_sensitive_param( 'csrf_token' ) );
+		$this->assertTrue( \MainWP\Dashboard\MainWP_Connect_Failure_Ux::is_sensitive_param( 'site_api_key' ) );
+		$this->assertTrue( \MainWP\Dashboard\MainWP_Connect_Failure_Ux::is_sensitive_param( 'user_password' ) );
+		$this->assertFalse( \MainWP\Dashboard\MainWP_Connect_Failure_Ux::is_sensitive_param( 'page' ) );
+
+		$body = 'Welcome csrf_token=qa-csrf-secret site_api_key=qa-api-key page=sites';
+		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( $body );
+		$this->assertStringContainsString( 'csrf_token=[redacted]', $text );
+		$this->assertStringContainsString( 'site_api_key=[redacted]', $text );
+		$this->assertStringContainsString( 'page=sites', $text );
+		$this->assertStringNotContainsString( 'qa-csrf-secret', $text );
+		$this->assertStringNotContainsString( 'qa-api-key', $text );
+
+		$headers = "HTTP/1.1 302 Found\r\nLocation: https://sso.example.test/cb?csrf_token=qa-csrf-secret&page=sites\r\n";
+		$details = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::build_details(
+			array(
+				'http_status' => 302,
+				'headers'     => $headers,
+				'body'        => $body,
+			)
+		);
+		$html     = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::render_html( $details );
+		$text_ux  = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::format_text( $details );
+		$enriched = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::enrich_output(
+			array(),
+			array(
+				'http_status' => 302,
+				'headers'     => $headers,
+				'body'        => $body,
+			)
+		);
+
+		foreach ( array( $details['response']['text'], $html, $text_ux, $enriched['response_readable'], $enriched['failure_ux'], $enriched['failure_ux_text'] ) as $surface ) {
+			$this->assertStringContainsString( 'page=sites', $surface );
+			$this->assertStringNotContainsString( 'qa-csrf-secret', $surface );
+			$this->assertStringNotContainsString( 'qa-api-key', $surface );
+		}
+	}
+
+	/**
+	 * Successful Test Connection context can skip the outbound-IP lookup.
+	 */
+	public function test_skip_outbound_ip_avoids_lookup_on_success_context(): void {
+		$details = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::build_details(
+			array(
+				'http_status'      => 200,
+				'skip_outbound_ip' => true,
+			)
+		);
+		$this->assertSame( '', $details['dashboard_outbound_ip'] );
+	}
+
+	/**
 	 * JavaScript translations include the new failure-UX strings.
 	 */
 	public function test_js_translations_include_failure_ux_labels(): void {

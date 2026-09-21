@@ -281,11 +281,12 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $out = MainWP_Connect_Failure_Ux::enrich_output(
             $out,
             array(
-                'http_status' => $http_status,
-                'headers'     => $resp_headers,
-                'body'        => $hide_raw ? '' : ( is_string( $data ) ? $data : '' ),
-                'resolved_ip' => $ip,
-                'error'       => $out['error'],
+                'http_status'      => $http_status,
+                'headers'          => $resp_headers,
+                'body'             => $hide_raw ? '' : ( is_string( $data ) ? $data : '' ),
+                'resolved_ip'      => $ip,
+                'error'            => $out['error'],
+                'skip_outbound_ip' => ( '' === $out['error'] && 200 === (int) $http_status ),
             )
         );
 
@@ -2089,19 +2090,13 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         $output['http_status'] = (int) $http_status;
 
-        $output = MainWP_Connect_Failure_Ux::enrich_output(
-            $output,
-            array(
-                'http_status' => $http_status,
-                'headers'     => $resp_headers,
-                'body'        => $hide_raw ? '' : ( is_string( $data ) ? $data : '' ),
-                'resolved_ip' => $ip,
-                'error'       => $err,
-            )
+        $failure_context = array(
+            'http_status' => $http_status,
+            'headers'     => $resp_headers,
+            'body'        => $hide_raw ? '' : ( is_string( $data ) ? $data : '' ),
+            'resolved_ip' => $ip,
+            'error'       => $err,
         );
-        if ( ! $hide_raw && ! empty( $output['response_readable'] ) ) {
-            $output['fetch_data'] = $output['response_readable'];
-        }
 
         MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'http status: [' . $http_status . '] err: [' . $err . ']' );
         if ( '400' === $http_status ) {
@@ -2188,6 +2183,10 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         }
 
         if ( null !== $thr_error ) {
+            $output = MainWP_Connect_Failure_Ux::enrich_output( $output, $failure_context );
+            if ( ! $hide_raw && ! empty( $output['response_readable'] ) ) {
+                $output['fetch_data'] = $output['response_readable'];
+            }
             $readable = ! empty( $output['response_readable'] ) ? $output['response_readable'] : $hidden_data;
             $thr_error->set_data(
                 array(

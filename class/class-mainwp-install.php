@@ -1043,7 +1043,8 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
                     foreach ( $rows as $row ) {
                         $sites[ $row->site_id ][] = $row;
                     }
-                    $cleared = true;
+                    $cleared         = true;
+                    $cancel_failures = array();
                     foreach ( $sites as $jobs ) {
                         if ( count( $jobs ) < 2 ) {
                             continue;
@@ -1088,16 +1089,28 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
                                 )
                             );
                             if ( 1 !== $changed ) {
-                                $error  = $this->wpdb->last_error;
-                                $reason = array( 'code' => 'pristine_cancel_failed' );
-                                if ( '' !== $error ) {
-                                    $reason['error'] = $error;
+                                $error = $this->wpdb->last_error;
+                                if ( empty( $cancel_failures ) ) {
+                                    $cancel_failures = array(
+                                        'code'      => 'pristine_cancel_failed',
+                                        'job_count' => 0,
+                                        'job_ids'   => array(),
+                                    );
                                 }
-                                $reasons[ $table ]['reasons'][] = $reason;
+                                ++$cancel_failures['job_count'];
+                                if ( count( $cancel_failures['job_ids'] ) < 20 ) {
+                                    $cancel_failures['job_ids'][] = (int) $job->id;
+                                }
+                                if ( '' !== $error && ! isset( $cancel_failures['error'] ) ) {
+                                    $cancel_failures['error'] = $error;
+                                }
                                 MainWP_Logger::instance()->warning( sprintf( 'Backup identity repair deferred for %s: failed to cancel pristine restore job %d: %s', $table, $job->id, '' !== $error ? $error : 'row no longer matched the pristine state.' ) );
                                 $cleared = false;
                             }
                         }
+                    }
+                    if ( ! empty( $cancel_failures ) ) {
+                        $reasons[ $table ]['reasons'][] = $cancel_failures;
                     }
                     $filled = false;
                     if ( false !== $cleared ) {
@@ -1124,11 +1137,11 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
 
                 // dbDelta reports planned changes even when an ALTER fails; verify before clearing the retry marker.
                 if ( empty( $has_index ) ) {
-                    $alter_failed = false === $this->wpdb->query( "ALTER TABLE {$table} ADD UNIQUE KEY {$key} ({$column})" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL statement; table name escaped via esc_sql.
-                    $alter_error  = $this->wpdb->last_error;
-                    $has_index    = $this->wpdb->get_results( $this->wpdb->prepare( "SHOW INDEX FROM {$table} WHERE Key_name = %s", $key ) ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL introspection; table name escaped via esc_sql.
-                    $valid_index  = 1 === count( (array) $has_index ) && 0 === (int) $has_index[0]->Non_unique && 1 === (int) $has_index[0]->Seq_in_index && $column === $has_index[0]->Column_name;
-                    if ( $alter_failed || ! $valid_index ) {
+                    $this->wpdb->query( "ALTER TABLE {$table} ADD UNIQUE KEY {$key} ({$column})" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL statement; table name escaped via esc_sql.
+                    $alter_error = $this->wpdb->last_error;
+                    $has_index   = $this->wpdb->get_results( $this->wpdb->prepare( "SHOW INDEX FROM {$table} WHERE Key_name = %s", $key ) ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL introspection; table name escaped via esc_sql.
+                    $valid_index = 1 === count( (array) $has_index ) && 0 === (int) $has_index[0]->Non_unique && 1 === (int) $has_index[0]->Seq_in_index && $column === $has_index[0]->Column_name;
+                    if ( ! $valid_index ) {
                         $reason = array( 'code' => 'add_unique_failed' );
                         if ( '' !== $alter_error ) {
                             $reason['error'] = $alter_error;

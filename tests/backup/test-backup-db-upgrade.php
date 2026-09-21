@@ -1945,6 +1945,125 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * A concurrent key creation must not leave a successful repair deferred.
+	 */
+	public function test_site_identity_repair_accepts_concurrently_created_unique_key() {
+		global $wpdb;
+		$table  = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$manual = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		$probes = 0;
+		$adds   = 0;
+		$block  = static function ( $query ) use ( $table, $manual, &$probes, &$adds ) {
+			// The unrelated manual self-joins cannot run against harness temporary tables.
+			if ( str_starts_with( $query, "UPDATE {$manual} task " ) ) {
+				return 'SELECT 1';
+			}
+			if ( str_starts_with( $query, "SHOW INDEX FROM {$table} WHERE Key_name = 'uniq_active_site'" ) ) {
+				++$probes;
+				if ( 1 === $probes ) {
+					return "SHOW INDEX FROM {$table} WHERE Key_name = 'mainwp_missing_fixture_key'";
+				}
+			}
+			if ( str_starts_with( $query, "ALTER TABLE {$table} ADD UNIQUE KEY uniq_active_site" ) ) {
+				++$adds;
+			}
+			return $query;
+		};
+		try {
+			$this->assertTrue( $this->index_exists( $table, 'uniq_active_site' ) );
+			update_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_PENDING, time() );
+			delete_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_REASONS );
+			add_filter( 'query', $block );
+			$this->assertTrue( MainWP_Install::instance()->repair_backup_site_unique_keys() );
+			$this->assertSame( 1, $adds );
+			$this->assertSame( 2, $probes );
+			$this->assertFalse( get_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_REASONS ) );
+			$this->assertFalse( get_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_PENDING ) );
+			remove_filter( 'query', $block );
+			$index = $wpdb->get_results( "SHOW INDEX FROM {$table} WHERE Key_name = 'uniq_active_site'" ); // phpcs:ignore WordPress.DB -- test probe.
+			$this->assertCount( 1, $index );
+			$this->assertSame( 'active_site_id', $index[0]->Column_name );
+			$this->assertSame( 0, (int) $index[0]->Non_unique );
+			$this->assertSame( 1, (int) $index[0]->Seq_in_index );
+		} finally {
+			remove_filter( 'query', $block );
+			delete_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_REASONS );
+			delete_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_PENDING );
+			self::commit_transaction();
+		}
+	}
+
+	/**
+	 * Repeated cancellation failures must not grow the stored diagnostic without bounds.
+	 */
+	public function test_site_identity_repair_bounds_pristine_cancel_failures() {
+		global $wpdb;
+		$table    = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$manual   = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		$ids      = array();
+		$failures = 0;
+		$block    = static function ( $query ) use ( $table, $manual, &$failures ) {
+			// The unrelated manual self-joins cannot run against harness temporary tables.
+			if ( str_starts_with( $query, "UPDATE {$manual} task " ) ) {
+				return 'SELECT 1';
+			}
+			if ( str_starts_with( $query, "UPDATE {$table} SET status = 'cancelled'" ) ) {
+				++$failures;
+				return 1 === $failures ? 'SELECT mainwp_first_cancel_failure' : 'SELECT mainwp_later_cancel_failure';
+			}
+			return $query;
+		};
+		try {
+			$this->assertNotFalse( $wpdb->query( "ALTER TABLE {$table} DROP INDEX uniq_active_site" ) ); // phpcs:ignore WordPress.DB -- test fixture.
+			for ( $site = 889940; $site < 889942; ++$site ) {
+				for ( $job = 0; $job < 13; ++$job ) {
+					$this->assertSame(
+						1,
+						$wpdb->insert(
+							$table,
+							array(
+								'site_id'     => $site,
+								'snapshot_id' => 42,
+								'status'      => 'pending',
+								'checkpoint'  => '[]',
+							)
+						)
+					); // phpcs:ignore WordPress.DB -- test fixture.
+					$ids[ $site ][] = (int) $wpdb->insert_id;
+				}
+			}
+			delete_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_REASONS );
+			add_filter( 'query', $block );
+			$this->assertFalse( MainWP_Install::instance()->repair_backup_site_unique_keys() );
+			$this->assertSame( 24, $failures );
+			$recorded = get_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_REASONS );
+			$this->assertSame( array( $table ), array_keys( $recorded ) );
+			$this->assertCount( 1, $recorded[ $table ]['reasons'] );
+			$reason = $recorded[ $table ]['reasons'][0];
+			$this->assertSame( 'pristine_cancel_failed', $reason['code'] );
+			$this->assertSame( 24, $reason['job_count'] );
+			$this->assertSame(
+				array_slice( array_merge( array_slice( array_reverse( $ids[889941] ), 1 ), array_slice( array_reverse( $ids[889940] ), 1 ) ), 0, 20 ),
+				$reason['job_ids']
+			);
+			$this->assertStringContainsString( 'mainwp_first_cancel_failure', $reason['error'] );
+			$this->assertStringNotContainsString( 'mainwp_later_cancel_failure', $reason['error'] );
+			$this->assertGreaterThan( 0, (int) get_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_PENDING ) );
+		} finally {
+			remove_filter( 'query', $block );
+			foreach ( array( 889940, 889941 ) as $site ) {
+				$wpdb->delete( $table, array( 'site_id' => $site ) ); // phpcs:ignore WordPress.DB -- DDL can commit fixture rows.
+			}
+			if ( ! $this->index_exists( $table, 'uniq_active_site' ) ) {
+				$wpdb->query( "ALTER TABLE {$table} ADD UNIQUE KEY uniq_active_site (active_site_id)" ); // phpcs:ignore WordPress.DB -- test cleanup.
+			}
+			delete_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_REASONS );
+			delete_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_PENDING );
+			self::commit_transaction();
+		}
+	}
+
+	/**
 	 * A failed ADD UNIQUE must be diagnosed; an absent key on a normal first
 	 * run must stay silent.
 	 *
@@ -2015,6 +2134,10 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 			$this->assertSame( array( $table ), array_keys( $recorded ) );
 			$this->assertCount( 1, $recorded[ $table ]['reasons'] );
 			$this->assertSame( $code, $recorded[ $table ]['reasons'][0]['code'] );
+			if ( 'pristine_cancel_failed' === $code ) {
+				$this->assertSame( 1, $recorded[ $table ]['reasons'][0]['job_count'] );
+				$this->assertCount( 1, $recorded[ $table ]['reasons'][0]['job_ids'] );
+			}
 			$this->assertArrayNotHasKey( 'reason', $recorded[ $table ] );
 			$this->assertArrayNotHasKey( 'error', $recorded[ $table ] );
 			$this->assertSame( 1, $recorded[ $table ]['attempts'] );

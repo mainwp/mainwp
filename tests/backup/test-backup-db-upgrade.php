@@ -1663,4 +1663,134 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 			self::commit_transaction();
 		}
 	}
+
+	/**
+	 * Restore repair decisions for pristine and progressed rows.
+	 *
+	 * @return array Fixtures and surviving row offset, or null when repair must defer.
+	 */
+	public static function restore_repair_matrix() {
+		return array(
+			'no active rows'      => array( array(), null, true ),
+			'one active row'      => array( array( array() ), 0, true ),
+			'all pristine'        => array( array( array( 'checkpoint' => '' ), array( 'checkpoint' => '[]' ), array() ), 2, true ),
+			'newer progressed'    => array( array( array(), array( 'status' => 'running' ) ), 1, true ),
+			'older progressed'    => array( array( array( 'status' => 'failed_retryable' ), array() ), 0, true ),
+			'child handle'        => array( array( array( 'child_task_id' => 'child-1' ), array() ), 0, true ),
+			'snapshot handle'     => array( array( array(), array( 'pre_snapshot_task_id' => 'snapshot-1' ) ), 1, true ),
+			'lease owner'         => array( array( array( 'locked_by' => 'worker-1' ), array() ), 0, true ),
+			'lease deadline'      => array( array( array( 'locked_until' => 123 ), array() ), 0, true ),
+			'checkpoint progress' => array( array( array( 'checkpoint' => '{"phase":"staging"}' ), array() ), 0, true ),
+			'invalid checkpoint'  => array( array( array( 'checkpoint' => 'invalid' ), array() ), 0, true ),
+			'two progressed'      => array( array( array( 'status' => 'running' ), array( 'child_task_id' => 'child-2' ), array() ), null, false ),
+		);
+	}
+
+	/**
+	 * Only pristine duplicates may be cancelled by the migration.
+	 *
+	 * @dataProvider restore_repair_matrix
+	 * @param array    $fixtures Active row overrides, in insertion order.
+	 * @param int|null $keep     Surviving offset.
+	 * @param bool     $repaired Expected repair result.
+	 */
+	public function test_restore_site_repair_matrix( $fixtures, $keep, $repaired ) {
+		global $wpdb;
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$ids   = array();
+		try {
+			$wpdb->query( "ALTER TABLE {$table} DROP INDEX uniq_active_site" ); // phpcs:ignore WordPress.DB -- test fixture.
+			foreach ( $fixtures as $fixture ) {
+				$this->assertSame(
+					1,
+					$wpdb->insert(
+						$table,
+						array_merge(
+							array(
+								'site_id'     => 889901,
+								'snapshot_id' => 42,
+								'status'      => 'pending',
+								'checkpoint'  => '{}',
+							),
+							$fixture
+						)
+					)
+				); // phpcs:ignore WordPress.DB -- test fixture.
+				$ids[] = (int) $wpdb->insert_id;
+			}
+			$before = $wpdb->get_results( "SELECT * FROM {$table} WHERE site_id = 889901 ORDER BY id", ARRAY_A ); // phpcs:ignore WordPress.DB -- test probe.
+			delete_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_PENDING );
+			$this->assertSame( $repaired, MainWP_Install::instance()->repair_backup_site_unique_keys() );
+			$this->assertSame( $repaired, $this->index_exists( $table, 'uniq_active_site' ) );
+			if ( ! $repaired ) {
+				$this->assertGreaterThan( 0, (int) get_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_PENDING ) );
+				$this->assertSame( $before, $wpdb->get_results( "SELECT * FROM {$table} WHERE site_id = 889901 ORDER BY id", ARRAY_A ) ); // phpcs:ignore WordPress.DB -- test probe.
+				return;
+			}
+			$this->assertFalse( get_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_PENDING ) );
+			foreach ( $ids as $offset => $id ) {
+				$row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d", $id ) ); // phpcs:ignore WordPress.DB -- test probe.
+				if ( $offset === $keep ) {
+					$this->assertSame( $before[ $offset ]['status'], $row->status );
+					$this->assertSame( 889901, (int) $row->active_site_id );
+					foreach ( array( 'checkpoint', 'child_task_id', 'pre_snapshot_task_id', 'locked_by', 'locked_until' ) as $column ) {
+						$this->assertSame( $before[ $offset ][ $column ], $row->$column );
+					}
+				} else {
+					$this->assertSame( 'cancelled', $row->status );
+					$this->assertNull( $row->active_site_id );
+					$this->assertSame( '', $row->locked_by );
+					$this->assertSame( 0, (int) $row->locked_until );
+					$this->assertSame( 'Superseded by the active restore uniqueness repair.', $row->last_error );
+				}
+			}
+		} finally {
+			$wpdb->query( "DELETE FROM {$table} WHERE site_id = 889901" ); // phpcs:ignore WordPress.DB -- test cleanup.
+			MainWP_Install::instance()->repair_backup_site_unique_keys();
+			self::commit_transaction();
+		}
+	}
+
+	/**
+	 * Same-name keys must have exactly the required definition.
+	 *
+	 * @return array Table suffix, key name, and foreign definition.
+	 */
+	public static function foreign_site_indexes() {
+		return array(
+			'manual nonunique'  => array( 'wp_backup', 'uniq_manual_site', 'INDEX uniq_manual_site (manual_site_id)' ),
+			'manual wrong'      => array( 'wp_backup', 'uniq_manual_site', 'UNIQUE INDEX uniq_manual_site (id)' ),
+			'manual composite'  => array( 'wp_backup', 'uniq_manual_site', 'UNIQUE INDEX uniq_manual_site (manual_site_id, id)' ),
+			'restore nonunique' => array( 'wp_backup_restore_job', 'uniq_active_site', 'INDEX uniq_active_site (active_site_id)' ),
+			'restore wrong'     => array( 'wp_backup_restore_job', 'uniq_active_site', 'UNIQUE INDEX uniq_active_site (id)' ),
+			'restore composite' => array( 'wp_backup_restore_job', 'uniq_active_site', 'UNIQUE INDEX uniq_active_site (active_site_id, id)' ),
+		);
+	}
+
+	/**
+	 * A foreign index is preserved and leaves the retry marker armed.
+	 *
+	 * @dataProvider foreign_site_indexes
+	 * @param string $suffix     Table suffix.
+	 * @param string $key        Index name.
+	 * @param string $definition Foreign index SQL.
+	 */
+	public function test_site_identity_repair_rejects_foreign_index( $suffix, $key, $definition ) {
+		global $wpdb;
+		$table = MainWP_DB::instance()->get_table_name( $suffix );
+		try {
+			$this->assertNotFalse( $wpdb->query( "ALTER TABLE {$table} DROP INDEX {$key}, ADD {$definition}" ) ); // phpcs:ignore WordPress.DB -- test fixture.
+			$before = $wpdb->get_results( $wpdb->prepare( "SHOW INDEX FROM {$table} WHERE Key_name = %s", $key ), ARRAY_A ); // phpcs:ignore WordPress.DB -- test probe.
+			delete_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_PENDING );
+			$this->assertFalse( MainWP_Install::instance()->repair_backup_site_unique_keys() );
+			$this->assertGreaterThan( 0, (int) get_site_option( MainWP_Install::BACKUP_SITE_UNIQ_KEYS_REPAIR_PENDING ) );
+			$after = $wpdb->get_results( $wpdb->prepare( "SHOW INDEX FROM {$table} WHERE Key_name = %s", $key ), ARRAY_A ); // phpcs:ignore WordPress.DB -- test probe.
+			$this->assertSame( array_column( $before, 'Column_name' ), array_column( $after, 'Column_name' ) );
+			$this->assertSame( array_column( $before, 'Non_unique' ), array_column( $after, 'Non_unique' ) );
+		} finally {
+			$wpdb->query( "ALTER TABLE {$table} DROP INDEX {$key}" ); // phpcs:ignore WordPress.DB -- test cleanup.
+			MainWP_Install::instance()->repair_backup_site_unique_keys();
+			self::commit_transaction();
+		}
+	}
 }

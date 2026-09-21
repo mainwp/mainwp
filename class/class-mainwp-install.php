@@ -975,13 +975,62 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
                 } else {
                     $statuses     = MainWP_Backup_Restore_Job_Store::active_statuses();
                     $placeholders = implode( ',', array_fill( 0, count( $statuses ), '%s' ) );
-                    $cleared      = $this->wpdb->query(
+                    // Restore repair matrix, per site:
+                    // - Zero or one active row: keep it.
+                    // - All duplicates pristine: keep the highest id.
+                    // - Exactly one progressed row: keep it; cancel only pristine siblings.
+                    // - Two or more progressed rows: leave the site untouched and defer this table.
+                    // Pristine means pending, no handles or lease, and an empty checkpoint.
+                    // The unique key is hardening, not worth terminalizing a live restore for.
+                    $rows = $this->wpdb->get_results(
                         $this->wpdb->prepare(
-                            "UPDATE {$table} duplicate INNER JOIN {$table} older ON older.site_id = duplicate.site_id AND older.id < duplicate.id AND older.status IN ( {$placeholders} ) SET duplicate.status = 'cancelled', duplicate.active_site_id = NULL, duplicate.last_error = %s, duplicate.locked_until = 0, duplicate.locked_by = '' WHERE duplicate.status IN ( {$placeholders} )", // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- one-time dedupe; table name escaped via esc_sql.
-                            array_merge( $statuses, array( 'Superseded by the active restore uniqueness repair.' ), $statuses )
+                            "SELECT * FROM {$table} WHERE status IN ( {$placeholders} ) ORDER BY id DESC", // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- trusted table and counted status placeholders.
+                            $statuses
                         )
                     );
-                    $filled       = false;
+                    if ( null === $rows || '' !== $this->wpdb->last_error ) {
+                        $repaired = false;
+                        continue;
+                    }
+                    $sites = array();
+                    foreach ( $rows as $row ) {
+                        $sites[ $row->site_id ][] = $row;
+                    }
+                    $cleared = true;
+                    foreach ( $sites as $jobs ) {
+                        if ( count( $jobs ) < 2 ) {
+                            continue;
+                        }
+                        $progressed = array();
+                        foreach ( $jobs as $job ) {
+                            $checkpoint = '' === (string) $job->checkpoint ? array() : json_decode( $job->checkpoint, true );
+                            if ( 'pending' !== $job->status || '' !== (string) $job->child_task_id || '' !== (string) $job->pre_snapshot_task_id || '' !== (string) $job->locked_by || 0 !== (int) $job->locked_until || array() !== $checkpoint ) {
+                                $progressed[] = $job;
+                            }
+                        }
+                        if ( count( $progressed ) > 1 ) {
+                            $cleared = false;
+                            continue;
+                        }
+                        $keep = empty( $progressed ) ? $jobs[0] : $progressed[0];
+                        foreach ( $jobs as $job ) {
+                            if ( $job->id === $keep->id ) {
+                                continue;
+                            }
+                            $changed = $this->wpdb->query(
+                                $this->wpdb->prepare(
+                                    "UPDATE {$table} SET status = 'cancelled', active_site_id = NULL, locked_until = 0, locked_by = '', last_error = %s WHERE id = %d AND status = 'pending' AND child_task_id = '' AND pre_snapshot_task_id = '' AND locked_by = '' AND locked_until = 0 AND checkpoint = %s", // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- trusted table; recheck pristine state so a worker that progressed after the SELECT is not cancelled.
+                                    'Superseded by the active restore uniqueness repair.',
+                                    $job->id,
+                                    $job->checkpoint
+                                )
+                            );
+                            if ( 1 !== $changed ) {
+                                $cleared = false;
+                            }
+                        }
+                    }
+                    $filled = false;
                     if ( false !== $cleared ) {
                         $filled = $this->wpdb->query(
                             $this->wpdb->prepare(
@@ -1002,7 +1051,9 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
                     $this->wpdb->query( "ALTER TABLE {$table} ADD UNIQUE KEY {$key} ({$column})" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL statement; table name escaped via esc_sql.
                     $has_index = $this->wpdb->get_results( $this->wpdb->prepare( "SHOW INDEX FROM {$table} WHERE Key_name = %s", $key ) ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL introspection; table name escaped via esc_sql.
                 }
-                $repaired = ! empty( $has_index ) && $repaired;
+                // A foreign same-name index must remain untouched and keep the retry armed.
+                $valid_index = 1 === count( (array) $has_index ) && 0 === (int) $has_index[0]->Non_unique && 1 === (int) $has_index[0]->Seq_in_index && $column === $has_index[0]->Column_name;
+                $repaired    = $valid_index && $repaired;
             }
         } finally {
             $this->wpdb->suppress_errors( $suppress );

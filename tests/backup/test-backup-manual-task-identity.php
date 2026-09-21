@@ -58,8 +58,11 @@ class MainWP_Backup_Manual_Task_Identity_Test extends \WP_UnitTestCase {
 
 	/**
 	 * The losing insert must adopt the winner even without advisory locks.
+	 *
+	 * @dataProvider insert_error_languages
+	 * @param bool $localized Simulate a non-English duplicate message.
 	 */
-	public function test_ensure_manual_backup_task_refetches_duplicate_key_winner() {
+	public function test_ensure_manual_backup_task_refetches_duplicate_key_winner( $localized ) {
 		global $wpdb;
 		$db        = MainWP_DB_Backup::instance();
 		$website   = (object) array(
@@ -73,7 +76,7 @@ class MainWP_Backup_Manual_Task_Identity_Test extends \WP_UnitTestCase {
 		update_option( 'mainwp_on_demand_retention_count', 11 );
 		$table  = MainWP_DB::instance()->get_table_name( 'wp_backup' );
 		$winner = null;
-		$race   = function ( $query ) use ( &$race, &$winner, $db, $website, $table ) {
+		$race   = function ( $query ) use ( &$race, &$winner, $db, $website, $table, $wpdb, $localized ) {
 			if ( str_starts_with( $query, 'INSERT INTO `' . $table . '`' ) ) {
 				remove_filter( 'query', $race );
 				$winner = $db->ensure_manual_backup_task( $website );
@@ -88,6 +91,10 @@ class MainWP_Backup_Manual_Task_Identity_Test extends \WP_UnitTestCase {
 						'max_chain_length' => 5,
 					)
 				);
+				if ( $localized ) {
+					$wpdb->last_error = 'Doppelter Eintrag';
+					return '';
+				}
 			}
 			return $query;
 		};
@@ -111,5 +118,45 @@ class MainWP_Backup_Manual_Task_Identity_Test extends \WP_UnitTestCase {
 		$this->assertSame( 0, (int) $task->paused );
 		$this->assertSame( 0, (int) $task->max_chain_length );
 		$this->assertSame( 1, (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table} WHERE manual_site_id = 887701" ) ); // phpcs:ignore WordPress.DB -- test probe.
+	}
+
+	/**
+	 * A failed insert without a winner remains a database failure.
+	 */
+	public function test_ensure_manual_backup_task_returns_false_on_insert_failure() {
+		global $wpdb;
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		$fail  = static function ( $query ) use ( $table, $wpdb ) {
+			if ( str_starts_with( $query, 'INSERT INTO `' . $table . '`' ) ) {
+				$wpdb->last_error = 'Insert failed';
+				return '';
+			}
+			return $query;
+		};
+		add_filter( 'query', $fail );
+		try {
+			$this->assertFalse(
+				MainWP_DB_Backup::instance()->ensure_manual_backup_task(
+					(object) array(
+						'id'     => 887701,
+						'userid' => 1,
+					)
+				)
+			);
+		} finally {
+			remove_filter( 'query', $fail );
+		}
+	}
+
+	/**
+	 * Exercise both the real duplicate key and a localized failure response.
+	 *
+	 * @return array Error message modes.
+	 */
+	public static function insert_error_languages() {
+		return array(
+			'server message'    => array( false ),
+			'localized message' => array( true ),
+		);
 	}
 }

@@ -637,21 +637,28 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 			if ( 'cancel_job' === $terminal ) {
 				$this->assertSame( 'retry', $this->store->get_job( $id )->last_error );
 			}
-			$this->assertFalse( $this->store->cancel_job( $id ), 'A second terminal writer must still be refused.' );
+			$this->assertSame( 'cancel_job' === $terminal, $this->store->cancel_job( $id ), 'A terminal row only acknowledges its existing status.' );
 		}
 	}
 
 	/**
-	 * A stale NOT EXISTS result cannot bypass the unique key.
+	 * A losing insert adopts the active job without English error text.
+	 *
+	 * @dataProvider insert_error_languages
+	 * @param bool $localized Simulate a non-English duplicate message.
 	 */
-	public function test_create_job_duplicate_key_race_returns_zero() {
+	public function test_create_job_duplicate_key_race_returns_zero( $localized ) {
 		global $wpdb;
 		$this->assertGreaterThan( 0, $this->store->create_job( 77901, 42, array() ) );
 		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
 		$raced = false;
-		$race  = function ( $query ) use ( $table, &$raced ) {
+		$race  = function ( $query ) use ( $wpdb, $table, &$raced, $localized ) {
 			if ( str_starts_with( $query, 'INSERT INTO ' . $table ) ) {
 				$raced = true;
+				if ( $localized ) {
+					$wpdb->last_error = 'Doppelter Eintrag';
+					return '';
+				}
 				return strstr( $query, ' WHERE NOT EXISTS', true );
 			}
 			return $query;
@@ -667,7 +674,7 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * An upgrade keeps the oldest active job and preserves terminal history.
+	 * An upgrade keeps the progressed job and preserves terminal history.
 	 */
 	public function test_install_deduplicates_active_restore_site_identity() {
 		global $wpdb;
@@ -676,7 +683,7 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 		$ids     = array();
 		try {
 			$wpdb->query( "ALTER TABLE {$table} DROP INDEX uniq_active_site, DROP COLUMN active_site_id" ); // phpcs:ignore WordPress.DB -- test fixture.
-			foreach ( array( 'completed', 'running', 'pending', 'failed_retryable', 'cancelled' ) as $status ) {
+			foreach ( array( 'completed', 'pending', 'running', 'pending', 'cancelled' ) as $status ) {
 				$row = array(
 					'site_id'     => 77902,
 					'snapshot_id' => 42,
@@ -691,13 +698,13 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 			foreach ( $ids as $index => $id ) {
 				$row = $this->store->get_job( $id );
 				$this->assertNotNull( $row );
-				if ( 1 === $index ) {
+				if ( 2 === $index ) {
 					$this->assertSame( 'running', $row->status );
 					$this->assertSame( 77902, (int) $row->active_site_id );
 				} else {
 					$this->assertNull( $row->active_site_id );
 					$this->assertSame( 0 === $index ? 'completed' : 'cancelled', $row->status );
-					if ( 2 === $index || 3 === $index ) {
+					if ( 1 === $index || 3 === $index ) {
 						$this->assertSame( 'Superseded by the active restore uniqueness repair.', $row->last_error );
 					}
 				}
@@ -726,5 +733,96 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 			remove_filter( 'query', $fail );
 		}
 		$this->assertNull( $this->store->get_active_job_for_site( 77903 ) );
+	}
+
+	/**
+	 * A cancelled row cannot reclaim a site occupied by a newer restore.
+	 */
+	public function test_set_status_refuses_active_write_onto_cancelled_row() {
+		$id = $this->store->create_job( 77904, 42, array() );
+		$this->assertTrue( $this->store->cancel_job( $id ) );
+		$this->assertGreaterThan( 0, $this->store->create_job( 77904, 43, array() ) );
+		$this->assertFalse( $this->store->set_status( $id, 'running' ) );
+		$this->assertSame( 'cancelled', $this->store->get_job( $id )->status );
+	}
+
+	/**
+	 * A missing row cannot acknowledge a tokenless status write.
+	 */
+	public function test_set_status_missing_row_returns_false() {
+		$id = $this->store->create_job( 77904, 42, array() );
+		global $wpdb;
+		$wpdb->delete( MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ), array( 'id' => $id ) ); // phpcs:ignore WordPress.DB -- test fixture.
+		$this->assertFalse( $this->store->set_status( $id, 'running' ) );
+	}
+
+	/**
+	 * Freeze the UPDATE timestamp to exercise an actual zero-row no-op.
+	 */
+	public function test_set_status_same_second_noop_returns_true() {
+		$id        = $this->store->create_job( 77904, 42, array() );
+		$table     = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$updated   = (int) $this->store->get_job( $id )->updated;
+		$read_back = false;
+		$freeze    = static function ( $query ) use ( $table, $updated, &$read_back ) {
+			if ( str_starts_with( $query, 'SELECT * FROM ' . $table . ' WHERE id = ' ) ) {
+				$read_back = true;
+			}
+			return str_starts_with( $query, 'UPDATE ' . $table . ' SET ' ) ? preg_replace( '/`updated` = [0-9]+/', '`updated` = ' . $updated, $query ) : $query;
+		};
+		add_filter( 'query', $freeze );
+		try {
+			$this->assertTrue( $this->store->set_status( $id, 'pending' ) );
+			$this->assertTrue( $read_back, 'A zero-row write must re-read the current row.' );
+		} finally {
+			remove_filter( 'query', $freeze );
+		}
+	}
+
+	/**
+	 * Throwing query filters must not leak error suppression from either write.
+	 */
+	public function test_restore_writes_restore_error_suppression_after_throw() {
+		global $wpdb;
+		$id       = $this->store->create_job( 77904, 42, array() );
+		$table    = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$suppress = $wpdb->suppress_errors( false );
+		$throw    = static function ( $query ) use ( $table ) {
+			if ( str_starts_with( $query, 'INSERT INTO ' . $table ) || str_starts_with( $query, 'UPDATE ' . $table ) ) {
+				throw new \RuntimeException( 'query filter failed' );
+			}
+			return $query;
+		};
+		add_filter( 'query', $throw );
+		try {
+			foreach ( array( 'create', 'status' ) as $operation ) {
+				try {
+					if ( 'create' === $operation ) {
+						$this->store->create_job( 77905, 42, array() );
+					} else {
+						$this->store->set_status( $id, 'running' );
+					}
+					$this->fail( 'The query filter must throw.' );
+				} catch ( \RuntimeException $e ) {
+					$this->assertSame( 'query filter failed', $e->getMessage() );
+					$this->assertFalse( $wpdb->suppress_errors );
+				}
+			}
+		} finally {
+			remove_filter( 'query', $throw );
+			$wpdb->suppress_errors( $suppress );
+		}
+	}
+
+	/**
+	 * Exercise both the real duplicate key and a localized failure response.
+	 *
+	 * @return array Error message modes.
+	 */
+	public static function insert_error_languages() {
+		return array(
+			'server message'    => array( false ),
+			'localized message' => array( true ),
+		);
 	}
 }

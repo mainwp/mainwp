@@ -114,16 +114,18 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
         $placeholders = implode( ',', array_fill( 0, count( $statuses ), '%s' ) );
 
         $suppress = $this->wpdb->suppress_errors();
-        $result   = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- the atomic create gate; must hit the DB engine.
-            $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- replacements and placeholders come from the same counted array.
-                'INSERT INTO ' . $this->table() . ' ( site_id, active_site_id, snapshot_id, status, checkpoint, created, updated ) SELECT %d, %d, %d, %s, %s, %d, %d FROM DUAL WHERE NOT EXISTS ( SELECT 1 FROM ' . $this->table() . " WHERE site_id = %d AND status IN ( {$placeholders} ) LIMIT 1 )", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- placeholder list built from a counted array; table name from trusted helper.
-                array_merge( array( $site_id, $site_id, $snapshot_id, self::STATUS_PENDING, wp_json_encode( $checkpoint ), $now, $now, $site_id ), $statuses )
-            )
-        );
-
-        $this->wpdb->suppress_errors( $suppress );
+        try {
+            $result = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- the atomic create gate; must hit the DB engine.
+                $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- replacements and placeholders come from the same counted array.
+                    'INSERT INTO ' . $this->table() . ' ( site_id, active_site_id, snapshot_id, status, checkpoint, created, updated ) SELECT %d, %d, %d, %s, %s, %d, %d FROM DUAL WHERE NOT EXISTS ( SELECT 1 FROM ' . $this->table() . " WHERE site_id = %d AND status IN ( {$placeholders} ) LIMIT 1 )", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- placeholder list built from a counted array; table name from trusted helper.
+                    array_merge( array( $site_id, $site_id, $snapshot_id, self::STATUS_PENDING, wp_json_encode( $checkpoint ), $now, $now, $site_id ), $statuses )
+                )
+            );
+        } finally {
+            $this->wpdb->suppress_errors( $suppress );
+        }
         if ( false === $result ) {
-            return str_contains( $this->wpdb->last_error, 'Duplicate entry' ) && str_contains( $this->wpdb->last_error, 'uniq_active_site' ) ? 0 : -1;
+            return null !== $this->get_active_job_for_site( $site_id ) ? 0 : -1;
         }
         return 1 === (int) $result ? (int) $this->wpdb->insert_id : 0;
     }
@@ -409,6 +411,13 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
     /**
      * Move a job to a status, optionally recording handles.
      *
+     * Transition matrix (failed_retryable is active):
+     * - Active -> active or terminal: write; a supplied token must match.
+     * - Terminal -> active or terminal: no write, with or without a token.
+     * - Changed row: true. Query failure or missing row: false.
+     * - Unchanged row, token supplied: true only while that token still owns it.
+     * - Unchanged row, no token: true only if its status already matches.
+     *
      * @param int         $job_id     Job id.
      * @param string      $status     New status.
      * @param array       $extra      Extra columns (child_task_id, pre_snapshot_task_id).
@@ -438,32 +447,34 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
         }
         $set[]    = 'active_site_id = ' . ( $active ? 'site_id' : 'NULL' );
         $values[] = $job_id;
-        $guard    = '';
-        if ( ! $active ) {
-            // Preserve the first terminal writer's result and release its site in the same write.
-            $statuses = self::active_statuses();
-            $guard    = ' AND status IN ( ' . implode( ',', array_fill( 0, count( $statuses ), '%s' ) ) . ' )';
-            $values   = array_merge( $values, $statuses );
-        }
+        // Every transition preserves the first terminal writer's result.
+        $statuses = self::active_statuses();
+        $guard    = ' AND status IN ( ' . implode( ',', array_fill( 0, count( $statuses ), '%s' ) ) . ' )';
+        $values   = array_merge( $values, $statuses );
         if ( null !== $lock_token ) {
             $guard   .= ' AND locked_by = %s';
             $values[] = $lock_token;
         }
-        $changed = $this->wpdb->query(
-            $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- placeholder list and bind array grow together.
-                'UPDATE ' . $this->table() . ' SET ' . implode( ', ', $set ) . " WHERE id = %d{$guard}", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- the fence is a fixed SQL fragment; its value binds via placeholder.
-                $values
-            )
-        );
-        if ( ! $active || false === $changed || 1 === $changed ) {
+        $suppress = $this->wpdb->suppress_errors();
+        try {
+            $changed = $this->wpdb->query(
+                $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- placeholder list and bind array grow together.
+                    'UPDATE ' . $this->table() . ' SET ' . implode( ', ', $set ) . " WHERE id = %d{$guard}", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- the fence is a fixed SQL fragment; its value binds via placeholder.
+                    $values
+                )
+            );
+        } finally {
+            $this->wpdb->suppress_errors( $suppress );
+        }
+        if ( false === $changed || 1 === $changed ) {
             return 1 === $changed;
         }
-        if ( null === $lock_token ) {
-            return true;
+        // Resolve an unchanged write from the current row, including same-second no-ops.
+        $current = $this->get_job( $job_id );
+        if ( null === $current ) {
+            return false;
         }
-        // An unchanged same-second write still succeeds while its lease is held.
-        $holder = $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT locked_by FROM ' . $this->table() . ' WHERE id = %d', $job_id ) );
-        return $holder === $lock_token;
+        return null !== $lock_token ? $current->locked_by === $lock_token : $current->status === $status;
     }
 
     /**

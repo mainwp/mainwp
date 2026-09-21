@@ -544,7 +544,7 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         if ( empty( $task ) ) {
             $suppress = $this->wpdb->suppress_errors();
             try {
-                $created   = $this->add_backup_task(
+                $created = $this->add_backup_task(
                     (int) $website->userid,
                     'On-demand backup',
                     'manual',
@@ -567,11 +567,10 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
                     0,
                     $site_id
                 );
-                $duplicate = false === $created && str_contains( $this->wpdb->last_error, 'Duplicate entry' ) && str_contains( $this->wpdb->last_error, 'uniq_manual_site' );
             } finally {
                 $this->wpdb->suppress_errors( $suppress );
             }
-            if ( false === $created && ! $duplicate ) {
+            if ( false === $created && empty( $this->get_manual_backup_task( $site_id ) ) ) {
                 return false;
             }
             if ( ! empty( $created ) ) {

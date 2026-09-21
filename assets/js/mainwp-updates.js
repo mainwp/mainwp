@@ -1169,11 +1169,16 @@ let updatesoverview_plugins_upgrade_all_upgrade_next = function () {
 
 let updatesoverview_check_to_continue_updates = function () {
     mainwpVars.bulkTaskRunning = false;
-    setTimeout(function () {
-        if (!mainwpVars?.errorCount && jQuery('.updates-regression-score-red-flag').length === 0) {
-            mainwpPopup('#mainwp-sync-sites-modal').close(true);
-        }
-    }, 3000);
+    if (!mainwpVars?.errorCount){
+        setTimeout(function () {
+            // wait for generated updates-regression-score-red-flag.
+            if (jQuery('.updates-regression-score-red-flag').length === 0) {
+                mainwpPopup('#mainwp-sync-sites-modal').close(true);
+            }
+        }, 3000);
+    } else {
+        mainwpPopup('#mainwp-sync-sites-modal').updateStatusLabel(MainWP.I18n.t('processed'));
+    }
     return false;
 }
 
@@ -2300,6 +2305,8 @@ let updatesoverview_upgrade_all_update_done = function () {
                 // close and refresh page
                 mainwpPopup('#mainwp-sync-sites-modal').close(true);
             }, 3000);
+        } else {
+            mainwpPopup('#mainwp-sync-sites-modal').updateStatusLabel(MainWP.I18n.t('processed'));
         }
         return;
     }
@@ -4104,6 +4111,8 @@ let updatesoverview_upgrade_plugintheme_list_popup = function (what, pId, pSiteN
                         globalThis.location.href = location.href; // NOSONAR - window is ok.
                     }
                 }, 3000);
+            } else {
+                mainwpPopup('#mainwp-sync-sites-modal').updateStatusLabel(MainWP.I18n.t('processed'));
             }
             return;
         }

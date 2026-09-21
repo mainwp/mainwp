@@ -39,6 +39,7 @@ class MainWP_Backup_Error_Codes_Test extends \WP_UnitTestCase {
 		'mainwp_backup_too_many_skipped',
 		'mainwp_backup_stalled',
 		'mainwp_backup_already_running',
+		'mainwp_backup_mutex_write_failed',
 		'mainwp_backup_dl_file_not_found',
 		'mainwp_backup_dl_file_changed',
 		'mainwp_backup_dl_token_invalid',
@@ -136,6 +137,21 @@ class MainWP_Backup_Error_Codes_Test extends \WP_UnitTestCase {
 	public function test_hash_mismatch_code_is_error_severity() {
 		$this->assertSame( 'mainwp_backup_hash_mismatch', MainWP_Backup_Error_Codes::ERR_HASH_MISMATCH );
 		$this->assertSame( 'error', MainWP_Backup_Error_Codes::severity( MainWP_Backup_Error_Codes::ERR_HASH_MISMATCH ) );
+	}
+
+	/**
+	 * A mutex write failure has its own message and error severity.
+	 *
+	 * @return void
+	 */
+	public function test_mutex_write_failed_code_is_registered_with_message() {
+		$this->assertSame( 'mainwp_backup_mutex_write_failed', MainWP_Backup_Error_Codes::ERR_MUTEX_WRITE_FAILED );
+		$this->assertContains( MainWP_Backup_Error_Codes::ERR_MUTEX_WRITE_FAILED, MainWP_Backup_Error_Codes::get_registered_codes() );
+		$this->assertSame(
+			'The site could not write its backup lock to the database. The database may be busy or unreachable. Try again in a few minutes.',
+			MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_MUTEX_WRITE_FAILED )
+		);
+		$this->assertSame( 'error', MainWP_Backup_Error_Codes::severity( MainWP_Backup_Error_Codes::ERR_MUTEX_WRITE_FAILED ) );
 	}
 
 	/**

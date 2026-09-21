@@ -65,13 +65,14 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
     const ERR_SNAPSHOT_RECORD_FAILED = 'mainwp_backup_snapshot_record_failed';
 
     // Process.
-    const ERR_STALLED           = 'mainwp_backup_stalled';
-    const ERR_RETRY_EXHAUSTED   = 'mainwp_backup_retry_exhausted';
-    const ERR_ALREADY_RUNNING   = 'mainwp_backup_already_running';
-    const ERR_WALL_CLOCK        = 'mainwp_backup_wall_clock_exceeded';
-    const ERR_UNKNOWN_PHASE     = 'mainwp_backup_unknown_phase';
-    const ERR_CONCURRENCY_LIMIT = 'mainwp_backup_concurrency_limit';
-    const ERR_SLOT_LOST         = 'mainwp_backup_slot_lost';
+    const ERR_STALLED            = 'mainwp_backup_stalled';
+    const ERR_RETRY_EXHAUSTED    = 'mainwp_backup_retry_exhausted';
+    const ERR_ALREADY_RUNNING    = 'mainwp_backup_already_running';
+    const ERR_MUTEX_WRITE_FAILED = 'mainwp_backup_mutex_write_failed';
+    const ERR_WALL_CLOCK         = 'mainwp_backup_wall_clock_exceeded';
+    const ERR_UNKNOWN_PHASE      = 'mainwp_backup_unknown_phase';
+    const ERR_CONCURRENCY_LIMIT  = 'mainwp_backup_concurrency_limit';
+    const ERR_SLOT_LOST          = 'mainwp_backup_slot_lost';
 
     // Restore preflight.
     const ERR_RESTORE_ARTIFACT_MISSING = 'mainwp_restore_artifact_missing';
@@ -239,6 +240,7 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
             self::ERR_STALLED                    => esc_html__( 'Backup stopped responding after receiving an invalid status from the child site. Check the child site error log for details.', 'mainwp' ),
             self::ERR_RETRY_EXHAUSTED            => esc_html__( 'Backup did not complete after every retry was used. The child site may be overloaded, have insufficient resources, or be behind a firewall that blocks long-running requests. Check the child site status and try again during low-traffic hours.', 'mainwp' ),
             self::ERR_ALREADY_RUNNING            => esc_html__( 'Another backup is in progress for this site. Wait for it to finish or for the stale process to be detected, then try again.', 'mainwp' ),
+            self::ERR_MUTEX_WRITE_FAILED         => esc_html__( 'The site could not write its backup lock to the database. The database may be busy or unreachable. Try again in a few minutes.', 'mainwp' ),
             self::ERR_WALL_CLOCK                 => esc_html__( 'The backup ran past the maximum time allowed on the child site and was stopped. The site may be very large or the host may limit how long a process can run. Try running the backup during off-peak hours, or split large folders into separate schedules.', 'mainwp' ),
             self::ERR_UNKNOWN_PHASE              => esc_html__( 'The backup reached a step the child site does not recognize. This usually means the MainWP Child plugin is older than the dashboard. Update the MainWP Child plugin on the site to the latest version, then run the backup again.', 'mainwp' ),
             self::ERR_CONCURRENCY_LIMIT          => esc_html__( 'The maximum number of concurrent backups is already running. Wait for one to finish, then try again.', 'mainwp' ),

@@ -331,6 +331,41 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
+	 * A database mutex write failure retries restore creation from staging.
+	 */
+	public function test_staging_mutex_write_failure_is_retryable() {
+		$this->responses['restore_task_create'] = array(
+			'error'      => 'Could not acquire the backup lock.',
+			'error_code' => 'mainwp_backup_mutex_write_failed',
+		);
+
+		$job = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_STAGING );
+		$job = $this->tick( $job );
+
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE, $job->status );
+		$this->assertSame( 'mainwp_backup_mutex_write_failed', $job->checkpoint['last_error_code'] );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_STAGING, $job->checkpoint['resume_status'] );
+		$this->assertSame( 1, (int) $job->attempt_count );
+		$this->assertGreaterThan( time(), (int) $job->next_retry_at );
+	}
+
+	/**
+	 * A lock refusal without a code remains a permanent argument error.
+	 */
+	public function test_staging_uncoded_lock_failure_is_permanent() {
+		$this->responses['restore_task_create'] = array(
+			'error'      => 'Could not acquire the backup lock.',
+			'error_code' => '',
+		);
+
+		$job = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_STAGING );
+		$job = $this->tick( $job );
+
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
+		$this->assertSame( '', $job->checkpoint['last_error_code'] );
+	}
+
+	/**
 	 * A files-only restore job carries sub_type files through to the
 	 * child task-create options untouched.
 	 */

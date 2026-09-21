@@ -1250,7 +1250,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         if ( ! is_array( $payload ) || empty( $payload['task_id'] ) ) {
             $message    = is_array( $payload ) && isset( $payload['error'] ) ? (string) $payload['error'] : esc_html__( 'The child site did not accept the restore task.', 'mainwp' );
             $error_code = is_array( $payload ) && isset( $payload['error_code'] ) ? (string) $payload['error_code'] : '';
-            $retryable  = 'mainwp_backup_already_running' === $error_code;
+            $retryable  = in_array( $error_code, array( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING, MainWP_Backup_Error_Codes::ERR_MUTEX_WRITE_FAILED ), true );
             $this->record_failure( $job, $message, $retryable, $error_code );
             return array(
                 'task_id'       => '',

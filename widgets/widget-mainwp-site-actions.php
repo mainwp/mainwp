@@ -306,10 +306,13 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                             if ( empty( $users ) ) {
                                 $filter_user_ids = '';
                             } else {
-                                $users_ids       = explode( ',', $filter_user_ids );
-                                $valid_user_ids  = array_map(
+                                $users_ids      = explode( ',', $filter_user_ids );
+                                $valid_user_ids = array_map(
                                     static function ( $user ) {
-                                        return (int) $user['id'] . '-' . (int) $user['site_id'] . '-' . ( ! empty( $user['is_dashboard_user'] ) ? 1 : 0 );
+                                        if ( ! empty( $user['is_dashboard_user'] ) ) {
+                                            return (int) $user['id'] . '-xxx-1';
+                                        }
+                                        return (int) $user['id'] . '-' . (int) $user['site_id'] . '-0';
                                     },
                                     $users
                                 );
@@ -339,8 +342,14 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                 <?php
 
                                 foreach ( $users as $item ) {
+                                    $filter_users = intval( $item['id'] );
+                                    if ( ! empty( $item['is_dashboard_user'] ) ) {
+                                        $filter_users .= '-xxx-1'; // Dashboard users are independent of sites.
+                                    } else {
+                                        $filter_users .= '-' . (int) $item['site_id'] . '-0';
+                                    }
                                     ?>
-                                    <div class="item" data-value="<?php echo intval( $item['id'] ) . '-' . (int) $item['site_id'] . '-' . ( ! empty( $item['is_dashboard_user'] ) ? 1 : 0 ); ?>"><?php echo ( ! empty( $item['login'] ) ? esc_html( $item['login'] ) : esc_html( $item['nicename'] ) ) . ' (' . esc_html( $item['source'] ) . ')'; ?></div>
+                                    <div class="item" data-value="<?php echo esc_attr( $filter_users ); ?>"><?php echo ( ! empty( $item['login'] ) ? esc_html( $item['login'] ) : esc_html( $item['nicename'] ) ) . ' (' . esc_html( $item['source'] ) . ')'; ?></div>
                                     <?php
                                 }
                                 ?>

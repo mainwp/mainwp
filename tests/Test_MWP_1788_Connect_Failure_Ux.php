@@ -207,6 +207,88 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Location query secrets are redacted; useful non-secret keys stay visible.
+	 */
+	public function test_location_header_redacts_sensitive_query_params(): void {
+		$headers = "HTTP/1.1 302 Found\r\nLocation: https://sso.example.test/callback?token=qa-secret&code=qa-code&page=sites&foo=bar\r\nserver: cloudflare\r\n";
+		$summary = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_headers( $headers );
+
+		$this->assertStringContainsString( 'location: https://sso.example.test/callback?', $summary );
+		$this->assertStringContainsString( 'page=sites', $summary );
+		$this->assertStringContainsString( 'foo=bar', $summary );
+		$this->assertStringContainsString( 'token=[redacted]', $summary );
+		$this->assertStringContainsString( 'code=[redacted]', $summary );
+		$this->assertStringNotContainsString( 'qa-secret', $summary );
+		$this->assertStringNotContainsString( 'qa-code', $summary );
+	}
+
+	/**
+	 * Location redaction is case-insensitive and handles URL-encoded names/values.
+	 */
+	public function test_location_header_redacts_mixed_case_and_urlencoded_values(): void {
+		$headers = "HTTP/1.1 302 Found\r\nLocation: https://idp.example.test/cb?TOKEN=qa-secret&Key=qa-code&Nonce=qa-nonce&State=qa-state&Signature=qa-sig&rp_key=qa-reset\r\n";
+		$summary = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_headers( $headers );
+
+		$this->assertStringContainsString( 'TOKEN=[redacted]', $summary );
+		$this->assertStringContainsString( 'Key=[redacted]', $summary );
+		$this->assertStringContainsString( 'Nonce=[redacted]', $summary );
+		$this->assertStringContainsString( 'State=[redacted]', $summary );
+		$this->assertStringContainsString( 'Signature=[redacted]', $summary );
+		$this->assertStringContainsString( 'rp_key=[redacted]', $summary );
+		$this->assertStringNotContainsString( 'qa-secret', $summary );
+		$this->assertStringNotContainsString( 'qa-code', $summary );
+		$this->assertStringNotContainsString( 'qa-nonce', $summary );
+		$this->assertStringNotContainsString( 'qa-state', $summary );
+		$this->assertStringNotContainsString( 'qa-sig', $summary );
+		$this->assertStringNotContainsString( 'qa-reset', $summary );
+
+		$encoded = "Location: https://idp.example.test/cb?t%6Fken=qa%2Dsecret&code=qa%2Dcode\r\n";
+		$enc_sum = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_headers( $encoded );
+		$this->assertStringContainsString( 't%6Fken=[redacted]', $enc_sum );
+		$this->assertStringContainsString( 'code=[redacted]', $enc_sum );
+		$this->assertStringNotContainsString( 'qa-secret', $enc_sum );
+		$this->assertStringNotContainsString( 'qa%2Dsecret', $enc_sum );
+		$this->assertStringNotContainsString( 'qa-code', $enc_sum );
+		$this->assertStringNotContainsString( 'qa%2Dcode', $enc_sum );
+	}
+
+	/**
+	 * Hidden body still keeps Location, with secrets stripped, for stored/copied diagnostics.
+	 */
+	public function test_hidden_body_still_redacts_location_in_failure_surfaces(): void {
+		$headers = "HTTP/1.1 302 Found\r\nLocation: https://login.example.test/wp-login.php?action=rp&key=qa-secret&rp_key=qa-code&redirect_to=/wp-admin/\r\n";
+		$details = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::build_details(
+			array(
+				'http_status' => 302,
+				'headers'     => $headers,
+				'body'        => '',
+			)
+		);
+		$html     = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::render_html( $details );
+		$text     = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::format_text( $details );
+		$enriched = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::enrich_output(
+			array(),
+			array(
+				'http_status' => 302,
+				'headers'     => $headers,
+				'body'        => '',
+			)
+		);
+
+		foreach ( array( $details['response']['text'], $html, $text, $enriched['response_readable'], $enriched['failure_ux'], $enriched['failure_ux_text'], $enriched['response_headers'] ) as $surface ) {
+			$this->assertStringContainsString( 'wp-login.php', $surface );
+			$this->assertStringContainsString( 'action=rp', $surface );
+			$this->assertStringContainsString( 'redirect_to=/wp-admin/', $surface );
+			$this->assertStringNotContainsString( 'qa-secret', $surface );
+			$this->assertStringNotContainsString( 'qa-code', $surface );
+		}
+
+		$rest_sync_errors = $enriched['failure_ux'];
+		$this->assertStringNotContainsString( 'qa-secret', $rest_sync_errors );
+		$this->assertStringNotContainsString( 'qa-code', $rest_sync_errors );
+	}
+
+	/**
 	 * JavaScript translations include the new failure-UX strings.
 	 */
 	public function test_js_translations_include_failure_ux_labels(): void {

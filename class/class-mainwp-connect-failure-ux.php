@@ -47,6 +47,53 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
     );
 
     /**
+     * Query/body parameter names whose values must not appear in failure diagnostics.
+     *
+     * Compared case-insensitively. Names ending in _token, _code, _key, _nonce,
+     * _secret, _signature, _password, _passwd, or _pwd are also treated as sensitive.
+     *
+     * @var array<int,string>
+     */
+    const SENSITIVE_PARAM_NAMES = array(
+        'password',
+        'passwd',
+        'pwd',
+        'adminpwd',
+        'uniqueid',
+        'unique_id',
+        'privkey',
+        'pubkey',
+        'mainwpsignature',
+        'authorization',
+        'token',
+        'code',
+        'key',
+        'nonce',
+        'state',
+        'signature',
+        'secret',
+        'sig',
+        'hmac',
+        'jwt',
+        'bearer',
+        'session',
+        'rp_key',
+        'rp_login',
+        'reset_key',
+        'resetpass',
+        'reset_pass',
+        'apikey',
+        'api_key',
+        'client_secret',
+        'access_token',
+        'id_token',
+        'refresh_token',
+        'oauth_token',
+        'oauth_verifier',
+        '_wpnonce',
+    );
+
+    /**
      * Markers that mean Cloudflare, another WAF, or a similar edge block.
      *
      * @var array<int,string>
@@ -167,7 +214,11 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             }
             $name = strtolower( trim( $parts[0] ) );
             if ( in_array( $name, $wanted, true ) ) {
-                $value  = self::redact_secrets( trim( $parts[1] ) );
+                $value = trim( $parts[1] );
+                if ( 'location' === $name ) {
+                    $value = self::redact_url( $value );
+                }
+                $value  = self::redact_secrets( $value );
                 $kept[] = $name . ': ' . $value;
             }
         }
@@ -522,6 +573,143 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
     }
 
     /**
+     * Whether a query or form parameter name is sensitive.
+     *
+     * @param string $name Parameter name (already decoded).
+     *
+     * @return bool
+     */
+    public static function is_sensitive_param( $name ) {
+        $name = strtolower( (string) $name );
+        $name = preg_replace( '/\[.*$/', '', $name );
+        if ( ! is_string( $name ) || '' === $name ) {
+            return false;
+        }
+
+        if ( in_array( $name, self::SENSITIVE_PARAM_NAMES, true ) ) {
+            return true;
+        }
+
+        $suffixes = array( 'token', 'code', 'key', 'nonce', 'secret', 'signature', 'password', 'passwd', 'pwd' );
+        foreach ( $suffixes as $suffix ) {
+            $needle = '_' . $suffix;
+            $len    = strlen( $needle );
+            if ( strlen( $name ) > $len && substr( $name, -$len ) === $needle ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Redact sensitive names in a query or fragment string.
+     *
+     * Handles mixed-case and URL-encoded names/values. Non-sensitive pairs stay intact.
+     *
+     * @param string $query Raw query or fragment (without leading ? or #).
+     *
+     * @return string
+     */
+    public static function redact_query_string( $query ) {
+        if ( ! is_string( $query ) || '' === $query ) {
+            return '';
+        }
+
+        $pairs = array();
+        foreach ( explode( '&', $query ) as $pair ) {
+            if ( '' === $pair ) {
+                continue;
+            }
+            $bits     = explode( '=', $pair, 2 );
+            $raw_name = $bits[0];
+            $decoded  = rawurldecode( str_replace( '+', ' ', $raw_name ) );
+            if ( self::is_sensitive_param( $decoded ) ) {
+                $pairs[] = $raw_name . '=[redacted]';
+            } else {
+                $pairs[] = $pair;
+            }
+        }
+
+        return implode( '&', $pairs );
+    }
+
+    /**
+     * Redact sensitive query and fragment values in a URL (Location and similar).
+     *
+     * Host, path, and non-sensitive query keys remain for troubleshooting.
+     *
+     * @param string $url URL or relative Location value.
+     *
+     * @return string
+     */
+    public static function redact_url( $url ) {
+        if ( ! is_string( $url ) || '' === $url ) {
+            return '';
+        }
+
+        $parts = function_exists( 'wp_parse_url' ) ? wp_parse_url( $url ) : parse_url( $url );
+        if ( ! is_array( $parts ) ) {
+            return self::redact_query_string( $url );
+        }
+
+        if ( ! empty( $parts['pass'] ) ) {
+            $parts['pass'] = 'redacted';
+        }
+        if ( isset( $parts['query'] ) ) {
+            $parts['query'] = self::redact_query_string( $parts['query'] );
+        }
+        if ( isset( $parts['fragment'] ) && false !== strpos( $parts['fragment'], '=' ) ) {
+            $parts['fragment'] = self::redact_query_string( $parts['fragment'] );
+        }
+
+        return self::rebuild_url( $parts );
+    }
+
+    /**
+     * Rebuild a URL from parse_url / wp_parse_url parts.
+     *
+     * @param array $parts URL parts.
+     *
+     * @return string
+     */
+    public static function rebuild_url( $parts ) {
+        if ( ! is_array( $parts ) ) {
+            return '';
+        }
+
+        $url = '';
+        if ( ! empty( $parts['scheme'] ) ) {
+            $url .= $parts['scheme'] . ':';
+        }
+        if ( ! empty( $parts['host'] ) ) {
+            $url .= '//';
+            if ( ! empty( $parts['user'] ) ) {
+                $url .= $parts['user'];
+                if ( isset( $parts['pass'] ) && '' !== $parts['pass'] ) {
+                    $url .= ':' . $parts['pass'];
+                }
+                $url .= '@';
+            }
+            $url .= $parts['host'];
+            if ( ! empty( $parts['port'] ) ) {
+                $url .= ':' . $parts['port'];
+            }
+        }
+        if ( isset( $parts['path'] ) ) {
+            $url .= $parts['path'];
+        }
+        if ( isset( $parts['query'] ) && '' !== $parts['query'] ) {
+            $url .= '?' . $parts['query'];
+        }
+        if ( isset( $parts['fragment'] ) && '' !== $parts['fragment'] ) {
+            $url .= '#' . $parts['fragment'];
+        }
+
+        return $url;
+    }
+
+    /**
      * Redact likely secrets from diagnostic text.
      *
      * @param string $text Text.
@@ -533,11 +721,23 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             return '';
         }
 
-        $redacted = preg_replace(
-            '/(password|passwd|pwd|uniqueId|unique_id|privkey|pubkey|mainwpsignature|authorization|adminpwd)\s*[:=]\s*\S+/i',
-            '$1=[redacted]',
+        $with_urls = preg_replace_callback(
+            '#(?:https?://[^\s\'"<>]+|/[^\s\'"<>]*\?[^\s\'"<>]+)#i',
+            static function ( $match ) {
+                return MainWP_Connect_Failure_Ux::redact_url( $match[0] );
+            },
             $text
         );
+        if ( is_string( $with_urls ) ) {
+            $text = $with_urls;
+        }
+
+        $names = array();
+        foreach ( self::SENSITIVE_PARAM_NAMES as $name ) {
+            $names[] = preg_quote( $name, '/' );
+        }
+        $pattern  = '/\b(' . implode( '|', $names ) . ')\s*[:=]\s*[^\s&;#]+/i';
+        $redacted = preg_replace( $pattern, '$1=[redacted]', $text );
 
         return is_string( $redacted ) ? $redacted : $text;
     }

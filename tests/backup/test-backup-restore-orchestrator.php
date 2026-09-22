@@ -858,6 +858,105 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
+	 * A busy child must stop before the failure releases its safety backup.
+	 *
+	 * @dataProvider terminal_failure_cancellation_cases
+	 * @param string $answer Child cancellation outcome.
+	 * @param string $child_task_id Child task id, or empty before task creation.
+	 */
+	public function test_terminal_failure_cancels_child_before_finishing( $answer, $child_task_id ) {
+		$job    = $this->make_job(
+			array(),
+			MainWP_Backup_Restore_Job_Store::STATUS_RUNNING,
+			array(
+				'child_task_id'        => $child_task_id,
+				'pre_snapshot_task_id' => 'task-7-pre',
+			)
+		);
+		$handle = wp_json_encode(
+			array(
+				'task_id' => 'task-7-pre',
+				'owner'   => (string) $job->id,
+			)
+		);
+		MainWP_DB::instance()->update_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION, $handle );
+		$this->responses['restore_task_cancel'] = 'unreachable' === $answer
+			? new MainWP_Exception( 'Site unreachable.' )
+			: array(
+				'result' => $answer,
+				'phase'  => 'failed',
+			);
+		$events                                 = array();
+		$logs                                   = array();
+		add_action(
+			'mainwp_backup_restore_failed',
+			function ( $event ) use ( &$events ) {
+				$events[] = $event;
+			}
+		);
+		add_action(
+			'mainwp_log_info',
+			function ( $message ) use ( &$logs ) {
+				$logs[] = $message;
+			}
+		);
+
+		$record = new \ReflectionMethod( MainWP_Backup_Restore_Orchestrator::class, 'record_terminal_failure' );
+		$record->invoke( $this->orchestrator, $job, 'Replay failed on table posts', 'mainwp_restore_db_replay', null );
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+		$job   = $store->get_job( (int) $job->id );
+
+		$this->assertSame( '' === $child_task_id ? array() : array( 'restore_task_cancel' ), array_column( $this->calls, 'what' ) );
+		if ( '' !== $child_task_id ) {
+			$this->assertSame( $child_task_id, $this->calls[0]['params']['task_id'] );
+		}
+		if ( 'busy' === $answer ) {
+			$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, $job->status );
+			$this->assertTrue( $job->checkpoint['cancel_intent'] );
+			$this->assertSame(
+				array(
+					'error'      => 'Replay failed on table posts',
+					'error_code' => 'mainwp_restore_db_replay',
+				),
+				$job->checkpoint['terminal_failure']
+			);
+			$this->assertSame( $handle, MainWP_DB::instance()->get_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION ) );
+			$this->assertEmpty( $events );
+
+			$this->responses['restore_task_cancel'] = array( 'result' => 'ok' );
+			$this->calls                            = array();
+			$job                                    = $this->tick( $job );
+			$this->assertSame( array( 'restore_task_cancel' ), array_column( $this->calls, 'what' ), 'Applying the failure must not issue a second cancellation or resume the restore.' );
+		}
+		if ( 'unreachable' === $answer ) {
+			$this->assertStringContainsString( 'did not confirm cancelling its child task', implode( "\n", $logs ) );
+		}
+
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
+		$this->assertSame( 'Replay failed on table posts', $job->last_error );
+		$this->assertSame( 'mainwp_restore_db_replay', $job->checkpoint['last_error_code'] );
+		$this->assertNull( MainWP_DB::instance()->get_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION ) );
+		$this->assertCount( 1, $events );
+		$this->assertSame( 'Replay failed on table posts', $events[0]['error'] );
+		$this->assertSame( 'mainwp_restore_db_replay', $events[0]['error_code'] );
+	}
+
+	/**
+	 * Only a busy response needs another tick before failure can become terminal.
+	 *
+	 * @return array
+	 */
+	public static function terminal_failure_cancellation_cases() {
+		return array(
+			'confirmed'      => array( 'ok', 'task-9-restore' ),
+			'already failed' => array( 'already_terminal', 'task-9-restore' ),
+			'busy'           => array( 'busy', 'task-9-restore' ),
+			'unreachable'    => array( 'unreachable', 'task-9-restore' ),
+			'no child task'  => array( 'ok', '' ),
+		);
+	}
+
+	/**
 	 * A failed child task carries its error code through to the job
 	 * checkpoint so the progress poll can report a stable code for support
 	 * and AI diagnosis alongside the human-readable last_error.
@@ -1437,6 +1536,60 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
+	 * Rollback is only available after a failed or cancelled restore.
+	 *
+	 * @dataProvider rollback_status_cases
+	 * @param string $status Original job status.
+	 * @param bool   $allowed Whether rollback may start.
+	 */
+	public function test_rollback_enforces_job_status( $status, $allowed ) {
+		$original = $this->make_job(
+			array(
+				'pre_snapshot_artifacts' => array(
+					array(
+						'file' => 'backup-pre.tar.gz',
+						'size' => 1234,
+						'role' => 'full',
+					),
+				),
+			),
+			$status
+		);
+		$store    = MainWP_Backup_Restore_Job_Store::instance();
+
+		if ( $allowed ) {
+			$job_id = $this->orchestrator->initiate_rollback( $original );
+			$job    = $store->get_job( $job_id );
+			$this->assertGreaterThan( (int) $original->id, $job_id );
+			$this->assertTrue( $job->checkpoint['plan'][0]['adopt_only'] );
+			$this->assertSame( 'backup-pre.tar.gz', $job->checkpoint['plan'][0]['file'] );
+		} else {
+			try {
+				$this->orchestrator->initiate_rollback( $original );
+				$this->fail( 'Ineligible jobs must not start a rollback.' );
+			} catch ( MainWP_Exception $e ) {
+				$this->assertSame( 'mainwp_restore_rollback_status', $e->get_message_error_code() );
+			}
+			$active = $store->get_active_job_for_site( $this->site_id );
+			$this->assertSame( 'running' === $status ? (int) $original->id : null, null === $active ? null : (int) $active->id );
+		}
+		$this->assertSame( $status, $store->get_job( (int) $original->id )->status );
+	}
+
+	/**
+	 * Completed and active restores must not be replaced by rollback jobs.
+	 *
+	 * @return array
+	 */
+	public static function rollback_status_cases() {
+		return array(
+			'completed' => array( MainWP_Backup_Restore_Job_Store::STATUS_COMPLETED, false ),
+			'running'   => array( MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, false ),
+			'cancelled' => array( MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED, true ),
+		);
+	}
+
+	/**
 	 * Rollback honors the one-active-restore-per-site guard: with another
 	 * restore already active for the site it refuses, so a double-click or
 	 * a rollback during a running restore cannot open a second active job.
@@ -1963,7 +2116,13 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		);
 
 		$job = $this->make_job(
-			array( 'cancel_intent' => true ),
+			array(
+				'cancel_intent'    => true,
+				'terminal_failure' => array(
+					'error'      => 'Replay failed on table posts',
+					'error_code' => 'mainwp_restore_db_replay',
+				),
+			),
 			MainWP_Backup_Restore_Job_Store::STATUS_RUNNING,
 			array( 'child_task_id' => 'task-9-restore' )
 		);
@@ -1971,6 +2130,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 
 		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_VERIFYING, $job->status );
 		$this->assertTrue( empty( $job->checkpoint['cancel_intent'] ) );
+		$this->assertArrayNotHasKey( 'terminal_failure', $job->checkpoint );
 	}
 
 	/**

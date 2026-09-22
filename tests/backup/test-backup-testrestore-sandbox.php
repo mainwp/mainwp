@@ -254,6 +254,34 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 	}
 
 	/**
+	 * A destination collision must not let a failed tar extraction pass verification.
+	 *
+	 * @return void
+	 */
+	public function test_tar_extraction_exception_surfaces_as_failure() {
+		$path    = $this->clean_tar();
+		$sandbox = new MainWP_Backup_TestRestore_Sandbox();
+		$sandbox->bring_up();
+
+		try {
+			$this->assertTrue( mkdir( $sandbox->temp_dir() . 'good.txt' ) );
+			try {
+				// PharData emits a warning before throwing on the destination collision.
+				@$sandbox->extract_files( $path );
+				$this->fail( 'A failed tar extraction must not pass verification.' );
+			} catch ( MainWP_Exception $e ) {
+				$this->assertSame( MainWP_Backup_TestRestore_Sandbox::ERR_APPLY, $e->get_message_error_code() );
+				$this->assertStringContainsString( 'A backup archive could not be extracted.', $e->getMessage() );
+				$this->assertStringContainsString( 'tar extract: Extraction from phar', $e->get_message_extra( false ) );
+			}
+			$this->assertSame( 0, $sandbox->temp_file_count() );
+			$this->assertSame( array( '.', '..' ), scandir( $sandbox->temp_dir() . 'good.txt' ) );
+		} finally {
+			$sandbox->tear_down();
+		}
+	}
+
+	/**
 	 * Every member must fit while leaving the reserve available to other uploads.
 	 *
 	 * @dataProvider extraction_space_cases

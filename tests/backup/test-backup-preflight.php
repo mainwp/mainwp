@@ -943,12 +943,14 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 	 * (MainWP_Manage_Backups_Handler::backup), capturing the ext param the
 	 * dashboard sends the child.
 	 *
-	 * @param int $site_id            Site id.
-	 * @param int $zip_force_override 1 to keep ZIP over the guardrail.
+	 * @param int    $site_id             Site id.
+	 * @param int    $zip_force_override  1 to keep ZIP over the guardrail.
+	 * @param array  $preflight_overrides Child capability overrides.
+	 * @param string $archive_format      Task archive format.
 	 *
 	 * @return array{0:string|null,1:object} Captured ext and the task row after the run.
 	 */
-	private function run_site_flow_captured_ext( $site_id, $zip_force_override ) {
+	private function run_site_flow_captured_ext( $site_id, $zip_force_override, $preflight_overrides = array( 'estimated_bytes' => 3 * GB_IN_BYTES ), $archive_format = 'zip' ) {
 		$user = self::factory()->user->create( array( 'role' => 'administrator' ) );
 		$task = MainWP_DB_Backup::instance()->add_backup_task(
 			$user,
@@ -965,7 +967,7 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 			0,
 			0,
 			0,
-			'zip',
+			$archive_format,
 			0,
 			1,
 			150,
@@ -990,7 +992,7 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 
 		$this->mock_child_actions(
 			array(
-				'backup_preflight' => $this->preflight_response( array( 'estimated_bytes' => 3 * GB_IN_BYTES ) ),
+				'backup_preflight' => $this->preflight_response( $preflight_overrides ),
 				'backup'           => array( 'error' => 'stop here' ),
 			)
 		);
@@ -1029,6 +1031,63 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 
 		$this->assertSame( 'tar.gz', $ext, 'The per-site run must auto-switch a large ZIP site.' );
 		$this->assertStringContainsString( 'switched to tar.gz', (string) $task->backup_notices, 'The switch must be recorded on the task, not applied silently.' );
+	}
+
+	/**
+	 * A ZIP preference cannot make PclZip resumable on a child without ext-zip.
+	 *
+	 * @dataProvider zip_support_cases
+	 * @param bool   $gz_support Gzip capability.
+	 * @param int    $override Keep-ZIP preference.
+	 * @param string $format Requested format.
+	 * @param string $expected Negotiated format.
+	 * @param bool   $switched Whether a switch notice is required.
+	 * @return void
+	 */
+	public function test_zip_support_switch_records_notice( $gz_support, $override, $format, $expected, $switched ) {
+		$warnings = array();
+		add_action(
+			'mainwp_log_warning',
+			function ( $message ) use ( &$warnings ) {
+				$warnings[] = $message;
+			}
+		);
+		list( $ext, $task ) = $this->run_site_flow_captured_ext(
+			$this->create_test_site(),
+			$override,
+			array(
+				'zip_support' => false,
+				'gz_support'  => $gz_support,
+			),
+			$format
+		);
+
+		$this->assertSame( $expected, $ext );
+		if ( $switched ) {
+			$this->assertStringContainsString( 'switched to tar.gz', (string) $task->backup_notices );
+			$this->assertStringContainsString( 'lacks ext-zip', (string) $task->backup_notices );
+			$this->assertStringContainsString( 'switched to tar.gz', implode( "\n", $warnings ) );
+		} else {
+			$this->assertStringNotContainsString( 'switched', (string) $task->backup_notices );
+			$this->assertStringNotContainsString( 'switched', implode( "\n", $warnings ) );
+			if ( 'zip' === $format ) {
+				$this->assertStringContainsString( 'reports no support for the requested zip', implode( "\n", $warnings ) );
+			}
+		}
+	}
+
+	/**
+	 * Gzip is the resumable fallback only when the child supports it.
+	 *
+	 * @return array
+	 */
+	public static function zip_support_cases() {
+		return array(
+			'ZIP unavailable'      => array( true, 0, 'zip', 'tar.gz', true ),
+			'override cannot help' => array( true, 1, 'zip', 'tar.gz', true ),
+			'both unavailable'     => array( false, 0, 'zip', 'zip', false ),
+			'already using tar.gz' => array( true, 0, 'tar.gz', 'tar.gz', false ),
+		);
 	}
 
 	/**

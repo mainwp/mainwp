@@ -43,8 +43,7 @@ class MainWP_Backup_Storage_Dropbox_Test extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * Default provider settings. The refresh token is unique per test so
-	 * the access-token cache never leaks across tests.
+	 * Default provider settings.
 	 *
 	 * @param array $overrides Setting overrides.
 	 *
@@ -422,18 +421,19 @@ class MainWP_Backup_Storage_Dropbox_Test extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * The minted token is cached: a second operation reuses it without a
-	 * second mint.
+	 * One instance reuses its token without persisting it for other instances.
 	 *
 	 * @return void
 	 */
 	public function test_access_token_is_cached_between_calls() {
+		$settings = $this->settings();
 		$provider = $this->make_provider(
 			array(
 				$this->token_response(),
 				$this->response( 200, '{}' ),
 				$this->response( 200, '{}' ),
-			)
+			),
+			$settings
 		);
 
 		$provider->put_object( 'a.bin', 'x' );
@@ -445,7 +445,14 @@ class MainWP_Backup_Storage_Dropbox_Test extends \WP_UnitTestCase {
 				++$mints;
 			}
 		}
-		$this->assertSame( 1, $mints, 'The access token must be minted once and cached.' );
+		$this->assertSame( 1, $mints, 'One instance must mint only once.' );
+		$this->assertFalse( get_transient( 'mainwp_dropbox_token_' . md5( $settings['app_key'] . '|' . $settings['refresh_token'] ) ), 'Bearer tokens must not be persisted.' );
+
+		$second = $this->make_provider( array( $this->token_response( 'second-instance-token' ), $this->response( 200, '{}' ) ), $settings );
+		$this->assertTrue( $second->put_object( 'c.bin', 'z' ) );
+		$this->assertCount( 5, $this->requests );
+		$this->assertSame( 'https://api.dropboxapi.com/oauth2/token', $this->requests[3]['url'] );
+		$this->assertSame( 'Bearer second-instance-token', $this->requests[4]['args']['headers']['Authorization'] );
 	}
 
 	/**

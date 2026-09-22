@@ -6,7 +6,7 @@
  * flow: Dropbox apps issue four-hour access tokens, and uploads run
  * from cron, so the destination stores the app key, app secret, and a
  * refresh token, and the provider mints access tokens itself. Minted
- * tokens cache in a transient keyed by the credential pair and re-mint
+ * tokens stay on the provider instance for the request and re-mint
  * once on a 401. Uploads and downloads use the content endpoint with
  * the path in the Dropbox-API-Arg header; metadata, delete, and list
  * calls use the RPC endpoint. Dropbox reports many distinct failures
@@ -49,19 +49,18 @@ class MainWP_Backup_Storage_Dropbox implements MainWP_Backup_Storage_Provider { 
     const CONTENT_BASE = 'https://content.dropboxapi.com';
 
     /**
-     * Seconds subtracted from the reported token lifetime before the
-     * cached token expires, so a token never goes stale mid-request.
-     *
-     * @var int
-     */
-    const TOKEN_MARGIN = 300;
-
-    /**
      * Provider settings.
      *
      * @var array
      */
     private $settings;
+
+    /**
+     * Keep bearer tokens out of persistent storage.
+     *
+     * @var string|null
+     */
+    private ?string $cached_access_token = null;
 
     /**
      * HTTP transport callable: fn(string $url, array $args): array|\WP_Error.
@@ -336,8 +335,8 @@ class MainWP_Backup_Storage_Dropbox implements MainWP_Backup_Storage_Provider { 
         $response = $this->send_authed( $url, $headers, $body, $extra_args, $this->access_token() );
 
         if ( 401 === $this->status( $response ) ) {
-            delete_transient( $this->token_cache_key() );
-            $response = $this->send_authed( $url, $headers, $body, $extra_args, $this->access_token() );
+            $this->cached_access_token = null;
+            $response                  = $this->send_authed( $url, $headers, $body, $extra_args, $this->access_token() );
         }
 
         return $response;
@@ -491,9 +490,8 @@ class MainWP_Backup_Storage_Dropbox implements MainWP_Backup_Storage_Provider { 
      * @throws \RuntimeException When the mint fails; the HTTP status rides as the code.
      */
     private function access_token(): string {
-        $cached = get_transient( $this->token_cache_key() );
-        if ( is_string( $cached ) && '' !== $cached ) {
-            return $cached;
+        if ( null !== $this->cached_access_token ) {
+            return $this->cached_access_token;
         }
 
         $response = $this->send(
@@ -519,23 +517,9 @@ class MainWP_Backup_Storage_Dropbox implements MainWP_Backup_Storage_Provider { 
             throw new \RuntimeException( 'Storage request token request returned no access token.', 0 );
         }
 
-        $lifetime = is_array( $data ) && isset( $data['expires_in'] ) ? (int) $data['expires_in'] : 14400;
-        set_transient( $this->token_cache_key(), $token, max( 60, $lifetime - static::TOKEN_MARGIN ) );
+        $this->cached_access_token = $token;
 
         return $token;
-    }
-
-    /**
-     * The transient key caching the access token for this credential
-     * pair.
-     *
-     * @return string
-     */
-    private function token_cache_key(): string {
-        $app_key       = isset( $this->settings['app_key'] ) ? (string) $this->settings['app_key'] : '';
-        $refresh_token = isset( $this->settings['refresh_token'] ) ? (string) $this->settings['refresh_token'] : '';
-
-        return 'mainwp_dropbox_token_' . md5( $app_key . '|' . $refresh_token );
     }
 
     /**

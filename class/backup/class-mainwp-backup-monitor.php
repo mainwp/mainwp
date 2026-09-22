@@ -287,6 +287,15 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             do_action( 'mainwp_log_warning', 'Child site disk warning: ' . MainWP_Backup_Error_Codes::sanitize_message( $preflight['disk_warning'] ) );
         }
 
+        if ( $allow_switch && 'zip' === $archive_ext && isset( $preflight['zip_support'] ) && ! $preflight['zip_support'] && ! empty( $preflight['gz_support'] ) ) {
+            $archive_ext = 'tar.gz';
+            $zip_warning = esc_html__( 'ZIP was switched to tar.gz because this child lacks ext-zip and cannot create a resumable ZIP backup, even with the keep ZIP override enabled.', 'mainwp' );
+            do_action( 'mainwp_log_warning', $zip_warning );
+            if ( is_object( $task ) && ! empty( $task->id ) && MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id ) ) {
+                MainWP_DB_Backup::instance()->update_backup_notices( $task->id, $zip_warning . "\n" );
+            }
+        }
+
         $format_support = array(
             'zip'     => 'zip_support',
             'tar.gz'  => 'gz_support',

@@ -239,7 +239,7 @@ class MainWP_Backup_Retention_Scheduler { // phpcs:ignore Generic.Classes.Openin
             // sweep) run through here and otherwise drop the report, so a
             // failed cleanup would leave no trace. The warning channel also
             // lands in the backup diagnostics guardrail records.
-            do_action( 'mainwp_log_warning', 'Backup retention for task ' . (int) $task->id . ' on site ' . (int) $site_id . ' reported errors: ' . implode( ' | ', array_map( 'strval', (array) $report['errors'] ) ) );
+            do_action( 'mainwp_log_warning', 'Backup retention for task ' . (int) $task->id . ' on site ' . (int) $site_id . ' reported errors: ' . implode( ' | ', array_map( 'strval', (array) $report['errors'] ) ), (int) $site_id, (int) $task->id );
         }
 
         return $report;

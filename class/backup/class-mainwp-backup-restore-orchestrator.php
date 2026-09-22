@@ -199,6 +199,10 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * @return int New job id.
      */
     public function initiate_rollback( object $failed_job ): int {
+        if ( ! in_array( $failed_job->status, array( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT, MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED ), true ) ) {
+            throw new MainWP_Exception( esc_html__( 'Only failed or cancelled restores can be rolled back.', 'mainwp' ), '', 'mainwp_restore_rollback_status' );
+        }
+
         $site_id = (int) $failed_job->site_id;
         if ( null !== MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $site_id ) ) {
             throw new MainWP_Exception( esc_html__( 'A restore is already running for this site. Wait for it to finish before rolling back.', 'mainwp' ) );
@@ -309,7 +313,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             if ( $require_confirmation ) {
                 throw $e;
             }
-            do_action( 'mainwp_log_info', sprintf( 'Restore job %d: the site did not confirm cancelling its child task: %s', (int) $job->id, $e->getMessage() ) );
+            do_action( 'mainwp_log_info', sprintf( 'Restore job %d: the site did not confirm cancelling its child task: %s', (int) $job->id, $e->getMessage() ), (int) $job->site_id, 0 );
         }
 
         if ( 'busy' === $outcome ) {
@@ -371,7 +375,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 }
             }
         } catch ( \Throwable $e ) {
-            do_action( 'mainwp_log_info', sprintf( 'Restore job %d: the site did not confirm cancelling its safety backup: %s', (int) $job->id, $e->getMessage() ) );
+            do_action( 'mainwp_log_info', sprintf( 'Restore job %d: the site did not confirm cancelling its safety backup: %s', (int) $job->id, $e->getMessage() ), (int) $job->site_id, 0 );
         }
     }
 
@@ -482,7 +486,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      *
      * @return bool True when the child already completed its restore -
      *              the intent clears and the normal completion path
-     *              takes over. False when the job was cancelled or the
+     *              takes over. False when the job is terminal or the
      *              child is still busy (nothing to drive this tick).
      */
     private function apply_cancel_intent( object $job ): bool {
@@ -501,6 +505,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             $fresh = $store->get_job( (int) $job->id );
             if ( null !== $fresh ) {
                 $checkpoint = $fresh->checkpoint;
+                unset( $checkpoint['terminal_failure'] );
                 // The explicit clear flag: every other save_checkpoint
                 // preserves a stored cancel_intent, so dropping the
                 // applied intent has to be spelled out.
@@ -509,9 +514,11 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             return true;
         }
 
-        // ok / already failed: the child confirmed - cancel the job.
         MainWP_Backup_Restore_Transfer_Driver::instance()->cleanup_staging( (int) $job->id );
-        if ( $store->cancel_job( (int) $job->id, $this->lock_token ) ) {
+        if ( ! empty( $job->checkpoint['terminal_failure'] ) ) {
+            $failure = $job->checkpoint['terminal_failure'];
+            $this->record_terminal_failure( $job, (string) $failure['error'], (string) $failure['error_code'], $this->lock_token, true );
+        } elseif ( $store->cancel_job( (int) $job->id, $this->lock_token ) ) {
             $this->cancel_owned_pre_snapshot_handle( $job );
         }
         return false;
@@ -677,9 +684,9 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING,
             MainWP_Backup_Restore_Job_Store::STATUS_RUNNING,
         );
-        if ( in_array( $status, $intent_phases, true ) && ! empty( $job->checkpoint['cancel_intent'] ) ) {
+        if ( ! empty( $job->checkpoint['cancel_intent'] ) && ( in_array( $status, $intent_phases, true ) || ! empty( $job->checkpoint['terminal_failure'] ) ) ) {
             if ( ! $this->apply_cancel_intent( $job ) ) {
-                return; // Cancelled, or the child is still busy.
+                return;
             }
             // The child completed its restore: the intent was cleared on
             // the row, so the stale copy must not be written back below.
@@ -879,10 +886,10 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                     if ( ! $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_STAGING, array( 'child_task_id' => $created['task_id'] ), $this->lock_token ) ) {
                         // Lease lost after the child task was created: its id
                         // never landed, so surface the orphan and stop.
-                        do_action( 'mainwp_log_warning', sprintf( 'Restore job %d: the lease was lost after creating child restore task %s; it may need manual cleanup on the site.', (int) $job->id, $created['task_id'] ) );
+                        do_action( 'mainwp_log_warning', sprintf( 'Restore job %d: the lease was lost after creating child restore task %s; it may need manual cleanup on the site.', (int) $job->id, $created['task_id'] ), (int) $job->site_id, 0 );
                         return;
                     }
-                    do_action( 'mainwp_log_warning', sprintf( 'Restore job %d: the site declined the direct cloud download; using the standard transfer.', (int) $job->id ) );
+                    do_action( 'mainwp_log_warning', sprintf( 'Restore job %d: the site declined the direct cloud download; using the standard transfer.', (int) $job->id ), (int) $job->site_id, 0 );
                     return;
                 }
 
@@ -890,7 +897,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                     // The lease was lost in the window between creating the
                     // child task and recording its id. Surface the orphaned
                     // child task and stop; the reclaiming worker owns the job.
-                    do_action( 'mainwp_log_warning', sprintf( 'Restore job %d: the lease was lost after creating child restore task %s; it may need manual cleanup on the site.', (int) $job->id, $created['task_id'] ) );
+                    do_action( 'mainwp_log_warning', sprintf( 'Restore job %d: the lease was lost after creating child restore task %s; it may need manual cleanup on the site.', (int) $job->id, $created['task_id'] ), (int) $job->site_id, 0 );
                     return;
                 }
                 $artifact_count = count( $pull_manifest['artifacts'] );
@@ -898,7 +905,9 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                     'mainwp_log_info',
                     1 === $artifact_count
                         ? sprintf( 'Restore job %d: the site downloads 1 backup file directly from cloud storage.', (int) $job->id )
-                        : sprintf( 'Restore job %d: the site downloads %d backup files directly from cloud storage.', (int) $job->id, $artifact_count )
+                        : sprintf( 'Restore job %d: the site downloads %d backup files directly from cloud storage.', (int) $job->id, $artifact_count ),
+                    (int) $job->site_id,
+                    0
                 );
                 return;
             }
@@ -940,7 +949,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
 
         if ( ! $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING, array( 'child_task_id' => $created['task_id'] ), $this->lock_token ) ) {
             // Lease lost between creating the child task and recording its id.
-            do_action( 'mainwp_log_warning', sprintf( 'Restore job %d: the lease was lost after creating child restore task %s; it may need manual cleanup on the site.', (int) $job->id, $created['task_id'] ) );
+            do_action( 'mainwp_log_warning', sprintf( 'Restore job %d: the lease was lost after creating child restore task %s; it may need manual cleanup on the site.', (int) $job->id, $created['task_id'] ), (int) $job->site_id, 0 );
             return;
         }
     }
@@ -1124,7 +1133,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                     $checkpoint['transfer']         = array();
                     $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
                     $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_STAGING, array( 'child_task_id' => '' ), $this->lock_token );
-                    do_action( 'mainwp_log_warning', sprintf( 'Restore job %d: the direct cloud download failed on the site; retrying with the standard transfer.', (int) $job->id ) );
+                    do_action( 'mainwp_log_warning', sprintf( 'Restore job %d: the direct cloud download failed on the site; retrying with the standard transfer.', (int) $job->id ), (int) $job->site_id, 0 );
                     return;
                 }
 
@@ -1267,13 +1276,45 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
     /**
      * Record terminal failure before releasing ownership and publishing the event.
      *
-     * @param object      $job        Job row.
-     * @param string      $error      Error text.
-     * @param string      $error_code Stable error code, or empty when none.
-     * @param string|null $lock_token Worker lease token, or null for an expired-lease sweep.
+     * @param object      $job             Job row.
+     * @param string      $error           Error text.
+     * @param string      $error_code      Stable error code, or empty when none.
+     * @param string|null $lock_token      Worker lease token, or null for an expired-lease sweep.
+     * @param bool        $child_confirmed Whether the intent lane already confirmed cancellation.
+     *
+     * @throws MainWP_Exception When a busy child's cancellation intent cannot be saved.
      */
-    private function record_terminal_failure( object $job, string $error, string $error_code, ?string $lock_token ): void {
+    private function record_terminal_failure( object $job, string $error, string $error_code, ?string $lock_token, bool $child_confirmed = false ): void {
         $store = MainWP_Backup_Restore_Job_Store::instance();
+        if ( ! $child_confirmed && ! empty( $job->child_task_id ) ) {
+            $outcome = 'ok';
+            try {
+                $outcome = $this->request_child_cancel( $job );
+            } catch ( \Throwable $e ) {
+                do_action( 'mainwp_log_info', sprintf( 'Restore job %d: the site did not confirm cancelling its child task: %s', (int) $job->id, $e->getMessage() ), (int) $job->site_id, 0 );
+            }
+
+            if ( 'busy' === $outcome ) {
+                // Terminal rows leave the cron lane, so defer failure until the child confirms cancellation.
+                $fresh = $store->get_job( (int) $job->id );
+                if ( null === $fresh || ! in_array( $fresh->status, $store::active_statuses(), true ) ) {
+                    return;
+                }
+                $checkpoint                     = $fresh->checkpoint;
+                $checkpoint['terminal_failure'] = array(
+                    'error'      => $error,
+                    'error_code' => $error_code,
+                );
+                if ( ! $store->save_checkpoint( (int) $job->id, $checkpoint, $lock_token ) ) {
+                    return;
+                }
+                if ( ! $store->arm_cancel_intent( (int) $job->id ) ) {
+                    throw new MainWP_Exception( esc_html__( 'The cancellation could not be recorded; try again.', 'mainwp' ) );
+                }
+                return;
+            }
+        }
+
         $this->stamp_error_code( $job, $error_code, $lock_token );
         if ( ! $store->fail_permanent( (int) $job->id, $error, $lock_token ) ) {
             // Already terminal, or this worker's lease was reclaimed -
@@ -1283,8 +1324,6 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         }
 
         // The owner is terminal and no other lane may release its handle.
-        // A running child task finishes on its own; until then it refuses
-        // the next restore's create, which the orchestrator already retries.
         $website = MainWP_DB::instance()->get_website_by_id( (int) $job->site_id );
         // A deleted site can leave its job behind. Throwing here inside a
         // catch block would prevent the failure event below from firing.

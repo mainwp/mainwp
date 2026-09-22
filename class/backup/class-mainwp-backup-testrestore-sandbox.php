@@ -1257,7 +1257,9 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
                     throw new MainWP_Exception( esc_html__( 'The test-restore sandbox does not have enough free space to extract the archive.', 'mainwp' ), 'tar extract free space: ' . basename( $path ), self::ERR_UNSUPPORTED );
                 }
             }
-            $phar->extractTo( untrailingslashit( $this->temp_dir ), null, true );
+            if ( ! $phar->extractTo( untrailingslashit( $this->temp_dir ), null, true ) ) {
+                throw new MainWP_Exception( esc_html__( 'A backup archive could not be extracted.', 'mainwp' ), 'tar extract: ' . basename( $path ), self::ERR_APPLY );
+            }
         } catch ( MainWP_Exception $e ) {
             throw $e;
         } catch ( \Throwable $e ) {

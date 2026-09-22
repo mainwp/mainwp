@@ -111,8 +111,8 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
         add_action( 'mainwp_backup_upload_job_settled', array( $this, 'on_upload_job_settled' ), 10, 1 );
 
         // Guardrail/advisory messages, filtered to backup-related ones.
-        add_action( 'mainwp_log_warning', array( $this, 'on_log_warning' ), 10, 1 );
-        add_action( 'mainwp_log_info', array( $this, 'on_log_info' ), 10, 1 );
+        add_action( 'mainwp_log_warning', array( $this, 'on_log_warning' ), 10, 3 );
+        add_action( 'mainwp_log_info', array( $this, 'on_log_info' ), 10, 3 );
 
         // Retention rides the existing daily backups prune cron.
         add_action( 'mainwp_cronbackups_prune_action', array( $this, 'prune' ) );
@@ -238,22 +238,26 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * Record a backup-related warning from the dashboard log channel.
      *
      * @param mixed $message Log message.
+     * @param int   $site_id Site id, or zero for a host-level message.
+     * @param int   $task_id Backup task id, or zero when unrelated to a backup task.
      *
      * @return void
      */
-    public function on_log_warning( $message ): void {
-        $this->record_guardrail( 'warning', $message );
+    public function on_log_warning( $message, $site_id = 0, $task_id = 0 ): void {
+        $this->record_guardrail( 'warning', $message, (int) $site_id, (int) $task_id );
     }
 
     /**
      * Record a backup-related info line from the dashboard log channel.
      *
      * @param mixed $message Log message.
+     * @param int   $site_id Site id, or zero for a host-level message.
+     * @param int   $task_id Backup task id, or zero when unrelated to a backup task.
      *
      * @return void
      */
-    public function on_log_info( $message ): void {
-        $this->record_guardrail( 'info', $message );
+    public function on_log_info( $message, $site_id = 0, $task_id = 0 ): void {
+        $this->record_guardrail( 'info', $message, (int) $site_id, (int) $task_id );
     }
 
     /**
@@ -287,10 +291,12 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
      *
      * @param string $level   warning|info.
      * @param mixed  $message Log message.
+     * @param int    $site_id Site id, or zero for a host-level message.
+     * @param int    $task_id Backup task id, or zero when unrelated to a backup task.
      *
      * @return void
      */
-    private function record_guardrail( string $level, $message ): void {
+    private function record_guardrail( string $level, $message, int $site_id = 0, int $task_id = 0 ): void {
         try {
             if ( ! is_string( $message ) || '' === $message ) {
                 return;
@@ -308,8 +314,8 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
             $this->record(
                 '_global',
                 'guardrail',
-                0,
-                0,
+                $site_id,
+                $task_id,
                 array(
                     'level'   => $level,
                     'message' => $message,

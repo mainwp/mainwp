@@ -1153,6 +1153,11 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 		MainWP_Backup_Diagnostics::instance()->record( 'terminal-' . $site_denied, 'terminal', $site_denied, 0, array( 'success' => true ) );
 		MainWP_Backup_Diagnostics::instance()->record( '_global', 'site_mark', $site_allowed, (int) $task_allowed->id, array( 'outcome' => 'allowed-mark' ) );
 		MainWP_Backup_Diagnostics::instance()->record( '_global', 'site_mark', $site_denied, (int) $task_denied->id, array( 'outcome' => 'denied-mark' ) );
+		do_action( 'mainwp_log_warning', 'Backup retention allowed guardrail', $site_allowed, (int) $task_allowed->id );
+		do_action( 'mainwp_log_warning', 'Backup retention denied guardrail', $site_denied, (int) $task_denied->id );
+		do_action( 'mainwp_log_info', 'Restore denied guardrail', $site_denied, 0 );
+		do_action( 'mainwp_log_warning', 'Backup host guardrail' );
+		do_action( 'mainwp_log_info', 'Restore host guardrail' );
 
 		$deny = function ( $allowed, $cap_type, $cap ) use ( $site_denied ) {
 			if ( 'site' === $cap_type && (int) $cap === (int) $site_denied ) {
@@ -1195,6 +1200,11 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 
 		$this->assertStringContainsString( 'allowed-mark', $global, 'The shared stream keeps the caller\'s own lines.' );
 		$this->assertStringNotContainsString( 'denied-mark', $global, 'The shared stream must drop out-of-scope lines.' );
+		$this->assertStringContainsString( 'Backup retention allowed guardrail', $global );
+		$this->assertStringNotContainsString( 'Backup retention denied guardrail', $global );
+		$this->assertStringNotContainsString( 'Restore denied guardrail', $global );
+		$this->assertStringContainsString( 'Backup host guardrail', $global );
+		$this->assertStringContainsString( 'Restore host guardrail', $global );
 	}
 
 	/**

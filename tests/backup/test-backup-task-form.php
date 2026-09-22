@@ -87,8 +87,9 @@ class MainWP_Backup_Task_Form_Test extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * The archive-type field guides large sites toward tar.gz: both formats
-	 * resume after a timeout, but ZIP rewrites the whole archive every slice.
+	 * The archive-type field guides large sites toward tar.gz, because ZIP
+	 * rewrites the whole archive every slice. It must not claim that ZIP
+	 * resumes: a child without ext-zip falls back to PclZip, which does not.
 	 *
 	 * @return void
 	 */
@@ -99,6 +100,7 @@ class MainWP_Backup_Task_Form_Test extends \WP_UnitTestCase {
 
 		$this->assertStringContainsString( 'mainwp-archive-format-note', $output );
 		$this->assertStringContainsString( 'rewrites the whole archive', $output );
+		$this->assertStringNotContainsString( 'Both formats resume', $output );
 	}
 
 	/**

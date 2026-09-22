@@ -243,6 +243,16 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
             $controller_obj = $this->get_batch_controller( $con_name );
 
             if ( false === $controller_obj ) {
+                if ( ! empty( $items[ $con_name ] ) ) {
+                    $response[ $con_name ] = array(
+                        'error' => array(
+                            'code'    => 'rest_batch_group_not_supported',
+                            /* translators: %s: batch group name */
+                            'message' => sprintf( __( 'The %s group is not supported by the batch endpoint.', 'mainwp' ), $con_name ),
+                            'data'    => array( 'status' => 400 ),
+                        ),
+                    );
+                }
                 continue;
             }
 

@@ -421,7 +421,7 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
                             ?>
                             selected<?php endif; ?>><?php esc_html_e( 'Tar BZip2', 'mainwp' ); ?></option>
                     </select>
-                    <em class="mainwp-archive-format-note"><?php esc_html_e( 'For large sites, Tar GZip is the safer choice. Both formats resume after a timeout, but Zip rewrites the whole archive after every slice, which gets slower as the backup grows and needs as much free disk as the archive.', 'mainwp' ); ?></em>
+                    <em class="mainwp-archive-format-note"><?php esc_html_e( 'For large sites, Tar GZip is the safer choice. Zip rewrites the whole archive after every slice, so it gets slower as the backup grows and needs as much free disk as the archive itself. Tar GZip appends instead.', 'mainwp' ); ?></em>
                 </div>
             </div>
             <?php $zip_override_style = 'zip' === $archiveFormat ? '' : 'style="display:none"'; ?>

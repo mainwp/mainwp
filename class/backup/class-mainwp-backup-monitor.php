@@ -296,10 +296,12 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             do_action( 'mainwp_log_warning', sprintf( 'Child site reports no support for the requested %s archive format.', $archive_ext ) );
         }
 
-        // Both formats resume after a slice timeout, but ZIP closes the archive
-        // at the end of every slice and ZipArchive::close() rewrites the whole
-        // file, so on a large site each slice gets slower and the close needs
-        // free disk equal to the archive; tar.gz appends. Over the guardrail
+        // ZipArchive resumes after a slice timeout, but it closes the archive at
+        // the end of every slice and ZipArchive::close() rewrites the whole file,
+        // so on a large site each slice gets slower and the close needs free disk
+        // equal to the archive; tar.gz appends. A child without ext-zip falls back
+        // to PclZip, which resumes not at all - the copy below therefore claims
+        // only the rewrite cost, never that ZIP resumes. Over the guardrail
         // threshold, switch ZIP to tar.gz so the backup can actually finish,
         // unless the task explicitly forces ZIP.
         // Either way, surface the outcome on the task so it is visible before

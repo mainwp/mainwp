@@ -2023,6 +2023,36 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 	}
 
 	/**
+	 * The integer schema accepts a signed digit string and WordPress sanitizes
+	 * "+9223372036854775808" to PHP_INT_MAX, so both an id action and an update
+	 * item refuse the signed form before it can address a different item.
+	 */
+	public function test_batch_rejects_a_signed_overflowing_id_on_id_and_update_actions(): void {
+		$this->authenticate_as_admin();
+
+		$response = $this->do_authenticated_request(
+			'POST',
+			'/mainwp/v2/batch',
+			[
+				'sites' => [
+					'sync'   => [ '+9223372036854775808' ],
+					'update' => [ [ 'id' => '+9223372036854775808', 'name' => 'renamed' ] ],
+				],
+			]
+		);
+
+		$data = $response->get_data();
+
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $data ) );
+		$this->assertArrayNotHasKey( 'error', $data['sites'], wp_json_encode( $data ) );
+		foreach ( [ 'sync', 'update' ] as $action ) {
+			$this->assertCount( 1, $data['sites'][ $action ], $action );
+			$this->assertSame( 'rest_invalid_param', $data['sites'][ $action ][0]['error']['code'], $action . ': ' . wp_json_encode( $data ) );
+			$this->assertSame( 400, $data['sites'][ $action ][0]['error']['data']['status'], $action );
+		}
+	}
+
+	/**
 	 * PR review: an action sent as an object of named items is reported, not dispatched.
 	 *
 	 * The dispatch walks an action as a list, so an object's values used to be dispatched with the

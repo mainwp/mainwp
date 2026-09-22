@@ -531,7 +531,27 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
             'minimum'           => 1,
             'description'       => __( 'Item ID.', 'mainwp' ),
             'sanitize_callback' => 'rest_parse_request_arg',
-            'validate_callback' => 'rest_validate_request_arg',
+            // rest_is_integer() accepts anything is_numeric() calls a whole number, so
+            // "01", "1e3", "+5", " 5" and a float past PHP_INT_MAX all survive it and
+            // then get cast to an ID the caller never sent - "1e3" dispatches against
+            // site 1000, and an overflowing JSON number casts to 0. Only a real int, a
+            // float that round-trips through int, or a canonical digit string gets past
+            // this. An integral float stays valid because core treats it as an integer
+            // and existing callers send it.
+            'validate_callback' => static function ( $value, $request, $param ) {
+                if ( is_string( $value ) ) {
+                    if ( ! ctype_digit( $value ) || (string) (int) $value !== $value ) {
+                        return false;
+                    }
+                } elseif ( is_float( $value ) ) {
+                    if ( ! is_finite( $value ) || floor( $value ) !== $value || (float) (int) $value !== $value ) {
+                        return false;
+                    }
+                } elseif ( ! is_int( $value ) ) {
+                    return false;
+                }
+                return rest_validate_request_arg( $value, $request, $param );
+            },
         );
     }
 
@@ -549,10 +569,6 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
      * @return WP_REST_Request|WP_Error
      */
     protected function prepare_batch_id_request( $route, $id, $query = array(), $args = array() ) {
-        // A digit string past PHP_INT_MAX casts to PHP_INT_MAX, a different ID than the one sent.
-        if ( is_string( $id ) && ctype_digit( $id ) && PHP_INT_MAX === (int) $id && (string) PHP_INT_MAX !== ltrim( $id, '0' ) ) {
-            return new WP_Error( 'rest_invalid_param', __( 'Batch item ID is too large.', 'mainwp' ), array( 'status' => 400 ) );
-        }
         if ( empty( $args ) ) {
             $args = array( 'id' => $this->get_batch_item_id_arg() );
         }

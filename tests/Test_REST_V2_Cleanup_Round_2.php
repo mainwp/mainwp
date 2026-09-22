@@ -1795,6 +1795,95 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 	}
 
 	/**
+	 * Disabled modules must answer batches that name them.
+	 */
+	public function test_batch_disabled_costs_group_is_reported(): void {
+		$this->authenticate_as_admin();
+		$property = new \ReflectionProperty( \MainWP_Rest_Server::class, 'controllers' );
+		$property->setAccessible( true );
+		$server      = \MainWP_Rest_Server::instance();
+		$saved       = $property->getValue( $server );
+		$controllers = $saved;
+		unset( $controllers['mainwp/v2']['costs'], $controllers['mainwp/v2/costs']['costs'] );
+		$property->setValue( $server, $controllers );
+		try {
+			$response = $this->do_authenticated_request( 'POST', '/mainwp/v2/batch', array( 'costs' => array( 'delete' => array( 1 ) ) ) );
+			$data     = $response->get_data();
+			$this->assertSame( 200, $response->get_status() );
+			$this->assertSame( 'rest_batch_group_not_supported', $data['costs']['error']['code'] );
+			$this->assertSame( 400, $data['costs']['error']['data']['status'] );
+		} finally {
+			$property->setValue( $server, $saved );
+		}
+	}
+
+	/**
+	 * Only canonical IDs may reach a batch item handler.
+	 *
+	 * @param string $json_id Raw JSON ID.
+	 * @param bool   $accepted Whether dispatch is allowed.
+	 * @param string $action Batch action.
+	 * @dataProvider batch_canonical_id_cases
+	 */
+	public function test_batch_canonical_ids( $json_id, $accepted, $action ): void {
+		$this->authenticate_as_admin();
+		$id         = json_decode( $json_id, true );
+		$controller = $this->createPartialMock( \MainWP_Rest_Sites_Controller::class, array( 'sync_item', 'update_item' ) );
+		$method     = 'update' === $action ? 'update_item' : 'sync_item';
+		$controller->expects( $accepted ? $this->once() : $this->never() )->method( $method )->willReturnCallback(
+			function ( $request ) use ( $id ) {
+				$this->assertSame( (int) $id, $request['id'] );
+				return new \WP_REST_Response( array( 'id' => $request['id'] ) );
+			}
+		);
+		$property = new \ReflectionProperty( \MainWP_Rest_Server::class, 'controllers' );
+		$property->setAccessible( true );
+		$server                            = \MainWP_Rest_Server::instance();
+		$saved                             = $property->getValue( $server );
+		$controllers                       = $saved;
+		$controllers['mainwp/v2']['sites'] = $controller;
+		$property->setValue( $server, $controllers );
+		try {
+			$item     = 'update' === $action ? '{"id":' . $json_id . '}' : $json_id;
+			$response = $this->do_authenticated_raw_request( 'POST', '/mainwp/v2/batch', '{"sites":{"' . $action . '":[' . $item . ']}}', 'application/json' );
+			$data     = $response->get_data();
+			$this->assertSame( 200, $response->get_status(), wp_json_encode( $data ) );
+			$this->assertArrayNotHasKey( 'error', $data['sites'] );
+			$this->assertCount( 1, $data['sites'][ $action ] );
+			$result = $data['sites'][ $action ][0];
+			$this->assertArrayHasKey( 'id', $result );
+			if ( $accepted ) {
+				$this->assertArrayNotHasKey( 'error', $result );
+				$this->assertSame( (int) $id, $result['id'] );
+			} else {
+				$this->assertSame( is_numeric( $id ) ? (int) $id : 0, $result['id'] );
+				$this->assertContains( $result['error']['code'], array( 'rest_invalid_param', 'rest_missing_callback_param' ) );
+				$this->assertSame( 400, $result['error']['data']['status'] );
+			}
+		} finally {
+			$property->setValue( $server, $saved );
+		}
+	}
+
+	/**
+	 * Canonical IDs and coercions must behave consistently across both paths.
+	 *
+	 * @return array
+	 */
+	public static function batch_canonical_id_cases(): array {
+		$cases = array();
+		foreach ( array( 'sync', 'update' ) as $action ) {
+			foreach ( array( '1', '"1"', '"1650"' ) as $id ) {
+				$cases[ $action . ' accepts ' . $id ] = array( $id, true, $action );
+			}
+			foreach ( array( '0', '-5', '"00"', '"01"', '"1.5"', '"1e3"', '"165e1"', '"+5"', '" 5"', 'true', 'null', '["x"]', '"9223372036854775808"', '"99999999999999999999"', '92233720368547758079' ) as $id ) {
+				$cases[ $action . ' refuses ' . $id ] = array( $id, false, $action );
+			}
+		}
+		return $cases;
+	}
+
+	/**
 	 * PR review: ids still dispatch whether they arrive as numbers or as strings.
 	 *
 	 * A query-sent id is always a string, so the id check cannot demand an int.

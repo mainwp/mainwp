@@ -838,8 +838,8 @@ KEY idx_wpid_issub (wpid, issub)";
     /**
      * Repair sites that are missing their Primary Monitor.
      *
-     * @param null|int $site_id  Site ID to repair, or null to repair all sites.
-     * @param int      $limit     Maximum number of sites to process in one batch.
+     * @param null|int $site_id Site ID to repair, or null to repair all sites.
+     * @param int      $limit  Maximum number of sites to process in one batch.
      *
      * @return array{found:int,created:int,has_more:bool} Repair result.
      */
@@ -879,12 +879,6 @@ KEY idx_wpid_issub (wpid, issub)";
             );
         }
 
-        /*
-        * Get sites that are missing a Primary Monitor.
-        *
-        * get_sites_missing_primary_monitor() excludes sites that have
-        * already reached the maximum retry limit.
-        */
         $site_ids = $this->get_sites_missing_primary_monitor( null, $limit );
 
         $created = 0;
@@ -903,31 +897,22 @@ KEY idx_wpid_issub (wpid, issub)";
             if ( $created_id ) {
                 ++$created;
 
-                /*
-                * The monitor was successfully created, so remove any
-                * previous failure counter.
-                */
-                if ( get_option( $opt_name ) ) {
-                    delete_option( $opt_name );
-                }
+                delete_option( $opt_name );
             } else {
-                /*
-                * Count failures per site. Once a site reaches 3 failures,
-                * it will be excluded from subsequent repair batches.
-                */
                 $attempts = (int) get_option( $opt_name, 0 );
                 update_option( $opt_name, $attempts + 1 );
             }
         }
 
         /*
-        * Continue while the batch was full. Failed sites that reach the
-        * retry limit are excluded from subsequent batches.
+        * Check whether there are still sites eligible for repair.
         */
+        $remaining = $this->get_sites_missing_primary_monitor( null, 1 );
+
         return array(
             'found'    => $found,
             'created'  => $created,
-            'has_more' => $found === $limit,
+            'has_more' => ! empty( $remaining ),
         );
     }
 

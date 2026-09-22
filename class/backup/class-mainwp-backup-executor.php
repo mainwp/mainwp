@@ -341,13 +341,13 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 );
 
                 if ( 'incremental' === $type ) {
-                    $send           = static::resolve_incremental_send( $website, $pTask, $backupTaskProgress );
+                    $send           = self::resolve_incremental_send( $website, $pTask, $backupTaskProgress );
                     $params['type'] = $send['type'];
                     foreach ( $send['params'] as $send_key => $send_value ) {
                         $params[ $send_key ] = $send_value;
                     }
                     if ( '' !== $send['notice'] ) {
-                        static::record_incremental_notice( $website, $taskId, $send['notice'] );
+                        self::record_incremental_notice( $website, $taskId, $send['notice'] );
                     }
                     if ( 'chunk-push' === $send['mode'] ) {
                         // The manifest is too large for the create request:
@@ -365,7 +365,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                             $params['parent_manifest_ref']    = $push['mtoken'];
                             $params['parent_manifest_sha256'] = $manifest_sha256;
                         } else {
-                            static::record_incremental_notice( $website, $taskId, MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_MANIFEST_CHUNK_SEND_FAILED ) );
+                            self::record_incremental_notice( $website, $taskId, MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_MANIFEST_CHUNK_SEND_FAILED ) );
                             $params['type']          = 'full';
                             $params['emit_manifest'] = '1';
                             unset( $params['parent_snapshot_id'] );
@@ -432,7 +432,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     );
                 }
 
-                static::clear_creating_marker_if_mine( $taskId, (int) $website->id, $creating_marker );
+                self::clear_creating_marker_if_mine( $taskId, (int) $website->id, $creating_marker );
                 throw $e;
             }
 
@@ -446,7 +446,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 // no way to stop it. A marker this driver leaves behind is
                 // reclaimed by the CREATE_MARKER_TTL_SECONDS window on the
                 // next cycle; nothing here is terminal.
-                static::hand_off_created_task_after_slot_loss( $website, $taskId, $creating_marker, $information );
+                self::hand_off_created_task_after_slot_loss( $website, $taskId, $creating_marker, $information );
                 return false;
             }
 
@@ -483,18 +483,18 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
                 if ( 0 === $refused_since ) {
                     MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'foreign_refused_since' => time() ) );
-                    static::reset_create_window_if_mine( $taskId, (int) $website->id, $creating_marker );
+                    self::reset_create_window_if_mine( $taskId, (int) $website->id, $creating_marker );
                     /** This action is documented in pages/page-mainwp-manage-backups-handler.php */
                     do_action( 'mainwp_backup_diag_run_reinit', (int) $taskId, 'foreign_refusal_pending', (int) $pTask->last_run, isset( $pTask->completed ) ? (int) $pTask->completed : 0 );
                     return false;
                 }
 
                 if ( ( time() - $refused_since ) < self::FOREIGN_REFUSAL_SURFACE_SECONDS ) {
-                    static::reset_create_window_if_mine( $taskId, (int) $website->id, $creating_marker );
+                    self::reset_create_window_if_mine( $taskId, (int) $website->id, $creating_marker );
                     return false;
                 }
 
-                static::clear_creating_marker_if_mine( $taskId, (int) $website->id, $creating_marker );
+                self::clear_creating_marker_if_mine( $taskId, (int) $website->id, $creating_marker );
                 throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING, self::EXTRA_FOREIGN_ALREADY_RUNNING ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
             }
 
@@ -531,7 +531,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
             if ( empty( $information['error'] ) ) {
                 if ( empty( $information['task_id'] ) || ! is_string( $information['task_id'] ) ) {
-                    static::clear_creating_marker_if_mine( $taskId, (int) $website->id, $creating_marker );
+                    self::clear_creating_marker_if_mine( $taskId, (int) $website->id, $creating_marker );
                     throw new MainWP_Exception( esc_html__( 'The child site did not return a backup task id. Sync the child site and try again.', 'mainwp' ) );
                 }
 
@@ -561,7 +561,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     'foreign_refused_since' => 0,
                 )
             );
-        } elseif ( static::is_creating_marker( $backupTaskProgress->child_backup_task_id ) ) {
+        } elseif ( self::is_creating_marker( $backupTaskProgress->child_backup_task_id ) ) {
             if ( ( time() - (int) $backupTaskProgress->dtsFetched ) < self::CREATE_MARKER_TTL_SECONDS ) {
                 // Another driver's create request for this run has not
                 // returned yet; give it the round trip it needs instead of
@@ -613,7 +613,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
             if ( ! empty( $temp ) && 'incremental' === $type
                 && isset( $temp['error_code'] ) && MainWP_Backup_Error_Codes::ERR_INCREMENTAL_BASE_MISSING === $temp['error_code']
-                && static::requeue_incremental_after_base_missing( $website, $pTask, $backupTaskProgress ) ) {
+                && self::requeue_incremental_after_base_missing( $website, $pTask, $backupTaskProgress ) ) {
                 return false; // Requeued: the next cycle re-creates the task with the escalated send.
             }
 
@@ -653,7 +653,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 // Unknown phase strings from newer children stay null and keep polling.
                 $phase = MainWP_Backup_Task_Phase::tryFrom( (string) $temp['phase'] );
 
-                static::record_child_progress( $taskId, (int) $website->id, $temp );
+                self::record_child_progress( $taskId, (int) $website->id, $temp );
 
                 if ( (int) $backupTaskProgress->foreign_refused_since > 0 ) {
                     // The lock holder is gone and the slice ran: stop the
@@ -754,7 +754,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         } elseif ( 'incremental' === $type && ! empty( $information['artifacts'] ) ) {
             $snapshot_recorded = false;
             try {
-                $result = static::finish_incremental_backup( $website, $pTask, $information['artifacts'], $backupTaskProgress, $snapshot_recorded );
+                $result = self::finish_incremental_backup( $website, $pTask, $information['artifacts'], $backupTaskProgress, $snapshot_recorded );
             } catch ( \Throwable $e ) {
                 /** This action is documented in class/backup/class-mainwp-backup-executor.php */
                 do_action(
@@ -1040,7 +1040,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 return false; // A snapshot is what retires the site, so it may not be written under a slot this driver no longer owns.
             }
 
-            static::record_run_snapshot_locked( $website, $pTask, $backupTaskProgress, $localBackupFile );
+            self::record_run_snapshot_locked( $website, $pTask, $backupTaskProgress, $localBackupFile );
 
             $unique = $pTask->last_run;
 
@@ -1187,7 +1187,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             );
         }
 
-        $marker = static::incremental_sent_marker( $progress, (int) $pTask->last_run );
+        $marker = self::incremental_sent_marker( $progress, (int) $pTask->last_run );
         $base   = MainWP_Backup_Snapshots::instance()->get_latest_complete( (int) $website->id, (int) $pTask->id );
 
         if ( null === $base ) {
@@ -1223,11 +1223,11 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         $escalate_to_full = in_array( $marker, array( 'push', 'chunk-push', 'full' ), true );
         $manifest_b64     = '';
         if ( ! $escalate_to_full && 'plain' === $marker ) {
-            $manifest_b64 = static::pushable_manifest( $base );
+            $manifest_b64 = self::pushable_manifest( $base );
             if ( '' === $manifest_b64 ) {
                 // Too large for one request: a chunk-capable child stages
                 // the manifest in pieces instead of forcing a full backup.
-                $chunkable = static::chunkable_manifest( $base, $website );
+                $chunkable = self::chunkable_manifest( $base, $website );
                 if ( '' !== $chunkable['path'] ) {
                     return array(
                         'type'   => 'incremental',
@@ -1284,7 +1284,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @return bool True when requeued; false when the failure is final.
      */
     protected static function requeue_incremental_after_base_missing( $website, $pTask, $progress ) {
-        $marker = static::incremental_sent_marker( $progress, (int) $pTask->last_run );
+        $marker = self::incremental_sent_marker( $progress, (int) $pTask->last_run );
         if ( 'full' === $marker ) {
             return false; // The full fallback itself failed - a real failure.
         }
@@ -1426,7 +1426,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     protected static function record_run_snapshot_locked( $website, $pTask, $progress, $lock_file ) {
         // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.Missing
         if ( empty( $lock_file ) ) {
-            static::record_downloaded_run_snapshot( $website, $pTask, $progress );
+            self::record_downloaded_run_snapshot( $website, $pTask, $progress );
             return;
         }
 
@@ -1434,7 +1434,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING, 'record lock held for ' . basename( (string) $lock_file ) ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         }
         try {
-            static::record_downloaded_run_snapshot( $website, $pTask, $progress );
+            self::record_downloaded_run_snapshot( $website, $pTask, $progress );
         } finally {
             MainWP_Backup_File_Manager::release_download_lock( (string) $lock_file );
         }
@@ -1514,7 +1514,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 'parent_id'     => null,
                 'archives'      => $archives,
                 'manifest_path' => '',
-                'woo_meta'      => static::woo_meta_from_progress( $progress ),
+                'woo_meta'      => self::woo_meta_from_progress( $progress ),
             )
         );
         if ( $snapshot_id < 1 ) {
@@ -1645,7 +1645,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     'parent_id'     => $parent_id,
                     'archives'      => $archives,
                     'manifest_path' => $run_dir . 'files.list',
-                    'woo_meta'      => static::woo_meta_from_progress( $progress ),
+                    'woo_meta'      => self::woo_meta_from_progress( $progress ),
                 )
             );
         } else {
@@ -2038,12 +2038,12 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_CHILD_UPDATE_REQUIRED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         }
 
-        $persisted = static::read_adhoc_task( $website );
+        $persisted = self::read_adhoc_task( $website );
         if ( ! empty( $persisted['task_id'] ) && ( empty( $persisted['type'] ) || $persisted['type'] === $type ) ) {
             if ( (string) ( $persisted['owner'] ?? '' ) === $owner ) {
                 return $persisted['task_id'];
             }
-            if ( time() - (int) ( $persisted['started'] ?? 0 ) <= static::ADHOC_TASK_ABANDON_SECONDS ) {
+            if ( time() - (int) ( $persisted['started'] ?? 0 ) <= self::ADHOC_TASK_ABANDON_SECONDS ) {
                 throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
             }
         }
@@ -2090,7 +2090,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         $task_id = sanitize_text_field( $information['task_id'] );
         MainWP_DB::instance()->update_website_option(
             $website,
-            static::ADHOC_TASK_OPTION,
+            self::ADHOC_TASK_OPTION,
             wp_json_encode(
                 array(
                     'task_id' => $task_id,
@@ -2208,7 +2208,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     'task_id' => 0,
                 )
             );
-            return static::map_task_status( $payload );
+            return self::map_task_status( $payload );
         }
 
         $deadline = time() + $budget_seconds;
@@ -2226,12 +2226,12 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     'task_id' => 0,
                 )
             );
-            $status = static::map_task_status( $payload );
+            $status = self::map_task_status( $payload );
         } while ( 'running' === $status['status'] && time() < $deadline );
 
         if ( 'completed' === $status['status'] && ! empty( $status['meta']['file'] ) ) {
             $type  = isset( $payload['type'] ) && MainWP_Backup_Type::DATABASE === $payload['type'] ? 'db' : 'full';
-            $local = static::build_local_backup_file( $website, $type, $status['meta']['file'] );
+            $local = self::build_local_backup_file( $website, $type, $status['meta']['file'] );
             MainWP_Backup_File_Manager::backup_download_file( $site_id, $type, $status['meta']['file'], $local );
             if ( 'full' === $type ) {
                 MainWP_Connect::fetch_url_authed( $website, 'delete_backup', array( 'del' => $status['meta']['file'] ) );
@@ -2270,7 +2270,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 );
             }
 
-            MainWP_DB::instance()->update_website_option( $website, static::ADHOC_TASK_OPTION, '' );
+            MainWP_DB::instance()->update_website_option( $website, self::ADHOC_TASK_OPTION, '' );
         }
 
         return $status;
@@ -2429,16 +2429,16 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             $require_offsite = (bool) get_option( 'mainwp_backup_before_upgrade_require_offsite', 0 );
         }
 
-        if ( $require_offsite && static::has_recent_native_backup( $site_id, $max_age_days, true ) ) {
-            return static::UPDATE_GATE_PASS;
+        if ( $require_offsite && self::has_recent_native_backup( $site_id, $max_age_days, true ) ) {
+            return self::UPDATE_GATE_PASS;
         }
 
-        if ( static::has_recent_native_backup( $site_id, $max_age_days )
-            || static::has_recent_backup( $site_id, $max_age_days ) ) {
-            return $require_offsite ? static::UPDATE_GATE_PENDING_OFFSITE : static::UPDATE_GATE_PASS;
+        if ( self::has_recent_native_backup( $site_id, $max_age_days )
+            || self::has_recent_backup( $site_id, $max_age_days ) ) {
+            return $require_offsite ? self::UPDATE_GATE_PENDING_OFFSITE : self::UPDATE_GATE_PASS;
         }
 
-        return static::UPDATE_GATE_MISSING;
+        return self::UPDATE_GATE_MISSING;
     }
 
     /**
@@ -2525,7 +2525,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @return array Persisted handle data, empty when none.
      */
     private static function read_adhoc_task( object $website ): array {
-        $raw  = MainWP_DB::instance()->get_website_option( $website, static::ADHOC_TASK_OPTION );
+        $raw  = MainWP_DB::instance()->get_website_option( $website, self::ADHOC_TASK_OPTION );
         $data = json_decode( (string) $raw, true );
         return is_array( $data ) ? $data : array();
     }

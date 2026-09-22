@@ -296,10 +296,12 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             do_action( 'mainwp_log_warning', sprintf( 'Child site reports no support for the requested %s archive format.', $archive_ext ) );
         }
 
-        // ZIP archiving restarts from the beginning on each slice timeout, so a
-        // large site can burn the resume budget and stall; tar.gz appends and
-        // resumes. Over the guardrail threshold, switch ZIP to tar.gz so the
-        // backup can actually finish, unless the task explicitly forces ZIP.
+        // Both formats resume after a slice timeout, but ZIP closes the archive
+        // at the end of every slice and ZipArchive::close() rewrites the whole
+        // file, so on a large site each slice gets slower and the close needs
+        // free disk equal to the archive; tar.gz appends. Over the guardrail
+        // threshold, switch ZIP to tar.gz so the backup can actually finish,
+        // unless the task explicitly forces ZIP.
         // Either way, surface the outcome on the task so it is visible before
         // the run.
         if ( 'zip' === $archive_ext && isset( $preflight['estimated_bytes'] ) && is_numeric( $preflight['estimated_bytes'] ) ) {
@@ -315,14 +317,14 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 if ( $keep_zip ) {
                     $zip_warning = sprintf(
                         /* translators: %s: estimated backup size */
-                        esc_html__( 'ZIP is not recommended for large sites (estimated %s): it restarts from the beginning on every timeout, while tar.gz resumes across timeouts.', 'mainwp' ),
+                        esc_html__( 'ZIP is not recommended for sites this large (estimated %s). ZIP rewrites the whole archive after every slice, so slices slow down as the backup grows and the site needs as much free disk as the archive itself. tar.gz appends and does not have that cost.', 'mainwp' ),
                         $estimate
                     );
                 } else {
                     $archive_ext = 'tar.gz';
                     $zip_warning = sprintf(
                         /* translators: %s: estimated backup size */
-                        esc_html__( 'ZIP was switched to tar.gz for this large site (estimated %s): ZIP restarts from the beginning on every timeout, while tar.gz resumes across timeouts.', 'mainwp' ),
+                        esc_html__( 'ZIP was switched to tar.gz for this large site (estimated %s). ZIP rewrites the whole archive after every slice, so slices slow down as the backup grows and the site needs as much free disk as the archive itself. tar.gz appends and does not have that cost.', 'mainwp' ),
                         $estimate
                     );
                     // Only a visible scheduled task carries the settings form

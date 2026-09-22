@@ -76,6 +76,27 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * The fallback preserves the first failure without granting a stale worker ownership.
+	 */
+	public function test_cancel_intent_fallback_preserves_failure_and_lease_fence() {
+		$job_id = $this->store->create_job( 8801, 42, array( 'cursor' => 7 ) );
+		$this->assertNotNull( $this->store->acquire_next_job( 'current-holder', 300, null, $job_id ) );
+		$failure = array( 'error' => 'Original failure', 'error_code' => 'original_code' );
+		$this->assertFalse( $this->store->arm_cancel_intent( $job_id, $failure, 'stale-holder' ) );
+		$this->assertSame( array( 'cursor' => 7 ), $this->store->get_job( $job_id )->checkpoint );
+		$this->assertTrue( $this->store->arm_cancel_intent( $job_id ) );
+		$this->assertTrue( $this->store->arm_cancel_intent( $job_id, $failure, 'current-holder' ) );
+		$this->assertTrue( $this->store->arm_cancel_intent( $job_id, array( 'error' => 'Later failure', 'error_code' => 'later_code' ), 'current-holder' ) );
+		$fresh = $this->store->get_job( $job_id );
+		$this->assertTrue( $fresh->checkpoint['cancel_intent'] );
+		$this->assertSame( $failure, $fresh->checkpoint['terminal_failure'] );
+		$this->assertSame( 7, $fresh->checkpoint['cursor'] );
+		$this->assertTrue( $this->store->fail_permanent( $job_id, 'Finished', 'current-holder' ) );
+		$this->assertFalse( $this->store->arm_cancel_intent( $job_id, $failure ) );
+		$this->assertSame( $fresh->checkpoint, $this->store->get_job( $job_id )->checkpoint );
+	}
+
+	/**
 	 * A lost lease or terminal transition must refuse the entire deferral.
 	 */
 	public function test_terminal_deferral_refuses_stale_lease_and_terminal_job() {

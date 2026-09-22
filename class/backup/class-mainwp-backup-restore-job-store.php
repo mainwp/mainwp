@@ -48,12 +48,7 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
     const RECLAIM_CEILING = 3;
 
     /**
-     * Bound unconfirmed child cancellations independently of expired leases.
-     */
-    const CANCEL_CONFIRMATION_ATTEMPT_CEILING = 10;
-
-    /**
-     * Bound cancellation deferral time even when continuation ticks are sparse.
+     * Elapsed time preserves the rollback window under browser polling and sparse cron ticks.
      */
     const CANCEL_CONFIRMATION_TIMEOUT_SECONDS = 15 * 60;
 
@@ -377,16 +372,18 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
      * lands while the checkpoint still matches the exact value read, and
      * a miss re-reads and retries against the fresher row.
      *
-     * @param int $job_id Job id.
+     * @param int         $job_id     Job id.
+     * @param array       $failure    Original failure to preserve when combined deferral failed.
+     * @param string|null $lock_token Worker lease token, or null for an unleased cancellation.
      *
      * @return bool True when the intent is recorded on the row.
      */
-    public function arm_cancel_intent( int $job_id ): bool {
+    public function arm_cancel_intent( int $job_id, array $failure = array(), ?string $lock_token = null ): bool {
         for ( $attempt = 0; $attempt < 5; $attempt++ ) {
             $row = $this->wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- dedicated restore job table.
-                $this->wpdb->prepare( 'SELECT checkpoint FROM ' . $this->table() . ' WHERE id = %d', $job_id )
+                $this->wpdb->prepare( 'SELECT checkpoint, status, locked_by FROM ' . $this->table() . ' WHERE id = %d', $job_id )
             );
-            if ( null === $row ) {
+            if ( null === $row || ! in_array( $row->status, self::active_statuses(), true ) || ( null !== $lock_token && $row->locked_by !== $lock_token ) ) {
                 return false;
             }
 
@@ -395,18 +392,24 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
             if ( ! is_array( $decoded ) ) {
                 $decoded = array();
             }
-            if ( ! empty( $decoded['cancel_intent'] ) ) {
+            if ( ! empty( $decoded['cancel_intent'] ) && ( empty( $failure ) || ! empty( $decoded['terminal_failure'] ) ) ) {
                 return true; // Already armed.
             }
             $decoded['cancel_intent'] = true;
+            if ( ! empty( $failure ) && empty( $decoded['terminal_failure'] ) ) {
+                $decoded['terminal_failure'] = $failure;
+            }
+            $fence = '';
+            $binds = array( wp_json_encode( $decoded ), time(), $job_id, $stored, $row->status );
+            if ( null !== $lock_token ) {
+                $fence   = ' AND locked_by = %s';
+                $binds[] = $lock_token;
+            }
 
             $swapped = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- compare-and-swap on the exact stored value.
-                $this->wpdb->prepare(
-                    'UPDATE ' . $this->table() . ' SET checkpoint = %s, updated = %d WHERE id = %d AND checkpoint = %s',
-                    wp_json_encode( $decoded ),
-                    time(),
-                    $job_id,
-                    $stored
+                $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- the optional lease fence adds its bind.
+                    'UPDATE ' . $this->table() . " SET checkpoint = %s, updated = %d WHERE id = %d AND checkpoint = %s AND status = %s{$fence}", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed fence with a bound token.
+                    $binds
                 )
             );
             if ( 1 === $swapped ) {

@@ -46,6 +46,11 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     const BACKUP_PROGRESS_INDEX_REPAIR_PENDING = 'mainwp_backup_progress_index_repair_pending';
 
     /**
+     * Network-scoped like mainwp_db_version, so every blog on a multisite sees the pending repair.
+     */
+    const WP_GROUP_MISSING_PRIMARY_KEY_REPAIR_PENDING = 'mainwp_wp_group_missing_primary_key_repair_pending';
+
+    /**
      * Private static variable to hold the single instance of the class.
      *
      * @static
@@ -108,6 +113,8 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             // most hourly, without holding the DB version back and re-running every
             // older migration on each load.
             $this->maybe_retry_backup_progress_index_repair();
+
+            $this->maybe_retry_repair_wp_group_primary_key();
             return;
         }
 
@@ -579,7 +586,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         }
 
         if ( ! empty( $currentVersion ) && version_compare( $currentVersion, '9.0.2.5', '<' ) ) { // NOSONAR - no ip.
-            $this->maybe_repair_wp_group_primary_key();
+            $this->repair_wp_group_primary_key();
         }
 
         $this->wpdb->suppress_errors( $suppress );
@@ -634,13 +641,32 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     }
 
     /**
+     * Retry a pending backup progress index repair, no more than once an hour.
+     *
+     * A DB user without ALTER never clears the marker, so an unthrottled retry
+     * would run two SHOW INDEX plus a failing ALTER on every single request.
+     *
+     * @return bool True when a repair attempt was made.
+     */
+    public function maybe_retry_repair_wp_group_primary_key() {
+        $pending = (int) get_site_option( self::WP_GROUP_MISSING_PRIMARY_KEY_REPAIR_PENDING );
+        if ( empty( $pending ) || time() - $pending < HOUR_IN_SECONDS ) {
+            return false;
+        }
+
+        $this->repair_wp_group_primary_key();
+
+        return true;
+    }
+
+    /**
      * Repair the wp_group table primary key for legacy installations.
      *
      * To fix MWP-1794.
      *
      * @return void
      */
-    private function maybe_repair_wp_group_primary_key() {
+    private function repair_wp_group_primary_key() {
         $wp_group_table = esc_sql( $this->table_name( 'wp_group' ) );
 
         $column_exists = $this->wpdb->get_var(
@@ -666,9 +692,20 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
                 );
             }
         }
+
+        $primary_key = $this->wpdb->get_var(
+            "SHOW INDEX FROM {$wp_group_table}
+            WHERE Key_name = 'PRIMARY'
+            AND Column_name = 'wp_group_id'" // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Table name is escaped and query contains no user input.
+        );
+
+        if ( ! empty( $primary_key ) ) {
+            delete_site_option( self::WP_GROUP_MISSING_PRIMARY_KEY_REPAIR_PENDING );
+        } else {
+            // A timestamp, not a formatted date: the retry throttle compares it against time().
+            update_site_option( self::WP_GROUP_MISSING_PRIMARY_KEY_REPAIR_PENDING, time() );
+        }
     }
-
-
 
     /**
      * Retry a pending backup progress index repair, no more than once an hour.

@@ -858,6 +858,204 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
+	 * The reclaim sweep can issue child HTTP even when no job is acquired.
+	 */
+	public function test_reclaim_cancellation_has_timeout_cap_and_removes_it() {
+		$job = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, array( 'child_task_id' => 'task-9-restore' ) );
+		$this->expire_job_at_reclaim_ceiling( (int) $job->id );
+		$timeouts = array();
+		$observe  = static function ( $pre, $website, $what ) use ( &$timeouts ) {
+			if ( 'restore_task_cancel' === $what ) {
+				$timeouts[] = apply_filters( 'mainwp_fetch_url_site_timeout', 20 * HOUR_IN_SECONDS );
+			}
+			return $pre;
+		};
+		$before = apply_filters( 'mainwp_fetch_url_site_timeout', 20 * HOUR_IN_SECONDS );
+		add_filter( 'mainwp_fetch_url_authed_pre', $observe, 20, 3 );
+		try {
+			$this->orchestrator->process_pending_restore_jobs( 30, (int) $job->id );
+		} finally {
+			remove_filter( 'mainwp_fetch_url_authed_pre', $observe, 20 );
+		}
+		$this->assertSame( array( 90 ), $timeouts, 'The sweep must use the same request bound as a leased slice.' );
+		$this->assertSame( $before, apply_filters( 'mainwp_fetch_url_site_timeout', 20 * HOUR_IN_SECONDS ), 'The no-job return must remove its timeout filter.' );
+	}
+
+	/**
+	 * A worker dying after its first write must leave a resumable cancellation.
+	 */
+	public function test_terminal_deferral_is_atomic_at_worker_exit() {
+		global $wpdb;
+		$job = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, array( 'child_task_id' => 'task-9-restore' ) );
+		$this->responses['restore_task_cancel'] = array( 'result' => 'busy' );
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$interrupted = false;
+		$interrupt = static function ( $sql ) use ( &$interrupt, &$interrupted, $wpdb, $table ) {
+			if ( str_starts_with( $sql, 'UPDATE ' . $table . ' SET checkpoint' ) && str_contains( $sql, 'terminal_failure' ) ) {
+				remove_filter( 'query', $interrupt );
+				$wpdb->query( $sql );
+				$interrupted = true;
+				throw new \RuntimeException( 'Simulated worker exit after the first write.' );
+			}
+			return $sql;
+		};
+		add_filter( 'query', $interrupt );
+		try {
+			$record = new \ReflectionMethod( MainWP_Backup_Restore_Orchestrator::class, 'record_terminal_failure' );
+			$record->invoke( $this->orchestrator, $job, 'Original replay failure', 'mainwp_restore_db_replay', null );
+		} catch ( \RuntimeException $e ) {
+			$this->assertSame( 'Simulated worker exit after the first write.', $e->getMessage() );
+		} finally {
+			remove_filter( 'query', $interrupt );
+		}
+		$this->assertTrue( $interrupted );
+		$fresh = MainWP_Backup_Restore_Job_Store::instance()->get_job( (int) $job->id );
+		$this->assertSame( 'Original replay failure', $fresh->checkpoint['terminal_failure']['error'] );
+		$this->assertTrue( ! empty( $fresh->checkpoint['cancel_intent'] ), 'The first write must include the cancel intent.' );
+		$this->assertSame( 'Original replay failure', $fresh->last_error );
+	}
+
+	/**
+	 * Failed intent writes must not escape the sweep or replace a caught failure.
+	 *
+	 * @dataProvider terminal_deferral_failure_lanes
+	 */
+	public function test_terminal_deferral_write_refusal_does_not_abort_worker( $sweep ) {
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+		$job = $this->make_job( array(), $store::STATUS_RUNNING, array( 'child_task_id' => 'task-9-restore', 'attempt_count' => MainWP_Backup_Backoff::MAX_ATTEMPTS - 1 ) );
+		$other = $store->create_job( $this->create_test_site(), 5, array() );
+		if ( $sweep ) {
+			$this->expire_job_at_reclaim_ceiling( (int) $job->id );
+			$this->expire_job_at_reclaim_ceiling( $other );
+		} else {
+			$this->responses['restore_task_run'] = new MainWP_Exception( 'Original replay failure', '', 'mainwp_restore_db_replay' );
+		}
+		$this->responses['restore_task_cancel'] = array( 'result' => 'busy' );
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$refuse = static function ( $sql ) use ( $table ) {
+			if ( str_starts_with( $sql, 'UPDATE ' . $table . ' SET checkpoint' ) && str_contains( $sql, 'cancel_intent' ) ) {
+				return 'SELECT 1 WHERE 0 = 1';
+			}
+			return $sql;
+		};
+		$caught = null;
+		add_filter( 'query', $refuse );
+		try {
+			$this->orchestrator->process_pending_restore_jobs( 30 );
+		} catch ( \Throwable $e ) {
+			$caught = $e->getMessage();
+		} finally {
+			remove_filter( 'query', $refuse );
+		}
+		$this->assertNull( $caught, 'A refused cancellation write must remain retryable by the next tick.' );
+		$this->assertSame( $store::STATUS_RUNNING, $store->get_job( (int) $job->id )->status );
+		$this->assertSame( $sweep ? $store::STATUS_FAILED_PERMANENT : $store::STATUS_PENDING, $store->get_job( $other )->status );
+		$this->orchestrator->process_pending_restore_jobs( 30 );
+		$fresh = $store->get_job( (int) $job->id );
+		$this->assertTrue( $fresh->checkpoint['cancel_intent'] );
+		$this->assertStringContainsString( $sweep ? 'Reclaimed' : 'Original replay failure', $fresh->last_error );
+	}
+
+	public static function terminal_deferral_failure_lanes() {
+		return array( 'expired lease sweep' => array( true ), 'caught phase failure' => array( false ) );
+	}
+
+	/**
+	 * Released leases do not reset cancellation attempts.
+	 *
+	 * @dataProvider unconfirmed_cancellation_cases
+	 */
+	public function test_unconfirmed_cancellation_attempts_are_bounded( $answer, $sweep, $terminal_failure ) {
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+		$checkpoint = array( 'cancel_intent' => true );
+		if ( $terminal_failure ) {
+			$checkpoint['terminal_failure'] = array( 'error' => 'Original replay failure', 'error_code' => 'mainwp_restore_db_replay' );
+		}
+		$job = $this->make_job( $checkpoint, $store::STATUS_RUNNING, array( 'child_task_id' => 'task-9-restore' ) );
+		if ( $sweep ) {
+			$this->expire_job_at_reclaim_ceiling( (int) $job->id );
+		}
+		$this->responses['restore_task_cancel'] = 'unreachable' === $answer ? new MainWP_Exception( 'Site unreachable.' ) : array( 'result' => $answer );
+		$events = array();
+		add_action( 'mainwp_backup_restore_failed', static function ( $event ) use ( &$events ) { $events[] = $event; } );
+		$first_attempt_at = null;
+		$attempt_ceiling = 10;
+		for ( $attempt = 1; $attempt <= $attempt_ceiling; ++$attempt ) {
+			$this->orchestrator->process_pending_restore_jobs( 30, (int) $job->id );
+			$fresh = $store->get_job( (int) $job->id );
+			$this->assertArrayHasKey( 'cancel_confirmation', $fresh->checkpoint, 'Every unconfirmed cancellation must persist its retry budget.' );
+			$this->assertSame( $attempt, $fresh->checkpoint['cancel_confirmation']['attempt_count'] );
+			if ( null === $first_attempt_at ) {
+				$first_attempt_at = $fresh->checkpoint['cancel_confirmation']['first_attempt_at'];
+			}
+			$this->assertSame( $first_attempt_at, $fresh->checkpoint['cancel_confirmation']['first_attempt_at'] );
+			if ( $attempt < $attempt_ceiling ) {
+				$this->assertSame( $store::STATUS_RUNNING, $fresh->status );
+				$this->assertEmpty( $events );
+			}
+		}
+		$this->assertSame( $store::STATUS_FAILED_PERMANENT, $fresh->status );
+		$this->assertSame( 'mainwp_restore_cancel_unconfirmed', $fresh->checkpoint['last_error_code'] );
+		$this->assertSame( 'The child site did not confirm that it stopped restoring. The site may need manual cleanup.', $fresh->last_error );
+		$this->assertCount( 1, $events );
+		$this->assertSame( 'mainwp_restore_cancel_unconfirmed', $events[0]['error_code'] );
+		$this->assertSame( array_fill( 0, $attempt_ceiling, 'restore_task_cancel' ), array_column( $this->calls, 'what' ) );
+	}
+
+	public static function unconfirmed_cancellation_cases() {
+		return array(
+			'busy failure' => array( 'busy', false, true ),
+			'unreachable failure' => array( 'unreachable', false, true ),
+			'rollback failure' => array( 'rolling_back', false, true ),
+			'busy sweep' => array( 'busy', true, false ),
+			'unreachable sweep' => array( 'unreachable', true, false ),
+			'user cancellation' => array( 'busy', false, false ),
+		);
+	}
+
+	/**
+	 * A sparse cron must also stop retrying after the elapsed-time limit.
+	 */
+	public function test_unconfirmed_cancellation_elapsed_time_is_bounded() {
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+		$job = $this->make_job(
+			array(
+				'cancel_intent' => true,
+				'terminal_failure' => array( 'error' => 'Original replay failure', 'error_code' => 'mainwp_restore_db_replay' ),
+				'cancel_confirmation' => array( 'attempt_count' => 1, 'first_attempt_at' => time() - 15 * MINUTE_IN_SECONDS ),
+			),
+			$store::STATUS_RUNNING,
+			array( 'child_task_id' => 'task-9-restore' )
+		);
+		$this->responses['restore_task_cancel'] = array( 'result' => 'busy' );
+		$job = $this->tick( $job );
+		$this->assertSame( $store::STATUS_FAILED_PERMANENT, $job->status );
+		$this->assertSame( 2, $job->checkpoint['cancel_confirmation']['attempt_count'] );
+		$this->assertSame( 'mainwp_restore_cancel_unconfirmed', $job->checkpoint['last_error_code'] );
+	}
+
+	/**
+	 * A valid rollback reply must keep both UI and cron cancellation pending.
+	 */
+	public function test_rolling_back_cancellation_remains_pending_until_terminal() {
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+		$job = $this->make_job( array(), $store::STATUS_RUNNING, array( 'child_task_id' => 'task-9-restore' ) );
+		$this->responses['restore_task_cancel'] = array( 'result' => 'rolling_back', 'phase' => 'fk_rollback' );
+		$request = new \ReflectionMethod( MainWP_Backup_Restore_Orchestrator::class, 'request_child_cancel' );
+		$this->assertSame( 'rolling_back', $request->invoke( $this->orchestrator, $job ) );
+		$this->assertSame( 'cancel_pending', $this->orchestrator->cancel_job( (int) $job->id ) );
+		$job = $this->tick( $job );
+		$this->assertSame( $store::STATUS_RUNNING, $job->status );
+		$this->assertTrue( $job->checkpoint['cancel_intent'] );
+		$this->assertArrayNotHasKey( 'terminal_failure', $job->checkpoint );
+		$this->assertSame( 1, $job->checkpoint['cancel_confirmation']['attempt_count'] );
+		$this->responses['restore_task_cancel'] = array( 'result' => 'already_terminal', 'phase' => 'failed' );
+		$job = $this->tick( $job );
+		$this->assertSame( $store::STATUS_CANCELLED, $job->status );
+		$this->assertSame( array_fill( 0, 4, 'restore_task_cancel' ), array_column( $this->calls, 'what' ) );
+	}
+
+	/**
 	 * A busy child must stop before the failure releases its safety backup.
 	 *
 	 * @dataProvider terminal_failure_cancellation_cases
@@ -884,8 +1082,14 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			? new MainWP_Exception( 'Site unreachable.' )
 			: array(
 				'result' => $answer,
-				'phase'  => 'failed',
+				'phase'  => 'completed' === $answer ? 'completed' : 'failed',
 			);
+		if ( 'completed' === $answer ) {
+			$this->responses['restore_task_cancel']['result'] = 'already_terminal';
+		}
+		if ( 'error' === $answer ) {
+			$this->responses['restore_task_cancel'] = array( 'error' => 'The child could not cancel its restore.' );
+		}
 		$events                                 = array();
 		$logs                                   = array();
 		add_action(
@@ -910,7 +1114,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		if ( '' !== $child_task_id ) {
 			$this->assertSame( $child_task_id, $this->calls[0]['params']['task_id'] );
 		}
-		if ( 'busy' === $answer ) {
+		if ( in_array( $answer, array( 'busy', 'unreachable', 'error', 'rolling_back' ), true ) ) {
 			$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, $job->status );
 			$this->assertTrue( $job->checkpoint['cancel_intent'] );
 			$this->assertSame(
@@ -942,7 +1146,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
-	 * Only a busy response needs another tick before failure can become terminal.
+	 * Unconfirmed cancellations keep the original failure pending.
 	 *
 	 * @return array
 	 */
@@ -951,6 +1155,9 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			'confirmed'      => array( 'ok', 'task-9-restore' ),
 			'already failed' => array( 'already_terminal', 'task-9-restore' ),
 			'busy'           => array( 'busy', 'task-9-restore' ),
+			'rolling back'   => array( 'rolling_back', 'task-9-restore' ),
+			'child error'    => array( 'error', 'task-9-restore' ),
+			'already completed' => array( 'completed', 'task-9-restore' ),
 			'unreachable'    => array( 'unreachable', 'task-9-restore' ),
 			'no child task'  => array( 'ok', '' ),
 		);
@@ -2118,6 +2325,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$job = $this->make_job(
 			array(
 				'cancel_intent'    => true,
+				'cancel_confirmation' => array( 'attempt_count' => 2, 'first_attempt_at' => time() - 60 ),
 				'terminal_failure' => array(
 					'error'      => 'Replay failed on table posts',
 					'error_code' => 'mainwp_restore_db_replay',
@@ -2131,6 +2339,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_VERIFYING, $job->status );
 		$this->assertTrue( empty( $job->checkpoint['cancel_intent'] ) );
 		$this->assertArrayNotHasKey( 'terminal_failure', $job->checkpoint );
+		$this->assertArrayNotHasKey( 'cancel_confirmation', $job->checkpoint );
 	}
 
 	/**

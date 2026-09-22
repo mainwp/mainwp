@@ -83,6 +83,11 @@ class MainWP_Backup_Storage_Dropbox implements MainWP_Backup_Storage_Provider { 
      * @param callable|null $transport Transport override for tests.
      */
     public function __construct( array $settings, $transport = null ) {
+        // Earlier versions persisted bearer tokens in this transient, including external caches.
+        $app_key       = isset( $settings['app_key'] ) ? (string) $settings['app_key'] : '';
+        $refresh_token = isset( $settings['refresh_token'] ) ? (string) $settings['refresh_token'] : '';
+        delete_transient( 'mainwp_dropbox_token_' . md5( $app_key . '|' . $refresh_token ) );
+
         $this->settings  = $settings;
         $this->transport = is_callable( $transport ) ? $transport : array( static::class, 'default_transport' );
     }

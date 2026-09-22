@@ -48,6 +48,16 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
     const RECLAIM_CEILING = 3;
 
     /**
+     * Bound unconfirmed child cancellations independently of expired leases.
+     */
+    const CANCEL_CONFIRMATION_ATTEMPT_CEILING = 10;
+
+    /**
+     * Bound cancellation deferral time even when continuation ticks are sparse.
+     */
+    const CANCEL_CONFIRMATION_TIMEOUT_SECONDS = 15 * 60;
+
+    /**
      * Singleton.
      *
      * @var MainWP_Backup_Restore_Job_Store|null
@@ -406,6 +416,65 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
             // retry against the fresher checkpoint.
         }
         return false;
+    }
+
+    /**
+     * Keep the failure and its cancel intent indivisible across worker crashes.
+     *
+     * @param int         $job_id     Job id.
+     * @param string|null $error      Original failure text, or null for a user cancellation.
+     * @param string      $error_code Original failure code.
+     * @param string|null $lock_token Worker lease token, or null for the sweep.
+     *
+     * @return array|null Cancellation attempt record, or null when the write was refused.
+     */
+    public function defer_terminal_failure( int $job_id, ?string $error, string $error_code, ?string $lock_token = null ): ?array {
+        for ( $attempt = 0; $attempt < 5; $attempt++ ) {
+            $row = $this->wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- dedicated restore job table.
+                $this->wpdb->prepare( 'SELECT checkpoint, status, locked_by, last_error FROM ' . $this->table() . ' WHERE id = %d', $job_id )
+            );
+            if ( null === $row || ! in_array( $row->status, self::active_statuses(), true ) || ( null !== $lock_token && $row->locked_by !== $lock_token ) ) {
+                return null;
+            }
+
+            $stored  = (string) $row->checkpoint;
+            $decoded = json_decode( $stored, true );
+            $decoded = is_array( $decoded ) ? $decoded : array();
+            if ( null !== $error && empty( $decoded['terminal_failure'] ) ) {
+                $decoded['terminal_failure'] = array(
+                    'error'      => $error,
+                    'error_code' => $error_code,
+                );
+            }
+            $previous                       = $decoded['cancel_confirmation'] ?? array();
+            $deferred                       = array(
+                'first_attempt_at' => (int) ( $previous['first_attempt_at'] ?? time() ),
+                'attempt_count'    => (int) ( $previous['attempt_count'] ?? 0 ) + 1,
+            );
+            $decoded['cancel_confirmation'] = $deferred;
+            $decoded['cancel_intent']       = true;
+            $last_error                     = $decoded['terminal_failure']['error'] ?? $row->last_error;
+            if ( ! empty( $decoded['terminal_failure'] ) ) {
+                $decoded['last_error_code'] = $decoded['terminal_failure']['error_code'];
+            }
+
+            $fence = '';
+            $binds = array( wp_json_encode( $decoded ), $last_error, time(), $job_id, $stored, $row->status );
+            if ( null !== $lock_token ) {
+                $fence   = ' AND locked_by = %s';
+                $binds[] = $lock_token;
+            }
+            $swapped = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- compare-and-swap on the exact stored value.
+                $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- the optional lease fence adds its bind.
+                    'UPDATE ' . $this->table() . " SET checkpoint = %s, last_error = %s, updated = %d WHERE id = %d AND checkpoint = %s AND status = %s{$fence}", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed fence with a bound token.
+                    $binds
+                )
+            );
+            if ( 1 === $swapped ) {
+                return $deferred;
+            }
+        }
+        return null;
     }
 
     /**

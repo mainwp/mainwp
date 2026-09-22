@@ -280,17 +280,17 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         }
 
         if ( isset( $preflight['time_limit_ok'] ) && ! $preflight['time_limit_ok'] ) {
-            do_action( 'mainwp_log_warning', 'Child site cannot call set_time_limit(). Large backups may time out.' );
+            do_action( 'mainwp_log_warning', 'Child site cannot call set_time_limit(). Large backups may time out.', (int) $website->id, $diag_task_id );
         }
 
         if ( ! empty( $preflight['disk_warning'] ) && is_string( $preflight['disk_warning'] ) ) {
-            do_action( 'mainwp_log_warning', 'Child site disk warning: ' . MainWP_Backup_Error_Codes::sanitize_message( $preflight['disk_warning'] ) );
+            do_action( 'mainwp_log_warning', 'Child site disk warning: ' . MainWP_Backup_Error_Codes::sanitize_message( $preflight['disk_warning'] ), (int) $website->id, $diag_task_id );
         }
 
         if ( $allow_switch && 'zip' === $archive_ext && isset( $preflight['zip_support'] ) && ! $preflight['zip_support'] && ! empty( $preflight['gz_support'] ) ) {
             $archive_ext = 'tar.gz';
             $zip_warning = esc_html__( 'ZIP was switched to tar.gz because this child lacks ext-zip and cannot create a resumable ZIP backup, even with the keep ZIP override enabled.', 'mainwp' );
-            do_action( 'mainwp_log_warning', $zip_warning );
+            do_action( 'mainwp_log_warning', $zip_warning, (int) $website->id, $diag_task_id );
             if ( is_object( $task ) && ! empty( $task->id ) && MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id ) ) {
                 MainWP_DB_Backup::instance()->update_backup_notices( $task->id, $zip_warning . "\n" );
             }
@@ -302,7 +302,7 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             'tar.bz2' => 'bz2_support',
         );
         if ( isset( $format_support[ $archive_ext ] ) && isset( $preflight[ $format_support[ $archive_ext ] ] ) && ! $preflight[ $format_support[ $archive_ext ] ] ) {
-            do_action( 'mainwp_log_warning', sprintf( 'Child site reports no support for the requested %s archive format.', $archive_ext ) );
+            do_action( 'mainwp_log_warning', sprintf( 'Child site reports no support for the requested %s archive format.', $archive_ext ), (int) $website->id, $diag_task_id );
         }
 
         // ZipArchive resumes after a slice timeout, but it closes the archive at
@@ -345,7 +345,7 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                         $zip_warning .= ' ' . esc_html__( 'Enable "keep ZIP" on the backup task to override.', 'mainwp' );
                     }
                 }
-                do_action( 'mainwp_log_warning', $zip_warning );
+                do_action( 'mainwp_log_warning', $zip_warning, (int) $website->id, $diag_task_id );
                 // Advisory outcome, not a failure: record it on the notices
                 // channel so it never flips a successful run to "failed" in
                 // the poll, the failure email, or the task list.
@@ -360,7 +360,7 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         if ( isset( $preflight['file_count'] ) && is_numeric( $preflight['file_count'] ) ) {
             $filecount_advisory = (int) apply_filters( 'mainwp_backup_filecount_advisory', 100000 );
             if ( $filecount_advisory > 0 && (int) $preflight['file_count'] > $filecount_advisory ) {
-                do_action( 'mainwp_log_warning', sprintf( 'Child site reports a large file count (%d); backups may need extra memory.', (int) $preflight['file_count'] ) );
+                do_action( 'mainwp_log_warning', sprintf( 'Child site reports a large file count (%d); backups may need extra memory.', (int) $preflight['file_count'] ), (int) $website->id, $diag_task_id );
             }
         }
 

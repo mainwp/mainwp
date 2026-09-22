@@ -49,6 +49,44 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Every advisory must remain attached to its site in scoped diagnostics.
+	 *
+	 * @dataProvider scoped_advisory_cases
+	 */
+	public function test_preflight_advisories_include_site_and_task( $overrides, $expected ) {
+		$site_id = $this->create_test_site();
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$task = (object) array( 'id' => 987654, 'template' => 1 );
+		$archive_ext = 'zip';
+		$this->mock_child_actions( array( 'backup_preflight' => $this->preflight_response( $overrides ) ) );
+		$warnings = array();
+		$capture = static function ( $message, $logged_site = 0, $logged_task = 0 ) use ( &$warnings ) {
+			$warnings[] = array( $message, $logged_site, $logged_task );
+		};
+		add_action( 'mainwp_log_warning', $capture, 10, 3 );
+		try {
+			MainWP_Backup_Monitor::negotiate_backup_preflight( $website, $archive_ext, $task );
+		} finally {
+			remove_action( 'mainwp_log_warning', $capture );
+		}
+		$this->assertCount( 1, $warnings );
+		$this->assertStringContainsString( $expected, $warnings[0][0] );
+		$this->assertSame( $site_id, $warnings[0][1], 'The warning must carry its child site id.' );
+		$this->assertSame( 987654, $warnings[0][2], 'The warning must carry its task id.' );
+	}
+
+	public static function scoped_advisory_cases() {
+		return array(
+			'time limit' => array( array( 'time_limit_ok' => false ), 'cannot call set_time_limit' ),
+			'disk' => array( array( 'disk_warning' => 'Space is low' ), 'disk warning' ),
+			'zip switch' => array( array( 'zip_support' => false ), 'lacks ext-zip' ),
+			'unsupported format' => array( array( 'zip_support' => false, 'gz_support' => false ), 'no support for the requested zip' ),
+			'large zip' => array( array( 'estimated_bytes' => 3 * GB_IN_BYTES ), 'switched to tar.gz for this large site' ),
+			'file count' => array( array( 'file_count' => 100001 ), 'large file count' ),
+		);
+	}
+
+	/**
 	 * A healthy preflight response.
 	 *
 	 * @param array $overrides Key overrides.

@@ -421,6 +421,37 @@ class MainWP_Backup_Storage_Dropbox_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Upgrades must delete an unexpired token from either transient backend.
+	 *
+	 * @dataProvider legacy_transient_backends
+	 */
+	public function test_constructor_deletes_legacy_plaintext_token( $external_cache ) {
+		$settings = $this->settings();
+		$key = 'mainwp_dropbox_token_' . md5( $settings['app_key'] . '|' . $settings['refresh_token'] );
+		$previous_cache = wp_using_ext_object_cache();
+		wp_using_ext_object_cache( $external_cache );
+		try {
+			set_transient( $key, 'legacy-plaintext-bearer', 14100 );
+			$this->assertSame( 'legacy-plaintext-bearer', get_transient( $key ) );
+			$this->make_provider( array( $this->token_response() ), $settings );
+			$this->assertFalse( get_transient( $key ), 'Construction must delete the old bearer token before any provider request.' );
+			if ( $external_cache ) {
+				$this->assertFalse( wp_cache_get( $key, 'transient' ) );
+			} else {
+				$this->assertFalse( get_option( '_transient_' . $key ) );
+				$this->assertFalse( get_option( '_transient_timeout_' . $key ) );
+			}
+		} finally {
+			delete_transient( $key );
+			wp_using_ext_object_cache( $previous_cache );
+		}
+	}
+
+	public static function legacy_transient_backends() {
+		return array( 'database' => array( false ), 'external cache' => array( true ) );
+	}
+
+	/**
 	 * One instance reuses its token without persisting it for other instances.
 	 *
 	 * @return void

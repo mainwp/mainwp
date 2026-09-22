@@ -618,14 +618,18 @@ class MainWP_Database_Schema_Checker { // phpcs:ignore Generic.Classes.OpeningBr
         // Normalize NULL handling.
         // MySQL reports an explicit NULL default as no default at all.
         // Remove that default before the nullable marker so both forms compare equal.
+        // Quoted literals are skipped, including escapes and doubled quotes, so a
+        // default value that contains this text is left intact.
+        $quoted = '/(?:\'(?:\'\'|\\\\.|[^\'\\\\])*\'|"(?:\\\\.|""|[^"\\\\])*")(*SKIP)(*F)|';
+
         $definition = preg_replace(
-            '/\s+DEFAULT\s+NULL\b/',
+            $quoted . '\s+DEFAULT\s+NULL\b/',
             '',
             $definition
         );
 
         $definition = preg_replace(
-            '/(?<!NOT)\s+NULL\b/',
+            $quoted . '(?<!NOT)\s+NULL\b/',
             '',
             $definition
         );

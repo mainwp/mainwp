@@ -95,6 +95,26 @@ class Test_Database_Schema_Checker extends \PHPUnit\Framework\TestCase {
 		$this->assertSame( 'VARCHAR(255) NOT NULL DEFAULT ""', Schema_Checker_Access::normalize( 'varchar(255) NOT NULL DEFAULT ""' ) );
 		$this->assertSame( 'TEXT NOT NULL', Schema_Checker_Access::normalize( "text NOT NULL DEFAULT ''" ) );
 		$this->assertSame( "VARCHAR(200) NOT NULL DEFAULT 'NULL'", Schema_Checker_Access::normalize( "varchar(200) NOT NULL DEFAULT 'NULL'" ) );
+		$this->assertSame(
+			"VARCHAR(255) DEFAULT 'X DEFAULT NULL'",
+			Schema_Checker_Access::normalize( "varchar(255) DEFAULT 'X DEFAULT NULL'" )
+		);
+		$this->assertNotSame(
+			Schema_Checker_Access::normalize( "varchar(255) DEFAULT 'X DEFAULT NULL'" ),
+			Schema_Checker_Access::normalize( "varchar(255) DEFAULT 'X'" )
+		);
+		$this->assertSame(
+			'VARCHAR(255) DEFAULT "X DEFAULT NULL"',
+			Schema_Checker_Access::normalize( 'varchar(255) DEFAULT "X DEFAULT NULL"' )
+		);
+		$this->assertNotSame(
+			Schema_Checker_Access::normalize( 'varchar(255) DEFAULT "X DEFAULT NULL"' ),
+			Schema_Checker_Access::normalize( 'varchar(255) DEFAULT "X"' )
+		);
+		$this->assertSame(
+			'VARCHAR(255) DEFAULT \'X"" DEFAULT NULL\'',
+			Schema_Checker_Access::normalize( "varchar(255) DEFAULT 'X'' DEFAULT NULL'" )
+		);
 
 		$this->assertNotSame(
 			Schema_Checker_Access::normalize( 'int(10) NOT NULL' ),

@@ -771,7 +771,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                         $tag_id = $tags_ids[ $idx ];
                     }
 
-                    $tags_labels .= static::get_site_tag_label( $tag, $tag_id, $href, $tagc );
+                    $tags_labels .= self::get_site_tag_label( $tag, $tag_id, $href, $tagc );
                 }
             }
         }
@@ -815,7 +815,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                         $tag_id = $tags_ids[ $idx ];
                     }
 
-                    $tags_labels .= static::get_site_tag_label( $tag, $tag_id, $href, $tagc );
+                    $tags_labels .= self::get_site_tag_label( $tag, $tag_id, $href, $tagc );
                 }
             }
         }
@@ -833,23 +833,23 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @return string #ffffff, #000000, or an empty string when the color is unusable.
      */
     public static function get_tag_contrast_color( $background ) {
-        $normalized = static::normalize_tag_color( $background );
+        $normalized = self::normalize_tag_color( $background );
         if ( '' === $normalized ) {
             return '';
         }
 
-        if ( isset( static::$tag_contrast_cache[ $normalized ] ) ) {
-            return static::$tag_contrast_cache[ $normalized ];
+        if ( isset( self::$tag_contrast_cache[ $normalized ] ) ) {
+            return self::$tag_contrast_cache[ $normalized ];
         }
 
-        $white_contrast = 1.05 / ( static::tag_relative_luminance( $normalized ) + 0.05 );
+        $white_contrast = 1.05 / ( self::tag_relative_luminance( $normalized ) + 0.05 );
         if ( $white_contrast >= 4.5 ) {
             $foreground = '#ffffff';
         } else {
             $foreground = '#000000';
         }
 
-        static::$tag_contrast_cache[ $normalized ] = $foreground;
+        self::$tag_contrast_cache[ $normalized ] = $foreground;
         return $foreground;
     }
 
@@ -890,9 +890,9 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @return float Luminance between 0 and 1.
      */
     private static function tag_relative_luminance( $hex ) {
-        $red   = static::tag_channel_linear( hexdec( substr( $hex, 1, 2 ) ) / 255 );
-        $green = static::tag_channel_linear( hexdec( substr( $hex, 3, 2 ) ) / 255 );
-        $blue  = static::tag_channel_linear( hexdec( substr( $hex, 5, 2 ) ) / 255 );
+        $red   = self::tag_channel_linear( hexdec( substr( $hex, 1, 2 ) ) / 255 );
+        $green = self::tag_channel_linear( hexdec( substr( $hex, 3, 2 ) ) / 255 );
+        $blue  = self::tag_channel_linear( hexdec( substr( $hex, 5, 2 ) ) / 255 );
 
         return ( 0.2126 * $red ) + ( 0.7152 * $green ) + ( 0.0722 * $blue );
     }
@@ -931,12 +931,12 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         $tag_style  = '';
 
         if ( '' !== $foreground ) {
-            $normalized = static::normalize_tag_color( $background );
+            $normalized = self::normalize_tag_color( $background );
             $tag_style  = 'style="background-color:' . esc_attr( $normalized ) . ';color:' . esc_attr( $foreground ) . '"';
         }
 
         if ( ! empty( $tag_id ) ) {
-            $tag_a_style = '';
+            $tag_a_style = 'style="opacity:1;"';
             if ( '' !== $foreground ) {
                 $tag_a_style = 'style="color:' . esc_attr( $foreground ) . '!important;opacity:1;"';
             }

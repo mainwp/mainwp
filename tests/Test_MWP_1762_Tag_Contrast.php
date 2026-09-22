@@ -114,8 +114,9 @@ class Test_MWP_1762_Tag_Contrast extends \WP_UnitTestCase {
 		foreach ( $colors as $color ) {
 			foreach ( array( false, true ) as $belong ) {
 				$html = $this->render_tag( 'North', '4', $color, $belong );
-				$this->assertStringNotContainsString( 'style=', $html, $color );
+				$this->assertStringContainsString( 'style="opacity:1;"', $html, $color );
 				$this->assertStringNotContainsString( 'background-color', $html, $color );
+				$this->assertStringNotContainsString( 'color:', $html, $color );
 				$this->assertStringNotContainsString( '#fff', $html, $color );
 				$this->assertStringNotContainsString( '#000000', $html, $color );
 				$this->assertStringContainsString( 'ui tag mini label', $html );

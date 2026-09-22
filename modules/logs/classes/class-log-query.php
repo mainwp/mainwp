@@ -149,7 +149,7 @@ class Log_Query {
                 }
             }
             if ( ! empty( $cond_users ) ) {
-                $where_users_filter = ' AND ( ' . implode( ') OR (', $cond_users ) . ') ';
+                $where_users_filter = ' AND ( ( ' . implode( ') OR (', $cond_users ) . ') ) ';
             }
         } elseif ( ! empty( $args['user_ids'] ) && is_array( $args['user_ids'] ) ) { // compatible.
             $array_users_ids = MainWP_Utility::array_numeric_filter( $args['user_ids'] );

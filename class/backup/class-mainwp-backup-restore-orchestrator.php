@@ -321,6 +321,17 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             return 'cancel_pending';
         }
 
+        // A stored terminal_failure wins over the cancellation, per the
+        // decision matrix on record_terminal_failure(). Ending the job as
+        // cancelled here would skip the error-code stamp and the failure
+        // event, so the original cause would never reach the logs.
+        $pending = $store->get_job( $job_id );
+        if ( null !== $pending && ! empty( $pending->checkpoint['terminal_failure'] ) ) {
+            $failure = $pending->checkpoint['terminal_failure'];
+            $this->record_terminal_failure( $pending, (string) ( $failure['error'] ?? '' ), (string) ( $failure['error_code'] ?? '' ), null );
+            return 'cancelled';
+        }
+
         if ( $require_confirmation ) {
             // Confirmation can arrive after the cron lane reached verification.
             $fresh    = $store->get_job( $job_id );
@@ -524,6 +535,8 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * the job still mid-flight, a near-term continuation is scheduled so the
      * next poll does not wait for the periodic cron.
      *
+     * @throws \Throwable When the reclaim sweep or lease acquisition fails.
+     *
      * @param int      $budget_seconds Slice budget.
      * @param int|null $only_job_id    Drive only this job (a foreground poll
      *                                 advancing the restore it polls); null
@@ -550,17 +563,27 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         };
         add_filter( 'mainwp_fetch_url_site_timeout', $cap_timeout );
 
-        $now = time();
-        foreach ( $store->find_jobs_over_reclaim_ceiling( $store::active_statuses(), $now, $only_job_id ) as $expired_job ) {
-            $this->record_terminal_failure(
-                $expired_job,
-                sprintf( 'Reclaimed %d times without completing a phase; the worker keeps dying on this restore, so it is stopped instead of retried forever.', $store::RECLAIM_CEILING ),
-                '',
-                null
-            );
+        // The sweep terminalizes jobs, which fires a third-party action and
+        // touches the filesystem, so it can throw. Leaving the cap registered
+        // would then bound every later child request in this process,
+        // including backup calls that have nothing to do with a restore.
+        try {
+            $now = time();
+            foreach ( $store->find_jobs_over_reclaim_ceiling( $store::active_statuses(), $now, $only_job_id ) as $expired_job ) {
+                $this->record_terminal_failure(
+                    $expired_job,
+                    sprintf( 'Reclaimed %d times without completing a phase; the worker keeps dying on this restore, so it is stopped instead of retried forever.', $store::RECLAIM_CEILING ),
+                    '',
+                    null
+                );
+            }
+
+            $job = $store->acquire_next_job( $token, $lease_seconds, $now, $only_job_id );
+        } catch ( \Throwable $e ) {
+            remove_filter( 'mainwp_fetch_url_site_timeout', $cap_timeout );
+            throw $e;
         }
 
-        $job = $store->acquire_next_job( $token, $lease_seconds, $now, $only_job_id );
         if ( null === $job ) {
             remove_filter( 'mainwp_fetch_url_site_timeout', $cap_timeout );
             return;
@@ -1250,33 +1273,37 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * Record terminal failure before releasing ownership and publishing the event.
      *
      * Cancellation decision matrix (rows apply in order):
-     * Phase: failed_retryable uses resume_status; terminal rows do nothing.
-     * Only transferring/running with a child task request cancellation.
-     * Verifying and other phases have no child restore to cancel.
+     * failed_retryable uses resume_status (pending when absent).
+     * A child task can still restore in staging after a rejected pull manifest,
+     * and in transferring/running. Pending, preflight and pre_snapshot precede
+     * restore-task creation; verifying follows confirmed child completion.
+     * Terminal rows cannot drive work. A missing child task needs no request.
      *
-     * Phase             Child answer       Can write?  Decision
-     * terminal          any                no drive    retain terminal verdict
-     * verifying/other   not requested      no          terminalize failure; otherwise drive on
-     * transfer/run      ok/failed          no          terminalize failure or cancellation
-     * transfer/run      completed          no          terminalize failure; otherwise drive on
-     * transfer/run      request threw      unconfirmed terminalize failure or cancellation
-     * transfer/run      busy/rolling_back  yes         defer until 15 minutes have elapsed
-     * transfer/run      busy/rolling_back  yes         at timeout, terminalize with warning
+     * Child can restore?  Child answer       Decision
+     * terminal row        not requested      retain terminal verdict
+     * no                  not requested      terminalize failure; otherwise drive on
+     * yes                 ok/failed          terminalize failure or cancellation
+     * yes                 completed          clear pending decision; poll completion
+     * yes                 busy/rolling_back  defer until 15 minutes have elapsed
+     * yes                 unconfirmed        defer until the same elapsed-time limit
+     * yes                 any deferred       at timeout, terminalize with warning
      *
      * Durability, crossed with every row above:
-     * - A stored terminal_failure wins over a later error or completed reply.
+     * - A stored terminal_failure wins over a later error. An authoritative
+     *   completed child outranks both because the child knows the restore happened.
      * - Without an incoming or stored failure, cancel_intent means user
      *   cancellation. A retry record supplies elapsed time, not a verdict.
      *   Missing retry records start now.
-     * - Deferral writes intent, original failure and retry time together.
-     * - A refused combined write defers without cleanup; arm the intent and
-     *   original failure separately before returning. Existing intent is sticky.
+     * - Intent, original failure and retry time must be durable before the child
+     *   round trip, so a new lease holder inherits the gate while it is in flight.
+     * - A refused combined write defers without a request or cleanup; arm intent
+     *   and original failure separately before returning. Existing intent is sticky.
      * - A refused terminal/drive-on write retains ownership and staging.
      * - Only a successful terminal write releases the safety-backup handle and
      *   cleans staging. Defer, drive on and already terminal do neither.
      *
-     * A thrown request supplies no busy evidence. Verification never consults
-     * that request because child completion already settled whether it can write.
+     * A thrown or unreadable reply is unconfirmed, not proof the child stopped.
+     * Verification never consults it because child completion settled that already.
      * Poll frequency must not shorten the rollback window or replace the cause.
      *
      * @param object      $job        Job row.
@@ -1297,18 +1324,9 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         $error      = $failure['error'] ?? $error;
         $error_code = $failure['error_code'] ?? $error_code;
         $phase      = $store::STATUS_FAILED_RETRYABLE === $job->status ? ( $job->checkpoint['resume_status'] ?? $store::STATUS_PENDING ) : $job->status;
-        $can_cancel = ! empty( $job->child_task_id ) && in_array( $phase, array( $store::STATUS_TRANSFERRING, $store::STATUS_RUNNING ), true );
+        $can_cancel = ! empty( $job->child_task_id ) && in_array( $phase, array( $store::STATUS_STAGING, $store::STATUS_TRANSFERRING, $store::STATUS_RUNNING ), true );
         $outcome    = 'completed';
         if ( $can_cancel ) {
-            $outcome = 'unconfirmed';
-            try {
-                $outcome = $this->request_child_cancel( $job );
-            } catch ( \Throwable $e ) {
-                do_action( 'mainwp_log_info', sprintf( 'Restore job %d: the site did not confirm cancelling its child task: %s', (int) $job->id, $e->getMessage() ), (int) $job->site_id, 0 );
-            }
-        }
-
-        if ( in_array( $outcome, array( 'busy', 'rolling_back' ), true ) ) {
             $deferred = $store->defer_terminal_failure( (int) $job->id, $error, $error_code, $lock_token );
             if ( null === $deferred ) {
                 // A failed combined write must not let the next worker resume a restore slice.
@@ -1321,6 +1339,15 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 }
                 return false;
             }
+            $outcome = 'unconfirmed';
+            try {
+                $outcome = $this->request_child_cancel( $job );
+            } catch ( \Throwable $e ) {
+                do_action( 'mainwp_log_info', sprintf( 'Restore job %d: the site did not confirm cancelling its child task: %s', (int) $job->id, $e->getMessage() ), (int) $job->site_id, 0 );
+            }
+        }
+
+        if ( in_array( $outcome, array( 'busy', 'rolling_back', 'unconfirmed' ), true ) ) {
             if ( time() - $deferred['first_attempt_at'] < $store::CANCEL_CONFIRMATION_TIMEOUT_SECONDS ) {
                 return false;
             }
@@ -1329,7 +1356,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             $error      = null === $error ? $warning : $error . ' ' . $warning;
         }
 
-        if ( null === $error && 'completed' === $outcome ) {
+        if ( 'completed' === $outcome && ( $can_cancel || null === $error ) ) {
             // Preserve verification and never resume artifact transfer after child completion.
             if ( $can_cancel && ! $store->set_status( (int) $job->id, $store::STATUS_RUNNING, array(), $lock_token ) ) {
                 return false;
@@ -1339,7 +1366,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 return false;
             }
             $checkpoint = $fresh->checkpoint;
-            unset( $checkpoint['cancel_confirmation'] );
+            unset( $checkpoint['cancel_confirmation'], $checkpoint['terminal_failure'], $checkpoint['last_error_code'] );
             return $store->save_checkpoint( (int) $job->id, $checkpoint, $lock_token, true );
         }
 

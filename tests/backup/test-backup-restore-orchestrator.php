@@ -886,21 +886,24 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	 *
 	 * @dataProvider cancellation_decision_matrix
 	 */
-	public function test_cancellation_decision_matrix( $status, $resume, $answer, $records, $refused ) {
+	public function test_cancellation_decision_matrix( $status, $resume, $answer, $records, $refused, $expected, $child_task_id = 'task-9-restore' ) {
 		$store = MainWP_Backup_Restore_Job_Store::instance();
-		$checkpoint = array( 'resume_status' => $resume );
+		$checkpoint = null === $resume ? array() : array( 'resume_status' => $resume );
 		$original = array( 'error' => 'Original replay failure', 'error_code' => 'mainwp_restore_db_replay' );
-		$incoming = 'intent' === $records ? null : 'Later failure';
-		if ( in_array( $records, array( 'intent', 'failure', 'expired failure' ), true ) ) {
+		$incoming = in_array( $records, array( 'intent', 'expired intent' ), true ) ? null : 'Later failure';
+		if ( in_array( $records, array( 'intent', 'expired intent', 'failure', 'expired failure' ), true ) ) {
 			$checkpoint['cancel_intent'] = true;
 		}
 		if ( in_array( $records, array( 'failure', 'expired failure' ), true ) ) {
 			$checkpoint['terminal_failure'] = $original;
 		}
-		if ( in_array( $records, array( 'retry', 'expired failure' ), true ) ) {
-			$checkpoint['cancel_confirmation'] = array( 'attempt_count' => 99, 'first_attempt_at' => time() - ( 'expired failure' === $records ? 901 : 30 ) );
+		if ( in_array( $records, array( 'retry', 'expired failure', 'expired intent' ), true ) ) {
+			$checkpoint['cancel_confirmation'] = array( 'attempt_count' => 99, 'first_attempt_at' => time() - ( 'retry' === $records ? 30 : 901 ) );
 		}
-		$job = $this->make_job( $checkpoint, $status, array( 'child_task_id' => 'task-9-restore', 'pre_snapshot_task_id' => 'task-7-pre' ) );
+		$job = $this->make_job( $checkpoint, $status, array( 'child_task_id' => $child_task_id, 'pre_snapshot_task_id' => 'task-7-pre' ) );
+		if ( 'pending' === $status ) {
+			$store->set_status( (int) $job->id, $status, array( 'child_task_id' => $child_task_id, 'pre_snapshot_task_id' => 'task-7-pre' ) );
+		}
 		$handle = wp_json_encode( array( 'task_id' => 'task-7-pre', 'owner' => (string) $job->id ) );
 		MainWP_DB::instance()->update_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION, $handle );
 		$driver = MainWP_Backup_Restore_Transfer_Driver::instance();
@@ -919,9 +922,13 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		add_action( 'mainwp_backup_restore_failed', static function ( $event ) use ( &$events ) { $events[] = $event; } );
 		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
 		$refuse = static function ( $sql ) use ( $table, $refused ) {
-			if ( $refused && str_starts_with( $sql, 'UPDATE ' . $table )
-				&& ( str_contains( $sql, 'last_error = ' ) || str_contains( $sql, '`status` = ' ) ) ) {
-				return 'SELECT 1 WHERE 0 = 1';
+			if ( str_starts_with( $sql, 'UPDATE ' . $table ) ) {
+				$combined = str_contains( $sql, 'last_error = ' );
+				$status_write = str_contains( $sql, '`status` = ' );
+				if ( ( true === $refused && ( $combined || $status_write ) )
+					|| ( 'terminal' === $refused && $status_write ) ) {
+					return 'SELECT 1 WHERE 0 = 1';
+				}
 			}
 			return $sql;
 		};
@@ -930,43 +937,32 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			$record = new \ReflectionMethod( MainWP_Backup_Restore_Orchestrator::class, 'record_terminal_failure' );
 			$drive = $record->invoke( $this->orchestrator, $job, $incoming, 'later_code', null );
 			$fresh = $store->get_job( (int) $job->id );
-			$active = in_array( $status, $store::active_statuses(), true );
-			$phase = $store::STATUS_FAILED_RETRYABLE === $status ? $resume : $status;
-			$can_cancel = $active && in_array( $phase, array( 'transferring', 'running' ), true );
-			$busy = $can_cancel && in_array( $answer, array( 'busy', 'rolling_back' ), true );
-			$completed = ! $can_cancel || 'completed' === $answer;
-			$failure = $checkpoint['terminal_failure'] ?? ( null === $incoming ? null : array( 'error' => $incoming, 'error_code' => 'later_code' ) );
-			$defer = $busy && ( $refused || 'expired failure' !== $records );
-			$drive_expected = $active && null === $failure && $completed && ( ! $can_cancel || ! $refused || $store::STATUS_RUNNING === $status );
-			$terminalize = $active && ! $defer && ! ( null === $failure && $completed ) && ! $refused;
-			$expected_status = $terminalize ? ( null === $failure ? $store::STATUS_CANCELLED : $store::STATUS_FAILED_PERMANENT ) : ( $drive_expected && $can_cancel ? $store::STATUS_RUNNING : $status );
+			list( $expected_status, $drive_expected, $expected_calls, $cleanup, $event, $pending, $attempts ) = $expected;
 			$this->assertSame( $expected_status, $fresh->status );
 			$this->assertSame( $drive_expected, $drive );
-			$expected_calls = $can_cancel ? array( 'restore_task_cancel' ) : array();
-			if ( $terminalize && null === $failure ) {
-				$expected_calls[] = 'backup_task_cancel';
-			}
 			$this->assertSame( $expected_calls, array_column( $this->calls, 'what' ) );
-			$this->assertSame( ! $terminalize, file_exists( $staging . 'backup.zip' ), 'Only the winning terminal write may clean staging.' );
-			$this->assertSame( $terminalize ? null : $handle, MainWP_DB::instance()->get_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION ) );
-			$this->assertCount( $terminalize && null !== $failure ? 1 : 0, $events );
-			if ( $defer ) {
-				$this->assertTrue( $fresh->checkpoint['cancel_intent'] );
-				if ( null !== $failure ) {
-					$this->assertSame( $failure, $fresh->checkpoint['terminal_failure'] );
-				}
-				if ( ! $refused ) {
-					$this->assertSame( isset( $checkpoint['cancel_confirmation'] ) ? 100 : 1, $fresh->checkpoint['cancel_confirmation']['attempt_count'] );
-				}
-			} elseif ( $terminalize && null !== $failure ) {
-				$message = $failure['error'] . ( $busy ? ' The child site did not confirm that it stopped restoring. The site may need manual cleanup.' : '' );
-				$this->assertSame( $message, $fresh->last_error );
-				$this->assertSame( $failure['error_code'], $fresh->checkpoint['last_error_code'] );
-				$this->assertSame( $message, $events[0]['error'] );
-				$this->assertSame( $failure['error_code'], $events[0]['error_code'] );
-			} elseif ( $drive_expected ) {
+			$this->assertSame( ! $cleanup, file_exists( $staging . 'backup.zip' ), 'Only the winning terminal write may clean staging.' );
+			$this->assertSame( $cleanup ? null : $handle, MainWP_DB::instance()->get_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION ) );
+			if ( null === $event ) {
+				$this->assertSame( array(), $events );
+			} else {
+				$this->assertCount( 1, $events );
+				$this->assertSame( $event['error'], $fresh->last_error );
+				$this->assertSame( $event['error_code'], $fresh->checkpoint['last_error_code'] );
+				$this->assertSame( $event['error'], $events[0]['error'] );
+				$this->assertSame( $event['error_code'], $events[0]['error_code'] );
+			}
+			if ( false === $pending ) {
 				$this->assertEmpty( $fresh->checkpoint['cancel_intent'] ?? false );
+				$this->assertArrayNotHasKey( 'terminal_failure', $fresh->checkpoint );
 				$this->assertArrayNotHasKey( 'cancel_confirmation', $fresh->checkpoint );
+				$this->assertArrayNotHasKey( 'last_error_code', $fresh->checkpoint );
+			} elseif ( null !== $pending ) {
+				$this->assertTrue( $fresh->checkpoint['cancel_intent'] );
+				$this->assertSame( $pending, $fresh->checkpoint['terminal_failure'] ?? true );
+			}
+			if ( null !== $attempts ) {
+				$this->assertSame( $attempts, $fresh->checkpoint['cancel_confirmation']['attempt_count'] );
 			}
 		} finally {
 			remove_filter( 'query', $refuse );
@@ -975,19 +971,1002 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	public static function cancellation_decision_matrix() {
-		$phases = array(
-			array( 'transferring', '' ), array( 'running', '' ), array( 'verifying', '' ),
-			array( 'failed_retryable', 'transferring' ), array( 'failed_retryable', 'running' ), array( 'failed_retryable', 'verifying' ),
-			array( 'completed', '' ), array( 'failed_permanent', '' ), array( 'cancelled', '' ),
+		$later = array( 'error' => 'Later failure', 'error_code' => 'later_code' );
+		$original = array( 'error' => 'Original replay failure', 'error_code' => 'mainwp_restore_db_replay' );
+		$expired = array( 'error' => 'Original replay failure The child site did not confirm that it stopped restoring. The site may need manual cleanup.', 'error_code' => 'mainwp_restore_db_replay' );
+		// Expectations are independent of the phase and reply rules under test.
+		// Each tuple is status, drive, calls, cleanup, event, pending failure, attempts.
+		$failed = array( 'failed_permanent', false, array( 'restore_task_cancel' ), true, $later, null, null );
+		$failed_original = array( 'failed_permanent', false, array( 'restore_task_cancel' ), true, $original, null, null );
+		$failed_expired = array( 'failed_permanent', false, array( 'restore_task_cancel' ), true, $expired, null, 100 );
+		$cancelled = array( 'cancelled', false, array( 'restore_task_cancel', 'backup_task_cancel' ), true, null, null, null );
+		$completed = array( 'running', true, array( 'restore_task_cancel' ), false, null, false, null );
+		$pending_later = array( 'running', false, array( 'restore_task_cancel' ), false, null, $later, 1 );
+		$pending_original = array( 'running', false, array( 'restore_task_cancel' ), false, null, $original, 1 );
+		$pending_intent = array( 'running', false, array( 'restore_task_cancel' ), false, null, true, 1 );
+		$pending_retry = array( 'running', false, array( 'restore_task_cancel' ), false, null, $later, 100 );
+		$refused_later = array( 'running', false, array(), false, null, $later, null );
+		$refused_original = array( 'running', false, array(), false, null, $original, null );
+		$refused_intent = array( 'running', false, array(), false, null, true, null );
+		$no_child_failure = array( 'failed_permanent', false, array(), true, $later, null, null );
+		$no_child_original = array( 'failed_permanent', false, array(), true, $original, null, null );
+
+		return array(
+			'staging//ok/none/written' => array( 'staging', '', 'ok', 'none', false, $failed ),
+			'staging//ok/none/refused' => array( 'staging', '', 'ok', 'none', true, array( 'staging', false, array(), false, null, $later, null ) ),
+			'staging//ok/intent/written' => array( 'staging', '', 'ok', 'intent', false, $cancelled ),
+			'staging//ok/intent/refused' => array( 'staging', '', 'ok', 'intent', true, array( 'staging', false, array(), false, null, true, null ) ),
+			'staging//ok/failure/written' => array( 'staging', '', 'ok', 'failure', false, $failed_original ),
+			'staging//ok/failure/refused' => array( 'staging', '', 'ok', 'failure', true, array( 'staging', false, array(), false, null, $original, null ) ),
+			'staging//ok/retry/written' => array( 'staging', '', 'ok', 'retry', false, $failed ),
+			'staging//ok/retry/refused' => array( 'staging', '', 'ok', 'retry', true, array( 'staging', false, array(), false, null, $later, null ) ),
+			'staging//ok/expired failure/written' => array( 'staging', '', 'ok', 'expired failure', false, $failed_original ),
+			'staging//ok/expired failure/refused' => array( 'staging', '', 'ok', 'expired failure', true, array( 'staging', false, array(), false, null, $original, null ) ),
+			'staging//failed/none/written' => array( 'staging', '', 'failed', 'none', false, $failed ),
+			'staging//failed/none/refused' => array( 'staging', '', 'failed', 'none', true, array( 'staging', false, array(), false, null, $later, null ) ),
+			'staging//failed/intent/written' => array( 'staging', '', 'failed', 'intent', false, $cancelled ),
+			'staging//failed/intent/refused' => array( 'staging', '', 'failed', 'intent', true, array( 'staging', false, array(), false, null, true, null ) ),
+			'staging//failed/failure/written' => array( 'staging', '', 'failed', 'failure', false, $failed_original ),
+			'staging//failed/failure/refused' => array( 'staging', '', 'failed', 'failure', true, array( 'staging', false, array(), false, null, $original, null ) ),
+			'staging//failed/retry/written' => array( 'staging', '', 'failed', 'retry', false, $failed ),
+			'staging//failed/retry/refused' => array( 'staging', '', 'failed', 'retry', true, array( 'staging', false, array(), false, null, $later, null ) ),
+			'staging//failed/expired failure/written' => array( 'staging', '', 'failed', 'expired failure', false, $failed_original ),
+			'staging//failed/expired failure/refused' => array( 'staging', '', 'failed', 'expired failure', true, array( 'staging', false, array(), false, null, $original, null ) ),
+			'staging//completed/none/written' => array( 'staging', '', 'completed', 'none', false, $completed ),
+			'staging//completed/none/refused' => array( 'staging', '', 'completed', 'none', true, array( 'staging', false, array(), false, null, $later, null ) ),
+			'staging//completed/intent/written' => array( 'staging', '', 'completed', 'intent', false, $completed ),
+			'staging//completed/intent/refused' => array( 'staging', '', 'completed', 'intent', true, array( 'staging', false, array(), false, null, true, null ) ),
+			'staging//completed/failure/written' => array( 'staging', '', 'completed', 'failure', false, $completed ),
+			'staging//completed/failure/refused' => array( 'staging', '', 'completed', 'failure', true, array( 'staging', false, array(), false, null, $original, null ) ),
+			'staging//completed/retry/written' => array( 'staging', '', 'completed', 'retry', false, $completed ),
+			'staging//completed/retry/refused' => array( 'staging', '', 'completed', 'retry', true, array( 'staging', false, array(), false, null, $later, null ) ),
+			'staging//completed/expired failure/written' => array( 'staging', '', 'completed', 'expired failure', false, $completed ),
+			'staging//completed/expired failure/refused' => array( 'staging', '', 'completed', 'expired failure', true, array( 'staging', false, array(), false, null, $original, null ) ),
+			'staging//busy/none/written' => array( 'staging', '', 'busy', 'none', false, array( 'staging', false, array( 'restore_task_cancel' ), false, null, $later, 1 ) ),
+			'staging//busy/none/refused' => array( 'staging', '', 'busy', 'none', true, array( 'staging', false, array(), false, null, $later, null ) ),
+			'staging//busy/intent/written' => array( 'staging', '', 'busy', 'intent', false, array( 'staging', false, array( 'restore_task_cancel' ), false, null, true, 1 ) ),
+			'staging//busy/intent/refused' => array( 'staging', '', 'busy', 'intent', true, array( 'staging', false, array(), false, null, true, null ) ),
+			'staging//busy/failure/written' => array( 'staging', '', 'busy', 'failure', false, array( 'staging', false, array( 'restore_task_cancel' ), false, null, $original, 1 ) ),
+			'staging//busy/failure/refused' => array( 'staging', '', 'busy', 'failure', true, array( 'staging', false, array(), false, null, $original, null ) ),
+			'staging//busy/retry/written' => array( 'staging', '', 'busy', 'retry', false, array( 'staging', false, array( 'restore_task_cancel' ), false, null, $later, 100 ) ),
+			'staging//busy/retry/refused' => array( 'staging', '', 'busy', 'retry', true, array( 'staging', false, array(), false, null, $later, null ) ),
+			'staging//busy/expired failure/written' => array( 'staging', '', 'busy', 'expired failure', false, $failed_expired ),
+			'staging//busy/expired failure/refused' => array( 'staging', '', 'busy', 'expired failure', true, array( 'staging', false, array(), false, null, $original, null ) ),
+			'staging//rolling_back/none/written' => array( 'staging', '', 'rolling_back', 'none', false, array( 'staging', false, array( 'restore_task_cancel' ), false, null, $later, 1 ) ),
+			'staging//rolling_back/none/refused' => array( 'staging', '', 'rolling_back', 'none', true, array( 'staging', false, array(), false, null, $later, null ) ),
+			'staging//rolling_back/intent/written' => array( 'staging', '', 'rolling_back', 'intent', false, array( 'staging', false, array( 'restore_task_cancel' ), false, null, true, 1 ) ),
+			'staging//rolling_back/intent/refused' => array( 'staging', '', 'rolling_back', 'intent', true, array( 'staging', false, array(), false, null, true, null ) ),
+			'staging//rolling_back/failure/written' => array( 'staging', '', 'rolling_back', 'failure', false, array( 'staging', false, array( 'restore_task_cancel' ), false, null, $original, 1 ) ),
+			'staging//rolling_back/failure/refused' => array( 'staging', '', 'rolling_back', 'failure', true, array( 'staging', false, array(), false, null, $original, null ) ),
+			'staging//rolling_back/retry/written' => array( 'staging', '', 'rolling_back', 'retry', false, array( 'staging', false, array( 'restore_task_cancel' ), false, null, $later, 100 ) ),
+			'staging//rolling_back/retry/refused' => array( 'staging', '', 'rolling_back', 'retry', true, array( 'staging', false, array(), false, null, $later, null ) ),
+			'staging//rolling_back/expired failure/written' => array( 'staging', '', 'rolling_back', 'expired failure', false, $failed_expired ),
+			'staging//rolling_back/expired failure/refused' => array( 'staging', '', 'rolling_back', 'expired failure', true, array( 'staging', false, array(), false, null, $original, null ) ),
+			'staging//threw/none/written' => array( 'staging', '', 'threw', 'none', false, array( 'staging', false, array( 'restore_task_cancel' ), false, null, $later, 1 ) ),
+			'staging//threw/none/refused' => array( 'staging', '', 'threw', 'none', true, array( 'staging', false, array(), false, null, $later, null ) ),
+			'staging//threw/intent/written' => array( 'staging', '', 'threw', 'intent', false, array( 'staging', false, array( 'restore_task_cancel' ), false, null, true, 1 ) ),
+			'staging//threw/intent/refused' => array( 'staging', '', 'threw', 'intent', true, array( 'staging', false, array(), false, null, true, null ) ),
+			'staging//threw/failure/written' => array( 'staging', '', 'threw', 'failure', false, array( 'staging', false, array( 'restore_task_cancel' ), false, null, $original, 1 ) ),
+			'staging//threw/failure/refused' => array( 'staging', '', 'threw', 'failure', true, array( 'staging', false, array(), false, null, $original, null ) ),
+			'staging//threw/retry/written' => array( 'staging', '', 'threw', 'retry', false, array( 'staging', false, array( 'restore_task_cancel' ), false, null, $later, 100 ) ),
+			'staging//threw/retry/refused' => array( 'staging', '', 'threw', 'retry', true, array( 'staging', false, array(), false, null, $later, null ) ),
+			'staging//threw/expired failure/written' => array( 'staging', '', 'threw', 'expired failure', false, $failed_expired ),
+			'staging//threw/expired failure/refused' => array( 'staging', '', 'threw', 'expired failure', true, array( 'staging', false, array(), false, null, $original, null ) ),
+			'staging//error/none/written' => array( 'staging', '', 'error', 'none', false, array( 'staging', false, array( 'restore_task_cancel' ), false, null, $later, 1 ) ),
+			'staging//error/none/refused' => array( 'staging', '', 'error', 'none', true, array( 'staging', false, array(), false, null, $later, null ) ),
+			'staging//error/intent/written' => array( 'staging', '', 'error', 'intent', false, array( 'staging', false, array( 'restore_task_cancel' ), false, null, true, 1 ) ),
+			'staging//error/intent/refused' => array( 'staging', '', 'error', 'intent', true, array( 'staging', false, array(), false, null, true, null ) ),
+			'staging//error/failure/written' => array( 'staging', '', 'error', 'failure', false, array( 'staging', false, array( 'restore_task_cancel' ), false, null, $original, 1 ) ),
+			'staging//error/failure/refused' => array( 'staging', '', 'error', 'failure', true, array( 'staging', false, array(), false, null, $original, null ) ),
+			'staging//error/retry/written' => array( 'staging', '', 'error', 'retry', false, array( 'staging', false, array( 'restore_task_cancel' ), false, null, $later, 100 ) ),
+			'staging//error/retry/refused' => array( 'staging', '', 'error', 'retry', true, array( 'staging', false, array(), false, null, $later, null ) ),
+			'staging//error/expired failure/written' => array( 'staging', '', 'error', 'expired failure', false, $failed_expired ),
+			'staging//error/expired failure/refused' => array( 'staging', '', 'error', 'expired failure', true, array( 'staging', false, array(), false, null, $original, null ) ),
+			'staging//unknown task/none/written' => array( 'staging', '', 'unknown task', 'none', false, array( 'staging', false, array( 'restore_task_cancel' ), false, null, $later, 1 ) ),
+			'staging//unknown task/none/refused' => array( 'staging', '', 'unknown task', 'none', true, array( 'staging', false, array(), false, null, $later, null ) ),
+			'staging//unknown task/intent/written' => array( 'staging', '', 'unknown task', 'intent', false, array( 'staging', false, array( 'restore_task_cancel' ), false, null, true, 1 ) ),
+			'staging//unknown task/intent/refused' => array( 'staging', '', 'unknown task', 'intent', true, array( 'staging', false, array(), false, null, true, null ) ),
+			'staging//unknown task/failure/written' => array( 'staging', '', 'unknown task', 'failure', false, array( 'staging', false, array( 'restore_task_cancel' ), false, null, $original, 1 ) ),
+			'staging//unknown task/failure/refused' => array( 'staging', '', 'unknown task', 'failure', true, array( 'staging', false, array(), false, null, $original, null ) ),
+			'staging//unknown task/retry/written' => array( 'staging', '', 'unknown task', 'retry', false, array( 'staging', false, array( 'restore_task_cancel' ), false, null, $later, 100 ) ),
+			'staging//unknown task/retry/refused' => array( 'staging', '', 'unknown task', 'retry', true, array( 'staging', false, array(), false, null, $later, null ) ),
+			'staging//unknown task/expired failure/written' => array( 'staging', '', 'unknown task', 'expired failure', false, $failed_expired ),
+			'staging//unknown task/expired failure/refused' => array( 'staging', '', 'unknown task', 'expired failure', true, array( 'staging', false, array(), false, null, $original, null ) ),
+			'transferring//ok/none/written' => array( 'transferring', '', 'ok', 'none', false, $failed ),
+			'transferring//ok/none/refused' => array( 'transferring', '', 'ok', 'none', true, array( 'transferring', false, array(), false, null, $later, null ) ),
+			'transferring//ok/intent/written' => array( 'transferring', '', 'ok', 'intent', false, $cancelled ),
+			'transferring//ok/intent/refused' => array( 'transferring', '', 'ok', 'intent', true, array( 'transferring', false, array(), false, null, true, null ) ),
+			'transferring//ok/failure/written' => array( 'transferring', '', 'ok', 'failure', false, $failed_original ),
+			'transferring//ok/failure/refused' => array( 'transferring', '', 'ok', 'failure', true, array( 'transferring', false, array(), false, null, $original, null ) ),
+			'transferring//ok/retry/written' => array( 'transferring', '', 'ok', 'retry', false, $failed ),
+			'transferring//ok/retry/refused' => array( 'transferring', '', 'ok', 'retry', true, array( 'transferring', false, array(), false, null, $later, null ) ),
+			'transferring//ok/expired failure/written' => array( 'transferring', '', 'ok', 'expired failure', false, $failed_original ),
+			'transferring//ok/expired failure/refused' => array( 'transferring', '', 'ok', 'expired failure', true, array( 'transferring', false, array(), false, null, $original, null ) ),
+			'transferring//failed/none/written' => array( 'transferring', '', 'failed', 'none', false, $failed ),
+			'transferring//failed/none/refused' => array( 'transferring', '', 'failed', 'none', true, array( 'transferring', false, array(), false, null, $later, null ) ),
+			'transferring//failed/intent/written' => array( 'transferring', '', 'failed', 'intent', false, $cancelled ),
+			'transferring//failed/intent/refused' => array( 'transferring', '', 'failed', 'intent', true, array( 'transferring', false, array(), false, null, true, null ) ),
+			'transferring//failed/failure/written' => array( 'transferring', '', 'failed', 'failure', false, $failed_original ),
+			'transferring//failed/failure/refused' => array( 'transferring', '', 'failed', 'failure', true, array( 'transferring', false, array(), false, null, $original, null ) ),
+			'transferring//failed/retry/written' => array( 'transferring', '', 'failed', 'retry', false, $failed ),
+			'transferring//failed/retry/refused' => array( 'transferring', '', 'failed', 'retry', true, array( 'transferring', false, array(), false, null, $later, null ) ),
+			'transferring//failed/expired failure/written' => array( 'transferring', '', 'failed', 'expired failure', false, $failed_original ),
+			'transferring//failed/expired failure/refused' => array( 'transferring', '', 'failed', 'expired failure', true, array( 'transferring', false, array(), false, null, $original, null ) ),
+			'transferring//completed/none/written' => array( 'transferring', '', 'completed', 'none', false, $completed ),
+			'transferring//completed/none/refused' => array( 'transferring', '', 'completed', 'none', true, array( 'transferring', false, array(), false, null, $later, null ) ),
+			'transferring//completed/intent/written' => array( 'transferring', '', 'completed', 'intent', false, $completed ),
+			'transferring//completed/intent/refused' => array( 'transferring', '', 'completed', 'intent', true, array( 'transferring', false, array(), false, null, true, null ) ),
+			'transferring//completed/failure/written' => array( 'transferring', '', 'completed', 'failure', false, $completed ),
+			'transferring//completed/failure/refused' => array( 'transferring', '', 'completed', 'failure', true, array( 'transferring', false, array(), false, null, $original, null ) ),
+			'transferring//completed/retry/written' => array( 'transferring', '', 'completed', 'retry', false, $completed ),
+			'transferring//completed/retry/refused' => array( 'transferring', '', 'completed', 'retry', true, array( 'transferring', false, array(), false, null, $later, null ) ),
+			'transferring//completed/expired failure/written' => array( 'transferring', '', 'completed', 'expired failure', false, $completed ),
+			'transferring//completed/expired failure/refused' => array( 'transferring', '', 'completed', 'expired failure', true, array( 'transferring', false, array(), false, null, $original, null ) ),
+			'transferring//busy/none/written' => array( 'transferring', '', 'busy', 'none', false, array( 'transferring', false, array( 'restore_task_cancel' ), false, null, $later, 1 ) ),
+			'transferring//busy/none/refused' => array( 'transferring', '', 'busy', 'none', true, array( 'transferring', false, array(), false, null, $later, null ) ),
+			'transferring//busy/intent/written' => array( 'transferring', '', 'busy', 'intent', false, array( 'transferring', false, array( 'restore_task_cancel' ), false, null, true, 1 ) ),
+			'transferring//busy/intent/refused' => array( 'transferring', '', 'busy', 'intent', true, array( 'transferring', false, array(), false, null, true, null ) ),
+			'transferring//busy/failure/written' => array( 'transferring', '', 'busy', 'failure', false, array( 'transferring', false, array( 'restore_task_cancel' ), false, null, $original, 1 ) ),
+			'transferring//busy/failure/refused' => array( 'transferring', '', 'busy', 'failure', true, array( 'transferring', false, array(), false, null, $original, null ) ),
+			'transferring//busy/retry/written' => array( 'transferring', '', 'busy', 'retry', false, array( 'transferring', false, array( 'restore_task_cancel' ), false, null, $later, 100 ) ),
+			'transferring//busy/retry/refused' => array( 'transferring', '', 'busy', 'retry', true, array( 'transferring', false, array(), false, null, $later, null ) ),
+			'transferring//busy/expired failure/written' => array( 'transferring', '', 'busy', 'expired failure', false, $failed_expired ),
+			'transferring//busy/expired failure/refused' => array( 'transferring', '', 'busy', 'expired failure', true, array( 'transferring', false, array(), false, null, $original, null ) ),
+			'transferring//rolling_back/none/written' => array( 'transferring', '', 'rolling_back', 'none', false, array( 'transferring', false, array( 'restore_task_cancel' ), false, null, $later, 1 ) ),
+			'transferring//rolling_back/none/refused' => array( 'transferring', '', 'rolling_back', 'none', true, array( 'transferring', false, array(), false, null, $later, null ) ),
+			'transferring//rolling_back/intent/written' => array( 'transferring', '', 'rolling_back', 'intent', false, array( 'transferring', false, array( 'restore_task_cancel' ), false, null, true, 1 ) ),
+			'transferring//rolling_back/intent/refused' => array( 'transferring', '', 'rolling_back', 'intent', true, array( 'transferring', false, array(), false, null, true, null ) ),
+			'transferring//rolling_back/failure/written' => array( 'transferring', '', 'rolling_back', 'failure', false, array( 'transferring', false, array( 'restore_task_cancel' ), false, null, $original, 1 ) ),
+			'transferring//rolling_back/failure/refused' => array( 'transferring', '', 'rolling_back', 'failure', true, array( 'transferring', false, array(), false, null, $original, null ) ),
+			'transferring//rolling_back/retry/written' => array( 'transferring', '', 'rolling_back', 'retry', false, array( 'transferring', false, array( 'restore_task_cancel' ), false, null, $later, 100 ) ),
+			'transferring//rolling_back/retry/refused' => array( 'transferring', '', 'rolling_back', 'retry', true, array( 'transferring', false, array(), false, null, $later, null ) ),
+			'transferring//rolling_back/expired failure/written' => array( 'transferring', '', 'rolling_back', 'expired failure', false, $failed_expired ),
+			'transferring//rolling_back/expired failure/refused' => array( 'transferring', '', 'rolling_back', 'expired failure', true, array( 'transferring', false, array(), false, null, $original, null ) ),
+			'transferring//threw/none/written' => array( 'transferring', '', 'threw', 'none', false, array( 'transferring', false, array( 'restore_task_cancel' ), false, null, $later, 1 ) ),
+			'transferring//threw/none/refused' => array( 'transferring', '', 'threw', 'none', true, array( 'transferring', false, array(), false, null, $later, null ) ),
+			'transferring//threw/intent/written' => array( 'transferring', '', 'threw', 'intent', false, array( 'transferring', false, array( 'restore_task_cancel' ), false, null, true, 1 ) ),
+			'transferring//threw/intent/refused' => array( 'transferring', '', 'threw', 'intent', true, array( 'transferring', false, array(), false, null, true, null ) ),
+			'transferring//threw/failure/written' => array( 'transferring', '', 'threw', 'failure', false, array( 'transferring', false, array( 'restore_task_cancel' ), false, null, $original, 1 ) ),
+			'transferring//threw/failure/refused' => array( 'transferring', '', 'threw', 'failure', true, array( 'transferring', false, array(), false, null, $original, null ) ),
+			'transferring//threw/retry/written' => array( 'transferring', '', 'threw', 'retry', false, array( 'transferring', false, array( 'restore_task_cancel' ), false, null, $later, 100 ) ),
+			'transferring//threw/retry/refused' => array( 'transferring', '', 'threw', 'retry', true, array( 'transferring', false, array(), false, null, $later, null ) ),
+			'transferring//threw/expired failure/written' => array( 'transferring', '', 'threw', 'expired failure', false, $failed_expired ),
+			'transferring//threw/expired failure/refused' => array( 'transferring', '', 'threw', 'expired failure', true, array( 'transferring', false, array(), false, null, $original, null ) ),
+			'transferring//error/none/written' => array( 'transferring', '', 'error', 'none', false, array( 'transferring', false, array( 'restore_task_cancel' ), false, null, $later, 1 ) ),
+			'transferring//error/none/refused' => array( 'transferring', '', 'error', 'none', true, array( 'transferring', false, array(), false, null, $later, null ) ),
+			'transferring//error/intent/written' => array( 'transferring', '', 'error', 'intent', false, array( 'transferring', false, array( 'restore_task_cancel' ), false, null, true, 1 ) ),
+			'transferring//error/intent/refused' => array( 'transferring', '', 'error', 'intent', true, array( 'transferring', false, array(), false, null, true, null ) ),
+			'transferring//error/failure/written' => array( 'transferring', '', 'error', 'failure', false, array( 'transferring', false, array( 'restore_task_cancel' ), false, null, $original, 1 ) ),
+			'transferring//error/failure/refused' => array( 'transferring', '', 'error', 'failure', true, array( 'transferring', false, array(), false, null, $original, null ) ),
+			'transferring//error/retry/written' => array( 'transferring', '', 'error', 'retry', false, array( 'transferring', false, array( 'restore_task_cancel' ), false, null, $later, 100 ) ),
+			'transferring//error/retry/refused' => array( 'transferring', '', 'error', 'retry', true, array( 'transferring', false, array(), false, null, $later, null ) ),
+			'transferring//error/expired failure/written' => array( 'transferring', '', 'error', 'expired failure', false, $failed_expired ),
+			'transferring//error/expired failure/refused' => array( 'transferring', '', 'error', 'expired failure', true, array( 'transferring', false, array(), false, null, $original, null ) ),
+			'transferring//unknown task/none/written' => array( 'transferring', '', 'unknown task', 'none', false, array( 'transferring', false, array( 'restore_task_cancel' ), false, null, $later, 1 ) ),
+			'transferring//unknown task/none/refused' => array( 'transferring', '', 'unknown task', 'none', true, array( 'transferring', false, array(), false, null, $later, null ) ),
+			'transferring//unknown task/intent/written' => array( 'transferring', '', 'unknown task', 'intent', false, array( 'transferring', false, array( 'restore_task_cancel' ), false, null, true, 1 ) ),
+			'transferring//unknown task/intent/refused' => array( 'transferring', '', 'unknown task', 'intent', true, array( 'transferring', false, array(), false, null, true, null ) ),
+			'transferring//unknown task/failure/written' => array( 'transferring', '', 'unknown task', 'failure', false, array( 'transferring', false, array( 'restore_task_cancel' ), false, null, $original, 1 ) ),
+			'transferring//unknown task/failure/refused' => array( 'transferring', '', 'unknown task', 'failure', true, array( 'transferring', false, array(), false, null, $original, null ) ),
+			'transferring//unknown task/retry/written' => array( 'transferring', '', 'unknown task', 'retry', false, array( 'transferring', false, array( 'restore_task_cancel' ), false, null, $later, 100 ) ),
+			'transferring//unknown task/retry/refused' => array( 'transferring', '', 'unknown task', 'retry', true, array( 'transferring', false, array(), false, null, $later, null ) ),
+			'transferring//unknown task/expired failure/written' => array( 'transferring', '', 'unknown task', 'expired failure', false, $failed_expired ),
+			'transferring//unknown task/expired failure/refused' => array( 'transferring', '', 'unknown task', 'expired failure', true, array( 'transferring', false, array(), false, null, $original, null ) ),
+			'running//ok/none/written' => array( 'running', '', 'ok', 'none', false, $failed ),
+			'running//ok/none/refused' => array( 'running', '', 'ok', 'none', true, $refused_later ),
+			'running//ok/intent/written' => array( 'running', '', 'ok', 'intent', false, $cancelled ),
+			'running//ok/intent/refused' => array( 'running', '', 'ok', 'intent', true, $refused_intent ),
+			'running//ok/failure/written' => array( 'running', '', 'ok', 'failure', false, $failed_original ),
+			'running//ok/failure/refused' => array( 'running', '', 'ok', 'failure', true, $refused_original ),
+			'running//ok/retry/written' => array( 'running', '', 'ok', 'retry', false, $failed ),
+			'running//ok/retry/refused' => array( 'running', '', 'ok', 'retry', true, $refused_later ),
+			'running//ok/expired failure/written' => array( 'running', '', 'ok', 'expired failure', false, $failed_original ),
+			'running//ok/expired failure/refused' => array( 'running', '', 'ok', 'expired failure', true, $refused_original ),
+			'running//failed/none/written' => array( 'running', '', 'failed', 'none', false, $failed ),
+			'running//failed/none/refused' => array( 'running', '', 'failed', 'none', true, $refused_later ),
+			'running//failed/intent/written' => array( 'running', '', 'failed', 'intent', false, $cancelled ),
+			'running//failed/intent/refused' => array( 'running', '', 'failed', 'intent', true, $refused_intent ),
+			'running//failed/failure/written' => array( 'running', '', 'failed', 'failure', false, $failed_original ),
+			'running//failed/failure/refused' => array( 'running', '', 'failed', 'failure', true, $refused_original ),
+			'running//failed/retry/written' => array( 'running', '', 'failed', 'retry', false, $failed ),
+			'running//failed/retry/refused' => array( 'running', '', 'failed', 'retry', true, $refused_later ),
+			'running//failed/expired failure/written' => array( 'running', '', 'failed', 'expired failure', false, $failed_original ),
+			'running//failed/expired failure/refused' => array( 'running', '', 'failed', 'expired failure', true, $refused_original ),
+			'running//completed/none/written' => array( 'running', '', 'completed', 'none', false, $completed ),
+			'running//completed/none/refused' => array( 'running', '', 'completed', 'none', true, $refused_later ),
+			'running//completed/intent/written' => array( 'running', '', 'completed', 'intent', false, $completed ),
+			'running//completed/intent/refused' => array( 'running', '', 'completed', 'intent', true, $refused_intent ),
+			'running//completed/failure/written' => array( 'running', '', 'completed', 'failure', false, $completed ),
+			'running//completed/failure/refused' => array( 'running', '', 'completed', 'failure', true, $refused_original ),
+			'running//completed/retry/written' => array( 'running', '', 'completed', 'retry', false, $completed ),
+			'running//completed/retry/refused' => array( 'running', '', 'completed', 'retry', true, $refused_later ),
+			'running//completed/expired failure/written' => array( 'running', '', 'completed', 'expired failure', false, $completed ),
+			'running//completed/expired failure/refused' => array( 'running', '', 'completed', 'expired failure', true, $refused_original ),
+			'running//busy/none/written' => array( 'running', '', 'busy', 'none', false, $pending_later ),
+			'running//busy/none/refused' => array( 'running', '', 'busy', 'none', true, $refused_later ),
+			'running//busy/intent/written' => array( 'running', '', 'busy', 'intent', false, $pending_intent ),
+			'running//busy/intent/refused' => array( 'running', '', 'busy', 'intent', true, $refused_intent ),
+			'running//busy/failure/written' => array( 'running', '', 'busy', 'failure', false, $pending_original ),
+			'running//busy/failure/refused' => array( 'running', '', 'busy', 'failure', true, $refused_original ),
+			'running//busy/retry/written' => array( 'running', '', 'busy', 'retry', false, $pending_retry ),
+			'running//busy/retry/refused' => array( 'running', '', 'busy', 'retry', true, $refused_later ),
+			'running//busy/expired failure/written' => array( 'running', '', 'busy', 'expired failure', false, $failed_expired ),
+			'running//busy/expired failure/refused' => array( 'running', '', 'busy', 'expired failure', true, $refused_original ),
+			'running//rolling_back/none/written' => array( 'running', '', 'rolling_back', 'none', false, $pending_later ),
+			'running//rolling_back/none/refused' => array( 'running', '', 'rolling_back', 'none', true, $refused_later ),
+			'running//rolling_back/intent/written' => array( 'running', '', 'rolling_back', 'intent', false, $pending_intent ),
+			'running//rolling_back/intent/refused' => array( 'running', '', 'rolling_back', 'intent', true, $refused_intent ),
+			'running//rolling_back/failure/written' => array( 'running', '', 'rolling_back', 'failure', false, $pending_original ),
+			'running//rolling_back/failure/refused' => array( 'running', '', 'rolling_back', 'failure', true, $refused_original ),
+			'running//rolling_back/retry/written' => array( 'running', '', 'rolling_back', 'retry', false, $pending_retry ),
+			'running//rolling_back/retry/refused' => array( 'running', '', 'rolling_back', 'retry', true, $refused_later ),
+			'running//rolling_back/expired failure/written' => array( 'running', '', 'rolling_back', 'expired failure', false, $failed_expired ),
+			'running//rolling_back/expired failure/refused' => array( 'running', '', 'rolling_back', 'expired failure', true, $refused_original ),
+			'running//threw/none/written' => array( 'running', '', 'threw', 'none', false, $pending_later ),
+			'running//threw/none/refused' => array( 'running', '', 'threw', 'none', true, $refused_later ),
+			'running//threw/intent/written' => array( 'running', '', 'threw', 'intent', false, $pending_intent ),
+			'running//threw/intent/refused' => array( 'running', '', 'threw', 'intent', true, $refused_intent ),
+			'running//threw/failure/written' => array( 'running', '', 'threw', 'failure', false, $pending_original ),
+			'running//threw/failure/refused' => array( 'running', '', 'threw', 'failure', true, $refused_original ),
+			'running//threw/retry/written' => array( 'running', '', 'threw', 'retry', false, $pending_retry ),
+			'running//threw/retry/refused' => array( 'running', '', 'threw', 'retry', true, $refused_later ),
+			'running//threw/expired failure/written' => array( 'running', '', 'threw', 'expired failure', false, $failed_expired ),
+			'running//threw/expired failure/refused' => array( 'running', '', 'threw', 'expired failure', true, $refused_original ),
+			'running//error/none/written' => array( 'running', '', 'error', 'none', false, $pending_later ),
+			'running//error/none/refused' => array( 'running', '', 'error', 'none', true, $refused_later ),
+			'running//error/intent/written' => array( 'running', '', 'error', 'intent', false, $pending_intent ),
+			'running//error/intent/refused' => array( 'running', '', 'error', 'intent', true, $refused_intent ),
+			'running//error/failure/written' => array( 'running', '', 'error', 'failure', false, $pending_original ),
+			'running//error/failure/refused' => array( 'running', '', 'error', 'failure', true, $refused_original ),
+			'running//error/retry/written' => array( 'running', '', 'error', 'retry', false, $pending_retry ),
+			'running//error/retry/refused' => array( 'running', '', 'error', 'retry', true, $refused_later ),
+			'running//error/expired failure/written' => array( 'running', '', 'error', 'expired failure', false, $failed_expired ),
+			'running//error/expired failure/refused' => array( 'running', '', 'error', 'expired failure', true, $refused_original ),
+			'running//unknown task/none/written' => array( 'running', '', 'unknown task', 'none', false, $pending_later ),
+			'running//unknown task/none/refused' => array( 'running', '', 'unknown task', 'none', true, $refused_later ),
+			'running//unknown task/intent/written' => array( 'running', '', 'unknown task', 'intent', false, $pending_intent ),
+			'running//unknown task/intent/refused' => array( 'running', '', 'unknown task', 'intent', true, $refused_intent ),
+			'running//unknown task/failure/written' => array( 'running', '', 'unknown task', 'failure', false, $pending_original ),
+			'running//unknown task/failure/refused' => array( 'running', '', 'unknown task', 'failure', true, $refused_original ),
+			'running//unknown task/retry/written' => array( 'running', '', 'unknown task', 'retry', false, $pending_retry ),
+			'running//unknown task/retry/refused' => array( 'running', '', 'unknown task', 'retry', true, $refused_later ),
+			'running//unknown task/expired failure/written' => array( 'running', '', 'unknown task', 'expired failure', false, $failed_expired ),
+			'running//unknown task/expired failure/refused' => array( 'running', '', 'unknown task', 'expired failure', true, $refused_original ),
+			'failed_retryable/staging/ok/none/written' => array( 'failed_retryable', 'staging', 'ok', 'none', false, $failed ),
+			'failed_retryable/staging/ok/none/refused' => array( 'failed_retryable', 'staging', 'ok', 'none', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/staging/ok/intent/written' => array( 'failed_retryable', 'staging', 'ok', 'intent', false, $cancelled ),
+			'failed_retryable/staging/ok/intent/refused' => array( 'failed_retryable', 'staging', 'ok', 'intent', true, array( 'failed_retryable', false, array(), false, null, true, null ) ),
+			'failed_retryable/staging/ok/failure/written' => array( 'failed_retryable', 'staging', 'ok', 'failure', false, $failed_original ),
+			'failed_retryable/staging/ok/failure/refused' => array( 'failed_retryable', 'staging', 'ok', 'failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'failed_retryable/staging/ok/retry/written' => array( 'failed_retryable', 'staging', 'ok', 'retry', false, $failed ),
+			'failed_retryable/staging/ok/retry/refused' => array( 'failed_retryable', 'staging', 'ok', 'retry', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/staging/ok/expired failure/written' => array( 'failed_retryable', 'staging', 'ok', 'expired failure', false, $failed_original ),
+			'failed_retryable/staging/ok/expired failure/refused' => array( 'failed_retryable', 'staging', 'ok', 'expired failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'failed_retryable/staging/failed/none/written' => array( 'failed_retryable', 'staging', 'failed', 'none', false, $failed ),
+			'failed_retryable/staging/failed/none/refused' => array( 'failed_retryable', 'staging', 'failed', 'none', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/staging/failed/intent/written' => array( 'failed_retryable', 'staging', 'failed', 'intent', false, $cancelled ),
+			'failed_retryable/staging/failed/intent/refused' => array( 'failed_retryable', 'staging', 'failed', 'intent', true, array( 'failed_retryable', false, array(), false, null, true, null ) ),
+			'failed_retryable/staging/failed/failure/written' => array( 'failed_retryable', 'staging', 'failed', 'failure', false, $failed_original ),
+			'failed_retryable/staging/failed/failure/refused' => array( 'failed_retryable', 'staging', 'failed', 'failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'failed_retryable/staging/failed/retry/written' => array( 'failed_retryable', 'staging', 'failed', 'retry', false, $failed ),
+			'failed_retryable/staging/failed/retry/refused' => array( 'failed_retryable', 'staging', 'failed', 'retry', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/staging/failed/expired failure/written' => array( 'failed_retryable', 'staging', 'failed', 'expired failure', false, $failed_original ),
+			'failed_retryable/staging/failed/expired failure/refused' => array( 'failed_retryable', 'staging', 'failed', 'expired failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'failed_retryable/staging/completed/none/written' => array( 'failed_retryable', 'staging', 'completed', 'none', false, $completed ),
+			'failed_retryable/staging/completed/none/refused' => array( 'failed_retryable', 'staging', 'completed', 'none', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/staging/completed/intent/written' => array( 'failed_retryable', 'staging', 'completed', 'intent', false, $completed ),
+			'failed_retryable/staging/completed/intent/refused' => array( 'failed_retryable', 'staging', 'completed', 'intent', true, array( 'failed_retryable', false, array(), false, null, true, null ) ),
+			'failed_retryable/staging/completed/failure/written' => array( 'failed_retryable', 'staging', 'completed', 'failure', false, $completed ),
+			'failed_retryable/staging/completed/failure/refused' => array( 'failed_retryable', 'staging', 'completed', 'failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'failed_retryable/staging/completed/retry/written' => array( 'failed_retryable', 'staging', 'completed', 'retry', false, $completed ),
+			'failed_retryable/staging/completed/retry/refused' => array( 'failed_retryable', 'staging', 'completed', 'retry', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/staging/completed/expired failure/written' => array( 'failed_retryable', 'staging', 'completed', 'expired failure', false, $completed ),
+			'failed_retryable/staging/completed/expired failure/refused' => array( 'failed_retryable', 'staging', 'completed', 'expired failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'failed_retryable/staging/busy/none/written' => array( 'failed_retryable', 'staging', 'busy', 'none', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, $later, 1 ) ),
+			'failed_retryable/staging/busy/none/refused' => array( 'failed_retryable', 'staging', 'busy', 'none', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/staging/busy/intent/written' => array( 'failed_retryable', 'staging', 'busy', 'intent', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, true, 1 ) ),
+			'failed_retryable/staging/busy/intent/refused' => array( 'failed_retryable', 'staging', 'busy', 'intent', true, array( 'failed_retryable', false, array(), false, null, true, null ) ),
+			'failed_retryable/staging/busy/failure/written' => array( 'failed_retryable', 'staging', 'busy', 'failure', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, $original, 1 ) ),
+			'failed_retryable/staging/busy/failure/refused' => array( 'failed_retryable', 'staging', 'busy', 'failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'failed_retryable/staging/busy/retry/written' => array( 'failed_retryable', 'staging', 'busy', 'retry', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, $later, 100 ) ),
+			'failed_retryable/staging/busy/retry/refused' => array( 'failed_retryable', 'staging', 'busy', 'retry', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/staging/busy/expired failure/written' => array( 'failed_retryable', 'staging', 'busy', 'expired failure', false, $failed_expired ),
+			'failed_retryable/staging/busy/expired failure/refused' => array( 'failed_retryable', 'staging', 'busy', 'expired failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'failed_retryable/staging/rolling_back/none/written' => array( 'failed_retryable', 'staging', 'rolling_back', 'none', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, $later, 1 ) ),
+			'failed_retryable/staging/rolling_back/none/refused' => array( 'failed_retryable', 'staging', 'rolling_back', 'none', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/staging/rolling_back/intent/written' => array( 'failed_retryable', 'staging', 'rolling_back', 'intent', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, true, 1 ) ),
+			'failed_retryable/staging/rolling_back/intent/refused' => array( 'failed_retryable', 'staging', 'rolling_back', 'intent', true, array( 'failed_retryable', false, array(), false, null, true, null ) ),
+			'failed_retryable/staging/rolling_back/failure/written' => array( 'failed_retryable', 'staging', 'rolling_back', 'failure', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, $original, 1 ) ),
+			'failed_retryable/staging/rolling_back/failure/refused' => array( 'failed_retryable', 'staging', 'rolling_back', 'failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'failed_retryable/staging/rolling_back/retry/written' => array( 'failed_retryable', 'staging', 'rolling_back', 'retry', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, $later, 100 ) ),
+			'failed_retryable/staging/rolling_back/retry/refused' => array( 'failed_retryable', 'staging', 'rolling_back', 'retry', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/staging/rolling_back/expired failure/written' => array( 'failed_retryable', 'staging', 'rolling_back', 'expired failure', false, $failed_expired ),
+			'failed_retryable/staging/rolling_back/expired failure/refused' => array( 'failed_retryable', 'staging', 'rolling_back', 'expired failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'failed_retryable/staging/threw/none/written' => array( 'failed_retryable', 'staging', 'threw', 'none', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, $later, 1 ) ),
+			'failed_retryable/staging/threw/none/refused' => array( 'failed_retryable', 'staging', 'threw', 'none', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/staging/threw/intent/written' => array( 'failed_retryable', 'staging', 'threw', 'intent', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, true, 1 ) ),
+			'failed_retryable/staging/threw/intent/refused' => array( 'failed_retryable', 'staging', 'threw', 'intent', true, array( 'failed_retryable', false, array(), false, null, true, null ) ),
+			'failed_retryable/staging/threw/failure/written' => array( 'failed_retryable', 'staging', 'threw', 'failure', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, $original, 1 ) ),
+			'failed_retryable/staging/threw/failure/refused' => array( 'failed_retryable', 'staging', 'threw', 'failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'failed_retryable/staging/threw/retry/written' => array( 'failed_retryable', 'staging', 'threw', 'retry', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, $later, 100 ) ),
+			'failed_retryable/staging/threw/retry/refused' => array( 'failed_retryable', 'staging', 'threw', 'retry', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/staging/threw/expired failure/written' => array( 'failed_retryable', 'staging', 'threw', 'expired failure', false, $failed_expired ),
+			'failed_retryable/staging/threw/expired failure/refused' => array( 'failed_retryable', 'staging', 'threw', 'expired failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'failed_retryable/staging/error/none/written' => array( 'failed_retryable', 'staging', 'error', 'none', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, $later, 1 ) ),
+			'failed_retryable/staging/error/none/refused' => array( 'failed_retryable', 'staging', 'error', 'none', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/staging/error/intent/written' => array( 'failed_retryable', 'staging', 'error', 'intent', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, true, 1 ) ),
+			'failed_retryable/staging/error/intent/refused' => array( 'failed_retryable', 'staging', 'error', 'intent', true, array( 'failed_retryable', false, array(), false, null, true, null ) ),
+			'failed_retryable/staging/error/failure/written' => array( 'failed_retryable', 'staging', 'error', 'failure', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, $original, 1 ) ),
+			'failed_retryable/staging/error/failure/refused' => array( 'failed_retryable', 'staging', 'error', 'failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'failed_retryable/staging/error/retry/written' => array( 'failed_retryable', 'staging', 'error', 'retry', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, $later, 100 ) ),
+			'failed_retryable/staging/error/retry/refused' => array( 'failed_retryable', 'staging', 'error', 'retry', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/staging/error/expired failure/written' => array( 'failed_retryable', 'staging', 'error', 'expired failure', false, $failed_expired ),
+			'failed_retryable/staging/error/expired failure/refused' => array( 'failed_retryable', 'staging', 'error', 'expired failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'failed_retryable/staging/unknown task/none/written' => array( 'failed_retryable', 'staging', 'unknown task', 'none', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, $later, 1 ) ),
+			'failed_retryable/staging/unknown task/none/refused' => array( 'failed_retryable', 'staging', 'unknown task', 'none', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/staging/unknown task/intent/written' => array( 'failed_retryable', 'staging', 'unknown task', 'intent', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, true, 1 ) ),
+			'failed_retryable/staging/unknown task/intent/refused' => array( 'failed_retryable', 'staging', 'unknown task', 'intent', true, array( 'failed_retryable', false, array(), false, null, true, null ) ),
+			'failed_retryable/staging/unknown task/failure/written' => array( 'failed_retryable', 'staging', 'unknown task', 'failure', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, $original, 1 ) ),
+			'failed_retryable/staging/unknown task/failure/refused' => array( 'failed_retryable', 'staging', 'unknown task', 'failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'failed_retryable/staging/unknown task/retry/written' => array( 'failed_retryable', 'staging', 'unknown task', 'retry', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, $later, 100 ) ),
+			'failed_retryable/staging/unknown task/retry/refused' => array( 'failed_retryable', 'staging', 'unknown task', 'retry', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/staging/unknown task/expired failure/written' => array( 'failed_retryable', 'staging', 'unknown task', 'expired failure', false, $failed_expired ),
+			'failed_retryable/staging/unknown task/expired failure/refused' => array( 'failed_retryable', 'staging', 'unknown task', 'expired failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'failed_retryable/transferring/ok/none/written' => array( 'failed_retryable', 'transferring', 'ok', 'none', false, $failed ),
+			'failed_retryable/transferring/ok/none/refused' => array( 'failed_retryable', 'transferring', 'ok', 'none', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/transferring/ok/intent/written' => array( 'failed_retryable', 'transferring', 'ok', 'intent', false, $cancelled ),
+			'failed_retryable/transferring/ok/intent/refused' => array( 'failed_retryable', 'transferring', 'ok', 'intent', true, array( 'failed_retryable', false, array(), false, null, true, null ) ),
+			'failed_retryable/transferring/ok/failure/written' => array( 'failed_retryable', 'transferring', 'ok', 'failure', false, $failed_original ),
+			'failed_retryable/transferring/ok/failure/refused' => array( 'failed_retryable', 'transferring', 'ok', 'failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'failed_retryable/transferring/ok/retry/written' => array( 'failed_retryable', 'transferring', 'ok', 'retry', false, $failed ),
+			'failed_retryable/transferring/ok/retry/refused' => array( 'failed_retryable', 'transferring', 'ok', 'retry', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/transferring/ok/expired failure/written' => array( 'failed_retryable', 'transferring', 'ok', 'expired failure', false, $failed_original ),
+			'failed_retryable/transferring/ok/expired failure/refused' => array( 'failed_retryable', 'transferring', 'ok', 'expired failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'failed_retryable/transferring/failed/none/written' => array( 'failed_retryable', 'transferring', 'failed', 'none', false, $failed ),
+			'failed_retryable/transferring/failed/none/refused' => array( 'failed_retryable', 'transferring', 'failed', 'none', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/transferring/failed/intent/written' => array( 'failed_retryable', 'transferring', 'failed', 'intent', false, $cancelled ),
+			'failed_retryable/transferring/failed/intent/refused' => array( 'failed_retryable', 'transferring', 'failed', 'intent', true, array( 'failed_retryable', false, array(), false, null, true, null ) ),
+			'failed_retryable/transferring/failed/failure/written' => array( 'failed_retryable', 'transferring', 'failed', 'failure', false, $failed_original ),
+			'failed_retryable/transferring/failed/failure/refused' => array( 'failed_retryable', 'transferring', 'failed', 'failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'failed_retryable/transferring/failed/retry/written' => array( 'failed_retryable', 'transferring', 'failed', 'retry', false, $failed ),
+			'failed_retryable/transferring/failed/retry/refused' => array( 'failed_retryable', 'transferring', 'failed', 'retry', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/transferring/failed/expired failure/written' => array( 'failed_retryable', 'transferring', 'failed', 'expired failure', false, $failed_original ),
+			'failed_retryable/transferring/failed/expired failure/refused' => array( 'failed_retryable', 'transferring', 'failed', 'expired failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'failed_retryable/transferring/completed/none/written' => array( 'failed_retryable', 'transferring', 'completed', 'none', false, $completed ),
+			'failed_retryable/transferring/completed/none/refused' => array( 'failed_retryable', 'transferring', 'completed', 'none', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/transferring/completed/intent/written' => array( 'failed_retryable', 'transferring', 'completed', 'intent', false, $completed ),
+			'failed_retryable/transferring/completed/intent/refused' => array( 'failed_retryable', 'transferring', 'completed', 'intent', true, array( 'failed_retryable', false, array(), false, null, true, null ) ),
+			'failed_retryable/transferring/completed/failure/written' => array( 'failed_retryable', 'transferring', 'completed', 'failure', false, $completed ),
+			'failed_retryable/transferring/completed/failure/refused' => array( 'failed_retryable', 'transferring', 'completed', 'failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'failed_retryable/transferring/completed/retry/written' => array( 'failed_retryable', 'transferring', 'completed', 'retry', false, $completed ),
+			'failed_retryable/transferring/completed/retry/refused' => array( 'failed_retryable', 'transferring', 'completed', 'retry', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/transferring/completed/expired failure/written' => array( 'failed_retryable', 'transferring', 'completed', 'expired failure', false, $completed ),
+			'failed_retryable/transferring/completed/expired failure/refused' => array( 'failed_retryable', 'transferring', 'completed', 'expired failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'failed_retryable/transferring/busy/none/written' => array( 'failed_retryable', 'transferring', 'busy', 'none', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, $later, 1 ) ),
+			'failed_retryable/transferring/busy/none/refused' => array( 'failed_retryable', 'transferring', 'busy', 'none', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/transferring/busy/intent/written' => array( 'failed_retryable', 'transferring', 'busy', 'intent', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, true, 1 ) ),
+			'failed_retryable/transferring/busy/intent/refused' => array( 'failed_retryable', 'transferring', 'busy', 'intent', true, array( 'failed_retryable', false, array(), false, null, true, null ) ),
+			'failed_retryable/transferring/busy/failure/written' => array( 'failed_retryable', 'transferring', 'busy', 'failure', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, $original, 1 ) ),
+			'failed_retryable/transferring/busy/failure/refused' => array( 'failed_retryable', 'transferring', 'busy', 'failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'failed_retryable/transferring/busy/retry/written' => array( 'failed_retryable', 'transferring', 'busy', 'retry', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, $later, 100 ) ),
+			'failed_retryable/transferring/busy/retry/refused' => array( 'failed_retryable', 'transferring', 'busy', 'retry', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/transferring/busy/expired failure/written' => array( 'failed_retryable', 'transferring', 'busy', 'expired failure', false, $failed_expired ),
+			'failed_retryable/transferring/busy/expired failure/refused' => array( 'failed_retryable', 'transferring', 'busy', 'expired failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'failed_retryable/transferring/rolling_back/none/written' => array( 'failed_retryable', 'transferring', 'rolling_back', 'none', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, $later, 1 ) ),
+			'failed_retryable/transferring/rolling_back/none/refused' => array( 'failed_retryable', 'transferring', 'rolling_back', 'none', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/transferring/rolling_back/intent/written' => array( 'failed_retryable', 'transferring', 'rolling_back', 'intent', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, true, 1 ) ),
+			'failed_retryable/transferring/rolling_back/intent/refused' => array( 'failed_retryable', 'transferring', 'rolling_back', 'intent', true, array( 'failed_retryable', false, array(), false, null, true, null ) ),
+			'failed_retryable/transferring/rolling_back/failure/written' => array( 'failed_retryable', 'transferring', 'rolling_back', 'failure', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, $original, 1 ) ),
+			'failed_retryable/transferring/rolling_back/failure/refused' => array( 'failed_retryable', 'transferring', 'rolling_back', 'failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'failed_retryable/transferring/rolling_back/retry/written' => array( 'failed_retryable', 'transferring', 'rolling_back', 'retry', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, $later, 100 ) ),
+			'failed_retryable/transferring/rolling_back/retry/refused' => array( 'failed_retryable', 'transferring', 'rolling_back', 'retry', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/transferring/rolling_back/expired failure/written' => array( 'failed_retryable', 'transferring', 'rolling_back', 'expired failure', false, $failed_expired ),
+			'failed_retryable/transferring/rolling_back/expired failure/refused' => array( 'failed_retryable', 'transferring', 'rolling_back', 'expired failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'failed_retryable/transferring/threw/none/written' => array( 'failed_retryable', 'transferring', 'threw', 'none', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, $later, 1 ) ),
+			'failed_retryable/transferring/threw/none/refused' => array( 'failed_retryable', 'transferring', 'threw', 'none', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/transferring/threw/intent/written' => array( 'failed_retryable', 'transferring', 'threw', 'intent', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, true, 1 ) ),
+			'failed_retryable/transferring/threw/intent/refused' => array( 'failed_retryable', 'transferring', 'threw', 'intent', true, array( 'failed_retryable', false, array(), false, null, true, null ) ),
+			'failed_retryable/transferring/threw/failure/written' => array( 'failed_retryable', 'transferring', 'threw', 'failure', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, $original, 1 ) ),
+			'failed_retryable/transferring/threw/failure/refused' => array( 'failed_retryable', 'transferring', 'threw', 'failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'failed_retryable/transferring/threw/retry/written' => array( 'failed_retryable', 'transferring', 'threw', 'retry', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, $later, 100 ) ),
+			'failed_retryable/transferring/threw/retry/refused' => array( 'failed_retryable', 'transferring', 'threw', 'retry', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/transferring/threw/expired failure/written' => array( 'failed_retryable', 'transferring', 'threw', 'expired failure', false, $failed_expired ),
+			'failed_retryable/transferring/threw/expired failure/refused' => array( 'failed_retryable', 'transferring', 'threw', 'expired failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'failed_retryable/transferring/error/none/written' => array( 'failed_retryable', 'transferring', 'error', 'none', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, $later, 1 ) ),
+			'failed_retryable/transferring/error/none/refused' => array( 'failed_retryable', 'transferring', 'error', 'none', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/transferring/error/intent/written' => array( 'failed_retryable', 'transferring', 'error', 'intent', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, true, 1 ) ),
+			'failed_retryable/transferring/error/intent/refused' => array( 'failed_retryable', 'transferring', 'error', 'intent', true, array( 'failed_retryable', false, array(), false, null, true, null ) ),
+			'failed_retryable/transferring/error/failure/written' => array( 'failed_retryable', 'transferring', 'error', 'failure', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, $original, 1 ) ),
+			'failed_retryable/transferring/error/failure/refused' => array( 'failed_retryable', 'transferring', 'error', 'failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'failed_retryable/transferring/error/retry/written' => array( 'failed_retryable', 'transferring', 'error', 'retry', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, $later, 100 ) ),
+			'failed_retryable/transferring/error/retry/refused' => array( 'failed_retryable', 'transferring', 'error', 'retry', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/transferring/error/expired failure/written' => array( 'failed_retryable', 'transferring', 'error', 'expired failure', false, $failed_expired ),
+			'failed_retryable/transferring/error/expired failure/refused' => array( 'failed_retryable', 'transferring', 'error', 'expired failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'failed_retryable/transferring/unknown task/none/written' => array( 'failed_retryable', 'transferring', 'unknown task', 'none', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, $later, 1 ) ),
+			'failed_retryable/transferring/unknown task/none/refused' => array( 'failed_retryable', 'transferring', 'unknown task', 'none', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/transferring/unknown task/intent/written' => array( 'failed_retryable', 'transferring', 'unknown task', 'intent', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, true, 1 ) ),
+			'failed_retryable/transferring/unknown task/intent/refused' => array( 'failed_retryable', 'transferring', 'unknown task', 'intent', true, array( 'failed_retryable', false, array(), false, null, true, null ) ),
+			'failed_retryable/transferring/unknown task/failure/written' => array( 'failed_retryable', 'transferring', 'unknown task', 'failure', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, $original, 1 ) ),
+			'failed_retryable/transferring/unknown task/failure/refused' => array( 'failed_retryable', 'transferring', 'unknown task', 'failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'failed_retryable/transferring/unknown task/retry/written' => array( 'failed_retryable', 'transferring', 'unknown task', 'retry', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, $later, 100 ) ),
+			'failed_retryable/transferring/unknown task/retry/refused' => array( 'failed_retryable', 'transferring', 'unknown task', 'retry', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/transferring/unknown task/expired failure/written' => array( 'failed_retryable', 'transferring', 'unknown task', 'expired failure', false, $failed_expired ),
+			'failed_retryable/transferring/unknown task/expired failure/refused' => array( 'failed_retryable', 'transferring', 'unknown task', 'expired failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'failed_retryable/running/ok/none/written' => array( 'failed_retryable', 'running', 'ok', 'none', false, $failed ),
+			'failed_retryable/running/ok/none/refused' => array( 'failed_retryable', 'running', 'ok', 'none', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/running/ok/intent/written' => array( 'failed_retryable', 'running', 'ok', 'intent', false, $cancelled ),
+			'failed_retryable/running/ok/intent/refused' => array( 'failed_retryable', 'running', 'ok', 'intent', true, array( 'failed_retryable', false, array(), false, null, true, null ) ),
+			'failed_retryable/running/ok/failure/written' => array( 'failed_retryable', 'running', 'ok', 'failure', false, $failed_original ),
+			'failed_retryable/running/ok/failure/refused' => array( 'failed_retryable', 'running', 'ok', 'failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'failed_retryable/running/ok/retry/written' => array( 'failed_retryable', 'running', 'ok', 'retry', false, $failed ),
+			'failed_retryable/running/ok/retry/refused' => array( 'failed_retryable', 'running', 'ok', 'retry', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/running/ok/expired failure/written' => array( 'failed_retryable', 'running', 'ok', 'expired failure', false, $failed_original ),
+			'failed_retryable/running/ok/expired failure/refused' => array( 'failed_retryable', 'running', 'ok', 'expired failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'failed_retryable/running/failed/none/written' => array( 'failed_retryable', 'running', 'failed', 'none', false, $failed ),
+			'failed_retryable/running/failed/none/refused' => array( 'failed_retryable', 'running', 'failed', 'none', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/running/failed/intent/written' => array( 'failed_retryable', 'running', 'failed', 'intent', false, $cancelled ),
+			'failed_retryable/running/failed/intent/refused' => array( 'failed_retryable', 'running', 'failed', 'intent', true, array( 'failed_retryable', false, array(), false, null, true, null ) ),
+			'failed_retryable/running/failed/failure/written' => array( 'failed_retryable', 'running', 'failed', 'failure', false, $failed_original ),
+			'failed_retryable/running/failed/failure/refused' => array( 'failed_retryable', 'running', 'failed', 'failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'failed_retryable/running/failed/retry/written' => array( 'failed_retryable', 'running', 'failed', 'retry', false, $failed ),
+			'failed_retryable/running/failed/retry/refused' => array( 'failed_retryable', 'running', 'failed', 'retry', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/running/failed/expired failure/written' => array( 'failed_retryable', 'running', 'failed', 'expired failure', false, $failed_original ),
+			'failed_retryable/running/failed/expired failure/refused' => array( 'failed_retryable', 'running', 'failed', 'expired failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'failed_retryable/running/completed/none/written' => array( 'failed_retryable', 'running', 'completed', 'none', false, $completed ),
+			'failed_retryable/running/completed/none/refused' => array( 'failed_retryable', 'running', 'completed', 'none', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/running/completed/intent/written' => array( 'failed_retryable', 'running', 'completed', 'intent', false, $completed ),
+			'failed_retryable/running/completed/intent/refused' => array( 'failed_retryable', 'running', 'completed', 'intent', true, array( 'failed_retryable', false, array(), false, null, true, null ) ),
+			'failed_retryable/running/completed/failure/written' => array( 'failed_retryable', 'running', 'completed', 'failure', false, $completed ),
+			'failed_retryable/running/completed/failure/refused' => array( 'failed_retryable', 'running', 'completed', 'failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'failed_retryable/running/completed/retry/written' => array( 'failed_retryable', 'running', 'completed', 'retry', false, $completed ),
+			'failed_retryable/running/completed/retry/refused' => array( 'failed_retryable', 'running', 'completed', 'retry', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/running/completed/expired failure/written' => array( 'failed_retryable', 'running', 'completed', 'expired failure', false, $completed ),
+			'failed_retryable/running/completed/expired failure/refused' => array( 'failed_retryable', 'running', 'completed', 'expired failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'failed_retryable/running/busy/none/written' => array( 'failed_retryable', 'running', 'busy', 'none', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, $later, 1 ) ),
+			'failed_retryable/running/busy/none/refused' => array( 'failed_retryable', 'running', 'busy', 'none', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/running/busy/intent/written' => array( 'failed_retryable', 'running', 'busy', 'intent', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, true, 1 ) ),
+			'failed_retryable/running/busy/intent/refused' => array( 'failed_retryable', 'running', 'busy', 'intent', true, array( 'failed_retryable', false, array(), false, null, true, null ) ),
+			'failed_retryable/running/busy/failure/written' => array( 'failed_retryable', 'running', 'busy', 'failure', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, $original, 1 ) ),
+			'failed_retryable/running/busy/failure/refused' => array( 'failed_retryable', 'running', 'busy', 'failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'failed_retryable/running/busy/retry/written' => array( 'failed_retryable', 'running', 'busy', 'retry', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, $later, 100 ) ),
+			'failed_retryable/running/busy/retry/refused' => array( 'failed_retryable', 'running', 'busy', 'retry', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/running/busy/expired failure/written' => array( 'failed_retryable', 'running', 'busy', 'expired failure', false, $failed_expired ),
+			'failed_retryable/running/busy/expired failure/refused' => array( 'failed_retryable', 'running', 'busy', 'expired failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'failed_retryable/running/rolling_back/none/written' => array( 'failed_retryable', 'running', 'rolling_back', 'none', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, $later, 1 ) ),
+			'failed_retryable/running/rolling_back/none/refused' => array( 'failed_retryable', 'running', 'rolling_back', 'none', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/running/rolling_back/intent/written' => array( 'failed_retryable', 'running', 'rolling_back', 'intent', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, true, 1 ) ),
+			'failed_retryable/running/rolling_back/intent/refused' => array( 'failed_retryable', 'running', 'rolling_back', 'intent', true, array( 'failed_retryable', false, array(), false, null, true, null ) ),
+			'failed_retryable/running/rolling_back/failure/written' => array( 'failed_retryable', 'running', 'rolling_back', 'failure', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, $original, 1 ) ),
+			'failed_retryable/running/rolling_back/failure/refused' => array( 'failed_retryable', 'running', 'rolling_back', 'failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'failed_retryable/running/rolling_back/retry/written' => array( 'failed_retryable', 'running', 'rolling_back', 'retry', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, $later, 100 ) ),
+			'failed_retryable/running/rolling_back/retry/refused' => array( 'failed_retryable', 'running', 'rolling_back', 'retry', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/running/rolling_back/expired failure/written' => array( 'failed_retryable', 'running', 'rolling_back', 'expired failure', false, $failed_expired ),
+			'failed_retryable/running/rolling_back/expired failure/refused' => array( 'failed_retryable', 'running', 'rolling_back', 'expired failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'failed_retryable/running/threw/none/written' => array( 'failed_retryable', 'running', 'threw', 'none', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, $later, 1 ) ),
+			'failed_retryable/running/threw/none/refused' => array( 'failed_retryable', 'running', 'threw', 'none', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/running/threw/intent/written' => array( 'failed_retryable', 'running', 'threw', 'intent', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, true, 1 ) ),
+			'failed_retryable/running/threw/intent/refused' => array( 'failed_retryable', 'running', 'threw', 'intent', true, array( 'failed_retryable', false, array(), false, null, true, null ) ),
+			'failed_retryable/running/threw/failure/written' => array( 'failed_retryable', 'running', 'threw', 'failure', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, $original, 1 ) ),
+			'failed_retryable/running/threw/failure/refused' => array( 'failed_retryable', 'running', 'threw', 'failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'failed_retryable/running/threw/retry/written' => array( 'failed_retryable', 'running', 'threw', 'retry', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, $later, 100 ) ),
+			'failed_retryable/running/threw/retry/refused' => array( 'failed_retryable', 'running', 'threw', 'retry', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/running/threw/expired failure/written' => array( 'failed_retryable', 'running', 'threw', 'expired failure', false, $failed_expired ),
+			'failed_retryable/running/threw/expired failure/refused' => array( 'failed_retryable', 'running', 'threw', 'expired failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'failed_retryable/running/error/none/written' => array( 'failed_retryable', 'running', 'error', 'none', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, $later, 1 ) ),
+			'failed_retryable/running/error/none/refused' => array( 'failed_retryable', 'running', 'error', 'none', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/running/error/intent/written' => array( 'failed_retryable', 'running', 'error', 'intent', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, true, 1 ) ),
+			'failed_retryable/running/error/intent/refused' => array( 'failed_retryable', 'running', 'error', 'intent', true, array( 'failed_retryable', false, array(), false, null, true, null ) ),
+			'failed_retryable/running/error/failure/written' => array( 'failed_retryable', 'running', 'error', 'failure', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, $original, 1 ) ),
+			'failed_retryable/running/error/failure/refused' => array( 'failed_retryable', 'running', 'error', 'failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'failed_retryable/running/error/retry/written' => array( 'failed_retryable', 'running', 'error', 'retry', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, $later, 100 ) ),
+			'failed_retryable/running/error/retry/refused' => array( 'failed_retryable', 'running', 'error', 'retry', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/running/error/expired failure/written' => array( 'failed_retryable', 'running', 'error', 'expired failure', false, $failed_expired ),
+			'failed_retryable/running/error/expired failure/refused' => array( 'failed_retryable', 'running', 'error', 'expired failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'failed_retryable/running/unknown task/none/written' => array( 'failed_retryable', 'running', 'unknown task', 'none', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, $later, 1 ) ),
+			'failed_retryable/running/unknown task/none/refused' => array( 'failed_retryable', 'running', 'unknown task', 'none', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/running/unknown task/intent/written' => array( 'failed_retryable', 'running', 'unknown task', 'intent', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, true, 1 ) ),
+			'failed_retryable/running/unknown task/intent/refused' => array( 'failed_retryable', 'running', 'unknown task', 'intent', true, array( 'failed_retryable', false, array(), false, null, true, null ) ),
+			'failed_retryable/running/unknown task/failure/written' => array( 'failed_retryable', 'running', 'unknown task', 'failure', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, $original, 1 ) ),
+			'failed_retryable/running/unknown task/failure/refused' => array( 'failed_retryable', 'running', 'unknown task', 'failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'failed_retryable/running/unknown task/retry/written' => array( 'failed_retryable', 'running', 'unknown task', 'retry', false, array( 'failed_retryable', false, array( 'restore_task_cancel' ), false, null, $later, 100 ) ),
+			'failed_retryable/running/unknown task/retry/refused' => array( 'failed_retryable', 'running', 'unknown task', 'retry', true, array( 'failed_retryable', false, array(), false, null, $later, null ) ),
+			'failed_retryable/running/unknown task/expired failure/written' => array( 'failed_retryable', 'running', 'unknown task', 'expired failure', false, $failed_expired ),
+			'failed_retryable/running/unknown task/expired failure/refused' => array( 'failed_retryable', 'running', 'unknown task', 'expired failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'verifying//ok/none/written' => array( 'verifying', '', 'ok', 'none', false, $no_child_failure ),
+			'verifying//ok/none/refused' => array( 'verifying', '', 'ok', 'none', true, array( 'verifying', false, array(), false, null, null, null ) ),
+			'verifying//ok/intent/written' => array( 'verifying', '', 'ok', 'intent', false, array( 'verifying', true, array(), false, null, false, null ) ),
+			'verifying//ok/intent/refused' => array( 'verifying', '', 'ok', 'intent', true, array( 'verifying', true, array(), false, null, false, null ) ),
+			'verifying//ok/failure/written' => array( 'verifying', '', 'ok', 'failure', false, $no_child_original ),
+			'verifying//ok/failure/refused' => array( 'verifying', '', 'ok', 'failure', true, array( 'verifying', false, array(), false, null, null, null ) ),
+			'verifying//ok/retry/written' => array( 'verifying', '', 'ok', 'retry', false, $no_child_failure ),
+			'verifying//ok/retry/refused' => array( 'verifying', '', 'ok', 'retry', true, array( 'verifying', false, array(), false, null, null, null ) ),
+			'verifying//ok/expired failure/written' => array( 'verifying', '', 'ok', 'expired failure', false, $no_child_original ),
+			'verifying//ok/expired failure/refused' => array( 'verifying', '', 'ok', 'expired failure', true, array( 'verifying', false, array(), false, null, null, null ) ),
+			'verifying//failed/none/written' => array( 'verifying', '', 'failed', 'none', false, $no_child_failure ),
+			'verifying//failed/none/refused' => array( 'verifying', '', 'failed', 'none', true, array( 'verifying', false, array(), false, null, null, null ) ),
+			'verifying//failed/intent/written' => array( 'verifying', '', 'failed', 'intent', false, array( 'verifying', true, array(), false, null, false, null ) ),
+			'verifying//failed/intent/refused' => array( 'verifying', '', 'failed', 'intent', true, array( 'verifying', true, array(), false, null, false, null ) ),
+			'verifying//failed/failure/written' => array( 'verifying', '', 'failed', 'failure', false, $no_child_original ),
+			'verifying//failed/failure/refused' => array( 'verifying', '', 'failed', 'failure', true, array( 'verifying', false, array(), false, null, null, null ) ),
+			'verifying//failed/retry/written' => array( 'verifying', '', 'failed', 'retry', false, $no_child_failure ),
+			'verifying//failed/retry/refused' => array( 'verifying', '', 'failed', 'retry', true, array( 'verifying', false, array(), false, null, null, null ) ),
+			'verifying//failed/expired failure/written' => array( 'verifying', '', 'failed', 'expired failure', false, $no_child_original ),
+			'verifying//failed/expired failure/refused' => array( 'verifying', '', 'failed', 'expired failure', true, array( 'verifying', false, array(), false, null, null, null ) ),
+			'verifying//completed/none/written' => array( 'verifying', '', 'completed', 'none', false, $no_child_failure ),
+			'verifying//completed/none/refused' => array( 'verifying', '', 'completed', 'none', true, array( 'verifying', false, array(), false, null, null, null ) ),
+			'verifying//completed/intent/written' => array( 'verifying', '', 'completed', 'intent', false, array( 'verifying', true, array(), false, null, false, null ) ),
+			'verifying//completed/intent/refused' => array( 'verifying', '', 'completed', 'intent', true, array( 'verifying', true, array(), false, null, false, null ) ),
+			'verifying//completed/failure/written' => array( 'verifying', '', 'completed', 'failure', false, $no_child_original ),
+			'verifying//completed/failure/refused' => array( 'verifying', '', 'completed', 'failure', true, array( 'verifying', false, array(), false, null, null, null ) ),
+			'verifying//completed/retry/written' => array( 'verifying', '', 'completed', 'retry', false, $no_child_failure ),
+			'verifying//completed/retry/refused' => array( 'verifying', '', 'completed', 'retry', true, array( 'verifying', false, array(), false, null, null, null ) ),
+			'verifying//completed/expired failure/written' => array( 'verifying', '', 'completed', 'expired failure', false, $no_child_original ),
+			'verifying//completed/expired failure/refused' => array( 'verifying', '', 'completed', 'expired failure', true, array( 'verifying', false, array(), false, null, null, null ) ),
+			'verifying//busy/none/written' => array( 'verifying', '', 'busy', 'none', false, $no_child_failure ),
+			'verifying//busy/none/refused' => array( 'verifying', '', 'busy', 'none', true, array( 'verifying', false, array(), false, null, null, null ) ),
+			'verifying//busy/intent/written' => array( 'verifying', '', 'busy', 'intent', false, array( 'verifying', true, array(), false, null, false, null ) ),
+			'verifying//busy/intent/refused' => array( 'verifying', '', 'busy', 'intent', true, array( 'verifying', true, array(), false, null, false, null ) ),
+			'verifying//busy/failure/written' => array( 'verifying', '', 'busy', 'failure', false, $no_child_original ),
+			'verifying//busy/failure/refused' => array( 'verifying', '', 'busy', 'failure', true, array( 'verifying', false, array(), false, null, null, null ) ),
+			'verifying//busy/retry/written' => array( 'verifying', '', 'busy', 'retry', false, $no_child_failure ),
+			'verifying//busy/retry/refused' => array( 'verifying', '', 'busy', 'retry', true, array( 'verifying', false, array(), false, null, null, null ) ),
+			'verifying//busy/expired failure/written' => array( 'verifying', '', 'busy', 'expired failure', false, $no_child_original ),
+			'verifying//busy/expired failure/refused' => array( 'verifying', '', 'busy', 'expired failure', true, array( 'verifying', false, array(), false, null, null, null ) ),
+			'verifying//rolling_back/none/written' => array( 'verifying', '', 'rolling_back', 'none', false, $no_child_failure ),
+			'verifying//rolling_back/none/refused' => array( 'verifying', '', 'rolling_back', 'none', true, array( 'verifying', false, array(), false, null, null, null ) ),
+			'verifying//rolling_back/intent/written' => array( 'verifying', '', 'rolling_back', 'intent', false, array( 'verifying', true, array(), false, null, false, null ) ),
+			'verifying//rolling_back/intent/refused' => array( 'verifying', '', 'rolling_back', 'intent', true, array( 'verifying', true, array(), false, null, false, null ) ),
+			'verifying//rolling_back/failure/written' => array( 'verifying', '', 'rolling_back', 'failure', false, $no_child_original ),
+			'verifying//rolling_back/failure/refused' => array( 'verifying', '', 'rolling_back', 'failure', true, array( 'verifying', false, array(), false, null, null, null ) ),
+			'verifying//rolling_back/retry/written' => array( 'verifying', '', 'rolling_back', 'retry', false, $no_child_failure ),
+			'verifying//rolling_back/retry/refused' => array( 'verifying', '', 'rolling_back', 'retry', true, array( 'verifying', false, array(), false, null, null, null ) ),
+			'verifying//rolling_back/expired failure/written' => array( 'verifying', '', 'rolling_back', 'expired failure', false, $no_child_original ),
+			'verifying//rolling_back/expired failure/refused' => array( 'verifying', '', 'rolling_back', 'expired failure', true, array( 'verifying', false, array(), false, null, null, null ) ),
+			'verifying//threw/none/written' => array( 'verifying', '', 'threw', 'none', false, $no_child_failure ),
+			'verifying//threw/none/refused' => array( 'verifying', '', 'threw', 'none', true, array( 'verifying', false, array(), false, null, null, null ) ),
+			'verifying//threw/intent/written' => array( 'verifying', '', 'threw', 'intent', false, array( 'verifying', true, array(), false, null, false, null ) ),
+			'verifying//threw/intent/refused' => array( 'verifying', '', 'threw', 'intent', true, array( 'verifying', true, array(), false, null, false, null ) ),
+			'verifying//threw/failure/written' => array( 'verifying', '', 'threw', 'failure', false, $no_child_original ),
+			'verifying//threw/failure/refused' => array( 'verifying', '', 'threw', 'failure', true, array( 'verifying', false, array(), false, null, null, null ) ),
+			'verifying//threw/retry/written' => array( 'verifying', '', 'threw', 'retry', false, $no_child_failure ),
+			'verifying//threw/retry/refused' => array( 'verifying', '', 'threw', 'retry', true, array( 'verifying', false, array(), false, null, null, null ) ),
+			'verifying//threw/expired failure/written' => array( 'verifying', '', 'threw', 'expired failure', false, $no_child_original ),
+			'verifying//threw/expired failure/refused' => array( 'verifying', '', 'threw', 'expired failure', true, array( 'verifying', false, array(), false, null, null, null ) ),
+			'verifying//error/none/written' => array( 'verifying', '', 'error', 'none', false, $no_child_failure ),
+			'verifying//error/none/refused' => array( 'verifying', '', 'error', 'none', true, array( 'verifying', false, array(), false, null, null, null ) ),
+			'verifying//error/intent/written' => array( 'verifying', '', 'error', 'intent', false, array( 'verifying', true, array(), false, null, false, null ) ),
+			'verifying//error/intent/refused' => array( 'verifying', '', 'error', 'intent', true, array( 'verifying', true, array(), false, null, false, null ) ),
+			'verifying//error/failure/written' => array( 'verifying', '', 'error', 'failure', false, $no_child_original ),
+			'verifying//error/failure/refused' => array( 'verifying', '', 'error', 'failure', true, array( 'verifying', false, array(), false, null, null, null ) ),
+			'verifying//error/retry/written' => array( 'verifying', '', 'error', 'retry', false, $no_child_failure ),
+			'verifying//error/retry/refused' => array( 'verifying', '', 'error', 'retry', true, array( 'verifying', false, array(), false, null, null, null ) ),
+			'verifying//error/expired failure/written' => array( 'verifying', '', 'error', 'expired failure', false, $no_child_original ),
+			'verifying//error/expired failure/refused' => array( 'verifying', '', 'error', 'expired failure', true, array( 'verifying', false, array(), false, null, null, null ) ),
+			'verifying//unknown task/none/written' => array( 'verifying', '', 'unknown task', 'none', false, $no_child_failure ),
+			'verifying//unknown task/none/refused' => array( 'verifying', '', 'unknown task', 'none', true, array( 'verifying', false, array(), false, null, null, null ) ),
+			'verifying//unknown task/intent/written' => array( 'verifying', '', 'unknown task', 'intent', false, array( 'verifying', true, array(), false, null, false, null ) ),
+			'verifying//unknown task/intent/refused' => array( 'verifying', '', 'unknown task', 'intent', true, array( 'verifying', true, array(), false, null, false, null ) ),
+			'verifying//unknown task/failure/written' => array( 'verifying', '', 'unknown task', 'failure', false, $no_child_original ),
+			'verifying//unknown task/failure/refused' => array( 'verifying', '', 'unknown task', 'failure', true, array( 'verifying', false, array(), false, null, null, null ) ),
+			'verifying//unknown task/retry/written' => array( 'verifying', '', 'unknown task', 'retry', false, $no_child_failure ),
+			'verifying//unknown task/retry/refused' => array( 'verifying', '', 'unknown task', 'retry', true, array( 'verifying', false, array(), false, null, null, null ) ),
+			'verifying//unknown task/expired failure/written' => array( 'verifying', '', 'unknown task', 'expired failure', false, $no_child_original ),
+			'verifying//unknown task/expired failure/refused' => array( 'verifying', '', 'unknown task', 'expired failure', true, array( 'verifying', false, array(), false, null, null, null ) ),
+			'failed_retryable/verifying/ok/none/written' => array( 'failed_retryable', 'verifying', 'ok', 'none', false, $no_child_failure ),
+			'failed_retryable/verifying/ok/none/refused' => array( 'failed_retryable', 'verifying', 'ok', 'none', true, array( 'failed_retryable', false, array(), false, null, null, null ) ),
+			'failed_retryable/verifying/ok/intent/written' => array( 'failed_retryable', 'verifying', 'ok', 'intent', false, array( 'failed_retryable', true, array(), false, null, false, null ) ),
+			'failed_retryable/verifying/ok/intent/refused' => array( 'failed_retryable', 'verifying', 'ok', 'intent', true, array( 'failed_retryable', true, array(), false, null, false, null ) ),
+			'failed_retryable/verifying/ok/failure/written' => array( 'failed_retryable', 'verifying', 'ok', 'failure', false, $no_child_original ),
+			'failed_retryable/verifying/ok/failure/refused' => array( 'failed_retryable', 'verifying', 'ok', 'failure', true, array( 'failed_retryable', false, array(), false, null, null, null ) ),
+			'failed_retryable/verifying/ok/retry/written' => array( 'failed_retryable', 'verifying', 'ok', 'retry', false, $no_child_failure ),
+			'failed_retryable/verifying/ok/retry/refused' => array( 'failed_retryable', 'verifying', 'ok', 'retry', true, array( 'failed_retryable', false, array(), false, null, null, null ) ),
+			'failed_retryable/verifying/ok/expired failure/written' => array( 'failed_retryable', 'verifying', 'ok', 'expired failure', false, $no_child_original ),
+			'failed_retryable/verifying/ok/expired failure/refused' => array( 'failed_retryable', 'verifying', 'ok', 'expired failure', true, array( 'failed_retryable', false, array(), false, null, null, null ) ),
+			'failed_retryable/verifying/failed/none/written' => array( 'failed_retryable', 'verifying', 'failed', 'none', false, $no_child_failure ),
+			'failed_retryable/verifying/failed/none/refused' => array( 'failed_retryable', 'verifying', 'failed', 'none', true, array( 'failed_retryable', false, array(), false, null, null, null ) ),
+			'failed_retryable/verifying/failed/intent/written' => array( 'failed_retryable', 'verifying', 'failed', 'intent', false, array( 'failed_retryable', true, array(), false, null, false, null ) ),
+			'failed_retryable/verifying/failed/intent/refused' => array( 'failed_retryable', 'verifying', 'failed', 'intent', true, array( 'failed_retryable', true, array(), false, null, false, null ) ),
+			'failed_retryable/verifying/failed/failure/written' => array( 'failed_retryable', 'verifying', 'failed', 'failure', false, $no_child_original ),
+			'failed_retryable/verifying/failed/failure/refused' => array( 'failed_retryable', 'verifying', 'failed', 'failure', true, array( 'failed_retryable', false, array(), false, null, null, null ) ),
+			'failed_retryable/verifying/failed/retry/written' => array( 'failed_retryable', 'verifying', 'failed', 'retry', false, $no_child_failure ),
+			'failed_retryable/verifying/failed/retry/refused' => array( 'failed_retryable', 'verifying', 'failed', 'retry', true, array( 'failed_retryable', false, array(), false, null, null, null ) ),
+			'failed_retryable/verifying/failed/expired failure/written' => array( 'failed_retryable', 'verifying', 'failed', 'expired failure', false, $no_child_original ),
+			'failed_retryable/verifying/failed/expired failure/refused' => array( 'failed_retryable', 'verifying', 'failed', 'expired failure', true, array( 'failed_retryable', false, array(), false, null, null, null ) ),
+			'failed_retryable/verifying/completed/none/written' => array( 'failed_retryable', 'verifying', 'completed', 'none', false, $no_child_failure ),
+			'failed_retryable/verifying/completed/none/refused' => array( 'failed_retryable', 'verifying', 'completed', 'none', true, array( 'failed_retryable', false, array(), false, null, null, null ) ),
+			'failed_retryable/verifying/completed/intent/written' => array( 'failed_retryable', 'verifying', 'completed', 'intent', false, array( 'failed_retryable', true, array(), false, null, false, null ) ),
+			'failed_retryable/verifying/completed/intent/refused' => array( 'failed_retryable', 'verifying', 'completed', 'intent', true, array( 'failed_retryable', true, array(), false, null, false, null ) ),
+			'failed_retryable/verifying/completed/failure/written' => array( 'failed_retryable', 'verifying', 'completed', 'failure', false, $no_child_original ),
+			'failed_retryable/verifying/completed/failure/refused' => array( 'failed_retryable', 'verifying', 'completed', 'failure', true, array( 'failed_retryable', false, array(), false, null, null, null ) ),
+			'failed_retryable/verifying/completed/retry/written' => array( 'failed_retryable', 'verifying', 'completed', 'retry', false, $no_child_failure ),
+			'failed_retryable/verifying/completed/retry/refused' => array( 'failed_retryable', 'verifying', 'completed', 'retry', true, array( 'failed_retryable', false, array(), false, null, null, null ) ),
+			'failed_retryable/verifying/completed/expired failure/written' => array( 'failed_retryable', 'verifying', 'completed', 'expired failure', false, $no_child_original ),
+			'failed_retryable/verifying/completed/expired failure/refused' => array( 'failed_retryable', 'verifying', 'completed', 'expired failure', true, array( 'failed_retryable', false, array(), false, null, null, null ) ),
+			'failed_retryable/verifying/busy/none/written' => array( 'failed_retryable', 'verifying', 'busy', 'none', false, $no_child_failure ),
+			'failed_retryable/verifying/busy/none/refused' => array( 'failed_retryable', 'verifying', 'busy', 'none', true, array( 'failed_retryable', false, array(), false, null, null, null ) ),
+			'failed_retryable/verifying/busy/intent/written' => array( 'failed_retryable', 'verifying', 'busy', 'intent', false, array( 'failed_retryable', true, array(), false, null, false, null ) ),
+			'failed_retryable/verifying/busy/intent/refused' => array( 'failed_retryable', 'verifying', 'busy', 'intent', true, array( 'failed_retryable', true, array(), false, null, false, null ) ),
+			'failed_retryable/verifying/busy/failure/written' => array( 'failed_retryable', 'verifying', 'busy', 'failure', false, $no_child_original ),
+			'failed_retryable/verifying/busy/failure/refused' => array( 'failed_retryable', 'verifying', 'busy', 'failure', true, array( 'failed_retryable', false, array(), false, null, null, null ) ),
+			'failed_retryable/verifying/busy/retry/written' => array( 'failed_retryable', 'verifying', 'busy', 'retry', false, $no_child_failure ),
+			'failed_retryable/verifying/busy/retry/refused' => array( 'failed_retryable', 'verifying', 'busy', 'retry', true, array( 'failed_retryable', false, array(), false, null, null, null ) ),
+			'failed_retryable/verifying/busy/expired failure/written' => array( 'failed_retryable', 'verifying', 'busy', 'expired failure', false, $no_child_original ),
+			'failed_retryable/verifying/busy/expired failure/refused' => array( 'failed_retryable', 'verifying', 'busy', 'expired failure', true, array( 'failed_retryable', false, array(), false, null, null, null ) ),
+			'failed_retryable/verifying/rolling_back/none/written' => array( 'failed_retryable', 'verifying', 'rolling_back', 'none', false, $no_child_failure ),
+			'failed_retryable/verifying/rolling_back/none/refused' => array( 'failed_retryable', 'verifying', 'rolling_back', 'none', true, array( 'failed_retryable', false, array(), false, null, null, null ) ),
+			'failed_retryable/verifying/rolling_back/intent/written' => array( 'failed_retryable', 'verifying', 'rolling_back', 'intent', false, array( 'failed_retryable', true, array(), false, null, false, null ) ),
+			'failed_retryable/verifying/rolling_back/intent/refused' => array( 'failed_retryable', 'verifying', 'rolling_back', 'intent', true, array( 'failed_retryable', true, array(), false, null, false, null ) ),
+			'failed_retryable/verifying/rolling_back/failure/written' => array( 'failed_retryable', 'verifying', 'rolling_back', 'failure', false, $no_child_original ),
+			'failed_retryable/verifying/rolling_back/failure/refused' => array( 'failed_retryable', 'verifying', 'rolling_back', 'failure', true, array( 'failed_retryable', false, array(), false, null, null, null ) ),
+			'failed_retryable/verifying/rolling_back/retry/written' => array( 'failed_retryable', 'verifying', 'rolling_back', 'retry', false, $no_child_failure ),
+			'failed_retryable/verifying/rolling_back/retry/refused' => array( 'failed_retryable', 'verifying', 'rolling_back', 'retry', true, array( 'failed_retryable', false, array(), false, null, null, null ) ),
+			'failed_retryable/verifying/rolling_back/expired failure/written' => array( 'failed_retryable', 'verifying', 'rolling_back', 'expired failure', false, $no_child_original ),
+			'failed_retryable/verifying/rolling_back/expired failure/refused' => array( 'failed_retryable', 'verifying', 'rolling_back', 'expired failure', true, array( 'failed_retryable', false, array(), false, null, null, null ) ),
+			'failed_retryable/verifying/threw/none/written' => array( 'failed_retryable', 'verifying', 'threw', 'none', false, $no_child_failure ),
+			'failed_retryable/verifying/threw/none/refused' => array( 'failed_retryable', 'verifying', 'threw', 'none', true, array( 'failed_retryable', false, array(), false, null, null, null ) ),
+			'failed_retryable/verifying/threw/intent/written' => array( 'failed_retryable', 'verifying', 'threw', 'intent', false, array( 'failed_retryable', true, array(), false, null, false, null ) ),
+			'failed_retryable/verifying/threw/intent/refused' => array( 'failed_retryable', 'verifying', 'threw', 'intent', true, array( 'failed_retryable', true, array(), false, null, false, null ) ),
+			'failed_retryable/verifying/threw/failure/written' => array( 'failed_retryable', 'verifying', 'threw', 'failure', false, $no_child_original ),
+			'failed_retryable/verifying/threw/failure/refused' => array( 'failed_retryable', 'verifying', 'threw', 'failure', true, array( 'failed_retryable', false, array(), false, null, null, null ) ),
+			'failed_retryable/verifying/threw/retry/written' => array( 'failed_retryable', 'verifying', 'threw', 'retry', false, $no_child_failure ),
+			'failed_retryable/verifying/threw/retry/refused' => array( 'failed_retryable', 'verifying', 'threw', 'retry', true, array( 'failed_retryable', false, array(), false, null, null, null ) ),
+			'failed_retryable/verifying/threw/expired failure/written' => array( 'failed_retryable', 'verifying', 'threw', 'expired failure', false, $no_child_original ),
+			'failed_retryable/verifying/threw/expired failure/refused' => array( 'failed_retryable', 'verifying', 'threw', 'expired failure', true, array( 'failed_retryable', false, array(), false, null, null, null ) ),
+			'failed_retryable/verifying/error/none/written' => array( 'failed_retryable', 'verifying', 'error', 'none', false, $no_child_failure ),
+			'failed_retryable/verifying/error/none/refused' => array( 'failed_retryable', 'verifying', 'error', 'none', true, array( 'failed_retryable', false, array(), false, null, null, null ) ),
+			'failed_retryable/verifying/error/intent/written' => array( 'failed_retryable', 'verifying', 'error', 'intent', false, array( 'failed_retryable', true, array(), false, null, false, null ) ),
+			'failed_retryable/verifying/error/intent/refused' => array( 'failed_retryable', 'verifying', 'error', 'intent', true, array( 'failed_retryable', true, array(), false, null, false, null ) ),
+			'failed_retryable/verifying/error/failure/written' => array( 'failed_retryable', 'verifying', 'error', 'failure', false, $no_child_original ),
+			'failed_retryable/verifying/error/failure/refused' => array( 'failed_retryable', 'verifying', 'error', 'failure', true, array( 'failed_retryable', false, array(), false, null, null, null ) ),
+			'failed_retryable/verifying/error/retry/written' => array( 'failed_retryable', 'verifying', 'error', 'retry', false, $no_child_failure ),
+			'failed_retryable/verifying/error/retry/refused' => array( 'failed_retryable', 'verifying', 'error', 'retry', true, array( 'failed_retryable', false, array(), false, null, null, null ) ),
+			'failed_retryable/verifying/error/expired failure/written' => array( 'failed_retryable', 'verifying', 'error', 'expired failure', false, $no_child_original ),
+			'failed_retryable/verifying/error/expired failure/refused' => array( 'failed_retryable', 'verifying', 'error', 'expired failure', true, array( 'failed_retryable', false, array(), false, null, null, null ) ),
+			'failed_retryable/verifying/unknown task/none/written' => array( 'failed_retryable', 'verifying', 'unknown task', 'none', false, $no_child_failure ),
+			'failed_retryable/verifying/unknown task/none/refused' => array( 'failed_retryable', 'verifying', 'unknown task', 'none', true, array( 'failed_retryable', false, array(), false, null, null, null ) ),
+			'failed_retryable/verifying/unknown task/intent/written' => array( 'failed_retryable', 'verifying', 'unknown task', 'intent', false, array( 'failed_retryable', true, array(), false, null, false, null ) ),
+			'failed_retryable/verifying/unknown task/intent/refused' => array( 'failed_retryable', 'verifying', 'unknown task', 'intent', true, array( 'failed_retryable', true, array(), false, null, false, null ) ),
+			'failed_retryable/verifying/unknown task/failure/written' => array( 'failed_retryable', 'verifying', 'unknown task', 'failure', false, $no_child_original ),
+			'failed_retryable/verifying/unknown task/failure/refused' => array( 'failed_retryable', 'verifying', 'unknown task', 'failure', true, array( 'failed_retryable', false, array(), false, null, null, null ) ),
+			'failed_retryable/verifying/unknown task/retry/written' => array( 'failed_retryable', 'verifying', 'unknown task', 'retry', false, $no_child_failure ),
+			'failed_retryable/verifying/unknown task/retry/refused' => array( 'failed_retryable', 'verifying', 'unknown task', 'retry', true, array( 'failed_retryable', false, array(), false, null, null, null ) ),
+			'failed_retryable/verifying/unknown task/expired failure/written' => array( 'failed_retryable', 'verifying', 'unknown task', 'expired failure', false, $no_child_original ),
+			'failed_retryable/verifying/unknown task/expired failure/refused' => array( 'failed_retryable', 'verifying', 'unknown task', 'expired failure', true, array( 'failed_retryable', false, array(), false, null, null, null ) ),
+			'completed//ok/none/written' => array( 'completed', '', 'ok', 'none', false, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//ok/none/refused' => array( 'completed', '', 'ok', 'none', true, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//ok/intent/written' => array( 'completed', '', 'ok', 'intent', false, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//ok/intent/refused' => array( 'completed', '', 'ok', 'intent', true, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//ok/failure/written' => array( 'completed', '', 'ok', 'failure', false, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//ok/failure/refused' => array( 'completed', '', 'ok', 'failure', true, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//ok/retry/written' => array( 'completed', '', 'ok', 'retry', false, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//ok/retry/refused' => array( 'completed', '', 'ok', 'retry', true, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//ok/expired failure/written' => array( 'completed', '', 'ok', 'expired failure', false, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//ok/expired failure/refused' => array( 'completed', '', 'ok', 'expired failure', true, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//failed/none/written' => array( 'completed', '', 'failed', 'none', false, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//failed/none/refused' => array( 'completed', '', 'failed', 'none', true, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//failed/intent/written' => array( 'completed', '', 'failed', 'intent', false, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//failed/intent/refused' => array( 'completed', '', 'failed', 'intent', true, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//failed/failure/written' => array( 'completed', '', 'failed', 'failure', false, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//failed/failure/refused' => array( 'completed', '', 'failed', 'failure', true, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//failed/retry/written' => array( 'completed', '', 'failed', 'retry', false, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//failed/retry/refused' => array( 'completed', '', 'failed', 'retry', true, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//failed/expired failure/written' => array( 'completed', '', 'failed', 'expired failure', false, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//failed/expired failure/refused' => array( 'completed', '', 'failed', 'expired failure', true, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//completed/none/written' => array( 'completed', '', 'completed', 'none', false, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//completed/none/refused' => array( 'completed', '', 'completed', 'none', true, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//completed/intent/written' => array( 'completed', '', 'completed', 'intent', false, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//completed/intent/refused' => array( 'completed', '', 'completed', 'intent', true, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//completed/failure/written' => array( 'completed', '', 'completed', 'failure', false, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//completed/failure/refused' => array( 'completed', '', 'completed', 'failure', true, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//completed/retry/written' => array( 'completed', '', 'completed', 'retry', false, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//completed/retry/refused' => array( 'completed', '', 'completed', 'retry', true, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//completed/expired failure/written' => array( 'completed', '', 'completed', 'expired failure', false, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//completed/expired failure/refused' => array( 'completed', '', 'completed', 'expired failure', true, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//busy/none/written' => array( 'completed', '', 'busy', 'none', false, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//busy/none/refused' => array( 'completed', '', 'busy', 'none', true, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//busy/intent/written' => array( 'completed', '', 'busy', 'intent', false, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//busy/intent/refused' => array( 'completed', '', 'busy', 'intent', true, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//busy/failure/written' => array( 'completed', '', 'busy', 'failure', false, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//busy/failure/refused' => array( 'completed', '', 'busy', 'failure', true, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//busy/retry/written' => array( 'completed', '', 'busy', 'retry', false, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//busy/retry/refused' => array( 'completed', '', 'busy', 'retry', true, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//busy/expired failure/written' => array( 'completed', '', 'busy', 'expired failure', false, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//busy/expired failure/refused' => array( 'completed', '', 'busy', 'expired failure', true, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//rolling_back/none/written' => array( 'completed', '', 'rolling_back', 'none', false, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//rolling_back/none/refused' => array( 'completed', '', 'rolling_back', 'none', true, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//rolling_back/intent/written' => array( 'completed', '', 'rolling_back', 'intent', false, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//rolling_back/intent/refused' => array( 'completed', '', 'rolling_back', 'intent', true, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//rolling_back/failure/written' => array( 'completed', '', 'rolling_back', 'failure', false, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//rolling_back/failure/refused' => array( 'completed', '', 'rolling_back', 'failure', true, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//rolling_back/retry/written' => array( 'completed', '', 'rolling_back', 'retry', false, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//rolling_back/retry/refused' => array( 'completed', '', 'rolling_back', 'retry', true, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//rolling_back/expired failure/written' => array( 'completed', '', 'rolling_back', 'expired failure', false, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//rolling_back/expired failure/refused' => array( 'completed', '', 'rolling_back', 'expired failure', true, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//threw/none/written' => array( 'completed', '', 'threw', 'none', false, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//threw/none/refused' => array( 'completed', '', 'threw', 'none', true, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//threw/intent/written' => array( 'completed', '', 'threw', 'intent', false, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//threw/intent/refused' => array( 'completed', '', 'threw', 'intent', true, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//threw/failure/written' => array( 'completed', '', 'threw', 'failure', false, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//threw/failure/refused' => array( 'completed', '', 'threw', 'failure', true, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//threw/retry/written' => array( 'completed', '', 'threw', 'retry', false, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//threw/retry/refused' => array( 'completed', '', 'threw', 'retry', true, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//threw/expired failure/written' => array( 'completed', '', 'threw', 'expired failure', false, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//threw/expired failure/refused' => array( 'completed', '', 'threw', 'expired failure', true, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//error/none/written' => array( 'completed', '', 'error', 'none', false, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//error/none/refused' => array( 'completed', '', 'error', 'none', true, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//error/intent/written' => array( 'completed', '', 'error', 'intent', false, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//error/intent/refused' => array( 'completed', '', 'error', 'intent', true, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//error/failure/written' => array( 'completed', '', 'error', 'failure', false, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//error/failure/refused' => array( 'completed', '', 'error', 'failure', true, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//error/retry/written' => array( 'completed', '', 'error', 'retry', false, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//error/retry/refused' => array( 'completed', '', 'error', 'retry', true, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//error/expired failure/written' => array( 'completed', '', 'error', 'expired failure', false, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//error/expired failure/refused' => array( 'completed', '', 'error', 'expired failure', true, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//unknown task/none/written' => array( 'completed', '', 'unknown task', 'none', false, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//unknown task/none/refused' => array( 'completed', '', 'unknown task', 'none', true, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//unknown task/intent/written' => array( 'completed', '', 'unknown task', 'intent', false, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//unknown task/intent/refused' => array( 'completed', '', 'unknown task', 'intent', true, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//unknown task/failure/written' => array( 'completed', '', 'unknown task', 'failure', false, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//unknown task/failure/refused' => array( 'completed', '', 'unknown task', 'failure', true, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//unknown task/retry/written' => array( 'completed', '', 'unknown task', 'retry', false, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//unknown task/retry/refused' => array( 'completed', '', 'unknown task', 'retry', true, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//unknown task/expired failure/written' => array( 'completed', '', 'unknown task', 'expired failure', false, array( 'completed', false, array(), false, null, null, null ) ),
+			'completed//unknown task/expired failure/refused' => array( 'completed', '', 'unknown task', 'expired failure', true, array( 'completed', false, array(), false, null, null, null ) ),
+			'failed_permanent//ok/none/written' => array( 'failed_permanent', '', 'ok', 'none', false, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//ok/none/refused' => array( 'failed_permanent', '', 'ok', 'none', true, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//ok/intent/written' => array( 'failed_permanent', '', 'ok', 'intent', false, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//ok/intent/refused' => array( 'failed_permanent', '', 'ok', 'intent', true, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//ok/failure/written' => array( 'failed_permanent', '', 'ok', 'failure', false, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//ok/failure/refused' => array( 'failed_permanent', '', 'ok', 'failure', true, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//ok/retry/written' => array( 'failed_permanent', '', 'ok', 'retry', false, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//ok/retry/refused' => array( 'failed_permanent', '', 'ok', 'retry', true, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//ok/expired failure/written' => array( 'failed_permanent', '', 'ok', 'expired failure', false, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//ok/expired failure/refused' => array( 'failed_permanent', '', 'ok', 'expired failure', true, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//failed/none/written' => array( 'failed_permanent', '', 'failed', 'none', false, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//failed/none/refused' => array( 'failed_permanent', '', 'failed', 'none', true, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//failed/intent/written' => array( 'failed_permanent', '', 'failed', 'intent', false, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//failed/intent/refused' => array( 'failed_permanent', '', 'failed', 'intent', true, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//failed/failure/written' => array( 'failed_permanent', '', 'failed', 'failure', false, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//failed/failure/refused' => array( 'failed_permanent', '', 'failed', 'failure', true, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//failed/retry/written' => array( 'failed_permanent', '', 'failed', 'retry', false, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//failed/retry/refused' => array( 'failed_permanent', '', 'failed', 'retry', true, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//failed/expired failure/written' => array( 'failed_permanent', '', 'failed', 'expired failure', false, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//failed/expired failure/refused' => array( 'failed_permanent', '', 'failed', 'expired failure', true, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//completed/none/written' => array( 'failed_permanent', '', 'completed', 'none', false, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//completed/none/refused' => array( 'failed_permanent', '', 'completed', 'none', true, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//completed/intent/written' => array( 'failed_permanent', '', 'completed', 'intent', false, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//completed/intent/refused' => array( 'failed_permanent', '', 'completed', 'intent', true, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//completed/failure/written' => array( 'failed_permanent', '', 'completed', 'failure', false, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//completed/failure/refused' => array( 'failed_permanent', '', 'completed', 'failure', true, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//completed/retry/written' => array( 'failed_permanent', '', 'completed', 'retry', false, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//completed/retry/refused' => array( 'failed_permanent', '', 'completed', 'retry', true, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//completed/expired failure/written' => array( 'failed_permanent', '', 'completed', 'expired failure', false, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//completed/expired failure/refused' => array( 'failed_permanent', '', 'completed', 'expired failure', true, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//busy/none/written' => array( 'failed_permanent', '', 'busy', 'none', false, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//busy/none/refused' => array( 'failed_permanent', '', 'busy', 'none', true, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//busy/intent/written' => array( 'failed_permanent', '', 'busy', 'intent', false, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//busy/intent/refused' => array( 'failed_permanent', '', 'busy', 'intent', true, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//busy/failure/written' => array( 'failed_permanent', '', 'busy', 'failure', false, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//busy/failure/refused' => array( 'failed_permanent', '', 'busy', 'failure', true, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//busy/retry/written' => array( 'failed_permanent', '', 'busy', 'retry', false, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//busy/retry/refused' => array( 'failed_permanent', '', 'busy', 'retry', true, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//busy/expired failure/written' => array( 'failed_permanent', '', 'busy', 'expired failure', false, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//busy/expired failure/refused' => array( 'failed_permanent', '', 'busy', 'expired failure', true, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//rolling_back/none/written' => array( 'failed_permanent', '', 'rolling_back', 'none', false, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//rolling_back/none/refused' => array( 'failed_permanent', '', 'rolling_back', 'none', true, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//rolling_back/intent/written' => array( 'failed_permanent', '', 'rolling_back', 'intent', false, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//rolling_back/intent/refused' => array( 'failed_permanent', '', 'rolling_back', 'intent', true, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//rolling_back/failure/written' => array( 'failed_permanent', '', 'rolling_back', 'failure', false, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//rolling_back/failure/refused' => array( 'failed_permanent', '', 'rolling_back', 'failure', true, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//rolling_back/retry/written' => array( 'failed_permanent', '', 'rolling_back', 'retry', false, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//rolling_back/retry/refused' => array( 'failed_permanent', '', 'rolling_back', 'retry', true, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//rolling_back/expired failure/written' => array( 'failed_permanent', '', 'rolling_back', 'expired failure', false, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//rolling_back/expired failure/refused' => array( 'failed_permanent', '', 'rolling_back', 'expired failure', true, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//threw/none/written' => array( 'failed_permanent', '', 'threw', 'none', false, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//threw/none/refused' => array( 'failed_permanent', '', 'threw', 'none', true, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//threw/intent/written' => array( 'failed_permanent', '', 'threw', 'intent', false, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//threw/intent/refused' => array( 'failed_permanent', '', 'threw', 'intent', true, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//threw/failure/written' => array( 'failed_permanent', '', 'threw', 'failure', false, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//threw/failure/refused' => array( 'failed_permanent', '', 'threw', 'failure', true, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//threw/retry/written' => array( 'failed_permanent', '', 'threw', 'retry', false, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//threw/retry/refused' => array( 'failed_permanent', '', 'threw', 'retry', true, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//threw/expired failure/written' => array( 'failed_permanent', '', 'threw', 'expired failure', false, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//threw/expired failure/refused' => array( 'failed_permanent', '', 'threw', 'expired failure', true, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//error/none/written' => array( 'failed_permanent', '', 'error', 'none', false, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//error/none/refused' => array( 'failed_permanent', '', 'error', 'none', true, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//error/intent/written' => array( 'failed_permanent', '', 'error', 'intent', false, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//error/intent/refused' => array( 'failed_permanent', '', 'error', 'intent', true, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//error/failure/written' => array( 'failed_permanent', '', 'error', 'failure', false, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//error/failure/refused' => array( 'failed_permanent', '', 'error', 'failure', true, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//error/retry/written' => array( 'failed_permanent', '', 'error', 'retry', false, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//error/retry/refused' => array( 'failed_permanent', '', 'error', 'retry', true, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//error/expired failure/written' => array( 'failed_permanent', '', 'error', 'expired failure', false, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//error/expired failure/refused' => array( 'failed_permanent', '', 'error', 'expired failure', true, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//unknown task/none/written' => array( 'failed_permanent', '', 'unknown task', 'none', false, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//unknown task/none/refused' => array( 'failed_permanent', '', 'unknown task', 'none', true, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//unknown task/intent/written' => array( 'failed_permanent', '', 'unknown task', 'intent', false, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//unknown task/intent/refused' => array( 'failed_permanent', '', 'unknown task', 'intent', true, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//unknown task/failure/written' => array( 'failed_permanent', '', 'unknown task', 'failure', false, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//unknown task/failure/refused' => array( 'failed_permanent', '', 'unknown task', 'failure', true, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//unknown task/retry/written' => array( 'failed_permanent', '', 'unknown task', 'retry', false, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//unknown task/retry/refused' => array( 'failed_permanent', '', 'unknown task', 'retry', true, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//unknown task/expired failure/written' => array( 'failed_permanent', '', 'unknown task', 'expired failure', false, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'failed_permanent//unknown task/expired failure/refused' => array( 'failed_permanent', '', 'unknown task', 'expired failure', true, array( 'failed_permanent', false, array(), false, null, null, null ) ),
+			'cancelled//ok/none/written' => array( 'cancelled', '', 'ok', 'none', false, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//ok/none/refused' => array( 'cancelled', '', 'ok', 'none', true, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//ok/intent/written' => array( 'cancelled', '', 'ok', 'intent', false, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//ok/intent/refused' => array( 'cancelled', '', 'ok', 'intent', true, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//ok/failure/written' => array( 'cancelled', '', 'ok', 'failure', false, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//ok/failure/refused' => array( 'cancelled', '', 'ok', 'failure', true, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//ok/retry/written' => array( 'cancelled', '', 'ok', 'retry', false, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//ok/retry/refused' => array( 'cancelled', '', 'ok', 'retry', true, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//ok/expired failure/written' => array( 'cancelled', '', 'ok', 'expired failure', false, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//ok/expired failure/refused' => array( 'cancelled', '', 'ok', 'expired failure', true, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//failed/none/written' => array( 'cancelled', '', 'failed', 'none', false, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//failed/none/refused' => array( 'cancelled', '', 'failed', 'none', true, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//failed/intent/written' => array( 'cancelled', '', 'failed', 'intent', false, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//failed/intent/refused' => array( 'cancelled', '', 'failed', 'intent', true, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//failed/failure/written' => array( 'cancelled', '', 'failed', 'failure', false, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//failed/failure/refused' => array( 'cancelled', '', 'failed', 'failure', true, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//failed/retry/written' => array( 'cancelled', '', 'failed', 'retry', false, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//failed/retry/refused' => array( 'cancelled', '', 'failed', 'retry', true, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//failed/expired failure/written' => array( 'cancelled', '', 'failed', 'expired failure', false, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//failed/expired failure/refused' => array( 'cancelled', '', 'failed', 'expired failure', true, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//completed/none/written' => array( 'cancelled', '', 'completed', 'none', false, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//completed/none/refused' => array( 'cancelled', '', 'completed', 'none', true, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//completed/intent/written' => array( 'cancelled', '', 'completed', 'intent', false, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//completed/intent/refused' => array( 'cancelled', '', 'completed', 'intent', true, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//completed/failure/written' => array( 'cancelled', '', 'completed', 'failure', false, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//completed/failure/refused' => array( 'cancelled', '', 'completed', 'failure', true, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//completed/retry/written' => array( 'cancelled', '', 'completed', 'retry', false, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//completed/retry/refused' => array( 'cancelled', '', 'completed', 'retry', true, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//completed/expired failure/written' => array( 'cancelled', '', 'completed', 'expired failure', false, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//completed/expired failure/refused' => array( 'cancelled', '', 'completed', 'expired failure', true, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//busy/none/written' => array( 'cancelled', '', 'busy', 'none', false, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//busy/none/refused' => array( 'cancelled', '', 'busy', 'none', true, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//busy/intent/written' => array( 'cancelled', '', 'busy', 'intent', false, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//busy/intent/refused' => array( 'cancelled', '', 'busy', 'intent', true, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//busy/failure/written' => array( 'cancelled', '', 'busy', 'failure', false, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//busy/failure/refused' => array( 'cancelled', '', 'busy', 'failure', true, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//busy/retry/written' => array( 'cancelled', '', 'busy', 'retry', false, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//busy/retry/refused' => array( 'cancelled', '', 'busy', 'retry', true, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//busy/expired failure/written' => array( 'cancelled', '', 'busy', 'expired failure', false, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//busy/expired failure/refused' => array( 'cancelled', '', 'busy', 'expired failure', true, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//rolling_back/none/written' => array( 'cancelled', '', 'rolling_back', 'none', false, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//rolling_back/none/refused' => array( 'cancelled', '', 'rolling_back', 'none', true, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//rolling_back/intent/written' => array( 'cancelled', '', 'rolling_back', 'intent', false, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//rolling_back/intent/refused' => array( 'cancelled', '', 'rolling_back', 'intent', true, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//rolling_back/failure/written' => array( 'cancelled', '', 'rolling_back', 'failure', false, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//rolling_back/failure/refused' => array( 'cancelled', '', 'rolling_back', 'failure', true, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//rolling_back/retry/written' => array( 'cancelled', '', 'rolling_back', 'retry', false, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//rolling_back/retry/refused' => array( 'cancelled', '', 'rolling_back', 'retry', true, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//rolling_back/expired failure/written' => array( 'cancelled', '', 'rolling_back', 'expired failure', false, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//rolling_back/expired failure/refused' => array( 'cancelled', '', 'rolling_back', 'expired failure', true, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//threw/none/written' => array( 'cancelled', '', 'threw', 'none', false, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//threw/none/refused' => array( 'cancelled', '', 'threw', 'none', true, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//threw/intent/written' => array( 'cancelled', '', 'threw', 'intent', false, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//threw/intent/refused' => array( 'cancelled', '', 'threw', 'intent', true, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//threw/failure/written' => array( 'cancelled', '', 'threw', 'failure', false, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//threw/failure/refused' => array( 'cancelled', '', 'threw', 'failure', true, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//threw/retry/written' => array( 'cancelled', '', 'threw', 'retry', false, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//threw/retry/refused' => array( 'cancelled', '', 'threw', 'retry', true, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//threw/expired failure/written' => array( 'cancelled', '', 'threw', 'expired failure', false, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//threw/expired failure/refused' => array( 'cancelled', '', 'threw', 'expired failure', true, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//error/none/written' => array( 'cancelled', '', 'error', 'none', false, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//error/none/refused' => array( 'cancelled', '', 'error', 'none', true, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//error/intent/written' => array( 'cancelled', '', 'error', 'intent', false, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//error/intent/refused' => array( 'cancelled', '', 'error', 'intent', true, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//error/failure/written' => array( 'cancelled', '', 'error', 'failure', false, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//error/failure/refused' => array( 'cancelled', '', 'error', 'failure', true, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//error/retry/written' => array( 'cancelled', '', 'error', 'retry', false, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//error/retry/refused' => array( 'cancelled', '', 'error', 'retry', true, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//error/expired failure/written' => array( 'cancelled', '', 'error', 'expired failure', false, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//error/expired failure/refused' => array( 'cancelled', '', 'error', 'expired failure', true, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//unknown task/none/written' => array( 'cancelled', '', 'unknown task', 'none', false, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//unknown task/none/refused' => array( 'cancelled', '', 'unknown task', 'none', true, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//unknown task/intent/written' => array( 'cancelled', '', 'unknown task', 'intent', false, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//unknown task/intent/refused' => array( 'cancelled', '', 'unknown task', 'intent', true, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//unknown task/failure/written' => array( 'cancelled', '', 'unknown task', 'failure', false, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//unknown task/failure/refused' => array( 'cancelled', '', 'unknown task', 'failure', true, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//unknown task/retry/written' => array( 'cancelled', '', 'unknown task', 'retry', false, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//unknown task/retry/refused' => array( 'cancelled', '', 'unknown task', 'retry', true, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//unknown task/expired failure/written' => array( 'cancelled', '', 'unknown task', 'expired failure', false, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'cancelled//unknown task/expired failure/refused' => array( 'cancelled', '', 'unknown task', 'expired failure', true, array( 'cancelled', false, array(), false, null, null, null ) ),
+			'pending//failure without probe' => array( 'pending', '', 'threw', 'none', false, $no_child_failure ),
+			'pending//stored failure without probe' => array( 'pending', '', 'completed', 'failure', false, $no_child_original ),
+			'pending//intent without probe' => array( 'pending', '', 'threw', 'intent', false, array( 'pending', true, array(), false, null, false, null ) ),
+			'preflight//failure without probe' => array( 'preflight', '', 'threw', 'none', false, $no_child_failure ),
+			'preflight//stored failure without probe' => array( 'preflight', '', 'completed', 'failure', false, $no_child_original ),
+			'preflight//intent without probe' => array( 'preflight', '', 'threw', 'intent', false, array( 'preflight', true, array(), false, null, false, null ) ),
+			'pre_snapshot//failure without probe' => array( 'pre_snapshot', '', 'threw', 'none', false, $no_child_failure ),
+			'pre_snapshot//stored failure without probe' => array( 'pre_snapshot', '', 'completed', 'failure', false, $no_child_original ),
+			'pre_snapshot//intent without probe' => array( 'pre_snapshot', '', 'threw', 'intent', false, array( 'pre_snapshot', true, array(), false, null, false, null ) ),
+			'verifying//failure without probe' => array( 'verifying', '', 'threw', 'none', false, $no_child_failure ),
+			'verifying//stored failure without probe' => array( 'verifying', '', 'completed', 'failure', false, $no_child_original ),
+			'verifying//intent without probe' => array( 'verifying', '', 'threw', 'intent', false, array( 'verifying', true, array(), false, null, false, null ) ),
+			'failed_retryable/pending/failure without probe' => array( 'failed_retryable', 'pending', 'threw', 'none', false, $no_child_failure ),
+			'failed_retryable/pending/stored failure without probe' => array( 'failed_retryable', 'pending', 'completed', 'failure', false, $no_child_original ),
+			'failed_retryable/pending/intent without probe' => array( 'failed_retryable', 'pending', 'threw', 'intent', false, array( 'failed_retryable', true, array(), false, null, false, null ) ),
+			'failed_retryable/preflight/failure without probe' => array( 'failed_retryable', 'preflight', 'threw', 'none', false, $no_child_failure ),
+			'failed_retryable/preflight/stored failure without probe' => array( 'failed_retryable', 'preflight', 'completed', 'failure', false, $no_child_original ),
+			'failed_retryable/preflight/intent without probe' => array( 'failed_retryable', 'preflight', 'threw', 'intent', false, array( 'failed_retryable', true, array(), false, null, false, null ) ),
+			'failed_retryable/pre_snapshot/failure without probe' => array( 'failed_retryable', 'pre_snapshot', 'threw', 'none', false, $no_child_failure ),
+			'failed_retryable/pre_snapshot/stored failure without probe' => array( 'failed_retryable', 'pre_snapshot', 'completed', 'failure', false, $no_child_original ),
+			'failed_retryable/pre_snapshot/intent without probe' => array( 'failed_retryable', 'pre_snapshot', 'threw', 'intent', false, array( 'failed_retryable', true, array(), false, null, false, null ) ),
+			'failed_retryable/verifying/failure without probe' => array( 'failed_retryable', 'verifying', 'threw', 'none', false, $no_child_failure ),
+			'failed_retryable/verifying/stored failure without probe' => array( 'failed_retryable', 'verifying', 'completed', 'failure', false, $no_child_original ),
+			'failed_retryable/verifying/intent without probe' => array( 'failed_retryable', 'verifying', 'threw', 'intent', false, array( 'failed_retryable', true, array(), false, null, false, null ) ),
+			'retry missing resume/failure' => array( 'failed_retryable', null, 'threw', 'none', false, $no_child_failure ),
+			'retry missing resume/intent' => array( 'failed_retryable', null, 'threw', 'intent', false, array( 'failed_retryable', true, array(), false, null, false, null ) ),
+			'running/expired user unconfirmed' => array( 'running', '', 'threw', 'expired intent', false, array( 'failed_permanent', false, array( 'restore_task_cancel' ), true, array( 'error' => 'The child site did not confirm that it stopped restoring. The site may need manual cleanup.', 'error_code' => 'mainwp_restore_cancel_unconfirmed' ), null, 100 ) ),
+			'staging/refused before probe' => array( 'staging', '', 'busy', 'none', true, array( 'staging', false, array(), false, null, $later, null ) ),
+			'retry staging/refused before probe' => array( 'failed_retryable', 'staging', 'busy', 'failure', true, array( 'failed_retryable', false, array(), false, null, $original, null ) ),
+			'running/refused terminal after probe' => array( 'running', '', 'ok', 'failure', 'terminal', $pending_original ),
+			'transferring/refused completion transition' => array( 'transferring', '', 'completed', 'failure', 'terminal', array( 'transferring', false, array( 'restore_task_cancel' ), false, null, $original, 1 ) ),
+			'transferring/no task' => array( 'transferring', '', 'busy', 'none', false, $no_child_failure, '' ),
+			'staging/no task' => array( 'staging', '', 'busy', 'none', false, $no_child_failure, '' ),
+			'running/no task' => array( 'running', '', 'busy', 'none', false, $no_child_failure, '' ),
+			'verifying/refused terminal' => array( 'verifying', '', 'threw', 'none', true, array( 'verifying', false, array(), false, null, null, null ) ),
 		);
-		foreach ( $phases as list( $status, $resume ) ) {
-			foreach ( array( 'ok', 'failed', 'completed', 'busy', 'rolling_back', 'threw', 'error', 'unknown task' ) as $answer ) {
-				foreach ( array( 'none', 'intent', 'failure', 'retry', 'expired failure' ) as $records ) {
-					foreach ( array( false, true ) as $refused ) {
-						yield implode( '/', array( $status, $resume, $answer, $records, $refused ? 'refused' : 'written' ) ) => array( $status, $resume, $answer, $records, $refused );
-					}
-				}
+	}
+
+	/**
+	 * The next lease holder must inherit the failure while cancellation is in flight.
+	 */
+	public function test_terminal_failure_survives_lease_handoff_during_cancel() {
+		global $wpdb;
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+		$job = $this->make_job( array(), $store::STATUS_RUNNING, array( 'child_task_id' => 'task-9-restore', 'pre_snapshot_task_id' => 'task-7-pre' ) );
+		$job = $store->acquire_next_job( 'old-holder', 90, time(), (int) $job->id );
+		$this->assertNotNull( $job );
+		$handle = wp_json_encode( array( 'task_id' => 'task-7-pre', 'owner' => (string) $job->id ) );
+		MainWP_DB::instance()->update_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION, $handle );
+		$driver = MainWP_Backup_Restore_Transfer_Driver::instance();
+		$staging = $driver->staging_dir( (int) $job->id );
+		wp_mkdir_p( $staging );
+		file_put_contents( $staging . 'backup.zip', 'staged backup' );
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$inherited = null;
+		$reclaim = static function ( $pre, $website, $what ) use ( $wpdb, $table, $store, $job, &$inherited ) {
+			if ( 'restore_task_cancel' === $what ) {
+				$wpdb->update( $table, array( 'locked_until' => time() - 1 ), array( 'id' => (int) $job->id ) );
+				$inherited = $store->acquire_next_job( 'new-holder', 90, time(), (int) $job->id );
 			}
+			return $pre;
+		};
+		$events = array();
+		add_action( 'mainwp_backup_restore_failed', static function ( $event ) use ( &$events ) { $events[] = $event; } );
+		$this->responses['restore_task_cancel'] = array( 'result' => 'busy' );
+		add_filter( 'mainwp_fetch_url_authed_pre', $reclaim, 20, 3 );
+		try {
+			$record = new \ReflectionMethod( MainWP_Backup_Restore_Orchestrator::class, 'record_terminal_failure' );
+			$this->assertFalse( $record->invoke( $this->orchestrator, $job, 'Original replay failure', 'mainwp_restore_db_replay', 'old-holder' ) );
+			remove_filter( 'mainwp_fetch_url_authed_pre', $reclaim, 20 );
+			$this->assertNotNull( $inherited, 'The request must cross an actual lease acquisition.' );
+			$this->assertSame( 'new-holder', $inherited->locked_by );
+			$this->assertSame( 1, (int) $inherited->reclaim_count );
+			$this->assertTrue( $inherited->checkpoint['cancel_intent'] );
+			$this->assertSame( array( 'error' => 'Original replay failure', 'error_code' => 'mainwp_restore_db_replay' ), $inherited->checkpoint['terminal_failure'] );
+			$this->assertSame( 1, $inherited->checkpoint['cancel_confirmation']['attempt_count'] );
+
+			$next = new Testable_Restore_Orchestrator();
+			$token = new \ReflectionProperty( MainWP_Backup_Restore_Orchestrator::class, 'lock_token' );
+			$token->setValue( $next, 'new-holder' );
+			$this->calls = array();
+			$this->responses['restore_task_run'] = array( 'phase' => 'completed' );
+			$next->run_job( $inherited, microtime( true ) + 30 );
+			$this->assertSame( array( 'restore_task_cancel' ), array_column( $this->calls, 'what' ), 'The new holder must cancel before any restore slice.' );
+			$fresh = $store->get_job( (int) $job->id );
+			$this->assertSame( $store::STATUS_RUNNING, $fresh->status );
+			$this->assertSame( 'new-holder', $fresh->locked_by );
+			$this->assertSame( $inherited->checkpoint['terminal_failure'], $fresh->checkpoint['terminal_failure'] );
+			$this->assertSame( 2, $fresh->checkpoint['cancel_confirmation']['attempt_count'] );
+			$this->assertFileExists( $staging . 'backup.zip' );
+			$this->assertSame( $handle, MainWP_DB::instance()->get_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION ) );
+			$this->assertSame( array(), $events );
+		} finally {
+			remove_filter( 'mainwp_fetch_url_authed_pre', $reclaim, 20 );
+			$driver->cleanup_staging( (int) $job->id );
 		}
 	}
 
@@ -1031,6 +2010,68 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		} finally {
 			$driver->cleanup_staging( (int) $job->id );
 		}
+	}
+
+	/**
+	 * A user cancel on a job that already deferred a permanent failure must
+	 * publish that failure rather than quietly ending as cancelled, or the
+	 * only record of why the restore failed never reaches the logs.
+	 */
+	public function test_ui_cancel_publishes_a_stored_terminal_failure() {
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+		$job   = $this->make_job(
+			array(
+				'cancel_intent'     => true,
+				'terminal_failure'  => array( 'error' => 'Original replay failure', 'error_code' => 'mainwp_restore_db_replay' ),
+			),
+			$store::STATUS_RUNNING,
+			array( 'child_task_id' => 'task-9-restore' )
+		);
+		$this->responses['restore_task_cancel'] = array( 'result' => 'ok' );
+		$published = array();
+		add_action( 'mainwp_backup_restore_failed', static function () use ( &$published ) {
+			$published[] = true;
+		} );
+
+		$outcome = $this->orchestrator->cancel_job( (int) $job->id );
+
+		$fresh = $store->get_job( (int) $job->id );
+		$this->assertSame( 'cancelled', $outcome );
+		$this->assertSame( $store::STATUS_FAILED_PERMANENT, $fresh->status );
+		$this->assertSame( 'Original replay failure', $fresh->last_error );
+		$this->assertSame( 'mainwp_restore_db_replay', $fresh->checkpoint['last_error_code'] );
+		$this->assertCount( 1, $published, 'The failure event carries the original cause to the logs connector.' );
+	}
+
+	/**
+	 * The request timeout cap is installed before the reclaim sweep, so a
+	 * throw inside the sweep must not leave it bounding every later child
+	 * request in this process.
+	 */
+	public function test_sweep_throw_removes_the_request_timeout_cap() {
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+		$job   = $this->make_job( array(), $store::STATUS_RUNNING, array( 'child_task_id' => 'task-9-restore' ) );
+		$this->expire_job_at_reclaim_ceiling( (int) $job->id );
+		$exploded = static function () {
+			throw new \RuntimeException( 'listener exploded' );
+		};
+		add_action( 'mainwp_backup_restore_failed', $exploded );
+		$caught = null;
+		try {
+			$this->orchestrator->process_pending_restore_jobs( 30, (int) $job->id );
+		} catch ( \Throwable $e ) {
+			$caught = $e;
+		} finally {
+			remove_action( 'mainwp_backup_restore_failed', $exploded );
+		}
+		$this->assertNotNull( $caught, 'The sweep was expected to rethrow the listener failure.' );
+		$this->assertSame( 'listener exploded', $caught->getMessage() );
+
+		$this->assertSame(
+			20 * 60 * 60,
+			(int) apply_filters( 'mainwp_fetch_url_site_timeout', 20 * 60 * 60 ),
+			'A throw in the sweep must not leave the restore cap on every later child request.'
+		);
 	}
 
 	public static function bounded_cancellation_cleanup_cases() {
@@ -1163,13 +2204,10 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$events = array();
 		add_action( 'mainwp_backup_restore_failed', static function ( $event ) use ( &$events ) { $events[] = $event; } );
 		$first_attempt_at = null;
-		$ticks = 'unreachable' === $answer ? 1 : 36;
+		$ticks = 36;
 		for ( $attempt = 1; $attempt <= $ticks; ++$attempt ) {
 			$this->orchestrator->process_pending_restore_jobs( 30, (int) $job->id );
 			$fresh = $store->get_job( (int) $job->id );
-			if ( 'unreachable' === $answer ) {
-				break;
-			}
 			$this->assertSame( $attempt, $fresh->checkpoint['cancel_confirmation']['attempt_count'] );
 			$first_attempt_at = $first_attempt_at ?? $fresh->checkpoint['cancel_confirmation']['first_attempt_at'];
 			$this->assertSame( $first_attempt_at, $fresh->checkpoint['cancel_confirmation']['first_attempt_at'] );
@@ -1177,16 +2215,14 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			$this->assertEmpty( $events );
 		}
 		$original = $terminal_failure ? 'Original replay failure' : ( $sweep ? $fresh->last_error : null );
-		if ( 'unreachable' !== $answer ) {
-			$checkpoint = $fresh->checkpoint;
-			$checkpoint['cancel_confirmation']['first_attempt_at'] = time() - $store::CANCEL_CONFIRMATION_TIMEOUT_SECONDS;
-			$store->save_checkpoint( (int) $job->id, $checkpoint );
-			$this->orchestrator->process_pending_restore_jobs( 30, (int) $job->id );
-			$fresh = $store->get_job( (int) $job->id );
-			++$ticks;
-		}
+		$checkpoint = $fresh->checkpoint;
+		$checkpoint['cancel_confirmation']['first_attempt_at'] = time() - $store::CANCEL_CONFIRMATION_TIMEOUT_SECONDS;
+		$store->save_checkpoint( (int) $job->id, $checkpoint );
+		$this->orchestrator->process_pending_restore_jobs( 30, (int) $job->id );
+		$fresh = $store->get_job( (int) $job->id );
+		++$ticks;
 		$warning = 'The child site did not confirm that it stopped restoring. The site may need manual cleanup.';
-		$expected_error = 'unreachable' === $answer ? $original : ( null === $original ? $warning : $original . ' ' . $warning );
+		$expected_error = null === $original ? $warning : $original . ' ' . $warning;
 		$expected_code = $terminal_failure ? 'mainwp_restore_db_replay' : ( $sweep ? '' : 'mainwp_restore_cancel_unconfirmed' );
 		$this->assertSame( $store::STATUS_FAILED_PERMANENT, $fresh->status );
 		$this->assertSame( $expected_code, $fresh->checkpoint['last_error_code'] );
@@ -1309,7 +2345,9 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		if ( '' !== $child_task_id ) {
 			$this->assertSame( $child_task_id, $this->calls[0]['params']['task_id'] );
 		}
-		if ( in_array( $answer, array( 'busy', 'rolling_back' ), true ) ) {
+		// A child that answered busy or rolling_back may still be writing, and
+		// a request that threw proves nothing either way, so all four defer.
+		if ( in_array( $answer, array( 'busy', 'rolling_back', 'error', 'unreachable' ), true ) ) {
 			$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, $job->status );
 			$this->assertTrue( $job->checkpoint['cancel_intent'] );
 			$this->assertSame(
@@ -1329,6 +2367,16 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		}
 		if ( 'unreachable' === $answer ) {
 			$this->assertStringContainsString( 'did not confirm cancelling its child task', implode( "\n", $logs ) );
+		}
+		if ( 'completed' === $answer ) {
+			// The child is the authority on whether the restore happened, so a
+			// completed answer outranks the failure the Dashboard had pending.
+			$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, $job->status );
+			$this->assertArrayNotHasKey( 'terminal_failure', $job->checkpoint );
+			$this->assertArrayNotHasKey( 'cancel_intent', $job->checkpoint );
+			$this->assertSame( $handle, MainWP_DB::instance()->get_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION ) );
+			$this->assertEmpty( $events );
+			return;
 		}
 
 		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
@@ -2504,7 +3552,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	/**
 	 * A child that completed before the intent could land finished its
 	 * restore: the intent clears and the job follows the normal
-	 * completion path unless a permanent failure was already decided.
+	 * completion path because the child is the authority on whether it restored.
 	 *
 	 * @dataProvider completed_child_intent_cases
 	 */
@@ -2533,13 +3581,8 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			MainWP_Backup_Restore_Job_Store::instance()->save_checkpoint( (int) $job->id, $checkpoint );
 		}
 		$job = $this->tick( $job );
-		if ( $has_failure ) {
-			$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
-			$this->assertSame( 'Replay failed on table posts', $job->last_error );
-			$this->assertSame( 'mainwp_restore_db_replay', $job->checkpoint['last_error_code'] );
-			$this->assertSame( array( 'restore_task_cancel' ), array_column( $this->calls, 'what' ) );
-			return;
-		}
+		$this->assertArrayNotHasKey( 'last_error_code', $job->checkpoint );
+		$this->assertSame( array( 'restore_task_cancel', 'restore_task_run' ), array_column( $this->calls, 'what' ) );
 
 		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_VERIFYING, $job->status );
 		$this->assertTrue( empty( $job->checkpoint['cancel_intent'] ) );

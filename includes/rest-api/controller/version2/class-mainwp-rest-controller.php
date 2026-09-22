@@ -539,16 +539,23 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
             // this. An integral float stays valid because core treats it as an integer
             // and existing callers send it.
             'validate_callback' => static function ( $value, $request, $param ) {
+                $refused = false;
                 if ( is_string( $value ) ) {
-                    if ( ! ctype_digit( $value ) || (string) (int) $value !== $value ) {
-                        return false;
-                    }
+                    $refused = ! ctype_digit( $value ) || (string) (int) $value !== $value;
                 } elseif ( is_float( $value ) ) {
-                    if ( ! is_finite( $value ) || floor( $value ) !== $value || (float) (int) $value !== $value ) {
-                        return false;
-                    }
+                    $refused = ! is_finite( $value ) || floor( $value ) !== $value || (float) (int) $value !== $value;
                 } elseif ( ! is_int( $value ) ) {
-                    return false;
+                    $refused = true;
+                }
+                if ( $refused ) {
+                    // A bare false would collapse to core's generic "Invalid parameter.",
+                    // and a caller batching 100 items needs to know which one and why.
+                    return new \WP_Error(
+                        'rest_invalid_param',
+                        /* translators: %s: parameter name */
+                        sprintf( __( '%s must be a whole number sent as an integer or an unpadded digit string.', 'mainwp' ), $param ),
+                        array( 'param' => $param )
+                    );
                 }
                 return rest_validate_request_arg( $value, $request, $param );
             },

@@ -965,11 +965,11 @@ KEY idx_wpid_issub (wpid, issub)";
         $retry_where = '';
 
         if ( null === $site_id ) {
-            $retry_where = "
+            $retry_where = '
                 AND (
                     ra.option_id IS NULL
                     OR CAST( ra.option_value AS UNSIGNED ) < 3
-                )";
+                )';
         }
 
         return $this->wpdb->get_col(

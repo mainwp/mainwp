@@ -549,6 +549,10 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
      * @return WP_REST_Request|WP_Error
      */
     protected function prepare_batch_id_request( $route, $id, $query = array(), $args = array() ) {
+        // A digit string past PHP_INT_MAX casts to PHP_INT_MAX, a different ID than the one sent.
+        if ( is_string( $id ) && ctype_digit( $id ) && PHP_INT_MAX === (int) $id && (string) PHP_INT_MAX !== ltrim( $id, '0' ) ) {
+            return new WP_Error( 'rest_invalid_param', __( 'Batch item ID is too large.', 'mainwp' ), array( 'status' => 400 ) );
+        }
         if ( empty( $args ) ) {
             $args = array( 'id' => $this->get_batch_item_id_arg() );
         }

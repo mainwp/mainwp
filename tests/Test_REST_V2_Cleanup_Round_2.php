@@ -1631,7 +1631,7 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 	}
 
 	/**
-	 * Item 6: a group with no items is still a group the endpoint cannot dispatch.
+	 * An empty supported group has no items to answer.
 	 */
 	public function test_batch_empty_group_value_returns_group_error(): void {
 		$this->authenticate_as_admin();
@@ -1640,9 +1640,8 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 
 		$data = $response->get_data();
 
-		$this->assertArrayHasKey( 'costs', $data );
-		$this->assertSame( 'rest_batch_group_not_supported', $data['costs']['error']['code'] );
-		$this->assertSame( 400, $data['costs']['error']['data']['status'] );
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $data ) );
+		$this->assertSame( [], $data );
 	}
 
 	/**
@@ -1768,9 +1767,7 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 	}
 
 	/**
-	 * PR review: a create item that is not an object is reported before it reaches the dispatch.
-	 *
-	 * Every create item is handed to set_body_params(), which takes an array.
+	 * A null create item must be identified in the response without refusing its group.
 	 */
 	public function test_batch_null_create_item_returns_invalid_param(): void {
 		$this->authenticate_as_admin();
@@ -1787,10 +1784,14 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 
 		$data = $response->get_data();
 
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $data ) );
 		$this->assertArrayHasKey( 'sites', $data );
-		$this->assertSame( 'rest_invalid_param', $data['sites']['error']['code'] );
-		$this->assertSame( 400, $data['sites']['error']['data']['status'] );
-		$this->assertArrayNotHasKey( 'create', $data['sites'] );
+		$this->assertArrayNotHasKey( 'error', $data['sites'], wp_json_encode( $data ) );
+		$this->assertArrayHasKey( 'create', $data['sites'], wp_json_encode( $data ) );
+		$this->assertCount( 1, $data['sites']['create'] );
+		$this->assertSame( 'rest_invalid_param', $data['sites']['create'][0]['error']['code'] );
+		$this->assertSame( 400, $data['sites']['create'][0]['error']['data']['status'] );
+		$this->assertSame( 0, $data['sites']['create'][0]['id'] );
 	}
 
 	/**
@@ -1821,8 +1822,7 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 	}
 
 	/**
-	 * PR review: an id action reads whole numbers, so a fractional string is a group the endpoint
-	 * refuses instead of a cast onto whichever site the leading digits name.
+	 * A fractional ID must fail per item before a cast can target a different site.
 	 */
 	public function test_batch_id_action_rejects_fractional_string_ids(): void {
 		$this->authenticate_as_admin();
@@ -1839,16 +1839,18 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 
 		$data = $response->get_data();
 
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $data ) );
 		$this->assertArrayHasKey( 'sites', $data );
-		$this->assertSame( 'rest_invalid_param', $data['sites']['error']['code'] );
-		$this->assertArrayNotHasKey( 'sync', $data['sites'] );
+		$this->assertArrayNotHasKey( 'error', $data['sites'], wp_json_encode( $data ) );
+		$this->assertArrayHasKey( 'sync', $data['sites'], wp_json_encode( $data ) );
+		$this->assertCount( 1, $data['sites']['sync'] );
+		$this->assertSame( 'rest_invalid_param', $data['sites']['sync'][0]['error']['code'] );
+		$this->assertSame( 400, $data['sites']['sync'][0]['error']['data']['status'] );
+		$this->assertSame( 1, $data['sites']['sync'][0]['id'] );
 	}
 
 	/**
-	 * PR review: an id of 0 is refused instead of dispatched into a no-op.
-	 *
-	 * Every site action skips an id that casts to 0, so the batch used to answer with neither an
-	 * operation nor an error entry for the item and the caller read that as a success.
+	 * A zero ID must produce an item error rather than disappear from the response.
 	 */
 	public function test_batch_id_action_rejects_a_zero_id(): void {
 		$this->authenticate_as_admin();
@@ -1865,13 +1867,18 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 
 		$data = $response->get_data();
 
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $data ) );
 		$this->assertArrayHasKey( 'sites', $data );
-		$this->assertSame( 'rest_invalid_param', $data['sites']['error']['code'] );
-		$this->assertArrayNotHasKey( 'sync', $data['sites'] );
+		$this->assertArrayNotHasKey( 'error', $data['sites'], wp_json_encode( $data ) );
+		$this->assertArrayHasKey( 'sync', $data['sites'], wp_json_encode( $data ) );
+		$this->assertCount( 1, $data['sites']['sync'] );
+		$this->assertSame( 'rest_invalid_param', $data['sites']['sync'][0]['error']['code'] );
+		$this->assertSame( 400, $data['sites']['sync'][0]['error']['data']['status'] );
+		$this->assertSame( 0, $data['sites']['sync'][0]['id'] );
 	}
 
 	/**
-	 * The same for a padded zero: "00" is all digits, and it casts to the id the dispatch skips.
+	 * Padding a zero ID must not bypass per-item validation.
 	 */
 	public function test_batch_id_action_rejects_a_padded_zero_string_id(): void {
 		$this->authenticate_as_admin();
@@ -1888,9 +1895,14 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 
 		$data = $response->get_data();
 
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $data ) );
 		$this->assertArrayHasKey( 'sites', $data );
-		$this->assertSame( 'rest_invalid_param', $data['sites']['error']['code'] );
-		$this->assertArrayNotHasKey( 'sync', $data['sites'] );
+		$this->assertArrayNotHasKey( 'error', $data['sites'], wp_json_encode( $data ) );
+		$this->assertArrayHasKey( 'sync', $data['sites'], wp_json_encode( $data ) );
+		$this->assertCount( 1, $data['sites']['sync'] );
+		$this->assertSame( 'rest_invalid_param', $data['sites']['sync'][0]['error']['code'] );
+		$this->assertSame( 400, $data['sites']['sync'][0]['error']['data']['status'] );
+		$this->assertSame( 0, $data['sites']['sync'][0]['id'] );
 	}
 
 	/**
@@ -1911,9 +1923,14 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 
 		$data = $response->get_data();
 
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $data ) );
 		$this->assertArrayHasKey( 'sites', $data );
-		$this->assertSame( 'rest_invalid_param', $data['sites']['error']['code'] );
-		$this->assertArrayNotHasKey( 'sync', $data['sites'] );
+		$this->assertArrayNotHasKey( 'error', $data['sites'], wp_json_encode( $data ) );
+		$this->assertArrayHasKey( 'sync', $data['sites'], wp_json_encode( $data ) );
+		$this->assertCount( 1, $data['sites']['sync'] );
+		$this->assertSame( 'rest_invalid_param', $data['sites']['sync'][0]['error']['code'] );
+		$this->assertSame( 400, $data['sites']['sync'][0]['error']['data']['status'] );
+		$this->assertSame( PHP_INT_MAX, $data['sites']['sync'][0]['id'] );
 	}
 
 	/**
@@ -2002,9 +2019,13 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 	}
 
 	/**
-	 * Item 5: the costs group has no controller, so it gets the per-group error.
+	 * Cost Tracker registers under its own namespace; the global batch must reach its args.
 	 */
 	public function test_batch_costs_group_returns_group_error(): void {
+		if ( ! array_key_exists( '/mainwp/v2/costs/batch', $this->server->get_routes() ) ) {
+			$this->markTestSkipped( 'Cost Tracker REST routes are not registered in this harness.' );
+		}
+
 		$this->authenticate_as_admin();
 
 		$response = $this->do_authenticated_request(
@@ -2013,7 +2034,7 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 			[
 				'costs' => [
 					'create' => [
-						[ 'name' => 'REST V2 Cleanup Cost' ],
+						[ 'name' => [ 'invalid' ] ],
 					],
 				],
 			]
@@ -2021,10 +2042,14 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 
 		$data = $response->get_data();
 
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $data ) );
 		$this->assertArrayHasKey( 'costs', $data );
-		$this->assertSame( 'rest_batch_group_not_supported', $data['costs']['error']['code'] );
-		$this->assertSame( 400, $data['costs']['error']['data']['status'] );
-		$this->assertArrayNotHasKey( 'create', $data['costs'] );
+		$this->assertArrayNotHasKey( 'error', $data['costs'], wp_json_encode( $data ) );
+		$this->assertArrayHasKey( 'create', $data['costs'], wp_json_encode( $data ) );
+		$this->assertCount( 1, $data['costs']['create'] );
+		$this->assertSame( 'rest_invalid_param', $data['costs']['create'][0]['error']['code'] );
+		$this->assertSame( 400, $data['costs']['create'][0]['error']['data']['status'] );
+		$this->assertSame( 0, $data['costs']['create'][0]['id'] );
 	}
 
 	/**

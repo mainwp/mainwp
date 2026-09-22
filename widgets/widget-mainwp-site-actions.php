@@ -14,6 +14,7 @@ use MainWP\Dashboard\Module\Log\Log_Manager;
 use MainWP\Dashboard\Module\Log\Log_Events_List_Table;
 use MainWP\Dashboard\Module\Log\Log_DB_Helper;
 use MainWP\Dashboard\Module\Log\Log_Events_Filter_Segment;
+use MainWP\Dashboard\Module\Log\Log_Manage_Insights_Events_Page;
 
 
 // Exit if accessed directly.
@@ -565,29 +566,8 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 $filters_saved = array();
             }
             $filter_user_ids = isset( $filters_saved['user_ids'] ) && ! empty( $filters_saved['user_ids'] ) ? $filters_saved['user_ids'] : '';
-
-            // Fix legacy user filter values.
-            if ( ! empty( $filter_user_ids ) ) {
-                $filter_user_ids = implode(
-                    ',',
-                    array_map(
-                        static function ( $user_id ) {
-                            $parts = explode( '-', trim( $user_id ) );
-
-                            if ( 3 === count( $parts ) && is_numeric( $parts[1] ) && '1' === $parts[2] ) {
-                                $parts[1] = 'xxx';
-                                return implode( '-', $parts );
-                            }
-
-                            return trim( $user_id );
-                        },
-                        explode( ',', $filter_user_ids )
-                    )
-                );
-            }
-
-            $filter_sites  = isset( $filters_saved['sites'] ) && ! empty( $filters_saved['sites'] ) ? $filters_saved['sites'] : '';
-            $filter_events = isset( $filters_saved['events'] ) && ! empty( $filters_saved['events'] ) ? $filters_saved['events'] : '';
+            $filter_sites    = isset( $filters_saved['sites'] ) && ! empty( $filters_saved['sites'] ) ? $filters_saved['sites'] : '';
+            $filter_events   = isset( $filters_saved['events'] ) && ! empty( $filters_saved['events'] ) ? $filters_saved['events'] : '';
 
         } else {
             // phpcs:disable WordPress.Security.NonceVerification
@@ -600,6 +580,7 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         }
 
         if ( ! empty( $filter_user_ids ) ) {
+            $filter_user_ids             = Log_Manage_Insights_Events_Page::convert_legacy_users_filters_values( $filter_user_ids );
             $array_usersfilter_sites_ids = explode( ',', $filter_user_ids ); // convert to array.
             if ( in_array( 'allusers', $array_usersfilter_sites_ids, true ) ) {
                 $array_usersfilter_sites_ids = false;

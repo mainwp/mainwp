@@ -331,26 +331,6 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
             $filter_client_ids = isset( $filters_saved['client_ids'] ) && ! empty( $filters_saved['client_ids'] ) ? $filters_saved['client_ids'] : false;
             $filter_user_ids   = isset( $filters_saved['user_ids'] ) && ! empty( $filters_saved['user_ids'] ) ? $filters_saved['user_ids'] : '';
 
-            // Fix legacy user filter values.
-            if ( ! empty( $filter_user_ids ) ) {
-                $filter_user_ids = implode(
-                    ',',
-                    array_map(
-                        static function ( $user_id ) {
-                            $parts = explode( '-', trim( $user_id ) );
-
-                            if ( 3 === count( $parts ) && is_numeric( $parts[1] ) && '1' === $parts[2] ) {
-                                $parts[1] = 'xxx';
-                                return implode( '-', $parts );
-                            }
-
-                            return trim( $user_id );
-                        },
-                        explode( ',', $filter_user_ids )
-                    )
-                );
-            }
-
             $filter_dtsstart = isset( $filters_saved['dtsstart'] ) && ! empty( $filters_saved['dtsstart'] ) ? $filters_saved['dtsstart'] : '';
             $filter_dtsstop  = isset( $filters_saved['dtsstop'] ) && ! empty( $filters_saved['dtsstop'] ) ? $filters_saved['dtsstop'] : '';
 
@@ -399,6 +379,7 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
         }
 
         if ( ! empty( $filter_user_ids ) ) {
+            $filter_user_ids             = static::convert_legacy_users_filters_values( $filter_user_ids );
             $array_usersfilter_sites_ids = explode( ',', $filter_user_ids ); // convert to array.
             if ( in_array( 'allusers', $array_usersfilter_sites_ids, true ) ) {
                 $array_usersfilter_sites_ids = false;
@@ -518,6 +499,40 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
                 'array_source_list'
             )
         );
+    }
+
+    /**
+     * Convert legacy Dashboard user filter values to the current format.
+     *
+     * Legacy Dashboard user filter values may contain a site ID in the format
+     * `{user_id}-{site_id}-1`. Replace the site ID with `xxx` so the user filter
+     * remains independent of site IDs.
+     *
+     * @param string $filter_user_ids Comma-separated Dashboard user filter values.
+     * @return string Converted comma-separated Dashboard user filter values.
+     */
+    public static function convert_legacy_users_filters_values( $filter_user_ids ) {
+        // Fix legacy user filter values.
+        if ( ! empty( $filter_user_ids ) ) {
+            $filter_user_ids = implode(
+                ',',
+                array_map(
+                    static function ( $user_id ) {
+                        $parts = explode( '-', trim( $user_id ) );
+
+                        if ( 3 === count( $parts ) && is_numeric( $parts[1] ) && '1' === $parts[2] ) {
+                            $parts[1] = 'xxx';
+                            return implode( '-', $parts );
+                        }
+
+                        return trim( $user_id );
+                    },
+                    explode( ',', $filter_user_ids )
+                )
+            );
+        }
+
+        return $filter_user_ids;
     }
 
     /**

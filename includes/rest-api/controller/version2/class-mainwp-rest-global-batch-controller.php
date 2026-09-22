@@ -45,17 +45,18 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
      *
      * @var array
      */
-    protected $controller_names = array( 'sites', 'clients', 'tags' );
+    protected $controller_names = array( 'sites', 'clients', 'costs', 'tags' );
 
     /**
-     * Actions the dispatch below reads per group, each marked with the shape it reads its items in:
-     * an 'item' action passes every item on as a request body, an 'id' action casts every item to an int.
+     * Keep the allowed actions aligned with dispatch so supported work is not rejected or dropped.
      *
      * @var array
      */
     const GROUP_ACTIONS = array(
         'sites'   => array(
             'create'             => 'item',
+            'update'             => 'item',
+            'delete'             => 'id',
             'sync'               => 'id',
             'reconnect'          => 'id',
             'disconnect'         => 'id',
@@ -69,9 +70,18 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
         ),
         'clients' => array(
             'create' => 'item',
+            'update' => 'item',
+            'delete' => 'id',
+        ),
+        'costs'   => array(
+            'create' => 'item',
+            'update' => 'item',
+            'delete' => 'id',
         ),
         'tags'    => array(
             'create' => 'item',
+            'update' => 'item',
+            'delete' => 'id',
         ),
     );
 
@@ -155,9 +165,8 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
             $body_groups = (array) $request->get_body_params();
         }
 
-        // Groups the batch endpoint cannot dispatch (updates has no batch-capable create handler,
-        // costs has no controller at all, anything else is unknown) are reported once each instead
-        // of being dropped without a word or failing per item with a 405 from the core stub.
+        // Unsupported groups would otherwise be dropped silently or fail per item with a 405
+        // from the core stub, as updates has no batch-capable create handler.
         //
         // The names come from the same merged params the limit check and the dispatch read, so a
         // group sent only in the query string is answered rather than counted in silence. A group is
@@ -525,9 +534,8 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
      *
      * The dispatch indexes the group by action name and then walks each action list, so a scalar in
      * either place would reach a foreach over something that is not a list, a JSON list carries none
-     * of the names it indexes by, and an action it does not read is silently dropped. Items are
-     * checked too: a create item is passed on as a request body and an id item is cast to an int, so
-     * neither can be an arbitrary value.
+     * of the names it indexes by, and an action it does not read is silently dropped. The per-item
+     * helpers validate bodies and IDs so the response identifies each invalid item.
      *
      * @param string $group_name  Group name.
      * @param mixed  $group_items Group value taken from the request.
@@ -561,21 +569,6 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
             if ( array() !== $action_items && array_keys( $action_items ) !== range( 0, count( $action_items ) - 1 ) ) {
                 return false;
             }
-
-            foreach ( $action_items as $item ) {
-                if ( 'item' === $actions[ $action_name ] ) {
-                    if ( ! is_array( $item ) ) {
-                        return false;
-                    }
-                } elseif ( ! ( is_int( $item ) && $item > 0 ) && ! ( is_string( $item ) && ctype_digit( $item ) && (int) $item > 0 && ltrim( $item, '0' ) === (string) (int) $item ) ) {
-                    // A fractional or exponent string is numeric, and the (int) cast below would read
-                    // it as a whole id the caller never asked for, so only digits are accepted. Zero
-                    // is refused with them: every site action skips an id that casts to 0, so the
-                    // batch would answer with neither an operation nor an error for that item. A digit
-                    // string past PHP_INT_MAX casts to PHP_INT_MAX, a different id than the one sent.
-                    return false;
-                }
-            }
         }
 
         return true;
@@ -591,10 +584,9 @@ class MainWP_Rest_Global_Batch_Controller extends MainWP_REST_Controller{ //phpc
         $limit = apply_filters( 'mainwp_rest_batch_items_limit', 100, $this->get_normalized_rest_base() );
         $total = 0;
 
-        // The updates and costs groups are rejected as a whole by batch_items(), but their items
-        // still count toward the cap so an oversized request is refused before anything else is
-        // dispatched.
-        $count_names = array_merge( $this->controller_names, array( 'updates', 'costs' ) );
+        // The updates group is rejected as a whole by batch_items(), but its items still count
+        // toward the cap so an oversized request is refused before anything else is dispatched.
+        $count_names = array_merge( $this->controller_names, array( 'updates' ) );
 
         foreach ( $count_names as $con_name ) {
             if ( ! empty( $items[ $con_name ] ) && is_countable( $items[ $con_name ] ) ) {

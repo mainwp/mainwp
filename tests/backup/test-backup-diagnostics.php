@@ -38,8 +38,8 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 			$path,
 			array( 'env' => array( 'invalid' => INF ) ),
 			array(
-				'files' => array(),
-				'blobs' => array(),
+				'files'  => array(),
+				'scopes' => array(),
 			)
 		);
 		$this->assertSame( '', $result );
@@ -53,13 +53,15 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 		$files = array( $this->diag_dir . '/one.jsonl', $this->diag_dir . '/two.jsonl' );
 		file_put_contents( $files[0], "{\"run_key\":\"1-2\"}\n\n0\n" );
 		file_put_contents( $files[1], "{\"message\":\"quote \\\" slash /\"}\r\nlast line" );
+		$files[] = $this->diag_dir . '/global.jsonl';
+		file_put_contents( $files[2], "{\"kind\":\"first\"}\n\n0\nlast\n" );
 		$sections                           = array(
 			'env'   => array( 'version' => 'test' ),
 			'tasks' => array(),
 		);
 		$events                             = array(
-			'files' => $files,
-			'blobs' => array( 'global.jsonl' => "{\"kind\":\"first\"}\n\n0\nlast\n" ),
+			'files'  => $files,
+			'scopes' => array( $files[2] => array( array( 1 ), array() ) ),
 		);
 		$expected                           = $sections;
 		$expected['events']                 = array();
@@ -72,6 +74,27 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 		$actual = file_get_contents( $path );
 		$this->assertSame( wp_json_encode( $expected ), $actual );
 		$this->assertSame( wp_json_encode( json_decode( wp_json_encode( $expected ), true ) ), $actual );
+	}
+
+	/**
+	 * Event filtering must yield each redacted line without buffering the file.
+	 */
+	public function test_event_redaction_is_lazy_and_streams_to_disk() {
+		$file = $this->diag_dir . '/stream.jsonl';
+		$line = wp_json_encode( array( 'payload' => $this->restore_payload_with_secrets() ) );
+		file_put_contents( $file, $line . "\ninvalid\n" . $line . "\n" );
+		$reader = new \ReflectionMethod( MainWP_Backup_Diagnostics::class, 'filter_event_lines' );
+		$lines  = $reader->invoke( MainWP_Backup_Diagnostics::instance(), $file, null, array() );
+		$this->assertInstanceOf( \Generator::class, $lines );
+		$this->assertCount( 2, iterator_to_array( $lines ) );
+		$writer = new \ReflectionMethod( MainWP_Backup_Diagnostics::class, 'write_redacted_event_file' );
+		$path   = $this->diag_dir . '/redacted-test';
+		$writer->invoke( MainWP_Backup_Diagnostics::instance(), $file, $path, array( null, array() ) );
+		$written = file( $path, FILE_IGNORE_NEW_LINES );
+		$this->assertCount( 2, $written );
+		foreach ( $written as $event ) {
+			$this->assert_restore_event_redacted( $event );
+		}
 	}
 
 	/**
@@ -560,7 +583,23 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 			)
 		);
 		file_put_contents( $this->diag_dir . '/' . $name, $line . "\n" );
-		$bundle = MainWP_Backup_Diagnostics::instance()->export_bundle();
+		$temporary_files = array();
+		$observe_cleanup = function ( $path ) use ( &$temporary_files ) {
+			if ( str_starts_with( basename( $path ), 'redacted-' ) ) {
+				$this->assertFileExists( $path );
+				$this->assertSame( realpath( $this->diag_dir ), realpath( dirname( $path ) ) ); // macOS resolves /var to /private/var.
+				$temporary_files[] = $path;
+			}
+			return $path;
+		};
+		add_filter( 'wp_delete_file', $observe_cleanup );
+		try {
+			$bundle = MainWP_Backup_Diagnostics::instance()->export_bundle();
+		} finally {
+			remove_filter( 'wp_delete_file', $observe_cleanup );
+		}
+		$this->assertCount( 1, $temporary_files );
+		$this->assertFileDoesNotExist( $temporary_files[0] );
 		$this->assertStringEndsWith( '.zip', $bundle );
 		$zip = new \ZipArchive();
 		$this->assertTrue( $zip->open( $bundle ) );
@@ -572,12 +611,52 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * The fallback must redact both files and shared-stream blobs.
+	 * A failed redaction removes both the incomplete ZIP and its staging files.
+	 */
+	public function test_zip_export_cleans_temporary_files_on_redaction_failure() {
+		if ( ! class_exists( \ZipArchive::class ) ) {
+			$this->markTestSkipped( 'ZipArchive is unavailable in this environment.' );
+		}
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$site_id = $this->create_test_site();
+		$file    = $this->diag_dir . '/' . $this->event_filename( 'terminal-' . $site_id );
+		file_put_contents( $file, '{"run_key":"terminal-' . $site_id . '","metric":1e9999}' . "\n" );
+		$temporary_files = array();
+		$observe_cleanup = function ( $path ) use ( &$temporary_files ) {
+			if ( str_starts_with( basename( $path ), 'redacted-' ) ) {
+				$temporary_files[] = $path;
+			}
+			return $path;
+		};
+		add_filter( 'wp_delete_file', $observe_cleanup );
+		try {
+			$this->assertSame( '', MainWP_Backup_Diagnostics::instance()->export_bundle() );
+		} finally {
+			remove_filter( 'wp_delete_file', $observe_cleanup );
+		}
+		$this->assertCount( 1, $temporary_files );
+		$this->assertFileDoesNotExist( $temporary_files[0] );
+		$this->assertSame( array(), glob( $this->diag_dir . '/*.zip' ) );
+		$this->assertFileExists( $file );
+	}
+
+	/**
+	 * The fallback must redact both files and scoped shared streams.
 	 */
 	public function test_json_fallback_redacts_pre_existing_restore_events() {
 		$line = wp_json_encode( array( 'payload' => $this->restore_payload_with_secrets() ) );
 		$file = $this->diag_dir . '/legacy.jsonl';
 		file_put_contents( $file, $line . "\n" );
+		$global = $this->diag_dir . '/global.jsonl';
+		file_put_contents(
+			$global,
+			$line . "\n" . wp_json_encode(
+				array(
+					'site_id' => 99,
+					'secret'  => 'excluded',
+				)
+			) . "\n"
+		);
 		$writer = new \ReflectionMethod( MainWP_Backup_Diagnostics::class, 'write_json_bundle' );
 		$path   = $this->diag_dir . '/legacy-bundle.json';
 		$result = $writer->invoke(
@@ -585,8 +664,8 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 			$path,
 			array(),
 			array(
-				'files' => array( $file ),
-				'blobs' => array( 'global.jsonl' => $line . "\n" ),
+				'files'  => array( $file, $global ),
+				'scopes' => array( $global => array( array( 1 ), array() ) ),
 			)
 		);
 		$this->assertSame( $path, $result );
@@ -616,7 +695,14 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 				'identity_preserve' => array( 'mainwp_child_pubkey' => 'identity-option-secret' ),
 				'progress'          => array( 'bytes_done' => 512 ),
 			),
-			'nested'    => array( array( 'pull_manifest' => $manifest ) ),
+			'nested'    => array(
+				array(
+					'pull_manifest'      => $manifest,
+					'pull_manifest_json' => wp_json_encode( $manifest ),
+					'identity_preserve'  => array( 'key' => 'identity-option-secret' ),
+				),
+				array( 'pull_manifest' => false ),
+			),
 			'url'       => 'https://example.test/public',
 		);
 	}
@@ -636,6 +722,9 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 		$this->assertTrue( $payload['sub_state']['params']['pull_manifest'] );
 		$this->assertTrue( $payload['sub_state']['identity_preserve'] );
 		$this->assertTrue( $payload['nested'][0]['pull_manifest'] );
+		$this->assertTrue( $payload['nested'][0]['pull_manifest_json'] );
+		$this->assertTrue( $payload['nested'][0]['identity_preserve'] );
+		$this->assertFalse( $payload['nested'][1]['pull_manifest'] );
 		$this->assertSame( 512, $payload['sub_state']['progress']['bytes_done'] );
 		$this->assertSame( 'completed', $payload['phase'] );
 		$this->assertSame( 'https://example.test/public', $payload['url'] );

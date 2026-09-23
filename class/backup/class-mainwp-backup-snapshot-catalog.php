@@ -223,7 +223,7 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
                 if ( ! in_array( $role, array( 'full', 'part', 'tombstones', 'db', 'manifest' ), true ) ) {
                     continue;
                 }
-                if ( 'manifest' === $role && (int) $snapshot->id !== (int) $leaf->id ) {
+                if ( 'manifest' === $role && ( (int) $snapshot->id !== (int) $leaf->id || ! isset( $archive['walk'] ) || ! is_array( $archive['walk'] ) ) ) {
                     continue; // Only the selected point in time can bound reconciliation.
                 }
 
@@ -241,7 +241,8 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
             }
         }
 
-        if ( null !== $manifest_entry ) {
+        $has_files = (bool) array_intersect( array( 'full', 'part' ), array_column( $file_ops, 'role' ) );
+        if ( $has_files && null !== $manifest_entry ) {
             $file_ops[] = $manifest_entry;
         }
         if ( null !== $db_entry ) {

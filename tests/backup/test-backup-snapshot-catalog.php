@@ -450,6 +450,49 @@ class MainWP_Backup_Snapshot_Catalog_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * An unavailable pre-beta manifest must not block a working file restore.
+	 */
+	public function test_leaf_manifest_without_walk_is_not_required() {
+		$base = $this->make_snapshot( array( array( 'file' => 'base.zip', 'role' => 'full' ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+		$id   = $this->make_snapshot(
+			array(
+				array( 'file' => 'part.zip', 'role' => 'part' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+				array( 'file' => 'files.list', 'role' => 'manifest' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+			),
+			array(
+				'type'      => 'incremental',
+				'parent_id' => $base,
+			)
+		);
+		unlink( $this->dir . '/files.list' );
+		$resolved = MainWP_Backup_Snapshot_Catalog::instance()->resolve_restorable_chain( $id );
+		$this->assertTrue( $resolved['ok'] );
+		$this->assertSame( array( 'full', 'part' ), array_column( $resolved['plan'], 'role' ) );
+	}
+
+	/**
+	 * A database-only restore does not consume even a with-walk manifest.
+	 */
+	public function test_database_only_plan_omits_manifest_with_walk() {
+		$id = $this->make_snapshot(
+			array(
+				array( 'file' => 'db.zip', 'role' => 'db' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+				array(
+					'file' => 'files.list',
+					'role' => 'manifest',
+					'walk' => array( 'excludes' => array() ),
+				),
+			),
+			array( 'type' => 'db' )
+		);
+		unlink( $this->dir . '/files.list' );
+		$resolved = MainWP_Backup_Snapshot_Catalog::instance()->resolve_restorable_chain( $id );
+		$this->assertTrue( $resolved['ok'] );
+		$this->assertSame( 'db', $resolved['sub_type'] );
+		$this->assertSame( array( 'db' ), array_column( $resolved['plan'], 'role' ) );
+	}
+
+	/**
 	 * A missing leaf manifest must never select an ancestor's manifest.
 	 */
 	public function test_assemble_plan_omits_ancestor_manifest_when_leaf_has_none() {

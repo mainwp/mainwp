@@ -479,6 +479,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                     'artifact_total'   => count( $plan ),
                     'has_rollback'     => ! empty( $job->checkpoint['pre_snapshot_artifacts'] ),
                     'cancel_requested' => ! empty( $job->checkpoint['cancel_intent'] ),
+                    'sub_type'         => (string) ( $job->checkpoint['sub_type'] ?? '' ),
                     'verification'     => isset( $job->checkpoint['verification'] ) ? $job->checkpoint['verification'] : array(),
                 ),
                 $this->transfer_byte_progress( $plan, $transfer )

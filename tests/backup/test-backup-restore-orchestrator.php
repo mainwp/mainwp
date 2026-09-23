@@ -786,7 +786,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			$inc1_id,
 			'incremental',
 			array(
-				array( 'file' => 'files.list', 'role' => 'manifest' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+				array( 'file' => 'files.list', 'role' => 'manifest', 'walk' => array( 'excludes' => array(), 'excludenonwp' => 0, 'excludezip' => 0 ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
 				array( 'file' => 'tombstones.list', 'role' => 'tombstones' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
 				array( 'file' => 'db.zip', 'role' => 'db' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
 				array( 'file' => 'plugins.part001.zip', 'role' => 'part' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
@@ -997,7 +997,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			$plan[] = $entry;
 		}
 		$checkpoint             = $job->checkpoint;
-		$checkpoint['sub_type'] = 'full';
+		$checkpoint['sub_type'] = 'db_only' === $metadata ? 'db' : 'full';
 		$checkpoint['plan']     = $plan;
 		MainWP_Backup_Restore_Job_Store::instance()->save_checkpoint( (int) $job->id, $checkpoint );
 		if ( $cloud ) {
@@ -1050,6 +1050,8 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			'pull no manifest'   => array( true, 'no_manifest' ),
 			'pull no walk'       => array( true, 'no_walk' ),
 			'pull ancestor'      => array( true, 'ancestor' ),
+			'staged db only'     => array( false, 'db_only' ),
+			'pull db only'       => array( true, 'db_only' ),
 		);
 	}
 

@@ -728,7 +728,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 }
                 $backupTaskProgress = MainWP_DB_Backup::instance()->get_backup_task_progress( $taskId, $website->id );
 
-                if ( 'incremental' !== $type && empty( $information['artifacts'] ) ) {
+                if ( 'incremental' !== $type ) {
                     /** This action is documented in class/backup/class-mainwp-backup-executor.php */
                     do_action(
                         'mainwp_native_backup_completed',
@@ -760,7 +760,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
         if ( isset( $information['error'] ) ) {
             throw new MainWP_Exception( esc_html( MainWP_Backup_Error_Codes::sanitize_message( $information['error'] ) ), null, isset( $information['error_code'] ) ? $information['error_code'] : '' ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-        } elseif ( in_array( $type, array( 'incremental', 'full', 'files' ), true ) && ! empty( $information['artifacts'] ) ) {
+        } elseif ( 'incremental' === $type && ! empty( $information['artifacts'] ) ) {
             $snapshot_recorded = false;
             try {
                 $result = self::finish_incremental_backup( $website, $pTask, $information['artifacts'], $backupTaskProgress, $snapshot_recorded );
@@ -1582,6 +1582,48 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             $snapshot_type = 'files';
         }
 
+        $manifest_path = '';
+        foreach ( (array) ( $progress->fetchResult['artifacts'] ?? array() ) as $artifact ) {
+            if ( ! $has_full || 'manifest' !== ( $artifact['role'] ?? '' ) ) {
+                continue;
+            }
+            $remote = basename( (string) ( $artifact['file'] ?? '' ) );
+            $size   = (int) ( $artifact['size'] ?? 0 );
+            if ( '' === $remote || $size < 1 ) {
+                throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, 'invalid manifest artifact' ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+            }
+            $run_dir = MainWP_System_Utility::get_mainwp_specific_dir( $website->id ) . 'snapshot-' . MainWP_Utility::sanitize_file_name( (string) $progress->child_backup_task_id ) . '/';
+            wp_mkdir_p( $run_dir );
+            $manifest_path = $run_dir . MainWP_Utility::sanitize_file_name( $remote );
+            if ( ! is_file( $manifest_path ) || (int) filesize( $manifest_path ) !== $size ) {
+                MainWP_Backup_File_Manager::download_backup_artifact(
+                    $website,
+                    $remote,
+                    $manifest_path,
+                    $size,
+                    MainWP_Credential_Storage::decrypt_credential( $website->http_user ),
+                    MainWP_Credential_Storage::decrypt_credential( $website->http_pass )
+                );
+                if ( ! is_file( $manifest_path ) || (int) filesize( $manifest_path ) !== $size ) {
+                    throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, 'manifest size mismatch' ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+                }
+            }
+            $manifest = array(
+                'file' => basename( $manifest_path ),
+                'size' => $size,
+                'role' => 'manifest',
+                'path' => $manifest_path,
+            );
+            if ( isset( $artifact['walk'] ) && is_array( $artifact['walk'] ) ) {
+                $manifest['walk'] = $artifact['walk'];
+            }
+            $archives[] = $manifest;
+            break;
+        }
+        if ( ! MainWP_Backup_Monitor::confirm_native_lease() ) {
+            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING, 'backup lease lost before snapshot record' ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+        }
+
         $snapshot_id = $snapshots->record_snapshot(
             array(
                 'task_id'       => (int) $pTask->id,
@@ -1589,7 +1631,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 'type'          => $snapshot_type,
                 'parent_id'     => null,
                 'archives'      => $archives,
-                'manifest_path' => '',
+                'manifest_path' => $manifest_path,
                 'woo_meta'      => self::woo_meta_from_progress( $progress ),
                 'run_key'       => self::snapshot_run_key( $website, $pTask, $progress ),
             )

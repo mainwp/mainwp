@@ -154,11 +154,12 @@ Please report security bugs found in the source code of the MainWP plugin throug
 = 6.3-beta1 - 9-23-2026 =
 
 * Added: Native Backups (beta): schedule or run full, database-only, files-only, and incremental backups of child sites from the Dashboard, with resumable transfers that survive timeouts and slow hosts.
-* Added: Storage destinations for backups: S3 compatible storage, Google Cloud Storage, Dropbox, SFTP, and a local directory on the Dashboard server, with per-task destination selection and retention that covers cloud copies.
-* Added: Snapshots & Restore page: restore any recorded backup, including any point in an incremental chain, with a safety backup taken first and an automatic rollback if the restore fails.
-* Added: Restores load the database into temporary tables and switch to them in one step, so the site never runs on a half-restored database.
+* Added: Storage destinations for backups: S3-compatible storage, Google Cloud Storage, Dropbox, SFTP, and a local directory on the Dashboard server, with per-task destination selection and retention that covers cloud copies.
+* Added: Snapshots & Restore page: restore any recorded backup, including any point in an incremental chain, with an optional safety backup taken first and a Roll Back button if the restore fails.
+* Added: Restores load the database into temporary tables and switch to them in one step, so the site never runs on a half-restored database. Tables linked by foreign keys are restored in place while the site is in maintenance mode.
 * Added: Restores keep the site connected to the Dashboard by preserving the child's connection identity across the restored database.
-* Added: Direct-from-storage restore transfer for S3 compatible and Google Cloud Storage destinations, with an automatic fall back to the standard transfer.
+* Added: Restoring a files or full backup removes files added to the site after that backup was taken. Backups made before this version have no file list, so their restores leave those files in place.
+* Added: Direct-from-storage restore transfer for S3-compatible and Google Cloud Storage destinations, with an automatic fall back to the standard transfer.
 * Added: WooCommerce order preservation on restore: keep orders placed after the backup and re-merge the customers and stock they reference.
 * Added: Multisite network backups and restores.
 * Added: Retention by count, age, or storage size per backup task, applied to whole incremental chains.

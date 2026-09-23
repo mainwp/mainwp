@@ -390,12 +390,9 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
      */
     private function redact_restore_secrets( array $payload ): array {
         foreach ( $payload as $key => $value ) {
-            if ( 'pull_manifest' === $key ) {
-                $payload[ $key ] = true;
+            if ( 'identity_preserve' === $key || str_starts_with( (string) $key, 'pull_manifest' ) ) {
+                $payload[ $key ] = (bool) $value;
             } elseif ( is_array( $value ) ) {
-                if ( 'sub_state' === $key && array_key_exists( 'identity_preserve', $value ) ) {
-                    $value['identity_preserve'] = (bool) $value['identity_preserve'];
-                }
                 $payload[ $key ] = $this->redact_restore_secrets( $value );
             }
         }
@@ -672,6 +669,7 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
         }
     }
 
+    // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.Missing -- export failures are caught and returned as an empty path.
     /**
      * Build the export bundle: env.json, bounded table dumps, and the
      * redacted event files, zipped inside the diagnostics directory. Falls
@@ -691,6 +689,11 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
      *                or the bundle could not be written.
      */
     public function export_bundle(): string {
+        // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.Missing
+        $temporary_files = array();
+        $zip             = null;
+        $path            = '';
+        $complete        = false;
         try {
             $dir = $this->diagnostics_dir();
             if ( '' === $dir || ! is_dir( $dir ) ) {
@@ -711,25 +714,86 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 $path = $base . '.zip';
                 $zip  = new \ZipArchive();
                 if ( true !== $zip->open( $path, \ZipArchive::CREATE | \ZipArchive::OVERWRITE ) ) {
+                    $zip = null;
                     return '';
                 }
                 foreach ( $sections as $name => $data ) {
                     $zip->addFromString( $name . '.json', (string) wp_json_encode( $data, JSON_PRETTY_PRINT ) );
                 }
                 foreach ( $events['files'] as $event_file ) {
-                    $zip->addFromString( 'events/' . basename( $event_file ), $this->filter_event_lines( $event_file, null, array() ) );
+                    $temporary = tempnam( $dir, 'redacted-' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- private export staging.
+                    if ( false === $temporary ) {
+                        throw new \RuntimeException( 'Could not create a redacted event file.' );
+                    }
+                    $temporary_files[] = $temporary;
+                    if ( realpath( dirname( $temporary ) ) !== realpath( $dir ) ) {
+                        throw new \RuntimeException( 'Could not stage diagnostics in the private directory.' );
+                    }
+                    $scope = $events['scopes'][ $event_file ] ?? array( null, array() );
+                    $this->write_redacted_event_file( $event_file, $temporary, $scope );
+                    if ( ! $zip->addFile( $temporary, 'events/' . basename( $event_file ) ) ) {
+                        throw new \RuntimeException( 'Could not add an event file to the diagnostics bundle.' );
+                    }
                 }
-                foreach ( $events['blobs'] as $name => $content ) {
-                    $zip->addFromString( 'events/' . $name, $content );
+                $closed = $zip->close();
+                $zip    = null;
+                if ( ! $closed ) {
+                    return '';
                 }
-                $zip->close();
+                $complete = true;
                 return $path;
             }
 
             return $this->write_json_bundle( $base . '.json', $sections, $events );
         } catch ( \Throwable $e ) {
             return '';
+        } finally {
+            try {
+                if ( null !== $zip ) {
+                    $zip->close();
+                }
+            } catch ( \Throwable $e ) {
+                return '';
+            } finally {
+                foreach ( $temporary_files as $temporary ) {
+                    wp_delete_file( $temporary );
+                }
+                if ( ! $complete && '' !== $path ) {
+                    wp_delete_file( $path );
+                }
+            }
         }
+    }
+
+    /**
+     * Stream redacted events to a private file kept until the ZIP closes.
+     *
+     * @param string $source Event file.
+     * @param string $path Temporary destination.
+     * @param array  $scope Allowed sites and tasks.
+     * @return void
+     * @throws \RuntimeException When the temporary file cannot be written.
+     */
+    private function write_redacted_event_file( string $source, string $path, array $scope ): void {
+        // phpcs:disable WordPress.WP.AlternativeFunctions -- streaming private diagnostics files.
+        $output = fopen( $path, 'wb' );
+        if ( false === $output ) {
+            throw new \RuntimeException( 'Could not open a redacted event file.' );
+        }
+        try {
+            foreach ( $this->filter_event_lines( $source, $scope[0], $scope[1] ) as $line ) {
+                $line .= "\n";
+                if ( strlen( $line ) !== fwrite( $output, $line ) ) {
+                    throw new \RuntimeException( 'Could not write a redacted event file.' );
+                }
+            }
+            if ( ! fflush( $output ) ) {
+                throw new \RuntimeException( 'Could not flush a redacted event file.' );
+            }
+        } finally {
+            fclose( $output );
+        }
+        // phpcs:enable WordPress.WP.AlternativeFunctions
     }
 
     // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.Missing -- export failures are caught and returned as an empty path.
@@ -739,7 +803,7 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
      *
      * @param string $path Destination path.
      * @param array  $sections Non-event bundle sections.
-     * @param array  $events Scoped event files and filtered blobs.
+     * @param array  $events Scoped event files and per-file scope filters.
      * @return string Written path, or an empty string on failure.
      */
     private function write_json_bundle( string $path, array $sections, array $events ): string {
@@ -758,12 +822,7 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 }
                 return $json;
             };
-            // Old files and malformed lines cannot be trusted to be free of secrets.
-            $redact_line = function ( string $line ) use ( $encode ): string {
-                $event = json_decode( $line, true );
-                return is_array( $event ) ? $encode( $this->redact_restore_secrets( $event ) ) : '';
-            };
-            $write       = static function ( string $value ) use ( $output ) {
+            $write  = static function ( string $value ) use ( $output ) {
                 if ( strlen( $value ) !== fwrite( $output, $value ) ) {
                     throw new \RuntimeException( 'Could not write the diagnostics bundle.' );
                 }
@@ -772,44 +831,17 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
             foreach ( $sections as $name => $data ) {
                 $write( $encode( (string) $name ) . ':' . $encode( $data ) . ',' );
             }
-            $has_events = ! empty( $events['files'] ) || ! empty( $events['blobs'] );
+            $has_events = ! empty( $events['files'] );
             $write( '"events":' . ( $has_events ? '{' : '[]' ) );
             $separator = '';
             foreach ( $events['files'] as $event_file ) {
                 $write( $separator . $encode( basename( $event_file ) ) . ':[' );
-                $separator = ',';
-                $handle    = fopen( $event_file, 'rb' );
-                if ( false !== $handle ) {
-                    try {
-                        $line_separator = '';
-                        while ( false !== ( $line = fgets( $handle ) ) ) { // phpcs:ignore WordPress.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition
-                            $line = $redact_line( $line );
-                            if ( $line ) {
-                                $write( $line_separator . $encode( $line ) );
-                                $line_separator = ',';
-                            }
-                        }
-                    } finally {
-                        fclose( $handle );
-                    }
-                }
-                $write( ']' );
-            }
-            foreach ( $events['blobs'] as $name => $content ) {
-                $write( $separator . $encode( (string) $name ) . ':[' );
                 $separator      = ',';
+                $scope          = $events['scopes'][ $event_file ] ?? array( null, array() );
                 $line_separator = '';
-                $offset         = 0;
-                $length         = strlen( $content );
-                while ( $offset < $length ) {
-                    $end  = strpos( $content, "\n", $offset );
-                    $end  = false === $end ? $length : $end;
-                    $line = $redact_line( substr( $content, $offset, $end - $offset ) );
-                    if ( $line ) {
-                        $write( $line_separator . $encode( $line ) );
-                        $line_separator = ',';
-                    }
-                    $offset = $end + 1;
+                foreach ( $this->filter_event_lines( $event_file, $scope[0], $scope[1] ) as $line ) {
+                    $write( $line_separator . $encode( $line ) );
+                    $line_separator = ',';
                 }
                 $write( ']' );
             }
@@ -877,7 +909,7 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @param int[]|null $allowed     Allowed site ids, null when unrestricted.
      * @param array      $tasks       The exported task rows, already scoped.
      *
-     * @return array{files:string[],blobs:array<string,string>}
+     * @return array{files:string[],scopes:array}
      */
     private function scope_event_files( array $event_files, ?array $allowed, array $tasks ): array {
         // A file can vanish between the glob and this read, and the stat cache can be stale within a request.
@@ -885,8 +917,8 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
         $event_files = array_values( array_filter( $event_files, static fn( $file ) => is_file( $file ) && 0 !== filesize( $file ) ) );
         if ( null === $allowed ) {
             return array(
-                'files' => $event_files,
-                'blobs' => array(),
+                'files'  => $event_files,
+                'scopes' => array(),
             );
         }
 
@@ -896,12 +928,13 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
         // Scope is carried in the event because private filenames are opaque.
         $global_key = sanitize_file_name( '_global' );
 
-        $files = array();
-        $blobs = array();
+        $files  = array();
+        $scopes = array();
         foreach ( $event_files as $event_file ) {
             $run_key = $this->event_file_run_key( $event_file );
             if ( $global_key === $run_key ) {
-                $blobs[ basename( $event_file ) ] = $this->filter_event_lines( $event_file, $allowed, $allowed_tasks );
+                $files[]               = $event_file;
+                $scopes[ $event_file ] = array( $allowed, $allowed_tasks );
                 continue;
             }
 
@@ -912,8 +945,8 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
         }
 
         return array(
-            'files' => $files,
-            'blobs' => $blobs,
+            'files'  => $files,
+            'scopes' => $scopes,
         );
     }
 
@@ -972,15 +1005,15 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @param int[]|null $allowed_sites Allowed site ids, null when unrestricted.
      * @param int[]      $allowed_tasks Allowed task ids.
      *
-     * @return string The kept lines, newline separated.
+     * @throws \RuntimeException When an event cannot be read or encoded.
+     * @return \Generator Redacted JSON lines within the caller's scope.
      */
-    private function filter_event_lines( string $file, ?array $allowed_sites, array $allowed_tasks ): string {
+    private function filter_event_lines( string $file, ?array $allowed_sites, array $allowed_tasks ): \Generator {
         $handle = fopen( $file, 'rb' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- stream local diagnostics.
         if ( false === $handle ) {
-            return '';
+            throw new \RuntimeException( 'Could not read a diagnostics event file.' );
         }
 
-        $kept = array();
         try {
             while ( false !== ( $line = fgets( $handle ) ) ) { // phpcs:ignore WordPress.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition
                 $line = rtrim( $line, "\n" );
@@ -999,13 +1032,15 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 if ( null !== $allowed_sites && 0 !== $task_id && ! in_array( $task_id, $allowed_tasks, true ) ) {
                     continue;
                 }
-                $kept[] = (string) wp_json_encode( $this->redact_restore_secrets( $event ) );
+                $redacted = wp_json_encode( $this->redact_restore_secrets( $event ) );
+                if ( false === $redacted ) {
+                    throw new \RuntimeException( 'Could not encode a diagnostics event.' );
+                }
+                yield $redacted;
             }
         } finally {
             fclose( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- stream local diagnostics.
         }
-
-        return implode( "\n", $kept );
     }
 
     /**

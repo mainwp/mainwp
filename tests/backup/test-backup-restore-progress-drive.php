@@ -115,6 +115,7 @@ class MainWP_Backup_Restore_Progress_Drive_Test extends MainWP_Abilities_Test_Ca
 		);
 
 		$this->assertIsArray( $response, 'The poll should still return a status payload.' );
+		$this->assertSame( 'db', $response['sub_type'], 'The reconcile note must use the job subtype.' );
 		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_PREFLIGHT, $response['status'] );
 	}
 

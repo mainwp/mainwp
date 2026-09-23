@@ -898,6 +898,26 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 				'delete_backup'      => array( 'result' => 'ok' ),
 			)
 		);
+		$postprocessed = array();
+		$feedback_runs = array();
+		add_action(
+			'mainwp_postprocess_backup_site',
+			function ( ...$args ) use ( &$postprocessed ) {
+				$postprocessed[] = $args;
+			},
+			10,
+			7
+		);
+		add_filter(
+			'mainwp_postprocess_backup_sites_feedback',
+			function ( $feedback, $unique ) use ( &$feedback_runs ) {
+				$feedback_runs[]       = $unique;
+				$feedback['delivered'] = true;
+				return $feedback;
+			},
+			10,
+			2
+		);
 		$events = array();
 		add_action(
 			'mainwp_native_backup_completed',
@@ -912,6 +932,10 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		$create  = $this->run_cycle( $site_id, $task );
 		$this->assertNull( $create['exception'] );
 		$this->assertSame( '1', $this->last_call_params( 'backup_task_create' )['emit_manifest'] );
+		$old_backup = MainWP_System_Utility::get_mainwp_specific_dir( $site_id ) . 'full-obsolete.zip';
+		wp_mkdir_p( dirname( $old_backup ) );
+		file_put_contents( $old_backup, $this->remote_files['backup-base.zip'] );
+		update_option( 'mainwp_backupsOnServer', 1 );
 		$cycle = $this->run_cycle( $site_id, $task );
 		$this->assertNull( $cycle['exception'] );
 		$this->assertIsArray( $cycle['result'] );
@@ -937,7 +961,24 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( array( 'backup-base.zip' ), array_column( $this->all_call_params( 'delete_backup' ), 'del' ) );
 		$this->assertCount( 1, $events );
 		$this->assertTrue( $events[0][0] );
-		$this->assertSame( (int) $snapshot->id, $events[0][1]['snapshot_id'] );
+		$this->assertSame( 'backup-base.zip', $events[0][1]['file'] );
+		$this->assertCount( 1, $postprocessed );
+		$this->assertNotEmpty( $postprocessed[0][0] );
+		$this->assertSame( $snapshot->archives[0]['path'], $postprocessed[0][0] );
+		$this->assertFileExists( $postprocessed[0][0] );
+		$this->assertSame( 'full', $postprocessed[0][1] );
+		$this->assertSame( 'backups', $postprocessed[0][2] );
+		$this->assertStringStartsWith( 'full-', basename( $postprocessed[0][0] ) );
+		$this->assertNotEmpty( $postprocessed[0][3] );
+		$this->assertSame( $site_id, (int) $postprocessed[0][4]->id );
+		$this->assertSame( 11, (int) $postprocessed[0][5] );
+		$this->assertSame( $task->last_run, $postprocessed[0][6] );
+		$this->assertSame( array( $task->last_run ), $feedback_runs );
+		$this->assertTrue( $cycle['result']['delivered'] );
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( 11, $site_id );
+		$this->assertSame( 1, (int) $progress->removedFiles );
+		$this->assertFileDoesNotExist( $old_backup );
+		$this->assertSame( $postprocessed[0][0], $progress->downloadedFULL );
 	}
 
 	/**

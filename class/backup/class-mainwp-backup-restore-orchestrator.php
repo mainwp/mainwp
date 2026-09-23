@@ -1145,7 +1145,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 'sha256'     => (string) $entry['sha256'],
                 'adopt_only' => ! empty( $entry['adopt_only'] ),
             );
-            if ( 'manifest' === $entry['role'] && (int) $entry['snapshot_id'] === (int) $job->snapshot_id && isset( $entry['walk'] ) && is_array( $entry['walk'] ) ) {
+            if ( 'db' !== $options['sub_type'] && 'manifest' === $entry['role'] && (int) $entry['snapshot_id'] === (int) $job->snapshot_id && isset( $entry['walk'] ) && is_array( $entry['walk'] ) ) {
                 $options['reconcile'] = array(
                     'manifest' => $entry['file'],
                     'walk'     => $entry['walk'],

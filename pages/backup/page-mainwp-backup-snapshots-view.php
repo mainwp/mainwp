@@ -628,6 +628,9 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             }
 
             function setPane( confirming ) {
+                if ( confirming ) {
+                    $( '#mainwp-restore-reconcile-note' ).hide();
+                }
                 $( '#mainwp-restore-confirm-pane' ).toggle( confirming );
                 $( '#mainwp-restore-progress-pane' ).toggle( ! confirming );
                 $( '#mainwp-restore-start-btn' ).toggle( confirming );
@@ -687,7 +690,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     if ( 'completed' === data.status ) {
                         $message.addClass( 'green' ).text( '<?php echo esc_js( esc_html__( 'The site was restored and responds normally.', 'mainwp' ) ); ?>' );
                         showPreserveNote( data.verification );
-                        showReconcileNote( data.verification );
+                        showReconcileNote( data.verification, data.sub_type );
                     } else if ( rolledBack && outcome ) {
                         // The restore failed but the database was recovered:
                         // the data is safe, so this reads as information.
@@ -738,23 +741,35 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 $note.text( text ).show();
             }
 
-            function showReconcileNote( verification ) {
+            function showReconcileNote( verification, subType ) {
                 var $note = $( '#mainwp-restore-reconcile-note' ).removeClass( 'blue yellow' ).hide();
-                if ( ! verification || ! verification.reconcile ) {
+                if ( 'db' === subType || ! verification || ! verification.reconcile ) {
                     return;
                 }
                 var reconcile = verification.reconcile;
                 if ( 'skipped' === reconcile.status ) {
-                    $note.addClass( 'yellow' ).text( '<?php echo esc_js( esc_html__( 'Files added after this backup were not removed. Backups made before MainWP Child 6.3-beta1 have no file list to compare against.', 'mainwp' ) ); ?>' ).show();
+                    if ( [ 'no_manifest', 'no_walk_params' ].indexOf( reconcile.reason ) !== -1 ) {
+                        $note.addClass( 'yellow' ).text( '<?php echo esc_js( esc_html__( 'Files added after this backup were not removed. Backups made before MainWP Child 6.3-beta1 have no file list to compare against.', 'mainwp' ) ); ?>' ).show();
+                    } else if ( [ 'empty_manifest', 'manifest_unverified' ].indexOf( reconcile.reason ) !== -1 ) {
+                        $note.addClass( 'yellow' ).text( '<?php echo esc_js( esc_html__( "Files added after this backup were not removed, because the backup's file list could not be verified.", 'mainwp' ) ); ?>' ).show();
+                    }
                 } else if ( 'done' === reconcile.status ) {
                     var removed = parseInt( reconcile.removed, 10 ) || 0;
-                    var text = '<?php echo esc_js( esc_html__( 'No files were added after this backup.', 'mainwp' ) ); ?>';
-                    if ( 1 === removed ) {
-                        text = '<?php echo esc_js( esc_html__( 'Removed 1 file that was added after this backup.', 'mainwp' ) ); ?>';
-                    } else if ( removed > 1 ) {
-                        text = '<?php /* translators: %d: number of removed files. */ echo esc_js( esc_html__( 'Removed %d files that were added after this backup.', 'mainwp' ) ); ?>'.replace( '%d', removed );
+                    var failed = parseInt( reconcile.failed, 10 ) || 0;
+                    if ( 0 === removed && 0 === failed ) {
+                        return;
                     }
-                    $note.addClass( 'blue' ).text( text ).show();
+                    var text = 0 === removed ? '' : ( 1 === removed
+                        ? '<?php /* translators: %d: number of removed files. */ echo esc_js( _n( 'Removed %d file that was added after this backup.', 'Removed %d files that were added after this backup.', 1, 'mainwp' ) ); ?>'
+                        : '<?php /* translators: %d: number of removed files. */ echo esc_js( _n( 'Removed %d file that was added after this backup.', 'Removed %d files that were added after this backup.', 2, 'mainwp' ) ); ?>'
+                    ).replace( '%d', removed );
+                    if ( failed > 0 ) {
+                        text += ( '' === text ? '' : ' ' ) + ( 1 === failed
+                            ? '<?php /* translators: %d: number of files that could not be removed. */ echo esc_js( _n( '%d file could not be removed and is still on the site.', '%d files could not be removed and are still on the site.', 1, 'mainwp' ) ); ?>'
+                            : '<?php /* translators: %d: number of files that could not be removed. */ echo esc_js( _n( '%d file could not be removed and is still on the site.', '%d files could not be removed and are still on the site.', 2, 'mainwp' ) ); ?>'
+                        ).replace( '%d', failed );
+                    }
+                    $note.addClass( failed > 0 ? 'yellow' : 'blue' ).text( text ).show();
                 }
             }
 

@@ -102,6 +102,10 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             throw new MainWP_Exception( esc_html__( 'Site not found.', 'mainwp' ) );
         }
 
+        if ( null !== MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $site_id ) ) {
+            throw new MainWP_Exception( esc_html__( 'A restore is already running for this site. Wait for it to finish before starting another.', 'mainwp' ) );
+        }
+
         if ( ! MainWP_Backup_Monitor::child_supports_restore_create_idempotency( $website ) ) {
             // The stored flag goes stale on exactly the update this refusal asks
             // for, so re-negotiate once before taking Restore away.
@@ -109,10 +113,6 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             if ( MainWP_Backup_Monitor::child_requires_restore_create_idempotency_update( $website ) ) {
                 throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_RESTORE_CHILD_UPDATE_REQUIRED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
             }
-        }
-
-        if ( null !== MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $site_id ) ) {
-            throw new MainWP_Exception( esc_html__( 'A restore is already running for this site. Wait for it to finish before starting another.', 'mainwp' ) );
         }
 
         $resolved = MainWP_Backup_Snapshot_Catalog::instance()->resolve_restorable_chain( $snapshot_id, $site_id );

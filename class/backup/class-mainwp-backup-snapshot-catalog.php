@@ -51,8 +51,6 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
      *                 local|remote|remote_chunked|unavailable.
      */
     public function list_snapshots_for_site( int $site_id ): array {
-        $website          = MainWP_DB::instance()->get_website_by_id( $site_id );
-        $create_gated     = ! empty( $website ) && MainWP_Backup_Monitor::child_requires_restore_create_idempotency_update( $website );
         $files_restorable = $this->site_supports_restore_files( $site_id );
         $multisite_gated  = $this->site_is_multisite( $site_id ) && ! $this->site_supports_restore_multisite( $site_id );
 
@@ -65,8 +63,6 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
                 $reason = __( 'Removed by retention; no copy survives locally or in cloud storage.', 'mainwp' );
             } elseif ( 'files' === $snapshot->type && ! $files_restorable ) {
                 $reason = __( 'Update the MainWP Child plugin on the site to restore files-only backups.', 'mainwp' );
-            } elseif ( $create_gated ) {
-                $reason = MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_RESTORE_CHILD_UPDATE_REQUIRED );
             } elseif ( $multisite_gated ) {
                 $reason = __( 'This site runs WordPress Multisite. Update the MainWP Child plugin to enable network-wide restore.', 'mainwp' );
             }

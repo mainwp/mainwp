@@ -119,9 +119,9 @@ class MainWP_Backup_Snapshot_Catalog_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * The listing refuses only a negotiated lack of idempotent task creation.
+	 * The listing leaves create-idempotency checks to restore initiation.
 	 */
-	public function test_restore_create_idempotency_gate_follows_child_capability() {
+	public function test_listing_ignores_restore_create_idempotency_capability() {
 		$site_id = $this->create_test_site();
 		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
 		MainWP_DB::instance()->update_website_option( $website, 'restore_create_idempotency_support', '0' );
@@ -132,8 +132,8 @@ class MainWP_Backup_Snapshot_Catalog_Test extends MainWP_Abilities_Test_Case {
 		);
 
 		$entries = MainWP_Backup_Snapshot_Catalog::instance()->list_snapshots_for_site( $site_id );
-		$this->assertFalse( $entries[0]['restorable'], 'A child without create idempotency must not be restorable.' );
-		$this->assertSame( 'The MainWP Child plugin on this site is too old to restore a backup safely. Update MainWP Child on the site, then run the restore again.', $entries[0]['restore_reason'] );
+		$this->assertTrue( $entries[0]['restorable'], 'The listing must allow restore initiation to refresh a stale capability.' );
+		$this->assertSame( '', $entries[0]['restore_reason'] );
 
 		$resolved = MainWP_Backup_Snapshot_Catalog::instance()->resolve_restorable_chain( $snapshot_id );
 		$this->assertTrue( $resolved['ok'] );
@@ -270,6 +270,7 @@ class MainWP_Backup_Snapshot_Catalog_Test extends MainWP_Abilities_Test_Case {
 	 * action and a direct resolve refuses with a clear message.
 	 */
 	public function test_files_snapshot_not_restorable_when_child_lacks_capability() {
+		// Create idempotency is irrelevant to the listing; files-only support still gates it.
 		$this->set_site_option( 9901, 'restore_create_idempotency_support', '0' );
 		$id = $this->make_snapshot(
 			array( array( 'file' => 'files.tar.gz', 'role' => 'full' ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.

@@ -391,13 +391,20 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @return void
      */
     public static function refresh_negotiated_capabilities( object $website ): void {
+        $clamp = static function ( $timeout ) {
+            return is_numeric( $timeout ) && $timeout > 0 ? max( 1, min( (int) $timeout, self::CAPABILITY_PROBE_TIMEOUT_SECONDS ) ) : 1;
+        };
+        add_filter( 'mainwp_fetch_url_site_timeout', $clamp, PHP_INT_MAX );
         try {
-            $preflight = MainWP_Connect::fetch_with_retry( $website, 'backup_preflight', array() );
-        } catch ( \Exception $e ) {
+            $preflight = MainWP_Connect::fetch_with_retry( $website, 'backup_preflight', array(), 1 );
+        } catch ( \Throwable $e ) {
+            MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'Capability probe unavailable: ' . $e->getMessage() );
             // An unreachable child says nothing about its capabilities, so the
             // last negotiated flags stand rather than being cleared by a site
             // that is merely down.
             return;
+        } finally {
+            remove_filter( 'mainwp_fetch_url_site_timeout', $clamp, PHP_INT_MAX );
         }
 
         if ( ! is_array( $preflight ) || isset( $preflight['error'] ) ) {
@@ -623,6 +630,16 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @var int
      */
     const NATIVE_REQUEST_TIMEOUT_SECONDS = 900;
+
+    /**
+     * Bound capability reads made during an admin request.
+     *
+     * The report is only a few hundred bytes; an admin request cannot wait
+     * through a stalled child. A failed probe falls back to the stored answer.
+     *
+     * @var int
+     */
+    const CAPABILITY_PROBE_TIMEOUT_SECONDS = 30;
 
     /**
      * Bound applied to one artifact transfer attempt under a native lease.

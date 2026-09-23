@@ -11,6 +11,7 @@ namespace MainWP\Dashboard\Tests;
 use MainWP\Dashboard\MainWP_Backup_Backoff;
 use MainWP\Dashboard\MainWP_Backup_Error_Codes;
 use MainWP\Dashboard\MainWP_Backup_Executor;
+use MainWP\Dashboard\MainWP_Backup_Monitor;
 use MainWP\Dashboard\MainWP_Backup_Restore_Job_Store;
 use MainWP\Dashboard\MainWP_Backup_Restore_Orchestrator;
 use MainWP\Dashboard\MainWP_Backup_Restore_Transfer_Driver;
@@ -3894,6 +3895,56 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		}
 
 		$this->assertNull( MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $this->site_id ) );
+	}
+
+	/**
+	 * The capability probe installs its timeout clamp only around the fetch.
+	 */
+	public function test_capability_probe_clamps_timeout_and_removes_filter() {
+		$this->set_site_option( $this->site_id, 'restore_create_idempotency_support', '0' );
+		$this->responses['backup_preflight'] = array( 'restore_create_idempotency' => 1 );
+		$website                             = MainWP_DB::instance()->get_website_by_id( $this->site_id );
+		$observed                            = null;
+		$offer                               = static function () {
+			return 72000;
+		};
+		$observe                             = static function ( $pre, $site, $what ) use ( &$observed ) {
+			if ( 'backup_preflight' === $what ) {
+				// The mock bypasses the transport, so exercise its timeout hook here.
+				$observed = apply_filters( 'mainwp_fetch_url_site_timeout', 72000 );
+			}
+			return $pre;
+		};
+		add_filter( 'mainwp_fetch_url_site_timeout', $offer, 10 );
+		add_filter( 'mainwp_fetch_url_authed_pre', $observe, 20, 3 );
+		try {
+			MainWP_Backup_Monitor::refresh_negotiated_capabilities( $website );
+			$this->assertSame( 30, MainWP_Backup_Monitor::CAPABILITY_PROBE_TIMEOUT_SECONDS );
+			$this->assertSame( 30, $observed );
+			$this->assertSame( 72000, apply_filters( 'mainwp_fetch_url_site_timeout', 72000 ) );
+			$this->assertSame( array( 'backup_preflight' ), array_column( $this->calls, 'what' ) );
+		} finally {
+			remove_filter( 'mainwp_fetch_url_authed_pre', $observe, 20 );
+			remove_filter( 'mainwp_fetch_url_site_timeout', $offer, 10 );
+		}
+	}
+
+	/**
+	 * An unavailable capability probe makes one attempt and keeps the stored flag.
+	 */
+	public function test_initiate_restore_attempts_capability_probe_once() {
+		$this->set_site_option( $this->site_id, 'restore_create_idempotency_support', '0' );
+
+		try {
+			$this->orchestrator->initiate_restore( $this->site_id, 5 );
+			$this->fail( 'An unavailable probe must preserve the stored refusal.' );
+		} catch ( MainWP_Exception $e ) {
+			$this->assertSame( 'mainwp_restore_child_update_required', $e->get_message_error_code() );
+		}
+
+		$this->assertSame( array( 'backup_preflight' ), array_column( $this->calls, 'what' ) );
+		$this->assertSame( '0', MainWP_DB::instance()->get_website_option( $this->site_id, 'restore_create_idempotency_support' ) );
+		$this->assertSame( 72000, apply_filters( 'mainwp_fetch_url_site_timeout', 72000 ) );
 	}
 
 	/**

@@ -292,15 +292,12 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	 *
 	 * @param int  $site_id Site id.
 	 * @param int  $task_id Task id.
-	 * @param bool $record_writer Whether the child-local manifest belongs to this base.
+	 * @param bool $record_manifest Whether the child-local manifest belongs to this base.
 	 *
 	 * @return int Snapshot id.
 	 */
-	protected function record_base_snapshot( $site_id, $task_id = 11, $record_writer = true ) {
-		if ( $record_writer ) {
-			MainWP_DB::instance()->update_website_option( $site_id, 'native_manifest_writer_task', (string) $task_id );
-		}
-		return MainWP_Backup_Snapshots::instance()->record_snapshot(
+	protected function record_base_snapshot( $site_id, $task_id = 11, $record_manifest = true ) {
+		$snapshot_id = MainWP_Backup_Snapshots::instance()->record_snapshot(
 			array(
 				'task_id'       => $task_id,
 				'site_id'       => $site_id,
@@ -310,6 +307,10 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 				'manifest_path' => $this->manifest_fixture,
 			)
 		);
+		if ( $record_manifest ) {
+			MainWP_DB::instance()->update_website_option( $site_id, 'native_manifest_snapshot', (string) $snapshot_id );
+		}
+		return $snapshot_id;
 	}
 
 	/**
@@ -425,114 +426,181 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * Another file task replaces the shared child manifest before A runs again.
+	 * Only a recorded manifest identifies the child's shared files.list.
 	 *
-	 * @dataProvider manifest_writer_types
+	 * @dataProvider manifest_snapshot_events
 	 * @param string $type Intervening task type.
+	 * @param string $event Intervening run outcome.
+	 * @param int    $next_task Task whose next incremental is checked.
 	 */
-	public function test_intervening_task_pushes_own_base_manifest( $type ) {
+	public function test_manifest_snapshot_event_matrix( $type, $event, $next_task ) {
+		global $wpdb;
 		$site_id = $this->create_test_site();
-		$this->record_base_snapshot( $site_id, 12 );
-		$base_id          = $this->record_base_snapshot( $site_id );
-		$website          = MainWP_DB::instance()->get_website_by_id( $site_id );
-		$writer_at_create = array();
+		$this->give_site_real_privkey( $site_id );
+		self::$fixed_time = \time() - 200;
+		$base_b           = $this->record_base_snapshot( $site_id, 12, false );
+		$base_a           = $this->record_base_snapshot( $site_id, 11 );
+		$base_b_manifest  = $this->manifest_fixture . '-task-b';
+		file_put_contents( $base_b_manifest, "task-b.php\t30\t300\n" );
+		$wpdb->update( $wpdb->prefix . 'mainwp_wp_backup_snapshot', array( 'manifest_path' => $base_b_manifest ), array( 'id' => $base_b ) );
+		self::$fixed_time += 200;
+		$website           = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$task              = $this->make_task( $website, 12, array( 'type' => $type ) );
+		$artifacts         = $this->arrange_remote_artifacts( 'incremental' !== $type );
+		$this->mock_artifact_downloads();
+		$creates = 0;
 		$this->mock_child_actions(
 			array(
 				'backup_preflight'   => $this->preflight_response(),
-				'backup_task_create' => function () use ( $site_id, &$writer_at_create ) {
-					$writer_at_create[] = MainWP_DB::instance()->get_website_option( $site_id, 'native_manifest_writer_task' );
+				'backup_task_create' => function () use ( $site_id, $event, &$creates ) {
+					++$creates;
+					$this->assertSame( '', (string) MainWP_DB::instance()->get_website_option( $site_id, 'native_manifest_snapshot' ), 'Clear the snapshot before every manifest-producing create.' );
+					if ( 1 === $creates && 'create fails' === $event ) {
+						throw new MainWP_Exception( 'Create failed.' );
+					}
+					if ( 1 === $creates && 'refused' === $event ) {
+						return array(
+							'error'      => 'Busy.',
+							'error_code' => MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING,
+						);
+					}
 					return array(
-						'task_id' => 'writer-' . count( $writer_at_create ),
+						'task_id' => 'matrix-' . $creates,
 						'phase'   => 'queued',
 					);
 				},
+				'backup_task_run'    => array(
+					'task_id'   => 'matrix-1',
+					'phase'     => 'child fails' === $event ? 'failed' : 'completed',
+					'file'      => 'incremental' === $type ? 'files.list' : 'backup-base.zip',
+					'size'      => 'incremental' === $type ? 40 : 400,
+					'artifacts' => $artifacts,
+				),
+				'delete_backup'      => array( 'result' => 'ok' ),
+				'backup_task_cancel' => array( 'result' => 'ok' ),
 			)
 		);
-		$cycle = $this->run_cycle( $site_id, $this->make_task( $website, 12, array( 'type' => $type ) ) );
-		$this->assertNull( $cycle['exception'] );
-		$this->assertSame( '12', $writer_at_create[0] );
-		$cycle = $this->run_cycle( $site_id, $this->make_task( $website ) );
-		$this->assertNull( $cycle['exception'] );
-		$params = $this->last_call_params( 'backup_task_create' );
-		$this->assertSame( 'incremental', $params['type'] );
-		$this->assertSame( (string) $base_id, $params['parent_snapshot_id'] );
-		$this->assertSame( base64_encode( file_get_contents( $this->manifest_fixture ) ), $params['parent_manifest'] );
-		$this->assertSame( '11', $writer_at_create[1] );
+		$property = new \ReflectionProperty( MainWP_Backup_Snapshots::class, 'instance' );
+		$original = $property->getValue();
+		try {
+			if ( 'old option only' === $event ) {
+				MainWP_DB::instance()->update_website_option( $site_id, 'native_manifest_snapshot', '' );
+				MainWP_DB::instance()->update_website_option( $site_id, 'native_manifest_writer_task', '12' );
+			} else {
+				$create = $this->run_cycle( $site_id, $task );
+				if ( 'create fails' === $event ) {
+					$this->assertInstanceOf( MainWP_Exception::class, $create['exception'] );
+				} else {
+					$this->assertNull( $create['exception'] );
+					$this->assertFalse( $create['result'] );
+				}
+				$this->assertSame( '', (string) MainWP_DB::instance()->get_website_option( $site_id, 'native_manifest_snapshot' ) );
+				if ( 'record fails' === $event ) {
+					$property->setValue(
+						null,
+						new class() extends MainWP_Backup_Snapshots {
+							/**
+							 * Refuse the insert after the completed child's artifacts arrive.
+							 *
+							 * @param array $data Snapshot fields.
+							 * @return int Failed id.
+							 */
+							public function record_snapshot( array $data ): int {
+								return 0;
+							}
+						}
+					);
+				}
+				if ( 'degraded' === $event ) {
+					add_filter(
+						'mainwp_download_to_file_pre',
+						static function ( $pre, $url, $file ) {
+							if ( 'files.list' === basename( $file ) ) {
+								throw new MainWP_Exception( 'Manifest download failed.' );
+							}
+							return $pre;
+						},
+						5,
+						3
+					);
+				}
+				if ( 'cancelled' === $event ) {
+					MainWP_Manage_Backups_Handler::close_child_task_after_terminal_mark( 12, $site_id );
+					$this->assertSame( array( array( 'task_id' => 'matrix-1' ) ), $this->all_call_params( 'backup_task_cancel' ) );
+				}
+				if ( ! in_array( $event, array( 'create fails', 'refused', 'cancelled' ), true ) ) {
+					$finish = $this->run_cycle( $site_id, $task );
+					if ( 'record fails' === $event ) {
+						$this->assertInstanceOf( MainWP_Exception::class, $finish['exception'] );
+						$this->assertSame( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_RECORD_FAILED, $finish['exception']->get_message_error_code() );
+					} elseif ( 'child fails' === $event ) {
+						$this->assertInstanceOf( MainWP_Exception::class, $finish['exception'] );
+					} else {
+						$this->assertNull( $finish['exception'] );
+						$this->assertIsArray( $finish['result'] );
+					}
+				}
+			}
+			$property->setValue( null, $original );
+			$latest = $original->get_latest_complete( $site_id, 12 );
+			if ( in_array( $event, array( 'recorded', 'degraded' ), true ) ) {
+				$this->assertNotSame( $base_b, (int) $latest->id, 'The completion must insert a new snapshot.' );
+				$this->assertSame( 'degraded' === $event ? '' : (string) $latest->id, (string) MainWP_DB::instance()->get_website_option( $site_id, 'native_manifest_snapshot' ) );
+				$this->assertSame( 'degraded' === $event, '' === $latest->manifest_path );
+			} else {
+				$this->assertSame( $base_b, (int) $latest->id, 'A failed or cancelled run must not record a snapshot.' );
+				$this->assertSame( '', (string) MainWP_DB::instance()->get_website_option( $site_id, 'native_manifest_snapshot' ) );
+			}
+
+			// Start a fresh run after the outcome, without carrying its retry marker.
+			$wpdb->delete(
+				$wpdb->prefix . 'mainwp_wp_backup_progress',
+				array(
+					'task_id' => $next_task,
+					'wp_id'   => $site_id,
+				)
+			); // phpcs:ignore WordPress.DB -- test fixture.
+			++self::$fixed_time;
+			$next = $this->make_task( $website, $next_task, array( 'last_run' => self::$fixed_time ) );
+			$this->assertNull( $this->run_cycle( $site_id, $next )['exception'] );
+			$params = $this->last_call_params( 'backup_task_create' );
+			if ( 12 === $next_task && ( 'degraded' === $event || ( 'files' === $type && 'recorded' === $event ) ) ) {
+				$this->assertSame( 'full', $params['type'], 'A missing manifest or files-only base requires the existing full escalation.' );
+				$this->assertSame( '1', $params['emit_manifest'] );
+			} else {
+				$this->assertSame( 'incremental', $params['type'] );
+				$this->assertSame( (string) ( 11 === $next_task ? $base_a : $latest->id ), $params['parent_snapshot_id'] );
+				if ( 'recorded' === $event && 12 === $next_task ) {
+					$this->assertArrayNotHasKey( 'parent_manifest', $params );
+					$this->assertArrayNotHasKey( 'parent_manifest_ref', $params );
+				} else {
+					$this->assertSame( base64_encode( file_get_contents( 11 === $next_task ? $this->manifest_fixture : $base_b_manifest ) ), $params['parent_manifest'] );
+				}
+			}
+		} finally {
+			$property->setValue( null, $original );
+			self::$fixed_time = null;
+			unlink( $base_b_manifest );
+		}
 	}
 
 	/**
-	 * Native file runs that promote the child's shared manifest.
+	 * Successful records and every interruption before a record.
 	 *
 	 * @return array
 	 */
-	public static function manifest_writer_types() {
-		return array(
-			'full'        => array( 'full' ),
-			'files'       => array( 'files' ),
-			'incremental' => array( 'incremental' ),
-		);
-	}
-
-	/**
-	 * An absent writer must push the stored base even on the first create attempt.
-	 */
-	public function test_absent_manifest_writer_pushes_base() {
-		$site_id = $this->create_test_site();
-		$base_id = $this->record_base_snapshot( $site_id, 11, false );
-		$this->assertNull( MainWP_DB::instance()->get_website_option( $site_id, 'native_manifest_writer_task' ) );
-		$this->mock_child_actions(
-			array(
-				'backup_preflight'   => $this->preflight_response(),
-				'backup_task_create' => array(
-					'task_id' => 'no-writer',
-					'phase'   => 'queued',
-				),
-			)
-		);
-		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
-		$cycle   = $this->run_cycle( $site_id, $this->make_task( $website ) );
-		$this->assertNull( $cycle['exception'] );
-		$params = $this->last_call_params( 'backup_task_create' );
-		$this->assertSame( (string) $base_id, $params['parent_snapshot_id'] );
-		$this->assertSame( base64_encode( file_get_contents( $this->manifest_fixture ) ), $params['parent_manifest'] );
-	}
-
-	/**
-	 * Consecutive runs from the recorded writer keep using the child-local base.
-	 */
-	public function test_consecutive_manifest_writer_runs_stay_plain() {
-		$site_id = $this->create_test_site();
-		$this->record_base_snapshot( $site_id );
-		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
-		$task    = $this->make_task( $website );
-		$this->mock_child_actions(
-			array(
-				'backup_preflight'   => $this->preflight_response(),
-				'backup_task_create' => array(
-					'task_id' => 'same-writer',
-					'phase'   => 'queued',
-				),
-			)
-		);
-		for ( $run = 0; $run < 2; ++$run ) {
-			$cycle = $this->run_cycle( $site_id, $task );
-			$this->assertNull( $cycle['exception'] );
-			$params = $this->last_call_params( 'backup_task_create' );
-			$this->assertSame( 'incremental', $params['type'] );
-			$this->assertArrayNotHasKey( 'parent_manifest', $params );
-			$this->assertArrayNotHasKey( 'parent_manifest_ref', $params );
-			MainWP_DB_Backup::instance()->update_backup_task_progress(
-				$task->id,
-				$site_id,
-				array(
-					'dtsFetched'           => 0,
-					'child_backup_task_id' => '',
-					'last_error'           => '',
-				)
-			);
-			++$task->last_run;
+	public static function manifest_snapshot_events() {
+		$cases = array( 'old task option is ignored' => array( 'incremental', 'old option only', 12 ) );
+		foreach ( array( 'incremental', 'full', 'files' ) as $type ) {
+			foreach ( array( 'create fails', 'child fails', 'cancelled', 'refused', 'record fails', 'recorded' ) as $event ) {
+				$cases[ $type . '/' . $event ] = array( $type, $event, 12 );
+			}
+			$cases[ $type . '/another task recorded in between' ] = array( $type, 'recorded', 11 );
+			if ( 'incremental' !== $type ) {
+				$cases[ $type . '/degraded' ] = array( $type, 'degraded', 12 );
+			}
 		}
-		$this->assertCount( 2, $this->all_call_params( 'backup_task_create' ) );
+		return $cases;
 	}
 
 	/**

@@ -158,7 +158,7 @@ Please report security bugs found in the source code of the MainWP plugin throug
 * Added: Snapshots & Restore page: restore any recorded backup, including any point in an incremental chain, with an optional safety backup taken first and a Roll Back button if the restore fails.
 * Added: Restores load the database into temporary tables and switch to them in one step, so the site never runs on a half-restored database. Tables linked by foreign keys are restored in place while the site is in maintenance mode.
 * Added: Restores keep the site connected to the Dashboard by preserving the child's connection identity across the restored database.
-* Added: Restoring a full or files-only backup removes files added to the site after that backup was taken. A files-only restore keeps uploads, because the database still refers to them. Backups made before this version have no file list, so their restores leave those files in place.
+* Added: Restoring a full or files-only backup removes files added to the site after that backup was taken. A files-only restore keeps uploads, because the database still refers to them. A backup needs a file list for this: backups made before this version have none, and the restore result says so when a list is missing.
 * Added: Direct-from-storage restore transfer for S3-compatible and Google Cloud Storage destinations, with an automatic fall back to the standard transfer.
 * Added: WooCommerce order preservation on restore: keep orders placed after the backup and re-merge the customers and stock they reference.
 * Added: Multisite network backups and restores.

@@ -374,6 +374,7 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         static::record_negotiated_capabilities( $website, $preflight );
     }
 
+    // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.Missing -- the inner rethrow is caught within this method.
     /**
      * Re-read a child's capability report on demand, with none of the backup
      * side effects.
@@ -391,12 +392,22 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @return void
      */
     public static function refresh_negotiated_capabilities( object $website ): void {
+        // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.Missing
         $clamp = static function ( $timeout ) {
             return is_numeric( $timeout ) && $timeout > 0 ? max( 1, min( (int) $timeout, self::CAPABILITY_PROBE_TIMEOUT_SECONDS ) ) : 1;
         };
         add_filter( 'mainwp_fetch_url_site_timeout', $clamp, PHP_INT_MAX );
         try {
-            $preflight = MainWP_Connect::fetch_url_authed( $website, 'backup_preflight', array( 'capabilities_only' => 1 ), false, false, true );
+            $start = static::capability_probe_time();
+            try {
+                $preflight = MainWP_Connect::fetch_url_authed( $website, 'backup_preflight', array( 'capabilities_only' => 1 ), false, false, false );
+            } catch ( \Throwable $e ) {
+                if ( static::capability_probe_time() - $start >= 5 ) {
+                    throw $e;
+                }
+                // A fast endpoint refusal may succeed through the site-root fallback.
+                $preflight = MainWP_Connect::fetch_url_authed( $website, 'backup_preflight', array( 'capabilities_only' => 1 ), false, false, true );
+            }
         } catch ( \Throwable $e ) {
             MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'Capability probe unavailable: ' . $e->getMessage() );
             // An unreachable child says nothing about its capabilities, so the
@@ -415,6 +426,15 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         }
 
         static::record_negotiated_capabilities( $website, $preflight );
+    }
+
+    /**
+     * Clock seam for the capability probe's retry decision.
+     *
+     * @return float Current time in seconds.
+     */
+    protected static function capability_probe_time(): float {
+        return microtime( true );
     }
 
     /**
@@ -639,7 +659,7 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      *
      * @var int
      */
-    const CAPABILITY_PROBE_TIMEOUT_SECONDS = 15;
+    const CAPABILITY_PROBE_TIMEOUT_SECONDS = 30;
 
     /**
      * Bound applied to one artifact transfer attempt under a native lease.

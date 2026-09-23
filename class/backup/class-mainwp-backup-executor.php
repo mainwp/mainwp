@@ -394,9 +394,9 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
                 MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Requesting backup task: ' . MainWP_Utility::value_to_string( $params ) );
 
-                // The child shares files.list across tasks; record its next writer before sending.
+                // A create may replace the shared files.list before its snapshot is recorded.
                 if ( 'incremental' === $params['type'] || ( in_array( $params['type'], array( 'full', 'files' ), true ) && ! empty( $params['emit_manifest'] ) ) ) {
-                    MainWP_DB::instance()->update_website_option( $website, 'native_manifest_writer_task', (string) $taskId );
+                    MainWP_DB::instance()->update_website_option( $website, 'native_manifest_snapshot', '' );
                 }
 
                 $diag_start  = microtime( true );
@@ -1303,7 +1303,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
         $escalate_to_full = in_array( $marker, array( 'push', 'chunk-push', 'full' ), true );
         $manifest_b64     = '';
-        $owns_manifest    = (string) MainWP_DB::instance()->get_website_option( $website, 'native_manifest_writer_task' ) === (string) $pTask->id;
+        $owns_manifest    = (string) MainWP_DB::instance()->get_website_option( $website, 'native_manifest_snapshot' ) === (string) $base->id;
         if ( ! $escalate_to_full && ( 'plain' === $marker || ! $owns_manifest ) ) {
             $manifest_b64 = self::pushable_manifest( $base );
             if ( '' === $manifest_b64 ) {
@@ -1653,6 +1653,9 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         if ( $snapshot_id < 1 ) {
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_RECORD_FAILED, 'task id ' . (int) $pTask->id . ', site id ' . (int) $website->id ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         }
+        if ( '' !== $manifest_path ) {
+            MainWP_DB::instance()->update_website_option( $website, 'native_manifest_snapshot', (string) $snapshot_id );
+        }
     }
 
     /**
@@ -1716,8 +1719,9 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         $http_user_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_user );
         $http_pass_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_pass );
 
-        $archives = array();
-        $is_base  = false;
+        $archives      = array();
+        $is_base       = false;
+        $manifest_path = '';
 
         foreach ( $artifacts as $artifact ) {
             $remote = isset( $artifact['file'] ) ? basename( (string) $artifact['file'] ) : '';
@@ -1760,6 +1764,9 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 $archive['walk'] = $artifact['walk'];
             }
             $archives[] = $archive;
+            if ( 'manifest' === $role ) {
+                $manifest_path = $local;
+            }
         }
 
         if ( ! MainWP_Backup_Monitor::confirm_native_lease() ) {
@@ -1781,7 +1788,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     'type'          => 'files' === $pTask->type ? 'files' : ( $is_base ? 'full' : 'incremental' ),
                     'parent_id'     => $parent_id,
                     'archives'      => $archives,
-                    'manifest_path' => $run_dir . 'files.list',
+                    'manifest_path' => $manifest_path,
                     'woo_meta'      => self::woo_meta_from_progress( $progress ),
                     'run_key'       => self::snapshot_run_key( $website, $pTask, $progress ),
                 )
@@ -1795,6 +1802,9 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         }
 
         $snapshot_recorded = ! $already_saved;
+        if ( $snapshot_recorded && '' !== $manifest_path ) {
+            MainWP_DB::instance()->update_website_option( $website, 'native_manifest_snapshot', (string) $snapshot_id );
+        }
 
         // Remote cleanup: every artifact except the manifest sidecar the
         // next incremental diffs against. Best effort - a leftover file on

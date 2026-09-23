@@ -134,6 +134,29 @@ class Testable_Restore_Orchestrator extends MainWP_Backup_Restore_Orchestrator {
 }
 
 /**
+ * Supply elapsed probe time without delaying the test.
+ */
+class Capability_Probe_Test_Monitor extends MainWP_Backup_Monitor {
+ // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- clock test double.
+
+	/**
+	 * Scripted clock readings in seconds.
+	 *
+	 * @var array
+	 */
+	public static $times = array();
+
+	/**
+	 * Consume the next clock reading.
+	 *
+	 * @return float Scripted time.
+	 */
+	protected static function capability_probe_time(): float {
+		return array_shift( self::$times );
+	}
+}
+
+/**
  * Exercise the real root fallback while replacing only the HTTP attempt.
  */
 class Capability_Probe_Test_Transport extends MainWP_Connect {
@@ -4072,88 +4095,76 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
-	 * The capability probe installs its timeout clamp only around the fetch.
+	 * Retry only a fast failure, keeping the clamp scoped to the probe.
+	 *
+	 * @dataProvider capability_probe_failures
+	 * @param float $elapsed First failure duration.
+	 * @param bool  $root_succeeds Whether the site-root fallback succeeds.
 	 */
-	public function test_capability_probe_clamps_timeout_and_removes_filter() {
+	public function test_capability_probe_retry_matrix( $elapsed, $root_succeeds ) {
 		$this->set_site_option( $this->site_id, 'restore_create_idempotency_support', '0' );
-		$this->responses['backup_preflight'] = array( 'restore_create_idempotency' => 1 );
-		$website                             = MainWP_DB::instance()->get_website_by_id( $this->site_id );
-		$observed                            = null;
-		$offer                               = static function () {
-			return 72000;
-		};
-		$observe                             = static function ( $pre, $site, $what ) use ( &$observed ) {
-			if ( 'backup_preflight' === $what ) {
-				// The mock bypasses the transport, so exercise its timeout hook here.
-				$observed = apply_filters( 'mainwp_fetch_url_site_timeout', 72000 );
-			}
-			return $pre;
-		};
-		add_filter( 'mainwp_fetch_url_site_timeout', $offer, 10 );
-		add_filter( 'mainwp_fetch_url_authed_pre', $observe, 20, 3 );
-		try {
-			MainWP_Backup_Monitor::refresh_negotiated_capabilities( $website );
-			$this->assertSame( 15, MainWP_Backup_Monitor::CAPABILITY_PROBE_TIMEOUT_SECONDS );
-			$this->assertSame( 15, $observed );
-			$this->assertSame( 72000, apply_filters( 'mainwp_fetch_url_site_timeout', 72000 ) );
-			$this->assertSame( array( 'backup_preflight' ), array_column( $this->calls, 'what' ) );
-		} finally {
-			remove_filter( 'mainwp_fetch_url_authed_pre', $observe, 20 );
-			remove_filter( 'mainwp_fetch_url_site_timeout', $offer, 10 );
-		}
-	}
-
-	/**
-	 * A blocked admin endpoint gets one root fallback, with both attempts bounded.
-	 */
-	public function test_capability_probe_uses_two_bounded_attempts_with_root_fallback() {
-		$website                             = MainWP_DB::instance()->get_website_by_id( $this->site_id );
-		$this->responses['backup_preflight'] = array();
-		$observe                             = static function ( $pre, $site, $what, $params, $verify_signature, $retry_failed ) {
+		$this->set_site_option( $this->site_id, 'incremental_support', '1' );
+		$this->responses['backup_preflight']            = array();
+		$website                                        = MainWP_DB::instance()->get_website_by_id( $this->site_id );
+		Capability_Probe_Test_Monitor::$times           = array( 100.0, 100.0 + $elapsed );
+		Capability_Probe_Test_Transport::$attempts      = array();
+		Capability_Probe_Test_Transport::$root_succeeds = $root_succeeds;
+		$retries                                        = array();
+		$observe                                        = static function ( $pre, $site, $what, $params, $verify_signature, $retry_failed ) use ( &$retries ) {
 			if ( 'backup_preflight' !== $what ) {
 				return $pre;
 			}
+			$retries[] = $retry_failed;
 			return Capability_Probe_Test_Transport::fetch_url( $site, $site->url, $params, false, null, $retry_failed );
 		};
+		$offer = static function () {
+			return 72000;
+		};
+		add_filter( 'mainwp_fetch_url_site_timeout', $offer, 10 );
 		add_filter( 'mainwp_fetch_url_authed_pre', $observe, 20, 6 );
 		try {
-			foreach ( array( false, true ) as $root_succeeds ) {
-				$this->set_site_option( $this->site_id, 'restore_create_idempotency_support', '0' );
-				Capability_Probe_Test_Transport::$attempts      = array();
-				Capability_Probe_Test_Transport::$root_succeeds = $root_succeeds;
-				MainWP_Backup_Monitor::refresh_negotiated_capabilities( $website );
-				$this->assertSame(
-					array(
-						array( rtrim( $website->url, '/' ) . '/wp-admin/admin-ajax.php', 15 ),
-						array( $website->url, 15 ),
-					),
-					Capability_Probe_Test_Transport::$attempts
-				);
-				$this->assertSame( $root_succeeds ? '1' : '0', MainWP_DB::instance()->get_website_option( $this->site_id, 'restore_create_idempotency_support' ) );
-				$this->assertSame( 72000, apply_filters( 'mainwp_fetch_url_site_timeout', 72000 ) );
+			Capability_Probe_Test_Monitor::refresh_negotiated_capabilities( $website );
+			$fast     = $elapsed < 5;
+			$admin    = rtrim( $website->url, '/' ) . '/wp-admin/admin-ajax.php';
+			$attempts = array( array( $admin, 30 ) );
+			if ( $fast ) {
+				$attempts[] = array( $admin, 30 );
+				$attempts[] = array( $website->url, 30 );
 			}
-			$this->assertSame( array( 'capabilities_only' => 1 ), $this->calls[0]['params'] );
+			$this->assertSame( $fast ? array( false, true ) : array( false ), $retries );
+			$this->assertSame( $attempts, Capability_Probe_Test_Transport::$attempts );
+			$this->assertSame( 30, MainWP_Backup_Monitor::CAPABILITY_PROBE_TIMEOUT_SECONDS );
+			$this->assertSame( 72000, apply_filters( 'mainwp_fetch_url_site_timeout', 72000 ), 'Remove the clamp after success and failure.' );
+			$this->assertSame( $fast && $root_succeeds ? '1' : '0', MainWP_DB::instance()->get_website_option( $this->site_id, 'restore_create_idempotency_support' ) );
+			if ( ! $fast || ! $root_succeeds ) {
+				$this->assertSame( '1', MainWP_DB::instance()->get_website_option( $this->site_id, 'incremental_support' ), 'A failed probe must preserve every stored flag.' );
+			}
+			$this->assertSame( array(), Capability_Probe_Test_Monitor::$times );
+			$this->assertCount( $fast ? 2 : 1, $this->calls );
+			foreach ( $this->calls as $call ) {
+				$this->assertSame( 'backup_preflight', $call['what'] );
+				$this->assertSame( array( 'capabilities_only' => 1 ), $call['params'] );
+			}
 		} finally {
 			remove_filter( 'mainwp_fetch_url_authed_pre', $observe, 20 );
+			remove_filter( 'mainwp_fetch_url_site_timeout', $offer, 10 );
+			Capability_Probe_Test_Monitor::$times = array();
 		}
 	}
 
 	/**
-	 * An unavailable capability probe makes one logical request and keeps the stored flag.
+	 * Fast refusals can reach the root; failures at five seconds cannot retry.
+	 *
+	 * @return array
 	 */
-	public function test_initiate_restore_requests_capabilities_once() {
-		$this->set_site_option( $this->site_id, 'restore_create_idempotency_support', '0' );
-
-		try {
-			$this->orchestrator->initiate_restore( $this->site_id, 5 );
-			$this->fail( 'An unavailable probe must preserve the stored refusal.' );
-		} catch ( MainWP_Exception $e ) {
-			$this->assertSame( 'mainwp_restore_child_update_required', $e->get_message_error_code() );
-		}
-
-		$this->assertSame( array( 'backup_preflight' ), array_column( $this->calls, 'what' ) );
-		$this->assertSame( '0', MainWP_DB::instance()->get_website_option( $this->site_id, 'restore_create_idempotency_support' ) );
-		$this->assertSame( 72000, apply_filters( 'mainwp_fetch_url_site_timeout', 72000 ) );
+	public static function capability_probe_failures() {
+		return array(
+			'fast refusal then root succeeds' => array( 0.1, true ),
+			'fast refusal then root fails'    => array( 0.1, false ),
+			'just below retry cutoff'         => array( 4.999, true ),
+			'exact retry cutoff'              => array( 5.0, true ),
+			'stalled child timeout'           => array( 30.0, false ),
+		);
 	}
 
 	/**

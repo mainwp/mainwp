@@ -156,7 +156,7 @@ class Testable_Restore_Transfer_Driver extends MainWP_Backup_Restore_Transfer_Dr
 /**
  * Class MainWP_Backup_Restore_Transfer_Driver_Test
  */
-class MainWP_Backup_Restore_Transfer_Driver_Test extends \WP_UnitTestCase {
+class MainWP_Backup_Restore_Transfer_Driver_Test extends MainWP_Abilities_Test_Case {
 
 	/**
 	 * Scratch dir.
@@ -638,6 +638,7 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends \WP_UnitTestCase {
 	 */
 	public function test_upload_catalog_stage_chunked_roundtrip() {
 		global $wpdb;
+		$this->create_test_site( array( 'id' => 9901 ) );
 		$content = str_repeat( 'integration-bytes-', 40 );
 
 		// A complete snapshot whose only artifact is gone locally.

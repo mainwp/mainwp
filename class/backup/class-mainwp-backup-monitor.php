@@ -390,14 +390,15 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      */
     protected static function record_negotiated_capabilities( object $website, array $preflight ): void {
         $flags = array(
-            'task_spine_support'         => 'task_spine',
-            'download_token_support'     => 'download_token',
-            'incremental_support'        => 'incremental',
-            'manifest_chunk_support'     => 'manifest_chunk',
-            'restore_files_support'      => 'restore_files',
-            'cloud_restore_pull_support' => 'cloud_restore_pull',
-            'child_is_multisite'         => 'is_multisite',
-            'restore_multisite_support'  => 'restore_multisite',
+            'task_spine_support'                 => 'task_spine',
+            'download_token_support'             => 'download_token',
+            'incremental_support'                => 'incremental',
+            'manifest_chunk_support'             => 'manifest_chunk',
+            'restore_create_idempotency_support' => 'restore_create_idempotency',
+            'restore_files_support'              => 'restore_files',
+            'cloud_restore_pull_support'         => 'cloud_restore_pull',
+            'child_is_multisite'                 => 'is_multisite',
+            'restore_multisite_support'          => 'restore_multisite',
         );
 
         foreach ( $flags as $option => $reported ) {
@@ -515,6 +516,20 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      */
     public static function child_supports_restore_multisite( object $website ): bool {
         return '1' === (string) MainWP_DB::instance()->get_website_option( $website, 'restore_multisite_support' );
+    }
+
+    /**
+     * Method child_supports_restore_create_idempotency()
+     *
+     * Whether the child site advertised idempotent restore creation
+     * in its last preflight report.
+     *
+     * @param object $website Website object.
+     *
+     * @return bool True when the child reuses the first task for a restore id.
+     */
+    public static function child_supports_restore_create_idempotency( object $website ): bool {
+        return '1' === (string) MainWP_DB::instance()->get_website_option( $website, 'restore_create_idempotency_support' );
     }
 
     /**

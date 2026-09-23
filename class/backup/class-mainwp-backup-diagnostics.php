@@ -1095,6 +1095,7 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
             'download_token_support',
             'incremental_support',
             'manifest_chunk_support',
+            'restore_create_idempotency_support',
             'restore_files_support',
             'cloud_restore_pull_support',
             'child_is_multisite',

@@ -37,6 +37,8 @@ class MainWP_Backup_Snapshot_Catalog_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function set_up() {
 		parent::set_up();
+		$this->create_test_site( array( 'id' => 9901 ) );
+		$this->create_test_site( array( 'id' => 9902 ) );
 		$this->dir = sys_get_temp_dir() . '/mainwp-catalog-test-' . uniqid();
 		mkdir( $this->dir );
 	}
@@ -114,6 +116,35 @@ class MainWP_Backup_Snapshot_Catalog_Test extends MainWP_Abilities_Test_Case {
 		$this->assertCount( 1, $entries );
 		$this->assertSame( 'local', $entries[0]['source'] );
 		$this->assertTrue( $entries[0]['restorable'] );
+	}
+
+	/**
+	 * Restore requires the child to advertise idempotent task creation.
+	 */
+	public function test_restore_create_idempotency_gate_follows_child_capability() {
+		$site_id = $this->create_test_site();
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		MainWP_DB::instance()->update_website_option( $website, 'restore_create_idempotency_support', '' );
+
+		$snapshot_id = $this->make_snapshot(
+			array( array( 'file' => 'full.tar.gz', 'role' => 'full' ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+			array( 'site_id' => $site_id )
+		);
+
+		$entries = MainWP_Backup_Snapshot_Catalog::instance()->list_snapshots_for_site( $site_id );
+		$this->assertFalse( $entries[0]['restorable'], 'A child without create idempotency must not be restorable.' );
+		$this->assertSame( 'Update the MainWP Child plugin on the site to restore backups.', $entries[0]['restore_reason'] );
+
+		$resolved = MainWP_Backup_Snapshot_Catalog::instance()->resolve_restorable_chain( $snapshot_id );
+		$this->assertFalse( $resolved['ok'] );
+		$this->assertSame( 'Update the MainWP Child plugin on the site to restore backups.', $resolved['error'] );
+
+		MainWP_DB::instance()->update_website_option( $website, 'restore_create_idempotency_support', '1' );
+
+		$entries = MainWP_Backup_Snapshot_Catalog::instance()->list_snapshots_for_site( $site_id );
+		$this->assertTrue( $entries[0]['restorable'] );
+		$this->assertSame( '', $entries[0]['restore_reason'] );
+		$this->assertTrue( MainWP_Backup_Snapshot_Catalog::instance()->resolve_restorable_chain( $snapshot_id )['ok'] );
 	}
 
 	/**

@@ -305,6 +305,7 @@ abstract class MainWP_Abilities_Test_Case extends WP_UnitTestCase { //phpcs:igno
 
 		// Store verify_method in options table.
 		$this->set_site_option( $site_id, 'verify_method', $verify_method );
+		$this->set_site_option( $site_id, 'restore_create_idempotency_support', '1' );
 
 		// Create sync record with version and sync_errors.
 		$this->create_test_site_sync(

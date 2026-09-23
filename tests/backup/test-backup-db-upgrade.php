@@ -17,6 +17,7 @@ use MainWP\Dashboard\MainWP_DB_Backup;
 use MainWP\Dashboard\MainWP_Install;
 use MainWP\Dashboard\MainWP_Logger;
 use MainWP\Dashboard\MainWP_Backup_Snapshots;
+use MainWP\Dashboard\MainWP_Backup_Diagnostics;
 
 /**
  * Class MainWP_Backup_DB_Upgrade_Test
@@ -534,6 +535,56 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		$this->assertTrue( MainWP_Install::instance()->ensure_backup_snapshot_run_key() );
 		$this->assertTrue( MainWP_Install::backup_snapshot_run_key_ready() );
 		$this->assertFalse( get_site_option( MainWP_Install::BACKUP_SNAPSHOT_RUN_KEY_REPAIR_PENDING ) );
+	}
+
+	/**
+	 * Failed repairs reach backup diagnostics while the action logger is disabled.
+	 */
+	public function test_b11_failed_run_key_alter_records_guardrail_with_logger_disabled() {
+		global $wpdb;
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+		$wpdb->query( "ALTER TABLE {$table} DROP INDEX uniq_run_key" ); // phpcs:ignore WordPress.DB -- test fixture.
+		$skip_alter = static function ( $sql ) use ( $table ) {
+			return "ALTER TABLE {$table} ADD UNIQUE KEY uniq_run_key (run_key)" === $sql ? 'SELECT mainwp_run_key_forced_failure' : $sql;
+		};
+		$dir        = sys_get_temp_dir() . '/mainwp-upgrade-diag-' . uniqid();
+		mkdir( $dir );
+		$diag_dir    = static fn() => $dir;
+		$diagnostics = MainWP_Backup_Diagnostics::instance();
+		$enabled     = get_option( MainWP_Backup_Diagnostics::OPTION_ENABLED );
+		update_option( MainWP_Backup_Diagnostics::OPTION_ENABLED, '1' );
+		$diagnostics->init();
+		add_filter( 'mainwp_backup_diagnostics_dir', $diag_dir );
+		$logger = MainWP_Logger::instance();
+		$logger->set_log_priority( MainWP_Logger::DISABLED );
+		add_filter( 'query', $skip_alter );
+		try {
+			$this->assertFalse( MainWP_Install::instance()->ensure_backup_snapshot_run_key() );
+			$files = glob( $dir . '/*.jsonl' );
+			$this->assertCount( 1, $files );
+			$lines = array_values( array_filter( explode( "\n", file_get_contents( $files[0] ) ) ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test read.
+			$this->assertCount( 1, $lines );
+			$event = json_decode( $lines[0], true );
+			$this->assertSame( 'guardrail', $event['kind'] );
+			$this->assertSame( 'warning', $event['payload']['level'] );
+			$this->assertStringContainsString( 'Backup snapshot run key repair deferred', $event['payload']['message'] );
+			$this->assertStringContainsString( 'mainwp_run_key_forced_failure', $event['payload']['message'] );
+			$this->assertFalse( MainWP_Install::backup_snapshot_run_key_ready() );
+		} finally {
+			remove_filter( 'query', $skip_alter );
+			remove_filter( 'mainwp_backup_diagnostics_dir', $diag_dir );
+			remove_action( 'mainwp_log_warning', array( $diagnostics, 'on_log_warning' ), 10 );
+			if ( false === $enabled ) {
+				delete_option( MainWP_Backup_Diagnostics::OPTION_ENABLED );
+			} else {
+				update_option( MainWP_Backup_Diagnostics::OPTION_ENABLED, $enabled );
+			}
+			$logger->set_log_priority( $logger->get_log_status(), $logger->get_log_specific() );
+			foreach ( (array) glob( $dir . '/*' ) as $file ) {
+				unlink( $file );
+			}
+			rmdir( $dir );
+		}
 	}
 
 	/**

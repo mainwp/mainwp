@@ -1229,8 +1229,14 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             $checkpoint                     = $job->checkpoint;
             $checkpoint['cloud_pull_tried'] = true;
             $checkpoint['transfer']         = array();
-            $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
-            $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_STAGING, array( 'child_task_id' => '' ), $this->lock_token );
+            // The child pins each restore_id to its first task for replay safety; the fallback needs its own identity.
+            $checkpoint['restore_id'] = strtolower( wp_generate_password( 12, false ) );
+            if ( ! $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token ) ) {
+                return false;
+            }
+            if ( ! $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_STAGING, array( 'child_task_id' => '' ), $this->lock_token ) ) {
+                return false;
+            }
             do_action( 'mainwp_log_warning', sprintf( 'Restore job %d: the direct cloud download failed on the site; retrying with the standard transfer.', (int) $job->id ), (int) $job->site_id, 0 );
             return false;
         }

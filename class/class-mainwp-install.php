@@ -1437,7 +1437,10 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             if ( ! empty( $index ) && ! $valid_index ) {
                 $error = 'Malformed uniq_run_key index; expected a single-column unique index on run_key without a prefix.';
             }
-            MainWP_Logger::instance()->warning( sprintf( 'Backup snapshot run key repair deferred for %s: %s', $table, $error ) );
+            // MainWP_Hooks routes this to MainWP_Logger::warning(), which is off by
+            // default, and backup diagnostics records it regardless of that priority.
+            // Calling the logger directly as well would log the failure twice.
+            do_action( 'mainwp_log_warning', sprintf( 'Backup snapshot run key repair deferred for %s: %s', $table, $error ), 0, 0 );
             update_site_option( static::BACKUP_SNAPSHOT_RUN_KEY_REPAIR_PENDING, time() );
             return false;
         }

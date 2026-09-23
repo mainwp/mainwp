@@ -137,6 +137,24 @@ class MainWP_Backup_Snapshots_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Replaying a run preserves its encryption key and emits no second upload hook.
+	 */
+	public function test_b11_run_key_replay_preserves_encryption_and_hook_count() {
+		$this->assertTrue( MainWP_Install::backup_snapshot_run_key_ready() );
+		$this->arm_encryption();
+		$before = did_action( 'mainwp_backup_snapshot_recorded' );
+		$first  = $this->record( array( 'run_key' => '22:11:c:encrypted-replay' ) );
+		$this->assertGreaterThan( 0, $first );
+		$encryption = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $first )->encryption;
+		$this->assertTrue( MainWP_Backup_Encryption::meta_is_encrypted( $encryption ) );
+		$second = $this->record( array( 'run_key' => '22:11:c:encrypted-replay' ) );
+		$this->assertSame( $first, $second );
+		$this->assertSame( $encryption, MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $first )->encryption );
+		$this->assertSame( $before + 1, did_action( 'mainwp_backup_snapshot_recorded' ) );
+		$this->assertCount( 1, MainWP_Backup_Snapshots::instance()->get_snapshots_for_site( 22 ) );
+	}
+
+	/**
 	 * Pending schema repair retains independent legacy snapshot rows.
 	 */
 	public function test_b11_pending_run_key_inserts_legacy_rows() {

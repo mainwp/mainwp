@@ -133,22 +133,30 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
         if ( isset( $data['run_key'] ) && MainWP_Install::backup_snapshot_run_key_ready() ) {
             $row['run_key'] = (string) $data['run_key'];
             $format[]       = '%s';
-            $inserted       = $this->wpdb->query(
-                $this->wpdb->prepare(
-                    'INSERT INTO ' . $this->table_name( 'wp_backup_snapshot' ) . ' (`' . implode( '`, `', array_keys( $row ) ) . '`) VALUES (' . implode( ', ', $format ) . ') ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- Columns and formats are fixed above; values are prepared.
-                    array_values( $row )
-                )
-            );
-            if ( false === $inserted ) {
-                return 0;
-            }
-            $snapshot_id = (int) $this->wpdb->get_var(
+            $snapshot_id    = (int) $this->wpdb->get_var(
                 $this->wpdb->prepare( 'SELECT id FROM ' . $this->table_name( 'wp_backup_snapshot' ) . ' WHERE run_key = %s', $row['run_key'] )
             );
-            // A losing finisher must not replace the winner's encryption or enqueue its uploads again.
-            if ( 1 !== $inserted || $snapshot_id < 1 ) {
+            if ( $snapshot_id > 0 ) {
                 return $snapshot_id;
             }
+
+            $suppress = $this->wpdb->suppress_errors();
+            try {
+                $inserted = $this->wpdb->insert( $this->table_name( 'wp_backup_snapshot' ), $row, $format );
+                $error    = $this->wpdb->last_error;
+            } finally {
+                $this->wpdb->suppress_errors( $suppress );
+            }
+            if ( false === $inserted ) {
+                // The unique key arbitrates concurrent finishers that both passed the lookup.
+                if ( false !== strpos( $error, 'Duplicate entry' ) && false !== strpos( $error, 'uniq_run_key' ) ) {
+                    return (int) $this->wpdb->get_var(
+                        $this->wpdb->prepare( 'SELECT id FROM ' . $this->table_name( 'wp_backup_snapshot' ) . ' WHERE run_key = %s', $row['run_key'] )
+                    );
+                }
+                return 0;
+            }
+            $snapshot_id = (int) $this->wpdb->insert_id;
         } else {
             $inserted = $this->wpdb->insert( $this->table_name( 'wp_backup_snapshot' ), $row, $format );
             if ( ! $inserted ) {

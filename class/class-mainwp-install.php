@@ -1412,29 +1412,46 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         $found    = $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- table probe.
         $column   = null;
         $index    = array();
+        $error    = 'Snapshot table or run_key schema is missing.';
 
         if ( ! empty( $found ) ) {
             $column = $this->wpdb->get_var( "SHOW COLUMNS FROM {$table} LIKE 'run_key'" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL introspection; table escaped via esc_sql.
             if ( empty( $column ) ) {
                 $this->wpdb->query( "ALTER TABLE {$table} ADD COLUMN run_key varchar(191) NULL DEFAULT NULL" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL; table escaped via esc_sql.
+                $error  = 'Failed to add run_key column: ' . $this->wpdb->last_error;
                 $column = $this->wpdb->get_var( "SHOW COLUMNS FROM {$table} LIKE 'run_key'" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL introspection; table escaped via esc_sql.
             }
             if ( ! empty( $column ) ) {
                 $index = $this->wpdb->get_results( "SHOW INDEX FROM {$table} WHERE Key_name = 'uniq_run_key'" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL introspection; table escaped via esc_sql.
                 if ( empty( $index ) ) {
                     $this->wpdb->query( "ALTER TABLE {$table} ADD UNIQUE KEY uniq_run_key (run_key)" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL; table escaped via esc_sql.
+                    $error = 'Failed to add uniq_run_key: ' . $this->wpdb->last_error;
                     $index = $this->wpdb->get_results( "SHOW INDEX FROM {$table} WHERE Key_name = 'uniq_run_key'" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL introspection; table escaped via esc_sql.
                 }
             }
         }
         $this->wpdb->suppress_errors( $suppress );
 
-        if ( empty( $column ) || empty( $index ) ) {
+        $valid_index = ! empty( $index ) && 1 === count( $index ) && 0 === (int) $index[0]->Non_unique && 'run_key' === $index[0]->Column_name && empty( $index[0]->Sub_part );
+        if ( empty( $column ) || ! $valid_index ) {
+            if ( ! empty( $index ) && ! $valid_index ) {
+                $error = 'Malformed uniq_run_key index; expected a single-column unique index on run_key without a prefix.';
+            }
+            MainWP_Logger::instance()->warning( sprintf( 'Backup snapshot run key repair deferred for %s: %s', $table, $error ) );
             update_site_option( static::BACKUP_SNAPSHOT_RUN_KEY_REPAIR_PENDING, time() );
             return false;
         }
         delete_site_option( static::BACKUP_SNAPSHOT_RUN_KEY_REPAIR_PENDING );
         return true;
+    }
+
+    /**
+     * Whether snapshot inserts can use the run key schema.
+     *
+     * @return bool Whether no schema repair is pending.
+     */
+    public static function backup_snapshot_run_key_ready(): bool {
+        return ! get_site_option( static::BACKUP_SNAPSHOT_RUN_KEY_REPAIR_PENDING );
     }
 
     /**

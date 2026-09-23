@@ -407,7 +407,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			'phase'      => 'failed',
 			'reused'     => true,
 			'error'      => 'Original restore failed.',
-			'error_code' => 'mainwp_cloud_pull_failed',
+			'error_code' => 'mainwp_restore_failed',
 		);
 		$this->responses['restore_task_cancel'] = array(
 			'result' => 'already_terminal',
@@ -419,7 +419,63 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$this->assertSame( 'b14-failed', $job->child_task_id );
 		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
 		$this->assertSame( 'Original restore failed.', $job->last_error );
+		$this->assertSame( 'mainwp_restore_failed', $job->checkpoint['last_error_code'] );
+		$this->tick( $job );
+		$this->assertSame( 1, array_count_values( array_column( $this->calls, 'what' ) )['restore_task_create'] );
+	}
+
+	/**
+	 * A reused cloud failure returns to staging without adopting the failed handle.
+	 *
+	 * @test
+	 */
+	public function b14_reused_cloud_pull_failure_falls_back_to_staging() {
+		$this->use_cloud_pull_driver( $this->pull_manifest_fixture() );
+		$this->responses['restore_task_create'] = array(
+			'task_id'   => 'b14-pull-failed',
+			'phase'     => 'failed',
+			'reused'    => true,
+			'sub_state' => array(
+				'error' => array(
+					'message' => 'Cloud download failed.',
+					'code'    => 'mainwp_cloud_pull_failed',
+				),
+			),
+		);
+		$job                                    = $this->make_job( array( 'transfer' => array( 'stale' => true ) ), MainWP_Backup_Restore_Job_Store::STATUS_STAGING );
+		$job                                    = $this->tick( $job );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_STAGING, $job->status );
+		$this->assertSame( '', (string) $job->child_task_id );
+		$this->assertTrue( $job->checkpoint['cloud_pull_tried'] );
+		$this->assertSame( array(), $job->checkpoint['transfer'] );
+		$this->assertEmpty( $job->last_error );
+		$this->assertSame( array( 'restore_task_create' ), array_column( $this->calls, 'what' ) );
+	}
+
+	/**
+	 * A reused cloud failure is terminal after its one fallback was consumed.
+	 *
+	 * @test
+	 */
+	public function b14_reused_cloud_pull_failure_after_fallback_is_terminal() {
+		$this->responses['restore_task_create'] = array(
+			'task_id'    => 'b14-pull-failed',
+			'phase'      => 'failed',
+			'reused'     => true,
+			'error'      => 'Cloud download failed again.',
+			'error_code' => 'mainwp_cloud_pull_failed',
+		);
+		$this->responses['restore_task_cancel'] = array(
+			'result' => 'already_terminal',
+			'phase'  => 'failed',
+		);
+		$job                                    = $this->make_job( array( 'cloud_pull_tried' => true ), MainWP_Backup_Restore_Job_Store::STATUS_STAGING );
+		$job                                    = $this->tick( $job );
+		$this->assertSame( 'b14-pull-failed', $job->child_task_id );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
+		$this->assertSame( 'Cloud download failed again.', $job->last_error );
 		$this->assertSame( 'mainwp_cloud_pull_failed', $job->checkpoint['last_error_code'] );
+		$this->assertTrue( $job->checkpoint['cloud_pull_tried'] );
 		$this->tick( $job );
 		$this->assertSame( 1, array_count_values( array_column( $this->calls, 'what' ) )['restore_task_create'] );
 	}

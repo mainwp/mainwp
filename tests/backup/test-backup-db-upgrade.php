@@ -16,6 +16,7 @@ use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_DB_Backup;
 use MainWP\Dashboard\MainWP_Install;
 use MainWP\Dashboard\MainWP_Logger;
+use MainWP\Dashboard\MainWP_Backup_Snapshots;
 
 /**
  * Class MainWP_Backup_DB_Upgrade_Test
@@ -460,6 +461,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 
 		MainWP_Install::instance()->install();
 
+		$this->assertTrue( MainWP_Install::backup_snapshot_run_key_ready() );
 		$this->assertTrue( $this->column_exists( $table, 'run_key' ) );
 		$this->assertTrue( $this->index_exists( $table, 'uniq_run_key' ) );
 		$this->assertSame( array( 'run_key' ), $this->index_columns( $table, 'uniq_run_key' ) );
@@ -484,6 +486,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 
 		MainWP_Install::instance()->install();
 
+		$this->assertTrue( MainWP_Install::backup_snapshot_run_key_ready() );
 		$this->assertTrue( $this->column_exists( $table, 'run_key' ) );
 		$this->assertTrue( $this->index_exists( $table, 'uniq_run_key' ) );
 		$this->assertFalse( get_site_option( MainWP_Install::BACKUP_SNAPSHOT_RUN_KEY_REPAIR_PENDING ) );
@@ -497,18 +500,71 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
 		$wpdb->query( "ALTER TABLE {$table} DROP INDEX uniq_run_key" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture.
 		$skip_alter = static function ( $sql ) use ( $table ) {
-			return "ALTER TABLE {$table} ADD UNIQUE KEY uniq_run_key (run_key)" === $sql ? 'SELECT 1' : $sql;
+			return "ALTER TABLE {$table} ADD UNIQUE KEY uniq_run_key (run_key)" === $sql ? 'SELECT mainwp_run_key_forced_failure' : $sql;
 		};
+		$logger     = MainWP_Logger::instance();
+		$priority   = new \ReflectionProperty( $logger, 'logPriority' );
+		$priority->setAccessible( true );
+		$previous = $priority->getValue( $logger );
+		$priority->setValue( $logger, MainWP_Logger::WARNING );
+		$messages = array();
+		$capture  = static function ( $text ) use ( &$messages ) {
+			$messages[] = $text;
+		};
+		add_filter( 'mainwp_log_do_to_db', '__return_true' );
+		add_action( 'mainwp_before_log_data', $capture );
 		add_filter( 'query', $skip_alter );
 		try {
 			$this->assertFalse( MainWP_Install::instance()->ensure_backup_snapshot_run_key() );
+			$this->assertFalse( MainWP_Install::backup_snapshot_run_key_ready() );
+			$this->assertCount( 1, $messages );
+			$this->assertStringContainsString( 'mainwp_run_key_forced_failure', $messages[0] );
 			$this->assertFalse( $this->index_exists( $table, 'uniq_run_key' ) );
 			$this->assertGreaterThanOrEqual( time() - 5, (int) get_site_option( MainWP_Install::BACKUP_SNAPSHOT_RUN_KEY_REPAIR_PENDING ) );
 		} finally {
 			remove_filter( 'query', $skip_alter );
+			remove_action( 'mainwp_before_log_data', $capture );
+			remove_filter( 'mainwp_log_do_to_db', '__return_true' );
+			$priority->setValue( $logger, $previous );
+			foreach ( $messages as $message ) {
+				$wpdb->delete( MainWP_DB::instance()->get_table_name( 'action_log' ), array( 'log_content' => $message ) ); // phpcs:ignore WordPress.DB -- test cleanup.
+				$wpdb->delete( MainWP_DB::instance()->get_table_name( 'action_log' ), array( 'log_content' => 'CRON :: ' . $message ) ); // phpcs:ignore WordPress.DB -- test cleanup.
+			}
 		}
 		$this->assertTrue( MainWP_Install::instance()->ensure_backup_snapshot_run_key() );
+		$this->assertTrue( MainWP_Install::backup_snapshot_run_key_ready() );
 		$this->assertFalse( get_site_option( MainWP_Install::BACKUP_SNAPSHOT_RUN_KEY_REPAIR_PENDING ) );
+	}
+
+	/**
+	 * A same-name non-unique index must fall back to legacy inserts.
+	 */
+	public function test_b11_malformed_run_key_index_inserts_legacy_rows() {
+		global $wpdb;
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+		try {
+			$wpdb->query( "ALTER TABLE {$table} DROP INDEX uniq_run_key, ADD INDEX uniq_run_key (run_key)" ); // phpcs:ignore WordPress.DB -- test fixture.
+			$this->assertFalse( MainWP_Install::instance()->ensure_backup_snapshot_run_key() );
+			$this->assertGreaterThanOrEqual( time() - 5, (int) get_site_option( MainWP_Install::BACKUP_SNAPSHOT_RUN_KEY_REPAIR_PENDING ) );
+			$this->assertFalse( MainWP_Install::backup_snapshot_run_key_ready() );
+			$data   = array(
+				'site_id' => 888899,
+				'run_key' => 'malformed-index-run',
+			);
+			$first  = MainWP_Backup_Snapshots::instance()->record_snapshot( $data );
+			$second = MainWP_Backup_Snapshots::instance()->record_snapshot( $data );
+			$this->assertGreaterThan( 0, $first );
+			$this->assertGreaterThan( 0, $second );
+			$this->assertNotSame( $first, $second );
+			$this->assertCount( 2, MainWP_Backup_Snapshots::instance()->get_snapshots_for_site( 888899 ) );
+			$this->assertNull( MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $first )->run_key );
+			$this->assertNull( MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $second )->run_key );
+		} finally {
+			$wpdb->query( "ALTER TABLE {$table} DROP INDEX uniq_run_key" ); // phpcs:ignore WordPress.DB -- test cleanup.
+			$wpdb->delete( $table, array( 'site_id' => 888899 ) ); // phpcs:ignore WordPress.DB -- test cleanup.
+			MainWP_Install::instance()->ensure_backup_snapshot_run_key();
+			delete_site_option( MainWP_Install::BACKUP_SNAPSHOT_RUN_KEY_REPAIR_PENDING );
+		}
 	}
 
 	/**

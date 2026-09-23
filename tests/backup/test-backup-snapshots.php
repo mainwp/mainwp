@@ -17,6 +17,7 @@ use MainWP\Dashboard\MainWP_Backup_Snapshots;
 use MainWP\Dashboard\MainWP_Backup_Encryption;
 use MainWP\Dashboard\MainWP_Keys_Manager;
 use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_Install;
 
 /**
  * Class MainWP_Backup_Snapshots_Test
@@ -118,6 +119,7 @@ class MainWP_Backup_Snapshots_Test extends \WP_UnitTestCase {
 	 * A duplicate run adopts the winner without repeating upload hooks.
 	 */
 	public function test_b11_run_key_records_one_row_and_fires_hook_once() {
+		$this->assertTrue( MainWP_Install::backup_snapshot_run_key_ready() );
 		$before = did_action( 'mainwp_backup_snapshot_recorded' );
 		$first  = $this->record( array( 'run_key' => '22:11:c:child-one' ) );
 		$second = $this->record(
@@ -132,6 +134,26 @@ class MainWP_Backup_Snapshots_Test extends \WP_UnitTestCase {
 		$this->assertCount( 1, MainWP_Backup_Snapshots::instance()->get_snapshots_for_site( 22 ) );
 		$this->assertSame( '/tmp/snapshots/files.list', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $first )->manifest_path );
 		$this->assertSame( $before + 1, did_action( 'mainwp_backup_snapshot_recorded' ) );
+	}
+
+	/**
+	 * Pending schema repair retains independent legacy snapshot rows.
+	 */
+	public function test_b11_pending_run_key_inserts_legacy_rows() {
+		update_site_option( MainWP_Install::BACKUP_SNAPSHOT_RUN_KEY_REPAIR_PENDING, time() );
+		try {
+			$this->assertFalse( MainWP_Install::backup_snapshot_run_key_ready() );
+			$first  = $this->record( array( 'run_key' => '22:11:c:pending' ) );
+			$second = $this->record( array( 'run_key' => '22:11:c:pending' ) );
+			$this->assertGreaterThan( 0, $first );
+			$this->assertGreaterThan( 0, $second );
+			$this->assertNotSame( $first, $second );
+			$this->assertCount( 2, MainWP_Backup_Snapshots::instance()->get_snapshots_for_site( 22 ) );
+			$this->assertNull( MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $first )->run_key );
+			$this->assertNull( MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $second )->run_key );
+		} finally {
+			delete_site_option( MainWP_Install::BACKUP_SNAPSHOT_RUN_KEY_REPAIR_PENDING );
+		}
 	}
 
 	/**

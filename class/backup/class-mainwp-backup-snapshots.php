@@ -130,7 +130,7 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
             }
         }
 
-        if ( isset( $data['run_key'] ) ) {
+        if ( isset( $data['run_key'] ) && MainWP_Install::backup_snapshot_run_key_ready() ) {
             $row['run_key'] = (string) $data['run_key'];
             $format[]       = '%s';
             $inserted       = $this->wpdb->query(

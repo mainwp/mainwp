@@ -1038,28 +1038,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 return;
             }
             if ( 'failed' === $phase ) {
-                $error_code = isset( $payload['error_code'] ) ? (string) $payload['error_code'] : '';
-                if ( '' === $error_code && isset( $payload['sub_state']['error']['code'] ) ) {
-                    $error_code = (string) $payload['sub_state']['error']['code'];
-                }
-
-                // A failed cloud pull never fails the restore: the job goes
-                // back through staging once, taking the standard transfer.
-                if ( 'mainwp_cloud_pull_failed' === $error_code && empty( $job->checkpoint['cloud_pull_tried'] ) ) {
-                    $checkpoint                     = $job->checkpoint;
-                    $checkpoint['cloud_pull_tried'] = true;
-                    $checkpoint['transfer']         = array();
-                    $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
-                    $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_STAGING, array( 'child_task_id' => '' ), $this->lock_token );
-                    do_action( 'mainwp_log_warning', sprintf( 'Restore job %d: the direct cloud download failed on the site; retrying with the standard transfer.', (int) $job->id ), (int) $job->site_id, 0 );
-                    return;
-                }
-
-                $error = isset( $payload['error'] ) ? (string) $payload['error'] : esc_html__( 'The restore failed on the child site.', 'mainwp' );
-                if ( isset( $payload['sub_state']['error']['message'] ) ) {
-                    $error = (string) $payload['sub_state']['error']['message'];
-                }
-                $this->record_failure( $job, $error, false, $error_code );
+                $this->handle_failed_child_task( $job, $payload );
                 return;
             }
             // Still working within this slice: poll the child again.
@@ -1206,17 +1185,18 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                     );
                 }
             }
-            // The original handle must survive even when the lost reply hid a terminal task.
-            if ( ! $store->set_status( (int) $job->id, $status, array( 'child_task_id' => $task_id ), $this->lock_token ) ) {
+            if ( 'failed' === $phase ) {
+                if ( ! $this->handle_failed_child_task( $job, $payload, $task_id ) ) {
+                    return array(
+                        'task_id'       => '',
+                        'pull_rejected' => false,
+                    );
+                }
+            } elseif ( ! $store->set_status( (int) $job->id, $status, array( 'child_task_id' => $task_id ), $this->lock_token ) ) {
                 return array(
                     'task_id'       => '',
                     'pull_rejected' => false,
                 );
-            }
-            if ( 'failed' === $phase ) {
-                $error      = $payload['sub_state']['error']['message'] ?? ( $payload['error'] ?? esc_html__( 'The restore failed on the child site.', 'mainwp' ) );
-                $error_code = $payload['sub_state']['error']['code'] ?? ( $payload['error_code'] ?? '' );
-                $this->record_failure( $job, (string) $error, false, (string) $error_code );
             }
         }
 
@@ -1225,6 +1205,45 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             'pull_rejected' => ! empty( $payload['pull_manifest_rejected'] ),
             'reused'        => $reused,
         );
+    }
+
+    /**
+     * Handle a failed child task, falling back from cloud pull once.
+     *
+     * @param object $job     Restore job.
+     * @param array  $payload Child response.
+     * @param string $task_id Reused handle to retain if no fallback is needed.
+     *
+     * @return bool Whether the handle can be returned after recording failure.
+     */
+    private function handle_failed_child_task( object $job, array $payload, string $task_id = '' ): bool {
+        $store      = MainWP_Backup_Restore_Job_Store::instance();
+        $error_code = isset( $payload['error_code'] ) ? (string) $payload['error_code'] : '';
+        if ( '' === $error_code && isset( $payload['sub_state']['error']['code'] ) ) {
+            $error_code = (string) $payload['sub_state']['error']['code'];
+        }
+
+        // A failed cloud pull never fails the restore: the job goes
+        // back through staging once, taking the standard transfer.
+        if ( 'mainwp_cloud_pull_failed' === $error_code && empty( $job->checkpoint['cloud_pull_tried'] ) ) {
+            $checkpoint                     = $job->checkpoint;
+            $checkpoint['cloud_pull_tried'] = true;
+            $checkpoint['transfer']         = array();
+            $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
+            $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_STAGING, array( 'child_task_id' => '' ), $this->lock_token );
+            do_action( 'mainwp_log_warning', sprintf( 'Restore job %d: the direct cloud download failed on the site; retrying with the standard transfer.', (int) $job->id ), (int) $job->site_id, 0 );
+            return false;
+        }
+
+        $error = isset( $payload['error'] ) ? (string) $payload['error'] : esc_html__( 'The restore failed on the child site.', 'mainwp' );
+        if ( isset( $payload['sub_state']['error']['message'] ) ) {
+            $error = (string) $payload['sub_state']['error']['message'];
+        }
+        if ( '' !== $task_id && ! $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, array( 'child_task_id' => $task_id ), $this->lock_token ) ) {
+            return false;
+        }
+        $this->record_failure( $job, $error, false, $error_code );
+        return true;
     }
 
     /**

@@ -1201,16 +1201,17 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * restore-task creation; verifying follows confirmed child completion.
      * Terminal rows cannot drive work. A missing child task needs no request.
      *
-     * Child can restore?  Child answer       Decision
-     * terminal row        not requested      retain terminal verdict
-     * advanced in flight  any reply          retain verification or terminal verdict
-     * verifying           not requested      terminalize failure; otherwise drive on
-     * no                  not requested      terminalize failure or cancellation
-     * yes                 ok/failed          terminalize failure or cancellation
-     * yes                 completed          clear pending decision; poll completion
-     * yes                 busy/rolling_back  defer until 15 minutes have elapsed
-     * yes                 unconfirmed        defer until the same elapsed-time limit
-     * yes                 any deferred       at timeout, terminalize with warning
+     * Child can restore?            Child answer       Decision
+     * terminal row                  not requested      retain terminal verdict
+     * advanced in flight            any reply          retain verification or terminal verdict
+     * verifying, stored failure     not requested      clear pending decision; poll completion
+     * verifying, no stored failure  not requested      terminalize fresh failure; otherwise drive on
+     * no                            not requested      terminalize failure or cancellation
+     * yes                           ok/failed          terminalize failure or cancellation
+     * yes                           completed          clear pending decision; poll completion
+     * yes                           busy/rolling_back  defer until 15 minutes have elapsed
+     * yes                           unconfirmed        defer until the same elapsed-time limit
+     * yes                           any deferred       at timeout, terminalize with warning
      *
      * Durability, crossed with every row above:
      * - A stored terminal_failure wins over a later error. An authoritative
@@ -1252,12 +1253,13 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             return self::TERMINAL_OUTCOME_TERMINAL;
         }
 
-        $failure    = $job->checkpoint['terminal_failure'] ?? array();
-        $error      = $failure['error'] ?? $error;
-        $error_code = $failure['error_code'] ?? $error_code;
-        $phase      = $store::STATUS_FAILED_RETRYABLE === $job->status ? ( $job->checkpoint['resume_status'] ?? $store::STATUS_PENDING ) : $job->status;
-        $can_cancel = ! empty( $job->child_task_id ) && in_array( $phase, array( $store::STATUS_STAGING, $store::STATUS_TRANSFERRING, $store::STATUS_RUNNING ), true );
-        $outcome    = $store::STATUS_VERIFYING === $phase ? 'completed' : 'ok';
+        $failure            = $job->checkpoint['terminal_failure'] ?? array();
+        $had_stored_failure = ! empty( $failure );
+        $error              = $failure['error'] ?? $error;
+        $error_code         = $failure['error_code'] ?? $error_code;
+        $phase              = $store::STATUS_FAILED_RETRYABLE === $job->status ? ( $job->checkpoint['resume_status'] ?? $store::STATUS_PENDING ) : $job->status;
+        $can_cancel         = ! empty( $job->child_task_id ) && in_array( $phase, array( $store::STATUS_STAGING, $store::STATUS_TRANSFERRING, $store::STATUS_RUNNING ), true );
+        $outcome            = $store::STATUS_VERIFYING === $phase ? 'completed' : 'ok';
         if ( $can_cancel ) {
             $deferred = $store->defer_terminal_failure( (int) $job->id, $error, $error_code, $lock_token );
             if ( null === $deferred ) {
@@ -1292,7 +1294,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             $error      = null === $error ? $warning : $error . ' ' . $warning;
         }
 
-        if ( 'completed' === $outcome && ( $can_cancel || null === $error ) ) {
+        if ( 'completed' === $outcome && ( $can_cancel || null === $error || $had_stored_failure ) ) {
             // Preserve verification and never resume artifact transfer after child completion.
             if ( $can_cancel && ! $store->set_status( (int) $job->id, $store::STATUS_RUNNING, array(), $lock_token ) ) {
                 return self::TERMINAL_OUTCOME_DEFERRED;

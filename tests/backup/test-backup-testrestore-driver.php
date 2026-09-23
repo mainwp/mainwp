@@ -388,6 +388,35 @@ class MainWP_Backup_TestRestore_Driver_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Local verification works without child restore-create idempotency.
+	 *
+	 * @return void
+	 */
+	public function test_verify_snapshot_allows_reported_missing_create_idempotency() {
+		$this->set_site_option( $this->site_id, 'restore_create_idempotency_support', '0' );
+		$dump        = $this->write_db_dump( 'db.sql.gz', $this->sentinel_sql() );
+		$snapshot_id = $this->record(
+			'db',
+			array(
+				array(
+					'file' => 'db.sql.gz',
+					'size' => filesize( $dump ),
+					'role' => 'db',
+					'path' => $dump,
+				),
+			)
+		);
+
+		$result = MainWP_Backup_TestRestore_Driver::instance()->verify_snapshot( $snapshot_id );
+
+		$this->assertSame( 'pass', $result['state'] );
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+		$this->assertSame( 'pass', (string) $snapshot->test_restore_state );
+		$this->assertFalse( $this->db_exists( $result['sandbox']['db_name'] ) );
+		$this->assertDirectoryDoesNotExist( $result['sandbox']['temp_dir'] );
+	}
+
+	/**
 	 * An encrypted snapshot uploaded through the real seal path test-restores
 	 * through the resolve -> stage decrypt pipeline: the sandbox imports the
 	 * decrypted dump, proving the AAD round-trip holds at this layer too.

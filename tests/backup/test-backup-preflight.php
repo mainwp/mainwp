@@ -744,7 +744,7 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 	public function test_preflight_stores_restore_create_idempotency_support() {
 		$site_id = $this->create_test_site();
 		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
-		MainWP_DB::instance()->update_website_option( $website, 'restore_create_idempotency_support', '' );
+		MainWP_DB::instance()->update_website_option( $website, 'restore_create_idempotency_support', '0' );
 
 		$this->run_backup_site(
 			$site_id,
@@ -780,6 +780,11 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 
 		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
 		$this->assertFalse( MainWP_Backup_Monitor::child_supports_restore_create_idempotency( $website ) );
+
+		// Stored as '0', not '', so the restore gate can tell a negotiated "no"
+		// from a site that has never reported the capability at all.
+		$this->assertSame( '0', MainWP_DB::instance()->get_website_option( $website, 'restore_create_idempotency_support' ) );
+		$this->assertTrue( MainWP_Backup_Monitor::child_reported_restore_create_idempotency( $website ) );
 	}
 
 	/**
@@ -1348,10 +1353,12 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 			)
 		);
 
-		$this->assertSame( '', $flag, 'A downgraded child must lose the task-spine capability it can no longer serve.' );
+		// '0' and not '': an absent capability is recorded so the restore gate
+		// can tell it from a site that has never been negotiated.
+		$this->assertSame( '0', $flag, 'A downgraded child must lose the task-spine capability it can no longer serve.' );
 
 		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
-		$this->assertSame( '', (string) MainWP_DB::instance()->get_website_option( $website, 'download_token_support' ), 'Every negotiated capability goes with the downgrade, not just the spine.' );
+		$this->assertSame( '0', (string) MainWP_DB::instance()->get_website_option( $website, 'download_token_support' ), 'Every negotiated capability goes with the downgrade, not just the spine.' );
 		$this->assertFalse( MainWP_Backup_Monitor::child_supports_task_spine( $website ), 'The gate must now read the site as spine-less.' );
 	}
 

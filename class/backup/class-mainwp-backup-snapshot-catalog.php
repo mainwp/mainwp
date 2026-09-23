@@ -51,9 +51,10 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
      *                 local|remote|remote_chunked|unavailable.
      */
     public function list_snapshots_for_site( int $site_id ): array {
-        $create_idempotent = $this->site_supports_restore_create_idempotency( $site_id );
-        $files_restorable  = $this->site_supports_restore_files( $site_id );
-        $multisite_gated   = $this->site_is_multisite( $site_id ) && ! $this->site_supports_restore_multisite( $site_id );
+        $website          = MainWP_DB::instance()->get_website_by_id( $site_id );
+        $create_gated     = ! empty( $website ) && MainWP_Backup_Monitor::child_requires_restore_create_idempotency_update( $website );
+        $files_restorable = $this->site_supports_restore_files( $site_id );
+        $multisite_gated  = $this->site_is_multisite( $site_id ) && ! $this->site_supports_restore_multisite( $site_id );
 
         $entries = array();
         foreach ( MainWP_Backup_Snapshots::instance()->get_snapshots_for_site( $site_id ) as $snapshot ) {
@@ -62,10 +63,10 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
             $reason = '';
             if ( 'unavailable' === $source ) {
                 $reason = __( 'Removed by retention; no copy survives locally or in cloud storage.', 'mainwp' );
-            } elseif ( ! $create_idempotent ) {
-                $reason = __( 'Update the MainWP Child plugin on the site to restore backups.', 'mainwp' );
             } elseif ( 'files' === $snapshot->type && ! $files_restorable ) {
                 $reason = __( 'Update the MainWP Child plugin on the site to restore files-only backups.', 'mainwp' );
+            } elseif ( $create_gated ) {
+                $reason = __( 'Update the MainWP Child plugin on the site to restore backups.', 'mainwp' );
             } elseif ( $multisite_gated ) {
                 $reason = __( 'This site runs WordPress Multisite. Update the MainWP Child plugin to enable network-wide restore.', 'mainwp' );
             }
@@ -78,18 +79,6 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
             );
         }
         return $entries;
-    }
-
-    /**
-     * Whether a site's child advertised idempotent restore creation.
-     *
-     * @param int $site_id Child site id.
-     *
-     * @return bool True when the child reuses the first task for a restore id.
-     */
-    private function site_supports_restore_create_idempotency( int $site_id ): bool {
-        $website = MainWP_DB::instance()->get_website_by_id( $site_id );
-        return ! empty( $website ) && MainWP_Backup_Monitor::child_supports_restore_create_idempotency( $website );
     }
 
     /**
@@ -154,9 +143,6 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
         }
         if ( 'complete' !== $leaf->status ) {
             return $this->refusal( __( 'The selected backup was removed by retention and can no longer be restored.', 'mainwp' ) );
-        }
-        if ( ! $this->site_supports_restore_create_idempotency( (int) $leaf->site_id ) ) {
-            return $this->refusal( __( 'Update the MainWP Child plugin on the site to restore backups.', 'mainwp' ) );
         }
         if ( 'files' === $leaf->type && ! $this->site_supports_restore_files( (int) $leaf->site_id ) ) {
             return $this->refusal( __( 'This backup contains the site\'s files without a database, and the site\'s MainWP Child plugin predates files-only restore. Update the child plugin to restore it, or download the archive to recover individual files.', 'mainwp' ) );

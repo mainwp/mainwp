@@ -119,12 +119,12 @@ class MainWP_Backup_Snapshot_Catalog_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * Restore requires the child to advertise idempotent task creation.
+	 * The listing refuses only a negotiated lack of idempotent task creation.
 	 */
 	public function test_restore_create_idempotency_gate_follows_child_capability() {
 		$site_id = $this->create_test_site();
 		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
-		MainWP_DB::instance()->update_website_option( $website, 'restore_create_idempotency_support', '' );
+		MainWP_DB::instance()->update_website_option( $website, 'restore_create_idempotency_support', '0' );
 
 		$snapshot_id = $this->make_snapshot(
 			array( array( 'file' => 'full.tar.gz', 'role' => 'full' ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
@@ -136,8 +136,8 @@ class MainWP_Backup_Snapshot_Catalog_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( 'Update the MainWP Child plugin on the site to restore backups.', $entries[0]['restore_reason'] );
 
 		$resolved = MainWP_Backup_Snapshot_Catalog::instance()->resolve_restorable_chain( $snapshot_id );
-		$this->assertFalse( $resolved['ok'] );
-		$this->assertSame( 'Update the MainWP Child plugin on the site to restore backups.', $resolved['error'] );
+		$this->assertTrue( $resolved['ok'] );
+		$this->assertNull( $resolved['error'] );
 
 		MainWP_DB::instance()->update_website_option( $website, 'restore_create_idempotency_support', '1' );
 
@@ -145,6 +145,20 @@ class MainWP_Backup_Snapshot_Catalog_Test extends MainWP_Abilities_Test_Case {
 		$this->assertTrue( $entries[0]['restorable'] );
 		$this->assertSame( '', $entries[0]['restore_reason'] );
 		$this->assertTrue( MainWP_Backup_Snapshot_Catalog::instance()->resolve_restorable_chain( $snapshot_id )['ok'] );
+
+		global $wpdb;
+		$wpdb->delete(
+			$wpdb->prefix . 'mainwp_wp_options',
+			array(
+				'wpid' => $site_id,
+				'name' => 'restore_create_idempotency_support',
+			)
+		);
+		$this->assertNull( MainWP_DB::instance()->get_website_option( $site_id, 'restore_create_idempotency_support' ) );
+
+		$entries = MainWP_Backup_Snapshot_Catalog::instance()->list_snapshots_for_site( $site_id );
+		$this->assertTrue( $entries[0]['restorable'] );
+		$this->assertSame( '', $entries[0]['restore_reason'] );
 	}
 
 	/**
@@ -256,6 +270,7 @@ class MainWP_Backup_Snapshot_Catalog_Test extends MainWP_Abilities_Test_Case {
 	 * action and a direct resolve refuses with a clear message.
 	 */
 	public function test_files_snapshot_not_restorable_when_child_lacks_capability() {
+		$this->set_site_option( 9901, 'restore_create_idempotency_support', '0' );
 		$id = $this->make_snapshot(
 			array( array( 'file' => 'files.tar.gz', 'role' => 'full' ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
 			array( 'type' => 'files' )
@@ -263,6 +278,7 @@ class MainWP_Backup_Snapshot_Catalog_Test extends MainWP_Abilities_Test_Case {
 
 		$entries = MainWP_Backup_Snapshot_Catalog::instance()->list_snapshots_for_site( 9901 );
 		$this->assertFalse( $entries[0]['restorable'], 'A files snapshot must not offer a restore on a child without the capability.' );
+		$this->assertSame( 'Update the MainWP Child plugin on the site to restore files-only backups.', $entries[0]['restore_reason'] );
 
 		$resolved = MainWP_Backup_Snapshot_Catalog::instance()->resolve_restorable_chain( $id );
 		$this->assertFalse( $resolved['ok'] );

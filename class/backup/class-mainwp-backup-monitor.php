@@ -401,8 +401,14 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             'restore_multisite_support'          => 'restore_multisite',
         );
 
+        // An absent capability is stored as '0' rather than '', because
+        // wpdb::get_var() returns null for an empty column, which makes ''
+        // indistinguishable from a site that has never been negotiated at all.
+        // The restore gate has to tell those apart: unknown fails open, a
+        // recorded '0' refuses. Every reader compares against '1', so the
+        // stored '0' behaves exactly as '' did for all of them.
         foreach ( $flags as $option => $reported ) {
-            MainWP_DB::instance()->update_website_option( $website, $option, empty( $preflight[ $reported ] ) ? '' : '1' );
+            MainWP_DB::instance()->update_website_option( $website, $option, empty( $preflight[ $reported ] ) ? '0' : '1' );
         }
     }
 
@@ -530,6 +536,33 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      */
     public static function child_supports_restore_create_idempotency( object $website ): bool {
         return '1' === (string) MainWP_DB::instance()->get_website_option( $website, 'restore_create_idempotency_support' );
+    }
+
+    /**
+     * Whether restore-create idempotency has been negotiated for this site.
+     *
+     * A site that has never reported the capability - every site right after a
+     * Dashboard update, and any site whose preflight has not been reachable
+     * since - reads as unknown, not as unsupported, so the restore gate leaves
+     * it alone instead of taking the Restore button away.
+     *
+     * @param object $website Website object.
+     *
+     * @return bool True when the capability option has been recorded.
+     */
+    public static function child_reported_restore_create_idempotency( object $website ): bool {
+        return null !== MainWP_DB::instance()->get_website_option( $website, 'restore_create_idempotency_support' );
+    }
+
+    /**
+     * Whether the child's reported capabilities require refusing a restore.
+     *
+     * @param object $website Website object.
+     *
+     * @return bool True when idempotent restore creation is known to be unsupported.
+     */
+    public static function child_requires_restore_create_idempotency_update( object $website ): bool {
+        return self::child_reported_restore_create_idempotency( $website ) && ! self::child_supports_restore_create_idempotency( $website );
     }
 
     /**

@@ -3875,6 +3875,77 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
+	 * Restore refuses a child that reported no create-idempotency support.
+	 */
+	public function test_initiate_restore_refuses_reported_missing_create_idempotency() {
+		$this->set_site_option( $this->site_id, 'restore_create_idempotency_support', '0' );
+
+		try {
+			$this->orchestrator->initiate_restore( $this->site_id, 5 );
+			$this->fail( 'A reported lack of create idempotency must refuse restore.' );
+		} catch ( MainWP_Exception $e ) {
+			$this->assertSame( 'Update the MainWP Child plugin on this site before restoring. The installed version predates the safeguard that stops a dropped reply from starting a restore twice.', $e->getMessage() );
+		}
+
+		$this->assertNull( MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $this->site_id ) );
+	}
+
+	/**
+	 * A capability that has never been negotiated does not block restore.
+	 */
+	public function test_initiate_restore_allows_unknown_create_idempotency() {
+		global $wpdb;
+		$wpdb->delete(
+			$wpdb->prefix . 'mainwp_wp_options',
+			array(
+				'wpid' => $this->site_id,
+				'name' => 'restore_create_idempotency_support',
+			)
+		);
+		$this->assertNull( MainWP_DB::instance()->get_website_option( $this->site_id, 'restore_create_idempotency_support' ) );
+
+		$snapshot_id = $this->make_chain_snapshot(
+			null,
+			'db',
+			array( array( 'file' => 'db.zip', 'role' => 'db' ) ) // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+		);
+		$job_id      = $this->orchestrator->initiate_restore( $this->site_id, $snapshot_id );
+		$job         = MainWP_Backup_Restore_Job_Store::instance()->get_job( $job_id );
+
+		$this->assertGreaterThan( 0, $job_id );
+		$this->assertSame( 'pending', $job->status );
+		$this->assertSame( 'db', $job->checkpoint['sub_type'] );
+	}
+
+	/**
+	 * Rollback also refuses a reported lack of create-idempotency support.
+	 */
+	public function test_rollback_refuses_reported_missing_create_idempotency() {
+		$this->set_site_option( $this->site_id, 'restore_create_idempotency_support', '0' );
+		$failed = $this->make_job(
+			array(
+				'pre_snapshot_artifacts' => array(
+					array(
+						'file' => 'backup-pre.tar.gz',
+						'size' => 1234,
+						'role' => 'full',
+					),
+				),
+			),
+			MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT
+		);
+
+		try {
+			$this->orchestrator->initiate_rollback( $failed );
+			$this->fail( 'A reported lack of create idempotency must refuse rollback.' );
+		} catch ( MainWP_Exception $e ) {
+			$this->assertSame( 'Update the MainWP Child plugin on this site before restoring. The installed version predates the safeguard that stops a dropped reply from starting a restore twice.', $e->getMessage() );
+		}
+
+		$this->assertNull( MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $this->site_id ) );
+	}
+
+	/**
 	 * A rollback job builds an adopt-only plan from the pre-restore
 	 * safety backup.
 	 */

@@ -453,6 +453,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_STAGING, $job->status );
 		$this->assertSame( '', (string) $job->child_task_id );
 		$this->assertTrue( $job->checkpoint['cloud_pull_tried'] );
+		$this->assertSame( str_repeat( 'a', 64 ), $job->checkpoint['plan'][0]['sha256'] );
 		$this->assertSame( array(), $job->checkpoint['transfer'] );
 		$this->assertEmpty( $job->last_error );
 		$this->assertSame( array( 'restore_task_create' ), array_column( $this->calls, 'what' ) );
@@ -466,9 +467,9 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
-	 * A refused fallback checkpoint must retain the running task and identity.
+	 * A refused fallback status write must retain the running task and identity.
 	 */
-	public function test_cloud_pull_fallback_checkpoint_failure_keeps_running_handle() {
+	public function test_cloud_pull_fallback_status_failure_keeps_running_handle() {
 		global $wpdb;
 		$this->responses['restore_task_run'] = array(
 			'task_id'    => 'b14-pull-failed',
@@ -478,8 +479,8 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$job                                 = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, array( 'child_task_id' => 'b14-pull-failed' ) );
 		$table                               = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
 		$refuse                              = static function ( $sql ) use ( $table ) {
-			if ( str_starts_with( $sql, 'UPDATE ' . $table . ' SET checkpoint' ) && str_contains( $sql, 'cloud_pull_tried' ) ) {
-				return 'SELECT mainwp_test_refused_checkpoint_write';
+			if ( str_starts_with( $sql, 'UPDATE ' . $table . ' SET ' ) && str_contains( $sql, "`status` = 'staging'" ) && str_contains( $sql, "`child_task_id` = ''" ) ) {
+				return 'SELECT mainwp_test_refused_status_write';
 			}
 			return $sql;
 		};
@@ -495,6 +496,74 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$this->assertSame( 'b14-pull-failed', $job->child_task_id );
 		$this->assertSame( 'orch01test', $job->checkpoint['restore_id'] );
 		$this->assertArrayNotHasKey( 'cloud_pull_tried', $job->checkpoint );
+	}
+
+	/**
+	 * A torn fallback heals through cloud-task reuse before creating a standard transfer.
+	 */
+	public function test_cloud_pull_fallback_checkpoint_failure_converges_through_staging() {
+		global $wpdb;
+		$this->use_cloud_pull_driver( $this->pull_manifest_fixture() );
+		$this->responses['restore_task_run'] = array(
+			'task_id'    => 'b14-pull-failed',
+			'phase'      => 'failed',
+			'error_code' => 'mainwp_cloud_pull_failed',
+		);
+		$job                                 = $this->make_job( array( 'transfer' => array( 'stale' => true ) ), MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, array( 'child_task_id' => 'b14-pull-failed' ) );
+		$table                               = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$refuse                              = static function ( $sql ) use ( $table ) {
+			if ( str_starts_with( $sql, 'UPDATE ' . $table . ' SET checkpoint' ) && str_contains( $sql, 'cloud_pull_tried' ) ) {
+				return 'SELECT mainwp_test_refused_checkpoint_write';
+			}
+			return $sql;
+		};
+		$suppress                            = $wpdb->suppress_errors();
+		add_filter( 'query', $refuse );
+		try {
+			$job = $this->tick( $job );
+		} finally {
+			remove_filter( 'query', $refuse );
+			$wpdb->suppress_errors( $suppress );
+		}
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_STAGING, $job->status );
+		$this->assertSame( '', (string) $job->child_task_id );
+		$this->assertSame( 'orch01test', $job->checkpoint['restore_id'] );
+		$this->assertArrayNotHasKey( 'cloud_pull_tried', $job->checkpoint );
+		$this->assertSame( array( 'stale' => true ), $job->checkpoint['transfer'] );
+		$this->assertSame( array( 'restore_task_run' ), array_column( $this->calls, 'what' ) );
+		$this->responses['restore_task_create'] = array(
+			array(
+				'task_id'    => 'b14-pull-failed',
+				'phase'      => 'failed',
+				'reused'     => true,
+				'error_code' => 'mainwp_cloud_pull_failed',
+			),
+			array(
+				'task_id' => 'b14-standard-transfer',
+				'phase'   => 'receiving',
+			),
+		);
+		$job                                    = $this->tick( $job );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_STAGING, $job->status );
+		$this->assertSame( '', (string) $job->child_task_id );
+		$this->assertTrue( $job->checkpoint['cloud_pull_tried'] );
+		$this->assertSame( array(), $job->checkpoint['transfer'] );
+		$this->assertNotSame( 'orch01test', $job->checkpoint['restore_id'] );
+		$fallback_id = $job->checkpoint['restore_id'];
+		$creates     = array_values( array_filter( $this->calls, static fn( $call ) => 'restore_task_create' === $call['what'] ) );
+		$this->assertCount( 1, $creates );
+		$this->assertSame( 'orch01test', $creates[0]['params']['restore_id'] );
+		$job = $this->tick( $job );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING, $job->status );
+		$this->assertSame( 'b14-standard-transfer', $job->child_task_id );
+		$this->assertNotSame( 'b14-pull-failed', $job->child_task_id );
+		$this->assertSame( $fallback_id, $job->checkpoint['restore_id'] );
+		$creates = array_values( array_filter( $this->calls, static fn( $call ) => 'restore_task_create' === $call['what'] ) );
+		$this->assertCount( 2, $creates );
+		$this->assertSame( $fallback_id, $creates[1]['params']['restore_id'] );
+		$this->assertNotSame( 'orch01test', $creates[1]['params']['restore_id'] );
+		$this->assertArrayHasKey( 'pull_manifest_json', $creates[0]['params'] );
+		$this->assertArrayNotHasKey( 'pull_manifest_json', $creates[1]['params'] );
 	}
 
 	/**

@@ -290,12 +290,16 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	/**
 	 * Record a base snapshot row for a site and task.
 	 *
-	 * @param int $site_id Site id.
-	 * @param int $task_id Task id.
+	 * @param int  $site_id Site id.
+	 * @param int  $task_id Task id.
+	 * @param bool $record_writer Whether the child-local manifest belongs to this base.
 	 *
 	 * @return int Snapshot id.
 	 */
-	protected function record_base_snapshot( $site_id, $task_id = 11 ) {
+	protected function record_base_snapshot( $site_id, $task_id = 11, $record_writer = true ) {
+		if ( $record_writer ) {
+			MainWP_DB::instance()->update_website_option( $site_id, 'native_manifest_writer_task', (string) $task_id );
+		}
 		return MainWP_Backup_Snapshots::instance()->record_snapshot(
 			array(
 				'task_id'       => $task_id,
@@ -418,6 +422,117 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( 'incremental', $params['type'] );
 		$this->assertSame( (string) $base_id, (string) $params['parent_snapshot_id'] );
 		$this->assertArrayNotHasKey( 'parent_manifest', $params, 'The manifest is only pushed when the child copy is gone.' );
+	}
+
+	/**
+	 * Another file task replaces the shared child manifest before A runs again.
+	 *
+	 * @dataProvider manifest_writer_types
+	 * @param string $type Intervening task type.
+	 */
+	public function test_intervening_task_pushes_own_base_manifest( $type ) {
+		$site_id = $this->create_test_site();
+		$this->record_base_snapshot( $site_id, 12 );
+		$base_id          = $this->record_base_snapshot( $site_id );
+		$website          = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$writer_at_create = array();
+		$this->mock_child_actions(
+			array(
+				'backup_preflight'   => $this->preflight_response(),
+				'backup_task_create' => function () use ( $site_id, &$writer_at_create ) {
+					$writer_at_create[] = MainWP_DB::instance()->get_website_option( $site_id, 'native_manifest_writer_task' );
+					return array(
+						'task_id' => 'writer-' . count( $writer_at_create ),
+						'phase'   => 'queued',
+					);
+				},
+			)
+		);
+		$cycle = $this->run_cycle( $site_id, $this->make_task( $website, 12, array( 'type' => $type ) ) );
+		$this->assertNull( $cycle['exception'] );
+		$this->assertSame( '12', $writer_at_create[0] );
+		$cycle = $this->run_cycle( $site_id, $this->make_task( $website ) );
+		$this->assertNull( $cycle['exception'] );
+		$params = $this->last_call_params( 'backup_task_create' );
+		$this->assertSame( 'incremental', $params['type'] );
+		$this->assertSame( (string) $base_id, $params['parent_snapshot_id'] );
+		$this->assertSame( base64_encode( file_get_contents( $this->manifest_fixture ) ), $params['parent_manifest'] );
+		$this->assertSame( '11', $writer_at_create[1] );
+	}
+
+	/**
+	 * Native file runs that promote the child's shared manifest.
+	 *
+	 * @return array
+	 */
+	public static function manifest_writer_types() {
+		return array(
+			'full'        => array( 'full' ),
+			'files'       => array( 'files' ),
+			'incremental' => array( 'incremental' ),
+		);
+	}
+
+	/**
+	 * An absent writer must push the stored base even on the first create attempt.
+	 */
+	public function test_absent_manifest_writer_pushes_base() {
+		$site_id = $this->create_test_site();
+		$base_id = $this->record_base_snapshot( $site_id, 11, false );
+		$this->assertNull( MainWP_DB::instance()->get_website_option( $site_id, 'native_manifest_writer_task' ) );
+		$this->mock_child_actions(
+			array(
+				'backup_preflight'   => $this->preflight_response(),
+				'backup_task_create' => array(
+					'task_id' => 'no-writer',
+					'phase'   => 'queued',
+				),
+			)
+		);
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$cycle   = $this->run_cycle( $site_id, $this->make_task( $website ) );
+		$this->assertNull( $cycle['exception'] );
+		$params = $this->last_call_params( 'backup_task_create' );
+		$this->assertSame( (string) $base_id, $params['parent_snapshot_id'] );
+		$this->assertSame( base64_encode( file_get_contents( $this->manifest_fixture ) ), $params['parent_manifest'] );
+	}
+
+	/**
+	 * Consecutive runs from the recorded writer keep using the child-local base.
+	 */
+	public function test_consecutive_manifest_writer_runs_stay_plain() {
+		$site_id = $this->create_test_site();
+		$this->record_base_snapshot( $site_id );
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$task    = $this->make_task( $website );
+		$this->mock_child_actions(
+			array(
+				'backup_preflight'   => $this->preflight_response(),
+				'backup_task_create' => array(
+					'task_id' => 'same-writer',
+					'phase'   => 'queued',
+				),
+			)
+		);
+		for ( $run = 0; $run < 2; ++$run ) {
+			$cycle = $this->run_cycle( $site_id, $task );
+			$this->assertNull( $cycle['exception'] );
+			$params = $this->last_call_params( 'backup_task_create' );
+			$this->assertSame( 'incremental', $params['type'] );
+			$this->assertArrayNotHasKey( 'parent_manifest', $params );
+			$this->assertArrayNotHasKey( 'parent_manifest_ref', $params );
+			MainWP_DB_Backup::instance()->update_backup_task_progress(
+				$task->id,
+				$site_id,
+				array(
+					'dtsFetched'           => 0,
+					'child_backup_task_id' => '',
+					'last_error'           => '',
+				)
+			);
+			++$task->last_run;
+		}
+		$this->assertCount( 2, $this->all_call_params( 'backup_task_create' ) );
 	}
 
 	/**

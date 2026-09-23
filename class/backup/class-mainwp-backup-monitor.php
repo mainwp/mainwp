@@ -396,7 +396,7 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         };
         add_filter( 'mainwp_fetch_url_site_timeout', $clamp, PHP_INT_MAX );
         try {
-            $preflight = MainWP_Connect::fetch_url_authed( $website, 'backup_preflight', array( 'capabilities_only' => 1 ), false, false, false );
+            $preflight = MainWP_Connect::fetch_url_authed( $website, 'backup_preflight', array( 'capabilities_only' => 1 ), false, false, true );
         } catch ( \Throwable $e ) {
             MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'Capability probe unavailable: ' . $e->getMessage() );
             // An unreachable child says nothing about its capabilities, so the
@@ -639,7 +639,7 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      *
      * @var int
      */
-    const CAPABILITY_PROBE_TIMEOUT_SECONDS = 30;
+    const CAPABILITY_PROBE_TIMEOUT_SECONDS = 15;
 
     /**
      * Bound applied to one artifact transfer attempt under a native lease.

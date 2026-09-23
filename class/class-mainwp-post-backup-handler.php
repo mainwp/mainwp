@@ -480,6 +480,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                     'has_rollback'     => ! empty( $job->checkpoint['pre_snapshot_artifacts'] ),
                     'cancel_requested' => ! empty( $job->checkpoint['cancel_intent'] ),
                     'sub_type'         => (string) ( $job->checkpoint['sub_type'] ?? '' ),
+                    'is_rollback'      => ! empty( $job->checkpoint['is_rollback'] ),
                     'verification'     => isset( $job->checkpoint['verification'] ) ? $job->checkpoint['verification'] : array(),
                 ),
                 $this->transfer_byte_progress( $plan, $transfer )

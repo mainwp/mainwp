@@ -395,6 +395,85 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Manifest failures preserve the validated archive and postprocess hook.
+	 *
+	 * @dataProvider manifest_failure_cases
+	 * @param string $failure Manifest failure to simulate.
+	 */
+	public function test_manifest_failure_still_records_snapshot_and_postprocesses( $failure ) {
+		list( $site_id, $task ) = $this->site_and_task();
+		$content                = "PK\x03\x04" . str_repeat( 'x', 4092 );
+		$this->seed_download_ready_progress( $task->id, $site_id, strlen( $content ) );
+		$progress           = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+		$fetch              = $progress->fetchResult;
+		$fetch['artifacts'] = array(
+			array(
+				'file' => 'files.list',
+				'size' => 'invalid' === $failure ? 0 : 50,
+				'role' => 'manifest',
+			),
+		);
+		MainWP_DB_Backup::instance()->update_backup_task_progress( $task->id, $site_id, array( 'fetchResult' => wp_json_encode( $fetch ) ) );
+		$this->mock_child_action( 'delete_backup', array( 'result' => 'ok' ) );
+		$manifest_path = '';
+		if ( 'invalid' === $failure ) {
+			$run_dir = \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_specific_dir( $site_id ) . 'snapshot-/';
+			wp_mkdir_p( $run_dir );
+			$manifest_path          = $run_dir . 'files.list';
+			$this->snapshot_files[] = $manifest_path;
+			file_put_contents( $manifest_path, 'partial' );
+		}
+		add_filter(
+			'mainwp_download_to_file_pre',
+			function ( $pre, $url, $file ) use ( $content, $failure, &$manifest_path ) {
+				$this->snapshot_files[] = $file;
+				if ( 'files.list' === basename( $file ) ) {
+					$manifest_path = $file;
+					file_put_contents( $file, 'partial' );
+					if ( 'download' === $failure ) {
+						throw new MainWP_Exception( 'Manifest download failed.' );
+					}
+				} else {
+					file_put_contents( $file, $content );
+				}
+				return true;
+			},
+			10,
+			3
+		);
+		$postprocessed = array();
+		add_action(
+			'mainwp_postprocess_backup_site',
+			static function ( $file ) use ( &$postprocessed ) {
+				$postprocessed[] = $file;
+			}
+		);
+		$result   = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, (int) $task->id );
+		$this->assertNotFalse( $result );
+		$this->assertNotNull( $snapshot );
+		$this->assertSame( '', $snapshot->manifest_path );
+		$this->assertSame( array( 'full' ), array_column( $snapshot->archives, 'role' ) );
+		$this->assertFileExists( $snapshot->archives[0]['path'] );
+		$this->assertSame( array( $snapshot->archives[0]['path'] ), $postprocessed );
+		$this->assertNotSame( '', $manifest_path );
+		$this->assertFileDoesNotExist( $manifest_path );
+	}
+
+	/**
+	 * Each failure happens after the full archive has been downloaded.
+	 *
+	 * @return array
+	 */
+	public static function manifest_failure_cases() {
+		return array(
+			'invalid artifact'   => array( 'invalid' ),
+			'download exception' => array( 'download' ),
+			'size mismatch'      => array( 'size' ),
+		);
+	}
+
+	/**
 	 * Child identity survives the full download and snapshot path.
 	 */
 	public function test_b11_completed_full_run_records_child_run_key() {

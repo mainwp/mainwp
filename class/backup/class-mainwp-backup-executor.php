@@ -394,6 +394,11 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
                 MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Requesting backup task: ' . MainWP_Utility::value_to_string( $params ) );
 
+                // The child shares files.list across tasks; record its next writer before sending.
+                if ( 'incremental' === $params['type'] || ( in_array( $params['type'], array( 'full', 'files' ), true ) && ! empty( $params['emit_manifest'] ) ) ) {
+                    MainWP_DB::instance()->update_website_option( $website, 'native_manifest_writer_task', (string) $taskId );
+                }
+
                 $diag_start  = microtime( true );
                 $information = MainWP_Connect::fetch_url_authed( $website, 'backup_task_create', $params, false, false, false );
 
@@ -1298,7 +1303,8 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
         $escalate_to_full = in_array( $marker, array( 'push', 'chunk-push', 'full' ), true );
         $manifest_b64     = '';
-        if ( ! $escalate_to_full && 'plain' === $marker ) {
+        $owns_manifest    = (string) MainWP_DB::instance()->get_website_option( $website, 'native_manifest_writer_task' ) === (string) $pTask->id;
+        if ( ! $escalate_to_full && ( 'plain' === $marker || ! $owns_manifest ) ) {
             $manifest_b64 = self::pushable_manifest( $base );
             if ( '' === $manifest_b64 ) {
                 // Too large for one request: a chunk-capable child stages
@@ -1587,37 +1593,45 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             if ( ! $has_full || 'manifest' !== ( $artifact['role'] ?? '' ) ) {
                 continue;
             }
-            $remote = basename( (string) ( $artifact['file'] ?? '' ) );
-            $size   = (int) ( $artifact['size'] ?? 0 );
-            if ( '' === $remote || $size < 1 ) {
-                throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, 'invalid manifest artifact' ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
-            }
-            $run_dir = MainWP_System_Utility::get_mainwp_specific_dir( $website->id ) . 'snapshot-' . MainWP_Utility::sanitize_file_name( (string) $progress->child_backup_task_id ) . '/';
-            wp_mkdir_p( $run_dir );
-            $manifest_path = $run_dir . MainWP_Utility::sanitize_file_name( $remote );
-            if ( ! is_file( $manifest_path ) || (int) filesize( $manifest_path ) !== $size ) {
-                MainWP_Backup_File_Manager::download_backup_artifact(
-                    $website,
-                    $remote,
-                    $manifest_path,
-                    $size,
-                    MainWP_Credential_Storage::decrypt_credential( $website->http_user ),
-                    MainWP_Credential_Storage::decrypt_credential( $website->http_pass )
-                );
-                if ( ! is_file( $manifest_path ) || (int) filesize( $manifest_path ) !== $size ) {
-                    throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, 'manifest size mismatch' ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+            try {
+                $remote        = basename( (string) ( $artifact['file'] ?? '' ) );
+                $size          = (int) ( $artifact['size'] ?? 0 );
+                $run_dir       = MainWP_System_Utility::get_mainwp_specific_dir( $website->id ) . 'snapshot-' . MainWP_Utility::sanitize_file_name( (string) $progress->child_backup_task_id ) . '/';
+                $manifest_path = $run_dir . MainWP_Utility::sanitize_file_name( $remote );
+                if ( '' === $remote || $size < 1 ) {
+                    throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, 'invalid manifest artifact' ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
                 }
+                wp_mkdir_p( $run_dir );
+                if ( ! is_file( $manifest_path ) || (int) filesize( $manifest_path ) !== $size ) {
+                    MainWP_Backup_File_Manager::download_backup_artifact(
+                        $website,
+                        $remote,
+                        $manifest_path,
+                        $size,
+                        MainWP_Credential_Storage::decrypt_credential( $website->http_user ),
+                        MainWP_Credential_Storage::decrypt_credential( $website->http_pass )
+                    );
+                    if ( ! is_file( $manifest_path ) || (int) filesize( $manifest_path ) !== $size ) {
+                        throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, 'manifest size mismatch' ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+                    }
+                }
+                $manifest = array(
+                    'file' => basename( $manifest_path ),
+                    'size' => $size,
+                    'role' => 'manifest',
+                    'path' => $manifest_path,
+                );
+                if ( isset( $artifact['walk'] ) && is_array( $artifact['walk'] ) ) {
+                    $manifest['walk'] = $artifact['walk'];
+                }
+                $archives[] = $manifest;
+            } catch ( \Throwable $e ) {
+                if ( '' !== $manifest_path && is_file( $manifest_path ) ) {
+                    wp_delete_file( $manifest_path );
+                }
+                $manifest_path = '';
+                MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'Backup recorded without a file manifest: ' . $e->getMessage() );
             }
-            $manifest = array(
-                'file' => basename( $manifest_path ),
-                'size' => $size,
-                'role' => 'manifest',
-                'path' => $manifest_path,
-            );
-            if ( isset( $artifact['walk'] ) && is_array( $artifact['walk'] ) ) {
-                $manifest['walk'] = $artifact['walk'];
-            }
-            $archives[] = $manifest;
             break;
         }
         if ( ! MainWP_Backup_Monitor::confirm_native_lease() ) {

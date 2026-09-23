@@ -18,6 +18,7 @@ use MainWP\Dashboard\MainWP_Backup_Restore_Transfer_Driver;
 use MainWP\Dashboard\MainWP_Backup_Snapshots;
 use MainWP\Dashboard\MainWP_Backup_Storage_Destinations;
 use MainWP\Dashboard\MainWP_Backup_Upload_Job_Store;
+use MainWP\Dashboard\MainWP_Connect;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_DB_Backup;
 use MainWP\Dashboard\MainWP_Exception;
@@ -129,6 +130,51 @@ class Testable_Restore_Orchestrator extends MainWP_Backup_Restore_Orchestrator {
 	 */
 	protected function transfer_driver(): MainWP_Backup_Restore_Transfer_Driver {
 		return null !== $this->driver ? $this->driver : parent::transfer_driver();
+	}
+}
+
+/**
+ * Exercise the real root fallback while replacing only the HTTP attempt.
+ */
+class Capability_Probe_Test_Transport extends MainWP_Connect {
+ // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- transport test double.
+
+	/**
+	 * Requested URLs and effective timeout values.
+	 *
+	 * @var array
+	 */
+	public static $attempts = array();
+
+	/**
+	 * Whether the root attempt succeeds.
+	 *
+	 * @var bool
+	 */
+	public static $root_succeeds = false;
+
+	/**
+	 * Capture one attempt without network access.
+	 *
+	 * @param object $website Website row.
+	 * @param string $url Request URL.
+	 * @param mixed  $postdata Request data.
+	 * @param bool   $checkConstraints Connection constraints.
+	 * @param mixed  $verifyCertificate Certificate setting.
+	 * @param mixed  $http_user HTTP username.
+	 * @param mixed  $http_pass HTTP password.
+	 * @param int    $sslVersion SSL version.
+	 * @param array  $others Request options.
+	 * @param array  $output Output values.
+	 * @return array Capability response.
+	 * @throws MainWP_Exception For a blocked endpoint.
+	 */
+	public static function fetch_url_site( &$website, $url, $postdata, $checkConstraints = false, $verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = 0, $others = array(), &$output = array() ) {
+		self::$attempts[] = array( $url, apply_filters( 'mainwp_fetch_url_site_timeout', 72000 ) );
+		if ( self::$root_succeeds && $url === $website->url ) {
+			return array( 'restore_create_idempotency' => 1 );
+		}
+		throw new MainWP_Exception( 'Endpoint blocked.' );
 	}
 }
 
@@ -4047,8 +4093,8 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		add_filter( 'mainwp_fetch_url_authed_pre', $observe, 20, 3 );
 		try {
 			MainWP_Backup_Monitor::refresh_negotiated_capabilities( $website );
-			$this->assertSame( 30, MainWP_Backup_Monitor::CAPABILITY_PROBE_TIMEOUT_SECONDS );
-			$this->assertSame( 30, $observed );
+			$this->assertSame( 15, MainWP_Backup_Monitor::CAPABILITY_PROBE_TIMEOUT_SECONDS );
+			$this->assertSame( 15, $observed );
 			$this->assertSame( 72000, apply_filters( 'mainwp_fetch_url_site_timeout', 72000 ) );
 			$this->assertSame( array( 'backup_preflight' ), array_column( $this->calls, 'what' ) );
 		} finally {
@@ -4058,36 +4104,44 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
-	 * The timeout bound requires the transport's inner retry to be disabled.
+	 * A blocked admin endpoint gets one root fallback, with both attempts bounded.
 	 */
-	public function test_capability_probe_requests_only_capabilities_without_transport_retry() {
-		$this->responses['backup_preflight'] = array( 'restore_create_idempotency' => 1 );
+	public function test_capability_probe_uses_two_bounded_attempts_with_root_fallback() {
 		$website                             = MainWP_DB::instance()->get_website_by_id( $this->site_id );
-		$observed                            = array();
-		$observe                             = static function ( $pre, $site, $what, $params, $verify_signature, $retry_failed ) use ( &$observed ) {
-			if ( 'backup_preflight' === $what ) {
-				$observed[] = array(
-					'params'       => $params,
-					'retry_failed' => $retry_failed,
-				);
+		$this->responses['backup_preflight'] = array();
+		$observe                             = static function ( $pre, $site, $what, $params, $verify_signature, $retry_failed ) {
+			if ( 'backup_preflight' !== $what ) {
+				return $pre;
 			}
-			return $pre;
+			return Capability_Probe_Test_Transport::fetch_url( $site, $site->url, $params, false, null, $retry_failed );
 		};
 		add_filter( 'mainwp_fetch_url_authed_pre', $observe, 20, 6 );
 		try {
-			MainWP_Backup_Monitor::refresh_negotiated_capabilities( $website );
-			$this->assertCount( 1, $observed );
-			$this->assertSame( array( 'capabilities_only' => 1 ), $observed[0]['params'] );
-			$this->assertFalse( $observed[0]['retry_failed'] );
+			foreach ( array( false, true ) as $root_succeeds ) {
+				$this->set_site_option( $this->site_id, 'restore_create_idempotency_support', '0' );
+				Capability_Probe_Test_Transport::$attempts      = array();
+				Capability_Probe_Test_Transport::$root_succeeds = $root_succeeds;
+				MainWP_Backup_Monitor::refresh_negotiated_capabilities( $website );
+				$this->assertSame(
+					array(
+						array( rtrim( $website->url, '/' ) . '/wp-admin/admin-ajax.php', 15 ),
+						array( $website->url, 15 ),
+					),
+					Capability_Probe_Test_Transport::$attempts
+				);
+				$this->assertSame( $root_succeeds ? '1' : '0', MainWP_DB::instance()->get_website_option( $this->site_id, 'restore_create_idempotency_support' ) );
+				$this->assertSame( 72000, apply_filters( 'mainwp_fetch_url_site_timeout', 72000 ) );
+			}
+			$this->assertSame( array( 'capabilities_only' => 1 ), $this->calls[0]['params'] );
 		} finally {
 			remove_filter( 'mainwp_fetch_url_authed_pre', $observe, 20 );
 		}
 	}
 
 	/**
-	 * An unavailable capability probe makes one attempt and keeps the stored flag.
+	 * An unavailable capability probe makes one logical request and keeps the stored flag.
 	 */
-	public function test_initiate_restore_attempts_capability_probe_once() {
+	public function test_initiate_restore_requests_capabilities_once() {
 		$this->set_site_option( $this->site_id, 'restore_create_idempotency_support', '0' );
 
 		try {
@@ -4221,6 +4275,21 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$this->assertTrue( $job->checkpoint['plan'][0]['adopt_only'] );
 		$this->assertSame( 'backup-pre.tar.gz', $job->checkpoint['plan'][0]['file'] );
 		$this->assertSame( 'full', $job->checkpoint['sub_type'] );
+		$this->assertTrue( $job->checkpoint['is_rollback'] );
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$skip_drive           = static fn() => -1;
+		add_filter( 'mainwp_restore_foreground_budget', $skip_drive );
+		$nonce                = wp_create_nonce( 'mainwp_restore_progress' );
+		$_POST['security']    = $nonce;
+		$_REQUEST['security'] = $nonce;
+		$_POST['job_id']      = (string) $job_id;
+		try {
+			$response = $this->invoke_ajax_handler( 'mainwp_restore_progress' );
+			$this->assertTrue( $response['is_rollback'] );
+		} finally {
+			remove_filter( 'mainwp_restore_foreground_budget', $skip_drive );
+			unset( $_POST['security'], $_REQUEST['security'], $_POST['job_id'] );
+		}
 	}
 
 	/**

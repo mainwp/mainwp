@@ -246,14 +246,15 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         }
 
         $checkpoint = array(
-            'restore_id' => strtolower( wp_generate_password( 12, false ) ),
-            'sub_type'   => 'full',
-            'plan'       => $plan,
-            'options'    => array(
+            'restore_id'  => strtolower( wp_generate_password( 12, false ) ),
+            'sub_type'    => 'full',
+            'is_rollback' => true,
+            'plan'        => $plan,
+            'options'     => array(
                 'pre_snapshot'  => false,
                 'file_rollback' => false,
             ),
-            'transfer'   => array(),
+            'transfer'    => array(),
         );
 
         $job_id = MainWP_Backup_Restore_Job_Store::instance()->create_job( (int) $failed_job->site_id, (int) $failed_job->snapshot_id, $checkpoint );

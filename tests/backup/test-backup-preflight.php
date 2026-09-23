@@ -781,8 +781,7 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
 		$this->assertFalse( MainWP_Backup_Monitor::child_supports_restore_create_idempotency( $website ) );
 
-		// Stored as '0', not '', so the restore gate can tell a negotiated "no"
-		// from a site that has never reported the capability at all.
+		// wpdb::get_var() returns null for '', so '0' distinguishes recorded absence from unknown.
 		$this->assertSame( '0', MainWP_DB::instance()->get_website_option( $website, 'restore_create_idempotency_support' ) );
 		$this->assertTrue( MainWP_Backup_Monitor::child_reported_restore_create_idempotency( $website ) );
 	}
@@ -1353,8 +1352,7 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 			)
 		);
 
-		// '0' and not '': an absent capability is recorded so the restore gate
-		// can tell it from a site that has never been negotiated.
+		// Store '0', not '': wpdb::get_var() reads an empty column as null, just like a missing row.
 		$this->assertSame( '0', $flag, 'A downgraded child must lose the task-spine capability it can no longer serve.' );
 
 		$website = MainWP_DB::instance()->get_website_by_id( $site_id );

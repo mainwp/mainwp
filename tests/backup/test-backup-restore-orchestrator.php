@@ -181,6 +181,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$this->orchestrator = new Testable_Restore_Orchestrator();
 		$this->dir          = sys_get_temp_dir() . '/mainwp-orch-test-' . uniqid();
 		mkdir( $this->dir );
+		add_filter( 'mainwp_backup_retry_delay', '__return_zero' );
 
 		add_filter(
 			'mainwp_fetch_url_authed_pre',
@@ -198,6 +199,9 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 						throw $scripted;
 					}
 					return $scripted;
+				}
+				if ( 'backup_preflight' === $what ) {
+					throw new MainWP_Exception( 'No backup preflight response scripted.' );
 				}
 				return array( 'result' => 'ok' );
 			},
@@ -3880,13 +3884,56 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	public function test_initiate_restore_refuses_reported_missing_create_idempotency() {
 		$this->set_site_option( $this->site_id, 'restore_create_idempotency_support', '0' );
 
+		// Without a scripted preflight response, the fetch fails and the stored '0' stands.
 		try {
 			$this->orchestrator->initiate_restore( $this->site_id, 5 );
 			$this->fail( 'A reported lack of create idempotency must refuse restore.' );
 		} catch ( MainWP_Exception $e ) {
-			$this->assertSame( 'Update the MainWP Child plugin on this site before restoring. The installed version predates the safeguard that stops a dropped reply from starting a restore twice.', $e->getMessage() );
+			$this->assertSame( 'The MainWP Child plugin on this site is too old to restore a backup safely. Update MainWP Child on the site, then run the restore again.', $e->getMessage() );
+			$this->assertSame( 'mainwp_restore_child_update_required', $e->get_message_error_code() );
 		}
 
+		$this->assertNull( MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $this->site_id ) );
+	}
+
+	/**
+	 * A live child update replaces a stale refusal before restore starts.
+	 */
+	public function test_initiate_restore_refreshes_stale_create_idempotency() {
+		$this->set_site_option( $this->site_id, 'restore_create_idempotency_support', '0' );
+		$this->responses['backup_preflight'] = array( 'restore_create_idempotency' => 1 );
+
+		$snapshot_id = $this->make_chain_snapshot(
+			null,
+			'db',
+			array( array( 'file' => 'db.zip', 'role' => 'db' ) ) // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+		);
+		$job_id      = $this->orchestrator->initiate_restore( $this->site_id, $snapshot_id );
+		$job         = MainWP_Backup_Restore_Job_Store::instance()->get_job( $job_id );
+
+		$this->assertGreaterThan( 0, $job_id );
+		$this->assertSame( 'pending', $job->status );
+		$this->assertSame( '1', MainWP_DB::instance()->get_website_option( $this->site_id, 'restore_create_idempotency_support' ) );
+		$this->assertSame( array( 'backup_preflight' ), array_column( $this->calls, 'what' ) );
+	}
+
+	/**
+	 * A live report without create idempotency confirms the refusal.
+	 */
+	public function test_initiate_restore_refuses_confirmed_missing_create_idempotency() {
+		$this->set_site_option( $this->site_id, 'restore_create_idempotency_support', '0' );
+		$this->responses['backup_preflight'] = array( 'task_spine' => 1 );
+
+		try {
+			$this->orchestrator->initiate_restore( $this->site_id, 5 );
+			$this->fail( 'A live report without create idempotency must refuse restore.' );
+		} catch ( MainWP_Exception $e ) {
+			$this->assertSame( 'The MainWP Child plugin on this site is too old to restore a backup safely. Update MainWP Child on the site, then run the restore again.', $e->getMessage() );
+			$this->assertSame( 'mainwp_restore_child_update_required', $e->get_message_error_code() );
+		}
+
+		$this->assertSame( '0', MainWP_DB::instance()->get_website_option( $this->site_id, 'restore_create_idempotency_support' ) );
+		$this->assertSame( array( 'backup_preflight' ), array_column( $this->calls, 'what' ) );
 		$this->assertNull( MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $this->site_id ) );
 	}
 
@@ -3894,6 +3941,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	 * A capability that has never been negotiated does not block restore.
 	 */
 	public function test_initiate_restore_allows_unknown_create_idempotency() {
+		// No scripted preflight response is needed: a failed fetch leaves unknown support unchanged.
 		global $wpdb;
 		$wpdb->delete(
 			$wpdb->prefix . 'mainwp_wp_options',
@@ -3918,9 +3966,9 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
-	 * Rollback also refuses a reported lack of create-idempotency support.
+	 * Rollback remains available when create-idempotency support is absent.
 	 */
-	public function test_rollback_refuses_reported_missing_create_idempotency() {
+	public function test_rollback_allows_reported_missing_create_idempotency() {
 		$this->set_site_option( $this->site_id, 'restore_create_idempotency_support', '0' );
 		$failed = $this->make_job(
 			array(
@@ -3935,14 +3983,12 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT
 		);
 
-		try {
-			$this->orchestrator->initiate_rollback( $failed );
-			$this->fail( 'A reported lack of create idempotency must refuse rollback.' );
-		} catch ( MainWP_Exception $e ) {
-			$this->assertSame( 'Update the MainWP Child plugin on this site before restoring. The installed version predates the safeguard that stops a dropped reply from starting a restore twice.', $e->getMessage() );
-		}
+		$job_id = $this->orchestrator->initiate_rollback( $failed );
+		$job    = MainWP_Backup_Restore_Job_Store::instance()->get_job( $job_id );
 
-		$this->assertNull( MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $this->site_id ) );
+		$this->assertGreaterThan( 0, $job_id );
+		$this->assertSame( 'pending', $job->status );
+		$this->assertTrue( $job->checkpoint['plan'][0]['adopt_only'] );
 	}
 
 	/**

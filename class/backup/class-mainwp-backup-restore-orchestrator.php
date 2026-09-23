@@ -102,8 +102,13 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             throw new MainWP_Exception( esc_html__( 'Site not found.', 'mainwp' ) );
         }
 
-        if ( MainWP_Backup_Monitor::child_requires_restore_create_idempotency_update( $website ) ) {
-            throw new MainWP_Exception( esc_html__( 'Update the MainWP Child plugin on this site before restoring. The installed version predates the safeguard that stops a dropped reply from starting a restore twice.', 'mainwp' ) );
+        if ( ! MainWP_Backup_Monitor::child_supports_restore_create_idempotency( $website ) ) {
+            // The stored flag goes stale on exactly the update this refusal asks
+            // for, so re-negotiate once before taking Restore away.
+            MainWP_Backup_Monitor::refresh_negotiated_capabilities( $website );
+            if ( MainWP_Backup_Monitor::child_requires_restore_create_idempotency_update( $website ) ) {
+                throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_RESTORE_CHILD_UPDATE_REQUIRED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+            }
         }
 
         if ( null !== MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $site_id ) ) {
@@ -216,17 +221,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             throw new MainWP_Exception( esc_html__( 'Only failed or cancelled restores can be rolled back.', 'mainwp' ), '', 'mainwp_restore_rollback_status' );
         }
 
-        $site_id = (int) $failed_job->site_id;
-        $website = MainWP_DB::instance()->get_website_by_id( $site_id );
-        if ( empty( $website ) ) {
-            throw new MainWP_Exception( esc_html__( 'Site not found.', 'mainwp' ) );
-        }
-
-        if ( MainWP_Backup_Monitor::child_requires_restore_create_idempotency_update( $website ) ) {
-            throw new MainWP_Exception( esc_html__( 'Update the MainWP Child plugin on this site before restoring. The installed version predates the safeguard that stops a dropped reply from starting a restore twice.', 'mainwp' ) );
-        }
-
-        if ( null !== MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $site_id ) ) {
+        if ( null !== MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( (int) $failed_job->site_id ) ) {
             throw new MainWP_Exception( esc_html__( 'A restore is already running for this site. Wait for it to finish before rolling back.', 'mainwp' ) );
         }
 

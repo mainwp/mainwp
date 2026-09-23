@@ -375,6 +375,42 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     }
 
     /**
+     * Re-read a child's capability report on demand, with none of the backup
+     * side effects.
+     *
+     * The restore gate needs a current answer, and the stored flags are only
+     * ever written by a backup preflight, so they go stale on exactly the child
+     * update a refusal asks the user to perform. This is not
+     * negotiate_backup_preflight(): that one throws on critically low child disk
+     * space and can switch a task's archive format, neither of which belongs on
+     * a restore, and it reports to the per-backup diagnostics recorder, which
+     * has no task to attribute this call to.
+     *
+     * @param object $website Website row.
+     *
+     * @return void
+     */
+    public static function refresh_negotiated_capabilities( object $website ): void {
+        try {
+            $preflight = MainWP_Connect::fetch_with_retry( $website, 'backup_preflight', array() );
+        } catch ( \Exception $e ) {
+            // An unreachable child says nothing about its capabilities, so the
+            // last negotiated flags stand rather than being cleared by a site
+            // that is merely down.
+            return;
+        }
+
+        if ( ! is_array( $preflight ) || isset( $preflight['error'] ) ) {
+            if ( is_array( $preflight ) && isset( $preflight['error_code'] ) && self::CHILD_INCOMPATIBLE_CODE === $preflight['error_code'] ) {
+                static::record_negotiated_capabilities( $website, array() );
+            }
+            return;
+        }
+
+        static::record_negotiated_capabilities( $website, $preflight );
+    }
+
+    /**
      * Record the capability flags a child's preflight report advertises.
      *
      * An empty report clears every flag, which is exactly what a child
@@ -401,12 +437,12 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             'restore_multisite_support'          => 'restore_multisite',
         );
 
-        // An absent capability is stored as '0' rather than '', because
-        // wpdb::get_var() returns null for an empty column, which makes ''
-        // indistinguishable from a site that has never been negotiated at all.
-        // The restore gate has to tell those apart: unknown fails open, a
-        // recorded '0' refuses. Every reader compares against '1', so the
-        // stored '0' behaves exactly as '' did for all of them.
+        // An absent capability is stored as '0' rather than ''. WordPress core's
+        // wpdb::get_var() ends with "isset( $values[ $x ] ) && '' !== $values[ $x ]",
+        // so an empty column reads back as null and '' is indistinguishable from a
+        // site that has never been negotiated. The restore gate has to tell those
+        // apart: unknown re-probes the child, a recorded '0' refuses. Every reader
+        // compares against '1', so the stored '0' behaves exactly as '' did.
         foreach ( $flags as $option => $reported ) {
             MainWP_DB::instance()->update_website_option( $website, $option, empty( $preflight[ $reported ] ) ? '0' : '1' );
         }

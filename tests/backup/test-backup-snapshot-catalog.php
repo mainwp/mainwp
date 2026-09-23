@@ -133,7 +133,7 @@ class MainWP_Backup_Snapshot_Catalog_Test extends MainWP_Abilities_Test_Case {
 
 		$entries = MainWP_Backup_Snapshot_Catalog::instance()->list_snapshots_for_site( $site_id );
 		$this->assertFalse( $entries[0]['restorable'], 'A child without create idempotency must not be restorable.' );
-		$this->assertSame( 'Update the MainWP Child plugin on the site to restore backups.', $entries[0]['restore_reason'] );
+		$this->assertSame( 'The MainWP Child plugin on this site is too old to restore a backup safely. Update MainWP Child on the site, then run the restore again.', $entries[0]['restore_reason'] );
 
 		$resolved = MainWP_Backup_Snapshot_Catalog::instance()->resolve_restorable_chain( $snapshot_id );
 		$this->assertTrue( $resolved['ok'] );

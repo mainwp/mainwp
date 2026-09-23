@@ -66,7 +66,7 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
             } elseif ( 'files' === $snapshot->type && ! $files_restorable ) {
                 $reason = __( 'Update the MainWP Child plugin on the site to restore files-only backups.', 'mainwp' );
             } elseif ( $create_gated ) {
-                $reason = __( 'Update the MainWP Child plugin on the site to restore backups.', 'mainwp' );
+                $reason = MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_RESTORE_CHILD_UPDATE_REQUIRED );
             } elseif ( $multisite_gated ) {
                 $reason = __( 'This site runs WordPress Multisite. Update the MainWP Child plugin to enable network-wide restore.', 'mainwp' );
             }

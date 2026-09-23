@@ -47,9 +47,9 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 	public function test_terminal_deferral_merges_concurrent_checkpoint_and_counts_once() {
 		$job_id = $this->store->create_job( 8801, 42, array( 'transfer' => array( 'cursor' => 1 ) ) );
 		$this->assertNotNull( $this->store->acquire_next_job( 'cancel-holder', 300, null, $job_id ) );
-		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$table       = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
 		$interleaved = false;
-		$interleave = function ( $sql ) use ( &$interleave, &$interleaved, $table, $job_id ) {
+		$interleave  = function ( $sql ) use ( &$interleave, &$interleaved, $table, $job_id ) {
 			if ( str_starts_with( $sql, 'UPDATE ' . $table . ' SET checkpoint' ) && str_contains( $sql, 'terminal_failure' ) ) {
 				remove_filter( 'query', $interleave );
 				$interleaved = true;
@@ -68,7 +68,13 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 		$fresh = $this->store->get_job( $job_id );
 		$this->assertSame( 9, $fresh->checkpoint['transfer']['cursor'] );
 		$this->assertTrue( $fresh->checkpoint['cancel_intent'] );
-		$this->assertSame( array( 'error' => 'Original failure', 'error_code' => 'original_code' ), $fresh->checkpoint['terminal_failure'] );
+		$this->assertSame(
+			array(
+				'error'      => 'Original failure',
+				'error_code' => 'original_code',
+			),
+			$fresh->checkpoint['terminal_failure']
+		);
 		$second = $this->store->defer_terminal_failure( $job_id, 'Later sweep failure', 'other_code', 'cancel-holder' );
 		$this->assertSame( 2, $second['attempt_count'] );
 		$this->assertSame( $first['first_attempt_at'], $second['first_attempt_at'] );
@@ -81,12 +87,24 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 	public function test_cancel_intent_fallback_preserves_failure_and_lease_fence() {
 		$job_id = $this->store->create_job( 8801, 42, array( 'cursor' => 7 ) );
 		$this->assertNotNull( $this->store->acquire_next_job( 'current-holder', 300, null, $job_id ) );
-		$failure = array( 'error' => 'Original failure', 'error_code' => 'original_code' );
+		$failure = array(
+			'error'      => 'Original failure',
+			'error_code' => 'original_code',
+		);
 		$this->assertFalse( $this->store->arm_cancel_intent( $job_id, $failure, 'stale-holder' ) );
 		$this->assertSame( array( 'cursor' => 7 ), $this->store->get_job( $job_id )->checkpoint );
 		$this->assertTrue( $this->store->arm_cancel_intent( $job_id ) );
 		$this->assertTrue( $this->store->arm_cancel_intent( $job_id, $failure, 'current-holder' ) );
-		$this->assertTrue( $this->store->arm_cancel_intent( $job_id, array( 'error' => 'Later failure', 'error_code' => 'later_code' ), 'current-holder' ) );
+		$this->assertTrue(
+			$this->store->arm_cancel_intent(
+				$job_id,
+				array(
+					'error'      => 'Later failure',
+					'error_code' => 'later_code',
+				),
+				'current-holder'
+			)
+		);
 		$fresh = $this->store->get_job( $job_id );
 		$this->assertTrue( $fresh->checkpoint['cancel_intent'] );
 		$this->assertSame( $failure, $fresh->checkpoint['terminal_failure'] );

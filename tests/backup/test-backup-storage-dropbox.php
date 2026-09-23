@@ -424,10 +424,12 @@ class MainWP_Backup_Storage_Dropbox_Test extends \WP_UnitTestCase {
 	 * Upgrades must delete an unexpired token from either transient backend.
 	 *
 	 * @dataProvider legacy_transient_backends
+	 * @param bool $external_cache Whether an external object cache is active.
+	 * @return void
 	 */
 	public function test_constructor_deletes_legacy_plaintext_token( $external_cache ) {
-		$settings = $this->settings();
-		$key = 'mainwp_dropbox_token_' . md5( $settings['app_key'] . '|' . $settings['refresh_token'] );
+		$settings       = $this->settings();
+		$key            = 'mainwp_dropbox_token_' . md5( $settings['app_key'] . '|' . $settings['refresh_token'] );
 		$previous_cache = wp_using_ext_object_cache();
 		wp_using_ext_object_cache( $external_cache );
 		try {
@@ -447,8 +449,16 @@ class MainWP_Backup_Storage_Dropbox_Test extends \WP_UnitTestCase {
 		}
 	}
 
+	/**
+	 * Database and external-cache transient backends.
+	 *
+	 * @return array
+	 */
 	public static function legacy_transient_backends() {
-		return array( 'database' => array( false ), 'external cache' => array( true ) );
+		return array(
+			'database'       => array( false ),
+			'external cache' => array( true ),
+		);
 	}
 
 	/**

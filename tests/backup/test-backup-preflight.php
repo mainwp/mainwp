@@ -52,15 +52,21 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 	 * Every advisory must remain attached to its site in scoped diagnostics.
 	 *
 	 * @dataProvider scoped_advisory_cases
+	 * @param array  $overrides Preflight response fields to override.
+	 * @param string $expected  Substring expected in the warning message.
+	 * @return void
 	 */
 	public function test_preflight_advisories_include_site_and_task( $overrides, $expected ) {
-		$site_id = $this->create_test_site();
-		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
-		$task = (object) array( 'id' => 987654, 'template' => 1 );
+		$site_id     = $this->create_test_site();
+		$website     = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$task        = (object) array(
+			'id'       => 987654,
+			'template' => 1,
+		);
 		$archive_ext = 'zip';
 		$this->mock_child_actions( array( 'backup_preflight' => $this->preflight_response( $overrides ) ) );
 		$warnings = array();
-		$capture = static function ( $message, $logged_site = 0, $logged_task = 0 ) use ( &$warnings ) {
+		$capture  = static function ( $message, $logged_site = 0, $logged_task = 0 ) use ( &$warnings ) {
 			$warnings[] = array( $message, $logged_site, $logged_task );
 		};
 		add_action( 'mainwp_log_warning', $capture, 10, 3 );
@@ -75,14 +81,25 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( 987654, $warnings[0][2], 'The warning must carry its task id.' );
 	}
 
+	/**
+	 * Preflight advisory overrides and the warning substring each must produce.
+	 *
+	 * @return array
+	 */
 	public static function scoped_advisory_cases() {
 		return array(
-			'time limit' => array( array( 'time_limit_ok' => false ), 'cannot call set_time_limit' ),
-			'disk' => array( array( 'disk_warning' => 'Space is low' ), 'disk warning' ),
-			'zip switch' => array( array( 'zip_support' => false ), 'lacks ext-zip' ),
-			'unsupported format' => array( array( 'zip_support' => false, 'gz_support' => false ), 'no support for the requested zip' ),
-			'large zip' => array( array( 'estimated_bytes' => 3 * GB_IN_BYTES ), 'switched to tar.gz for this large site' ),
-			'file count' => array( array( 'file_count' => 100001 ), 'large file count' ),
+			'time limit'         => array( array( 'time_limit_ok' => false ), 'cannot call set_time_limit' ),
+			'disk'               => array( array( 'disk_warning' => 'Space is low' ), 'disk warning' ),
+			'zip switch'         => array( array( 'zip_support' => false ), 'lacks ext-zip' ),
+			'unsupported format' => array(
+				array(
+					'zip_support' => false,
+					'gz_support'  => false,
+				),
+				'no support for the requested zip',
+			),
+			'large zip'          => array( array( 'estimated_bytes' => 3 * GB_IN_BYTES ), 'switched to tar.gz for this large site' ),
+			'file count'         => array( array( 'file_count' => 100001 ), 'large file count' ),
 		);
 	}
 

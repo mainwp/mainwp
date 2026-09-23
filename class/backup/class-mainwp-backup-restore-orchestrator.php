@@ -34,6 +34,15 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      */
     const DEFAULT_BUDGET_SECONDS = 200;
 
+    /** No further work belongs to this caller. */
+    const TERMINAL_OUTCOME_TERMINAL = 'terminal';
+
+    /** A durable decision or child confirmation must be retried. */
+    const TERMINAL_OUTCOME_DEFERRED = 'deferred';
+
+    /** The normal completion path may continue. */
+    const TERMINAL_OUTCOME_DRIVE_ON = 'drive_on';
+
     /**
      * Singleton.
      *
@@ -255,24 +264,16 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
     /**
      * Cancel a restore job, deferring a busy child to the cron lane.
      *
-     * Running restores require child confirmation and cannot be cancelled
-     * after verification begins. Earlier phases tolerate child call failures.
-     * Status determines whether the child restore task needs cancellation.
-     * The ad-hoc backup handle is shared by all jobs for a site, so only its
-     * owner may cancel and release it, regardless of the job's current phase,
-     * and only once this job's own cancellation is durable: releasing first
-     * would strand a still-active job without the safety backup it owns.
-     * Missing, empty, or undecodable handles are left untouched.
+     * Admission ends when verification begins. The cancellation matrix owns
+     * child confirmation, durable decisions, cleanup and safety-backup release.
      *
      * @param int $job_id Job id.
      *
      * @throws MainWP_Exception When the job is past the cancel window,
-     *                          or the child could not confirm the cancel.
-     * @throws \Throwable When a running child's cancellation call fails.
+     *                          or another lane already finished it.
      *
-     * @return string 'cancelled' when the job was cancelled, or
-     *                'cancel_pending' when the busy child deferred the
-     *                cancel to the cron lane.
+     * @return string 'cancelled' for a cancelled or permanently failed job,
+     *                or 'cancel_pending' when the decision must be retried.
      */
     public function cancel_job( int $job_id ): string {
         $store = MainWP_Backup_Restore_Job_Store::instance();
@@ -281,75 +282,31 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             throw new MainWP_Exception( esc_html__( 'Restore job not found.', 'mainwp' ) );
         }
 
-        $child_action         = '';
-        $require_confirmation = false;
         switch ( $job->status ) {
-            case MainWP_Backup_Restore_Job_Store::STATUS_RUNNING:
-                $child_action         = 'restore_task_cancel';
-                $require_confirmation = true;
-                break;
-            case MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING:
-                $child_action = ! empty( $job->child_task_id ) ? 'restore_task_cancel' : '';
-                break;
-            case MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT:
-            case MainWP_Backup_Restore_Job_Store::STATUS_PREFLIGHT:
-            case MainWP_Backup_Restore_Job_Store::STATUS_PENDING:
-            case MainWP_Backup_Restore_Job_Store::STATUS_STAGING:
-            case MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE:
-                break;
             case MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED:
                 throw new MainWP_Exception( esc_html__( 'The restore is already cancelled.', 'mainwp' ) );
+            case MainWP_Backup_Restore_Job_Store::STATUS_VERIFYING:
+            case MainWP_Backup_Restore_Job_Store::STATUS_COMPLETED:
+            case MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT:
+                throw new MainWP_Exception( esc_html__( 'This restore has already finished on the site and can no longer be cancelled. If it failed, you can roll it back instead.', 'mainwp' ) );
             default:
-                throw new MainWP_Exception( esc_html__( 'The restore finished its work on the site and can no longer be cancelled. Use the rollback once it completes or fails.', 'mainwp' ) );
+                break;
         }
 
-        $outcome = 'ok';
-        // An unreachable child must not prevent cancellation before restore execution.
-        try {
-            if ( 'restore_task_cancel' === $child_action ) {
-                $outcome = $this->request_child_cancel( $job );
-            }
-        } catch ( \Throwable $e ) {
-            if ( $require_confirmation ) {
-                throw $e;
-            }
-            do_action( 'mainwp_log_info', sprintf( 'Restore job %d: the site did not confirm cancelling its child task: %s', (int) $job->id, $e->getMessage() ), (int) $job->site_id, 0 );
-        }
-
-        if ( in_array( $outcome, array( 'busy', 'rolling_back' ), true ) ) {
-            $this->record_cancel_intent( $job_id );
+        $outcome = $this->record_terminal_failure( $job, null, '', null );
+        if ( self::TERMINAL_OUTCOME_DEFERRED === $outcome ) {
             return 'cancel_pending';
         }
-
-        // A stored terminal_failure wins over the cancellation, per the
-        // decision matrix on record_terminal_failure(). Ending the job as
-        // cancelled here would skip the error-code stamp and the failure
-        // event, so the original cause would never reach the logs.
-        $pending = $store->get_job( $job_id );
-        if ( null !== $pending && ! empty( $pending->checkpoint['terminal_failure'] ) ) {
-            $failure = $pending->checkpoint['terminal_failure'];
-            $this->record_terminal_failure( $pending, (string) ( $failure['error'] ?? '' ), (string) ( $failure['error_code'] ?? '' ), null );
-            return 'cancelled';
-        }
-
-        if ( $require_confirmation ) {
-            // Confirmation can arrive after the cron lane reached verification.
-            $fresh    = $store->get_job( $job_id );
-            $finished = array(
-                MainWP_Backup_Restore_Job_Store::STATUS_VERIFYING,
-                MainWP_Backup_Restore_Job_Store::STATUS_COMPLETED,
-            );
-            if ( 'completed' === $outcome || null === $fresh || in_array( $fresh->status, $finished, true ) ) {
-                throw new MainWP_Exception( esc_html__( 'The restore already finished on the site and can no longer be cancelled.', 'mainwp' ) );
+        if ( self::TERMINAL_OUTCOME_TERMINAL === $outcome ) {
+            $fresh = $store->get_job( $job_id );
+            if ( null !== $fresh && in_array( $fresh->status, array( $store::STATUS_CANCELLED, $store::STATUS_FAILED_PERMANENT ), true ) ) {
+                return 'cancelled';
+            }
+            if ( null === $fresh || ! in_array( $fresh->status, array( $store::STATUS_VERIFYING, $store::STATUS_COMPLETED ), true ) ) {
+                throw new MainWP_Exception( esc_html__( 'The restore reached its final state while the cancellation was confirmed and no longer needs cancelling.', 'mainwp' ) );
             }
         }
-
-        MainWP_Backup_Restore_Transfer_Driver::instance()->cleanup_staging( $job_id );
-        if ( ! $store->cancel_job( $job_id ) ) {
-            throw new MainWP_Exception( esc_html__( 'The restore reached its final state while the cancellation was confirmed and no longer needs cancelling.', 'mainwp' ) );
-        }
-        $this->cancel_owned_pre_snapshot_handle( $job );
-        return 'cancelled';
+        throw new MainWP_Exception( esc_html__( 'The restore already finished on the site and can no longer be cancelled.', 'mainwp' ) );
     }
 
     /**
@@ -458,49 +415,13 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
     }
 
     /**
-     * Record the cancel intent on the job's checkpoint for the cron
-     * lane to apply between child slices.
-     *
-     * The intent is armed with the store's compare-and-swap so this
-     * unleased request can never revert a worker's newer checkpoint by
-     * writing back a full copy of its own read. A job that left the
-     * cancel-intent phases meanwhile refuses,
-     * mirroring the synchronous path.
-     *
-     * @param int $job_id Job id.
-     *
-     * @throws MainWP_Exception When the job finished meanwhile, or the
-     *                          intent could not be recorded.
-     */
-    private function record_cancel_intent( int $job_id ): void {
-        $store = MainWP_Backup_Restore_Job_Store::instance();
-        $fresh = $store->get_job( $job_id );
-
-        $intent_holders = array(
-            MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING,
-            MainWP_Backup_Restore_Job_Store::STATUS_RUNNING,
-            MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE,
-        );
-        if ( null === $fresh || ! in_array( $fresh->status, $intent_holders, true ) ) {
-            throw new MainWP_Exception( esc_html__( 'The restore already finished on the site and can no longer be cancelled.', 'mainwp' ) );
-        }
-
-        if ( ! $store->arm_cancel_intent( $job_id ) ) {
-            throw new MainWP_Exception( esc_html__( 'The cancellation could not be recorded; try again.', 'mainwp' ) );
-        }
-    }
-
-    /**
      * Apply a recorded cancel intent before driving the child.
      *
      * @param object $job Job row.
      *
-     * @return bool True when the child already completed its restore -
-     *              the intent clears and the normal completion path
-     *              takes over. False when the job is terminal or the
-     *              child is still busy (nothing to drive this tick).
+     * @return string One of the TERMINAL_OUTCOME_* constants.
      */
-    private function apply_cancel_intent( object $job ): bool {
+    private function apply_cancel_intent( object $job ): string {
         $failure = $job->checkpoint['terminal_failure'] ?? array();
         return $this->record_terminal_failure( $job, $failure['error'] ?? null, $failure['error_code'] ?? '', $this->lock_token );
     }
@@ -677,11 +598,12 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         // A pending cancel is applied before any slice work: the restore
         // must not be driven forward once the user asked it to stop.
         $intent_phases = array(
+            MainWP_Backup_Restore_Job_Store::STATUS_STAGING,
             MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING,
             MainWP_Backup_Restore_Job_Store::STATUS_RUNNING,
         );
         if ( ! empty( $job->checkpoint['cancel_intent'] ) && ( in_array( $status, $intent_phases, true ) || ! empty( $job->checkpoint['terminal_failure'] ) ) ) {
-            if ( ! $this->apply_cancel_intent( $job ) ) {
+            if ( self::TERMINAL_OUTCOME_DRIVE_ON !== $this->apply_cancel_intent( $job ) ) {
                 return;
             }
             // The child completed its restore: the intent was cleared on
@@ -978,7 +900,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         // A UI cancel may have arrived after run_job read its entry checkpoint.
         $job = $fresh;
         if ( ! empty( $job->checkpoint['cancel_intent'] ) ) {
-            if ( ! $this->apply_cancel_intent( $job ) ) {
+            if ( self::TERMINAL_OUTCOME_DRIVE_ON !== $this->apply_cancel_intent( $job ) ) {
                 return;
             }
             $job = $store->get_job( (int) $job->id );
@@ -1012,7 +934,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         if ( ! $outcome['done'] ) {
             $fresh = $store->get_job( (int) $job->id );
             if ( null !== $fresh && ! empty( $fresh->checkpoint['cancel_intent'] ) ) {
-                if ( ! $this->apply_cancel_intent( $fresh ) ) {
+                if ( self::TERMINAL_OUTCOME_DRIVE_ON !== $this->apply_cancel_intent( $fresh ) ) {
                     return;
                 }
             }
@@ -1061,7 +983,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             }
             $job = $fresh;
             if ( ! empty( $job->checkpoint['cancel_intent'] ) ) {
-                if ( ! $this->apply_cancel_intent( $job ) ) {
+                if ( self::TERMINAL_OUTCOME_DRIVE_ON !== $this->apply_cancel_intent( $job ) ) {
                     return; // Cancelled, or the child is still busy.
                 }
                 // The child already completed its restore: the intent was
@@ -1167,13 +1089,13 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             return;
         }
 
-        MainWP_Backup_Restore_Transfer_Driver::instance()->cleanup_staging( (int) $job->id );
-        $this->prune_pre_snapshot( $job );
         if ( ! $store->complete_job( (int) $job->id, $this->lock_token ) ) {
             // Already terminal, or this worker's lease was reclaimed - the
             // completion (and its event below) belongs to the live holder.
             return;
         }
+        MainWP_Backup_Restore_Transfer_Driver::instance()->cleanup_staging( (int) $job->id );
+        $this->prune_pre_snapshot( $job );
 
         /**
          * Fires after a restore completes and the site responds.
@@ -1281,7 +1203,9 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      *
      * Child can restore?  Child answer       Decision
      * terminal row        not requested      retain terminal verdict
-     * no                  not requested      terminalize failure; otherwise drive on
+     * advanced in flight  any reply          retain verification or terminal verdict
+     * verifying           not requested      terminalize failure; otherwise drive on
+     * no                  not requested      terminalize failure or cancellation
      * yes                 ok/failed          terminalize failure or cancellation
      * yes                 completed          clear pending decision; poll completion
      * yes                 busy/rolling_back  defer until 15 minutes have elapsed
@@ -1300,24 +1224,32 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      *   and original failure separately before returning. Existing intent is sticky.
      * - A refused terminal/drive-on write retains ownership and staging.
      * - Only a successful terminal write releases the safety-backup handle and
-     *   cleans staging. Defer, drive on and already terminal do neither.
+     *   cleans staging. Defer, drive on and already terminal do neither;
+     *   phase_verifying() and the UI cancel lane obey the same ordering.
      *
      * A thrown or unreadable reply is unconfirmed, not proof the child stopped.
      * Verification never consults it because child completion settled that already.
      * Poll frequency must not shorten the rollback window or replace the cause.
+     *
+     * Returns: terminal for an absent, already terminal or foreign-lease row,
+     * or a row that reached verification or a terminal status during the request,
+     * and for a successful terminal write or an unfenced terminal refusal.
+     * Deferred covers refused decision writes, replies within the timeout,
+     * refused completion checkpoint writes and fenced terminal refusals.
+     * Drive_on means the completion checkpoint cleared successfully.
      *
      * @param object      $job        Job row.
      * @param string|null $error      Error text, or null for a user cancellation.
      * @param string      $error_code Stable error code, or empty when none.
      * @param string|null $lock_token Worker lease token, or null for an expired-lease sweep.
      *
-     * @return bool Whether a completed child may follow the normal completion path.
+     * @return string One of the TERMINAL_OUTCOME_* constants.
      */
-    private function record_terminal_failure( object $job, ?string $error, string $error_code, ?string $lock_token ): bool {
+    private function record_terminal_failure( object $job, ?string $error, string $error_code, ?string $lock_token ): string {
         $store = MainWP_Backup_Restore_Job_Store::instance();
         $job   = $store->get_job( (int) $job->id );
         if ( null === $job || ! in_array( $job->status, $store::active_statuses(), true ) || ( null !== $lock_token && $job->locked_by !== $lock_token ) ) {
-            return false;
+            return self::TERMINAL_OUTCOME_TERMINAL;
         }
 
         $failure    = $job->checkpoint['terminal_failure'] ?? array();
@@ -1325,7 +1257,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         $error_code = $failure['error_code'] ?? $error_code;
         $phase      = $store::STATUS_FAILED_RETRYABLE === $job->status ? ( $job->checkpoint['resume_status'] ?? $store::STATUS_PENDING ) : $job->status;
         $can_cancel = ! empty( $job->child_task_id ) && in_array( $phase, array( $store::STATUS_STAGING, $store::STATUS_TRANSFERRING, $store::STATUS_RUNNING ), true );
-        $outcome    = 'completed';
+        $outcome    = $store::STATUS_VERIFYING === $phase ? 'completed' : 'ok';
         if ( $can_cancel ) {
             $deferred = $store->defer_terminal_failure( (int) $job->id, $error, $error_code, $lock_token );
             if ( null === $deferred ) {
@@ -1337,7 +1269,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 if ( ! $store->arm_cancel_intent( (int) $job->id, $failure, $lock_token ) ) {
                     do_action( 'mainwp_log_info', sprintf( 'Restore job %d: cancellation intent could not be persisted.', (int) $job->id ), (int) $job->site_id, 0 );
                 }
-                return false;
+                return self::TERMINAL_OUTCOME_DEFERRED;
             }
             $outcome = 'unconfirmed';
             try {
@@ -1345,11 +1277,15 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             } catch ( \Throwable $e ) {
                 do_action( 'mainwp_log_info', sprintf( 'Restore job %d: the site did not confirm cancelling its child task: %s', (int) $job->id, $e->getMessage() ), (int) $job->site_id, 0 );
             }
+            $fresh = $store->get_job( (int) $job->id );
+            if ( null === $fresh || ! in_array( $fresh->status, $store::active_statuses(), true ) || $store::STATUS_VERIFYING === $fresh->status ) {
+                return self::TERMINAL_OUTCOME_TERMINAL;
+            }
         }
 
         if ( in_array( $outcome, array( 'busy', 'rolling_back', 'unconfirmed' ), true ) ) {
             if ( time() - $deferred['first_attempt_at'] < $store::CANCEL_CONFIRMATION_TIMEOUT_SECONDS ) {
-                return false;
+                return self::TERMINAL_OUTCOME_DEFERRED;
             }
             $warning    = esc_html__( 'The child site did not confirm that it stopped restoring. The site may need manual cleanup.', 'mainwp' );
             $error_code = null === $error ? 'mainwp_restore_cancel_unconfirmed' : $error_code;
@@ -1359,28 +1295,29 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         if ( 'completed' === $outcome && ( $can_cancel || null === $error ) ) {
             // Preserve verification and never resume artifact transfer after child completion.
             if ( $can_cancel && ! $store->set_status( (int) $job->id, $store::STATUS_RUNNING, array(), $lock_token ) ) {
-                return false;
+                return self::TERMINAL_OUTCOME_DEFERRED;
             }
             $fresh = $store->get_job( (int) $job->id );
             if ( null === $fresh ) {
-                return false;
+                return self::TERMINAL_OUTCOME_TERMINAL;
             }
             $checkpoint = $fresh->checkpoint;
             unset( $checkpoint['cancel_confirmation'], $checkpoint['terminal_failure'], $checkpoint['last_error_code'] );
-            return $store->save_checkpoint( (int) $job->id, $checkpoint, $lock_token, true );
+            return $store->save_checkpoint( (int) $job->id, $checkpoint, $lock_token, true ) ? self::TERMINAL_OUTCOME_DRIVE_ON : self::TERMINAL_OUTCOME_DEFERRED;
         }
 
         if ( null === $error ) {
             if ( $store->cancel_job( (int) $job->id, $lock_token ) ) {
                 MainWP_Backup_Restore_Transfer_Driver::instance()->cleanup_staging( (int) $job->id );
                 $this->cancel_owned_pre_snapshot_handle( $job );
+                return self::TERMINAL_OUTCOME_TERMINAL;
             }
-            return false;
+            return null === $lock_token ? self::TERMINAL_OUTCOME_TERMINAL : self::TERMINAL_OUTCOME_DEFERRED;
         }
 
         $this->stamp_error_code( $job, $error_code, $lock_token );
         if ( ! $store->fail_permanent( (int) $job->id, $error, $lock_token ) ) {
-            return false;
+            return null === $lock_token ? self::TERMINAL_OUTCOME_TERMINAL : self::TERMINAL_OUTCOME_DEFERRED;
         }
 
         MainWP_Backup_Restore_Transfer_Driver::instance()->cleanup_staging( (int) $job->id );
@@ -1410,7 +1347,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 'error_code'  => $error_code,
             )
         );
-        return false;
+        return self::TERMINAL_OUTCOME_TERMINAL;
     }
 
     /**

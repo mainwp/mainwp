@@ -863,6 +863,96 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Reconciliation needs the full/files run's own walker parameters and manifest.
+	 *
+	 * @dataProvider native_file_backup_types
+	 * @param string $type Scheduled backup type.
+	 */
+	public function test_full_task_finish_records_manifest_and_walk( $type ) {
+		$site_id = $this->create_test_site();
+		$this->give_site_real_privkey( $site_id );
+		$walk = array(
+			'excludes'     => array( 'private', 'wp-content/cache' ),
+			'excludenonwp' => 1,
+			'excludezip'   => 0,
+		);
+
+		$artifacts            = $this->arrange_remote_artifacts( true );
+		$artifacts            = array( $artifacts[2], $artifacts[0] );
+		$artifacts[1]['walk'] = $walk;
+		$this->mock_artifact_downloads();
+		$this->mock_child_actions(
+			array(
+				'backup_preflight'   => $this->preflight_response(),
+				'backup_task_create' => array(
+					'task_id' => 'child-full-manifest',
+					'phase'   => 'queued',
+				),
+				'backup_task_run'    => array(
+					'task_id'   => 'child-full-manifest',
+					'phase'     => 'completed',
+					'file'      => 'backup-base.zip',
+					'size'      => 400,
+					'artifacts' => $artifacts,
+				),
+				'delete_backup'      => array( 'result' => 'ok' ),
+			)
+		);
+		$events = array();
+		add_action(
+			'mainwp_native_backup_completed',
+			function ( $site, $task_id, $success, $details ) use ( &$events ) {
+				$events[] = array( $success, $details );
+			},
+			10,
+			4
+		);
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$task    = $this->make_task( $website, 11, array( 'type' => $type ) );
+		$create  = $this->run_cycle( $site_id, $task );
+		$this->assertNull( $create['exception'] );
+		$this->assertSame( '1', $this->last_call_params( 'backup_task_create' )['emit_manifest'] );
+		$cycle = $this->run_cycle( $site_id, $task );
+		$this->assertNull( $cycle['exception'] );
+		$this->assertIsArray( $cycle['result'] );
+
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, 11 );
+		$this->assertNotNull( $snapshot );
+		$this->assertSame( $type, $snapshot->type );
+		$this->assertNull( $snapshot->parent_id );
+		$run_dir = MainWP_System_Utility::get_mainwp_specific_dir( $site_id ) . 'snapshot-child-full-manifest/';
+		$this->assertSame( $run_dir . 'files.list', $snapshot->manifest_path );
+		$this->assertCount( 2, $snapshot->archives );
+		$this->assertSame(
+			array(
+				'file' => 'files.list',
+				'size' => 40,
+				'role' => 'manifest',
+				'path' => $run_dir . 'files.list',
+				'walk' => $walk,
+			),
+			$snapshot->archives[1]
+		);
+		$this->assertSame( $this->remote_files['files.list'], file_get_contents( $snapshot->manifest_path ) );
+		$this->assertSame( array( 'backup-base.zip' ), array_column( $this->all_call_params( 'delete_backup' ), 'del' ) );
+		$this->assertCount( 1, $events );
+		$this->assertTrue( $events[0][0] );
+		$this->assertSame( (int) $snapshot->id, $events[0][1]['snapshot_id'] );
+	}
+
+	/**
+	 * Both file-producing task types need reconciliation metadata.
+	 *
+	 * @return array
+	 */
+	public static function native_file_backup_types() {
+		return array(
+			'full'  => array( 'full' ),
+			'files' => array( 'files' ),
+		);
+	}
+
+	/**
 	 * A child-reported missing base first retries by pushing the parent
 	 * manifest the dashboard holds, then falls back to a manifest-emitting
 	 * full, and only then treats the failure as real.

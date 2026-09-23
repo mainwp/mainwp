@@ -221,6 +221,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     <div class="ui small yellow message" id="mainwp-restore-cancel-warning" style="display:none;"><?php esc_html_e( 'Cancelling now stops the restore while the site is mid-change. Files already copied stay in place and the previous database tables are kept aside, so a rollback from the safety backup remains available if the site looks wrong afterwards.', 'mainwp' ); ?></div>
                     <div class="ui message" id="mainwp-restore-result-message" style="display:none;"></div>
                     <div class="ui small message" id="mainwp-restore-preserve-note" style="display:none;"></div>
+                    <div class="ui small message" id="mainwp-restore-reconcile-note" style="display:none;"></div>
                     <div class="ui small red message" id="mainwp-restore-maintenance-note" style="display:none;"><?php esc_html_e( 'The site is in maintenance mode until the database is checked, so it will not serve visitors until then.', 'mainwp' ); ?></div>
                     <div id="mainwp-restore-visit-site-wrap" style="display:none;margin-top:.5em;"><a id="mainwp-restore-visit-site" href="#" target="_blank" rel="noopener" class="ui tiny basic button"><i class="external alternate icon"></i><?php esc_html_e( 'Visit site', 'mainwp' ); ?></a></div>
                 </div>
@@ -686,6 +687,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     if ( 'completed' === data.status ) {
                         $message.addClass( 'green' ).text( '<?php echo esc_js( esc_html__( 'The site was restored and responds normally.', 'mainwp' ) ); ?>' );
                         showPreserveNote( data.verification );
+                        showReconcileNote( data.verification );
                     } else if ( rolledBack && outcome ) {
                         // The restore failed but the database was recovered:
                         // the data is safe, so this reads as information.
@@ -736,6 +738,26 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 $note.text( text ).show();
             }
 
+            function showReconcileNote( verification ) {
+                var $note = $( '#mainwp-restore-reconcile-note' ).removeClass( 'blue yellow' ).hide();
+                if ( ! verification || ! verification.reconcile ) {
+                    return;
+                }
+                var reconcile = verification.reconcile;
+                if ( 'skipped' === reconcile.status ) {
+                    $note.addClass( 'yellow' ).text( '<?php echo esc_js( esc_html__( 'Files added after this backup were not removed. Backups made before MainWP Child 6.3-beta1 have no file list to compare against.', 'mainwp' ) ); ?>' ).show();
+                } else if ( 'done' === reconcile.status ) {
+                    var removed = parseInt( reconcile.removed, 10 ) || 0;
+                    var text = '<?php echo esc_js( esc_html__( 'No files were added after this backup.', 'mainwp' ) ); ?>';
+                    if ( 1 === removed ) {
+                        text = '<?php echo esc_js( esc_html__( 'Removed 1 file that was added after this backup.', 'mainwp' ) ); ?>';
+                    } else if ( removed > 1 ) {
+                        text = '<?php /* translators: %d: number of removed files. */ echo esc_js( esc_html__( 'Removed %d files that were added after this backup.', 'mainwp' ) ); ?>'.replace( '%d', removed );
+                    }
+                    $note.addClass( 'blue' ).text( text ).show();
+                }
+            }
+
             function poll() {
                 $.post( ajaxurl, { action: 'mainwp_restore_progress', security: nonces.progress, job_id: currentJob }, function ( data ) {
                     restorePollRetries = 0;
@@ -778,6 +800,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 restorePollRetries = 0;
                 setPane( false );
                 $( '#mainwp-restore-result-message' ).hide();
+                $( '#mainwp-restore-reconcile-note' ).hide();
                 $( '#mainwp-restore-maintenance-note' ).hide();
                 poll();
             }

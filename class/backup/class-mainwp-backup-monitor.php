@@ -396,7 +396,7 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         };
         add_filter( 'mainwp_fetch_url_site_timeout', $clamp, PHP_INT_MAX );
         try {
-            $preflight = MainWP_Connect::fetch_with_retry( $website, 'backup_preflight', array(), 1 );
+            $preflight = MainWP_Connect::fetch_url_authed( $website, 'backup_preflight', array( 'capabilities_only' => 1 ), false, false, false );
         } catch ( \Throwable $e ) {
             MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'Capability probe unavailable: ' . $e->getMessage() );
             // An unreachable child says nothing about its capabilities, so the

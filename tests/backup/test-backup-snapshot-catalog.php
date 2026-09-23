@@ -403,6 +403,74 @@ class MainWP_Backup_Snapshot_Catalog_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * An ancestor's file list would reconcile against the wrong point in time.
+	 */
+	public function test_assemble_plan_keeps_only_leaf_manifest_after_file_ops() {
+		$walk = array(
+			'excludes'     => array( 'wp-content/cache', 'private' ),
+			'excludenonwp' => 1,
+			'excludezip'   => 0,
+		);
+		$base = $this->make_snapshot(
+			array(
+				array( 'file' => 'files.list', 'role' => 'manifest' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+				array( 'file' => 'base.zip', 'role' => 'full' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+				array( 'file' => 'base-db.zip', 'role' => 'db' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+			)
+		);
+		$leaf = $this->make_snapshot(
+			array(
+				array(
+					'file' => 'files.list',
+					'role' => 'manifest',
+					'walk' => $walk,
+				),
+				array( 'file' => 'db.zip', 'role' => 'db' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+				array( 'file' => 'tombstones.list', 'role' => 'tombstones' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+				array( 'file' => 'plugins.part001.zip', 'role' => 'part' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+			),
+			array(
+				'type'      => 'incremental',
+				'parent_id' => $base,
+			)
+		);
+
+		$chain = MainWP_Backup_Snapshots::instance()->get_chain( $leaf );
+		$plan  = MainWP_Backup_Snapshot_Catalog::instance()->assemble_plan( $chain );
+		$this->assertSame( array( 'full', 'tombstones', 'part', 'manifest', 'db' ), array_column( $plan, 'role' ) );
+		$this->assertSame(
+			array( 's' . $base . '-base.zip', 's' . $leaf . '-tombstones.list', 's' . $leaf . '-plugins.part001.zip', 's' . $leaf . '-files.list', 's' . $leaf . '-db.zip' ),
+			array_column( $plan, 'file' )
+		);
+		$this->assertSame( $leaf, $plan[3]['snapshot_id'] );
+		$this->assertSame( $walk, $plan[3]['walk'] );
+		$this->assertSame( 'local', $plan[3]['source'] );
+		$this->assertSame( $this->dir . '/files.list', $plan[3]['local_path'] );
+		$this->assertSame( 32, $plan[3]['size'] );
+	}
+
+	/**
+	 * A missing leaf manifest must never select an ancestor's manifest.
+	 */
+	public function test_assemble_plan_omits_ancestor_manifest_when_leaf_has_none() {
+		$base = $this->make_snapshot(
+			array(
+				array( 'file' => 'base.zip', 'role' => 'full' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+				array( 'file' => 'files.list', 'role' => 'manifest' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+			)
+		);
+		$leaf = $this->make_snapshot(
+			array( array( 'file' => 'db.zip', 'role' => 'db' ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+			array(
+				'type'      => 'incremental',
+				'parent_id' => $base,
+			)
+		);
+		$plan = MainWP_Backup_Snapshot_Catalog::instance()->assemble_plan( MainWP_Backup_Snapshots::instance()->get_chain( $leaf ) );
+		$this->assertSame( array( 'full', 'db' ), array_column( $plan, 'role' ) );
+	}
+
+	/**
 	 * A chain whose base was pruned refuses.
 	 */
 	public function test_resolve_chain_with_pruned_base_refused() {

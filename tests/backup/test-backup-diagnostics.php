@@ -47,26 +47,25 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * Streaming must preserve the fallback's original JSON encoding and shape.
+	 * Streaming preserves valid events and omits lines that cannot be redacted.
 	 */
 	public function test_json_fallback_matches_two_file_payload() {
 		$files = array( $this->diag_dir . '/one.jsonl', $this->diag_dir . '/two.jsonl' );
 		file_put_contents( $files[0], "{\"run_key\":\"1-2\"}\n\n0\n" );
 		file_put_contents( $files[1], "{\"message\":\"quote \\\" slash /\"}\r\nlast line" );
-		$sections           = array(
+		$sections                           = array(
 			'env'   => array( 'version' => 'test' ),
 			'tasks' => array(),
 		);
-		$events             = array(
+		$events                             = array(
 			'files' => $files,
-			'blobs' => array( 'global.jsonl' => "first\n\n0\nlast\n" ),
+			'blobs' => array( 'global.jsonl' => "{\"kind\":\"first\"}\n\n0\nlast\n" ),
 		);
-		$expected           = $sections;
-		$expected['events'] = array();
-		foreach ( $files as $file ) {
-			$expected['events'][ basename( $file ) ] = array_values( array_filter( explode( "\n", file_get_contents( $file ) ) ) );
-		}
-		$expected['events']['global.jsonl'] = array( 'first', 'last' );
+		$expected                           = $sections;
+		$expected['events']                 = array();
+		$expected['events']['one.jsonl']    = array( '{"run_key":"1-2"}' );
+		$expected['events']['two.jsonl']    = array( wp_json_encode( array( 'message' => 'quote " slash /' ) ) );
+		$expected['events']['global.jsonl'] = array( '{"kind":"first"}' );
 		$writer                             = new \ReflectionMethod( MainWP_Backup_Diagnostics::class, 'write_json_bundle' );
 		$path                               = $this->diag_dir . '/bundle.json';
 		$this->assertSame( $path, $writer->invoke( MainWP_Backup_Diagnostics::instance(), $path, $sections, $events ) );
@@ -491,6 +490,155 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( $site_id, $captured[0]['site_id'] );
 		$this->assertIsFloat( $captured[0]['duration'] );
 		$this->assertSame( 'completed', $captured[1]['payload']['phase'] );
+	}
+
+	/**
+	 * Old child responses must not leave credentials in the recorder.
+	 */
+	public function test_restore_poll_redacts_manifest_and_identity_before_recording() {
+		$this->enable_recorder();
+		$site_id = $this->create_test_site();
+		$payload = $this->restore_payload_with_secrets();
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			static function ( $pre, $website, $what ) use ( $payload ) {
+				return 'restore_task_run' === $what ? $payload : $pre;
+			},
+			10,
+			3
+		);
+		$store  = MainWP_Backup_Restore_Job_Store::instance();
+		$job_id = $store->create_job(
+			$site_id,
+			5,
+			array(
+				'restore_id' => 'diag-redaction',
+				'sub_type'   => 'db',
+				'plan'       => array(),
+				'options'    => array(
+					'pre_snapshot'  => false,
+					'file_rollback' => false,
+				),
+				'transfer'   => array(),
+			)
+		);
+		$store->set_status( $job_id, MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, array( 'child_task_id' => 'restore-redaction' ) );
+		MainWP_Backup_Restore_Orchestrator::instance()->run_job( $store->get_job( $job_id ), microtime( true ) + 30 );
+
+		$file = $this->diag_dir . '/' . $this->event_filename( 'restore-' . $job_id );
+		$this->assertFileExists( $file );
+		$lines = array_values(
+			array_filter(
+				file( $file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES ),
+				static fn( $line ) => 'restore_poll' === json_decode( $line, true )['kind']
+			)
+		);
+		$this->assertCount( 1, $lines );
+		$this->assert_restore_event_redacted( $lines[0] );
+		$event = json_decode( $lines[0], true );
+		$this->assertSame( 'restore_poll', $event['kind'] );
+		$this->assertArrayHasKey( 'poll_duration_s', $event['payload'] );
+	}
+
+	/**
+	 * A bundle must also redact files written before the recorder was fixed.
+	 */
+	public function test_zip_export_redacts_pre_existing_restore_event() {
+		if ( ! class_exists( \ZipArchive::class ) ) {
+			$this->markTestSkipped( 'ZipArchive is unavailable in this environment.' );
+		}
+		$this->enable_recorder();
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$site_id = $this->create_test_site();
+		$name    = $this->event_filename( 'terminal-' . $site_id );
+		$line    = wp_json_encode(
+			array(
+				'run_key' => 'terminal-' . $site_id,
+				'site_id' => $site_id,
+				'kind'    => 'restore_poll',
+				'payload' => $this->restore_payload_with_secrets(),
+			)
+		);
+		file_put_contents( $this->diag_dir . '/' . $name, $line . "\n" );
+		$bundle = MainWP_Backup_Diagnostics::instance()->export_bundle();
+		$this->assertStringEndsWith( '.zip', $bundle );
+		$zip = new \ZipArchive();
+		$this->assertTrue( $zip->open( $bundle ) );
+		$event = $zip->getFromName( 'events/' . $name );
+		$zip->close();
+		$this->assertIsString( $event );
+		$this->assert_restore_event_redacted( $event );
+		$this->assertSame( $line . "\n", file_get_contents( $this->diag_dir . '/' . $name ) );
+	}
+
+	/**
+	 * The fallback must redact both files and shared-stream blobs.
+	 */
+	public function test_json_fallback_redacts_pre_existing_restore_events() {
+		$line = wp_json_encode( array( 'payload' => $this->restore_payload_with_secrets() ) );
+		$file = $this->diag_dir . '/legacy.jsonl';
+		file_put_contents( $file, $line . "\n" );
+		$writer = new \ReflectionMethod( MainWP_Backup_Diagnostics::class, 'write_json_bundle' );
+		$path   = $this->diag_dir . '/legacy-bundle.json';
+		$result = $writer->invoke(
+			MainWP_Backup_Diagnostics::instance(),
+			$path,
+			array(),
+			array(
+				'files' => array( $file ),
+				'blobs' => array( 'global.jsonl' => $line . "\n" ),
+			)
+		);
+		$this->assertSame( $path, $result );
+		$bundle = json_decode( file_get_contents( $path ), true );
+		$this->assertCount( 2, $bundle['events'] );
+		foreach ( $bundle['events'] as $lines ) {
+			$this->assertCount( 1, $lines );
+			$this->assert_restore_event_redacted( $lines[0] );
+		}
+	}
+
+	/**
+	 * Include nested manifests because old logs may contain more than the status shape.
+	 *
+	 * @return array Child payload.
+	 */
+	private function restore_payload_with_secrets(): array {
+		$manifest = array(
+			'url'    => 'https://example.test/db?X-Amz-Signature=manifest-secret',
+			'chunks' => array( array( 'url' => 'https://example.test/chunk?X-Amz-Signature=chunk-secret' ) ),
+		);
+		return array(
+			'task_id'   => 'restore-redaction',
+			'phase'     => 'completed',
+			'sub_state' => array(
+				'params'            => array( 'pull_manifest' => $manifest ),
+				'identity_preserve' => array( 'mainwp_child_pubkey' => 'identity-option-secret' ),
+				'progress'          => array( 'bytes_done' => 512 ),
+			),
+			'nested'    => array( array( 'pull_manifest' => $manifest ) ),
+			'url'       => 'https://example.test/public',
+		);
+	}
+
+	/**
+	 * Check both secrecy and the diagnostic fields that must survive.
+	 *
+	 * @param string $line Encoded event.
+	 * @return void
+	 */
+	private function assert_restore_event_redacted( string $line ): void {
+		$this->assertStringNotContainsString( 'manifest-secret', $line );
+		$this->assertStringNotContainsString( 'chunk-secret', $line );
+		$this->assertStringNotContainsString( 'identity-option-secret', $line );
+		$event   = json_decode( $line, true );
+		$payload = $event['payload'];
+		$this->assertTrue( $payload['sub_state']['params']['pull_manifest'] );
+		$this->assertTrue( $payload['sub_state']['identity_preserve'] );
+		$this->assertTrue( $payload['nested'][0]['pull_manifest'] );
+		$this->assertSame( 512, $payload['sub_state']['progress']['bytes_done'] );
+		$this->assertSame( 'completed', $payload['phase'] );
+		$this->assertSame( 'https://example.test/public', $payload['url'] );
 	}
 
 	/**

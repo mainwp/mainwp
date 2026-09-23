@@ -340,6 +340,10 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     'f'                     => $file,
                 );
 
+                if ( in_array( $type, array( 'full', 'files' ), true ) ) {
+                    $params['emit_manifest'] = '1';
+                }
+
                 if ( 'incremental' === $type ) {
                     $send           = self::resolve_incremental_send( $website, $pTask, $backupTaskProgress );
                     $params['type'] = $send['type'];
@@ -697,8 +701,9 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 } elseif ( 'full' === $type || 'files' === $type ) {
                     // A files-only run produces an archive like a full run,
                     // so it lands in the same download slot.
-                    $information['full'] = isset( $temp['file'] ) ? $temp['file'] : false;
-                    $information['db']   = false;
+                    $information['full']      = isset( $temp['file'] ) ? $temp['file'] : false;
+                    $information['db']        = false;
+                    $information['artifacts'] = isset( $temp['artifacts'] ) && is_array( $temp['artifacts'] ) ? $temp['artifacts'] : array();
                 } else {
                     $information['full'] = false;
                     $information['db']   = isset( $temp['file'] ) ? $temp['file'] : false;
@@ -723,7 +728,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 }
                 $backupTaskProgress = MainWP_DB_Backup::instance()->get_backup_task_progress( $taskId, $website->id );
 
-                if ( 'incremental' !== $type ) {
+                if ( 'incremental' !== $type && empty( $information['artifacts'] ) ) {
                     /** This action is documented in class/backup/class-mainwp-backup-executor.php */
                     do_action(
                         'mainwp_native_backup_completed',
@@ -755,7 +760,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
         if ( isset( $information['error'] ) ) {
             throw new MainWP_Exception( esc_html( MainWP_Backup_Error_Codes::sanitize_message( $information['error'] ) ), null, isset( $information['error_code'] ) ? $information['error_code'] : '' ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-        } elseif ( 'incremental' === $type && ! empty( $information['artifacts'] ) ) {
+        } elseif ( in_array( $type, array( 'incremental', 'full', 'files' ), true ) && ! empty( $information['artifacts'] ) ) {
             $snapshot_recorded = false;
             try {
                 $result = self::finish_incremental_backup( $website, $pTask, $information['artifacts'], $backupTaskProgress, $snapshot_recorded );
@@ -1608,7 +1613,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     }
 
     /**
-     * Download every artifact of a completed incremental-chain run and
+     * Download every artifact of a completed native file backup and
      * record the durable snapshot row.
      *
      * Artifacts land in a per-run directory keyed by the child task id, so
@@ -1689,12 +1694,16 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 }
             }
 
-            $archives[] = array(
+            $archive = array(
                 'file' => basename( $local ),
                 'size' => $size,
                 'role' => $role,
                 'path' => $local,
             );
+            if ( 'manifest' === $role && isset( $artifact['walk'] ) && is_array( $artifact['walk'] ) ) {
+                $archive['walk'] = $artifact['walk'];
+            }
+            $archives[] = $archive;
         }
 
         if ( ! MainWP_Backup_Monitor::confirm_native_lease() ) {
@@ -1713,7 +1722,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 array(
                     'task_id'       => (int) $pTask->id,
                     'site_id'       => (int) $website->id,
-                    'type'          => $is_base ? 'full' : 'incremental',
+                    'type'          => 'files' === $pTask->type ? 'files' : ( $is_base ? 'full' : 'incremental' ),
                     'parent_id'     => $parent_id,
                     'archives'      => $archives,
                     'manifest_path' => $run_dir . 'files.list',

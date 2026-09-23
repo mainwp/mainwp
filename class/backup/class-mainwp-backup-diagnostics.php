@@ -373,13 +373,33 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
      */
     public function on_restore_poll( $job_id, $site_id, $payload, $duration ): void {
         try {
-            $payload                    = is_array( $payload ) ? $payload : array();
+            $payload                    = is_array( $payload ) ? $this->redact_restore_secrets( $payload ) : array();
             $payload['poll_duration_s'] = (float) $duration;
 
             $this->record( 'restore-' . (int) $job_id, 'restore_poll', (int) $site_id, 0, $payload );
         } catch ( \Throwable $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement -- diagnostics must never break a restore.
             return;
         }
+    }
+
+    /**
+     * Keep presence markers without retaining restore credentials or signed URLs.
+     *
+     * @param array $payload Diagnostic payload or decoded event.
+     * @return array Redacted payload.
+     */
+    private function redact_restore_secrets( array $payload ): array {
+        foreach ( $payload as $key => $value ) {
+            if ( 'pull_manifest' === $key ) {
+                $payload[ $key ] = true;
+            } elseif ( is_array( $value ) ) {
+                if ( 'sub_state' === $key && array_key_exists( 'identity_preserve', $value ) ) {
+                    $value['identity_preserve'] = (bool) $value['identity_preserve'];
+                }
+                $payload[ $key ] = $this->redact_restore_secrets( $value );
+            }
+        }
+        return $payload;
     }
 
     /**
@@ -654,7 +674,7 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
     /**
      * Build the export bundle: env.json, bounded table dumps, and the
-     * raw event files, zipped inside the diagnostics directory. Falls
+     * redacted event files, zipped inside the diagnostics directory. Falls
      * back to a single concatenated .json when ZipArchive is missing.
      *
      * The wp_backup_storage table is deliberately absent - it holds
@@ -697,7 +717,7 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
                     $zip->addFromString( $name . '.json', (string) wp_json_encode( $data, JSON_PRETTY_PRINT ) );
                 }
                 foreach ( $events['files'] as $event_file ) {
-                    $zip->addFile( $event_file, 'events/' . basename( $event_file ) );
+                    $zip->addFromString( 'events/' . basename( $event_file ), $this->filter_event_lines( $event_file, null, array() ) );
                 }
                 foreach ( $events['blobs'] as $name => $content ) {
                     $zip->addFromString( 'events/' . $name, $content );
@@ -738,7 +758,12 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 }
                 return $json;
             };
-            $write  = static function ( string $value ) use ( $output ) {
+            // Old files and malformed lines cannot be trusted to be free of secrets.
+            $redact_line = function ( string $line ) use ( $encode ): string {
+                $event = json_decode( $line, true );
+                return is_array( $event ) ? $encode( $this->redact_restore_secrets( $event ) ) : '';
+            };
+            $write       = static function ( string $value ) use ( $output ) {
                 if ( strlen( $value ) !== fwrite( $output, $value ) ) {
                     throw new \RuntimeException( 'Could not write the diagnostics bundle.' );
                 }
@@ -758,7 +783,7 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
                     try {
                         $line_separator = '';
                         while ( false !== ( $line = fgets( $handle ) ) ) { // phpcs:ignore WordPress.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition
-                            $line = rtrim( $line, "\n" );
+                            $line = $redact_line( $line );
                             if ( $line ) {
                                 $write( $line_separator . $encode( $line ) );
                                 $line_separator = ',';
@@ -779,7 +804,7 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 while ( $offset < $length ) {
                     $end  = strpos( $content, "\n", $offset );
                     $end  = false === $end ? $length : $end;
-                    $line = substr( $content, $offset, $end - $offset );
+                    $line = $redact_line( substr( $content, $offset, $end - $offset ) );
                     if ( $line ) {
                         $write( $line_separator . $encode( $line ) );
                         $line_separator = ',';
@@ -839,8 +864,7 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
     }
 
     /**
-     * Split the event files into the ones copied verbatim and the ones
-     * rewritten line by line, honoring the caller's site scope.
+     * Select event files and shared-stream lines within the caller's site scope.
      *
      * Run keys carry their site: "terminal-<site>", "<task>-<site>" and
      * "<task>-<site>-preflight" name it directly, and "restore-<job>" /
@@ -944,13 +968,13 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * scope: a line naming no site and no task (a host-level slot or
      * guardrail record) stays, one naming either must name an allowed one.
      *
-     * @param string $file          Event file path.
-     * @param int[]  $allowed_sites Allowed site ids.
-     * @param int[]  $allowed_tasks Allowed task ids.
+     * @param string     $file          Event file path.
+     * @param int[]|null $allowed_sites Allowed site ids, null when unrestricted.
+     * @param int[]      $allowed_tasks Allowed task ids.
      *
      * @return string The kept lines, newline separated.
      */
-    private function filter_event_lines( string $file, array $allowed_sites, array $allowed_tasks ): string {
+    private function filter_event_lines( string $file, ?array $allowed_sites, array $allowed_tasks ): string {
         $handle = fopen( $file, 'rb' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- stream local diagnostics.
         if ( false === $handle ) {
             return '';
@@ -969,13 +993,13 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 }
                 $site_id = isset( $event['site_id'] ) ? (int) $event['site_id'] : 0;
                 $task_id = isset( $event['task_id'] ) ? (int) $event['task_id'] : 0;
-                if ( 0 !== $site_id && ! in_array( $site_id, $allowed_sites, true ) ) {
+                if ( null !== $allowed_sites && 0 !== $site_id && ! in_array( $site_id, $allowed_sites, true ) ) {
                     continue;
                 }
-                if ( 0 !== $task_id && ! in_array( $task_id, $allowed_tasks, true ) ) {
+                if ( null !== $allowed_sites && 0 !== $task_id && ! in_array( $task_id, $allowed_tasks, true ) ) {
                     continue;
                 }
-                $kept[] = $line;
+                $kept[] = (string) wp_json_encode( $this->redact_restore_secrets( $event ) );
             }
         } finally {
             fclose( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- stream local diagnostics.

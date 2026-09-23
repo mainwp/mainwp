@@ -830,6 +830,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 				array( 'part', 's' . $inc1_id . '-uploads.part001.zip' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact expectation.
 				array( 'tombstones', 's' . $inc2_id . '-tombstones.list' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact expectation.
 				array( 'part', 's' . $inc2_id . '-plugins.part001.zip' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact expectation.
+				array( 'manifest', 's' . $inc2_id . '-files.list' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact expectation.
 				array( 'db', 's' . $inc2_id . '-db.zip' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact expectation.
 			),
 			array_map(
@@ -838,7 +839,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 				},
 				$artifacts
 			),
-			'The chain must ship base-first, per-increment tombstones before parts, chain-newest db last.'
+			'The chain must ship base-first, per-increment tombstones before parts, the leaf manifest after the file ops, chain-newest db last.'
 		);
 
 		// Exactly one db entry survives: increment 1's dump must not ship.
@@ -951,6 +952,131 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 				),
 			),
 		);
+	}
+
+	/**
+	 * Only the leaf's manifest and recorded walk can authorize reconciliation.
+	 *
+	 * @dataProvider reconcile_option_cases
+	 * @param bool   $cloud    Pull directly from cloud storage.
+	 * @param string $metadata Available leaf metadata.
+	 */
+	public function test_restore_create_reconcile_requires_leaf_manifest_and_walk( $cloud, $metadata ) {
+		$walk = array(
+			'excludes'     => array( 'private', 'wp-content/cache' ),
+			'excludenonwp' => 1,
+			'excludezip'   => 0,
+		);
+
+		$this->responses['restore_task_create'] = array(
+			'task_id' => 'task-reconcile',
+			'phase'   => 'queued',
+		);
+
+		$job             = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_STAGING );
+		$plan            = $job->checkpoint['plan'];
+		$plan[0]['walk'] = $walk;
+		if ( 'no_manifest' !== $metadata ) {
+			$path = $this->dir . '/files.list';
+			file_put_contents( $path, "index.php\t10\t100\n" );
+			$entry = array(
+				'role'        => 'manifest',
+				'file'        => 's5-files.list',
+				'source_file' => 'files.list',
+				'size'        => (int) filesize( $path ),
+				'sha256'      => '',
+				'snapshot_id' => 'ancestor' === $metadata ? 4 : 5,
+				'source'      => 'local',
+				'local_path'  => $path,
+				'remote_key'  => '',
+				'adopt_only'  => false,
+			);
+			if ( 'no_walk' !== $metadata ) {
+				$entry['walk'] = $walk;
+			}
+			$plan[] = $entry;
+		}
+		$checkpoint             = $job->checkpoint;
+		$checkpoint['sub_type'] = 'full';
+		$checkpoint['plan']     = $plan;
+		MainWP_Backup_Restore_Job_Store::instance()->save_checkpoint( (int) $job->id, $checkpoint );
+		if ( $cloud ) {
+			$manifest = $this->pull_manifest_fixture();
+			if ( 'no_manifest' !== $metadata ) {
+				$manifest['artifacts'][] = array(
+					'file'   => 's5-files.list',
+					'sha256' => str_repeat( 'a', 64 ),
+					'size'   => (int) filesize( $path ),
+					'url'    => 'https://bucket.example/5/files/files.list',
+				);
+			}
+			$this->use_cloud_pull_driver( $manifest );
+		}
+		$job = $this->tick( $job );
+		$this->assertSame( $cloud ? MainWP_Backup_Restore_Job_Store::STATUS_RUNNING : MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING, $job->status );
+		$creates = array_values( array_filter( $this->calls, static fn( $call ) => 'restore_task_create' === $call['what'] ) );
+		$this->assertCount( 1, $creates );
+		$options = json_decode( $creates[0]['params']['options_json'], true );
+		if ( 'both' === $metadata ) {
+			$this->assertSame(
+				array(
+					'manifest' => 's5-files.list',
+					'walk'     => $walk,
+				),
+				$options['reconcile']
+			);
+			$artifacts = json_decode( $creates[0]['params']['artifacts_json'], true );
+			$this->assertSame( 'manifest', $artifacts[1]['role'] );
+			$this->assertSame( 's5-files.list', $artifacts[1]['file'] );
+			$this->assertSame( $cloud ? str_repeat( 'a', 64 ) : hash_file( 'sha256', $path ), $artifacts[1]['sha256'] );
+			$this->assertSame( (int) filesize( $path ), $artifacts[1]['size'] );
+		} else {
+			$this->assertArrayNotHasKey( 'reconcile', $options );
+		}
+	}
+
+	/**
+	 * Staging and direct pull must apply the same metadata gate.
+	 *
+	 * @return array
+	 */
+	public static function reconcile_option_cases() {
+		return array(
+			'staged complete'    => array( false, 'both' ),
+			'staged no manifest' => array( false, 'no_manifest' ),
+			'staged no walk'     => array( false, 'no_walk' ),
+			'staged ancestor'    => array( false, 'ancestor' ),
+			'pull complete'      => array( true, 'both' ),
+			'pull no manifest'   => array( true, 'no_manifest' ),
+			'pull no walk'       => array( true, 'no_walk' ),
+			'pull ancestor'      => array( true, 'ancestor' ),
+		);
+	}
+
+	/**
+	 * Completion must retain the child's reconcile result for the progress poll.
+	 */
+	public function test_completed_restore_retains_reconcile_verification() {
+		$reconcile = array(
+			'status'   => 'done',
+			'removed'  => 2,
+			'examined' => 20,
+		);
+
+		$this->responses['restore_task_run'] = array(
+			'task_id'   => 'task-reconcile',
+			'phase'     => 'completed',
+			'sub_state' => array( 'verification' => array( 'reconcile' => $reconcile ) ),
+		);
+
+		$job = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, array( 'child_task_id' => 'task-reconcile' ) );
+		$job = $this->tick( $job );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_VERIFYING, $job->status );
+		$this->assertSame( $reconcile, $job->checkpoint['verification']['reconcile'] );
+		$job = $this->tick( $job );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_COMPLETED, $job->status );
+		$this->assertSame( $reconcile, $job->checkpoint['verification']['reconcile'] );
+		$this->assertTrue( $job->checkpoint['verification']['site_responds'] );
 	}
 
 	/**
@@ -3926,6 +4052,33 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		} finally {
 			remove_filter( 'mainwp_fetch_url_authed_pre', $observe, 20 );
 			remove_filter( 'mainwp_fetch_url_site_timeout', $offer, 10 );
+		}
+	}
+
+	/**
+	 * The timeout bound requires the transport's inner retry to be disabled.
+	 */
+	public function test_capability_probe_requests_only_capabilities_without_transport_retry() {
+		$this->responses['backup_preflight'] = array( 'restore_create_idempotency' => 1 );
+		$website                             = MainWP_DB::instance()->get_website_by_id( $this->site_id );
+		$observed                            = array();
+		$observe                             = static function ( $pre, $site, $what, $params, $verify_signature, $retry_failed ) use ( &$observed ) {
+			if ( 'backup_preflight' === $what ) {
+				$observed[] = array(
+					'params'       => $params,
+					'retry_failed' => $retry_failed,
+				);
+			}
+			return $pre;
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $observe, 20, 6 );
+		try {
+			MainWP_Backup_Monitor::refresh_negotiated_capabilities( $website );
+			$this->assertCount( 1, $observed );
+			$this->assertSame( array( 'capabilities_only' => 1 ), $observed[0]['params'] );
+			$this->assertFalse( $observed[0]['retry_failed'] );
+		} finally {
+			remove_filter( 'mainwp_fetch_url_authed_pre', $observe, 20 );
 		}
 	}
 

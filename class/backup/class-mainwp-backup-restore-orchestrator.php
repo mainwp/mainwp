@@ -1129,6 +1129,13 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             );
         }
 
+        $options   = array(
+            'sub_type'         => (string) $checkpoint['sub_type'],
+            'has_foreign_keys' => null,
+            'file_rollback'    => ! empty( $checkpoint['options']['file_rollback'] ) || ! empty( $checkpoint['pre_snapshot_artifacts'] ),
+            'preserve_orders'  => ! empty( $checkpoint['options']['preserve_orders'] ),
+            'woo_order_since'  => isset( $checkpoint['options']['woo_order_since'] ) ? (int) $checkpoint['options']['woo_order_since'] : 0,
+        );
         $artifacts = array();
         foreach ( $plan as $entry ) {
             $artifacts[] = array(
@@ -1138,21 +1145,19 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 'sha256'     => (string) $entry['sha256'],
                 'adopt_only' => ! empty( $entry['adopt_only'] ),
             );
+            if ( 'manifest' === $entry['role'] && (int) $entry['snapshot_id'] === (int) $job->snapshot_id && isset( $entry['walk'] ) && is_array( $entry['walk'] ) ) {
+                $options['reconcile'] = array(
+                    'manifest' => $entry['file'],
+                    'walk'     => $entry['walk'],
+                );
+            }
         }
 
         $params = array(
             'restore_id'     => (string) $checkpoint['restore_id'],
             'source_prefix'  => '',
             'artifacts_json' => wp_json_encode( $artifacts ),
-            'options_json'   => wp_json_encode(
-                array(
-                    'sub_type'         => (string) $checkpoint['sub_type'],
-                    'has_foreign_keys' => null,
-                    'file_rollback'    => ! empty( $checkpoint['options']['file_rollback'] ) || ! empty( $checkpoint['pre_snapshot_artifacts'] ),
-                    'preserve_orders'  => ! empty( $checkpoint['options']['preserve_orders'] ),
-                    'woo_order_since'  => isset( $checkpoint['options']['woo_order_since'] ) ? (int) $checkpoint['options']['woo_order_since'] : 0,
-                )
-            ),
+            'options_json'   => wp_json_encode( $options ),
         );
         if ( null !== $pull_manifest ) {
             $params['pull_manifest_json'] = wp_json_encode( $pull_manifest );

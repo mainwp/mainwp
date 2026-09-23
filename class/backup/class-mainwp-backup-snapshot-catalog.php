@@ -210,27 +210,40 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
      * @return array[] Plan entries in apply order.
      */
     public function assemble_plan( array $chain ): array {
-        $file_ops = array();
-        $db_entry = null;
+        $file_ops       = array();
+        $db_entry       = null;
+        $manifest_entry = null;
+        $leaf           = empty( $chain ) ? null : end( $chain );
 
         foreach ( $chain as $snapshot ) {
             $remote = $this->remote_artifact_index( $snapshot );
 
             foreach ( (array) $snapshot->archives as $archive ) {
                 $role = isset( $archive['role'] ) ? (string) $archive['role'] : '';
-                if ( ! in_array( $role, array( 'full', 'part', 'tombstones', 'db' ), true ) ) {
-                    continue; // Manifest sidecars do not participate in a restore.
+                if ( ! in_array( $role, array( 'full', 'part', 'tombstones', 'db', 'manifest' ), true ) ) {
+                    continue;
+                }
+                if ( 'manifest' === $role && (int) $snapshot->id !== (int) $leaf->id ) {
+                    continue; // Only the selected point in time can bound reconciliation.
                 }
 
                 $entry = $this->plan_entry( $snapshot, $archive, $remote );
                 if ( 'db' === $role ) {
                     $db_entry = $entry; // Chain-newest dump wins.
+                } elseif ( 'manifest' === $role ) {
+                    $manifest_entry = $entry;
+                    if ( isset( $archive['walk'] ) && is_array( $archive['walk'] ) ) {
+                        $manifest_entry['walk'] = $archive['walk'];
+                    }
                 } else {
                     $file_ops[] = $entry;
                 }
             }
         }
 
+        if ( null !== $manifest_entry ) {
+            $file_ops[] = $manifest_entry;
+        }
         if ( null !== $db_entry ) {
             $file_ops[] = $db_entry; // Files extract first; the dump replays last.
         }

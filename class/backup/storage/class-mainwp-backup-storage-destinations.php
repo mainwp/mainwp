@@ -124,9 +124,14 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
             }
         }
 
-        $old_file_key    = '';
-        $settings_intent = null;
+        $old_file_key     = '';
+        $settings_intent  = null;
+        $reset_sftp_trust = false;
         if ( isset( $data['settings'] ) && is_array( $data['settings'] ) ) {
+            $existing = $this->get_destination( $id );
+            if ( null !== $existing && 'sftp' === $existing->provider ) {
+                $reset_sftp_trust = MainWP_Backup_Storage_Handler::sftp_trust_changed( $data['settings'], is_array( $existing->settings ) ? $existing->settings : array() );
+            }
             $settings_intent = $this->stage_settings_encryption( $data['settings'] );
             if ( false === $settings_intent ) {
                 return false;
@@ -175,10 +180,8 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
             MainWP_Keys_Manager::instance()->delete_key_file( $old_file_key );
         }
 
-        if ( false !== $updated && isset( $data['settings'] ) ) {
-            // Edited settings may point at a different server; drop the
-            // learned host-key pin so the next connect re-learns instead of
-            // refusing the legitimate new host.
+        if ( false !== $updated && $reset_sftp_trust ) {
+            // A failed save must leave the original destination's trust intact.
             MainWP_Backup_Storage_SFTP::forget_host_key( $id );
         }
 

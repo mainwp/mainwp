@@ -395,6 +395,171 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Child identity survives the full download and snapshot path.
+	 */
+	public function test_b11_completed_full_run_records_child_run_key() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$content                = 'PK' . "\x03\x04" . str_repeat( 'x', 4092 );
+		$this->seed_download_ready_progress( $task->id, $site_id, strlen( $content ) );
+		MainWP_DB_Backup::instance()->update_backup_task_progress( $task->id, $site_id, array( 'child_backup_task_id' => 'b11-full-run' ) );
+		$this->mock_child_action( 'delete_backup', array( 'result' => 'ok' ) );
+
+		add_filter(
+			'mainwp_download_to_file_pre',
+			function ( $pre, $url, $file ) use ( $content ) {
+				unset( $pre, $url );
+				$this->snapshot_files[] = $file;
+				file_put_contents( $file, $content ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- test fixture.
+				return true;
+			},
+			10,
+			3
+		);
+
+		$result = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+		$this->assertNotFalse( $result );
+
+		$snapshot = \MainWP\Dashboard\MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, (int) $task->id );
+
+		$this->assertNotNull( $snapshot, 'A completed full run must record a snapshot row.' );
+		$this->assertSame( $site_id . ':' . $task->id . ':c:b11-full-run', $snapshot->run_key );
+		$this->assertSame( 'full', $snapshot->type );
+		$this->assertNull( $snapshot->parent_id );
+		$this->assertCount( 1, $snapshot->archives );
+		$this->assertSame( 'full', $snapshot->archives[0]['role'] );
+		$this->assertSame( strlen( $content ), (int) $snapshot->archives[0]['size'] );
+		$this->assertFileExists( $snapshot->archives[0]['path'] );
+	}
+
+	/**
+	 * Both producers must survive another finisher inserting after their read guard.
+	 *
+	 * @dataProvider b11_producer_types
+	 * @param string $type Task type.
+	 */
+	public function test_b11_interleaved_record_adopts_child_run( $type ) {
+		list( $site_id, $task ) = $this->site_and_task( array( 'type' => $type ) );
+		$content                = 'PK' . "\x03\x04" . str_repeat( 'x', 4092 );
+		$this->seed_download_ready_progress( $task->id, $site_id, strlen( $content ) );
+		$fields = array( 'child_backup_task_id' => 'b11-race-' . $site_id );
+		if ( 'incremental' === $type ) {
+			$fields['fetchResult'] = wp_json_encode(
+				array(
+					'artifacts' => array(
+						array(
+							'file' => 'full.zip',
+							'size' => strlen( $content ),
+							'role' => 'full',
+						),
+					),
+				)
+			);
+		}
+		MainWP_DB_Backup::instance()->update_backup_task_progress( $task->id, $site_id, $fields );
+		$this->mock_child_action( 'delete_backup', array( 'result' => 'ok' ) );
+		add_filter(
+			'mainwp_download_to_file_pre',
+			function ( $pre, $url, $file ) use ( $content ) {
+				$this->snapshot_files[] = $file;
+				file_put_contents( $file, $content ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+				return true;
+			},
+			10,
+			3
+		);
+		$recorder = new class() extends MainWP_Backup_Snapshots {
+			/**
+			 * Winning row inserted after the executor's guard.
+			 *
+			 * @var int
+			 */
+			public $winner_id = 0;
+
+			/**
+			 * Interleave a competing insert before this finisher records.
+			 *
+			 * @param array $data Snapshot fields.
+			 * @return int Adopted snapshot id.
+			 */
+			public function record_snapshot( array $data ): int {
+				$this->winner_id = parent::record_snapshot( $data );
+				return parent::record_snapshot( $data );
+			}
+		};
+		$property = new \ReflectionProperty( MainWP_Backup_Snapshots::class, 'instance' );
+		$property->setValue( null, $recorder );
+		$before = did_action( 'mainwp_backup_snapshot_recorded' );
+
+		$this->assertNotFalse( MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' ) );
+
+		$rows = $recorder->get_snapshots_for_site( $site_id );
+		$this->assertCount( 1, $rows );
+		$this->assertGreaterThan( 0, $recorder->winner_id );
+		$this->assertSame( $recorder->winner_id, (int) $rows[0]->id );
+		$this->assertSame( $site_id . ':' . $task->id . ':c:b11-race-' . $site_id, $rows[0]->run_key );
+		$this->assertSame( $before + 1, did_action( 'mainwp_backup_snapshot_recorded' ) );
+	}
+
+	/**
+	 * Both producers can race after their initial snapshot lookup.
+	 *
+	 * @return array Both snapshot producer paths.
+	 */
+	public function b11_producer_types() {
+		return array(
+			'ordinary full'    => array( 'full' ),
+			'incremental base' => array( 'incremental' ),
+		);
+	}
+
+	/**
+	 * The legacy token must exist before any bytes arrive and survive a retry.
+	 */
+	public function test_b11_legacy_token_is_persisted_before_download_and_reused() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$content                = 'PK' . "\x03\x04" . str_repeat( 'x', 4092 );
+		$this->seed_download_ready_progress( $task->id, $site_id, strlen( $content ) );
+		$this->mock_child_action( 'delete_backup', array( 'result' => 'ok' ) );
+		$token = null;
+		add_filter(
+			'mainwp_download_to_file_pre',
+			function ( $pre, $url, $file ) use ( $content, $site_id, $task, &$token ) {
+				$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+				$this->assertNotEmpty( $progress->fetchResult['snapshot_run_token'] );
+				$token                  = $progress->fetchResult['snapshot_run_token'];
+				$this->snapshot_files[] = $file;
+				file_put_contents( $file, $content ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+				return true;
+			},
+			10,
+			3
+		);
+
+		$this->assertNotFalse( MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' ) );
+		$this->assertNotEmpty( $token );
+		$first = MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, (int) $task->id );
+		$this->assertSame( $site_id . ':' . $task->id . ':l:' . $token, $first->run_key );
+		$this->assertNotFalse( MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' ) );
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+		$this->assertSame( $token, $progress->fetchResult['snapshot_run_token'] );
+		$this->assertCount( 1, MainWP_Backup_Snapshots::instance()->get_snapshots_for_site( $site_id ) );
+	}
+
+	/**
+	 * A transient creation claim is not the child's durable operation identity.
+	 */
+	public function test_b11_creating_marker_is_not_a_child_run_key() {
+		$method = new \ReflectionMethod( MainWP_Backup_Executor::class, 'snapshot_run_key' );
+		$method->setAccessible( true );
+		$progress = (object) array(
+			'child_backup_task_id' => '__creating_b11-token',
+			'fetchResult'          => array(),
+		);
+		$this->assertTrue( MainWP_Backup_Executor::is_creating_marker( $progress->child_backup_task_id ) );
+		$this->assertNull( $method->invoke( null, (object) array( 'id' => 22 ), (object) array( 'id' => 11 ), $progress ) );
+	}
+
+	/**
 	 * A scheduled database backup records its downloaded database archive.
 	 */
 	public function test_completed_db_run_records_snapshot() {

@@ -36,6 +36,13 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     const BACKUP_PROGRESS_UNIQ_KEY_REPAIR_PENDING = 'mainwp_backup_progress_uniq_key_repair_pending';
 
     /**
+     * Retry failed snapshot identity migrations after the version is stamped.
+     *
+     * @var string
+     */
+    const BACKUP_SNAPSHOT_RUN_KEY_REPAIR_PENDING = 'mainwp_backup_snapshot_run_key_repair_pending';
+
+    /**
      * Retry failed per-site identity migrations after the version is stamped.
      *
      * @var string
@@ -60,7 +67,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * @var string DB version info.
      */
-    protected $mainwp_db_version = '9.0.2.25'; // NOSONAR - no IP. Added per-site unique identities for manual backup tasks and active restore jobs, and retried markerless legacy task_id index drops. Previous 9.0.2.24 added the UNIQUE KEY uniq_task_wp (task_id, wp_id) to wp_backup_progress: the pair was never unique, so the executor's read-then-insert could land two progress rows for one site when drivers raced, and every guard that reads the row by pair then read an arbitrary one of them - pre_update_tables() collapses existing duplicates to one row per pair before the key is added (a row naming the child's backup task beats one that does not, then the freshest dtsFetched), ensure_backup_progress_unique_key() re-runs that collapse and hourly retries the key install when the ALTER did not take, and add_backup_task_progress() inserts ON DUPLICATE KEY UPDATE so a losing racer adopts the surviving row instead of failing. Previous 9.0.2.23 added wp_backup_progress.foreign_refused_since to stamp the first consecutive marker-less child already-running refusal on a manual run's progress row; the executor surfaces a foreign collision to the operator only after the refusal persists past FOREIGN_REFUSAL_SURFACE_SECONDS (a same-run create-window reset race re-marks within milliseconds and never accumulates), instead of always yielding it as the generic no-snapshot line. Previous 9.0.2.22 made wp_backup.authorized_sites nullable: NULL is now the never-stamped sentinel (a pre-authorized_sites row, backfilled from live expansion on its first run), while a stamped empty string is authoritative and means the save authorized zero sites - so an empty-saved group can no longer be mistaken for a legacy row and lazily auto-authorize a member added later. Previous 9.0.2.21 added wp_backup.authorized_sites, the site set that passed authorize_task_scope() at save time; the scheduled runner backs up only that set (cron has no user context to authorize a group's later additions against). Previous 9.0.2.20 bump made pre_update_tables() drop the legacy unnamed UNIQUE (task_id) key from wp_backup_progress - a leftover of the <= 8.53 CREATE clause that capped the table at one per-site progress row per task, so the second add_backup_task_progress() insert on a multi-site run died on a duplicate key. Previous 9.0.2.19 bump added reclaim_count to wp_backup_upload_job and wp_backup_restore_job, the stale-lease-reclaim counter that lets acquire_next_job() route a job whose worker keeps dying mid-run to fail_permanent instead of reclaiming it forever. Previous 9.0.2.18 bump added wp_backup_snapshot.woo_meta, the Woo order-storage facts a database-bearing backup captured at dump time, read by the restore initiate handler's preserve-orders gate; 9.0.2.17 bump added wp_backup.backup_notices, the informational-notes channel that keeps run notes (like the large-site ZIP auto-switch) out of backup_errors; 9.0.2.16 added wp_backup.zip_force_override for the large-site ZIP auto-switch override; 9.0.2.15 added wp_backup_snapshot.test_restore_state/test_restore_at for the verified-restore (sandbox test-restore) result; 9.0.2.14 added wp_backup_snapshot.encryption for the per-snapshot archive-encryption metadata.
+    protected $mainwp_db_version = '9.0.2.26'; // NOSONAR - no IP. Added a nullable unique snapshot run_key so concurrent finishers adopt one snapshot, with hourly retries for failed schema changes. Previous 9.0.2.25 added per-site unique identities for manual backup tasks and active restore jobs, and retried markerless legacy task_id index drops. Previous 9.0.2.24 added the UNIQUE KEY uniq_task_wp (task_id, wp_id) to wp_backup_progress: the pair was never unique, so the executor's read-then-insert could land two progress rows for one site when drivers raced, and every guard that reads the row by pair then read an arbitrary one of them - pre_update_tables() collapses existing duplicates to one row per pair before the key is added (a row naming the child's backup task beats one that does not, then the freshest dtsFetched), ensure_backup_progress_unique_key() re-runs that collapse and hourly retries the key install when the ALTER did not take, and add_backup_task_progress() inserts ON DUPLICATE KEY UPDATE so a losing racer adopts the surviving row instead of failing. Previous 9.0.2.23 added wp_backup_progress.foreign_refused_since to stamp the first consecutive marker-less child already-running refusal on a manual run's progress row; the executor surfaces a foreign collision to the operator only after the refusal persists past FOREIGN_REFUSAL_SURFACE_SECONDS (a same-run create-window reset race re-marks within milliseconds and never accumulates), instead of always yielding it as the generic no-snapshot line. Previous 9.0.2.22 made wp_backup.authorized_sites nullable: NULL is now the never-stamped sentinel (a pre-authorized_sites row, backfilled from live expansion on its first run), while a stamped empty string is authoritative and means the save authorized zero sites - so an empty-saved group can no longer be mistaken for a legacy row and lazily auto-authorize a member added later. Previous 9.0.2.21 added wp_backup.authorized_sites, the site set that passed authorize_task_scope() at save time; the scheduled runner backs up only that set (cron has no user context to authorize a group's later additions against). Previous 9.0.2.20 bump made pre_update_tables() drop the legacy unnamed UNIQUE (task_id) key from wp_backup_progress - a leftover of the <= 8.53 CREATE clause that capped the table at one per-site progress row per task, so the second add_backup_task_progress() insert on a multi-site run died on a duplicate key. Previous 9.0.2.19 bump added reclaim_count to wp_backup_upload_job and wp_backup_restore_job, the stale-lease-reclaim counter that lets acquire_next_job() route a job whose worker keeps dying mid-run to fail_permanent instead of reclaiming it forever. Previous 9.0.2.18 bump added wp_backup_snapshot.woo_meta, the Woo order-storage facts a database-bearing backup captured at dump time, read by the restore initiate handler's preserve-orders gate; 9.0.2.17 bump added wp_backup.backup_notices, the informational-notes channel that keeps run notes (like the large-site ZIP auto-switch) out of backup_errors; 9.0.2.16 added wp_backup.zip_force_override for the large-site ZIP auto-switch override; 9.0.2.15 added wp_backup_snapshot.test_restore_state/test_restore_at for the verified-restore (sandbox test-restore) result; 9.0.2.14 added wp_backup_snapshot.encryption for the per-snapshot archive-encryption metadata.
 
     /**
      * Protected variable to hold the database option name.
@@ -151,6 +158,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             // older migration on each load.
             $this->maybe_retry_backup_progress_index_repair();
             $this->maybe_retry_backup_progress_unique_key();
+            $this->maybe_retry_backup_snapshot_run_key();
             $pending = (int) get_site_option( self::BACKUP_SITE_UNIQ_KEYS_REPAIR_PENDING );
             if ( $pending && time() - $pending >= HOUR_IN_SECONDS ) {
                 $this->repair_backup_site_unique_keys();
@@ -448,6 +456,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
   site_id int(11) NOT NULL,
   type varchar(20) NOT NULL,
   parent_id bigint(20) unsigned NULL DEFAULT NULL,
+  run_key varchar(191) NULL DEFAULT NULL,
   created int(11) NOT NULL DEFAULT 0,
   archives text NOT NULL DEFAULT '',
   manifest_path text NOT NULL DEFAULT '',
@@ -458,6 +467,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
   woo_meta text NOT NULL DEFAULT '',
   test_restore_state varchar(20) NOT NULL DEFAULT '',
   test_restore_at int(11) NOT NULL DEFAULT 0,
+  UNIQUE KEY uniq_run_key (run_key),
   KEY idx_site_task (site_id, task_id),
   KEY idx_parent (parent_id),
   KEY idx_offsite_state (offsite_state),
@@ -779,6 +789,10 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         // table's (task_id, wp_id) unique key to an existing install.
         if ( version_compare( $currentVersion, '9.0.2.24', '<' ) ) { // NOSONAR - none IP.
             $this->ensure_backup_progress_unique_key();
+        }
+
+        if ( version_compare( $currentVersion, '9.0.2.26', '<' ) ) { // NOSONAR - none IP.
+            $this->ensure_backup_snapshot_run_key();
         }
 
         // Rename the backups feature flag to mainwp_enableNativeBackups; reads fall back to the
@@ -1385,6 +1399,54 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         }
 
         $this->ensure_backup_progress_unique_key();
+    }
+
+    /**
+     * Retry both schema changes because dbDelta failures do not hold back the version stamp.
+     *
+     * @return bool Whether the column and unique key exist.
+     */
+    public function ensure_backup_snapshot_run_key() {
+        $suppress = $this->wpdb->suppress_errors();
+        $table    = esc_sql( $this->table_name( 'wp_backup_snapshot' ) );
+        $found    = $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- table probe.
+        $column   = null;
+        $index    = array();
+
+        if ( ! empty( $found ) ) {
+            $column = $this->wpdb->get_var( "SHOW COLUMNS FROM {$table} LIKE 'run_key'" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL introspection; table escaped via esc_sql.
+            if ( empty( $column ) ) {
+                $this->wpdb->query( "ALTER TABLE {$table} ADD COLUMN run_key varchar(191) NULL DEFAULT NULL" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL; table escaped via esc_sql.
+                $column = $this->wpdb->get_var( "SHOW COLUMNS FROM {$table} LIKE 'run_key'" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL introspection; table escaped via esc_sql.
+            }
+            if ( ! empty( $column ) ) {
+                $index = $this->wpdb->get_results( "SHOW INDEX FROM {$table} WHERE Key_name = 'uniq_run_key'" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL introspection; table escaped via esc_sql.
+                if ( empty( $index ) ) {
+                    $this->wpdb->query( "ALTER TABLE {$table} ADD UNIQUE KEY uniq_run_key (run_key)" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL; table escaped via esc_sql.
+                    $index = $this->wpdb->get_results( "SHOW INDEX FROM {$table} WHERE Key_name = 'uniq_run_key'" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL introspection; table escaped via esc_sql.
+                }
+            }
+        }
+        $this->wpdb->suppress_errors( $suppress );
+
+        if ( empty( $column ) || empty( $index ) ) {
+            update_site_option( static::BACKUP_SNAPSHOT_RUN_KEY_REPAIR_PENDING, time() );
+            return false;
+        }
+        delete_site_option( static::BACKUP_SNAPSHOT_RUN_KEY_REPAIR_PENDING );
+        return true;
+    }
+
+    /**
+     * Avoid retrying denied ALTER statements on every request.
+     *
+     * @return void
+     */
+    public function maybe_retry_backup_snapshot_run_key() {
+        $pending = (int) get_site_option( static::BACKUP_SNAPSHOT_RUN_KEY_REPAIR_PENDING );
+        if ( $pending && time() - $pending >= HOUR_IN_SECONDS ) {
+            $this->ensure_backup_snapshot_run_key();
+        }
     }
 
     /**

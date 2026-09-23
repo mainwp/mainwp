@@ -432,7 +432,7 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
      *
      * @param array $input Destination fields: id, provider, name, is_default, settings.
      *
-     * @return array {id} on success, {error} on failure.
+     * @return array {id, notice?} on success, {error} on failure.
      */
     public static function save_destination( array $input ) {
         $merged = static::merge_candidate( $input );
@@ -463,7 +463,11 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
             if ( ! $store->update_destination( $merged['id'], $row ) ) {
                 return array( 'error' => esc_html__( 'Could not save the storage destination.', 'mainwp' ) );
             }
-            return array( 'id' => $merged['id'] );
+            $result = array( 'id' => $merged['id'] );
+            if ( $merged['reset_sftp_trust'] ) {
+                $result['notice'] = static::sftp_trust_reset_notice();
+            }
+            return $result;
         }
 
         $id = $store->add_destination( $row );
@@ -519,11 +523,12 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
         $existing_settings = ( $id > 0 && isset( $existing ) && is_array( $existing->settings ) ) ? $existing->settings : array();
 
         return array(
-            'id'         => $id,
-            'provider'   => $provider,
-            'name'       => $name,
-            'is_default' => empty( $input['is_default'] ) ? 0 : 1,
-            'settings'   => $settings,
+            'id'               => $id,
+            'provider'         => $provider,
+            'name'             => $name,
+            'is_default'       => empty( $input['is_default'] ) ? 0 : 1,
+            'settings'         => $settings,
+            'reset_sftp_trust' => $id > 0 && 'sftp' === $provider && static::sftp_trust_changed( $settings, $existing_settings ),
             // The destination id to run the connection test under, so an
             // SFTP edit against an unchanged server enforces its learned
             // host-key pin BEFORE credentials are sent (a re-save under
@@ -531,7 +536,7 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
             // password). Zero for a new destination or one whose target
             // server changed - there the pin does not apply and TOFU
             // re-learns on the new server's first real use.
-            'test_id'    => static::pin_enforcement_id( $id, $settings, $existing_settings ),
+            'test_id'          => static::pin_enforcement_id( $id, $settings, $existing_settings ),
         );
     }
 
@@ -574,6 +579,39 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
         $same_host = $norm_host( $new_settings['host'] ?? '' ) === $norm_host( $existing_settings['host'] ?? '' );
         $same_port = $norm_port( $new_settings['port'] ?? '' ) === $norm_port( $existing_settings['port'] ?? '' );
         return ( $same_host && $same_port ) ? $id : 0;
+    }
+
+    /**
+     * Keep learned trust across edits that do not change the connection.
+     *
+     * @param array $settings          Candidate settings.
+     * @param array $existing_settings Stored settings.
+     *
+     * @return bool
+     */
+    public static function sftp_trust_changed( array $settings, array $existing_settings ): bool {
+        if ( 0 === static::pin_enforcement_id( 1, $settings, $existing_settings ) ) {
+            return true;
+        }
+        if ( (string) ( $settings['username'] ?? '' ) !== (string) ( $existing_settings['username'] ?? '' ) ) {
+            return true;
+        }
+        foreach ( array( 'password', 'private_key' ) as $field ) {
+            $submitted = (string) ( $settings[ $field ] ?? '' );
+            if ( '' !== $submitted && (string) ( $existing_settings[ $field ] ?? '' ) !== $submitted ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Explain why the next connection must establish trust again.
+     *
+     * @return string
+     */
+    public static function sftp_trust_reset_notice(): string {
+        return __( 'The SFTP host key for this destination was reset because the host, port, or credentials changed and will be learned again on the next connection.', 'mainwp' );
     }
 
     /**

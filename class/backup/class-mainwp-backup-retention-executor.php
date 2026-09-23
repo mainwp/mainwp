@@ -182,7 +182,7 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
      *
      * The two passes cover the two ways a dashboard's backup tree grows
      * without bound. Interrupted runs leave snapshot-* directories that
-     * never gained a complete row, so neither retention nor the task
+     * never gained a snapshot row, so neither retention nor the task
      * purge ever revisits them - the orphan sweep removes those. And
      * retention for completed on-demand snapshots normally drains on
      * WP-Cron, which a low-traffic dashboard may never fire - the prune
@@ -218,7 +218,7 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
 
     /**
      * Sweep snapshot-* directories under a site's backup tree that no
-     * complete snapshot row claims.
+     * non-pruned snapshot row claims.
      *
      * A run that dies between staging files and record_snapshot() leaves
      * its directory rowless forever: retention only walks rows, and the
@@ -258,7 +258,7 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
             }
             if ( isset( $protected_dirs[ MainWP_Backup_Snapshots::normalise_path( $dir ) ] )
                 || isset( $protected_dirs[ MainWP_Backup_Snapshots::normalise_path( $real ) ] ) ) {
-                continue; // A complete snapshot's artifacts live here.
+                continue; // A non-pruned snapshot still owns this directory.
             }
 
             $files  = glob( $real . DIRECTORY_SEPARATOR . '*' ) ?: array(); // phpcs:ignore Universal.Operators.DisallowShortTernary.Found -- empty-glob guard.
@@ -634,6 +634,12 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
             $paths[] = (string) $snapshot->manifest_path;
         }
 
+        $protected_paths = MainWP_Backup_Snapshots::instance()->get_protected_paths_for_site( (int) $snapshot->site_id, (int) $snapshot->id );
+        $protected_dirs  = array();
+        foreach ( array_keys( $protected_paths ) as $path ) {
+            $protected_dirs[ MainWP_Backup_Snapshots::normalise_path( dirname( $path ) ) ] = true;
+        }
+
         $clean = true;
         $dirs  = array();
         foreach ( $paths as $path ) {
@@ -641,6 +647,15 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
 
             $real = realpath( $path );
             if ( false === $real || ! is_file( $real ) ) {
+                continue;
+            }
+            if ( isset( $protected_paths[ MainWP_Backup_Snapshots::normalise_path( $path ) ] )
+                || isset( $protected_paths[ MainWP_Backup_Snapshots::normalise_path( $real ) ] ) ) {
+                continue;
+            }
+            if ( 0 === strpos( basename( dirname( $real ) ), 'snapshot-' )
+                && ( isset( $protected_dirs[ MainWP_Backup_Snapshots::normalise_path( dirname( $path ) ) ] )
+                    || isset( $protected_dirs[ MainWP_Backup_Snapshots::normalise_path( dirname( $real ) ) ] ) ) ) {
                 continue;
             }
             if ( 0 !== strpos( $real, $root ) ) {
@@ -666,6 +681,11 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
         foreach ( array_keys( $dirs ) as $dir ) {
             $real = realpath( $dir );
             if ( false === $real || ! is_dir( $real ) ) {
+                continue;
+            }
+
+            if ( isset( $protected_dirs[ MainWP_Backup_Snapshots::normalise_path( $dir ) ] )
+                || isset( $protected_dirs[ MainWP_Backup_Snapshots::normalise_path( $real ) ] ) ) {
                 continue;
             }
 

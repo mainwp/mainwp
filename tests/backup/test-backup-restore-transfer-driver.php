@@ -258,6 +258,75 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Restored plaintext stays behind deny files after a host recreates uploads.
+	 */
+	public function test_staging_protection_survives_recreation_and_transfer_resume() {
+		$remote = $this->dir . '/remote';
+		mkdir( $remote . '/4/8/files', 0755, true );
+		file_put_contents( $remote . '/4/8/files/db.tar.gz', 'remote-bytes' );
+		$this->driver->remote_base = $remote;
+		$root                      = $this->dir . '/mainwp/restore-staging';
+		$upload                    = function ( $dirs ) {
+			$dirs['basedir'] = $this->dir;
+			return $dirs;
+		};
+		$filtered                  = function ( $dirs ) {
+			$dirs['basedir'] = $this->dir . '/filtered';
+			return $dirs;
+		};
+		add_filter( 'upload_dir', $upload );
+		add_filter( 'mainwp_get_wp_upload_dir', $filtered );
+		try {
+			$plan = array(
+				array(
+					'role'        => 'db',
+					'file'        => 'db.tar.gz',
+					'size'        => 12,
+					'sha256'      => '',
+					'snapshot_id' => 8,
+					'source'      => 'remote',
+					'local_path'  => '',
+					'remote_key'  => '4/8/files/db.tar.gz',
+					'adopt_only'  => false,
+				),
+			);
+			for ( $pass = 0; $pass < 3; ++$pass ) {
+				if ( 1 === $pass ) {
+					$this->rrmdir( $root );
+					$this->assertDirectoryDoesNotExist( $root );
+				} elseif ( 2 === $pass ) {
+					unlink( $root . '/.htaccess' );
+					unlink( $root . '/index.php' );
+				}
+				$outcome = $this->driver->stage_artifacts( 777001, $plan, microtime( true ) + 60 );
+				$this->assertTrue( $outcome['done'] );
+				$this->assertSame( $root . '/777001/db.tar.gz', $plan[0]['staged_path'] );
+				$this->assertSame( 'remote-bytes', file_get_contents( $plan[0]['staged_path'] ) );
+				$this->assertFileExists( $root . '/.htaccess' );
+				$this->assertSame( 'deny from all', file_get_contents( $root . '/.htaccess' ) );
+				$this->assertFileExists( $root . '/index.php' );
+				$this->assertSame( '', file_get_contents( $root . '/index.php' ) );
+				$this->assertDirectoryDoesNotExist( $this->dir . '/filtered/mainwp/restore-staging' );
+			}
+			unlink( $root . '/.htaccess' );
+			unlink( $root . '/index.php' );
+			$cursor  = array();
+			$outcome = $this->driver->transfer_artifacts( (object) array( 'id' => 4 ), 'task', $plan, $cursor, microtime( true ) + 60 );
+			$this->assertTrue( $outcome['done'] );
+			$this->assertNotEmpty( $this->driver->sent );
+			$this->assertSame( 'deny from all', file_get_contents( $root . '/.htaccess' ) );
+			$this->assertSame( '', file_get_contents( $root . '/index.php' ) );
+			$this->driver->cleanup_staging( 777001 );
+			$this->assertDirectoryDoesNotExist( $root . '/777001' );
+			$this->assertFileExists( $root . '/.htaccess' );
+			$this->assertFileExists( $root . '/index.php' );
+		} finally {
+			remove_filter( 'upload_dir', $upload );
+			remove_filter( 'mainwp_get_wp_upload_dir', $filtered );
+		}
+	}
+
+	/**
 	 * A remote-source artifact downloads into staging and hashes.
 	 */
 	public function test_stage_remote_artifact_downloads() {

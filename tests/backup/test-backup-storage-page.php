@@ -141,6 +141,160 @@ class MainWP_Backup_Storage_Page_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Ordinary edits must not make the next connection trust an unknown key.
+	 *
+	 * @dataProvider b13_unchanged_sftp_settings
+	 * @param array $changes Submitted settings changes.
+	 * @return void
+	 */
+	public function test_b13_save_renamed_sftp_destination_preserves_pin( array $changes ) {
+		$this->assert_b13_sftp_save( $changes, false );
+	}
+
+	/**
+	 * These edits still connect to the trusted server with the saved credentials.
+	 *
+	 * @return array
+	 */
+	public static function b13_unchanged_sftp_settings() {
+		return array(
+			'name only'          => array( array() ),
+			'blank secrets'      => array(
+				array(
+					'password'    => '',
+					'private_key' => '',
+				),
+			),
+			'normalized server'  => array(
+				array(
+					'host' => 'SFTP.Example.com.',
+					'port' => '022',
+				),
+			),
+			'default port'       => array( array( 'port' => '' ) ),
+			'unrelated settings' => array( array( 'base_path' => '/other-backups' ) ),
+		);
+	}
+
+	/**
+	 * A different server needs fresh trust and a visible explanation.
+	 *
+	 * @return void
+	 */
+	public function test_b13_save_sftp_host_change_clears_pin_and_returns_notice() {
+		$this->assert_b13_sftp_save( array( 'host' => 'other.example.com' ), true );
+	}
+
+	/**
+	 * A different port can serve a different SSH host key.
+	 *
+	 * @return void
+	 */
+	public function test_b13_save_sftp_port_change_clears_pin_and_returns_notice() {
+		$this->assert_b13_sftp_save( array( 'port' => '2222' ), true );
+	}
+
+	/**
+	 * Credential replacements must be distinguished from retained secrets.
+	 *
+	 * @dataProvider b13_changed_sftp_credentials
+	 * @param array $changes Submitted credential changes.
+	 * @return void
+	 */
+	public function test_b13_save_sftp_credential_change_clears_pin_and_returns_notice( array $changes ) {
+		$this->assert_b13_sftp_save( $changes, true );
+	}
+
+	/**
+	 * Each credential field can independently change the saved connection.
+	 *
+	 * @return array
+	 */
+	public static function b13_changed_sftp_credentials() {
+		return array(
+			'username'    => array( array( 'username' => 'other-user' ) ),
+			'password'    => array( array( 'password' => 'replacement-password' ) ),
+			'private key' => array( array( 'private_key' => 'replacement-private-key' ) ),
+		);
+	}
+
+	/**
+	 * Keep persistence real so the regression cannot hide behind a mocked save.
+	 *
+	 * @param array $changes     Submitted settings changes.
+	 * @param bool  $reset_trust Whether this edit should clear the learned pin.
+	 * @return void
+	 */
+	private function assert_b13_sftp_save( array $changes, bool $reset_trust ) {
+		$settings = array(
+			'host'        => 'sftp.example.com',
+			'port'        => '22',
+			'username'    => 'backup-user',
+			'password'    => 'saved-password',
+			'private_key' => 'saved-private-key',
+			'base_path'   => '/backups',
+		);
+		$store    = MainWP_Backup_Storage_Destinations::instance();
+		$id       = $store->add_destination(
+			array(
+				'provider' => 'sftp',
+				'name'     => 'Original SFTP',
+				'settings' => $settings,
+			)
+		);
+		$this->assertGreaterThan( 0, $id );
+		$pin = \MainWP\Dashboard\MainWP_Backup_Storage_SFTP::fingerprint_host_key( 'original-host-key' );
+		update_option( 'mainwp_backup_sftp_hostkeys', array( $id => $pin ), false );
+
+		$provider = $this->createMock( \MainWP\Dashboard\MainWP_Backup_Storage_Provider::class );
+		$provider->expects( $this->once() )->method( 'connection_test' )->willReturn( array( 'ok' => true ) );
+		$destinations = $this->getMockBuilder( MainWP_Backup_Storage_Destinations::class )->onlyMethods( array( 'make_provider' ) )->getMock();
+		$destinations->expects( $this->once() )->method( 'make_provider' )->willReturnCallback(
+			function ( $candidate ) use ( $provider, $changes, $id ) {
+				$new_server = isset( $changes['host'] ) && 'other.example.com' === $changes['host'];
+				$new_server = $new_server || ( isset( $changes['port'] ) && '2222' === $changes['port'] );
+				$this->assertSame( $new_server ? 0 : $id, $candidate->id, 'Same-server credential edits must still enforce the old pin before login.' );
+				return $provider;
+			}
+		);
+		$instance = new \ReflectionProperty( MainWP_Backup_Storage_Destinations::class, 'instance' );
+		$instance->setValue( null, $destinations );
+		try {
+			$result = MainWP_Backup_Storage_Handler::save_destination(
+				array(
+					'id'       => $id,
+					'provider' => 'sftp',
+					'name'     => 'Renamed SFTP',
+					'settings' => array_merge( $settings, $changes ),
+				)
+			);
+			$this->assertArrayNotHasKey( 'error', $result );
+			$this->assertSame( $id, $result['id'] );
+			$row = $store->get_destination( $id );
+			$this->assertSame( 'Renamed SFTP', $row->name );
+			$expected_settings = array_merge( $settings, $changes );
+			foreach ( array( 'password', 'private_key' ) as $field ) {
+				if ( '' === $expected_settings[ $field ] ) {
+					$expected_settings[ $field ] = $settings[ $field ];
+				}
+			}
+			$this->assertSame( $expected_settings, $row->settings );
+			$pins = get_option( 'mainwp_backup_sftp_hostkeys' );
+			if ( $reset_trust ) {
+				$this->assertArrayNotHasKey( $id, $pins );
+				$this->assertArrayHasKey( 'notice', $result );
+				$this->assertSame( 'The SFTP host key for this destination was reset because the host, port, or credentials changed and will be learned again on the next connection.', $result['notice'] );
+			} else {
+				$this->assertSame( $pin, $pins[ $id ] ?? null );
+				$this->assertArrayNotHasKey( 'notice', $result );
+			}
+		} finally {
+			$instance->setValue( null, $store );
+			delete_option( 'mainwp_backup_sftp_hostkeys' );
+		}
+	}
+
+	/**
 	 * A failed connection test blocks the save.
 	 *
 	 * @return void

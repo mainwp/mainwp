@@ -926,6 +926,135 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Keeping one row must preserve bytes shared with the row being pruned.
+	 *
+	 * @dataProvider b03_shared_artifacts
+	 * @param bool $snapshot_dir Whether owners share a run directory rather than one archive.
+	 */
+	public function test_b03_keep_one_preserves_shared_artifacts( $snapshot_dir ) {
+		global $wpdb;
+		list( $older, $dir ) = $this->make_snapshot_with_dir( array( 'created' => time() - 100 ) );
+		if ( ! $snapshot_dir ) {
+			$shared = dirname( $dir ) . '/shared-' . basename( $dir );
+			rename( $dir, $shared );
+			$dir                  = $shared;
+			$this->fixture_dirs[] = $dir;
+		}
+		$table        = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+		$path         = $dir . '/artifact.tar';
+		$old_archives = array(
+			array(
+				'file' => 'artifact.tar',
+				'size' => 100,
+				'role' => 'full',
+				'path' => $path,
+			),
+		);
+		$wpdb->update(
+			$table,
+			array(
+				'archives'      => wp_json_encode( $old_archives ),
+				'manifest_path' => '',
+			),
+			array( 'id' => $older )
+		); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- fixture.
+		$kept_path = $snapshot_dir ? $dir . '/new.tar' : $dir . '//artifact.tar';
+		if ( $snapshot_dir ) {
+			file_put_contents( $kept_path, 'retained bytes' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- fixture.
+		}
+		list( $newer ) = $this->make_snapshot_with_dir(
+			array(
+				'archives'      => wp_json_encode(
+					array(
+						array(
+							'file' => basename( $kept_path ),
+							'size' => 100,
+							'role' => 'full',
+							'path' => $kept_path,
+						),
+					)
+				),
+				'manifest_path' => '',
+			)
+		);
+		$task          = $this->make_task(
+			array(
+				'delete_cloud_copies' => 0,
+				'retention_count'     => 1,
+			)
+		);
+		$policy        = new \MainWP\Dashboard\MainWP_Backup_Retention_Policy( 1, 0, 0 );
+		$units         = MainWP_Backup_Retention_Query::instance()->get_units_for_site_task( $this->site_id, $this->task_id );
+		$candidates    = $policy->evaluate( $units, time() );
+		$this->assertCount( 1, $candidates );
+
+		$result = MainWP_Backup_Retention_Executor::instance()->run_prune( $candidates, $task );
+
+		$this->assertSame( array(), $result['errors'] );
+		$this->assertSame( 1, $result['snapshots_pruned'] );
+		$this->assertSame( 'pruned', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $older )->status );
+		$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $newer )->status );
+		$this->assertFileExists( $path );
+		$this->assertFileExists( $kept_path );
+		$this->assertDirectoryExists( $dir );
+	}
+
+	/**
+	 * Shared archive and shared directory cases need different deletion guards.
+	 *
+	 * @return array Ownership boundaries exercised by retention.
+	 */
+	public function b03_shared_artifacts() {
+		return array(
+			'same normalized archive' => array( false ),
+			'same snapshot directory' => array( true ),
+		);
+	}
+
+	/**
+	 * Task deletion cannot remove another task's shared archive.
+	 */
+	public function test_b03_task_purge_preserves_another_tasks_archive() {
+		list( $older, $dir ) = $this->make_snapshot_with_dir();
+		$old                 = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $older );
+		list( $newer )       = $this->make_snapshot_with_dir(
+			array(
+				'task_id'       => $this->task_id + 1,
+				'archives'      => wp_json_encode( $old->archives ),
+				'manifest_path' => $old->manifest_path,
+			)
+		);
+
+		$result = MainWP_Backup_Retention_Executor::instance()->purge_snapshots_for_task( $this->task_id, false );
+
+		$this->assertSame( array(), $result['errors'] );
+		$this->assertSame( 'pruned', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $older )->status );
+		$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $newer )->status );
+		$this->assertFileExists( $dir . '/artifact.tar' );
+	}
+
+	/**
+	 * An incomplete row's manifest still owns its directory during an orphan sweep.
+	 */
+	public function test_b03_site_cleanup_preserves_non_pruned_manifest_owner() {
+		list( $id, $dir ) = $this->make_snapshot_with_dir(
+			array(
+				'status'   => 'failed',
+				'archives' => '[]',
+			)
+		);
+		file_put_contents( $dir . '/files.list', 'manifest' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- fixture.
+
+		$result = MainWP_Backup_Retention_Executor::instance()->cleanup_site_backups( $this->site_id, 1, 0 );
+
+		$this->assertSame( array(), $result['errors'] );
+		$this->assertSame( 0, $result['orphan_dirs_removed'] );
+		$this->assertSame( 'failed', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->status );
+		$this->assertFileExists( $dir . '/files.list' );
+		$this->assertFileExists( $dir . '/artifact.tar' );
+	}
+
+	/**
 	 * Pruning notifies the child site so it cleans its own task rows and
 	 * artifacts, passing the chain's child task ids.
 	 *

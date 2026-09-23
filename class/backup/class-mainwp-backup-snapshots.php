@@ -84,6 +84,7 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
      *     @type int      $task_id       Scheduled task id.
      *     @type int      $site_id       Child site id.
      *     @type string   $type          What the run produced: 'full' or 'incremental'.
+     *     @type string|null $run_key    Durable run identity; null keeps legacy insert behavior.
      *     @type int|null $parent_id     Parent snapshot id, null for a base full.
      *     @type array    $archives      Downloaded artifact list: file, size, role per entry.
      *     @type string   $manifest_path Local path of the downloaded file manifest.
@@ -129,13 +130,32 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
             }
         }
 
-        $inserted = $this->wpdb->insert( $this->table_name( 'wp_backup_snapshot' ), $row, $format );
-
-        if ( ! $inserted ) {
-            return 0;
+        if ( isset( $data['run_key'] ) ) {
+            $row['run_key'] = (string) $data['run_key'];
+            $format[]       = '%s';
+            $inserted       = $this->wpdb->query(
+                $this->wpdb->prepare(
+                    'INSERT INTO ' . $this->table_name( 'wp_backup_snapshot' ) . ' (`' . implode( '`, `', array_keys( $row ) ) . '`) VALUES (' . implode( ', ', $format ) . ') ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- Columns and formats are fixed above; values are prepared.
+                    array_values( $row )
+                )
+            );
+            if ( false === $inserted ) {
+                return 0;
+            }
+            $snapshot_id = (int) $this->wpdb->get_var(
+                $this->wpdb->prepare( 'SELECT id FROM ' . $this->table_name( 'wp_backup_snapshot' ) . ' WHERE run_key = %s', $row['run_key'] )
+            );
+            // A losing finisher must not replace the winner's encryption or enqueue its uploads again.
+            if ( 1 !== $inserted || $snapshot_id < 1 ) {
+                return $snapshot_id;
+            }
+        } else {
+            $inserted = $this->wpdb->insert( $this->table_name( 'wp_backup_snapshot' ), $row, $format );
+            if ( ! $inserted ) {
+                return 0;
+            }
+            $snapshot_id = (int) $this->wpdb->insert_id;
         }
-
-        $snapshot_id = (int) $this->wpdb->insert_id;
 
         // When encryption is armed, mint this snapshot's key material and store
         // it before any upload job can run, so the wrapped DEK is bound to this
@@ -379,36 +399,37 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
     }
 
     /**
-     * Get the local artifact paths complete snapshots have recorded for a
-     * site - the files the legacy backups-on-server sweeper must not
-     * delete, since snapshot retention owns their lifecycle.
-     *
-     * Only complete rows count: a pruned snapshot's files were already
-     * removed by retention, so a leftover path matching a new file by
-     * name must not shield it. Paths are normalised with normalise_path()
-     * so callers compare candidates with the same helper.
+     * Protect artifacts until their owning snapshots are pruned, including manifests.
+     * Retention excludes its own row so shared bytes survive while unshared bytes can be removed.
      *
      * @param int $site_id Child site id.
+     * @param int $exclude_snapshot_id Snapshot being pruned, or zero to protect all owners.
      *
      * @return array<string, true> Set keyed by normalised absolute path.
      */
-    public function get_protected_paths_for_site( int $site_id ): array {
+    public function get_protected_paths_for_site( int $site_id, int $exclude_snapshot_id = 0 ): array {
         $rows = $this->wpdb->get_results(
             $this->wpdb->prepare(
-                'SELECT archives FROM ' . $this->table_name( 'wp_backup_snapshot' ) . " WHERE site_id = %d AND status = 'complete'",
-                $site_id
+                'SELECT archives, manifest_path FROM ' . $this->table_name( 'wp_backup_snapshot' ) . " WHERE site_id = %d AND status <> 'pruned' AND id <> %d",
+                $site_id,
+                $exclude_snapshot_id
             )
         );
 
         $paths = array();
         foreach ( (array) $rows as $row ) {
             $archives = json_decode( (string) $row->archives, true );
-            if ( ! is_array( $archives ) ) {
-                continue;
+            $archives = is_array( $archives ) ? $archives : array();
+            if ( ! empty( $row->manifest_path ) ) {
+                $archives[] = array( 'path' => $row->manifest_path );
             }
             foreach ( $archives as $archive ) {
                 if ( ! empty( $archive['path'] ) && is_string( $archive['path'] ) ) {
                     $paths[ static::normalise_path( $archive['path'] ) ] = true;
+                    $real = realpath( $archive['path'] );
+                    if ( false !== $real ) {
+                        $paths[ static::normalise_path( $real ) ] = true;
+                    }
                 }
             }
         }

@@ -408,8 +408,9 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
      * @return string Directory with trailing slash.
      */
     public function staging_dir( int $job_id ): string {
-        $upload = wp_upload_dir();
-        return trailingslashit( $upload['basedir'] ) . 'mainwp/restore-staging/' . (int) $job_id . '/';
+        // Uploads are served directly, and a host can recreate this tree without its deny files.
+        list( $root ) = MainWP_System_Utility::get_mainwp_dir( 'restore-staging', false, wp_upload_dir() );
+        return $root . (int) $job_id . '/';
     }
 
     /**
@@ -1122,6 +1123,8 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
      * @return array { done: bool, error: string|null, retryable: bool }
      */
     public function transfer_artifacts( object $website, string $task_id, array $plan, array &$cursor, float $deadline, ?callable $should_continue = null ): array { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- chunk loop with realign, adaptive sizing, and floor retries.
+        // Resumed transfers can outlive the host's copy of the parent deny files.
+        MainWP_System_Utility::get_mainwp_dir( 'restore-staging', false, wp_upload_dir() );
         $cursor = array_merge(
             array(
                 'artifact_index'        => 0,

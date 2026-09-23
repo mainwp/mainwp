@@ -129,6 +129,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 
 		$snapshot_table = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
 		if ( $this->table_exists( $snapshot_table ) ) {
+			MainWP_Install::instance()->ensure_backup_snapshot_run_key();
 			if ( ! $this->column_exists( $snapshot_table, 'offsite_state' ) ) {
 				$wpdb->query( "ALTER TABLE {$snapshot_table} ADD COLUMN offsite_state varchar(20) NOT NULL DEFAULT ''" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
 			}
@@ -175,6 +176,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		// install() implicitly commits past the transaction rollback, so a
 		// repair marker a test set must be cleared by hand.
 		delete_site_option( MainWP_Install::BACKUP_PROGRESS_UNIQ_KEY_REPAIR_PENDING );
+		delete_site_option( MainWP_Install::BACKUP_SNAPSHOT_RUN_KEY_REPAIR_PENDING );
 
 		if ( false === $this->saved_db_version ) {
 			delete_site_option( 'mainwp_db_version' );
@@ -435,6 +437,99 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		update_site_option( 'mainwp_db_version', '9.0.2.17' );
 		MainWP_Install::instance()->install();
 		$this->assertTrue( $this->column_exists( $table, 'woo_meta' ), 'Re-running install must remain idempotent.' );
+	}
+
+	/**
+	 * Existing snapshot rows must survive the additive identity migration.
+	 */
+	public function test_b11_upgrade_from_90225_adds_snapshot_run_key() {
+		global $wpdb;
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+		$wpdb->query( "ALTER TABLE {$table} DROP INDEX uniq_run_key, DROP COLUMN run_key" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture.
+		$wpdb->insert(
+			$table,
+			array(
+				'site_id' => 888812,
+				'task_id' => 888812,
+				'type'    => 'full',
+			)
+		); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- legacy fixture.
+		$legacy_id = (int) $wpdb->insert_id;
+		update_site_option( MainWP_Install::BACKUP_SNAPSHOT_RUN_KEY_REPAIR_PENDING, time() );
+		update_site_option( 'mainwp_db_version', '9.0.2.25' );
+
+		MainWP_Install::instance()->install();
+
+		$this->assertTrue( $this->column_exists( $table, 'run_key' ) );
+		$this->assertTrue( $this->index_exists( $table, 'uniq_run_key' ) );
+		$this->assertSame( array( 'run_key' ), $this->index_columns( $table, 'uniq_run_key' ) );
+		$row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d", $legacy_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test probe.
+		$this->assertNotNull( $row );
+		$this->assertNull( $row->run_key );
+		$this->assertSame( '9.0.2.26', get_site_option( 'mainwp_db_version' ) );
+		$this->assertFalse( get_site_option( MainWP_Install::BACKUP_SNAPSHOT_RUN_KEY_REPAIR_PENDING ) );
+		$wpdb->delete( $table, array( 'id' => $legacy_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- DDL committed this fixture.
+	}
+
+	/**
+	 * Current-version installs retry a failed column and key addition after one hour.
+	 */
+	public function test_b11_stale_run_key_marker_repairs_current_install() {
+		global $wpdb;
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+		update_site_option( 'mainwp_db_version', '9.0.2.25' );
+		MainWP_Install::instance()->install();
+		$wpdb->query( "ALTER TABLE {$table} DROP INDEX uniq_run_key, DROP COLUMN run_key" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture.
+		update_site_option( MainWP_Install::BACKUP_SNAPSHOT_RUN_KEY_REPAIR_PENDING, time() - HOUR_IN_SECONDS - 1 );
+
+		MainWP_Install::instance()->install();
+
+		$this->assertTrue( $this->column_exists( $table, 'run_key' ) );
+		$this->assertTrue( $this->index_exists( $table, 'uniq_run_key' ) );
+		$this->assertFalse( get_site_option( MainWP_Install::BACKUP_SNAPSHOT_RUN_KEY_REPAIR_PENDING ) );
+	}
+
+	/**
+	 * A failed ALTER must leave an hourly repair marker even after the version is current.
+	 */
+	public function test_b11_failed_run_key_alter_marks_pending() {
+		global $wpdb;
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+		$wpdb->query( "ALTER TABLE {$table} DROP INDEX uniq_run_key" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture.
+		$skip_alter = static function ( $sql ) use ( $table ) {
+			return "ALTER TABLE {$table} ADD UNIQUE KEY uniq_run_key (run_key)" === $sql ? 'SELECT 1' : $sql;
+		};
+		add_filter( 'query', $skip_alter );
+		try {
+			$this->assertFalse( MainWP_Install::instance()->ensure_backup_snapshot_run_key() );
+			$this->assertFalse( $this->index_exists( $table, 'uniq_run_key' ) );
+			$this->assertGreaterThanOrEqual( time() - 5, (int) get_site_option( MainWP_Install::BACKUP_SNAPSHOT_RUN_KEY_REPAIR_PENDING ) );
+		} finally {
+			remove_filter( 'query', $skip_alter );
+		}
+		$this->assertTrue( MainWP_Install::instance()->ensure_backup_snapshot_run_key() );
+		$this->assertFalse( get_site_option( MainWP_Install::BACKUP_SNAPSHOT_RUN_KEY_REPAIR_PENDING ) );
+	}
+
+	/**
+	 * A denied ALTER must not be retried on every request.
+	 */
+	public function test_b11_fresh_run_key_marker_throttles_retry() {
+		global $wpdb;
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+		update_site_option( 'mainwp_db_version', '9.0.2.25' );
+		MainWP_Install::instance()->install();
+		$wpdb->query( "ALTER TABLE {$table} DROP INDEX uniq_run_key" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture.
+		$marked = time() - 60;
+		update_site_option( MainWP_Install::BACKUP_SNAPSHOT_RUN_KEY_REPAIR_PENDING, $marked );
+
+		MainWP_Install::instance()->install();
+
+		$this->assertFalse( $this->index_exists( $table, 'uniq_run_key' ) );
+		$this->assertSame( $marked, (int) get_site_option( MainWP_Install::BACKUP_SNAPSHOT_RUN_KEY_REPAIR_PENDING ) );
+		update_site_option( MainWP_Install::BACKUP_SNAPSHOT_RUN_KEY_REPAIR_PENDING, time() - HOUR_IN_SECONDS - 1 );
+		MainWP_Install::instance()->install();
+		$this->assertTrue( $this->index_exists( $table, 'uniq_run_key' ) );
 	}
 
 	/**
@@ -1403,7 +1498,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		$upload_job_table = MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' );
 		$this->assertTrue( $this->index_exists( $upload_job_table, 'uniq_snap_dest_kind' ), 'Fresh install must create the kind-widened upload-job unique key.' );
 
-		$this->assertSame( '9.0.2.25', get_site_option( 'mainwp_db_version' ), 'Fresh install must preserve the merged native-backups db version.' );
+		$this->assertSame( '9.0.2.26', get_site_option( 'mainwp_db_version' ), 'Fresh install must preserve the merged native-backups db version.' );
 
 		$property = new \ReflectionProperty( MainWP_Install::class, 'mainwp_db_version' );
 		$property->setAccessible( true );
@@ -1451,7 +1546,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		);
 
 		$this->assertSame( array( 'repair_backup_progress_index', 'repair_backup_progress_index' ), $installer->calls );
-		$this->assertSame( '9.0.2.25', get_site_option( 'mainwp_db_version' ) );
+		$this->assertSame( '9.0.2.26', get_site_option( 'mainwp_db_version' ) );
 	}
 
 	/**
@@ -1501,7 +1596,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		$saved_pending = get_site_option( MainWP_Install::BACKUP_PROGRESS_INDEX_REPAIR_PENDING );
 
 		try {
-			update_site_option( 'mainwp_db_version', '9.0.2.25' );
+			update_site_option( 'mainwp_db_version', '9.0.2.26' );
 			update_site_option( MainWP_Install::BACKUP_PROGRESS_INDEX_REPAIR_PENDING, time() - 2 * HOUR_IN_SECONDS );
 			$installer->install();
 

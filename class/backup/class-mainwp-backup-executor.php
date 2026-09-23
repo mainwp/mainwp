@@ -749,6 +749,10 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             $information = $backupTaskProgress->fetchResult;
         }
 
+        if ( ! isset( $information['error'] ) && empty( $backupTaskProgress->child_backup_task_id ) && ! empty( $pTask->id ) ) {
+            self::persist_legacy_snapshot_token( $website, $pTask, $backupTaskProgress );
+        }
+
         if ( isset( $information['error'] ) ) {
             throw new MainWP_Exception( esc_html( MainWP_Backup_Error_Codes::sanitize_message( $information['error'] ) ), null, isset( $information['error_code'] ) ? $information['error_code'] : '' ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         } elseif ( 'incremental' === $type && ! empty( $information['artifacts'] ) ) {
@@ -1056,6 +1060,73 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         }
 
         return $backup_result;
+    }
+
+    // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.Missing -- The exception factory returns MainWP_Exception.
+    /**
+     * Persist legacy identity before downloading so retries cannot mint another run.
+     *
+     * @param object $website Child site.
+     * @param object $task Backup task.
+     * @param object $progress Progress row, refreshed after the conditional write.
+     * @return void
+     * @throws MainWP_Exception When the token cannot be persisted.
+     */
+    private static function persist_legacy_snapshot_token( $website, $task, &$progress ) {
+        // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.Missing
+        global $wpdb;
+
+        if ( ! empty( $progress->fetchResult['snapshot_run_token'] ) ) {
+            return;
+        }
+
+        $table = MainWP_DB::instance()->get_table_name( 'wp_backup_progress' );
+        $raw   = $wpdb->get_var( $wpdb->prepare( "SELECT fetchResult FROM {$table} WHERE task_id = %d AND wp_id = %d AND dtsFetched = %d AND child_backup_task_id = ''", $task->id, $website->id, $progress->dtsFetched ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery -- Table name from the database helper; conditional persistence needs the raw JSON.
+        $fetch = is_string( $raw ) ? json_decode( $raw, true ) : null;
+        if ( is_array( $fetch ) ) {
+            if ( empty( $fetch['snapshot_run_token'] ) ) {
+                $fetch['snapshot_run_token'] = wp_generate_uuid4();
+                // Compare the old payload so a racing downloader adopts the first token.
+                $wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Compare the persisted payload atomically.
+                    $table,
+                    array( 'fetchResult' => wp_json_encode( $fetch ) ),
+                    array(
+                        'task_id'              => (int) $task->id,
+                        'wp_id'                => (int) $website->id,
+                        'dtsFetched'           => (int) $progress->dtsFetched,
+                        'child_backup_task_id' => '',
+                        'fetchResult'          => $raw,
+                    ),
+                    array( '%s' ),
+                    array( '%d', '%d', '%d', '%s', '%s' )
+                );
+            }
+            $fresh = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $website->id );
+            if ( $fresh && (int) $fresh->dtsFetched === (int) $progress->dtsFetched && ! empty( $fresh->fetchResult['snapshot_run_token'] ) && empty( $fresh->child_backup_task_id ) ) {
+                $progress = $fresh;
+                return;
+            }
+        }
+        throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_RECORD_FAILED, 'could not persist legacy run identity' ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+    }
+
+    /**
+     * Keep child identities separate from tokens for older backup protocols.
+     *
+     * @param object $website Child site.
+     * @param object $task Backup task.
+     * @param object $progress Persisted progress row.
+     * @return string|null Run identity, or null when no durable identity exists.
+     */
+    private static function snapshot_run_key( $website, $task, $progress ): ?string {
+        $prefix = (int) $website->id . ':' . (int) $task->id;
+        if ( ! empty( $progress->child_backup_task_id ) && ! self::is_creating_marker( $progress->child_backup_task_id ) ) {
+            return $prefix . ':c:' . $progress->child_backup_task_id;
+        }
+        if ( ! empty( $progress->fetchResult['snapshot_run_token'] ) ) {
+            return $prefix . ':l:' . $progress->fetchResult['snapshot_run_token'];
+        }
+        return null;
     }
 
     /**
@@ -1515,6 +1586,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 'archives'      => $archives,
                 'manifest_path' => '',
                 'woo_meta'      => self::woo_meta_from_progress( $progress ),
+                'run_key'       => self::snapshot_run_key( $website, $pTask, $progress ),
             )
         );
         if ( $snapshot_id < 1 ) {
@@ -1646,6 +1718,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     'archives'      => $archives,
                     'manifest_path' => $run_dir . 'files.list',
                     'woo_meta'      => self::woo_meta_from_progress( $progress ),
+                    'run_key'       => self::snapshot_run_key( $website, $pTask, $progress ),
                 )
             );
         } else {

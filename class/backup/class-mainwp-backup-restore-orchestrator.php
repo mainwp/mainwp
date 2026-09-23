@@ -792,8 +792,8 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
 
                 $created = $this->create_child_restore_task( $job, $checkpoint, $plan, $pull_manifest );
-                if ( '' === $created['task_id'] ) {
-                    return; // Failure already recorded.
+                if ( '' === $created['task_id'] || ! empty( $created['reused'] ) ) {
+                    return; // Reuse already reconciled the job; a failed create must also stop here.
                 }
 
                 if ( $created['pull_rejected'] ) {
@@ -861,8 +861,8 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         }
 
         $created = $this->create_child_restore_task( $job, $checkpoint, $plan );
-        if ( '' === $created['task_id'] ) {
-            return; // Failure recorded, or the lease was lost before creation.
+        if ( '' === $created['task_id'] || ! empty( $created['reused'] ) ) {
+            return; // Reuse already reconciled the job; a failed create must also stop here.
         }
 
         if ( ! $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING, array( 'child_task_id' => $created['task_id'] ), $this->lock_token ) ) {
@@ -1125,7 +1125,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      *                                  child downloads from cloud storage.
      *
      * @return array { task_id: string ('' after recording a failure),
-     *                 pull_rejected: bool }.
+     *                 pull_rejected: bool, reused?: bool }.
      */
     private function create_child_restore_task( object $job, array $checkpoint, array $plan, ?array $pull_manifest = null ): array {
         // Re-check the lease immediately before this irreversible side effect.
@@ -1185,9 +1185,45 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             );
         }
 
+        $task_id = sanitize_text_field( (string) $payload['task_id'] );
+        $reused  = ! empty( $payload['reused'] );
+        if ( $reused ) {
+            $store  = MainWP_Backup_Restore_Job_Store::instance();
+            $phase  = isset( $payload['phase'] ) ? (string) $payload['phase'] : '';
+            $status = MainWP_Backup_Restore_Job_Store::STATUS_RUNNING;
+            if ( 'receiving' === $phase || ( 'queued' === $phase && empty( $payload['sub_state']['params']['pull_manifest'] ) ) ) {
+                $status = null !== $pull_manifest ? MainWP_Backup_Restore_Job_Store::STATUS_STAGING : MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING;
+            } elseif ( 'completed' === $phase ) {
+                $status                     = MainWP_Backup_Restore_Job_Store::STATUS_VERIFYING;
+                $checkpoint['verification'] = isset( $payload['sub_state']['verification'] ) && is_array( $payload['sub_state']['verification'] ) ? $payload['sub_state']['verification'] : array();
+                if ( isset( $payload['sub_state']['progress']['woo_preserve'] ) ) {
+                    $checkpoint['verification']['woo_preserve'] = $payload['sub_state']['progress']['woo_preserve'];
+                }
+                if ( ! $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token ) ) {
+                    return array(
+                        'task_id'       => '',
+                        'pull_rejected' => false,
+                    );
+                }
+            }
+            // The original handle must survive even when the lost reply hid a terminal task.
+            if ( ! $store->set_status( (int) $job->id, $status, array( 'child_task_id' => $task_id ), $this->lock_token ) ) {
+                return array(
+                    'task_id'       => '',
+                    'pull_rejected' => false,
+                );
+            }
+            if ( 'failed' === $phase ) {
+                $error      = $payload['sub_state']['error']['message'] ?? ( $payload['error'] ?? esc_html__( 'The restore failed on the child site.', 'mainwp' ) );
+                $error_code = $payload['sub_state']['error']['code'] ?? ( $payload['error_code'] ?? '' );
+                $this->record_failure( $job, (string) $error, false, (string) $error_code );
+            }
+        }
+
         return array(
-            'task_id'       => sanitize_text_field( (string) $payload['task_id'] ),
+            'task_id'       => $task_id,
             'pull_rejected' => ! empty( $payload['pull_manifest_rejected'] ),
+            'reused'        => $reused,
         );
     }
 

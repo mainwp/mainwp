@@ -275,10 +275,11 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      *
      * @param string|null $subdir mainwp sub diectories.
      * @param bool        $direct_access Return true if Direct access file system. Default: false.
+     * @param array|null  $upload_dir Explicit uploads root for paths already stored in checkpoints.
      *
      * @return array $dir, $url
      */
-    public static function get_mainwp_dir( $subdir = null, $direct_access = false ) {
+    public static function get_mainwp_dir( $subdir = null, $direct_access = false, $upload_dir = null ) {
         static::get_wp_file_system();
 
         /**
@@ -287,8 +288,6 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
          * @global object
          */
         global $wp_filesystem;
-
-        $upload_dir = wp_upload_dir();
 
         /**
          * Allow filtering the upload directory array used by MainWP.
@@ -299,7 +298,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
          * @param string $subdir      Optional. Sub Directory requested.
          * @param bool $direct_access Optional. Direct access.
          */
-        $upload_dir = apply_filters( 'mainwp_get_wp_upload_dir', $upload_dir, $subdir, $direct_access );
+        $upload_dir = null === $upload_dir ? apply_filters( 'mainwp_get_wp_upload_dir', wp_upload_dir(), $subdir, $direct_access ) : $upload_dir;
 
         $dir = $upload_dir['basedir'] . DIRECTORY_SEPARATOR . 'mainwp' . DIRECTORY_SEPARATOR;
         $url = $upload_dir['baseurl'] . '/mainwp/';
@@ -319,10 +318,10 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 $wp_filesystem->mkdir( $newdir, $direct_access ? 0755 : 0750 );
             }
 
+            if ( ! $wp_filesystem->exists( trailingslashit( $newdir ) . 'index.php' ) ) {
+                $wp_filesystem->touch( trailingslashit( $newdir ) . 'index.php' );
+            }
             if ( $direct_access ) {
-                if ( ! $wp_filesystem->exists( trailingslashit( $newdir ) . 'index.php' ) ) {
-                    $wp_filesystem->touch( trailingslashit( $newdir ) . 'index.php' );
-                }
                 if ( $wp_filesystem->exists( trailingslashit( $newdir ) . '.htaccess' ) ) {
                     $wp_filesystem->delete( trailingslashit( $newdir ) . '.htaccess' );
                 }

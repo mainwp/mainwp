@@ -191,12 +191,13 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 				);
 				if ( isset( $this->responses[ $what ] ) ) {
 					$scripted = $this->responses[ $what ];
+					if ( is_array( $scripted ) && isset( $scripted[0] ) && ( is_array( $scripted[0] ) || $scripted[0] instanceof \Throwable ) ) {
+						$scripted = array_shift( $this->responses[ $what ] );
+					}
 					if ( $scripted instanceof \Throwable ) {
 						throw $scripted;
 					}
-					return is_array( $scripted ) && isset( $scripted[0] ) && is_array( $scripted[0] )
-						? array_shift( $this->responses[ $what ] )
-						: $scripted;
+					return $scripted;
 				}
 				return array( 'result' => 'ok' );
 			},
@@ -328,6 +329,143 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$artifacts = json_decode( $create['params']['artifacts_json'], true );
 		$this->assertSame( 'db.zip', $artifacts[0]['file'] );
 		$this->assertSame( hash( 'sha256', 'dump-bytes' ), $artifacts[0]['sha256'] );
+	}
+
+	/**
+	 * A lost acknowledgement must retain the identity persisted before create.
+	 *
+	 * @test
+	 */
+	public function b14_lost_create_response_adopts_original_task() {
+		$this->responses['restore_task_create'] = array(
+			new MainWP_Exception( 'Lost create response.' ),
+			array(
+				'task_id' => 'b14-original',
+				'phase'   => 'receiving',
+				'reused'  => true,
+			),
+		);
+
+		$job   = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_STAGING );
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+		$this->orchestrator->process_pending_restore_jobs( 30, (int) $job->id );
+		$job = $store->get_job( (int) $job->id );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE, $job->status );
+		$this->assertEmpty( $job->child_task_id );
+		$this->assertSame( 'orch01test', $job->checkpoint['restore_id'] );
+		$this->assertSame( 1, array_count_values( array_column( $this->calls, 'what' ) )['restore_task_create'] );
+
+		$job = $this->tick( $job );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING, $job->status );
+		$this->assertSame( 'b14-original', $job->child_task_id );
+		$creates = $this->calls;
+		$this->assertCount( 2, $creates );
+		$this->assertSame( 'orch01test', $creates[0]['params']['restore_id'] );
+		$this->assertSame( $creates[0]['params'], $creates[1]['params'] );
+	}
+
+	/**
+	 * Completion recovered at create must never return to artifact transfer.
+	 *
+	 * @test
+	 */
+	public function b14_reused_completed_task_is_not_created_again() {
+		$this->responses['restore_task_create'] = array(
+			new MainWP_Exception( 'Lost create response.' ),
+			array(
+				'task_id'   => 'b14-completed',
+				'phase'     => 'completed',
+				'reused'    => true,
+				'sub_state' => array( 'verification' => array( 'db_ok' => true ) ),
+			),
+		);
+
+		$job = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_STAGING );
+		$this->orchestrator->process_pending_restore_jobs( 30, (int) $job->id );
+		$job = $this->tick( $job );
+		$this->assertSame( 'b14-completed', $job->child_task_id );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_VERIFYING, $job->status );
+		$this->assertTrue( $job->checkpoint['verification']['db_ok'] );
+		$job = $this->tick( $job );
+		$job = $this->tick( $job );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_COMPLETED, $job->status );
+		$creates = $this->calls;
+		$this->assertCount( 2, $creates );
+		$this->assertSame( 'orch01test', $creates[0]['params']['restore_id'] );
+		$this->assertSame( $creates[0]['params'], $creates[1]['params'] );
+		$this->assertSame( array( 'restore_task_create', 'restore_task_create' ), array_column( $this->calls, 'what' ) );
+	}
+
+	/**
+	 * A recovered failure retains the original handle instead of staging another task.
+	 *
+	 * @test
+	 */
+	public function b14_reused_failed_task_records_failure() {
+		$this->responses['restore_task_create'] = array(
+			'task_id'    => 'b14-failed',
+			'phase'      => 'failed',
+			'reused'     => true,
+			'error'      => 'Original restore failed.',
+			'error_code' => 'mainwp_cloud_pull_failed',
+		);
+		$this->responses['restore_task_cancel'] = array(
+			'result' => 'already_terminal',
+			'phase'  => 'failed',
+		);
+
+		$job = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_STAGING );
+		$job = $this->tick( $job );
+		$this->assertSame( 'b14-failed', $job->child_task_id );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
+		$this->assertSame( 'Original restore failed.', $job->last_error );
+		$this->assertSame( 'mainwp_cloud_pull_failed', $job->checkpoint['last_error_code'] );
+		$this->tick( $job );
+		$this->assertSame( 1, array_count_values( array_column( $this->calls, 'what' ) )['restore_task_create'] );
+	}
+
+	/**
+	 * A reused cloud task may still need bytes or may already be applying them.
+	 *
+	 * @test
+	 */
+	public function b14_reused_cloud_task_routes_by_stored_phase() {
+		$manifest = $this->pull_manifest_fixture();
+		$this->use_cloud_pull_driver( $manifest );
+		foreach ( array( 'queued', 'receiving', 'pulling', 'replaying_db', 'completed' ) as $phase ) {
+			$this->responses['restore_task_create'] = array(
+				'task_id' => 'b14-' . $phase,
+				'phase'   => $phase,
+				'reused'  => true,
+			);
+
+			$job = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_STAGING );
+			$job = $this->tick( $job );
+			$this->assertSame( 'b14-' . $phase, $job->child_task_id );
+			if ( in_array( $phase, array( 'queued', 'receiving' ), true ) ) {
+				$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_STAGING, $job->status );
+				$job = $this->tick( $job );
+				$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING, $job->status );
+			} elseif ( 'completed' === $phase ) {
+				$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_VERIFYING, $job->status );
+			} else {
+				$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, $job->status );
+			}
+			$this->assertTrue( MainWP_Backup_Restore_Job_Store::instance()->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_COMPLETED ) );
+		}
+		$this->assertSame( 5, array_count_values( array_column( $this->calls, 'what' ) )['restore_task_create'] );
+
+		$this->responses['restore_task_create'] = array(
+			'task_id'   => 'b14-accepted-pull',
+			'phase'     => 'queued',
+			'reused'    => true,
+			'sub_state' => array( 'params' => array( 'pull_manifest' => $manifest ) ),
+		);
+
+		$job = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_STAGING );
+		$job = $this->tick( $job );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, $job->status );
+		$this->assertSame( 'b14-accepted-pull', $job->child_task_id );
 	}
 
 	/**

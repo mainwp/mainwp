@@ -496,6 +496,63 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Hosts can recreate web-served staging trees without their deny files.
+	 *
+	 * @return void
+	 */
+	public function test_chunking_protects_staging_after_creation_and_recreation() {
+		list( $dest_id ) = $this->make_local_destination();
+		$snapshot_id     = $this->make_snapshot( $this->standard_files() );
+		$store           = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+		$job      = $store->get_jobs_for_snapshot( $snapshot_id )[0];
+		$driver   = MainWP_Backup_Upload_Driver::instance();
+		$build    = new \ReflectionMethod( $driver, 'new_checkpoint' );
+		$chunking = new \ReflectionMethod( $driver, 'phase_chunking' );
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+		$base     = $this->make_temp_dir();
+		$root     = $base . '/mainwp/upload-staging';
+		$upload   = static function ( $dirs ) use ( $base ) {
+			$dirs['basedir'] = $base;
+			return $dirs;
+		};
+		$filtered = static function ( $dirs ) use ( $base ) {
+			$dirs['basedir'] = $base . '/filtered';
+			return $dirs;
+		};
+		add_filter( 'upload_dir', $upload );
+		add_filter( 'mainwp_get_wp_upload_dir', $filtered );
+		try {
+			for ( $pass = 0; $pass < 3; ++$pass ) {
+				if ( 1 === $pass ) {
+					$this->remove_dir( $root );
+					$this->assertDirectoryDoesNotExist( $root );
+				} elseif ( 2 === $pass ) {
+					unlink( $root . '/.htaccess' );
+					unlink( $root . '/index.php' );
+				}
+				$checkpoint = $build->invoke( $driver, $snapshot );
+				$args       = array( $job, &$checkpoint, microtime( true ) + 60 );
+				$this->assertTrue( $chunking->invokeArgs( $driver, $args ) );
+				$this->assertNotEmpty( glob( $root . '/' . $snapshot_id . '-' . $dest_id . '/*.bin' ), 'Chunking must write staging bytes.' );
+				$this->assertFileExists( $root . '/.htaccess' );
+				$this->assertSame( 'deny from all', file_get_contents( $root . '/.htaccess' ) );
+				$this->assertFileExists( $root . '/index.php' );
+				$this->assertSame( '', file_get_contents( $root . '/index.php' ) );
+				$this->assertDirectoryDoesNotExist( $base . '/filtered/mainwp/upload-staging' );
+			}
+			$cleanup = new \ReflectionMethod( $driver, 'cleanup_staging' );
+			$cleanup->invoke( $driver, $job );
+			$this->assertDirectoryDoesNotExist( $root . '/' . $snapshot_id . '-' . $dest_id );
+			$this->assertFileExists( $root . '/.htaccess' );
+			$this->assertFileExists( $root . '/index.php' );
+		} finally {
+			remove_filter( 'upload_dir', $upload );
+			remove_filter( 'mainwp_get_wp_upload_dir', $filtered );
+		}
+	}
+
+	/**
 	 * A zero-budget tick still checkpoints, and the next tick finishes
 	 * from the checkpoint.
 	 *

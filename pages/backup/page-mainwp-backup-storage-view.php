@@ -39,6 +39,9 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
         ?>
         <div class="ui alt segment" id="mainwp-backup-storage">
             <?php static::render_oauth_notice(); ?>
+            <?php if ( ! empty( $_GET['sftp_trust_reset'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display-only save notice. ?>
+                <div class="ui yellow message"><?php echo esc_html( MainWP_Backup_Storage_Handler::sftp_trust_reset_notice() ); ?></div>
+            <?php endif; ?>
             <div class="ui message" id="mainwp-storage-message-zone" style="display:none"></div>
             <?php static::render_list_table(); ?>
             <div class="ui hidden divider"></div>
@@ -431,7 +434,7 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                     if ( response && response.error ) {
                         feedbackZone( response.error, 'red' );
                     } else {
-                        location.href = location.pathname + location.search.replace( /&saved=1/, '' ) + '&saved=1';
+                        location.href = location.pathname + location.search.replace( /&saved=1|&sftp_trust_reset=1/g, '' ) + '&saved=1' + ( response && response.notice ? '&sftp_trust_reset=1' : '' );
                     }
                 }, 'json' );
             } );

@@ -557,9 +557,9 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
         $identity_fields = array(
             's3'      => array( 'endpoint', 'bucket', 'region', 'path_style', 'access_key' ),
             'gcs'     => array( 'bucket', 'region', 'access_key' ),
-            'dropbox' => array( 'app_key', 'base_path' ),
-            'sftp'    => array( 'username', 'base_path' ),
-            'local'   => array( 'base_path' ),
+            'dropbox' => array( 'app_key' ),
+            'sftp'    => array( 'username' ),
+            'local'   => array(),
         );
         if ( 'sftp' === $provider && 0 === static::pin_enforcement_id( 1, $settings, $stored ) ) {
             return false;

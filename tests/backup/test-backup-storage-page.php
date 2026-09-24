@@ -1391,6 +1391,43 @@ class MainWP_Backup_Storage_Page_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Folder-only edits retain every stored secret when submitted blank.
+	 *
+	 * @return void
+	 */
+	public function test_base_path_only_changes_keep_stored_secrets() {
+		$method = new \ReflectionMethod( MainWP_Backup_Storage_Handler::class, 'merge_candidate' );
+		$method->setAccessible( true );
+		foreach ( array( 'dropbox', 'sftp' ) as $provider ) {
+			$stored  = static::credential_target_changes()[ $provider . ':provider' ][1];
+			$secrets = array();
+			foreach ( MainWP_Backup_Storage_Handler::SECRET_FIELDS as $field ) {
+				$secrets[ $field ] = 'saved-' . $field;
+			}
+			$id = MainWP_Backup_Storage_Destinations::instance()->add_destination(
+				array(
+					'provider' => $provider,
+					'name'     => 'Original',
+					'settings' => array_merge( $stored, $secrets ),
+				)
+			);
+			$this->assertGreaterThan( 0, $id );
+			$input                          = array(
+				'id'       => $id,
+				'provider' => $provider,
+				'name'     => 'Original',
+				'settings' => array_merge( $stored, array_fill_keys( MainWP_Backup_Storage_Handler::SECRET_FIELDS, '' ) ),
+			);
+			$input['settings']['base_path'] = '/other-backups';
+			$changed                        = $method->invoke( null, $input );
+			$this->assertSame( '/other-backups', $changed['settings']['base_path'] );
+			foreach ( $secrets as $field => $value ) {
+				$this->assertSame( $value, $changed['settings'][ $field ], $provider . ':base_path must retain ' . $field );
+			}
+		}
+	}
+
+	/**
 	 * Provider targets and account identifiers used by the connection code.
 	 *
 	 * @return array
@@ -1423,7 +1460,7 @@ class MainWP_Backup_Storage_Page_Test extends \WP_UnitTestCase {
 		);
 		$cases     = array();
 		foreach ( $providers as $provider => $settings ) {
-			foreach ( array_merge( array_keys( $settings ), array( 'provider' ) ) as $field ) {
+			foreach ( array_merge( array_diff( array_keys( $settings ), array( 'base_path' ) ), array( 'provider' ) ) as $field ) {
 				$cases[ $provider . ':' . $field ] = array( $provider, $settings, $field );
 			}
 		}

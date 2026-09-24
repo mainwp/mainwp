@@ -582,7 +582,12 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
     }
 
     /**
-     * Keep learned trust across edits that do not change the connection.
+     * Keep learned trust across edits that do not change the server.
+     *
+     * The pin identifies the server, not the account. A credential edit is
+     * connection-tested against the pinned key before it saves, so clearing
+     * the pin afterwards would only reopen trust-on-first-use for the next
+     * connection, with the new credential as the prize.
      *
      * @param array $settings          Candidate settings.
      * @param array $existing_settings Stored settings.
@@ -590,19 +595,7 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
      * @return bool
      */
     public static function sftp_trust_changed( array $settings, array $existing_settings ): bool {
-        if ( 0 === static::pin_enforcement_id( 1, $settings, $existing_settings ) ) {
-            return true;
-        }
-        if ( (string) ( $settings['username'] ?? '' ) !== (string) ( $existing_settings['username'] ?? '' ) ) {
-            return true;
-        }
-        foreach ( array( 'password', 'private_key' ) as $field ) {
-            $submitted = (string) ( $settings[ $field ] ?? '' );
-            if ( '' !== $submitted && (string) ( $existing_settings[ $field ] ?? '' ) !== $submitted ) {
-                return true;
-            }
-        }
-        return false;
+        return 0 === static::pin_enforcement_id( 1, $settings, $existing_settings );
     }
 
     /**
@@ -611,7 +604,7 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
      * @return string
      */
     public static function sftp_trust_reset_notice(): string {
-        return __( 'The SFTP host key for this destination was reset because the host, port, or credentials changed and will be learned again on the next connection.', 'mainwp' );
+        return __( 'The SFTP host key for this destination was reset because the host or port changed and will be learned again on the next connection.', 'mainwp' );
     }
 
     /**

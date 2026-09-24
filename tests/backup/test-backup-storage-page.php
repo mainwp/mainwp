@@ -195,18 +195,19 @@ class MainWP_Backup_Storage_Page_Test extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * Credential replacements must be distinguished from retained secrets.
+	 * A credential edit on the same server keeps the pin, so the next
+	 * connection cannot hand the new credential to an unpinned key.
 	 *
 	 * @dataProvider b13_changed_sftp_credentials
 	 * @param array $changes Submitted credential changes.
 	 * @return void
 	 */
-	public function test_b13_save_sftp_credential_change_clears_pin_and_returns_notice( array $changes ) {
-		$this->assert_b13_sftp_save( $changes, true );
+	public function test_b13_save_sftp_credential_change_keeps_pin( array $changes ) {
+		$this->assert_b13_sftp_save( $changes, false );
 	}
 
 	/**
-	 * Each credential field can independently change the saved connection.
+	 * Each credential field is checked on its own.
 	 *
 	 * @return array
 	 */
@@ -283,7 +284,7 @@ class MainWP_Backup_Storage_Page_Test extends \WP_UnitTestCase {
 			if ( $reset_trust ) {
 				$this->assertArrayNotHasKey( $id, $pins );
 				$this->assertArrayHasKey( 'notice', $result );
-				$this->assertSame( 'The SFTP host key for this destination was reset because the host, port, or credentials changed and will be learned again on the next connection.', $result['notice'] );
+				$this->assertSame( 'The SFTP host key for this destination was reset because the host or port changed and will be learned again on the next connection.', $result['notice'] );
 			} else {
 				$this->assertSame( $pin, $pins[ $id ] ?? null );
 				$this->assertArrayNotHasKey( 'notice', $result );

@@ -4911,6 +4911,70 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
+	 * Transfer results must not overwrite a row advanced by a concurrent cancel.
+	 */
+	public function test_transferring_mid_chunk_status_change_preserves_other_lane() {
+		$ack   = array( 'bytes_received' => 10 );
+		$wrong = array( 'error' => 'ERR_RESTORE_WRONG_PHASE' );
+		$rows  = array(
+			'advanced_after_ack'   => array( true, array( $ack, $wrong ), 1, MainWP_Backup_Restore_Job_Store::STATUS_RUNNING ),
+			'advanced_with_error'  => array( true, array( $wrong ), 1, MainWP_Backup_Restore_Job_Store::STATUS_RUNNING ),
+			'transfer_completes'   => array( false, array( $ack, $ack ), 2, MainWP_Backup_Restore_Job_Store::STATUS_RUNNING ),
+			'transfer_retry_error' => array( false, array( $wrong ), 1, MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE ),
+		);
+
+		foreach ( $rows as $label => list( $advance, $responses, $expected_calls, $expected_status ) ) {
+			$this->calls                               = array();
+			$this->responses['restore_artifact_chunk'] = $responses;
+			$plan                                      = $this->staged_plan_fixture();
+			$plan[]                                    = array_merge( $plan[0], array( 'file' => 'db-second.zip' ) );
+			$job                                       = $this->make_job(
+				array( 'plan' => $plan ),
+				MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING,
+				array( 'child_task_id' => 'task-9-restore' )
+			);
+			$store                                     = MainWP_Backup_Restore_Job_Store::instance();
+			$id                                        = (int) $job->id;
+			$attempts                                  = (int) $job->attempt_count;
+			$concurrent_checkpoint                     = $job->checkpoint;
+			$chunk_calls                               = 0;
+			$on_chunk                                  = function ( $pre, $website, $what ) use ( $advance, $store, $id, $concurrent_checkpoint, &$chunk_calls ) {
+				if ( 'restore_artifact_chunk' === $what && 1 === ++$chunk_calls && $advance ) {
+					// Match the row left by a UI cancel when the child already completed.
+					$this->assertTrue( $store->save_checkpoint( $id, $concurrent_checkpoint, null, true ) );
+					$this->assertTrue( $store->set_status( $id, MainWP_Backup_Restore_Job_Store::STATUS_RUNNING ) );
+				}
+				return $pre;
+			};
+			add_filter( 'mainwp_fetch_url_authed_pre', $on_chunk, 20, 3 );
+			try {
+				$job = $this->tick( $job );
+			} finally {
+				remove_filter( 'mainwp_fetch_url_authed_pre', $on_chunk, 20 );
+			}
+
+			$this->assertSame( array_fill( 0, $expected_calls, 'restore_artifact_chunk' ), array_column( $this->calls, 'what' ), $label );
+			$this->assertSame( $expected_status, $job->status, $label );
+			if ( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE === $expected_status ) {
+				$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING, $job->checkpoint['resume_status'], $label );
+				$this->assertNotEmpty( $job->last_error, $label );
+				$this->assertSame( $attempts + 1, (int) $job->attempt_count, $label );
+			} else {
+				$this->assertEmpty( $job->last_error, $label );
+				$this->assertSame( $attempts, (int) $job->attempt_count, $label );
+				$this->assertArrayNotHasKey( 'resume_status', $job->checkpoint, $label );
+				if ( $advance ) {
+					$this->assertSame( $concurrent_checkpoint, $job->checkpoint, $label );
+				} else {
+					$this->assertSame( count( $plan ), $job->checkpoint['transfer']['artifact_index'], $label );
+				}
+			}
+			// Release the site's restore slot before the next matrix row.
+			$this->assertTrue( $store->set_status( $id, MainWP_Backup_Restore_Job_Store::STATUS_COMPLETED ), $label );
+		}
+	}
+
+	/**
 	 * A cancel recorded while a slice's child round trip was in
 	 * flight must stop the loop before the NEXT slice. The intent lands
 	 * during the first restore_task_run round trip (the UI's unfenced

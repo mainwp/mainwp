@@ -207,7 +207,7 @@ class MainWP_Backup_Storage_SFTP implements MainWP_Backup_Storage_Provider { // 
         }
 
         if ( ! hash_equals( static::normalize_fingerprint( (string) $known[ $destination_id ] ), static::normalize_fingerprint( $offered ) ) ) {
-            throw new \RuntimeException( esc_html( 'The SFTP server\'s host key changed. Known: ' . $known[ $destination_id ] . ' - offered: ' . $offered . '. This can mean the connection is being intercepted; if the server key was intentionally rotated, re-save the destination to trust the new key.' ), 401 );
+            throw new \RuntimeException( esc_html( 'The SFTP server\'s host key changed. Known: ' . $known[ $destination_id ] . ' - offered: ' . $offered . '. This can mean the connection is being intercepted; if the server key was intentionally rotated, enter its new fingerprint in the destination\'s Host key fingerprint field.' ), 401 );
         }
     }
 

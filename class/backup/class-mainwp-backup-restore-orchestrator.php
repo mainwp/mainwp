@@ -928,11 +928,17 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             (array) $checkpoint['plan'],
             $cursor,
             $deadline,
-            function () use ( $store, $job ): bool {
+            function () use ( $store, $job, $still_driving ): bool {
                 $fresh = $store->get_job( (int) $job->id );
-                return null !== $fresh && empty( $fresh->checkpoint['cancel_intent'] );
+                return null !== $fresh && empty( $fresh->checkpoint['cancel_intent'] ) && in_array( $fresh->status, $still_driving, true );
             }
         );
+
+        // Another lane may have taken over during the chunk round trip.
+        $fresh = $store->get_job( (int) $job->id );
+        if ( null === $fresh || ! in_array( $fresh->status, $still_driving, true ) ) {
+            return;
+        }
 
         $checkpoint['transfer'] = $cursor;
         $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );

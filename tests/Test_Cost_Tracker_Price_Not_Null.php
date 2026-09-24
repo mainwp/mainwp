@@ -212,6 +212,84 @@ class Test_Cost_Tracker_Price_Not_Null extends WP_UnitTestCase {
     }
 
     /**
+     * A price written after the NULL id list is captured is not replaced with 0.
+     */
+    public function test_concurrent_price_edit_is_not_zeroed() {
+        $this->ensure_cost_table();
+        $this->make_price_nullable( 'decimal(26,8)' );
+
+        $edited_id = $this->insert_cost( 'race-edited', null );
+        $still_null = $this->insert_cost( 'race-still-null', null );
+
+        $db = new class() extends Cost_Tracker_DB {
+            /**
+             * Id that receives a real price after the id list is read.
+             *
+             * @var int
+             */
+            public $race_id = 0;
+
+            /**
+             * Simulate a save that lands between the SELECT and the UPDATE.
+             *
+             * @param string $table Escaped table name.
+             *
+             * @return array|null
+             */
+            protected function cost_tracker_null_price_ids( $table ) {
+                $ids = parent::cost_tracker_null_price_ids( $table );
+                global $wpdb;
+                $wpdb->query( $wpdb->prepare( "UPDATE {$table} SET price = %f WHERE id = %d", 9.99, $this->race_id ) );
+                return $ids;
+            }
+        };
+        $db->race_id = $edited_id;
+
+        $this->assertTrue( $db->repair_cost_tracker_price_not_null() );
+        $this->assertSame( 'NO', $this->price_column()->Null );
+        $this->assertSame( '9.99000000', $this->stored_price( $edited_id ) );
+        $this->assertSame( '0.00000000', $this->stored_price( $still_null ) );
+    }
+
+    /**
+     * A price written after the repair zero is not put back to NULL when ALTER fails.
+     */
+    public function test_concurrent_price_edit_is_not_restored_to_null() {
+        $this->ensure_cost_table();
+        $this->make_price_nullable( 'decimal(26,8)' );
+
+        $edited_id = $this->insert_cost( 'race-restore-edited', null );
+        $still_zero = $this->insert_cost( 'race-restore-zero', null );
+
+        $db = new class() extends Cost_Tracker_DB {
+            /**
+             * Id edited after it was set to 0.
+             *
+             * @var int
+             */
+            public $race_id = 0;
+
+            /**
+             * Skip ALTER and write a real price over the repair zero.
+             *
+             * @param string $table Escaped table name.
+             *
+             * @return void
+             */
+            protected function apply_cost_tracker_price_not_null( $table ) {
+                global $wpdb;
+                $wpdb->query( $wpdb->prepare( "UPDATE {$table} SET price = %f WHERE id = %d", 15, $this->race_id ) );
+            }
+        };
+        $db->race_id = $edited_id;
+
+        $this->assertFalse( $db->repair_cost_tracker_price_not_null() );
+        $this->assertSame( 'YES', $this->price_column()->Null );
+        $this->assertSame( '15.00000000', $this->stored_price( $edited_id ) );
+        $this->assertNull( $this->stored_price( $still_zero ) );
+    }
+
+    /**
      * Cost tracker table name.
      *
      * @return string

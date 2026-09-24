@@ -278,7 +278,7 @@ PRIMARY KEY  (`id`)  ';
      *
      * @return array|null
      */
-    private function cost_tracker_null_price_ids( $table ) {
+    protected function cost_tracker_null_price_ids( $table ) {
         $this->wpdb->last_error = '';
         // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is escaped; no user input.
         $ids = $this->wpdb->get_col( "SELECT id FROM {$table} WHERE price IS NULL" );
@@ -304,8 +304,8 @@ PRIMARY KEY  (`id`)  ';
         }
 
         $id_list = implode( ',', array_map( 'absint', $ids ) );
-        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- ids are absint; table name is escaped.
-        $updated = $this->wpdb->query( "UPDATE {$table} SET price = 0 WHERE id IN ({$id_list})" );
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- ids are absint; table name is escaped. price IS NULL skips a row edited after the id list was captured.
+        $updated = $this->wpdb->query( "UPDATE {$table} SET price = 0 WHERE id IN ({$id_list}) AND price IS NULL" );
         return false !== $updated;
     }
 
@@ -323,8 +323,8 @@ PRIMARY KEY  (`id`)  ';
         }
 
         $id_list = implode( ',', array_map( 'absint', $ids ) );
-        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- ids are absint; table name is escaped.
-        $restored = $this->wpdb->query( "UPDATE {$table} SET price = NULL WHERE id IN ({$id_list})" );
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- ids are absint; table name is escaped. price = 0 skips a row edited after it was zeroed.
+        $restored = $this->wpdb->query( "UPDATE {$table} SET price = NULL WHERE id IN ({$id_list}) AND price = 0" );
         return false !== $restored;
     }
 

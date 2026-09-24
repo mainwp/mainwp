@@ -20,6 +20,8 @@ use MainWP\Dashboard\Module\ApiBackups\Api_Backups_Utility;
 use MainWP\Dashboard\MainWP_Keys_Manager;
 use MainWP\Dashboard\MainWP_Api_Manager;
 use MainWP\Dashboard\MainWP_Connect;
+use MainWP\Dashboard\MainWP_Error_Helper;
+use MainWP\Dashboard\MainWP_Exception;
 use MainWP\Dashboard\MainWP_Logger;
 use MainWP\Dashboard\MainWP_Sync;
 use MainWP\Dashboard\MainWP_Manage_Sites_View;
@@ -1734,7 +1736,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         }
         $website_ids = $destroy_data['websites'];
         $start_index = $destroy_data['processed'];
-        $batch       = array_slice( $website_ids, $start_index, $this->batch_size );
+        $batch       = array_slice( $website_ids, $start_index, self::$batch_size );
 
         foreach ( $batch as $website_id ) {
             try {
@@ -1744,7 +1746,17 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 }
 
                 if ( MainWP_System_Utility::can_edit_website( $website ) ) {
+                    $response = MainWP_Connect::fetch_url_authed( $website, 'settings_tools', array( 'action' => 'force_destroy_sessions' ) );
                     ++$destroy_data['processed'];
+                    if ( ! is_array( $response ) || empty( $response['success'] ) ) {
+                        // The error text comes from the Child; cap and clean it before it is stored and served back.
+                        $child_error = is_array( $response ) && isset( $response['error'] ) && is_string( $response['error'] ) ? sanitize_text_field( mb_substr( $response['error'], 0, 500 ) ) : '';
+                        ++$destroy_data['failed'];
+                        $destroy_data['errors'][] = array(
+                            'site_id' => $website_id,
+                            'error'   => '' !== $child_error ? $child_error : __( 'Cannot destroy sessions.', 'mainwp' ),
+                        );
+                    }
                 } else {
                     ++$destroy_data['failed'];
                     ++$destroy_data['processed'];
@@ -1758,7 +1770,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 ++$destroy_data['processed'];
                 $destroy_data['errors'][] = array(
                     'site_id' => $website_id,
-                    'error'   => $e->getMessage(),
+                    'error'   => $e instanceof MainWP_Exception ? MainWP_Error_Helper::get_error_message( $e ) : $e->getMessage(),
                 );
             }
         }
@@ -1896,7 +1908,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         }
         $website_ids = $renew_data['websites'];
         $start_index = $renew_data['processed'];
-        $batch       = array_slice( $website_ids, $start_index, $this->batch_size );
+        $batch       = array_slice( $website_ids, $start_index, self::$batch_size );
 
         foreach ( $batch as $website_id ) {
             try {
@@ -2036,7 +2048,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
 
         $website_ids = $disconnect_data['websites'];
         $start_index = $disconnect_data['processed'];
-        $batch       = array_slice( $website_ids, $start_index, $this->batch_size );
+        $batch       = array_slice( $website_ids, $start_index, self::$batch_size );
 
         foreach ( $batch as $website_id ) {
             try {
@@ -2077,7 +2089,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 array( $disconnect_id )
             );
         } else {
-            wp_schedule_single_event( time() + 3, 'mainwp_disconnect_site_batch', array( $disconnect_id ) );
+            wp_schedule_single_event( time() + 3, 'mainwp_cron_disconnect_batch', array( $disconnect_id ) );
             spawn_cron(); // Run Cron now.
         }
 

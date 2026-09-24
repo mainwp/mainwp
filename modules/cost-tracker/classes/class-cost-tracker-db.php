@@ -254,8 +254,14 @@ PRIMARY KEY  (`id`)  ';
                 return false;
             }
             $cache_rows = $this->cost_tracker_cache_rows( $table, $null_ids );
-            $zeroed_ids = $this->set_cost_tracker_prices_to_zero( $table, $null_ids );
-            if ( null === $zeroed_ids ) {
+            if ( null === $cache_rows ) {
+                return false;
+            }
+            $zero_result = $this->set_cost_tracker_prices_to_zero( $table, $null_ids );
+            $zeroed_ids  = $zero_result['zeroed'];
+            if ( ! $zero_result['ok'] ) {
+                $this->restore_null_cost_prices( $table, $zeroed_ids );
+                $this->invalidate_repaired_cost_prices( $zeroed_ids, $cache_rows );
                 return false;
             }
         }
@@ -300,17 +306,34 @@ PRIMARY KEY  (`id`)  ';
      * @param string $table Escaped cost tracker table name.
      * @param array  $ids Cost ids.
      *
-     * @return array Rows keyed by id.
+     * @return array|null Rows keyed by int id, or null when the lookup fails or omits an id.
      */
-    private function cost_tracker_cache_rows( $table, $ids ) {
+    protected function cost_tracker_cache_rows( $table, $ids ) {
         if ( empty( $ids ) ) {
             return array();
         }
 
-        $id_list = implode( ',', array_map( 'absint', $ids ) );
+        $ids                    = array_values( array_filter( array_map( 'absint', $ids ) ) );
+        $id_list                = implode( ',', $ids );
+        $this->wpdb->last_error = '';
         // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- ids are absint; table name is escaped.
-        $rows = $this->wpdb->get_results( "SELECT id, slug, product_type, sites, clients FROM {$table} WHERE id IN ({$id_list})", OBJECT_K );
-        return is_array( $rows ) ? $rows : array();
+        $rows = $this->wpdb->get_results( "SELECT id, slug, product_type, sites, clients FROM {$table} WHERE id IN ({$id_list})" );
+        if ( '' !== $this->wpdb->last_error || ! is_array( $rows ) ) {
+            return null;
+        }
+
+        $by_id = array();
+        foreach ( $rows as $row ) {
+            $by_id[ absint( $row->id ) ] = $row;
+        }
+
+        foreach ( $ids as $id ) {
+            if ( ! isset( $by_id[ $id ] ) ) {
+                return null;
+            }
+        }
+
+        return $by_id;
     }
 
     /**
@@ -322,12 +345,15 @@ PRIMARY KEY  (`id`)  ';
      * @param string $table Escaped cost tracker table name.
      * @param array  $ids Cost ids.
      *
-     * @return array|null Ids the repair actually zeroed, or null on query failure.
+     * @return array{zeroed: array<int>, ok: bool} Ids already zeroed, and whether the batch finished.
      */
     private function set_cost_tracker_prices_to_zero( $table, $ids ) {
         $zeroed_ids = array();
         if ( empty( $ids ) ) {
-            return $zeroed_ids;
+            return array(
+                'zeroed' => $zeroed_ids,
+                'ok'     => true,
+            );
         }
 
         foreach ( $ids as $id ) {
@@ -335,17 +361,35 @@ PRIMARY KEY  (`id`)  ';
             if ( empty( $id ) ) {
                 continue;
             }
-            // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is escaped; id is absint. price IS NULL skips a row edited after the id list was captured.
-            $updated = $this->wpdb->query( $this->wpdb->prepare( "UPDATE {$table} SET price = 0 WHERE id = %d AND price IS NULL", $id ) );
+            $updated = $this->zero_one_null_cost_price( $table, $id );
             if ( false === $updated ) {
-                return null;
+                return array(
+                    'zeroed' => $zeroed_ids,
+                    'ok'     => false,
+                );
             }
             if ( $updated > 0 ) {
                 $zeroed_ids[] = $id;
             }
         }
 
-        return $zeroed_ids;
+        return array(
+            'zeroed' => $zeroed_ids,
+            'ok'     => true,
+        );
+    }
+
+    /**
+     * Zero one still-NULL price row.
+     *
+     * @param string $table Escaped cost tracker table name.
+     * @param int    $id Cost id.
+     *
+     * @return int|false Rows changed, or false on query failure.
+     */
+    protected function zero_one_null_cost_price( $table, $id ) {
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is escaped; id is absint. price IS NULL skips a row edited after the id list was captured.
+        return $this->wpdb->query( $this->wpdb->prepare( "UPDATE {$table} SET price = 0 WHERE id = %d AND price IS NULL", $id ) );
     }
 
     /**
@@ -1235,6 +1279,10 @@ PRIMARY KEY  (`id`)  ';
      * @return string Cache key.
      */
     private function get_cache_key_for_cost_tracker( $by, $value, $params = array() ) {
+        if ( in_array( $by, array( 'id', 'site_id', 'client_id' ), true ) && is_numeric( $value ) ) {
+            $value = (int) $value;
+        }
+
         $identifier = wp_json_encode(
             array(
                 'method' => 'get_cost_tracker_by',

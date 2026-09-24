@@ -367,6 +367,99 @@ class Test_Cost_Tracker_Price_Not_Null extends WP_UnitTestCase {
     }
 
     /**
+     * A mid-loop zeroing failure restores ids already set to 0.
+     */
+    public function test_mid_loop_zeroing_failure_restores_partial_batch() {
+        $this->ensure_cost_table();
+        $this->make_price_nullable( 'decimal(26,8)' );
+
+        $first_id  = $this->insert_cost( 'partial-first', null );
+        $second_id = $this->insert_cost( 'partial-second', null );
+
+        $id_key = $this->cost_cache_key( 'id', $first_id, array() );
+        wp_cache_set( $id_key, (object) array( 'id' => $first_id, 'price' => null ), 'mainwp_cost_tracker' );
+
+        $db = new class() extends Cost_Tracker_DB {
+            /**
+             * Fail on the second still-NULL row.
+             *
+             * @var int
+             */
+            public $updates = 0;
+
+            /**
+             * Zero one row, then fail the next UPDATE.
+             *
+             * @param string $table Escaped table name.
+             * @param int    $id Cost id.
+             *
+             * @return int|false
+             */
+            protected function zero_one_null_cost_price( $table, $id ) {
+                ++$this->updates;
+                if ( 2 === $this->updates ) {
+                    return false;
+                }
+                return parent::zero_one_null_cost_price( $table, $id );
+            }
+        };
+
+        $this->assertFalse( $db->repair_cost_tracker_price_not_null() );
+        $this->assertSame( 'YES', $this->price_column()->Null );
+        $this->assertNull( $this->stored_price( $first_id ) );
+        $this->assertNull( $this->stored_price( $second_id ) );
+        $this->assertFalse( wp_cache_get( $id_key, 'mainwp_cost_tracker' ) );
+        $this->assertFalse( get_option( Cost_Tracker_DB::PRICE_NOT_NULL_OPTION ) );
+    }
+
+    /**
+     * Missing cache metadata aborts before the column is tightened.
+     */
+    public function test_cache_metadata_lookup_failure_aborts_repair() {
+        $this->ensure_cost_table();
+        $this->make_price_nullable( 'decimal(26,8)' );
+
+        $null_id = $this->insert_cost( 'meta-fail', null );
+
+        $db = new class() extends Cost_Tracker_DB {
+            /**
+             * Pretend the metadata SELECT failed.
+             *
+             * @param string $table Escaped table name.
+             * @param array  $ids Cost ids.
+             *
+             * @return null
+             */
+            protected function cost_tracker_cache_rows( $table, $ids ) { // phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
+                return null;
+            }
+        };
+
+        $this->assertFalse( $db->repair_cost_tracker_price_not_null() );
+        $this->assertSame( 'YES', $this->price_column()->Null );
+        $this->assertNull( $this->stored_price( $null_id ) );
+        $this->assertFalse( get_option( Cost_Tracker_DB::PRICE_NOT_NULL_OPTION ) );
+    }
+
+    /**
+     * Numeric id cache keys match whether the caller passed int or string.
+     */
+    public function test_numeric_cache_keys_normalize_int_and_string_ids() {
+        $this->ensure_cost_table();
+        $this->make_price_nullable( 'decimal(26,8)' );
+
+        $null_id = $this->insert_cost( 'key-norm', null );
+        $int_key = $this->cost_cache_key( 'id', (int) $null_id, array() );
+        $str_key = $this->cost_cache_key( 'id', (string) $null_id, array() );
+        $this->assertSame( $int_key, $str_key );
+
+        wp_cache_set( $str_key, (object) array( 'id' => $null_id, 'price' => null ), 'mainwp_cost_tracker' );
+        $this->assertTrue( Cost_Tracker_DB::get_instance()->repair_cost_tracker_price_not_null() );
+        $this->assertFalse( wp_cache_get( $int_key, 'mainwp_cost_tracker' ) );
+        $this->assertFalse( wp_cache_get( $str_key, 'mainwp_cost_tracker' ) );
+    }
+
+    /**
      * Cost tracker table name.
      *
      * @return string
@@ -455,6 +548,10 @@ class Test_Cost_Tracker_Price_Not_Null extends WP_UnitTestCase {
      * @return string
      */
     private function cost_cache_key( $by, $value, $params = array() ) {
+        if ( in_array( $by, array( 'id', 'site_id', 'client_id' ), true ) && is_numeric( $value ) ) {
+            $value = (int) $value;
+        }
+
         return 'mainwp_cost_tracker_' . md5( // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_md5 -- cache key only.
             wp_json_encode(
                 array(

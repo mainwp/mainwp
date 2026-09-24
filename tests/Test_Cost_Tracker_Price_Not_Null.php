@@ -290,6 +290,83 @@ class Test_Cost_Tracker_Price_Not_Null extends WP_UnitTestCase {
     }
 
     /**
+     * A user-saved price of 0 is not restored to NULL when ALTER fails.
+     */
+    public function test_user_saved_zero_survives_failed_alter() {
+        $this->ensure_cost_table();
+        $this->make_price_nullable( 'decimal(26,8)' );
+
+        $user_zero_id = $this->insert_cost( 'user-zero', '0' );
+        $null_id      = $this->insert_cost( 'null-for-restore', null );
+
+        $db = new class() extends Cost_Tracker_DB {
+            /**
+             * Skip the ALTER so verification fails after NULL prices were zeroed.
+             *
+             * @param string $table Escaped table name.
+             *
+             * @return void
+             */
+            protected function apply_cost_tracker_price_not_null( $table ) { // phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
+            }
+        };
+
+        $this->assertFalse( $db->repair_cost_tracker_price_not_null() );
+        $this->assertSame( 'YES', $this->price_column()->Null );
+        $this->assertSame( '0.00000000', $this->stored_price( $user_zero_id ) );
+        $this->assertNull( $this->stored_price( $null_id ) );
+    }
+
+    /**
+     * A failed ALTER still drops stale id, slug, and site_id cache entries.
+     */
+    public function test_failed_alter_invalidates_cost_caches() {
+        $this->ensure_cost_table();
+        $this->make_price_nullable( 'decimal(26,8)' );
+
+        $null_id = $this->insert_cost(
+            'cache-fail',
+            null,
+            array(
+                'sites'   => wp_json_encode( array( 42 ) ),
+                'clients' => wp_json_encode( array( 7 ) ),
+            )
+        );
+
+        $db       = Cost_Tracker_DB::get_instance();
+        $id_key   = $this->cost_cache_key( 'id', $null_id, array() );
+        $slug_key = $this->cost_cache_key( 'slug', 'mwp-1792-cache-fail', array( 'product_type' => 'plugin' ) );
+        $site_key = $this->cost_cache_key( 'site_id', 42, array() );
+        $client_key = $this->cost_cache_key( 'client_id', 7, array() );
+
+        wp_cache_set( $id_key, (object) array( 'id' => $null_id, 'price' => null ), 'mainwp_cost_tracker' );
+        wp_cache_set( $slug_key, (object) array( 'id' => $null_id, 'price' => null ), 'mainwp_cost_tracker' );
+        wp_cache_set( $site_key, array( (object) array( 'id' => $null_id, 'price' => null ) ), 'mainwp_cost_tracker' );
+        wp_cache_set( $client_key, array( (object) array( 'id' => $null_id, 'price' => null ) ), 'mainwp_cost_tracker' );
+        wp_cache_set( 'mainwp_cost_tracker_all', 'stale-all', 'mainwp_cost_tracker' );
+
+        $failing = new class() extends Cost_Tracker_DB {
+            /**
+             * Skip the ALTER so verification fails after NULL prices were zeroed.
+             *
+             * @param string $table Escaped table name.
+             *
+             * @return void
+             */
+            protected function apply_cost_tracker_price_not_null( $table ) { // phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
+            }
+        };
+
+        $this->assertFalse( $failing->repair_cost_tracker_price_not_null() );
+        $this->assertFalse( wp_cache_get( $id_key, 'mainwp_cost_tracker' ) );
+        $this->assertFalse( wp_cache_get( $slug_key, 'mainwp_cost_tracker' ) );
+        $this->assertFalse( wp_cache_get( $site_key, 'mainwp_cost_tracker' ) );
+        $this->assertFalse( wp_cache_get( $client_key, 'mainwp_cost_tracker' ) );
+        $this->assertFalse( wp_cache_get( 'mainwp_cost_tracker_all', 'mainwp_cost_tracker' ) );
+        unset( $db );
+    }
+
+    /**
      * Cost tracker table name.
      *
      * @return string
@@ -342,25 +419,52 @@ class Test_Cost_Tracker_Price_Not_Null extends WP_UnitTestCase {
      *
      * @param string      $slug_suffix Row marker.
      * @param string|null $price Price, or null for an SQL NULL.
+     * @param array       $extra Optional sites/clients JSON overrides.
      *
      * @return int
      */
-    private function insert_cost( $slug_suffix, $price ) {
+    private function insert_cost( $slug_suffix, $price, $extra = array() ) {
         global $wpdb;
-        $table = $this->cost_table();
-        $slug  = 'mwp-1792-' . $slug_suffix;
+        $table   = $this->cost_table();
+        $slug    = 'mwp-1792-' . $slug_suffix;
+        $sites   = isset( $extra['sites'] ) ? $extra['sites'] : '';
+        $clients = isset( $extra['clients'] ) ? $extra['clients'] : '';
         $price_sql = null === $price ? 'NULL' : '%f';
         $args      = array( $slug, $slug );
         if ( null !== $price ) {
             $args[] = $price;
         }
+        $args[] = $sites;
+        $args[] = $clients;
 
         $sql = "INSERT INTO {$table}
             (name, url, type, product_type, slug, license_type, cost_status, payment_method, price, renewal_type, last_renewal, next_renewal, next_renewal_today, last_alert, sites, groups, clients, note)
-            VALUES (%s, 'https://example.com', 'subscription', 'plugin', %s, 'single', 'active', 'paypal', {$price_sql}, 'monthly', 0, 0, 0, 0, '', '', '', '')";
+            VALUES (%s, 'https://example.com', 'subscription', 'plugin', %s, 'single', 'active', 'paypal', {$price_sql}, 'monthly', 0, 0, 0, 0, %s, '', %s, '')";
 
         $wpdb->query( $wpdb->prepare( $sql, $args ) );
         return (int) $wpdb->insert_id;
+    }
+
+    /**
+     * Build a Cost Tracker object-cache key the same way the DB class does.
+     *
+     * @param string $by Query type.
+     * @param mixed  $value Query value.
+     * @param array  $params Extra params.
+     *
+     * @return string
+     */
+    private function cost_cache_key( $by, $value, $params = array() ) {
+        return 'mainwp_cost_tracker_' . md5( // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_md5 -- cache key only.
+            wp_json_encode(
+                array(
+                    'method' => 'get_cost_tracker_by',
+                    'by'     => $by,
+                    'value'  => $value,
+                    'params' => $params,
+                )
+            )
+        );
     }
 
     /**

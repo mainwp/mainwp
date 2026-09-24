@@ -246,13 +246,16 @@ PRIMARY KEY  (`id`)  ';
             return true;
         }
 
-        $null_ids = array();
+        $zeroed_ids = array();
+        $cache_rows = array();
         if ( 'YES' === $column->Null ) {
             $null_ids = $this->cost_tracker_null_price_ids( $table );
             if ( null === $null_ids ) {
                 return false;
             }
-            if ( ! $this->set_cost_tracker_prices_to_zero( $table, $null_ids ) ) {
+            $cache_rows = $this->cost_tracker_cache_rows( $table, $null_ids );
+            $zeroed_ids = $this->set_cost_tracker_prices_to_zero( $table, $null_ids );
+            if ( null === $zeroed_ids ) {
                 return false;
             }
         }
@@ -263,11 +266,12 @@ PRIMARY KEY  (`id`)  ';
         // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- DDL introspection; table name is escaped and is not a prepare() placeholder.
         $column = $this->wpdb->get_row( "SHOW COLUMNS FROM {$table} LIKE 'price'" );
         if ( '' !== $this->wpdb->last_error || empty( $column ) || ! $this->price_column_is_not_null_decimal( $column ) ) {
-            $this->restore_null_cost_prices( $table, $null_ids );
+            $this->restore_null_cost_prices( $table, $zeroed_ids );
+            $this->invalidate_repaired_cost_prices( $zeroed_ids, $cache_rows );
             return false;
         }
 
-        $this->invalidate_repaired_cost_prices( $null_ids );
+        $this->invalidate_repaired_cost_prices( $zeroed_ids, $cache_rows );
         return true;
     }
 
@@ -291,29 +295,67 @@ PRIMARY KEY  (`id`)  ';
     }
 
     /**
-     * Replace captured NULL prices with 0.
+     * Row fields needed to clear slug and site/client cache keys.
      *
      * @param string $table Escaped cost tracker table name.
      * @param array  $ids Cost ids.
      *
-     * @return bool
+     * @return array Rows keyed by id.
      */
-    private function set_cost_tracker_prices_to_zero( $table, $ids ) {
+    private function cost_tracker_cache_rows( $table, $ids ) {
         if ( empty( $ids ) ) {
-            return true;
+            return array();
         }
 
         $id_list = implode( ',', array_map( 'absint', $ids ) );
-        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- ids are absint; table name is escaped. price IS NULL skips a row edited after the id list was captured.
-        $updated = $this->wpdb->query( "UPDATE {$table} SET price = 0 WHERE id IN ({$id_list}) AND price IS NULL" );
-        return false !== $updated;
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- ids are absint; table name is escaped.
+        $rows = $this->wpdb->get_results( "SELECT id, slug, product_type, sites, clients FROM {$table} WHERE id IN ({$id_list})", OBJECT_K );
+        return is_array( $rows ) ? $rows : array();
     }
 
     /**
-     * Put captured prices back to SQL NULL after a failed NOT NULL change.
+     * Replace captured NULL prices with 0.
+     *
+     * Updates one id at a time so a concurrent save to 0 is not treated as a
+     * repair write and is not restored to NULL if the ALTER fails.
      *
      * @param string $table Escaped cost tracker table name.
-     * @param array  $ids Cost ids that were NULL before the repair.
+     * @param array  $ids Cost ids.
+     *
+     * @return array|null Ids the repair actually zeroed, or null on query failure.
+     */
+    private function set_cost_tracker_prices_to_zero( $table, $ids ) {
+        $zeroed_ids = array();
+        if ( empty( $ids ) ) {
+            return $zeroed_ids;
+        }
+
+        foreach ( $ids as $id ) {
+            $id = absint( $id );
+            if ( empty( $id ) ) {
+                continue;
+            }
+            // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is escaped; id is absint. price IS NULL skips a row edited after the id list was captured.
+            $updated = $this->wpdb->query( $this->wpdb->prepare( "UPDATE {$table} SET price = 0 WHERE id = %d AND price IS NULL", $id ) );
+            if ( false === $updated ) {
+                return null;
+            }
+            if ( $updated > 0 ) {
+                $zeroed_ids[] = $id;
+            }
+        }
+
+        return $zeroed_ids;
+    }
+
+    /**
+     * Put repair-zeroed prices back to SQL NULL after a failed NOT NULL change.
+     *
+     * Only ids the zeroing UPDATE changed are restored. A user-saved price of 0
+     * that the repair never wrote is left alone.
+     *
+     * @param string $table Escaped cost tracker table name.
+     * @param array  $ids Cost ids the repair zeroed.
      *
      * @return bool
      */
@@ -343,15 +385,23 @@ PRIMARY KEY  (`id`)  ';
     }
 
     /**
-     * Drop cached cost rows whose price was rewritten from NULL to 0.
+     * Drop cached cost rows whose price was rewritten or restored.
      *
      * @param array $ids Cost ids.
+     * @param array $cache_rows Rows keyed by id with slug/sites/clients fields.
      *
      * @return void
      */
-    private function invalidate_repaired_cost_prices( $ids ) {
+    private function invalidate_repaired_cost_prices( $ids, $cache_rows = array() ) {
+        if ( empty( $ids ) ) {
+            $this->invalidate_cost_tracker_caches();
+            return;
+        }
+
         foreach ( $ids as $id ) {
-            $this->invalidate_cost_tracker_caches( $id );
+            $id  = absint( $id );
+            $row = isset( $cache_rows[ $id ] ) ? $cache_rows[ $id ] : null;
+            $this->invalidate_cost_tracker_caches( $id, $row );
         }
     }
 
@@ -1199,11 +1249,12 @@ PRIMARY KEY  (`id`)  ';
     /**
      * Invalidate cost tracker caches.
      *
-     * @param int|null $cost_id Cost ID to invalidate specific caches, or null for all caches.
+     * @param int|null    $cost_id Cost ID to invalidate specific caches, or null for shared caches only.
+     * @param object|null $row Optional row with slug, product_type, sites, and clients.
      *
      * @return void
      */
-    private function invalidate_cost_tracker_caches( $cost_id = null ) {
+    private function invalidate_cost_tracker_caches( $cost_id = null, $row = null ) {
         wp_cache_delete(
             'mainwp_cost_tracker_' . md5( // NOSONAR - MD5 used for cache key generation only, not cryptographic (security) purposes.
                 wp_json_encode(
@@ -1228,12 +1279,60 @@ PRIMARY KEY  (`id`)  ';
             'mainwp_cost_tracker'
         );
 
-        if ( $cost_id ) {
-            $cost_id = absint( $cost_id );
+        if ( empty( $cost_id ) ) {
+            return;
+        }
+
+        $cost_id = absint( $cost_id );
+        wp_cache_delete(
+            $this->get_cache_key_for_cost_tracker( 'id', $cost_id, array() ),
+            'mainwp_cost_tracker'
+        );
+
+        if ( empty( $row ) || ! is_object( $row ) ) {
+            return;
+        }
+
+        if ( ! empty( $row->slug ) && is_string( $row->slug ) ) {
+            $product_type = isset( $row->product_type ) ? (string) $row->product_type : '';
             wp_cache_delete(
-                $this->get_cache_key_for_cost_tracker( 'id', $cost_id, array() ),
+                $this->get_cache_key_for_cost_tracker( 'slug', $row->slug, array() ),
                 'mainwp_cost_tracker'
             );
+            if ( '' !== $product_type ) {
+                wp_cache_delete(
+                    $this->get_cache_key_for_cost_tracker( 'slug', $row->slug, array( 'product_type' => $product_type ) ),
+                    'mainwp_cost_tracker'
+                );
+            }
+        }
+
+        $sites = ! empty( $row->sites ) ? json_decode( $row->sites, true ) : array();
+        if ( is_array( $sites ) ) {
+            foreach ( $sites as $site_id ) {
+                $site_id = absint( $site_id );
+                if ( empty( $site_id ) ) {
+                    continue;
+                }
+                wp_cache_delete(
+                    $this->get_cache_key_for_cost_tracker( 'site_id', $site_id, array() ),
+                    'mainwp_cost_tracker'
+                );
+            }
+        }
+
+        $clients = ! empty( $row->clients ) ? json_decode( $row->clients, true ) : array();
+        if ( is_array( $clients ) ) {
+            foreach ( $clients as $client_id ) {
+                $client_id = absint( $client_id );
+                if ( empty( $client_id ) ) {
+                    continue;
+                }
+                wp_cache_delete(
+                    $this->get_cache_key_for_cost_tracker( 'client_id', $client_id, array() ),
+                    'mainwp_cost_tracker'
+                );
+            }
         }
     }
 }

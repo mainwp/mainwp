@@ -452,6 +452,7 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
 
             jQuery( '#mainwp-storage-reset' ).on( 'click', function () {
                 jQuery( '#mainwp-storage-id' ).val( 0 );
+                jQuery( '#mainwp-storage-provider' ).dropdown( 'set selected', String( 's3' ) );
                 jQuery( '#mainwp-storage-name, #mainwp-storage-endpoint, #mainwp-storage-bucket, #mainwp-storage-region, #mainwp-storage-access-key, #mainwp-storage-secret-key, #mainwp-storage-base-path, #mainwp-storage-gcs-bucket, #mainwp-storage-gcs-access-key, #mainwp-storage-gcs-secret-key, #mainwp-storage-dropbox-app-key, #mainwp-storage-dropbox-app-secret, #mainwp-storage-dropbox-refresh-token, #mainwp-storage-dropbox-base-path, #mainwp-storage-sftp-host, #mainwp-storage-sftp-port, #mainwp-storage-sftp-username, #mainwp-storage-sftp-password, #mainwp-storage-sftp-private-key, #mainwp-storage-sftp-base-path, #mainwp-storage-sftp-host-fingerprint' ).val( '' );
                 jQuery( '#mainwp-storage-path-style, #mainwp-storage-is-default' ).prop( 'checked', false );
                 // Fomantic owns this select's visible label, so clearing the
@@ -474,7 +475,7 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                 let requestedId = row.data( 'destination-id' );
                 jQuery( '#mainwp-storage-id' ).val( requestedId );
                 jQuery( '#mainwp-storage-name' ).val( row.data( 'name' ) );
-                jQuery( '#mainwp-storage-provider' ).val( row.data( 'provider' ) ).trigger( 'change' );
+                jQuery( '#mainwp-storage-provider' ).dropdown( 'set selected', String( row.data( 'provider' ) ) );
                 jQuery( '#mainwp-storage-form-title' ).text( '<?php echo esc_js( __( 'Edit Storage Destination', 'mainwp' ) ); ?>' );
                 jQuery( '#mainwp-storage-reset' ).show();
 

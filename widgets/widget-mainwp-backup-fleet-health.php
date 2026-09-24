@@ -115,7 +115,13 @@ class MainWP_Backup_Fleet_Health { // phpcs:ignore Generic.Classes.OpeningBraceS
      * @return string
      */
     private static function filter_url( string $bucket_key ): string {
-        return 'admin.php?page=managesites&status=backup_health_' . $bucket_key;
+        return add_query_arg(
+            array(
+                'page'   => 'managesites',
+                'status' => 'backup_health_' . $bucket_key,
+            ),
+            'admin.php'
+        );
     }
 
     /**

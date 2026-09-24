@@ -39,4 +39,21 @@ class MainWP_Backup_Offsite_Flag_Surface_Test extends \WP_UnitTestCase {
 	public function test_offsite_flag_default_is_disabled() {
 		$this->assertSame( 0, MainWP_Settings_Indicator::get_defaults_value( 'mainwp_backup_before_upgrade_require_offsite' ) );
 	}
+	/**
+	 * Native backup defaults match their wrappers and hide unchanged badges.
+	 *
+	 * @return void
+	 */
+	public function test_native_backup_indicators_match_declared_defaults() {
+		$defaults = array(
+			'mainwp_on_demand_retention_count'  => 5,
+			'mainwp_backup_diagnostics_enabled' => 0,
+			'mainwp_backup_encryption_enabled'  => 0,
+		);
+		foreach ( $defaults as $option => $default ) {
+			$this->assertSame( $default, MainWP_Settings_Indicator::get_defaults_value( $option ), $option );
+			$this->assertStringNotContainsString( 'visible-indicator', MainWP_Settings_Indicator::render_not_default_indicator( $option, $default, false ), $option );
+			$this->assertStringContainsString( 'visible-indicator', MainWP_Settings_Indicator::render_not_default_indicator( $option, $default + 1, false ), $option );
+		}
+	}
 }

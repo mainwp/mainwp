@@ -306,7 +306,14 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
             $settings = array();
             foreach ( wp_unslash( $_POST['settings'] ) as $field => $value ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized per field below.
                 // A PEM private key is multi-line; sanitize_text_field would strip its line breaks.
-                $settings[ sanitize_key( $field ) ] = 'private_key' === $field ? sanitize_textarea_field( (string) $value ) : sanitize_text_field( (string) $value );
+                $field = sanitize_key( $field );
+                if ( 'private_key' === $field ) {
+                    $settings[ $field ] = sanitize_textarea_field( (string) $value );
+                } elseif ( in_array( $field, static::SECRET_FIELDS, true ) ) {
+                    $settings[ $field ] = (string) $value;
+                } else {
+                    $settings[ $field ] = sanitize_text_field( (string) $value );
+                }
             }
         }
 
@@ -508,12 +515,12 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
             if ( null === $existing ) {
                 return array( 'error' => esc_html__( 'The storage destination no longer exists.', 'mainwp' ) );
             }
-            if ( is_array( $existing->settings ) ) {
+            if ( $provider === (string) $existing->provider && is_array( $existing->settings ) ) {
                 if ( ! $submitted ) {
                     // No settings posted at all (the list row's Test): use
                     // the stored settings wholesale.
                     $settings = $existing->settings;
-                } else {
+                } elseif ( static::same_credential_target( $provider, $settings, $existing->settings ) ) {
                     foreach ( static::SECRET_FIELDS as $field ) {
                         if ( ( ! isset( $settings[ $field ] ) || '' === $settings[ $field ] ) && isset( $existing->settings[ $field ] ) ) {
                             $settings[ $field ] = $existing->settings[ $field ];
@@ -535,6 +542,34 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
             'reset_sftp_trust' => $decision['notice'],
             'test_id'          => $decision['test_id'],
         );
+    }
+
+    /**
+     * Check whether retained credentials would be sent to the same target.
+     *
+     * @param string $provider Provider key.
+     * @param array  $settings Candidate settings.
+     * @param array  $stored   Stored settings.
+     *
+     * @return bool
+     */
+    private static function same_credential_target( string $provider, array $settings, array $stored ): bool {
+        $identity_fields = array(
+            's3'      => array( 'endpoint', 'bucket', 'region', 'path_style', 'access_key' ),
+            'gcs'     => array( 'bucket', 'region', 'access_key' ),
+            'dropbox' => array( 'app_key', 'base_path' ),
+            'sftp'    => array( 'username', 'base_path' ),
+            'local'   => array( 'base_path' ),
+        );
+        if ( 'sftp' === $provider && 0 === static::pin_enforcement_id( 1, $settings, $stored ) ) {
+            return false;
+        }
+        foreach ( $identity_fields[ $provider ] as $field ) {
+            if ( (string) ( $settings[ $field ] ?? '' ) !== (string) ( $stored[ $field ] ?? '' ) ) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -587,7 +622,7 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
     /**
      * Keep a pin only for SFTP-to-SFTP edits on the same or an unknown server.
      *
-     * test_id is the destination id the connection test runs under, so a
+     * The test_id value is the destination id the connection test runs under, so a
      * surviving pin is enforced BEFORE the credential is sent: a re-save under
      * interception would otherwise skip the pin and leak the password. That
      * is why unreadable settings count as the same server during credential
@@ -642,6 +677,22 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
      * @return array {ok, error}.
      */
     private static function run_connection_test( array $candidate ) {
+        $settings         = $candidate['settings'];
+        $required_secrets = array(
+            's3'      => array( 'secret_key' ),
+            'gcs'     => array( 'secret_key' ),
+            'dropbox' => array( 'app_secret', 'refresh_token' ),
+            'sftp'    => '' === trim( (string) ( $settings['private_key'] ?? '' ) ) ? array( 'password' ) : array(),
+            'local'   => array(),
+        );
+        foreach ( $required_secrets[ $candidate['provider'] ] as $field ) {
+            if ( ! isset( $settings[ $field ] ) || '' === (string) $settings[ $field ] ) {
+                return array(
+                    'ok'    => false,
+                    'error' => esc_html__( 'Re-enter the required credentials for this storage destination.', 'mainwp' ),
+                );
+            }
+        }
         try {
             $provider = MainWP_Backup_Storage_Destinations::instance()->make_provider(
                 (object) array(

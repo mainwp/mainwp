@@ -382,7 +382,7 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
         $site_id        = 0;
         $child_task_ids = array();
 
-        $pruned_any = false;
+        $pruned_ids = array();
 
         // Leaf first: if the prune is interrupted, the remaining prefix of
         // the chain is still a complete restorable unit.
@@ -426,13 +426,13 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
 
             $snapshots->set_status( $snapshot_id, 'pruned' );
 
-            $pruned_any = true;
+            $pruned_ids[] = $snapshot_id;
             ++$result['snapshots_pruned'];
         }
 
         $this->notify_child_prune( $site_id, $child_task_ids );
 
-        if ( ! $pruned_any ) {
+        if ( empty( $pruned_ids ) ) {
             return false;
         }
 
@@ -450,7 +450,7 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
             array(
                 'site_id'      => $site_id,
                 'task_id'      => (int) $task->id,
-                'snapshot_ids' => array_map( 'intval', $candidate['snapshot_ids'] ),
+                'snapshot_ids' => array_reverse( $pruned_ids ),
                 'reason'       => (string) $candidate['reason'],
                 'size_bytes'   => isset( $candidate['size_bytes'] ) ? (int) $candidate['size_bytes'] : 0,
             )

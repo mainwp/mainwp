@@ -612,6 +612,25 @@ class MainWP_Backup_Mark_Close_Guard_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A run timestamp ahead of the local clock still closes exactly once.
+	 *
+	 * @return void
+	 */
+	public function test_close_never_precedes_last_run() {
+		list( , $task ) = $this->site_and_open_task(
+			array(
+				'last_run'  => time() + 60,
+				'completed' => time() - 60,
+			)
+		);
+
+		$this->assertTrue( MainWP_DB_Backup::instance()->update_backup_completed( $task->id ) );
+		$closed = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$this->assertSame( (int) $closed->last_run, (int) $closed->completed, 'The close must reach last_run even when the local clock is behind.' );
+		$this->assertFalse( MainWP_DB_Backup::instance()->update_backup_completed( $task->id ), 'The same run cannot close twice.' );
+	}
+
+	/**
 	 * The close path emails exactly once for a run with a real recorded
 	 * error even when a second driver reaches the close block after the
 	 * first has already closed it, and the errors stay on the row both

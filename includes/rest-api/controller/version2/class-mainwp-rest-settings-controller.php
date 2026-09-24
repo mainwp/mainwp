@@ -2593,7 +2593,6 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         $archive_format  = array( 'zip', 'tar.gz', 'tar.bz2', 'tar' );
         $primary_backup  = array( '', 'module-api-backups' );
         $max_concurrent  = range( 1, 10 );
-        $max_descriptors = range( 1, 65535 );
         $retention_count = range( 1, 100 );
 
         return array(
@@ -2676,8 +2675,10 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 'required'          => false,
                 'description'       => __( 'Maximum file descriptors.', 'mainwp' ),
                 'type'              => 'integer',
-                'sanitize_callback' => $this->make_enum_sanitizer( $max_descriptors ),
-                'validate_callback' => $this->make_enum_validator( $max_descriptors ),
+                'minimum'           => 1,
+                'maximum'           => 65535,
+                'sanitize_callback' => 'absint',
+                'validate_callback' => 'rest_validate_request_arg',
             ),
             'mainwp_backup_max_concurrent'         => array(
                 'required'          => false,

@@ -931,10 +931,10 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         }
 
         $table_users = esc_sql( $this->table_name( 'users' ) );
-        $row         = $this->wpdb->get_row( "SELECT * FROM `{$table_users}` WHERE userid= " . intval( $userid ), OBJECT ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name escaped via esc_sql, userid cast via intval.
+        $row         = $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT * FROM %i WHERE userid = %d', $table_users, $userid ), OBJECT );
         if ( null === $row ) {
             $this->create_user_extension( $userid );
-            $row = $this->wpdb->get_row( "SELECT * FROM `{$table_users}` WHERE userid= " . intval( $userid ), OBJECT ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name escaped via esc_sql, userid cast via intval.
+            $row = $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT * FROM %i WHERE userid = %d', $table_users, $userid ), OBJECT );
         }
 
         return $row;
@@ -1003,7 +1003,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             }
         }
         $table_users = esc_sql( $this->table_name( 'users' ) );
-        $row         = $this->wpdb->get_row( "SELECT * FROM `{$table_users}` WHERE userid= " . intval( $userid ), OBJECT ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name escaped via esc_sql, userid cast via intval.
+        $row         = $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT * FROM %i WHERE userid = %d', $table_users, $userid ), OBJECT );
         if ( null === $row ) {
             $this->create_user_extension( $userid );
         }
@@ -1019,7 +1019,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             $this->wpdb->update( $this->table_name( 'users' ), $fields, array( 'userid' => $userid ) );
         }
 
-        return $this->wpdb->get_row( "SELECT * FROM `{$table_users}` WHERE userid= " . intval( $userid ), OBJECT ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name escaped via esc_sql, userid cast via intval.
+        return $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT * FROM %i WHERE userid = %d', $table_users, $userid ), OBJECT );
     }
 
 
@@ -1080,6 +1080,11 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         // apart from $map_fields: an explicitly sent empty string clears
         // the credential (and retires its key file), while an absent key
         // leaves it unchanged.
+        foreach ( array( 'http_user', 'http_pass' ) as $field ) {
+            if ( isset( $data[ $field ] ) && ! is_scalar( $data[ $field ] ) ) {
+                return false;
+            }
+        }
         $cred_intents = array();
         foreach ( array( 'http_user', 'http_pass' ) as $field ) {
             if ( ! array_key_exists( $field, $data ) ) {
@@ -1087,7 +1092,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             }
             // An explicitly sent JSON null is a clear too; only an absent
             // key means "leave unchanged".
-            $value        = null === $data[ $field ] ? '' : $data[ $field ];
+            $value        = null === $data[ $field ] ? '' : (string) $data[ $field ];
             $old_envelope = isset( $website->{$field} ) ? $website->{$field} : null;
             $intent       = MainWP_Credential_Storage::stage_credential_encryption( $value, $field, $old_envelope );
             if ( false === $intent ) {

@@ -173,7 +173,7 @@ class MainWP_Backup_CLI_Restore_Runner {
                 )
             );
         } catch ( MainWP_Exception $e ) {
-            return $this->fail( 0, '', $e->getMessage(), $e->get_message_error_code() );
+            return $this->fail( 0, '', html_entity_decode( $e->getMessage(), ENT_QUOTES, 'UTF-8' ), $e->get_message_error_code() );
         }
 
         $job = $this->drive_to_terminal( $job_id, $progress );

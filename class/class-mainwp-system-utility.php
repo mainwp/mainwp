@@ -680,7 +680,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
          */
         global $current_user;
 
-        return $website->userid === $current_user->ID;
+        return (int) $website->userid === (int) $current_user->ID;
     }
 
     /**

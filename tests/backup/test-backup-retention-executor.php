@@ -1329,4 +1329,51 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 
 		$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $kept_id )->status, "An unrelated task's kept unit must not be touched." );
 	}
+	/**
+	 * An interrupted chain reports only the leaf removed in this pass.
+	 *
+	 * @return void
+	 */
+	public function test_partial_prune_event_contains_only_pruned_snapshots() {
+		$outside = tempnam( sys_get_temp_dir(), 'retention-outside-' );
+		file_put_contents( $outside, 'retained artifact' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+		list( $base ) = $this->make_snapshot_with_dir(
+			array(
+				'archives' => wp_json_encode(
+					array(
+						array(
+							'file' => 'outside.tar',
+							'path' => $outside,
+						),
+					)
+				),
+			)
+		);
+		list( $leaf ) = $this->make_snapshot_with_dir( array( 'parent_id' => $base ) );
+		$events       = array();
+		$capture      = static function ( $event ) use ( &$events ) {
+			$events[] = $event;
+		};
+		add_action( 'mainwp_backup_pruned', $capture );
+		try {
+			$result = MainWP_Backup_Retention_Executor::instance()->run_prune(
+				array(
+					array(
+						'snapshot_ids' => array( $base, $leaf ),
+						'reason'       => 'count',
+					),
+				),
+				$this->make_task( array( 'delete_cloud_copies' => 0 ) ),
+				false
+			);
+		} finally {
+			remove_action( 'mainwp_backup_pruned', $capture );
+			unlink( $outside );
+		}
+		$this->assertSame( 1, $result['snapshots_pruned'] );
+		$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $base )->status );
+		$this->assertSame( 'pruned', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $leaf )->status );
+		$this->assertCount( 1, $events );
+		$this->assertSame( array( $leaf ), $events[0]['snapshot_ids'], 'The event must exclude the retained ancestor.' );
+	}
 }

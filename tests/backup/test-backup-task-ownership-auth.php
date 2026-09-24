@@ -335,4 +335,20 @@ class MainWP_Backup_Task_Ownership_Auth_Test extends MainWP_Abilities_Test_Case 
 		$this->assertInstanceOf( MainWP_Exception::class, $thrown, 'A site outside the task scope must be refused.' );
 		$this->assertStringContainsString( 'not part of', $thrown->getMessage(), 'The task-scope gate must be what refuses this call.' );
 	}
+	/**
+	 * Database string IDs authorize the owner and reject a different user.
+	 *
+	 * @return void
+	 */
+	public function test_website_owner_comparison_accepts_database_string_id() {
+		$user_id = $this->set_current_user_as_admin();
+		$this->with_forced_multi_user(
+			function () use ( $user_id ) {
+				$website = (object) array( 'userid' => (string) $user_id );
+				$this->assertTrue( \MainWP\Dashboard\MainWP_System_Utility::can_edit_website( $website ) );
+				$website->userid = (string) ( $user_id + 1 );
+				$this->assertFalse( \MainWP\Dashboard\MainWP_System_Utility::can_edit_website( $website ) );
+			}
+		);
+	}
 }

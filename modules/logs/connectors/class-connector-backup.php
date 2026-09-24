@@ -220,13 +220,13 @@ class Connector_Backup extends Log_Connector {
         $message = esc_html__( 'Backup run failed: %s', 'mainwp' );
 
         $args = array(
-            'error'      => sanitize_text_field( $event['error'] ),
+            'error'      => sanitize_text_field( \MainWP\Dashboard\MainWP_Backup_Error_Codes::sanitize_message( $event['error'] ) ),
             'task_id'    => isset( $event['task_id'] ) ? sanitize_text_field( (string) $event['task_id'] ) : '',
             'error_code' => isset( $event['error_code'] ) ? sanitize_text_field( $event['error_code'] ) : '',
         );
 
         $info               = array(
-            'error' => $event['error'],
+            'error' => \MainWP\Dashboard\MainWP_Backup_Error_Codes::sanitize_message( $event['error'] ),
         );
         $args['extra_info'] = wp_json_encode( $info );
 
@@ -267,7 +267,7 @@ class Connector_Backup extends Log_Connector {
 
         if ( ! empty( $event['error'] ) ) {
             $info               = array(
-                'error' => $event['error'],
+                'error' => \MainWP\Dashboard\MainWP_Backup_Error_Codes::sanitize_message( $event['error'] ),
             );
             $args['extra_info'] = wp_json_encode( $info );
         }
@@ -306,7 +306,7 @@ class Connector_Backup extends Log_Connector {
 
         if ( ! empty( $event['error'] ) ) {
             $info               = array(
-                'error' => $event['error'],
+                'error' => \MainWP\Dashboard\MainWP_Backup_Error_Codes::sanitize_message( $event['error'] ),
             );
             $args['extra_info'] = wp_json_encode( $info );
         }

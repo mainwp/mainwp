@@ -594,7 +594,7 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
                     if ( empty( $websiteToBackup ) || empty( $websiteToBackup->backup_before_upgrade ) ) {
                         $sitesCheckCompleted[ $siteId ] = true;
                     }
-                    if ( isset( $sitesCheckCompleted[ $siteId ] ) ) {
+                    if ( isset( $sitesCheckCompleted[ $siteId ] ) && true === $sitesCheckCompleted[ $siteId ] ) {
                         continue;
                     }
 

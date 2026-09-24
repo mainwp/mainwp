@@ -827,7 +827,7 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
 
         $closed = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- the atomic close gate; must hit the DB engine.
             $this->wpdb->prepare(
-                'UPDATE ' . $this->table_name( 'wp_backup' ) . ' SET completed = %d WHERE id = %d AND completed < last_run', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted helper.
+                'UPDATE ' . $this->table_name( 'wp_backup' ) . ' SET completed = GREATEST(%d, last_run) WHERE id = %d AND completed < last_run', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted helper.
                 time(),
                 $id
             )

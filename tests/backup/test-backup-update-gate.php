@@ -473,4 +473,73 @@ class MainWP_Backup_Update_Gate_Test extends MainWP_Abilities_Test_Case {
 
 		return (int) $id;
 	}
+	/**
+	 * A deferred cron site is checked again after its offsite upload verifies.
+	 *
+	 * @return void
+	 */
+	public function test_cron_rechecks_false_backup_result_on_next_tick() {
+		global $wp_filesystem;
+		$this->set_current_user_as_admin();
+		$site_id = $this->create_test_site(
+			array(
+				'automatic_update'      => 1,
+				'backup_before_upgrade' => 1,
+			)
+		);
+		MainWP_DB::instance()->update_website_option(
+			$site_id,
+			'wp_upgrades',
+			wp_json_encode(
+				array(
+					'current' => '6.8',
+					'new'     => '6.9',
+				)
+			)
+		);
+		$snapshot = $this->record_native_snapshot( $site_id );
+		update_option( 'mainwp_backup_before_upgrade', 1 );
+		update_option( 'mainwp_backup_before_upgrade_require_offsite', 1 );
+		update_option( 'mainwp_automaticDailyUpdate', 1 );
+		update_option( 'mainwp_pluginAutomaticDailyUpdate', 0 );
+		update_option( 'mainwp_themeAutomaticDailyUpdate', 0 );
+		update_option( 'mainwp_transAutomaticDailyUpdate', 0 );
+		update_option( 'mainwp_delay_autoupdate', 0 );
+		update_option( 'mainwp_automaticUpdate_backupChecks', array() );
+		$store = \MainWP\Dashboard\MainWP_Auto_Updates_DB::instance();
+		$mock  = $this->getMockBuilder( \MainWP\Dashboard\MainWP_Auto_Updates_DB::class )->onlyMethods( array( 'get_websites_to_continue_updates' ) )->getMock();
+		$mock->method( 'get_websites_to_continue_updates' )->willReturn( array( MainWP_DB::instance()->get_website_by_id( $site_id ) ) );
+		$instance = new \ReflectionProperty( \MainWP\Dashboard\MainWP_Auto_Updates_DB::class, 'instance' );
+		$instance->setAccessible( true );
+		$instance->setValue( null, $mock );
+		$original_filesystem = $wp_filesystem;
+		$wp_filesystem       = new \stdClass(); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- temporary filesystem test double.
+		$upgrades            = 0;
+		$child               = static function ( $result, $website, $what ) use ( &$upgrades ) {
+			if ( 'upgrade' === $what ) {
+				++$upgrades;
+			}
+			return array( 'result' => 'SUCCESS' );
+		};
+		add_filter( 'mainwp_auto_updates_sync_data_before_run', '__return_false' );
+		add_filter( 'mainwp_fetch_url_authed_pre', $child, 10, 3 );
+		try {
+			$cron = \MainWP\Dashboard\MainWP_Cron_Jobs_Auto_Updates::instance();
+			$cron->handle_cron_auto_updates();
+			$this->assertSame( array( $site_id => false ), get_option( 'mainwp_automaticUpdate_backupChecks' ), 'The first tick must defer an unverified offsite backup.' );
+			$this->assertSame( 0, $upgrades );
+			MainWP_Backup_Snapshots::instance()->set_offsite_state( $snapshot, 'verified', time() );
+			$cron->handle_cron_auto_updates();
+			$this->assertSame( array( $site_id => true ), get_option( 'mainwp_automaticUpdate_backupChecks' ), 'The next tick must recheck the stored false result.' );
+			$this->assertSame( 1, $upgrades );
+		} finally {
+			$instance->setValue( null, $store );
+			$wp_filesystem = $original_filesystem; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- restore test double.
+			remove_filter( 'mainwp_auto_updates_sync_data_before_run', '__return_false' );
+			remove_filter( 'mainwp_fetch_url_authed_pre', $child, 10 );
+			foreach ( array( 'mainwp_automaticDailyUpdate', 'mainwp_pluginAutomaticDailyUpdate', 'mainwp_themeAutomaticDailyUpdate', 'mainwp_transAutomaticDailyUpdate', 'mainwp_delay_autoupdate', 'mainwp_automaticUpdate_backupChecks' ) as $option ) {
+				delete_option( $option );
+			}
+		}
+	}
 }

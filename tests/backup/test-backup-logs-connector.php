@@ -454,4 +454,27 @@ class MainWP_Backup_Logs_Connector_Test extends \WP_UnitTestCase {
 
 		$this->assertCount( 0, $captured );
 	}
+	/**
+	 * Failure metadata removes paths and SQL before storage.
+	 *
+	 * @return void
+	 */
+	public function test_failure_extra_info_sanitizes_diagnostics() {
+		$captured  = array();
+		$connector = $this->capturing_connector( $captured );
+		$event     = array(
+			'site_id'        => 42,
+			'destination_id' => 7,
+			'error'          => ABSPATH . 'private/file.sql: SELECT password FROM private_users WHERE id = 1;',
+		);
+		$connector->callback_mainwp_backup_failed( $event );
+		$connector->callback_mainwp_backup_upload_failed( $event );
+		$connector->callback_mainwp_backup_restore_failed( $event );
+		$this->assertCount( 3, $captured );
+		foreach ( $captured as $entry ) {
+			$info = json_decode( $entry['args']['extra_info'], true );
+			$this->assertSame( 'private/file.sql: [SQL removed];', $info['error'], $entry['action'] );
+		}
+		$this->assertSame( 'private/file.sql: [SQL removed];', $captured[0]['args']['error'] );
+	}
 }

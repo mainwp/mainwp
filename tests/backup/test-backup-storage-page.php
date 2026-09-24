@@ -1317,4 +1317,175 @@ class MainWP_Backup_Storage_Page_Test extends \WP_UnitTestCase {
 		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
 		$this->assertSame( array( $created['id'] ), json_decode( $task->destinations, true ), 'Only existing destination ids may persist.' );
 	}
+	/**
+	 * Secret input survives unslashing without text-field normalization.
+	 *
+	 * @return void
+	 */
+	public function test_secret_input_preserves_exact_bytes() {
+		$original                = $_POST;
+		$secret                  = "  p%2F<b>word</b>\\quote\"'\n\t  ";
+		$settings                = array_fill_keys( MainWP_Backup_Storage_Handler::SECRET_FIELDS, $secret );
+		$settings['private_key'] = "  -----BEGIN KEY-----\nabc\n-----END KEY-----  ";
+		$settings['host']        = ' <b>host.example.com</b> ';
+		$_POST['settings']       = wp_slash( $settings );
+		$method                  = new \ReflectionMethod( MainWP_Backup_Storage_Handler::class, 'read_destination_input' );
+		$method->setAccessible( true );
+		$handler = ( new \ReflectionClass( MainWP_Backup_Storage_Handler::class ) )->newInstanceWithoutConstructor();
+		try {
+			$input = $method->invoke( $handler );
+		} finally {
+			$_POST = $original;
+		}
+		foreach ( array( 'secret_key', 'app_secret', 'refresh_token', 'password' ) as $field ) {
+			$this->assertSame( $secret, $input['settings'][ $field ], $field );
+		}
+		$this->assertSame( sanitize_textarea_field( $settings['private_key'] ), $input['settings']['private_key'] );
+		$this->assertSame( 'host.example.com', $input['settings']['host'] );
+	}
+
+	/**
+	 * Blank secrets are retained only within the same provider and target.
+	 *
+	 * @dataProvider credential_target_changes
+	 * @param string $provider Stored provider.
+	 * @param array  $stored   Stored settings.
+	 * @param string $field    Identity field changed by the candidate.
+	 * @return void
+	 */
+	public function test_blank_secrets_do_not_cross_target_changes( $provider, $stored, $field ) {
+		$secrets = array_fill_keys( MainWP_Backup_Storage_Handler::SECRET_FIELDS, 'saved-secret' );
+		$id      = MainWP_Backup_Storage_Destinations::instance()->add_destination(
+			array(
+				'provider' => $provider,
+				'name'     => 'Original',
+				'settings' => array_merge( $stored, $secrets ),
+			)
+		);
+		$this->assertGreaterThan( 0, $id );
+		$method = new \ReflectionMethod( MainWP_Backup_Storage_Handler::class, 'merge_candidate' );
+		$method->setAccessible( true );
+		$input = array(
+			'id'       => $id,
+			'provider' => $provider,
+			'name'     => 'Renamed',
+			'settings' => array_merge( $stored, array_fill_keys( MainWP_Backup_Storage_Handler::SECRET_FIELDS, '' ) ),
+		);
+		$same  = $method->invoke( null, $input );
+		foreach ( $secrets as $secret_field => $value ) {
+			$this->assertSame( $value, $same['settings'][ $secret_field ], 'Same-target edits retain secrets.' );
+		}
+		if ( 'provider' === $field ) {
+			$input['provider'] = 'local' === $provider ? 'sftp' : 'local';
+		} else {
+			$input['settings'][ $field ] = 'port' === $field ? '2222' : 'changed-target';
+		}
+		$changed = $method->invoke( null, $input );
+		foreach ( $secrets as $secret_field => $value ) {
+			$this->assertSame( '', $changed['settings'][ $secret_field ], $provider . ':' . $field . ' must not inherit ' . $secret_field );
+		}
+		if ( 'provider' === $field ) {
+			unset( $input['settings'] );
+			$this->assertSame( array(), $method->invoke( null, $input )['settings'], 'A provider switch cannot inherit omitted settings either.' );
+		}
+	}
+
+	/**
+	 * Provider targets and account identifiers used by the connection code.
+	 *
+	 * @return array
+	 */
+	public static function credential_target_changes() {
+		$providers = array(
+			's3'      => array(
+				'endpoint'   => 'https://s3.example.com',
+				'bucket'     => 'backups',
+				'region'     => 'us-east-1',
+				'path_style' => '1',
+				'access_key' => 'account',
+			),
+			'gcs'     => array(
+				'bucket'     => 'backups',
+				'region'     => 'auto',
+				'access_key' => 'account',
+			),
+			'dropbox' => array(
+				'app_key'   => 'account',
+				'base_path' => '/backups',
+			),
+			'sftp'    => array(
+				'host'      => 'sftp.example.com',
+				'port'      => '22',
+				'username'  => 'account',
+				'base_path' => '/backups',
+			),
+			'local'   => array( 'base_path' => '/backups' ),
+		);
+		$cases     = array();
+		foreach ( $providers as $provider => $settings ) {
+			foreach ( array_merge( array_keys( $settings ), array( 'provider' ) ) as $field ) {
+				$cases[ $provider . ':' . $field ] = array( $provider, $settings, $field );
+			}
+		}
+		return $cases;
+	}
+
+	/**
+	 * Cosmetic SFTP host and port changes preserve blank credentials and pins.
+	 *
+	 * @return void
+	 */
+	public function test_blank_sftp_secrets_use_pin_target_normalization() {
+		$this->assert_b13_sftp_save(
+			array(
+				'host'        => 'SFTP.Example.com.',
+				'port'        => '022',
+				'password'    => '',
+				'private_key' => '',
+			),
+			false
+		);
+	}
+
+	/**
+	 * Retargeting cannot save blank credentials even if a provider accepts them.
+	 *
+	 * @return void
+	 */
+	public function test_retargeted_save_requires_reentered_secret() {
+		$store    = MainWP_Backup_Storage_Destinations::instance();
+		$id       = $store->add_destination(
+			array(
+				'provider' => 's3',
+				'name'     => 'Original bucket',
+				'settings' => array(
+					'bucket'     => 'old-bucket',
+					'secret_key' => 'stored-secret',
+				),
+			)
+		);
+		$provider = $this->createMock( \MainWP\Dashboard\MainWP_Backup_Storage_Provider::class );
+		$provider->method( 'connection_test' )->willReturn( array( 'ok' => true ) );
+		$destinations = $this->getMockBuilder( MainWP_Backup_Storage_Destinations::class )->onlyMethods( array( 'make_provider' ) )->getMock();
+		$destinations->method( 'make_provider' )->willReturn( $provider );
+		$instance = new \ReflectionProperty( MainWP_Backup_Storage_Destinations::class, 'instance' );
+		$instance->setValue( null, $destinations );
+		try {
+			$result = MainWP_Backup_Storage_Handler::save_destination(
+				array(
+					'id'       => $id,
+					'provider' => 's3',
+					'name'     => 'Other bucket',
+					'settings' => array(
+						'bucket'     => 'new-bucket',
+						'secret_key' => '',
+					),
+				)
+			);
+			$this->assertArrayHasKey( 'error', $result, 'A target change requires explicit credentials before saving.' );
+			$this->assertSame( 'old-bucket', $store->get_destination( $id )->settings['bucket'] );
+		} finally {
+			$instance->setValue( null, $store );
+		}
+	}
 }

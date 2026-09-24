@@ -1174,17 +1174,14 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         return true;
     }
 
-    // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.Missing -- registry factory throws MainWP_Exception.
     /**
      * Publish ownership only while this exact create still owns the option.
      *
      * @param object $website Website row.
      * @param object $progress Completed run's progress.
      * @param int    $snapshot_id Recorded snapshot id.
-     * @throws MainWP_Exception On a database failure.
      */
     private static function record_manifest_writer( $website, $progress, $snapshot_id ) {
-        // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.Missing
         global $wpdb;
         $state = json_decode( (string) ( $progress->last_error ?? '' ), true );
         $token = $state['manifest_pending'] ?? '';
@@ -1194,7 +1191,8 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         $table = MainWP_DB::instance()->get_table_name( 'wp_options' );
         $saved = $wpdb->query( $wpdb->prepare( "UPDATE {$table} SET value = %s WHERE wpid = %d AND name = %s AND BINARY value = BINARY %s", (string) $snapshot_id, $website->id, 'native_manifest_snapshot', $token ) ); // phpcs:ignore WordPress.DB -- exact conditional ownership write, table name from DB helper.
         if ( false === $saved ) {
-            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_RECORD_FAILED ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry factory.
+            MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'Manifest writer was not recorded; the next incremental will push its manifest.' );
+            return;
         }
     }
 
@@ -1834,24 +1832,33 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
             $allow_empty      = 'tombstones' === $role && isset( $artifact['size'] ) && 0 === $size;
             $already_complete = file_exists( $local ) && (int) filesize( $local ) === $size && ( $size > 0 || $allow_empty );
-            if ( ! $already_complete ) {
-                if ( ! MainWP_Backup_File_Manager::acquire_download_lock( $local, $website->id, $pTask->id ) ) {
-                    throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING, 'download lock held for ' . basename( $local ) ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
-                }
-                try {
-                    MainWP_Backup_File_Manager::download_backup_artifact( $website, $remote, $local, $size, $http_user_plain, $http_pass_plain, $allow_empty );
-                    if ( in_array( $role, array( 'part', 'db', 'full' ), true ) ) {
-                        MainWP_Backup_File_Manager::validate_backup_file( $local, $size );
-                    } elseif ( (int) filesize( $local ) !== $size ) {
-                        throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, 'expected ' . $size . ' bytes for ' . $remote ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
-                    }
-                } finally {
-                    MainWP_Backup_File_Manager::release_download_lock( $local );
-                }
+            if ( ! $already_complete && ! MainWP_Backup_File_Manager::acquire_download_lock( $local, $website->id, $pTask->id ) ) {
+                throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING, 'download lock held for ' . basename( $local ) ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
             }
-
-            if ( 'manifest' === $role && ! self::verify_manifest_artifact( $artifact, $local ) ) {
-                wp_delete_file( $local );
+            try {
+                if ( ! $already_complete ) {
+                    try {
+                        MainWP_Backup_File_Manager::download_backup_artifact( $website, $remote, $local, $size, $http_user_plain, $http_pass_plain, $allow_empty );
+                        if ( in_array( $role, array( 'part', 'db', 'full' ), true ) ) {
+                            MainWP_Backup_File_Manager::validate_backup_file( $local, $size );
+                        } elseif ( (int) filesize( $local ) !== $size ) {
+                            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, 'expected ' . $size . ' bytes for ' . $remote ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+                        }
+                    } finally {
+                        MainWP_Backup_File_Manager::release_download_lock( $local );
+                    }
+                }
+                if ( 'manifest' === $role && ! self::verify_manifest_artifact( $artifact, $local ) ) {
+                    throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, 'manifest digest missing or mismatched' ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+                }
+            } catch ( \Throwable $e ) {
+                if ( 'manifest' !== $role ) {
+                    throw $e;
+                }
+                if ( is_file( $local ) ) {
+                    wp_delete_file( $local );
+                }
+                MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'Backup recorded without a file manifest: ' . $e->getMessage() );
                 continue;
             }
 
@@ -1959,7 +1966,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             }
             $information = $fresh->fetchResult;
             if ( (int) ( $information['announced_snapshot_id'] ?? 0 ) !== $snapshot_id ) {
-                // The row can survive a failed writer update; adoption must finish that work too.
+                // An adopted snapshot may still have a pending writer token.
                 if ( '' !== $manifest_path ) {
                     self::record_manifest_writer( $website, $fresh, $snapshot_id );
                 }
@@ -1976,19 +1983,23 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 if ( 1 !== $claimed ) {
                     return false;
                 }
-                /** This action is documented in class/backup/class-mainwp-backup-executor.php */
-                do_action(
-                    'mainwp_native_backup_completed',
-                    (int) $website->id,
-                    $progress->child_backup_task_id,
-                    true,
-                    array(
-                        'type'        => 'incremental',
-                        'file'        => '',
-                        'size'        => $information['size'] ?? 0,
-                        'snapshot_id' => $snapshot_id,
-                    )
-                );
+                try {
+                    /** This action is documented in class/backup/class-mainwp-backup-executor.php */
+                    do_action(
+                        'mainwp_native_backup_completed',
+                        (int) $website->id,
+                        $progress->child_backup_task_id,
+                        true,
+                        array(
+                            'type'        => 'incremental',
+                            'file'        => '',
+                            'size'        => $information['size'] ?? 0,
+                            'snapshot_id' => $snapshot_id,
+                        )
+                    );
+                } catch ( \Throwable $e ) {
+                    MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'Backup completion listener failed: ' . $e->getMessage() );
+                }
             }
         } finally {
             MainWP_Backup_File_Manager::release_download_lock( $record_lock );

@@ -124,6 +124,94 @@ class Test_Cost_Tracker_Price_Not_Null extends WP_UnitTestCase {
     }
 
     /**
+     * An upgrade runs the retry wrapper once. A failed attempt is not repeated immediately.
+     */
+    public function test_upgrade_failure_is_not_retried_on_the_same_pass() {
+        $this->ensure_cost_table();
+        $this->make_price_nullable( 'decimal(26,8)' );
+        $this->add_legacy_author_column();
+        update_option( 'mainwp_module_cost_tracker_db_version', '1.0.7' );
+        update_site_option( 'mainwp_module_cost_tracker_db_version', '1.0.7' );
+
+        $db = new class() extends Cost_Tracker_DB {
+            /**
+             * Repair attempts during this install.
+             *
+             * @var int
+             */
+            public $repairs = 0;
+
+            /**
+             * Count the attempt and leave the column unchanged.
+             *
+             * @return bool
+             */
+            public function repair_cost_tracker_price_not_null() {
+                ++$this->repairs;
+                return false;
+            }
+        };
+
+        $db->install();
+
+        $this->assertSame( 1, $db->repairs );
+        $this->assertNotEmpty( get_option( Cost_Tracker_DB::PRICE_NOT_NULL_RETRY_OPTION ) );
+        $this->assertFalse( get_option( Cost_Tracker_DB::PRICE_NOT_NULL_OPTION ) );
+        $this->assertSame( 'YES', $this->price_column()->Null );
+
+        $db->install();
+        $this->assertSame( 1, $db->repairs, 'the hourly retry must block a second ALTER on the next install' );
+    }
+
+    /**
+     * A failed NOT NULL change puts the prices that were NULL back to NULL.
+     */
+    public function test_failed_alter_restores_null_prices() {
+        $this->ensure_cost_table();
+        $this->make_price_nullable( 'decimal(26,8)' );
+
+        $kept_id = $this->insert_cost( 'restore-kept', '4.50' );
+        $null_id = $this->insert_cost( 'restore-null', null );
+
+        $db = new class() extends Cost_Tracker_DB {
+            /**
+             * Skip the ALTER so verification fails after the NULL prices were zeroed.
+             *
+             * @param string $table Escaped table name.
+             *
+             * @return void
+             */
+            protected function apply_cost_tracker_price_not_null( $table ) { // phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
+            }
+        };
+
+        $this->assertFalse( $db->repair_cost_tracker_price_not_null() );
+        $this->assertSame( 'YES', $this->price_column()->Null );
+        $this->assertNull( $this->stored_price( $null_id ) );
+        $this->assertSame( '4.50000000', $this->stored_price( $kept_id ) );
+    }
+
+    /**
+     * A repaired NULL price is not served from the object cache.
+     */
+    public function test_successful_repair_drops_cached_null_price() {
+        $this->ensure_cost_table();
+        $this->make_price_nullable( 'decimal(26,8)' );
+
+        $null_id = $this->insert_cost( 'cache-null', null );
+        $before  = Cost_Tracker_DB::get_instance()->get_cost_tracker_by( 'id', $null_id );
+        $this->assertNull( $before->price );
+
+        wp_cache_set( 'mainwp_cost_tracker_all', 'stale-sentinel', 'mainwp_cost_tracker' );
+
+        $this->assertTrue( Cost_Tracker_DB::get_instance()->repair_cost_tracker_price_not_null() );
+
+        $after = Cost_Tracker_DB::get_instance()->get_cost_tracker_by( 'id', $null_id );
+        $this->assertSame( '0.00000000', $after->price );
+        $this->assertNotSame( 'stale-sentinel', Cost_Tracker_DB::get_instance()->get_cost_tracker_by( 'all' ) );
+    }
+
+    /**
      * Cost tracker table name.
      *
      * @return string
@@ -153,8 +241,11 @@ class Test_Cost_Tracker_Price_Not_Null extends WP_UnitTestCase {
      */
     private function add_legacy_author_column() {
         global $wpdb;
-        $table = $this->cost_table();
-        $wpdb->query( "ALTER TABLE {$table} ADD COLUMN author varchar(255) NULL" );
+        $table  = $this->cost_table();
+        $exists = $wpdb->get_var( "SHOW COLUMNS FROM {$table} LIKE 'author'" );
+        if ( empty( $exists ) ) {
+            $wpdb->query( "ALTER TABLE {$table} ADD COLUMN author varchar(255) NULL" );
+        }
     }
 
     /**

@@ -133,7 +133,6 @@ PRIMARY KEY  (`id`)  ';
         }
         $this->update_db_cost( $currentVersion );
         update_option( 'mainwp_module_cost_tracker_db_version', $this->cost_tracker_db_version );
-        $this->maybe_repair_cost_tracker_price_not_null();
     }
 
 
@@ -147,10 +146,8 @@ PRIMARY KEY  (`id`)  ';
     public function update_db_cost( $current_version ) { //phpcs:ignore -- NOSONAR - complex.
         if ( ! empty( $current_version ) ) {
             // 1.0.8 widened price but omitted NOT NULL. MySQL drops attributes that
-            // MODIFY does not repeat, so every version before the repair must run it.
-            if ( version_compare( $current_version, '1.0.8', '<' ) || ! get_option( self::PRICE_NOT_NULL_OPTION ) ) {
-                $this->repair_cost_tracker_price_not_null();
-            }
+            // MODIFY does not repeat. maybe_* owns the success flag and the hourly retry.
+            $this->maybe_repair_cost_tracker_price_not_null();
             if ( version_compare( $current_version, '1.0.9', '<' ) ) {
                 $table = esc_sql( $this->table_name( 'cost_tracker' ) );
                 $this->wpdb->query( "ALTER TABLE {$table} DROP COLUMN author" ); //phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd and a table name cannot be a prepare() placeholder.
@@ -226,6 +223,7 @@ PRIMARY KEY  (`id`)  ';
      * Make price decimal(26,8) NOT NULL without changing stored prices.
      *
      * NULL prices are set to 0 first so strict SQL mode can apply NOT NULL.
+     * If the ALTER or the follow-up check fails, those prices are set back to NULL.
      * Rows that already have a price are left as they are.
      *
      * @return bool True when the column is decimal(26,8) NOT NULL.
@@ -248,27 +246,113 @@ PRIMARY KEY  (`id`)  ';
             return true;
         }
 
+        $null_ids = array();
         if ( 'YES' === $column->Null ) {
-            // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is escaped; only SQL NULL prices are replaced.
-            $updated = $this->wpdb->query( "UPDATE {$table} SET price = 0 WHERE price IS NULL" );
-            if ( false === $updated ) {
+            $null_ids = $this->cost_tracker_null_price_ids( $table );
+            if ( null === $null_ids ) {
+                return false;
+            }
+            if ( ! $this->set_cost_tracker_prices_to_zero( $table, $null_ids ) ) {
                 return false;
             }
         }
 
-        $suppress = $this->wpdb->suppress_errors();
-        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- DDL; table name is escaped and is not a prepare() placeholder.
-        $this->wpdb->query( "ALTER TABLE {$table} MODIFY COLUMN price decimal(26,8) NOT NULL" );
-        $this->wpdb->suppress_errors( $suppress );
+        $this->apply_cost_tracker_price_not_null( $table );
 
         $this->wpdb->last_error = '';
         // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- DDL introspection; table name is escaped and is not a prepare() placeholder.
         $column = $this->wpdb->get_row( "SHOW COLUMNS FROM {$table} LIKE 'price'" );
-        if ( '' !== $this->wpdb->last_error || empty( $column ) ) {
+        if ( '' !== $this->wpdb->last_error || empty( $column ) || ! $this->price_column_is_not_null_decimal( $column ) ) {
+            $this->restore_null_cost_prices( $table, $null_ids );
             return false;
         }
 
-        return $this->price_column_is_not_null_decimal( $column );
+        $this->invalidate_repaired_cost_prices( $null_ids );
+        return true;
+    }
+
+    /**
+     * Ids whose price is SQL NULL, or null when the lookup failed.
+     *
+     * @param string $table Escaped cost tracker table name.
+     *
+     * @return array|null
+     */
+    private function cost_tracker_null_price_ids( $table ) {
+        $this->wpdb->last_error = '';
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is escaped; no user input.
+        $ids = $this->wpdb->get_col( "SELECT id FROM {$table} WHERE price IS NULL" );
+        if ( '' !== $this->wpdb->last_error || ! is_array( $ids ) ) {
+            return null;
+        }
+
+        $ids = array_map( 'absint', $ids );
+        return array_values( array_filter( $ids ) );
+    }
+
+    /**
+     * Replace captured NULL prices with 0.
+     *
+     * @param string $table Escaped cost tracker table name.
+     * @param array  $ids Cost ids.
+     *
+     * @return bool
+     */
+    private function set_cost_tracker_prices_to_zero( $table, $ids ) {
+        if ( empty( $ids ) ) {
+            return true;
+        }
+
+        $id_list = implode( ',', array_map( 'absint', $ids ) );
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- ids are absint; table name is escaped.
+        $updated = $this->wpdb->query( "UPDATE {$table} SET price = 0 WHERE id IN ({$id_list})" );
+        return false !== $updated;
+    }
+
+    /**
+     * Put captured prices back to SQL NULL after a failed NOT NULL change.
+     *
+     * @param string $table Escaped cost tracker table name.
+     * @param array  $ids Cost ids that were NULL before the repair.
+     *
+     * @return bool
+     */
+    private function restore_null_cost_prices( $table, $ids ) {
+        if ( empty( $ids ) ) {
+            return true;
+        }
+
+        $id_list = implode( ',', array_map( 'absint', $ids ) );
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- ids are absint; table name is escaped.
+        $restored = $this->wpdb->query( "UPDATE {$table} SET price = NULL WHERE id IN ({$id_list})" );
+        return false !== $restored;
+    }
+
+    /**
+     * Apply decimal(26,8) NOT NULL. DDL cannot share a transaction with the price update.
+     *
+     * @param string $table Escaped cost tracker table name.
+     *
+     * @return void
+     */
+    protected function apply_cost_tracker_price_not_null( $table ) {
+        $suppress = $this->wpdb->suppress_errors();
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- DDL; table name is escaped and is not a prepare() placeholder.
+        $this->wpdb->query( "ALTER TABLE {$table} MODIFY COLUMN price decimal(26,8) NOT NULL" );
+        $this->wpdb->suppress_errors( $suppress );
+    }
+
+    /**
+     * Drop cached cost rows whose price was rewritten from NULL to 0.
+     *
+     * @param array $ids Cost ids.
+     *
+     * @return void
+     */
+    private function invalidate_repaired_cost_prices( $ids ) {
+        foreach ( $ids as $id ) {
+            $this->invalidate_cost_tracker_caches( $id );
+        }
     }
 
     /**
@@ -1147,15 +1231,7 @@ PRIMARY KEY  (`id`)  ';
         if ( $cost_id ) {
             $cost_id = absint( $cost_id );
             wp_cache_delete(
-                'mainwp_cost_tracker_' . md5( // NOSONAR - MD5 used for cache key generation only, not cryptographic (security) purposes.
-                    wp_json_encode(
-                        array(
-                            'method' => 'get_cost_tracker_by',
-                            'by'     => 'id',
-                            'value'  => $cost_id,
-                        )
-                    )
-                ),
+                $this->get_cache_key_for_cost_tracker( 'id', $cost_id, array() ),
                 'mainwp_cost_tracker'
             );
         }

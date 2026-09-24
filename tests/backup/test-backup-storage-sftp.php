@@ -774,6 +774,165 @@ class MainWP_Backup_Storage_SFTP_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Provider changes discard stale trust; unreadable SFTP recovery keeps it.
+	 *
+	 * @dataProvider sftp_pin_decisions
+	 * @param int    $id                Destination id.
+	 * @param string $stored_provider   Stored provider.
+	 * @param string $new_provider      Candidate provider.
+	 * @param array  $new_settings      Candidate settings.
+	 * @param array  $existing_settings Stored settings.
+	 * @param array  $expected          Expected test id, reset, and notice.
+	 * @return void
+	 */
+	public function test_sftp_pin_decision( int $id, string $stored_provider, string $new_provider, array $new_settings, array $existing_settings, array $expected ) {
+		$this->assertSame(
+			$expected,
+			\MainWP\Dashboard\MainWP_Backup_Storage_Handler::sftp_pin_decision( $id, $stored_provider, $new_provider, $new_settings, $existing_settings )
+		);
+	}
+
+	/**
+	 * Each row states the expected trust behavior independently of the decision.
+	 *
+	 * @return array
+	 */
+	public static function sftp_pin_decisions() {
+		$stored = array(
+			'host' => 'sftp.example.com',
+			'port' => '22',
+		);
+		$new    = array(
+			'host' => 'new.example.com',
+			'port' => '22',
+		);
+		$local  = array( 'base_path' => '/backups' );
+
+		return array(
+			'new destination'          => array(
+				0,
+				'sftp',
+				'local',
+				$local,
+				$stored,
+				array(
+					'test_id' => 0,
+					'reset'   => false,
+					'notice'  => false,
+				),
+			),
+			'sftp same server'         => array(
+				7,
+				'sftp',
+				'sftp',
+				$stored,
+				$stored,
+				array(
+					'test_id' => 7,
+					'reset'   => false,
+					'notice'  => false,
+				),
+			),
+			'sftp changed server'      => array(
+				7,
+				'sftp',
+				'sftp',
+				$new,
+				$stored,
+				array(
+					'test_id' => 0,
+					'reset'   => true,
+					'notice'  => true,
+				),
+			),
+			'sftp unreadable'          => array(
+				7,
+				'sftp',
+				'sftp',
+				$new,
+				array(),
+				array(
+					'test_id' => 7,
+					'reset'   => false,
+					'notice'  => false,
+				),
+			),
+			'leaving sftp readable'    => array(
+				7,
+				'sftp',
+				'local',
+				$local,
+				$stored,
+				array(
+					'test_id' => 0,
+					'reset'   => true,
+					'notice'  => false,
+				),
+			),
+			'leaving sftp unreadable'  => array(
+				7,
+				'sftp',
+				'local',
+				$local,
+				array(),
+				array(
+					'test_id' => 0,
+					'reset'   => true,
+					'notice'  => false,
+				),
+			),
+			'entering sftp readable'   => array(
+				7,
+				'local',
+				'sftp',
+				$new,
+				$local,
+				array(
+					'test_id' => 0,
+					'reset'   => true,
+					'notice'  => false,
+				),
+			),
+			'entering sftp unreadable' => array(
+				7,
+				'local',
+				'sftp',
+				$new,
+				array(),
+				array(
+					'test_id' => 0,
+					'reset'   => true,
+					'notice'  => false,
+				),
+			),
+			'non-sftp readable'        => array(
+				7,
+				'local',
+				's3',
+				array(),
+				$local,
+				array(
+					'test_id' => 0,
+					'reset'   => false,
+					'notice'  => false,
+				),
+			),
+			'non-sftp unreadable'      => array(
+				7,
+				'local',
+				's3',
+				array(),
+				array(),
+				array(
+					'test_id' => 0,
+					'reset'   => false,
+					'notice'  => false,
+				),
+			),
+		);
+	}
+
+	/**
 	 * A cosmetic-only host/port difference targets the identical real server
 	 * (the provider (int)-casts the port and resolves the host case- and
 	 * trailing-dot-insensitively), so it must STILL enforce the pin - a

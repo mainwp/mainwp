@@ -481,6 +481,9 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
     /**
      * Validate input and merge retained secrets from the stored row.
      *
+     * Only SFTP-to-SFTP edits can enforce a surviving pin. A notice is
+     * warranted only when readable settings prove the server changed.
+     *
      * @param array $input Destination fields.
      *
      * @return array Merged candidate, or {error}.
@@ -521,6 +524,7 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
         }
 
         $existing_settings = ( $id > 0 && isset( $existing ) && is_array( $existing->settings ) ) ? $existing->settings : array();
+        $decision          = static::sftp_pin_decision( $id, $id > 0 ? (string) $existing->provider : '', $provider, $settings, $existing_settings );
 
         return array(
             'id'               => $id,
@@ -528,15 +532,8 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
             'name'             => $name,
             'is_default'       => empty( $input['is_default'] ) ? 0 : 1,
             'settings'         => $settings,
-            'reset_sftp_trust' => $id > 0 && 'sftp' === $provider && static::sftp_trust_changed( $settings, $existing_settings ),
-            // The destination id to run the connection test under, so an
-            // SFTP edit with unchanged or unreadable stored server settings
-            // enforces its learned host-key pin BEFORE credentials are sent
-            // (a re-save under interception would otherwise skip the pin
-            // and leak the password). Zero for a new destination or one
-            // whose target server changed - there the pin does not apply
-            // and TOFU re-learns on the new server's first real use.
-            'test_id'          => static::pin_enforcement_id( $id, $settings, $existing_settings ),
+            'reset_sftp_trust' => $decision['notice'],
+            'test_id'          => $decision['test_id'],
         );
     }
 
@@ -588,20 +585,44 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
     }
 
     /**
-     * Keep learned trust across edits that do not change the server.
+     * Keep a pin only for SFTP-to-SFTP edits on the same or an unknown server.
      *
-     * The pin identifies the server, not the account. A credential edit is
-     * connection-tested against the pinned key before it saves, so clearing
-     * the pin afterwards would only reopen trust-on-first-use for the next
-     * connection, with the new credential as the prize.
+     * test_id is the destination id the connection test runs under, so a
+     * surviving pin is enforced BEFORE the credential is sent: a re-save under
+     * interception would otherwise skip the pin and leak the password. That
+     * is why unreadable settings count as the same server during credential
+     * recovery, and only for an SFTP-to-SFTP edit. Entering or leaving SFTP
+     * clears stale trust so a later switch back cannot hit a pin learned on
+     * another host, and trust-on-first-use learns the new server. Only a
+     * known SFTP host or port change warrants the server-change notice.
      *
-     * @param array $settings          Candidate settings.
-     * @param array $existing_settings Stored settings.
+     * @param int    $id                Destination id (0 for a new destination).
+     * @param string $stored_provider   Stored provider.
+     * @param string $new_provider      Candidate provider.
+     * @param array  $new_settings      Candidate settings.
+     * @param array  $existing_settings Stored settings, empty when new or unreadable.
      *
-     * @return bool
+     * @return array {test_id: int, reset: bool, notice: bool}.
      */
-    public static function sftp_trust_changed( array $settings, array $existing_settings ): bool {
-        return 0 === static::pin_enforcement_id( 1, $settings, $existing_settings );
+    public static function sftp_pin_decision( int $id, string $stored_provider, string $new_provider, array $new_settings, array $existing_settings ): array {
+        $decision = array(
+            'test_id' => 0,
+            'reset'   => false,
+            'notice'  => false,
+        );
+        if ( $id <= 0 ) {
+            return $decision;
+        }
+
+        if ( 'sftp' === $stored_provider && 'sftp' === $new_provider ) {
+            $decision['test_id'] = static::pin_enforcement_id( $id, $new_settings, $existing_settings );
+            $decision['reset']   = 0 === $decision['test_id'];
+            $decision['notice']  = $decision['reset'];
+        } elseif ( 'sftp' === $stored_provider || 'sftp' === $new_provider ) {
+            $decision['reset'] = true;
+        }
+
+        return $decision;
     }
 
     /**

@@ -108,6 +108,10 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
      * Update a storage destination. Settings re-encrypt when provided and
      * stay untouched otherwise.
      *
+     * A successful provider or settings update clears SFTP trust when entering
+     * or leaving SFTP, or when readable SFTP settings identify a different server.
+     * Unreadable SFTP-to-SFTP recovery preserves any surviving pin.
+     *
      * @param int   $id   Destination id.
      * @param array $data Fields to update: provider, name, settings, is_default.
      *
@@ -127,11 +131,16 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
         $old_file_key     = '';
         $settings_intent  = null;
         $reset_sftp_trust = false;
-        if ( isset( $data['settings'] ) && is_array( $data['settings'] ) ) {
+        if ( isset( $data['provider'] ) || isset( $data['settings'] ) ) {
             $existing = $this->get_destination( $id );
-            if ( null !== $existing && 'sftp' === $existing->provider ) {
-                $reset_sftp_trust = MainWP_Backup_Storage_Handler::sftp_trust_changed( $data['settings'], is_array( $existing->settings ) ? $existing->settings : array() );
+            if ( null !== $existing ) {
+                $existing_settings = is_array( $existing->settings ) ? $existing->settings : array();
+                $new_settings      = isset( $data['settings'] ) && is_array( $data['settings'] ) ? $data['settings'] : $existing_settings;
+                $decision          = MainWP_Backup_Storage_Handler::sftp_pin_decision( $id, (string) $existing->provider, (string) ( $data['provider'] ?? $existing->provider ), $new_settings, $existing_settings );
+                $reset_sftp_trust  = $decision['reset'];
             }
+        }
+        if ( isset( $data['settings'] ) && is_array( $data['settings'] ) ) {
             $settings_intent = $this->stage_settings_encryption( $data['settings'] );
             if ( false === $settings_intent ) {
                 return false;

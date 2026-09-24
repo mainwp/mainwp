@@ -396,7 +396,9 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
                 // A create may replace the shared files.list before its snapshot is recorded.
                 if ( 'incremental' === $params['type'] || ( in_array( $params['type'], array( 'full', 'files' ), true ) && ! empty( $params['emit_manifest'] ) ) ) {
-                    self::claim_manifest_writer( $website, $taskId, $creating_marker );
+                    if ( ! self::claim_manifest_writer( $website, $taskId, $creating_marker ) ) {
+                        return false;
+                    }
                 }
 
                 $diag_start  = microtime( true );
@@ -1127,12 +1129,17 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @param array  $artifact Child artifact metadata.
      * @param string $path Downloaded manifest.
      * @throws MainWP_Exception When the recorded digest does not match.
+     * @return bool Whether the artifact has a verified digest.
      */
     private static function verify_manifest_artifact( $artifact, $path ) {
         // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.Missing
-        if ( array_key_exists( 'sha256', $artifact ) && ( ! is_string( $artifact['sha256'] ) || ! preg_match( '/^[a-f0-9]{64}$/D', $artifact['sha256'] ) || ! hash_equals( $artifact['sha256'], (string) hash_file( 'sha256', $path ) ) ) ) {
+        if ( ! array_key_exists( 'sha256', $artifact ) || '' === $artifact['sha256'] ) {
+            return false;
+        }
+        if ( ! is_string( $artifact['sha256'] ) || ! preg_match( '/^[a-f0-9]{64}$/D', $artifact['sha256'] ) || ! hash_equals( $artifact['sha256'], (string) hash_file( 'sha256', $path ) ) ) {
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, 'manifest digest mismatch' ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry factory.
         }
+        return true;
     }
 
     // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.Missing -- registry factory throws MainWP_Exception.
@@ -1142,7 +1149,8 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @param object $website Website row.
      * @param int    $task_id Dashboard task id.
      * @param string $marker Creating marker owned by this driver.
-     * @throws MainWP_Exception If either durable write cannot be confirmed.
+     * @throws MainWP_Exception If either durable write fails.
+     * @return bool Whether this driver still owns the creating marker.
      */
     private static function claim_manifest_writer( $website, $task_id, $marker ) {
         // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.Missing
@@ -1154,13 +1162,17 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         $token                     = 'pending:' . (int) $task_id . ':' . wp_generate_uuid4();
         $state['manifest_pending'] = $token;
         $written                   = MainWP_DB_Backup::instance()->update_backup_task_progress_if_marker( $task_id, $website->id, $marker, array( 'last_error' => wp_json_encode( $state ) ) );
-        if ( 1 !== $written ) {
+        if ( '' !== $wpdb->last_error ) {
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_RECORD_FAILED ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry factory.
+        }
+        if ( 1 !== $written ) {
+            return false;
         }
         $db->update_website_option( $website, 'native_manifest_snapshot', $token );
         if ( '' !== $wpdb->last_error || $token !== $db->get_website_option( (int) $website->id, 'native_manifest_snapshot' ) ) {
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_RECORD_FAILED ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry factory.
         }
+        return true;
     }
 
     // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.Missing -- registry factory throws MainWP_Exception.
@@ -1686,7 +1698,11 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, 'manifest size mismatch' ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
                     }
                 }
-                self::verify_manifest_artifact( $artifact, $manifest_path );
+                if ( ! self::verify_manifest_artifact( $artifact, $manifest_path ) ) {
+                    wp_delete_file( $manifest_path );
+                    $manifest_path = '';
+                    break;
+                }
                 $manifest = array(
                     'file' => basename( $manifest_path ),
                     'size' => $size,
@@ -1826,8 +1842,9 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 }
             }
 
-            if ( 'manifest' === $role ) {
-                self::verify_manifest_artifact( $artifact, $local );
+            if ( 'manifest' === $role && ! self::verify_manifest_artifact( $artifact, $local ) ) {
+                wp_delete_file( $local );
+                continue;
             }
 
             $archive = array(
@@ -1861,14 +1878,43 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             $run_key  = self::snapshot_run_key( $website, $pTask, $progress );
             $latest   = $snapshots->get_latest_complete( (int) $website->id, (int) $pTask->id );
             $existing = null;
-            if ( null !== $run_key ) {
+            if ( null !== $run_key && MainWP_Install::backup_snapshot_run_key_ready() ) {
                 $table    = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
                 $existing = $wpdb->get_row( $wpdb->prepare( "SELECT id FROM {$table} WHERE run_key = %s AND site_id = %d AND task_id = %d", $run_key, $website->id, $pTask->id ) ); // phpcs:ignore WordPress.DB -- stable run identity lookup under the record lock.
                 if ( '' !== $wpdb->last_error ) {
                     throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_RECORD_FAILED ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry factory.
                 }
-            } elseif ( null !== $latest && 0 === strpos( (string) $latest->manifest_path, $run_dir ) ) {
-                $existing = $latest; // Compatibility for old rows without a durable run identity.
+            }
+            if ( null === $existing ) {
+                // Runs recorded before schema repair still have no run_key, including manifestless runs.
+                $table      = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+                $path_match = '%' . $wpdb->esc_like( substr( wp_json_encode( $run_dir ), 1, -1 ) ) . '%';
+                $candidates = $wpdb->get_results( $wpdb->prepare( "SELECT id, archives FROM {$table} WHERE site_id = %d AND task_id = %d AND status = 'complete' AND archives LIKE %s", $website->id, $pTask->id, $path_match ) ); // phpcs:ignore WordPress.DB -- bounded run-directory candidates under the record lock.
+                if ( '' !== $wpdb->last_error ) {
+                    throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_RECORD_FAILED ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry factory.
+                }
+                $run_paths = array_column( array_filter( $archives, static fn( $entry ) => 'manifest' !== $entry['role'] ), 'path' );
+                sort( $run_paths );
+                foreach ( (array) $candidates as $candidate ) {
+                    $entries = json_decode( (string) $candidate->archives, true );
+                    $paths   = array();
+                    if ( ! is_array( $entries ) || empty( $run_paths ) ) {
+                        continue;
+                    }
+                    foreach ( $entries as $entry ) {
+                        if ( ! is_array( $entry ) || ! isset( $entry['path'], $entry['role'] ) || ! is_string( $entry['path'] ) || dirname( $entry['path'] ) . '/' !== $run_dir ) {
+                            continue 2;
+                        }
+                        if ( 'manifest' !== $entry['role'] ) {
+                            $paths[] = $entry['path'];
+                        }
+                    }
+                    sort( $paths );
+                    if ( $run_paths === $paths ) {
+                        $existing = $candidate;
+                        break;
+                    }
+                }
             }
             $already_saved = null !== $existing;
 

@@ -636,6 +636,133 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		);
 	}
 
+	/** Losing the creating marker during preflight yields without a create. */
+	public function test_manifest_claim_lost_before_write_yields() {
+		$site_id = $this->create_test_site();
+		$base_id = $this->record_base_snapshot( $site_id );
+		$this->mock_child_actions(
+			array(
+				'backup_preflight' => function () use ( $site_id ) {
+					MainWP_DB_Backup::instance()->update_backup_task_progress( 11, $site_id, array( 'child_backup_task_id' => 'creating-replacement' ) );
+					return $this->preflight_response();
+				},
+			)
+		);
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$cycle   = $this->run_cycle( $site_id, $this->make_task( $website ) );
+		$this->assertNull( $cycle['exception'] );
+		$this->assertSame( array(), $this->all_call_params( 'backup_task_create' ) );
+		$this->assertSame( 'creating-replacement', MainWP_DB_Backup::instance()->get_backup_task_progress( 11, $site_id )->child_backup_task_id );
+		$this->assertSame( (string) $base_id, MainWP_DB::instance()->get_website_option( $site_id, 'native_manifest_snapshot' ) );
+	}
+
+	/**
+	 * Unverified shared bytes cannot drive the next backup or restore reconciliation.
+	 *
+	 * @dataProvider unverified_manifest_digests
+	 * @param mixed $digest Missing, empty or malformed digest.
+	 */
+	public function test_unverified_manifest_degrades_or_rejects( $digest ) {
+		list( $site_id, $task )           = $this->arrange_manual_task();
+		$this->remote_files['files.list'] = str_repeat( 'x', strlen( $this->remote_files['files.list'] ) );
+		$rewrite                          = static function ( $result, $website, $what ) use ( $digest ) {
+			if ( 'backup_preflight' === $what ) {
+				$result['manifest_writer_identity'] = 0;
+			}
+			if ( 'backup_task_run' === $what && isset( $result['artifacts'] ) ) {
+				foreach ( $result['artifacts'] as &$artifact ) {
+					if ( 'manifest' === $artifact['role'] ) {
+						unset( $artifact['sha256'] );
+						if ( null !== $digest ) {
+							$artifact['sha256'] = $digest;
+						}
+					}
+				}
+			}
+			return $result;
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $rewrite, 20, 3 );
+		try {
+			$this->run_cycle( $site_id, $task );
+			$finish = $this->run_cycle( $site_id, $task );
+			if ( null !== $digest && '' !== $digest ) {
+				$this->assertInstanceOf( MainWP_Exception::class, $finish['exception'] );
+				$this->assertSame( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, $finish['exception']->get_message_error_code() );
+				return;
+			}
+			$this->assertNull( $finish['exception'] );
+			$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $finish['result']['snapshot_id'] );
+			$this->assertSame( '', $snapshot->manifest_path );
+			$this->assertNotContains( 'manifest', array_column( $snapshot->archives, 'role' ) );
+			$send = new \ReflectionMethod( MainWP_Backup_Executor::class, 'resolve_incremental_send' );
+			$send->setAccessible( true );
+			$next = $send->invoke( null, MainWP_DB::instance()->get_website_by_id( $site_id ), $task, null );
+			$this->assertSame( 'full', $next['mode'] );
+		} finally {
+			remove_filter( 'mainwp_fetch_url_authed_pre', $rewrite, 20 );
+		}
+	}
+
+	/**
+	 * Digest compatibility cases.
+	 *
+	 * @return array
+	 */
+	public static function unverified_manifest_digests() {
+		return array(
+			'old child absent'  => array( null ),
+			'mid-upgrade empty' => array( '' ),
+			'malformed'         => array( 'not-a-digest' ),
+			'non-string'        => array( 123 ),
+		);
+	}
+
+	/**
+	 * Legacy full downloads keep the archive but discard unverified reconciliation metadata.
+	 *
+	 * @dataProvider unverified_manifest_digests
+	 * @param mixed $digest Missing, empty or malformed digest.
+	 */
+	public function test_legacy_full_unverified_manifest_degrades( $digest ) {
+		$site_id = $this->create_test_site();
+		$this->give_site_real_privkey( $site_id );
+		$artifacts = $this->arrange_remote_artifacts( true );
+		$artifacts = array( $artifacts[2], $artifacts[0] );
+		unset( $artifacts[1]['sha256'] );
+		if ( null !== $digest ) {
+			$artifacts[1]['sha256'] = $digest;
+		}
+		$this->remote_files['files.list'] = str_repeat( 'x', 40 );
+		$this->mock_artifact_downloads();
+		$this->mock_child_actions(
+			array(
+				'backup_preflight'   => $this->preflight_response( array( 'manifest_writer_identity' => 0 ) ),
+				'backup_task_create' => array(
+					'task_id' => 'unverified-full',
+					'phase'   => 'queued',
+				),
+				'backup_task_run'    => array(
+					'task_id'   => 'unverified-full',
+					'phase'     => 'completed',
+					'file'      => 'backup-base.zip',
+					'size'      => 400,
+					'artifacts' => $artifacts,
+				),
+				'delete_backup'      => array( 'result' => 'ok' ),
+			)
+		);
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$task    = $this->make_task( $website, 11, array( 'type' => 'full' ) );
+		$this->run_cycle( $site_id, $task );
+		$finish = $this->run_cycle( $site_id, $task );
+		$this->assertNull( $finish['exception'] );
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, 11 );
+		$this->assertNotNull( $snapshot );
+		$this->assertSame( '', $snapshot->manifest_path );
+		$this->assertSame( array( 'full' ), array_column( $snapshot->archives, 'role' ) );
+		$this->assertFileExists( $snapshot->archives[0]['path'] );
+	}
+
 	/** Same-sized bytes from a later Child run cannot become this run's base. */
 	public function test_replaced_manifest_is_not_recorded() {
 		list( $site_id, $task )           = $this->arrange_manual_task();
@@ -2566,14 +2693,21 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	 * Reusing a recorded snapshot must not announce another successful backup.
 	 *
 	 * @dataProvider completion_identity_cases
-	 * @param bool $manifest Whether the child returns a manifest.
-	 * @param bool $newer Whether another run is recorded before the retry.
+	 * @param bool   $manifest Whether the child returns a manifest.
+	 * @param bool   $newer Whether another run is recorded before the retry.
+	 * @param string $schema Schema state.
+	 * @param bool   $repair Whether schema repair succeeds before retry.
 	 * @return void
 	 */
-	public function test_incremental_resume_recorded_snapshot_emits_success_once( $manifest, $newer ) {
+	public function test_incremental_resume_recorded_snapshot_emits_success_once( $manifest, $newer, $schema = 'ready', $repair = false ) {
 		list( $site_id, $task ) = $this->arrange_manual_task();
-		$events                 = array();
-		$omit_manifest          = static function ( $result, $website, $what ) use ( $manifest ) {
+		global $wpdb;
+		$table          = $wpdb->prefix . 'mainwp_wp_backup_snapshot';
+		$pending        = get_site_option( 'mainwp_backup_snapshot_run_key_repair_pending' );
+		$dropped_index  = false;
+		$dropped_column = false;
+		$events         = array();
+		$omit_manifest  = static function ( $result, $website, $what ) use ( $manifest ) {
 			if ( ! $manifest && 'backup_task_run' === $what && is_array( $result ) && isset( $result['artifacts'] ) ) {
 				$result['artifacts'] = array_values(
 					array_filter(
@@ -2594,13 +2728,37 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		};
 		add_action( 'mainwp_native_backup_completed', $capture, 10, 3 );
 		try {
+			if ( 'ready' !== $schema ) {
+				update_site_option( 'mainwp_backup_snapshot_run_key_repair_pending', time() );
+				$dropped_index = false !== $wpdb->query( "ALTER TABLE {$table} DROP INDEX uniq_run_key" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- schema fixture restored in finally.
+				$this->assertTrue( $dropped_index );
+				if ( 'missing-column' === $schema ) {
+					$dropped_column = false !== $wpdb->query( "ALTER TABLE {$table} DROP COLUMN run_key" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- schema fixture restored in finally.
+					$this->assertTrue( $dropped_column );
+				}
+			}
 			$this->run_cycle( $site_id, $task );
 			$first = $this->run_cycle( $site_id, $task );
 			$this->assertNull( $first['exception'] );
 			$this->assertCount( 1, $events );
 			$saved = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $first['result']['snapshot_id'] );
 			$this->assertSame( $manifest, '' !== $saved->manifest_path );
-			$this->assertNotEmpty( $saved->run_key );
+			if ( 'ready' === $schema ) {
+				$this->assertNotEmpty( $saved->run_key );
+			}
+			if ( $repair ) {
+				$this->assertNull( $saved->run_key ?? null );
+				if ( $dropped_column ) {
+					$this->assertNotFalse( $wpdb->query( "ALTER TABLE {$table} ADD COLUMN run_key varchar(191) NULL DEFAULT NULL" ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- installer-equivalent schema repair fixture.
+					$dropped_column = false;
+				}
+				$this->assertNotFalse( $wpdb->query( "ALTER TABLE {$table} ADD UNIQUE KEY uniq_run_key (run_key)" ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- installer-equivalent schema repair fixture.
+				$dropped_index = false;
+				delete_site_option( 'mainwp_backup_snapshot_run_key_repair_pending' );
+				$this->assertTrue( \MainWP\Dashboard\MainWP_Install::backup_snapshot_run_key_ready() );
+				$repaired = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $first['result']['snapshot_id'] );
+				$this->assertNull( $repaired->run_key );
+			}
 			if ( $newer ) {
 				$this->record_base_snapshot( $site_id, (int) $task->id, false );
 			}
@@ -2613,6 +2771,42 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		} finally {
 			remove_action( 'mainwp_native_backup_completed', $capture, 10 );
 			remove_filter( 'mainwp_fetch_url_authed_pre', $omit_manifest, 20 );
+			if ( $dropped_column ) {
+				$wpdb->query( "ALTER TABLE {$table} ADD COLUMN run_key varchar(191) NULL DEFAULT NULL" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- schema fixture restored in finally.
+			}
+			if ( $dropped_index ) {
+				$wpdb->query( "ALTER TABLE {$table} ADD UNIQUE KEY uniq_run_key (run_key)" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- schema fixture restored in finally.
+			}
+			if ( false === $pending ) {
+				delete_site_option( 'mainwp_backup_snapshot_run_key_repair_pending' );
+			} else {
+				update_site_option( 'mainwp_backup_snapshot_run_key_repair_pending', $pending );
+			}
+			if ( 'ready' !== $schema ) {
+				// ALTER commits the fixtures; commit their removal before parent teardown rolls back.
+				$wpdb->delete(
+					$table,
+					array(
+						'site_id' => $site_id,
+						'task_id' => $task->id,
+					)
+				);
+				$wpdb->delete(
+					$wpdb->prefix . 'mainwp_wp_backup_progress',
+					array(
+						'wp_id'   => $site_id,
+						'task_id' => $task->id,
+					)
+				);
+				$wpdb->delete( $wpdb->prefix . 'mainwp_wp_backup', array( 'id' => $task->id ) );
+				$wpdb->delete( $wpdb->prefix . 'mainwp_wp_options', array( 'wpid' => $site_id ) );
+				$wpdb->delete( $wpdb->prefix . 'mainwp_wp_sync', array( 'wpid' => $site_id ) );
+				$wpdb->delete( $wpdb->prefix . 'mainwp_wp', array( 'id' => $site_id ) );
+				$wpdb->delete( $wpdb->usermeta, array( 'user_id' => $task->userid ) );
+				$wpdb->delete( $wpdb->users, array( 'ID' => $task->userid ) );
+				delete_option( 'mainwp_enableNativeBackups' );
+				self::commit_transaction();
+			}
 		}
 	}
 
@@ -2623,9 +2817,15 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public static function completion_identity_cases() {
 		return array(
-			'with manifest'                       => array( true, false ),
-			'without manifest'                    => array( false, false ),
-			'without manifest and newer snapshot' => array( false, true ),
+			'with manifest'                         => array( true, false ),
+			'without manifest'                      => array( false, false ),
+			'without manifest and newer snapshot'   => array( false, true ),
+			'missing column manifestless'           => array( false, false, 'missing-column' ),
+			'missing column intervening completion' => array( false, true, 'missing-column' ),
+			'missing index manifestless'            => array( false, false, 'missing-index' ),
+			'missing index intervening completion'  => array( false, true, 'missing-index' ),
+			'missing column repaired before retry'  => array( false, true, 'missing-column', true ),
+			'missing index repaired before retry'   => array( false, true, 'missing-index', true ),
 		);
 	}
 

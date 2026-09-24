@@ -943,17 +943,15 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         $checkpoint['transfer'] = $cursor;
         $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
 
+        if ( ! empty( $fresh->checkpoint['cancel_intent'] ) ) {
+            // Cancellation owns the outcome, including an already-completed child.
+            $this->apply_cancel_intent( $fresh );
+            return;
+        }
+
         if ( null !== $outcome['error'] ) {
             $this->record_failure( $job, $outcome['error'], $outcome['retryable'] );
             return;
-        }
-        if ( ! $outcome['done'] ) {
-            $fresh = $store->get_job( (int) $job->id );
-            if ( null !== $fresh && ! empty( $fresh->checkpoint['cancel_intent'] ) ) {
-                if ( self::TERMINAL_OUTCOME_DRIVE_ON !== $this->apply_cancel_intent( $fresh ) ) {
-                    return;
-                }
-            }
         }
         if ( $outcome['done'] ) {
             $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, array(), $this->lock_token );

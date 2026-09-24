@@ -4917,15 +4917,19 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$ack   = array( 'bytes_received' => 10 );
 		$wrong = array( 'error' => 'ERR_RESTORE_WRONG_PHASE' );
 		$rows  = array(
-			'advanced_after_ack'   => array( true, array( $ack, $wrong ), 1, MainWP_Backup_Restore_Job_Store::STATUS_RUNNING ),
-			'advanced_with_error'  => array( true, array( $wrong ), 1, MainWP_Backup_Restore_Job_Store::STATUS_RUNNING ),
-			'transfer_completes'   => array( false, array( $ack, $ack ), 2, MainWP_Backup_Restore_Job_Store::STATUS_RUNNING ),
-			'transfer_retry_error' => array( false, array( $wrong ), 1, MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE ),
+			'advanced_after_ack'       => array( true, array( $ack, $wrong ), 1, MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, null, false ),
+			'advanced_with_error'      => array( true, array( $wrong ), 1, MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, null, false ),
+			'transfer_completes'       => array( false, array( $ack, $ack ), 2, MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, null, false ),
+			'transfer_retry_error'     => array( false, array( $wrong ), 1, MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE, null, false ),
+			'cancel_busy_with_error'   => array( false, array( $wrong ), 1, MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING, 'busy', false ),
+			'cancel_ok_with_error'     => array( false, array( $wrong ), 1, MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED, 'ok', false ),
+			'retry_transfer_completes' => array( false, array( $ack, $ack ), 2, MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, null, true ),
 		);
 
-		foreach ( $rows as $label => list( $advance, $responses, $expected_calls, $expected_status ) ) {
+		foreach ( $rows as $label => list( $advance, $responses, $expected_calls, $expected_status, $cancel_answer, $resume ) ) {
 			$this->calls                               = array();
 			$this->responses['restore_artifact_chunk'] = $responses;
+			$this->responses['restore_task_cancel']    = array( 'result' => $cancel_answer );
 			$plan                                      = $this->staged_plan_fixture();
 			$plan[]                                    = array_merge( $plan[0], array( 'file' => 'db-second.zip' ) );
 			$job                                       = $this->make_job(
@@ -4935,14 +4939,24 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			);
 			$store                                     = MainWP_Backup_Restore_Job_Store::instance();
 			$id                                        = (int) $job->id;
-			$attempts                                  = (int) $job->attempt_count;
-			$concurrent_checkpoint                     = $job->checkpoint;
-			$chunk_calls                               = 0;
-			$on_chunk                                  = function ( $pre, $website, $what ) use ( $advance, $store, $id, $concurrent_checkpoint, &$chunk_calls ) {
+			if ( $resume ) {
+				$checkpoint                  = $job->checkpoint;
+				$checkpoint['resume_status'] = MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING;
+				$this->assertTrue( $store->save_checkpoint( $id, $checkpoint ) );
+				$this->assertTrue( $store->fail_retryable( $id, '', 1, 0 ) );
+				$job = $store->get_job( $id );
+			}
+			$attempts              = (int) $job->attempt_count;
+			$concurrent_checkpoint = $job->checkpoint;
+			$chunk_calls           = 0;
+			$on_chunk              = function ( $pre, $website, $what ) use ( $advance, $cancel_answer, $store, $id, $concurrent_checkpoint, &$chunk_calls ) {
 				if ( 'restore_artifact_chunk' === $what && 1 === ++$chunk_calls && $advance ) {
 					// Match the row left by a UI cancel when the child already completed.
 					$this->assertTrue( $store->save_checkpoint( $id, $concurrent_checkpoint, null, true ) );
 					$this->assertTrue( $store->set_status( $id, MainWP_Backup_Restore_Job_Store::STATUS_RUNNING ) );
+				}
+				if ( 'restore_artifact_chunk' === $what && 1 === $chunk_calls && null !== $cancel_answer ) {
+					$this->assertTrue( $store->arm_cancel_intent( $id ) );
 				}
 				return $pre;
 			};
@@ -4953,7 +4967,11 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 				remove_filter( 'mainwp_fetch_url_authed_pre', $on_chunk, 20 );
 			}
 
-			$this->assertSame( array_fill( 0, $expected_calls, 'restore_artifact_chunk' ), array_column( $this->calls, 'what' ), $label );
+			$expected_actions = array_fill( 0, $expected_calls, 'restore_artifact_chunk' );
+			if ( null !== $cancel_answer ) {
+				$expected_actions[] = 'restore_task_cancel';
+			}
+			$this->assertSame( $expected_actions, array_column( $this->calls, 'what' ), $label );
 			$this->assertSame( $expected_status, $job->status, $label );
 			if ( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE === $expected_status ) {
 				$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING, $job->checkpoint['resume_status'], $label );
@@ -4962,15 +4980,26 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			} else {
 				$this->assertEmpty( $job->last_error, $label );
 				$this->assertSame( $attempts, (int) $job->attempt_count, $label );
-				$this->assertArrayNotHasKey( 'resume_status', $job->checkpoint, $label );
+				if ( $resume ) {
+					$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING, $job->checkpoint['resume_status'], $label );
+				} else {
+					$this->assertArrayNotHasKey( 'resume_status', $job->checkpoint, $label );
+				}
 				if ( $advance ) {
 					$this->assertSame( $concurrent_checkpoint, $job->checkpoint, $label );
+				} elseif ( null !== $cancel_answer ) {
+					$this->assertSame( 0, $job->checkpoint['transfer']['artifact_index'], $label );
+					if ( 'busy' === $cancel_answer ) {
+						$this->assertNotEmpty( $job->checkpoint['cancel_intent'], $label );
+					}
 				} else {
 					$this->assertSame( count( $plan ), $job->checkpoint['transfer']['artifact_index'], $label );
 				}
 			}
-			// Release the site's restore slot before the next matrix row.
-			$this->assertTrue( $store->set_status( $id, MainWP_Backup_Restore_Job_Store::STATUS_COMPLETED ), $label );
+			// Release the site's restore slot before the next matrix row; a cancelled row already has.
+			if ( in_array( $job->status, $store::active_statuses(), true ) ) {
+				$this->assertTrue( $store->set_status( $id, MainWP_Backup_Restore_Job_Store::STATUS_COMPLETED ), $label );
+			}
 		}
 	}
 

@@ -1835,31 +1835,52 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             if ( ! $already_complete && ! MainWP_Backup_File_Manager::acquire_download_lock( $local, $website->id, $pTask->id ) ) {
                 throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING, 'download lock held for ' . basename( $local ) ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
             }
+            $manifest_error = null;
             try {
                 if ( ! $already_complete ) {
                     try {
                         MainWP_Backup_File_Manager::download_backup_artifact( $website, $remote, $local, $size, $http_user_plain, $http_pass_plain, $allow_empty );
-                        if ( in_array( $role, array( 'part', 'db', 'full' ), true ) ) {
-                            MainWP_Backup_File_Manager::validate_backup_file( $local, $size );
-                        } elseif ( (int) filesize( $local ) !== $size ) {
-                            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, 'expected ' . $size . ' bytes for ' . $remote ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+                    } catch ( MainWP_Exception $e ) {
+                        // Transport and ownership failures need the handler's mid_download retry.
+                        if ( 'manifest' !== $role || ! in_array( $e->get_message_error_code(), array( MainWP_Backup_Error_Codes::ERR_FILE_TOO_SMALL, MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT ), true ) ) {
+                            throw $e;
                         }
-                    } finally {
-                        MainWP_Backup_File_Manager::release_download_lock( $local );
+                        $manifest_error = $e;
                     }
                 }
-                if ( 'manifest' === $role && ! self::verify_manifest_artifact( $artifact, $local ) ) {
-                    throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, 'manifest digest missing or mismatched' ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+
+                if ( null === $manifest_error ) {
+                    try {
+                        if ( ! $already_complete ) {
+                            if ( in_array( $role, array( 'part', 'db', 'full' ), true ) ) {
+                                MainWP_Backup_File_Manager::validate_backup_file( $local, $size );
+                            } elseif ( (int) filesize( $local ) !== $size ) {
+                                throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, 'expected ' . $size . ' bytes for ' . $remote ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+                            }
+                        }
+                        if ( 'manifest' === $role && ! self::verify_manifest_artifact( $artifact, $local ) ) {
+                            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, 'manifest digest missing or mismatched' ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+                        }
+                    } catch ( \Throwable $e ) {
+                        if ( 'manifest' !== $role ) {
+                            throw $e;
+                        }
+                        $manifest_error = $e;
+                    }
                 }
-            } catch ( \Throwable $e ) {
-                if ( 'manifest' !== $role ) {
-                    throw $e;
+
+                if ( null !== $manifest_error ) {
+                    // Shared-list replacement does not invalidate the archives; delete while still owning the download lock.
+                    if ( is_file( $local ) ) {
+                        wp_delete_file( $local );
+                    }
+                    MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'Backup recorded without a file manifest: ' . $manifest_error->getMessage() );
+                    continue;
                 }
-                if ( is_file( $local ) ) {
-                    wp_delete_file( $local );
+            } finally {
+                if ( ! $already_complete ) {
+                    MainWP_Backup_File_Manager::release_download_lock( $local );
                 }
-                MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'Backup recorded without a file manifest: ' . $e->getMessage() );
-                continue;
             }
 
             $archive = array(

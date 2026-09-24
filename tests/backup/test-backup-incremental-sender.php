@@ -849,46 +849,112 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * Unverified shared bytes cannot drive the next backup or restore reconciliation.
+	 * Replaced shared bytes permit completion; retryable failures must preserve the cycle.
 	 *
-	 * @dataProvider unverified_manifest_digests
-	 * @param mixed $digest Missing, empty, malformed or mismatching digest.
+	 * @dataProvider manifest_artifact_failures
+	 * @param int    $actual_size Downloaded byte count.
+	 * @param mixed  $digest Advertised digest.
+	 * @param string $download_code Injected download failure, or empty for success.
+	 * @param string $expected_code Surfaced failure, or empty for manifestless completion.
+	 * @param bool   $lock_refused Whether another driver owns the download lock.
 	 */
-	public function test_unverified_manifest_degrades_or_rejects( $digest ) {
-		list( $site_id, $task )           = $this->arrange_manual_task();
-		$this->remote_files['files.list'] = str_repeat( 'x', strlen( $this->remote_files['files.list'] ) );
-		$rewrite                          = static function ( $result, $website, $what ) use ( $digest ) {
-			if ( 'backup_preflight' === $what ) {
-				$result['manifest_writer_identity'] = 0;
-			}
+	public function test_manifest_artifact_failure_matrix( $actual_size, $digest, $download_code, $expected_code, $lock_refused = false ) {
+		list( $site_id, $task )           = $this->arrange_manual_task( false );
+		$this->remote_files['files.list'] = str_repeat( 'x', $actual_size );
+		$local                           = MainWP_System_Utility::get_mainwp_specific_dir( $site_id ) . 'snapshot-manual-' . $task->id . '/files.list';
+		$failure                         = '' === $download_code ? null : ( 'runtime' === $download_code ? new \RuntimeException( 'Download interrupted.' ) : MainWP_Backup_Error_Codes::exception( $download_code ) );
+		$deleted_under_lock              = array();
+		$rewrite                         = static function ( $result, $website, $what ) use ( $digest ) {
 			if ( 'backup_task_run' === $what && isset( $result['artifacts'] ) ) {
-				foreach ( $result['artifacts'] as &$artifact ) {
-					if ( 'manifest' === $artifact['role'] ) {
-						unset( $artifact['sha256'] );
-						if ( null !== $digest ) {
-							$artifact['sha256'] = $digest;
-						}
-					}
+				$result['artifacts'][0]['size'] = 1000;
+				unset( $result['artifacts'][0]['sha256'] );
+				if ( null !== $digest ) {
+					$result['artifacts'][0]['sha256'] = $digest;
 				}
 			}
 			return $result;
 		};
+		$download_failure = static function ( $pre, $url, $file ) use ( $failure ) {
+			if ( 'files.list' === basename( $file ) && null !== $failure ) {
+				throw $failure;
+			}
+			return $pre;
+		};
+		$observe_delete = static function ( $file ) use ( $local, &$deleted_under_lock ) {
+			if ( $local === $file ) {
+				$deleted_under_lock[] = is_file( $local . '.downloading' );
+			}
+			return $file;
+		};
+		add_filter( 'mainwp_download_to_file_pre', $download_failure, 20, 3 );
 		add_filter( 'mainwp_fetch_url_authed_pre', $rewrite, 20, 3 );
+		add_filter( 'wp_delete_file', $observe_delete );
 		try {
 			$this->run_cycle( $site_id, $task );
-			$finish = $this->run_cycle( $site_id, $task );
-			$this->assertNull( $finish['exception'] );
-			$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $finish['result']['snapshot_id'] );
-			$this->assertSame( '', $snapshot->manifest_path );
-			$this->assertNotContains( 'manifest', array_column( $snapshot->archives, 'role' ) );
-			$this->assertFileDoesNotExist( MainWP_System_Utility::get_mainwp_specific_dir( $site_id ) . 'snapshot-manual-' . $task->id . '/files.list' );
-			$send = new \ReflectionMethod( MainWP_Backup_Executor::class, 'resolve_incremental_send' );
-			$send->setAccessible( true );
-			$next = $send->invoke( null, MainWP_DB::instance()->get_website_by_id( $site_id ), $task, null );
-			$this->assertSame( 'full', $next['mode'] );
+			if ( $lock_refused ) {
+				wp_mkdir_p( dirname( $local ) );
+				file_put_contents( $local . '.downloading', wp_json_encode( array( 'started' => time(), 'site_id' => $site_id, 'task_id' => $task->id, 'token' => 'other-driver' ) ) ); // phpcs:ignore -- competing driver fixture.
+			}
+			try {
+				$finish = $this->run_cycle( $site_id, $task );
+			} catch ( \RuntimeException $e ) {
+				$finish = array( 'exception' => $e, 'result' => null );
+			}
+			if ( '' !== $expected_code ) {
+				$this->assertCount( 0, MainWP_Backup_Snapshots::instance()->get_snapshots_for_site( $site_id ) );
+				if ( null !== $failure ) {
+					$this->assertSame( $failure, $finish['exception'] );
+				}
+				if ( 'runtime' !== $expected_code ) {
+					$this->assertInstanceOf( MainWP_Exception::class, $finish['exception'] );
+					$this->assertSame( $expected_code, $finish['exception']->get_message_error_code() );
+				}
+				$this->assertSame( array(), $deleted_under_lock );
+			} else {
+				$this->assertNull( $finish['exception'], 'Manifest degradation must not surface ERR_FILE_CORRUPT.' );
+				$this->assertIsArray( $finish['result'] );
+				$this->assertCount( 1, MainWP_Backup_Snapshots::instance()->get_snapshots_for_site( $site_id ) );
+				$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $finish['result']['snapshot_id'] );
+				$this->assertSame( '', $snapshot->manifest_path );
+				$this->assertNotContains( 'manifest', array_column( $snapshot->archives, 'role' ) );
+				$this->assertNotContains( 'files.list', array_column( $snapshot->archives, 'file' ) );
+				$this->assertFileDoesNotExist( $local );
+				$this->assertSame( array( true ), $deleted_under_lock, 'Deletion must precede download lock release.' );
+				$send = new \ReflectionMethod( MainWP_Backup_Executor::class, 'resolve_incremental_send' );
+				$send->setAccessible( true );
+				$next = $send->invoke( null, MainWP_DB::instance()->get_website_by_id( $site_id ), $task, null );
+				$this->assertSame( 'full', $next['mode'] );
+			}
+			$this->assertSame( $lock_refused, is_file( $local . '.downloading' ), 'Release only the lock acquired by this driver.' );
 		} finally {
+			remove_filter( 'mainwp_download_to_file_pre', $download_failure, 20 );
 			remove_filter( 'mainwp_fetch_url_authed_pre', $rewrite, 20 );
+			remove_filter( 'wp_delete_file', $observe_delete );
 		}
+	}
+
+	/**
+	 * Only content failures justify abandoning the shared manifest.
+	 *
+	 * @return array
+	 */
+	public static function manifest_artifact_failures() {
+		$digest = hash( 'sha256', str_repeat( 'm', 1000 ) );
+		return array(
+			'lock refused'             => array( 1000, $digest, '', MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING, true ),
+			'too-small size error'     => array( 980, $digest, MainWP_Backup_Error_Codes::ERR_FILE_TOO_SMALL, '' ),
+			'oversize size error'      => array( 1020, $digest, MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, '' ),
+			'smaller within tolerance' => array( 995, $digest, MainWP_Backup_Error_Codes::ERR_FILE_TOO_SMALL, '' ),
+			'post-download mismatch'  => array( 1005, $digest, '', '' ),
+			'digest absent'           => array( 1000, null, '', '' ),
+			'digest empty'            => array( 1000, '', '', '' ),
+			'same-size replacement'   => array( 1000, $digest, '', '' ),
+			'digest malformed'        => array( 1000, 'not-a-digest', '', '' ),
+			'digest non-string'       => array( 1000, 123, '', '' ),
+			'transport error'         => array( 1000, $digest, MainWP_Backup_Error_Codes::ERR_HTTP_ERROR, MainWP_Backup_Error_Codes::ERR_HTTP_ERROR ),
+			'slot lost'               => array( 1000, $digest, MainWP_Backup_Error_Codes::ERR_SLOT_LOST, MainWP_Backup_Error_Codes::ERR_SLOT_LOST ),
+			'non-MainWP throwable'     => array( 1000, $digest, 'runtime', 'runtime' ),
+		);
 	}
 
 	/**
@@ -951,62 +1017,6 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( array( 'full' ), array_column( $snapshot->archives, 'role' ) );
 		$this->assertFileExists( $snapshot->archives[0]['path'] );
 		$this->assertFileDoesNotExist( MainWP_System_Utility::get_mainwp_specific_dir( $site_id ) . 'snapshot-unverified-full/files.list' );
-	}
-
-	/**
-	 * Shared bytes from a later Child run cannot become this run's base.
-	 *
-	 * @dataProvider replaced_manifest_sizes
-	 * @param int $actual_size Replacement byte count.
-	 */
-	public function test_replaced_manifest_is_not_recorded( $actual_size ) {
-		list( $site_id, $task )           = $this->arrange_manual_task( false );
-		$this->remote_files['files.list'] = str_repeat( 'x', $actual_size );
-		$rewrite                          = static function ( $result, $website, $what ) {
-			if ( 'backup_task_run' === $what && isset( $result['artifacts'] ) ) {
-				$result['artifacts'][0]['size']   = 1000;
-				$result['artifacts'][0]['sha256'] = hash( 'sha256', str_repeat( 'm', 1000 ) );
-			}
-			return $result;
-		};
-		$download_failure = static function ( $pre, $url, $file, $size ) use ( $actual_size ) {
-			if ( 'files.list' === basename( $file ) && ( $actual_size < $size || $actual_size - $size > 10 ) ) {
-				throw MainWP_Backup_Error_Codes::exception( $actual_size < $size ? MainWP_Backup_Error_Codes::ERR_FILE_TOO_SMALL : MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT );
-			}
-			return $pre;
-		};
-		add_filter( 'mainwp_download_to_file_pre', $download_failure, 20, 4 );
-		add_filter( 'mainwp_fetch_url_authed_pre', $rewrite, 20, 3 );
-		try {
-			$this->run_cycle( $site_id, $task );
-			$finish = $this->run_cycle( $site_id, $task );
-			$this->assertNull( $finish['exception'] );
-			$this->assertIsArray( $finish['result'] );
-			$this->assertCount( 1, MainWP_Backup_Snapshots::instance()->get_snapshots_for_site( $site_id ) );
-			$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $finish['result']['snapshot_id'] );
-			$this->assertSame( '', $snapshot->manifest_path );
-			$this->assertNotContains( 'manifest', array_column( $snapshot->archives, 'role' ) );
-			$this->assertNotContains( 'files.list', array_column( $snapshot->archives, 'file' ) );
-			$this->assertFileDoesNotExist( MainWP_System_Utility::get_mainwp_specific_dir( $site_id ) . 'snapshot-manual-' . $task->id . '/files.list' );
-		} finally {
-			remove_filter( 'mainwp_download_to_file_pre', $download_failure, 20 );
-			remove_filter( 'mainwp_fetch_url_authed_pre', $rewrite, 20 );
-		}
-	}
-
-	/**
-	 * Both download tolerance and exact manifest size checks protect shared bytes.
-	 *
-	 * @return array
-	 */
-	public static function replaced_manifest_sizes() {
-		return array(
-			'same size'                => array( 1000 ),
-			'smaller beyond tolerance' => array( 980 ),
-			'larger beyond tolerance'  => array( 1020 ),
-			'smaller within tolerance' => array( 995 ),
-			'larger within tolerance'  => array( 1005 ),
-		);
 	}
 
 	/** Archive size failures cannot be treated as optional metadata failures. */
@@ -1141,7 +1151,7 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 						'mainwp_download_to_file_pre',
 						static function ( $pre, $url, $file ) {
 							if ( 'files.list' === basename( $file ) ) {
-								throw new MainWP_Exception( 'Manifest download failed.' );
+								throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_TOO_SMALL );
 							}
 							return $pre;
 						},

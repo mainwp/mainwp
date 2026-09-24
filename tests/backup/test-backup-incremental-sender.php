@@ -861,10 +861,10 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	public function test_manifest_artifact_failure_matrix( $actual_size, $digest, $download_code, $expected_code, $lock_refused = false ) {
 		list( $site_id, $task )           = $this->arrange_manual_task( false );
 		$this->remote_files['files.list'] = str_repeat( 'x', $actual_size );
-		$local                           = MainWP_System_Utility::get_mainwp_specific_dir( $site_id ) . 'snapshot-manual-' . $task->id . '/files.list';
-		$failure                         = '' === $download_code ? null : ( 'runtime' === $download_code ? new \RuntimeException( 'Download interrupted.' ) : MainWP_Backup_Error_Codes::exception( $download_code ) );
-		$deleted_under_lock              = array();
-		$rewrite                         = static function ( $result, $website, $what ) use ( $digest ) {
+		$local                            = MainWP_System_Utility::get_mainwp_specific_dir( $site_id ) . 'snapshot-manual-' . $task->id . '/files.list';
+		$failure                          = '' === $download_code ? null : ( 'runtime' === $download_code ? new \RuntimeException( 'Download interrupted.' ) : MainWP_Backup_Error_Codes::exception( $download_code ) );
+		$deleted_under_lock               = array();
+		$rewrite                          = static function ( $result, $website, $what ) use ( $digest ) {
 			if ( 'backup_task_run' === $what && isset( $result['artifacts'] ) ) {
 				$result['artifacts'][0]['size'] = 1000;
 				unset( $result['artifacts'][0]['sha256'] );
@@ -874,13 +874,13 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 			}
 			return $result;
 		};
-		$download_failure = static function ( $pre, $url, $file ) use ( $failure ) {
+		$download_failure                 = static function ( $pre, $url, $file ) use ( $failure ) {
 			if ( 'files.list' === basename( $file ) && null !== $failure ) {
 				throw $failure;
 			}
 			return $pre;
 		};
-		$observe_delete = static function ( $file ) use ( $local, &$deleted_under_lock ) {
+		$observe_delete                   = static function ( $file ) use ( $local, &$deleted_under_lock ) {
 			if ( $local === $file ) {
 				$deleted_under_lock[] = is_file( $local . '.downloading' );
 			}
@@ -898,7 +898,10 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 			try {
 				$finish = $this->run_cycle( $site_id, $task );
 			} catch ( \RuntimeException $e ) {
-				$finish = array( 'exception' => $e, 'result' => null );
+				$finish = array(
+					'exception' => $e,
+					'result'    => null,
+				);
 			}
 			if ( '' !== $expected_code ) {
 				$this->assertCount( 0, MainWP_Backup_Snapshots::instance()->get_snapshots_for_site( $site_id ) );
@@ -945,14 +948,14 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 			'too-small size error'     => array( 980, $digest, MainWP_Backup_Error_Codes::ERR_FILE_TOO_SMALL, '' ),
 			'oversize size error'      => array( 1020, $digest, MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, '' ),
 			'smaller within tolerance' => array( 995, $digest, MainWP_Backup_Error_Codes::ERR_FILE_TOO_SMALL, '' ),
-			'post-download mismatch'  => array( 1005, $digest, '', '' ),
-			'digest absent'           => array( 1000, null, '', '' ),
-			'digest empty'            => array( 1000, '', '', '' ),
-			'same-size replacement'   => array( 1000, $digest, '', '' ),
-			'digest malformed'        => array( 1000, 'not-a-digest', '', '' ),
-			'digest non-string'       => array( 1000, 123, '', '' ),
-			'transport error'         => array( 1000, $digest, MainWP_Backup_Error_Codes::ERR_HTTP_ERROR, MainWP_Backup_Error_Codes::ERR_HTTP_ERROR ),
-			'slot lost'               => array( 1000, $digest, MainWP_Backup_Error_Codes::ERR_SLOT_LOST, MainWP_Backup_Error_Codes::ERR_SLOT_LOST ),
+			'post-download mismatch'   => array( 1005, $digest, '', '' ),
+			'digest absent'            => array( 1000, null, '', '' ),
+			'digest empty'             => array( 1000, '', '', '' ),
+			'same-size replacement'    => array( 1000, $digest, '', '' ),
+			'digest malformed'         => array( 1000, 'not-a-digest', '', '' ),
+			'digest non-string'        => array( 1000, 123, '', '' ),
+			'transport error'          => array( 1000, $digest, MainWP_Backup_Error_Codes::ERR_HTTP_ERROR, MainWP_Backup_Error_Codes::ERR_HTTP_ERROR ),
+			'slot lost'                => array( 1000, $digest, MainWP_Backup_Error_Codes::ERR_SLOT_LOST, MainWP_Backup_Error_Codes::ERR_SLOT_LOST ),
 			'non-MainWP throwable'     => array( 1000, $digest, 'runtime', 'runtime' ),
 		);
 	}
@@ -1021,8 +1024,8 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 
 	/** Archive size failures cannot be treated as optional metadata failures. */
 	public function test_incremental_archive_size_failure_rejects_run() {
-		list( $site_id, $task )                  = $this->arrange_manual_task();
-		$this->remote_files['dbBackup-1.zip']     = "PK\x03\x04" . str_repeat( 'z', 200 );
+		list( $site_id, $task )               = $this->arrange_manual_task();
+		$this->remote_files['dbBackup-1.zip'] = "PK\x03\x04" . str_repeat( 'z', 200 );
 		$this->run_cycle( $site_id, $task );
 		$before = count( MainWP_Backup_Snapshots::instance()->get_snapshots_for_site( $site_id ) );
 		$finish = $this->run_cycle( $site_id, $task );

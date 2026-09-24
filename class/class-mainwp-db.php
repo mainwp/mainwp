@@ -1096,7 +1096,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         $table_name = esc_sql( $this->table_name( 'wp_options' ) );
         $rslt       = $this->wpdb->get_results( $this->wpdb->prepare( "SELECT name FROM {$table_name} WHERE wpid = %d AND name = %s", $site_id, $option ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd.
         if ( empty( $rslt ) ) {
-            $this->wpdb->insert(
+            $written = $this->wpdb->insert(
                 $this->table_name( 'wp_options' ),
                 array(
                     'wpid'  => $site_id,
@@ -1105,7 +1105,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 )
             );
         } else {
-            $this->wpdb->update(
+            $written = $this->wpdb->update(
                 $this->table_name( 'wp_options' ),
                 array( 'value' => $value ),
                 array(
@@ -1113,6 +1113,10 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                     'name' => $option,
                 )
             );
+        }
+
+        if ( false !== $written && is_string( $option ) ) {
+            MainWP_Cache_Helper::invalidate_updates_cache_if_ignore_fields( array( $option => $value ) );
         }
     }
 
@@ -3386,7 +3390,11 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             );
             $this->wpdb->get_row( $sql );
 
-            return $this->wpdb->update( $this->table_name( 'wp' ), $fields, array( 'id' => $websiteid ) );
+            $updated = $this->wpdb->update( $this->table_name( 'wp' ), $fields, array( 'id' => $websiteid ) );
+            if ( false !== $updated ) {
+                MainWP_Cache_Helper::invalidate_updates_cache_if_ignore_fields( $fields );
+            }
+            return $updated;
         }
 
         return false;

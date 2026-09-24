@@ -200,6 +200,38 @@ final class MainWP_Cache_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSa
     }
 
     /**
+     * Drop the cached Available Updates nav counts when ignore settings change.
+     *
+     * Sync already invalidates this group when upgrade payloads change. Ignore
+     * toggles and per-item ignore lists do not, so the nav badge can stay stale
+     * for the cache TTL while the updates tables recompute live.
+     *
+     * @param array $fields Field names being written, keyed by column or option name.
+     */
+    public static function invalidate_updates_cache_if_ignore_fields( $fields ) {
+        if ( ! is_array( $fields ) || empty( $fields ) ) {
+            return;
+        }
+
+        $ignore_fields = array(
+            'is_ignoreCoreUpdates',
+            'is_ignorePluginUpdates',
+            'is_ignoreThemeUpdates',
+            'ignored_plugins',
+            'ignored_themes',
+            'ignored_wp_upgrades',
+            'ignored_trans_updates',
+        );
+
+        foreach ( $ignore_fields as $field ) {
+            if ( array_key_exists( $field, $fields ) ) {
+                self::invalidate_cache_group( self::CGR_UPDATES );
+                return;
+            }
+        }
+    }
+
+    /**
      * Add cache.
      *
      * @param string $key Cache key.

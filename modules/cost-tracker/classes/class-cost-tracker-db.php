@@ -31,6 +31,18 @@ class Cost_Tracker_DB extends MainWP_Install {
      */
     private $cost_tracker_db_version = '1.0.18';
 
+    /**
+     * Set once the price column is confirmed decimal(26,8) NOT NULL.
+     *
+     * Sites already stored at the current db version never re-enter update_db_cost().
+     */
+    const PRICE_NOT_NULL_OPTION = 'mainwp_module_cost_tracker_price_not_null';
+
+    /**
+     * Unix time before which a failed price repair is not retried.
+     */
+    const PRICE_NOT_NULL_RETRY_OPTION = 'mainwp_module_cost_tracker_price_not_null_after';
+
 
     /**
      * Static variable to hold the single instance of the class.
@@ -78,6 +90,7 @@ class Cost_Tracker_DB extends MainWP_Install {
         }
 
         if ( $currentVersion === $this->cost_tracker_db_version ) {
+            $this->maybe_repair_cost_tracker_price_not_null();
             return;
         }
 
@@ -120,6 +133,7 @@ PRIMARY KEY  (`id`)  ';
         }
         $this->update_db_cost( $currentVersion );
         update_option( 'mainwp_module_cost_tracker_db_version', $this->cost_tracker_db_version );
+        $this->maybe_repair_cost_tracker_price_not_null();
     }
 
 
@@ -132,9 +146,10 @@ PRIMARY KEY  (`id`)  ';
      */
     public function update_db_cost( $current_version ) { //phpcs:ignore -- NOSONAR - complex.
         if ( ! empty( $current_version ) ) {
-            if ( version_compare( $current_version, '1.0.8', '<' ) ) {
-                $table = esc_sql( $this->table_name( 'cost_tracker' ) );
-                $this->wpdb->query( "ALTER TABLE {$table} MODIFY COLUMN price decimal(26,8)" ); //phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd and a table name cannot be a prepare() placeholder.
+            // 1.0.8 widened price but omitted NOT NULL. MySQL drops attributes that
+            // MODIFY does not repeat, so every version before the repair must run it.
+            if ( version_compare( $current_version, '1.0.8', '<' ) || ! get_option( self::PRICE_NOT_NULL_OPTION ) ) {
+                $this->repair_cost_tracker_price_not_null();
             }
             if ( version_compare( $current_version, '1.0.9', '<' ) ) {
                 $table = esc_sql( $this->table_name( 'cost_tracker' ) );
@@ -176,6 +191,98 @@ PRIMARY KEY  (`id`)  ';
                 }
             }
         }
+    }
+
+    /**
+     * Repair a nullable price column left by the 1.0.8 precision change.
+     *
+     * Already-upgraded installs are stored at the current db version, so they
+     * never re-enter update_db_cost(). A confirmed column is remembered so later
+     * requests do not SHOW COLUMNS. A failed ALTER is retried at most hourly.
+     *
+     * @return bool True when the column is confirmed decimal(26,8) NOT NULL.
+     */
+    public function maybe_repair_cost_tracker_price_not_null() {
+        if ( get_option( self::PRICE_NOT_NULL_OPTION ) ) {
+            return false;
+        }
+
+        $retry_after = (int) get_option( self::PRICE_NOT_NULL_RETRY_OPTION );
+        if ( $retry_after && time() < $retry_after ) {
+            return false;
+        }
+
+        if ( $this->repair_cost_tracker_price_not_null() ) {
+            update_option( self::PRICE_NOT_NULL_OPTION, 1 );
+            delete_option( self::PRICE_NOT_NULL_RETRY_OPTION );
+            return true;
+        }
+
+        update_option( self::PRICE_NOT_NULL_RETRY_OPTION, time() + HOUR_IN_SECONDS, false );
+        return false;
+    }
+
+    /**
+     * Make price decimal(26,8) NOT NULL without changing stored prices.
+     *
+     * NULL prices are set to 0 first so strict SQL mode can apply NOT NULL.
+     * Rows that already have a price are left as they are.
+     *
+     * @return bool True when the column is decimal(26,8) NOT NULL.
+     */
+    public function repair_cost_tracker_price_not_null() {
+        $table = esc_sql( $this->table_name( 'cost_tracker' ) );
+
+        $this->wpdb->last_error = '';
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- DDL introspection; table name is escaped and is not a prepare() placeholder.
+        $column = $this->wpdb->get_row( "SHOW COLUMNS FROM {$table} LIKE 'price'" );
+        if ( '' !== $this->wpdb->last_error ) {
+            return false;
+        }
+
+        if ( empty( $column ) ) {
+            return false;
+        }
+
+        if ( $this->price_column_is_not_null_decimal( $column ) ) {
+            return true;
+        }
+
+        if ( 'YES' === $column->Null ) {
+            // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is escaped; only SQL NULL prices are replaced.
+            $updated = $this->wpdb->query( "UPDATE {$table} SET price = 0 WHERE price IS NULL" );
+            if ( false === $updated ) {
+                return false;
+            }
+        }
+
+        $suppress = $this->wpdb->suppress_errors();
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- DDL; table name is escaped and is not a prepare() placeholder.
+        $this->wpdb->query( "ALTER TABLE {$table} MODIFY COLUMN price decimal(26,8) NOT NULL" );
+        $this->wpdb->suppress_errors( $suppress );
+
+        $this->wpdb->last_error = '';
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- DDL introspection; table name is escaped and is not a prepare() placeholder.
+        $column = $this->wpdb->get_row( "SHOW COLUMNS FROM {$table} LIKE 'price'" );
+        if ( '' !== $this->wpdb->last_error || empty( $column ) ) {
+            return false;
+        }
+
+        return $this->price_column_is_not_null_decimal( $column );
+    }
+
+    /**
+     * Whether SHOW COLUMNS reports the intended price definition.
+     *
+     * @param object $column Column row from SHOW COLUMNS.
+     *
+     * @return bool
+     */
+    private function price_column_is_not_null_decimal( $column ) {
+        $type = strtolower( (string) $column->Type );
+        $type = preg_replace( '/\s+/', '', $type );
+
+        return 'NO' === $column->Null && 'decimal(26,8)' === $type;
     }
 
     /**

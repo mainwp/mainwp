@@ -746,6 +746,7 @@ class MainWP_Backup_Storage_SFTP_Test extends \WP_UnitTestCase {
 
 		$this->assertSame( 0, \MainWP\Dashboard\MainWP_Backup_Storage_Handler::pin_enforcement_id( 0, $stored, array() ), 'A new destination enforces no pin.' );
 		$this->assertSame( 7, \MainWP\Dashboard\MainWP_Backup_Storage_Handler::pin_enforcement_id( 7, $stored, $stored ), 'An edit against the same server enforces its pin.' );
+		$this->assertSame( 7, \MainWP\Dashboard\MainWP_Backup_Storage_Handler::pin_enforcement_id( 7, $stored, array() ), 'Unreadable stored settings must still enforce the existing destination pin.' );
 		$this->assertSame(
 			0,
 			\MainWP\Dashboard\MainWP_Backup_Storage_Handler::pin_enforcement_id(

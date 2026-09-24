@@ -326,8 +326,8 @@ class MainWP_Backup_Storage_SFTP implements MainWP_Backup_Storage_Provider { // 
 
     /**
      * Forget the learned host-key fingerprint for a destination - called
-     * when the destination is edited (the host may have changed; the next
-     * connect re-learns) or deleted.
+     * when the host or port changes (the next connect re-learns) or the
+     * destination is deleted.
      *
      * @param int $destination_id Destination id.
      */
@@ -343,8 +343,8 @@ class MainWP_Backup_Storage_SFTP implements MainWP_Backup_Storage_Provider { // 
      * loop: a lost swap re-reads and retries; a missing row or an already
      * absent pin is a no-op. When every swap loses (a dead or read-only DB),
      * the stale pin is left standing rather than force-written - the next
-     * connect then refuses on host-key-change and the user re-saves, the
-     * fail-closed direction.
+     * connect then refuses on host-key-change. To recover, the user enters
+     * the new fingerprint in the Host key fingerprint field.
      *
      * @param int $destination_id Destination id.
      *

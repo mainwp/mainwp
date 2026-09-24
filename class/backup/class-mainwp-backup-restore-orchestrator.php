@@ -940,6 +940,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             return;
         }
 
+        $checkpoint             = $fresh->checkpoint;
         $checkpoint['transfer'] = $cursor;
         $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
 

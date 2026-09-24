@@ -530,12 +530,12 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
             'settings'         => $settings,
             'reset_sftp_trust' => $id > 0 && 'sftp' === $provider && static::sftp_trust_changed( $settings, $existing_settings ),
             // The destination id to run the connection test under, so an
-            // SFTP edit against an unchanged server enforces its learned
-            // host-key pin BEFORE credentials are sent (a re-save under
-            // interception would otherwise skip the pin and leak the
-            // password). Zero for a new destination or one whose target
-            // server changed - there the pin does not apply and TOFU
-            // re-learns on the new server's first real use.
+            // SFTP edit with unchanged or unreadable stored server settings
+            // enforces its learned host-key pin BEFORE credentials are sent
+            // (a re-save under interception would otherwise skip the pin
+            // and leak the password). Zero for a new destination or one
+            // whose target server changed - there the pin does not apply
+            // and TOFU re-learns on the new server's first real use.
             'test_id'          => static::pin_enforcement_id( $id, $settings, $existing_settings ),
         );
     }
@@ -543,18 +543,24 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
     /**
      * The destination id a connection test should enforce the host-key pin
      * under: the row id when editing a destination whose target server
-     * (host + port) is unchanged, zero otherwise (a new destination, or an
-     * edit that repoints at a different server).
+     * (host + port) is unchanged or whose stored settings are empty or
+     * unreadable. Recovery must enforce any surviving pin and learn under
+     * the row id if none survives. A new destination or a known host/port
+     * change returns zero. If recovery also changes the server, the admin
+     * must enter its new fingerprint in the Host key fingerprint field.
      *
      * @param int   $id                Destination id (0 for a new destination).
      * @param array $new_settings      The settings being tested.
-     * @param array $existing_settings The stored settings, empty for a new destination.
+     * @param array $existing_settings The stored settings, empty when new or unreadable.
      *
      * @return int Destination id to enforce the pin under, or 0.
      */
     public static function pin_enforcement_id( int $id, array $new_settings, array $existing_settings ) {
-        if ( $id <= 0 || empty( $existing_settings ) ) {
+        if ( $id <= 0 ) {
             return 0;
+        }
+        if ( empty( $existing_settings ) ) {
+            return $id;
         }
 
         // Compare the way the provider actually dials the server, not by raw

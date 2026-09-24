@@ -4922,6 +4922,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			'transfer_completes'       => array( false, array( $ack, $ack ), 2, MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, null, false ),
 			'transfer_retry_error'     => array( false, array( $wrong ), 1, MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE, null, false ),
 			'cancel_busy_with_error'   => array( false, array( $wrong ), 1, MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING, 'busy', false ),
+			'cancel_deferred_busy'     => array( false, array( $wrong ), 1, MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING, 'busy', false ),
 			'cancel_ok_with_error'     => array( false, array( $wrong ), 1, MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED, 'ok', false ),
 			'retry_transfer_completes' => array( false, array( $ack, $ack ), 2, MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, null, true ),
 		);
@@ -4949,14 +4950,22 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			$attempts              = (int) $job->attempt_count;
 			$concurrent_checkpoint = $job->checkpoint;
 			$chunk_calls           = 0;
-			$on_chunk              = function ( $pre, $website, $what ) use ( $advance, $cancel_answer, $store, $id, $concurrent_checkpoint, &$chunk_calls ) {
+			$confirmation          = null;
+			$defer_cancel          = 'cancel_deferred_busy' === $label;
+			$on_chunk              = function ( $pre, $website, $what ) use ( $advance, $cancel_answer, $store, $id, $concurrent_checkpoint, &$chunk_calls, $defer_cancel, &$confirmation ) {
 				if ( 'restore_artifact_chunk' === $what && 1 === ++$chunk_calls && $advance ) {
 					// Match the row left by a UI cancel when the child already completed.
 					$this->assertTrue( $store->save_checkpoint( $id, $concurrent_checkpoint, null, true ) );
 					$this->assertTrue( $store->set_status( $id, MainWP_Backup_Restore_Job_Store::STATUS_RUNNING ) );
 				}
 				if ( 'restore_artifact_chunk' === $what && 1 === $chunk_calls && null !== $cancel_answer ) {
-					$this->assertTrue( $store->arm_cancel_intent( $id ) );
+					if ( $defer_cancel ) {
+						$confirmation = $store->defer_terminal_failure( $id, null, '' );
+						$this->assertNotNull( $confirmation );
+						$this->assertSame( 1, $confirmation['attempt_count'] );
+					} else {
+						$this->assertTrue( $store->arm_cancel_intent( $id ) );
+					}
 				}
 				return $pre;
 			};
@@ -4973,6 +4982,10 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			}
 			$this->assertSame( $expected_actions, array_column( $this->calls, 'what' ), $label );
 			$this->assertSame( $expected_status, $job->status, $label );
+			if ( $defer_cancel ) {
+				$this->assertSame( $confirmation['first_attempt_at'], $job->checkpoint['cancel_confirmation']['first_attempt_at'], $label );
+				$this->assertSame( 2, $job->checkpoint['cancel_confirmation']['attempt_count'], $label );
+			}
 			if ( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE === $expected_status ) {
 				$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING, $job->checkpoint['resume_status'], $label );
 				$this->assertNotEmpty( $job->last_error, $label );

@@ -207,6 +207,80 @@ class MainWP_Backup_Storage_Page_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Re-entering unreadable credentials must preserve and enforce the learned pin.
+	 *
+	 * @return void
+	 */
+	public function test_b13_save_sftp_unreadable_credentials_keeps_pin() {
+		global $wpdb;
+
+		$settings = array(
+			'host'        => 'sftp.example.com',
+			'port'        => '22',
+			'username'    => 'backup-user',
+			'password'    => 'saved-password',
+			'private_key' => 'saved-private-key',
+			'base_path'   => '/backups',
+		);
+		$store    = MainWP_Backup_Storage_Destinations::instance();
+		$id       = $store->add_destination(
+			array(
+				'provider' => 'sftp',
+				'name'     => 'Original SFTP',
+				'settings' => $settings,
+			)
+		);
+		$this->assertGreaterThan( 0, $id );
+		$pin = \MainWP\Dashboard\MainWP_Backup_Storage_SFTP::fingerprint_host_key( 'original-host-key' );
+		update_option( 'mainwp_backup_sftp_hostkeys', array( $id => $pin ), false );
+
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_storage' );
+		$raw   = (string) $wpdb->get_var( $wpdb->prepare( "SELECT settings FROM {$table} WHERE id = %d", $id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- raw credential envelope fixture.
+		$this->assertTrue( \MainWP\Dashboard\MainWP_Credential_Storage::is_credential_envelope( $raw ) );
+		$envelope = json_decode( substr( $raw, strlen( \MainWP\Dashboard\MainWP_Credential_Storage::ENVELOPE_PREFIX ) ), true );
+		$this->assertNotEmpty( $envelope['file_key'] );
+		\MainWP\Dashboard\MainWP_Keys_Manager::instance()->delete_key_file( $envelope['file_key'] );
+		$row = $store->get_destination( $id );
+		$this->assertNull( $row->settings );
+		$this->assertTrue( $row->credentials_invalid );
+		$settings['password'] = 'replacement-password';
+
+		$provider = $this->createMock( \MainWP\Dashboard\MainWP_Backup_Storage_Provider::class );
+		$provider->expects( $this->once() )->method( 'connection_test' )->willReturn( array( 'ok' => true ) );
+		$destinations = $this->getMockBuilder( MainWP_Backup_Storage_Destinations::class )->onlyMethods( array( 'make_provider' ) )->getMock();
+		$destinations->expects( $this->once() )->method( 'make_provider' )->willReturnCallback(
+			function ( $candidate ) use ( $provider, $id ) {
+				$this->assertSame( $id, $candidate->id, 'Credential recovery must enforce the surviving pin before login.' );
+				return $provider;
+			}
+		);
+		$instance = new \ReflectionProperty( MainWP_Backup_Storage_Destinations::class, 'instance' );
+		$instance->setValue( null, $destinations );
+		try {
+			$result = MainWP_Backup_Storage_Handler::save_destination(
+				array(
+					'id'       => $id,
+					'provider' => 'sftp',
+					'name'     => 'Renamed SFTP',
+					'settings' => $settings,
+				)
+			);
+			$this->assertArrayNotHasKey( 'error', $result );
+			$this->assertSame( $id, $result['id'] );
+			$row = $store->get_destination( $id );
+			$this->assertSame( 'Renamed SFTP', $row->name );
+			$this->assertSame( $settings, $row->settings );
+			$this->assertFalse( $row->credentials_invalid );
+			$pins = get_option( 'mainwp_backup_sftp_hostkeys' );
+			$this->assertSame( $pin, $pins[ $id ] ?? null );
+			$this->assertArrayNotHasKey( 'notice', $result );
+		} finally {
+			$instance->setValue( null, $store );
+			delete_option( 'mainwp_backup_sftp_hostkeys' );
+		}
+	}
+
+	/**
 	 * Each credential field is checked on its own.
 	 *
 	 * @return array

@@ -72,15 +72,19 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
     /**
      * Method backup_download_file()
      *
-     * Download backup file.
+     * Download a legacy backup into the site's backup directory, removing
+     * older unprotected backups of the same type to respect the local limit.
+     * Full and database backups are validated after download; other types
+     * do not trigger a download.
      *
-     * @param int    $pSiteId Child Site ID.
-     * @param string $pType   full|db Type of backup.
-     * @param string $pUrl    Backup location.
-     * @param string $pFile   Backup File.
+     * @param int    $pSiteId Child site ID.
+     * @param string $pType   'full' or 'db' to download a backup.
+     * @param string $pUrl    Remote backup identifier passed to the child.
+     * @param string $pFile   Local destination inside this site's backup directory.
      *
-     * @return bool true|false
-     * @throws MainWP_Exception Error message.
+     * @return bool True on success, including when the type is not 'full' or 'db'.
+     * @throws MainWP_Exception If the destination is outside the site's backup directory,
+     *                           the site or filesystem is unavailable, or transfer or validation fails.
      *
      * @uses \MainWP\Dashboard\MainWP_Connect::get_get_data_authed()
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()

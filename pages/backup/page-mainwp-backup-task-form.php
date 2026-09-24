@@ -54,7 +54,10 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
         MainWP_Backup_Page::render_footer( 'ManageBackupsEdit' );
     }
 
-    /** Render New Task Form. */
+    /**
+     * Render the new backup task form with its nonce and site selection.
+     * Show the permission error instead when the user cannot add tasks.
+     */
     public static function render_new(): void {
         if ( ! \mainwp_current_user_can( 'dashboard', 'add_backup_tasks' ) ) {
             \mainwp_do_not_have_permissions( esc_html__( 'add backup tasks', 'mainwp' ) );

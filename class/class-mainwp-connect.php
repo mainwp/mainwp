@@ -2452,19 +2452,23 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * confirms the partial response; error response bodies never reach the
      * backup file, and the transfer aborts on stalls and timeouts.
      *
-     * The size check here guards the transfer. A 416 whose total matches
-     * the local file confirms completion even if the child's expected size
-     * is larger: the server's total is authoritative about the file it holds.
-     * Callers that require the child-reported size validate it themselves.
+     * An existing file exactly matching the expected size needs no request.
+     * A 416 with a total that differs from the expected size restarts the
+     * transfer; an undersized result then fails the final size check.
+     * A partial file is discarded when its size is unknown or exceeds the
+     * expected size.
      *
-     * @param mixed       $url Download URL.
-     * @param mixed       $file File to download to.
-     * @param int|false   $size Expected total file size in bytes, false when unknown.
-     * @param null        $http_user htaccess username.
-     * @param null        $http_pass htaccess password.
-     * @param object|null $website Child site TLS settings; null uses cURL defaults.
+     * @param string      $url       Download URL.
+     * @param string      $file      Local destination path.
+     * @param int|false   $size      Expected total size in bytes; false or
+     *                               non-positive values disable size checks and resuming.
+     * @param string|null $http_user HTTP Basic Auth username.
+     * @param string|null $http_pass HTTP Basic Auth password.
+     * @param object|null $website   Child site transport settings; null uses cURL defaults.
      *
-     * @throws MainWP_Exception Exception message.
+     * @throws MainWP_Exception If the destination cannot be written, the HTTP transfer fails,
+     *                           a resumed 206 confirms the wrong range, or the
+     *                           downloaded size is outside the accepted range.
      *
      * @uses \MainWP\Dashboard\MainWP_Exception
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()

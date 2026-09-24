@@ -66,7 +66,7 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         return static::$instance;
     }
 
-    /** Instantiate Hooks. */
+    /** Register the Backups page header, footer, and help sidebar hooks. */
     public static function init(): void {
         /**
          * This hook allows you to render the Backups page header via the 'mainwp-pageheader-backups' action.

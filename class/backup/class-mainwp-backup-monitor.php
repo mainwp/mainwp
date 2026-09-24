@@ -393,20 +393,27 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      */
     public static function refresh_negotiated_capabilities( object $website ): void {
         // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.Missing
-        $clamp = static function ( $timeout ) {
-            return is_numeric( $timeout ) && $timeout > 0 ? max( 1, min( (int) $timeout, self::CAPABILITY_PROBE_TIMEOUT_SECONDS ) ) : 1;
+        $deadline = static::capability_probe_time() + self::CAPABILITY_PROBE_TIMEOUT_SECONDS;
+        $clamp    = static function ( $timeout, $what = '' ) use ( $deadline ) {
+            if ( 'backup_preflight' !== $what ) {
+                return $timeout;
+            }
+            $remaining = (int) floor( $deadline - static::capability_probe_time() );
+            if ( $remaining < 20 ) {
+                throw new MainWP_Exception( 'Capability probe deadline exhausted.' );
+            }
+            return max( 20, min( (int) $timeout, $remaining ) );
         };
-        add_filter( 'mainwp_fetch_url_site_timeout', $clamp, PHP_INT_MAX );
+        add_filter( 'mainwp_fetch_url_site_timeout', $clamp, PHP_INT_MAX, 2 );
         try {
-            $start = static::capability_probe_time();
             try {
                 $preflight = MainWP_Connect::fetch_url_authed( $website, 'backup_preflight', array( 'capabilities_only' => 1 ), false, false, false );
             } catch ( \Throwable $e ) {
-                if ( static::capability_probe_time() - $start >= 5 ) {
+                if ( $deadline - static::capability_probe_time() < 20 ) {
                     throw $e;
                 }
-                // A fast endpoint refusal may succeed through the site-root fallback.
-                $preflight = MainWP_Connect::fetch_url_authed( $website, 'backup_preflight', array( 'capabilities_only' => 1 ), false, false, true );
+                // Bypass admin-ajax on fallback; both attempts share the same deadline.
+                $preflight = MainWP_Connect::fetch_url_authed( $website, 'backup_preflight', array( 'capabilities_only' => 1 ), false, false, false, null, false, array( 'root_only' => true ) );
             }
         } catch ( \Throwable $e ) {
             MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'Capability probe unavailable: ' . $e->getMessage() );
@@ -449,14 +456,17 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @param array  $preflight Child readiness report. Empty for a child whose
      *                          build has no preflight action at all.
      *
+     * @throws MainWP_Exception When the manifest capability cannot be persisted.
      * @return void
      */
     protected static function record_negotiated_capabilities( object $website, array $preflight ): void {
+        global $wpdb;
         $flags = array(
             'task_spine_support'                 => 'task_spine',
             'download_token_support'             => 'download_token',
             'incremental_support'                => 'incremental',
             'manifest_chunk_support'             => 'manifest_chunk',
+            'manifest_writer_identity_support'   => 'manifest_writer_identity',
             'restore_create_idempotency_support' => 'restore_create_idempotency',
             'restore_files_support'              => 'restore_files',
             'cloud_restore_pull_support'         => 'cloud_restore_pull',
@@ -472,6 +482,9 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         // compares against '1', so the stored '0' behaves exactly as '' did.
         foreach ( $flags as $option => $reported ) {
             MainWP_DB::instance()->update_website_option( $website, $option, empty( $preflight[ $reported ] ) ? '0' : '1' );
+            if ( 'manifest_writer_identity_support' === $option && ( '' !== $wpdb->last_error || ( empty( $preflight[ $reported ] ) ? '0' : '1' ) !== MainWP_DB::instance()->get_website_option( (int) $website->id, $option ) ) ) {
+                throw new MainWP_Exception( esc_html__( 'Could not save the child manifest capability.', 'mainwp' ) );
+            }
         }
     }
 

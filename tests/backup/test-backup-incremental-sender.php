@@ -120,14 +120,15 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	protected function preflight_response( $overrides = array() ) {
 		return array_merge(
 			array(
-				'disk_free'       => 10 * GB_IN_BYTES,
-				'dir_writable'    => true,
-				'db_connected'    => true,
-				'zip_support'     => true,
-				'time_limit_ok'   => true,
-				'backup_dir_hash' => 'abc123def456gh78',
-				'task_spine'      => 1,
-				'incremental'     => 1,
+				'disk_free'                => 10 * GB_IN_BYTES,
+				'dir_writable'             => true,
+				'db_connected'             => true,
+				'zip_support'              => true,
+				'time_limit_ok'            => true,
+				'backup_dir_hash'          => 'abc123def456gh78',
+				'task_spine'               => 1,
+				'incremental'              => 1,
+				'manifest_writer_identity' => 1,
 			),
 			$overrides
 		);
@@ -198,9 +199,10 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 
 		$artifacts = array(
 			array(
-				'file' => 'files.list',
-				'size' => 40,
-				'role' => 'manifest',
+				'file'   => 'files.list',
+				'size'   => 40,
+				'role'   => 'manifest',
+				'sha256' => hash( 'sha256', $this->remote_files['files.list'] ),
 			),
 			array(
 				'file' => 'tombstones.list',
@@ -305,6 +307,7 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 				'parent_id'     => null,
 				'archives'      => array(),
 				'manifest_path' => $this->manifest_fixture,
+				'run_key'       => $site_id . ':' . $task_id . ':c:fixture-' . wp_generate_password( 12, false ),
 			)
 		);
 		if ( $record_manifest ) {
@@ -331,6 +334,7 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 				'parent_id'     => $parent_id,
 				'archives'      => array(),
 				'manifest_path' => $this->manifest_fixture,
+				'run_key'       => $site_id . ':' . $task_id . ':c:fixture-' . wp_generate_password( 12, false ),
 			)
 		);
 	}
@@ -426,6 +430,225 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Plain requires both a negotiated proof and a stable base identity.
+	 *
+	 * @dataProvider manifest_identity_inputs
+	 * @param bool   $capable Child capability.
+	 * @param string $identity Base run identity suffix.
+	 * @param bool   $plain Expected plain transport.
+	 */
+	public function test_plain_requires_manifest_writer_identity( $capable, $identity, $plain ) {
+		global $wpdb;
+		$site_id = $this->create_test_site();
+		$base_id = $this->record_base_snapshot( $site_id );
+		$wpdb->update( $wpdb->prefix . 'mainwp_wp_backup_snapshot', array( 'run_key' => $site_id . ':11:' . $identity ), array( 'id' => $base_id ) );
+		$this->mock_child_actions(
+			array(
+				'backup_preflight'   => $this->preflight_response( array( 'manifest_writer_identity' => $capable ? 1 : 0 ) ),
+				'backup_task_create' => array(
+					'task_id' => 'identity-next',
+					'phase'   => 'queued',
+				),
+			)
+		);
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$this->assertNull( $this->run_cycle( $site_id, $this->make_task( $website ) )['exception'] );
+		$params = $this->last_call_params( 'backup_task_create' );
+		$this->assertSame( 'incremental', $params['type'] );
+		$this->assertSame( $plain, isset( $params['parent_child_task_id'] ) );
+		$this->assertSame( ! $plain, isset( $params['parent_manifest'] ) );
+		if ( $plain ) {
+			$this->assertSame( 'task-base', $params['parent_child_task_id'] );
+		}
+		$this->assertSame( $capable ? '1' : '0', MainWP_DB::instance()->get_website_option( $site_id, 'manifest_writer_identity_support' ) );
+	}
+
+	/**
+	 * Capability and identity cases.
+	 *
+	 * @return array
+	 */
+	public static function manifest_identity_inputs() {
+		return array(
+			'new child'            => array( true, 'c:task-base', true ),
+			'old child'            => array( false, 'c:task-base', false ),
+			'legacy identity'      => array( true, 'l:legacy', false ),
+			'empty child identity' => array( true, 'c:', false ),
+		);
+	}
+
+	/**
+	 * Every ordering preserves the most recent pending owner, including failed records.
+	 *
+	 * @dataProvider manifest_record_interleavings
+	 * @param array  $events Ordered create/record events.
+	 * @param string $owner Expected final owner.
+	 */
+	public function test_manifest_pending_token_interleavings( $events, $owner ) {
+		$site_id = $this->create_test_site();
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$claim   = new \ReflectionMethod( MainWP_Backup_Executor::class, 'claim_manifest_writer' );
+		$claim->setAccessible( true );
+		$record = new \ReflectionMethod( MainWP_Backup_Executor::class, 'record_manifest_writer' );
+		$record->setAccessible( true );
+		$rows = array();
+		foreach ( $events as $event ) {
+			list( $op, $name ) = explode( ':', $event );
+			$id                = 'I' === $name ? 11 : 12;
+			if ( 'create' === $op ) {
+				MainWP_DB_Backup::instance()->add_backup_task_progress( $id, $site_id, array() );
+				MainWP_DB_Backup::instance()->update_backup_task_progress(
+					$id,
+					$site_id,
+					array(
+						'child_backup_task_id' => 'creating-' . $name,
+						'last_error'           => wp_json_encode(
+							array(
+								'incremental_sent' => 'push',
+								'run'              => 123,
+							)
+						),
+					)
+				);
+				$claim->invoke( null, $website, $id, 'creating-' . $name );
+				$rows[ $name ] = MainWP_DB_Backup::instance()->get_backup_task_progress( $id, $site_id );
+				$state         = json_decode( $rows[ $name ]->last_error, true );
+				$this->assertSame( 'push', $state['incremental_sent'] );
+				$this->assertSame( 123, $state['run'] );
+				$this->assertSame( $state['manifest_pending'], MainWP_DB::instance()->get_website_option( $site_id, 'native_manifest_snapshot' ) );
+			} elseif ( 'record' === $op ) {
+				$record->invoke( null, $website, $rows[ $name ], $id );
+			}
+		}
+		$expected = 'pending:F' === $owner ? json_decode( $rows['F']->last_error, true )['manifest_pending'] : $owner;
+		$this->assertSame( $expected, MainWP_DB::instance()->get_website_option( $site_id, 'native_manifest_snapshot' ) );
+		if ( 'pending:F' === $owner ) {
+			$this->record_base_snapshot( $site_id, 11, false );
+			MainWP_DB::instance()->update_website_option( $site_id, 'incremental_support', '1' );
+			MainWP_DB::instance()->update_website_option( $site_id, 'manifest_writer_identity_support', '1' );
+			$resolve = new \ReflectionMethod( MainWP_Backup_Executor::class, 'resolve_incremental_send' );
+			$resolve->setAccessible( true );
+			$send = $resolve->invoke( null, $website, $this->make_task( $website ), null );
+			$this->assertSame( 'push', $send['mode'], 'F completed but failed to record; I must send its own base.' );
+		}
+	}
+
+	/**
+	 * All create/record orders and an unrecorded completion.
+	 *
+	 * @return array
+	 */
+	public static function manifest_record_interleavings() {
+		return array(
+			'I R F R'                      => array( array( 'create:I', 'record:I', 'create:F', 'record:F' ), '12' ),
+			'I F RI RF'                    => array( array( 'create:I', 'create:F', 'record:I', 'record:F' ), '12' ),
+			'I F RF RI'                    => array( array( 'create:I', 'create:F', 'record:F', 'record:I' ), '12' ),
+			'F R I R'                      => array( array( 'create:F', 'record:F', 'create:I', 'record:I' ), '11' ),
+			'F I RF RI'                    => array( array( 'create:F', 'create:I', 'record:F', 'record:I' ), '11' ),
+			'F I RI RF'                    => array( array( 'create:F', 'create:I', 'record:I', 'record:F' ), '11' ),
+			'I F RI F record fails next I' => array( array( 'create:I', 'create:F', 'record:I', 'failed:F' ), 'pending:F' ),
+		);
+	}
+
+	/** The option CAS compares token bytes, not the database collation. */
+	public function test_manifest_record_rejects_case_variant_token() {
+		$site_id = $this->create_test_site();
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		MainWP_DB::instance()->update_website_option( $site_id, 'native_manifest_snapshot', 'pending:11:ABC' );
+		$record = new \ReflectionMethod( MainWP_Backup_Executor::class, 'record_manifest_writer' );
+		$record->setAccessible( true );
+		$record->invoke( null, $website, (object) array( 'last_error' => wp_json_encode( array( 'manifest_pending' => 'pending:11:abc' ) ) ), 99 );
+		$this->assertSame( 'pending:11:ABC', MainWP_DB::instance()->get_website_option( $site_id, 'native_manifest_snapshot' ) );
+	}
+
+	/** A database error cannot turn a pending token into recorded ownership. */
+	public function test_manifest_record_db_failure_preserves_pending() {
+		global $wpdb;
+		$site_id = $this->create_test_site();
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		MainWP_DB::instance()->update_website_option( $site_id, 'native_manifest_snapshot', 'pending:11:token' );
+		$record = new \ReflectionMethod( MainWP_Backup_Executor::class, 'record_manifest_writer' );
+		$record->setAccessible( true );
+		$fail = static function ( $query ) {
+			return 0 === strpos( $query, 'UPDATE ' ) && false !== strpos( $query, 'BINARY value' ) ? 'INVALID SQL FOR MANIFEST CAS TEST' : $query;
+		};
+		$old  = $wpdb->suppress_errors( true );
+		add_filter( 'query', $fail );
+		try {
+			try {
+				$record->invoke( null, $website, (object) array( 'last_error' => wp_json_encode( array( 'manifest_pending' => 'pending:11:token' ) ) ), 99 );
+				$this->fail( 'A failed ownership write must be reported.' );
+			} catch ( MainWP_Exception $e ) {
+				$this->assertSame( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_RECORD_FAILED, $e->get_message_error_code() );
+			}
+			$this->assertSame( 'pending:11:token', MainWP_DB::instance()->get_website_option( $site_id, 'native_manifest_snapshot' ) );
+		} finally {
+			remove_filter( 'query', $fail );
+			$wpdb->suppress_errors( $old );
+		}
+	}
+
+	/**
+	 * Failed pending writes must stop before the remote create.
+	 *
+	 * @dataProvider manifest_write_failures
+	 * @param string $target Failed table suffix.
+	 */
+	public function test_manifest_db_failure_prevents_create( $target ) {
+		global $wpdb;
+		$site_id = $this->create_test_site();
+		$base_id = $this->record_base_snapshot( $site_id );
+		$this->mock_child_actions(
+			array(
+				'backup_preflight'   => $this->preflight_response(),
+				'backup_task_create' => array( 'task_id' => 'should-not-create' ),
+			)
+		);
+		$fail = static function ( $query ) use ( $target ) {
+			if ( false !== strpos( $query, $target ) && ( 'manifest_writer_identity_support' === $target || false !== strpos( $query, 'pending:' ) ) && preg_match( '/^(UPDATE|INSERT)/i', $query ) ) {
+				return 'INVALID SQL FOR MANIFEST WRITE TEST';
+			}
+			return $query;
+		};
+		$old  = $wpdb->suppress_errors( true );
+		add_filter( 'query', $fail );
+		try {
+			$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+			$cycle   = $this->run_cycle( $site_id, $this->make_task( $website ) );
+			$this->assertInstanceOf( MainWP_Exception::class, $cycle['exception'] );
+			$this->assertSame( array(), $this->all_call_params( 'backup_task_create' ) );
+			$this->assertSame( (string) $base_id, MainWP_DB::instance()->get_website_option( $site_id, 'native_manifest_snapshot' ) );
+		} finally {
+			remove_filter( 'query', $fail );
+			$wpdb->suppress_errors( $old );
+		}
+	}
+
+	/**
+	 * Pending token writes in either table may fail independently.
+	 *
+	 * @return array
+	 */
+	public static function manifest_write_failures() {
+		return array(
+			'progress' => array( 'mainwp_wp_backup_progress' ),
+			'option'   => array( 'mainwp_wp_options' ),
+		);
+	}
+
+	/** Same-sized bytes from a later Child run cannot become this run's base. */
+	public function test_replaced_manifest_is_not_recorded() {
+		list( $site_id, $task )           = $this->arrange_manual_task();
+		$this->remote_files['files.list'] = str_repeat( 'x', 40 );
+		$this->run_cycle( $site_id, $task );
+		$before = count( MainWP_Backup_Snapshots::instance()->get_snapshots_for_site( $site_id ) );
+		$finish = $this->run_cycle( $site_id, $task );
+		$this->assertInstanceOf( MainWP_Exception::class, $finish['exception'] );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, $finish['exception']->get_message_error_code() );
+		$this->assertCount( $before, MainWP_Backup_Snapshots::instance()->get_snapshots_for_site( $site_id ) );
+	}
+
+	/**
 	 * Only a recorded manifest identifies the child's shared files.list.
 	 *
 	 * @dataProvider manifest_snapshot_events
@@ -454,7 +677,7 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 				'backup_preflight'   => $this->preflight_response(),
 				'backup_task_create' => function () use ( $site_id, $event, &$creates ) {
 					++$creates;
-					$this->assertSame( '', (string) MainWP_DB::instance()->get_website_option( $site_id, 'native_manifest_snapshot' ), 'Clear the snapshot before every manifest-producing create.' );
+					$this->assertStringStartsWith( 'pending:', (string) MainWP_DB::instance()->get_website_option( $site_id, 'native_manifest_snapshot' ) );
 					if ( 1 === $creates && 'create fails' === $event ) {
 						throw new MainWP_Exception( 'Create failed.' );
 					}
@@ -494,7 +717,7 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 					$this->assertNull( $create['exception'] );
 					$this->assertFalse( $create['result'] );
 				}
-				$this->assertSame( '', (string) MainWP_DB::instance()->get_website_option( $site_id, 'native_manifest_snapshot' ) );
+				$this->assertFalse( ctype_digit( (string) MainWP_DB::instance()->get_website_option( $site_id, 'native_manifest_snapshot' ) ) );
 				if ( 'record fails' === $event ) {
 					$property->setValue(
 						null,
@@ -545,11 +768,13 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 			$latest = $original->get_latest_complete( $site_id, 12 );
 			if ( in_array( $event, array( 'recorded', 'degraded' ), true ) ) {
 				$this->assertNotSame( $base_b, (int) $latest->id, 'The completion must insert a new snapshot.' );
-				$this->assertSame( 'degraded' === $event ? '' : (string) $latest->id, (string) MainWP_DB::instance()->get_website_option( $site_id, 'native_manifest_snapshot' ) );
+				if ( 'degraded' !== $event ) {
+					$this->assertSame( (string) $latest->id, (string) MainWP_DB::instance()->get_website_option( $site_id, 'native_manifest_snapshot' ) );
+				}
 				$this->assertSame( 'degraded' === $event, '' === $latest->manifest_path );
 			} else {
 				$this->assertSame( $base_b, (int) $latest->id, 'A failed or cancelled run must not record a snapshot.' );
-				$this->assertSame( '', (string) MainWP_DB::instance()->get_website_option( $site_id, 'native_manifest_snapshot' ) );
+				$this->assertFalse( ctype_digit( (string) MainWP_DB::instance()->get_website_option( $site_id, 'native_manifest_snapshot' ) ) );
 			}
 
 			// Start a fresh run after the outcome, without carrying its retry marker.
@@ -2340,12 +2565,29 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	/**
 	 * Reusing a recorded snapshot must not announce another successful backup.
 	 *
+	 * @dataProvider completion_identity_cases
+	 * @param bool $manifest Whether the child returns a manifest.
+	 * @param bool $newer Whether another run is recorded before the retry.
 	 * @return void
 	 */
-	public function test_incremental_resume_recorded_snapshot_emits_success_once() {
+	public function test_incremental_resume_recorded_snapshot_emits_success_once( $manifest, $newer ) {
 		list( $site_id, $task ) = $this->arrange_manual_task();
 		$events                 = array();
-		$capture                = static function ( $site, $child, $success ) use ( &$events ) {
+		$omit_manifest          = static function ( $result, $website, $what ) use ( $manifest ) {
+			if ( ! $manifest && 'backup_task_run' === $what && is_array( $result ) && isset( $result['artifacts'] ) ) {
+				$result['artifacts'] = array_values(
+					array_filter(
+						$result['artifacts'],
+						static function ( $artifact ) {
+							return 'manifest' !== $artifact['role'];
+						}
+					)
+				);
+			}
+			return $result;
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $omit_manifest, 20, 3 );
+		$capture = static function ( $site, $child, $success ) use ( &$events ) {
 			if ( $success ) {
 				$events[] = $child;
 			}
@@ -2356,13 +2598,35 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 			$first = $this->run_cycle( $site_id, $task );
 			$this->assertNull( $first['exception'] );
 			$this->assertCount( 1, $events );
+			$saved = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $first['result']['snapshot_id'] );
+			$this->assertSame( $manifest, '' !== $saved->manifest_path );
+			$this->assertNotEmpty( $saved->run_key );
+			if ( $newer ) {
+				$this->record_base_snapshot( $site_id, (int) $task->id, false );
+			}
+			$before = count( MainWP_Backup_Snapshots::instance()->get_snapshots_for_site( $site_id ) );
 			$resume = $this->run_cycle( $site_id, $task );
+			$this->assertCount( $before, MainWP_Backup_Snapshots::instance()->get_snapshots_for_site( $site_id ) );
 			$this->assertNull( $resume['exception'] );
 			$this->assertSame( $first['result']['snapshot_id'], $resume['result']['snapshot_id'] );
 			$this->assertCount( 1, $events );
 		} finally {
 			remove_action( 'mainwp_native_backup_completed', $capture, 10 );
+			remove_filter( 'mainwp_fetch_url_authed_pre', $omit_manifest, 20 );
 		}
+	}
+
+	/**
+	 * Completion identity cases independent of manifest and recency.
+	 *
+	 * @return array
+	 */
+	public static function completion_identity_cases() {
+		return array(
+			'with manifest'                       => array( true, false ),
+			'without manifest'                    => array( false, false ),
+			'without manifest and newer snapshot' => array( false, true ),
+		);
 	}
 
 	/**

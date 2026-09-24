@@ -152,7 +152,7 @@ class Capability_Probe_Test_Monitor extends MainWP_Backup_Monitor {
 	 * @return float Scripted time.
 	 */
 	protected static function capability_probe_time(): float {
-		return array_shift( self::$times );
+		return Capability_Probe_Test_Transport::$now;
 	}
 }
 
@@ -161,6 +161,20 @@ class Capability_Probe_Test_Monitor extends MainWP_Backup_Monitor {
  */
 class Capability_Probe_Test_Transport extends MainWP_Connect {
  // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- transport test double.
+
+	/**
+	 * Simulated monotonic time.
+	 *
+	 * @var float
+	 */
+	public static $now = 100.0;
+
+	/**
+	 * Durations consumed by actual transport attempts.
+	 *
+	 * @var array
+	 */
+	public static $durations = array();
 
 	/**
 	 * Requested URLs and effective timeout values.
@@ -193,7 +207,10 @@ class Capability_Probe_Test_Transport extends MainWP_Connect {
 	 * @throws MainWP_Exception For a blocked endpoint.
 	 */
 	public static function fetch_url_site( &$website, $url, $postdata, $checkConstraints = false, $verifyCertificate = null, $http_user = null, $http_pass = null, $sslVersion = 0, $others = array(), &$output = array() ) {
-		self::$attempts[] = array( $url, apply_filters( 'mainwp_fetch_url_site_timeout', 72000 ) );
+		$timeout          = apply_filters( 'mainwp_fetch_url_site_timeout', 72000, 'backup_preflight' );
+		$duration         = min( $timeout, array_shift( self::$durations ) ?? 30 );
+		self::$attempts[] = array( $url, $timeout );
+		self::$now       += $duration;
 		if ( self::$root_succeeds && $url === $website->url ) {
 			return array( 'restore_create_idempotency' => 1 );
 		}
@@ -4094,8 +4111,22 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$this->assertNull( MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $this->site_id ) );
 	}
 
+	/** Ordinary requests retain the existing admin-ajax and root fallback. */
+	public function test_non_probe_transport_keeps_existing_fallback() {
+		$website                                        = MainWP_DB::instance()->get_website_by_id( $this->site_id );
+		Capability_Probe_Test_Transport::$now           = 100.0;
+		Capability_Probe_Test_Transport::$durations     = array( 0.1, 0.1 );
+		Capability_Probe_Test_Transport::$attempts      = array();
+		Capability_Probe_Test_Transport::$root_succeeds = true;
+		Capability_Probe_Test_Transport::fetch_url( $website, $website->url, array() );
+		$this->assertSame(
+			array( array( rtrim( $website->url, '/' ) . '/wp-admin/admin-ajax.php', 72000 ), array( $website->url, 72000 ) ),
+			Capability_Probe_Test_Transport::$attempts
+		);
+	}
+
 	/**
-	 * Retry only a fast failure, keeping the clamp scoped to the probe.
+	 * Spend one deadline across actual transport attempts, keeping the clamp scoped to the probe.
 	 *
 	 * @dataProvider capability_probe_failures
 	 * @param float $elapsed First failure duration.
@@ -4106,32 +4137,33 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$this->set_site_option( $this->site_id, 'incremental_support', '1' );
 		$this->responses['backup_preflight']            = array();
 		$website                                        = MainWP_DB::instance()->get_website_by_id( $this->site_id );
-		Capability_Probe_Test_Monitor::$times           = array( 100.0, 100.0 + $elapsed );
+		Capability_Probe_Test_Transport::$now           = 100.0;
+		Capability_Probe_Test_Transport::$durations     = array( $elapsed, $root_succeeds ? 0.1 : 30.0 );
 		Capability_Probe_Test_Transport::$attempts      = array();
 		Capability_Probe_Test_Transport::$root_succeeds = $root_succeeds;
 		$retries                                        = array();
-		$observe                                        = static function ( $pre, $site, $what, $params, $verify_signature, $retry_failed ) use ( &$retries ) {
+		$observe                                        = static function ( $pre, $site, $what, $params, $verify_signature, $retry_failed, $options = array() ) use ( &$retries ) {
 			if ( 'backup_preflight' !== $what ) {
 				return $pre;
 			}
 			$retries[] = $retry_failed;
-			return Capability_Probe_Test_Transport::fetch_url( $site, $site->url, $params, false, null, $retry_failed );
+			return Capability_Probe_Test_Transport::fetch_url( $site, $site->url, $params, false, null, $retry_failed, null, null, 0, $options );
 		};
 		$offer = static function () {
 			return 72000;
 		};
 		add_filter( 'mainwp_fetch_url_site_timeout', $offer, 10 );
-		add_filter( 'mainwp_fetch_url_authed_pre', $observe, 20, 6 );
+		add_filter( 'mainwp_fetch_url_authed_pre', $observe, 20, 7 );
 		try {
 			Capability_Probe_Test_Monitor::refresh_negotiated_capabilities( $website );
-			$fast     = $elapsed < 5;
+			$this->assertLessThanOrEqual( 30.0, Capability_Probe_Test_Transport::$now - 100.0, 'All actual attempt durations share one budget.' );
+			$fast     = floor( 30 - $elapsed ) >= 20;
 			$admin    = rtrim( $website->url, '/' ) . '/wp-admin/admin-ajax.php';
 			$attempts = array( array( $admin, 30 ) );
 			if ( $fast ) {
-				$attempts[] = array( $admin, 30 );
-				$attempts[] = array( $website->url, 30 );
+				$attempts[] = array( $website->url, (int) floor( 30 - $elapsed ) );
 			}
-			$this->assertSame( $fast ? array( false, true ) : array( false ), $retries );
+			$this->assertSame( $fast ? array( false, false ) : array( false ), $retries );
 			$this->assertSame( $attempts, Capability_Probe_Test_Transport::$attempts );
 			$this->assertSame( 30, MainWP_Backup_Monitor::CAPABILITY_PROBE_TIMEOUT_SECONDS );
 			$this->assertSame( 72000, apply_filters( 'mainwp_fetch_url_site_timeout', 72000 ), 'Remove the clamp after success and failure.' );
@@ -4139,7 +4171,10 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			if ( ! $fast || ! $root_succeeds ) {
 				$this->assertSame( '1', MainWP_DB::instance()->get_website_option( $this->site_id, 'incremental_support' ), 'A failed probe must preserve every stored flag.' );
 			}
-			$this->assertSame( array(), Capability_Probe_Test_Monitor::$times );
+			foreach ( Capability_Probe_Test_Transport::$attempts as $attempt ) {
+				$this->assertGreaterThanOrEqual( 20, $attempt[1], 'Never race the PHP timer rearm.' );
+			}
+			$this->assertSame( 72000, apply_filters( 'mainwp_fetch_url_site_timeout', 72000, 'ordinary_request' ) );
 			$this->assertCount( $fast ? 2 : 1, $this->calls );
 			foreach ( $this->calls as $call ) {
 				$this->assertSame( 'backup_preflight', $call['what'] );
@@ -4153,7 +4188,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
-	 * Fast refusals can reach the root; failures at five seconds cannot retry.
+	 * A root attempt requires at least twenty seconds remaining.
 	 *
 	 * @return array
 	 */
@@ -4162,7 +4197,9 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			'fast refusal then root succeeds' => array( 0.1, true ),
 			'fast refusal then root fails'    => array( 0.1, false ),
 			'just below retry cutoff'         => array( 4.999, true ),
-			'exact retry cutoff'              => array( 5.0, true ),
+			'five second failure'             => array( 5.0, true ),
+			'exact minimum fallback budget'   => array( 10.0, false ),
+			'below minimum fallback budget'   => array( 10.001, false ),
 			'stalled child timeout'           => array( 30.0, false ),
 		);
 	}

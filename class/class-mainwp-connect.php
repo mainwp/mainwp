@@ -1433,6 +1433,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @param bool   $pRetryFailed     Whether or not to retry the fetch process.
      * @param null   $rawResponse      Raw response.
      * @param bool   $verify_signature Wether verify signature data.
+     * @param array  $request_options Optional transport controls; root_only bypasses admin-ajax.
      *
      * @return mixed $information
      *
@@ -1448,7 +1449,8 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $pForceFetch = false,
         $pRetryFailed = true,
         $rawResponse = null,
-        $verify_signature = false
+        $verify_signature = false,
+        $request_options = array()
     ) {
         unset( $pForceFetch );
 
@@ -1481,11 +1483,14 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
          * @param object $website    Website object being communicated with.
          * @param string $what       Action being performed (e.g., 'plugin_action').
          * @param array  $params     Request parameters.
+         * @param bool   $verify_signature Whether to verify the signature.
+         * @param bool   $pRetryFailed Whether to retry failed requests.
+         * @param array  $request_options Optional transport controls.
          * @return mixed Array to return early, false to proceed normally.
          */
         $is_phpunit_env = defined( 'WP_TESTS_DOMAIN' ) || defined( 'PHPUNIT_COMPOSER_INSTALL' ) || ( defined( 'WP_TESTS_DIR' ) && WP_TESTS_DIR );
         if ( defined( 'MAINWP_TESTING_MODE' ) && MAINWP_TESTING_MODE && $is_phpunit_env ) {
-            $pre_result = apply_filters( 'mainwp_fetch_url_authed_pre', false, $website, $what, $params, $verify_signature, $pRetryFailed );
+            $pre_result = apply_filters( 'mainwp_fetch_url_authed_pre', false, $website, $what, $params, $verify_signature, $pRetryFailed, $request_options );
             if ( false !== $pre_result ) {
                 return $pre_result;
             }
@@ -1581,6 +1586,9 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         }
 
         $others['function'] = $what;
+        if ( ! empty( $request_options['root_only'] ) ) {
+            $others['root_only'] = true;
+        }
 
         $information = static::fetch_url( $website, $website->url, $postdata, $checkConstraints, $website->verify_certificate, $pRetryFailed, $http_user_plain, $http_pass_plain, $website->ssl_version, $others, $output );
 
@@ -1709,6 +1717,10 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $others = array(),
         &$output = array()
     ) {
+
+        if ( ! empty( $others['root_only'] ) ) {
+            return static::fetch_url_site( $website, $url, $postdata, $checkConstraints, $verifyCertificate, $http_user, $http_pass, $sslVersion, $others, $output );
+        }
 
         $start = time();
 

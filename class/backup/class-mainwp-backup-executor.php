@@ -768,9 +768,9 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         if ( isset( $information['error'] ) ) {
             throw new MainWP_Exception( esc_html( MainWP_Backup_Error_Codes::sanitize_message( $information['error'] ) ), null, isset( $information['error_code'] ) ? $information['error_code'] : '' ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         } elseif ( 'incremental' === $type && ! empty( $information['artifacts'] ) ) {
-            $snapshot_recorded = false;
+            $snapshot_id = 0;
             try {
-                $result = self::finish_incremental_backup( $website, $pTask, $information['artifacts'], $backupTaskProgress, $snapshot_recorded );
+                $result = self::finish_incremental_backup( $website, $pTask, $information['artifacts'], $backupTaskProgress, $snapshot_id );
             } catch ( \Throwable $e ) {
                 /** This action is documented in class/backup/class-mainwp-backup-executor.php */
                 do_action(
@@ -779,26 +779,12 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     $backupTaskProgress->child_backup_task_id,
                     false,
                     array(
-                        'error'      => $e->getMessage(),
-                        'error_code' => $e instanceof MainWP_Exception ? $e->get_message_error_code() : $e->getCode(),
+                        'error'       => $e->getMessage(),
+                        'error_code'  => $e instanceof MainWP_Exception ? $e->get_message_error_code() : $e->getCode(),
+                        'snapshot_id' => $snapshot_id,
                     )
                 );
                 throw $e;
-            }
-            if ( false !== $result && $snapshot_recorded ) {
-                /** This action is documented in class/backup/class-mainwp-backup-executor.php */
-                do_action(
-                    'mainwp_native_backup_completed',
-                    (int) $website->id,
-                    $backupTaskProgress->child_backup_task_id,
-                    true,
-                    array(
-                        'type'        => $type,
-                        'file'        => '',
-                        'size'        => $information['size'] ?? 0,
-                        'snapshot_id' => $result['snapshot_id'],
-                    )
-                );
             }
             return $result;
         } elseif ( 'incremental' === $type && empty( $information['full'] ) && empty( $information['db'] ) ) {
@@ -1128,7 +1114,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      *
      * @param array  $artifact Child artifact metadata.
      * @param string $path Downloaded manifest.
-     * @throws MainWP_Exception When the recorded digest does not match.
+     * @throws MainWP_Exception When the recorded digest is malformed or the local file cannot be hashed.
      * @return bool Whether the artifact has a verified digest.
      */
     private static function verify_manifest_artifact( $artifact, $path ) {
@@ -1136,10 +1122,15 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         if ( ! array_key_exists( 'sha256', $artifact ) || '' === $artifact['sha256'] ) {
             return false;
         }
-        if ( ! is_string( $artifact['sha256'] ) || ! preg_match( '/^[a-f0-9]{64}$/D', $artifact['sha256'] ) || ! hash_equals( $artifact['sha256'], (string) hash_file( 'sha256', $path ) ) ) {
+        if ( ! is_string( $artifact['sha256'] ) || ! preg_match( '/^[a-f0-9]{64}$/D', $artifact['sha256'] ) ) {
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, 'manifest digest mismatch' ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry factory.
         }
-        return true;
+        $actual = hash_file( 'sha256', $path );
+        if ( false === $actual ) {
+            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, 'manifest digest unavailable' ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry factory.
+        }
+        // Another task can replace the shared list without invalidating this run's archives.
+        return hash_equals( $artifact['sha256'], $actual );
     }
 
     // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.Missing -- registry factory throws MainWP_Exception.
@@ -1793,14 +1784,14 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @param object $pTask     Scheduled task.
      * @param array  $artifacts Role-tagged artifact list from the child.
      * @param object $progress  Progress row (carries the child task id).
-     * @param bool   $snapshot_recorded Whether this invocation recorded the snapshot.
+     * @param int    $snapshot_id Recorded or adopted snapshot id, including on a later failure.
      *
      * @throws MainWP_Exception When an artifact cannot be downloaded or fails validation.
      *
      * @return array|false Backup result with the snapshot id, false when the run stopped without recording one.
      */
     // phpcs:ignore Squiz.Commenting.FunctionCommentThrowTag.Missing -- registry factory throws are MainWP_Exception, documented above.
-    protected static function finish_incremental_backup( $website, $pTask, $artifacts, $progress, &$snapshot_recorded = false ) { // phpcs:ignore -- NOSONAR - download loop with per-role validation.
+    protected static function finish_incremental_backup( $website, $pTask, $artifacts, $progress, &$snapshot_id = 0 ) { // phpcs:ignore -- NOSONAR - download loop with per-role validation.
         MainWP_System_Utility::get_wp_file_system();
 
         /**
@@ -1957,9 +1948,47 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_RECORD_FAILED, 'task id ' . (int) $pTask->id . ', site id ' . (int) $website->id ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
             }
 
-            $snapshot_recorded = ! $already_saved;
-            if ( $snapshot_recorded && '' !== $manifest_path ) {
-                self::record_manifest_writer( $website, $progress, $snapshot_id );
+            // Snapshot existence cannot distinguish a failed finish from an announced success.
+            // Reread under the record lock so a waiting driver sees the winner's announcement.
+            $fresh = MainWP_DB_Backup::instance()->get_backup_task_progress( $pTask->id, $website->id );
+            if ( '' !== $wpdb->last_error ) {
+                throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_RECORD_FAILED ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry factory.
+            }
+            if ( ! $fresh || $fresh->child_backup_task_id !== $progress->child_backup_task_id ) {
+                return false;
+            }
+            $information = $fresh->fetchResult;
+            if ( (int) ( $information['announced_snapshot_id'] ?? 0 ) !== $snapshot_id ) {
+                // The row can survive a failed writer update; adoption must finish that work too.
+                if ( '' !== $manifest_path ) {
+                    self::record_manifest_writer( $website, $fresh, $snapshot_id );
+                }
+                $information['announced_snapshot_id'] = $snapshot_id;
+                $claimed                              = MainWP_DB_Backup::instance()->update_backup_task_progress_if_marker(
+                    $pTask->id,
+                    $website->id,
+                    $progress->child_backup_task_id,
+                    array( 'fetchResult' => wp_json_encode( $information ) )
+                );
+                if ( '' !== $wpdb->last_error ) {
+                    throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_RECORD_FAILED ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry factory.
+                }
+                if ( 1 !== $claimed ) {
+                    return false;
+                }
+                /** This action is documented in class/backup/class-mainwp-backup-executor.php */
+                do_action(
+                    'mainwp_native_backup_completed',
+                    (int) $website->id,
+                    $progress->child_backup_task_id,
+                    true,
+                    array(
+                        'type'        => 'incremental',
+                        'file'        => '',
+                        'size'        => $information['size'] ?? 0,
+                        'snapshot_id' => $snapshot_id,
+                    )
+                );
             }
         } finally {
             MainWP_Backup_File_Manager::release_download_lock( $record_lock );

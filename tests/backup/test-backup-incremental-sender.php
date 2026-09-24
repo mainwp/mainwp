@@ -71,6 +71,18 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	protected $manifest_fixture;
 
 	/**
+	 * Site ids created by this test, so their run directories can be swept up
+	 * in tearDown(). The DB rolls back per test, but the run directories the
+	 * executor writes under get_mainwp_specific_dir() do not; because site
+	 * ids are reused across runs, a later test can find a same-size
+	 * files.list left over from an earlier run and skip a download it
+	 * expected to perform.
+	 *
+	 * @var int[]
+	 */
+	protected $site_ids = array();
+
+	/**
 	 * A failed clock-dependent test must not pin the next test's clock.
 	 */
 	public function set_up() {
@@ -88,13 +100,28 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		update_option( 'mainwp_enableNativeBackups', 1 );
 		$this->child_calls  = array();
 		$this->remote_files = array();
+		$this->site_ids     = array();
 
 		$this->manifest_fixture = tempnam( sys_get_temp_dir(), 'mainwp-manifest-' );
 		file_put_contents( $this->manifest_fixture, "a.php\t10\t100\nb.php\t20\t200\n" ); // phpcs:ignore -- test fixture.
 	}
 
 	/**
-	 * Clean up progress and snapshot rows.
+	 * Create a test site and track its id for run-directory cleanup.
+	 *
+	 * @param array $args Optional. Site properties to override defaults.
+	 *
+	 * @return int Site id.
+	 */
+	protected function create_test_site( array $args = array() ): int {
+		$site_id          = parent::create_test_site( $args );
+		$this->site_ids[] = $site_id;
+		return $site_id;
+	}
+
+	/**
+	 * Clean up progress and snapshot rows, and any run directories the
+	 * executor left behind for this test's sites.
 	 *
 	 * @return void
 	 */
@@ -106,7 +133,32 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		if ( file_exists( $this->manifest_fixture ) ) {
 			unlink( $this->manifest_fixture );
 		}
+		foreach ( $this->site_ids as $site_id ) {
+			$dir = MainWP_System_Utility::get_mainwp_specific_dir( $site_id );
+			if ( is_dir( $dir ) && false !== strpos( $dir, '/mainwp/' ) ) {
+				self::rrmdir( $dir );
+			}
+		}
 		parent::tearDown();
+	}
+
+	/**
+	 * Recursively delete a directory tree.
+	 *
+	 * @param string $dir Directory path.
+	 *
+	 * @return void
+	 */
+	private static function rrmdir( $dir ) {
+		$iterator = new \RecursiveIteratorIterator( new \RecursiveDirectoryIterator( $dir, \FilesystemIterator::SKIP_DOTS ), \RecursiveIteratorIterator::CHILD_FIRST );
+		foreach ( $iterator as $leftover ) {
+			if ( $leftover->isDir() ) {
+				rmdir( $leftover->getPathname() ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test cleanup.
+			} else {
+				unlink( $leftover->getPathname() ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test cleanup.
+			}
+		}
+		rmdir( $dir ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test cleanup.
 	}
 
 	/**
@@ -589,6 +641,85 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A writer failure leaves a usable snapshot whose retry still owes one success event.
+	 *
+	 * @dataProvider manifest_record_completion_cases
+	 * @param bool $fail_write Fail the first writer update.
+	 * @param bool $legacy_identity Adopt through the run-directory fallback.
+	 */
+	public function test_manifest_record_db_failure_retry_announces_success_once( $fail_write, $legacy_identity ) {
+		global $wpdb;
+		list( $site_id, $task ) = $this->arrange_manual_task( false );
+		$events                 = array();
+		$capture                = static function ( $site, $child, $success, $meta ) use ( &$events ) {
+			$events[] = array( $success, $meta );
+		};
+		$fail                   = static function ( $query ) {
+			return 0 === strpos( $query, 'UPDATE ' ) && false !== strpos( $query, 'BINARY value' ) ? 'INVALID SQL FOR MANIFEST CAS TEST' : $query;
+		};
+		$old                    = $wpdb->suppress_errors( true );
+		add_action( 'mainwp_native_backup_completed', $capture, 10, 4 );
+		try {
+			$create = $this->run_cycle( $site_id, $task );
+			$this->assertNull( $create['exception'] );
+			$this->assertFalse( $create['result'] );
+			if ( $fail_write ) {
+				add_filter( 'query', $fail );
+			}
+			$first = $this->run_cycle( $site_id, $task );
+			remove_filter( 'query', $fail );
+			$snapshots = MainWP_Backup_Snapshots::instance()->get_snapshots_for_site( $site_id );
+			$this->assertCount( 1, $snapshots );
+			$snapshot_id = (int) $snapshots[0]->id;
+			$this->assertCount( 1, $events );
+			$this->assertSame( ! $fail_write, $events[0][0] );
+			$this->assertSame( $snapshot_id, $events[0][1]['snapshot_id'] );
+			if ( $fail_write ) {
+				$this->assertInstanceOf( MainWP_Exception::class, $first['exception'] );
+				$this->assertSame( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_RECORD_FAILED, $first['exception']->get_message_error_code() );
+				$this->assertSame( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_RECORD_FAILED, $events[0][1]['error_code'] );
+				$this->assertStringStartsWith( 'pending:', MainWP_DB::instance()->get_website_option( $site_id, 'native_manifest_snapshot' ) );
+			} else {
+				$this->assertNull( $first['exception'] );
+				$this->assertSame( $snapshot_id, $first['result']['snapshot_id'] );
+			}
+			if ( $legacy_identity ) {
+				$this->assertSame( 1, $wpdb->update( $wpdb->prefix . 'mainwp_wp_backup_snapshot', array( 'run_key' => null ), array( 'id' => $snapshot_id ) ) );
+			}
+			$retry = $this->run_cycle( $site_id, $task );
+			$this->assertNull( $retry['exception'] );
+			$this->assertSame( $snapshot_id, $retry['result']['snapshot_id'] );
+			$this->assertCount( 1, MainWP_Backup_Snapshots::instance()->get_snapshots_for_site( $site_id ) );
+			$this->assertSame( $fail_write ? array( false, true ) : array( true ), array_column( $events, 0 ) );
+			$this->assertSame( $snapshot_id, $events[ count( $events ) - 1 ][1]['snapshot_id'] );
+			$this->assertSame( (string) $snapshot_id, MainWP_DB::instance()->get_website_option( $site_id, 'native_manifest_snapshot' ) );
+			$again = $this->run_cycle( $site_id, $task );
+			$this->assertNull( $again['exception'] );
+			$this->assertSame( $snapshot_id, $again['result']['snapshot_id'] );
+			$this->assertCount( 1, MainWP_Backup_Snapshots::instance()->get_snapshots_for_site( $site_id ) );
+			$this->assertCount( $fail_write ? 2 : 1, $events );
+		} finally {
+			remove_filter( 'query', $fail );
+			remove_action( 'mainwp_native_backup_completed', $capture, 10 );
+			$wpdb->suppress_errors( $old );
+		}
+	}
+
+	/**
+	 * Both snapshot identity paths must recover without duplicating a successful announcement.
+	 *
+	 * @return array
+	 */
+	public static function manifest_record_completion_cases() {
+		return array(
+			'writer failure'               => array( true, false ),
+			'writer failure run directory' => array( true, true ),
+			'happy path'                   => array( false, false ),
+			'happy path run directory'     => array( false, true ),
+		);
+	}
+
+	/**
 	 * Failed pending writes or readbacks must stop before the remote create.
 	 *
 	 * @dataProvider manifest_write_failures
@@ -721,9 +852,10 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	 * Unverified shared bytes cannot drive the next backup or restore reconciliation.
 	 *
 	 * @dataProvider unverified_manifest_digests
-	 * @param mixed $digest Missing, empty or malformed digest.
+	 * @param mixed $digest Missing, empty, malformed or mismatching digest.
+	 * @param bool  $reject Whether malformed metadata must reject the incremental run.
 	 */
-	public function test_unverified_manifest_degrades_or_rejects( $digest ) {
+	public function test_unverified_manifest_degrades_or_rejects( $digest, $reject ) {
 		list( $site_id, $task )           = $this->arrange_manual_task();
 		$this->remote_files['files.list'] = str_repeat( 'x', strlen( $this->remote_files['files.list'] ) );
 		$rewrite                          = static function ( $result, $website, $what ) use ( $digest ) {
@@ -746,7 +878,7 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		try {
 			$this->run_cycle( $site_id, $task );
 			$finish = $this->run_cycle( $site_id, $task );
-			if ( null !== $digest && '' !== $digest ) {
+			if ( $reject ) {
 				$this->assertInstanceOf( MainWP_Exception::class, $finish['exception'] );
 				$this->assertSame( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, $finish['exception']->get_message_error_code() );
 				return;
@@ -755,6 +887,7 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 			$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $finish['result']['snapshot_id'] );
 			$this->assertSame( '', $snapshot->manifest_path );
 			$this->assertNotContains( 'manifest', array_column( $snapshot->archives, 'role' ) );
+			$this->assertFileDoesNotExist( MainWP_System_Utility::get_mainwp_specific_dir( $site_id ) . 'snapshot-manual-' . $task->id . '/files.list' );
 			$send = new \ReflectionMethod( MainWP_Backup_Executor::class, 'resolve_incremental_send' );
 			$send->setAccessible( true );
 			$next = $send->invoke( null, MainWP_DB::instance()->get_website_by_id( $site_id ), $task, null );
@@ -771,10 +904,11 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public static function unverified_manifest_digests() {
 		return array(
-			'old child absent'  => array( null ),
-			'mid-upgrade empty' => array( '' ),
-			'malformed'         => array( 'not-a-digest' ),
-			'non-string'        => array( 123 ),
+			'old child absent'      => array( null, false ),
+			'mid-upgrade empty'     => array( '', false ),
+			'same-size replacement' => array( hash( 'sha256', str_repeat( 'm', 40 ) ), false ),
+			'malformed'             => array( 'not-a-digest', true ),
+			'non-string'            => array( 123, true ),
 		);
 	}
 
@@ -782,9 +916,11 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	 * Legacy full downloads keep the archive but discard unverified reconciliation metadata.
 	 *
 	 * @dataProvider unverified_manifest_digests
-	 * @param mixed $digest Missing, empty or malformed digest.
+	 * @param mixed $digest Missing, empty, malformed or mismatching digest.
+	 * @param bool  $reject Whether the incremental caller rejects this digest.
 	 */
-	public function test_legacy_full_unverified_manifest_degrades( $digest ) {
+	public function test_legacy_full_unverified_manifest_degrades( $digest, $reject ) {
+		unset( $reject );
 		$site_id = $this->create_test_site();
 		$this->give_site_real_privkey( $site_id );
 		$artifacts = $this->arrange_remote_artifacts( true );
@@ -822,6 +958,7 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( '', $snapshot->manifest_path );
 		$this->assertSame( array( 'full' ), array_column( $snapshot->archives, 'role' ) );
 		$this->assertFileExists( $snapshot->archives[0]['path'] );
+		$this->assertFileDoesNotExist( MainWP_System_Utility::get_mainwp_specific_dir( $site_id ) . 'snapshot-unverified-full/files.list' );
 	}
 
 	/** Same-sized bytes from a later Child run cannot become this run's base. */
@@ -831,9 +968,14 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		$this->run_cycle( $site_id, $task );
 		$before = count( MainWP_Backup_Snapshots::instance()->get_snapshots_for_site( $site_id ) );
 		$finish = $this->run_cycle( $site_id, $task );
-		$this->assertInstanceOf( MainWP_Exception::class, $finish['exception'] );
-		$this->assertSame( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, $finish['exception']->get_message_error_code() );
-		$this->assertCount( $before, MainWP_Backup_Snapshots::instance()->get_snapshots_for_site( $site_id ) );
+		$this->assertNull( $finish['exception'] );
+		$this->assertIsArray( $finish['result'] );
+		$this->assertCount( $before + 1, MainWP_Backup_Snapshots::instance()->get_snapshots_for_site( $site_id ) );
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $finish['result']['snapshot_id'] );
+		$this->assertSame( '', $snapshot->manifest_path );
+		$this->assertNotContains( 'manifest', array_column( $snapshot->archives, 'role' ) );
+		$this->assertNotContains( 'files.list', array_column( $snapshot->archives, 'file' ) );
+		$this->assertFileDoesNotExist( MainWP_System_Utility::get_mainwp_specific_dir( $site_id ) . 'snapshot-manual-' . $task->id . '/files.list' );
 	}
 
 	/**

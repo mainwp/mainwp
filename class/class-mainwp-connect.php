@@ -2455,8 +2455,8 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * An existing file exactly matching the expected size needs no request.
      * A 416 with a total that differs from the expected size restarts the
      * transfer; an undersized result then fails the final size check.
-     * A partial file is discarded when its size is unknown or exceeds the
-     * expected size.
+     * A partial file is discarded when the expected size is unknown or the
+     * file exceeds it.
      *
      * @param string      $url       Download URL.
      * @param string      $file      Local destination path.

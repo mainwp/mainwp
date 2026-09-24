@@ -913,7 +913,8 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 return;
             }
             $job = $store->get_job( (int) $job->id );
-            if ( null === $job ) {
+            // If the child finished during cancel, record_terminal_failure() moved the row to running; artifact transfer must never resume.
+            if ( null === $job || ! in_array( $job->status, $still_driving, true ) ) {
                 return;
             }
         }

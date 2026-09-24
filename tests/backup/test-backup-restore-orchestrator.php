@@ -4877,6 +4877,40 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
+	 * A cancel arriving after the entry read must never resume transfer to a completed child.
+	 */
+	public function test_transferring_cancel_landing_after_run_job_read_skips_chunks_when_child_completed() {
+		$this->responses['restore_task_cancel']    = array(
+			'result' => 'already_terminal',
+			'phase'  => 'completed',
+		);
+		$this->responses['restore_task_run']       = array(
+			'task_id'   => 'task-9-restore',
+			'phase'     => 'completed',
+			'sub_state' => array( 'verification' => array( 'row_counts_ok' => true ) ),
+		);
+		$this->responses['restore_artifact_chunk'] = array( 'error' => 'ERR_RESTORE_WRONG_PHASE' );
+
+		$job   = $this->make_job(
+			array( 'plan' => $this->staged_plan_fixture() ),
+			MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING,
+			array( 'child_task_id' => 'task-9-restore' )
+		);
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+		$id    = (int) $job->id;
+		$stale = $store->get_job( $id );
+		$this->assertTrue( $store->arm_cancel_intent( $id ) );
+
+		$this->orchestrator->run_job( $stale, microtime( true ) + 30 );
+		$job = $store->get_job( $id );
+
+		$this->assertNotContains( 'restore_artifact_chunk', array_column( $this->calls, 'what' ) );
+		$this->assertSame( array( 'restore_task_cancel' ), array_column( $this->calls, 'what' ) );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, $job->status );
+		$this->assertTrue( empty( $job->checkpoint['cancel_intent'] ) );
+	}
+
+	/**
 	 * A cancel recorded while a slice's child round trip was in
 	 * flight must stop the loop before the NEXT slice. The intent lands
 	 * during the first restore_task_run round trip (the UI's unfenced

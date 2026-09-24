@@ -520,7 +520,7 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
                     // No settings posted at all (the list row's Test): use
                     // the stored settings wholesale.
                     $settings = $existing->settings;
-                } elseif ( static::same_credential_target( $provider, $settings, $existing->settings ) ) {
+                } elseif ( self::same_credential_target( $provider, $settings, $existing->settings ) ) {
                     foreach ( static::SECRET_FIELDS as $field ) {
                         if ( ( ! isset( $settings[ $field ] ) || '' === $settings[ $field ] ) && isset( $existing->settings[ $field ] ) ) {
                             $settings[ $field ] = $existing->settings[ $field ];

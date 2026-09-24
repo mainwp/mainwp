@@ -76,6 +76,22 @@ class MainWP_Backup_Single_User_Arm_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * A site row with userid 0 must not be editable by "nobody": cron and
+	 * REST run with no current user, and the int cast that fixed the
+	 * string-vs-int mismatch would otherwise let 0 === 0 pass the gate.
+	 *
+	 * @return void
+	 */
+	public function test_armed_can_edit_website_refuses_anonymous_owner_zero() {
+		$website = (object) array( 'userid' => '0' );
+
+		add_filter( 'mainwp_is_single_user', '__return_false' );
+		wp_set_current_user( 0 );
+
+		$this->assertFalse( MainWP_System_Utility::can_edit_website( $website ), 'An anonymous request must never own a userid-0 row.' );
+	}
+
+	/**
 	 * The private-files root never moves: with multi-user armed and a real
 	 * current user, get_mainwp_specific_dir()/url() still resolve to the
 	 * userid-0 root that holds every existing install's encryption keys.

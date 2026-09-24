@@ -680,7 +680,10 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
          */
         global $current_user;
 
-        return (int) $website->userid === (int) $current_user->ID;
+        // Cron and REST run with no current user; ID 0 must never match a userid-0 row.
+        $current_id = (int) $current_user->ID;
+
+        return $current_id > 0 && (int) $website->userid === $current_id;
     }
 
     /**

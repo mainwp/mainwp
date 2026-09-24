@@ -3,9 +3,10 @@
  * Connect request nonce shape tests.
  *
  * Pins the nonce that MainWP_Connect puts in every signed Child request
- * to 16 random bytes, hex-encoded. The Child stores used nonces to refuse
- * replays, so a nonce drawn from a small range collides with an earlier
- * request and gets the new one refused.
+ * to 16 random bytes, hex-encoded. The Child stores a hash of every legacy
+ * signature it accepts and refuses a repeat. Signing is deterministic, so a
+ * nonce drawn from a small range reproduces an earlier signature and gets
+ * the new request refused.
  *
  * The fixture is an in-memory site object with a freshly generated RSA
  * key, so every call signs for real through openssl. The properties

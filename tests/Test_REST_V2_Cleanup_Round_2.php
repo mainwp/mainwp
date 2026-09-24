@@ -235,7 +235,7 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 		);
 
 		$this->destroy_session_filter = static function () {
-			throw new \MainWP\Dashboard\MainWP_Exception( 'HTTPERROR', 'x' );
+			throw new \MainWP\Dashboard\MainWP_Exception( 'NOMAINWP' );
 		};
 		add_filter( 'mainwp_fetch_url_authed_pre', $this->destroy_session_filter, 10, 4 );
 
@@ -243,8 +243,10 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 		$job = get_transient( "mainwp_tool_destroy_job_{$id}" );
 
 		$this->assertSame( 1, $job['failed'] );
-		$expected = \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( new \MainWP\Dashboard\MainWP_Exception( 'HTTPERROR', 'x' ) );
-		$this->assertSame( $expected, $job['errors'][0]['error'] );
+		$raw = \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( new \MainWP\Dashboard\MainWP_Exception( 'NOMAINWP' ) );
+		$this->assertStringContainsString( '<a ', $raw, 'The NOMAINWP text must carry the anchor this test strips.' );
+		$this->assertSame( sanitize_text_field( mb_substr( $raw, 0, 500 ) ), $job['errors'][0]['error'] );
+		$this->assertStringNotContainsString( '<', $job['errors'][0]['error'] );
 	}
 
 	/**

@@ -1768,9 +1768,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             } catch ( \Exception $e ) {
                 ++$destroy_data['failed'];
                 ++$destroy_data['processed'];
+                // Same cap and cleaning as the Child error above; the NOMAINWP text carries an anchor tag.
+                $error_message            = $e instanceof MainWP_Exception ? MainWP_Error_Helper::get_error_message( $e ) : $e->getMessage();
                 $destroy_data['errors'][] = array(
                     'site_id' => $website_id,
-                    'error'   => $e instanceof MainWP_Exception ? MainWP_Error_Helper::get_error_message( $e ) : $e->getMessage(),
+                    'error'   => sanitize_text_field( mb_substr( $error_message, 0, 500 ) ),
                 );
             }
         }

@@ -589,10 +589,10 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * Failed pending writes must stop before the remote create.
+	 * Failed pending writes or readbacks must stop before the remote create.
 	 *
 	 * @dataProvider manifest_write_failures
-	 * @param string $target Failed table suffix.
+	 * @param string $target Failed table suffix or readback.
 	 */
 	public function test_manifest_db_failure_prevents_create( $target ) {
 		global $wpdb;
@@ -604,20 +604,34 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 				'backup_task_create' => array( 'task_id' => 'should-not-create' ),
 			)
 		);
-		$fail = static function ( $query ) use ( $target ) {
+		$pending_written = false;
+		$fail            = static function ( $query ) use ( $target, &$pending_written ) {
+			if ( 'readback' === $target && false !== strpos( $query, 'native_manifest_snapshot' ) ) {
+				if ( 0 === strpos( $query, 'UPDATE ' ) && false !== strpos( $query, 'pending:' ) ) {
+					$pending_written = true;
+				} elseif ( $pending_written && 0 === strpos( $query, 'SELECT value ' ) ) {
+					return 'INVALID SQL FOR MANIFEST READBACK TEST';
+				}
+			}
 			if ( false !== strpos( $query, $target ) && ( 'manifest_writer_identity_support' === $target || false !== strpos( $query, 'pending:' ) ) && preg_match( '/^(UPDATE|INSERT)/i', $query ) ) {
 				return 'INVALID SQL FOR MANIFEST WRITE TEST';
 			}
 			return $query;
 		};
-		$old  = $wpdb->suppress_errors( true );
+		$old             = $wpdb->suppress_errors( true );
 		add_filter( 'query', $fail );
 		try {
 			$website = MainWP_DB::instance()->get_website_by_id( $site_id );
 			$cycle   = $this->run_cycle( $site_id, $this->make_task( $website ) );
 			$this->assertInstanceOf( MainWP_Exception::class, $cycle['exception'] );
+			$this->assertSame( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_RECORD_FAILED, $cycle['exception']->get_message_error_code() );
 			$this->assertSame( array(), $this->all_call_params( 'backup_task_create' ) );
-			$this->assertSame( (string) $base_id, MainWP_DB::instance()->get_website_option( $site_id, 'native_manifest_snapshot' ) );
+			remove_filter( 'query', $fail );
+			if ( 'readback' === $target ) {
+				$this->assertStringStartsWith( 'pending:11:', MainWP_DB::instance()->get_website_option( $site_id, 'native_manifest_snapshot' ) );
+			} else {
+				$this->assertSame( (string) $base_id, MainWP_DB::instance()->get_website_option( $site_id, 'native_manifest_snapshot' ) );
+			}
 		} finally {
 			remove_filter( 'query', $fail );
 			$wpdb->suppress_errors( $old );
@@ -625,7 +639,7 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * Pending token writes in either table may fail independently.
+	 * Pending token writes and the option readback may fail independently.
 	 *
 	 * @return array
 	 */
@@ -633,6 +647,7 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		return array(
 			'progress' => array( 'mainwp_wp_backup_progress' ),
 			'option'   => array( 'mainwp_wp_options' ),
+			'readback' => array( 'readback' ),
 		);
 	}
 
@@ -654,6 +669,52 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( array(), $this->all_call_params( 'backup_task_create' ) );
 		$this->assertSame( 'creating-replacement', MainWP_DB_Backup::instance()->get_backup_task_progress( 11, $site_id )->child_backup_task_id );
 		$this->assertSame( (string) $base_id, MainWP_DB::instance()->get_website_option( $site_id, 'native_manifest_snapshot' ) );
+	}
+
+	/** Another task replacing the option before readback yields without sending a create. */
+	public function test_manifest_claim_lost_on_readback_yields() {
+		global $wpdb;
+		$site_id = $this->create_test_site();
+		$this->record_base_snapshot( $site_id );
+		$this->mock_child_actions(
+			array(
+				'backup_preflight'   => $this->preflight_response(),
+				'backup_task_create' => array( 'task_id' => 'should-not-create' ),
+			)
+		);
+		$pending_written = false;
+		$interleaved     = false;
+		$interleave      = static function ( $query ) use ( &$interleave, &$pending_written, &$interleaved, $site_id, $wpdb ) {
+			if ( false !== strpos( $query, 'native_manifest_snapshot' ) ) {
+				if ( 0 === strpos( $query, 'UPDATE ' ) && false !== strpos( $query, 'pending:' ) ) {
+					$pending_written = true;
+				} elseif ( $pending_written && 0 === strpos( $query, 'SELECT value ' ) ) {
+					remove_filter( 'query', $interleave );
+					MainWP_DB::instance()->update_website_option( $site_id, 'native_manifest_snapshot', 'pending:12:other-task' );
+					$interleaved = '' === $wpdb->last_error;
+				}
+			}
+			return $query;
+		};
+		add_filter( 'query', $interleave );
+		try {
+			$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+			$cycle   = $this->run_cycle( $site_id, $this->make_task( $website ) );
+			$this->assertTrue( $interleaved, 'The competing option write must succeed before readback.' );
+			$this->assertNull( $cycle['exception'] );
+			$this->assertFalse( $cycle['result'] );
+			$this->assertSame( array(), $this->all_call_params( 'backup_task_create' ) );
+			$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( 11, $site_id );
+			$this->assertSame( 0, (int) $progress->dtsFetched );
+			$this->assertSame( '', $progress->child_backup_task_id );
+			$state = json_decode( $progress->last_error, true );
+			$this->assertArrayNotHasKey( 'incremental_sent', $state );
+			$this->assertArrayNotHasKey( 'run', $state );
+			$this->assertStringStartsWith( 'pending:11:', $state['manifest_pending'] );
+			$this->assertSame( 'pending:12:other-task', MainWP_DB::instance()->get_website_option( $site_id, 'native_manifest_snapshot' ) );
+		} finally {
+			remove_filter( 'query', $interleave );
+		}
 	}
 
 	/**
@@ -1526,6 +1587,154 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 			'full'  => array( 'full' ),
 			'files' => array( 'files' ),
 		);
+	}
+
+	/**
+	 * Refused creates retry conservatively without escalating to a full backup.
+	 *
+	 * @dataProvider incremental_create_refusals
+	 * @param string $error_code Child refusal code.
+	 */
+	public function test_refused_creates_retry_plain_push_push( $error_code ) {
+		$site_id          = $this->create_test_site();
+		$task             = $this->create_real_task_row( $site_id );
+		$base_id          = $this->record_base_snapshot( $site_id, (int) $task->id );
+		$creates          = 0;
+		$refused_state    = array();
+		self::$fixed_time = \time();
+		$started          = self::$fixed_time;
+		$this->mock_child_actions(
+			array(
+				'backup_preflight'   => $this->preflight_response(),
+				'backup_task_create' => function () use ( $site_id, $task, $error_code, &$creates, &$refused_state ) {
+					++$creates;
+					if ( 2 < $creates ) {
+						return array( 'task_id' => 'accepted-after-refusals' );
+					}
+					$progress              = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+					$refused_state          = json_decode( $progress->last_error, true );
+					$refused_state['other'] = 'preserved';
+					MainWP_DB_Backup::instance()->update_backup_task_progress( $task->id, $site_id, array( 'last_error' => wp_json_encode( $refused_state ) ) );
+					return array(
+						'error'      => 'Child refused the create.',
+						'error_code' => $error_code,
+						'extra'      => MainWP_Backup_Executor::EXTRA_FOREIGN_ALREADY_RUNNING,
+					);
+				},
+			)
+		);
+		try {
+			for ( $cycle_number = 1; $cycle_number <= 3; ++$cycle_number ) {
+				$cycle = $this->run_cycle( $site_id, $task );
+				$this->assertNull( $cycle['exception'] );
+				$this->assertFalse( $cycle['result'] );
+				$params = $this->last_call_params( 'backup_task_create' );
+				$this->assertSame( 'incremental', $params['type'] );
+				$this->assertSame( (string) $base_id, $params['parent_snapshot_id'] );
+				if ( 1 === $cycle_number ) {
+					$this->assertArrayNotHasKey( 'parent_manifest', $params );
+					$this->assertArrayHasKey( 'parent_child_task_id', $params );
+				} else {
+					$this->assertSame( base64_encode( file_get_contents( $this->manifest_fixture ) ), $params['parent_manifest'] );
+				}
+				if ( 3 > $cycle_number ) {
+					$this->assertSame( 1 === $cycle_number ? 'plain' : 'push', $refused_state['incremental_sent'] );
+					unset( $refused_state['incremental_sent'], $refused_state['run'] );
+					$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+					$this->assertSame( 0, (int) $progress->dtsFetched );
+					$this->assertSame( '', $progress->child_backup_task_id );
+					$this->assertSame( $started, (int) $progress->foreign_refused_since );
+					$this->assertSame( $refused_state, json_decode( $progress->last_error, true ) );
+					$this->assertStringStartsWith( 'pending:', $refused_state['manifest_pending'] );
+					$this->assertSame( $refused_state['manifest_pending'], MainWP_DB::instance()->get_website_option( $site_id, 'native_manifest_snapshot' ) );
+				}
+				$fresh_task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+				$this->assertSame( '', (string) $fresh_task->backup_notices, 'Refusals must not record a base-missing notice.' );
+				self::$fixed_time += 10;
+			}
+			$this->assertCount( 3, $this->all_call_params( 'backup_task_create' ) );
+			$this->assertSame( 'accepted-after-refusals', MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id )->child_backup_task_id );
+		} finally {
+			self::$fixed_time = null;
+		}
+	}
+
+	/**
+	 * Both refusal codes mean that the child did not accept the create.
+	 *
+	 * @return array
+	 */
+	public static function incremental_create_refusals() {
+		return array(
+			'foreign child task' => array( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING ),
+			'mutex write failed' => array( MainWP_Backup_Error_Codes::ERR_MUTEX_WRITE_FAILED ),
+		);
+	}
+
+	/** A losing driver's reset cannot change a replacement driver's state. */
+	public function test_refusal_reset_preserves_replacement_driver() {
+		$site_id = $this->create_test_site();
+		$state   = array(
+			'incremental_sent' => 'push',
+			'run'              => 123,
+			'manifest_pending' => 'pending:11:replacement',
+			'other'            => 'preserved',
+		);
+		MainWP_DB_Backup::instance()->add_backup_task_progress( 11, $site_id, array() );
+		MainWP_DB_Backup::instance()->update_backup_task_progress(
+			11,
+			$site_id,
+			array(
+				'dtsFetched'           => 123,
+				'child_backup_task_id' => '__creating_replacement',
+				'last_error'           => wp_json_encode( $state ),
+			)
+		);
+		$reset = new \ReflectionMethod( MainWP_Backup_Executor::class, 'reset_create_window_if_mine' );
+		$reset->invoke( null, 11, $site_id, '__creating_loser' );
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( 11, $site_id );
+		$this->assertSame( 123, (int) $progress->dtsFetched );
+		$this->assertSame( '__creating_replacement', $progress->child_backup_task_id );
+		$this->assertSame( $state, json_decode( $progress->last_error, true ) );
+	}
+
+	/** Run refusals retain the accepted task and its send marker for missing-base recovery. */
+	public function test_run_refusal_preserves_incremental_send_marker() {
+		$site_id = $this->create_test_site();
+		$this->record_base_snapshot( $site_id );
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$task    = $this->make_task( $website );
+		$this->mock_child_actions(
+			array(
+				'backup_preflight'   => $this->preflight_response(),
+				'backup_task_create' => array( 'task_id' => 'accepted-task' ),
+				'backup_task_run'    => array(
+					'error'      => 'Another backup holds the child lock.',
+					'error_code' => MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING,
+				),
+			)
+		);
+		self::$fixed_time = \time();
+		try {
+			$cycle = $this->run_cycle( $site_id, $task );
+			$this->assertNull( $cycle['exception'] );
+			$accepted = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+			$this->assertSame( 'plain', json_decode( $accepted->last_error, true )['incremental_sent'] );
+			for ( $refusal = 0; $refusal < 2; ++$refusal ) {
+				self::$fixed_time += 10;
+				$cycle             = $this->run_cycle( $site_id, $task );
+				$this->assertNull( $cycle['exception'] );
+				$this->assertFalse( $cycle['result'] );
+				$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+				$this->assertSame( 'accepted-task', $progress->child_backup_task_id );
+				$this->assertSame( $accepted->dtsFetched, $progress->dtsFetched );
+				$this->assertSame( $accepted->last_error, $progress->last_error );
+			}
+			$this->assertCount( 1, $this->all_call_params( 'backup_task_create' ) );
+			$this->assertCount( 2, $this->all_call_params( 'backup_task_run' ) );
+		} finally {
+			self::$fixed_time = null;
+		}
 	}
 
 	/**

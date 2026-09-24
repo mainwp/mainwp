@@ -1169,8 +1169,16 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             return false;
         }
         $db->update_website_option( $website, 'native_manifest_snapshot', $token );
-        if ( '' !== $wpdb->last_error || $token !== $db->get_website_option( (int) $website->id, 'native_manifest_snapshot' ) ) {
+        if ( '' !== $wpdb->last_error ) {
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_RECORD_FAILED ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry factory.
+        }
+        $recorded_token = $db->get_website_option( (int) $website->id, 'native_manifest_snapshot' );
+        if ( '' !== $wpdb->last_error ) {
+            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_RECORD_FAILED ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry factory.
+        }
+        if ( $token !== $recorded_token ) {
+            self::reset_create_window_if_mine( $task_id, (int) $website->id, $marker );
+            return false;
         }
         return true;
     }
@@ -1257,6 +1265,8 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * create until the hold clears or the surface window elapses.
      * foreign_refused_since is deliberately not touched: it is the persistence
      * clock across these resets.
+     * Remove send-mode markers because the child never accepted this create;
+     * preserve pending manifest ownership and any other state.
      *
      * @param int    $task_id Task id.
      * @param int    $site_id Site id.
@@ -1265,14 +1275,21 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @return void
      */
     private static function reset_create_window_if_mine( $task_id, $site_id, $marker ) {
+        $progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task_id, $site_id );
+        $state    = json_decode( (string) ( $progress->last_error ?? '' ), true );
+        $values   = array(
+            'dtsFetched'           => 0,
+            'child_backup_task_id' => '',
+        );
+        if ( is_array( $state ) ) {
+            unset( $state['incremental_sent'], $state['run'] );
+            $values['last_error'] = wp_json_encode( $state );
+        }
         MainWP_DB_Backup::instance()->update_backup_task_progress_if_marker(
             $task_id,
             $site_id,
             $marker,
-            array(
-                'dtsFetched'           => 0,
-                'child_backup_task_id' => '',
-            )
+            $values
         );
     }
 

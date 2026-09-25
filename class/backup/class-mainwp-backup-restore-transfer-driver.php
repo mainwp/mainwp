@@ -1129,10 +1129,13 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
      * @return array { done: bool, error: string|null, retryable: bool }
      */
     public function transfer_artifacts( object $website, string $task_id, array $plan, array &$cursor, float $deadline, ?callable $should_continue = null, int $job_id = 0 ): array { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- chunk loop with realign, adaptive sizing, and floor retries.
-        // Reassert privacy even when a transfer resumes without staging again.
+        // Confine resumed transfers without probing or creating staging directories.
         foreach ( $plan as $index => $entry ) {
             if ( ! empty( $entry['staged_path'] ) && empty( $entry['adopt_only'] ) && in_array( $entry['source'] ?? '', array( 'remote', 'remote_chunked' ), true ) ) {
-                $dir = $this->staging_dir( $job_id > 0 ? $job_id : (int) basename( dirname( $entry['staged_path'] ) ) );
+                $dir = MainWP_Backup_Private_Root::staging_path( 'restore-staging', (string) ( $job_id > 0 ? $job_id : (int) basename( dirname( $entry['staged_path'] ) ) ) );
+                if ( ! is_wp_error( $dir ) && ( is_link( untrailingslashit( $dir ) ) || is_link( dirname( untrailingslashit( $dir ) ) ) || is_link( dirname( untrailingslashit( $dir ), 2 ) ) ) ) {
+                    $dir = new \WP_Error( MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE, esc_html__( 'The private restore staging directory must not be a symlink.', 'mainwp' ) );
+                }
                 if ( is_wp_error( $dir ) ) {
                     return array(
                         'done'       => false,

@@ -2139,6 +2139,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_LEGACY_DISABLED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         }
 
+        self::private_site_dir( (int) $pSiteId );
         MainWP_Backup_Monitor::validate_backup_environment();
 
         $pExclude = MainWP_Backup_Settings::sanitize_exclude_list( $pExclude );

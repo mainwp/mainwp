@@ -16,6 +16,9 @@ use MainWP\Dashboard\MainWP_Backup_Monitor;
 use MainWP\Dashboard\MainWP_Backup_Page;
 use MainWP\Dashboard\MainWP_Post_Backup_Handler;
 use MainWP\Dashboard\MainWP_Backup_Private_Root;
+use MainWP\Dashboard\MainWP_Backup_Executor;
+use MainWP\Dashboard\MainWP_Backup_Error_Codes;
+use MainWP\Dashboard\MainWP_Exception;
 
 /**
  * Class MainWP_Backup_Environment_Test
@@ -65,6 +68,44 @@ class MainWP_Backup_Environment_Test extends \WP_UnitTestCase {
 		$this->assertSame( $this->private_root . '/', MainWP_Backup_Private_Root::resolve() );
 		$this->assertSame( 0500, fileperms( $this->private_root ) & 0777 );
 		$this->assertSame( array( '.', '..' ), scandir( $this->private_root ) );
+	}
+
+	/**
+	 * Backup refuses an unwritable root before contacting the child.
+	 *
+	 * @return void
+	 */
+	public function test_backup_refuses_read_only_root_before_http() {
+		$this->assertTrue( mkdir( $this->private_root, 0500 ) );
+		if ( is_writable( $this->private_root ) ) {
+			$this->markTestSkipped( 'The process can write read-only directories (for example, as root).' );
+		}
+		$enabled  = get_option( 'mainwp_enableNativeBackups' );
+		$requests = 0;
+		$http     = static function () use ( &$requests ) {
+			++$requests;
+			return new \WP_Error( 'unexpected_http', 'No HTTP request should be made.' );
+		};
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		add_filter( 'pre_http_request', $http );
+		try {
+			$caught = null;
+			try {
+				MainWP_Backup_Executor::backup( 1, 'full', '', '', false, false, false, false );
+			} catch ( MainWP_Exception $e ) {
+				$caught = $e;
+			}
+			$this->assertInstanceOf( MainWP_Exception::class, $caught );
+			$this->assertSame( MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE, $caught->get_message_error_code() );
+			$this->assertSame( 0, $requests );
+		} finally {
+			remove_filter( 'pre_http_request', $http );
+			if ( false === $enabled ) {
+				delete_option( 'mainwp_enableNativeBackups' );
+			} else {
+				update_option( 'mainwp_enableNativeBackups', $enabled );
+			}
+		}
 	}
 
 	/**

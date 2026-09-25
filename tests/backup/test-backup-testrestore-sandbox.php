@@ -32,6 +32,7 @@ require_once __DIR__ . '/trait-backup-private-root-fixture.php'; // phpcs:ignore
 
 use MainWP\Dashboard\MainWP_Backup_TestRestore_Sandbox;
 use MainWP\Dashboard\MainWP_Exception;
+use MainWP\Dashboard\MainWP_Backup_Error_Codes;
 
 /**
  * Class MainWP_Backup_TestRestore_Sandbox_Test
@@ -475,11 +476,11 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 	}
 
 	/**
-	 * Early alias callers need protection even when alias directory creation fails.
+	 * Alias directory creation must succeed before parent protection runs.
 	 *
 	 * @return void
 	 */
-	public function test_phar_readable_path_protects_parent_before_alias_directory() {
+	public function test_phar_readable_path_creates_alias_directory_before_protecting_parent() {
 		$upload_dir = function ( $upload ) {
 			$upload['basedir'] = $this->dir;
 			return $upload;
@@ -511,10 +512,10 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 				$this->assertStringContainsString( 'Private backup directory', $e->getMessage() );
 				$this->assertStringContainsString( $alias_dir, $e->getMessage() );
 			}
-			$this->assertTrue( $threw, 'The blocked alias directory must fail after parent protection.' );
+			$this->assertTrue( $threw, 'The blocked alias directory must fail before parent protection.' );
 			$this->assertDirectoryDoesNotExist( $alias_dir );
-			$this->assertSame( 'deny from all', file_get_contents( $parent . '/.htaccess' ) );
-			$this->assertSame( '', file_get_contents( $parent . '/index.php' ) );
+			$this->assertFileDoesNotExist( $parent . '/.htaccess' );
+			$this->assertFileDoesNotExist( $parent . '/index.php' );
 			$this->assertDirectoryDoesNotExist( $sandbox->temp_dir() );
 
 			$this->assertTrue( unlink( $alias_dir ) );
@@ -1094,11 +1095,11 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 	}
 
 	/**
-	 * Protection refusal must happen before the extraction root is created.
+	 * Protection refusal cleans up the newly created extraction root.
 	 *
 	 * @return void
 	 */
-	public function test_bring_up_protects_parent_before_extraction_root() {
+	public function test_bring_up_cleans_extraction_root_after_protection_refusal() {
 		$upload_dir = function ( $upload ) {
 			$upload['basedir'] = $this->dir;
 			return $upload;
@@ -1141,11 +1142,67 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 				$this->assertStringContainsString( $htaccess . ' is not a regular file', $e->get_message_extra( false ) );
 			}
 			$this->assertTrue( $threw, 'A non-regular protection path must be refused.' );
-			$this->assertFalse( $sandbox->root_before_cleanup, 'The extraction root must not exist when protection refuses.' );
+			$this->assertTrue( $sandbox->root_before_cleanup, 'The private root writer creates the extraction root before protection.' );
 			$this->assertDirectoryDoesNotExist( $sandbox->temp_dir() );
 		} finally {
 			$sandbox->tear_down();
 		}
+	}
+
+	/**
+	 * New sandbox parents are private; unwritable roots retain their storage error.
+	 *
+	 * @dataProvider bring_up_private_root_cases
+	 * @param bool $read_only Whether the root starts read-only.
+	 * @return void
+	 */
+	public function test_bring_up_private_root( bool $read_only ) {
+		if ( $read_only ) {
+			$this->assertTrue( mkdir( $this->private_root, 0500 ) );
+			if ( is_writable( $this->private_root ) ) {
+				$this->markTestSkipped( 'The process can write read-only directories (for example, as root).' );
+			}
+		} else {
+			$this->assertDirectoryDoesNotExist( $this->private_root );
+		}
+		$sandbox = new MainWP_Backup_TestRestore_Sandbox();
+		try {
+			$caught = null;
+			try {
+				$sandbox->bring_up();
+			} catch ( MainWP_Exception $e ) {
+				if ( MainWP_Backup_TestRestore_Sandbox::ERR_UNSUPPORTED === $e->get_message_error_code() && str_starts_with( (string) $e->get_message_extra( false ), 'create database: ' ) ) {
+					$this->markTestSkipped( 'The database user lacks CREATE DATABASE privilege.' );
+				}
+				$caught = $e;
+			}
+			if ( $read_only ) {
+				$this->assertInstanceOf( MainWP_Exception::class, $caught );
+				$this->assertSame( MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE, $caught->get_message_error_code() );
+			} else {
+				$this->assertNull( $caught );
+				foreach ( array( $this->private_root, $this->private_root . '/test-restore' ) as $dir ) {
+					clearstatcache( true, $dir );
+					$this->assertSame( 0700, fileperms( $dir ) & 0777 );
+					$this->assertFileExists( $dir . '/index.php' );
+					$this->assertSame( 'deny from all', file_get_contents( $dir . '/.htaccess' ) );
+				}
+			}
+		} finally {
+			$sandbox->tear_down();
+		}
+	}
+
+	/**
+	 * Root creation and write refusal cases.
+	 *
+	 * @return array
+	 */
+	public static function bring_up_private_root_cases(): array {
+		return array(
+			'missing root'   => array( false ),
+			'read-only root' => array( true ),
+		);
 	}
 
 	/**

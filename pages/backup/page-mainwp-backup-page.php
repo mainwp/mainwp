@@ -535,8 +535,8 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
      * Method render_backup_environment_notices()
      *
      * Display admin notices when the dashboard environment has issues
-     * that will affect backups: low disk space, a non-writable backup
-     * directory, or a low PHP memory limit.
+     * that will affect backups: low disk space, an unusable private root
+     * configuration, or a low PHP memory limit.
      *
      * @return void
      */

@@ -143,13 +143,12 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         $this->mysqli->select_db( $this->db_name );
         $this->apply_restore_session();
 
-        $this->protect_parent();
-
         $dir = MainWP_Backup_Private_Root::staging_dir( 'test-restore', basename( untrailingslashit( $this->temp_dir ) ) );
         if ( is_wp_error( $dir ) ) {
             $this->tear_down();
             throw new MainWP_Exception( esc_html( $dir->get_error_message() ), null, MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE );
         }
+        $this->protect_parent();
     }
 
     /**
@@ -1303,11 +1302,11 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         if ( is_file( $alias ) && filesize( $alias ) > 0 ) {
             return $alias;
         }
-        $this->protect_parent();
         $private_alias = MainWP_Backup_Private_Root::staging_dir( 'test-restore', basename( untrailingslashit( $this->temp_dir ) ) . '-phar' );
         if ( is_wp_error( $private_alias ) ) {
             throw new MainWP_Exception( esc_html( $private_alias->get_error_message() ), null, MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE );
         }
+        $this->protect_parent();
 
         // Budget each slab separately so decompression leaves the reserve for other uploads.
         $space_reserve = 64 * MB_IN_BYTES;

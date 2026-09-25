@@ -336,6 +336,43 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends MainWP_Abilities_Test_C
 	}
 
 	/**
+	 * A resumed transfer reads staged bytes without requiring a writable root.
+	 */
+	public function test_transfer_resume_reads_staged_file_under_read_only_root() {
+		$staging = $this->driver->staging_dir( 777001 );
+		$this->assertIsString( $staging );
+		$path = $staging . 'db.tar.gz';
+		$this->assertSame( 12, file_put_contents( $path, 'remote-bytes' ) );
+		$plan = array(
+			array(
+				'role'        => 'db',
+				'file'        => 'db.tar.gz',
+				'size'        => 12,
+				'sha256'      => hash_file( 'sha256', $path ),
+				'source'      => 'remote',
+				'staged_path' => $path,
+				'adopt_only'  => false,
+			),
+		);
+		$this->assertTrue( chmod( $this->private_root, 0500 ) );
+		try {
+			clearstatcache( true, $this->private_root );
+			if ( is_writable( $this->private_root ) ) {
+				$this->markTestSkipped( 'The process can write read-only directories (for example, as root).' );
+			}
+			$cursor  = array();
+			$outcome = $this->driver->transfer_artifacts( (object) array( 'id' => 4 ), 'task', $plan, $cursor, microtime( true ) + 60, null, 777001 );
+			$this->assertNotSame( MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE, $outcome['error_code'] ?? null );
+			$this->assertTrue( $outcome['done'] );
+			$this->assertNull( $outcome['error'] );
+			$this->assertCount( 1, $this->driver->sent );
+			$this->assertSame( 12, $this->driver->sent[0]['bytes'] );
+		} finally {
+			chmod( $this->private_root, 0700 );
+		}
+	}
+
+	/**
 	 * A remote-source artifact downloads into staging and hashes.
 	 */
 	public function test_stage_remote_artifact_downloads() {

@@ -439,24 +439,25 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function test_sibling_fallback_selection_matrix() {
 		$rows = array(
-			'default writable'        => array( 'default', 0700, 'default', '' ),
-			'private_html writable'   => array( 'default', 0500, 'private_html', '' ),
-			'private writable'        => array( 'private', 0500, 'private', '' ),
-			'both roots exist'        => array( 'both', 0700, 'default', '' ),
-			'default read-only'       => array( 'default-readonly', 0500, 'default', 'directory is not writable' ),
-			'existing snapshots'      => array( 'snapshots', 0700, 'private_html', '' ),
-			'both siblings exist'     => array( 'both-siblings', 0700, 'private_html', '' ),
-			'existing sibling wins'   => array( 'private-snapshots', 0500, 'private', '' ),
-			'default symlink refused' => array( 'default-symlink', 0700, 'error', 'directory is a symlink' ),
-			'no sibling directories'  => array( 'no-siblings', 0500, 'default', 'could not create directory' ),
-			'equivalent filter path'  => array( 'trailing-slash', 0500, 'private_html', '' ),
-			'constant skips ladder'   => array( 'constant', 0500, 'default', 'could not create directory' ),
-			'filter skips ladder'     => array( 'filter', 0500, 'override', 'could not create directory' ),
-			'nothing writable'        => array( 'blocked', 0500, 'default', 'could not create directory' ),
-			'content sibling refused' => array( 'content', 0500, 'private', '' ),
-			'ABSPATH sibling refused' => array( 'abspath', 0500, 'private', '' ),
-			'symlink root refused'    => array( 'symlink', 0500, 'private', '' ),
-			'symlink base refused'    => array( 'symlink-base', 0500, 'private', '' ),
+			'default writable'         => array( 'default', 0700, 'default', '' ),
+			'private_html writable'    => array( 'default', 0500, 'private_html', '' ),
+			'private writable'         => array( 'private', 0500, 'private', '' ),
+			'both roots exist'         => array( 'both', 0700, 'default', '' ),
+			'default read-only'        => array( 'default-readonly', 0500, 'default', 'directory is not writable' ),
+			'existing snapshots'       => array( 'snapshots', 0700, 'private_html', '' ),
+			'both siblings exist'      => array( 'both-siblings', 0700, 'private_html', '' ),
+			'existing sibling wins'    => array( 'private-snapshots', 0500, 'private', '' ),
+			'default symlink refused'  => array( 'default-symlink', 0700, 'error', 'directory is a symlink' ),
+			'dangling default refused' => array( 'default-dangling', 0700, 'error', 'directory is a symlink' ),
+			'no sibling directories'   => array( 'no-siblings', 0500, 'default', 'could not create directory' ),
+			'equivalent filter path'   => array( 'trailing-slash', 0500, 'private_html', '' ),
+			'constant skips ladder'    => array( 'constant', 0500, 'default', 'could not create directory' ),
+			'filter skips ladder'      => array( 'filter', 0500, 'override', 'could not create directory' ),
+			'nothing writable'         => array( 'blocked', 0500, 'default', 'could not create directory' ),
+			'content sibling refused'  => array( 'content', 0500, 'private', '' ),
+			'ABSPATH sibling refused'  => array( 'abspath', 0500, 'private', '' ),
+			'symlink root refused'     => array( 'symlink', 0500, 'private', '' ),
+			'symlink base refused'     => array( 'symlink-base', 0500, 'private', '' ),
 		);
 		foreach ( $rows as $label => $row ) {
 			list( $mode, $permissions, $selected, $reason ) = $row;
@@ -501,6 +502,11 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 			if ( 'default-symlink' === $mode ) {
 				wp_mkdir_p( dirname( $paths['default'] ) );
 				symlink( $base . '/private', $paths['default'] );
+			}
+			// is_dir() is false for a dangling link, so only the refusal check keeps the ladder from picking a sibling.
+			if ( 'default-dangling' === $mode ) {
+				wp_mkdir_p( dirname( $paths['default'] ) );
+				symlink( $base . '/missing', $paths['default'] );
 			}
 			if ( 'symlink' === $mode ) {
 				wp_mkdir_p( dirname( $paths['private_html'] ) );

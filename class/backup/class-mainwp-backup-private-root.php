@@ -294,7 +294,7 @@ class MainWP_Backup_Private_Root {
             'mainwp_backup_private_root_unavailable',
             sprintf(
                 /* translators: 1: Directory path, 2: Failure reason. */
-                __( 'Private backup directory "%1$s" is unavailable: %2$s. Configure MAINWP_BACKUP_PRIVATE_DIR outside ABSPATH and WP_CONTENT_DIR with write access. On an addon domain, or when the Dashboard is served from a folder inside another site, set MAINWP_BACKUP_PRIVATE_DIR to a directory no web server serves.', 'mainwp' ),
+                __( 'Private backup directory "%1$s" is unavailable: %2$s. Configure MAINWP_BACKUP_PRIVATE_DIR outside ABSPATH and WP_CONTENT_DIR with write access. On an addon domain, when WordPress sits in its own subdirectory of the site, or when the Dashboard is served from a folder inside another site, set MAINWP_BACKUP_PRIVATE_DIR to a directory no web server serves.', 'mainwp' ),
                 $path,
                 $reason
             )

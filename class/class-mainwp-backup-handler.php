@@ -394,11 +394,11 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     /**
      * Method validate_backup_environment()
      *
-     * Validates the dashboard server can receive and store a backup before
-     * any child site communication: required PHP extensions and a writable
-     * backup directory are hard requirements; low disk space and a low
-     * memory limit are logged as warnings because backups may still
-     * succeed.
+     * Validates required PHP extensions and the private root configuration.
+     * Callers must create the site directory through the private root first
+     * to check writability before any child site communication. Low disk
+     * space and a low memory limit are logged as warnings because backups
+     * may still succeed.
      *
      * @deprecated 6.2 Use MainWP_Backup_Monitor::validate_backup_environment() instead.
      *

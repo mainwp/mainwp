@@ -431,6 +431,8 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 			if ( 'root missing' !== $label ) {
 				wp_mkdir_p( dirname( $file ) );
 				file_put_contents( $file, 'recorded' );
+				file_put_contents( $site . 'full-backup.zip', 'listable' );
+				touch( $site . 'full-backup.zip', 1700000000 );
 				wp_mkdir_p( $site . 'snapshot-orphan' );
 				file_put_contents( $site . 'snapshot-orphan/archive.zip', 'orphan' );
 				touch( $site . 'snapshot-orphan/archive.zip', time() - 100 );
@@ -452,10 +454,17 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 				$this->assertSame( $exists, \MainWP\Dashboard\MainWP_Backup_File_Manager::path_is_confined_to( $file, MainWP_Backup_Private_Root::resolve() ), $label );
 				ob_start();
 				\MainWP\Dashboard\MainWP_Manage_Sites::show_backups( $website );
-				$html = ob_get_clean();
-				$this->assertStringContainsString( 'No full backup has been taken yet', $html, $label );
-				$table = new \MainWP\Dashboard\MainWP_Manage_Sites_List_Table();
-				$this->assertStringContainsString( 'Never', $table->column_backup( (array) $website ), $label );
+				$html   = ob_get_clean();
+				$table  = new \MainWP\Dashboard\MainWP_Manage_Sites_List_Table();
+				$column = $table->column_backup( (array) $website );
+				if ( $exists ) {
+					$this->assertStringContainsString( 'full-backup.zip', $html, $label );
+					$this->assertStringNotContainsString( 'No full backup has been taken yet', $html, $label );
+					$this->assertSame( \MainWP\Dashboard\MainWP_Utility::format_timestamp( \MainWP\Dashboard\MainWP_Utility::get_timestamp( 1700000000 ) ) . '<br />', $column, $label );
+				} else {
+					$this->assertStringContainsString( 'No full backup has been taken yet', $html, $label );
+					$this->assertStringContainsString( 'Never', $column, $label );
+				}
 				ob_start();
 				\MainWP\Dashboard\MainWP_Backup_Page::render_backup_environment_notices();
 				$notice = ob_get_clean();
@@ -484,6 +493,9 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 				$this->assertSame( $exists ? 1 : 0, $result['orphan_dirs_removed'], $label );
 				$this->assertSame( array(), $result['errors'], $label );
 				$this->assertDirectoryDoesNotExist( $site . 'snapshot-orphan', $label );
+				if ( $exists ) {
+					$this->assertFileExists( $site . 'full-backup.zip', $label );
+				}
 				$restore = new MainWP_Backup_Restore_Transfer_Driver();
 				$restore->cleanup_staging( 7 );
 				$cleanup = new \ReflectionMethod( MainWP_Backup_Upload_Driver::class, 'cleanup_staging' );

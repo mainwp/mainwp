@@ -23,7 +23,7 @@ use MainWP\Dashboard\MainWP_Exception;
 /**
  * Class MainWP_Backup_Environment_Test
  */
-class MainWP_Backup_Environment_Test extends \WP_UnitTestCase {
+class MainWP_Backup_Environment_Test extends MainWP_Abilities_Test_Case {
 
 	use Backup_Private_Root_Fixture;
 
@@ -80,6 +80,8 @@ class MainWP_Backup_Environment_Test extends \WP_UnitTestCase {
 		if ( is_writable( $this->private_root ) ) {
 			$this->markTestSkipped( 'The process can write read-only directories (for example, as root).' );
 		}
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$site_id  = $this->create_test_site();
 		$enabled  = get_option( 'mainwp_enableNativeBackups' );
 		$requests = 0;
 		$http     = static function () use ( &$requests ) {
@@ -91,7 +93,7 @@ class MainWP_Backup_Environment_Test extends \WP_UnitTestCase {
 		try {
 			$caught = null;
 			try {
-				MainWP_Backup_Executor::backup( 1, 'full', '', '', false, false, false, false );
+				MainWP_Backup_Executor::backup( $site_id, 'full', '', '', false, false, false, false );
 			} catch ( MainWP_Exception $e ) {
 				$caught = $e;
 			}
@@ -100,6 +102,36 @@ class MainWP_Backup_Environment_Test extends \WP_UnitTestCase {
 			$this->assertSame( 0, $requests );
 		} finally {
 			remove_filter( 'pre_http_request', $http );
+			if ( false === $enabled ) {
+				delete_option( 'mainwp_enableNativeBackups' );
+			} else {
+				update_option( 'mainwp_enableNativeBackups', $enabled );
+			}
+		}
+	}
+
+	/**
+	 * Unknown sites must not leave a private backup directory behind.
+	 *
+	 * @return void
+	 */
+	public function test_backup_unknown_site_does_not_create_private_directory() {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$this->assertEmpty( \MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( 987654 ) );
+		$enabled = get_option( 'mainwp_enableNativeBackups' );
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		try {
+			$caught = null;
+			try {
+				MainWP_Backup_Executor::backup( 987654, 'full', '', '', false, false, false, false );
+			} catch ( MainWP_Exception $e ) {
+				$caught = $e;
+			}
+			$this->assertInstanceOf( MainWP_Exception::class, $caught );
+			$this->assertSame( 'Site not found.', $caught->getMessage() );
+			$this->assertDirectoryDoesNotExist( $this->private_root . '/sites/987654' );
+			$this->assertDirectoryDoesNotExist( $this->private_root );
+		} finally {
 			if ( false === $enabled ) {
 				delete_option( 'mainwp_enableNativeBackups' );
 			} else {

@@ -2139,9 +2139,6 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_LEGACY_DISABLED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         }
 
-        self::private_site_dir( (int) $pSiteId );
-        MainWP_Backup_Monitor::validate_backup_environment();
-
         $pExclude = MainWP_Backup_Settings::sanitize_exclude_list( $pExclude );
 
         if ( null === $pFilename || '' === trim( $pFilename ) ) {
@@ -2154,6 +2151,9 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         if ( empty( $website ) ) {
             throw new MainWP_Exception( esc_html__( 'Site not found.', 'mainwp' ) );
         }
+
+        self::private_site_dir( (int) $pSiteId );
+        MainWP_Backup_Monitor::validate_backup_environment();
 
         $subfolder = str_replace( '%sitename%', MainWP_Utility::sanitize( $website->name ), $pSubfolder );
         $subfolder = str_replace( '%url%', MainWP_Utility::sanitize( MainWP_Utility::get_nice_url( $website->url ) ), $subfolder );

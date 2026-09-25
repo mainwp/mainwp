@@ -3359,7 +3359,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             $this->wpdb->delete( $this->table_name( 'wp_sync' ), array( 'wpid' => $websiteid ) );
             $this->wpdb->delete( $this->table_name( 'wp_options' ), array( 'wpid' => $websiteid ) );
             MainWP_Encrypt_Data_Lib::remove_key_file( $websiteid );
-            MainWP_DB_Uptime_Monitoring::instance()->delete_monitor( array( 'wpid' => $websiteid ) );
+            MainWP_DB_Uptime_Monitoring::instance()->delete_site_monitors( $websiteid );
             MainWP_Manage_Sites_List_Table::invalidate_manage_sites_cache();
             return $nr;
         }

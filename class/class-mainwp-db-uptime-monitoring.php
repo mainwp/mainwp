@@ -487,6 +487,55 @@ KEY idx_wpid_issub (wpid, issub)";
         return $this->wpdb->get_results( $this->get_sql_monitor( $params ), $obj ); //phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- SQL built with esc_sql().
     }
 
+
+    /**
+     * Get the primary monitor for a specific site.
+     *
+     * @param int  $site_id Website ID (wpid).
+     * @param bool $obj     Optional. Whether to return an object or associative array. Default true.
+     *
+     * @return object|array|false The primary monitor row, or false if not found.
+     */
+    public function get_primary_monitor( $site_id, $obj = true ) {
+        if ( empty( $site_id ) ) {
+            return false;
+        }
+
+        $result = $this->get_monitor_by( $site_id, 'issub', 0, array(), $obj ? OBJECT : ARRAY_A );
+
+        if ( empty( $result ) ) {
+            return false;
+        }
+
+        // If get_monitor_by returns an array of multiple results, return the first row.
+        if ( is_array( $result ) && isset( $result[0] ) ) {
+            return $result[0];
+        }
+
+        return $result;
+    }
+
+    /**
+     * Get sub-monitors by site ID.
+     *
+     * @param int|false $site_id Optional. The website ID (wpid). Default false.
+     * @param bool      $obj     Optional. Whether to return results as objects or arrays. Default true.
+     *
+     * @return array List of sub-monitor records.
+     */
+    public function get_sub_monitors( $site_id = false, $obj = true ) {
+        if ( empty( $site_id ) ) {
+            return array();
+        }
+
+        $sql = $this->wpdb->prepare(
+            'SELECT * FROM ' . $this->table_name( 'monitors' ) . ' WHERE wpid = %d AND suburl != "" AND suburl IS NOT NULL',
+            $site_id
+        );
+
+        return $obj ? $this->wpdb->get_results( $sql, OBJECT ) : $this->wpdb->get_results( $sql, ARRAY_A );
+    }
+
     /**
      * Get sites monitors to check.
      *
@@ -671,6 +720,7 @@ KEY idx_wpid_issub (wpid, issub)";
         return $this->wpdb->get_results( $sql );
     }
 
+
     /**
      * Update site monitor.
      *
@@ -833,7 +883,6 @@ KEY idx_wpid_issub (wpid, issub)";
             return $monitor_id;
         }
     }
-
 
     /**
      * Repair sites that are missing their Primary Monitor.
@@ -1002,7 +1051,7 @@ KEY idx_wpid_issub (wpid, issub)";
      *
      * @param array $params params.
      *
-     * @return object|null Database query result or null on failure.
+     * @return  string|false Database query result or null on failure.
      */
     public function get_sql_monitor( $params ) { //phpcs:ignore -- NOSONAR - complexity.
 
@@ -1022,7 +1071,16 @@ KEY idx_wpid_issub (wpid, issub)";
 
         $extra_view = ! empty( $params['extra_view'] ) ? $params['extra_view'] : array();
 
-        $site_id   = isset( $params['wpid'] ) ? intval( $params['wpid'] ) : false;
+        $site_id = isset( $params['wpid'] ) ? $params['wpid'] : false;
+
+        if ( false !== $site_id ) {
+            if ( ! filter_var( $site_id, FILTER_VALIDATE_INT ) || (int) $site_id <= 0 ) {
+                return false;
+            }
+
+            $site_id = (int) $site_id;
+        }
+
         $monitorid = isset( $params['monitor_id'] ) ? intval( $params['monitor_id'] ) : false;
         $sub_url   = isset( $params['suburl'] ) ? $params['suburl'] : false;
         $is_sub    = isset( $params['issub'] ) ? intval( $params['issub'] ) : false;
@@ -1195,62 +1253,96 @@ KEY idx_wpid_issub (wpid, issub)";
         return $qry;
     }
 
+    /**
+     * Delete all monitors (primary and sub-monitors) for a specific site along with related data.
+     *
+     * @param int $site_id Website ID (wpid).
+     *
+     * @return bool True if monitors were found and deleted, false otherwise.
+     */
+    public function delete_site_monitors( $site_id ) {
+        if ( empty( $site_id ) ) {
+            return false;
+        }
+
+        $table_monitors = $this->table_name( 'monitors' );
+
+        $sql         = $this->wpdb->prepare( "SELECT monitor_id FROM {$table_monitors} WHERE wpid = %d", $site_id );
+        $monitor_ids = $this->wpdb->get_col( $sql ); //phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
+
+        if ( empty( $monitor_ids ) ) {
+            return false;
+        }
+
+        foreach ( $monitor_ids as $monitor_id ) {
+            // Re-use single monitor deletion or execute cascading deletions.
+            $this->remove_monitor_and_data( (int) $monitor_id );
+        }
+
+        return true;
+    }
 
     /**
-     * Delete monitor and uptime data.
+     * Delete a single monitor by monitor ID or specified parameters.
      *
-     * @param array $params data.
+     * @param array $args Parameters for deletion, typically array( 'monitor_id' => $id ).
      *
-     * @return bool success|failed.
+     * @return bool True on successful deletion, false on failure or missing ID.
      */
-    public function delete_monitor( $params ) {
-
-        if ( ! is_array( $params ) ) {
+    public function delete_monitor( $args ) { // phpcs:ignore --NOSONAR -complex.
+        if ( empty( $args ) || ! is_array( $args ) ) {
             return false;
         }
 
-        $table_monitors = esc_sql( $this->table_name( 'monitors' ) );
-        $sql            = '';
+        $monitor_id = isset( $args['monitor_id'] ) && $args['monitor_id'] > 0 ? (int) $args['monitor_id'] : 0;
 
-        if ( ! empty( $params['monitor_id'] ) ) {
-            $sql = $this->wpdb->prepare( 'SELECT monitor_id, wpid FROM ' . $table_monitors . ' WHERE monitor_id=%d', $params['monitor_id'] );
-        } elseif ( ! empty( $params['wpid'] ) ) {
-            $sql = $this->wpdb->prepare( 'SELECT monitor_id, wpid FROM ' . $table_monitors . ' WHERE wpid=%d AND issub = 0 ', $params['wpid'] );
-        }
-
-        $current = 0;
-
-        if ( ! empty( $sql ) ) {
-            $current = $this->wpdb->get_row( $sql ); //phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- SQL from wpdb->prepare().
-        }
-
-        if ( empty( $current ) ) {
+        if ( empty( $monitor_id ) ) {
             return false;
         }
 
-        $monitor_id = $current->monitor_id;
-        $wp_id      = $current->wpid;
+        $monitor = $this->get_monitor_by( false, 'monitor_id', $monitor_id );
 
-        if ( ! empty( $current->issub ) ) {
-            if ( $this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $table_monitors . ' WHERE monitor_id=%d', $monitor_id ) ) ) {
-                $this->delete_heartbeat( $monitor_id );
-                $this->delete_stats( $monitor_id );
-                return true;
-            }
+        if ( empty( $monitor ) ) {
             return false;
         }
 
-        $sql      = $this->wpdb->prepare( 'SELECT monitor_id FROM ' . $table_monitors . ' WHERE wpid=%d ', $wp_id );
-        $monitors = $this->wpdb->get_results( $sql ); //phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- SQL from wpdb->prepare().
-        if ( $monitors ) {
-            foreach ( $monitors as $mo ) {
-                if ( $this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $table_monitors . ' WHERE monitor_id=%d', $mo->monitor_id ) ) ) {
-                    $this->delete_heartbeat( $mo->monitor_id );
-                    $this->delete_stats( $mo->monitor_id );
-                }
-            }
+        // If it is primary monitor.
+        if ( empty( $monitor->suburl ) && empty( $monitor->issub ) ) {
+            return $this->delete_site_monitors( $monitor->wpid );
+        }
+
+        return $this->remove_monitor_and_data( $monitor_id );
+    }
+
+    /**
+     * Delete a single monitor by monitor ID or specified parameters.
+     *
+     * @param int $monitor_id Monitor ID.
+     *
+     * @return bool True on successful deletion, false on failure or missing ID.
+     */
+    public function remove_monitor_and_data( $monitor_id ) {
+
+        if ( empty( $monitor_id ) ) {
+            return false;
+        }
+
+        $table_monitors = $this->table_name( 'monitors' );
+
+        // Perform deletion on the primary table.
+        $deleted = $this->wpdb->delete(
+            $table_monitors,
+            array( 'monitor_id' => $monitor_id ),
+            array( '%d' )
+        );
+
+        // Trigger cascading cleanups if row deletion succeeded.
+        if ( $deleted ) {
+            $this->delete_heartbeat( $monitor_id );
+            $this->delete_stats( $monitor_id );
             return true;
         }
+
         return false;
     }
 

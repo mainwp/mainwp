@@ -1203,4 +1203,37 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             'success' => $success,
         );
     }
+
+
+    /**
+     * Delete saved widget filters for all users.
+     *
+     * @param string $context The widget context. Accepts 'individual' or 'client'.
+     * @param int    $id      The site or client ID.
+     *
+     * @return int|false Number of deleted filters, or false for an invalid context.
+     */
+    public function delete_widget_saved_filters_for_all_users( $context, $id ) {
+        if ( ! in_array( $context, array( 'individual', 'client' ), true ) ) {
+            return false;
+        }
+
+        $option   = 'mainwp_widget_actions_logs_' . $context . '_filters_saved_' . intval( $id );
+        $meta_key = $this->wpdb->get_blog_prefix() . $option;
+
+        $user_ids = $this->wpdb->get_col(
+            $this->wpdb->prepare(
+                "SELECT DISTINCT user_id
+                FROM {$this->wpdb->usermeta}
+                WHERE meta_key = %s",
+                $meta_key
+            )
+        );
+
+        foreach ( $user_ids as $user_id ) {
+            delete_user_meta( $user_id, $meta_key );
+        }
+
+        return count( $user_ids );
+    }
 }

@@ -2268,7 +2268,44 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             $error_category = 'already_connected';
         } else {
             try {
-                if ( MainWP_Connect_Lib::is_use_fallback_sec_lib( $website ) ) {
+
+                /**
+                 * Filter to skip generating connection keys when adding a site in PHPUnit tests.
+                 *
+                 * This filter fires before connection keys are generated, allowing tests to
+                 * bypass RSA key generation when testing site-add functionality.
+                 *
+                 * SECURITY WARNING - TEST ONLY:
+                 * This filter ONLY fires when ALL of the following conditions are met:
+                 * 1. MAINWP_TESTING_MODE constant is defined and true.
+                 * 2. A PHPUnit test harness constant is present (WP_TESTS_DOMAIN,
+                 *    PHPUNIT_COMPOSER_INSTALL, or WP_TESTS_DIR).
+                 *
+                 * These checks prevent malicious code from defining MAINWP_TESTING_MODE
+                 * in production to bypass connection key generation.
+                 *
+                 * IMPORTANT: MAINWP_TESTING_MODE must ONLY be defined in the PHPUnit bootstrap
+                 * file (tests/bootstrap.php). Defining it in production code, wp-config.php,
+                 * or plugin files would create a security vulnerability by allowing connection
+                 * key generation to be bypassed.
+                 *
+                 * @since 6.2.1
+                 *
+                 * @param bool   $skip_keys Whether to skip connection key generation.
+                 * @param object $website   Website object being added.
+                 * @param array  $params   Site connection parameters.
+                 *
+                 * @return bool True to skip connection key generation, false to generate keys normally.
+                 */
+                $is_phpunit_env = defined( 'WP_TESTS_DOMAIN' ) || defined( 'PHPUNIT_COMPOSER_INSTALL' ) || ( defined( 'WP_TESTS_DIR' ) && WP_TESTS_DIR );
+
+                $skip_keys = false;
+
+                if ( defined( 'MAINWP_TESTING_MODE' ) && MAINWP_TESTING_MODE && $is_phpunit_env ) {
+                    $skip_keys = apply_filters( 'mainwp_add_site_skip_key_generation', false, $website, $params );
+                }
+
+                if ( ! $skip_keys && MainWP_Connect_Lib::is_use_fallback_sec_lib( $website ) ) {
                     $details = MainWP_Connect_Lib::instance()->create_connect_keys();
                     if ( is_array( $details ) ) {
                         $pubkey  = $details['pub'];
@@ -2277,7 +2314,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         $privkey = '-1';
                         $pubkey  = '-1';
                     }
-                } elseif ( function_exists( 'openssl_pkey_new' ) ) {
+                } elseif ( ! $skip_keys && function_exists( 'openssl_pkey_new' ) ) {
                     $conf     = array( 'private_key_bits' => 2048 );
                     $conf_loc = MainWP_System_Utility::get_openssl_conf();
                     if ( ! empty( $conf_loc ) ) {
@@ -2454,23 +2491,6 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
                         if ( ! empty( $information['regverify'] ) ) {
                             MainWP_DB::instance()->update_website_option( $website, 'register_verify_key', $information['regverify'] );
-                        }
-
-                        $glo_settings          = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
-                        $monitoring_glo_active = is_array( $glo_settings ) && isset( $glo_settings['active'] ) ? (int) $glo_settings['active'] : 1;
-                        if ( $monitoring_glo_active ) {
-                            MainWP_DB_Uptime_Monitoring::instance()->update_wp_monitor(
-                                array(
-                                    'wpid'            => $id,
-                                    'active'          => -1,
-                                    'interval'        => -1, // -1 - use global setting.
-                                    'timeout'         => -1,
-                                    'method'          => 'useglobal',
-                                    'type'            => 'useglobal',
-                                    'up_status_codes' => 'useglobal',
-                                    'issub'           => 0, // primary monitor.
-                                )
-                            );
                         }
 
                         /**

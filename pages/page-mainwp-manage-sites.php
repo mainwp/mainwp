@@ -842,6 +842,19 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
     }
 
     /**
+     * Render note that WordPress login 2FA does not block MainWP connection auth.
+     *
+     * @return void
+     */
+    public static function render_connection_2fa_note() {
+        ?>
+        <div class="ui blue message">
+            <?php esc_html_e( 'WordPress admin login two-factor authentication (2FA) does not apply to MainWP connections. MainWP authenticates with the administrator username and password and/or Unique Security ID configured on the Child site, not the WordPress login 2FA challenge.', 'mainwp' ); ?>
+        </div>
+        <?php
+    }
+
+    /**
      * Method render_new_site_add_new_site()
      *
      * Render page managesites add new site.
@@ -927,6 +940,8 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                             <span class="ui text"><strong><?php esc_html_e( 'Your settings must match the Child plugin configuration. If unsure, use the default.', 'mainwp' ); ?></strong></span>
                         </div>
                     </div>
+                    <div class="ui hidden fitted divider"></div>
+                    <?php static::render_connection_2fa_note(); ?>
                 </div>
             </div>
             <div id="mainwp-administrator-password-field">
@@ -2291,6 +2306,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             <div class="item"><?php esc_html_e( 'Enter the username of your Administrator account on the site.', 'mainwp' ); ?></div>
             <div class="item"><?php esc_html_e( 'Optionally, enter a custom Site Name, or MainWP will automatically generate a name for it.', 'mainwp' ); ?></div>
             <div class="item"><?php esc_html_e( 'Enter the administrator account password. If the requirement is disabled in the MainWP Child plugin settings, leave blank.', 'mainwp' ); ?></div>
+            <div class="item"><?php esc_html_e( 'WordPress admin login two-factor authentication (2FA) does not apply to MainWP connections. MainWP authenticates with the administrator username and password and/or Unique Security ID configured on the Child site, not the WordPress login 2FA challenge.', 'mainwp' ); ?></div>
             <?php if ( $is_qsw ) : ?>
             <div class="item"><?php esc_html_e( 'To show additional fields (Tags, Security ID, HTTP Username, HTTP Password, SSL Version, and SSL Verification, click the eye icon at the end of the row.', 'mainwp' ); ?></div>
             <?php endif; ?>

@@ -27,7 +27,7 @@ class MainWP_Backup_Private_Root {
     private static $availability_reason = '';
 
     /**
-     * Whether resolution considered the host's sibling directories.
+     * Whether the host's sibling directories failed to provide a fallback.
      *
      * @var bool
      */
@@ -51,7 +51,7 @@ class MainWP_Backup_Private_Root {
      * For a WordPress directory named mainwp-private, the sibling container is mainwp-private-dashboard to keep the root outside WordPress.
      * Changing MAINWP_BACKUP_PRIVATE_DIR, or renaming the WordPress directory, after backups exist means moving the sites/ folder to the new root, or the older snapshots leave retention and the Backups tab; restore still works from the recorded paths.
      * Hosts that deploy through an atomic symlink (current -> releases/<id>: Capistrano, Deployer, Envoyer) must set MAINWP_BACKUP_PRIVATE_DIR: WordPress resolves ABSPATH through the release directory, so the default folder name changes with every release and the earlier snapshots drop out of retention and the Backups tab.
-     * Without a constant or filter override, sibling private_html and private directories provide fallbacks for hosts with an unwritable WordPress parent; existing backup roots take precedence.
+     * Without a constant or filter override, sibling private_html and private directories are used only when the default cannot be created and the host already provides the sibling directory. A default that exists or can be created always wins.
      *
      * @return string|\WP_Error
      */
@@ -65,11 +65,20 @@ class MainWP_Backup_Private_Root {
         $suffix    = '/' . $container . '/' . $folder . '/backups';
         $default   = defined( 'MAINWP_BACKUP_PRIVATE_DIR' ) ? MAINWP_BACKUP_PRIVATE_DIR : $parent . $suffix;
         $candidate = apply_filters( 'mainwp_backup_private_root', $default );
-        if ( ! defined( 'MAINWP_BACKUP_PRIVATE_DIR' ) && $candidate === $default ) {
-            self::$used_ladder = true;
-            $writable          = null;
-            $existing          = null;
-            foreach ( array( $default, $parent . '/private_html' . $suffix, $parent . '/private' . $suffix ) as $path ) {
+        if ( ! defined( 'MAINWP_BACKUP_PRIVATE_DIR' )
+            && is_string( $candidate ) && is_string( $default )
+            && untrailingslashit( wp_normalize_path( $candidate ) ) === untrailingslashit( wp_normalize_path( $default ) )
+            && '' === self::refusal_reason( $default )
+            && ! is_dir( $default )
+            && '' !== self::path_availability_reason( $default ) ) {
+            $writable = null;
+            $existing = null;
+            foreach ( array( $parent . '/private_html', $parent . '/private' ) as $base ) {
+                // The host must provide the sibling; private_html may be a served HTTPS root.
+                if ( ! is_dir( $base ) || is_link( $base ) ) {
+                    continue;
+                }
+                $path = $base . $suffix;
                 if ( '' !== self::refusal_reason( $path ) ) {
                     continue;
                 }
@@ -82,7 +91,8 @@ class MainWP_Backup_Private_Root {
                     $writable = $path;
                 }
             }
-            $candidate = $existing ?? $writable ?? $default;
+            $candidate         = $existing ?? $writable ?? $default;
+            self::$used_ladder = $candidate === $default;
         }
         $reason                    = self::refusal_reason( $candidate );
         self::$availability_reason = '' === $reason ? self::path_availability_reason( $candidate ) : $reason;

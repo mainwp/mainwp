@@ -120,6 +120,9 @@ class MainWP_Backup_Page_Test extends \WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_environment_notices_do_not_probe_non_writable_dir() {
+		if ( function_exists( 'posix_geteuid' ) && 0 === posix_geteuid() ) {
+			$this->markTestSkipped( 'Root bypasses directory write permissions.' );
+		}
 		$this->private_dir = trailingslashit( get_temp_dir() ) . 'mainwp-page-ro-' . wp_generate_password( 8, false );
 		wp_mkdir_p( $this->private_dir );
 		chmod( $this->private_dir, 0500 ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.

@@ -443,7 +443,11 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 			'private_html writable'   => array( 'default', 0500, 'private_html', '' ),
 			'private writable'        => array( 'private', 0500, 'private', '' ),
 			'both roots exist'        => array( 'both', 0700, 'default', '' ),
-			'existing snapshots'      => array( 'snapshots', 0700, 'private_html', '' ),
+			'existing snapshots'      => array( 'snapshots', 0700, 'default', '' ),
+			'existing sibling wins'   => array( 'private-snapshots', 0500, 'private', '' ),
+			'default symlink refused' => array( 'default-symlink', 0700, 'error', 'directory is a symlink' ),
+			'no sibling directories'  => array( 'no-siblings', 0500, 'default', 'could not create directory' ),
+			'equivalent filter path'  => array( 'trailing-slash', 0500, 'private_html', '' ),
 			'constant skips ladder'   => array( 'constant', 0500, 'default', 'could not create directory' ),
 			'filter skips ladder'     => array( 'filter', 0500, 'override', 'could not create directory' ),
 			'nothing writable'        => array( 'blocked', 0500, 'default', 'could not create directory' ),
@@ -469,14 +473,23 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 				'override'     => $base . '/override/backups',
 			);
 			wp_mkdir_p( $abspath );
-			wp_mkdir_p( $base . '/private_html' );
-			wp_mkdir_p( $base . '/private' );
+			if ( 'no-siblings' !== $mode ) {
+				wp_mkdir_p( $base . '/private_html' );
+				wp_mkdir_p( $base . '/private' );
+			}
 			if ( in_array( $mode, array( 'both', 'snapshots' ), true ) ) {
 				wp_mkdir_p( $paths['private_html'] . '/sites/1/snapshot-recorded' );
 				file_put_contents( $paths['private_html'] . '/sites/1/snapshot-recorded/archive.zip', 'snapshot' );
 			}
 			if ( 'both' === $mode ) {
 				wp_mkdir_p( $paths['default'] );
+			}
+			if ( 'private-snapshots' === $mode ) {
+				wp_mkdir_p( $paths['private'] );
+			}
+			if ( 'default-symlink' === $mode ) {
+				wp_mkdir_p( dirname( $paths['default'] ) );
+				symlink( $base . '/private', $paths['default'] );
 			}
 			if ( 'symlink' === $mode ) {
 				wp_mkdir_p( dirname( $paths['private_html'] ) );
@@ -497,6 +510,9 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 					'constant' => 'constant' === $mode ? $paths['default'] : null,
 					'filter'   => 'filter' === $mode ? $paths['override'] : null,
 				);
+				if ( 'trailing-slash' === $mode ) {
+					$config['filter'] = $paths['default'] . '/';
+				}
 				// Separate processes let each host layout own its WordPress constants.
 				$source = dirname( __DIR__, 2 ) . '/class/backup/class-mainwp-backup-private-root.php';
 				// phpcs:disable WordPress.PHP.DevelopmentFunctions.error_log_var_export -- PHP literals preserve the fixture paths in the isolated process.
@@ -512,19 +528,29 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 					. '$root = MainWP\\Dashboard\\MainWP_Backup_Private_Root::resolve();'
 					. '$reason = MainWP\\Dashboard\\MainWP_Backup_Private_Root::availability_reason();'
 					. '$failure = new ReflectionMethod(MainWP\\Dashboard\\MainWP_Backup_Private_Root::class, "unavailable");'
-					. 'echo json_encode([$root, $reason, $failure->invoke(null, is_string($root) ? $root : "", $reason)->message]);';
+					. 'echo json_encode([$root instanceof WP_Error ? null : $root, $reason, $root instanceof WP_Error ? $root->message : $failure->invoke(null, $root, $reason)->message]);';
 				// phpcs:enable WordPress.PHP.DevelopmentFunctions.error_log_var_export
 				$output = shell_exec( escapeshellarg( PHP_BINARY ) . ' -r ' . escapeshellarg( $script ) );
 				$result = json_decode( $output, true );
 				$this->assertIsArray( $result, $label . ': ' . $output );
-				$this->assertSame( $paths[ $selected ] . '/', $result[0], $label );
+				if ( 'error' === $selected ) {
+					$this->assertNull( $result[0], $label );
+					$this->assertStringContainsString( $reason, $result[2], $label );
+					$this->assertDirectoryDoesNotExist( $base . '/private_html/mainwp-private', $label );
+				} else {
+					$this->assertSame( $paths[ $selected ] . '/', $result[0], $label );
+				}
 				$this->assertSame( $reason, $result[1], $label );
 				clearstatcache();
 				$this->assertSame( $before, array_map( 'is_dir', $paths ), $label );
-				if ( in_array( $mode, array( 'constant', 'filter' ), true ) ) {
-					$this->assertStringNotContainsString( 'Sibling directories tried:', $result[2], $label );
-				} else {
+				if ( 'no-siblings' === $mode ) {
+					$this->assertDirectoryDoesNotExist( $base . '/private_html', $label );
+					$this->assertDirectoryDoesNotExist( $base . '/private', $label );
+				}
+				if ( in_array( $mode, array( 'blocked', 'no-siblings' ), true ) ) {
 					$this->assertStringContainsString( 'Sibling directories tried: private_html, private.', $result[2], $label );
+				} else {
+					$this->assertStringNotContainsString( 'Sibling directories tried:', $result[2], $label );
 				}
 			} finally {
 				chmod( $base, 0700 );

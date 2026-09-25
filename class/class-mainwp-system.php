@@ -2021,7 +2021,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         <i class="close icon"></i>
             <div class="header"><?php esc_html_e( 'Child Site Response', 'mainwp' ); ?></div>
             <div class="content">
-                <div class="ui info message"><?php esc_html_e( 'To see the response in a more readable way, you can copy it and paste it into some HTML render tool, such as Codepen.io.', 'mainwp' ); ?>
+                <div class="ui info message"><?php esc_html_e( 'This is the readable child/HTTP response from the failed request (status, headers snippet, and body when it is safe to show). Copy it for support if needed.', 'mainwp' ); ?>
                 </div>
             </div>
             <div class="scrolling content content-response" contenteditable="true"></div>

@@ -1507,6 +1507,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                             <div class="sub header"></div>
                         </div>
                     </h2>
+                    <div id="mainwp-test-connection-details" class="mainwp-connect-failure-ux-wrap"></div>
                 </div>
             </div>
         </div>
@@ -1985,6 +1986,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             $success    = false;
             $_error     = '';
             $error_code = '';
+            $output     = array();
             try {
                 if ( $sync_first ) {
                     $success = MainWP_Sync::sync_site( $website, true );
@@ -2059,13 +2061,16 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         $website->verify_certificate,
                         MainWP_Credential_Storage::decrypt_credential( $website->http_user ),
                         MainWP_Credential_Storage::decrypt_credential( $website->http_pass ),
-                        $website->ssl_version
+                        $website->ssl_version,
+                        array(),
+                        $output
                     );
 
                     if ( isset( $information['error'] ) && '' !== $information['error'] ) {
                         $err        = urldecode( $information['error'] );
                         $_error     = MainWP_Utility::esc_content( $err );
                         $error_code = isset( $information['error_code'] ) ? sanitize_text_field( wp_unslash( $information['error_code'] ) ) : '';
+                        $_error     = MainWP_Error_Helper::get_connect_failure_message( new MainWP_Exception( $_error, '', $error_code ), $output );
                     } elseif ( isset( $information['register'] ) && 'OK' === $information['register'] ) {
 
                         $en_pk_data = MainWP_Encrypt_Data_Lib::instance()->encrypt_privkey( $privkey, $website->id, true );
@@ -2099,11 +2104,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     }
                 }
             } catch ( MainWP_Exception $e ) {
-                if ( 'HTTPERROR' === $e->getMessage() ) {
-                    $_error = 'HTTP error' . ( null !== $e->get_message_extra() ? ' - ' . $e->get_message_extra() : '' );
-                } elseif ( 'NOMAINWP' === $e->getMessage() ) {
-                    $_error = MainWP_Error_Helper::get_error_not_detected_connect(); // phpcs:ignore WordPress.Security.EscapeOutput
-                }
+                $_error = MainWP_Error_Helper::get_connect_failure_message( $e, $output );
             }
 
             /**
@@ -2362,7 +2363,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 );
 
                 if ( isset( $information['error'] ) && '' !== $information['error'] ) {
-                    $error = MainWP_Utility::esc_content( $information['error'] );
+                    $err = MainWP_Utility::esc_content( urldecode( $information['error'] ) );
                     if ( is_array( $output ) ) {
                         if ( ! empty( $output['error_category'] ) ) {
                             $error_category = $output['error_category'];
@@ -2374,6 +2375,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                             $error_code = $output['error_code'];
                         }
                     }
+                    $error = MainWP_Error_Helper::get_connect_failure_message( new MainWP_Exception( $err, '', $error_code ), $output );
                 } elseif ( isset( $information['register'] ) && 'OK' === $information['register'] ) {
                     $reported_site_url = isset( $information['siteurl'] ) ? trim( wp_unslash( $information['siteurl'] ) ) : '';
 
@@ -2525,13 +2527,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     $error = sprintf( esc_html__( 'Undefined error occurred. Please try again. For additional help, contact the MainWP Support.', 'mainwp' ), '<a href="https://docs.mainwp.com/troubleshooting/potential-issues" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe.
                 }
             } catch ( MainWP_Exception $e ) {
-                if ( 'HTTPERROR' === $e->getMessage() ) {
-                    $error = 'HTTP error' . ( null !== $e->get_message_extra() ? ' - ' . $e->get_message_extra() : '' );
-                } elseif ( 'NOMAINWP' === $e->getMessage() ) {
-                    $error = MainWP_Error_Helper::get_error_not_detected_connect();
-                } else {
-                    $error = $e->getMessage();
-                }
+                $error = MainWP_Error_Helper::get_connect_failure_message( $e, $output );
             }
         }
 

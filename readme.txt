@@ -151,6 +151,21 @@ Please report security bugs found in the source code of the MainWP plugin throug
 
 == Changelog ==
 
+= 6.2.1 - 9-30-2026 =
+
+* Fixed: Resolved an issue where enabling global uptime monitoring left monitors for previously added sites disabled.
+* Fixed: Removing a website now also removes its associated monitors and monitoring data.
+* Fixed: Improved database schema comparisons to correctly handle nullable defaults without misinterpreting markers inside quoted SQL values.
+* Fixed: Database upgrades now ensure group records include the required identifier and primary key.
+* Fixed: Resolved an issue affecting tag updates through REST API v2.
+* Fixed: Update rows now leave the version field blank when version information is unavailable.
+* Fixed: Resolved inconsistencies when processing update and synchronization responses.
+* Updated: Improved upgrade status reporting for plugins, themes, and translations, including clearer handling when upgrades begin or cannot proceed.
+* Updated: Strengthened authenticated and renewal request signatures with a longer, cryptographically random nonce.
+* Updated: Missing primary monitors are now repaired automatically, restoring monitoring for affected sites.
+* Updated: Clarified the notices on the “Edit Client” and “Edit User” screens that leaving fields blank preserves their existing values on child sites.
+* Updated: Improved tag readability by validating background colors and automatically selecting contrasting black or white text.
+
 = 6.2 - 9-9-2026 =
 
 * Fixed: Improved database size notices on the Operations and Client Overview pages with appropriate spacing and context.

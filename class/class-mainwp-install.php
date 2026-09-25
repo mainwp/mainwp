@@ -654,7 +654,9 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             return false;
         }
 
+        $suppress = $this->wpdb->suppress_errors();
         $this->repair_wp_group_primary_key();
+        $this->wpdb->suppress_errors( $suppress );
 
         return true;
     }

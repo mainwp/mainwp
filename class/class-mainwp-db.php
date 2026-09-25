@@ -177,9 +177,9 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
     /**
      * Method get_wp_options_join().
      *
-     * @param array  $fields Extra option fields.
-     * @param string $view_query view query.
-     * @param array<string, mixed>  $params Additional parameters.
+     * @param array                $fields Extra option fields.
+     * @param string               $view_query view query.
+     * @param array<string, mixed> $params Additional parameters.
 
      *
      * NOTE: This method is used to improve the performance of wp_options view, as the old view with subquery for each field will cause performance issue when there are many sites, and this method will generate the SQL with LEFT JOIN which will be much faster than subquery.
@@ -3317,6 +3317,24 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                         )
                     );
                 }
+
+                // Add primary monitor, use global settings.
+                $success = MainWP_DB_Uptime_Monitoring::instance()->update_wp_monitor(
+                    array(
+                        'wpid'   => $websiteid,
+                        'suburl' => '',
+                    )
+                );
+
+                $opt_name = 'mainwp_primary_monitor_repair_attempts_for_wp_' . $websiteid;
+
+                if ( ! $success ) {
+                    update_option( $opt_name, 1 );
+                    MainWP_Utility::unhide_mainwp_message( 'failed-attempt-create-primary-monitor-' . $websiteid );
+                } elseif ( get_option( $opt_name ) ) {
+                    delete_option( $opt_name );
+                }
+
                 MainWP_Manage_Sites_List_Table::invalidate_manage_sites_cache();
                 return $websiteid;
             }

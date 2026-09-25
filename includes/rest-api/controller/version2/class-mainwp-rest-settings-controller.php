@@ -661,6 +661,17 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             $update_if_present( 'mainwp_verify_connection_method', 'mainwp_verify_connection_method', 'int' );
             $update_if_present( 'mainwp_force_use_ipv4', 'mainwp_forceUseIPv4', 'int' );
 
+            if ( array_key_exists( 'mainwp_child_request_timeout', $body ) ) {
+                $saved_timeout = MainWP_Connect::save_child_request_timeout_setting( $body['mainwp_child_request_timeout'] );
+                if ( false === $saved_timeout ) {
+                    return new WP_Error(
+                        'invalid_mainwp_child_request_timeout',
+                        __( 'Child request timeout must be a whole number of seconds, at least 300. Use a blank value or 72000 to keep the default.', 'mainwp' ),
+                        array( 'status' => 400 )
+                    );
+                }
+            }
+
             // Update sync data.
             if ( isset( $body['sync_data'] ) ) {
                 $syncs_data = $this->safe_json_decode( get_option( 'mainwp_settings_sync_data', array() ) ?? '' );
@@ -2580,6 +2591,13 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 'sanitize_callback' => $this->make_enum_sanitizer( $val_bool ),
                 'validate_callback' => $this->make_enum_validator( $val_bool ),
             ),
+            'mainwp_child_request_timeout'              => array(
+                'required'          => false,
+                'description'       => __( 'Child request timeout in seconds. Null, blank, or 72000 clears the stored option (default 72000). A saved value must be at least 300.', 'mainwp' ),
+                'type'              => array( 'integer', 'string', 'null' ),
+                'sanitize_callback' => array( $this, 'sanitize_child_request_timeout' ),
+                'validate_callback' => array( $this, 'validate_child_request_timeout' ),
+            ),
             'mainwp_connect_signature_algo'             => array(
                 'required'          => false,
                 'description'       => __( 'OpenSSL signature algorithm.', 'mainwp' ),
@@ -4242,6 +4260,68 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
     }
 
     /**
+     * Stored child request timeout, or null when the option is unset.
+     *
+     * @return int|null
+     */
+    public static function get_stored_child_request_timeout() {
+        $normalized = MainWP_Connect::normalize_child_request_timeout_setting( get_option( MainWP_Connect::CHILD_REQUEST_TIMEOUT_OPTION, '' ) );
+        if ( is_int( $normalized ) ) {
+            return $normalized;
+        }
+        return null;
+    }
+
+    /**
+     * Sanitize a child request timeout for the advanced settings route.
+     *
+     * Blank and 72000 become null so the option is deleted. Invalid values are
+     * left for the validator.
+     *
+     * @param mixed $value Submitted value.
+     *
+     * @return mixed
+     */
+    public function sanitize_child_request_timeout( $value ) {
+        $normalized = MainWP_Connect::normalize_child_request_timeout_setting( $value );
+        if ( 'delete' === $normalized ) {
+            return null;
+        }
+        if ( is_int( $normalized ) ) {
+            return $normalized;
+        }
+        return $value;
+    }
+
+    /**
+     * Validate a child request timeout.
+     *
+     * Omitting the field is handled by WordPress (the argument is not required).
+     * A present null, blank, or 72000 clears the option.
+     *
+     * @param mixed $value Submitted value.
+     *
+     * @return true|WP_Error
+     */
+    public function validate_child_request_timeout( $value ) {
+        if ( null === $value || false === $value || '' === $value ) {
+            return true;
+        }
+        if ( is_string( $value ) && '' === trim( $value ) ) {
+            return true;
+        }
+        $normalized = MainWP_Connect::normalize_child_request_timeout_setting( $value );
+        if ( 'delete' === $normalized || is_int( $normalized ) ) {
+            return true;
+        }
+        return new WP_Error(
+            'invalid_mainwp_child_request_timeout',
+            __( 'Child request timeout must be a whole number of seconds, at least 300. Use a blank value or 72000 to keep the default.', 'mainwp' ),
+            array( 'status' => 400 )
+        );
+    }
+
+    /**
      * Get advanced settings data.
      *
      * @uses MainWP_Settings_Indicator::get_defaults_value()
@@ -4275,6 +4355,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             'mainwp_verify_connection_method'           => (int) get_option( 'mainwp_verify_connection_method', $default_setting['mainwp_verify_connection_method'] ),
             'mainwp_connect_signature_algo'             => isset( $sign_algs[ $signature_algo ] ) ? $sign_algs[ $signature_algo ] : $default_setting['mainwp_connect_signature_algo'],
             'mainwp_force_use_ipv4'                     => (int) get_option( 'mainwp_forceUseIPv4', $default_setting['mainwp_forceUseIPv4'] ),
+            'mainwp_child_request_timeout'              => self::get_stored_child_request_timeout(),
             'sync_data'                                 => $sync_data_settings,
         );
     }
@@ -4524,6 +4605,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 'mainwp_force_use_ipv4'                    => array(
                     'type'        => 'integer',
                     'description' => __( 'Force use IPv4.', 'mainwp' ),
+                    'context'     => array( 'advanced_view', 'advanced_edit' ),
+                ),
+                'mainwp_child_request_timeout'             => array(
+                    'type'        => array( 'integer', 'null' ),
+                    'description' => __( 'Child request timeout in seconds. Null means the option is unset and the effective default is 72000.', 'mainwp' ),
                     'context'     => array( 'advanced_view', 'advanced_edit' ),
                 ),
                 'sync_data'                                => array(

@@ -2104,7 +2104,13 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     }
                 }
             } catch ( MainWP_Exception $e ) {
-                $_error = MainWP_Error_Helper::get_connect_failure_message( $e, $output );
+                if ( 'HTTPERROR' === $e->getMessage() ) {
+                    $_error = 'HTTP error' . ( null !== $e->get_message_extra() ? ' - ' . $e->get_message_extra() : '' );
+                } elseif ( 'NOMAINWP' === $e->getMessage() ) {
+                    $_error = MainWP_Error_Helper::get_error_not_detected_connect(); // phpcs:ignore WordPress.Security.EscapeOutput
+                } elseif ( 'TIMEOUT' === $e->getMessage() ) {
+                    $_error = MainWP_Error_Helper::get_error_message( $e );
+                }
             }
 
             /**
@@ -2527,7 +2533,17 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     $error = sprintf( esc_html__( 'Undefined error occurred. Please try again. For additional help, contact the MainWP Support.', 'mainwp' ), '<a href="https://docs.mainwp.com/troubleshooting/potential-issues" target="_blank">', '</a> <i class="external alternate icon"></i>' ); // NOSONAR - noopener - open safe.
                 }
             } catch ( MainWP_Exception $e ) {
-                $error = MainWP_Error_Helper::get_connect_failure_message( $e, $output );
+                if ( 'HTTPERROR' === $e->getMessage() ) {
+                    $error = 'HTTP error' . ( null !== $e->get_message_extra() ? ' - ' . $e->get_message_extra() : '' );
+                } elseif ( 'NOMAINWP' === $e->getMessage() ) {
+                    $error = MainWP_Error_Helper::get_error_not_detected_connect();
+                } elseif ( 'TIMEOUT' === $e->getMessage() ) {
+                    $error          = MainWP_Error_Helper::get_error_message( $e );
+                    $error_category = 'request_timeout';
+                    $error_code     = 'request_timeout';
+                } else {
+                    $error = $e->getMessage();
+                }
             }
         }
 

@@ -199,6 +199,9 @@ let mainwp_managesites_import_sites = function () { // NOSONAR - to compatible.
             errors.push(check_result + MainWP.I18n.t('HTTP error: website does not exist!'));
         } else if (response == 'NOMAINWP') {
             errors.push(check_result + MainWP.I18n.t('MainWP Child plugin not detected! First install and activate the MainWP Child plugin and add your site to MainWP afterwards. Click <a href="%1" target="_blank">here</a> to install <a href="%2" target="_blank">MainWP</a> plugin (do not forget to activate it after installation)', url + 'wp-admin/plugin-install.php?tab=search&type=term&s=mainwp&plugin-search-input=Search+Plugins', url + 'wp-admin/plugin-install.php?tab=search&type=term&s=mainwp&plugin-search-input=Search+Plugins'));
+        } else if (response == 'TIMEOUT') {
+            let timeoutKind = res_things && res_things.timeout_kind ? res_things.timeout_kind : 'operation';
+            errors.push(check_result + mainwp_js_request_timeout_message(timeoutKind));
         } else if (response.substring(0, 5) == 'ERROR') {
             if (response.length == 5) {
                 errors.push(check_result + MainWP.I18n.t('Undefined error!'));

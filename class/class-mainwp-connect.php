@@ -24,6 +24,38 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     // phpcs:disable WordPress.DB.RestrictedFunctions, Generic.Metrics.CyclomaticComplexity, WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors -- Using cURL functions.
 
     /**
+     * Option key for an optional child-request total timeout override.
+     *
+     * Unset means the built-in default. Do not store the default itself.
+     */
+    const CHILD_REQUEST_TIMEOUT_OPTION = 'mainwp_child_request_timeout';
+
+    /**
+     * Total child request timeout, in seconds, when the option is unset.
+     */
+    const CHILD_REQUEST_TIMEOUT_DEFAULT = 72000;
+
+    /**
+     * Lowest total timeout, in seconds, that may be saved.
+     */
+    const CHILD_REQUEST_TIMEOUT_FLOOR = 300;
+
+    /**
+     * Site-removal (`deactivate`) cap, in seconds, when the option is unset.
+     */
+    const DEACTIVATE_TIMEOUT_DEFAULT = 300;
+
+    /**
+     * TCP/TLS connect wait, in seconds.
+     */
+    const CONNECT_TIMEOUT_SECONDS = 30;
+
+    /**
+     * Browser wait for site removal, in milliseconds, matching the default deactivate cap.
+     */
+    const SITE_REMOVAL_AJAX_TIMEOUT_MS = 360000;
+
+    /**
      * Method get_class_name()
      *
      * Get Class Name.
@@ -32,6 +64,359 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      */
     public static function get_class_name() {
         return __CLASS__;
+    }
+
+    /**
+     * Saved child request timeout, or 0 when the option is unset or not usable.
+     *
+     * Values below the floor and the built-in default are treated as unset so a
+     * stored 72000 cannot override the "do not write the default" rule.
+     *
+     * @return int Seconds, or 0.
+     */
+    public static function get_saved_child_request_timeout() {
+        $saved = get_option( self::CHILD_REQUEST_TIMEOUT_OPTION, false );
+        if ( false === $saved || null === $saved || '' === $saved ) {
+            return 0;
+        }
+        if ( ! is_numeric( $saved ) ) {
+            return 0;
+        }
+        $timeout = (int) $saved;
+        if ( $timeout < self::CHILD_REQUEST_TIMEOUT_FLOOR || self::CHILD_REQUEST_TIMEOUT_DEFAULT === $timeout ) {
+            return 0;
+        }
+        return $timeout;
+    }
+
+    /**
+     * Base timeout passed into mainwp_fetch_url_site_timeout.
+     *
+     * Unset option: 72000, or 300 for deactivate. A saved value replaces 72000.
+     * A saved value above 300 also raises the deactivate cap. The filtered
+     * result is not raised back to the floor, so a one-argument callback can
+     * still clamp a probe (including the URL corrector at 120).
+     *
+     * @param string $what Request action. `deactivate` uses the shorter base.
+     *
+     * @return int Timeout in seconds.
+     */
+    public static function resolve_child_request_timeout( $what = '' ) {
+        $saved = static::get_saved_child_request_timeout();
+        if ( 'deactivate' === $what ) {
+            $timeout = self::DEACTIVATE_TIMEOUT_DEFAULT;
+            if ( $saved > self::DEACTIVATE_TIMEOUT_DEFAULT ) {
+                $timeout = $saved;
+            }
+        } else {
+            $timeout = self::CHILD_REQUEST_TIMEOUT_DEFAULT;
+            if ( $saved >= self::CHILD_REQUEST_TIMEOUT_FLOOR ) {
+                $timeout = $saved;
+            }
+        }
+
+        /**
+         * Filter: mainwp_fetch_url_site_timeout
+         *
+         * Filters the request timeout ( CURLOPT_TIMEOUT + PHP time limit ) used
+         * for child site requests. The default argument is 72000 seconds except
+         * for site removal (`deactivate`), which starts at 300 unless a higher
+         * saved Child request timeout applies. Values below 1 are ignored
+         * ( 0 would disable the cURL timeout ) and fall back to 72000.
+         * Callbacks may return a lower positive value; that value is kept.
+         *
+         * @param int    $timeout Timeout in seconds.
+         * @param string $what    Request action, when the caller has one.
+         *
+         * @since 6.2
+         */
+        $timeout = (int) apply_filters( 'mainwp_fetch_url_site_timeout', $timeout, $what );
+        if ( $timeout <= 0 ) {
+            $timeout = self::CHILD_REQUEST_TIMEOUT_DEFAULT;
+        }
+        return $timeout;
+    }
+
+    /**
+     * Browser wait for site removal.
+     *
+     * Default is 360000 ms. When the deactivate cap is 360 seconds or more, the
+     * browser waits 60 seconds longer than that cap.
+     *
+     * @return int Milliseconds.
+     */
+    public static function get_site_removal_ajax_timeout_ms() {
+        $php_seconds = static::resolve_child_request_timeout( 'deactivate' );
+        if ( $php_seconds >= 360 ) {
+            return ( $php_seconds + 60 ) * 1000;
+        }
+        return self::SITE_REMOVAL_AJAX_TIMEOUT_MS;
+    }
+
+    /**
+     * Decide whether a submitted Child request timeout is stored.
+     *
+     * @param mixed $raw Submitted value.
+     *
+     * @return int|string|false Integer to store, `delete` to remove the option, false when the value is below the floor.
+     */
+    public static function normalize_child_request_timeout_setting( $raw ) {
+        if ( null === $raw || false === $raw ) {
+            return 'delete';
+        }
+        if ( is_string( $raw ) ) {
+            $raw = trim( wp_unslash( $raw ) );
+        }
+        if ( '' === $raw ) {
+            return 'delete';
+        }
+        if ( ! is_numeric( $raw ) ) {
+            return false;
+        }
+        $timeout = (int) $raw;
+        if ( self::CHILD_REQUEST_TIMEOUT_DEFAULT === $timeout ) {
+            return 'delete';
+        }
+        if ( $timeout < self::CHILD_REQUEST_TIMEOUT_FLOOR ) {
+            return false;
+        }
+        return $timeout;
+    }
+
+    /**
+     * Persist a Child request timeout submission.
+     *
+     * @param mixed $raw Submitted value.
+     *
+     * @return int|string|false Stored seconds, `delete`, or false when rejected.
+     */
+    public static function save_child_request_timeout_setting( $raw ) {
+        $normalized = static::normalize_child_request_timeout_setting( $raw );
+        if ( 'delete' === $normalized ) {
+            delete_option( self::CHILD_REQUEST_TIMEOUT_OPTION );
+            return 'delete';
+        }
+        if ( is_int( $normalized ) ) {
+            MainWP_Utility::update_option( self::CHILD_REQUEST_TIMEOUT_OPTION, $normalized );
+            return $normalized;
+        }
+        return false;
+    }
+
+    /**
+     * Classify a non-envelope child response that reached the NOMAINWP branch.
+     *
+     * Imunify `wsidchk` stays ahead of timeout. Gateway statuses are TIMEOUT
+     * only when cURL reported no error and the body has no mainwp envelope.
+     *
+     * @param mixed $data        Response body.
+     * @param mixed $err         cURL error string.
+     * @param mixed $http_status HTTP status.
+     * @param mixed $curl_errno  cURL error number captured before curl_close.
+     *
+     * @return string WSIDCHK, TIMEOUT, or NOMAINWP.
+     */
+    public static function child_fetch_else_code( $data, $err, $http_status, $curl_errno ) {
+        $body = is_string( $data ) ? $data : '';
+        if ( false !== strpos( $body, 'wsidchk' ) ) {
+            return 'WSIDCHK';
+        }
+        $kind = static::child_request_timeout_kind( $curl_errno, $err, $http_status, $data );
+        if ( '' !== $kind ) {
+            return 'TIMEOUT';
+        }
+        return 'NOMAINWP';
+    }
+
+    /**
+     * Tell a total timeout, a connect timeout, and a gateway timeout apart.
+     *
+     * @param mixed $curl_errno  cURL error number.
+     * @param mixed $err         cURL error string.
+     * @param mixed $http_status HTTP status.
+     * @param mixed $data        Response body.
+     *
+     * @return string `operation`, `connect`, `gateway`, or empty when this is not a timeout.
+     */
+    public static function child_request_timeout_kind( $curl_errno, $err, $http_status, $data = '' ) {
+        $body = is_string( $data ) ? $data : '';
+        if ( false !== strpos( $body, 'wsidchk' ) ) {
+            return '';
+        }
+        // A partial `<mainwp` fragment is not a Child envelope. Only a body the
+        // success parser would accept suppresses TIMEOUT.
+        if ( static::body_has_complete_mainwp_envelope( $data ) ) {
+            return '';
+        }
+
+        $err_text = is_string( $err ) ? strtolower( $err ) : '';
+        $errno    = (int) $curl_errno;
+        $status   = (int) $http_status;
+
+        $is_connect = false;
+        if ( false !== strpos( $err_text, 'connection timed out' ) ) {
+            $is_connect = true;
+        } elseif ( false !== strpos( $err_text, 'connect timed out' ) ) {
+            $is_connect = true;
+        } elseif ( false !== strpos( $err_text, 'resolving timed out' ) ) {
+            $is_connect = true;
+        } elseif ( false !== strpos( $err_text, 'ssl connection timeout' ) ) {
+            $is_connect = true;
+        }
+
+        if ( $is_connect ) {
+            return 'connect';
+        }
+        if ( 28 === $errno ) {
+            return 'operation';
+        }
+        if ( false !== strpos( $err_text, 'timed out' ) ) {
+            return 'operation';
+        }
+        if ( '' !== trim( $err_text ) ) {
+            return '';
+        }
+        if ( in_array( $status, array( 408, 504, 522, 524 ), true ) ) {
+            return 'gateway';
+        }
+        return '';
+    }
+
+    /**
+     * Whether the body is a complete Child envelope.
+     *
+     * Matches the `<mainwp>...</mainwp>` parser used by fetch_url_site(). An
+     * opening tag without the closing tag is not complete.
+     *
+     * @param mixed $data Response body.
+     *
+     * @return bool
+     */
+    public static function body_has_complete_mainwp_envelope( $data ) {
+        if ( ! is_string( $data ) || '' === $data ) {
+            return false;
+        }
+        return 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data );
+    }
+
+    /**
+     * Child-envelope body whose decoded error is the timeout message.
+     *
+     * Batch handlers only special-case a mainwp envelope or a missing plugin.
+     * This lets them show the timeout copy without a new handler argument.
+     * The message has no URL, IP, or Location.
+     *
+     * @param string $kind operation, connect, or gateway.
+     *
+     * @return string Envelope, or empty when encoding fails.
+     */
+    public static function timeout_batch_handler_body( $kind ) {
+        return static::handler_error_envelope( MainWP_Error_Helper::get_timeout_error_message( $kind ) );
+    }
+
+    /**
+     * Build a mainwp envelope containing a single error string.
+     *
+     * @param string $message Error text. Must not include a URL, IP, or Location.
+     *
+     * @return string
+     */
+    public static function handler_error_envelope( $message ) {
+        $payload = wp_json_encode(
+            array(
+                'error' => $message,
+            )
+        );
+        if ( ! is_string( $payload ) || '' === $payload ) {
+            return '';
+        }
+        return '<mainwp>' . base64_encode( $payload ) . '</mainwp>'; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- same encoding Child responses already use.
+    }
+
+    /**
+     * Data passed to a fetch_urls_authed handler.
+     *
+     * A complete envelope is left unchanged. A timeout-shaped result with no
+     * complete envelope becomes a timeout error envelope. Anything else is
+     * returned as received.
+     *
+     * @param mixed $data        Response body.
+     * @param mixed $curl_errno  cURL error number captured before curl_close.
+     * @param mixed $err         cURL error string.
+     * @param mixed $http_status HTTP status.
+     *
+     * @return mixed
+     */
+    public static function batch_handler_response_data( $data, $curl_errno, $err, $http_status ) {
+        if ( static::body_has_complete_mainwp_envelope( $data ) ) {
+            return $data;
+        }
+        $kind = static::child_request_timeout_kind( $curl_errno, $err, $http_status, $data );
+        if ( '' === $kind ) {
+            return $data;
+        }
+        $envelope = static::timeout_batch_handler_body( $kind );
+        if ( '' === $envelope ) {
+            return $data;
+        }
+        return $envelope;
+    }
+
+    /**
+     * Result returned by try_visit() when curl_init() does not return a handle.
+     *
+     * No IP is included. Callers treat a non-empty error as a failed visit.
+     *
+     * @return array
+     */
+    public static function try_visit_curl_init_failure() {
+        return array(
+            'host'           => '',
+            'httpCode'       => 0,
+            'httpCodeString' => '',
+            'httpVersion'    => false,
+            'error'          => 'cURL could not be initialized.',
+        );
+    }
+
+    /**
+     * Throw the fetch_url_site() failure for an unusable curl handle.
+     *
+     * @param array $output Fetch output.
+     *
+     * @throws MainWP_Exception HTTPERROR with an empty body. The extra is the fixed init message, not a URL or IP.
+     */
+    public static function throw_fetch_url_site_curl_init_failure( &$output ) {
+        if ( ! is_array( $output ) ) {
+            $output = array();
+        }
+        $output['error_category'] = 'http_error';
+        $output['error_code']     = 'curl_init_failed';
+        $output['error_message']  = 'cURL could not be initialized.';
+        $thr_error                = new MainWP_Exception( 'HTTPERROR', 'cURL could not be initialized.' ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+        $thr_error->set_data( '' );
+        throw $thr_error;
+    }
+
+    /**
+     * Build a TIMEOUT exception with an empty extra.
+     *
+     * @param string $kind   operation, connect, or gateway.
+     * @param array  $output Fetch output, updated with the timeout category.
+     *
+     * @return MainWP_Exception
+     */
+    protected static function new_timeout_exception( $kind, &$output ) {
+        if ( 'gateway' !== $kind && 'connect' !== $kind ) {
+            $kind = 'operation';
+        }
+        if ( ! is_array( $output ) ) {
+            $output = array();
+        }
+        $output['error_category'] = 'request_timeout';
+        $output['error_code']     = 'request_timeout';
+        $output['error_message']  = MainWP_Error_Helper::get_timeout_error_message( $kind );
+        return new MainWP_Exception( 'TIMEOUT', '', $kind );
     }
 
     /**
@@ -60,6 +445,9 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $postdata = array( 'test' => 'yes' );
 
         $ch = curl_init();
+        if ( ! static::is_valid_curl_handle( $ch ) ) {
+            return static::try_visit_curl_init_failure();
+        }
 
         $proxy = new \WP_HTTP_Proxy();
         if ( $proxy->is_enabled() && $proxy->send_through_proxy( $url ) ) {
@@ -84,7 +472,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, $follow_loc ? true : false );
         curl_setopt( $ch, CURLOPT_POST, true );
         curl_setopt( $ch, CURLOPT_POSTFIELDS, $postdata );
-        curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
+        curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, self::CONNECT_TIMEOUT_SECONDS );
         curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
         curl_setopt( $ch, CURLOPT_ENCODING, 'none' );
 
@@ -1055,24 +1443,8 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
         $mh    = curl_multi_init();
 
-        /**
-         * Filter: mainwp_fetch_url_site_timeout
-         *
-         * Filters the request timeout ( CURLOPT_TIMEOUT + PHP time limit ) used
-         * for child site requests. Defaults to 20 hours to accommodate the
-         * longest operations ( upgrades, backups ); short-lived callers such as
-         * the URL-correction verify probe bound it much tighter.
-         *
-         * @param int $timeout Timeout in seconds. Default 72000 ( 20 hours ).
-         *                     Values below 1 are ignored ( 0 would disable the
-         *                     cURL timeout entirely ) and fall back to the default.
-         *
-         * @since 6.2
-         */
-        $timeout = (int) apply_filters( 'mainwp_fetch_url_site_timeout', 20 * 60 * 60 );
-        if ( $timeout <= 0 ) {
-            $timeout = 20 * 60 * 60;
-        }
+        /** This filter is documented in class/class-mainwp-connect.php */
+        $timeout = static::resolve_child_request_timeout( $what );
 
         $disabled_functions = ini_get( 'disable_functions' );
         $handleToWebsite    = array();
@@ -1162,6 +1534,19 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             }
 
             $ch = curl_init();
+            if ( ! static::is_valid_curl_handle( $ch ) ) {
+                MainWP_Logger::instance()->debug( 'fetch_urls_authed :: curl_init failed' );
+                if ( null !== $handler ) {
+                    $init_body = static::handler_error_envelope( 'cURL could not be initialized.' );
+                    if ( '' !== $init_body ) {
+                        call_user_func_array( $handler, array( $init_body, $website, &$output, $params ) );
+                    }
+                }
+                if ( null !== $_org_params ) {
+                    $params = $_org_params;
+                }
+                continue;
+            }
 
             $proxy = new \WP_HTTP_Proxy();
             if ( $proxy->is_enabled() && $proxy->send_through_proxy( $url ) ) {
@@ -1202,7 +1587,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
             $postdata = static::get_post_data_authed( $website, $what, $params );
             curl_setopt( $ch, CURLOPT_POSTFIELDS, $postdata );
-            curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
+            curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, self::CONNECT_TIMEOUT_SECONDS );
             curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
             curl_setopt( $ch, CURLOPT_REFERER, get_option( 'siteurl' ) );
             curl_setopt( $ch, CURLOPT_ENCODING, 'none' );
@@ -1277,8 +1662,11 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 curl_multi_exec( $mh, $running );
                 curl_multi_select( $mh );
                 while ( $info = curl_multi_info_read( $mh ) ) {
-                    $data     = curl_multi_getcontent( $info['handle'] );
-                    $contains = ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) );
+                    $data         = curl_multi_getcontent( $info['handle'] );
+                    $batch_err    = curl_error( $info['handle'] );
+                    $batch_errno  = (int) curl_errno( $info['handle'] );
+                    $batch_status = (int) curl_getinfo( $info['handle'], CURLINFO_HTTP_CODE );
+                    $contains     = static::body_has_complete_mainwp_envelope( $data );
                     curl_multi_remove_handle( $mh, $info['handle'] );
 
                     $rid = static::get_resource_id( $info['handle'] );
@@ -1306,8 +1694,9 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     }
 
                     if ( null !== $handler ) {
-                        $site = &$handleToWebsite[ static::get_resource_id( $info['handle'] ) ];
-                        call_user_func_array( $handler, array( $data, $site, &$output, $params ) );
+                        $site         = &$handleToWebsite[ static::get_resource_id( $info['handle'] ) ];
+                        $handler_data = static::batch_handler_response_data( $data, $batch_errno, $batch_err, $batch_status );
+                        call_user_func_array( $handler, array( $handler_data, $site, &$output, $params ) );
                     }
 
                     unset( $handleToWebsite[ static::get_resource_id( $info['handle'] ) ] );
@@ -1324,11 +1713,15 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             }
         } else {
             foreach ( $requestHandles as $ch ) {
-                $data = curl_exec( $ch );
+                $data         = curl_exec( $ch );
+                $batch_err    = curl_error( $ch );
+                $batch_errno  = (int) curl_errno( $ch );
+                $batch_status = (int) curl_getinfo( $ch, CURLINFO_HTTP_CODE );
 
                 if ( null !== $handler ) {
-                    $site = &$handleToWebsite[ static::get_resource_id( $ch ) ];
-                    call_user_func_array( $handler, array( $data, $site, &$output, $params ) );
+                    $site         = &$handleToWebsite[ static::get_resource_id( $ch ) ];
+                    $handler_data = static::batch_handler_response_data( $data, $batch_errno, $batch_err, $batch_status );
+                    call_user_func_array( $handler, array( $handler_data, $site, &$output, $params ) );
                 }
             }
         }
@@ -1956,6 +2349,9 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $fetch_track_id = MainWP_Execution_Helper::execute_call_track( 'start_point', $website, $postdata );
 
         $ch = curl_init();
+        if ( ! static::is_valid_curl_handle( $ch ) ) {
+            static::throw_fetch_url_site_curl_init_failure( $output );
+        }
 
         $proxy = new \WP_HTTP_Proxy();
         if ( $proxy->is_enabled() && $proxy->send_through_proxy( $url ) ) {
@@ -1994,7 +2390,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
         curl_setopt( $ch, CURLOPT_POST, true );
         curl_setopt( $ch, CURLOPT_POSTFIELDS, $postdata );
-        curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, 10 );
+        curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, self::CONNECT_TIMEOUT_SECONDS );
         curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
         curl_setopt( $ch, CURLOPT_ENCODING, 'none' );
 
@@ -2082,17 +2478,8 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $what = $others['function'];
         }
 
-        if ( 'deactivate' === $what ) {
-            $timeout = 120; // 2 minutes.
-        } else {
-            $timeout = 20 * 60 * 60;
-        }
-
         /** This filter is documented in class/class-mainwp-connect.php */
-        $timeout = (int) apply_filters( 'mainwp_fetch_url_site_timeout', $timeout, $what );
-        if ( $timeout <= 0 ) {
-            $timeout = 20 * 60 * 60; // values below 1 would disable the cURL timeout entirely.
-        }
+        $timeout = static::resolve_child_request_timeout( $what );
 
         curl_setopt( $ch, CURLOPT_TIMEOUT, $timeout );
         MainWP_System_Utility::set_time_limit( $timeout );
@@ -2102,6 +2489,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'Executing handlers' );
 
         $disabled_functions = ini_get( 'disable_functions' );
+        $curl_errno         = 0;
         if ( empty( $disabled_functions ) || ( false === stristr( $disabled_functions, 'curl_multi_exec' ) ) ) {
             $mh = @curl_multi_init();
             @curl_multi_add_handle( $mh, $ch );
@@ -2129,6 +2517,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     $http_status = @curl_getinfo( $info['handle'], CURLINFO_HTTP_CODE );
                     $err         = @curl_error( $info['handle'] );
                     $real_url    = @curl_getinfo( $info['handle'], CURLINFO_EFFECTIVE_URL );
+                    $curl_errno  = (int) @curl_errno( $info['handle'] );
 
                     @curl_multi_remove_handle( $mh, $info['handle'] );
                     curl_close( $info['handle'] );
@@ -2144,6 +2533,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $http_status = @curl_getinfo( $ch, CURLINFO_HTTP_CODE );
             $err         = @curl_error( $ch );
             $real_url    = @curl_getinfo( $ch, CURLINFO_EFFECTIVE_URL );
+            $curl_errno  = (int) @curl_errno( $ch );
             curl_close( $ch );
         }
 
@@ -2201,16 +2591,28 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'function: [process_premium_updates] response data: [' . MainWP_Utility::value_to_string( $data ) . ']' );
         }
 
+        $timeout_kind = static::child_request_timeout_kind( $curl_errno, $err, $http_status, $data );
+
         if ( ( false === $data ) && empty( $http_status ) ) {
-            MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url', '[' . $url . '] HTTP Error: [status=0][' . $err . ']' );
-            $thr_error                = new MainWP_Exception( 'HTTPERROR', $err ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-            $output['error_category'] = 'http_error';
+            if ( '' !== $timeout_kind ) {
+                MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url', 'Error: TIMEOUT' );
+                $thr_error = static::new_timeout_exception( $timeout_kind, $output );
+            } else {
+                MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url', '[' . $url . '] HTTP Error: [status=0][' . $err . ']' );
+                $thr_error                = new MainWP_Exception( 'HTTPERROR', $err ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+                $output['error_category'] = 'http_error';
+            }
         } elseif ( empty( $data ) && ! empty( $err ) ) {
-            MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url', '[' . $url . '] HTTP Error: [status=' . $http_status . '][' . $err . ']' );
-            $thr_error                = new MainWP_Exception( 'HTTPERROR', $err ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-            $output['error_category'] = 'http_error';
-            $output['error_code']     = 'http_request_failed';
-            $output['error_message']  = $err;
+            if ( '' !== $timeout_kind ) {
+                MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url', 'Error: TIMEOUT' );
+                $thr_error = static::new_timeout_exception( $timeout_kind, $output );
+            } else {
+                MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url', '[' . $url . '] HTTP Error: [status=' . $http_status . '][' . $err . ']' );
+                $thr_error                = new MainWP_Exception( 'HTTPERROR', $err ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+                $output['error_category'] = 'http_error';
+                $output['error_code']     = 'http_request_failed';
+                $output['error_message']  = $err;
+            }
         } elseif ( 0 < preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) ) {
             $output['connection_step'] = 'verify_credentials';
             $result                    = $results[1];
@@ -2245,26 +2647,37 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
             return $information;
         } elseif ( 200 === (int) $http_status && ! empty( $err ) ) {
-            $thr_error                = new MainWP_Exception( 'HTTPERROR', $err ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-            $output['error_category'] = 'http_error';
-            $output['error_code']     = 'http_request_failed';
-            $output['error_message']  = $err;
-            MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', '[' . $url . '] error [' . $err . ']' ); //phpcs:ignore -- ok.
+            if ( '' !== $timeout_kind ) {
+                MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url', 'Error: TIMEOUT' );
+                $thr_error = static::new_timeout_exception( $timeout_kind, $output );
+            } else {
+                $thr_error                = new MainWP_Exception( 'HTTPERROR', $err ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+                $output['error_category'] = 'http_error';
+                $output['error_code']     = 'http_request_failed';
+                $output['error_message']  = $err;
+                MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', '[' . $url . '] error [' . $err . ']' ); //phpcs:ignore -- ok.
+            }
         } elseif ( $raw_response ) {
             MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'Response: [RAW]' );
             return $data;
         } else {
-            MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url', '[' . $url . '] Error: NOMAINWP [data=' . $hidden_data . ']' );
-            $detect_wsidchk = is_string( $data ) ? strpos( $data, 'wsidchk' ) : false;
-            if ( false !== $detect_wsidchk ) {
-                $err_msg   = 'Connection Failed. We suspect that Imunify360, a security layer added by your host, is causing this problem. Please contact your host to whitelist your Dashboard IP in their system. If you need help determining your MainWP Dashboard site IP address, check with your hosting provider.';
-                $thr_error = new MainWP_Exception( 'ERROR:' . $err_msg, $url );
+            $else_code = static::child_fetch_else_code( $data, $err, $http_status, $curl_errno );
+            if ( 'WSIDCHK' === $else_code ) {
+                MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url', 'Error: wsidchk' );
+                $err_msg                  = 'Connection Failed. We suspect that Imunify360, a security layer added by your host, is causing this problem. Please contact your host to whitelist your Dashboard IP in their system. If you need help determining your MainWP Dashboard site IP address, check with your hosting provider.';
+                $thr_error                = new MainWP_Exception( 'ERROR:' . $err_msg, $url );
+                $output['error_category'] = 'child_plugin_missing';
+                $output['error_message']  = $err_msg;
+            } elseif ( 'TIMEOUT' === $else_code ) {
+                MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url', 'Error: TIMEOUT' );
+                $thr_error = static::new_timeout_exception( $timeout_kind, $output );
             } else {
-                $thr_error = new MainWP_Exception( 'NOMAINWP', $url ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-                $err_msg   = 'Connection Failed. Please ensure that the MainWP Child plugin is installed and activated on the child site.';
+                MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url', '[' . $url . '] Error: NOMAINWP [data=' . $hidden_data . ']' );
+                $thr_error                = new MainWP_Exception( 'NOMAINWP', $url ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+                $err_msg                  = 'Connection Failed. Please ensure that the MainWP Child plugin is installed and activated on the child site.';
+                $output['error_category'] = 'child_plugin_missing';
+                $output['error_message']  = $err_msg;
             }
-            $output['error_category'] = 'child_plugin_missing';
-            $output['error_message']  = $err_msg;
         }
 
         if ( null !== $thr_error ) {

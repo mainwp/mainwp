@@ -296,7 +296,6 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             MainWP_Execution_Helper::execute_call_track( 'end_point', $pWebsite, array(), $stats_track_id, 'stats site' );
             $fetch_output = ( is_array( $information ) && isset( $information['fetch_url_output'] ) && is_array( $information['fetch_url_output'] ) ) ? $information['fetch_url_output'] : array();
             $sync_errors  = MainWP_Error_Helper::get_connect_failure_message( $e, $fetch_output );
-
             MainWP_Logger::instance()->log_execution_time( 'sync :: [siteid=' . $pWebsite->id . ']' );
             return static::sync_information_array( $pWebsite, $information, $sync_errors, false, true, $pAllowDisconnect );
         }

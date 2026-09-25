@@ -1750,7 +1750,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                     ++$destroy_data['processed'];
                     if ( ! is_array( $response ) || empty( $response['success'] ) ) {
                         // The error text comes from the Child; cap and clean it before it is stored and served back.
-                        $child_error = is_array( $response ) && isset( $response['error'] ) && is_string( $response['error'] ) ? sanitize_text_field( mb_substr( $response['error'], 0, 500 ) ) : '';
+                        $child_error = is_array( $response ) && isset( $response['error'] ) && is_string( $response['error'] ) ? static::sanitize_batch_error_message( $response['error'] ) : '';
                         ++$destroy_data['failed'];
                         $destroy_data['errors'][] = array(
                             'site_id' => $website_id,
@@ -1772,7 +1772,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 $error_message            = $e instanceof MainWP_Exception ? MainWP_Error_Helper::get_error_message( $e ) : $e->getMessage();
                 $destroy_data['errors'][] = array(
                     'site_id' => $website_id,
-                    'error'   => sanitize_text_field( mb_substr( $error_message, 0, 500 ) ),
+                    'error'   => static::sanitize_batch_error_message( $error_message ),
                 );
             }
         }
@@ -3953,6 +3953,18 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             return null;
         }
         return $website;
+    }
+
+    /**
+     * Sanitize and cap an error stored in a batch job.
+     *
+     * @param string $message Error message.
+     *
+     * @return string
+     */
+    private static function sanitize_batch_error_message( $message ) {
+        $message = function_exists( 'mb_substr' ) ? mb_substr( $message, 0, 500 ) : substr( $message, 0, 500 );
+        return sanitize_text_field( $message );
     }
 
     /**

@@ -1052,7 +1052,6 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                             $return_results['result_started'][ rawurlencode( $k ) ] = esc_html( $v );
                         }
                     }
-                    return $return_results;
                 }
 
                 if ( isset( $result['upgrades_error'] ) ) {

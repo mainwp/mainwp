@@ -955,11 +955,12 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 	 */
 	public function test_continue_lane_runs_while_last_continued_repair_is_pending() {
 		global $wpdb;
-		$db      = MainWP_DB_Backup::instance();
-		$table   = MainWP_DB::instance()->get_table_name( 'wp_backup' );
-		$pending = get_site_option( MainWP_Install::BACKUP_TASK_LAST_CONTINUED_REPAIR_PENDING );
-		$enabled = get_option( 'mainwp_enableNativeBackups' );
-		$task    = $db->add_backup_task( self::factory()->user->create(), 'Pending repair', 'daily', 'full', '', '', '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0 );
+		$db            = MainWP_DB_Backup::instance();
+		$table         = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		$pending       = get_site_option( MainWP_Install::BACKUP_TASK_LAST_CONTINUED_REPAIR_PENDING );
+		$enabled       = get_option( 'mainwp_enableNativeBackups' );
+		$last_continue = get_option( 'mainwp_cron_last_backups_continue' );
+		$task          = $db->add_backup_task( 1, 'Pending repair', 'daily', 'full', '', '', '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0 );
 		$this->assertNotFalse( $task );
 		$queries = array();
 		$capture = static function ( $sql ) use ( &$queries ) {
@@ -1025,7 +1026,13 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 			} else {
 				update_option( 'mainwp_enableNativeBackups', $enabled );
 			}
+			if ( false === $last_continue ) {
+				delete_option( 'mainwp_cron_last_backups_continue' );
+			} else {
+				update_option( 'mainwp_cron_last_backups_continue', $last_continue );
+			}
 			$db->remove_backup_task( $task->id );
+			self::commit_transaction();
 		}
 	}
 
@@ -1036,13 +1043,24 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 	 */
 	public function test_ensure_last_continued_repairs_missing_column() {
 		global $wpdb;
-		$table = MainWP_DB::instance()->get_table_name( 'wp_backup' );
-		$wpdb->query( "ALTER TABLE {$table} DROP COLUMN last_continued" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture.
-		update_site_option( MainWP_Install::BACKUP_TASK_LAST_CONTINUED_REPAIR_PENDING, time() );
+		$table   = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		$pending = get_site_option( MainWP_Install::BACKUP_TASK_LAST_CONTINUED_REPAIR_PENDING );
+		try {
+			$wpdb->query( "ALTER TABLE {$table} DROP COLUMN last_continued" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture.
+			update_site_option( MainWP_Install::BACKUP_TASK_LAST_CONTINUED_REPAIR_PENDING, time() );
 
-		$this->assertTrue( MainWP_Install::instance()->ensure_backup_task_last_continued() );
-		$this->assertTrue( $this->column_exists( $table, 'last_continued' ) );
-		$this->assertFalse( get_site_option( MainWP_Install::BACKUP_TASK_LAST_CONTINUED_REPAIR_PENDING ) );
+			$this->assertTrue( MainWP_Install::instance()->ensure_backup_task_last_continued() );
+			$this->assertTrue( $this->column_exists( $table, 'last_continued' ) );
+			$this->assertFalse( get_site_option( MainWP_Install::BACKUP_TASK_LAST_CONTINUED_REPAIR_PENDING ) );
+		} finally {
+			MainWP_Install::instance()->ensure_backup_task_last_continued();
+			if ( false === $pending ) {
+				delete_site_option( MainWP_Install::BACKUP_TASK_LAST_CONTINUED_REPAIR_PENDING );
+			} else {
+				update_site_option( MainWP_Install::BACKUP_TASK_LAST_CONTINUED_REPAIR_PENDING, $pending );
+			}
+			self::commit_transaction();
+		}
 	}
 
 	/**
@@ -1052,22 +1070,38 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 	 */
 	public function test_stale_last_continued_marker_repairs_current_install() {
 		global $wpdb;
-		$table = MainWP_DB::instance()->get_table_name( 'wp_backup' );
-		update_site_option( 'mainwp_db_version', '9.0.2.27' );
-		$wpdb->query( "ALTER TABLE {$table} DROP COLUMN last_continued" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture.
-		$marked = time() - 60;
-		update_site_option( MainWP_Install::BACKUP_TASK_LAST_CONTINUED_REPAIR_PENDING, $marked );
+		$table   = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		$pending = get_site_option( MainWP_Install::BACKUP_TASK_LAST_CONTINUED_REPAIR_PENDING );
+		try {
+			update_site_option( 'mainwp_db_version', '9.0.2.27' );
+			$wpdb->query( "ALTER TABLE {$table} DROP COLUMN last_continued" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture.
+			$marked = time() - 60;
+			update_site_option( MainWP_Install::BACKUP_TASK_LAST_CONTINUED_REPAIR_PENDING, $marked );
 
-		MainWP_Install::instance()->install();
+			MainWP_Install::instance()->install();
 
-		$this->assertFalse( $this->column_exists( $table, 'last_continued' ) );
-		$this->assertSame( $marked, (int) get_site_option( MainWP_Install::BACKUP_TASK_LAST_CONTINUED_REPAIR_PENDING ) );
-		update_site_option( MainWP_Install::BACKUP_TASK_LAST_CONTINUED_REPAIR_PENDING, time() - HOUR_IN_SECONDS - 1 );
+			$this->assertFalse( $this->column_exists( $table, 'last_continued' ) );
+			$this->assertSame( $marked, (int) get_site_option( MainWP_Install::BACKUP_TASK_LAST_CONTINUED_REPAIR_PENDING ) );
+			update_site_option( MainWP_Install::BACKUP_TASK_LAST_CONTINUED_REPAIR_PENDING, time() - HOUR_IN_SECONDS - 1 );
 
-		MainWP_Install::instance()->install();
+			MainWP_Install::instance()->install();
 
-		$this->assertTrue( $this->column_exists( $table, 'last_continued' ) );
-		$this->assertFalse( get_site_option( MainWP_Install::BACKUP_TASK_LAST_CONTINUED_REPAIR_PENDING ) );
+			$this->assertTrue( $this->column_exists( $table, 'last_continued' ) );
+			$this->assertFalse( get_site_option( MainWP_Install::BACKUP_TASK_LAST_CONTINUED_REPAIR_PENDING ) );
+		} finally {
+			MainWP_Install::instance()->ensure_backup_task_last_continued();
+			if ( false === $pending ) {
+				delete_site_option( MainWP_Install::BACKUP_TASK_LAST_CONTINUED_REPAIR_PENDING );
+			} else {
+				update_site_option( MainWP_Install::BACKUP_TASK_LAST_CONTINUED_REPAIR_PENDING, $pending );
+			}
+			if ( false === $this->saved_db_version ) {
+				delete_site_option( 'mainwp_db_version' );
+			} else {
+				update_site_option( 'mainwp_db_version', $this->saved_db_version );
+			}
+			self::commit_transaction();
+		}
 	}
 
 	/**
@@ -1077,8 +1111,8 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 	 */
 	public function test_failed_last_continued_alter_marks_pending() {
 		global $wpdb;
-		$table = MainWP_DB::instance()->get_table_name( 'wp_backup' );
-		$wpdb->query( "ALTER TABLE {$table} DROP COLUMN last_continued" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture.
+		$table      = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		$pending    = get_site_option( MainWP_Install::BACKUP_TASK_LAST_CONTINUED_REPAIR_PENDING );
 		$skip_alter = static function ( $sql ) use ( $table ) {
 			return "ALTER TABLE {$table} ADD COLUMN last_continued int(11) NOT NULL DEFAULT 0" === $sql ? 'SELECT mainwp_last_continued_forced_failure' : $sql;
 		};
@@ -1095,22 +1129,31 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		add_action( 'mainwp_before_log_data', $capture );
 		add_filter( 'query', $skip_alter );
 		try {
+			$wpdb->query( "ALTER TABLE {$table} DROP COLUMN last_continued" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture.
 			$this->assertFalse( MainWP_Install::instance()->ensure_backup_task_last_continued() );
 			$this->assertCount( 1, $messages );
 			$this->assertFalse( $this->column_exists( $table, 'last_continued' ) );
 			$this->assertGreaterThanOrEqual( time() - 5, (int) get_site_option( MainWP_Install::BACKUP_TASK_LAST_CONTINUED_REPAIR_PENDING ) );
+			remove_filter( 'query', $skip_alter );
+			$this->assertTrue( MainWP_Install::instance()->ensure_backup_task_last_continued() );
+			$this->assertFalse( get_site_option( MainWP_Install::BACKUP_TASK_LAST_CONTINUED_REPAIR_PENDING ) );
 		} finally {
 			remove_filter( 'query', $skip_alter );
 			remove_action( 'mainwp_before_log_data', $capture );
 			remove_filter( 'mainwp_log_do_to_db', '__return_true' );
 			$priority->setValue( $logger, $previous );
+			MainWP_Install::instance()->ensure_backup_task_last_continued();
 			foreach ( $messages as $message ) {
 				$wpdb->delete( MainWP_DB::instance()->get_table_name( 'action_log' ), array( 'log_content' => $message ) ); // phpcs:ignore WordPress.DB -- test cleanup.
 				$wpdb->delete( MainWP_DB::instance()->get_table_name( 'action_log' ), array( 'log_content' => 'CRON :: ' . $message ) ); // phpcs:ignore WordPress.DB -- test cleanup.
 			}
+			if ( false === $pending ) {
+				delete_site_option( MainWP_Install::BACKUP_TASK_LAST_CONTINUED_REPAIR_PENDING );
+			} else {
+				update_site_option( MainWP_Install::BACKUP_TASK_LAST_CONTINUED_REPAIR_PENDING, $pending );
+			}
+			self::commit_transaction();
 		}
-		$this->assertTrue( MainWP_Install::instance()->ensure_backup_task_last_continued() );
-		$this->assertFalse( get_site_option( MainWP_Install::BACKUP_TASK_LAST_CONTINUED_REPAIR_PENDING ) );
 	}
 
 	/**

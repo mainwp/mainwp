@@ -2764,7 +2764,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         }
 
         if ( isset( $request['client_id'] ) ) {
-            $data['client_id'] = isset( $request['client_id'] ) && ! empty( $request['client_id'] ) ? intval( $request['client_id'] ) : 0;
+            $data['client_id'] = ! empty( $request['client_id'] ) ? intval( $request['client_id'] ) : 0;
         }
 
         /**

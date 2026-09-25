@@ -141,6 +141,47 @@ class MainWP_Backup_Environment_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Scheduled backups for unknown sites must not create private directories.
+	 *
+	 * @return void
+	 */
+	public function test_backup_site_unknown_site_does_not_create_private_directory() {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$this->assertEmpty( \MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( 987654 ) );
+		$task    = (object) array(
+			'userid'        => get_current_user_id(),
+			'type'          => 'full',
+			'exclude'       => '',
+			'id'            => 1,
+			'excludebackup' => false,
+			'excludecache'  => false,
+			'excludenonwp'  => false,
+			'excludezip'    => false,
+			'filename'      => '',
+		);
+		$enabled = get_option( 'mainwp_enableNativeBackups' );
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		try {
+			$caught = null;
+			try {
+				MainWP_Backup_Executor::backup_site( 987654, $task, '' );
+			} catch ( MainWP_Exception $e ) {
+				$caught = $e;
+			}
+			$this->assertInstanceOf( MainWP_Exception::class, $caught );
+			$this->assertSame( 'Site not found.', $caught->getMessage() );
+			$this->assertDirectoryDoesNotExist( $this->private_root . '/sites/987654' );
+			$this->assertDirectoryDoesNotExist( $this->private_root );
+		} finally {
+			if ( false === $enabled ) {
+				delete_option( 'mainwp_enableNativeBackups' );
+			} else {
+				update_option( 'mainwp_enableNativeBackups', $enabled );
+			}
+		}
+	}
+
+	/**
 	 * The resource limit helper registers the elevated memory filter.
 	 *
 	 * @return void

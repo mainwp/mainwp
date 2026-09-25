@@ -67,7 +67,7 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 			}
 		);
 		$root = MainWP_Backup_Private_Root::resolve();
-		$this->assertSame( dirname( rtrim( ABSPATH, '/\\' ) ) . '/mainwp-private/backups', $seen );
+		$this->assertSame( dirname( rtrim( ABSPATH, '/\\' ) ) . '/mainwp-private/' . basename( rtrim( ABSPATH, '/\\' ) ) . '/backups', $seen );
 		$this->assertSame( $this->private_root . '/', $root );
 		$this->assertDirectoryDoesNotExist( $root );
 		$default = $seen;
@@ -366,37 +366,50 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function test_root_selection_matrix() {
 		$rows = array(
-			'default accepted'              => array( 'default', null, true ),
-			'constant wins over default'    => array( 'constant', null, true ),
-			'filter wins over constant'     => array( 'filter', null, true ),
-			'inside ABSPATH refused'        => array( 'path', ABSPATH . 'private-test', false ),
-			'inside WP_CONTENT_DIR refused' => array( 'path', WP_CONTENT_DIR . '/private-test', false ),
-			'symlink refused'               => array( 'symlink', $this->private_root . '/link', false ),
-			'unwritable refused'            => array( 'unwritable', $this->private_root . '/readonly', false ),
-			'relative refused'              => array( 'path', 'relative/backups', false ),
-			"'..' refused"                  => array( 'path', $this->private_root . '/../backups', false ),
+			'sibling installs resolve to different roots' => array( 'siblings', null, true ),
+			'default accepted'                            => array( 'default', null, true ),
+			'constant wins over default'                  => array( 'constant', null, true ),
+			'filter wins over constant'                   => array( 'filter', null, true ),
+			'inside ABSPATH refused'                      => array( 'path', ABSPATH . 'private-test', false ),
+			'inside WP_CONTENT_DIR refused'               => array( 'path', WP_CONTENT_DIR . '/private-test', false ),
+			'symlink refused'                             => array( 'symlink', $this->private_root . '/link', false ),
+			'unwritable refused'                          => array( 'unwritable', $this->private_root . '/readonly', false ),
+			'relative refused'                            => array( 'path', 'relative/backups', false ),
+			"'..' refused"                                => array( 'path', $this->private_root . '/../backups', false ),
 		);
 		mkdir( $this->private_root );
 		symlink( $this->private_root, $this->private_root . '/link' );
 		mkdir( $this->private_root . '/readonly', 0500 );
 		foreach ( $rows as $label => $row ) {
 			list( $selection, $path, $accepted ) = $row;
-			if ( in_array( $selection, array( 'default', 'constant', 'filter' ), true ) ) {
+			if ( in_array( $selection, array( 'default', 'constant', 'filter', 'siblings' ), true ) ) {
 				// Constants need separate processes; none of these resolutions writes to disk.
-				$source   = dirname( __DIR__, 2 ) . '/class/backup/class-mainwp-backup-private-root.php';
-				$script   = 'define("ABSPATH", "/public/wp/"); define("WP_CONTENT_DIR", "/public/content");'
-					. ( 'default' === $selection ? '' : 'define("MAINWP_BACKUP_PRIVATE_DIR", "/constant/backups");' )
-					. 'function wp_normalize_path($p) { return $p; } function untrailingslashit($p) { return rtrim($p, "/"); }'
-					. 'function trailingslashit($p) { return rtrim($p, "/") . "/"; } function path_is_absolute($p) { return $p[0] === "/"; }'
-					. 'function apply_filters($tag, $value) { return ' . ( 'filter' === $selection ? '"/filtered/backups"' : '$value' ) . '; }'
-					. 'function __($value, $domain) { return $value; } class WP_Error {}'
-					. 'require ' . var_export( $source, true ) . '; echo MainWP\\Dashboard\\MainWP_Backup_Private_Root::resolve();'; // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_var_export -- Quote the source path for the isolated constant test.
+				$resolve = static function ( string $abspath ) use ( $selection ) {
+					$source = dirname( __DIR__, 2 ) . '/class/backup/class-mainwp-backup-private-root.php';
+					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_var_export -- wp_json_encode() escapes slashes, which a PHP string literal keeps.
+					$script = 'define("ABSPATH", ' . var_export( $abspath, true ) . '); define("WP_CONTENT_DIR", "/public/content");'
+						. ( in_array( $selection, array( 'default', 'siblings' ), true ) ? '' : 'define("MAINWP_BACKUP_PRIVATE_DIR", "/constant/backups");' )
+						. 'function wp_normalize_path($p) { return $p; } function untrailingslashit($p) { return rtrim($p, "/"); }'
+						. 'function trailingslashit($p) { return rtrim($p, "/") . "/"; } function path_is_absolute($p) { return $p[0] === "/"; }'
+						. 'function apply_filters($tag, $value) { return ' . ( 'filter' === $selection ? '"/filtered/backups"' : '$value' ) . '; }'
+						. 'function __($value, $domain) { return $value; } class WP_Error {}'
+						. 'require ' . var_export( $source, true ) . '; echo MainWP\\Dashboard\\MainWP_Backup_Private_Root::resolve();'; // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_var_export -- Quote the source path for the isolated constant test.
+					return shell_exec( escapeshellarg( PHP_BINARY ) . ' -r ' . escapeshellarg( $script ) );
+				};
+				if ( 'siblings' === $selection ) {
+					$first  = $resolve( '/sites/a/' );
+					$second = $resolve( '/sites/b/' );
+					$this->assertSame( '/sites/mainwp-private/a/backups/', $first, $label );
+					$this->assertSame( '/sites/mainwp-private/b/backups/', $second, $label );
+					$this->assertNotSame( $first, $second, $label );
+					continue;
+				}
 				$expected = array(
-					'default'  => '/public/mainwp-private/backups/',
+					'default'  => '/public/mainwp-private/wp/backups/',
 					'constant' => '/constant/backups/',
 					'filter'   => '/filtered/backups/',
 				);
-				$this->assertSame( $expected[ $selection ], shell_exec( escapeshellarg( PHP_BINARY ) . ' -r ' . escapeshellarg( $script ) ), $label );
+				$this->assertSame( $expected[ $selection ], $resolve( '/public/wp/' ), $label );
 				continue;
 			}
 			$filter = static function () use ( $path ) {

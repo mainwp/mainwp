@@ -31,7 +31,8 @@ class MainWP_Backup_Private_Root {
     /**
      * Resolve the configured private root without creating it.
      *
-     * Changing MAINWP_BACKUP_PRIVATE_DIR after backups exist means moving the sites/ folder to the new root, or the older snapshots leave retention and the Backups tab; restore still works from the recorded paths.
+     * The default is mainwp-private/<WordPress directory name>/backups beside WordPress, so Dashboards installed side by side never share a root (retention would delete each other's snapshots).
+     * Changing MAINWP_BACKUP_PRIVATE_DIR, or renaming the WordPress directory, after backups exist means moving the sites/ folder to the new root, or the older snapshots leave retention and the Backups tab; restore still works from the recorded paths.
      *
      * @return string|\WP_Error
      */
@@ -39,7 +40,7 @@ class MainWP_Backup_Private_Root {
         if ( null !== self::$root ) {
             return self::$root;
         }
-        $default    = defined( 'MAINWP_BACKUP_PRIVATE_DIR' ) ? MAINWP_BACKUP_PRIVATE_DIR : dirname( rtrim( ABSPATH, '/\\' ) ) . '/mainwp-private/backups';
+        $default    = defined( 'MAINWP_BACKUP_PRIVATE_DIR' ) ? MAINWP_BACKUP_PRIVATE_DIR : dirname( rtrim( ABSPATH, '/\\' ) ) . '/mainwp-private/' . basename( rtrim( ABSPATH, '/\\' ) ) . '/backups';
         $candidate  = apply_filters( 'mainwp_backup_private_root', $default );
         $reason     = self::refusal_reason( $candidate );
         self::$root = '' === $reason ? trailingslashit( self::canonical_path( wp_normalize_path( $candidate ) ) ) : self::unavailable( is_string( $candidate ) ? str_replace( "\0", '[NUL]', $candidate ) : '(' . gettype( $candidate ) . ')', $reason );

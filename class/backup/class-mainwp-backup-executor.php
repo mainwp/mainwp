@@ -174,9 +174,6 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_LEGACY_DISABLED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         }
 
-        self::private_site_dir( (int) $siteid );
-        MainWP_Backup_Monitor::validate_backup_environment();
-
         $userid        = $pTask->userid;
         $type          = $pTask->type;
         $exclude       = MainWP_Backup_Settings::sanitize_exclude_list( $pTask->exclude );
@@ -198,6 +195,9 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         if ( empty( $website ) ) {
             throw new MainWP_Exception( esc_html__( 'Site not found.', 'mainwp' ) );
         }
+
+        self::private_site_dir( (int) $siteid );
+        MainWP_Backup_Monitor::validate_backup_environment();
 
         $subfolder = str_replace( '%sitename%', MainWP_Utility::sanitize( $website->name ), $subfolder );
         $subfolder = str_replace( '%url%', MainWP_Utility::sanitize( MainWP_Utility::get_nice_url( $website->url ) ), $subfolder );
@@ -2400,13 +2400,13 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             throw new MainWP_Exception( esc_html__( 'Incremental backups run from a scheduled backup task. Create a backup task with the incremental type instead.', 'mainwp' ) );
         }
 
-        self::private_site_dir( $site_id );
-        MainWP_Backup_Monitor::validate_backup_environment();
-
         $website = MainWP_DB::instance()->get_website_by_id( $site_id );
         if ( empty( $website ) ) {
             throw new MainWP_Exception( esc_html__( 'Site not found.', 'mainwp' ) );
         }
+
+        self::private_site_dir( $site_id );
+        MainWP_Backup_Monitor::validate_backup_environment();
 
         $archive_ext = MainWP_Backup_Settings::get_current_archive_extension( $website );
         MainWP_Backup_Monitor::negotiate_backup_preflight( $website, $archive_ext );

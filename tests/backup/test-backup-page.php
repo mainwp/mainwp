@@ -115,18 +115,14 @@ class MainWP_Backup_Page_Test extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * The environment notices warn when the private backup directory is not writable.
+	 * Environment notices do not probe a read-only private backup directory.
 	 *
 	 * @return void
 	 */
-	public function test_environment_notices_warn_for_non_writable_dir() {
-		if ( 0 === (int) getmyuid() ) {
-			$this->markTestSkipped( 'Permission checks do not apply when running as root.' );
-		}
-
+	public function test_environment_notices_do_not_probe_non_writable_dir() {
 		$this->private_dir = trailingslashit( get_temp_dir() ) . 'mainwp-page-ro-' . wp_generate_password( 8, false );
 		wp_mkdir_p( $this->private_dir );
-		chmod( $this->private_dir, 0555 ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+		chmod( $this->private_dir, 0500 ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
 		$private_dir       = $this->private_dir;
 		$this->root_filter = static function () use ( $private_dir ) {
 			return $private_dir;
@@ -138,7 +134,8 @@ class MainWP_Backup_Page_Test extends \WP_UnitTestCase {
 		MainWP_Backup_Page::render_backup_environment_notices();
 		$output = ob_get_clean();
 
-		$this->assertStringContainsString( 'write probe', $output );
-		$this->assertStringContainsString( 'ui yellow message', $output );
+		$this->assertStringNotContainsString( 'Private backup directory', $output );
+		$this->assertSame( 0500, fileperms( $this->private_dir ) & 0777 );
+		$this->assertSame( array( '.', '..' ), scandir( $this->private_dir ) );
 	}
 }

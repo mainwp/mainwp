@@ -93,8 +93,7 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         $token          = strtolower( preg_replace( '/[^a-z0-9]/i', '', wp_generate_password( 16, false ) ) );
         $token          = '' === $token ? 'x' . substr( (string) md5( uniqid( '', true ) ), 0, 12 ) : substr( $token, 0, 16 );
         $this->db_name  = 'mainwp_tr_' . $token;
-        $root           = MainWP_Backup_Private_Root::resolve();
-        $this->temp_dir = is_wp_error( $root ) ? $root : $root . 'test-restore/' . $token . '/';
+        $this->temp_dir = MainWP_Backup_Private_Root::staging_path( 'test-restore', $token );
     }
 
     /**

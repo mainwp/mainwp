@@ -238,7 +238,7 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
      */
     private function purge_orphaned_snapshot_dirs( int $site_id, int $min_age, array &$result ): void {
         $dirs = array();
-        foreach ( array( MainWP_Backup_Private_Root::site_dir( $site_id ), MainWP_Backup_Private_Root::legacy_site_dir( $site_id ) ) as $root ) {
+        foreach ( array( MainWP_Backup_Private_Root::site_path( $site_id ), MainWP_Backup_Private_Root::legacy_site_dir( $site_id ) ) as $root ) {
             if ( ! is_wp_error( $root ) ) {
                 $dirs = array_merge( $dirs, glob( $root . 'snapshot-*', GLOB_ONLYDIR ) ?: array() ); // phpcs:ignore Universal.Operators.DisallowShortTernary.Found -- empty-glob guard.
             }

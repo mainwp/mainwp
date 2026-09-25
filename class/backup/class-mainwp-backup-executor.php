@@ -843,8 +843,8 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     }
                 }
 
-                foreach ( array( $dir, MainWP_Backup_Private_Root::legacy_site_dir( (int) $website->id ) ) as $sweep_dir ) {
-                    if ( $wp_filesystem->exists( $sweep_dir ) ) {
+                foreach ( array( MainWP_Backup_Private_Root::site_path( (int) $website->id ), MainWP_Backup_Private_Root::legacy_site_dir( (int) $website->id ) ) as $sweep_dir ) {
+                    if ( ! is_wp_error( $sweep_dir ) && $wp_filesystem->exists( $sweep_dir ) ) {
                         $dh = opendir( $sweep_dir );
                         if ( $dh ) {
                             while ( false !== ( $file = readdir( $dh ) ) ) {

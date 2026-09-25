@@ -29,7 +29,9 @@ class MainWP_Backup_Private_Root {
     }
 
     /**
-     * Resolve and verify the private root without an uploads fallback.
+     * Resolve the configured private root without creating it.
+     *
+     * Changing MAINWP_BACKUP_PRIVATE_DIR after backups exist means moving the sites/ folder to the new root, or the older snapshots leave retention and the Backups tab; restore still works from the recorded paths.
      *
      * @return string|\WP_Error
      */
@@ -37,20 +39,10 @@ class MainWP_Backup_Private_Root {
         if ( null !== self::$root ) {
             return self::$root;
         }
-        $explicit = defined( 'MAINWP_BACKUP_PRIVATE_DIR' );
-        if ( $explicit ) {
-            $default = MAINWP_BACKUP_PRIVATE_DIR;
-        } else {
-            $suffix = self::install_suffix();
-            if ( is_wp_error( $suffix ) ) {
-                self::$root = $suffix;
-                return self::$root;
-            }
-            $default = dirname( rtrim( ABSPATH, '/\\' ) ) . '/mainwp-private-' . $suffix . '/backups';
-        }
+        $default    = defined( 'MAINWP_BACKUP_PRIVATE_DIR' ) ? MAINWP_BACKUP_PRIVATE_DIR : dirname( rtrim( ABSPATH, '/\\' ) ) . '/mainwp-private/backups';
         $candidate  = apply_filters( 'mainwp_backup_private_root', $default );
-        $is_default = ! $explicit && is_string( $candidate ) && untrailingslashit( wp_normalize_path( $candidate ) ) === untrailingslashit( wp_normalize_path( $default ) );
-        self::$root = self::ensure_private_dir( $candidate, null, true, $is_default );
+        $reason     = self::refusal_reason( $candidate );
+        self::$root = '' === $reason ? trailingslashit( self::canonical_path( wp_normalize_path( $candidate ) ) ) : self::unavailable( is_string( $candidate ) ? str_replace( "\0", '[NUL]', $candidate ) : '(' . gettype( $candidate ) . ')', $reason );
         return self::$root;
     }
 
@@ -89,6 +81,21 @@ class MainWP_Backup_Private_Root {
      * @return string|\WP_Error
      */
     public static function staging_dir( string $kind, string $name ): string|\WP_Error {
+        $path = self::staging_path( $kind, $name );
+        if ( is_wp_error( $path ) ) {
+            return $path;
+        }
+        return self::child_dir( $kind, basename( $path ) );
+    }
+
+    /**
+     * Read a staging location without creating it; cleanup and lookups must not create the root.
+     *
+     * @param string $kind Staging kind.
+     * @param string $name Job name.
+     * @return string|\WP_Error
+     */
+    public static function staging_path( string $kind, string $name ): string|\WP_Error {
         if ( ! in_array( $kind, array( 'restore-staging', 'upload-staging', 'test-restore' ), true )
             || false !== strpos( $name, '..' ) || false !== strpos( $name, '/' ) || false !== strpos( $name, '\\' ) || false !== strpos( $name, "\0" ) ) {
             return self::unavailable( $kind . '/' . $name, 'invalid staging name or kind' );
@@ -97,7 +104,8 @@ class MainWP_Backup_Private_Root {
         if ( '' === $name || false !== strpos( $name, '..' ) || false !== strpos( $name, '/' ) || false !== strpos( $name, '\\' ) ) {
             return self::unavailable( $kind . '/' . $name, 'invalid staging name' );
         }
-        return self::child_dir( $kind, $name );
+        $root = self::resolve();
+        return is_wp_error( $root ) ? $root : $root . $kind . '/' . $name . '/';
     }
 
     /**
@@ -139,68 +147,12 @@ class MainWP_Backup_Private_Root {
     }
 
     /**
-     * Read the winning insert directly; a cached option miss is not authoritative.
+     * Refuse invalid paths and paths inside WordPress or its content directory.
      *
-     * @return string|\WP_Error
-     */
-    private static function install_suffix(): string|\WP_Error {
-        global $wpdb;
-        // Once stored, the cached value is final; only the first requests need the uncached path.
-        $stored = get_option( 'mainwp_backup_private_suffix', '' );
-        if ( is_string( $stored ) && preg_match( '/^[a-z0-9]{16}$/D', $stored ) ) {
-            return $stored;
-        }
-        // phpcs:disable WordPress.DB.DirectDatabaseQuery -- The insert and read must bypass the option cache during concurrent first requests.
-        $wpdb->query( $wpdb->prepare( "INSERT IGNORE INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')", 'mainwp_backup_private_suffix', strtolower( wp_generate_password( 16, false ) ) ) );
-        $suffix = $wpdb->get_var( $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", 'mainwp_backup_private_suffix' ) );
-        // phpcs:enable WordPress.DB.DirectDatabaseQuery
-        wp_cache_delete( 'notoptions', 'options' );
-        wp_cache_delete( 'alloptions', 'options' );
-        wp_cache_delete( 'mainwp_backup_private_suffix', 'options' );
-        return is_string( $suffix ) && preg_match( '/^[a-z0-9]{16}$/D', $suffix ) ? $suffix : self::unavailable( 'mainwp_backup_private_suffix', 'a valid installation suffix could not be stored' );
-    }
-
-    /**
-     * Derive served trees from filesystem and URL configuration, without request history.
-     *
-     * @param array $pairs Filesystem directory and public URL pairs.
-     * @param mixed $document_root Current request document root.
-     * @return array
-     */
-    private static function served_boundaries( array $pairs, $document_root ): array {
-        $boundaries  = array();
-        $underivable = false;
-        foreach ( $pairs as $pair ) {
-            list( $dir, $url ) = $pair;
-            $dir               = untrailingslashit( wp_normalize_path( $dir ) );
-            $boundaries[]      = $dir;
-            $path              = trim( (string) wp_parse_url( $url, PHP_URL_PATH ), '/' );
-            if ( '' === $path ) {
-                $boundaries[] = $dir;
-            } elseif ( str_ends_with( $dir, '/' . $path ) ) {
-                $boundaries[] = substr( $dir, 0, -strlen( '/' . $path ) );
-            } else {
-                $underivable = true;
-            }
-        }
-        if ( is_string( $document_root ) && '' !== trim( $document_root ) && false === strpos( $document_root, "\0" ) ) {
-            $real         = realpath( $document_root );
-            $boundaries[] = false === $real ? $document_root : $real;
-        }
-        return array( $boundaries, $underivable );
-    }
-
-    /**
-     * Require disjoint served and private trees before any filesystem writes.
-     *
-     * @param mixed  $candidate Selected directory.
-     * @param array  $boundaries Served directories.
-     * @param bool   $is_default Whether the install default was selected unchanged.
-     * @param bool   $underivable Whether any configured URL has no matching filesystem suffix.
-     * @param string $wordpress_dir WordPress installation directory.
+     * @param mixed $candidate Selected directory.
      * @return string Empty when accepted.
      */
-    private static function refusal_reason( $candidate, array $boundaries, bool $is_default, bool $underivable, string $wordpress_dir = ABSPATH ): string {
+    private static function refusal_reason( $candidate ): string {
         if ( ! is_string( $candidate ) || '' === trim( $candidate ) || false !== strpos( $candidate, "\0" ) ) {
             return 'expected a non-empty path without NUL bytes';
         }
@@ -214,36 +166,14 @@ class MainWP_Backup_Private_Root {
         if ( is_link( $candidate ) ) {
             return 'directory is a symlink';
         }
-        if ( $is_default && $underivable ) {
-            return "the site's web root could not be determined; set MAINWP_BACKUP_PRIVATE_DIR";
-        }
-        foreach ( $boundaries as $boundary ) {
+        foreach ( array( ABSPATH, WP_CONTENT_DIR ) as $boundary ) {
             $boundary = untrailingslashit( wp_normalize_path( $boundary ) );
-            if ( '' === $boundary || preg_match( '/^[a-z]:$/i', $boundary ) ) {
-                continue;
-            }
             foreach ( array( $boundary, self::canonical_path( $boundary ) ) as $served ) {
-                if ( '' === $served || '/' === $served || preg_match( '/^[a-z]:$/i', $served ) ) {
-                    continue;
-                }
                 foreach ( array( $candidate, self::canonical_path( $candidate ) ) as $private ) {
-                    if ( $private === $served || str_starts_with( $private, $served . '/' ) || str_starts_with( $served, $private . '/' ) ) {
-                        return 'directory overlaps a served directory';
+                    if ( $private === $served || str_starts_with( $private, $served . '/' ) ) {
+                        return 'directory is inside WordPress or its content directory';
                     }
                 }
-            }
-        }
-        if ( $is_default ) {
-            $parent = dirname( untrailingslashit( wp_normalize_path( $wordpress_dir ) ) );
-            $public = in_array( strtolower( basename( $parent ) ), array( 'public_html', 'htdocs', 'httpdocs', 'www_root', 'wwwroot', 'webroot', 'public', 'web', 'html' ), true );
-            foreach ( array( 'index.php', 'index.html', 'index.htm', '.htaccess', 'wp-config.php', 'wp-load.php' ) as $marker ) {
-                if ( is_file( $parent . '/' . $marker ) ) {
-                    $public = true;
-                    break;
-                }
-            }
-            if ( $public ) {
-                return 'the directory above WordPress looks publicly served; set MAINWP_BACKUP_PRIVATE_DIR';
             }
         }
         return '';
@@ -261,6 +191,10 @@ class MainWP_Backup_Private_Root {
         if ( is_wp_error( $root ) ) {
             return $root;
         }
+        $root = self::ensure_private_dir( $root );
+        if ( is_wp_error( $root ) ) {
+            return $root;
+        }
         $parent = self::ensure_private_dir( $root . $kind, $root );
         if ( is_wp_error( $parent ) ) {
             return $parent;
@@ -274,19 +208,11 @@ class MainWP_Backup_Private_Root {
      * @param mixed       $dir Directory.
      * @param string|null $required_parent Required parent.
      * @param bool        $protect Add defense-in-depth files to shared parents.
-     * @param bool        $is_default Whether the install default was selected unchanged.
      * @return string|\WP_Error
      */
-    private static function ensure_private_dir( $dir, ?string $required_parent = null, bool $protect = true, bool $is_default = false ): string|\WP_Error {
+    private static function ensure_private_dir( $dir, ?string $required_parent = null, bool $protect = true ): string|\WP_Error {
         // phpcs:disable WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors.Discouraged -- Local filesystem probes must report failure without emitting warnings.
-        $upload = wp_upload_dir( null, false );
-        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- This value only adds a refusal boundary.
-        $document_root                    = $_SERVER['DOCUMENT_ROOT'] ?? '';
-        list( $boundaries, $underivable ) = self::served_boundaries(
-            array( array( ABSPATH, site_url() ), array( WP_CONTENT_DIR, content_url() ), array( $upload['basedir'], $upload['baseurl'] ) ),
-            $document_root
-        );
-        $reason                           = self::refusal_reason( $dir, $boundaries, $is_default, $underivable );
+        $reason = self::refusal_reason( $dir );
         if ( '' !== $reason ) {
             return self::unavailable( is_string( $dir ) ? str_replace( "\0", '[NUL]', $dir ) : '(' . gettype( $dir ) . ')', $reason );
         }
@@ -368,7 +294,7 @@ class MainWP_Backup_Private_Root {
             'mainwp_backup_private_root_unavailable',
             sprintf(
                 /* translators: 1: Directory path, 2: Failure reason. */
-                __( 'Private backup directory "%1$s" is unavailable: %2$s. Configure MAINWP_BACKUP_PRIVATE_DIR outside ABSPATH and WP_CONTENT_DIR with write access.', 'mainwp' ),
+                __( 'Private backup directory "%1$s" is unavailable: %2$s. Configure MAINWP_BACKUP_PRIVATE_DIR outside ABSPATH and WP_CONTENT_DIR with write access. On an addon domain, or when the Dashboard is served from a folder inside another site, set MAINWP_BACKUP_PRIVATE_DIR to a directory no web server serves.', 'mainwp' ),
                 $path,
                 $reason
             )

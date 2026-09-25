@@ -12,9 +12,7 @@ namespace MainWP\Dashboard\Tests;
 
 require_once __DIR__ . '/trait-backup-private-root-fixture.php';
 
-use MainWP\Dashboard\MainWP_Backup_Error_Codes;
 use MainWP\Dashboard\MainWP_Backup_Monitor;
-use MainWP\Dashboard\MainWP_Exception;
 use MainWP\Dashboard\MainWP_Backup_Page;
 use MainWP\Dashboard\MainWP_Post_Backup_Handler;
 use MainWP\Dashboard\MainWP_Backup_Private_Root;
@@ -57,24 +55,16 @@ class MainWP_Backup_Environment_Test extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * A non-writable backup directory is a hard failure before any child
-	 * site communication.
+	 * Advisory environment reads do not probe or change a read-only root.
 	 *
 	 * @return void
 	 */
-	public function test_non_writable_backup_dir_throws() {
-		if ( 0 === (int) getmyuid() ) {
-			$this->markTestSkipped( 'Permission checks do not apply when running as root.' );
-		}
-
-		mkdir( $this->private_root, 0555 ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
-
-		try {
-			MainWP_Backup_Monitor::validate_backup_environment();
-			$this->fail( 'Expected exception for a non-writable backup directory.' );
-		} catch ( MainWP_Exception $e ) {
-			$this->assertSame( MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE, $e->get_message_error_code() );
-		}
+	public function test_non_writable_backup_dir_remains_readable() {
+		mkdir( $this->private_root, 0500 );
+		MainWP_Backup_Monitor::validate_backup_environment();
+		$this->assertSame( $this->private_root . '/', MainWP_Backup_Private_Root::resolve() );
+		$this->assertSame( 0500, fileperms( $this->private_root ) & 0777 );
+		$this->assertSame( array( '.', '..' ), scandir( $this->private_root ) );
 	}
 
 	/**

@@ -102,7 +102,13 @@ class MainWP_Backup_Private_Download_Test extends MainWP_Abilities_Test_Case {
 			'mwpdl' => 'sites/' . $site_id . '/full-test.tar.gz',
 			'sig'   => MainWP_System_Utility::get_download_sig( $file ),
 		);
-		$this->assertSame( 'private archive bytes', $this->request_download( $query ) );
+		chmod( $this->private_root, 0500 );
+		MainWP_Backup_Private_Root::reset();
+		try {
+			$this->assertSame( 'private archive bytes', $this->request_download( $query ) );
+		} finally {
+			chmod( $this->private_root, 0700 );
+		}
 		$this->assertNull( $this->request_download( array_merge( $query, array( 'sig' => 'invalid' ) ) ) );
 		$this->assertNull( $this->request_download( array_merge( $query, array( 'mwpdl' => 'sites/' . $site_id . '/../' . $site_id . '/full-test.tar.gz' ) ) ) );
 		$outside = wp_tempnam( 'outside-backup' );
@@ -179,9 +185,6 @@ class MainWP_Backup_Private_Download_Test extends MainWP_Abilities_Test_Case {
 			$other_id = $this->create_test_site( array( 'userid' => $user ) );
 			$file     = $this->private_root . '/sites/' . ( 'existing-other' === $shape ? $other_id : $site_id ) . '/full.zip';
 			$sig      = 'unused';
-			if ( '' === $role ) {
-				delete_option( 'mainwp_backup_private_suffix' );
-			}
 			if ( '' !== $role ) {
 				wp_mkdir_p( dirname( $file ) );
 				file_put_contents( $file, 'archive' );
@@ -230,7 +233,6 @@ class MainWP_Backup_Private_Download_Test extends MainWP_Abilities_Test_Case {
 				$this->assertSame( $expected_calls, $calls, $label );
 				if ( '' === $role ) {
 					$this->assertDirectoryDoesNotExist( $this->private_root );
-					$this->assertFalse( get_option( 'mainwp_backup_private_suffix' ) );
 				}
 			} finally {
 				remove_filter( 'mainwp_backup_private_root', $count, 99 );

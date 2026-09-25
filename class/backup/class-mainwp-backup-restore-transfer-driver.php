@@ -1525,7 +1525,7 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
     public function cleanup_staging( int $job_id ): void {
         $upload = apply_filters( 'mainwp_get_wp_upload_dir', wp_upload_dir( null, false ), null, false );
         $legacy = trailingslashit( $upload['basedir'] ) . 'mainwp/restore-staging/' . $job_id . '/';
-        foreach ( array( $this->staging_dir( $job_id ), $legacy ) as $dir ) {
+        foreach ( array( MainWP_Backup_Private_Root::staging_path( 'restore-staging', (string) $job_id ), $legacy ) as $dir ) {
             if ( is_wp_error( $dir ) || ! is_dir( $dir ) || is_link( untrailingslashit( $dir ) ) || is_link( dirname( untrailingslashit( $dir ) ) ) || is_link( dirname( untrailingslashit( $dir ), 2 ) ) ) {
                 continue;
             }

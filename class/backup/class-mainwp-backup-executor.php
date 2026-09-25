@@ -489,6 +489,21 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     return false;
                 }
 
+                // Tasks sharing a site interleave on the continue lane, so
+                // the Child's one-task slot can be held by a sibling run that
+                // will finish; that refusal is a delay, never a foreign
+                // blocker, so the persistence clock must not run for it.
+                if ( 0 < MainWP_DB_Backup::instance()->get_sibling_site_holder( (int) $website->id, (int) $taskId ) ) {
+                    if ( $current && ! empty( $current->foreign_refused_since ) ) {
+                        MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'foreign_refused_since' => 0 ) );
+                    }
+                    self::reset_create_window_if_mine( $taskId, (int) $website->id, $creating_marker );
+                    MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Child refused the backup start because another task of this Dashboard holds the site; waiting for it to finish.' );
+                    /** This action is documented in pages/page-mainwp-manage-backups-handler.php */
+                    do_action( 'mainwp_backup_diag_run_reinit', (int) $taskId, 'sibling_holds_site_yield', (int) $pTask->last_run, isset( $pTask->completed ) ? (int) $pTask->completed : 0 );
+                    return false;
+                }
+
                 $refused_since = ( $current && (int) $current->foreign_refused_since >= (int) $pTask->last_run )
                     ? (int) $current->foreign_refused_since
                     : 0;
@@ -859,6 +874,11 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                                     if ( isset( $protected[ MainWP_Backup_Snapshots::normalise_path( $theFile ) ] ) ) {
                                         continue;
                                     }
+                                    // Stale locks were cleared above, so a sidecar still here is a live
+                                    // download that may have started after the protection snapshot.
+                                    if ( file_exists( $theFile . '.downloading' ) ) {
+                                        continue;
+                                    }
                                     if ( $information['db'] && MainWP_Backup_File_Manager::is_sql_file( $file ) ) {
                                         $dbBackups[ filemtime( $theFile ) . $theFile ] = $theFile;
                                     }
@@ -875,10 +895,19 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 krsort( $dbBackups );
                 krsort( $fullBackups );
 
+                // Another lane worker can record a download path while the scan runs, so
+                // re-read right before deleting; only microseconds remain until unlink.
+                $own_row = MainWP_DB_Backup::instance()->get_backup_task_progress( $taskId, $website->id );
+                foreach ( array_merge( MainWP_DB_Backup::instance()->get_open_run_download_paths( (int) $website->id ), array( (string) $own_row->downloadedDB, (string) $own_row->downloadedFULL ) ) as $path ) {
+                    if ( '' !== $path ) {
+                        $protected[ MainWP_Backup_Snapshots::normalise_path( $path ) ] = true;
+                    }
+                }
+
                 $cnt = 0;
                 foreach ( $dbBackups as $key => $dbBackup ) {
                     ++$cnt;
-                    if ( $cnt >= $maxBackups ) {
+                    if ( $cnt >= $maxBackups && ! isset( $protected[ MainWP_Backup_Snapshots::normalise_path( $dbBackup ) ] ) ) {
                         $wp_filesystem->delete( $dbBackup );
                     }
                 }
@@ -886,7 +915,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 $cnt = 0;
                 foreach ( $fullBackups as $key => $fullBackup ) {
                     ++$cnt;
-                    if ( $cnt >= $maxBackups ) {
+                    if ( $cnt >= $maxBackups && ! isset( $protected[ MainWP_Backup_Snapshots::normalise_path( $fullBackup ) ] ) ) {
                         $wp_filesystem->delete( $fullBackup );
                     }
                 }

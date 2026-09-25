@@ -1324,6 +1324,152 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Build the sweep fixture: an interleaved open-run task, the current
+	 * run's flagged artifact, and an older archive the sweep would prune.
+	 *
+	 * @return array Site id, task, sibling task row, artifact path, site dir.
+	 */
+	private function sweep_fixture_with_open_sibling() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$db                     = MainWP_DB_Backup::instance();
+		$other                  = $db->add_backup_task( $task->userid, 'Interleaved task', 'daily', 'full', '', (string) $site_id, '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0 );
+		$this->assertNotFalse( $other );
+		$task->id = (int) $other->id + 1;
+		$db->update_backup_task_with_values(
+			$other->id,
+			array(
+				'last_run'  => 100,
+				'completed' => 0,
+			)
+		);
+		$this->seed_progress( $other->id, $site_id );
+
+		$content = 'PK' . "\x03\x04" . str_repeat( 'x', 4092 );
+		$dir     = \MainWP\Dashboard\MainWP_Backup_Private_Root::site_dir( $site_id );
+		wp_mkdir_p( $dir );
+		$artifact = $dir . 'full-current-run.zip';
+		file_put_contents( $artifact, $content ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- test fixture.
+
+		$this->give_site_real_privkey( $site_id );
+		$this->seed_progress(
+			$task->id,
+			$site_id,
+			array(
+				'removedFiles'           => 0,
+				'fetchResult'            => wp_json_encode(
+					array(
+						'full' => 'backup-file.zip',
+						'db'   => false,
+						'size' => strlen( $content ),
+					)
+				),
+				'downloadedFULL'         => $artifact,
+				'downloadedFULLComplete' => 1,
+			)
+		);
+		update_option( 'mainwp_backupsOnServer', 1 );
+
+		return array( $site_id, $task, $other, $artifact, $dir );
+	}
+
+	/**
+	 * Remove what sweep_fixture_with_open_sibling() created.
+	 *
+	 * @param int    $site_id Site id.
+	 * @param object $other   Sibling task row.
+	 * @param string $dir     Site backup dir.
+	 *
+	 * @return void
+	 */
+	private function tear_down_sweep_fixture( $site_id, $other, $dir ) {
+		global $wpdb;
+		MainWP_DB_Backup::instance()->remove_backup_task( $other->id );
+		delete_option( 'mainwp_backupsOnServer' );
+		$snapshot_table = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$snapshot_table} WHERE site_id = %d", $site_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
+		array_map( 'unlink', glob( $dir . '*' ) ?: array() ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test cleanup.
+	}
+
+	/**
+	 * A lane worker records its download path and takes the lock after the
+	 * sweep's protection snapshot, so a live .downloading sidecar is the
+	 * only sign that its file is in flight.
+	 *
+	 * @return void
+	 */
+	public function test_sweep_skips_file_with_live_download_sidecar() {
+		list( $site_id, $task, $other, $artifact, $dir ) = $this->sweep_fixture_with_open_sibling();
+
+		$in_flight = $dir . 'full-in-flight.zip';
+		file_put_contents( $in_flight, 'PK' . "\x03\x04" . str_repeat( 'i', 32 ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- test fixture.
+		touch( $in_flight, time() - 600 );
+		touch( $in_flight . '.downloading' );
+		$stale = $dir . 'full-old-run.zip';
+		file_put_contents( $stale, 'PK' . "\x03\x04" . str_repeat( 'o', 32 ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- test fixture.
+		touch( $stale, time() - 900 );
+
+		try {
+			$result = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+			$this->assertNotFalse( $result, 'The run must complete: its artifact is on disk and flagged.' );
+			$this->assertFileExists( $artifact );
+			$this->assertFileExists( $in_flight, 'A file with a live download lock must survive the sweep.' );
+			$this->assertFileDoesNotExist( $stale, 'Old unlocked archives must still be pruned.' );
+		} finally {
+			$this->tear_down_sweep_fixture( $site_id, $other, $dir );
+		}
+	}
+
+	/**
+	 * A download path another open run records while the scan is running
+	 * must be protected by the re-read taken right before the deletes.
+	 *
+	 * @return void
+	 */
+	public function test_sweep_rereads_open_run_paths_before_deleting() {
+		global $wpdb;
+
+		list( $site_id, $task, $other, $artifact, $dir ) = $this->sweep_fixture_with_open_sibling();
+
+		$late = $dir . 'full-late-recorded.zip';
+		file_put_contents( $late, 'PK' . "\x03\x04" . str_repeat( 'l', 32 ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- test fixture.
+		touch( $late, time() - 600 );
+		$stale = $dir . 'full-old-run.zip';
+		file_put_contents( $stale, 'PK' . "\x03\x04" . str_repeat( 'o', 32 ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- test fixture.
+		touch( $stale, time() - 900 );
+
+		// The sibling's download is recorded between the first open-run read
+		// (before the scan) and the next one, as a concurrent lane worker would.
+		$reads    = 0;
+		$progress = MainWP_DB::instance()->get_table_name( 'wp_backup_progress' );
+		$record   = function ( $query ) use ( &$reads, $wpdb, $progress, $other, $site_id, $late ) {
+			if ( false !== strpos( $query, 'SELECT p.downloadedDB, p.downloadedFULL' ) && 2 === ++$reads ) {
+				$wpdb->update(
+					$progress,
+					array( 'downloadedFULL' => $late ),
+					array(
+						'task_id' => (int) $other->id,
+						'wp_id'   => $site_id,
+					)
+				); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test simulates a concurrent writer.
+			}
+			return $query;
+		};
+		add_filter( 'query', $record );
+
+		try {
+			$result = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+			$this->assertNotFalse( $result, 'The run must complete: its artifact is on disk and flagged.' );
+			$this->assertFileExists( $artifact );
+			$this->assertFileExists( $late, 'A download recorded after the first snapshot must survive the sweep.' );
+			$this->assertGreaterThanOrEqual( 2, $reads, 'The late record must come from the re-read, not the first snapshot.' );
+			$this->assertFileDoesNotExist( $stale, 'Old unrecorded archives must still be pruned.' );
+		} finally {
+			remove_filter( 'query', $record );
+			$this->tear_down_sweep_fixture( $site_id, $other, $dir );
+		}
+	}
+
+	/**
 	 * The sweep gate is claimed SQL-side: exactly one driver of a run can
 	 * win it, so a driver holding a stale in-memory removedFiles view can
 	 * never re-run the sweep after the winner.
@@ -2112,6 +2258,99 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 			$this->assertSame( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING, $e->get_message_error_code() );
 			$this->assertSame( MainWP_Backup_Executor::EXTRA_FOREIGN_ALREADY_RUNNING, $e->get_message_extra() );
 		}
+	}
+
+	/**
+	 * A sibling run of this Dashboard holding the Child's one-task slot is
+	 * a delay: the refused task yields with the persistence clock cleared.
+	 * A foreign holder, or a paused sibling nothing will advance, still
+	 * surfaces once the refusal outlives the window.
+	 *
+	 * @dataProvider sibling_holder_cases
+	 * @param string|null $sibling Null for no sibling row, else 'active' or 'paused'.
+	 * @param bool        $yields  Whether the refused create must yield.
+	 *
+	 * @return void
+	 */
+	public function test_refusal_while_sibling_task_holds_site( $sibling, $yields ) {
+		$last_run               = time() - MainWP_Backup_Executor::FOREIGN_REFUSAL_SURFACE_SECONDS - 60;
+		list( $site_id, $task ) = $this->site_and_task( array( 'last_run' => $last_run ) );
+		$db                     = MainWP_DB_Backup::instance();
+
+		$holder = null;
+		if ( null !== $sibling ) {
+			$holder = $db->add_backup_task( $task->userid, 'Sibling holder', 'daily', 'full', '', (string) $site_id, '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0 );
+			$this->assertNotFalse( $holder );
+			$db->update_backup_task_with_values(
+				$holder->id,
+				array(
+					'last_run'  => time() - 50,
+					'completed' => 0,
+					'paused'    => 'paused' === $sibling ? 1 : 0,
+				)
+			);
+			$this->seed_progress( $holder->id, $site_id, array( 'child_backup_task_id' => 'task-sibling-live' ) );
+			$task->id = (int) $holder->id + 1;
+		}
+
+		$this->seed_progress(
+			$task->id,
+			$site_id,
+			array(
+				'dtsFetched'            => $last_run - 1,
+				'foreign_refused_since' => time() - MainWP_Backup_Executor::FOREIGN_REFUSAL_SURFACE_SECONDS - 30,
+			)
+		);
+
+		$reasons = array();
+		$capture = function ( $task_id, $reason ) use ( &$reasons ) {
+			unset( $task_id );
+			$reasons[] = $reason;
+		};
+		add_action( 'mainwp_backup_diag_run_reinit', $capture, 10, 2 );
+
+		$refusals = 0;
+		$this->mock_already_running_race( $task->id, $site_id, $refusals, false );
+
+		$result = null;
+		$thrown = null;
+		try {
+			$result = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+		} catch ( MainWP_Exception $e ) {
+			$thrown = $e;
+		} finally {
+			remove_action( 'mainwp_backup_diag_run_reinit', $capture, 10 );
+			if ( $holder ) {
+				$db->remove_backup_task( $holder->id );
+			}
+		}
+
+		$this->assertSame( 1, $refusals, 'Precondition: the mocked child must refuse the start.' );
+		if ( $yields ) {
+			$this->assertNull( $thrown, 'A sibling-held site must not fail the refused task.' );
+			$this->assertFalse( $result );
+			$progress = $db->get_backup_task_progress( $task->id, $site_id );
+			$this->assertSame( 0, (int) $progress->foreign_refused_since, 'The persistence clock must not run for a sibling holder.' );
+			$this->assertContains( 'sibling_holds_site_yield', $reasons );
+		} else {
+			$this->assertNotNull( $thrown, 'A foreign or paused holder must still surface after the window.' );
+			$this->assertSame( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING, $thrown->get_message_error_code() );
+			$this->assertSame( MainWP_Backup_Executor::EXTRA_FOREIGN_ALREADY_RUNNING, $thrown->get_message_extra() );
+			$this->assertNotContains( 'sibling_holds_site_yield', $reasons );
+		}
+	}
+
+	/**
+	 * Holder shapes for the refused create.
+	 *
+	 * @return array
+	 */
+	public static function sibling_holder_cases() {
+		return array(
+			'active sibling holds the site' => array( 'active', true ),
+			'foreign holder'                => array( null, false ),
+			'paused sibling'                => array( 'paused', false ),
+		);
 	}
 
 	/**

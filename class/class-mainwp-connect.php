@@ -428,10 +428,13 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $http_pass_plain  = ! empty( $others['http_pass_plain'] ) ? $others['http_pass_plain'] : '';
 
         if ( $website && '' !== $what ) {
+            // The nonce must never repeat. The Child stores every legacy signature it accepts, forever,
+            // and refuses a repeat as "This request has already been used"; signing is deterministic,
+            // so the nonce is the only thing that makes two requests for the same action differ.
             $data              = array();
             $data['user']      = $website->adminname;
             $data['function']  = $what;
-            $data['nonce']     = wp_rand( 0, 9999 );
+            $data['nonce']     = bin2hex( random_bytes( 16 ) );
             $data['mainwpver'] = MainWP_System::$version;
 
             $params_filter = apply_filters( 'mainwp_pre_fetch_authed_data', false, $params, $what, $website, $verify_signature );
@@ -616,7 +619,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $data             = array();
             $data['user']     = $website->adminname;
             $data['function'] = $compat_what;
-            $data['nonce']    = wp_rand( 0, 9999 );
+            $data['nonce']    = bin2hex( random_bytes( 16 ) );
 
             $sign_value = $compat_what . $data['nonce']; // compatible format.
 
@@ -731,7 +734,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $sign_success = null;
             $alg          = false;
             $use_seclib   = false;
-            $nonce        = wp_rand( 0, 9999 );
+            $nonce        = bin2hex( random_bytes( 16 ) );
 
             /**
              * Current user global.

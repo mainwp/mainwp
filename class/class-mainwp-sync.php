@@ -829,6 +829,36 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         return ! $error;
     }
 
+    /**
+     * Method sync_partial_information()
+     *
+     * @param object $pWebsite The website object.
+     * @param array  $information Array contaning information returned from child site.
+     */
+    public static function sync_partial_information( &$pWebsite, &$information ) {
+        $websiteValues = array();
+
+        /**
+         * Filter: mainwp_before_save_partial_sync_result
+         *
+         * Filters partial sync data returned from the child site before saving it to the database.
+         *
+         * @param array  $information Partial sync data returned from the child site.
+         * @param object $pWebsite    Object containing child site data.
+         *
+         * @since 6.2.1
+         */
+        $information = apply_filters( 'mainwp_before_save_partial_sync_result', $information, $pWebsite );
+
+        if ( isset( $information['plugins'] ) ) {
+            $plugins_info             = $information['plugins'];
+            $websiteValues['plugins'] = wp_json_encode( $plugins_info );
+        }
+        if ( ! empty( $websiteValues ) ) {
+            MainWP_DB::instance()->update_website_values( $pWebsite->id, $websiteValues );
+        }
+    }
+
 
     /**
      * Method get_telem_sync_info.

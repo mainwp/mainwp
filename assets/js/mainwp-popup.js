@@ -185,6 +185,12 @@
                     this._lastValue = 0;
                     this._flushTimer = null;
                 },
+                updateStatusLabel: function (text) {
+                    this.statusText = text;
+                    this.setStatusText(
+                        `${this._lastValue} / ${this.totalSites} ${this.statusText}`
+                    );
+                },
                 setProgressSite: function (value) {
                     if (!this.$progress) return;
 

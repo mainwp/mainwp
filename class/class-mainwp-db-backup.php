@@ -177,10 +177,10 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * Protect unrecorded downloads while tasks sharing a site interleave on the continue lane.
      *
      * @param int $wp_id Child Site ID.
-     * @return string[] Non-empty download paths from open task runs.
+     * @return string[] Non-empty download paths fetched during the current open task runs.
      */
     public function get_open_run_download_paths( $wp_id ) {
-        $rows  = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT p.downloadedDB, p.downloadedFULL FROM ' . esc_sql( $this->table_name( 'wp_backup_progress' ) ) . ' p INNER JOIN ' . esc_sql( $this->table_name( 'wp_backup' ) ) . ' b ON p.task_id = b.id WHERE p.wp_id = %d AND b.completed < b.last_run', $wp_id ) );
+        $rows  = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT p.downloadedDB, p.downloadedFULL FROM ' . esc_sql( $this->table_name( 'wp_backup_progress' ) ) . ' p INNER JOIN ' . esc_sql( $this->table_name( 'wp_backup' ) ) . ' b ON p.task_id = b.id WHERE p.wp_id = %d AND b.completed < b.last_run AND p.dtsFetched >= b.last_run', $wp_id ) );
         $paths = array();
         foreach ( (array) $rows as $row ) {
             foreach ( array( $row->downloadedDB, $row->downloadedFULL ) as $path ) {
@@ -1264,7 +1264,9 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * @return object Backup tasks.
      */
     public function get_backup_tasks_to_complete() {
-        return $this->wpdb->get_results( 'SELECT * FROM ' . esc_sql( $this->table_name( 'wp_backup' ) ) . ' WHERE paused = 0 AND completed < last_run ORDER BY last_continued ASC, last_run ASC, id ASC', OBJECT );
+        // A pending column repair must not prevent unfinished tasks from continuing.
+        $order = MainWP_Install::backup_task_last_continued_ready() ? 'last_continued ASC, last_run ASC, id ASC' : 'last_run ASC, id ASC';
+        return $this->wpdb->get_results( 'SELECT * FROM ' . esc_sql( $this->table_name( 'wp_backup' ) ) . ' WHERE paused = 0 AND completed < last_run ORDER BY ' . $order, OBJECT );
     }
 
     /**

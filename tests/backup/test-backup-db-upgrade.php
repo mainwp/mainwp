@@ -16,6 +16,7 @@ use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_DB_Backup;
 use MainWP\Dashboard\MainWP_Install;
 use MainWP\Dashboard\MainWP_Logger;
+use MainWP\Dashboard\MainWP_System_Cron_Jobs;
 use MainWP\Dashboard\MainWP_Backup_Snapshots;
 
 /**
@@ -945,6 +946,87 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 			$this->column_exists( $table, 'backup_notices' ),
 			'Upgrade must add backup_notices to existing installs; the shipped db version needs a bump or dbDelta never runs.'
 		);
+	}
+
+	/**
+	 * A denied column repair must not stop the continue lane from advancing tasks.
+	 *
+	 * @return void
+	 */
+	public function test_continue_lane_runs_while_last_continued_repair_is_pending() {
+		global $wpdb;
+		$db      = MainWP_DB_Backup::instance();
+		$table   = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		$pending = get_site_option( MainWP_Install::BACKUP_TASK_LAST_CONTINUED_REPAIR_PENDING );
+		$enabled = get_option( 'mainwp_enableNativeBackups' );
+		$task    = $db->add_backup_task( self::factory()->user->create(), 'Pending repair', 'daily', 'full', '', '', '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0 );
+		$this->assertNotFalse( $task );
+		$queries = array();
+		$capture = static function ( $sql ) use ( &$queries ) {
+			$queries[] = $sql;
+			return $sql;
+		};
+		try {
+			$db->update_backup_task_with_values(
+				$task->id,
+				array(
+					'last_run'  => 100,
+					'completed' => 0,
+					'paused'    => 0,
+				)
+			);
+			$wpdb->query( "ALTER TABLE {$table} DROP COLUMN last_continued" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture.
+			$this->assertFalse( $this->column_exists( $table, 'last_continued' ) );
+			update_site_option( MainWP_Install::BACKUP_TASK_LAST_CONTINUED_REPAIR_PENDING, time() );
+			update_option( 'mainwp_enableNativeBackups', 1 );
+			$this->assertFalse( MainWP_Install::backup_task_last_continued_ready() );
+			$tasks = $db->get_backup_tasks_to_complete();
+			$this->assertSame( '', $wpdb->last_error );
+			$this->assertContains( (int) $task->id, array_map( 'intval', wp_list_pluck( $tasks, 'id' ) ) );
+
+			$lane = new class() extends MainWP_System_Cron_Jobs {
+				/**
+				 * Attempted task IDs.
+				 *
+				 * @var int[]
+				 */
+				public $picked = array();
+
+				/**
+				 * Keep the task unfinished so the test needs no child connection.
+				 *
+				 * @param object $task Backup task.
+				 * @return bool
+				 */
+				protected function continue_backup_task( $task ) {
+					$this->picked[] = (int) $task->id;
+					return false;
+				}
+			};
+			add_filter( 'query', $capture );
+			$lane->cron_backups_continue();
+			remove_filter( 'query', $capture );
+			$this->assertSame( array( (int) $task->id ), $lane->picked );
+			foreach ( $queries as $sql ) {
+				if ( str_contains( $sql, $table ) ) {
+					$this->assertStringNotContainsString( 'last_continued', $sql );
+				}
+			}
+		} finally {
+			remove_filter( 'query', $capture );
+			MainWP_Install::instance()->ensure_backup_task_last_continued();
+			if ( false === $pending ) {
+				delete_site_option( MainWP_Install::BACKUP_TASK_LAST_CONTINUED_REPAIR_PENDING );
+			} else {
+				update_site_option( MainWP_Install::BACKUP_TASK_LAST_CONTINUED_REPAIR_PENDING, $pending );
+			}
+			if ( false === $enabled ) {
+				delete_option( 'mainwp_enableNativeBackups' );
+			} else {
+				update_option( 'mainwp_enableNativeBackups', $enabled );
+			}
+			$db->remove_backup_task( $task->id );
+		}
 	}
 
 	/**

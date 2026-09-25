@@ -1509,6 +1509,15 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     }
 
     /**
+     * Whether the continue lane can use the rotation column.
+     *
+     * @return bool Whether no schema repair is pending.
+     */
+    public static function backup_task_last_continued_ready(): bool {
+        return ! get_site_option( static::BACKUP_TASK_LAST_CONTINUED_REPAIR_PENDING );
+    }
+
+    /**
      * Avoid retrying denied ALTER statements on every request.
      *
      * @return void

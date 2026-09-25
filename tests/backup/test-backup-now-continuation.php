@@ -171,6 +171,12 @@ class MainWP_Backup_Now_Continuation_Test extends \WP_UnitTestCase {
 				'results'  => array( false, false ),
 				'expected' => array( 'A', 'B' ),
 			),
+			'paused after query'        => array(
+				'ticks'    => 1,
+				'paused'   => false,
+				'results'  => array(),
+				'expected' => array( 'B' ),
+			),
 			'paused never picked'       => array(
 				'ticks'    => 3,
 				'paused'   => true,
@@ -180,8 +186,9 @@ class MainWP_Backup_Now_Continuation_Test extends \WP_UnitTestCase {
 		);
 
 		foreach ( $cases as $message => $case ) {
-			$ids = array();
-			$db  = MainWP_DB_Backup::instance();
+			$ids         = array();
+			$db          = MainWP_DB_Backup::instance();
+			$pause_later = null;
 
 			try {
 				update_option( 'mainwp_enableNativeBackups', 1 );
@@ -248,6 +255,22 @@ class MainWP_Backup_Now_Continuation_Test extends \WP_UnitTestCase {
 				};
 				$lane->results[ $ids['A'] ] = $case['results'];
 
+				if ( 'paused after query' === $message ) {
+					$seen        = false;
+					$paused      = false;
+					$pause_later = static function ( $sql ) use ( &$seen, &$paused, $db, $ids ) {
+						if ( $seen && ! $paused ) {
+							// Guard before the nested UPDATE so the filter cannot recurse.
+							$paused = true;
+							$db->update_backup_task_with_values( $ids['A'], array( 'paused' => 1 ) );
+						} elseif ( str_contains( $sql, 'WHERE paused = 0 AND completed < last_run ORDER BY' ) ) {
+							$seen = true;
+						}
+						return $sql;
+					};
+					add_filter( 'query', $pause_later );
+				}
+
 				$before = time();
 				for ( $tick = 1; $tick <= $case['ticks']; ++$tick ) {
 					$already = count( $lane->picked );
@@ -269,6 +292,9 @@ class MainWP_Backup_Now_Continuation_Test extends \WP_UnitTestCase {
 				}
 				$this->assertSame( $expected, $lane->picked, $message );
 			} finally {
+				if ( null !== $pause_later ) {
+					remove_filter( 'query', $pause_later );
+				}
 				foreach ( $ids as $id ) {
 					$db->remove_backup_task( $id );
 				}

@@ -1232,7 +1232,16 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 		$this->assertNotFalse( $other );
 		$closed = $db->add_backup_task( $task->userid, 'Closed task', 'daily', 'full', '', (string) $site_id, '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0 );
 		$this->assertNotFalse( $closed );
-		$task->id = (int) $closed->id + 1;
+		$previous = $db->add_backup_task( $task->userid, 'Previous run', 'daily', 'full', '', (string) $site_id, '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0 );
+		$this->assertNotFalse( $previous );
+		$task->id = (int) $previous->id + 1;
+		$db->update_backup_task_with_values(
+			$previous->id,
+			array(
+				'last_run'  => 100,
+				'completed' => 0,
+			)
+		);
 		$db->update_backup_task_with_values(
 			$closed->id,
 			array(
@@ -1261,6 +1270,17 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 		file_put_contents( $closed_artifact, $content ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- test fixture.
 		$this->seed_progress( $closed->id, $site_id, array( 'downloadedFULL' => $closed_artifact ) );
 
+		$previous_artifact = $dir . 'full-previous-run.zip';
+		file_put_contents( $previous_artifact, $content ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- test fixture.
+		$this->seed_progress(
+			$previous->id,
+			$site_id,
+			array(
+				'dtsFetched'     => 99,
+				'downloadedFULL' => $previous_artifact,
+			)
+		);
+
 		$this->give_site_real_privkey( $site_id );
 		$this->seed_progress(
 			$task->id,
@@ -1288,12 +1308,14 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 			$this->assertFileExists( $artifact, 'The sweep must never delete the current run\'s own artifact.' );
 			$this->assertFileExists( $stale );
 			$this->assertFileDoesNotExist( $closed_artifact );
+			$this->assertFileDoesNotExist( $previous_artifact );
 
 			$snapshot = \MainWP\Dashboard\MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, (int) $task->id );
 			$this->assertNotNull( $snapshot, 'The snapshot record must land on the surviving artifact.' );
 		} finally {
 			$db->remove_backup_task( $other->id );
 			$db->remove_backup_task( $closed->id );
+			$db->remove_backup_task( $previous->id );
 			delete_option( 'mainwp_backupsOnServer' );
 			$snapshot_table = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
 			$wpdb->query( $wpdb->prepare( "DELETE FROM {$snapshot_table} WHERE site_id = %d", $site_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.

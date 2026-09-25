@@ -37,25 +37,19 @@ class MainWP_Backup_Private_Root {
         if ( null !== self::$root ) {
             return self::$root;
         }
-        self::served_roots();
-        if ( defined( 'MAINWP_BACKUP_PRIVATE_DIR' ) ) {
+        $explicit = defined( 'MAINWP_BACKUP_PRIVATE_DIR' );
+        if ( $explicit ) {
             $default = MAINWP_BACKUP_PRIVATE_DIR;
         } else {
-            $suffix = get_option( 'mainwp_backup_private_suffix', '' );
-            if ( '' === $suffix ) {
-                add_option( 'mainwp_backup_private_suffix', strtolower( wp_generate_password( 16, false ) ), '', 'yes' );
-                $suffix = get_option( 'mainwp_backup_private_suffix' );
+            $suffix = self::install_suffix();
+            if ( is_wp_error( $suffix ) ) {
+                self::$root = $suffix;
+                return self::$root;
             }
             $default = dirname( rtrim( ABSPATH, '/\\' ) ) . '/mainwp-private-' . $suffix . '/backups';
         }
-        $root = apply_filters( 'mainwp_backup_private_root', $default );
-        if ( ! is_string( $root ) || '' === trim( $root ) || false !== strpos( $root, "\0" ) ) {
-            self::$root = self::unavailable( is_string( $root ) ? str_replace( "\0", '[NUL]', $root ) : '(' . gettype( $root ) . ')', 'expected a non-empty path without NUL bytes' );
-        } elseif ( ! path_is_absolute( $root ) ) {
-            self::$root = self::unavailable( $root, 'expected an absolute path' );
-        } else {
-            self::$root = self::ensure_private_dir( $root );
-        }
+        $candidate  = apply_filters( 'mainwp_backup_private_root', $default );
+        self::$root = self::ensure_private_dir( $candidate, null, true, ! $explicit && $candidate === $default );
         return self::$root;
     }
 
@@ -144,28 +138,97 @@ class MainWP_Backup_Private_Root {
     }
 
     /**
-     * Remember web roots so cron and CLI enforce the same boundary.
+     * Read the winning insert directly; a cached option miss is not authoritative.
      *
+     * @return string|\WP_Error
+     */
+    private static function install_suffix(): string|\WP_Error {
+        global $wpdb;
+        // Once stored, the cached value is final; only the first requests need the uncached path.
+        $stored = get_option( 'mainwp_backup_private_suffix', '' );
+        if ( is_string( $stored ) && preg_match( '/^[a-z0-9]{16}$/D', $stored ) ) {
+            return $stored;
+        }
+        // phpcs:disable WordPress.DB.DirectDatabaseQuery -- The insert and read must bypass the option cache during concurrent first requests.
+        $wpdb->query( $wpdb->prepare( "INSERT IGNORE INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')", 'mainwp_backup_private_suffix', strtolower( wp_generate_password( 16, false ) ) ) );
+        $suffix = $wpdb->get_var( $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", 'mainwp_backup_private_suffix' ) );
+        // phpcs:enable WordPress.DB.DirectDatabaseQuery
+        wp_cache_delete( 'notoptions', 'options' );
+        wp_cache_delete( 'alloptions', 'options' );
+        wp_cache_delete( 'mainwp_backup_private_suffix', 'options' );
+        return is_string( $suffix ) && preg_match( '/^[a-z0-9]{16}$/D', $suffix ) ? $suffix : self::unavailable( 'mainwp_backup_private_suffix', 'a valid installation suffix could not be stored' );
+    }
+
+    /**
+     * Derive served trees from filesystem and URL configuration, without request history.
+     *
+     * @param array $pairs Filesystem directory and public URL pairs.
+     * @param mixed $document_root Current request document root.
      * @return array
      */
-    private static function served_roots(): array {
-        $roots = get_option( 'mainwp_backup_served_roots', array() );
-        $roots = is_array( $roots ) ? array_filter( $roots, 'is_string' ) : array();
-        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- A filesystem boundary, never rendered or used as a write destination.
-        $current = $_SERVER['DOCUMENT_ROOT'] ?? '';
-        if ( is_string( $current ) && '' !== trim( $current ) ) {
-            $real    = realpath( $current );
-            $current = wp_normalize_path( false === $real ? $current : $real );
-            $current = '/' === $current ? $current : untrailingslashit( $current );
-            if ( ! in_array( $current, $roots, true ) ) {
-                $roots[] = $current;
-                $roots   = array_slice( $roots, -10 );
-                if ( ! add_option( 'mainwp_backup_served_roots', $roots, '', 'no' ) ) {
-                    update_option( 'mainwp_backup_served_roots', $roots, false );
+    private static function served_boundaries( array $pairs, $document_root ): array {
+        $boundaries  = array();
+        $underivable = false;
+        foreach ( $pairs as $pair ) {
+            list( $dir, $url ) = $pair;
+            $dir               = untrailingslashit( wp_normalize_path( $dir ) );
+            $boundaries[]      = $dir;
+            $path              = trim( (string) wp_parse_url( $url, PHP_URL_PATH ), '/' );
+            if ( '' === $path ) {
+                $boundaries[] = $dir;
+            } elseif ( str_ends_with( $dir, '/' . $path ) ) {
+                $boundaries[] = substr( $dir, 0, -strlen( '/' . $path ) );
+            } else {
+                $underivable = true;
+            }
+        }
+        if ( is_string( $document_root ) && '' !== trim( $document_root ) && false === strpos( $document_root, "\0" ) ) {
+            $real         = realpath( $document_root );
+            $boundaries[] = false === $real ? $document_root : $real;
+        }
+        return array( $boundaries, $underivable );
+    }
+
+    /**
+     * Require disjoint served and private trees before any filesystem writes.
+     *
+     * @param mixed $candidate Selected directory.
+     * @param array $boundaries Served directories.
+     * @param bool  $is_default Whether the install default was selected unchanged.
+     * @param bool  $underivable Whether any configured URL has no matching filesystem suffix.
+     * @return string Empty when accepted.
+     */
+    private static function refusal_reason( $candidate, array $boundaries, bool $is_default, bool $underivable ): string {
+        if ( ! is_string( $candidate ) || '' === trim( $candidate ) || false !== strpos( $candidate, "\0" ) ) {
+            return 'expected a non-empty path without NUL bytes';
+        }
+        if ( ! path_is_absolute( $candidate ) ) {
+            return 'expected an absolute path';
+        }
+        $candidate = untrailingslashit( wp_normalize_path( $candidate ) );
+        if ( is_link( $candidate ) ) {
+            return 'directory is a symlink';
+        }
+        if ( $is_default && $underivable ) {
+            return "the site's web root could not be determined; set MAINWP_BACKUP_PRIVATE_DIR";
+        }
+        foreach ( $boundaries as $boundary ) {
+            $boundary = untrailingslashit( wp_normalize_path( $boundary ) );
+            if ( '' === $boundary || preg_match( '/^[a-z]:$/i', $boundary ) ) {
+                continue;
+            }
+            foreach ( array( $boundary, self::canonical_path( $boundary ) ) as $served ) {
+                if ( '' === $served || '/' === $served || preg_match( '/^[a-z]:$/i', $served ) ) {
+                    continue;
+                }
+                foreach ( array( $candidate, self::canonical_path( $candidate ) ) as $private ) {
+                    if ( $private === $served || str_starts_with( $private, $served . '/' ) || str_starts_with( $served, $private . '/' ) ) {
+                        return 'directory overlaps a served directory';
+                    }
                 }
             }
         }
-        return array_filter( $roots, 'strlen' );
+        return '';
     }
 
     /**
@@ -190,26 +253,27 @@ class MainWP_Backup_Private_Root {
     /**
      * Verify location and actual writes before accepting a directory.
      *
-     * @param string      $dir Directory.
+     * @param mixed       $dir Directory.
      * @param string|null $required_parent Required parent.
      * @param bool        $protect Add defense-in-depth files to shared parents.
+     * @param bool        $is_default Whether the install default was selected unchanged.
      * @return string|\WP_Error
      */
-    private static function ensure_private_dir( string $dir, ?string $required_parent = null, bool $protect = true ): string|\WP_Error {
+    private static function ensure_private_dir( $dir, ?string $required_parent = null, bool $protect = true, bool $is_default = false ): string|\WP_Error {
         // phpcs:disable WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors.Discouraged -- Local filesystem probes must report failure without emitting warnings.
-        $dir = untrailingslashit( wp_normalize_path( $dir ) );
-        if ( is_link( $dir ) ) {
-            return self::unavailable( $dir, 'directory is a symlink' );
+        $upload = wp_upload_dir( null, false );
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- This value only adds a refusal boundary.
+        $document_root                    = $_SERVER['DOCUMENT_ROOT'] ?? '';
+        list( $boundaries, $underivable ) = self::served_boundaries(
+            array( array( ABSPATH, site_url() ), array( WP_CONTENT_DIR, content_url() ), array( $upload['basedir'], $upload['baseurl'] ) ),
+            $document_root
+        );
+        $reason                           = self::refusal_reason( $dir, $boundaries, $is_default, $underivable );
+        if ( '' !== $reason ) {
+            return self::unavailable( is_string( $dir ) ? str_replace( "\0", '[NUL]', $dir ) : '(' . gettype( $dir ) . ')', $reason );
         }
+        $dir       = untrailingslashit( wp_normalize_path( $dir ) );
         $candidate = self::canonical_path( $dir );
-        foreach ( array_merge( array( ABSPATH, WP_CONTENT_DIR ), self::served_roots() ) as $public ) {
-            foreach ( array( self::canonical_path( $public ), wp_normalize_path( $public ) ) as $served ) {
-                $served = untrailingslashit( $served );
-                if ( $candidate === $served || 0 === strpos( $candidate, $served . '/' ) || $dir === $served || 0 === strpos( $dir, $served . '/' ) ) {
-                    return self::unavailable( $dir, 'directory is inside a served WordPress directory' );
-                }
-            }
-        }
         if ( null !== $required_parent && ( is_link( untrailingslashit( $required_parent ) ) || 0 !== strpos( $candidate . '/', trailingslashit( self::canonical_path( $required_parent ) ) ) ) ) {
             return self::unavailable( $dir, 'directory escapes its private parent' );
         }

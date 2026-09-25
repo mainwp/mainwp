@@ -35,7 +35,7 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 		add_filter(
 			'upload_dir',
 			function ( $dirs ) {
-				$dirs['basedir'] = $this->private_root . '/legacy';
+				$dirs['basedir'] = $this->private_root . '-legacy';
 				return $dirs;
 			}
 		);
@@ -47,6 +47,8 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 	 * @return void
 	 */
 	public function tearDown(): void {
+		$this->remove_private_fixture( $this->private_root . '-legacy' );
+		$this->remove_private_fixture( $this->private_root . '-filtered' );
 		$this->tear_down_private_root();
 		parent::tearDown();
 	}
@@ -86,8 +88,11 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function test_constant_is_selected_before_filter() {
 		$source = dirname( __DIR__, 2 ) . '/class/backup/class-mainwp-backup-private-root.php';
-		$script = 'define("ABSPATH", "/public/wp/"); define("MAINWP_BACKUP_PRIVATE_DIR", "/constant/backups");'
-			. 'function get_option($name, $default = false) { return $default; }'
+		$script = 'define("ABSPATH", "/public/wp/"); define("WP_CONTENT_DIR", "/public/content"); define("MAINWP_BACKUP_PRIVATE_DIR", "/constant/backups");'
+			. 'function wp_upload_dir(...$args) { return ["basedir" => "/public/uploads", "baseurl" => "https://test/uploads"]; }'
+			. 'function site_url() { return "https://test/wp"; } function content_url() { return "https://test/content"; }'
+			. 'function wp_normalize_path($p) { return $p; } function untrailingslashit($p) { return rtrim($p, "/"); }'
+			. 'function wp_parse_url($u, $c) { return parse_url($u, $c); }'
 			. 'function apply_filters($tag, $value) { echo $tag . ":" . $value; return false; }'
 			. 'function __($value, $domain) { return $value; } class WP_Error { public function __construct(...$args) {} }'
 			. 'require ' . var_export( $source, true ) . '; echo MainWP\\Dashboard\\MainWP_Backup_Private_Root::resolve() instanceof WP_Error ? ":filtered" : ":unfiltered";'; // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_var_export -- Quote a PHP source path for the isolated process.
@@ -189,7 +194,7 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( $this->private_root . '/upload-staging/7-8', $upload->invoke( MainWP_Backup_Upload_Driver::instance(), $job ) );
 		add_filter( 'mainwp_backup_private_root', '__return_false', 99 );
 		MainWP_Backup_Private_Root::reset();
-		$plan    = array();
+		$plan    = array( array( 'source' => 'remote' ) );
 		$outcome = $restore->stage_artifacts( 42, $plan, microtime( true ) + 10 );
 		$this->assertStringContainsString( 'Private backup directory', $outcome['error'] );
 		$this->assertSame( \MainWP\Dashboard\MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE, $outcome['error_code'] );
@@ -288,36 +293,6 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * Web requests teach cron the document-root boundary.
-	 */
-	public function test_document_root_is_refused_and_remembered() {
-		$_SERVER['DOCUMENT_ROOT'] = $this->private_root . '/served';
-		add_filter(
-			'mainwp_backup_private_root',
-			function () {
-				return $this->private_root . '/served/backups';
-			},
-			99
-		);
-		$this->assertWPError( MainWP_Backup_Private_Root::resolve() );
-		$this->assertSame( array( $this->private_root . '/served' ), get_option( 'mainwp_backup_served_roots' ) );
-		unset( $_SERVER['DOCUMENT_ROOT'] );
-		MainWP_Backup_Private_Root::reset();
-		$this->assertWPError( MainWP_Backup_Private_Root::resolve() );
-		$this->assertDirectoryDoesNotExist( $this->private_root );
-		for ( $i = 0; $i < 11; ++$i ) {
-			$_SERVER['DOCUMENT_ROOT'] = $this->private_root . '/web-' . $i;
-			MainWP_Backup_Private_Root::reset();
-			MainWP_Backup_Private_Root::resolve();
-		}
-		$this->assertCount( 10, get_option( 'mainwp_backup_served_roots' ) );
-		$this->assertSame( $this->private_root . '/web-10', array_slice( get_option( 'mainwp_backup_served_roots' ), -1 )[0] );
-		$_SERVER['DOCUMENT_ROOT'] = '/';
-		MainWP_Backup_Private_Root::reset();
-		$this->assertWPError( MainWP_Backup_Private_Root::resolve() );
-	}
-
-	/**
 	 * A shared override directory must retain its traversal and contents.
 	 */
 	public function test_existing_override_keeps_mode_and_no_protection_files() {
@@ -394,15 +369,130 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 			function ( $dirs, $subdir, $direct ) {
 				$this->assertNull( $subdir );
 				$this->assertFalse( $direct );
-				$dirs['basedir'] = $this->private_root . '/filtered';
+				$dirs['basedir'] = $this->private_root . '-filtered';
 				return $dirs;
 			},
 			10,
 			3
 		);
-		$this->assertSame( $this->private_root . '/filtered/mainwp/0/1/', MainWP_Backup_Private_Root::legacy_site_dir( 1 ) );
+		$this->assertSame( $this->private_root . '-filtered/mainwp/0/1/', MainWP_Backup_Private_Root::legacy_site_dir( 1 ) );
 		$this->assertFalse( MainWP_Backup_Executor::has_recent_backup( 1 ) );
 		$this->assertDirectoryDoesNotExist( $this->private_root . '/sites/1' );
-		$this->assertDirectoryDoesNotExist( $this->private_root . '/filtered' );
+		$this->assertDirectoryDoesNotExist( $this->private_root . '-filtered' );
+	}
+
+	/**
+	 * Each configured layout has a literal decision, independent of the resolver rule.
+	 */
+	public function test_root_selection_matrix() {
+		$rows   = array(
+			// WordPress dir, site URL path, content dir, content URL path, uploads dir, uploads URL path, candidate, default, document root, reason.
+			'root install'           => array( '/srv/a/public', '', '/srv/a/public/content', 'content', '/srv/a/public/uploads', 'uploads', '/srv/a/mainwp-private-abcdefghijklmnop/backups', true, '', '' ),
+			'subdirectory'           => array( '/var/www/html/wp', 'wp', '/var/www/html/wp/content', 'wp/content', '/var/www/html/uploads', 'uploads', '/var/www/html/mainwp-private-abcdefghijklmnop/backups', true, '', 'directory overlaps a served directory' ),
+			'bedrock'                => array( '/srv/b/web/wp', 'wp', '/srv/b/web/app', 'app', '/srv/b/web/app/uploads', 'app/uploads', '/srv/b/web/mainwp-private-abcdefghijklmnop/backups', true, '', 'directory overlaps a served directory' ),
+			'underivable default'    => array( '/srv/a/public', 'blog', '/srv/a/public/content', 'content', '/srv/a/public/uploads', 'uploads', '/srv/a/mainwp-private-abcdefghijklmnop/backups', true, '', "the site's web root could not be determined; set MAINWP_BACKUP_PRIVATE_DIR" ),
+			'underivable constant'   => array( '/srv/a/public', 'blog', '/srv/a/public/content', 'content', '/srv/a/public/uploads', 'uploads', '/srv/private', false, '', '' ),
+			'equal document root'    => array( '/var/www/html/wp', 'wp', '/var/www/html/content', 'content', '/var/www/html/uploads', 'uploads', '/var/www/html', false, '', 'directory overlaps a served directory' ),
+			'contains WordPress'     => array( '/var/www/html', '', '/var/www/html/content', 'content', '/var/www/html/uploads', 'uploads', '/var/www', false, '', 'directory overlaps a served directory' ),
+			'inside content'         => array( '/srv/a/public', '', '/srv/a/public/content', 'content', '/srv/a/public/uploads', 'uploads', '/srv/a/public/content/private', false, '', 'directory overlaps a served directory' ),
+			'inside uploads'         => array( '/srv/a/public', '', '/srv/a/public/content', 'content', '/srv/uploads', '', '/srv/uploads/private', false, '', 'directory overlaps a served directory' ),
+			'unusable document root' => array( '/srv/a/public', '', '/srv/a/public/content', 'content', '/srv/a/public/uploads', 'uploads', '/srv/private', false, '/', '' ),
+			'request document root'  => array( '/srv/a/public', '', '/srv/a/public/content', 'content', '/srv/a/public/uploads', 'uploads', '/srv/private', false, '/srv', 'directory overlaps a served directory' ),
+			'relative'               => array( '/srv/a/public', '', '/srv/a/public/content', 'content', '/srv/a/public/uploads', 'uploads', 'relative', false, '', 'expected an absolute path' ),
+			'NUL'                    => array( '/srv/a/public', '', '/srv/a/public/content', 'content', '/srv/a/public/uploads', 'uploads', "bad\0path", false, '', 'expected a non-empty path without NUL bytes' ),
+			'junk filter'            => array( '/srv/a/public', '', '/srv/a/public/content', 'content', '/srv/a/public/uploads', 'uploads', false, false, '', 'expected a non-empty path without NUL bytes' ),
+			'symlink'                => array( '/srv/a/public', '', '/srv/a/public/content', 'content', '/srv/a/public/uploads', 'uploads', '/link', false, '', 'directory is a symlink' ),
+		);
+		$derive = new \ReflectionMethod( MainWP_Backup_Private_Root::class, 'served_boundaries' );
+		$decide = new \ReflectionMethod( MainWP_Backup_Private_Root::class, 'refusal_reason' );
+		wp_mkdir_p( $this->private_root . '/srv/private' );
+		symlink( $this->private_root . '/srv/private', $this->private_root . '/link' );
+		foreach ( $rows as $label => $row ) {
+			list( $wp, $site_path, $content, $content_path, $uploads, $uploads_path, $candidate, $default, $document, $expected ) = $row;
+			foreach ( array( $wp, $content, $uploads ) as $dir ) {
+				wp_mkdir_p( $this->private_root . $dir );
+			}
+			$site_filter    = static function () use ( $site_path ) {
+				return 'https://test/' . $site_path;
+			};
+			$content_filter = static function () use ( $content_path ) {
+				return 'https://test/' . $content_path;
+			};
+			$upload_filter  = function ( $dirs ) use ( $uploads, $uploads_path ) {
+				$dirs['basedir'] = $this->private_root . $uploads;
+				$dirs['baseurl'] = 'https://test/' . $uploads_path;
+				return $dirs;
+			};
+			add_filter( 'site_url', $site_filter );
+			add_filter( 'content_url', $content_filter );
+			add_filter( 'upload_dir', $upload_filter, 99 );
+			try {
+				$upload                           = wp_upload_dir( null, false );
+				$document                         = '' !== $document && '/' !== $document ? $this->private_root . $document : $document;
+				list( $boundaries, $underivable ) = $derive->invoke( null, array( array( $this->private_root . $wp, site_url() ), array( $this->private_root . $content, content_url() ), array( $upload['basedir'], $upload['baseurl'] ) ), $document );
+				$candidate                        = is_string( $candidate ) && str_starts_with( $candidate, '/' ) ? $this->private_root . $candidate : $candidate;
+				$this->assertSame( $expected, $decide->invoke( null, $candidate, $boundaries, $default, $underivable ), $label );
+			} finally {
+				remove_filter( 'site_url', $site_filter );
+				remove_filter( 'content_url', $content_filter );
+				remove_filter( 'upload_dir', $upload_filter, 99 );
+			}
+		}
+	}
+
+	/**
+	 * Real resolution covers accepted overrides and refused configuration defaults.
+	 */
+	public function test_resolve_configuration_outcomes() {
+		$rows = array(
+			array( 'override', '/', true ),
+			array( 'override', 'parent', false ),
+			array( 'default', '', false ),
+		);
+		foreach ( $rows as $row ) {
+			list( $selection, $document, $accepted ) = $row;
+			$_SERVER['DOCUMENT_ROOT']                = 'parent' === $document ? dirname( $this->private_root ) : $document;
+			$site_filter                             = static function () {
+				return 'https://test/unmatched-layout';
+			};
+			add_filter( 'site_url', $site_filter );
+			if ( 'default' === $selection ) {
+				remove_filter( 'mainwp_backup_private_root', array( $this, 'filter_private_root' ) );
+			}
+			MainWP_Backup_Private_Root::reset();
+			$result = MainWP_Backup_Private_Root::resolve();
+			$this->assertSame( $accepted, ! is_wp_error( $result ) );
+			if ( 'default' === $selection ) {
+				$this->assertStringContainsString( "the site's web root could not be determined", $result->get_error_message() );
+			}
+			remove_filter( 'site_url', $site_filter );
+			add_filter( 'mainwp_backup_private_root', array( $this, 'filter_private_root' ) );
+		}
+	}
+
+	/**
+	 * A database winner overrides stale cache state and fresh random generations.
+	 */
+	public function test_suffix_uses_database_winner_and_fails_closed() {
+		global $wpdb;
+		delete_option( 'mainwp_backup_private_suffix' );
+		$this->assertFalse( get_option( 'mainwp_backup_private_suffix' ) );
+		$wpdb->query( $wpdb->prepare( "INSERT INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')", 'mainwp_backup_private_suffix', 'abcdefghijklmnop' ) ); // phpcs:ignore WordPress.DB -- Simulate a competing writer after this request cached a miss.
+		add_filter(
+			'random_password',
+			static function ( $password, $length ) {
+				return 16 === $length ? 'zzzzzzzzzzzzzzzz' : $password;
+			},
+			10,
+			2
+		);
+		$method = new \ReflectionMethod( MainWP_Backup_Private_Root::class, 'install_suffix' );
+		$this->assertSame( 'abcdefghijklmnop', $method->invoke( null ) );
+		MainWP_Backup_Private_Root::reset();
+		$this->assertSame( 'abcdefghijklmnop', $method->invoke( null ) );
+		$this->assertSame( 'abcdefghijklmnop', get_option( 'mainwp_backup_private_suffix' ) );
+		update_option( 'mainwp_backup_private_suffix', 'invalid' );
+		MainWP_Backup_Private_Root::reset();
+		$this->assertWPError( MainWP_Backup_Private_Root::resolve() );
 	}
 }

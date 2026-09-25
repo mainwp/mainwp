@@ -1898,15 +1898,56 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends MainWP_Abilities_Test_C
 	}
 
 	/**
+	 * Local legacy artifacts remain restorable when private storage is unavailable.
+	 */
+	public function test_local_legacy_plan_never_resolves_private_staging() {
+		$legacy = \MainWP\Dashboard\MainWP_Backup_Private_Root::legacy_site_dir( 777001 );
+		wp_mkdir_p( $legacy );
+		$file = $legacy . 'local-test.zip';
+		file_put_contents( $file, 'local bytes' );
+		$plan   = array(
+			array(
+				'source'     => 'local',
+				'local_path' => $file,
+				'file'       => 'legacy.zip',
+			),
+		);
+		$calls  = 0;
+		$filter = static function () use ( &$calls ) {
+			++$calls;
+			return false;
+		};
+		add_filter( 'mainwp_backup_private_root', $filter, 99 );
+		\MainWP\Dashboard\MainWP_Backup_Private_Root::reset();
+		$outcome = $this->driver->stage_artifacts( 777001, $plan, microtime( true ) + 60 );
+		$this->assertSame(
+			array(
+				'done'  => true,
+				'error' => null,
+			),
+			$outcome
+		);
+		$this->assertSame( 0, $calls );
+		$this->assertSame( $file, $plan[0]['staged_path'] );
+		$this->assertSame( hash( 'sha256', 'local bytes' ), $plan[0]['sha256'] );
+		wp_delete_file( $file );
+	}
+
+	/**
 	 * Old remote checkpoints must stage again before transferring any bytes.
 	 */
 	public function test_legacy_staging_is_retried_for_both_remote_sources() {
-		$upload = wp_upload_dir( null, false );
+		$filter = function ( $dirs ) {
+			$dirs['basedir'] = $this->dir . '/filtered';
+			return $dirs;
+		};
+		add_filter( 'mainwp_get_wp_upload_dir', $filter );
+		$upload = apply_filters( 'mainwp_get_wp_upload_dir', wp_upload_dir( null, false ), null, false );
 		$legacy = trailingslashit( $upload['basedir'] ) . 'mainwp/restore-staging/777001/';
 		wp_mkdir_p( $legacy );
-		file_put_contents( $legacy . 'archive.zip', 'legacy' );
 		try {
 			foreach ( array( 'remote', 'remote_chunked' ) as $source ) {
+				file_put_contents( $legacy . 'archive.zip', 'legacy' );
 				$plan    = array(
 					array(
 						'source'      => $source,
@@ -1923,7 +1964,14 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends MainWP_Abilities_Test_C
 				$this->assertSame( '', $outcome['plan'][0]['staged_path'] );
 				$this->assertSame( '', $outcome['plan'][0]['sha256'] );
 				$this->assertEmpty( $this->driver->sent );
+				$this->assertFileDoesNotExist( $legacy . 'archive.zip' );
 			}
+			$outside = $this->dir . '/outside.zip';
+			file_put_contents( $outside, 'keep' );
+			$plan[0]['staged_path'] = $outside;
+			$outcome                = $this->driver->transfer_artifacts( (object) array( 'id' => 1 ), 'task', $plan, $cursor, microtime( true ) + 60, null, 777001 );
+			$this->assertTrue( $outcome['restage'] );
+			$this->assertSame( 'keep', file_get_contents( $outside ) );
 			add_filter( 'mainwp_backup_private_root', '__return_false', 99 );
 			\MainWP\Dashboard\MainWP_Backup_Private_Root::reset();
 			$outcome = $this->driver->transfer_artifacts( (object) array( 'id' => 1 ), 'task', $plan, $cursor, microtime( true ) + 60, null, 777001 );
@@ -1931,6 +1979,7 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends MainWP_Abilities_Test_C
 			$this->driver->cleanup_staging( 777001 );
 			$this->assertDirectoryDoesNotExist( $legacy );
 		} finally {
+			remove_filter( 'mainwp_get_wp_upload_dir', $filter );
 			$this->rrmdir( $legacy );
 		}
 	}

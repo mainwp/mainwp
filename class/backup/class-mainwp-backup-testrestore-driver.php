@@ -123,7 +123,7 @@ class MainWP_Backup_TestRestore_Driver { // phpcs:ignore Generic.Classes.Opening
             'error_code'  => '',
             'sandbox'     => array(
                 'db_name'  => $sandbox->db_name(),
-                'temp_dir' => $sandbox->temp_dir(),
+                'temp_dir' => is_wp_error( $sandbox->temp_dir() ) ? '' : $sandbox->temp_dir(),
             ),
         );
 

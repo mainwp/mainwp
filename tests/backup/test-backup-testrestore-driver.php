@@ -844,6 +844,7 @@ class MainWP_Backup_TestRestore_Driver_Test extends MainWP_Abilities_Test_Case {
 		$result = MainWP_Backup_TestRestore_Driver::instance()->verify_snapshot( $snapshot_id );
 
 		$this->assertSame( \MainWP\Dashboard\MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE, $result['error_code'] );
+		$this->assertSame( '', $result['sandbox']['temp_dir'] );
 
 		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
 		$this->assertSame( '', (string) $snapshot->test_restore_state, 'An environment failure must not record snapshot health.' );
@@ -866,6 +867,7 @@ class MainWP_Backup_TestRestore_Driver_Test extends MainWP_Abilities_Test_Case {
 		};
 		$result         = $driver->verify_snapshot( $snapshot_id );
 		$this->assertSame( \MainWP\Dashboard\MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE, $result['error_code'] );
+		$this->assertSame( '', $result['sandbox']['temp_dir'] );
 		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
 		$this->assertSame( '', (string) $snapshot->test_restore_state );
 	}

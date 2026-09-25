@@ -15,10 +15,13 @@
 
 namespace MainWP\Dashboard\Tests;
 
+require_once __DIR__ . '/trait-backup-private-root-fixture.php';
+
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_Backup_Snapshots;
 use MainWP\Dashboard\MainWP_Backup_TestRestore_Driver;
 use MainWP\Dashboard\MainWP_Backup_TestRestore_Scheduler;
+use MainWP\Dashboard\MainWP_Backup_TestRestore_Sandbox;
 use MainWP\Dashboard\MainWP_System_Cron_Jobs;
 
 /**
@@ -106,6 +109,8 @@ class Testable_TestRestore_Scheduler extends MainWP_Backup_TestRestore_Scheduler
  */
 class MainWP_Backup_TestRestore_Scheduler_Test extends MainWP_Abilities_Test_Case {
 
+	use Backup_Private_Root_Fixture;
+
 	/**
 	 * Inserted snapshot ids for cleanup.
 	 *
@@ -127,6 +132,7 @@ class MainWP_Backup_TestRestore_Scheduler_Test extends MainWP_Abilities_Test_Cas
 	 */
 	public function set_up() {
 		parent::set_up();
+		$this->set_up_private_root();
 		update_option( 'mainwp_enableNativeBackups', 1 );
 		$this->dir = sys_get_temp_dir() . '/mainwp-tr-sched-' . uniqid();
 		mkdir( $this->dir );
@@ -147,6 +153,7 @@ class MainWP_Backup_TestRestore_Scheduler_Test extends MainWP_Abilities_Test_Cas
 		delete_option( MainWP_Backup_TestRestore_Scheduler::CAPABILITY_OPTION );
 		delete_option( 'mainwp_enableNativeBackups' );
 		wp_clear_scheduled_hook( MainWP_Backup_TestRestore_Scheduler::CONTINUE_HOOK );
+		$this->tear_down_private_root();
 		parent::tear_down();
 	}
 
@@ -382,6 +389,26 @@ class MainWP_Backup_TestRestore_Scheduler_Test extends MainWP_Abilities_Test_Cas
 
 		$scheduler->process_pending_jobs( 120, $now );
 		$this->assertCount( 1, $scheduler->verified, 'A deadline-missed snapshot must not be re-selected within the same tick window.' );
+	}
+
+	/**
+	 * Storage repair can be retried next tick instead of waiting a month.
+	 */
+	public function test_private_root_probe_failure_is_not_cached() {
+		delete_option( MainWP_Backup_TestRestore_Scheduler::CAPABILITY_OPTION );
+		add_filter( 'mainwp_backup_private_root', '__return_false', 99 );
+		\MainWP\Dashboard\MainWP_Backup_Private_Root::reset();
+		$probe = MainWP_Backup_TestRestore_Sandbox::probe_capability();
+		$this->assertFalse( $probe['capable'] );
+		$this->assertSame( \MainWP\Dashboard\MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE, $probe['error_code'] );
+		$method    = new \ReflectionMethod( MainWP_Backup_TestRestore_Scheduler::class, 'ensure_capable' );
+		$scheduler = MainWP_Backup_TestRestore_Scheduler::instance();
+		$this->assertFalse( $method->invoke( $scheduler, time() ) );
+		$this->assertFalse( get_option( MainWP_Backup_TestRestore_Scheduler::CAPABILITY_OPTION ) );
+		remove_filter( 'mainwp_backup_private_root', '__return_false', 99 );
+		\MainWP\Dashboard\MainWP_Backup_Private_Root::reset();
+		$this->assertTrue( $method->invoke( $scheduler, time() + 1 ) );
+		$this->assertTrue( get_option( MainWP_Backup_TestRestore_Scheduler::CAPABILITY_OPTION )['capable'] );
 	}
 
 	/**

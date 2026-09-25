@@ -738,8 +738,29 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         if ( isset( $_GET['mwpdl'] ) && isset( $_GET['sig'] ) ) {
             $private_root = isset( $_GET['root'] ) && 'private' === $_GET['root'];
             if ( $private_root ) {
+                if ( ! is_user_logged_in() ) {
+                    return;
+                }
+                if ( ! MainWP_System_Utility::is_admin() || ! \mainwp_current_user_can( 'dashboard', 'execute_backups' ) ) {
+                    return;
+                }
+                $mwpdl    = isset( $_REQUEST['mwpdl'] ) ? wp_unslash( $_REQUEST['mwpdl'] ) : '';
+                $decoded  = rawurldecode( $mwpdl );
+                $segments = explode( '/', $decoded );
+                $site_id  = isset( $segments[1] ) ? (int) $segments[1] : 0;
+                if ( 'sites' !== ( $segments[0] ?? '' ) || $site_id <= 0 || ( $segments[1] ?? '' ) !== (string) $site_id || empty( $segments[2] ) ) {
+                    return;
+                }
+                $website = MainWP_DB::instance()->get_website_by_id( $site_id );
+                if ( empty( $website ) || ! MainWP_System_Utility::can_edit_website( $website ) || ! \mainwp_current_user_can( 'site', $site_id ) ) {
+                    return;
+                }
                 $mwpDir = MainWP_Backup_Private_Root::resolve();
-                if ( is_wp_error( $mwpDir ) ) {
+                if ( is_wp_error( $mwpDir ) || stristr( $decoded, '..' ) ) {
+                    return;
+                }
+                $file = trailingslashit( $mwpDir ) . $decoded;
+                if ( ! MainWP_Backup_File_Manager::path_is_confined_to( $file, $mwpDir ) || ! is_file( $file ) ) {
                     return;
                 }
             } else {
@@ -751,28 +772,6 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
             if ( stristr( rawurldecode( $mwpdl ), '..' ) ) {
                 return;
-            }
-
-            if ( $private_root && ( ! MainWP_Backup_File_Manager::path_is_confined_to( $file, $mwpDir ) || ! is_file( $file ) ) ) {
-                return;
-            }
-
-            // The private root holds plaintext archives, and unlike the uploads root
-            // nothing else fetches from it without a session; a signed link alone is
-            // not enough. Restrict it to a logged-in user downloading a site they can edit.
-            if ( $private_root ) {
-                if ( ! is_user_logged_in() ) {
-                    return;
-                }
-                $segments = explode( '/', rawurldecode( $mwpdl ) );
-                $site_id  = isset( $segments[1] ) ? (int) $segments[1] : 0;
-                if ( 'sites' !== ( $segments[0] ?? '' ) || $site_id <= 0 || ( $segments[1] ?? '' ) !== (string) $site_id ) {
-                    return;
-                }
-                $website = MainWP_DB::instance()->get_website_by_id( $site_id );
-                if ( ! \mainwp_current_user_can( 'dashboard', 'execute_backups' ) || ! MainWP_System_Utility::can_edit_website( $website ) || ! \mainwp_current_user_can( 'site', $site_id ) ) {
-                    return;
-                }
             }
 
             $hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();

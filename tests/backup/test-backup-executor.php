@@ -1105,6 +1105,13 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 		touch( $protected, time() - 600 );
 		file_put_contents( $unprotected, 'PK' . "\x03\x04" . str_repeat( 'u', 32 ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- test fixture.
 		touch( $unprotected, time() - 300 );
+		$legacy_dir = \MainWP\Dashboard\MainWP_Backup_Private_Root::legacy_site_dir( $site_id );
+		wp_mkdir_p( $legacy_dir );
+		$legacy_protected   = $legacy_dir . 'protected.zip';
+		$legacy_unprotected = $legacy_dir . 'unprotected.zip';
+		file_put_contents( $legacy_protected, 'recorded legacy' );
+		file_put_contents( $legacy_unprotected, 'unrecorded legacy' );
+		touch( $legacy_unprotected, filemtime( $unprotected ) );
 
 		\MainWP\Dashboard\MainWP_Backup_Snapshots::instance()->record_snapshot(
 			array(
@@ -1118,6 +1125,12 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 						'role' => 'full',
 						'path' => $protected,
 					),
+					array(
+						'file' => 'protected.zip',
+						'size' => 15,
+						'role' => 'full',
+						'path' => $legacy_protected,
+					),
 				),
 			)
 		);
@@ -1130,7 +1143,11 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 
 			$this->assertFileExists( $protected, 'A snapshot-recorded archive must survive the scheduled-task sweep.' );
 			$this->assertFileDoesNotExist( $unprotected, 'An unrecorded archive past the retention count must be deleted.' );
+			$this->assertFileExists( $legacy_protected );
+			$this->assertFileDoesNotExist( $legacy_unprotected );
 		} finally {
+			wp_delete_file( $legacy_protected );
+			wp_delete_file( $legacy_unprotected );
 			delete_option( 'mainwp_backupsOnServer' );
 			$snapshot_table = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
 			$wpdb->query( $wpdb->prepare( "DELETE FROM {$snapshot_table} WHERE site_id = %d", $site_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.

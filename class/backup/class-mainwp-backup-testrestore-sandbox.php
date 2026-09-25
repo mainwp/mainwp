@@ -664,7 +664,7 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
      * this so a host the dashboard database user cannot create on - common on
      * managed hosting - is skipped once instead of retried on every snapshot.
      *
-     * @return array{capable:bool,reason:string} Whether a sandbox can be hosted,
+     * @return array{capable:bool,reason:string,error_code:string} Whether a sandbox can be hosted,
      *                                            and the operator-facing reason
      *                                            when it cannot.
      */
@@ -673,8 +673,9 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         try {
             $sandbox->bring_up();
             return array(
-                'capable' => true,
-                'reason'  => '',
+                'capable'    => true,
+                'reason'     => '',
+                'error_code' => '',
             );
         } catch ( \Throwable $e ) {
             // The reason is cached for CAPABILITY_TTL and shown to the operator, so it
@@ -683,8 +684,9 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
             // which shape refused. The one surfacing template escapes what it renders.
             $detail = $e instanceof MainWP_Exception ? trim( (string) $e->get_message_extra( false ) ) : '';
             return array(
-                'capable' => false,
-                'reason'  => '' === $detail ? $e->getMessage() : $e->getMessage() . ' (' . $detail . ')',
+                'capable'    => false,
+                'reason'     => '' === $detail ? $e->getMessage() : $e->getMessage() . ' (' . $detail . ')',
+                'error_code' => $e instanceof MainWP_Exception ? (string) $e->get_message_error_code() : '',
             );
         } finally {
             $sandbox->tear_down();

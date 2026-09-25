@@ -843,25 +843,27 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     }
                 }
 
-                if ( $wp_filesystem->exists( $dir ) ) {
-                    $dh = opendir( $dir );
-                    if ( $dh ) {
-                        while ( false !== ( $file = readdir( $dh ) ) ) {
-                            if ( '.' !== $file && '..' !== $file ) {
-                                $theFile = $dir . $file;
-                                if ( isset( $protected[ MainWP_Backup_Snapshots::normalise_path( $theFile ) ] ) ) {
-                                    continue;
-                                }
-                                if ( $information['db'] && MainWP_Backup_File_Manager::is_sql_file( $file ) ) {
-                                    $dbBackups[ filemtime( $theFile ) . $file ] = $theFile;
-                                }
+                foreach ( array( $dir, MainWP_Backup_Private_Root::legacy_site_dir( (int) $website->id ) ) as $sweep_dir ) {
+                    if ( $wp_filesystem->exists( $sweep_dir ) ) {
+                        $dh = opendir( $sweep_dir );
+                        if ( $dh ) {
+                            while ( false !== ( $file = readdir( $dh ) ) ) {
+                                if ( '.' !== $file && '..' !== $file ) {
+                                    $theFile = $sweep_dir . $file;
+                                    if ( isset( $protected[ MainWP_Backup_Snapshots::normalise_path( $theFile ) ] ) ) {
+                                        continue;
+                                    }
+                                    if ( $information['db'] && MainWP_Backup_File_Manager::is_sql_file( $file ) ) {
+                                        $dbBackups[ filemtime( $theFile ) . $theFile ] = $theFile;
+                                    }
 
-                                if ( $information['full'] && MainWP_Backup_File_Manager::is_archive( $file ) && ! MainWP_Backup_File_Manager::is_sql_archive( $file ) ) {
-                                    $fullBackups[ filemtime( $theFile ) . $file ] = $theFile;
+                                    if ( $information['full'] && MainWP_Backup_File_Manager::is_archive( $file ) && ! MainWP_Backup_File_Manager::is_sql_archive( $file ) ) {
+                                        $fullBackups[ filemtime( $theFile ) . $theFile ] = $theFile;
+                                    }
                                 }
                             }
+                            closedir( $dh );
                         }
-                        closedir( $dh );
                     }
                 }
                 krsort( $dbBackups );

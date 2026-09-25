@@ -37,7 +37,6 @@ trait Backup_Private_Root_Fixture {
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- Preserve the original request value for teardown.
 		$this->private_document_root = $_SERVER['DOCUMENT_ROOT'] ?? null;
 		unset( $_SERVER['DOCUMENT_ROOT'] );
-		delete_option( 'mainwp_backup_served_roots' );
 		$this->private_root = realpath( sys_get_temp_dir() ) . '/mainwp-private-test-' . uniqid();
 		add_filter( 'mainwp_backup_private_root', array( $this, 'filter_private_root' ) );
 		MainWP_Backup_Private_Root::reset();

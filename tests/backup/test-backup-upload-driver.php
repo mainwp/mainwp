@@ -1561,12 +1561,19 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_RETRYABLE, $job->status );
 		$this->assertGreaterThan( $now, (int) $job->next_retry_at );
 		$this->assertStringContainsString( 'Private backup directory', $job->last_error );
-		$upload = wp_upload_dir( null, false );
+		$base   = $this->make_temp_dir();
+		$filter = static function ( $dirs ) use ( $base ) {
+			$dirs['basedir'] = $base;
+			return $dirs;
+		};
+		add_filter( 'mainwp_get_wp_upload_dir', $filter );
+		$upload = apply_filters( 'mainwp_get_wp_upload_dir', wp_upload_dir( null, false ), null, false );
 		$legacy = trailingslashit( $upload['basedir'] ) . 'mainwp/upload-staging/' . $snapshot_id . '-' . $dest_id . '/';
 		wp_mkdir_p( $legacy );
 		file_put_contents( $legacy . 'partial.bin', 'partial' );
 		$cleanup = new \ReflectionMethod( MainWP_Backup_Upload_Driver::class, 'cleanup_staging' );
 		$cleanup->invoke( MainWP_Backup_Upload_Driver::instance(), $job );
+		remove_filter( 'mainwp_get_wp_upload_dir', $filter );
 		$this->assertDirectoryDoesNotExist( $legacy );
 	}
 }

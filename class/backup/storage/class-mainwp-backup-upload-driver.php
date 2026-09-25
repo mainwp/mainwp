@@ -1052,7 +1052,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
      */
     private function cleanup_staging( object $job ): void {
         $name   = (int) $job->snapshot_id . '-' . (int) $job->destination_id;
-        $upload = wp_upload_dir( null, false );
+        $upload = apply_filters( 'mainwp_get_wp_upload_dir', wp_upload_dir( null, false ), null, false );
         $legacy = trailingslashit( $upload['basedir'] ) . 'mainwp/upload-staging/' . $name . '/';
         foreach ( array( MainWP_Backup_Private_Root::staging_dir( 'upload-staging', $name ), $legacy ) as $dir ) {
             if ( is_wp_error( $dir ) || ! is_dir( $dir ) || is_link( untrailingslashit( $dir ) ) || is_link( dirname( untrailingslashit( $dir ) ) ) || is_link( dirname( untrailingslashit( $dir ), 2 ) ) ) {

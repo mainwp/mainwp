@@ -169,6 +169,9 @@ class MainWP_Backup_TestRestore_Scheduler { // phpcs:ignore Generic.Classes.Open
         }
 
         $probe = MainWP_Backup_TestRestore_Sandbox::probe_capability();
+        if ( MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE === ( $probe['error_code'] ?? '' ) ) {
+            return false;
+        }
         update_option(
             self::CAPABILITY_OPTION,
             array(

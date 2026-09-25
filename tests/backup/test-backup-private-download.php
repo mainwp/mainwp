@@ -127,38 +127,6 @@ class MainWP_Backup_Private_Download_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * A signed private link is a bearer capability; without a session it must serve nothing.
-	 */
-	public function test_private_mwpdl_download_requires_login() {
-		$site_id = $this->create_test_site();
-		$dir     = MainWP_Backup_Private_Root::site_dir( $site_id );
-		$file    = $dir . 'full-test.tar.gz';
-		file_put_contents( $file, 'private archive bytes' );
-		$query = array(
-			'root'  => 'private',
-			'mwpdl' => 'sites/' . $site_id . '/full-test.tar.gz',
-			'sig'   => MainWP_System_Utility::get_download_sig( $file ),
-		);
-		wp_set_current_user( 0 );
-		$this->assertNull( $this->request_download( $query ) );
-	}
-
-	/**
-	 * Only the site-owned `sites/<id>/...` shape is servable; other private locations are refused.
-	 */
-	public function test_private_mwpdl_download_refuses_non_sites_path() {
-		$dir  = MainWP_Backup_Private_Root::staging_dir( 'restore-staging', 'x' );
-		$file = $dir . 'file.tar.gz';
-		file_put_contents( $file, 'staging archive bytes' );
-		$query = array(
-			'root'  => 'private',
-			'mwpdl' => 'restore-staging/x/file.tar.gz',
-			'sig'   => MainWP_System_Utility::get_download_sig( $file ),
-		);
-		$this->assertNull( $this->request_download( $query ) );
-	}
-
-	/**
 	 * Missing and unknown root selectors keep serving the legacy location.
 	 */
 	public function test_legacy_mwpdl_root_selection_is_unchanged() {
@@ -177,27 +145,87 @@ class MainWP_Backup_Private_Download_Test extends MainWP_Abilities_Test_Case {
 		}
 	}
 
+
 	/**
-	 * A session alone grants neither backup execution nor site access.
+	 * Literal authorization outcomes exercise the real endpoint and its ordering.
 	 */
-	public function test_private_download_requires_backup_and_site_rights() {
+	public function test_private_download_gate_matrix() {
 		$this->skip_when_capabilities_bypassed();
-		$site_id = $this->create_test_site();
-		$file    = MainWP_Backup_Private_Root::site_dir( $site_id ) . 'full.zip';
-		file_put_contents( $file, 'archive' );
-		$query = array(
-			'root'  => 'private',
-			'mwpdl' => 'sites/' . $site_id . '/full.zip',
-			'sig'   => MainWP_System_Utility::get_download_sig( $file ),
+		$rows = array(
+			// Role, denied right, multi-user, request shape, expected bytes, expected resolver calls.
+			'anonymous'            => array( '', '', false, 'own', null, 0 ),
+			'subscriber'           => array( 'subscriber', '', false, 'own', null, 0 ),
+			'editor'               => array( 'editor', '', false, 'own', null, 0 ),
+			'administrator'        => array( 'administrator', '', false, 'own', 'archive', 1 ),
+			'backup right denied'  => array( 'administrator', 'dashboard', false, 'own', null, 0 ),
+			'site right denied'    => array( 'administrator', 'site', false, 'own', null, 0 ),
+			'other owner'          => array( 'administrator', '', true, 'own', null, 0 ),
+			'leading zero'         => array( 'administrator', '', false, 'sites/05/full.zip', null, 0 ),
+			'noncanonical integer' => array( 'administrator', '', false, 'sites/12abc/full.zip', null, 0 ),
+			'non-site path'        => array( 'administrator', '', false, 'backups/full.zip', null, 0 ),
+			'parent traversal'     => array( 'administrator', '', false, 'traversal', null, 1 ),
+			'other site path'      => array( 'administrator', '', false, 'other', null, 1 ),
 		);
-		foreach ( array( 'dashboard', 'site' ) as $denied ) {
-			$filter = static function ( $allowed, $type, $cap ) use ( $denied, $site_id ) {
-				return $type === $denied && ( 'execute_backups' === $cap || $site_id === (int) $cap ) ? false : $allowed;
+		foreach ( $rows as $label => $row ) {
+			list( $role, $denied, $multi, $shape, $expected, $expected_calls ) = $row;
+			$this->remove_private_fixture( $this->private_root );
+			MainWP_Backup_Private_Root::reset();
+			$user = '' === $role ? 0 : self::factory()->user->create( array( 'role' => $role ) );
+			wp_set_current_user( $user );
+			$owner    = $multi ? self::factory()->user->create() : $user;
+			$site_id  = $this->create_test_site( array( 'userid' => $owner ) );
+			$other_id = $this->create_test_site( array( 'userid' => $user ) );
+			$file     = $this->private_root . '/sites/' . $site_id . '/full.zip';
+			$sig      = 'unused';
+			if ( '' === $role ) {
+				delete_option( 'mainwp_backup_private_suffix' );
+			}
+			if ( '' !== $role ) {
+				wp_mkdir_p( dirname( $file ) );
+				file_put_contents( $file, 'archive' );
+				$sig = MainWP_System_Utility::get_download_sig( $file );
+			}
+			$paths  = array(
+				'own'       => 'sites/' . $site_id . '/full.zip',
+				'other'     => 'sites/' . $other_id . '/full.zip',
+				'traversal' => 'sites/' . $site_id . '/../' . $site_id . '/full.zip',
+			);
+			$calls  = 0;
+			$count  = static function ( $root ) use ( &$calls ) {
+				++$calls;
+				return $root;
 			};
-			add_filter( 'mainwp_currentusercan', $filter, 10, 3 );
-			$this->assertNull( $this->request_download( $query ), $denied );
-			remove_filter( 'mainwp_currentusercan', $filter, 10 );
+			$rights = static function ( $allowed, $type ) use ( $denied ) {
+				return $type === $denied ? false : $allowed;
+			};
+			$mode   = static function () use ( $multi ) {
+				return ! $multi;
+			};
+			add_filter( 'mainwp_backup_private_root', $count, 99 );
+			add_filter( 'mainwp_currentusercan', $rights, 10, 2 );
+			add_filter( 'mainwp_is_single_user', $mode );
+			try {
+				$this->assertSame(
+					$expected,
+					$this->request_download(
+						array(
+							'root'  => 'private',
+							'mwpdl' => $paths[ $shape ] ?? $shape,
+							'sig'   => $sig,
+						)
+					),
+					$label
+				);
+				$this->assertSame( $expected_calls, $calls, $label );
+				if ( '' === $role ) {
+					$this->assertDirectoryDoesNotExist( $this->private_root );
+					$this->assertFalse( get_option( 'mainwp_backup_private_suffix' ) );
+				}
+			} finally {
+				remove_filter( 'mainwp_backup_private_root', $count, 99 );
+				remove_filter( 'mainwp_currentusercan', $rights, 10 );
+				remove_filter( 'mainwp_is_single_user', $mode );
+			}
 		}
-		$this->assertSame( 'archive', $this->request_download( $query ) );
 	}
 }

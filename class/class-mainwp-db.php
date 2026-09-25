@@ -3343,6 +3343,10 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             MainWP_Encrypt_Data_Lib::remove_key_file( $websiteid );
             MainWP_DB_Uptime_Monitoring::instance()->delete_monitor( array( 'wpid' => $websiteid ) );
             MainWP_Manage_Sites_List_Table::invalidate_manage_sites_cache();
+            if ( $nr > 0 ) {
+                MainWP_DB_Common::instance()->delete_widget_saved_filters_for_all_users( 'individual', $websiteid );
+            }
+
             return $nr;
         }
 

@@ -159,19 +159,19 @@ class MainWP_Backup_Now_Continuation_Test extends \WP_UnitTestCase {
 	 */
 	public function test_continue_lane_rotates_across_unfinished_tasks() {
 		$cases = array(
-			'alternation'         => array(
+			'alternation'               => array(
 				'ticks'    => 4,
 				'paused'   => false,
 				'results'  => array(),
 				'expected' => array( 'A', 'B', 'A', 'B' ),
 			),
-			'slot refused'        => array(
-				'ticks'    => 1,
+			'false still ends the tick' => array(
+				'ticks'    => 2,
 				'paused'   => false,
-				'results'  => array( false ),
+				'results'  => array( false, false ),
 				'expected' => array( 'A', 'B' ),
 			),
-			'paused never picked' => array(
+			'paused never picked'       => array(
 				'ticks'    => 3,
 				'paused'   => true,
 				'results'  => array(),

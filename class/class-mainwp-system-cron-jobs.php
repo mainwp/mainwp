@@ -1570,6 +1570,8 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         MainWP_Utility::update_option( 'mainwp_cron_last_backups_continue', time() );
 
         $tasks = MainWP_DB_Backup::instance()->get_backup_tasks_to_complete();
+        // A failed task query must not stop the other drivers on this lane.
+        $tasks = is_array( $tasks ) ? $tasks : array();
 
         MainWP_Logger::instance()->debug( 'backups continue :: Found ' . count( $tasks ) . ' to continue.' );
 
@@ -1602,7 +1604,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
             if ( empty( $task ) ) {
                 continue;
             }
-            if ( $task->completed >= $task->last_run ) {
+            if ( ! empty( $task->paused ) || $task->completed >= $task->last_run ) {
                 continue;
             }
 
@@ -1610,11 +1612,11 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
             // still rotates to the back: starvation was seen on dev.mainwps.com 2026-09-25.
             MainWP_DB_Backup::instance()->update_backup_task_with_values( $task->id, array( 'last_continued' => time() ) );
 
-            // False means the run never started (scope pause or slot refusal), so this
-            // tick is still free for the next candidate; only one started run gets a tick.
-            if ( false !== $this->continue_backup_task( $task ) ) {
-                break;
-            }
+            // One call consumes the tick: false also follows real work with site errors,
+            // and a global slot refusal would refuse the next candidate too. The stamp
+            // still rotates a refused or erroring task to the back.
+            $this->continue_backup_task( $task );
+            break;
         }
     }
 

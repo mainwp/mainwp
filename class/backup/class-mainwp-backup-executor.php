@@ -831,6 +831,12 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 // them.
                 $protected = MainWP_Backup_Snapshots::instance()->get_protected_paths_for_site( (int) $website->id );
 
+                // Tasks sharing a site interleave on the continue lane, so another open
+                // run's unrecorded downloads must survive this task's sweep too.
+                foreach ( MainWP_DB_Backup::instance()->get_open_run_download_paths( (int) $website->id ) as $path ) {
+                    $protected[ MainWP_Backup_Snapshots::normalise_path( $path ) ] = true;
+                }
+
                 // The current run's own downloaded artifacts are unrecorded
                 // until their snapshot lands, so the sweep must read them
                 // fresh and protect them: this caller's row view can predate

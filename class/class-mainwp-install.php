@@ -43,6 +43,13 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     const BACKUP_SNAPSHOT_RUN_KEY_REPAIR_PENDING = 'mainwp_backup_snapshot_run_key_repair_pending';
 
     /**
+     * Retry a failed continue-lane column migration after the version is stamped.
+     *
+     * @var string
+     */
+    const BACKUP_TASK_LAST_CONTINUED_REPAIR_PENDING = 'mainwp_backup_task_last_continued_repair_pending';
+
+    /**
      * Retry failed per-site identity migrations after the version is stamped.
      *
      * @var string
@@ -159,6 +166,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             $this->maybe_retry_backup_progress_index_repair();
             $this->maybe_retry_backup_progress_unique_key();
             $this->maybe_retry_backup_snapshot_run_key();
+            $this->maybe_retry_backup_task_last_continued();
             $pending = (int) get_site_option( self::BACKUP_SITE_UNIQ_KEYS_REPAIR_PENDING );
             if ( $pending && time() - $pending >= HOUR_IN_SECONDS ) {
                 $this->repair_backup_site_unique_keys();
@@ -794,6 +802,10 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
 
         if ( version_compare( $currentVersion, '9.0.2.26', '<' ) ) { // NOSONAR - none IP.
             $this->ensure_backup_snapshot_run_key();
+        }
+
+        if ( version_compare( $currentVersion, '9.0.2.27', '<' ) ) { // NOSONAR - none IP.
+            $this->ensure_backup_task_last_continued();
         }
 
         // Rename the backups feature flag to mainwp_enableNativeBackups; reads fall back to the
@@ -1465,6 +1477,46 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         $pending = (int) get_site_option( static::BACKUP_SNAPSHOT_RUN_KEY_REPAIR_PENDING );
         if ( $pending && time() - $pending >= HOUR_IN_SECONDS ) {
             $this->ensure_backup_snapshot_run_key();
+        }
+    }
+
+    /**
+     * Retry the column addition because dbDelta failures do not hold back the version stamp.
+     *
+     * @return bool Whether the column exists.
+     */
+    public function ensure_backup_task_last_continued() {
+        $suppress = $this->wpdb->suppress_errors();
+        $table    = esc_sql( $this->table_name( 'wp_backup' ) );
+        $column   = $this->wpdb->get_var( "SHOW COLUMNS FROM {$table} LIKE 'last_continued'" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL introspection; table escaped via esc_sql.
+        $error    = '';
+
+        if ( empty( $column ) ) {
+            $this->wpdb->query( "ALTER TABLE {$table} ADD COLUMN last_continued int(11) NOT NULL DEFAULT 0" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL; table escaped via esc_sql.
+            $error  = $this->wpdb->last_error;
+            $column = $this->wpdb->get_var( "SHOW COLUMNS FROM {$table} LIKE 'last_continued'" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL introspection; table escaped via esc_sql.
+        }
+        $this->wpdb->suppress_errors( $suppress );
+
+        if ( empty( $column ) ) {
+            // Install runs before the mainwp_log_warning listeners are registered; use the logger directly.
+            MainWP_Logger::instance()->warning( sprintf( 'Backup task last_continued repair deferred for %s: %s', $table, $error ) );
+            update_site_option( static::BACKUP_TASK_LAST_CONTINUED_REPAIR_PENDING, time() );
+            return false;
+        }
+        delete_site_option( static::BACKUP_TASK_LAST_CONTINUED_REPAIR_PENDING );
+        return true;
+    }
+
+    /**
+     * Avoid retrying denied ALTER statements on every request.
+     *
+     * @return void
+     */
+    public function maybe_retry_backup_task_last_continued() {
+        $pending = (int) get_site_option( static::BACKUP_TASK_LAST_CONTINUED_REPAIR_PENDING );
+        if ( $pending && time() - $pending >= HOUR_IN_SECONDS ) {
+            $this->ensure_backup_task_last_continued();
         }
     }
 

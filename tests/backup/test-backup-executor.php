@@ -1219,6 +1219,89 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Interleaved tasks must retain each other's downloads only while their runs are open.
+	 *
+	 * @return void
+	 */
+	public function test_sweep_preserves_other_open_run_downloads() {
+		global $wpdb;
+
+		list( $site_id, $task ) = $this->site_and_task();
+		$db                     = MainWP_DB_Backup::instance();
+		$other                  = $db->add_backup_task( $task->userid, 'Interleaved task', 'daily', 'full', '', (string) $site_id, '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0 );
+		$this->assertNotFalse( $other );
+		$closed = $db->add_backup_task( $task->userid, 'Closed task', 'daily', 'full', '', (string) $site_id, '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0 );
+		$this->assertNotFalse( $closed );
+		$task->id = (int) $closed->id + 1;
+		$db->update_backup_task_with_values(
+			$closed->id,
+			array(
+				'last_run'  => 100,
+				'completed' => 100,
+			)
+		);
+		$db->update_backup_task_with_values(
+			$other->id,
+			array(
+				'last_run'  => 100,
+				'completed' => 0,
+			)
+		);
+		$content = 'PK' . "\x03\x04" . str_repeat( 'x', 4092 );
+
+		$dir = \MainWP\Dashboard\MainWP_Backup_Private_Root::site_dir( $site_id );
+		wp_mkdir_p( $dir );
+		$artifact = $dir . 'full-current-run.zip';
+		file_put_contents( $artifact, $content ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- test fixture.
+		$stale = $dir . 'full-old-run.zip';
+		file_put_contents( $stale, 'PK' . "\x03\x04" . str_repeat( 'o', 32 ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- test fixture.
+		touch( $stale, time() - 600 );
+		$this->seed_progress( $other->id, $site_id, array( 'downloadedFULL' => $stale ) );
+		$closed_artifact = $dir . 'full-closed-run.zip';
+		file_put_contents( $closed_artifact, $content ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- test fixture.
+		$this->seed_progress( $closed->id, $site_id, array( 'downloadedFULL' => $closed_artifact ) );
+
+		$this->give_site_real_privkey( $site_id );
+		$this->seed_progress(
+			$task->id,
+			$site_id,
+			array(
+				'removedFiles'           => 0,
+				'fetchResult'            => wp_json_encode(
+					array(
+						'full' => 'backup-file.zip',
+						'db'   => false,
+						'size' => strlen( $content ),
+					)
+				),
+				'downloadedFULL'         => $artifact,
+				'downloadedFULLComplete' => 1,
+			)
+		);
+
+		update_option( 'mainwp_backupsOnServer', 1 );
+
+		try {
+			$result = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+			$this->assertNotFalse( $result, 'The run must complete: its artifact is on disk and flagged.' );
+
+			$this->assertFileExists( $artifact, 'The sweep must never delete the current run\'s own artifact.' );
+			$this->assertFileExists( $stale );
+			$this->assertFileDoesNotExist( $closed_artifact );
+
+			$snapshot = \MainWP\Dashboard\MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, (int) $task->id );
+			$this->assertNotNull( $snapshot, 'The snapshot record must land on the surviving artifact.' );
+		} finally {
+			$db->remove_backup_task( $other->id );
+			$db->remove_backup_task( $closed->id );
+			delete_option( 'mainwp_backupsOnServer' );
+			$snapshot_table = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+			$wpdb->query( $wpdb->prepare( "DELETE FROM {$snapshot_table} WHERE site_id = %d", $site_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
+			array_map( 'unlink', glob( $dir . '*' ) ?: array() ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test cleanup.
+		}
+	}
+
+	/**
 	 * The sweep gate is claimed SQL-side: exactly one driver of a run can
 	 * win it, so a driver holding a stale in-memory removedFiles view can
 	 * never re-run the sweep after the winner.

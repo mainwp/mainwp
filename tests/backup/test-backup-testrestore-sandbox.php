@@ -26,7 +26,9 @@ function disk_free_space( $directory ) {
 	return null === $free ? \disk_free_space( $directory ) : $free;
 }
 
-namespace MainWP\Dashboard\Tests; // phpcs:ignore Universal.Namespaces.OneDeclarationPerFile.MultipleFound -- the filesystem stub must share the production namespace.
+namespace MainWP\Dashboard\Tests; // phpcs:ignore Universal.Namespaces.OneDeclarationPerFile.MultipleFound -- The production-namespace filesystem stub belongs with its tests.
+
+require_once __DIR__ . '/trait-backup-private-root-fixture.php'; // phpcs:ignore Universal.Namespaces.OneDeclarationPerFile.MultipleFound -- the filesystem stub must share the production namespace.
 
 use MainWP\Dashboard\MainWP_Backup_TestRestore_Sandbox;
 use MainWP\Dashboard\MainWP_Exception;
@@ -35,6 +37,8 @@ use MainWP\Dashboard\MainWP_Exception;
  * Class MainWP_Backup_TestRestore_Sandbox_Test
  */
 class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs:ignore Universal.Files.SeparateFunctionsFromOO.Mixed, Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- the switchable stub belongs with its regression tests.
+
+	use Backup_Private_Root_Fixture;
 
 	/**
 	 * Null preserves the host capacity outside capacity tests.
@@ -58,6 +62,7 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 	 */
 	public function set_up() {
 		parent::set_up();
+		$this->set_up_private_root();
 		self::$free_space = null;
 		$this->dir        = sys_get_temp_dir() . '/mainwp-tr-sandbox-' . uniqid();
 		mkdir( $this->dir ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
@@ -71,6 +76,7 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 	public function tear_down() {
 		self::$free_space = null;
 		$this->rrmdir( $this->dir );
+		$this->tear_down_private_root();
 		parent::tear_down();
 	}
 
@@ -458,7 +464,7 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 
 		try {
 			$sandbox->bring_up();
-			$parent = $this->dir . '/mainwp/test-restore';
+			$parent = $this->private_root . '/test-restore';
 			$this->assertFileExists( $parent . '/.htaccess' );
 			$this->assertSame( 'deny from all', file_get_contents( $parent . '/.htaccess' ) );
 			$this->assertFileExists( $parent . '/index.php' );
@@ -502,7 +508,8 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 			} catch ( MainWP_Exception $e ) {
 				$threw = true;
 				$this->assertSame( MainWP_Backup_TestRestore_Sandbox::ERR_UNSUPPORTED, $e->get_message_error_code() );
-				$this->assertSame( 'The test-restore sandbox could not create its archive directory.', $e->getMessage() );
+				$this->assertStringContainsString( 'Private backup directory', $e->getMessage() );
+				$this->assertStringContainsString( $alias_dir, $e->getMessage() );
 			}
 			$this->assertTrue( $threw, 'The blocked alias directory must fail after parent protection.' );
 			$this->assertDirectoryDoesNotExist( $alias_dir );
@@ -1064,7 +1071,7 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 	 * @return void
 	 */
 	public function test_probe_capability_reason_names_the_refusing_shape() {
-		$parent = $this->dir . '/mainwp/test-restore';
+		$parent = $this->private_root . '/test-restore';
 		$this->assertTrue( wp_mkdir_p( $parent ) );
 		$this->assertSame( 14, file_put_contents( $this->dir . '/operator-file', 'allow from all' ) );
 		$this->assertTrue( symlink( $this->dir . '/operator-file', $parent . '/.htaccess' ) );

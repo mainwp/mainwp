@@ -405,12 +405,10 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
      *
      * @param int $job_id Restore job id.
      *
-     * @return string Directory with trailing slash.
+     * @return string|\WP_Error Directory with trailing slash, or a storage error.
      */
-    public function staging_dir( int $job_id ): string {
-        // Uploads are served directly, and a host can recreate this tree without its deny files.
-        list( $root ) = MainWP_System_Utility::get_mainwp_dir( 'restore-staging', false, wp_upload_dir() );
-        return $root . (int) $job_id . '/';
+    public function staging_dir( int $job_id ): string|\WP_Error {
+        return MainWP_Backup_Private_Root::staging_dir( 'restore-staging', (string) $job_id );
     }
 
     /**
@@ -426,8 +424,11 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
      */
     public function stage_artifacts( int $job_id, array &$plan, float $deadline ): array {
         $staging = $this->staging_dir( $job_id );
-        if ( ! is_dir( $staging ) ) {
-            wp_mkdir_p( $staging );
+        if ( is_wp_error( $staging ) ) {
+            return array(
+                'done'  => false,
+                'error' => $staging->get_error_message(),
+            );
         }
 
         foreach ( $plan as $index => $entry ) {
@@ -1123,8 +1124,19 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
      * @return array { done: bool, error: string|null, retryable: bool }
      */
     public function transfer_artifacts( object $website, string $task_id, array $plan, array &$cursor, float $deadline, ?callable $should_continue = null ): array { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- chunk loop with realign, adaptive sizing, and floor retries.
-        // Resumed transfers can outlive the host's copy of the parent deny files.
-        MainWP_System_Utility::get_mainwp_dir( 'restore-staging', false, wp_upload_dir() );
+        // Reassert privacy even when a transfer resumes without staging again.
+        foreach ( $plan as $entry ) {
+            if ( ! empty( $entry['staged_path'] ) && empty( $entry['adopt_only'] ) && 'remote' === ( $entry['source'] ?? '' ) ) {
+                $dir = MainWP_Backup_Private_Root::staging_dir( 'restore-staging', basename( dirname( $entry['staged_path'] ) ) );
+                if ( is_wp_error( $dir ) || ! MainWP_Backup_File_Manager::path_is_confined_to( $entry['staged_path'], $dir ) ) {
+                    return array(
+                        'done'      => false,
+                        'error'     => is_wp_error( $dir ) ? $dir->get_error_message() : __( 'Restore staging path is outside its private directory.', 'mainwp' ),
+                        'retryable' => false,
+                    );
+                }
+            }
+        }
         $cursor = array_merge(
             array(
                 'artifact_index'        => 0,
@@ -1489,7 +1501,7 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
      */
     public function cleanup_staging( int $job_id ): void {
         $dir = $this->staging_dir( $job_id );
-        if ( ! is_dir( $dir ) ) {
+        if ( is_wp_error( $dir ) || ! is_dir( $dir ) ) {
             return;
         }
         foreach ( (array) glob( $dir . '*' ) as $file ) {

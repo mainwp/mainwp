@@ -1750,20 +1750,22 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
         $dbBackups   = array();
         $fullBackups = array();
-        if ( file_exists( $dir ) ) {
-            $dh = opendir( $dir );
-            if ( $dh ) {
-                while ( false !== ( $file = readdir( $dh ) ) ) {
-                    if ( '.' !== $file && '..' !== $file ) {
-                        $theFile = $dir . $file;
-                        if ( MainWP_Backup_File_Manager::is_sql_file( $file ) ) {
-                            $dbBackups[ filemtime( $theFile ) . $file ] = $theFile;
-                        } elseif ( MainWP_Backup_File_Manager::is_archive( $file ) ) {
-                            $fullBackups[ filemtime( $theFile ) . $file ] = $theFile;
+        foreach ( array( MainWP_Backup_Private_Root::site_dir( (int) $website->id ), $dir ) as $dir ) {
+            if ( ! is_wp_error( $dir ) && file_exists( $dir ) ) {
+                $dh = opendir( $dir );
+                if ( $dh ) {
+                    while ( false !== ( $file = readdir( $dh ) ) ) {
+                        if ( '.' !== $file && '..' !== $file ) {
+                            $theFile = $dir . $file;
+                            if ( MainWP_Backup_File_Manager::is_sql_file( $file ) ) {
+                                $dbBackups[ filemtime( $theFile ) . $file . $dir ] = $theFile;
+                            } elseif ( MainWP_Backup_File_Manager::is_archive( $file ) ) {
+                                $fullBackups[ filemtime( $theFile ) . $file . $dir ] = $theFile;
+                            }
                         }
                     }
+                    closedir( $dh );
                 }
-                closedir( $dh );
             }
         }
         krsort( $dbBackups );

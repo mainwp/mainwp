@@ -13,6 +13,8 @@
 
 namespace MainWP\Dashboard\Tests;
 
+require_once __DIR__ . '/trait-backup-private-root-fixture.php';
+
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_Backup_Restore_Job_Store;
 use MainWP\Dashboard\MainWP_Backup_Retention_Executor;
@@ -24,6 +26,19 @@ use MainWP\Dashboard\MainWP_Backup_Upload_Job_Store;
  * Class MainWP_Backup_Retention_Executor_Test
  */
 class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
+
+	use Backup_Private_Root_Fixture;
+
+	/**
+	 * Isolate native writes.
+	 *
+	 * @return void
+	 */
+	public function setUp(): void {
+		parent::setUp();
+		$this->set_up_private_root();
+	}
+
 
 	/**
 	 * Fixture site id.
@@ -71,6 +86,7 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 		}
 		$this->fixture_dirs = array();
 
+		$this->tear_down_private_root();
 		parent::tear_down();
 	}
 
@@ -105,7 +121,7 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 
 		$upload  = wp_upload_dir();
 		$site_id = isset( $fields['site_id'] ) ? (int) $fields['site_id'] : $this->site_id;
-		$dir     = trailingslashit( $upload['basedir'] ) . 'mainwp/0/' . $site_id . '/snapshot-task-reten-' . uniqid();
+		$dir     = \MainWP\Dashboard\MainWP_Backup_Private_Root::site_dir( $site_id ) . 'snapshot-task-reten-' . uniqid();
 		wp_mkdir_p( $dir );
 		$this->fixture_dirs[] = $dir;
 

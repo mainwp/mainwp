@@ -14,6 +14,8 @@
 
 namespace MainWP\Dashboard\Tests;
 
+require_once __DIR__ . '/trait-backup-private-root-fixture.php';
+
 use MainWP\Dashboard\MainWP_Backup_Archive_Cipher;
 use MainWP\Dashboard\MainWP_Backup_Chunker;
 use MainWP\Dashboard\MainWP_Backup_Encryption;
@@ -28,6 +30,8 @@ use MainWP\Dashboard\MainWP_DB;
  * Class MainWP_Backup_Upload_Driver_Test
  */
 class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
+
+	use Backup_Private_Root_Fixture;
 
 	/**
 	 * Empty and malformed artifact lists must never verify an offsite copy.
@@ -65,6 +69,7 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function set_up() {
 		parent::set_up();
+		$this->set_up_private_root();
 		remove_all_actions( 'mainwp_backup_snapshot_recorded' );
 		remove_all_actions( 'mainwp_backup_upload_job_settled' );
 		remove_all_actions( 'mainwp_backup_snapshot_offsite_verified' );
@@ -94,7 +99,7 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 		$this->temp_dirs = array();
 
 		$upload = wp_upload_dir();
-		$this->remove_dir( trailingslashit( $upload['basedir'] ) . 'mainwp/upload-staging' );
+		$this->remove_dir( $this->private_root . '/upload-staging' );
 
 		// Encryption state lives in a filesystem KEK file and options that
 		// outlive the per-test DB rollback; clear it so an armed test does not
@@ -104,6 +109,7 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 		delete_option( MainWP_Backup_Encryption::ENABLED_OPTION );
 		delete_option( MainWP_Backup_Encryption::RECOVERY_OPTION );
 
+		$this->tear_down_private_root();
 		parent::tear_down();
 	}
 
@@ -486,7 +492,7 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( $small_sha, $by_checkpoint['small.txt']['sha256'] );
 
 		$upload = wp_upload_dir();
-		$this->assertDirectoryDoesNotExist( trailingslashit( $upload['basedir'] ) . 'mainwp/upload-staging/' . $snapshot_id . '-' . $dest_id );
+		$this->assertDirectoryDoesNotExist( $this->private_root . '/upload-staging/' . $snapshot_id . '-' . $dest_id );
 
 		$this->assertCount( 1, $events );
 		$this->assertSame( 4, $events[0]['site_id'] );
@@ -511,7 +517,7 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 		$chunking = new \ReflectionMethod( $driver, 'phase_chunking' );
 		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
 		$base     = $this->make_temp_dir();
-		$root     = $base . '/mainwp/upload-staging';
+		$root     = $this->private_root . '/upload-staging';
 		$upload   = static function ( $dirs ) use ( $base ) {
 			$dirs['basedir'] = $base;
 			return $dirs;

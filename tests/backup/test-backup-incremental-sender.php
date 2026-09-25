@@ -23,7 +23,9 @@ function time() {
 	return Tests\MainWP_Backup_Incremental_Sender_Test::$fixed_time ?? \time();
 }
 
-namespace MainWP\Dashboard\Tests; // phpcs:ignore Universal.Namespaces.OneDeclarationPerFile.MultipleFound -- the filesystem or clock stub must share the production namespace.
+namespace MainWP\Dashboard\Tests; // phpcs:ignore Universal.Namespaces.OneDeclarationPerFile.MultipleFound -- The production-namespace filesystem stub belongs with its tests.
+
+require_once __DIR__ . '/trait-backup-private-root-fixture.php'; // phpcs:ignore Universal.Namespaces.OneDeclarationPerFile.MultipleFound -- the filesystem or clock stub must share the production namespace.
 
 use MainWP\Dashboard\MainWP_Backup_Error_Codes;
 use MainWP\Dashboard\MainWP_Backup_Executor;
@@ -41,6 +43,8 @@ use MainWP\Dashboard\MainWP_System_Utility;
  * Class MainWP_Backup_Incremental_Sender_Test
  */
 class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case { // phpcs:ignore Universal.Files.SeparateFunctionsFromOO.Mixed, Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- the switchable stub belongs with its regression tests.
+
+	use Backup_Private_Root_Fixture;
 
 	/**
 	 * Keep initiation timestamps equal even when a test crosses a wall-clock second.
@@ -87,6 +91,7 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function set_up() {
 		parent::set_up();
+		$this->set_up_private_root();
 		self::$fixed_time = null;
 	}
 
@@ -134,11 +139,12 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 			unlink( $this->manifest_fixture );
 		}
 		foreach ( $this->site_ids as $site_id ) {
-			$dir = MainWP_System_Utility::get_mainwp_specific_dir( $site_id );
+			$dir = \MainWP\Dashboard\MainWP_Backup_Private_Root::site_dir( $site_id );
 			if ( is_dir( $dir ) && false !== strpos( $dir, '/mainwp/' ) ) {
 				self::rrmdir( $dir );
 			}
 		}
+		$this->tear_down_private_root();
 		parent::tearDown();
 	}
 
@@ -861,7 +867,7 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	public function test_manifest_artifact_failure_matrix( $actual_size, $digest, $download_code, $expected_code, $lock_refused = false ) {
 		list( $site_id, $task )           = $this->arrange_manual_task( false );
 		$this->remote_files['files.list'] = str_repeat( 'x', $actual_size );
-		$local                            = MainWP_System_Utility::get_mainwp_specific_dir( $site_id ) . 'snapshot-manual-' . $task->id . '/files.list';
+		$local                            = \MainWP\Dashboard\MainWP_Backup_Private_Root::site_dir( $site_id ) . 'snapshot-manual-' . $task->id . '/files.list';
 		$failure                          = '' === $download_code ? null : ( 'runtime' === $download_code ? new \RuntimeException( 'Download interrupted.' ) : MainWP_Backup_Error_Codes::exception( $download_code ) );
 		$deleted_under_lock               = array();
 		$rewrite                          = static function ( $result, $website, $what ) use ( $digest ) {
@@ -1019,7 +1025,7 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( '', $snapshot->manifest_path );
 		$this->assertSame( array( 'full' ), array_column( $snapshot->archives, 'role' ) );
 		$this->assertFileExists( $snapshot->archives[0]['path'] );
-		$this->assertFileDoesNotExist( MainWP_System_Utility::get_mainwp_specific_dir( $site_id ) . 'snapshot-unverified-full/files.list' );
+		$this->assertFileDoesNotExist( \MainWP\Dashboard\MainWP_Backup_Private_Root::site_dir( $site_id ) . 'snapshot-unverified-full/files.list' );
 	}
 
 	/** Archive size failures cannot be treated as optional metadata failures. */
@@ -1566,7 +1572,7 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		$this->assertIsArray( $cycle['result'] );
 
 		// Every artifact landed in the per-run snapshot directory.
-		$run_dir = MainWP_System_Utility::get_mainwp_specific_dir( $site_id ) . 'snapshot-child-task-1/';
+		$run_dir = \MainWP\Dashboard\MainWP_Backup_Private_Root::site_dir( $site_id ) . 'snapshot-child-task-1/';
 		foreach ( $artifacts as $artifact ) {
 			$this->assertFileExists( $run_dir . $artifact['file'] );
 			$this->assertSame( (int) $artifact['size'], (int) filesize( $run_dir . $artifact['file'] ) );
@@ -1620,7 +1626,7 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		);
 		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
 		$task    = $this->make_task( $website );
-		$dir     = MainWP_System_Utility::get_mainwp_specific_dir( $site_id );
+		$dir     = \MainWP\Dashboard\MainWP_Backup_Private_Root::site_dir( $site_id );
 		wp_mkdir_p( $dir );
 		$orphan = $dir . 'previous.zip.downloading.reclaim';
 		file_put_contents( $orphan, '' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
@@ -1755,7 +1761,7 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		$create  = $this->run_cycle( $site_id, $task );
 		$this->assertNull( $create['exception'] );
 		$this->assertSame( '1', $this->last_call_params( 'backup_task_create' )['emit_manifest'] );
-		$old_backup = MainWP_System_Utility::get_mainwp_specific_dir( $site_id ) . 'full-obsolete.zip';
+		$old_backup = \MainWP\Dashboard\MainWP_Backup_Private_Root::site_dir( $site_id ) . 'full-obsolete.zip';
 		wp_mkdir_p( dirname( $old_backup ) );
 		file_put_contents( $old_backup, $this->remote_files['backup-base.zip'] );
 		update_option( 'mainwp_backupsOnServer', 1 );
@@ -1767,7 +1773,7 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		$this->assertNotNull( $snapshot );
 		$this->assertSame( $type, $snapshot->type );
 		$this->assertNull( $snapshot->parent_id );
-		$run_dir = MainWP_System_Utility::get_mainwp_specific_dir( $site_id ) . 'snapshot-child-full-manifest/';
+		$run_dir = \MainWP\Dashboard\MainWP_Backup_Private_Root::site_dir( $site_id ) . 'snapshot-child-full-manifest/';
 		$this->assertSame( $run_dir . 'files.list', $snapshot->manifest_path );
 		$this->assertCount( 2, $snapshot->archives );
 		$this->assertSame(

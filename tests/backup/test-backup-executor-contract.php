@@ -11,6 +11,8 @@
 
 namespace MainWP\Dashboard\Tests;
 
+require_once __DIR__ . '/trait-backup-private-root-fixture.php';
+
 use MainWP\Dashboard\MainWP_Backup_Executor;
 use MainWP\Dashboard\MainWP_Backup_Snapshots;
 use MainWP\Dashboard\MainWP_DB;
@@ -22,6 +24,8 @@ use MainWP\Dashboard\MainWP_System_Utility;
  */
 class MainWP_Backup_Executor_Contract_Test extends MainWP_Abilities_Test_Case {
 
+	use Backup_Private_Root_Fixture;
+
 	/**
 	 * Set up: enable the legacy backup feature.
 	 *
@@ -29,6 +33,7 @@ class MainWP_Backup_Executor_Contract_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function setUp(): void {
 		parent::setUp();
+		$this->set_up_private_root();
 		update_option( 'mainwp_enableNativeBackups', 1 );
 	}
 
@@ -43,6 +48,7 @@ class MainWP_Backup_Executor_Contract_Test extends MainWP_Abilities_Test_Case {
 		// wp_options has no cascade, so handle rows would outlive their site.
 		$wpdb->query( $wpdb->prepare( 'DELETE FROM ' . MainWP_DB::instance()->get_table_name( 'wp_options' ) . ' WHERE name = %s', MainWP_Backup_Executor::ADHOC_TASK_OPTION ) ); // phpcs:ignore WordPress.DB -- test cleanup.
 		delete_option( 'mainwp_enableNativeBackups' );
+		$this->tear_down_private_root();
 		parent::tearDown();
 	}
 
@@ -476,7 +482,7 @@ class MainWP_Backup_Executor_Contract_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function test_has_recent_backup_detects_fresh_and_stale() {
 		$site_id = $this->create_test_site();
-		$dir     = MainWP_System_Utility::get_mainwp_specific_dir( $site_id );
+		$dir     = \MainWP\Dashboard\MainWP_Backup_Private_Root::site_dir( $site_id );
 		wp_mkdir_p( $dir );
 
 		$this->assertFalse( MainWP_Backup_Executor::has_recent_backup( $site_id, 7 ), 'An empty backup directory has no recent backup.' );
@@ -586,7 +592,7 @@ class MainWP_Backup_Executor_Contract_Test extends MainWP_Abilities_Test_Case {
 		$this->assertFalse( MainWP_Backup_Executor::has_recent_backup( $native_site, 7 ), 'No legacy archive on disk.' );
 
 		$legacy_site = $this->create_test_site();
-		$dir         = MainWP_System_Utility::get_mainwp_specific_dir( $legacy_site );
+		$dir         = \MainWP\Dashboard\MainWP_Backup_Private_Root::site_dir( $legacy_site );
 		wp_mkdir_p( $dir );
 		$archive = $dir . 'full-example-June-1-2026.tar.gz';
 		file_put_contents( $archive, 'x' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- test fixture.

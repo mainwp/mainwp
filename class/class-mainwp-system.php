@@ -736,13 +736,43 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     public function parse_init() {
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( isset( $_GET['mwpdl'] ) && isset( $_GET['sig'] ) ) {
-            $mwpDir = MainWP_System_Utility::get_mainwp_dir();
-            $mwpDir = $mwpDir[0];
-            $mwpdl  = isset( $_REQUEST['mwpdl'] ) ? wp_unslash( $_REQUEST['mwpdl'] ) : '';
-            $file   = trailingslashit( $mwpDir ) . rawurldecode( $mwpdl );
+            $private_root = isset( $_GET['root'] ) && 'private' === $_GET['root'];
+            if ( $private_root ) {
+                $mwpDir = MainWP_Backup_Private_Root::resolve();
+                if ( is_wp_error( $mwpDir ) ) {
+                    return;
+                }
+            } else {
+                $mwpDir = MainWP_System_Utility::get_mainwp_dir();
+                $mwpDir = $mwpDir[0];
+            }
+            $mwpdl = isset( $_REQUEST['mwpdl'] ) ? wp_unslash( $_REQUEST['mwpdl'] ) : '';
+            $file  = trailingslashit( $mwpDir ) . rawurldecode( $mwpdl );
 
             if ( stristr( rawurldecode( $mwpdl ), '..' ) ) {
                 return;
+            }
+
+            if ( $private_root && ( ! MainWP_Backup_File_Manager::path_is_confined_to( $file, $mwpDir ) || ! is_file( $file ) ) ) {
+                return;
+            }
+
+            // The private root holds plaintext archives, and unlike the uploads root
+            // nothing else fetches from it without a session; a signed link alone is
+            // not enough. Restrict it to a logged-in user downloading a site they can edit.
+            if ( $private_root ) {
+                if ( ! is_user_logged_in() ) {
+                    return;
+                }
+                $segments = explode( '/', rawurldecode( $mwpdl ) );
+                $site_id  = isset( $segments[1] ) ? (int) $segments[1] : 0;
+                if ( 'sites' !== ( $segments[0] ?? '' ) || $site_id <= 0 || ( $segments[1] ?? '' ) !== (string) $site_id ) {
+                    return;
+                }
+                $website = MainWP_DB::instance()->get_website_by_id( $site_id );
+                if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
+                    return;
+                }
             }
 
             $hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();

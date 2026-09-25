@@ -126,7 +126,6 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             return '';
         }
 
-        $dir        = MainWP_System_Utility::get_mainwp_specific_dir( $item['id'] );
         $lastbackup = 0;
 
         $hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
@@ -138,18 +137,20 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
          */
         global $wp_filesystem;
 
-        if ( $hasWPFileSystem && $wp_filesystem->exists( $dir ) ) {
-            $dh = opendir( $dir );
-            if ( $dh ) {
-                while ( false !== ( $file = readdir( $dh ) ) ) {
-                    if ( '.' !== $file && '..' !== $file ) {
-                        $theFile = $dir . $file;
-                        if ( MainWP_Backup_File_Manager::is_archive( $file ) && ! MainWP_Backup_File_Manager::is_sql_archive( $file ) && $wp_filesystem->mtime( $theFile ) > $lastbackup ) {
-                            $lastbackup = $wp_filesystem->mtime( $theFile );
+        foreach ( array( MainWP_Backup_Private_Root::site_dir( (int) $item['id'] ), MainWP_Backup_Private_Root::legacy_site_dir( (int) $item['id'] ) ) as $dir ) {
+            if ( $hasWPFileSystem && ! is_wp_error( $dir ) && $wp_filesystem->exists( $dir ) ) {
+                $dh = opendir( $dir );
+                if ( $dh ) {
+                    while ( false !== ( $file = readdir( $dh ) ) ) {
+                        if ( '.' !== $file && '..' !== $file ) {
+                            $theFile = $dir . $file;
+                            if ( MainWP_Backup_File_Manager::is_archive( $file ) && ! MainWP_Backup_File_Manager::is_sql_archive( $file ) && $wp_filesystem->mtime( $theFile ) > $lastbackup ) {
+                                $lastbackup = $wp_filesystem->mtime( $theFile );
+                            }
                         }
                     }
+                    closedir( $dh );
                 }
-                closedir( $dh );
             }
         }
 

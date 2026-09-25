@@ -33,11 +33,12 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
     const ERR_CHILD_UNREACHABLE = 'mainwp_backup_child_unreachable';
 
     // Child environment.
-    const ERR_DISK_FULL         = 'mainwp_backup_disk_full';
-    const ERR_MEMORY_LIMIT      = 'mainwp_backup_memory_limit';
-    const ERR_PERMISSIONS       = 'mainwp_backup_permissions';
-    const ERR_DIR_NOT_WRITABLE  = 'mainwp_backup_dir_not_writable';
-    const ERR_MISSING_EXTENSION = 'mainwp_backup_missing_extension';
+    const ERR_DISK_FULL                = 'mainwp_backup_disk_full';
+    const ERR_MEMORY_LIMIT             = 'mainwp_backup_memory_limit';
+    const ERR_PERMISSIONS              = 'mainwp_backup_permissions';
+    const ERR_DIR_NOT_WRITABLE         = 'mainwp_backup_dir_not_writable';
+    const ERR_PRIVATE_ROOT_UNAVAILABLE = 'mainwp_backup_private_root_unavailable';
+    const ERR_MISSING_EXTENSION        = 'mainwp_backup_missing_extension';
 
     // Database.
     const ERR_DB_CONNECTION_LOST = 'mainwp_backup_db_connection_lost';
@@ -227,6 +228,7 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
             self::ERR_MEMORY_LIMIT                  => esc_html__( 'The backup is approaching the PHP memory limit. Increase the PHP memory limit or exclude large folders from the backup.', 'mainwp' ),
             self::ERR_PERMISSIONS                   => esc_html__( 'Could not create a file or directory for the backup. Check that the web server has write permission on the backup directory.', 'mainwp' ),
             self::ERR_DIR_NOT_WRITABLE              => esc_html__( 'The backup directory is not writable. Set the directory permissions to allow the web server to write, or contact your hosting provider.', 'mainwp' ),
+            self::ERR_PRIVATE_ROOT_UNAVAILABLE      => esc_html__( 'Private backup storage could not be set up. The Dashboard needs a writable directory outside the web root for backup archives. Set MAINWP_BACKUP_PRIVATE_DIR in wp-config.php to such a directory and try again.', 'mainwp' ),
             self::ERR_MISSING_EXTENSION             => esc_html__( 'A required PHP extension is not available. Ask your host to enable the missing extension, such as cURL, OpenSSL, or ZipArchive.', 'mainwp' ),
             self::ERR_DB_CONNECTION_LOST            => esc_html__( 'The database connection was lost during the backup. The database server may be overloaded. Try running the backup again during low-traffic hours.', 'mainwp' ),
             self::ERR_DB_QUERY_FAILED               => esc_html__( 'Database backup did not complete. The child site may have run out of memory or the database connection was interrupted. Check the child site PHP memory limit and error log.', 'mainwp' ),

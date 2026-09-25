@@ -12,6 +12,8 @@
 
 namespace MainWP\Dashboard\Tests;
 
+require_once __DIR__ . '/trait-backup-private-root-fixture.php';
+
 use MainWP\Dashboard\MainWP_Backup_File_Manager;
 use MainWP\Dashboard\MainWP_Backup_Snapshots;
 use MainWP\Dashboard\MainWP_DB;
@@ -21,6 +23,19 @@ use MainWP\Dashboard\MainWP_System_Utility;
  * Class MainWP_Backup_Sweeper_Exemption_Test
  */
 class MainWP_Backup_Sweeper_Exemption_Test extends MainWP_Abilities_Test_Case {
+
+	use Backup_Private_Root_Fixture;
+
+	/**
+	 * Isolate native writes.
+	 *
+	 * @return void
+	 */
+	public function setUp(): void {
+		parent::setUp();
+		$this->set_up_private_root();
+	}
+
 
 	/**
 	 * Created fixture dirs for cleanup.
@@ -65,6 +80,7 @@ class MainWP_Backup_Sweeper_Exemption_Test extends MainWP_Abilities_Test_Case {
 
 		delete_option( 'mainwp_backupsOnServer' );
 
+		$this->tear_down_private_root();
 		parent::tearDown();
 	}
 
@@ -101,7 +117,7 @@ class MainWP_Backup_Sweeper_Exemption_Test extends MainWP_Abilities_Test_Case {
 	 * @return string Dir with trailing slash.
 	 */
 	private function make_flat_dir( $site_id ) {
-		$site_dir = MainWP_System_Utility::get_mainwp_specific_dir( (string) $site_id );
+		$site_dir = \MainWP\Dashboard\MainWP_Backup_Private_Root::site_dir( (string) $site_id );
 		$dir      = $site_dir . 'test-sweep-' . uniqid();
 		wp_mkdir_p( $dir );
 		$this->fixture_dirs[] = $dir;

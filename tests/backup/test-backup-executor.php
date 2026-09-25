@@ -10,6 +10,8 @@
 
 namespace MainWP\Dashboard\Tests;
 
+require_once __DIR__ . '/trait-backup-private-root-fixture.php';
+
 use MainWP\Dashboard\MainWP_Backup_Executor;
 use MainWP\Dashboard\MainWP_Backup_Error_Codes;
 use MainWP\Dashboard\MainWP_Backup_File_Manager;
@@ -24,6 +26,29 @@ use MainWP\Dashboard\MainWP_Post_Backup_Handler;
  * Class MainWP_Backup_Executor_Test
  */
 class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
+
+	use Backup_Private_Root_Fixture;
+
+	/**
+	 * A pre-write storage failure must reach the normal task error path.
+	 */
+	public function test_unusable_private_root_fails_without_artifacts() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$this->seed_download_ready_progress( $task->id, $site_id, 4096 );
+		mkdir( $this->private_root, 0500 );
+		try {
+			MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+			$this->fail( 'Unavailable storage must fail the backup.' );
+		} catch ( MainWP_Exception $error ) {
+			$this->assertSame( MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE, $error->get_message_error_code() );
+			$this->assertStringContainsString( $this->private_root, $error->getMessage() );
+			$this->assertStringContainsString( 'write probe', $error->getMessage() );
+			$this->assertSame( array( '.', '..' ), scandir( $this->private_root ) );
+			$this->assertNull( MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, (int) $task->id ) );
+		} finally {
+			chmod( $this->private_root, 0700 );
+		}
+	}
 
 	/**
 	 * Original snapshot singleton, restored after each test.
@@ -46,6 +71,7 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function setUp(): void {
 		parent::setUp();
+		$this->set_up_private_root();
 		update_option( 'mainwp_enableNativeBackups', 1 );
 		$property                = new \ReflectionProperty( MainWP_Backup_Snapshots::class, 'instance' );
 		$this->snapshot_instance = $property->getValue();
@@ -68,6 +94,7 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 		global $wpdb;
 		$wpdb->query( "DELETE FROM {$wpdb->prefix}mainwp_wp_backup_progress" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup.
 		delete_option( 'mainwp_enableNativeBackups' );
+		$this->tear_down_private_root();
 		parent::tearDown();
 	}
 
@@ -417,7 +444,7 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 		$this->mock_child_action( 'delete_backup', array( 'result' => 'ok' ) );
 		$manifest_path = '';
 		if ( 'invalid' === $failure ) {
-			$run_dir = \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_specific_dir( $site_id ) . 'snapshot-/';
+			$run_dir = \MainWP\Dashboard\MainWP_Backup_Private_Root::site_dir( $site_id ) . 'snapshot-/';
 			wp_mkdir_p( $run_dir );
 			$manifest_path          = $run_dir . 'files.list';
 			$this->snapshot_files[] = $manifest_path;
@@ -1070,7 +1097,7 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 			3
 		);
 
-		$dir = \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_specific_dir( $site_id );
+		$dir = \MainWP\Dashboard\MainWP_Backup_Private_Root::site_dir( $site_id );
 		wp_mkdir_p( $dir );
 		$protected   = $dir . 'protected.zip';
 		$unprotected = $dir . 'unprotected.zip';
@@ -1127,7 +1154,7 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 		list( $site_id, $task ) = $this->site_and_task();
 		$content                = 'PK' . "\x03\x04" . str_repeat( 'x', 4092 );
 
-		$dir = \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_specific_dir( $site_id );
+		$dir = \MainWP\Dashboard\MainWP_Backup_Private_Root::site_dir( $site_id );
 		wp_mkdir_p( $dir );
 		$artifact = $dir . 'full-current-run.zip';
 		file_put_contents( $artifact, $content ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- test fixture.

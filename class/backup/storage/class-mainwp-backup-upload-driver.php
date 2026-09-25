@@ -1033,11 +1033,14 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
      * @param object $job Job row.
      *
      * @return string
+     * @throws \RuntimeException When private staging is unavailable.
      */
     private function staging_dir( object $job ): string {
-        // Uploads are served directly, and a host can recreate this tree without its deny files.
-        list( $root ) = MainWP_System_Utility::get_mainwp_dir( 'upload-staging', false, wp_upload_dir() );
-        return $root . (int) $job->snapshot_id . '-' . (int) $job->destination_id;
+        $dir = MainWP_Backup_Private_Root::staging_dir( 'upload-staging', (int) $job->snapshot_id . '-' . (int) $job->destination_id );
+        if ( is_wp_error( $dir ) ) {
+            throw new \RuntimeException( esc_html( $dir->get_error_message() ), 410 );
+        }
+        return untrailingslashit( $dir );
     }
 
     /**
@@ -1048,8 +1051,8 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
      * @return void
      */
     private function cleanup_staging( object $job ): void {
-        $dir = $this->staging_dir( $job );
-        if ( ! is_dir( $dir ) ) {
+        $dir = MainWP_Backup_Private_Root::staging_dir( 'upload-staging', (int) $job->snapshot_id . '-' . (int) $job->destination_id );
+        if ( is_wp_error( $dir ) || ! is_dir( $dir ) ) {
             return;
         }
 

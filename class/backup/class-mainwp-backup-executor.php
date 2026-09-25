@@ -174,6 +174,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_LEGACY_DISABLED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         }
 
+        self::private_site_dir( (int) $siteid );
         MainWP_Backup_Monitor::validate_backup_environment();
 
         $userid        = $pTask->userid;
@@ -805,7 +806,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
              */
             global $wp_filesystem;
 
-            $dir = MainWP_System_Utility::get_mainwp_specific_dir( $website->id );
+            $dir = self::private_site_dir( (int) $website->id );
 
             $wp_filesystem->mkdir( $dir, 0750 ); // MWP-1558: tightened from 0777; per-site backup dumps.
 
@@ -1677,6 +1678,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             $snapshot_type = 'files';
         }
 
+        $site_dir      = self::private_site_dir( (int) $website->id );
         $manifest_path = '';
         foreach ( (array) ( $progress->fetchResult['artifacts'] ?? array() ) as $artifact ) {
             if ( ! $has_full || 'manifest' !== ( $artifact['role'] ?? '' ) ) {
@@ -1685,7 +1687,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             try {
                 $remote        = basename( (string) ( $artifact['file'] ?? '' ) );
                 $size          = (int) ( $artifact['size'] ?? 0 );
-                $run_dir       = MainWP_System_Utility::get_mainwp_specific_dir( $website->id ) . 'snapshot-' . MainWP_Utility::sanitize_file_name( (string) $progress->child_backup_task_id ) . '/';
+                $run_dir       = $site_dir . 'snapshot-' . MainWP_Utility::sanitize_file_name( (string) $progress->child_backup_task_id ) . '/';
                 $manifest_path = $run_dir . MainWP_Utility::sanitize_file_name( $remote );
                 if ( '' === $remote || $size < 1 ) {
                     throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, 'invalid manifest artifact' ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
@@ -1799,7 +1801,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
          */
         global $wp_filesystem;
 
-        $dir = MainWP_System_Utility::get_mainwp_specific_dir( $website->id );
+        $dir = self::private_site_dir( (int) $website->id );
         $wp_filesystem->mkdir( $dir, 0750 );
         if ( ! $wp_filesystem->exists( $dir . 'index.php' ) ) {
             $wp_filesystem->touch( $dir . 'index.php' );
@@ -2310,7 +2312,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             }
             $backup_result['subfolder'] = $subfolder;
 
-            $dir = MainWP_System_Utility::get_mainwp_specific_dir( $pSiteId );
+            $dir = self::private_site_dir( (int) $pSiteId );
 
             $fm_date = MainWP_Utility::sanitize_file_name( MainWP_Utility::date( get_option( 'date_format' ) ) );
             $fm_time = MainWP_Utility::sanitize_file_name( MainWP_Utility::date( get_option( 'time_format' ) ) );
@@ -2656,26 +2658,26 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @return bool True when a recent full archive exists.
      */
     public static function has_recent_backup( int $site_id, int $max_age_days = 7 ): bool {
-        $dir = MainWP_System_Utility::get_mainwp_specific_dir( $site_id );
-        if ( empty( $dir ) || ! is_dir( $dir ) ) {
-            return false;
-        }
-
-        $latest = - 1;
-        $dh     = opendir( $dir );
-        if ( $dh ) {
-            while ( false !== ( $file = readdir( $dh ) ) ) {
-                if ( '.' === $file || '..' === $file ) {
-                    continue;
-                }
-                if ( MainWP_Backup_File_Manager::is_archive( $file ) && ! MainWP_Backup_File_Manager::is_sql_archive( $file ) ) {
-                    $mtime = (int) filemtime( $dir . $file );
-                    if ( $mtime > $latest ) {
-                        $latest = $mtime;
+        $latest = -1;
+        foreach ( array( MainWP_Backup_Private_Root::site_dir( $site_id ), MainWP_Backup_Private_Root::legacy_site_dir( $site_id ) ) as $dir ) {
+            if ( is_wp_error( $dir ) || ! is_dir( $dir ) ) {
+                continue;
+            }
+            $dh = opendir( $dir );
+            if ( $dh ) {
+                while ( false !== ( $file = readdir( $dh ) ) ) {
+                    if ( '.' === $file || '..' === $file ) {
+                        continue;
+                    }
+                    if ( MainWP_Backup_File_Manager::is_archive( $file ) && ! MainWP_Backup_File_Manager::is_sql_archive( $file ) ) {
+                        $mtime = (int) filemtime( $dir . $file );
+                        if ( $mtime > $latest ) {
+                            $latest = $mtime;
+                        }
                     }
                 }
+                closedir( $dh );
             }
-            closedir( $dh );
         }
 
         return $latest >= ( time() - $max_age_days * DAY_IN_SECONDS );
@@ -2875,12 +2877,27 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         }
         $clean_url = str_replace( array( 'http://', 'https://', '/' ), array( '', '', '-' ), $clean_url );
 
-        $dir     = MainWP_System_Utility::get_mainwp_specific_dir( $website->id );
+        $dir     = self::private_site_dir( (int) $website->id );
         $fm_date = MainWP_Utility::sanitize_file_name( MainWP_Utility::date( get_option( 'date_format' ) ) );
         $fm_time = MainWP_Utility::sanitize_file_name( MainWP_Utility::date( get_option( 'time_format' ) ) );
         $prefix  = MainWP_Backup_Type::DATABASE === $type ? 'db-' : 'full-';
 
         return MainWP_Backup_File_Manager::normalize_filename( $dir . $prefix . $clean_url . '-' . $fm_date . '-' . $fm_time . MainWP_Backup_File_Manager::get_real_extension( $remote_file ) );
+    }
+
+    /**
+     * Fail through the task's existing pre-write error handler.
+     *
+     * @param int $site_id Site id.
+     * @return string
+     * @throws MainWP_Exception When private storage is unavailable.
+     */
+    private static function private_site_dir( int $site_id ): string {
+        $dir = MainWP_Backup_Private_Root::site_dir( $site_id );
+        if ( is_wp_error( $dir ) ) {
+            throw new MainWP_Exception( esc_html( $dir->get_error_message() ), null, MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- The message is escaped; the final argument is an error code.
+        }
+        return $dir;
     }
 
     /**

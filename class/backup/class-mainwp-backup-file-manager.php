@@ -98,7 +98,7 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
             // confine it to the requesting site's own backup directory so
             // a tampered request can neither write bytes into nor sweep a
             // sibling site's archive set. Internal callers build the path
-            // with get_mainwp_specific_dir() in the same request, so a
+            // with the private root resolver in the same request, so a
             // legitimate target always passes.
             throw new MainWP_Exception( esc_html__( 'Invalid backup file location.', 'mainwp' ) );
         }
@@ -1031,63 +1031,49 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
     }
 
     /**
-     * Whether a caller-supplied local path stays inside a specific site's
-     * backup directory (uploads/mainwp/{userid}/{site_id}/).
-     *
-     * The legacy download and filesize endpoints take browser-supplied
-     * paths; confining them to the requesting site's own directory keeps
-     * a site-restricted user from probing or mutating another site's
-     * artifacts. The path is the same one the executor and monitor build
-     * with get_mainwp_specific_dir(), so an authorized request for a real
-     * download target passes.
+     * Accept recorded legacy paths while confining downloads to their site.
      *
      * @param string $path    Candidate absolute path.
      * @param int    $site_id Site the path must belong to.
      *
      * @return bool True when the path is confined to that site's backup dir.
-     *
-     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_specific_dir()
      */
     public static function is_within_site_backup_dir( string $path, int $site_id ): bool {
-        if ( $site_id <= 0 ) {
-            return false;
-        }
-        $dir = MainWP_System_Utility::get_mainwp_specific_dir( (string) $site_id );
-        return static::path_is_confined_to( $path, $dir );
+        return MainWP_Backup_Private_Root::is_within_site_roots( $path, $site_id );
     }
 
     /**
      * Whether a path is confined to a base directory.
      *
-     * The path may not exist yet (it is a download destination), so this
-     * checks the normalized string: it must start with the base and carry
-     * no parent-directory segments. A substring match is not enough - the
-     * base can appear later in a hostile path, and a `..` after a valid
-     * base escapes it.
+     * Resolve existing files and ancestors so symlinks cannot escape the base.
+     * Missing download destinations may have uncreated child directories.
      *
      * @param string $path Candidate absolute path.
      * @param string $base Directory the path must sit under.
      *
      * @return bool True when the path is confined to the base.
      */
-    private static function path_is_confined_to( string $path, string $base ): bool {
-        if ( '' === $path || '' === $base ) {
+    public static function path_is_confined_to( string $path, string $base ): bool {
+        if ( '' === $path || '' === $base || false !== strpos( $path, "\0" ) ) {
             return false;
         }
-
-        $base = trailingslashit( wp_normalize_path( $base ) );
-        $norm = wp_normalize_path( $path );
-
-        if ( 0 !== strpos( $norm, $base ) ) {
-            return false;
-        }
-
-        foreach ( explode( '/', $norm ) as $segment ) {
+        foreach ( explode( '/', wp_normalize_path( $path ) ) as $segment ) {
             if ( '..' === $segment ) {
                 return false;
             }
         }
-
-        return true;
+        $root = realpath( $base );
+        $real = realpath( $path );
+        if ( false === $real && ! is_link( $path ) ) {
+            $pending = basename( $path );
+            $parent  = dirname( $path );
+            while ( false === realpath( $parent ) && dirname( $parent ) !== $parent && ! is_link( $parent ) ) {
+                $pending = basename( $parent ) . '/' . $pending;
+                $parent  = dirname( $parent );
+            }
+            $parent = realpath( $parent );
+            $real   = false === $parent ? false : trailingslashit( $parent ) . $pending;
+        }
+        return false !== $root && false !== $real && 0 === strpos( wp_normalize_path( $real ), trailingslashit( wp_normalize_path( $root ) ) );
     }
 }

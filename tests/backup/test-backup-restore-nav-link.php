@@ -9,6 +9,8 @@
 
 namespace MainWP\Dashboard\Tests;
 
+require_once __DIR__ . '/trait-backup-private-root-fixture.php';
+
 use MainWP\Dashboard\MainWP_Backup_Snapshots_View;
 use MainWP\Dashboard\MainWP_Manage_Sites_Backup_View;
 use MainWP\Dashboard\MainWP_DB;
@@ -17,6 +19,76 @@ use MainWP\Dashboard\MainWP_DB;
  * Class MainWP_Backup_Restore_Nav_Link_Test
  */
 class MainWP_Backup_Restore_Nav_Link_Test extends MainWP_Abilities_Test_Case {
+
+	use Backup_Private_Root_Fixture;
+
+	/**
+	 * Isolate native archive fixtures.
+	 *
+	 * @return void
+	 */
+	public function setUp(): void {
+		parent::setUp();
+		$this->set_up_private_root();
+	}
+
+	/**
+	 * Remove the private archive tree.
+	 *
+	 * @return void
+	 */
+	public function tearDown(): void {
+		$this->tear_down_private_root();
+		parent::tearDown();
+	}
+
+	/**
+	 * The existing tab lists both roots with their original download mechanism.
+	 */
+	public function test_show_backups_lists_private_and_legacy_signed_links() {
+		$this->as_admin();
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		$site_id = $this->create_test_site();
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$private = \MainWP\Dashboard\MainWP_Backup_Private_Root::site_dir( $site_id );
+		$legacy  = \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_specific_dir( $site_id );
+		$files   = array( $private . 'full-private.zip', $private . 'db-private.sql', $legacy . 'full-legacy.zip', $legacy . 'db-legacy.sql' );
+		foreach ( $files as $file ) {
+			file_put_contents( $file, 'archive bytes' );
+		}
+		try {
+			ob_start();
+			\MainWP\Dashboard\MainWP_Manage_Sites::show_backups( $website );
+			$html = ob_get_clean();
+			$this->assertStringNotContainsString( 'page=SiteRestore', $html );
+			preg_match_all( '/<a title="([^"]+)" href="([^"]+)"/', $html, $matches, PREG_SET_ORDER );
+			$this->assertCount( 4, $matches );
+			foreach ( $matches as $match ) {
+				parse_str( wp_parse_url( html_entity_decode( $match[2] ), PHP_URL_QUERY ), $query );
+				$is_private = false !== strpos( $match[1], 'private' );
+				$file       = ( $is_private ? $private : $legacy ) . $match[1];
+				$this->assertTrue( \MainWP\Dashboard\MainWP_System_Utility::valid_download_sig( $file, $query['sig'] ) );
+				$this->assertSame( ( $is_private ? 'sites/' : '0/' ) . $site_id . '/' . $match[1], $query['mwpdl'] );
+				if ( $is_private ) {
+					$this->assertSame( 'private', $query['root'] );
+				} else {
+					$this->assertArrayNotHasKey( 'root', $query );
+				}
+			}
+			add_filter( 'mainwp_backup_private_root', '__return_false', 99 );
+			\MainWP\Dashboard\MainWP_Backup_Private_Root::reset();
+			ob_start();
+			\MainWP\Dashboard\MainWP_Manage_Sites::show_backups( $website );
+			$legacy_only = ob_get_clean();
+			$this->assertStringContainsString( 'full-legacy.zip', $legacy_only );
+			$this->assertStringContainsString( 'db-legacy.sql', $legacy_only );
+			$this->assertStringNotContainsString( 'root=private', $legacy_only );
+		} finally {
+			foreach ( $files as $file ) {
+				wp_delete_file( $file );
+			}
+		}
+	}
 
 	/**
 	 * Act as an administrator (carries the execute_backups capability the

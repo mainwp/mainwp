@@ -237,23 +237,21 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
      * @return void
      */
     private function purge_orphaned_snapshot_dirs( int $site_id, int $min_age, array &$result ): void {
-        $upload = wp_upload_dir();
-        $root   = trailingslashit( $upload['basedir'] ) . 'mainwp/0/' . $site_id . '/';
-
-        $real_root = realpath( $root );
-        if ( false === $real_root ) {
-            return; // No backup tree for this site.
+        $dirs = array();
+        foreach ( array( MainWP_Backup_Private_Root::site_dir( $site_id ), MainWP_Backup_Private_Root::legacy_site_dir( $site_id ) ) as $root ) {
+            if ( ! is_wp_error( $root ) ) {
+                $dirs = array_merge( $dirs, glob( $root . 'snapshot-*', GLOB_ONLYDIR ) ?: array() ); // phpcs:ignore Universal.Operators.DisallowShortTernary.Found -- empty-glob guard.
+            }
         }
-        $real_root = trailingslashit( $real_root );
 
         $protected_dirs = array();
         foreach ( array_keys( MainWP_Backup_Snapshots::instance()->get_protected_paths_for_site( $site_id ) ) as $path ) {
             $protected_dirs[ MainWP_Backup_Snapshots::normalise_path( dirname( $path ) ) ] = true;
         }
 
-        foreach ( glob( $root . 'snapshot-*', GLOB_ONLYDIR ) ?: array() as $dir ) { // phpcs:ignore Universal.Operators.DisallowShortTernary.Found -- empty-glob guard.
+        foreach ( array_unique( $dirs ) as $dir ) {
             $real = realpath( $dir );
-            if ( false === $real || 0 !== strpos( trailingslashit( $real ), $real_root ) ) {
+            if ( false === $real || ! MainWP_Backup_Private_Root::is_within_site_roots( $dir, $site_id ) ) {
                 continue; // A symlinked or escaping entry is not ours to sweep.
             }
             if ( isset( $protected_dirs[ MainWP_Backup_Snapshots::normalise_path( $dir ) ] )
@@ -595,12 +593,8 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
      * per-snapshot dir (snapshot-{child_task_id}) this snapshot owns
      * alone. Legacy and db runs share one site directory with other
      * snapshots' artifacts - those siblings and the directory stay.
-     * Every native-backup writer (MainWP_System_Utility::get_mainwp_specific_dir())
-     * lands artifacts under mainwp/0/{site_id}/, so a deletion is confined
-     * to the snapshot's own site subtree, not merely the shared mainwp
-     * root - a row whose path was tampered with (or copied from another
-     * site's row) can otherwise reach across sites. Paths outside that
-     * subtree are never touched, whatever the row says.
+     * Recorded paths may use the private root or the legacy uploads tree.
+     * Neither location permits deleting another site's artifacts.
      *
      * A failed artifact deletion returns false so the caller keeps the
      * snapshot's status honest; the directory sweep afterwards is
@@ -612,18 +606,6 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
      * @return bool True when every artifact this snapshot names is gone.
      */
     private function remove_local_dir( object $snapshot, array &$errors ): bool {
-        $upload = wp_upload_dir();
-        $root   = trailingslashit( $upload['basedir'] ) . 'mainwp/0/' . (int) $snapshot->site_id . '/';
-
-        // Canonicalize like purge_orphaned_snapshot_dirs() does: the paths
-        // below are realpath()ed, so a symlinked uploads root would never
-        // prefix-match an un-canonicalized $root and every removal would be
-        // refused as outside the tree.
-        $real_root = realpath( $root );
-        if ( false !== $real_root ) {
-            $root = trailingslashit( $real_root );
-        }
-
         $paths = array();
         foreach ( (array) $snapshot->archives as $archive ) {
             if ( ! empty( $archive['path'] ) ) {
@@ -658,7 +640,7 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
                     || isset( $protected_dirs[ MainWP_Backup_Snapshots::normalise_path( dirname( $real ) ) ] ) ) ) {
                 continue;
             }
-            if ( 0 !== strpos( $real, $root ) ) {
+            if ( ! MainWP_Backup_Private_Root::is_within_site_roots( $real, (int) $snapshot->site_id ) ) {
                 // The named artifact still exists, so the snapshot must not
                 // read as pruned and nothing irreversible (cloud deletes,
                 // upload-row purge) may run for it. Migrated dashboards
@@ -693,7 +675,7 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
                 continue; // A shared directory; other snapshots' artifacts live here.
             }
 
-            if ( 0 !== strpos( trailingslashit( $real ), $root ) ) {
+            if ( ! MainWP_Backup_Private_Root::is_within_site_roots( $real, (int) $snapshot->site_id ) ) {
                 $errors[] = 'Refused to remove a directory outside its site\'s backup tree: ' . $dir;
                 continue;
             }

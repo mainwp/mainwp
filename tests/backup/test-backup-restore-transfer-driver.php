@@ -8,6 +8,8 @@
 
 namespace MainWP\Dashboard\Tests;
 
+require_once __DIR__ . '/trait-backup-private-root-fixture.php';
+
 use MainWP\Dashboard\MainWP_Backup_Error_Codes;
 use MainWP\Dashboard\MainWP_Backup_Restore_Transfer_Driver;
 use MainWP\Dashboard\MainWP_Backup_Snapshot_Catalog;
@@ -158,6 +160,8 @@ class Testable_Restore_Transfer_Driver extends MainWP_Backup_Restore_Transfer_Dr
  */
 class MainWP_Backup_Restore_Transfer_Driver_Test extends MainWP_Abilities_Test_Case {
 
+	use Backup_Private_Root_Fixture;
+
 	/**
 	 * Scratch dir.
 	 *
@@ -184,6 +188,7 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends MainWP_Abilities_Test_C
 	 */
 	public function set_up() {
 		parent::set_up();
+		$this->set_up_private_root();
 		$this->dir = sys_get_temp_dir() . '/mainwp-transfer-test-' . uniqid();
 		mkdir( $this->dir );
 		$this->driver = new Testable_Restore_Transfer_Driver();
@@ -204,6 +209,7 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends MainWP_Abilities_Test_C
 			}
 			$this->snapshot_ids = array();
 		}
+		$this->tear_down_private_root();
 		parent::tear_down();
 	}
 
@@ -265,7 +271,7 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends MainWP_Abilities_Test_C
 		mkdir( $remote . '/4/8/files', 0755, true );
 		file_put_contents( $remote . '/4/8/files/db.tar.gz', 'remote-bytes' );
 		$this->driver->remote_base = $remote;
-		$root                      = $this->dir . '/mainwp/restore-staging';
+		$root                      = $this->private_root . '/restore-staging';
 		$upload                    = function ( $dirs ) {
 			$dirs['basedir'] = $this->dir;
 			return $dirs;

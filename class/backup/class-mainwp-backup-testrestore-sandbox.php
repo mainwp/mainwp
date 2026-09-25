@@ -67,7 +67,7 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
     /**
      * Sandbox temp directory (absolute, trailing slash).
      *
-     * @var string
+     * @var string|\WP_Error
      */
     private $temp_dir = '';
 
@@ -87,14 +87,14 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
 
     /**
      * Mint the scratch database name and temp dir path. No connection or
-     * filesystem work happens until bring_up().
+     * extraction or database work happens until bring_up().
      */
     public function __construct() {
         $token          = strtolower( preg_replace( '/[^a-z0-9]/i', '', wp_generate_password( 16, false ) ) );
         $token          = '' === $token ? 'x' . substr( (string) md5( uniqid( '', true ) ), 0, 12 ) : substr( $token, 0, 16 );
         $this->db_name  = 'mainwp_tr_' . $token;
-        $upload         = wp_upload_dir();
-        $this->temp_dir = trailingslashit( $upload['basedir'] ) . 'mainwp/test-restore/' . $token . '/';
+        $root           = MainWP_Backup_Private_Root::resolve();
+        $this->temp_dir = is_wp_error( $root ) ? $root : $root . 'test-restore/' . $token . '/';
     }
 
     /**
@@ -109,9 +109,9 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
     /**
      * Sandbox temp directory (absolute, trailing slash).
      *
-     * @return string
+     * @return string|\WP_Error
      */
-    public function temp_dir(): string {
+    public function temp_dir(): string|\WP_Error {
         return $this->temp_dir;
     }
 
@@ -124,6 +124,9 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
      * @return void
      */
     public function bring_up(): void {
+        if ( is_wp_error( $this->temp_dir ) ) {
+            throw new MainWP_Exception( esc_html( $this->temp_dir->get_error_message() ), null, self::ERR_UNSUPPORTED );
+        }
         if ( ! class_exists( '\mysqli' ) ) {
             throw new MainWP_Exception( esc_html__( 'The test-restore sandbox needs the mysqli extension, which is not available.', 'mainwp' ), 'mysqli missing', self::ERR_UNSUPPORTED );
         }
@@ -143,9 +146,10 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
 
         $this->protect_parent();
 
-        if ( ! wp_mkdir_p( $this->temp_dir ) ) {
+        $dir = MainWP_Backup_Private_Root::staging_dir( 'test-restore', basename( untrailingslashit( $this->temp_dir ) ) );
+        if ( is_wp_error( $dir ) ) {
             $this->tear_down();
-            throw new MainWP_Exception( esc_html__( 'The test-restore sandbox could not create its working directory.', 'mainwp' ), 'mkdir: ' . $this->temp_dir, self::ERR_UNSUPPORTED );
+            throw new MainWP_Exception( esc_html( $dir->get_error_message() ), null, self::ERR_UNSUPPORTED );
         }
     }
 
@@ -639,6 +643,9 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
             $this->close_connection();
         }
 
+        if ( is_wp_error( $this->temp_dir ) ) {
+            return;
+        }
         if ( '' !== $this->temp_dir && is_dir( $this->temp_dir ) ) {
             $this->remove_dir( $this->temp_dir );
         }
@@ -1296,8 +1303,9 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
             return $alias;
         }
         $this->protect_parent();
-        if ( ! wp_mkdir_p( $alias_dir ) ) {
-            throw new MainWP_Exception( esc_html__( 'The test-restore sandbox could not create its archive directory.', 'mainwp' ), 'tar alias mkdir: ' . $basename, self::ERR_UNSUPPORTED );
+        $private_alias = MainWP_Backup_Private_Root::staging_dir( 'test-restore', basename( untrailingslashit( $this->temp_dir ) ) . '-phar' );
+        if ( is_wp_error( $private_alias ) ) {
+            throw new MainWP_Exception( esc_html( $private_alias->get_error_message() ), null, self::ERR_UNSUPPORTED );
         }
 
         // Budget each slab separately so decompression leaves the reserve for other uploads.

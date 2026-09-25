@@ -3323,6 +3323,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                             </div>
                         </div>
                     </div>
+                    <?php MainWP_Manage_Sites::render_connection_2fa_note(); ?>
                     <div id="mainwp-administrator-password-field">
                         <input type="password" id="fake-disable-autofill" style="display:none;" name="fake-disable-autofill" />
                         <div class="ui grid field">
@@ -3336,6 +3337,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                             </div>
                         </div>
                     </div>
+                    <?php MainWP_Manage_Sites::render_connection_unique_security_id_note(); ?>
             </div>
             <div class="actions">
                 <input type="button" autofocus name="mainwp-popup-reconnect-site-btn" id="mainwp-popup-reconnect-site-btn" class="ui button green big focus" value="<?php esc_attr_e( 'Reconnect', 'mainwp' ); ?>" />

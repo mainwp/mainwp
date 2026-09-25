@@ -96,14 +96,18 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
                 if ( isset( $information['wpversion'] ) ) {
                     $ret['response'] = 'OK';
                 } elseif ( isset( $information['error'] ) ) {
-                    $ret['response'] = 'ERROR ' . MainWP_Utility::esc_content( $information['error'] );
+                    $ret['response']    = 'ERROR ' . MainWP_Utility::esc_content( $information['error'] );
+                    $ret['resp_data']   = MainWP_Connect_Failure_Ux::readable_response_from_output( $output );
+                    $ret['failure_ux']  = isset( $output['failure_ux'] ) ? $output['failure_ux'] : MainWP_Connect_Failure_Ux::render_html( MainWP_Connect_Failure_Ux::from_exception( null, $output ) );
                 } else {
-                    $ret['response']  = 'ERROR';
-                    $ret['resp_data'] = isset( $output['fetch_data'] ) ? $output['fetch_data'] : '';
+                    $ret['response']   = 'ERROR';
+                    $ret['resp_data']  = isset( $output['fetch_data'] ) ? $output['fetch_data'] : MainWP_Connect_Failure_Ux::readable_response_from_output( $output );
+                    $ret['failure_ux'] = isset( $output['failure_ux'] ) ? $output['failure_ux'] : MainWP_Connect_Failure_Ux::render_html( MainWP_Connect_Failure_Ux::from_exception( null, $output ) );
                 }
             } catch ( MainWP_Exception $e ) {
-                $ret['response']  = $e->getMessage();
-                $ret['resp_data'] = $e->get_data();
+                $ret['response']   = $e->getMessage();
+                $ret['resp_data']  = MainWP_Connect_Failure_Ux::readable_response_from_output( $output, $e );
+                $ret['failure_ux'] = MainWP_Connect_Failure_Ux::render_html( MainWP_Connect_Failure_Ux::from_exception( $e, $output ) );
                 if ( 'TIMEOUT' === $e->getMessage() ) {
                     $ret['timeout_kind'] = $e->get_message_error_code();
                     $ret['resp_data']    = '';
@@ -219,7 +223,9 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
 
         $ret['add_me'] = ( isset( $_POST['add_me'] ) ? intval( $_POST['add_me'] ) : null );
         if ( '' !== $error ) {
-            $ret['response'] = 'ERROR ' . $error;
+            $ret['response']   = 'ERROR ' . $error;
+            $ret['resp_data']  = isset( $output['fetch_data'] ) ? $output['fetch_data'] : MainWP_Connect_Failure_Ux::readable_response_from_output( $output );
+            $ret['failure_ux'] = isset( $output['failure_ux'] ) ? $output['failure_ux'] : MainWP_Connect_Failure_Ux::render_html( MainWP_Connect_Failure_Ux::from_exception( null, $output ) );
             die( wp_json_encode( $ret ) );
         }
         $ret['response'] = $message;

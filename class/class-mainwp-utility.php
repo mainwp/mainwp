@@ -1225,6 +1225,36 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     }
 
     /**
+     * Un-hide a MainWP message for the current user.
+     *
+     * Removes the notice ID from the saved notice status so the message
+     * can be displayed again.
+     *
+     * @param mixed $notice_id Notice ID.
+     *
+     * @return bool True if the notice was un-hidden, otherwise false.
+     */
+    public static function unhide_mainwp_message( $notice_id ) {
+        $status = get_user_option( 'mainwp_notice_saved_status' );
+
+        if ( ! is_array( $status ) || ! isset( $status[ $notice_id ] ) ) {
+            return false;
+        }
+
+        unset( $status[ $notice_id ] );
+
+        if ( empty( $status ) ) {
+            return delete_user_option( get_current_user_id(), 'mainwp_notice_saved_status' );
+        }
+
+        return update_user_option(
+            get_current_user_id(),
+            'mainwp_notice_saved_status',
+            $status
+        );
+    }
+
+    /**
      * Method get_hide_notice_status()
      *
      * Check whenther or not to show the MainWP Message.

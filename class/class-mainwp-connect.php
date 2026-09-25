@@ -441,7 +441,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      */
     public static function try_visit( $url, $ssl_verifyhost = null, $http_user = null, $http_pass = null, $sslVersion = 0, $forceUseIPv4 = null, $no_body = false ) { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
-        $agent    = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
+        $agent    = MainWP_Connect_Failure_Ux::get_user_agent();
         $postdata = array( 'test' => 'yes' );
 
         $ch = curl_init();
@@ -514,6 +514,9 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         curl_setopt( $ch, CURLOPT_HTTPHEADER, $headers );
         curl_setopt( $ch, CURLOPT_REFERER, get_option( 'siteurl' ) );
+
+        $resp_headers = '';
+        static::capture_response_headers( $ch, $resp_headers );
 
         $force_use_ipv4 = false;
         if ( null !== $forceUseIPv4 ) {
@@ -648,8 +651,9 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         );
 
         $hidden_data = '[hidden response data]';
+        $hide_raw    = (bool) apply_filters( 'mainwp_hide_raw_connection_response_data', true );
 
-        if ( ( false === $ip || $ip === $host || ! static::validate_ip( $ip ) ) && apply_filters( 'mainwp_hide_raw_connection_response_data', true ) ) { // Failed to resolve hostname.
+        if ( ( false === $ip || $ip === $host || ! static::validate_ip( $ip ) ) && $hide_raw ) { // Failed to resolve hostname.
             $data = $hidden_data;
         }
 
@@ -662,7 +666,48 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         $out['error'] = ( '' === $err && false === $found ? 'Invalid host.' : $err );
 
+        $response_body = '';
+        if ( ! $hide_raw && is_string( $data ) ) {
+            $response_body = $data;
+        }
+
+        $out = MainWP_Connect_Failure_Ux::enrich_output(
+            $out,
+            array(
+                'http_status'      => $http_status,
+                'headers'          => $resp_headers,
+                'body'             => $response_body,
+                'resolved_ip'      => $ip,
+                'error'            => $out['error'],
+                'skip_outbound_ip' => ( '' === $out['error'] && 200 === (int) $http_status ),
+            )
+        );
+
         return $out;
+    }
+
+    /**
+     * Capture response headers on a cURL handle without changing the request.
+     *
+     * @param resource|\CurlHandle $ch      cURL handle.
+     * @param string               $headers Captured header text.
+     *
+     * @return void
+     */
+    public static function capture_response_headers( $ch, &$headers ) {
+        $headers = '';
+        if ( ! static::is_valid_curl_handle( $ch ) ) {
+            return;
+        }
+        curl_setopt(
+            $ch,
+            CURLOPT_HEADERFUNCTION,
+            static function ( $curl, $header_line ) use ( &$headers ) {
+                unset( $curl );
+                $headers .= $header_line;
+                return strlen( $header_line );
+            }
+        );
     }
 
 
@@ -816,10 +861,13 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $http_pass_plain  = ! empty( $others['http_pass_plain'] ) ? $others['http_pass_plain'] : '';
 
         if ( $website && '' !== $what ) {
+            // The nonce must never repeat. The Child stores every legacy signature it accepts, forever,
+            // and refuses a repeat as "This request has already been used"; signing is deterministic,
+            // so the nonce is the only thing that makes two requests for the same action differ.
             $data              = array();
             $data['user']      = $website->adminname;
             $data['function']  = $what;
-            $data['nonce']     = wp_rand( 0, 9999 );
+            $data['nonce']     = bin2hex( random_bytes( 16 ) );
             $data['mainwpver'] = MainWP_System::$version;
 
             $params_filter = apply_filters( 'mainwp_pre_fetch_authed_data', false, $params, $what, $website, $verify_signature );
@@ -901,7 +949,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     'nonce'         => $data['nonce'],
                     'expires'       => $ts + 60,
                     'user'          => $website->adminname,
-                    'req_id'    => wp_generate_uuid4(),
+                    'req_id'        => wp_generate_uuid4(),
                 );
 
                 if ( ! empty( $alt_user ) ) {
@@ -1004,7 +1052,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $data             = array();
             $data['user']     = $website->adminname;
             $data['function'] = $compat_what;
-            $data['nonce']    = wp_rand( 0, 9999 );
+            $data['nonce']    = bin2hex( random_bytes( 16 ) );
 
             $sign_value = $compat_what . $data['nonce']; // compatible format.
 
@@ -1049,7 +1097,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     'nonce'         => $data['nonce'],
                     'expires'       => $ts + 60,
                     'user'          => $website->adminname,
-                    'req_id'    => wp_generate_uuid4(),
+                    'req_id'        => wp_generate_uuid4(),
                 );
                 $sign_value_v2 = wp_json_encode( $data_sign_v2 );
 
@@ -1119,7 +1167,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $sign_success = null;
             $alg          = false;
             $use_seclib   = false;
-            $nonce        = wp_rand( 0, 9999 );
+            $nonce        = bin2hex( random_bytes( 16 ) );
 
             /**
              * Current user global.
@@ -1184,7 +1232,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     'nonce'         => $nonce,
                     'expires'       => $ts + 60,
                     'user'          => $website->adminname,
-                    'req_id'    => wp_generate_uuid4(),
+                    'req_id'        => wp_generate_uuid4(),
                 );
 
                 if ( ! empty( $alt_user ) ) {
@@ -1197,7 +1245,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
                 if ( MainWP_Connect_Lib::is_use_fallback_sec_lib( $website ) ) {
                     $sign_success_v2 = MainWP_Connect_Lib::connect_sign( $sign_value_v2, $signature_v2, base64_decode( $website->privkey ), $website->id ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-                    $use_seclib   = true;
+                    $use_seclib      = true;
                 } elseif ( function_exists( 'openssl_verify' ) ) {
                     $alg             = MainWP_System_Utility::get_connect_sign_algorithm( $website );
                     $sign_success_v2 = static::connect_sign( $sign_value_v2, $signature_v2, base64_decode( $website->privkey ), $alg, $website->id ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
@@ -1996,9 +2044,16 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
          */
         do_action( 'mainwp_fetch_url_authed', $website, $information, $what, $params, $others );
 
-        if ( is_array( $information ) && isset( $information['sync'] ) && ! empty( $information['sync'] ) ) {
-            MainWP_Sync::sync_information_array( $website, $information['sync'] );
-            unset( $information['sync'] );
+        if ( is_array( $information ) ) {
+            if ( isset( $information['sync'] ) && ! empty( $information['sync'] ) ) {
+                MainWP_Sync::sync_information_array( $website, $information['sync'] );
+                unset( $information['sync'] );
+            }
+
+            if ( isset( $information['sync_partial'] ) && is_array( $information['sync_partial'] ) && ! empty( $information['sync_partial'] ) ) {
+                MainWP_Sync::sync_partial_information( $website, $information['sync_partial'] );
+                unset( $information['sync_partial'] );
+            }
         }
 
         if ( $updating_website ) {
@@ -2055,6 +2110,70 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $others = array(),
         &$output = array()
     ) {
+
+        /**
+         * Filter to mock the fetch_url_not_authed response before any HTTP request occurs.
+         *
+         * This filter fires early, before the HTTP request is performed, allowing
+         * tests to bypass child site communication entirely.
+         *
+         * SECURITY WARNING - TEST ONLY:
+         * This filter ONLY fires when ALL of the following conditions are met:
+         * 1. MAINWP_TESTING_MODE constant is defined and true.
+         * 2. A PHPUnit test harness constant is present (WP_TESTS_DOMAIN,
+         *    PHPUNIT_COMPOSER_INSTALL, or WP_TESTS_DIR).
+         *
+         * These checks prevent malicious code from defining MAINWP_TESTING_MODE
+         * in production to spoof child site responses.
+         *
+         * IMPORTANT: MAINWP_TESTING_MODE must ONLY be defined in the PHPUnit bootstrap
+         * file (tests/bootstrap.php). Defining it in production code, wp-config.php,
+         * or plugin files would create a security vulnerability allowing response
+         * spoofing.
+         *
+         * @since 6.2.1
+         *
+         * @param mixed       $pre_result          Return non-false to short-circuit the request and return this value.
+         * @param string      $url                 URL to fetch.
+         * @param string      $admin               Admin username or identifier.
+         * @param string      $what                Action being performed.
+         * @param array|null  $params              Request parameters.
+         * @param bool        $pForceFetch         Whether to force the fetch.
+         * @param bool|null   $verifyCertificate   Whether to verify the SSL certificate.
+         * @param string|null $http_user           HTTP authentication username.
+         * @param string|null $http_pass           HTTP authentication password.
+         * @param int         $sslVersion          SSL version.
+         * @param array       $others              Additional request options.
+         * @param array       $output              Output data passed by reference.
+         *
+         * @return mixed Array or other value to return early, false to proceed normally.
+         */
+        $is_phpunit_env = defined( 'WP_TESTS_DOMAIN' ) || defined( 'PHPUNIT_COMPOSER_INSTALL' ) || ( defined( 'WP_TESTS_DIR' ) && WP_TESTS_DIR );
+
+        if ( defined( 'MAINWP_TESTING_MODE' ) && MAINWP_TESTING_MODE && $is_phpunit_env ) {
+            $pre_result = apply_filters_ref_array(
+                'mainwp_fetch_url_not_authed_pre',
+                array(
+                    false,
+                    $url,
+                    $admin,
+                    $what,
+                    $params,
+                    $pForceFetch,
+                    $verifyCertificate,
+                    $http_user,
+                    $http_pass,
+                    $sslVersion,
+                    $others,
+                    &$output,
+                )
+            );
+
+            if ( false !== $pre_result ) {
+                return $pre_result;
+            }
+        }
+
         unset( $pForceFetch );
 
         if ( empty( $params ) ) {
@@ -2203,7 +2322,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             }
         }
 
-        $agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
+        $agent = MainWP_Connect_Failure_Ux::get_user_agent();
 
         if ( ! empty( $website ) ) {
             MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'Request to [' . $url . '] [' . MainWP_Utility::value_to_string( $postdata, 1 ) . ']' );
@@ -2274,6 +2393,9 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, self::CONNECT_TIMEOUT_SECONDS );
         curl_setopt( $ch, CURLOPT_USERAGENT, $agent );
         curl_setopt( $ch, CURLOPT_ENCODING, 'none' );
+
+        $resp_headers = '';
+        static::capture_response_headers( $ch, $resp_headers );
 
         if ( ! empty( $http_user ) && ! empty( $http_pass ) ) {
             $http_pass = stripslashes( $http_pass );
@@ -2415,8 +2537,9 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             curl_close( $ch );
         }
 
-        $host = wp_parse_url( $real_url, PHP_URL_HOST );
-        $ip   = gethostbyname( $host );
+        $host        = wp_parse_url( $real_url, PHP_URL_HOST );
+        $ip          = gethostbyname( $host );
+        $resolved_ip = ( is_string( $ip ) && false !== filter_var( $ip, FILTER_VALIDATE_IP ) ) ? $ip : '';
 
         MainWP_Execution_Helper::execute_call_track( 'end_point', $website, $postdata, $fetch_track_id, 'fetch site' );
 
@@ -2426,11 +2549,8 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         $raw_response = isset( $others['raw_response'] ) && 'yes' === $others['raw_response'] ? true : false;
 
-        $hidden_data = '[hidden response data]';
-
-        if ( ! apply_filters( 'mainwp_hide_raw_connection_response_data', true ) ) {
-            $hidden_data = $data;
-        }
+        $hide_raw    = (bool) apply_filters( 'mainwp_hide_raw_connection_response_data', true );
+        $hidden_data = $hide_raw ? '[hidden response data]' : $data;
 
         if ( ! is_array( $output ) ) {
             $output = array();
@@ -2439,6 +2559,19 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $output['fetch_data'] = $hidden_data;
 
         $output['http_status'] = (int) $http_status;
+
+        $response_body = '';
+        if ( ! $hide_raw && is_string( $data ) ) {
+            $response_body = $data;
+        }
+
+        $failure_context = array(
+            'http_status' => $http_status,
+            'headers'     => $resp_headers,
+            'body'        => $response_body,
+            'resolved_ip' => $resolved_ip,
+            'error'       => $err,
+        );
 
         MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'http status: [' . $http_status . '] err: [' . $err . ']' );
         if ( '400' === $http_status ) {
@@ -2449,7 +2582,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         $thr_error = null;
 
-        if ( in_array( $what, array( 'installplugintheme', 'upgradeplugintheme', 'upgradetranslation', 'upgrade', 'stats', 'renew', 'reconnect' ), true ) ) {
+        if ( in_array( $what, array( 'installplugintheme', 'upgradeplugintheme', 'upgradetranslation', 'process_premium_updates', 'upgrade', 'stats', 'renew', 'reconnect' ), true ) ) {
             MainWP_Cache_Helper::invalidate_cache_group( MainWP_Cache_Helper::CGR_UPDATES );
             MainWP_Cache_Warm_Helper::invalidate_pages_by_site_actions( $what );
         }
@@ -2548,11 +2681,20 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         }
 
         if ( null !== $thr_error ) {
-            if ( 'TIMEOUT' === $thr_error->getMessage() ) {
-                $thr_error->set_data( '[hidden response data]' );
-            } else {
-                $thr_error->set_data( $hidden_data ); // to compatible.
+            $output = MainWP_Connect_Failure_Ux::enrich_output( $output, $failure_context );
+            if ( ! $hide_raw && ! empty( $output['response_readable'] ) ) {
+                $output['fetch_data'] = $output['response_readable'];
             }
+            $readable = ! empty( $output['response_readable'] ) ? $output['response_readable'] : $hidden_data;
+            $thr_error->set_data(
+                array(
+                    'text'        => $readable,
+                    'http_status' => (int) $http_status,
+                    'headers'     => isset( $output['response_headers'] ) ? $output['response_headers'] : '',
+                    'body'        => isset( $output['response_body'] ) ? $output['response_body'] : '',
+                    'resolved_ip' => $resolved_ip,
+                )
+            );
             throw $thr_error;
         }
     }

@@ -85,6 +85,36 @@ class MainWP_Error_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
     }
 
     /**
+     * Connect/sync failure message with IP labels, User-Agent, and readable response.
+     *
+     * On 403 / Cloudflare / WAF, Cloudflare and User-Agent allow steps come first.
+     *
+     * @param MainWP_Exception $exception Exception.
+     * @param array            $output    Fetch output.
+     *
+     * @return string
+     */
+    public static function get_connect_failure_message( $exception, $output = array() ) {
+        $details = MainWP_Connect_Failure_Ux::from_exception( $exception, $output );
+        $ux      = MainWP_Connect_Failure_Ux::render_html( $details );
+
+        if ( ! empty( $details['waf_likely'] ) ) {
+            return $ux;
+        }
+
+        $base = '';
+        if ( $exception instanceof MainWP_Exception ) {
+            $base = static::get_error_message( $exception );
+        }
+
+        if ( '' === $base ) {
+            return $ux;
+        }
+
+        return $base . $ux;
+    }
+
+    /**
      * Fixed copy for a child request timeout.
      *
      * Gateway and connect timeouts do not mention the Advanced Settings total.

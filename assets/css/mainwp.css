@@ -1914,3 +1914,14 @@ body.show-upload-theme .mainwp-content-wrap .mainwp-upload-theme {
 .mainwp-ui.mainwp-custom-theme #mainwp-premium-updates-identifier-search > .results .result.active {
     background: var(--mainwp-element-background, var(--background-color-2, var(--grey-light, #f9fafb))) !important;
 }
+
+.mainwp-connect-failure-ux pre {
+    white-space: pre-wrap;
+    word-break: break-word;
+    text-align: left;
+    margin-top: 0.5em;
+}
+
+.mainwp-connect-failure-ux code {
+    word-break: break-all;
+}

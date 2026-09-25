@@ -177,9 +177,9 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
     /**
      * Method get_wp_options_join().
      *
-     * @param array  $fields Extra option fields.
-     * @param string $view_query view query.
-     * @param array<string, mixed>  $params Additional parameters.
+     * @param array                $fields Extra option fields.
+     * @param string               $view_query view query.
+     * @param array<string, mixed> $params Additional parameters.
 
      *
      * NOTE: This method is used to improve the performance of wp_options view, as the old view with subquery for each field will cause performance issue when there are many sites, and this method will generate the SQL with LEFT JOIN which will be much faster than subquery.
@@ -1096,7 +1096,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         $table_name = esc_sql( $this->table_name( 'wp_options' ) );
         $rslt       = $this->wpdb->get_results( $this->wpdb->prepare( "SELECT name FROM {$table_name} WHERE wpid = %d AND name = %s", $site_id, $option ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd.
         if ( empty( $rslt ) ) {
-            $this->wpdb->insert(
+            $written = $this->wpdb->insert(
                 $this->table_name( 'wp_options' ),
                 array(
                     'wpid'  => $site_id,
@@ -1105,7 +1105,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 )
             );
         } else {
-            $this->wpdb->update(
+            $written = $this->wpdb->update(
                 $this->table_name( 'wp_options' ),
                 array( 'value' => $value ),
                 array(
@@ -1113,6 +1113,10 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                     'name' => $option,
                 )
             );
+        }
+
+        if ( false !== $written && is_string( $option ) ) {
+            MainWP_Cache_Helper::invalidate_updates_cache_if_ignore_fields( array( $option => $value ) );
         }
     }
 
@@ -3317,6 +3321,24 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                         )
                     );
                 }
+
+                // Add primary monitor, use global settings.
+                $success = MainWP_DB_Uptime_Monitoring::instance()->update_wp_monitor(
+                    array(
+                        'wpid'   => $websiteid,
+                        'suburl' => '',
+                    )
+                );
+
+                $opt_name = 'mainwp_primary_monitor_repair_attempts_for_wp_' . $websiteid;
+
+                if ( ! $success ) {
+                    update_option( $opt_name, 1 );
+                    MainWP_Utility::unhide_mainwp_message( 'failed-attempt-create-primary-monitor-' . $websiteid );
+                } elseif ( get_option( $opt_name ) ) {
+                    delete_option( $opt_name );
+                }
+
                 MainWP_Manage_Sites_List_Table::invalidate_manage_sites_cache();
                 return $websiteid;
             }
@@ -3343,6 +3365,10 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             MainWP_Encrypt_Data_Lib::remove_key_file( $websiteid );
             MainWP_DB_Uptime_Monitoring::instance()->delete_monitor( array( 'wpid' => $websiteid ) );
             MainWP_Manage_Sites_List_Table::invalidate_manage_sites_cache();
+            if ( $nr > 0 ) {
+                MainWP_DB_Common::instance()->delete_widget_saved_filters_for_all_users( 'individual', $websiteid );
+            }
+
             return $nr;
         }
 
@@ -3386,7 +3412,11 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             );
             $this->wpdb->get_row( $sql );
 
-            return $this->wpdb->update( $this->table_name( 'wp' ), $fields, array( 'id' => $websiteid ) );
+            $updated = $this->wpdb->update( $this->table_name( 'wp' ), $fields, array( 'id' => $websiteid ) );
+            if ( false !== $updated ) {
+                MainWP_Cache_Helper::invalidate_updates_cache_if_ignore_fields( $fields );
+            }
+            return $updated;
         }
 
         return false;

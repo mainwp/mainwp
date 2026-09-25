@@ -16,6 +16,7 @@ use MainWP\Dashboard\MainWP_DB_Common;
 use MainWP\Dashboard\MainWP_Post_Handler;
 use MainWP\Dashboard\MainWP_Logger;
 use MainWP\Dashboard\MainWP_Ui_Manage_Widgets_Layout;
+use MainWP\Dashboard\MainWP_Site_Actions;
 
 // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
@@ -681,7 +682,7 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
                         </div>
                         <div class="two wide middle aligned column">
                             <div id="mainwp-module-log-filter-users" class="ui selection multiple fluid mini dropdown seg_users">
-                                <input type="hidden" value="<?php echo esc_html( $filter_user_ids ); ?>">
+                                <input type="hidden" value="<?php echo esc_attr( $filter_user_ids ); ?>">
                                 <i class="dropdown icon"></i>
                                 <div class="default text"><?php esc_html_e( 'All users', 'mainwp' ); ?></div>
                                 <div class="menu">
@@ -812,9 +813,9 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
      * Method load_sites_table()
      *
      * @param string $tbl_id Table Id
-     * @param bool $optimize Whether optimize data query.
+     * @param bool   $optimize Whether optimize data query.
      *
-     * Load sites table.
+     *   Load sites table.
      */
     public function load_events_list_table( $tbl_id = '', $optimize = false ) {
         $manager                 = Log_Manager::instance();
@@ -846,10 +847,16 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
         $this->load_events_list_table( 'widget-overview', true );
 
         $insights_filters = array();
+        $context          = 'operations';
+        $client_id        = 0;
+        $site_id          = 0;
         //phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( ! empty( $_POST['current_site_id'] ) ) {
-            $insights_filters['wpid'] = intval( $_POST['current_site_id'] );
+            $site_id                  = intval( $_POST['current_site_id'] );
+            $insights_filters['wpid'] = $site_id;
+            $context                  = 'individual';
         } elseif ( ! empty( $_POST['current_client_id'] ) ) {
+            $context   = 'client';
             $client_id = intval( $_POST['current_client_id'] );
             $websites  = MainWP_DB_Client::instance()->get_websites_by_client_ids( $client_id );
             $site_ids  = array();
@@ -895,6 +902,11 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
             }
         }
         $insights_filters['sources_conds'] = $sources_conds;
+        $others_filters                    = MainWP_Site_Actions::instance()->get_widget_insights_filters( $context, $site_id, $client_id, false, true ); // get ajax filters.
+        if ( is_array( $others_filters ) ) {
+            $insights_filters = array_merge( $others_filters, $insights_filters );
+        }
+
         $this->list_events_table->prepare_items( false, $insights_filters );
         $output = $this->list_events_table->ajax_get_datatable_rows();
         MainWP_Logger::instance()->log_execution_time( 'ajax_events_display_rows()' );

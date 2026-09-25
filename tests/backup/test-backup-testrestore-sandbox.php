@@ -343,7 +343,7 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 	 *
 	 * @return void
 	 */
-	public function test_tar_gz_alias_directory_failure_is_unsupported() {
+	public function test_tar_gz_alias_directory_failure_reports_private_root() {
 		$short = $this->clean_tar();
 		$phar  = new \PharData( $short );
 		$phar->compress( \Phar::GZ );
@@ -359,9 +359,9 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 				$sandbox->extract_files( $short . '.gz' );
 			} catch ( MainWP_Exception $e ) {
 				$threw = true;
-				$this->assertSame( MainWP_Backup_TestRestore_Sandbox::ERR_UNSUPPORTED, $e->get_message_error_code() );
+				$this->assertSame( \MainWP\Dashboard\MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE, $e->get_message_error_code() );
 			}
-			$this->assertTrue( $threw, 'An unavailable alias directory must be reported as unsupported.' );
+			$this->assertTrue( $threw, 'An unavailable alias directory must be reported as a private storage failure.' );
 			$this->assertSame( 0, $sandbox->temp_file_count() );
 		} finally {
 			wp_delete_file( $alias_dir );
@@ -507,7 +507,7 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 				$method->invoke( $sandbox, $path );
 			} catch ( MainWP_Exception $e ) {
 				$threw = true;
-				$this->assertSame( MainWP_Backup_TestRestore_Sandbox::ERR_UNSUPPORTED, $e->get_message_error_code() );
+				$this->assertSame( \MainWP\Dashboard\MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE, $e->get_message_error_code() );
 				$this->assertStringContainsString( 'Private backup directory', $e->getMessage() );
 				$this->assertStringContainsString( $alias_dir, $e->getMessage() );
 			}

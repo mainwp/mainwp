@@ -23,6 +23,8 @@ function link( $target, $link ) {
 
 namespace MainWP\Dashboard\Tests; // phpcs:ignore Universal.Namespaces.OneDeclarationPerFile.MultipleFound -- the filesystem or clock stub must share the production namespace.
 
+require_once __DIR__ . '/trait-backup-private-root-fixture.php';
+
 use MainWP\Dashboard\MainWP_Backup_File_Manager;
 
 // phpcs:disable WordPress.WP.AlternativeFunctions -- direct file IO in tests.
@@ -31,6 +33,8 @@ use MainWP\Dashboard\MainWP_Backup_File_Manager;
  * Class MainWP_Download_Lock_Test
  */
 class MainWP_Download_Lock_Test extends MainWP_Abilities_Test_Case { // phpcs:ignore Universal.Files.SeparateFunctionsFromOO.Mixed, Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- the switchable stub belongs with its regression tests.
+
+	use Backup_Private_Root_Fixture;
 
 	/**
 	 * Force hosts with hard links to cover the fallback.
@@ -53,6 +57,7 @@ class MainWP_Download_Lock_Test extends MainWP_Abilities_Test_Case { // phpcs:ig
 	 */
 	public function set_up() {
 		parent::set_up();
+		$this->set_up_private_root();
 		self::$disable_hard_links = false;
 		$this->dir                = get_temp_dir() . 'mainwp-lock-tests-' . uniqid() . '/';
 		mkdir( $this->dir, 0777, true );
@@ -69,6 +74,7 @@ class MainWP_Download_Lock_Test extends MainWP_Abilities_Test_Case { // phpcs:ig
 			unlink( $left_over );
 		}
 		rmdir( $this->dir );
+		$this->tear_down_private_root();
 		parent::tear_down();
 	}
 
@@ -211,9 +217,9 @@ class MainWP_Download_Lock_Test extends MainWP_Abilities_Test_Case { // phpcs:ig
 	 * Transfer heartbeats renew our sidecar but cannot overwrite a new owner.
 	 */
 	public function test_download_progress_refreshes_only_owned_lock() {
-		$file    = $this->dir . 'heartbeat.zip';
-		$lock    = $file . '.downloading';
 		$site_id = $this->create_test_site();
+		$file    = \MainWP\Dashboard\MainWP_Backup_Private_Root::site_dir( $site_id ) . 'heartbeat.zip';
+		$lock    = $file . '.downloading';
 		$website = \MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( $site_id );
 		$key     = openssl_pkey_new(
 			array(

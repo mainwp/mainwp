@@ -1750,7 +1750,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
         $dbBackups   = array();
         $fullBackups = array();
-        foreach ( array( MainWP_Backup_Private_Root::site_dir( (int) $website->id ), $dir ) as $dir ) {
+        foreach ( array( MainWP_Backup_Private_Root::site_path( (int) $website->id ), $dir ) as $dir ) {
             if ( ! is_wp_error( $dir ) && file_exists( $dir ) ) {
                 $dh = opendir( $dir );
                 if ( $dh ) {

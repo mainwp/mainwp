@@ -10,6 +10,9 @@
 
 namespace MainWP\Dashboard\Tests;
 
+require_once __DIR__ . '/trait-backup-private-root-fixture.php';
+
+use MainWP\Dashboard\MainWP_Backup_Error_Codes;
 use MainWP\Dashboard\MainWP_Backup_Monitor;
 use MainWP\Dashboard\MainWP_Exception;
 use MainWP\Dashboard\MainWP_Backup_Page;
@@ -20,6 +23,18 @@ use MainWP\Dashboard\MainWP_System_Utility;
  * Class MainWP_Backup_Environment_Test
  */
 class MainWP_Backup_Environment_Test extends \WP_UnitTestCase {
+
+	use Backup_Private_Root_Fixture;
+
+	/**
+	 * Isolate the destination checked by preflight.
+	 *
+	 * @return void
+	 */
+	public function set_up() {
+		parent::set_up();
+		$this->set_up_private_root();
+	}
 
 	/**
 	 * Restore permissions on the backup dir.
@@ -34,6 +49,7 @@ class MainWP_Backup_Environment_Test extends \WP_UnitTestCase {
 		if ( is_dir( $backup_dir ) ) {
 			chmod( $backup_dir, 0755 ); // phpcs:ignore WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors -- test cleanup.
 		}
+		$this->tear_down_private_root();
 		parent::tear_down();
 	}
 
@@ -58,17 +74,13 @@ class MainWP_Backup_Environment_Test extends \WP_UnitTestCase {
 			$this->markTestSkipped( 'Permission checks do not apply when running as root.' );
 		}
 
-		$backup_dir = MainWP_System_Utility::get_mainwp_dir( 'backup' );
-		if ( is_array( $backup_dir ) ) {
-			$backup_dir = $backup_dir[0];
-		}
-		chmod( $backup_dir, 0555 ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+		mkdir( $this->private_root, 0555 ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
 
 		try {
 			MainWP_Backup_Monitor::validate_backup_environment();
 			$this->fail( 'Expected exception for a non-writable backup directory.' );
 		} catch ( MainWP_Exception $e ) {
-			$this->assertSame( 'mainwp_backup_dir_not_writable', $e->get_message_error_code() );
+			$this->assertSame( MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE, $e->get_message_error_code() );
 		}
 	}
 

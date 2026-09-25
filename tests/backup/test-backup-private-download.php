@@ -176,4 +176,28 @@ class MainWP_Backup_Private_Download_Test extends MainWP_Abilities_Test_Case {
 			unlink( $file );
 		}
 	}
+
+	/**
+	 * A session alone grants neither backup execution nor site access.
+	 */
+	public function test_private_download_requires_backup_and_site_rights() {
+		$this->skip_when_capabilities_bypassed();
+		$site_id = $this->create_test_site();
+		$file    = MainWP_Backup_Private_Root::site_dir( $site_id ) . 'full.zip';
+		file_put_contents( $file, 'archive' );
+		$query = array(
+			'root'  => 'private',
+			'mwpdl' => 'sites/' . $site_id . '/full.zip',
+			'sig'   => MainWP_System_Utility::get_download_sig( $file ),
+		);
+		foreach ( array( 'dashboard', 'site' ) as $denied ) {
+			$filter = static function ( $allowed, $type, $cap ) use ( $denied, $site_id ) {
+				return $type === $denied && ( 'execute_backups' === $cap || $site_id === (int) $cap ) ? false : $allowed;
+			};
+			add_filter( 'mainwp_currentusercan', $filter, 10, 3 );
+			$this->assertNull( $this->request_download( $query ), $denied );
+			remove_filter( 'mainwp_currentusercan', $filter, 10 );
+		}
+		$this->assertSame( 'archive', $this->request_download( $query ) );
+	}
 }

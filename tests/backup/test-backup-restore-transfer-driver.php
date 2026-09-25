@@ -308,24 +308,27 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends MainWP_Abilities_Test_C
 				$this->assertTrue( $outcome['done'] );
 				$this->assertSame( $root . '/777001/db.tar.gz', $plan[0]['staged_path'] );
 				$this->assertSame( 'remote-bytes', file_get_contents( $plan[0]['staged_path'] ) );
+				if ( 2 === $pass ) {
+					$this->assertFileDoesNotExist( $root . '/.htaccess' );
+					$this->assertFileDoesNotExist( $root . '/index.php' );
+					continue;
+				}
 				$this->assertFileExists( $root . '/.htaccess' );
 				$this->assertSame( 'deny from all', file_get_contents( $root . '/.htaccess' ) );
 				$this->assertFileExists( $root . '/index.php' );
 				$this->assertSame( '', file_get_contents( $root . '/index.php' ) );
 				$this->assertDirectoryDoesNotExist( $this->dir . '/filtered/mainwp/restore-staging' );
 			}
-			unlink( $root . '/.htaccess' );
-			unlink( $root . '/index.php' );
 			$cursor  = array();
 			$outcome = $this->driver->transfer_artifacts( (object) array( 'id' => 4 ), 'task', $plan, $cursor, microtime( true ) + 60 );
 			$this->assertTrue( $outcome['done'] );
 			$this->assertNotEmpty( $this->driver->sent );
-			$this->assertSame( 'deny from all', file_get_contents( $root . '/.htaccess' ) );
-			$this->assertSame( '', file_get_contents( $root . '/index.php' ) );
+			$this->assertFileDoesNotExist( $root . '/.htaccess' );
+			$this->assertFileDoesNotExist( $root . '/index.php' );
 			$this->driver->cleanup_staging( 777001 );
 			$this->assertDirectoryDoesNotExist( $root . '/777001' );
-			$this->assertFileExists( $root . '/.htaccess' );
-			$this->assertFileExists( $root . '/index.php' );
+			$this->assertFileDoesNotExist( $root . '/.htaccess' );
+			$this->assertFileDoesNotExist( $root . '/index.php' );
 		} finally {
 			remove_filter( 'upload_dir', $upload );
 			remove_filter( 'mainwp_get_wp_upload_dir', $filtered );
@@ -1892,6 +1895,44 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends MainWP_Abilities_Test_C
 		$this->assertFalse( $outcome['done'] );
 		$this->assertNotNull( $outcome['error'] );
 		$this->assertSame( array( 21, 22 ), $this->driver->resolved_destinations );
+	}
+
+	/**
+	 * Old remote checkpoints must stage again before transferring any bytes.
+	 */
+	public function test_legacy_staging_is_retried_for_both_remote_sources() {
+		$upload = wp_upload_dir( null, false );
+		$legacy = trailingslashit( $upload['basedir'] ) . 'mainwp/restore-staging/777001/';
+		wp_mkdir_p( $legacy );
+		file_put_contents( $legacy . 'archive.zip', 'legacy' );
+		try {
+			foreach ( array( 'remote', 'remote_chunked' ) as $source ) {
+				$plan    = array(
+					array(
+						'source'      => $source,
+						'staged_path' => $legacy . 'archive.zip',
+						'sha256'      => hash( 'sha256', 'legacy' ),
+					),
+				);
+				$cursor  = array( 'offset' => 3 );
+				$outcome = $this->driver->transfer_artifacts( (object) array( 'id' => 1 ), 'task', $plan, $cursor, microtime( true ) + 60, null, 777001 );
+				$this->assertFalse( $outcome['done'] );
+				$this->assertNull( $outcome['error'] );
+				$this->assertTrue( $outcome['retryable'] );
+				$this->assertTrue( $outcome['restage'] );
+				$this->assertSame( '', $outcome['plan'][0]['staged_path'] );
+				$this->assertSame( '', $outcome['plan'][0]['sha256'] );
+				$this->assertEmpty( $this->driver->sent );
+			}
+			add_filter( 'mainwp_backup_private_root', '__return_false', 99 );
+			\MainWP\Dashboard\MainWP_Backup_Private_Root::reset();
+			$outcome = $this->driver->transfer_artifacts( (object) array( 'id' => 1 ), 'task', $plan, $cursor, microtime( true ) + 60, null, 777001 );
+			$this->assertSame( MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE, $outcome['error_code'] );
+			$this->driver->cleanup_staging( 777001 );
+			$this->assertDirectoryDoesNotExist( $legacy );
+		} finally {
+			$this->rrmdir( $legacy );
+		}
 	}
 }
 

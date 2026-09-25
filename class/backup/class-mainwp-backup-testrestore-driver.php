@@ -161,6 +161,9 @@ class MainWP_Backup_TestRestore_Driver { // phpcs:ignore Generic.Classes.Opening
                 $result['state']      = self::STATE_FAIL;
                 $result['error']      = (string) $outcome['error'];
                 $result['error_code'] = isset( $outcome['error_code'] ) ? (string) $outcome['error_code'] : 'mainwp_testrestore_staging_failed';
+                if ( MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE === $result['error_code'] ) {
+                    return $result;
+                }
             } elseif ( null !== $caller_deadline && microtime( true ) >= $caller_deadline ) {
                 // Staging alone consumed the caller's whole budget. Bringing up
                 // a sandbox and applying the plan now would overrun the tick
@@ -195,6 +198,9 @@ class MainWP_Backup_TestRestore_Driver { // phpcs:ignore Generic.Classes.Opening
             $result['state']      = $unsupported ? self::STATE_UNSUPPORTED : self::STATE_FAIL;
             $result['error']      = $e->getMessage();
             $result['error_code'] = $code;
+            if ( MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE === $code ) {
+                return $result;
+            }
         } catch ( \Throwable $e ) {
             $result['state']      = self::STATE_FAIL;
             $result['error']      = $e->getMessage();

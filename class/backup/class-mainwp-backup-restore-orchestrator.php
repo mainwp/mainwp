@@ -931,7 +931,8 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             function () use ( $store, $job, $still_driving ): bool {
                 $fresh = $store->get_job( (int) $job->id );
                 return null !== $fresh && empty( $fresh->checkpoint['cancel_intent'] ) && in_array( $fresh->status, $still_driving, true );
-            }
+            },
+            (int) $job->id
         );
 
         // Another lane may have taken over during the chunk round trip.
@@ -942,6 +943,9 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
 
         $checkpoint             = $fresh->checkpoint;
         $checkpoint['transfer'] = $cursor;
+        if ( ! empty( $outcome['restage'] ) ) {
+            $checkpoint['plan'] = $outcome['plan'];
+        }
         $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
 
         if ( ! empty( $fresh->checkpoint['cancel_intent'] ) ) {
@@ -951,7 +955,11 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         }
 
         if ( null !== $outcome['error'] ) {
-            $this->record_failure( $job, $outcome['error'], $outcome['retryable'] );
+            $this->record_failure( $job, $outcome['error'], $outcome['retryable'], (string) ( $outcome['error_code'] ?? '' ) );
+            return;
+        }
+        if ( ! empty( $outcome['restage'] ) ) {
+            $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_STAGING, array(), $this->lock_token );
             return;
         }
         if ( $outcome['done'] ) {

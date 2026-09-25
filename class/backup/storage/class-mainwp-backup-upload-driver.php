@@ -1038,7 +1038,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
     private function staging_dir( object $job ): string {
         $dir = MainWP_Backup_Private_Root::staging_dir( 'upload-staging', (int) $job->snapshot_id . '-' . (int) $job->destination_id );
         if ( is_wp_error( $dir ) ) {
-            throw new \RuntimeException( esc_html( $dir->get_error_message() ), 410 );
+            throw new \RuntimeException( esc_html( $dir->get_error_message() ), 503 );
         }
         return untrailingslashit( $dir );
     }
@@ -1051,17 +1051,21 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
      * @return void
      */
     private function cleanup_staging( object $job ): void {
-        $dir = MainWP_Backup_Private_Root::staging_dir( 'upload-staging', (int) $job->snapshot_id . '-' . (int) $job->destination_id );
-        if ( is_wp_error( $dir ) || ! is_dir( $dir ) ) {
-            return;
-        }
-
-        foreach ( glob( $dir . DIRECTORY_SEPARATOR . '*' ) as $file ) {
-            if ( is_file( $file ) ) {
-                unlink( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- staging cleanup.
+        $name   = (int) $job->snapshot_id . '-' . (int) $job->destination_id;
+        $upload = wp_upload_dir( null, false );
+        $legacy = trailingslashit( $upload['basedir'] ) . 'mainwp/upload-staging/' . $name . '/';
+        foreach ( array( MainWP_Backup_Private_Root::staging_dir( 'upload-staging', $name ), $legacy ) as $dir ) {
+            if ( is_wp_error( $dir ) || ! is_dir( $dir ) || is_link( untrailingslashit( $dir ) ) || is_link( dirname( untrailingslashit( $dir ) ) ) || is_link( dirname( untrailingslashit( $dir ), 2 ) ) ) {
+                continue;
             }
+            foreach ( (array) scandir( $dir ) as $name ) {
+                $file = $dir . $name;
+                if ( is_file( $file ) && MainWP_Backup_File_Manager::path_is_confined_to( $file, $dir ) ) {
+                    wp_delete_file( $file );
+                }
+            }
+            @rmdir( $dir ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions -- best-effort staging cleanup.
         }
-        rmdir( $dir ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- staging cleanup.
     }
 
     /**

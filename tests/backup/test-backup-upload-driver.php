@@ -541,6 +541,11 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 				$args       = array( $job, &$checkpoint, microtime( true ) + 60 );
 				$this->assertTrue( $chunking->invokeArgs( $driver, $args ) );
 				$this->assertNotEmpty( glob( $root . '/' . $snapshot_id . '-' . $dest_id . '/*.bin' ), 'Chunking must write staging bytes.' );
+				if ( 2 === $pass ) {
+					$this->assertFileDoesNotExist( $root . '/.htaccess' );
+					$this->assertFileDoesNotExist( $root . '/index.php' );
+					continue;
+				}
 				$this->assertFileExists( $root . '/.htaccess' );
 				$this->assertSame( 'deny from all', file_get_contents( $root . '/.htaccess' ) );
 				$this->assertFileExists( $root . '/index.php' );
@@ -550,8 +555,8 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 			$cleanup = new \ReflectionMethod( $driver, 'cleanup_staging' );
 			$cleanup->invoke( $driver, $job );
 			$this->assertDirectoryDoesNotExist( $root . '/' . $snapshot_id . '-' . $dest_id );
-			$this->assertFileExists( $root . '/.htaccess' );
-			$this->assertFileExists( $root . '/index.php' );
+			$this->assertFileDoesNotExist( $root . '/.htaccess' );
+			$this->assertFileDoesNotExist( $root . '/index.php' );
 		} finally {
 			remove_filter( 'upload_dir', $upload );
 			remove_filter( 'mainwp_get_wp_upload_dir', $filtered );
@@ -1538,5 +1543,30 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 
 		$this->assertNotSame( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE, $job->status, 'A failed terminal manifest checkpoint must not complete the job.' );
 		$this->assertNotEmpty( $job->checkpoint['artifacts'], 'The artifact index persisted earlier must survive; only the terminal write failed.' );
+	}
+
+	/**
+	 * Operators can repair private storage while the upload waits in backoff.
+	 */
+	public function test_private_staging_failure_is_retryable_and_cleans_legacy() {
+		list( $dest_id ) = $this->make_local_destination();
+		$snapshot_id     = $this->make_snapshot( $this->standard_files() );
+		$store           = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+		add_filter( 'mainwp_backup_private_root', '__return_false', 99 );
+		\MainWP\Dashboard\MainWP_Backup_Private_Root::reset();
+		$now = time();
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240, $now );
+		$job = $store->get_jobs_for_snapshot( $snapshot_id )[0];
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_RETRYABLE, $job->status );
+		$this->assertGreaterThan( $now, (int) $job->next_retry_at );
+		$this->assertStringContainsString( 'Private backup directory', $job->last_error );
+		$upload = wp_upload_dir( null, false );
+		$legacy = trailingslashit( $upload['basedir'] ) . 'mainwp/upload-staging/' . $snapshot_id . '-' . $dest_id . '/';
+		wp_mkdir_p( $legacy );
+		file_put_contents( $legacy . 'partial.bin', 'partial' );
+		$cleanup = new \ReflectionMethod( MainWP_Backup_Upload_Driver::class, 'cleanup_staging' );
+		$cleanup->invoke( MainWP_Backup_Upload_Driver::instance(), $job );
+		$this->assertDirectoryDoesNotExist( $legacy );
 	}
 }

@@ -426,8 +426,9 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
         $staging = $this->staging_dir( $job_id );
         if ( is_wp_error( $staging ) ) {
             return array(
-                'done'  => false,
-                'error' => $staging->get_error_message(),
+                'done'       => false,
+                'error'      => $staging->get_error_message(),
+                'error_code' => MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE,
             );
         }
 
@@ -1120,19 +1121,32 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
      *                                      ceiling_cleared_bytes, good_bytes }.
      * @param float         $deadline        Slice deadline (epoch).
      * @param callable|null $should_continue Whether another chunk may be sent; called without arguments.
+     * @param int           $job_id Restore job id, when supplied by the orchestrator.
      *
      * @return array { done: bool, error: string|null, retryable: bool }
      */
-    public function transfer_artifacts( object $website, string $task_id, array $plan, array &$cursor, float $deadline, ?callable $should_continue = null ): array { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- chunk loop with realign, adaptive sizing, and floor retries.
+    public function transfer_artifacts( object $website, string $task_id, array $plan, array &$cursor, float $deadline, ?callable $should_continue = null, int $job_id = 0 ): array { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- chunk loop with realign, adaptive sizing, and floor retries.
         // Reassert privacy even when a transfer resumes without staging again.
-        foreach ( $plan as $entry ) {
-            if ( ! empty( $entry['staged_path'] ) && empty( $entry['adopt_only'] ) && 'remote' === ( $entry['source'] ?? '' ) ) {
-                $dir = MainWP_Backup_Private_Root::staging_dir( 'restore-staging', basename( dirname( $entry['staged_path'] ) ) );
-                if ( is_wp_error( $dir ) || ! MainWP_Backup_File_Manager::path_is_confined_to( $entry['staged_path'], $dir ) ) {
+        foreach ( $plan as $index => $entry ) {
+            if ( ! empty( $entry['staged_path'] ) && empty( $entry['adopt_only'] ) && in_array( $entry['source'] ?? '', array( 'remote', 'remote_chunked' ), true ) ) {
+                $dir = $this->staging_dir( $job_id > 0 ? $job_id : (int) basename( dirname( $entry['staged_path'] ) ) );
+                if ( is_wp_error( $dir ) ) {
+                    return array(
+                        'done'       => false,
+                        'error'      => $dir->get_error_message(),
+                        'error_code' => MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE,
+                        'retryable'  => false,
+                    );
+                }
+                if ( ! MainWP_Backup_File_Manager::path_is_confined_to( $entry['staged_path'], $dir ) ) {
+                    $plan[ $index ]['staged_path'] = '';
+                    $plan[ $index ]['sha256']      = '';
                     return array(
                         'done'      => false,
-                        'error'     => is_wp_error( $dir ) ? $dir->get_error_message() : __( 'Restore staging path is outside its private directory.', 'mainwp' ),
-                        'retryable' => false,
+                        'error'     => null,
+                        'retryable' => true,
+                        'restage'   => true,
+                        'plan'      => $plan,
                     );
                 }
             }
@@ -1500,16 +1514,20 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
      * @param int $job_id Restore job id.
      */
     public function cleanup_staging( int $job_id ): void {
-        $dir = $this->staging_dir( $job_id );
-        if ( is_wp_error( $dir ) || ! is_dir( $dir ) ) {
-            return;
-        }
-        foreach ( (array) glob( $dir . '*' ) as $file ) {
-            if ( is_file( $file ) ) {
-                wp_delete_file( $file );
+        $upload = wp_upload_dir( null, false );
+        $legacy = trailingslashit( $upload['basedir'] ) . 'mainwp/restore-staging/' . $job_id . '/';
+        foreach ( array( $this->staging_dir( $job_id ), $legacy ) as $dir ) {
+            if ( is_wp_error( $dir ) || ! is_dir( $dir ) || is_link( untrailingslashit( $dir ) ) || is_link( dirname( untrailingslashit( $dir ) ) ) || is_link( dirname( untrailingslashit( $dir ), 2 ) ) ) {
+                continue;
             }
+            foreach ( (array) scandir( $dir ) as $name ) {
+                $file = $dir . $name;
+                if ( is_file( $file ) && MainWP_Backup_File_Manager::path_is_confined_to( $file, $dir ) ) {
+                    wp_delete_file( $file );
+                }
+            }
+            @rmdir( $dir ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions -- best-effort staging cleanup.
         }
-        @rmdir( $dir ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions -- best-effort staging cleanup.
     }
 
     /**

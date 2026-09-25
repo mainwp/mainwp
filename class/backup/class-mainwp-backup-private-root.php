@@ -37,10 +37,22 @@ class MainWP_Backup_Private_Root {
         if ( null !== self::$root ) {
             return self::$root;
         }
-        $default = defined( 'MAINWP_BACKUP_PRIVATE_DIR' ) ? MAINWP_BACKUP_PRIVATE_DIR : dirname( rtrim( ABSPATH, '/\\' ) ) . '/mainwp-private/backups';
-        $root    = apply_filters( 'mainwp_backup_private_root', $default );
+        self::served_roots();
+        if ( defined( 'MAINWP_BACKUP_PRIVATE_DIR' ) ) {
+            $default = MAINWP_BACKUP_PRIVATE_DIR;
+        } else {
+            $suffix = get_option( 'mainwp_backup_private_suffix', '' );
+            if ( '' === $suffix ) {
+                add_option( 'mainwp_backup_private_suffix', strtolower( wp_generate_password( 16, false ) ), '', 'yes' );
+                $suffix = get_option( 'mainwp_backup_private_suffix' );
+            }
+            $default = dirname( rtrim( ABSPATH, '/\\' ) ) . '/mainwp-private-' . $suffix . '/backups';
+        }
+        $root = apply_filters( 'mainwp_backup_private_root', $default );
         if ( ! is_string( $root ) || '' === trim( $root ) || false !== strpos( $root, "\0" ) ) {
             self::$root = self::unavailable( is_string( $root ) ? str_replace( "\0", '[NUL]', $root ) : '(' . gettype( $root ) . ')', 'expected a non-empty path without NUL bytes' );
+        } elseif ( ! path_is_absolute( $root ) ) {
+            self::$root = self::unavailable( $root, 'expected an absolute path' );
         } else {
             self::$root = self::ensure_private_dir( $root );
         }
@@ -100,7 +112,7 @@ class MainWP_Backup_Private_Root {
      * @return string
      */
     public static function legacy_site_dir( int $site_id ): string {
-        $upload = wp_upload_dir( null, false );
+        $upload = apply_filters( 'mainwp_get_wp_upload_dir', wp_upload_dir( null, false ), null, false );
         return trailingslashit( $upload['basedir'] ) . 'mainwp/0/' . $site_id . '/';
     }
 
@@ -115,9 +127,45 @@ class MainWP_Backup_Private_Root {
         if ( $site_id <= 0 ) {
             return false;
         }
-        $private = self::site_path( $site_id );
-        return ( ! is_wp_error( $private ) && ! is_link( untrailingslashit( $private ) ) && ! is_link( dirname( untrailingslashit( $private ) ) ) && MainWP_Backup_File_Manager::path_is_confined_to( $path, $private ) )
+        return self::is_within_private_site_dir( $path, $site_id )
             || MainWP_Backup_File_Manager::path_is_confined_to( $path, self::legacy_site_dir( $site_id ) );
+    }
+
+    /**
+     * Confine new writes to private storage, including resumed downloads.
+     *
+     * @param string $path Candidate path.
+     * @param int    $site_id Site id.
+     * @return bool
+     */
+    public static function is_within_private_site_dir( string $path, int $site_id ): bool {
+        $private = self::site_path( $site_id );
+        return ! is_wp_error( $private ) && ! is_link( untrailingslashit( $private ) ) && ! is_link( dirname( untrailingslashit( $private ) ) ) && MainWP_Backup_File_Manager::path_is_confined_to( $path, $private );
+    }
+
+    /**
+     * Remember web roots so cron and CLI enforce the same boundary.
+     *
+     * @return array
+     */
+    private static function served_roots(): array {
+        $roots = get_option( 'mainwp_backup_served_roots', array() );
+        $roots = is_array( $roots ) ? array_filter( $roots, 'is_string' ) : array();
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- A filesystem boundary, never rendered or used as a write destination.
+        $current = $_SERVER['DOCUMENT_ROOT'] ?? '';
+        if ( is_string( $current ) && '' !== trim( $current ) ) {
+            $real    = realpath( $current );
+            $current = wp_normalize_path( false === $real ? $current : $real );
+            $current = '/' === $current ? $current : untrailingslashit( $current );
+            if ( ! in_array( $current, $roots, true ) ) {
+                $roots[] = $current;
+                $roots   = array_slice( $roots, -10 );
+                if ( ! add_option( 'mainwp_backup_served_roots', $roots, '', 'no' ) ) {
+                    update_option( 'mainwp_backup_served_roots', $roots, false );
+                }
+            }
+        }
+        return array_filter( $roots, 'strlen' );
     }
 
     /**
@@ -154,7 +202,7 @@ class MainWP_Backup_Private_Root {
             return self::unavailable( $dir, 'directory is a symlink' );
         }
         $candidate = self::canonical_path( $dir );
-        foreach ( array( ABSPATH, WP_CONTENT_DIR ) as $public ) {
+        foreach ( array_merge( array( ABSPATH, WP_CONTENT_DIR ), self::served_roots() ) as $public ) {
             foreach ( array( self::canonical_path( $public ), wp_normalize_path( $public ) ) as $served ) {
                 $served = untrailingslashit( $served );
                 if ( $candidate === $served || 0 === strpos( $candidate, $served . '/' ) || $dir === $served || 0 === strpos( $dir, $served . '/' ) ) {
@@ -165,6 +213,7 @@ class MainWP_Backup_Private_Root {
         if ( null !== $required_parent && ( is_link( untrailingslashit( $required_parent ) ) || 0 !== strpos( $candidate . '/', trailingslashit( self::canonical_path( $required_parent ) ) ) ) ) {
             return self::unavailable( $dir, 'directory escapes its private parent' );
         }
+        $existed = is_dir( $dir );
         if ( ! wp_mkdir_p( $dir ) ) {
             return self::unavailable( $dir, 'could not create directory' );
         }
@@ -183,8 +232,10 @@ class MainWP_Backup_Private_Root {
         if ( ! $written ) {
             return self::unavailable( $dir, 'could not create and remove a write probe' );
         }
-        @chmod( $real, 0700 );
-        if ( $protect ) {
+        if ( ! $existed ) {
+            @chmod( $real, 0700 );
+        }
+        if ( ! $existed && $protect ) {
             foreach ( array(
                 'index.php' => '',
                 '.htaccess' => 'deny from all',

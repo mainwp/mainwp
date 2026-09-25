@@ -770,7 +770,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     return;
                 }
                 $website = MainWP_DB::instance()->get_website_by_id( $site_id );
-                if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
+                if ( ! \mainwp_current_user_can( 'dashboard', 'execute_backups' ) || ! MainWP_System_Utility::can_edit_website( $website ) || ! \mainwp_current_user_can( 'site', $site_id ) ) {
                     return;
                 }
             }

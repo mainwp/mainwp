@@ -92,7 +92,7 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
      * @uses \MainWP\Dashboard\MainWP_Utility::end_session()
      */
     public static function backup_download_file( int $pSiteId, string $pType, string $pUrl, string $pFile ): bool {
-        if ( ! static::is_within_site_backup_dir( $pFile, $pSiteId ) ) {
+        if ( ! MainWP_Backup_Private_Root::is_within_private_site_dir( $pFile, $pSiteId ) ) {
             // The local path round-trips through the browser between the
             // create and download requests, so it is attacker-influenced:
             // confine it to the requesting site's own backup directory so
@@ -224,6 +224,9 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
      */
     public static function download_backup_artifact( object $website, string $remote_filename, string $local_file, $size, $http_user, $http_pass, bool $allow_empty = false ): void {
         // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber
+        if ( ! MainWP_Backup_Private_Root::is_within_private_site_dir( $local_file, (int) $website->id ) ) {
+            throw new MainWP_Exception( esc_html__( 'Invalid backup file location.', 'mainwp' ) );
+        }
         $progress = static function ( $file ) use ( $local_file ) {
             if ( $file === $local_file ) {
                 static::refresh_download_lock( $local_file );
@@ -1008,7 +1011,8 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
      * @return int|false File size in bytes, or 0 outside the backup directory.
      */
     public static function backup_get_file_size( string $pFile ): int|false {
-        if ( static::is_within_backup_root( $pFile ) && file_exists( $pFile ) ) {
+        $root = MainWP_Backup_Private_Root::resolve();
+        if ( ( static::is_within_backup_root( $pFile ) || ( ! is_wp_error( $root ) && static::path_is_confined_to( $pFile, $root ) ) ) && file_exists( $pFile ) ) {
             return filesize( $pFile );
         }
 

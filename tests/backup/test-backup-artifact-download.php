@@ -71,11 +71,11 @@ class MainWP_Backup_Artifact_Download_Test extends MainWP_Abilities_Test_Case {
 	/**
 	 * Build a local download target path.
 	 *
+	 * @param object $website Site owning the destination.
 	 * @return string Path (file does not exist yet).
 	 */
-	private function local_file() {
-		$upload              = wp_upload_dir();
-		$path                = $upload['basedir'] . '/mainwp-test-artifact-' . wp_rand( 1000, 999999 ) . '.bin';
+	private function local_file( $website ) {
+		$path                = \MainWP\Dashboard\MainWP_Backup_Private_Root::site_dir( (int) $website->id ) . 'mainwp-test-artifact-' . wp_rand( 1000, 999999 ) . '.bin';
 		$this->local_files[] = $path;
 		return $path;
 	}
@@ -183,7 +183,7 @@ class MainWP_Backup_Artifact_Download_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function test_legacy_child_downloads_without_token() {
 		$website = $this->make_site( false );
-		$local   = $this->local_file();
+		$local   = $this->local_file( $website );
 		$calls   = array();
 		$urls    = array();
 		$this->mock_token_callable( array( 'error' => 'must never be called' ), $calls );
@@ -216,7 +216,7 @@ class MainWP_Backup_Artifact_Download_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function test_token_download_verifies_hash_and_fires_action() {
 		$website = $this->make_site( true );
-		$local   = $this->local_file();
+		$local   = $this->local_file( $website );
 		$content = 'verified-artifact-bytes';
 		$calls   = array();
 		$urls    = array();
@@ -256,7 +256,7 @@ class MainWP_Backup_Artifact_Download_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function test_hash_mismatch_deletes_local_file_and_throws() {
 		$website = $this->make_site( true );
-		$local   = $this->local_file();
+		$local   = $this->local_file( $website );
 		$calls   = array();
 		$urls    = array();
 		$this->mock_token_callable(
@@ -286,7 +286,7 @@ class MainWP_Backup_Artifact_Download_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function test_token_issue_failure_throws_without_fallback() {
 		$website = $this->make_site( true );
-		$local   = $this->local_file();
+		$local   = $this->local_file( $website );
 		$calls   = array();
 		$urls    = array();
 		$this->mock_token_callable(
@@ -314,7 +314,7 @@ class MainWP_Backup_Artifact_Download_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function test_invalid_token_response_throws() {
 		$website = $this->make_site( true );
-		$local   = $this->local_file();
+		$local   = $this->local_file( $website );
 		$calls   = array();
 		$urls    = array();
 		$this->mock_token_callable(
@@ -338,7 +338,7 @@ class MainWP_Backup_Artifact_Download_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function test_token_rejection_triggers_fresh_token_retry() {
 		$website = $this->make_site( true );
-		$local   = $this->local_file();
+		$local   = $this->local_file( $website );
 		$content = 'retried-artifact-bytes';
 		$calls   = array();
 		$urls    = array();
@@ -381,7 +381,7 @@ class MainWP_Backup_Artifact_Download_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function test_persistent_token_rejection_exhausts_retries() {
 		$website = $this->make_site( true );
-		$local   = $this->local_file();
+		$local   = $this->local_file( $website );
 		$calls   = array();
 		$urls    = array();
 		$this->mock_token_callable(
@@ -450,7 +450,7 @@ class MainWP_Backup_Artifact_Download_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function test_tokenless_401_escalates_to_token_path_and_stamps_capability() {
 		$website = $this->make_site( false );
-		$local   = $this->local_file();
+		$local   = $this->local_file( $website );
 		$content = 'ratcheted-child-bytes';
 		$calls   = array();
 		$urls    = array();
@@ -490,7 +490,7 @@ class MainWP_Backup_Artifact_Download_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function test_tokenless_non_auth_failure_propagates_without_escalation() {
 		$website = $this->make_site( false );
-		$local   = $this->local_file();
+		$local   = $this->local_file( $website );
 		$calls   = array();
 		$urls    = array();
 		$this->mock_token_callable( array( 'error' => 'must never be called' ), $calls );
@@ -517,7 +517,7 @@ class MainWP_Backup_Artifact_Download_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function test_non_token_failure_propagates_without_refresh() {
 		$website = $this->make_site( true );
-		$local   = $this->local_file();
+		$local   = $this->local_file( $website );
 		$calls   = array();
 		$urls    = array();
 		$this->mock_token_callable(
@@ -553,7 +553,7 @@ class MainWP_Backup_Artifact_Download_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function test_tokenless_download_with_no_local_file_throws_before_event() {
 		$website = $this->make_site( false );
-		$local   = $this->local_file();
+		$local   = $this->local_file( $website );
 		$calls   = array();
 		$this->mock_token_callable( array( 'error' => 'must never be called' ), $calls );
 
@@ -591,7 +591,7 @@ class MainWP_Backup_Artifact_Download_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function test_tokenless_download_with_empty_file_throws_and_removes_leftover() {
 		$website = $this->make_site( false );
-		$local   = $this->local_file();
+		$local   = $this->local_file( $website );
 		$calls   = array();
 		$urls    = array();
 		$this->mock_token_callable( array( 'error' => 'must never be called' ), $calls );
@@ -624,7 +624,7 @@ class MainWP_Backup_Artifact_Download_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function test_token_download_with_no_local_file_throws_instead_of_vacuous_event() {
 		$website = $this->make_site( true );
-		$local   = $this->local_file();
+		$local   = $this->local_file( $website );
 		$calls   = array();
 		$this->mock_token_callable(
 			array(
@@ -669,7 +669,7 @@ class MainWP_Backup_Artifact_Download_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function test_token_download_with_empty_file_throws_before_hash_check() {
 		$website = $this->make_site( true );
-		$local   = $this->local_file();
+		$local   = $this->local_file( $website );
 		$calls   = array();
 		$urls    = array();
 		$this->mock_token_callable(

@@ -898,7 +898,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             if ( $information['db'] ) {
                 $what            = 'db';
                 $regexBackupFile = 'db-' . $websiteCleanUrl . '-(.*)-(.*).sql(\.zip|\.tar|\.tar\.gz|\.tar\.bz2)?';
-                if ( '' === $backupTaskProgress->downloadedDB ) {
+                if ( '' === self::resumable_download_path( $backupTaskProgress->downloadedDB, (int) $backupTaskProgress->downloadedDBComplete, (int) $website->id ) ) {
                     $localBackupFile = $dir . 'db-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time;
 
                     if ( null !== $pFilename ) {
@@ -964,7 +964,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 $realExt         = MainWP_Backup_File_Manager::get_real_extension( $information['full'] );
                 $what            = 'full';
                 $regexBackupFile = 'full-' . $websiteCleanUrl . '-(.*)-(.*).(zip|tar|tar.gz|tar.bz2)';
-                if ( '' === $backupTaskProgress->downloadedFULL ) {
+                if ( '' === self::resumable_download_path( $backupTaskProgress->downloadedFULL, (int) $backupTaskProgress->downloadedFULLComplete, (int) $website->id ) ) {
                     $localBackupFile = $dir . 'full-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . $realExt;
 
                     if ( null !== $pFilename ) {
@@ -1692,6 +1692,9 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 if ( '' === $remote || $size < 1 ) {
                     throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, 'invalid manifest artifact' ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
                 }
+                if ( ! MainWP_Backup_Private_Root::is_within_private_site_dir( $manifest_path, (int) $website->id ) ) {
+                    throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, 'manifest path is outside the private site directory' ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Registry messages are pre-escaped.
+                }
                 wp_mkdir_p( $run_dir );
                 if ( ! is_file( $manifest_path ) || (int) filesize( $manifest_path ) !== $size ) {
                     MainWP_Backup_File_Manager::download_backup_artifact(
@@ -1722,7 +1725,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 }
                 $archives[] = $manifest;
             } catch ( \Throwable $e ) {
-                if ( '' !== $manifest_path && is_file( $manifest_path ) ) {
+                if ( '' !== $manifest_path && MainWP_Backup_Private_Root::is_within_private_site_dir( $manifest_path, (int) $website->id ) && is_file( $manifest_path ) ) {
                     wp_delete_file( $manifest_path );
                 }
                 $manifest_path = '';
@@ -2394,6 +2397,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             throw new MainWP_Exception( esc_html__( 'Incremental backups run from a scheduled backup task. Create a backup task with the incremental type instead.', 'mainwp' ) );
         }
 
+        self::private_site_dir( $site_id );
         MainWP_Backup_Monitor::validate_backup_environment();
 
         $website = MainWP_DB::instance()->get_website_by_id( $site_id );
@@ -2659,7 +2663,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      */
     public static function has_recent_backup( int $site_id, int $max_age_days = 7 ): bool {
         $latest = -1;
-        foreach ( array( MainWP_Backup_Private_Root::site_dir( $site_id ), MainWP_Backup_Private_Root::legacy_site_dir( $site_id ) ) as $dir ) {
+        foreach ( array( MainWP_Backup_Private_Root::site_path( $site_id ), MainWP_Backup_Private_Root::legacy_site_dir( $site_id ) ) as $dir ) {
             if ( is_wp_error( $dir ) || ! is_dir( $dir ) ) {
                 continue;
             }
@@ -2883,6 +2887,24 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         $prefix  = MainWP_Backup_Type::DATABASE === $type ? 'db-' : 'full-';
 
         return MainWP_Backup_File_Manager::normalize_filename( $dir . $prefix . $clean_url . '-' . $fm_date . '-' . $fm_time . MainWP_Backup_File_Manager::get_real_extension( $remote_file ) );
+    }
+
+    /**
+     * Drop an incomplete public checkpoint before selecting a new destination.
+     *
+     * @param string $path Recorded path.
+     * @param int    $complete Completion flag.
+     * @param int    $site_id Site id.
+     * @return string
+     */
+    private static function resumable_download_path( string $path, int $complete, int $site_id ): string {
+        if ( '' !== $path && 0 === $complete && ! MainWP_Backup_Private_Root::is_within_private_site_dir( $path, $site_id ) ) {
+            if ( MainWP_Backup_File_Manager::path_is_confined_to( $path, MainWP_Backup_Private_Root::legacy_site_dir( $site_id ) ) && is_file( $path ) ) {
+                wp_delete_file( $path );
+            }
+            return '';
+        }
+        return $path;
     }
 
     /**

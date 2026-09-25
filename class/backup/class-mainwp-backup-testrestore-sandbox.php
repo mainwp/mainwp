@@ -125,7 +125,7 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
      */
     public function bring_up(): void {
         if ( is_wp_error( $this->temp_dir ) ) {
-            throw new MainWP_Exception( esc_html( $this->temp_dir->get_error_message() ), null, self::ERR_UNSUPPORTED );
+            throw new MainWP_Exception( esc_html( $this->temp_dir->get_error_message() ), null, MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE );
         }
         if ( ! class_exists( '\mysqli' ) ) {
             throw new MainWP_Exception( esc_html__( 'The test-restore sandbox needs the mysqli extension, which is not available.', 'mainwp' ), 'mysqli missing', self::ERR_UNSUPPORTED );
@@ -149,7 +149,7 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         $dir = MainWP_Backup_Private_Root::staging_dir( 'test-restore', basename( untrailingslashit( $this->temp_dir ) ) );
         if ( is_wp_error( $dir ) ) {
             $this->tear_down();
-            throw new MainWP_Exception( esc_html( $dir->get_error_message() ), null, self::ERR_UNSUPPORTED );
+            throw new MainWP_Exception( esc_html( $dir->get_error_message() ), null, MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE );
         }
     }
 
@@ -1305,7 +1305,7 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         $this->protect_parent();
         $private_alias = MainWP_Backup_Private_Root::staging_dir( 'test-restore', basename( untrailingslashit( $this->temp_dir ) ) . '-phar' );
         if ( is_wp_error( $private_alias ) ) {
-            throw new MainWP_Exception( esc_html( $private_alias->get_error_message() ), null, self::ERR_UNSUPPORTED );
+            throw new MainWP_Exception( esc_html( $private_alias->get_error_message() ), null, MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE );
         }
 
         // Budget each slab separately so decompression leaves the reserve for other uploads.

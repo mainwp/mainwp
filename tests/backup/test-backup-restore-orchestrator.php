@@ -8,6 +8,8 @@
 
 namespace MainWP\Dashboard\Tests;
 
+require_once __DIR__ . '/trait-backup-private-root-fixture.php';
+
 use MainWP\Dashboard\MainWP_Backup_Backoff;
 use MainWP\Dashboard\MainWP_Backup_Error_Codes;
 use MainWP\Dashboard\MainWP_Backup_Executor;
@@ -223,6 +225,8 @@ class Capability_Probe_Test_Transport extends MainWP_Connect {
  */
 class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case {
 
+	use Backup_Private_Root_Fixture;
+
 	/**
 	 * Test site id.
 	 *
@@ -263,6 +267,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	 */
 	public function set_up() {
 		parent::set_up();
+		$this->set_up_private_root();
 		update_option( 'mainwp_enableNativeBackups', 1 );
 		$this->site_id      = $this->create_test_site();
 		$this->orchestrator = new Testable_Restore_Orchestrator();
@@ -317,6 +322,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			rmdir( $this->dir );
 		}
 		delete_option( 'mainwp_enableNativeBackups' );
+		$this->tear_down_private_root();
 		parent::tear_down();
 	}
 
@@ -5817,5 +5823,47 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		}
 		$this->assertTrue( $raced, 'The replacement must land after the read and before the swap.' );
 		$this->assertSame( $new, $db->get_website_option( $website, $name ) );
+	}
+
+	/**
+	 * Private-root errors survive both restore phases in the persisted job.
+	 */
+	public function test_private_root_failure_is_recorded_in_restore_job() {
+		add_filter( 'mainwp_backup_private_root', '__return_false', 99 );
+		\MainWP\Dashboard\MainWP_Backup_Private_Root::reset();
+		foreach ( array( MainWP_Backup_Restore_Job_Store::STATUS_STAGING, MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING ) as $phase ) {
+			$job                    = $this->make_job( array(), $phase, array( 'child_task_id' => 'task-existing' ) );
+			$plan                   = $job->checkpoint['plan'];
+			$plan[0]['source']      = 'remote';
+			$plan[0]['staged_path'] = $this->dir . '/db.zip';
+			$checkpoint             = $job->checkpoint;
+			$checkpoint['plan']     = $plan;
+			MainWP_Backup_Restore_Job_Store::instance()->save_checkpoint( (int) $job->id, $checkpoint );
+			$job = $this->tick( $job );
+			$this->assertSame( MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE, $job->checkpoint['last_error_code'] );
+		}
+	}
+
+	/**
+	 * A resumed transfer saves the cleared plan before returning to staging.
+	 */
+	public function test_legacy_transfer_checkpoint_returns_to_staging() {
+		$job                   = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING, array( 'child_task_id' => 'task-existing' ) );
+		$checkpoint            = $job->checkpoint;
+		$checkpoint['plan'][0] = array_merge(
+			$checkpoint['plan'][0],
+			array(
+				'source'      => 'remote_chunked',
+				'staged_path' => $this->dir . '/db.zip',
+				'sha256'      => hash( 'sha256', 'dump-bytes' ),
+			)
+		);
+		MainWP_Backup_Restore_Job_Store::instance()->save_checkpoint( (int) $job->id, $checkpoint );
+		$job = $this->tick( $job );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_STAGING, $job->status );
+		$this->assertSame( '', $job->checkpoint['plan'][0]['staged_path'] );
+		$this->assertSame( '', $job->checkpoint['plan'][0]['sha256'] );
+		$this->assertSame( 'task-existing', $job->child_task_id );
+		$this->assertEmpty( $this->calls );
 	}
 }

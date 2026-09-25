@@ -15,6 +15,8 @@
 
 namespace MainWP\Dashboard\Tests;
 
+require_once __DIR__ . '/trait-backup-private-root-fixture.php';
+
 use MainWP\Dashboard\MainWP_Backup_Encryption;
 use MainWP\Dashboard\MainWP_Backup_Restore_Transfer_Driver;
 use MainWP\Dashboard\MainWP_Backup_Snapshots;
@@ -109,6 +111,8 @@ class Testable_TestRestore_Driver extends MainWP_Backup_TestRestore_Driver {
  */
 class MainWP_Backup_TestRestore_Driver_Test extends MainWP_Abilities_Test_Case {
 
+	use Backup_Private_Root_Fixture;
+
 	/**
 	 * Scratch dir for fixtures.
 	 *
@@ -137,6 +141,7 @@ class MainWP_Backup_TestRestore_Driver_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function set_up() {
 		parent::set_up();
+		$this->set_up_private_root();
 		$this->site_id = $this->create_test_site();
 		$this->dir     = sys_get_temp_dir() . '/mainwp-testrestore-' . uniqid();
 		mkdir( $this->dir );
@@ -161,6 +166,7 @@ class MainWP_Backup_TestRestore_Driver_Test extends MainWP_Abilities_Test_Case {
 		delete_option( MainWP_Backup_Encryption::RECOVERY_OPTION );
 		delete_option( 'mainwp_testrestore_canary' );
 
+		$this->tear_down_private_root();
 		parent::tear_down();
 	}
 
@@ -814,5 +820,53 @@ class MainWP_Backup_TestRestore_Driver_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( 'fail', $fail['state'] );
 		$this->assertFalse( $this->db_exists( $fail['sandbox']['db_name'] ) );
 		$this->assertDirectoryDoesNotExist( $fail['sandbox']['temp_dir'] );
+	}
+
+	/**
+	 * Unavailable private storage leaves snapshot health unchanged.
+	 */
+	public function test_private_root_failure_does_not_record_snapshot_verdict() {
+		$dump        = $this->write_db_dump( 'db.sql.gz', $this->sentinel_sql() );
+		$snapshot_id = $this->record(
+			'db',
+			array(
+				array(
+					'file' => 'db.sql.gz',
+					'size' => filesize( $dump ),
+					'role' => 'db',
+					'path' => $dump,
+				),
+			)
+		);
+
+		add_filter( 'mainwp_backup_private_root', '__return_false', 99 );
+		\MainWP\Dashboard\MainWP_Backup_Private_Root::reset();
+		$result = MainWP_Backup_TestRestore_Driver::instance()->verify_snapshot( $snapshot_id );
+
+		$this->assertSame( \MainWP\Dashboard\MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE, $result['error_code'] );
+
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+		$this->assertSame( '', (string) $snapshot->test_restore_state, 'An environment failure must not record snapshot health.' );
+		$driver         = new Testable_TestRestore_Driver();
+		$driver->driver = new class() extends MainWP_Backup_Restore_Transfer_Driver {
+			/**
+			 * Let the sandbox report its own private-root failure.
+			 *
+			 * @param int   $job_id Job id.
+			 * @param array $plan Plan entries.
+			 * @param float $deadline Deadline.
+			 * @return array
+			 */
+			public function stage_artifacts( int $job_id, array &$plan, float $deadline ): array {
+				return array(
+					'done'  => true,
+					'error' => null,
+				);
+			}
+		};
+		$result         = $driver->verify_snapshot( $snapshot_id );
+		$this->assertSame( \MainWP\Dashboard\MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE, $result['error_code'] );
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+		$this->assertSame( '', (string) $snapshot->test_restore_state );
 	}
 }

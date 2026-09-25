@@ -1292,23 +1292,9 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             }
         }
 
-        $backup_dir = MainWP_System_Utility::get_mainwp_dir( 'backup' );
-        if ( is_array( $backup_dir ) ) {
-            $backup_dir = $backup_dir[0];
-        }
-        if ( ! is_dir( $backup_dir ) && ! wp_mkdir_p( $backup_dir ) ) {
-            throw new MainWP_Exception(
-                esc_html__( 'Cannot create the dashboard backup directory. Check file permissions on the uploads folder.', 'mainwp' ),
-                $backup_dir,
-                MainWP_Backup_Error_Codes::ERR_PERMISSIONS
-            );
-        }
-        if ( ! wp_is_writable( $backup_dir ) ) {
-            throw new MainWP_Exception(
-                esc_html__( 'The dashboard backup directory is not writable. Set permissions to 755 or contact your hosting provider.', 'mainwp' ),
-                $backup_dir,
-                MainWP_Backup_Error_Codes::ERR_DIR_NOT_WRITABLE
-            );
+        $backup_dir = MainWP_Backup_Private_Root::resolve();
+        if ( is_wp_error( $backup_dir ) ) {
+            throw new MainWP_Exception( esc_html( $backup_dir->get_error_message() ), null, MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE );
         }
         // phpcs:enable WordPress.Security.EscapeOutput.ExceptionNotEscaped
 

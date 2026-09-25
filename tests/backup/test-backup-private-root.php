@@ -65,11 +65,16 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 			}
 		);
 		$root = MainWP_Backup_Private_Root::resolve();
-		$this->assertSame( dirname( rtrim( ABSPATH, '/\\' ) ) . '/mainwp-private/backups', $seen );
+		$this->assertSame( dirname( rtrim( ABSPATH, '/\\' ) ) . '/mainwp-private-' . get_option( 'mainwp_backup_private_suffix' ) . '/backups', $seen );
 		$this->assertSame( $this->private_root . '/', $root );
 		$this->assertSame( 0700, fileperms( $root ) & 0777 );
 		$this->assertSame( 'deny from all', file_get_contents( $root . '.htaccess' ) );
 		$this->assertFileExists( $root . 'index.php' );
+		$this->assertMatchesRegularExpression( '/^[a-z0-9]{16}$/', get_option( 'mainwp_backup_private_suffix' ) );
+		$default = $seen;
+		MainWP_Backup_Private_Root::reset();
+		$this->assertSame( $root, MainWP_Backup_Private_Root::resolve() );
+		$this->assertSame( $default, $seen );
 		add_filter( 'mainwp_backup_private_root', '__return_false', 99 );
 		$this->assertSame( $root, MainWP_Backup_Private_Root::resolve() );
 		MainWP_Backup_Private_Root::reset();
@@ -82,6 +87,7 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 	public function test_constant_is_selected_before_filter() {
 		$source = dirname( __DIR__, 2 ) . '/class/backup/class-mainwp-backup-private-root.php';
 		$script = 'define("ABSPATH", "/public/wp/"); define("MAINWP_BACKUP_PRIVATE_DIR", "/constant/backups");'
+			. 'function get_option($name, $default = false) { return $default; }'
 			. 'function apply_filters($tag, $value) { echo $tag . ":" . $value; return false; }'
 			. 'function __($value, $domain) { return $value; } class WP_Error { public function __construct(...$args) {} }'
 			. 'require ' . var_export( $source, true ) . '; echo MainWP\\Dashboard\\MainWP_Backup_Private_Root::resolve() instanceof WP_Error ? ":filtered" : ":unfiltered";'; // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_var_export -- Quote a PHP source path for the isolated process.
@@ -93,7 +99,7 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 	 * Reject public roots before creating anything.
 	 */
 	public function test_public_and_invalid_roots_are_refused() {
-		foreach ( array( ABSPATH, ABSPATH . 'private-test', WP_CONTENT_DIR, WP_CONTENT_DIR . '/private-test', '', false, "bad\0path" ) as $path ) {
+		foreach ( array( ABSPATH, ABSPATH . 'private-test', WP_CONTENT_DIR, WP_CONTENT_DIR . '/private-test', '', false, "bad\0path", 'relative/backups' ) as $path ) {
 			$filter = static function () use ( $path ) {
 				return $path;
 			};
@@ -183,12 +189,15 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( $this->private_root . '/upload-staging/7-8', $upload->invoke( MainWP_Backup_Upload_Driver::instance(), $job ) );
 		add_filter( 'mainwp_backup_private_root', '__return_false', 99 );
 		MainWP_Backup_Private_Root::reset();
-		$plan = array();
-		$this->assertStringContainsString( 'Private backup directory', $restore->stage_artifacts( 42, $plan, microtime( true ) + 10 )['error'] );
+		$plan    = array();
+		$outcome = $restore->stage_artifacts( 42, $plan, microtime( true ) + 10 );
+		$this->assertStringContainsString( 'Private backup directory', $outcome['error'] );
+		$this->assertSame( \MainWP\Dashboard\MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE, $outcome['error_code'] );
 		try {
 			$upload->invoke( MainWP_Backup_Upload_Driver::instance(), $job );
 			$this->fail( 'Upload must refuse unavailable private staging.' );
 		} catch ( \RuntimeException $error ) {
+			$this->assertSame( 503, $error->getCode() );
 			$this->assertStringContainsString( 'Private backup directory', $error->getMessage() );
 		}
 		$sandbox = new MainWP_Backup_TestRestore_Sandbox();
@@ -196,6 +205,7 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 			$sandbox->bring_up();
 			$this->fail( 'Sandbox must refuse unavailable private staging.' );
 		} catch ( MainWP_Exception $error ) {
+			$this->assertSame( \MainWP\Dashboard\MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE, $error->get_message_error_code() );
 			$this->assertStringContainsString( 'Private backup directory', $error->getMessage() );
 		} finally {
 			$sandbox->tear_down();
@@ -275,5 +285,124 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 		add_filter( 'mainwp_backup_private_root', '__return_false', 99 );
 		MainWP_Backup_Private_Root::reset();
 		$this->assertWPError( MainWP_Backup_Private_Root::site_path( 7654321 ) );
+	}
+
+	/**
+	 * Web requests teach cron the document-root boundary.
+	 */
+	public function test_document_root_is_refused_and_remembered() {
+		$_SERVER['DOCUMENT_ROOT'] = $this->private_root . '/served';
+		add_filter(
+			'mainwp_backup_private_root',
+			function () {
+				return $this->private_root . '/served/backups';
+			},
+			99
+		);
+		$this->assertWPError( MainWP_Backup_Private_Root::resolve() );
+		$this->assertSame( array( $this->private_root . '/served' ), get_option( 'mainwp_backup_served_roots' ) );
+		unset( $_SERVER['DOCUMENT_ROOT'] );
+		MainWP_Backup_Private_Root::reset();
+		$this->assertWPError( MainWP_Backup_Private_Root::resolve() );
+		$this->assertDirectoryDoesNotExist( $this->private_root );
+		for ( $i = 0; $i < 11; ++$i ) {
+			$_SERVER['DOCUMENT_ROOT'] = $this->private_root . '/web-' . $i;
+			MainWP_Backup_Private_Root::reset();
+			MainWP_Backup_Private_Root::resolve();
+		}
+		$this->assertCount( 10, get_option( 'mainwp_backup_served_roots' ) );
+		$this->assertSame( $this->private_root . '/web-10', array_slice( get_option( 'mainwp_backup_served_roots' ), -1 )[0] );
+		$_SERVER['DOCUMENT_ROOT'] = '/';
+		MainWP_Backup_Private_Root::reset();
+		$this->assertWPError( MainWP_Backup_Private_Root::resolve() );
+	}
+
+	/**
+	 * A shared override directory must retain its traversal and contents.
+	 */
+	public function test_existing_override_keeps_mode_and_no_protection_files() {
+		mkdir( $this->private_root );
+		chmod( $this->private_root, 0755 );
+		$this->assertSame( $this->private_root . '/', MainWP_Backup_Private_Root::resolve() );
+		$this->assertSame( 0755, fileperms( $this->private_root ) & 0777 );
+		$this->assertSame( array( '.', '..' ), scandir( $this->private_root ) );
+	}
+
+	/**
+	 * Legacy files remain readable but cannot be new download destinations.
+	 */
+	public function test_legacy_write_refused_and_private_size_reported() {
+		$private = MainWP_Backup_Private_Root::site_dir( 1 );
+		$legacy  = MainWP_Backup_Private_Root::legacy_site_dir( 1 );
+		wp_mkdir_p( $legacy );
+		file_put_contents( $private . 'full.zip', 'private bytes' );
+		$this->assertSame( 13, \MainWP\Dashboard\MainWP_Backup_File_Manager::backup_get_file_size( $private . 'full.zip' ) );
+		$this->assertTrue( MainWP_Backup_Private_Root::is_within_site_roots( $legacy . 'full.zip', 1 ) );
+		$this->assertFalse( MainWP_Backup_Private_Root::is_within_private_site_dir( $legacy . 'full.zip', 1 ) );
+		$this->expectException( MainWP_Exception::class );
+		\MainWP\Dashboard\MainWP_Backup_File_Manager::backup_download_file( 1, 'full', 'remote', $legacy . 'full.zip' );
+	}
+
+	/**
+	 * Incomplete legacy checkpoints take the fresh private destination branch.
+	 */
+	public function test_incomplete_legacy_checkpoint_is_discarded() {
+		$private = MainWP_Backup_Private_Root::site_dir( 1 ) . 'full.zip';
+		$legacy  = MainWP_Backup_Private_Root::legacy_site_dir( 1 );
+		wp_mkdir_p( $legacy );
+		$path   = $legacy . 'full.zip';
+		$choose = new \ReflectionMethod( MainWP_Backup_Executor::class, 'resumable_download_path' );
+		file_put_contents( $path, 'partial' );
+		$this->assertSame( $path, $choose->invoke( null, $path, 1, 1 ) );
+		$this->assertSame( '', $choose->invoke( null, $path, 0, 1 ) );
+		$this->assertFileDoesNotExist( $path );
+		$this->assertSame( $private, $choose->invoke( null, $private, 0, 1 ) );
+	}
+
+	/**
+	 * Environment checks need only private storage to be writable.
+	 */
+	public function test_environment_checks_private_root() {
+		$upload = wp_upload_dir( null, false );
+		wp_mkdir_p( $upload['basedir'] . '/mainwp' );
+		file_put_contents( $upload['basedir'] . '/mainwp/backup', 'blocked legacy directory' );
+		\MainWP\Dashboard\MainWP_Backup_Monitor::validate_backup_environment();
+		$this->assertSame( 'blocked legacy directory', file_get_contents( $upload['basedir'] . '/mainwp/backup' ) );
+		add_filter( 'mainwp_backup_private_root', '__return_false', 99 );
+		MainWP_Backup_Private_Root::reset();
+		try {
+			\MainWP\Dashboard\MainWP_Backup_Monitor::validate_backup_environment();
+			$this->fail( 'Unavailable private storage must fail validation.' );
+		} catch ( MainWP_Exception $error ) {
+			$this->assertSame( \MainWP\Dashboard\MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE, $error->get_message_error_code() );
+		}
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		try {
+			MainWP_Backup_Executor::trigger_backup( $this->create_test_site() );
+			$this->fail( 'Storage must be resolved before a child task can start.' );
+		} catch ( MainWP_Exception $error ) {
+			$this->assertSame( \MainWP\Dashboard\MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE, $error->get_message_error_code() );
+		}
+	}
+
+	/**
+	 * Historical site paths honor MainWP's upload filter without creating them.
+	 */
+	public function test_filtered_legacy_path_and_read_only_scan() {
+		add_filter(
+			'mainwp_get_wp_upload_dir',
+			function ( $dirs, $subdir, $direct ) {
+				$this->assertNull( $subdir );
+				$this->assertFalse( $direct );
+				$dirs['basedir'] = $this->private_root . '/filtered';
+				return $dirs;
+			},
+			10,
+			3
+		);
+		$this->assertSame( $this->private_root . '/filtered/mainwp/0/1/', MainWP_Backup_Private_Root::legacy_site_dir( 1 ) );
+		$this->assertFalse( MainWP_Backup_Executor::has_recent_backup( 1 ) );
+		$this->assertDirectoryDoesNotExist( $this->private_root . '/sites/1' );
+		$this->assertDirectoryDoesNotExist( $this->private_root . '/filtered' );
 	}
 }

@@ -443,7 +443,9 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 			'private_html writable'   => array( 'default', 0500, 'private_html', '' ),
 			'private writable'        => array( 'private', 0500, 'private', '' ),
 			'both roots exist'        => array( 'both', 0700, 'default', '' ),
-			'existing snapshots'      => array( 'snapshots', 0700, 'default', '' ),
+			'default read-only'       => array( 'default-readonly', 0500, 'default', 'directory is not writable' ),
+			'existing snapshots'      => array( 'snapshots', 0700, 'private_html', '' ),
+			'both siblings exist'     => array( 'both-siblings', 0700, 'private_html', '' ),
 			'existing sibling wins'   => array( 'private-snapshots', 0500, 'private', '' ),
 			'default symlink refused' => array( 'default-symlink', 0700, 'error', 'directory is a symlink' ),
 			'no sibling directories'  => array( 'no-siblings', 0500, 'default', 'could not create directory' ),
@@ -454,6 +456,7 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 			'content sibling refused' => array( 'content', 0500, 'private', '' ),
 			'ABSPATH sibling refused' => array( 'abspath', 0500, 'private', '' ),
 			'symlink root refused'    => array( 'symlink', 0500, 'private', '' ),
+			'symlink base refused'    => array( 'symlink-base', 0500, 'private', '' ),
 		);
 		foreach ( $rows as $label => $row ) {
 			list( $mode, $permissions, $selected, $reason ) = $row;
@@ -474,17 +477,25 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 			);
 			wp_mkdir_p( $abspath );
 			if ( 'no-siblings' !== $mode ) {
-				wp_mkdir_p( $base . '/private_html' );
+				if ( 'symlink-base' === $mode ) {
+					wp_mkdir_p( $base . '/elsewhere' );
+					symlink( $base . '/elsewhere', $base . '/private_html' );
+				} else {
+					wp_mkdir_p( $base . '/private_html' );
+				}
 				wp_mkdir_p( $base . '/private' );
 			}
-			if ( in_array( $mode, array( 'both', 'snapshots' ), true ) ) {
+			if ( in_array( $mode, array( 'both', 'snapshots', 'both-siblings', 'default-readonly' ), true ) ) {
 				wp_mkdir_p( $paths['private_html'] . '/sites/1/snapshot-recorded' );
 				file_put_contents( $paths['private_html'] . '/sites/1/snapshot-recorded/archive.zip', 'snapshot' );
 			}
-			if ( 'both' === $mode ) {
+			if ( in_array( $mode, array( 'both', 'default-readonly' ), true ) ) {
 				wp_mkdir_p( $paths['default'] );
 			}
-			if ( 'private-snapshots' === $mode ) {
+			if ( 'default-readonly' === $mode ) {
+				chmod( $paths['default'], 0500 );
+			}
+			if ( in_array( $mode, array( 'private-snapshots', 'both-siblings' ), true ) ) {
 				wp_mkdir_p( $paths['private'] );
 			}
 			if ( 'default-symlink' === $mode ) {

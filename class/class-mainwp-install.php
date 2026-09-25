@@ -31,7 +31,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * @var string DB version info.
      */
-    protected $mainwp_db_version = '9.0.2.4'; // NOSONAR - no IP. 9.0.2.4 drops the stray unique index on backup progress task_id. Bumped for MWP-1566 sibling-dir chmod migration (MWP-1558 follow-up). Original 9.0.2.0 bump for MWP-1557/1558.
+    protected $mainwp_db_version = '9.0.2.5'; // NOSONAR - no IP. 9.0.2.4 drops the stray unique index on backup progress task_id. Bumped for MWP-1566 sibling-dir chmod migration (MWP-1558 follow-up). Original 9.0.2.0 bump for MWP-1557/1558.
 
     /**
      * Protected variable to hold the database option name.
@@ -44,6 +44,11 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      * Network-scoped like mainwp_db_version, so every blog on a multisite sees the pending repair.
      */
     const BACKUP_PROGRESS_INDEX_REPAIR_PENDING = 'mainwp_backup_progress_index_repair_pending';
+
+    /**
+     * Network-scoped like mainwp_db_version, so every blog on a multisite sees the pending repair.
+     */
+    const WP_GROUP_MISSING_PRIMARY_KEY_REPAIR_PENDING = 'mainwp_wp_group_missing_primary_key_repair_pending';
 
     /**
      * Private static variable to hold the single instance of the class.
@@ -108,6 +113,8 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             // most hourly, without holding the DB version back and re-running every
             // older migration on each load.
             $this->maybe_retry_backup_progress_index_repair();
+
+            $this->maybe_retry_repair_wp_group_primary_key();
             return;
         }
 
@@ -290,12 +297,10 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
   wpid int(11) NOT NULL,
   groupid int(11) NOT NULL,
   KEY idx_wpid (wpid),
-  KEY idx_groupid (groupid)';
-        if ( empty( $currentVersion ) || version_compare( $currentVersion, '8.57', '<=' ) ) {
-            $tbl .= ',
-  PRIMARY KEY  (wp_group_id)  ';
-        }
-        $tbl  .= ') ' . $charset_collate;
+  KEY idx_groupid (groupid),
+  PRIMARY KEY (wp_group_id)
+  ) ' . $charset_collate;
+
         $sql[] = $tbl;
 
         $tbl = 'CREATE TABLE ' . $this->table_name( 'lookup_item_objects' ) . ' (
@@ -580,6 +585,10 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             $this->repair_backup_progress_index();
         }
 
+        if ( ! empty( $currentVersion ) && version_compare( $currentVersion, '9.0.2.5', '<' ) ) { // NOSONAR - no ip.
+            $this->repair_wp_group_primary_key();
+        }
+
         $this->wpdb->suppress_errors( $suppress );
         MainWP_DB_Client::instance()->check_to_updates_reports_data_861( $currentVersion );
     }
@@ -628,6 +637,75 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             } else {
                 delete_option( 'mainwp_notice_consumer_secret_migration_failed' );
             }
+        }
+    }
+
+    /**
+     * Retry a pending backup progress index repair, no more than once an hour.
+     *
+     * A DB user without ALTER never clears the marker, so an unthrottled retry
+     * would run two SHOW INDEX plus a failing ALTER on every single request.
+     *
+     * @return bool True when a repair attempt was made.
+     */
+    public function maybe_retry_repair_wp_group_primary_key() {
+        $pending = (int) get_site_option( self::WP_GROUP_MISSING_PRIMARY_KEY_REPAIR_PENDING );
+        if ( empty( $pending ) || time() - $pending < HOUR_IN_SECONDS ) {
+            return false;
+        }
+
+        $suppress = $this->wpdb->suppress_errors();
+        $this->repair_wp_group_primary_key();
+        $this->wpdb->suppress_errors( $suppress );
+
+        return true;
+    }
+
+    /**
+     * Repair the wp_group table primary key for legacy installations.
+     *
+     * To fix MWP-1794.
+     *
+     * @return void
+     */
+    private function repair_wp_group_primary_key() {
+        $wp_group_table = esc_sql( $this->table_name( 'wp_group' ) );
+
+        $column_exists = $this->wpdb->get_var(
+            "SHOW COLUMNS FROM {$wp_group_table} LIKE 'wp_group_id'" // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Table name is escaped and query contains no user input.
+        );
+
+        if ( empty( $column_exists ) ) {
+            $this->wpdb->query(
+                "ALTER TABLE {$wp_group_table}
+                ADD COLUMN wp_group_id int(11) NOT NULL auto_increment PRIMARY KEY FIRST" // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Table name is escaped and query contains no user input.
+            );
+        } else {
+            $primary_key = $this->wpdb->get_var(
+                "SHOW INDEX FROM {$wp_group_table}
+                WHERE Key_name = 'PRIMARY'
+                AND Column_name = 'wp_group_id'" // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Table name is escaped and query contains no user input.
+            );
+
+            if ( empty( $primary_key ) ) {
+                $this->wpdb->query(
+                    "ALTER TABLE {$wp_group_table}
+                    ADD PRIMARY KEY (wp_group_id)" // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Table name is escaped and query contains no user input.
+                );
+            }
+        }
+
+        $primary_key = $this->wpdb->get_var(
+            "SHOW INDEX FROM {$wp_group_table}
+            WHERE Key_name = 'PRIMARY'
+            AND Column_name = 'wp_group_id'" // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Table name is escaped and query contains no user input.
+        );
+
+        if ( ! empty( $primary_key ) ) {
+            delete_site_option( self::WP_GROUP_MISSING_PRIMARY_KEY_REPAIR_PENDING );
+        } else {
+            // A timestamp, not a formatted date: the retry throttle compares it against time().
+            update_site_option( self::WP_GROUP_MISSING_PRIMARY_KEY_REPAIR_PENDING, time() );
         }
     }
 

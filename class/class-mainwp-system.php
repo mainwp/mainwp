@@ -64,7 +64,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * @var string The plugin current update version.
      */
-    private $check_ver_update = '0.0.7';
+    private $check_ver_update = '0.0.8';
 
     /**
      * Private variable to hold the plugin slug (mainwp/mainwp.php)
@@ -794,17 +794,13 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      */
     public function hook_admin_update_check() {
         $current_ver = $this->check_ver_update;
-        $saved_ver   = get_option( 'mainwp_update_check_version', false );
-
-        if ( false === $saved_ver ) {
-            return;
-        }
+        $saved_ver   = get_option( 'mainwp_update_check_version', '' );
 
         if ( version_compare( $saved_ver, $current_ver, '=' ) ) {
             return;
         }
 
-        if ( version_compare( $saved_ver, '0.0.4', '<' ) ) {
+        if ( ! empty( $saved_ver ) && version_compare( $saved_ver, '0.0.4', '<' ) ) {
             $sched = wp_next_scheduled( 'mainwp_cronstats_action' );
             if ( ! empty( $sched ) ) {
                 wp_unschedule_event( $sched, 'mainwp_cronstats_action' );
@@ -813,7 +809,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             $wpdb->query( 'DELETE FROM ' . $wpdb->usermeta . ' WHERE meta_key = "mainwp_widgets_sorted_toplevel_page_mainwp_tab" OR meta_key="mainwp_settings_show_widgets"' );//phpcs:ignore -- safe.
         }
 
-        if ( version_compare( $saved_ver, '0.0.5', '<' ) ) {
+        if ( ! empty( $saved_ver ) && version_compare( $saved_ver, '0.0.5', '<' ) ) {
             $all_ext = MainWP_Extensions_View::get_available_extensions();
             foreach ( $all_ext as $slug => $info ) {
                 $data = MainWP_Api_Manager::instance()->get_activation_info( $slug );
@@ -826,19 +822,21 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             update_option( 'mainwp_extensions_all_activation_cached', '' );
         }
 
-        if ( version_compare( $saved_ver, '0.0.7', '<' ) ) {
-            $this->handle_admin_perform_update( 'attempted_repair_primary_monitors' ); // init attempted repair.
+        if ( version_compare( $saved_ver, '0.0.8', '<' ) ) {
+            static::handle_admin_perform_update( 'attempted_repair_primary_monitors' ); // init attempted repair.
         }
 
         MainWP_Utility::update_option( 'mainwp_update_check_version', $current_ver );
     }
 
+
     /**
      * Method admin_init_update()
      */
     public function admin_init_update() {
-        $this->handle_admin_perform_update();
+        static::handle_admin_perform_update();
     }
+
 
     /**
      * Method handle_admin_perform_update()
@@ -1033,6 +1031,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             remove_action( 'admin_notices', 'update_nag', 3 );
         }
     }
+
 
     /**
      * Method hook_wp_shutdown()
@@ -1330,7 +1329,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @return array<string, array<int, mixed>> Command palette configuration.
      */
     private function get_command_palette_data() {
-        $registered_pages    = $this->get_command_palette_registered_pages();
+        $registered_pages     = $this->get_command_palette_registered_pages();
         $registered_page_urls = array();
 
         foreach ( $registered_pages as $slug => $page_data ) {
@@ -2023,7 +2022,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         <i class="close icon"></i>
             <div class="header"><?php esc_html_e( 'Child Site Response', 'mainwp' ); ?></div>
             <div class="content">
-                <div class="ui info message"><?php esc_html_e( 'To see the response in a more readable way, you can copy it and paste it into some HTML render tool, such as Codepen.io.', 'mainwp' ); ?>
+                <div class="ui info message"><?php esc_html_e( 'This is the readable child/HTTP response from the failed request (status, headers snippet, and body when it is safe to show). Copy it for support if needed.', 'mainwp' ); ?>
                 </div>
             </div>
             <div class="scrolling content content-response" contenteditable="true"></div>

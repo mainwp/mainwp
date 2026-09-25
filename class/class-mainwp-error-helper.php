@@ -79,4 +79,34 @@ class MainWP_Error_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         /* translators: 1: Opening anchor tag, 2: Closing anchor tag */
         return sprintf( esc_html__( 'MainWP Child plugin not detected or could not be reached! Ensure the MainWP Child plugin is installed and activated on the child site, and there are no security rules blocking requests.  If you continue experiencing this issue, check the %1$sMainWP Community%2$s for help.', 'mainwp' ), '<a href="https://community.mainwp.com/c/community-support/5" target="_blank">', '</a>' );
     }
+
+    /**
+     * Connect/sync failure message with IP labels, User-Agent, and readable response.
+     *
+     * On 403 / Cloudflare / WAF, Cloudflare and User-Agent allow steps come first.
+     *
+     * @param MainWP_Exception $exception Exception.
+     * @param array            $output    Fetch output.
+     *
+     * @return string
+     */
+    public static function get_connect_failure_message( $exception, $output = array() ) {
+        $details = MainWP_Connect_Failure_Ux::from_exception( $exception, $output );
+        $ux      = MainWP_Connect_Failure_Ux::render_html( $details );
+
+        if ( ! empty( $details['waf_likely'] ) ) {
+            return $ux;
+        }
+
+        $base = '';
+        if ( $exception instanceof MainWP_Exception ) {
+            $base = static::get_error_message( $exception );
+        }
+
+        if ( '' === $base ) {
+            return $ux;
+        }
+
+        return $base . $ux;
+    }
 }

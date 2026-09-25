@@ -489,75 +489,6 @@ KEY idx_wpid_issub (wpid, issub)";
 
 
     /**
-     * Get site IDs that do not have a Primary Monitor.
-     *
-     * @return array<int>
-     */
-    public function get_sites_missing_primary_monitor() {
-        $sites_table    = $this->table_name( 'wp' );
-        $monitors_table = $this->table_name( 'monitors' );
-
-        return $this->wpdb->get_col(
-            "SELECT s.id
-            FROM {$sites_table} AS s
-            LEFT JOIN {$monitors_table} AS m
-                ON m.wpid = s.id
-                AND m.suburl = ''
-            WHERE m.monitor_id IS NULL
-                AND EXISTS (
-                    SELECT 1
-                    FROM {$monitors_table} AS sm
-                    WHERE sm.wpid = s.id
-                        AND sm.suburl != ''
-                        AND sm.suburl IS NOT NULL
-                )"
-        );
-    }
-
-    /**
-     * Repair sites that are missing their Primary Monitor.
-     *
-     * @param null|int $attempted Number of repair attempts, or null if no repair was attempted.
-     *
-     * @return array{found:int,created:int,attempted:int} Sites found, Primary Monitors created, and the next repair attempt count.
-     */
-    public function repair_missing_primary_monitors( $attempted = null ) {
-        $site_ids = $this->get_sites_missing_primary_monitor();
-        $created  = 0;
-        $found    = $site_ids ? count( $site_ids ) : 0;
-        foreach ( $site_ids as $site_id ) {
-            $data       = array(
-                'wpid'   => $site_id,
-                'suburl' => '',
-            );
-            $created_id = $this->update_wp_monitor( $data );
-            if ( $created_id ) {
-                ++$created;
-            }
-        }
-
-        if ( $found && null !== $attempted ) {
-            if ( $found > $created ) {
-                ++$attempted;
-            } else {
-                $attempted = 0;
-            }
-        } else {
-            $attempted = 0;
-        }
-
-        if ( $attempted > 3 ) {
-            $attempted = 0; // stop attempted.
-        }
-
-        return array(
-            'found'     => $found,
-            'created'   => $created,
-            'attempted' => $attempted,
-        );
-    }
-
-    /**
      * Get the primary monitor for a specific site.
      *
      * @param int  $site_id Website ID (wpid).
@@ -807,6 +738,20 @@ KEY idx_wpid_issub (wpid, issub)";
             $output = array();
         }
 
+        /**
+         * Filters the monitor data before creating or updating a monitor.
+         *
+         * Returning an empty value prevents the monitor from being created or updated.
+         *
+         * @param array $data   Monitor data.
+         * @param array $output Output data collected during the operation.
+         */
+        $data = apply_filters( 'mainwp_update_wp_monitor', $data, $output );
+
+        if ( empty( $data ) ) {
+            return false;
+        }
+
         $allowed_methods = MainWP_Uptime_Monitoring_Edit::get_allowed_methods();
 
         if ( isset( $data['method'] ) ) {
@@ -938,6 +883,154 @@ KEY idx_wpid_issub (wpid, issub)";
             return $monitor_id;
         }
     }
+
+    /**
+     * Repair sites that are missing their Primary Monitor.
+     *
+     * @param null|int $site_id Site ID to repair, or null to repair all sites.
+     * @param int      $limit  Maximum number of sites to process in one batch.
+     *
+     * @return array{found:int,created:int,has_more:bool} Repair result.
+     */
+    public function repair_missing_primary_monitors( $site_id = null, $limit = 50 ) {
+        /*
+        * A specific site repair does not use the retry counter.
+        */
+        if ( null !== $site_id ) {
+            $site_ids = $this->get_sites_missing_primary_monitor( $site_id, $limit );
+
+            $created = 0;
+            $found   = count( $site_ids );
+
+            foreach ( $site_ids as $current_site_id ) {
+                $data = array(
+                    'wpid'   => $current_site_id,
+                    'suburl' => '',
+                );
+
+                $created_id = $this->update_wp_monitor( $data );
+
+                if ( $created_id ) {
+                    ++$created;
+
+                    $opt_name = 'mainwp_primary_monitor_repair_attempts_for_wp_' . $current_site_id;
+
+                    if ( get_option( $opt_name ) ) {
+                        delete_option( $opt_name );
+                    }
+                }
+            }
+
+            return array(
+                'found'    => $found,
+                'created'  => $created,
+                'has_more' => false,
+            );
+        }
+
+        $site_ids = $this->get_sites_missing_primary_monitor( null, $limit );
+
+        $created = 0;
+        $found   = count( $site_ids );
+
+        foreach ( $site_ids as $current_site_id ) {
+            $data = array(
+                'wpid'   => $current_site_id,
+                'suburl' => '',
+            );
+
+            $created_id = $this->update_wp_monitor( $data );
+
+            $opt_name = 'mainwp_primary_monitor_repair_attempts_for_wp_' . $current_site_id;
+
+            if ( $created_id ) {
+                ++$created;
+
+                delete_option( $opt_name );
+            } else {
+                $attempts = (int) get_option( $opt_name, 0 );
+                update_option( $opt_name, $attempts + 1 );
+            }
+        }
+
+        /*
+        * Check whether there are still sites eligible for repair.
+        */
+        $remaining = $this->get_sites_missing_primary_monitor( null, 1 );
+
+        return array(
+            'found'    => $found,
+            'created'  => $created,
+            'has_more' => ! empty( $remaining ),
+        );
+    }
+
+
+    /**
+     * Get site IDs that do not have a Primary Monitor.
+     *
+     * @param int|null $site_id Optional site ID to check.
+     * @param int      $limit    Maximum number of sites to process.
+     *
+     * @return array<int>
+     */
+    public function get_sites_missing_primary_monitor( $site_id = null, $limit = 50 ) {
+        $sites_table    = $this->table_name( 'wp' );
+        $monitors_table = $this->table_name( 'monitors' );
+        $options_table  = esc_sql( $this->wpdb->options );
+
+        $where = '';
+
+        if ( null !== $site_id ) {
+            $where = $this->wpdb->prepare(
+                'AND s.id = %d',
+                $site_id
+            );
+        }
+
+        $limit = max( 1, min( 100, (int) $limit ) );
+
+        /*
+        * For the general repair process, exclude sites that have already
+        * reached the maximum number of repair attempts.
+        *
+        * A specific site repair is not subject to the retry limit.
+        */
+        $retry_where = '';
+
+        if ( null === $site_id ) {
+            $retry_where = '
+                AND (
+                    ra.option_id IS NULL
+                    OR CAST( ra.option_value AS UNSIGNED ) < 3
+                )';
+        }
+
+        return $this->wpdb->get_col(
+            $this->wpdb->prepare(
+                "SELECT s.id
+                FROM {$sites_table} AS s " . // NOSONAR - table name is generated internally and safely escaped.
+                " LEFT JOIN {$options_table} AS ra " . // NOSONAR - table name is generated internally and safely escaped.
+                " ON ra.option_name = CONCAT(
+                    'mainwp_primary_monitor_repair_attempts_for_wp_',
+                    s.id
+                )
+                WHERE NOT EXISTS (
+                    SELECT 1
+                    FROM {$monitors_table} AS m " . // NOSONAR - table name is generated internally and safely escaped.
+                    " WHERE m.wpid = s.id
+                        AND m.suburl = ''
+                )
+                {$retry_where}
+                {$where}
+                ORDER BY s.id ASC
+                LIMIT %d",
+                $limit
+            )
+        );
+    }
+
+
     /**
      * Update site monitor increase retries.
      *

@@ -718,6 +718,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
                 if ( isset( $result['result_error'] ) ) {
                     $info['result_error'] = $result['result_error'];
                 }
+                // for backward compatibility.
                 if ( isset( $result['result_started'] ) ) {
                     $info['result_started'] = $result['result_started'];
                 }

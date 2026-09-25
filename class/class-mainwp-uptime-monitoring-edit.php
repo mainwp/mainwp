@@ -206,6 +206,10 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                 MainWP_DB_Uptime_Monitoring::instance()->update_wp_monitor( $update, $output );
 
                 if ( $site_id && empty( $update['issub'] ) ) {
+                    $opt_name = 'mainwp_primary_monitor_repair_attempts_for_wp_' . $site_id;
+                    if ( $success ) {
+                        delete_option( $opt_name );
+                    }
                     MainWP_DB_Uptime_Monitoring::instance()->update_website_option( $site_id, 'bypass_cache', $bypass_cache_opt );
                 }
 
@@ -229,6 +233,9 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                     exit();
                 }
             } else {
+                if ( $update['active'] ) {
+                    MainWP_System::handle_admin_perform_update( 'attempted_repair_primary_monitors' ); // init attempted repair.
+                }
                 $check_http_response        = ( isset( $_POST['mainwp_check_http_response'] ) ? 1 : 0 );
                 $chk_http_method            = isset( $_POST['mainwp_check_http_response_method'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_check_http_response_method'] ) ) : 'head';
                 $chk_http_method            = in_array( $chk_http_method, array( 'get', 'head' ) ) ? $chk_http_method : 'head';

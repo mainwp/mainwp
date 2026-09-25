@@ -16686,8 +16686,8 @@ msgstr ""
 msgid "Edit client"
 msgstr ""
 
-#: pages/page-mainwp-client.php:646 pages/page-mainwp-user.php:718
-msgid "Empty fields will not be passed to child sites."
+#: pages/page-mainwp-client.php:656 pages/page-mainwp-user.php:718
+msgid "Blank fields will not be changed."
 msgstr ""
 
 #: pages/page-mainwp-client.php:651 pages/page-mainwp-user.php:738

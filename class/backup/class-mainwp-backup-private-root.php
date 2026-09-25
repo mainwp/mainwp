@@ -43,7 +43,7 @@ class MainWP_Backup_Private_Root {
             return self::$root;
         }
         $folder     = basename( rtrim( ABSPATH, '/\\' ) );
-        $container  = 'mainwp-private' === $folder ? 'mainwp-private-dashboard' : 'mainwp-private';
+        $container  = 0 === strcasecmp( $folder, 'mainwp-private' ) ? 'mainwp-private-dashboard' : 'mainwp-private';
         $default    = defined( 'MAINWP_BACKUP_PRIVATE_DIR' ) ? MAINWP_BACKUP_PRIVATE_DIR : dirname( rtrim( ABSPATH, '/\\' ) ) . '/' . $container . '/' . $folder . '/backups';
         $candidate  = apply_filters( 'mainwp_backup_private_root', $default );
         $reason     = self::refusal_reason( $candidate );

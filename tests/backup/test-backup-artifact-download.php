@@ -451,11 +451,18 @@ class MainWP_Backup_Artifact_Download_Test extends MainWP_Abilities_Test_Case {
 		$website  = $this->make_site( false );
 		$local    = $this->local_file( $website );
 		$requests = 0;
-		$http     = function () use ( &$requests ) {
+		$download = function ( $pre, $url, $file ) use ( &$requests ) {
+			unset( $pre, $url, $file );
 			++$requests;
-			$this->fail( 'No HTTP request should be made.' );
+			return new MainWP_Exception( 'blocked' );
 		};
-		add_filter( 'pre_http_request', $http );
+		$fetch    = function ( $result, $website, $what, $params ) use ( &$requests ) {
+			unset( $result, $website, $what, $params );
+			++$requests;
+			return array( 'error' => 'blocked' );
+		};
+		add_filter( 'mainwp_download_to_file_pre', $download, 10, 3 );
+		add_filter( 'mainwp_fetch_url_authed_pre', $fetch, 10, 4 );
 		try {
 			$this->assertTrue( chmod( $this->private_root, 0500 ) );
 			$caught = null;
@@ -469,7 +476,8 @@ class MainWP_Backup_Artifact_Download_Test extends MainWP_Abilities_Test_Case {
 			$this->assertSame( 0, $requests );
 		} finally {
 			chmod( $this->private_root, 0700 );
-			remove_filter( 'pre_http_request', $http );
+			remove_filter( 'mainwp_download_to_file_pre', $download, 10 );
+			remove_filter( 'mainwp_fetch_url_authed_pre', $fetch, 10 );
 		}
 	}
 

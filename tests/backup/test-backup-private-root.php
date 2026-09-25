@@ -399,6 +399,7 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 				};
 				if ( 'container' === $selection ) {
 					$this->assertSame( '/srv/mainwp-private-dashboard/mainwp-private/backups/', $resolve( '/srv/mainwp-private/' ), $label );
+					$this->assertSame( '/srv/mainwp-private-dashboard/Mainwp-Private/backups/', $resolve( '/srv/Mainwp-Private/' ), $label );
 					$this->assertSame( '/srv/mainwp-private/site/backups/', $resolve( '/srv/site/' ), $label );
 					continue;
 				}

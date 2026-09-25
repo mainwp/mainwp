@@ -1603,9 +1603,16 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
          */
         do_action( 'mainwp_fetch_url_authed', $website, $information, $what, $params, $others );
 
-        if ( is_array( $information ) && isset( $information['sync'] ) && ! empty( $information['sync'] ) ) {
-            MainWP_Sync::sync_information_array( $website, $information['sync'] );
-            unset( $information['sync'] );
+        if ( is_array( $information ) ) {
+            if ( isset( $information['sync'] ) && ! empty( $information['sync'] ) ) {
+                MainWP_Sync::sync_information_array( $website, $information['sync'] );
+                unset( $information['sync'] );
+            }
+
+            if ( isset( $information['sync_partial'] ) && is_array( $information['sync_partial'] ) && ! empty( $information['sync_partial'] ) ) {
+                MainWP_Sync::sync_partial_information( $website, $information['sync_partial'] );
+                unset( $information['sync_partial'] );
+            }
         }
 
         if ( $updating_website ) {
@@ -2123,7 +2130,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         $thr_error = null;
 
-        if ( in_array( $what, array( 'installplugintheme', 'upgradeplugintheme', 'upgradetranslation', 'upgrade', 'stats', 'renew', 'reconnect' ), true ) ) {
+        if ( in_array( $what, array( 'installplugintheme', 'upgradeplugintheme', 'upgradetranslation', 'process_premium_updates', 'upgrade', 'stats', 'renew', 'reconnect' ), true ) ) {
             MainWP_Cache_Helper::invalidate_cache_group( MainWP_Cache_Helper::CGR_UPDATES );
             MainWP_Cache_Warm_Helper::invalidate_pages_by_site_actions( $what );
         }

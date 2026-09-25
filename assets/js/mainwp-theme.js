@@ -1677,10 +1677,11 @@ globalThis.wp = globalThis.wp || {};
             // Handles sorting / browsing routes
             // Also handles the root URL triggering a sort request
             // for `featured`, the default view
-            themes.router.on('route:sort', function (sort) {
+            themes.router.on('route:sort', (sort) => {
                 if (!sort) {
                     sort = 'featured';
                 }
+
                 this.view.sort(sort);
                 this.view.trigger('theme:close');
             });

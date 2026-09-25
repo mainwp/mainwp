@@ -377,7 +377,7 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                     </div>
                 <?php endif; ?>
                 <?php do_action( 'mainwp_module_log_render_db_update_notice' ); ?>
-                <?php do_action( 'mainwp_module_log_render_db_size_notice' ); ?>
+                <?php do_action( 'mainwp_module_log_render_db_size_notice', 300, 'overview' ); ?>
 
                 <?php
                 /**
@@ -387,7 +387,7 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                  *
                  * @since 4.1
                  */
-                do_action( 'mainwp_before_overview_widgets', 'dashboard' );
+                do_action( 'mainwp_before_overview_widgets', 'dashboard', $current_wp_id, $website );
                 ?>
                 <div id="mainwp-grid-wrapper" class="gridster">
                     <div id="mainwp-widgets-placeholder" class="ui page dimmer">

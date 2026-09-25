@@ -151,6 +151,68 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
     }
 
     /**
+     * Delete one canonical private key file with exact absence readback.
+     *
+     * @param string $file_key Name of key file.
+     *
+     * @return bool Whether exact absence was proved.
+     */
+    public function delete_key_file_with_result( $file_key ) {
+        if ( ! is_string( $file_key ) || 1 !== preg_match( '/^[A-Za-z0-9][A-Za-z0-9_-]{0,254}$/D', $file_key ) ) {
+            return false;
+        }
+
+        $key_dir = static::get_keys_dir();
+        if ( ! is_string( $key_dir ) || '' === $key_dir ) {
+            return false;
+        }
+
+        $file_path = trailingslashit( $key_dir ) . $file_key;
+        if ( ! $this->key_entry_present( $file_path ) ) {
+            return true;
+        }
+
+        MainWP_Utility::delete_file( $file_path );
+        clearstatcache( true, $file_path );
+
+        // A dangling symlink fails every exists() check, so the transport-aware helper skips it and leaves the entry behind.
+        if ( is_link( $file_path ) ) {
+            wp_delete_file( $file_path );
+            clearstatcache( true, $file_path );
+        }
+
+        return ! $this->key_entry_present( $file_path );
+    }
+
+    /**
+     * Whether any directory entry, file or symlink, still occupies the key path.
+     *
+     * @param string $file_path Absolute key path.
+     *
+     * @return bool Whether an entry is present.
+     */
+    private function key_entry_present( $file_path ) {
+        return $this->key_file_exists( $file_path ) || is_link( $file_path );
+    }
+
+    /**
+     * Check one exact private key path through the active filesystem boundary.
+     *
+     * @param string $file_path Absolute key path.
+     *
+     * @return bool Whether the path exists.
+     */
+    private function key_file_exists( $file_path ) {
+        global $wp_filesystem;
+
+        if ( is_object( $wp_filesystem ) && method_exists( $wp_filesystem, 'exists' ) ) {
+            return (bool) $wp_filesystem->exists( $file_path );
+        }
+
+        return file_exists( $file_path );
+    }
+
+    /**
      * Method get_decrypt_values()
      *
      * Get decrypt value.
@@ -454,6 +516,7 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @return void
      */
     public static function migrate_private_filenames( $from_version, $to_version ) {
+        unset( $to_version );
         if ( ! version_compare( $from_version, '9.0.2.0', '<' ) ) {
             return;
         }
@@ -483,10 +546,10 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             $new_path = $key_dir . $new_name;
             if ( file_exists( $new_path ) ) {
                 // New file already present (rare race); legacy is stale, remove it.
-                @unlink( $old_path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- cleanup of stale legacy.
+                wp_delete_file( $old_path );
                 continue;
             }
-            @rename( $old_path, $new_path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- best-effort; lazy migration in get_key_file() handles failures.
+            @rename( $old_path, $new_path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors, WordPress.WP.AlternativeFunctions.rename_rename -- best-effort direct rename inside the keys dir, before WP_Filesystem is initialized; lazy migration in get_key_file() handles failures.
         }
     }
 
@@ -510,6 +573,7 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @return void
      */
     public static function migrate_sibling_dir_perms( $from_version, $to_version ) {
+        unset( $to_version );
         if ( ! version_compare( $from_version, '9.0.2.1', '<' ) ) {
             return;
         }
@@ -592,6 +656,7 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @return void
      */
     public static function fix_sibling_dir_perms_9023( $from_version, $to_version ) {
+        unset( $to_version );
 
         if ( empty( $from_version ) || version_compare( $from_version, '9.0.2.1', '<' ) || version_compare( $from_version, '9.0.2.3', '>=' ) ) {
             return;

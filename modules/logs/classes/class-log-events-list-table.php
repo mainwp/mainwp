@@ -1041,6 +1041,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
         </div>
             <?php
         }
+        if ( 'widget-overview' !== $this->table_id_prefix ) {
         ?>
         <div id="mainwp-loading-sites">
             <div class="ui active page dimmer">
@@ -1048,7 +1049,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             </div>
         </div>
         <?php
-
+        }
         $table_features = array(
             'searching'     => 'true',
             'paging'        => 'true',
@@ -1102,7 +1103,9 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
 
                         //jQuery( '#mainwp-sites-table-loader' ).hide();
                         $module_log_table = jQuery( manage_tbl_id ).on( 'processing.dt', function ( e, settings, processing ) {
-                            jQuery( '#mainwp-loading-sites' ).css( 'display', processing ? 'block' : 'none' );
+                            if(jQuery( '#mainwp-loading-sites' ).length){
+                                jQuery( '#mainwp-loading-sites' ).css( 'display', processing ? 'block' : 'none' );
+                            }
                             if (!processing) {
                                 let tb = jQuery( manage_tbl_id );
                                 tb.find( 'th[cell-cls]' ).each( function(){

@@ -540,6 +540,19 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
 
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $no_id = isset( $_POST['notice_id'] ) ? sanitize_text_field( wp_unslash( $_POST['notice_id'] ) ) : false;
+
+        if ( ! empty( $_POST['short_term'] ) ) {
+            if ( empty( $no_id ) ) {
+                die( 'invalid' );
+            }
+
+            $keys = explode( ';', $no_id );
+            foreach ( $keys as $key ) {
+                MainWP_Utility::dismiss_short_term_notice( $key );
+            }
+            die( 'dismissed' );
+        }
+
         if ( 'mail_failed' === $no_id ) {
             MainWP_Utility::update_option( 'mainwp_notice_wp_mail_failed', 'hide' );
             die( 'ok' );

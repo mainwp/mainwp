@@ -1148,7 +1148,34 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             if ( false === $updated ) {
                 return false;
             }
+            $success = true;
 
+            if ( isset( $update_fields['url'] ) ) {
+                // A user-set URL ( REST API / WP-CLI ) that diverges from the
+                // child-reported address locks auto-correction for the site.
+                MainWP_Site_Url_Corrector::after_user_set_url( $website, $update_fields['url'] );
+            }
+        }
+
+        $groupids = array();
+        if ( isset( $data['groupids'] ) && ! empty( $data['groupids'] ) ) {
+            $groupids = explode( ',', sanitize_text_field( wp_unslash( $data['groupids'] ) ) );
+        }
+
+        if ( ! empty( $groupids ) ) {
+            $table_wp_group = esc_sql( $this->table_name( 'wp_group' ) );
+            $this->wpdb->query( $this->wpdb->prepare( "DELETE FROM `{$table_wp_group}` WHERE wpid=%d", $websiteid ) );
+
+            // update groups.
+            foreach ( $groupids as $groupid ) {
+                $this->wpdb->insert(
+                    $this->table_name( 'wp_group' ),
+                    array(
+                        'wpid'    => $websiteid,
+                        'groupid' => $groupid,
+                    )
+                );
+            }
             $success = true;
         }
 

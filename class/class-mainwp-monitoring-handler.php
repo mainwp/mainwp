@@ -294,7 +294,6 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
         $admin_email = MainWP_Notification_Settings::get_general_email();
 
         $heading = $email_settings['heading'];
-        $subject = $email_settings['subject'];
 
         if ( $to_admin && ! empty( $admin_email ) ) {
             $mail_content = MainWP_Notification_Template::instance()->get_template_html(

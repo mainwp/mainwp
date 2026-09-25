@@ -805,6 +805,19 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
     }
 
     /**
+     * Render note that password, Unique Security ID, or both can authenticate a connection.
+     *
+     * @return void
+     */
+    public static function render_connection_unique_security_id_note() {
+        ?>
+        <div class="ui blue message">
+            <?php esc_html_e( 'Administrator password only, Unique Security ID only, or both are valid, depending on how MainWP Child is configured. Generate or create a new Unique Security ID on the child site under Settings > MainWP Child: enable Require Unique Security ID and click Save Settings.', 'mainwp' ); ?>
+        </div>
+        <?php
+    }
+
+    /**
      * Renders the Add New Site page navigation.
      *
      * Highlights the specified navigation item as active.
@@ -915,6 +928,8 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     <div class="ui toggle checkbox not-auto-init" id="addsite-uniqueid">
                         <input type="checkbox" id="mainwp-unique-security-id-checkbox-field"><label><?php esc_html_e( 'Unique Security ID', 'mainwp' ); ?></label>
                     </div>
+                    <div class="ui hidden fitted divider"></div>
+                    <?php static::render_connection_unique_security_id_note(); ?>
 
                     <div class="ui fluid accordion" id="mainwp-connection-authentication-accordion" style="margin-top:1em">
                         <div class="title">
@@ -933,7 +948,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                             <h4 class="ui small header"><?php esc_html_e( 'Toggle Summary', 'mainwp' ); ?></h4>
                             <div class="ui bulleted small list">
                                 <div class="item"><?php esc_html_e( 'Password On → Displays the Password field.', 'mainwp' ); ?></div>
-                                <div class="item"><?php esc_html_e( 'Security Key On → Displays the Security Key field.', 'mainwp' ); ?></div>
+                                <div class="item"><?php esc_html_e( 'Unique Security ID On → Displays the Unique Security ID field.', 'mainwp' ); ?></div>
                                 <div class="item"><?php esc_html_e( 'Both On → Displays both fields.', 'mainwp' ); ?></div>
                                 <div class="item"><?php esc_html_e( 'Both Off → Hides both fields.', 'mainwp' ); ?></div>
                             </div>
@@ -964,6 +979,8 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         <div class="ui left labeled input">
                             <input type="text" id="mainwp_managesites_add_uniqueId" name="mainwp_managesites_add_uniqueId" value="" />
                         </div>
+                        <div class="ui hidden fitted divider"></div>
+                        <span class="ui small text"><?php esc_html_e( 'Copy this from the child site under Settings > MainWP Child. Required only when Require Unique Security ID is enabled there.', 'mainwp' ); ?></span>
                     </div>
                 </div>
             </div>
@@ -2311,7 +2328,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             <div class="item"><?php esc_html_e( 'To show additional fields (Tags, Security ID, HTTP Username, HTTP Password, SSL Version, and SSL Verification, click the eye icon at the end of the row.', 'mainwp' ); ?></div>
             <?php endif; ?>
             <div class="item"><?php esc_html_e( 'If needed, you can tag your sites in the Tag field.', 'mainwp' ); ?></div>
-            <div class="item"><?php esc_html_e( 'If you have enabled the Unique Security ID in the MainWP Child plugin settings, enter the Security ID in the corresponding field.', 'mainwp' ); ?></div>
+            <div class="item"><?php esc_html_e( 'Administrator password only, Unique Security ID only, or both are valid, depending on how MainWP Child is configured. If Require Unique Security ID is enabled on the child site (Settings > MainWP Child), enter the Unique Security ID. Generate or create a new ID there by enabling Require Unique Security ID and clicking Save Settings.', 'mainwp' ); ?></div>
             <div class="item"><?php esc_html_e( 'If the website you are trying to connect is protected with HTTP Basic Auth, enter the HTTP Username & Password. If not, leave it blank.', 'mainwp' ); ?></div>
             <div class="item"><?php esc_html_e( 'Keep the default value of "1" to verify the SSL certificate for your sites, or change it if you prefer not to verify.', 'mainwp' ); ?></div>
             <div class="item"><?php esc_html_e( 'Leave the SSL Version as "auto" unless you know the specific version required by the site. The "auto" option typically works for most sites.', 'mainwp' ); ?></div>

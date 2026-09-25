@@ -38,6 +38,13 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
     const DEFAULT_BUDGET_SECONDS = 240;
 
     /**
+     * Distinguish operator-fixable private storage failures from provider errors.
+     *
+     * @var int
+     */
+    private const PRIVATE_ROOT_FAILURE = 10001;
+
+    /**
      * Maximum jobs attempted in one tick.
      *
      * @var int
@@ -926,7 +933,8 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
         $store = MainWP_Backup_Upload_Job_Store::instance();
         $code  = (int) $e->getCode();
 
-        $error = '[' . $this->error_code_for_provider( (string) $destination->provider ) . '] ' . $e->getMessage();
+        $label = self::PRIVATE_ROOT_FAILURE === $code ? MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE : $this->error_code_for_provider( (string) $destination->provider );
+        $error = '[' . $label . '] ' . $e->getMessage();
 
         // Every outcome write is fenced and checked: a worker whose lease
         // was reclaimed must not relabel the new holder's job, clean its
@@ -1038,7 +1046,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
     private function staging_dir( object $job ): string {
         $dir = MainWP_Backup_Private_Root::staging_dir( 'upload-staging', (int) $job->snapshot_id . '-' . (int) $job->destination_id );
         if ( is_wp_error( $dir ) ) {
-            throw new \RuntimeException( esc_html( $dir->get_error_message() ), 503 );
+            throw new \RuntimeException( esc_html( $dir->get_error_message() ), self::PRIVATE_ROOT_FAILURE ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- The message is escaped; the constant is an integer exception code.
         }
         return untrailingslashit( $dir );
     }

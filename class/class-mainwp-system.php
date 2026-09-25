@@ -741,6 +741,9 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 if ( ! is_user_logged_in() ) {
                     return;
                 }
+                if ( wp_doing_cron() || ( defined( 'WP_CLI' ) && WP_CLI ) ) {
+                    return;
+                }
                 if ( ! MainWP_System_Utility::is_admin() || ! \mainwp_current_user_can( 'dashboard', 'execute_backups' ) ) {
                     return;
                 }

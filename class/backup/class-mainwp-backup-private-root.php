@@ -49,7 +49,8 @@ class MainWP_Backup_Private_Root {
             $default = dirname( rtrim( ABSPATH, '/\\' ) ) . '/mainwp-private-' . $suffix . '/backups';
         }
         $candidate  = apply_filters( 'mainwp_backup_private_root', $default );
-        self::$root = self::ensure_private_dir( $candidate, null, true, ! $explicit && $candidate === $default );
+        $is_default = ! $explicit && is_string( $candidate ) && untrailingslashit( wp_normalize_path( $candidate ) ) === untrailingslashit( wp_normalize_path( $default ) );
+        self::$root = self::ensure_private_dir( $candidate, null, true, $is_default );
         return self::$root;
     }
 
@@ -192,13 +193,14 @@ class MainWP_Backup_Private_Root {
     /**
      * Require disjoint served and private trees before any filesystem writes.
      *
-     * @param mixed $candidate Selected directory.
-     * @param array $boundaries Served directories.
-     * @param bool  $is_default Whether the install default was selected unchanged.
-     * @param bool  $underivable Whether any configured URL has no matching filesystem suffix.
+     * @param mixed  $candidate Selected directory.
+     * @param array  $boundaries Served directories.
+     * @param bool   $is_default Whether the install default was selected unchanged.
+     * @param bool   $underivable Whether any configured URL has no matching filesystem suffix.
+     * @param string $wordpress_dir WordPress installation directory.
      * @return string Empty when accepted.
      */
-    private static function refusal_reason( $candidate, array $boundaries, bool $is_default, bool $underivable ): string {
+    private static function refusal_reason( $candidate, array $boundaries, bool $is_default, bool $underivable, string $wordpress_dir = ABSPATH ): string {
         if ( ! is_string( $candidate ) || '' === trim( $candidate ) || false !== strpos( $candidate, "\0" ) ) {
             return 'expected a non-empty path without NUL bytes';
         }
@@ -206,6 +208,9 @@ class MainWP_Backup_Private_Root {
             return 'expected an absolute path';
         }
         $candidate = untrailingslashit( wp_normalize_path( $candidate ) );
+        if ( in_array( '..', explode( '/', $candidate ), true ) ) {
+            return "expected a path without '..' segments";
+        }
         if ( is_link( $candidate ) ) {
             return 'directory is a symlink';
         }
@@ -226,6 +231,19 @@ class MainWP_Backup_Private_Root {
                         return 'directory overlaps a served directory';
                     }
                 }
+            }
+        }
+        if ( $is_default ) {
+            $parent = dirname( untrailingslashit( wp_normalize_path( $wordpress_dir ) ) );
+            $public = in_array( strtolower( basename( $parent ) ), array( 'public_html', 'htdocs', 'httpdocs', 'www_root', 'wwwroot', 'webroot', 'public', 'web', 'html' ), true );
+            foreach ( array( 'index.php', 'index.html', 'index.htm', '.htaccess', 'wp-config.php', 'wp-load.php' ) as $marker ) {
+                if ( is_file( $parent . '/' . $marker ) ) {
+                    $public = true;
+                    break;
+                }
+            }
+            if ( $public ) {
+                return 'the directory above WordPress looks publicly served; set MAINWP_BACKUP_PRIVATE_DIR';
             }
         }
         return '';

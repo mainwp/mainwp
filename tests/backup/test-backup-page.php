@@ -11,12 +11,27 @@
 namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Backup_Page;
+use MainWP\Dashboard\MainWP_Backup_Private_Root;
 use MainWP\Dashboard\MainWP_System_Utility;
 
 /**
  * Class MainWP_Backup_Page_Test
  */
 class MainWP_Backup_Page_Test extends \WP_UnitTestCase {
+
+	/**
+	 * Read-only private root created by a test.
+	 *
+	 * @var string
+	 */
+	private $private_dir = '';
+
+	/**
+	 * Private root filter added by a test.
+	 *
+	 * @var \Closure|null
+	 */
+	private $root_filter = null;
 
 	/**
 	 * Restore permissions on the backup dir.
@@ -31,6 +46,14 @@ class MainWP_Backup_Page_Test extends \WP_UnitTestCase {
 		if ( is_dir( $backup_dir ) ) {
 			chmod( $backup_dir, 0755 ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test cleanup.
 		}
+		if ( '' !== $this->private_dir && is_dir( $this->private_dir ) ) {
+			chmod( $this->private_dir, 0755 ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test cleanup.
+			rmdir( $this->private_dir ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test cleanup.
+		}
+		if ( null !== $this->root_filter ) {
+			remove_filter( 'mainwp_backup_private_root', $this->root_filter, 99 );
+		}
+		MainWP_Backup_Private_Root::reset();
 		parent::tear_down();
 	}
 
@@ -92,7 +115,7 @@ class MainWP_Backup_Page_Test extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * The environment notices warn about a non-writable backup directory.
+	 * The environment notices warn when the private backup directory is not writable.
 	 *
 	 * @return void
 	 */
@@ -101,17 +124,21 @@ class MainWP_Backup_Page_Test extends \WP_UnitTestCase {
 			$this->markTestSkipped( 'Permission checks do not apply when running as root.' );
 		}
 
-		$backup_dir = MainWP_System_Utility::get_mainwp_dir( 'backup' );
-		if ( is_array( $backup_dir ) ) {
-			$backup_dir = $backup_dir[0];
-		}
-		chmod( $backup_dir, 0555 ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+		$this->private_dir = trailingslashit( get_temp_dir() ) . 'mainwp-page-ro-' . wp_generate_password( 8, false );
+		wp_mkdir_p( $this->private_dir );
+		chmod( $this->private_dir, 0555 ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+		$private_dir       = $this->private_dir;
+		$this->root_filter = static function () use ( $private_dir ) {
+			return $private_dir;
+		};
+		add_filter( 'mainwp_backup_private_root', $this->root_filter, 99 );
+		MainWP_Backup_Private_Root::reset();
 
 		ob_start();
 		MainWP_Backup_Page::render_backup_environment_notices();
 		$output = ob_get_clean();
 
-		$this->assertStringContainsString( 'not writable', $output );
+		$this->assertStringContainsString( 'write probe', $output );
 		$this->assertStringContainsString( 'ui yellow message', $output );
 	}
 }

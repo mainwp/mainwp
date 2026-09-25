@@ -1561,6 +1561,7 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_RETRYABLE, $job->status );
 		$this->assertGreaterThan( $now, (int) $job->next_retry_at );
 		$this->assertStringContainsString( 'Private backup directory', $job->last_error );
+		$this->assertStringStartsWith( '[' . \MainWP\Dashboard\MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE . '] ', $job->last_error );
 		$base   = $this->make_temp_dir();
 		$filter = static function ( $dirs ) use ( $base ) {
 			$dirs['basedir'] = $base;

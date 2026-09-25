@@ -153,18 +153,20 @@ class MainWP_Backup_Private_Download_Test extends MainWP_Abilities_Test_Case {
 		$this->skip_when_capabilities_bypassed();
 		$rows = array(
 			// Role, denied right, multi-user, request shape, expected bytes, expected resolver calls.
-			'anonymous'            => array( '', '', false, 'own', null, 0 ),
-			'subscriber'           => array( 'subscriber', '', false, 'own', null, 0 ),
-			'editor'               => array( 'editor', '', false, 'own', null, 0 ),
-			'administrator'        => array( 'administrator', '', false, 'own', 'archive', 1 ),
-			'backup right denied'  => array( 'administrator', 'dashboard', false, 'own', null, 0 ),
-			'site right denied'    => array( 'administrator', 'site', false, 'own', null, 0 ),
-			'other owner'          => array( 'administrator', '', true, 'own', null, 0 ),
-			'leading zero'         => array( 'administrator', '', false, 'sites/05/full.zip', null, 0 ),
-			'noncanonical integer' => array( 'administrator', '', false, 'sites/12abc/full.zip', null, 0 ),
-			'non-site path'        => array( 'administrator', '', false, 'backups/full.zip', null, 0 ),
-			'parent traversal'     => array( 'administrator', '', false, 'traversal', null, 1 ),
-			'other site path'      => array( 'administrator', '', false, 'other', null, 1 ),
+			'cron'                       => array( 'administrator', '', false, 'cron', null, 0 ),
+			'existing other site denied' => array( 'administrator', 'other-site', false, 'existing-other', null, 0 ),
+			'anonymous'                  => array( '', '', false, 'own', null, 0 ),
+			'subscriber'                 => array( 'subscriber', '', false, 'own', null, 0 ),
+			'editor'                     => array( 'editor', '', false, 'own', null, 0 ),
+			'administrator'              => array( 'administrator', '', false, 'own', 'archive', 1 ),
+			'backup right denied'        => array( 'administrator', 'dashboard', false, 'own', null, 0 ),
+			'site right denied'          => array( 'administrator', 'site', false, 'own', null, 0 ),
+			'other owner'                => array( 'administrator', '', true, 'own', null, 0 ),
+			'leading zero'               => array( 'administrator', '', false, 'sites/05/full.zip', null, 0 ),
+			'noncanonical integer'       => array( 'administrator', '', false, 'sites/12abc/full.zip', null, 0 ),
+			'non-site path'              => array( 'administrator', '', false, 'backups/full.zip', null, 0 ),
+			'parent traversal'           => array( 'administrator', '', false, 'traversal', null, 1 ),
+			'other site path'            => array( 'administrator', '', false, 'other', null, 1 ),
 		);
 		foreach ( $rows as $label => $row ) {
 			list( $role, $denied, $multi, $shape, $expected, $expected_calls ) = $row;
@@ -175,7 +177,7 @@ class MainWP_Backup_Private_Download_Test extends MainWP_Abilities_Test_Case {
 			$owner    = $multi ? self::factory()->user->create() : $user;
 			$site_id  = $this->create_test_site( array( 'userid' => $owner ) );
 			$other_id = $this->create_test_site( array( 'userid' => $user ) );
-			$file     = $this->private_root . '/sites/' . $site_id . '/full.zip';
+			$file     = $this->private_root . '/sites/' . ( 'existing-other' === $shape ? $other_id : $site_id ) . '/full.zip';
 			$sig      = 'unused';
 			if ( '' === $role ) {
 				delete_option( 'mainwp_backup_private_suffix' );
@@ -183,27 +185,36 @@ class MainWP_Backup_Private_Download_Test extends MainWP_Abilities_Test_Case {
 			if ( '' !== $role ) {
 				wp_mkdir_p( dirname( $file ) );
 				file_put_contents( $file, 'archive' );
+				$this->assertFileExists( $file, $label );
 				$sig = MainWP_System_Utility::get_download_sig( $file );
 			}
 			$paths  = array(
-				'own'       => 'sites/' . $site_id . '/full.zip',
-				'other'     => 'sites/' . $other_id . '/full.zip',
-				'traversal' => 'sites/' . $site_id . '/../' . $site_id . '/full.zip',
+				'cron'           => 'sites/' . $site_id . '/full.zip',
+				'existing-other' => 'sites/' . $other_id . '/full.zip',
+				'own'            => 'sites/' . $site_id . '/full.zip',
+				'other'          => 'sites/' . $other_id . '/full.zip',
+				'traversal'      => 'sites/' . $site_id . '/../' . $site_id . '/full.zip',
 			);
 			$calls  = 0;
 			$count  = static function ( $root ) use ( &$calls ) {
 				++$calls;
 				return $root;
 			};
-			$rights = static function ( $allowed, $type ) use ( $denied ) {
+			$rights = static function ( $allowed, $type, $cap ) use ( $denied, $site_id ) {
+				if ( 'other-site' === $denied && 'site' === $type ) {
+					return (int) $cap === $site_id;
+				}
 				return $type === $denied ? false : $allowed;
 			};
 			$mode   = static function () use ( $multi ) {
 				return ! $multi;
 			};
 			add_filter( 'mainwp_backup_private_root', $count, 99 );
-			add_filter( 'mainwp_currentusercan', $rights, 10, 2 );
+			add_filter( 'mainwp_currentusercan', $rights, 10, 3 );
 			add_filter( 'mainwp_is_single_user', $mode );
+			if ( 'cron' === $shape ) {
+				add_filter( 'wp_doing_cron', '__return_true' );
+			}
 			try {
 				$this->assertSame(
 					$expected,
@@ -225,6 +236,7 @@ class MainWP_Backup_Private_Download_Test extends MainWP_Abilities_Test_Case {
 				remove_filter( 'mainwp_backup_private_root', $count, 99 );
 				remove_filter( 'mainwp_currentusercan', $rights, 10 );
 				remove_filter( 'mainwp_is_single_user', $mode );
+				remove_filter( 'wp_doing_cron', '__return_true' );
 			}
 		}
 	}

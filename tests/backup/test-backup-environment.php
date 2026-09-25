@@ -17,7 +17,7 @@ use MainWP\Dashboard\MainWP_Backup_Monitor;
 use MainWP\Dashboard\MainWP_Exception;
 use MainWP\Dashboard\MainWP_Backup_Page;
 use MainWP\Dashboard\MainWP_Post_Backup_Handler;
-use MainWP\Dashboard\MainWP_System_Utility;
+use MainWP\Dashboard\MainWP_Backup_Private_Root;
 
 /**
  * Class MainWP_Backup_Environment_Test
@@ -42,13 +42,6 @@ class MainWP_Backup_Environment_Test extends \WP_UnitTestCase {
 	 * @return void
 	 */
 	public function tear_down() {
-		$backup_dir = MainWP_System_Utility::get_mainwp_dir( 'backup' );
-		if ( is_array( $backup_dir ) ) {
-			$backup_dir = $backup_dir[0];
-		}
-		if ( is_dir( $backup_dir ) ) {
-			chmod( $backup_dir, 0755 ); // phpcs:ignore WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors -- test cleanup.
-		}
 		$this->tear_down_private_root();
 		parent::tear_down();
 	}
@@ -109,26 +102,28 @@ class MainWP_Backup_Environment_Test extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * The environment notices warn about a non-writable backup directory.
+	 * The environment notices escape private-root failure messages.
 	 *
 	 * @return void
 	 */
-	public function test_environment_notices_warn_for_non_writable_dir() {
-		if ( 0 === (int) getmyuid() ) {
-			$this->markTestSkipped( 'Permission checks do not apply when running as root.' );
-		}
-
-		$backup_dir = MainWP_System_Utility::get_mainwp_dir( 'backup' );
-		if ( is_array( $backup_dir ) ) {
-			$backup_dir = $backup_dir[0];
-		}
-		chmod( $backup_dir, 0555 ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+	public function test_environment_notices_warn_for_private_root_failure() {
+		add_filter(
+			'mainwp_backup_private_root',
+			static function () {
+				return "bad\0<unsafe>";
+			},
+			99
+		);
+		MainWP_Backup_Private_Root::reset();
+		$error = MainWP_Backup_Private_Root::resolve();
+		$this->assertWPError( $error );
 
 		ob_start();
 		MainWP_Backup_Page::render_backup_environment_notices();
 		$output = ob_get_clean();
 
-		$this->assertStringContainsString( 'not writable', $output );
+		$this->assertStringContainsString( esc_html( $error->get_error_message() ), $output );
+		$this->assertStringNotContainsString( '<unsafe>', $output );
 		$this->assertStringContainsString( 'ui yellow message', $output );
 	}
 }

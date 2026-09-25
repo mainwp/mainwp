@@ -543,12 +543,10 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
     public static function render_backup_environment_notices(): void {
         $warnings = array();
 
-        $backup_dir = MainWP_System_Utility::get_mainwp_dir( 'backup' );
-        if ( is_array( $backup_dir ) ) {
-            $backup_dir = $backup_dir[0];
-        }
-
-        if ( function_exists( 'disk_free_space' ) && is_dir( $backup_dir ) ) {
+        $backup_dir = MainWP_Backup_Private_Root::resolve();
+        if ( is_wp_error( $backup_dir ) ) {
+            $warnings[] = $backup_dir->get_error_message();
+        } elseif ( function_exists( 'disk_free_space' ) && is_dir( $backup_dir ) ) {
             $free = @disk_free_space( $backup_dir ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- may be disabled by the host.
             if ( false !== $free && $free < 500 * MB_IN_BYTES ) {
                 $warnings[] = sprintf(
@@ -557,10 +555,6 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                     size_format( $free )
                 );
             }
-        }
-
-        if ( is_dir( $backup_dir ) && ! wp_is_writable( $backup_dir ) ) {
-            $warnings[] = esc_html__( 'The backup directory is not writable. Backups will fail until permissions are fixed.', 'mainwp' );
         }
 
         $memory = wp_convert_hr_to_bytes( ini_get( 'memory_limit' ) );

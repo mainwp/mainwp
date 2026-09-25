@@ -102,6 +102,13 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
             // legitimate target always passes.
             throw new MainWP_Exception( esc_html__( 'Invalid backup file location.', 'mainwp' ) );
         }
+        // The root can become read-only, full or over quota between the create
+        // request and this second browser request; the creating path names the
+        // cause instead of a generic filesystem or transfer error.
+        $dir = MainWP_Backup_Private_Root::site_dir( $pSiteId );
+        if ( is_wp_error( $dir ) ) {
+            throw new MainWP_Exception( esc_html( $dir->get_error_message() ), null, MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- The message is escaped; the final argument is an error code.
+        }
         if ( ! MainWP_System_Utility::get_wp_file_system() ) {
             throw new MainWP_Exception( esc_html__( 'Could not initialize the WordPress filesystem to store the backup.', 'mainwp' ) );
         }

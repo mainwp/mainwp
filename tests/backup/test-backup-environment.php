@@ -182,6 +182,36 @@ class MainWP_Backup_Environment_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Triggering a backup for an unknown site must not create private directories.
+	 *
+	 * @return void
+	 */
+	public function test_trigger_backup_unknown_site_does_not_create_private_directory() {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$this->assertEmpty( \MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( 987654 ) );
+		$enabled = get_option( 'mainwp_enableNativeBackups' );
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		try {
+			$caught = null;
+			try {
+				MainWP_Backup_Executor::trigger_backup( 987654, 'full' );
+			} catch ( MainWP_Exception $e ) {
+				$caught = $e;
+			}
+			$this->assertInstanceOf( MainWP_Exception::class, $caught );
+			$this->assertSame( 'Site not found.', $caught->getMessage() );
+			$this->assertDirectoryDoesNotExist( $this->private_root . '/sites/987654' );
+			$this->assertDirectoryDoesNotExist( $this->private_root );
+		} finally {
+			if ( false === $enabled ) {
+				delete_option( 'mainwp_enableNativeBackups' );
+			} else {
+				update_option( 'mainwp_enableNativeBackups', $enabled );
+			}
+		}
+	}
+
+	/**
 	 * The resource limit helper registers the elevated memory filter.
 	 *
 	 * @return void

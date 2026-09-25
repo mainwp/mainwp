@@ -32,7 +32,9 @@ class MainWP_Backup_Private_Root {
      * Resolve the configured private root without creating it.
      *
      * The default is mainwp-private/<WordPress directory name>/backups beside WordPress, so Dashboards installed side by side never share a root (retention would delete each other's snapshots).
+     * For a WordPress directory named mainwp-private, the sibling container is mainwp-private-dashboard to keep the root outside WordPress.
      * Changing MAINWP_BACKUP_PRIVATE_DIR, or renaming the WordPress directory, after backups exist means moving the sites/ folder to the new root, or the older snapshots leave retention and the Backups tab; restore still works from the recorded paths.
+     * Hosts that deploy through an atomic symlink (current -> releases/<id>: Capistrano, Deployer, Envoyer) must set MAINWP_BACKUP_PRIVATE_DIR: WordPress resolves ABSPATH through the release directory, so the default folder name changes with every release and the earlier snapshots drop out of retention and the Backups tab.
      *
      * @return string|\WP_Error
      */
@@ -40,7 +42,9 @@ class MainWP_Backup_Private_Root {
         if ( null !== self::$root ) {
             return self::$root;
         }
-        $default    = defined( 'MAINWP_BACKUP_PRIVATE_DIR' ) ? MAINWP_BACKUP_PRIVATE_DIR : dirname( rtrim( ABSPATH, '/\\' ) ) . '/mainwp-private/' . basename( rtrim( ABSPATH, '/\\' ) ) . '/backups';
+        $folder     = basename( rtrim( ABSPATH, '/\\' ) );
+        $container  = 'mainwp-private' === $folder ? 'mainwp-private-dashboard' : 'mainwp-private';
+        $default    = defined( 'MAINWP_BACKUP_PRIVATE_DIR' ) ? MAINWP_BACKUP_PRIVATE_DIR : dirname( rtrim( ABSPATH, '/\\' ) ) . '/' . $container . '/' . $folder . '/backups';
         $candidate  = apply_filters( 'mainwp_backup_private_root', $default );
         $reason     = self::refusal_reason( $candidate );
         self::$root = '' === $reason ? trailingslashit( self::canonical_path( wp_normalize_path( $candidate ) ) ) : self::unavailable( is_string( $candidate ) ? str_replace( "\0", '[NUL]', $candidate ) : '(' . gettype( $candidate ) . ')', $reason );

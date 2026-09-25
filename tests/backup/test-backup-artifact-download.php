@@ -440,6 +440,40 @@ class MainWP_Backup_Artifact_Download_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A root that becomes read-only between browser requests must fail before HTTP.
+	 *
+	 * @return void
+	 */
+	public function test_backup_download_file_refuses_read_only_root_before_http() {
+		if ( function_exists( 'posix_geteuid' ) && 0 === posix_geteuid() ) {
+			$this->markTestSkipped( 'Root can write read-only directories.' );
+		}
+		$website  = $this->make_site( false );
+		$local    = $this->local_file( $website );
+		$requests = 0;
+		$http     = function () use ( &$requests ) {
+			++$requests;
+			$this->fail( 'No HTTP request should be made.' );
+		};
+		add_filter( 'pre_http_request', $http );
+		try {
+			$this->assertTrue( chmod( $this->private_root, 0500 ) );
+			$caught = null;
+			try {
+				MainWP_Backup_File_Manager::backup_download_file( (int) $website->id, 'full', 'backup-remote.tar.gz', $local );
+			} catch ( MainWP_Exception $e ) {
+				$caught = $e;
+			}
+			$this->assertInstanceOf( MainWP_Exception::class, $caught );
+			$this->assertSame( MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE, $caught->get_message_error_code() );
+			$this->assertSame( 0, $requests );
+		} finally {
+			chmod( $this->private_root, 0700 );
+			remove_filter( 'pre_http_request', $http );
+		}
+	}
+
+	/**
 	 * A 401 on the tokenless path means the child has ratcheted onto
 	 * tokens while the dashboard's capability flag is empty - a fresh
 	 * dashboard install reconnected to a ratcheted child. The download

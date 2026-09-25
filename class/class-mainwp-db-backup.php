@@ -1240,12 +1240,12 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
     /**
      * Method get_backup_tasks_to_complete()
      *
-     * Get backup tasks to complete.
+     * Get backup tasks to complete, least recently continued first.
      *
      * @return object Backup tasks.
      */
     public function get_backup_tasks_to_complete() {
-        return $this->wpdb->get_results( 'SELECT * FROM ' . esc_sql( $this->table_name( 'wp_backup' ) ) . ' WHERE paused = 0 AND completed < last_run', OBJECT );
+        return $this->wpdb->get_results( 'SELECT * FROM ' . esc_sql( $this->table_name( 'wp_backup' ) ) . ' WHERE paused = 0 AND completed < last_run ORDER BY last_continued ASC, last_run ASC, id ASC', OBJECT );
     }
 
     /**

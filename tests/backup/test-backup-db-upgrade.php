@@ -468,7 +468,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		$row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d", $legacy_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test probe.
 		$this->assertNotNull( $row );
 		$this->assertNull( $row->run_key );
-		$this->assertSame( '9.0.2.26', get_site_option( 'mainwp_db_version' ) );
+		$this->assertSame( '9.0.2.27', get_site_option( 'mainwp_db_version' ) );
 		$this->assertFalse( get_site_option( MainWP_Install::BACKUP_SNAPSHOT_RUN_KEY_REPAIR_PENDING ) );
 		$wpdb->delete( $table, array( 'id' => $legacy_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- DDL committed this fixture.
 	}
@@ -942,6 +942,31 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		$this->assertTrue(
 			$this->column_exists( $table, 'backup_notices' ),
 			'Upgrade must add backup_notices to existing installs; the shipped db version needs a bump or dbDelta never runs.'
+		);
+	}
+
+	/**
+	 * The continue lane orders unfinished tasks by last_continued, so an
+	 * upgraded install needs the column or every tick falls over on the query.
+	 *
+	 * @return void
+	 */
+	public function test_upgrade_adds_last_continued_column_to_backup_task_table() {
+		global $wpdb;
+
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		$this->assertTrue( $this->column_exists( $table, 'last_continued' ), 'Precondition: fresh install has last_continued.' );
+
+		$wpdb->query( "ALTER TABLE {$table} DROP COLUMN last_continued" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture, identifiers cannot be prepared.
+		$this->assertFalse( $this->column_exists( $table, 'last_continued' ), 'Precondition: column dropped to simulate an older install.' );
+
+		update_site_option( 'mainwp_db_version', '9.0.2.26' );
+
+		MainWP_Install::instance()->install();
+
+		$this->assertTrue(
+			$this->column_exists( $table, 'last_continued' ),
+			'Upgrade must add last_continued to existing installs; the shipped db version needs a bump or dbDelta never runs.'
 		);
 	}
 
@@ -1554,7 +1579,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		$upload_job_table = MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' );
 		$this->assertTrue( $this->index_exists( $upload_job_table, 'uniq_snap_dest_kind' ), 'Fresh install must create the kind-widened upload-job unique key.' );
 
-		$this->assertSame( '9.0.2.26', get_site_option( 'mainwp_db_version' ), 'Fresh install must preserve the merged native-backups db version.' );
+		$this->assertSame( '9.0.2.27', get_site_option( 'mainwp_db_version' ), 'Fresh install must preserve the merged native-backups db version.' );
 
 		$property = new \ReflectionProperty( MainWP_Install::class, 'mainwp_db_version' );
 		$property->setAccessible( true );
@@ -1602,7 +1627,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		);
 
 		$this->assertSame( array( 'repair_backup_progress_index', 'repair_backup_progress_index' ), $installer->calls );
-		$this->assertSame( '9.0.2.26', get_site_option( 'mainwp_db_version' ) );
+		$this->assertSame( '9.0.2.27', get_site_option( 'mainwp_db_version' ) );
 	}
 
 	/**
@@ -1652,7 +1677,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		$saved_pending = get_site_option( MainWP_Install::BACKUP_PROGRESS_INDEX_REPAIR_PENDING );
 
 		try {
-			update_site_option( 'mainwp_db_version', '9.0.2.26' );
+			update_site_option( 'mainwp_db_version', '9.0.2.27' );
 			update_site_option( MainWP_Install::BACKUP_PROGRESS_INDEX_REPAIR_PENDING, time() - 2 * HOUR_IN_SECONDS );
 			$installer->install();
 

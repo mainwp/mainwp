@@ -1540,6 +1540,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
      *
      * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_tasks_to_complete()
      * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_task_by_id()
+     * @uses \MainWP\Dashboard\MainWP_DB_Backup::update_backup_task_with_values()
      * @uses \MainWP\Dashboard\MainWP_Logger::info()
      * @uses \MainWP\Dashboard\MainWP_Logger::debug()
      * @uses \MainWP\Dashboard\MainWP_Manage_Backups_Handler::execute_backup_task()
@@ -1601,11 +1602,30 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
             if ( empty( $task ) ) {
                 continue;
             }
-            if ( $task->completed < $task->last_run ) {
-                MainWP_Manage_Backups_Handler::execute_backup_task( $task, 5, false );
+            if ( $task->completed >= $task->last_run ) {
+                continue;
+            }
+
+            // Stamp before the run so a task whose run dies or whose children always fail
+            // still rotates to the back: starvation was seen on dev.mainwps.com 2026-09-25.
+            MainWP_DB_Backup::instance()->update_backup_task_with_values( $task->id, array( 'last_continued' => time() ) );
+
+            // False means the run never started (scope pause or slot refusal), so this
+            // tick is still free for the next candidate; only one started run gets a tick.
+            if ( false !== $this->continue_backup_task( $task ) ) {
                 break;
             }
         }
+    }
+
+    /**
+     * Continue a backup task so a test can substitute the run.
+     *
+     * @param object $task Backup task.
+     * @return mixed Backup execution result.
+     */
+    protected function continue_backup_task( $task ) {
+        return MainWP_Manage_Backups_Handler::execute_backup_task( $task, 5, false );
     }
 
     /**

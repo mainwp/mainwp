@@ -15,6 +15,7 @@
 namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Backup_Restore_Orchestrator;
+use MainWP\Dashboard\MainWP_DB_Backup;
 use MainWP\Dashboard\MainWP_Post_Backup_Handler;
 use MainWP\Dashboard\MainWP_System_Cron_Jobs;
 
@@ -148,6 +149,131 @@ class MainWP_Backup_Now_Continuation_Test extends \WP_UnitTestCase {
 			$prop->setValue( null, $saved );
 			delete_option( 'mainwp_enableNativeBackups' );
 			delete_option( 'mainwp_enableLegacyBackupFeature' );
+		}
+	}
+
+	/**
+	 * Unfinished tasks share the continue lane even when a run never completes.
+	 *
+	 * @return void
+	 */
+	public function test_continue_lane_rotates_across_unfinished_tasks() {
+		$cases = array(
+			'alternation'         => array(
+				'ticks'    => 4,
+				'paused'   => false,
+				'results'  => array(),
+				'expected' => array( 'A', 'B', 'A', 'B' ),
+			),
+			'slot refused'        => array(
+				'ticks'    => 1,
+				'paused'   => false,
+				'results'  => array( false ),
+				'expected' => array( 'A', 'B' ),
+			),
+			'paused never picked' => array(
+				'ticks'    => 3,
+				'paused'   => true,
+				'results'  => array(),
+				'expected' => array( 'A', 'B', 'A' ),
+			),
+		);
+
+		foreach ( $cases as $message => $case ) {
+			$ids = array();
+			$db  = MainWP_DB_Backup::instance();
+
+			try {
+				update_option( 'mainwp_enableNativeBackups', 1 );
+				$names = $case['paused'] ? array( 'A', 'B', 'C' ) : array( 'A', 'B' );
+				foreach ( $names as $name ) {
+					$task = $db->add_backup_task(
+						self::factory()->user->create(),
+						'',
+						'test',
+						'test',
+						'',
+						'',
+						'',
+						'',
+						'',
+						0,
+						0,
+						0,
+						0,
+						0,
+						'zip',
+						0,
+						0,
+						0,
+						0
+					);
+					$this->assertNotFalse( $task, $message );
+					$ids[ $name ] = (int) $task->id;
+					$db->update_backup_task_with_values(
+						$task->id,
+						array(
+							'last_run'  => 100,
+							'completed' => 0,
+							'paused'    => 'C' === $name ? 1 : 0,
+						)
+					);
+				}
+
+				$lane                       = new class() extends MainWP_System_Cron_Jobs {
+					/**
+					 * Attempted task IDs in order.
+					 *
+					 * @var int[]
+					 */
+					public $picked = array();
+
+					/**
+					 * Scripted results by task ID.
+					 *
+					 * @var array
+					 */
+					public $results = array();
+
+					/**
+					 * Record the attempt without completing the task.
+					 *
+					 * @param object $task Backup task.
+					 * @return bool Scripted result, defaulting to a started run.
+					 */
+					protected function continue_backup_task( $task ) {
+						$this->picked[] = (int) $task->id;
+						return empty( $this->results[ $task->id ] ) ? true : array_shift( $this->results[ $task->id ] );
+					}
+				};
+				$lane->results[ $ids['A'] ] = $case['results'];
+
+				$before = time();
+				for ( $tick = 1; $tick <= $case['ticks']; ++$tick ) {
+					$already = count( $lane->picked );
+					$lane->cron_backups_continue();
+					// The lane, not this test, must stamp every task it tried this tick.
+					foreach ( array_slice( $lane->picked, $already ) as $tried ) {
+						$row = $db->get_backup_task_by_id( $tried );
+						$this->assertGreaterThanOrEqual( $before, (int) $row->last_continued, $message );
+					}
+					if ( $tick < $case['ticks'] && ! empty( $lane->picked ) ) {
+						// Rapid ticks can share a Unix second; preserve their order without sleeping.
+						$db->update_backup_task_with_values( end( $lane->picked ), array( 'last_continued' => $tick ) );
+					}
+				}
+
+				$expected = array();
+				foreach ( $case['expected'] as $name ) {
+					$expected[] = $ids[ $name ];
+				}
+				$this->assertSame( $expected, $lane->picked, $message );
+			} finally {
+				foreach ( $ids as $id ) {
+					$db->remove_backup_task( $id );
+				}
+				delete_option( 'mainwp_enableNativeBackups' );
+			}
 		}
 	}
 }

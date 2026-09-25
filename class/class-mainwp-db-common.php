@@ -1016,7 +1016,10 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         }
 
         if ( ! empty( $fields ) ) {
-            $this->wpdb->update( $this->table_name( 'users' ), $fields, array( 'userid' => $userid ) );
+            $updated = $this->wpdb->update( $this->table_name( 'users' ), $fields, array( 'userid' => $userid ) );
+            if ( false !== $updated ) {
+                MainWP_Cache_Helper::invalidate_updates_cache_if_ignore_fields( $fields );
+            }
         }
 
         return $this->wpdb->get_row( "SELECT * FROM `{$table_users}` WHERE userid= " . intval( $userid ), OBJECT );

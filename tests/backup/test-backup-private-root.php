@@ -435,6 +435,163 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Host fallbacks preserve existing snapshots and explicit configuration.
+	 */
+	public function test_sibling_fallback_selection_matrix() {
+		$rows = array(
+			'default writable'        => array( 'default', 0700, 'default', '' ),
+			'private_html writable'   => array( 'default', 0500, 'private_html', '' ),
+			'private writable'        => array( 'private', 0500, 'private', '' ),
+			'both roots exist'        => array( 'both', 0700, 'default', '' ),
+			'existing snapshots'      => array( 'snapshots', 0700, 'private_html', '' ),
+			'constant skips ladder'   => array( 'constant', 0500, 'default', 'could not create directory' ),
+			'filter skips ladder'     => array( 'filter', 0500, 'override', 'could not create directory' ),
+			'nothing writable'        => array( 'blocked', 0500, 'default', 'could not create directory' ),
+			'content sibling refused' => array( 'content', 0500, 'private', '' ),
+			'ABSPATH sibling refused' => array( 'abspath', 0500, 'private', '' ),
+			'symlink root refused'    => array( 'symlink', 0500, 'private', '' ),
+		);
+		foreach ( $rows as $label => $row ) {
+			list( $mode, $permissions, $selected, $reason ) = $row;
+			if ( 0500 === $permissions && function_exists( 'posix_geteuid' ) && 0 === posix_geteuid() ) {
+				continue;
+			}
+			$this->remove_private_fixture( $this->private_root );
+			MainWP_Backup_Private_Root::reset();
+			$base    = $this->private_root;
+			$folder  = 'abspath' === $mode ? 'private_html' : 'public_html';
+			$abspath = $base . '/' . $folder . '/';
+			$suffix  = '/mainwp-private/' . $folder . '/backups';
+			$paths   = array(
+				'default'      => $base . $suffix,
+				'private_html' => $base . '/private_html' . $suffix,
+				'private'      => $base . '/private' . $suffix,
+				'override'     => $base . '/override/backups',
+			);
+			wp_mkdir_p( $abspath );
+			wp_mkdir_p( $base . '/private_html' );
+			wp_mkdir_p( $base . '/private' );
+			if ( in_array( $mode, array( 'both', 'snapshots' ), true ) ) {
+				wp_mkdir_p( $paths['private_html'] . '/sites/1/snapshot-recorded' );
+				file_put_contents( $paths['private_html'] . '/sites/1/snapshot-recorded/archive.zip', 'snapshot' );
+			}
+			if ( 'both' === $mode ) {
+				wp_mkdir_p( $paths['default'] );
+			}
+			if ( 'symlink' === $mode ) {
+				wp_mkdir_p( dirname( $paths['private_html'] ) );
+				symlink( $base . '/private', $paths['private_html'] );
+			}
+			if ( in_array( $mode, array( 'blocked', 'private' ), true ) ) {
+				chmod( $base . '/private_html', 0500 );
+			}
+			if ( 'blocked' === $mode ) {
+				chmod( $base . '/private', 0500 );
+			}
+			$before = array_map( 'is_dir', $paths );
+			chmod( $base, $permissions );
+			try {
+				$config = array(
+					'abspath'  => $abspath,
+					'content'  => 'content' === $mode ? $base . '/private_html' : $abspath . 'wp-content',
+					'constant' => 'constant' === $mode ? $paths['default'] : null,
+					'filter'   => 'filter' === $mode ? $paths['override'] : null,
+				);
+				// Separate processes let each host layout own its WordPress constants.
+				$source = dirname( __DIR__, 2 ) . '/class/backup/class-mainwp-backup-private-root.php';
+				// phpcs:disable WordPress.PHP.DevelopmentFunctions.error_log_var_export -- PHP literals preserve the fixture paths in the isolated process.
+				$script = '$config = ' . var_export( $config, true ) . ';'
+					. 'define("ABSPATH", $config["abspath"]); define("WP_CONTENT_DIR", $config["content"]);'
+					. 'if (null !== $config["constant"]) { define("MAINWP_BACKUP_PRIVATE_DIR", $config["constant"]); }'
+					. 'function wp_normalize_path($p) { return $p; } function untrailingslashit($p) { return rtrim($p, "/"); }'
+					. 'function trailingslashit($p) { return rtrim($p, "/") . "/"; } function path_is_absolute($p) { return $p[0] === "/"; }'
+					. 'function apply_filters($tag, $value) { global $config; return $config["filter"] ?? $value; }'
+					. 'function __($value, $domain) { return $value; } class WP_Error { public $message; function __construct($code, $message) { $this->message = $message; } }'
+					. 'require ' . var_export( $source, true ) . ';'
+					. 'MainWP\\Dashboard\\MainWP_Backup_Private_Root::reset();'
+					. '$root = MainWP\\Dashboard\\MainWP_Backup_Private_Root::resolve();'
+					. '$reason = MainWP\\Dashboard\\MainWP_Backup_Private_Root::availability_reason();'
+					. '$failure = new ReflectionMethod(MainWP\\Dashboard\\MainWP_Backup_Private_Root::class, "unavailable");'
+					. 'echo json_encode([$root, $reason, $failure->invoke(null, is_string($root) ? $root : "", $reason)->message]);';
+				// phpcs:enable WordPress.PHP.DevelopmentFunctions.error_log_var_export
+				$output = shell_exec( escapeshellarg( PHP_BINARY ) . ' -r ' . escapeshellarg( $script ) );
+				$result = json_decode( $output, true );
+				$this->assertIsArray( $result, $label . ': ' . $output );
+				$this->assertSame( $paths[ $selected ] . '/', $result[0], $label );
+				$this->assertSame( $reason, $result[1], $label );
+				clearstatcache();
+				$this->assertSame( $before, array_map( 'is_dir', $paths ), $label );
+				if ( in_array( $mode, array( 'constant', 'filter' ), true ) ) {
+					$this->assertStringNotContainsString( 'Sibling directories tried:', $result[2], $label );
+				} else {
+					$this->assertStringContainsString( 'Sibling directories tried: private_html, private.', $result[2], $label );
+				}
+			} finally {
+				chmod( $base, 0700 );
+				$this->remove_private_fixture( $base );
+				MainWP_Backup_Private_Root::reset();
+			}
+		}
+	}
+
+	/**
+	 * Warn before a backup tries to create storage under an unwritable parent.
+	 */
+	public function test_unwritable_root_notice_and_availability_cache() {
+		if ( function_exists( 'posix_geteuid' ) && 0 === posix_geteuid() ) {
+			$this->markTestSkipped( 'Root bypasses directory write permissions.' );
+		}
+		mkdir( $this->private_root );
+		chmod( $this->private_root, 0500 );
+		$path   = $this->private_root . '/backups/';
+		$filter = static function () use ( $path ) {
+			return $path;
+		};
+		add_filter( 'mainwp_backup_private_root', $filter, 99 );
+		MainWP_Backup_Private_Root::reset();
+		try {
+			$this->assertSame( $path, MainWP_Backup_Private_Root::resolve() );
+			$this->assertSame( 'could not create directory', MainWP_Backup_Private_Root::availability_reason() );
+			ob_start();
+			try {
+				\MainWP\Dashboard\MainWP_Backup_Page::render_backup_environment_notices();
+				$notice = ob_get_contents();
+			} finally {
+				ob_end_clean();
+			}
+			$this->assertStringContainsString( esc_html( $path ), $notice );
+			$this->assertStringContainsString( 'could not create directory', $notice );
+			$this->assertStringContainsString( esc_html( "define( 'MAINWP_BACKUP_PRIVATE_DIR', '/absolute/path/outside/the/web/root' );" ), $notice );
+			$this->assertDirectoryDoesNotExist( $path );
+			chmod( $this->private_root, 0700 );
+			clearstatcache();
+			$this->assertSame( $path, MainWP_Backup_Private_Root::resolve() );
+			$this->assertSame( 'could not create directory', MainWP_Backup_Private_Root::availability_reason() );
+			MainWP_Backup_Private_Root::reset();
+			$this->assertSame( '', MainWP_Backup_Private_Root::availability_reason() );
+			$this->assertSame( $path, MainWP_Backup_Private_Root::resolve() );
+			// A root that exists but lost write access is still selected, and the page says why the write probe will fail.
+			mkdir( $path );
+			chmod( $path, 0500 );
+			clearstatcache();
+			MainWP_Backup_Private_Root::reset();
+			$this->assertSame( $path, MainWP_Backup_Private_Root::resolve() );
+			$this->assertSame( 'directory is not writable', MainWP_Backup_Private_Root::availability_reason() );
+			chmod( $path, 0700 );
+			clearstatcache();
+			MainWP_Backup_Private_Root::reset();
+			$this->assertSame( '', MainWP_Backup_Private_Root::availability_reason() );
+		} finally {
+			chmod( $this->private_root, 0700 );
+			if ( is_dir( $path ) ) {
+				chmod( $path, 0700 );
+			}
+			remove_filter( 'mainwp_backup_private_root', $filter, 99 );
+			MainWP_Backup_Private_Root::reset();
+		}
+	}
+
+	/**
 	 * Readers never need a write probe; only writers create and protect storage.
 	 */
 	public function test_resolve_configuration_outcomes() {
@@ -488,7 +645,11 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 				ob_start();
 				\MainWP\Dashboard\MainWP_Backup_Page::render_backup_environment_notices();
 				$notice = ob_get_clean();
-				$this->assertStringNotContainsString( 'Private backup directory', $notice, $label );
+				if ( 'root read-only' === $label ) {
+					$this->assertStringContainsString( 'directory is not writable', $notice, $label );
+				} else {
+					$this->assertStringNotContainsString( 'Private backup directory', $notice, $label );
+				}
 				if ( $exists ) {
 					$remove   = new \ReflectionMethod( MainWP_Backup_Retention_Executor::class, 'remove_local_dir' );
 					$snapshot = (object) array(

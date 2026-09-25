@@ -20,12 +20,28 @@ class MainWP_Backup_Private_Root {
     private static $root = null;
 
     /**
+     * Request-local stat failure, without a write probe.
+     *
+     * @var string
+     */
+    private static $availability_reason = '';
+
+    /**
+     * Whether resolution considered the host's sibling directories.
+     *
+     * @var bool
+     */
+    private static $used_ladder = false;
+
+    /**
      * Reset request-local state for tests.
      *
      * @return void
      */
     public static function reset(): void {
-        self::$root = null;
+        self::$root                = null;
+        self::$availability_reason = '';
+        self::$used_ladder         = false;
     }
 
     /**
@@ -35,6 +51,7 @@ class MainWP_Backup_Private_Root {
      * For a WordPress directory named mainwp-private, the sibling container is mainwp-private-dashboard to keep the root outside WordPress.
      * Changing MAINWP_BACKUP_PRIVATE_DIR, or renaming the WordPress directory, after backups exist means moving the sites/ folder to the new root, or the older snapshots leave retention and the Backups tab; restore still works from the recorded paths.
      * Hosts that deploy through an atomic symlink (current -> releases/<id>: Capistrano, Deployer, Envoyer) must set MAINWP_BACKUP_PRIVATE_DIR: WordPress resolves ABSPATH through the release directory, so the default folder name changes with every release and the earlier snapshots drop out of retention and the Backups tab.
+     * Without a constant or filter override, sibling private_html and private directories provide fallbacks for hosts with an unwritable WordPress parent; existing backup roots take precedence.
      *
      * @return string|\WP_Error
      */
@@ -42,13 +59,66 @@ class MainWP_Backup_Private_Root {
         if ( null !== self::$root ) {
             return self::$root;
         }
-        $folder     = basename( rtrim( ABSPATH, '/\\' ) );
-        $container  = 0 === strcasecmp( $folder, 'mainwp-private' ) ? 'mainwp-private-dashboard' : 'mainwp-private';
-        $default    = defined( 'MAINWP_BACKUP_PRIVATE_DIR' ) ? MAINWP_BACKUP_PRIVATE_DIR : dirname( rtrim( ABSPATH, '/\\' ) ) . '/' . $container . '/' . $folder . '/backups';
-        $candidate  = apply_filters( 'mainwp_backup_private_root', $default );
-        $reason     = self::refusal_reason( $candidate );
-        self::$root = '' === $reason ? trailingslashit( self::canonical_path( wp_normalize_path( $candidate ) ) ) : self::unavailable( is_string( $candidate ) ? str_replace( "\0", '[NUL]', $candidate ) : '(' . gettype( $candidate ) . ')', $reason );
+        $folder    = basename( rtrim( ABSPATH, '/\\' ) );
+        $parent    = dirname( rtrim( ABSPATH, '/\\' ) );
+        $container = 0 === strcasecmp( $folder, 'mainwp-private' ) ? 'mainwp-private-dashboard' : 'mainwp-private';
+        $suffix    = '/' . $container . '/' . $folder . '/backups';
+        $default   = defined( 'MAINWP_BACKUP_PRIVATE_DIR' ) ? MAINWP_BACKUP_PRIVATE_DIR : $parent . $suffix;
+        $candidate = apply_filters( 'mainwp_backup_private_root', $default );
+        if ( ! defined( 'MAINWP_BACKUP_PRIVATE_DIR' ) && $candidate === $default ) {
+            self::$used_ladder = true;
+            $writable          = null;
+            $existing          = null;
+            foreach ( array( $default, $parent . '/private_html' . $suffix, $parent . '/private' . $suffix ) as $path ) {
+                if ( '' !== self::refusal_reason( $path ) ) {
+                    continue;
+                }
+                // Preserve snapshots even when an earlier candidate becomes writable.
+                if ( is_dir( $path ) ) {
+                    $existing = $path;
+                    break;
+                }
+                if ( null === $writable && '' === self::path_availability_reason( $path ) ) {
+                    $writable = $path;
+                }
+            }
+            $candidate = $existing ?? $writable ?? $default;
+        }
+        $reason                    = self::refusal_reason( $candidate );
+        self::$availability_reason = '' === $reason ? self::path_availability_reason( $candidate ) : $reason;
+        self::$root                = '' === $reason ? trailingslashit( self::canonical_path( wp_normalize_path( $candidate ) ) ) : self::unavailable( is_string( $candidate ) ? str_replace( "\0", '[NUL]', $candidate ) : '(' . gettype( $candidate ) . ')', $reason );
         return self::$root;
+    }
+
+    /**
+     * Report whether the resolved root can be reached or created, without writing.
+     *
+     * @return string Empty when the root exists or its nearest existing ancestor is writable.
+     */
+    public static function availability_reason(): string {
+        self::resolve();
+        return self::$availability_reason;
+    }
+
+    /**
+     * Predict mkdir failure for a path that passed the location checks.
+     *
+     * @param string $path Accepted path.
+     * @return string
+     */
+    private static function path_availability_reason( string $path ): string {
+        if ( is_dir( $path ) ) {
+            // An existing root still wins the ladder so snapshots are never abandoned, but the write probe would fail here.
+            return is_writable( $path ) ? '' : 'directory is not writable'; // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_is_writable -- Resolution must use local metadata without connecting or writing.
+        }
+        while ( ! file_exists( $path ) && ! is_link( $path ) ) {
+            $parent = dirname( $path );
+            if ( $parent === $path ) {
+                return 'could not create directory';
+            }
+            $path = $parent;
+        }
+        return is_dir( $path ) && is_writable( $path ) ? '' : 'could not create directory'; // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_is_writable -- Resolution must use local metadata without connecting or writing.
     }
 
     /**
@@ -295,13 +365,15 @@ class MainWP_Backup_Private_Root {
      * @return \WP_Error
      */
     private static function unavailable( string $path, string $reason ): \WP_Error {
+        $searched = self::$used_ladder ? __( ' Sibling directories tried: private_html, private.', 'mainwp' ) : '';
         return new \WP_Error(
             'mainwp_backup_private_root_unavailable',
             sprintf(
-                /* translators: 1: Directory path, 2: Failure reason. */
-                __( 'Private backup directory "%1$s" is unavailable: %2$s. Configure MAINWP_BACKUP_PRIVATE_DIR outside ABSPATH and WP_CONTENT_DIR with write access. On an addon domain, when WordPress sits in its own subdirectory of the site, or when the Dashboard is served from a folder inside another site, set MAINWP_BACKUP_PRIVATE_DIR to a directory no web server serves.', 'mainwp' ),
+                /* translators: 1: Directory path, 2: Failure reason, 3: Sibling directories tried, when applicable. */
+                __( 'Private backup directory "%1$s" is unavailable: %2$s.%3$s Configure MAINWP_BACKUP_PRIVATE_DIR outside ABSPATH and WP_CONTENT_DIR with write access. On an addon domain, when WordPress sits in its own subdirectory of the site, or when the Dashboard is served from a folder inside another site, set MAINWP_BACKUP_PRIVATE_DIR to a directory no web server serves.', 'mainwp' ),
                 $path,
-                $reason
+                $reason,
+                $searched
             )
         );
     }

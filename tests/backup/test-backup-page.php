@@ -134,7 +134,8 @@ class MainWP_Backup_Page_Test extends \WP_UnitTestCase {
 		MainWP_Backup_Page::render_backup_environment_notices();
 		$output = ob_get_clean();
 
-		$this->assertStringNotContainsString( 'Private backup directory', $output );
+		// The page may warn from a stat, never from a write probe: the directory stays untouched.
+		$this->assertStringContainsString( 'directory is not writable', $output );
 		$this->assertSame( 0500, fileperms( $this->private_dir ) & 0777 );
 		$this->assertSame( array( '.', '..' ), scandir( $this->private_dir ) );
 	}

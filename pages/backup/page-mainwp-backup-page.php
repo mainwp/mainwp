@@ -546,7 +546,19 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         $backup_dir = MainWP_Backup_Private_Root::resolve();
         if ( is_wp_error( $backup_dir ) ) {
             $warnings[] = $backup_dir->get_error_message();
-        } elseif ( function_exists( 'disk_free_space' ) && is_dir( $backup_dir ) ) {
+        } else {
+            $reason = MainWP_Backup_Private_Root::availability_reason();
+            if ( '' !== $reason ) {
+                $warnings[] = sprintf(
+                    /* translators: 1: Directory path, 2: Failure reason, 3: wp-config.php constant definition. */
+                    __( 'Private backup directory "%1$s" is unavailable: %2$s. Add this line to wp-config.php: %3$s', 'mainwp' ),
+                    $backup_dir,
+                    $reason,
+                    "define( 'MAINWP_BACKUP_PRIVATE_DIR', '/absolute/path/outside/the/web/root' );"
+                );
+            }
+        }
+        if ( ! is_wp_error( $backup_dir ) && function_exists( 'disk_free_space' ) && is_dir( $backup_dir ) ) {
             $free = @disk_free_space( $backup_dir ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- may be disabled by the host.
             if ( false !== $free && $free < 500 * MB_IN_BYTES ) {
                 $warnings[] = sprintf(

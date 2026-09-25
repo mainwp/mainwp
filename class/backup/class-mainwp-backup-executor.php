@@ -866,6 +866,9 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
                 foreach ( array( MainWP_Backup_Private_Root::site_path( (int) $website->id ), MainWP_Backup_Private_Root::legacy_site_dir( (int) $website->id ) ) as $sweep_dir ) {
                     if ( ! is_wp_error( $sweep_dir ) && $wp_filesystem->exists( $sweep_dir ) ) {
+                        // The legacy dir gets no cleanup elsewhere, and a stale sidecar
+                        // left there would shield its file from retention for good.
+                        MainWP_Backup_File_Manager::cleanup_stale_download_locks( $sweep_dir );
                         $dh = opendir( $sweep_dir );
                         if ( $dh ) {
                             while ( false !== ( $file = readdir( $dh ) ) ) {
@@ -874,7 +877,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                                     if ( isset( $protected[ MainWP_Backup_Snapshots::normalise_path( $theFile ) ] ) ) {
                                         continue;
                                     }
-                                    // Stale locks were cleared above, so a sidecar still here is a live
+                                    // Stale locks were just cleared, so a sidecar still here is a live
                                     // download that may have started after the protection snapshot.
                                     if ( file_exists( $theFile . '.downloading' ) ) {
                                         continue;
@@ -895,9 +898,11 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 krsort( $dbBackups );
                 krsort( $fullBackups );
 
-                // Another lane worker can record a download path while the scan runs, so
-                // re-read right before deleting; only microseconds remain until unlink.
-                $own_row = MainWP_DB_Backup::instance()->get_backup_task_progress( $taskId, $website->id );
+                // Another lane worker can record a download path, or record its snapshot
+                // and close its run, while the scan runs, so re-read both right before
+                // deleting; only microseconds remain until unlink.
+                $protected += MainWP_Backup_Snapshots::instance()->get_protected_paths_for_site( (int) $website->id );
+                $own_row    = MainWP_DB_Backup::instance()->get_backup_task_progress( $taskId, $website->id );
                 foreach ( array_merge( MainWP_DB_Backup::instance()->get_open_run_download_paths( (int) $website->id ), array( (string) $own_row->downloadedDB, (string) $own_row->downloadedFULL ) ) as $path ) {
                     if ( '' !== $path ) {
                         $protected[ MainWP_Backup_Snapshots::normalise_path( $path ) ] = true;
@@ -906,16 +911,26 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
                 $cnt = 0;
                 foreach ( $dbBackups as $key => $dbBackup ) {
+                    // A path protected only by the re-read keeps no retention slot, as if
+                    // the first snapshot had seen it.
+                    if ( isset( $protected[ MainWP_Backup_Snapshots::normalise_path( $dbBackup ) ] ) ) {
+                        continue;
+                    }
                     ++$cnt;
-                    if ( $cnt >= $maxBackups && ! isset( $protected[ MainWP_Backup_Snapshots::normalise_path( $dbBackup ) ] ) ) {
+                    if ( $cnt >= $maxBackups ) {
                         $wp_filesystem->delete( $dbBackup );
                     }
                 }
 
                 $cnt = 0;
                 foreach ( $fullBackups as $key => $fullBackup ) {
+                    // A path protected only by the re-read keeps no retention slot, as if
+                    // the first snapshot had seen it.
+                    if ( isset( $protected[ MainWP_Backup_Snapshots::normalise_path( $fullBackup ) ] ) ) {
+                        continue;
+                    }
                     ++$cnt;
-                    if ( $cnt >= $maxBackups && ! isset( $protected[ MainWP_Backup_Snapshots::normalise_path( $fullBackup ) ] ) ) {
+                    if ( $cnt >= $maxBackups ) {
                         $wp_filesystem->delete( $fullBackup );
                     }
                 }

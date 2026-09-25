@@ -1470,6 +1470,138 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A download the re-read protects keeps no retention slot, so the
+	 * sweep still keeps the configured number of older archives.
+	 *
+	 * @return void
+	 */
+	public function test_sweep_reread_protection_keeps_no_retention_slot() {
+		global $wpdb;
+
+		list( $site_id, $task, $other, $artifact, $dir ) = $this->sweep_fixture_with_open_sibling();
+		update_option( 'mainwp_backupsOnServer', 2 );
+
+		$late = $dir . 'full-late-recorded.zip';
+		file_put_contents( $late, 'PK' . "\x03\x04" . str_repeat( 'l', 32 ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- test fixture.
+		touch( $late, time() - 300 );
+		$kept = $dir . 'full-kept-run.zip';
+		file_put_contents( $kept, 'PK' . "\x03\x04" . str_repeat( 'k', 32 ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- test fixture.
+		touch( $kept, time() - 600 );
+		$stale = $dir . 'full-old-run.zip';
+		file_put_contents( $stale, 'PK' . "\x03\x04" . str_repeat( 'o', 32 ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- test fixture.
+		touch( $stale, time() - 900 );
+
+		$reads    = 0;
+		$progress = MainWP_DB::instance()->get_table_name( 'wp_backup_progress' );
+		$record   = function ( $query ) use ( &$reads, $wpdb, $progress, $other, $site_id, $late ) {
+			if ( false !== strpos( $query, 'SELECT p.downloadedDB, p.downloadedFULL' ) && 2 === ++$reads ) {
+				$wpdb->update(
+					$progress,
+					array( 'downloadedFULL' => $late ),
+					array(
+						'task_id' => (int) $other->id,
+						'wp_id'   => $site_id,
+					)
+				); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test simulates a concurrent writer.
+			}
+			return $query;
+		};
+		add_filter( 'query', $record );
+
+		try {
+			$result = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+			$this->assertNotFalse( $result );
+			$this->assertFileExists( $late );
+			$this->assertFileExists( $kept, 'The re-read protected file must not take the one older archive slot.' );
+			$this->assertFileDoesNotExist( $stale );
+		} finally {
+			remove_filter( 'query', $record );
+			$this->tear_down_sweep_fixture( $site_id, $other, $dir );
+		}
+	}
+
+	/**
+	 * A sibling that records its snapshot and closes its run while the scan
+	 * runs leaves the open-run set; the re-read must see the snapshot.
+	 *
+	 * @return void
+	 */
+	public function test_sweep_rereads_snapshot_protection_before_deleting() {
+		list( $site_id, $task, $other, $artifact, $dir ) = $this->sweep_fixture_with_open_sibling();
+
+		$late = $dir . 'full-late-snapshot.zip';
+		file_put_contents( $late, 'PK' . "\x03\x04" . str_repeat( 'l', 32 ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- test fixture.
+		touch( $late, time() - 600 );
+		$stale = $dir . 'full-old-run.zip';
+		file_put_contents( $stale, 'PK' . "\x03\x04" . str_repeat( 'o', 32 ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- test fixture.
+		touch( $stale, time() - 900 );
+
+		// The first open-run read follows the first snapshot read, so a record
+		// made there is invisible to the initial protection set.
+		$reads  = 0;
+		$record = function ( $query ) use ( &$reads, $other, $site_id, $late ) {
+			if ( false !== strpos( $query, 'SELECT p.downloadedDB, p.downloadedFULL' ) && 1 === ++$reads ) {
+				\MainWP\Dashboard\MainWP_Backup_Snapshots::instance()->record_snapshot(
+					array(
+						'task_id'  => (int) $other->id,
+						'site_id'  => $site_id,
+						'type'     => 'full',
+						'archives' => array(
+							array(
+								'file' => 'full-late-snapshot.zip',
+								'size' => 36,
+								'role' => 'full',
+								'path' => $late,
+							),
+						),
+					)
+				);
+			}
+			return $query;
+		};
+		add_filter( 'query', $record );
+
+		try {
+			$result = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+			$this->assertNotFalse( $result );
+			$this->assertGreaterThanOrEqual( 2, $reads, 'The snapshot must be recorded after the first protection read.' );
+			$this->assertFileExists( $late, 'An archive a snapshot recorded during the scan must survive the sweep.' );
+			$this->assertFileDoesNotExist( $stale );
+		} finally {
+			remove_filter( 'query', $record );
+			$this->tear_down_sweep_fixture( $site_id, $other, $dir );
+		}
+	}
+
+	/**
+	 * A stale download sidecar in the legacy dir is cleared by the sweep,
+	 * so it cannot shield its archive from retention.
+	 *
+	 * @return void
+	 */
+	public function test_sweep_clears_stale_legacy_sidecar() {
+		list( $site_id, $task, $other, $artifact, $dir ) = $this->sweep_fixture_with_open_sibling();
+
+		$legacy_dir = \MainWP\Dashboard\MainWP_Backup_Private_Root::legacy_site_dir( $site_id );
+		wp_mkdir_p( $legacy_dir );
+		$orphan = $legacy_dir . 'full-crashed-download.zip';
+		file_put_contents( $orphan, 'PK' . "\x03\x04" . str_repeat( 'c', 32 ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- test fixture.
+		touch( $orphan, time() - 900 );
+		file_put_contents( $orphan . '.downloading', wp_json_encode( array( 'started' => time() - 2 * HOUR_IN_SECONDS ) ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- test fixture.
+
+		try {
+			$result = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+			$this->assertNotFalse( $result );
+			$this->assertFileExists( $artifact );
+			$this->assertFileDoesNotExist( $orphan . '.downloading', 'The stale legacy sidecar must be cleared.' );
+			$this->assertFileDoesNotExist( $orphan, 'An archive behind a stale sidecar must still be pruned.' );
+		} finally {
+			array_map( 'unlink', glob( $legacy_dir . '*' ) ?: array() ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test cleanup.
+			$this->tear_down_sweep_fixture( $site_id, $other, $dir );
+		}
+	}
+
+	/**
 	 * The sweep gate is claimed SQL-side: exactly one driver of a run can
 	 * win it, so a driver holding a stale in-memory removedFiles view can
 	 * never re-run the sweep after the winner.
@@ -2263,11 +2395,12 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 	/**
 	 * A sibling run of this Dashboard holding the Child's one-task slot is
 	 * a delay: the refused task yields with the persistence clock cleared.
-	 * A foreign holder, or a paused sibling nothing will advance, still
-	 * surfaces once the refusal outlives the window.
+	 * A foreign holder, a paused sibling nothing will advance, or a sibling
+	 * already finished on the site still surfaces once the refusal outlives
+	 * the window.
 	 *
 	 * @dataProvider sibling_holder_cases
-	 * @param string|null $sibling Null for no sibling row, else 'active' or 'paused'.
+	 * @param string|null $sibling Null for no sibling row, else 'active', 'paused' or 'finished'.
 	 * @param bool        $yields  Whether the refused create must yield.
 	 *
 	 * @return void
@@ -2289,7 +2422,17 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 					'paused'    => 'paused' === $sibling ? 1 : 0,
 				)
 			);
-			$this->seed_progress( $holder->id, $site_id, array( 'child_backup_task_id' => 'task-sibling-live' ) );
+			$sibling_row = array( 'child_backup_task_id' => 'task-sibling-live' );
+			if ( 'finished' === $sibling ) {
+				// A completed site keeps its task id for the snapshot run key.
+				$sibling_row['fetchResult'] = wp_json_encode(
+					array(
+						'full' => 'backup-file.zip',
+						'db'   => false,
+					)
+				);
+			}
+			$this->seed_progress( $holder->id, $site_id, $sibling_row );
 			$task->id = (int) $holder->id + 1;
 		}
 
@@ -2350,6 +2493,7 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 			'active sibling holds the site' => array( 'active', true ),
 			'foreign holder'                => array( null, false ),
 			'paused sibling'                => array( 'paused', false ),
+			'sibling finished on the site'  => array( 'finished', false ),
 		);
 	}
 

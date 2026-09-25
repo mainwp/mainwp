@@ -196,14 +196,17 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * Find another open run of this Dashboard that holds the site's single Child backup slot.
      *
      * Paused tasks are left out because nothing advances them, so a task
-     * yielding to one would wait forever.
+     * yielding to one would wait forever. A row whose fetchResult is set has
+     * finished on the Child, which frees the slot, but its task id is kept
+     * for the snapshot run key; matching it would hide a real blocker for the
+     * rest of the sibling's run.
      *
      * @param int $wp_id   Child Site ID.
      * @param int $task_id Task that was refused.
      * @return int Holding task id, or 0 when no sibling run holds the site.
      */
     public function get_sibling_site_holder( $wp_id, $task_id ) {
-        return (int) $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT b.id FROM ' . esc_sql( $this->table_name( 'wp_backup' ) ) . ' b INNER JOIN ' . esc_sql( $this->table_name( 'wp_backup_progress' ) ) . " p ON p.task_id = b.id WHERE p.wp_id = %d AND b.id <> %d AND b.paused = 0 AND b.completed < b.last_run AND p.dtsFetched >= b.last_run AND p.child_backup_task_id <> '' LIMIT 1", $wp_id, $task_id ) );
+        return (int) $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT b.id FROM ' . esc_sql( $this->table_name( 'wp_backup' ) ) . ' b INNER JOIN ' . esc_sql( $this->table_name( 'wp_backup_progress' ) ) . " p ON p.task_id = b.id WHERE p.wp_id = %d AND b.id <> %d AND b.paused = 0 AND b.completed < b.last_run AND p.dtsFetched >= b.last_run AND p.child_backup_task_id <> '' AND p.fetchResult IN ( '', '[]' ) LIMIT 1", $wp_id, $task_id ) );
     }
 
     /**

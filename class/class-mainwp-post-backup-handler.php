@@ -740,9 +740,19 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             return;
         }
 
+        $cron_request = self::get_cron_loopback_request();
+        wp_remote_post( $cron_request['url'], $cron_request['args'] );
+    }
+
+    /**
+     * Build the filtered cron request shared by the continuation sender and loopback probe.
+     *
+     * @return array Filtered cron URL, key and request arguments.
+     */
+    public static function get_cron_loopback_request(): array {
         // A timestamped doing_wp_cron argument requires a matching pre-existing lock.
-        $cron_url     = site_url( 'wp-cron.php' );
-        $cron_request = apply_filters(
+        $cron_url = site_url( 'wp-cron.php' );
+        return apply_filters(
             'cron_request',
             array(
                 'url'  => $cron_url,
@@ -755,7 +765,6 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             ),
             ''
         );
-        wp_remote_post( $cron_request['url'], $cron_request['args'] );
     }
 
     /**

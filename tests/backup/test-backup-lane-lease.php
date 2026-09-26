@@ -401,6 +401,8 @@ require ABSPATH . WPINC . '/plugin.php';
 require ABSPATH . WPINC . '/class-wp-error.php';
 require ABSPATH . WPINC . '/class-wp-http.php';
 require ABSPATH . WPINC . '/http.php';
+require $argv[2] . '/class/class-mainwp-post-base-handler.php';
+require $argv[2] . '/class/class-mainwp-post-backup-handler.php';
 require $argv[2] . '/pages/page-mainwp-server-information-handler.php';
 function site_url( $path ) { return 'https://example.org/' . $path; }
 function add_query_arg( $key, $value, $url ) { return $url . '?' . http_build_query( array( $key => $value ) ); }
@@ -417,13 +419,25 @@ function set_transient( $name, $value, $ttl ) {
     $GLOBALS['ttl'] = $ttl;
 }
 add_filter( 'https_local_ssl_verify', static function ( $verify, $url ) {
-    if ( false !== $verify || site_url( 'wp-cron.php' ) . '?doing_wp_cron=mainwp-loopback-probe' !== $url ) {
+    if ( false !== $verify || site_url( 'wp-cron.php' ) !== $url ) {
         throw new RuntimeException( 'Unexpected SSL filter arguments.' );
     }
     return $verify;
 }, 10, 2 );
+add_filter( 'cron_request', static function ( $request, $key ) {
+    if ( '' !== $key || '' !== $request['key'] || site_url( 'wp-cron.php' ) !== $request['url'] ) {
+        throw new RuntimeException( 'Unexpected cron filter arguments.' );
+    }
+    $request['url'] = 'https://127.0.0.1/wp-cron.php';
+    $request['args']['headers']['Authorization'] = 'Basic dGVzdDp0ZXN0';
+    $request['args']['blocking'] = false;
+    $request['args']['timeout'] = 0.02;
+    $request['args']['redirection'] = 5;
+    return $request;
+}, 10, 2 );
 $cases = array(
     array( 'response' => array( 'code' => 200 ), 'body' => '' ),
+    array( 'response' => array( 'code' => 202 ), 'body' => '' ),
     array( 'response' => array( 'code' => 204 ), 'body' => '' ),
     array( 'response' => array( 'code' => 302 ), 'body' => '' ),
     array( 'response' => array( 'code' => 403 ), 'body' => '' ),
@@ -436,7 +450,7 @@ foreach ( $cases as $response ) {
     $ttl = null;
     $calls = array();
     $http = static function ( $pre, $args, $url ) use ( &$calls, $response ) {
-        if ( site_url( 'wp-cron.php' ) . '?doing_wp_cron=mainwp-loopback-probe' !== $url ) {
+        if ( 'https://127.0.0.1/wp-cron.php?doing_wp_cron=mainwp-loopback-probe' !== $url ) {
             throw new RuntimeException( 'Unexpected loopback URL.' );
         }
         $calls[] = array( $url, $args );
@@ -454,9 +468,9 @@ PHP;
 			$output = shell_exec( escapeshellarg( PHP_BINARY ) . ' -r ' . escapeshellarg( $script ) . ' ' . escapeshellarg( ABSPATH ) . ' ' . escapeshellarg( dirname( __DIR__, 2 ) ) . ' ' . escapeshellarg( $mode ) );
 			$data   = json_decode( (string) $output, true );
 			$this->assertIsArray( $data, $mode . ': ' . $output );
-			$this->assertCount( 6, $data, $mode );
+			$this->assertCount( 7, $data, $mode );
 			foreach ( $data as $index => list( $first, $second, $cached, $ttl, $calls ) ) {
-				$expected = 'enabled' !== $mode || 2 > $index;
+				$expected = 'enabled' !== $mode || 0 === $index;
 				$this->assertSame( $expected, $first, $mode . ': ' . $index );
 				$this->assertSame( $expected, $second, $mode . ': ' . $index );
 				if ( 'enabled' !== $mode ) {
@@ -467,7 +481,8 @@ PHP;
 				$this->assertSame( $expected ? 'ok' : 'failed', $cached );
 				$this->assertSame( 600, $ttl );
 				$this->assertCount( 1, $calls, 'The second call must use the cached result.' );
-				$this->assertSame( 'https://example.org/wp-cron.php?doing_wp_cron=mainwp-loopback-probe', $calls[0][0] );
+				$this->assertSame( 'https://127.0.0.1/wp-cron.php?doing_wp_cron=mainwp-loopback-probe', $calls[0][0] );
+				$this->assertSame( 'Basic dGVzdDp0ZXN0', $calls[0][1]['headers']['Authorization'] );
 				$this->assertTrue( $calls[0][1]['blocking'] );
 				$this->assertSame( 15, $calls[0][1]['timeout'] );
 				$this->assertSame( 'GET', $calls[0][1]['method'] );

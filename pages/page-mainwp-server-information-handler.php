@@ -690,21 +690,26 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
             return true;
         }
 
+        // This proves self-reachability, not delivery of the 0.01 s non-blocking spawn;
+        // core's spawn_cron() and Site Health's loopback test share that limit.
+        $request = MainWP_Post_Backup_Handler::get_cron_loopback_request();
         // wp-cron.php uses the GET value as its lock without taking a new lock. This non-numeric
         // value cannot match a real doing_cron lock (a formatted microtime), so WordPress loads
         // and exits before running any cron event.
-        $url         = add_query_arg( 'doing_wp_cron', 'mainwp-loopback-probe', site_url( 'wp-cron.php' ) );
+        $url         = add_query_arg( 'doing_wp_cron', 'mainwp-loopback-probe', $request['url'] );
         $response    = wp_remote_get(
             $url,
-            array(
-                'blocking'    => true,
-                'timeout'     => 15,
-                'redirection' => 0,
-                'sslverify'   => apply_filters( 'https_local_ssl_verify', false, $url ),
+            array_merge(
+                $request['args'],
+                array(
+                    'blocking'    => true,
+                    'timeout'     => 15,
+                    'redirection' => 0,
+                )
             )
         );
         $code        = (int) wp_remote_retrieve_response_code( $response );
-        $loopback_ok = ! is_wp_error( $response ) && 200 <= $code && 299 >= $code;
+        $loopback_ok = ! is_wp_error( $response ) && 200 === $code;
         set_transient( 'mainwp_backup_loopback_ok', $loopback_ok ? 'ok' : 'failed', 10 * MINUTE_IN_SECONDS );
         return $loopback_ok;
     }

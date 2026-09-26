@@ -61,6 +61,30 @@ class MainWP_Backup_Lane_Lease_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Store exact bytes for malformed lease fixtures.
+	 *
+	 * @param string $value Raw option value.
+	 * @return void
+	 */
+	private function seed_raw( string $value ): void {
+		global $wpdb;
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name = %s", MainWP_Backup_Monitor::LANE_LEASE_OPTION ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- semaphore fixture.
+		$inserted = $wpdb->query( $wpdb->prepare( "INSERT INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')", MainWP_Backup_Monitor::LANE_LEASE_OPTION, $value ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- semaphore fixture.
+		$this->assertSame( 1, $inserted, 'Precondition: the raw lane fixture must be stored.' );
+	}
+
+	/**
+	 * Read the exact stored lane bytes; get_var() would turn an empty value into null.
+	 *
+	 * @return string|null Stored value, null when no row exists.
+	 */
+	private function raw_value(): ?string {
+		global $wpdb;
+		$row = $wpdb->get_row( $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", MainWP_Backup_Monitor::LANE_LEASE_OPTION ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- assert exact stored bytes.
+		return null === $row ? null : (string) $row->option_value;
+	}
+
+	/**
 	 * Seed a live native slot for request coverage assertions.
 	 *
 	 * @return string Slot token.
@@ -119,43 +143,62 @@ class MainWP_Backup_Lane_Lease_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * A heartbeat beyond the skew margin is reclaimed immediately.
+	 * Lane liveness tolerates clock skew and rejects expired or malformed rows.
 	 */
-	public function test_future_skewed_lane_is_reclaimed() {
-		$this->seed( 'future-owner', -3600 );
-		$events = array();
-		$record = static function ( $event, $token ) use ( &$events ) {
-			$events[] = array( $event, $token );
-		};
-		add_action( 'mainwp_backup_diag_lane', $record, 10, 2 );
-		try {
-			$token = MainWP_Backup_Monitor::acquire_lane_lease();
-			$this->assertIsString( $token );
-			$this->assertSame( $token, $this->row()['token'] );
-			$this->assertSame( array( array( 'reclaimed_stale', 'future-owner' ), array( 'acquired', $token ) ), $events );
-		} finally {
-			remove_action( 'mainwp_backup_diag_lane', $record );
+	public function test_lane_liveness_matrix() {
+		$now   = time();
+		$cases = array(
+			'fresh'             => array( 0, 600, null, false ),
+			'expired'           => array( 601, 600, null, true ),
+			'expiry boundary'   => array( 600, 600, null, true ),
+			'future 30 seconds' => array( -30, 600, null, false ),
+			'future one hour'   => array( -3600, 600, null, false ),
+			'future over limit' => array( -7201, 600, null, true ),
+			'extended lease'    => array( 1000, 1860, null, false ),
+			'cap expired'       => array( 7300, 99999, null, true ),
+			'cap live'          => array( 7000, 99999, null, false ),
+			'numeric strings'   => array( 0, 600, '{"token":"other-owner","heartbeat":"' . $now . '","lease":"600"}', false ),
+			'missing token'     => array( 0, 600, '{"heartbeat":' . $now . ',"lease":600}', true ),
+			'empty token'       => array( 0, 600, '{"token":"","heartbeat":' . $now . ',"lease":600}', true ),
+			'integer token'     => array( 0, 600, '{"token":5,"heartbeat":' . $now . ',"lease":600}', true ),
+			'invalid heartbeat' => array( 0, 600, '{"token":"other-owner","heartbeat":"abc","lease":600}', true ),
+			'missing lease'     => array( 0, 600, '{"token":"other-owner","heartbeat":' . $now . '}', true ),
+			'invalid JSON'      => array( 0, 600, 'garbage', true ),
+			'empty value'       => array( 0, 600, '', true ),
+		);
+		foreach ( $cases as $label => list( $age, $lease, $raw, $reclaimed ) ) {
+			if ( null === $raw ) {
+				$this->seed( 'other-owner', $age, $lease );
+			} else {
+				$this->seed_raw( $raw );
+			}
+			$before = $this->raw_value();
+			$this->assertIsString( $before, $label );
+			if ( null !== $raw ) {
+				$this->assertSame( $raw, $before, $label );
+			}
+			$events = array();
+			$record = static function ( $event ) use ( &$events ) {
+				$events[] = $event;
+			};
+			add_action( 'mainwp_backup_diag_lane', $record );
+			try {
+				$token = MainWP_Backup_Monitor::acquire_lane_lease();
+				if ( $reclaimed ) {
+					$this->assertIsString( $token, $label );
+					$this->assertNotSame( '', $token, $label );
+					$this->assertSame( $token, $this->row()['token'], $label );
+					$this->assertSame( array( 'reclaimed_stale', 'acquired' ), $events, $label );
+				} else {
+					$this->assertFalse( $token, $label );
+					$this->assertSame( $before, $this->raw_value(), $label );
+					$this->assertSame( array( 'refused' ), $events, $label );
+				}
+			} finally {
+				remove_action( 'mainwp_backup_diag_lane', $record );
+				MainWP_Backup_Monitor::release_lane_lease();
+			}
 		}
-	}
-
-	/**
-	 * Clock skew within the margin keeps a live holder exclusive.
-	 */
-	public function test_future_heartbeat_within_margin_is_refused() {
-		$this->seed( 'near-future-owner', -30 );
-		$before = $this->row();
-		$this->assertFalse( MainWP_Backup_Monitor::acquire_lane_lease() );
-		$this->assertSame( $before, $this->row() );
-	}
-
-	/**
-	 * An oversized stored lease cannot keep a dead holder past two hours.
-	 */
-	public function test_lane_lease_is_capped_at_two_hours() {
-		$this->seed( 'old-owner', 7300, 99999 );
-		$token = MainWP_Backup_Monitor::acquire_lane_lease();
-		$this->assertIsString( $token );
-		$this->assertSame( $token, $this->row()['token'] );
 	}
 
 	/**

@@ -878,6 +878,13 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     const LANE_LEASE_SECONDS = 600;
 
     /**
+     * Maximum forward clock skew for a lane heartbeat, in seconds.
+     *
+     * @var int
+     */
+    private const LANE_MAX_FUTURE_SKEW_SECONDS = 2 * HOUR_IN_SECONDS;
+
+    /**
      * Token owned by this process, empty outside a slice.
      *
      * @var string
@@ -910,14 +917,15 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             do_action( 'mainwp_backup_diag_lane', 'refused', '', (int) $live, is_array( $data ) && is_numeric( $data['lease'] ?? null ) ? (int) $data['lease'] : self::LANE_LEASE_SECONDS );
             return false;
         }
-        if ( null !== $held ) {
-            $reclaimed = $wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- a renewed or re-owned row must survive reclamation.
-                $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name = %s AND option_value = %s", self::LANE_LEASE_OPTION, (string) $held )
-            );
-            if ( 1 === $reclaimed ) {
-                /** This action is documented in class/backup/class-mainwp-backup-monitor.php */
-                do_action( 'mainwp_backup_diag_lane', 'reclaimed_stale', (string) ( $data['token'] ?? '' ), 0, self::LANE_LEASE_SECONDS );
-            }
+        // Not guarded on a null read: get_var() returns null for an empty
+        // value too, and skipping the delete then would wedge the lane on an
+        // empty row. With no row at all the delete matches nothing.
+        $reclaimed = $wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- a renewed or re-owned row must survive reclamation.
+            $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name = %s AND option_value = %s", self::LANE_LEASE_OPTION, (string) $held )
+        );
+        if ( 1 === $reclaimed ) {
+            /** This action is documented in class/backup/class-mainwp-backup-monitor.php */
+            do_action( 'mainwp_backup_diag_lane', 'reclaimed_stale', (string) ( $data['token'] ?? '' ), 0, self::LANE_LEASE_SECONDS );
         }
 
         $token   = wp_generate_password( 12, false );
@@ -1051,20 +1059,21 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @return bool True while the lane holder is live.
      */
     private static function is_lane_live( mixed $data, int $now ): bool {
-        if ( ! is_array( $data ) || ! isset( $data['token'] ) || ! is_string( $data['token'] ) || '' === $data['token']
+        if ( ! is_array( $data )
+            || ! is_string( $data['token'] ?? null ) || '' === $data['token']
             || ! is_numeric( $data['heartbeat'] ?? null ) || ! is_numeric( $data['lease'] ?? null )
         ) {
             return false;
         }
 
-        $beat = (int) $data['heartbeat'];
-        // A clock beyond the allowed skew cannot establish a live holder.
-        if ( $beat > $now + self::SLOT_LEASE_MARGIN_SECONDS ) {
+        $heartbeat = (int) $data['heartbeat'];
+        // Allow forward skew so a slower web node does not reclaim a healthy holder on each tick.
+        if ( $heartbeat > $now + self::LANE_MAX_FUTURE_SKEW_SECONDS ) {
             return false;
         }
 
-        // An oversized lease must not block reclamation for more than two hours.
-        return $now < $beat + min( (int) $data['lease'], 2 * HOUR_IN_SECONDS );
+        // Together, the skew limit and lease cap bound a bogus future heartbeat to about four hours.
+        return $now < $heartbeat + min( (int) $data['lease'], 2 * HOUR_IN_SECONDS );
     }
 
     /**

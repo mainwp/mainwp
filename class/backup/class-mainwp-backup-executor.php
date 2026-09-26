@@ -819,9 +819,6 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             $snapshot_id = 0;
             try {
                 $result = self::finish_incremental_backup( $website, $pTask, $information['artifacts'], $backupTaskProgress, $snapshot_id, $advanced );
-                if ( false !== $result ) {
-                    $advanced = true;
-                }
             } catch ( \Throwable $e ) {
                 /** This action is documented in class/backup/class-mainwp-backup-executor.php */
                 do_action(

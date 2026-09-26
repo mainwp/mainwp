@@ -3132,7 +3132,7 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * Resuming cached artifacts or a recorded snapshot reports site advancement.
+	 * Downloading cached artifacts on resume reports advancement; re-adopting a recorded snapshot does not.
 	 *
 	 * @return void
 	 */
@@ -3158,6 +3158,8 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 			$local = \MainWP\Dashboard\MainWP_Backup_Private_Root::site_dir( $site_id ) . 'snapshot-manual-' . $task->id . '/files.list';
 			$this->assertFileDoesNotExist( $local );
 
+			$run_call_count = count( $this->all_call_params( 'backup_task_run' ) );
+
 			$fail_download = false;
 			$advanced      = false;
 			$result        = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups', $advanced );
@@ -3165,11 +3167,13 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 			$this->assertIsArray( $result );
 			$this->assertGreaterThan( 0, $result['snapshot_id'] );
 			$this->assertFileExists( $local );
+			$this->assertCount( $run_call_count, $this->all_call_params( 'backup_task_run' ) );
 
 			$advanced = false;
 			$resume   = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups', $advanced );
 			$this->assertSame( $result['snapshot_id'], $resume['snapshot_id'] );
-			$this->assertTrue( $advanced );
+			$this->assertFalse( $advanced );
+			$this->assertCount( $run_call_count, $this->all_call_params( 'backup_task_run' ) );
 		} finally {
 			remove_filter( 'mainwp_download_to_file_pre', $download_failure, 5 );
 		}

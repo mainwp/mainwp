@@ -248,6 +248,12 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
         foreach ( array_keys( MainWP_Backup_Snapshots::instance()->get_protected_paths_for_site( $site_id ) ) as $path ) {
             $protected_dirs[ MainWP_Backup_Snapshots::normalise_path( dirname( $path ) ) ] = true;
         }
+        // A paused or starved run can idle past the freshness window before
+        // its snapshot is recorded, and it still owns its staging directory.
+        $open_run_names = array();
+        foreach ( MainWP_DB_Backup::instance()->get_open_run_child_task_ids( $site_id ) as $child_task_id ) {
+            $open_run_names[ MainWP_Backup_Executor::run_dir_name( $child_task_id ) ] = true;
+        }
 
         foreach ( array_unique( $dirs ) as $dir ) {
             $real = realpath( $dir );
@@ -257,6 +263,9 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
             if ( isset( $protected_dirs[ MainWP_Backup_Snapshots::normalise_path( $dir ) ] )
                 || isset( $protected_dirs[ MainWP_Backup_Snapshots::normalise_path( $real ) ] ) ) {
                 continue; // A non-pruned snapshot still owns this directory.
+            }
+            if ( isset( $open_run_names[ basename( $dir ) ] ) ) {
+                continue; // An open run still owns this directory.
             }
 
             $files  = glob( $real . DIRECTORY_SEPARATOR . '*' ) ?: array(); // phpcs:ignore Universal.Operators.DisallowShortTernary.Found -- empty-glob guard.

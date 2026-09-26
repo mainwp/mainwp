@@ -674,9 +674,24 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 				$this->assertSame( $exists, \MainWP\Dashboard\MainWP_Backup_File_Manager::path_is_confined_to( $file, MainWP_Backup_Private_Root::resolve() ), $label );
 				ob_start();
 				\MainWP\Dashboard\MainWP_Manage_Sites::show_backups( $website );
-				$html   = ob_get_clean();
-				$table  = new \MainWP\Dashboard\MainWP_Manage_Sites_List_Table();
-				$column = $table->column_backup( (array) $website );
+				$html = ob_get_clean();
+				// A non-direct transport cannot map the private root, so the column must not read through it.
+				global $wp_filesystem;
+				$saved_fs      = $wp_filesystem;
+				$wp_filesystem = new class() { // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- stands in for a non-direct transport.
+					public function exists( $path ) { // phpcs:ignore Squiz.Commenting.FunctionComment.Missing -- blind transport stub.
+						return false;
+					}
+					public function mtime( $path ) { // phpcs:ignore Squiz.Commenting.FunctionComment.Missing -- blind transport stub.
+						return false;
+					}
+				};
+				try {
+					$table  = new \MainWP\Dashboard\MainWP_Manage_Sites_List_Table();
+					$column = $table->column_backup( (array) $website );
+				} finally {
+					$wp_filesystem = $saved_fs; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- restore the real transport.
+				}
 				if ( $exists ) {
 					$this->assertStringContainsString( 'full-backup.zip', $html, $label );
 					$this->assertStringNotContainsString( 'No full backup has been taken yet', $html, $label );

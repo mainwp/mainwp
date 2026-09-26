@@ -193,6 +193,18 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
     }
 
     /**
+     * Protect open runs' staging directories from the orphan sweep until their snapshot is recorded.
+     *
+     * Paused runs are included: a paused run still owns its directory.
+     *
+     * @param int $wp_id Child Site ID.
+     * @return string[] Child backup task ids of the site's open task runs.
+     */
+    public function get_open_run_child_task_ids( $wp_id ) {
+        return array_map( 'strval', (array) $this->wpdb->get_col( $this->wpdb->prepare( 'SELECT p.child_backup_task_id FROM ' . esc_sql( $this->table_name( 'wp_backup_progress' ) ) . ' p INNER JOIN ' . esc_sql( $this->table_name( 'wp_backup' ) ) . " b ON p.task_id = b.id WHERE p.wp_id = %d AND b.completed < b.last_run AND p.dtsFetched >= b.last_run AND p.child_backup_task_id <> ''", $wp_id ) ) );
+    }
+
+    /**
      * Find another open run of this Dashboard that holds the site's single Child backup slot.
      *
      * Paused tasks are left out because nothing advances them, so a task

@@ -93,7 +93,6 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
      * @uses \MainWP\Dashboard\MainWP_Backup_File_Manager::is_archive()
      * @uses \MainWP\Dashboard\MainWP_DB::instance()::get_website_option()
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_specific_dir()
-     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
      * @uses  \MainWP\Dashboard\MainWP_Utility::format_timestamp()
      * @uses  \MainWP\Dashboard\MainWP_Utility::get_timestamp()
      */
@@ -128,30 +127,23 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
 
         $lastbackup = 0;
 
-        $hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
-
-        /**
-         * WordPress files system object.
-         *
-         * @global object
-         */
-        global $wp_filesystem;
-
+        // Direct reads: a non-direct $wp_filesystem transport cannot map the
+        // private root beside ABSPATH and would report every site as never backed up.
         foreach ( array( MainWP_Backup_Private_Root::site_path( (int) $item['id'] ), MainWP_Backup_Private_Root::legacy_site_dir( (int) $item['id'] ) ) as $dir ) {
-            if ( $hasWPFileSystem && ! is_wp_error( $dir ) && $wp_filesystem->exists( $dir ) ) {
-                $dh = opendir( $dir );
-                if ( $dh ) {
-                    while ( false !== ( $file = readdir( $dh ) ) ) {
-                        if ( '.' !== $file && '..' !== $file ) {
-                            $theFile = $dir . $file;
-                            if ( MainWP_Backup_File_Manager::is_archive( $file ) && ! MainWP_Backup_File_Manager::is_sql_archive( $file ) && $wp_filesystem->mtime( $theFile ) > $lastbackup ) {
-                                $lastbackup = $wp_filesystem->mtime( $theFile );
-                            }
-                        }
-                    }
-                    closedir( $dh );
-                }
+            if ( is_wp_error( $dir ) || ! is_dir( $dir ) ) {
+                continue;
             }
+            $dh = opendir( $dir );
+            if ( ! $dh ) {
+                continue;
+            }
+            while ( false !== ( $file = readdir( $dh ) ) ) {
+                if ( ! MainWP_Backup_File_Manager::is_archive( $file ) || MainWP_Backup_File_Manager::is_sql_archive( $file ) ) {
+                    continue;
+                }
+                $lastbackup = max( $lastbackup, (int) filemtime( $dir . $file ) );
+            }
+            closedir( $dh );
         }
 
         $output = '';

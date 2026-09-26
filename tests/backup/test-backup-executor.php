@@ -1521,6 +1521,51 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A task deleted while its sweep scans leaves no progress row for the
+	 * re-read, so the run must stop instead of reading a null row.
+	 *
+	 * @return void
+	 */
+	public function test_sweep_stops_when_progress_row_is_deleted_mid_sweep() {
+		global $wpdb;
+
+		list( $site_id, $task, $other, $artifact, $dir ) = $this->sweep_fixture_with_open_sibling();
+
+		// The snapshot read after the scan is the re-read's first query, so the
+		// row vanishes right before the re-read fetches it.
+		$reads    = 0;
+		$deleted  = false;
+		$progress = MainWP_DB::instance()->get_table_name( 'wp_backup_progress' );
+		$delete   = function ( $query ) use ( &$reads, &$deleted, $wpdb, $progress, $task, $site_id ) {
+			if ( false !== strpos( $query, 'SELECT p.downloadedDB, p.downloadedFULL' ) ) {
+				++$reads;
+			}
+			if ( 1 === $reads && ! $deleted && false !== strpos( $query, 'SELECT archives, manifest_path' ) ) {
+				$deleted = true;
+				$wpdb->delete(
+					$progress,
+					array(
+						'task_id' => (int) $task->id,
+						'wp_id'   => $site_id,
+					)
+				); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test simulates a concurrent task delete.
+			}
+			return $query;
+		};
+		add_filter( 'query', $delete );
+
+		try {
+			$result = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+			$this->assertFalse( $result, 'A run whose progress row vanished mid-sweep must stop.' );
+			$this->assertTrue( $deleted, 'The row must vanish before the re-read.' );
+			$this->assertFileExists( $artifact );
+		} finally {
+			remove_filter( 'query', $delete );
+			$this->tear_down_sweep_fixture( $site_id, $other, $dir );
+		}
+	}
+
+	/**
 	 * A sibling that records its snapshot and closes its run while the scan
 	 * runs leaves the open-run set; the re-read must see the snapshot.
 	 *

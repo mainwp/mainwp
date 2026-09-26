@@ -903,6 +903,9 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 // deleting; only microseconds remain until unlink.
                 $protected += MainWP_Backup_Snapshots::instance()->get_protected_paths_for_site( (int) $website->id );
                 $own_row    = MainWP_DB_Backup::instance()->get_backup_task_progress( $taskId, $website->id );
+                if ( null === $own_row ) {
+                    return false; // The task was deleted mid-sweep; its run has nothing left to finish.
+                }
                 foreach ( array_merge( MainWP_DB_Backup::instance()->get_open_run_download_paths( (int) $website->id ), array( (string) $own_row->downloadedDB, (string) $own_row->downloadedFULL ) ) as $path ) {
                     if ( '' !== $path ) {
                         $protected[ MainWP_Backup_Snapshots::normalise_path( $path ) ] = true;
@@ -1739,7 +1742,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             try {
                 $remote        = basename( (string) ( $artifact['file'] ?? '' ) );
                 $size          = (int) ( $artifact['size'] ?? 0 );
-                $run_dir       = $site_dir . 'snapshot-' . MainWP_Utility::sanitize_file_name( (string) $progress->child_backup_task_id ) . '/';
+                $run_dir       = $site_dir . self::run_dir_name( (string) $progress->child_backup_task_id ) . '/';
                 $manifest_path = $run_dir . MainWP_Utility::sanitize_file_name( $remote );
                 if ( '' === $remote || $size < 1 ) {
                     throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, 'invalid manifest artifact' ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
@@ -1862,7 +1865,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             $wp_filesystem->touch( $dir . 'index.php' );
         }
 
-        $run_dir = $dir . 'snapshot-' . MainWP_Utility::sanitize_file_name( (string) $progress->child_backup_task_id ) . '/';
+        $run_dir = $dir . self::run_dir_name( (string) $progress->child_backup_task_id ) . '/';
         $wp_filesystem->mkdir( $run_dir, 0750 );
         // Native backup starts revisit the site directory to recover crashed downloads and sweep orphan mutexes.
         MainWP_Backup_File_Manager::cleanup_stale_download_locks( $dir );
@@ -2973,6 +2976,19 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             throw new MainWP_Exception( esc_html( $dir->get_error_message() ), null, MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- The message is escaped; the final argument is an error code.
         }
         return $dir;
+    }
+
+    /**
+     * Name of the per-run directory an incremental or spine run stages into.
+     *
+     * The retention orphan sweep derives open runs' directories from this
+     * too, so both sides must build the name the same way.
+     *
+     * @param string $child_backup_task_id Child backup task id.
+     * @return string
+     */
+    public static function run_dir_name( string $child_backup_task_id ): string {
+        return 'snapshot-' . MainWP_Utility::sanitize_file_name( $child_backup_task_id );
     }
 
     /**

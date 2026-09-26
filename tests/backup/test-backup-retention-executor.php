@@ -1071,6 +1071,58 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A paused run can idle past the freshness window before it records its
+	 * snapshot; the sweep must leave its staging directory alone while still
+	 * removing a genuinely orphaned one beside it.
+	 *
+	 * @return void
+	 */
+	public function test_orphan_sweep_spares_open_paused_run_dir() {
+		$db   = \MainWP\Dashboard\MainWP_DB_Backup::instance();
+		$task = $db->add_backup_task( 1, 'Paused open run', 'daily', 'full', '', (string) $this->site_id, '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0 );
+		$this->assertNotFalse( $task );
+		$db->update_backup_task_with_values(
+			$task->id,
+			array(
+				'last_run'  => time() - 8 * HOUR_IN_SECONDS,
+				'completed' => 0,
+				'paused'    => 1,
+			)
+		);
+		$db->add_backup_task_progress( $task->id, $this->site_id, array() );
+		$db->update_backup_task_progress(
+			$task->id,
+			$this->site_id,
+			array(
+				'dtsFetched'           => time() - 7 * HOUR_IN_SECONDS,
+				'child_backup_task_id' => 'open-run-42',
+			)
+		);
+
+		$root     = \MainWP\Dashboard\MainWP_Backup_Private_Root::site_dir( $this->site_id );
+		$open_dir = $root . 'snapshot-open-run-42';
+		$orphan   = $root . 'snapshot-orphan-' . uniqid();
+		foreach ( array( $open_dir, $orphan ) as $dir ) {
+			wp_mkdir_p( $dir );
+			$this->fixture_dirs[] = $dir;
+			file_put_contents( $dir . '/artifact.tar', 'x' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+			touch( $dir . '/artifact.tar', time() - 7 * HOUR_IN_SECONDS );
+			touch( $dir, time() - 7 * HOUR_IN_SECONDS );
+		}
+
+		try {
+			$result = MainWP_Backup_Retention_Executor::instance()->cleanup_site_backups( $this->site_id, 1 );
+
+			$this->assertSame( array(), $result['errors'] );
+			$this->assertSame( 1, $result['orphan_dirs_removed'] );
+			$this->assertFileExists( $open_dir . '/artifact.tar', 'An open paused run still owns its staging directory.' );
+			$this->assertDirectoryDoesNotExist( $orphan, 'A directory no run or snapshot owns must still be swept.' );
+		} finally {
+			$db->remove_backup_task( $task->id );
+		}
+	}
+
+	/**
 	 * Pruning notifies the child site so it cleans its own task rows and
 	 * artifacts, passing the chain's child task ids.
 	 *

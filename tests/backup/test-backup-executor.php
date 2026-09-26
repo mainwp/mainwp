@@ -1597,6 +1597,7 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 			$this->assertFileDoesNotExist( $orphan, 'An archive behind a stale sidecar must still be pruned.' );
 		} finally {
 			array_map( 'unlink', glob( $legacy_dir . '*' ) ?: array() ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test cleanup.
+			rmdir( $legacy_dir ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test cleanup.
 			$this->tear_down_sweep_fixture( $site_id, $other, $dir );
 		}
 	}
@@ -2396,11 +2397,11 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 	 * A sibling run of this Dashboard holding the Child's one-task slot is
 	 * a delay: the refused task yields with the persistence clock cleared.
 	 * A foreign holder, a paused sibling nothing will advance, or a sibling
-	 * already finished on the site still surfaces once the refusal outlives
-	 * the window.
+	 * whose Child task already finished or failed on the site still surfaces
+	 * once the refusal outlives the window.
 	 *
 	 * @dataProvider sibling_holder_cases
-	 * @param string|null $sibling Null for no sibling row, else 'active', 'paused' or 'finished'.
+	 * @param string|null $sibling Null for no sibling row, else 'active', 'paused', 'finished' or 'child failed'.
 	 * @param bool        $yields  Whether the refused create must yield.
 	 *
 	 * @return void
@@ -2431,6 +2432,9 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 						'db'   => false,
 					)
 				);
+			} elseif ( 'child failed' === $sibling ) {
+				// The phase lands before the failure cleanup clears the task id.
+				$sibling_row['child_phase'] = 'failed';
 			}
 			$this->seed_progress( $holder->id, $site_id, $sibling_row );
 			$task->id = (int) $holder->id + 1;
@@ -2494,6 +2498,7 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 			'foreign holder'                => array( null, false ),
 			'paused sibling'                => array( 'paused', false ),
 			'sibling finished on the site'  => array( 'finished', false ),
+			'sibling child task failed'     => array( 'child failed', false ),
 		);
 	}
 

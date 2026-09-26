@@ -716,15 +716,12 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
      * @return void
      */
     public static function kick_backup_continuation( int $when = 0 ) {
-        static $shutdown_registered = false;
-
         if ( ! wp_next_scheduled( 'mainwp_native_backup_continue_action' ) ) {
             wp_schedule_single_event( 0 === $when ? time() : $when, 'mainwp_native_backup_continue_action' );
         }
         if ( wp_doing_cron() ) {
-            if ( ! $shutdown_registered ) {
+            if ( false === has_action( 'shutdown', array( self::class, 'spawn_backup_continuation' ) ) ) {
                 add_action( 'shutdown', array( self::class, 'spawn_backup_continuation' ) );
-                $shutdown_registered = true;
             }
             return;
         }
@@ -744,15 +741,16 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         }
 
         // A timestamped doing_wp_cron argument requires a matching pre-existing lock.
+        $cron_url     = site_url( 'wp-cron.php' );
         $cron_request = apply_filters(
             'cron_request',
             array(
-                'url'  => site_url( 'wp-cron.php' ),
+                'url'  => $cron_url,
                 'key'  => '',
                 'args' => array(
                     'timeout'   => 0.01,
                     'blocking'  => false,
-                    'sslverify' => apply_filters( 'https_local_ssl_verify', false ),
+                    'sslverify' => apply_filters( 'https_local_ssl_verify', false, $cron_url ),
                 ),
             ),
             ''

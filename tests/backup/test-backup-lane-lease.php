@@ -389,51 +389,83 @@ class MainWP_Backup_Lane_Lease_Test extends MainWP_Abilities_Test_Case {
 	 * A failed probe is cached just like a successful probe.
 	 */
 	public function test_backup_loopback_probe_caches_response() {
-		$cases = array(
-			array( new \WP_Error( 'blocked', 'Loopback blocked.' ), false ),
-			array(
-				array(
-					'response' => array( 'code' => 503 ),
-					'body'     => 'MainWP Test',
-				),
-				false,
-			),
-			array(
-				array(
-					'response' => array( 'code' => 200 ),
-					'body'     => 'Login required',
-				),
-				false,
-			),
-			array(
-				array(
-					'response' => array( 'code' => 200 ),
-					'body'     => 'MainWP Test',
-				),
-				true,
-			),
-		);
-		foreach ( $cases as list( $response, $expected ) ) {
-			delete_transient( 'mainwp_backup_loopback_ok' );
-			$calls = array();
-			$http  = static function ( $pre, $args, $url ) use ( &$calls, $response ) {
-				$calls[] = array( $url, $args );
-				return $response;
-			};
-			add_filter( 'pre_http_request', $http, 10, 3 );
-			try {
-				$before = time();
-				$this->assertSame( $expected, MainWP_Server_Information_Handler::is_backup_loopback_ok() );
-				$this->assertSame( $expected, MainWP_Server_Information_Handler::is_backup_loopback_ok() );
-				$this->assertCount( 1, $calls );
-				$this->assertSame( add_query_arg( 'mainwp_run', 'test', site_url( 'wp-cron.php' ) ), $calls[0][0] );
+		// Load real HTTP and hook APIs without the bootstrap's DISABLE_WP_CRON.
+		$script = <<<'PHP'
+define( 'ABSPATH', $argv[1] );
+define( 'WPINC', 'wp-includes' );
+define( 'MINUTE_IN_SECONDS', 60 );
+if ( 'enabled' !== $argv[3] ) {
+    define( $argv[3], true );
+}
+require ABSPATH . WPINC . '/plugin.php';
+require ABSPATH . WPINC . '/class-wp-error.php';
+require ABSPATH . WPINC . '/class-wp-http.php';
+require ABSPATH . WPINC . '/http.php';
+require $argv[2] . '/class/class-mainwp-system-utility.php';
+require $argv[2] . '/pages/page-mainwp-server-information-handler.php';
+function admin_url( $path ) { return 'https://example.org/wp-admin/' . $path; }
+function get_bloginfo( $key ) { return 'url' === $key ? 'https://example.org' : 'test'; }
+function wp_parse_args( $args, $defaults = array() ) { return array_merge( $defaults, $args ); }
+function is_wp_error( $value ) { return $value instanceof WP_Error; }
+function get_option( $name, $default = false ) { return str_repeat( 'a', 64 ); }
+function get_transient( $name ) { return $GLOBALS['cached']; }
+function set_transient( $name, $value, $ttl ) { $GLOBALS['cached'] = $value; $GLOBALS['ttl'] = $ttl; }
+$cases = array(
+    array( 'response' => array( 'code' => 200 ), 'body' => 'MainWP Self Connect OK' ),
+    array( 'response' => array( 'code' => 202 ), 'body' => 'Unexpected body' ),
+    new WP_Error( 'blocked', 'Loopback blocked.' ),
+    array( 'response' => array( 'code' => 403 ), 'body' => 'MainWP Self Connect OK' ),
+    array( 'response' => array( 'code' => 500 ), 'body' => 'MainWP Self Connect OK' ),
+);
+$results = array();
+foreach ( $cases as $response ) {
+    $cached = false;
+    $ttl = null;
+    $calls = array();
+    $http = static function ( $pre, $args, $url ) use ( &$calls, $response ) {
+        if ( admin_url( 'admin-ajax.php' ) !== $url ) {
+            throw new RuntimeException( 'Unexpected loopback URL.' );
+        }
+        $calls[] = array( $url, $args );
+        return $response;
+    };
+    add_filter( 'pre_http_request', $http, 10, 3 );
+    $first = MainWP\Dashboard\MainWP_Server_Information_Handler::is_backup_loopback_ok();
+    $second = MainWP\Dashboard\MainWP_Server_Information_Handler::is_backup_loopback_ok();
+    $results[] = array( $first, $second, $cached, $ttl, $calls );
+    remove_filter( 'pre_http_request', $http );
+}
+echo json_encode( $results );
+PHP;
+		foreach ( array( 'enabled', 'DISABLE_WP_CRON', 'ALTERNATE_WP_CRON' ) as $mode ) {
+			$output = shell_exec( escapeshellarg( PHP_BINARY ) . ' -r ' . escapeshellarg( $script ) . ' ' . escapeshellarg( ABSPATH ) . ' ' . escapeshellarg( dirname( __DIR__, 2 ) ) . ' ' . escapeshellarg( $mode ) );
+			$data   = json_decode( (string) $output, true );
+			$this->assertIsArray( $data, $mode . ': ' . $output );
+			$this->assertCount( 5, $data, $mode );
+			foreach ( $data as $index => list( $first, $second, $cached, $ttl, $calls ) ) {
+				$expected = 'enabled' !== $mode || 2 > $index;
+				$this->assertSame( $expected, $first, $mode . ': ' . $index );
+				$this->assertSame( $expected, $second, $mode . ': ' . $index );
+				if ( 'enabled' !== $mode ) {
+					$this->assertSame( array(), $calls, $mode );
+					$this->assertFalse( $cached, $mode );
+					continue;
+				}
+				$this->assertSame( $expected ? 'ok' : 'failed', $cached );
+				$this->assertSame( 600, $ttl );
+				$this->assertCount( 1, $calls, 'The second call must use the cached result.' );
+				$this->assertSame( 'https://example.org/wp-admin/admin-ajax.php', $calls[0][0] );
 				$this->assertTrue( $calls[0][1]['blocking'] );
 				$this->assertSame( 15, $calls[0][1]['timeout'] );
-				$this->assertGreaterThanOrEqual( $before + 600, (int) get_option( '_transient_timeout_mainwp_backup_loopback_ok' ) );
-				$this->assertLessThanOrEqual( time() + 600, (int) get_option( '_transient_timeout_mainwp_backup_loopback_ok' ) );
-			} finally {
-				remove_filter( 'pre_http_request', $http );
-				delete_transient( 'mainwp_backup_loopback_ok' );
+				$this->assertSame(
+					array(
+						'action'     => 'mainwp_self_connect',
+						'mainwp_run' => 'self_connect',
+					),
+					$calls[0][1]['body']
+				);
+				$headers = $calls[0][1]['headers'];
+				$this->assertSame( hash_hmac( 'sha256', 'mainwp_self_connect|' . $headers['X-MainWP-Self-Connect-Timestamp'], str_repeat( 'a', 64 ) ), $headers['X-MainWP-Self-Connect-Signature'] );
 			}
 		}
 	}

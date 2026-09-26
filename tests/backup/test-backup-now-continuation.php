@@ -122,6 +122,9 @@ class MainWP_Backup_Now_Continuation_Test extends MainWP_Abilities_Test_Case {
 				}
 			}
 			$this->assertCount( 1, $registered );
+			remove_action( 'shutdown', $callback );
+			MainWP_Post_Backup_Handler::kick_backup_continuation( $when );
+			$this->assertSame( 10, has_action( 'shutdown', $callback ), 'Removing the action must reset registration.' );
 			call_user_func( $registered[0] );
 			$this->assertTrue( DISABLE_WP_CRON, 'The WordPress test bootstrap disables cron.' );
 			$this->assertSame( array(), $requests, 'Disabled cron must leave the event for system cron.' );
@@ -160,7 +163,12 @@ function set_transient() { throw new RuntimeException( 'The sender must not acqu
 $pending = true;
 $requests = array();
 $filtered = array();
-add_filter( 'https_local_ssl_verify', static fn() => true );
+add_filter( 'https_local_ssl_verify', static function ( $verify, $url ) {
+    if ( false !== $verify || site_url( 'wp-cron.php' ) !== $url ) {
+        throw new RuntimeException( 'Unexpected SSL filter arguments.' );
+    }
+    return true;
+}, 10, 2 );
 add_filter( 'cron_request', static function ( $request, $key ) use ( &$filtered ) {
     $filtered[] = array( $request, $key );
     $request['args']['headers']['X-Test'] = 'filtered';
@@ -671,7 +679,9 @@ PHP;
 			'moving to close'  => array( array( $moving, $moving, $moving, $moving ), 99, true, 'no_work' ),
 			'idle'             => array( array( $idle, $idle, $idle ), 3, false, 'idle' ),
 			'idle reset'       => array( array( $idle, $idle, $moving, $idle, $idle, $idle ), 99, false, 'idle' ),
-			'no visits reset'  => array( array( $idle, $idle, $empty, $idle, $idle, $idle ), 99, false, 'idle' ),
+			'no visits idle'   => array( array( $idle, $idle, $empty ), 99, false, 'idle' ),
+			'alternating idle' => array( array( $idle, $empty, $idle ), 99, false, 'idle' ),
+			'run closed reset' => array( array( $idle, $idle, array( 'run_closed' => true ), $idle, $idle, $idle ), 99, false, 'idle' ),
 			'finished reset'   => array(
 				array(
 					$idle,

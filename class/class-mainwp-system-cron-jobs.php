@@ -1632,7 +1632,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
     protected function run_backup_slice( float $started ): void {
         $picked_task_id = 0;
         $outcome        = null;
-        $tasks          = array();
+        $candidates     = array();
         $iterations     = 0;
         $idle_polls     = 0;
         $ended_by       = 'no_work';
@@ -1647,7 +1647,8 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
                 $ended_by = 'lease_lost';
                 return;
             }
-            $tasks = MainWP_DB_Backup::instance()->get_backup_tasks_to_complete();
+            $tasks      = MainWP_DB_Backup::instance()->get_backup_tasks_to_complete();
+            $candidates = array_map( static fn( $task ) => (int) $task->id, $tasks );
             MainWP_Logger::instance()->debug( 'backups continue :: Found ' . count( $tasks ) . ' to continue.' );
 
             while ( ! empty( $tasks ) ) {
@@ -1700,7 +1701,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
                 if ( empty( $remaining_tasks ) ) {
                     break;
                 }
-                $idle_polls = ! empty( $outcome['sites_visited'] ) && empty( $outcome['sites_advanced'] ) && empty( $outcome['sites_finished'] ) ? $idle_polls + 1 : 0;
+                $idle_polls = empty( $outcome['sites_advanced'] ) && empty( $outcome['sites_finished'] ) && empty( $outcome['run_closed'] ) ? $idle_polls + 1 : 0;
                 if ( 3 <= $idle_polls ) {
                     $ended_by = 'idle';
                     break;
@@ -1727,7 +1728,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     $tick = array(
                         'started'              => $started,
                         'wall_time'            => microtime( true ) - $started,
-                        'candidates'           => array_map( static fn( $task ) => (int) $task->id, $tasks ),
+                        'candidates'           => $candidates,
                         'unfinished_remaining' => ! empty( MainWP_DB_Backup::instance()->get_backup_tasks_to_complete() ),
                         'iterations'           => $iterations,
                         'ended_by'             => $ended_by,

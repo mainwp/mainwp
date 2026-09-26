@@ -674,9 +674,9 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
     }
 
     /**
-     * Cache the cron loopback probe so page refreshes do not repeat the request.
+     * Cache the signed self-connect probe so page refreshes do not repeat the request.
      *
-     * @return bool Whether wp-cron.php returned the self-connect marker.
+     * @return bool Whether loopback is reachable or the cron mode needs no loopback.
      */
     public static function is_backup_loopback_ok(): bool {
         $cached = get_transient( 'mainwp_backup_loopback_ok' );
@@ -684,17 +684,15 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
             return 'ok' === $cached;
         }
 
-        $response    = wp_remote_post(
-            esc_url_raw( add_query_arg( 'mainwp_run', 'test', site_url( 'wp-cron.php' ) ) ),
-            array(
-                'blocking'  => true,
-                'sslverify' => apply_filters( 'https_local_ssl_verify', true ),
-                'timeout'   => 15,
-            )
-        );
-        $code        = wp_remote_retrieve_response_code( $response );
-        $loopback_ok = ! is_wp_error( $response ) && 200 <= $code && 300 > $code
-            && false !== strpos( wp_remote_retrieve_body( $response ), 'MainWP Test' );
+        // These modes use system cron; the continuation sender makes no loopback request.
+        if ( ( defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON )
+            || ( defined( 'ALTERNATE_WP_CRON' ) && ALTERNATE_WP_CRON ) ) {
+            return true;
+        }
+
+        $response    = MainWP_System_Utility::test_self_connect( admin_url( 'admin-ajax.php' ) );
+        $code        = (int) wp_remote_retrieve_response_code( $response );
+        $loopback_ok = ! is_wp_error( $response ) && 200 <= $code && 204 >= $code;
         set_transient( 'mainwp_backup_loopback_ok', $loopback_ok ? 'ok' : 'failed', 10 * MINUTE_IN_SECONDS );
         return $loopback_ok;
     }

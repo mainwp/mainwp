@@ -9,6 +9,7 @@ namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Backup_Monitor;
 use MainWP\Dashboard\MainWP_Server_Information;
+use MainWP\Dashboard\MainWP_System_Cron_Jobs;
 
 /**
  * Class MainWP_Backup_Lane_Lease_Test
@@ -84,6 +85,49 @@ class MainWP_Backup_Lane_Lease_Test extends MainWP_Abilities_Test_Case {
 		$this->assertNull( $this->row() );
 		$this->assertFalse( MainWP_Backup_Monitor::lane_lease_lost() );
 		$this->assertTrue( MainWP_Backup_Monitor::confirm_lane_lease() );
+	}
+
+	/**
+	 * Native request coverage also renews the lane without a native slot token.
+	 */
+	public function test_native_heartbeat_extends_lane_lease() {
+		$token = MainWP_Backup_Monitor::acquire_lane_lease();
+		$this->assertIsString( $token );
+		$this->seed( $token, 700 );
+		$before = time();
+		MainWP_Backup_Monitor::touch_native_leases( 1860 );
+		$row = $this->row();
+		$this->assertSame( $token, $row['token'] );
+		$this->assertGreaterThanOrEqual( $before, $row['heartbeat'] );
+		$this->assertLessThanOrEqual( time(), $row['heartbeat'] );
+		$this->assertGreaterThanOrEqual( 1860, $row['lease'] );
+		$this->assertTrue( MainWP_Backup_Monitor::confirm_lane_lease() );
+		$this->assertGreaterThan( time(), $row['heartbeat'] + $row['lease'], 'A competing acquirer must refuse this live row even without a local token.' );
+	}
+
+	/**
+	 * Callers outside the lane neither create nor refresh its row.
+	 */
+	public function test_native_heartbeat_without_lane_token_leaves_option_untouched() {
+		MainWP_Backup_Monitor::touch_native_leases( 1860 );
+		$this->assertNull( $this->row() );
+		$this->seed( 'other-owner', 700 );
+		$before = $this->row();
+		MainWP_Backup_Monitor::touch_native_leases( 1860 );
+		$this->assertSame( $before, $this->row() );
+	}
+
+	/**
+	 * Maintenance ticks cannot stand in for missing minutely ticks.
+	 */
+	public function test_continue_tick_does_not_stamp_slice() {
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		delete_option( 'mainwp_cron_last_backups_slice' );
+		delete_option( 'mainwp_cron_last_backups_continue' );
+		$before = time();
+		MainWP_System_Cron_Jobs::instance()->cron_backups_continue();
+		$this->assertFalse( get_option( 'mainwp_cron_last_backups_slice' ) );
+		$this->assertGreaterThanOrEqual( $before, (int) get_option( 'mainwp_cron_last_backups_continue' ) );
 	}
 
 	/**

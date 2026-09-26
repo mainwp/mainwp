@@ -1610,6 +1610,8 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
             return;
         }
 
+        MainWP_Utility::update_option( 'mainwp_cron_last_backups_slice', time() );
+
         ignore_user_abort( true );
         MainWP_System_Utility::set_time_limit( 0 );
         $previous_lane           = $this->backup_slice_lane;
@@ -1628,8 +1630,6 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @return void
      */
     protected function run_backup_slice( float $started ): void {
-        MainWP_Utility::update_option( 'mainwp_cron_last_backups_slice', time() );
-
         $picked_task_id = 0;
         $outcome        = null;
         $tasks          = array();

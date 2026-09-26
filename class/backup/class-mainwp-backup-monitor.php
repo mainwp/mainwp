@@ -956,9 +956,10 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     /**
      * Extend only the row this process still owns.
      *
+     * @param int $lease_seconds Coverage in seconds, floored at LANE_LEASE_SECONDS.
      * @return bool False once ownership has been lost; true outside a lane scope.
      */
-    public static function refresh_lane_lease(): bool {
+    public static function refresh_lane_lease( int $lease_seconds = self::LANE_LEASE_SECONDS ): bool {
         global $wpdb;
 
         if ( '' === self::$lane_lease_token ) {
@@ -973,6 +974,7 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         $data = json_decode( (string) $held, true );
         if ( is_array( $data ) && ( $data['token'] ?? '' ) === self::$lane_lease_token ) {
             $data['heartbeat'] = time();
+            $data['lease']     = max( self::LANE_LEASE_SECONDS, $lease_seconds );
             $updated           = $wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- compare-and-update cannot refresh another owner.
                 $wpdb->prepare( "UPDATE {$wpdb->options} SET option_value = %s WHERE option_name = %s AND option_value = %s", (string) wp_json_encode( $data ), self::LANE_LEASE_OPTION, (string) $held )
             );
@@ -1348,6 +1350,9 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      */
     public static function touch_native_leases( int $lease_seconds ): int {
         global $wpdb;
+
+        // The lane must outlive the longest single request the native lease covers.
+        self::refresh_lane_lease( $lease_seconds );
 
         if ( empty( self::$native_lease_tokens ) ) {
             return PHP_INT_MAX;

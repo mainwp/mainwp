@@ -904,10 +904,10 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", self::LANE_LEASE_OPTION )
         );
         $data = json_decode( (string) $held, true );
-        $live = is_array( $data ) && (int) ( $data['heartbeat'] ?? 0 ) + (int) ( $data['lease'] ?? 0 ) > $now;
+        $live = self::is_lane_live( $data, $now );
         if ( $live || '' !== self::$lane_lease_token ) {
             /** This action is documented in class/backup/class-mainwp-backup-monitor.php */
-            do_action( 'mainwp_backup_diag_lane', 'refused', '', (int) $live, self::LANE_LEASE_SECONDS );
+            do_action( 'mainwp_backup_diag_lane', 'refused', '', (int) $live, is_array( $data ) && is_numeric( $data['lease'] ?? null ) ? (int) $data['lease'] : self::LANE_LEASE_SECONDS );
             return false;
         }
         if ( null !== $held ) {
@@ -947,7 +947,7 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
          * @param string $event         acquired|refused|reclaimed_stale|released|lost.
          * @param string $token         Lane token, empty on refusal.
          * @param int    $active        Active lane holder count after the decision.
-         * @param int    $lease_seconds Lane lease duration.
+         * @param int    $lease_seconds Stored lane lease where a row was read, otherwise the default duration.
          */
         do_action( 'mainwp_backup_diag_lane', 'acquired', $token, 1, self::LANE_LEASE_SECONDS );
         return $token;
@@ -1038,9 +1038,33 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", self::LANE_LEASE_OPTION )
         );
         $data = json_decode( (string) $held, true );
-        $live = is_array( $data ) && (int) ( $data['heartbeat'] ?? 0 ) + (int) ( $data['lease'] ?? 0 ) > time();
+        $live = self::is_lane_live( $data, time() );
         /** This action is documented in class/backup/class-mainwp-backup-monitor.php */
-        do_action( 'mainwp_backup_diag_lane', 'lost', self::$lane_lease_token, (int) $live, self::LANE_LEASE_SECONDS );
+        do_action( 'mainwp_backup_diag_lane', 'lost', self::$lane_lease_token, (int) $live, is_array( $data ) && is_numeric( $data['lease'] ?? null ) ? (int) $data['lease'] : self::LANE_LEASE_SECONDS );
+    }
+
+    /**
+     * Whether a decoded lane row still belongs to a live holder.
+     *
+     * @param mixed $data Decoded lane value, possibly malformed.
+     * @param int   $now  Current time.
+     * @return bool True while the lane holder is live.
+     */
+    private static function is_lane_live( mixed $data, int $now ): bool {
+        if ( ! is_array( $data ) || ! isset( $data['token'] ) || ! is_string( $data['token'] ) || '' === $data['token']
+            || ! is_numeric( $data['heartbeat'] ?? null ) || ! is_numeric( $data['lease'] ?? null )
+        ) {
+            return false;
+        }
+
+        $beat = (int) $data['heartbeat'];
+        // A clock beyond the allowed skew cannot establish a live holder.
+        if ( $beat > $now + self::SLOT_LEASE_MARGIN_SECONDS ) {
+            return false;
+        }
+
+        // An oversized lease must not block reclamation for more than two hours.
+        return $now < $beat + min( (int) $data['lease'], 2 * HOUR_IN_SECONDS );
     }
 
     /**
@@ -1345,14 +1369,15 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      *
      * @return int Seconds of coverage guaranteed from now: the smallest
      *             heartbeat + lease still stored for a token in scope, 0
-     *             for a token whose row is gone, PHP_INT_MAX when nothing
+     *             for a lost lane or a token whose row is gone, PHP_INT_MAX when nothing
      *             is in scope.
      */
     public static function touch_native_leases( int $lease_seconds ): int {
         global $wpdb;
 
-        // The lane must outlive the longest single request the native lease covers.
-        self::refresh_lane_lease( $lease_seconds );
+        // The lane must outlive the longest request the native lease covers,
+        // and losing it cuts that coverage the same way a lost slot does.
+        $lane_refreshed = self::refresh_lane_lease( $lease_seconds );
 
         if ( empty( self::$native_lease_tokens ) ) {
             return PHP_INT_MAX;
@@ -1392,6 +1417,9 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         }
 
         $lowest = (int) min( $covered );
+        if ( ! $lane_refreshed ) {
+            $lowest = 0;
+        }
         if ( $lowest <= 0 ) {
             self::mark_native_lease_lost();
         }

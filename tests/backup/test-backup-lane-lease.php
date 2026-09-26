@@ -42,9 +42,10 @@ class MainWP_Backup_Lane_Lease_Test extends MainWP_Abilities_Test_Case {
 	 *
 	 * @param string $token Owner token.
 	 * @param int    $age Heartbeat age in seconds.
+	 * @param int    $lease Lease duration in seconds.
 	 * @return void
 	 */
-	private function seed( string $token, int $age = 0 ): void {
+	private function seed( string $token, int $age = 0, int $lease = 600 ): void {
 		global $wpdb;
 		$value = wp_json_encode(
 			array(
@@ -52,11 +53,127 @@ class MainWP_Backup_Lane_Lease_Test extends MainWP_Abilities_Test_Case {
 				'started'   => time() - $age,
 				'heartbeat' => time() - $age,
 				'pid'       => 123,
-				'lease'     => 600,
+				'lease'     => $lease,
 			)
 		);
 		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name = %s", MainWP_Backup_Monitor::LANE_LEASE_OPTION ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- semaphore fixture.
 		$wpdb->query( $wpdb->prepare( "INSERT INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')", MainWP_Backup_Monitor::LANE_LEASE_OPTION, $value ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- semaphore fixture.
+	}
+
+	/**
+	 * Seed a live native slot for request coverage assertions.
+	 *
+	 * @return string Slot token.
+	 */
+	private function seed_native_slot(): string {
+		global $wpdb;
+		$token    = 'lane-test-native-slot';
+		$value    = wp_json_encode(
+			array(
+				'token'     => $token,
+				'started'   => time(),
+				'heartbeat' => time(),
+				'lease'     => 600,
+				'lane'      => 'native',
+				'pid'       => 123,
+			)
+		);
+		$inserted = $wpdb->query( $wpdb->prepare( "INSERT INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')", MainWP_Backup_Monitor::SLOT_OPTION_PREFIX . '1', $value ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- semaphore fixture.
+		$this->assertSame( 1, $inserted, 'Precondition: the native slot fixture must be stored.' );
+		return $token;
+	}
+
+	/**
+	 * Losing the lane removes request coverage even while the slot is live.
+	 */
+	public function test_lane_loss_cuts_native_coverage() {
+		$this->assertIsString( MainWP_Backup_Monitor::acquire_lane_lease() );
+		$token = $this->seed_native_slot();
+		MainWP_Backup_Monitor::begin_native_lease( $token );
+		try {
+			$this->seed( 'replacement' );
+			$before = $this->row();
+			$this->assertSame( 0, MainWP_Backup_Monitor::touch_native_leases( 960 ) );
+			$this->assertTrue( MainWP_Backup_Monitor::native_lease_lost() );
+			$this->assertSame( $before, $this->row() );
+		} finally {
+			MainWP_Backup_Monitor::end_native_lease( $token );
+			MainWP_Backup_Monitor::release_backup_slot( $token );
+		}
+	}
+
+	/**
+	 * A held lane preserves coverage for a live native slot.
+	 */
+	public function test_held_lane_preserves_native_coverage() {
+		$this->assertIsString( MainWP_Backup_Monitor::acquire_lane_lease() );
+		$token = $this->seed_native_slot();
+		MainWP_Backup_Monitor::begin_native_lease( $token );
+		try {
+			$this->assertGreaterThan( 0, MainWP_Backup_Monitor::touch_native_leases( 960 ) );
+			$this->assertFalse( MainWP_Backup_Monitor::native_lease_lost() );
+		} finally {
+			MainWP_Backup_Monitor::end_native_lease( $token );
+			MainWP_Backup_Monitor::release_backup_slot( $token );
+		}
+	}
+
+	/**
+	 * A heartbeat beyond the skew margin is reclaimed immediately.
+	 */
+	public function test_future_skewed_lane_is_reclaimed() {
+		$this->seed( 'future-owner', -3600 );
+		$events = array();
+		$record = static function ( $event, $token ) use ( &$events ) {
+			$events[] = array( $event, $token );
+		};
+		add_action( 'mainwp_backup_diag_lane', $record, 10, 2 );
+		try {
+			$token = MainWP_Backup_Monitor::acquire_lane_lease();
+			$this->assertIsString( $token );
+			$this->assertSame( $token, $this->row()['token'] );
+			$this->assertSame( array( array( 'reclaimed_stale', 'future-owner' ), array( 'acquired', $token ) ), $events );
+		} finally {
+			remove_action( 'mainwp_backup_diag_lane', $record );
+		}
+	}
+
+	/**
+	 * Clock skew within the margin keeps a live holder exclusive.
+	 */
+	public function test_future_heartbeat_within_margin_is_refused() {
+		$this->seed( 'near-future-owner', -30 );
+		$before = $this->row();
+		$this->assertFalse( MainWP_Backup_Monitor::acquire_lane_lease() );
+		$this->assertSame( $before, $this->row() );
+	}
+
+	/**
+	 * An oversized stored lease cannot keep a dead holder past two hours.
+	 */
+	public function test_lane_lease_is_capped_at_two_hours() {
+		$this->seed( 'old-owner', 7300, 99999 );
+		$token = MainWP_Backup_Monitor::acquire_lane_lease();
+		$this->assertIsString( $token );
+		$this->assertSame( $token, $this->row()['token'] );
+	}
+
+	/**
+	 * Refusal reports the duration stored by the live holder.
+	 */
+	public function test_refused_diagnostic_reports_stored_lease() {
+		$this->seed( 'other-owner', 0, 1860 );
+		$events = array();
+		$record = static function ( $event, $token, $active, $lease_seconds ) use ( &$events ) {
+			$events[] = array( $event, $lease_seconds );
+		};
+		add_action( 'mainwp_backup_diag_lane', $record, 10, 4 );
+		try {
+			$this->assertFalse( MainWP_Backup_Monitor::acquire_lane_lease() );
+			$this->assertSame( array( array( 'refused', 1860 ) ), $events );
+		} finally {
+			remove_action( 'mainwp_backup_diag_lane', $record );
+		}
 	}
 
 	/**
@@ -109,7 +226,8 @@ class MainWP_Backup_Lane_Lease_Test extends MainWP_Abilities_Test_Case {
 	 * Callers outside the lane neither create nor refresh its row.
 	 */
 	public function test_native_heartbeat_without_lane_token_leaves_option_untouched() {
-		MainWP_Backup_Monitor::touch_native_leases( 1860 );
+		$this->assertTrue( MainWP_Backup_Monitor::refresh_lane_lease( 1860 ) );
+		$this->assertSame( PHP_INT_MAX, MainWP_Backup_Monitor::touch_native_leases( 1860 ) );
 		$this->assertNull( $this->row() );
 		$this->seed( 'other-owner', 700 );
 		$before = $this->row();
@@ -155,18 +273,19 @@ class MainWP_Backup_Lane_Lease_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function test_reowned_row_fences_refresh_and_survives_release() {
 		$this->assertIsString( MainWP_Backup_Monitor::acquire_lane_lease() );
-		$this->seed( 'replacement', 5 );
+		$this->seed( 'replacement', 5, 1860 );
 		$row    = $this->row();
 		$events = array();
-		$record = static function ( $event, $token, $active ) use ( &$events ) {
-			$events[] = array( $event, $token, $active );
+		$record = static function ( $event, $token, $active, $lease_seconds ) use ( &$events ) {
+			$events[] = array( $event, $token, $active, $lease_seconds );
 		};
-		add_action( 'mainwp_backup_diag_lane', $record, 10, 3 );
+		add_action( 'mainwp_backup_diag_lane', $record, 10, 4 );
 		try {
 			$this->assertFalse( MainWP_Backup_Monitor::refresh_lane_lease() );
 			$this->assertCount( 1, $events );
 			$this->assertSame( 'lost', $events[0][0] );
 			$this->assertSame( 1, $events[0][2], 'The replacement holder remains active.' );
+			$this->assertSame( 1860, $events[0][3] );
 		} finally {
 			remove_action( 'mainwp_backup_diag_lane', $record );
 		}

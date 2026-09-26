@@ -135,6 +135,9 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 = Where do I report security bugs found in this plugin? =
 Please report security bugs found in the source code of the MainWP plugin through the [Patchstack Vulnerability Disclosure Program](https://patchstack.com/database/vdp/9e5fb39c-dd7e-4c6b-a871-c6a046430f0f). The Patchstack team will assist you with verification, CVE assignment, and notify the developers of this plugin.
 
+= Why do large backups take a long time to finish? =
+The Dashboard drives Child backups from WP-Cron in one-minute slices. WP-Cron only runs when the Dashboard gets visits. On a Dashboard with little traffic, set DISABLE_WP_CRON in wp-config.php and add a system cron that requests wp-cron.php every minute. Server Information shows when the slice job last ran.
+
 == Screenshots ==
 
 1. Sites - Operations

@@ -300,6 +300,7 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 			'mainwp_backup_diag_restore_transfer',
 			'mainwp_backup_diag_preflight',
 			'mainwp_backup_diag_slot',
+			'mainwp_backup_diag_lane',
 		) as $hook ) {
 			$this->assertFalse( has_action( $hook ), "No callback may register on {$hook} while disabled." );
 		}
@@ -1261,6 +1262,25 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( 1, $events[1]['payload']['active'] );
 
 		$this->assertSame( 'released', $events[2]['payload']['event'] );
+	}
+
+	/**
+	 * Lane decisions use their own diagnostics kind and lease duration.
+	 */
+	public function test_lane_events_are_recorded() {
+		$this->enable_recorder();
+		try {
+			$token = MainWP_Backup_Monitor::acquire_lane_lease();
+			$this->assertIsString( $token );
+			$this->assertFalse( MainWP_Backup_Monitor::acquire_lane_lease() );
+		} finally {
+			MainWP_Backup_Monitor::release_lane_lease();
+		}
+		$events = array_values( array_filter( $this->recorded_events(), fn( $event ) => 'lane' === $event['kind'] ) );
+		$this->assertSame( array( 'acquired', 'refused', 'released' ), array_column( array_column( $events, 'payload' ), 'event' ) );
+		$this->assertSame( $token, $events[0]['payload']['token'] );
+		$this->assertSame( 600, $events[0]['payload']['lease_seconds'] );
+		$this->assertSame( 1, $events[0]['payload']['active'] );
 	}
 
 	/**

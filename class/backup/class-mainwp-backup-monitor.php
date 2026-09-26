@@ -864,6 +864,215 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     }
 
     /**
+     * Option shared by the maintenance and slice ticks.
+     *
+     * @var string
+     */
+    const LANE_LEASE_OPTION = 'mainwp_backup_lane_lease';
+
+    /**
+     * Coverage between lane heartbeats, in seconds.
+     *
+     * @var int
+     */
+    const LANE_LEASE_SECONDS = 600;
+
+    /**
+     * Token owned by this process, empty outside a slice.
+     *
+     * @var string
+     */
+    private static string $lane_lease_token = '';
+
+    /**
+     * A lost holder stays fenced until its scope ends.
+     *
+     * @var bool
+     */
+    private static bool $lane_lease_lost = false;
+
+    /**
+     * Claim the shared lane without overwriting a live holder.
+     *
+     * @return string|false Token on success, false when the lane is occupied.
+     */
+    public static function acquire_lane_lease(): string|false {
+        global $wpdb;
+
+        $now  = time();
+        $held = $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- lease ownership must bypass option caches.
+            $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", self::LANE_LEASE_OPTION )
+        );
+        $data = json_decode( (string) $held, true );
+        $live = is_array( $data ) && (int) ( $data['heartbeat'] ?? 0 ) + (int) ( $data['lease'] ?? 0 ) > $now;
+        if ( $live || '' !== self::$lane_lease_token ) {
+            /** This action is documented in class/backup/class-mainwp-backup-monitor.php */
+            do_action( 'mainwp_backup_diag_lane', 'refused', '', (int) $live, self::LANE_LEASE_SECONDS );
+            return false;
+        }
+        if ( null !== $held ) {
+            $reclaimed = $wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- a renewed or re-owned row must survive reclamation.
+                $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name = %s AND option_value = %s", self::LANE_LEASE_OPTION, (string) $held )
+            );
+            if ( 1 === $reclaimed ) {
+                /** This action is documented in class/backup/class-mainwp-backup-monitor.php */
+                do_action( 'mainwp_backup_diag_lane', 'reclaimed_stale', (string) ( $data['token'] ?? '' ), 0, self::LANE_LEASE_SECONDS );
+            }
+        }
+
+        $token   = wp_generate_password( 12, false );
+        $value   = (string) wp_json_encode(
+            array(
+                'token'     => $token,
+                'started'   => $now,
+                'heartbeat' => $now,
+                'pid'       => getmypid(),
+                'lease'     => self::LANE_LEASE_SECONDS,
+            )
+        );
+        $claimed = $wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- UNIQUE(option_name) arbitrates concurrent claims.
+            $wpdb->prepare( "INSERT IGNORE INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')", self::LANE_LEASE_OPTION, $value )
+        );
+        if ( 1 !== $claimed ) {
+            /** This action is documented in class/backup/class-mainwp-backup-monitor.php */
+            do_action( 'mainwp_backup_diag_lane', 'refused', '', 1, self::LANE_LEASE_SECONDS );
+            return false;
+        }
+
+        self::$lane_lease_token = $token;
+        self::$lane_lease_lost  = false;
+        /**
+         * Fires on a lane ownership decision so overlaps and lost holders are observable.
+         *
+         * @param string $event         acquired|refused|reclaimed_stale|released|lost.
+         * @param string $token         Lane token, empty on refusal.
+         * @param int    $active        Active lane holder count after the decision.
+         * @param int    $lease_seconds Lane lease duration.
+         */
+        do_action( 'mainwp_backup_diag_lane', 'acquired', $token, 1, self::LANE_LEASE_SECONDS );
+        return $token;
+    }
+
+    /**
+     * Extend only the row this process still owns.
+     *
+     * @return bool False once ownership has been lost; true outside a lane scope.
+     */
+    public static function refresh_lane_lease(): bool {
+        global $wpdb;
+
+        if ( '' === self::$lane_lease_token ) {
+            return true;
+        }
+        if ( self::lane_lease_lost() ) {
+            return false;
+        }
+        $held = $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- lease ownership must bypass option caches.
+            $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", self::LANE_LEASE_OPTION )
+        );
+        $data = json_decode( (string) $held, true );
+        if ( is_array( $data ) && ( $data['token'] ?? '' ) === self::$lane_lease_token ) {
+            $data['heartbeat'] = time();
+            $updated           = $wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- compare-and-update cannot refresh another owner.
+                $wpdb->prepare( "UPDATE {$wpdb->options} SET option_value = %s WHERE option_name = %s AND option_value = %s", (string) wp_json_encode( $data ), self::LANE_LEASE_OPTION, (string) $held )
+            );
+            // MySQL reports zero when a heartbeat repeats within the same second.
+            if ( false !== $updated && self::confirm_lane_lease() ) {
+                return true;
+            }
+        }
+        self::mark_lane_lease_lost();
+        return false;
+    }
+
+    /**
+     * Report loss only within this process's lane scope.
+     *
+     * @return bool Whether the held lease was lost.
+     */
+    public static function lane_lease_lost(): bool {
+        return '' !== self::$lane_lease_token && self::$lane_lease_lost;
+    }
+
+    /**
+     * Fence a stale holder before it writes task state.
+     *
+     * @return bool True outside a lane scope or while the token still owns the row.
+     */
+    public static function confirm_lane_lease(): bool {
+        global $wpdb;
+
+        if ( '' === self::$lane_lease_token ) {
+            return true;
+        }
+        if ( self::lane_lease_lost() ) {
+            return false;
+        }
+        $held = $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- lease ownership must bypass option caches.
+            $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", self::LANE_LEASE_OPTION )
+        );
+        $data = json_decode( (string) $held, true );
+        if ( is_array( $data ) && ( $data['token'] ?? '' ) === self::$lane_lease_token ) {
+            return true;
+        }
+        self::mark_lane_lease_lost();
+        return false;
+    }
+
+    /**
+     * Emit loss once per holder, even when several fences detect it.
+     *
+     * @return void
+     */
+    private static function mark_lane_lease_lost(): void {
+        global $wpdb;
+
+        if ( self::$lane_lease_lost ) {
+            return;
+        }
+        self::$lane_lease_lost = true;
+
+        $held = $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- diagnostics must observe any replacement holder.
+            $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", self::LANE_LEASE_OPTION )
+        );
+        $data = json_decode( (string) $held, true );
+        $live = is_array( $data ) && (int) ( $data['heartbeat'] ?? 0 ) + (int) ( $data['lease'] ?? 0 ) > time();
+        /** This action is documented in class/backup/class-mainwp-backup-monitor.php */
+        do_action( 'mainwp_backup_diag_lane', 'lost', self::$lane_lease_token, (int) $live, self::LANE_LEASE_SECONDS );
+    }
+
+    /**
+     * Release only this holder's exact row and end its process scope.
+     *
+     * @return void
+     */
+    public static function release_lane_lease(): void {
+        global $wpdb;
+
+        try {
+            if ( '' === self::$lane_lease_token ) {
+                return;
+            }
+            $held = $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- lease ownership must bypass option caches.
+                $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", self::LANE_LEASE_OPTION )
+            );
+            $data = json_decode( (string) $held, true );
+            if ( is_array( $data ) && ( $data['token'] ?? '' ) === self::$lane_lease_token ) {
+                $released = $wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- a replacement row must survive release.
+                    $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name = %s AND option_value = %s", self::LANE_LEASE_OPTION, (string) $held )
+                );
+                if ( 1 === $released ) {
+                    /** This action is documented in class/backup/class-mainwp-backup-monitor.php */
+                    do_action( 'mainwp_backup_diag_lane', 'released', self::$lane_lease_token, 0, self::LANE_LEASE_SECONDS );
+                }
+            }
+        } finally {
+            self::$lane_lease_token = '';
+            self::$lane_lease_lost  = false;
+        }
+    }
+
+    /**
      * Method release_backup_slot()
      *
      * Release a backup execution slot: compare-and-delete the slot row

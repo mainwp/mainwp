@@ -29,6 +29,13 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
     private static $instance = null;
 
     /**
+     * Entry point recorded with the shared slice diagnostics.
+     *
+     * @var string
+     */
+    private string $backup_slice_lane = 'continue';
+
+    /**
      * Last auto logging.
      *
      * @var int Last time auto logs.
@@ -75,6 +82,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         add_action( 'mainwp_cronreconnect_action', array( $this, 'cron_reconnect' ) );
         add_action( 'mainwp_cronbackups_action', array( $this, 'cron_backups' ) );
         add_action( 'mainwp_cronbackups_continue_action', array( $this, 'cron_backups_continue' ) );
+        add_action( 'mainwp_cronbackups_slice_action', array( $this, 'cron_backups_slice' ) );
         // Single-event lane (never added to get_cron_jobs): an on-demand backup
         // schedules this to continue immediately instead of waiting for the
         // 5-minute recurring mainwp_cronbackups_continue_action, which WordPress
@@ -149,6 +157,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
                 array(
                     'mainwp_cronbackups_action'          => 'hourly',
                     'mainwp_cronbackups_continue_action' => '5minutely',
+                    'mainwp_cronbackups_slice_action'    => 'minutely',
                     'mainwp_cronbackups_prune_action'    => 'daily',
                 )
             );
@@ -186,6 +195,10 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
             $sched = wp_next_scheduled( 'mainwp_cronbackups_continue_action' );
             if ( $sched ) {
                 wp_unschedule_event( $sched, 'mainwp_cronbackups_continue_action' );
+            }
+            $sched = wp_next_scheduled( 'mainwp_cronbackups_slice_action' );
+            if ( $sched ) {
+                wp_unschedule_event( $sched, 'mainwp_cronbackups_slice_action' );
             }
             $sched = wp_next_scheduled( 'mainwp_cronbackups_prune_action' );
             if ( $sched ) {
@@ -1570,27 +1583,66 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
         MainWP_Utility::update_option( 'mainwp_cron_last_backups_continue', time() );
 
-        $tasks = MainWP_DB_Backup::instance()->get_backup_tasks_to_complete();
+        // Completed snapshots upload to their storage destinations on this
+        // same five-minute lane, one resumable job per tick. Retention
+        // follows: one cloud delete job, then one queued task and site pair
+        // from the post-snapshot queue.
+        MainWP_Backup_Upload_Driver::instance()->process_pending_jobs();
+        MainWP_Backup_Cloud_Delete_Driver::instance()->process_pending_delete_jobs();
+        MainWP_Backup_Retention_Scheduler::instance()->process_post_snapshot_queue();
+        MainWP_Backup_Restore_Orchestrator::instance()->process_pending_restore_jobs();
+
+        // Sample one snapshot per tick for a verified (sandbox) test-restore.
+        // Runs last and dashboard-side only, so it never delays the real backup
+        // lanes or touches a child site. Runs even when no backup task is due.
+        MainWP_Backup_TestRestore_Scheduler::instance()->process_pending_jobs();
+
+        $this->run_backup_slice( $started );
+    }
+
+    /**
+     * Drive task slices without running the five-minute maintenance jobs.
+     *
+     * @return void
+     */
+    public function cron_backups_slice(): void {
+        if ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
+            return;
+        }
+
+        ignore_user_abort( true );
+        MainWP_System_Utility::set_time_limit( 0 );
+        $previous_lane           = $this->backup_slice_lane;
+        $this->backup_slice_lane = 'slice';
+        try {
+            $this->run_backup_slice( microtime( true ) );
+        } finally {
+            $this->backup_slice_lane = $previous_lane;
+        }
+    }
+
+    /**
+     * Serialize picks so overlapping ticks cannot overwrite site completion.
+     *
+     * @param float $started Tick start time, including maintenance when applicable.
+     * @return void
+     */
+    protected function run_backup_slice( float $started ): void {
+        MainWP_Utility::update_option( 'mainwp_cron_last_backups_slice', time() );
 
         $picked_task_id = 0;
         $outcome        = null;
+        $tasks          = array();
+        $lane_busy      = false === MainWP_Backup_Monitor::acquire_lane_lease();
         try {
+            if ( $lane_busy ) {
+                return;
+            }
+            if ( ! MainWP_Backup_Monitor::refresh_lane_lease() ) {
+                return;
+            }
+            $tasks = MainWP_DB_Backup::instance()->get_backup_tasks_to_complete();
             MainWP_Logger::instance()->debug( 'backups continue :: Found ' . count( $tasks ) . ' to continue.' );
-
-            // Completed snapshots upload to their storage destinations on this
-            // same five-minute lane, one resumable job per tick. Retention
-            // follows: one cloud delete job, then one queued task and site pair
-            // from the post-snapshot queue.
-            MainWP_Backup_Upload_Driver::instance()->process_pending_jobs();
-            MainWP_Backup_Cloud_Delete_Driver::instance()->process_pending_delete_jobs();
-            MainWP_Backup_Retention_Scheduler::instance()->process_post_snapshot_queue();
-            MainWP_Backup_Restore_Orchestrator::instance()->process_pending_restore_jobs();
-
-            // Sample one snapshot per tick for a verified (sandbox) test-restore.
-            // Runs last and dashboard-side only, so it never delays the real backup
-            // lanes or touches a child site. Placed before the empty-tasks return
-            // below so it still runs on the common tick that has no legacy task.
-            MainWP_Backup_TestRestore_Scheduler::instance()->process_pending_jobs();
 
             if ( empty( $tasks ) ) {
                 return;
@@ -1624,16 +1676,23 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
                 break;
             }
         } finally {
-            // The re-query is only for the diagnostics; a Dashboard with no
-            // listener does not pay for it every five minutes.
-            if ( has_action( 'mainwp_backup_diag_tick' ) ) {
-                $tick = array(
-                    'started'              => $started,
-                    'wall_time'            => microtime( true ) - $started,
-                    'candidates'           => array_map( static fn( $task ) => (int) $task->id, $tasks ),
-                    'unfinished_remaining' => ! empty( MainWP_DB_Backup::instance()->get_backup_tasks_to_complete() ),
-                );
-                do_action( 'mainwp_backup_diag_tick', $picked_task_id, $outcome, $tick );
+            try {
+                // Queue diagnostics are optional; ownership is always released.
+                if ( has_action( 'mainwp_backup_diag_tick' ) ) {
+                    $tick = array(
+                        'started'              => $started,
+                        'wall_time'            => microtime( true ) - $started,
+                        'candidates'           => array_map( static fn( $task ) => (int) $task->id, $tasks ),
+                        'unfinished_remaining' => ! empty( MainWP_DB_Backup::instance()->get_backup_tasks_to_complete() ),
+                        'lane_busy'            => $lane_busy,
+                        'lane'                 => $this->backup_slice_lane,
+                    );
+                    do_action( 'mainwp_backup_diag_tick', $picked_task_id, $outcome, $tick );
+                }
+            } finally {
+                if ( ! $lane_busy ) {
+                    MainWP_Backup_Monitor::release_lane_lease();
+                }
             }
         }
     }

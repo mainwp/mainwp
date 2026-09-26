@@ -524,6 +524,17 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     }
 
     /**
+     * Method mainwp_cronbackups_slice_action()
+     *
+     * Run cron backups slice action.
+     *
+     * @uses \MainWP\Dashboard\MainWP_System_Cron_Jobs::cron_backups_slice()
+     */
+    public function mainwp_cronbackups_slice_action() {
+        MainWP_System_Cron_Jobs::instance()->cron_backups_slice();
+    }
+
+    /**
      * Method mainwp_cronbackups_action()
      *
      * Run cron backups action.

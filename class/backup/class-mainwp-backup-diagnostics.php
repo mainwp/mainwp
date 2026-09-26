@@ -101,6 +101,7 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
         add_action( 'mainwp_backup_diag_tick', array( $this, 'on_tick' ), 10, 3 );
         add_action( 'mainwp_backup_diag_preflight', array( $this, 'on_preflight' ), 10, 4 );
         add_action( 'mainwp_backup_diag_slot', array( $this, 'on_slot' ), 10, 4 );
+        add_action( 'mainwp_backup_diag_lane', array( $this, 'on_lane' ), 10, 4 );
 
         // Existing pipeline hooks: terminal outcomes and lifecycle events.
         add_action( 'mainwp_native_backup_completed', array( $this, 'on_backup_terminal' ), 10, 4 );
@@ -626,6 +627,35 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
                     'token'          => (string) $token,
                     'active'         => (int) $active,
                     'max_concurrent' => (int) $max_concurrent,
+                )
+            );
+        } catch ( \Throwable $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement -- diagnostics must never break a backup.
+            return;
+        }
+    }
+
+    /**
+     * Record a lane lease decision.
+     *
+     * @param string $event         acquired|refused|released|reclaimed_stale|lost.
+     * @param string $token         Lane token, '' on refusal.
+     * @param int    $active        Active lane holder count after the decision.
+     * @param int    $lease_seconds Lane lease duration.
+     *
+     * @return void
+     */
+    public function on_lane( $event, $token, $active, $lease_seconds ): void {
+        try {
+            $this->record(
+                '_global',
+                'lane',
+                0,
+                0,
+                array(
+                    'event'         => (string) $event,
+                    'token'         => (string) $token,
+                    'active'        => (int) $active,
+                    'lease_seconds' => (int) $lease_seconds,
                 )
             );
         } catch ( \Throwable $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement -- diagnostics must never break a backup.

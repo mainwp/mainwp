@@ -22,6 +22,28 @@ use MainWP\Dashboard\MainWP_System_Cron_Jobs;
 class MainWP_Backup_Schedule_Cron_Test extends MainWP_Abilities_Test_Case {
 
 	/**
+	 * The minutely slice event follows the native-backup toggle.
+	 */
+	public function test_slice_event_registration_and_unscheduling() {
+		$cron = MainWP_System_Cron_Jobs::instance();
+		$cron->init_cron_jobs();
+		$this->assertNotFalse( has_action( 'mainwp_cronbackups_slice_action', array( $cron, 'cron_backups_slice' ) ) );
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		$this->assertSame( 'minutely', $cron->get_cron_jobs()['mainwp_cronbackups_slice_action'] );
+		$this->assertSame( '5minutely', $cron->get_cron_jobs()['mainwp_cronbackups_continue_action'] );
+		$cron->init_mainwp_cron( true, 'mainwp_cronbackups_slice_action', 'minutely' );
+		$this->assertSame( 'minutely', wp_get_schedule( 'mainwp_cronbackups_slice_action' ) );
+		$this->assertNotFalse( wp_next_scheduled( 'mainwp_cronbackups_slice_action' ) );
+		update_option( 'mainwp_enableNativeBackups', 0 );
+		$this->assertArrayNotHasKey( 'mainwp_cronbackups_slice_action', $cron->get_cron_jobs() );
+		$cron->init_cron();
+		$this->assertFalse( wp_next_scheduled( 'mainwp_cronbackups_slice_action' ) );
+		delete_option( 'mainwp_cron_last_backups_slice' );
+		$cron->cron_backups_slice();
+		$this->assertFalse( get_option( 'mainwp_cron_last_backups_slice' ), 'A disabled tick never enters the slice.' );
+	}
+
+	/**
 	 * An interleaved schedule save must survive either cron recomputation path.
 	 */
 	public function test_next_run_recomputation_preserves_concurrent_schedule_save() {

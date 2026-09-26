@@ -1377,7 +1377,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             MainWP_Backup_Monitor::touch_native_leases( MainWP_Backup_Monitor::DEFAULT_SLOT_LEASE_SECONDS );
             MainWP_System_Utility::set_time_limit( 0 );
 
-            if ( MainWP_Backup_Monitor::native_lease_lost() ) {
+            if ( MainWP_Backup_Monitor::native_lease_lost() || ! MainWP_Backup_Monitor::confirm_lane_lease() ) {
                 $outcome['lease_lost'] = true;
                 // The slot was reclaimed under this holder and another
                 // process may already own it, so driving another site would
@@ -1550,9 +1550,11 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                 // gave itself, so the bookkeeping and hashing that follow would
                 // inherit it instead of the cron lanes' no-limit policy.
                 MainWP_System_Utility::set_time_limit( 0 );
+                // Yielded sites also need a heartbeat before the next site starts.
+                MainWP_Backup_Monitor::refresh_lane_lease();
             }
 
-            if ( ! MainWP_Backup_Monitor::confirm_native_lease() ) {
+            if ( ! MainWP_Backup_Monitor::confirm_native_lease() || ! MainWP_Backup_Monitor::confirm_lane_lease() ) {
                 $outcome['lease_lost'] = true;
                 // The slot went away while this site was being driven, so
                 // whatever the child did or did not do happened outside a
@@ -1592,7 +1594,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
 
         MainWP_System_Utility::set_time_limit( 0 );
 
-        $lease_lost = ! MainWP_Backup_Monitor::confirm_native_lease();
+        $lease_lost = ! MainWP_Backup_Monitor::confirm_native_lease() || ! MainWP_Backup_Monitor::confirm_lane_lease();
         if ( $lease_lost ) {
             $outcome['lease_lost'] = true;
             // Both loop exits above leave the run unfinished, so the reason

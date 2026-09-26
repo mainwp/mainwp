@@ -1238,6 +1238,16 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
     }
 
     /**
+     * Flag missed slice ticks only while native backups are enabled.
+     *
+     * @return bool Whether the last tick is more than three minutes old.
+     */
+    public static function is_backup_slice_stale(): bool {
+        return MainWP_Backup_Settings::is_native_backups_enabled()
+            && (int) get_option( 'mainwp_cron_last_backups_slice', 0 ) < time() - 180;
+    }
+
+    /**
      * Renders the Cron Schedule page.
      *
      * @return void
@@ -1276,7 +1286,8 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
         if ( MainWP_Backup_Settings::is_native_backups_enabled() ) {
             $cron_jobs['Start backups (Legacy)']    = array( 'mainwp_cron_last_backups', 'mainwp_cronbackups_action', esc_html__( 'Once hourly', 'mainwp' ), 'hourly' );
-            $cron_jobs['Continue backups (Legacy)'] = array( 'mainwp_cron_last_backups_continue', 'mainwp_cronbackups_continue_action', esc_html__( 'Once every five minutes', 'mainwp' ), '5minutely' );
+            $cron_jobs['Continue backups (Legacy)'] = array( 'mainwp_cron_last_backups_continue', 'mainwp_cronbackups_continue_action', esc_html__( 'Once every five minutes (maintenance)', 'mainwp' ), '5minutely' );
+            $cron_jobs['Backup slices (Legacy)']    = array( 'mainwp_cron_last_backups_slice', 'mainwp_cronbackups_slice_action', esc_html__( 'Once every minute', 'mainwp' ), 'minutely' );
         }
 
         $cron_jobs = apply_filters( 'mainwp_info_schedules_cron_listing', $cron_jobs );
@@ -1374,7 +1385,11 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                         <td><?php echo esc_html( $job_title ); ?></td>
                         <td><?php echo esc_html( $job_action ); ?></td>
                         <td><?php echo esc_html( $job_freq ); ?></td>
-                        <td><?php echo esc_html( $job_last_run ); ?></td>
+                        <td><?php echo esc_html( $job_last_run ); ?>
+                            <?php if ( 'mainwp_cronbackups_slice_action' === $job_action && static::is_backup_slice_stale() ) : ?>
+                                <span class="ui yellow label"><i class="exclamation icon"></i><?php esc_html_e( 'WP-Cron is not firing every minute. Add a system cron for wp-cron.php so backups keep moving.', 'mainwp' ); ?></span>
+                            <?php endif; ?>
+                        </td>
                         <td><?php echo ! empty( $job_next_run ) ? esc_html( $job_next_run ) : ''; ?></td>
                     </tr>
                     <?php

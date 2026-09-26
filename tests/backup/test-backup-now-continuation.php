@@ -3,7 +3,7 @@
  * MainWP "Back up now" immediate-continuation tests.
  *
  * An on-demand backup kicks a near-term continuation so a tab-closed run
- * finishes within seconds instead of waiting for the 5-minute recurring
+ * finishes within seconds instead of waiting for the recurring
  * backup cron. The continuation rides a dedicated single-event hook
  * (mainwp_native_backup_continue_action) that reuses the same
  * cron_backups_continue handler, because the recurring
@@ -155,11 +155,22 @@ class MainWP_Backup_Now_Continuation_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Exercise both entry points against the same rotation cases.
+	 *
+	 * @return array Entry point names.
+	 */
+	public static function slice_entry_points(): array {
+		return array( array( 'cron_backups_continue' ), array( 'cron_backups_slice' ) );
+	}
+
+	/**
 	 * Unfinished tasks share the continue lane even when a run never completes.
 	 *
+	 * @dataProvider slice_entry_points
+	 * @param string $entry Entry point.
 	 * @return void
 	 */
-	public function test_continue_lane_rotates_across_unfinished_tasks() {
+	public function test_continue_lane_rotates_across_unfinished_tasks( string $entry ) {
 		$cases = array(
 			'alternation'               => array(
 				'ticks'    => 4,
@@ -277,7 +288,7 @@ class MainWP_Backup_Now_Continuation_Test extends MainWP_Abilities_Test_Case {
 				$before = time();
 				for ( $tick = 1; $tick <= $case['ticks']; ++$tick ) {
 					$already = count( $lane->picked );
-					$lane->cron_backups_continue();
+					$lane->$entry();
 					// The lane, not this test, must stamp every task it tried this tick.
 					foreach ( array_slice( $lane->picked, $already ) as $tried ) {
 						$row = $db->get_backup_task_by_id( $tried );
@@ -459,10 +470,29 @@ class MainWP_Backup_Now_Continuation_Test extends MainWP_Abilities_Test_Case {
 				if ( 'slot refused' === $label ) {
 					$this->assertIsString( $slot, $label );
 				}
+				if ( 'identical poll' === $label ) {
+					$lane_token = MainWP_Backup_Monitor::acquire_lane_lease();
+					$this->assertIsString( $lane_token );
+					$aged = wp_json_encode(
+						array(
+							'token'     => $lane_token,
+							'started'   => time() - 10,
+							'heartbeat' => time() - 10,
+							'pid'       => getmypid(),
+							'lease'     => 600,
+						)
+					);
+					$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->options} SET option_value = %s WHERE option_name = %s", $aged, MainWP_Backup_Monitor::LANE_LEASE_OPTION ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- age the heartbeat to expose a skipped refresh on yield.
+					$before = time();
+				}
 				$claimed         = null;
 				$claimed_started = 0;
 				$outcome         = array( 'stale' => true );
 				$result          = MainWP_Manage_Backups_Handler::execute_backup_task( $task, 5, false, 0, $claimed, $claimed_started, false, $outcome );
+				if ( 'identical poll' === $label ) {
+					$lane_row = json_decode( $wpdb->get_var( $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", MainWP_Backup_Monitor::LANE_LEASE_OPTION ) ), true ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- observe the yielded site's heartbeat.
+					$this->assertGreaterThanOrEqual( $before, $lane_row['heartbeat'], 'Yielded sites must refresh the lane too.' );
+				}
 				$this->assertSame( $expected[0], $result, $label . ': existing bool result' );
 				$this->assertSame( $keys, array_keys( $outcome ), $label );
 				$this->assertSame( array_slice( $expected, 1, 7 ), array_slice( array_values( $outcome ), 0, 7 ), $label );
@@ -476,6 +506,7 @@ class MainWP_Backup_Now_Continuation_Test extends MainWP_Abilities_Test_Case {
 				remove_filter( 'mainwp_fetch_url_authed_pre', $child );
 				remove_filter( 'mainwp_download_to_file_pre', $download );
 				remove_action( 'mainwp_postprocess_backup_site', $drop );
+				MainWP_Backup_Monitor::release_lane_lease();
 				if ( false !== $slot ) {
 					MainWP_Backup_Monitor::release_backup_slot( $slot );
 				}
@@ -495,9 +526,11 @@ class MainWP_Backup_Now_Continuation_Test extends MainWP_Abilities_Test_Case {
 	/**
 	 * Every queried tick emits one event, even when no task is due.
 	 *
+	 * @dataProvider slice_entry_points
+	 * @param string $entry Entry point.
 	 * @return void
 	 */
-	public function test_continue_tick_reports_pick_and_empty_queue() {
+	public function test_continue_tick_reports_pick_and_empty_queue( string $entry ) {
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
 		update_option( 'mainwp_enableNativeBackups', 1 );
 		$db     = MainWP_DB_Backup::instance();
@@ -511,8 +544,10 @@ class MainWP_Backup_Now_Continuation_Test extends MainWP_Abilities_Test_Case {
 		};
 		add_action( 'mainwp_backup_diag_tick', $record, 10, 3 );
 		try {
-			MainWP_System_Cron_Jobs::instance()->cron_backups_continue();
+			MainWP_System_Cron_Jobs::instance()->$entry();
 			$this->assertCount( 1, $events );
+			$this->assertFalse( $events[0][2]['lane_busy'] );
+			$this->assertSame( 'cron_backups_slice' === $entry ? 'slice' : 'continue', $events[0][2]['lane'] );
 			$this->assertSame( (int) $second->id, $events[0][0] );
 			$this->assertSame( array( (int) $second->id, (int) $first->id ), $events[0][2]['candidates'] );
 			$this->assertSame( array( 'sites_visited', 'sites_advanced', 'sites_finished', 'sites_yielded', 'slot_refused', 'lease_lost', 'run_closed', 'wall_time' ), array_keys( $events[0][1] ) );
@@ -523,7 +558,7 @@ class MainWP_Backup_Now_Continuation_Test extends MainWP_Abilities_Test_Case {
 			$db->remove_backup_task( $first->id );
 			$db->remove_backup_task( $second->id );
 			$events = array();
-			MainWP_System_Cron_Jobs::instance()->cron_backups_continue();
+			MainWP_System_Cron_Jobs::instance()->$entry();
 			$this->assertCount( 1, $events );
 			$this->assertSame( 0, $events[0][0] );
 			$this->assertNull( $events[0][1] );
@@ -534,6 +569,147 @@ class MainWP_Backup_Now_Continuation_Test extends MainWP_Abilities_Test_Case {
 			$db->remove_backup_task( $first->id );
 			$db->remove_backup_task( $second->id );
 			delete_option( 'mainwp_enableNativeBackups' );
+		}
+	}
+
+	/**
+	 * An occupied lane stamps the tick but cannot pick or rotate a task.
+	 */
+	public function test_busy_slice_does_not_pick() {
+		global $wpdb;
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$task = $this->open_outcome_task( array() );
+		$row  = wp_json_encode(
+			array(
+				'token'     => 'other-owner',
+				'started'   => time(),
+				'heartbeat' => time(),
+				'pid'       => 2,
+				'lease'     => 600,
+			)
+		);
+		$wpdb->query( $wpdb->prepare( "INSERT INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')", MainWP_Backup_Monitor::LANE_LEASE_OPTION, $row ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- another process owns this lease.
+		$events = array();
+		$record = static function ( $picked, $outcome, $tick ) use ( &$events ) {
+			$events[] = array( $picked, $outcome, $tick );
+		};
+		add_action( 'mainwp_backup_diag_tick', $record, 10, 3 );
+		try {
+			$before = time();
+			MainWP_System_Cron_Jobs::instance()->cron_backups_slice();
+			$this->assertGreaterThanOrEqual( $before, (int) get_option( 'mainwp_cron_last_backups_slice' ) );
+			$this->assertCount( 1, $events );
+			$this->assertSame( 0, $events[0][0] );
+			$this->assertNull( $events[0][1] );
+			$this->assertTrue( $events[0][2]['lane_busy'] );
+			$this->assertSame( 'slice', $events[0][2]['lane'] );
+			$this->assertSame( array(), $events[0][2]['candidates'] );
+			$this->assertSame( $task->last_continued, MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id )->last_continued );
+			$this->assertSame( $row, $wpdb->get_var( $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", MainWP_Backup_Monitor::LANE_LEASE_OPTION ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- refusal cannot release another process's row.
+		} finally {
+			remove_action( 'mainwp_backup_diag_tick', $record );
+			delete_option( MainWP_Backup_Monitor::LANE_LEASE_OPTION );
+			MainWP_DB_Backup::instance()->remove_backup_task( $task->id );
+		}
+	}
+
+	/**
+	 * Losing the lane after backup_site prevents marks and the run close.
+	 */
+	public function test_lane_loss_after_first_site_fences_task_writes() {
+		global $wpdb;
+		$user = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $user );
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		$key = openssl_pkey_new(
+			array(
+				'private_key_bits' => 2048,
+				'private_key_type' => OPENSSL_KEYTYPE_RSA,
+			)
+		);
+		openssl_pkey_export( $key, $private_key );
+		$sites = array();
+		for ( $i = 0; $i < 2; ++$i ) {
+			$sites[] = $this->create_test_site(
+				array(
+					'userid'  => $user,
+					'privkey' => base64_encode( $private_key ),
+				)
+			); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- signing fixture.
+		}
+		$db   = MainWP_DB_Backup::instance();
+		$task = $this->open_outcome_task( $sites );
+		foreach ( $sites as $site ) {
+			$db->add_backup_task_progress( $task->id, $site, array() );
+			$db->update_backup_task_progress(
+				$task->id,
+				$site,
+				array(
+					'dtsFetched'           => time(),
+					'pid'                  => 12345,
+					'child_backup_task_id' => 'lane-child-' . $site,
+					'child_phase'          => 'archiving_files',
+					'removedFiles'         => 1,
+				)
+			);
+		}
+		$calls    = array();
+		$files    = array();
+		$child    = static function ( $result, $website, $what ) use ( &$calls ) {
+			$calls[] = (int) $website->id;
+			if ( 'backup_task_run' === $what ) {
+				return array(
+					'phase' => 'completed',
+					'file'  => 'lane-backup.zip',
+					'size'  => 4096,
+				);
+			}
+			if ( in_array( $what, array( 'delete_backup', 'backup_task_cancel' ), true ) ) {
+				return array( 'result' => 'ok' );
+			}
+			throw new \RuntimeException( 'Unexpected Child action: ' . $what );
+		};
+		$download = static function ( $pre, $url, $file ) use ( &$files ) {
+			$files[] = $file;
+			file_put_contents( $file, 'PK' . "\x03\x04" . str_repeat( 'x', 4092 ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- validated artifact fixture.
+			return true;
+		};
+		$dropped  = 0;
+		$drop     = static function () use ( $wpdb, &$dropped ) {
+			++$dropped;
+			$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name = %s", MainWP_Backup_Monitor::LANE_LEASE_OPTION ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- another process removed the lane after backup_site.
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $child, 10, 3 );
+		add_filter( 'mainwp_download_to_file_pre', $download, 10, 3 );
+		add_action( 'mainwp_postprocess_backup_site', $drop );
+		try {
+			$this->assertIsString( MainWP_Backup_Monitor::acquire_lane_lease() );
+			$claimed         = null;
+			$claimed_started = 0;
+			$outcome         = null;
+			$this->assertFalse( MainWP_Manage_Backups_Handler::execute_backup_task( $task, 5, false, 0, $claimed, $claimed_started, false, $outcome ) );
+			$this->assertSame( 1, $dropped );
+			$this->assertSame( 1, $outcome['sites_visited'] );
+			$this->assertTrue( $outcome['lease_lost'] );
+			$this->assertFalse( $outcome['run_closed'] );
+			$this->assertNotEmpty( $calls );
+			$this->assertSame( array( $sites[0] ), array_values( array_unique( $calls ) ) );
+			$after = $db->get_backup_task_by_id( $task->id );
+			$this->assertSame( $task->completed_sites, $after->completed_sites );
+			$this->assertSame( $task->completed, $after->completed );
+		} finally {
+			MainWP_Backup_Monitor::release_lane_lease();
+			remove_filter( 'mainwp_fetch_url_authed_pre', $child );
+			remove_filter( 'mainwp_download_to_file_pre', $download );
+			remove_action( 'mainwp_postprocess_backup_site', $drop );
+			foreach ( $files as $file ) {
+				if ( file_exists( $file ) ) {
+					unlink( $file );
+				}
+			}
+			$wpdb->delete( $wpdb->prefix . 'mainwp_wp_backup_snapshot', array( 'task_id' => $task->id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- fixture cleanup.
+			$db->remove_backup_task( $task->id );
 		}
 	}
 

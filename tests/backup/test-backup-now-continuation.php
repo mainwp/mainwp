@@ -336,6 +336,7 @@ class MainWP_Backup_Now_Continuation_Test extends MainWP_Abilities_Test_Case {
 		$cases = array(
 			// result, visited, advanced, finished, yielded, refused, lost, closed, advanced unfinished, dropped.
 			'advanced same-phase' => array( true, 1, 1, 0, 0, false, false, false, 1, 0 ),
+			'current file moved'  => array( true, 1, 1, 0, 0, false, false, false, 1, 0 ),
 			'create issued'       => array( true, 1, 1, 0, 0, false, false, false, 1, 0 ),
 			'identical poll'      => array( true, 1, 0, 0, 1, false, false, false, 0, 0 ),
 			'creating marker'     => array( true, 1, 0, 0, 1, false, false, false, 0, 0 ),
@@ -387,6 +388,7 @@ class MainWP_Backup_Now_Continuation_Test extends MainWP_Abilities_Test_Case {
 						'child_backup_task_id' => 'creating marker' === $label ? '__creating_outcome' : 'outcome-child-task',
 						'child_phase'          => 'archiving_files',
 						'bytes_downloaded'     => 10,
+						'current_file'         => 'wp_options',
 						'removedFiles'         => 1,
 					)
 				);
@@ -412,8 +414,24 @@ class MainWP_Backup_Now_Continuation_Test extends MainWP_Abilities_Test_Case {
 							'size'  => 4096,
 						);
 					}
+					if ( 'finished error' === $label ) {
+						return array(
+							'phase'      => 'failed',
+							'error'      => 'Outcome failure',
+							'error_code' => 'outcome_failed',
+						);
+					}
+					if ( 'current file moved' === $label ) {
+						return array(
+							'phase'    => 'archiving_files',
+							'progress' => array(
+								'bytes_done'   => 10,
+								'current_file' => 'wp_posts',
+							),
+						);
+					}
 					return array(
-						'phase'    => 'finished error' === $label ? 'failed' : 'archiving_files',
+						'phase'    => 'archiving_files',
 						'progress' => array( 'bytes_done' => 'advanced same-phase' === $label ? 20 : 10 ),
 					);
 				}
@@ -530,12 +548,13 @@ class MainWP_Backup_Now_Continuation_Test extends MainWP_Abilities_Test_Case {
 			foreach ( array(
 				'0'       => 0,
 				'1'       => 5,
+				'empty'   => 0,
 				'missing' => 5,
 			) as $value => $expected ) {
 				if ( 'missing' === $value ) {
 					delete_option( 'mainwp_chunkedBackupTasks' );
 				} else {
-					update_option( 'mainwp_chunkedBackupTasks', (string) $value );
+					update_option( 'mainwp_chunkedBackupTasks', 'empty' === $value ? '' : (string) $value );
 				}
 				$this->assertSame( $expected, $method->invoke( MainWP_System_Cron_Jobs::instance() ), (string) $value );
 			}

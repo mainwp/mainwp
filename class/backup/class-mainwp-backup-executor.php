@@ -681,6 +681,9 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             }
 
             if ( ! empty( $temp ) && isset( $temp['error'] ) ) {
+                if ( isset( $temp['phase'] ) && is_string( $temp['phase'] ) && sanitize_key( $temp['phase'] ) !== (string) $backupTaskProgress->child_phase ) {
+                    $advanced = true;
+                }
                 throw new MainWP_Exception( esc_html( MainWP_Backup_Error_Codes::sanitize_message( $temp['error'] ) ), null, isset( $temp['error_code'] ) ? $temp['error_code'] : '' ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
             }
 
@@ -688,8 +691,14 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 // Unknown phase strings from newer children stay null and keep polling.
                 $phase = MainWP_Backup_Task_Phase::tryFrom( (string) $temp['phase'] );
 
+                // Dashboard sees only the Child's projected progress columns. Internal cursor movement within
+                // one table or file still reads as not advanced if phase, counters and current_file stay the same.
+                // A stored Child progress token would close this gap.
                 $advanced = is_string( $temp['phase'] ) && sanitize_key( $temp['phase'] ) !== (string) $backupTaskProgress->child_phase;
                 $progress = isset( $temp['progress'] ) && is_array( $temp['progress'] ) ? $temp['progress'] : array();
+                if ( isset( $progress['current_file'] ) && substr( sanitize_text_field( (string) $progress['current_file'] ), 0, 255 ) !== (string) $backupTaskProgress->current_file ) {
+                    $advanced = true;
+                }
                 $counters = array(
                     'bytes_downloaded' => 'bytes_done',
                     'bytes_expected'   => isset( $progress['total_bytes'] ) ? 'total_bytes' : 'bytes_total',

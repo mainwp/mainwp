@@ -168,7 +168,7 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
         // and the download about to land restores the count to exactly
         // $maxBackups. A strict > would leave one file too many.
         $cnt = 0;
-        foreach ( $dbBackups as $key => $dbBackup ) {
+        foreach ( $dbBackups as $dbBackup ) {
             ++$cnt;
             if ( $cnt >= $maxBackups ) {
                 $wp_filesystem->delete( $dbBackup );
@@ -176,7 +176,7 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
         }
 
         $cnt = 0;
-        foreach ( $fullBackups as $key => $fullBackup ) {
+        foreach ( $fullBackups as $fullBackup ) {
             ++$cnt;
             if ( $cnt >= $maxBackups ) {
                 $wp_filesystem->delete( $fullBackup );

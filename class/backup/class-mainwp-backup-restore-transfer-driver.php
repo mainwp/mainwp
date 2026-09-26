@@ -35,6 +35,13 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
     private static $instance = null;
 
     /**
+     * Remote key prefixes by snapshot id.
+     *
+     * @var array<int,string>
+     */
+    private array $snapshot_prefixes = array();
+
+    /**
      * Get the singleton instance.
      *
      * @return MainWP_Backup_Restore_Transfer_Driver
@@ -336,9 +343,13 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
      * @return string {site}/{snapshot}/.
      */
     protected function snapshot_prefix( int $snapshot_id ): string {
-        $snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
-        $site_id  = null !== $snapshot ? (int) $snapshot->site_id : 0;
-        return $site_id . '/' . $snapshot_id . '/';
+        // Cache the prefix to avoid querying the snapshot once per artifact.
+        if ( ! isset( $this->snapshot_prefixes[ $snapshot_id ] ) ) {
+            $snapshot                                = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+            $site_id                                 = null !== $snapshot ? (int) $snapshot->site_id : 0;
+            $this->snapshot_prefixes[ $snapshot_id ] = $site_id . '/' . $snapshot_id . '/';
+        }
+        return $this->snapshot_prefixes[ $snapshot_id ];
     }
 
     /**
@@ -802,7 +813,6 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
             }
         }
 
-        $prefix      = $entry['snapshot_id'] . '/';
         $chunk_count = count( $entry['chunks'] );
 
         while ( $cursor['next'] < $chunk_count ) {

@@ -1596,9 +1596,10 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 			$this->assertFileDoesNotExist( $orphan . '.downloading', 'The stale legacy sidecar must be cleared.' );
 			$this->assertFileDoesNotExist( $orphan, 'An archive behind a stale sidecar must still be pruned.' );
 		} finally {
+			// Fixture teardown first: a warning from rmdir() must not skip it.
+			$this->tear_down_sweep_fixture( $site_id, $other, $dir );
 			array_map( 'unlink', glob( $legacy_dir . '*' ) ?: array() ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test cleanup.
 			rmdir( $legacy_dir ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test cleanup.
-			$this->tear_down_sweep_fixture( $site_id, $other, $dir );
 		}
 	}
 
@@ -2401,7 +2402,7 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 	 * once the refusal outlives the window.
 	 *
 	 * @dataProvider sibling_holder_cases
-	 * @param string|null $sibling Null for no sibling row, else 'active', 'paused', 'finished' or 'child failed'.
+	 * @param string|null $sibling Null for no sibling row, else 'active', 'paused', 'finished', 'child failed' or 'child completed'.
 	 * @param bool        $yields  Whether the refused create must yield.
 	 *
 	 * @return void
@@ -2435,6 +2436,9 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 			} elseif ( 'child failed' === $sibling ) {
 				// The phase lands before the failure cleanup clears the task id.
 				$sibling_row['child_phase'] = 'failed';
+			} elseif ( 'child completed' === $sibling ) {
+				// The phase lands before the fetchResult claim.
+				$sibling_row['child_phase'] = 'completed';
 			}
 			$this->seed_progress( $holder->id, $site_id, $sibling_row );
 			$task->id = (int) $holder->id + 1;
@@ -2480,7 +2484,7 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 			$this->assertSame( 0, (int) $progress->foreign_refused_since, 'The persistence clock must not run for a sibling holder.' );
 			$this->assertContains( 'sibling_holds_site_yield', $reasons );
 		} else {
-			$this->assertNotNull( $thrown, 'A foreign or paused holder must still surface after the window.' );
+			$this->assertNotNull( $thrown, 'A holder that is not a live sibling must still surface after the window.' );
 			$this->assertSame( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING, $thrown->get_message_error_code() );
 			$this->assertSame( MainWP_Backup_Executor::EXTRA_FOREIGN_ALREADY_RUNNING, $thrown->get_message_extra() );
 			$this->assertNotContains( 'sibling_holds_site_yield', $reasons );
@@ -2499,6 +2503,7 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 			'paused sibling'                => array( 'paused', false ),
 			'sibling finished on the site'  => array( 'finished', false ),
 			'sibling child task failed'     => array( 'child failed', false ),
+			'sibling child task completed'  => array( 'child completed', false ),
 		);
 	}
 

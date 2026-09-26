@@ -674,7 +674,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
     }
 
     /**
-     * Cache the signed self-connect probe so page refreshes do not repeat the request.
+     * Probe wp-cron.php and cache the result so page refreshes do not repeat the request.
      *
      * @return bool Whether loopback is reachable or the cron mode needs no loopback.
      */
@@ -684,15 +684,27 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
             return 'ok' === $cached;
         }
 
-        // These modes use system cron; the continuation sender makes no loopback request.
+        // The continuation sender makes no loopback request in either mode, so there is nothing to probe.
         if ( ( defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON )
             || ( defined( 'ALTERNATE_WP_CRON' ) && ALTERNATE_WP_CRON ) ) {
             return true;
         }
 
-        $response    = MainWP_System_Utility::test_self_connect( admin_url( 'admin-ajax.php' ) );
+        // wp-cron.php uses the GET value as its lock without taking a new lock. This non-numeric
+        // value cannot match a real doing_cron lock (a formatted microtime), so WordPress loads
+        // and exits before running any cron event.
+        $url         = add_query_arg( 'doing_wp_cron', 'mainwp-loopback-probe', site_url( 'wp-cron.php' ) );
+        $response    = wp_remote_get(
+            $url,
+            array(
+                'blocking'    => true,
+                'timeout'     => 15,
+                'redirection' => 0,
+                'sslverify'   => apply_filters( 'https_local_ssl_verify', false, $url ),
+            )
+        );
         $code        = (int) wp_remote_retrieve_response_code( $response );
-        $loopback_ok = ! is_wp_error( $response ) && 200 <= $code && 204 >= $code;
+        $loopback_ok = ! is_wp_error( $response ) && 200 <= $code && 299 >= $code;
         set_transient( 'mainwp_backup_loopback_ok', $loopback_ok ? 'ok' : 'failed', 10 * MINUTE_IN_SECONDS );
         return $loopback_ok;
     }

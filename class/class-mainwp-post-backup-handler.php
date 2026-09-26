@@ -710,7 +710,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
      *
      * Cron requests defer the loopback until shutdown, after WordPress releases
      * its lock. Under DISABLE_WP_CRON or ALTERNATE_WP_CRON the shutdown spawn is
-     * a no-op; recurring events driven by system cron remain the backstop.
+     * a no-op; system or page-load cron, respectively, is the backstop.
      *
      * @param int $when Unix timestamp, or zero for the current time.
      * @return void

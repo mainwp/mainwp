@@ -818,7 +818,10 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         } elseif ( 'incremental' === $type && ! empty( $information['artifacts'] ) ) {
             $snapshot_id = 0;
             try {
-                $result = self::finish_incremental_backup( $website, $pTask, $information['artifacts'], $backupTaskProgress, $snapshot_id );
+                $result = self::finish_incremental_backup( $website, $pTask, $information['artifacts'], $backupTaskProgress, $snapshot_id, $advanced );
+                if ( false !== $result ) {
+                    $advanced = true;
+                }
             } catch ( \Throwable $e ) {
                 /** This action is documented in class/backup/class-mainwp-backup-executor.php */
                 do_action(
@@ -1877,13 +1880,14 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @param array  $artifacts Role-tagged artifact list from the child.
      * @param object $progress  Progress row (carries the child task id).
      * @param int    $snapshot_id Recorded or adopted snapshot id, including on a later failure.
+     * @param bool|null $advanced Set true when this call accepted a newly downloaded artifact.
      *
      * @throws MainWP_Exception When an artifact cannot be downloaded or fails validation.
      *
      * @return array|false Backup result with the snapshot id, false when the run stopped without recording one.
      */
     // phpcs:ignore Squiz.Commenting.FunctionCommentThrowTag.Missing -- registry factory throws are MainWP_Exception, documented above.
-    protected static function finish_incremental_backup( $website, $pTask, $artifacts, $progress, &$snapshot_id = 0 ) { // phpcs:ignore -- NOSONAR - download loop with per-role validation.
+    protected static function finish_incremental_backup( $website, $pTask, $artifacts, $progress, &$snapshot_id = 0, &$advanced = null ) { // phpcs:ignore -- NOSONAR - download loop with per-role validation.
         MainWP_System_Utility::get_wp_file_system();
 
         /**
@@ -1977,6 +1981,9 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 }
             }
 
+            if ( ! $already_complete ) {
+                $advanced = true;
+            }
             $archive = array(
                 'file' => basename( $local ),
                 'size' => $size,

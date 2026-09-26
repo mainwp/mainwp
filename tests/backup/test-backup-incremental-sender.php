@@ -3132,6 +3132,50 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Resuming cached artifacts or a recorded snapshot reports site advancement.
+	 *
+	 * @return void
+	 */
+	public function test_incremental_resume_cached_fetch_result_reports_advanced() {
+		list( $site_id, $task ) = $this->arrange_manual_task();
+
+		$failure          = new MainWP_Exception( 'Download interrupted.' );
+		$fail_download    = true;
+		$download_failure = static function ( $pre ) use ( $failure, &$fail_download ) {
+			if ( $fail_download ) {
+				throw $failure;
+			}
+			return $pre;
+		};
+		add_filter( 'mainwp_download_to_file_pre', $download_failure, 5 );
+		try {
+			$this->run_cycle( $site_id, $task );
+			$failed = $this->run_cycle( $site_id, $task );
+			$this->assertSame( $failure, $failed['exception'] );
+			$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+			$this->assertGreaterThan( 0, (int) $progress->dtsFetched );
+			$this->assertNotEmpty( $progress->fetchResult['artifacts'] );
+			$local = \MainWP\Dashboard\MainWP_Backup_Private_Root::site_dir( $site_id ) . 'snapshot-manual-' . $task->id . '/files.list';
+			$this->assertFileDoesNotExist( $local );
+
+			$fail_download = false;
+			$advanced      = false;
+			$result        = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups', $advanced );
+			$this->assertTrue( $advanced );
+			$this->assertIsArray( $result );
+			$this->assertGreaterThan( 0, $result['snapshot_id'] );
+			$this->assertFileExists( $local );
+
+			$advanced = false;
+			$resume   = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups', $advanced );
+			$this->assertSame( $result['snapshot_id'], $resume['snapshot_id'] );
+			$this->assertTrue( $advanced );
+		} finally {
+			remove_filter( 'mainwp_download_to_file_pre', $download_failure, 5 );
+		}
+	}
+
+	/**
 	 * Reusing a recorded snapshot must not announce another successful backup.
 	 *
 	 * @dataProvider completion_identity_cases

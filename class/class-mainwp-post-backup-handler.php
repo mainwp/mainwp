@@ -706,24 +706,58 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
     }
 
     /**
-     * Schedule an immediate backup continuation.
+     * Schedule one continuation, even when a recurring event is already pending.
      *
-     * Mirrors the restore orchestrator's near-term lane: a dedicated
-     * single-event hook driven by spawn_cron, guarded so repeated kicks
-     * collapse into one pending event. The hook reuses cron_backups_continue;
-     * the recurring mainwp_cronbackups_continue_action cannot serve here
-     * because WordPress de-duplicates a single event against the recurring
-     * occurrence and spawn_cron will not run a future-dated recurring event
-     * early. Under DISABLE_WP_CRON spawn_cron is a no-op and the 5-minute
-     * recurring cron remains the backstop.
+     * Cron requests defer the loopback until shutdown, after WordPress releases
+     * its lock. Under DISABLE_WP_CRON or ALTERNATE_WP_CRON the shutdown spawn is
+     * a no-op; recurring events driven by system cron remain the backstop.
+     *
+     * @param int $when Unix timestamp, or zero for the current time.
+     * @return void
+     */
+    public static function kick_backup_continuation( int $when = 0 ) {
+        static $shutdown_registered = false;
+
+        if ( ! wp_next_scheduled( 'mainwp_native_backup_continue_action' ) ) {
+            wp_schedule_single_event( 0 === $when ? time() : $when, 'mainwp_native_backup_continue_action' );
+        }
+        if ( wp_doing_cron() ) {
+            if ( ! $shutdown_registered ) {
+                add_action( 'shutdown', array( self::class, 'spawn_backup_continuation' ) );
+                $shutdown_registered = true;
+            }
+            return;
+        }
+        spawn_cron();
+    }
+
+    /**
+     * Let the next cron request acquire its own lock after this request ends.
      *
      * @return void
      */
-    public static function kick_backup_continuation() {
-        if ( ! wp_next_scheduled( 'mainwp_native_backup_continue_action' ) ) {
-            wp_schedule_single_event( time(), 'mainwp_native_backup_continue_action' );
+    public static function spawn_backup_continuation(): void {
+        if ( ( defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON )
+            || ( defined( 'ALTERNATE_WP_CRON' ) && ALTERNATE_WP_CRON )
+            || ! wp_next_scheduled( 'mainwp_native_backup_continue_action' ) ) {
+            return;
         }
-        spawn_cron();
+
+        // A timestamped doing_wp_cron argument requires a matching pre-existing lock.
+        $cron_request = apply_filters(
+            'cron_request',
+            array(
+                'url'  => site_url( 'wp-cron.php' ),
+                'key'  => '',
+                'args' => array(
+                    'timeout'   => 0.01,
+                    'blocking'  => false,
+                    'sslverify' => apply_filters( 'https_local_ssl_verify', false ),
+                ),
+            ),
+            ''
+        );
+        wp_remote_post( $cron_request['url'], $cron_request['args'] );
     }
 
     /**

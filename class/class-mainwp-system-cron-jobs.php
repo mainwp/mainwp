@@ -1633,47 +1633,92 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         $picked_task_id = 0;
         $outcome        = null;
         $tasks          = array();
+        $iterations     = 0;
+        $idle_polls     = 0;
+        $ended_by       = 'no_work';
+        $poll_interval  = max( 0, (int) apply_filters( 'mainwp_backup_slice_poll_interval', 5 ) );
         $lane_busy      = false === MainWP_Backup_Monitor::acquire_lane_lease();
         try {
             if ( $lane_busy ) {
+                $ended_by = 'lane_busy';
                 return;
             }
             if ( ! MainWP_Backup_Monitor::refresh_lane_lease() ) {
+                $ended_by = 'lease_lost';
                 return;
             }
             $tasks = MainWP_DB_Backup::instance()->get_backup_tasks_to_complete();
             MainWP_Logger::instance()->debug( 'backups continue :: Found ' . count( $tasks ) . ' to continue.' );
 
-            if ( empty( $tasks ) ) {
-                return;
-            }
-
-            foreach ( $tasks as $task ) {
-                MainWP_Logger::instance()->debug( 'backups continue ::    Task: ' . $task->name );
-            }
-
-            foreach ( $tasks as $task ) {
-                $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
-                // The due query ran before this re-read; a task deleted in between has no row.
-                if ( empty( $task ) ) {
-                    continue;
-                }
-                if ( ! empty( $task->paused ) || $task->completed >= $task->last_run ) {
-                    continue;
+            while ( ! empty( $tasks ) ) {
+                foreach ( $tasks as $task ) {
+                    MainWP_Logger::instance()->debug( 'backups continue ::    Task: ' . $task->name );
                 }
 
-                // Stamp before the run so a task whose run dies or whose children always fail
-                // still rotates to the back: starvation was seen on dev.mainwps.com 2026-09-25.
-                if ( MainWP_Install::backup_task_last_continued_ready() ) {
-                    MainWP_DB_Backup::instance()->update_backup_task_with_values( $task->id, array( 'last_continued' => time() ) );
+                $picked = false;
+                foreach ( $tasks as $task ) {
+                    $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+                    // The due query ran before this re-read; a task deleted in between has no row.
+                    if ( empty( $task ) ) {
+                        continue;
+                    }
+                    if ( ! empty( $task->paused ) || $task->completed >= $task->last_run ) {
+                        continue;
+                    }
+
+                    // Stamp before the run so a task whose run dies or whose children always fail
+                    // still rotates to the back: starvation was seen on dev.mainwps.com 2026-09-25.
+                    if ( MainWP_Install::backup_task_last_continued_ready() ) {
+                        MainWP_DB_Backup::instance()->update_backup_task_with_values( $task->id, array( 'last_continued' => time() ) );
+                    }
+
+                    $picked_task_id = (int) $task->id;
+                    $outcome        = null;
+                    $picked         = true;
+                    ++$iterations;
+                    $this->continue_backup_task( $task, $outcome );
+                    break;
                 }
 
-                // One call consumes the tick: false also follows real work with site errors,
-                // and a global slot refusal would refuse the next candidate too. The stamp
-                // still rotates a refused or erroring task to the back.
-                $picked_task_id = (int) $task->id;
-                $this->continue_backup_task( $task, $outcome );
-                break;
+                if ( ! $picked ) {
+                    break;
+                }
+                // Older adapters cannot report progress, so preserve their one-pick tick.
+                if ( ! is_array( $outcome ) ) {
+                    $ended_by = 'no_outcome';
+                    break;
+                }
+                if ( ! empty( $outcome['slot_refused'] ) ) {
+                    $ended_by = 'slot_refused';
+                    break;
+                }
+                if ( ! empty( $outcome['lease_lost'] ) ) {
+                    $ended_by = 'lease_lost';
+                    break;
+                }
+                $remaining_tasks = MainWP_DB_Backup::instance()->get_backup_tasks_to_complete();
+                if ( empty( $remaining_tasks ) ) {
+                    break;
+                }
+                $idle_polls = ! empty( $outcome['sites_visited'] ) && empty( $outcome['sites_advanced'] ) && empty( $outcome['sites_finished'] ) ? $idle_polls + 1 : 0;
+                if ( 3 <= $idle_polls ) {
+                    $ended_by = 'idle';
+                    break;
+                }
+                $budget = max( 0.0, (float) apply_filters( 'mainwp_backup_slice_tick_budget', 240 ) );
+                if ( microtime( true ) - $started >= $budget ) {
+                    $ended_by = 'budget';
+                    MainWP_Post_Backup_Handler::kick_backup_continuation();
+                    break;
+                }
+                if ( ! MainWP_Backup_Monitor::refresh_lane_lease() ) {
+                    $ended_by = 'lease_lost';
+                    break;
+                }
+                if ( 0 < $poll_interval ) {
+                    sleep( $poll_interval );
+                }
+                $tasks = $remaining_tasks;
             }
         } finally {
             try {
@@ -1684,6 +1729,8 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
                         'wall_time'            => microtime( true ) - $started,
                         'candidates'           => array_map( static fn( $task ) => (int) $task->id, $tasks ),
                         'unfinished_remaining' => ! empty( MainWP_DB_Backup::instance()->get_backup_tasks_to_complete() ),
+                        'iterations'           => $iterations,
+                        'ended_by'             => $ended_by,
                         'lane_busy'            => $lane_busy,
                         'lane'                 => $this->backup_slice_lane,
                     );

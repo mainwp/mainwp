@@ -925,7 +925,7 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         );
         if ( 1 === $reclaimed ) {
             /** This action is documented in class/backup/class-mainwp-backup-monitor.php */
-            do_action( 'mainwp_backup_diag_lane', 'reclaimed_stale', (string) ( $data['token'] ?? '' ), 0, self::LANE_LEASE_SECONDS );
+            do_action( 'mainwp_backup_diag_lane', 'reclaimed_stale', is_string( $data['token'] ?? null ) ? $data['token'] : '', 0, self::LANE_LEASE_SECONDS );
         }
 
         $token   = wp_generate_password( 12, false );

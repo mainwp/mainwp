@@ -1397,6 +1397,11 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                                 ?>
                                 </span>
                             <?php endif; ?>
+                            <?php if ( 'mainwp_cronbackups_slice_action' === $job_action && MainWP_Backup_Settings::is_native_backups_enabled() && ! MainWP_Server_Information_Handler::is_backup_loopback_ok() ) : ?>
+                                <span class="ui yellow label"><i class="exclamation icon"></i>
+                                <?php esc_html_e( 'This site cannot reach its own wp-cron.php, so backups cannot keep themselves running. Check loopback requests or add a system cron.', 'mainwp' ); ?>
+                                </span>
+                            <?php endif; ?>
                         </td>
                         <td><?php echo ! empty( $job_next_run ) ? esc_html( $job_next_run ) : ''; ?></td>
                     </tr>

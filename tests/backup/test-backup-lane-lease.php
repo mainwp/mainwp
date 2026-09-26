@@ -9,6 +9,7 @@ namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Backup_Monitor;
 use MainWP\Dashboard\MainWP_Server_Information;
+use MainWP\Dashboard\MainWP_Server_Information_Handler;
 use MainWP\Dashboard\MainWP_System_Cron_Jobs;
 
 /**
@@ -153,13 +154,14 @@ class MainWP_Backup_Lane_Lease_Test extends MainWP_Abilities_Test_Case {
 			'expiry boundary'   => array( 600, 600, null, true ),
 			'future 30 seconds' => array( -30, 600, null, false ),
 			'future one hour'   => array( -3600, 600, null, false ),
-			'future over limit' => array( -7201, 600, null, true ),
+			'future over limit' => array( -7300, 600, null, true ),
 			'extended lease'    => array( 1000, 1860, null, false ),
 			'cap expired'       => array( 7300, 99999, null, true ),
 			'cap live'          => array( 7000, 99999, null, false ),
 			'numeric strings'   => array( 0, 600, '{"token":"other-owner","heartbeat":"' . $now . '","lease":"600"}', false ),
 			'missing token'     => array( 0, 600, '{"heartbeat":' . $now . ',"lease":600}', true ),
 			'empty token'       => array( 0, 600, '{"token":"","heartbeat":' . $now . ',"lease":600}', true ),
+			'array token'       => array( 0, 600, '{"token":[],"heartbeat":' . $now . ',"lease":600}', true ),
 			'integer token'     => array( 0, 600, '{"token":5,"heartbeat":' . $now . ',"lease":600}', true ),
 			'invalid heartbeat' => array( 0, 600, '{"token":"other-owner","heartbeat":"abc","lease":600}', true ),
 			'missing lease'     => array( 0, 600, '{"token":"other-owner","heartbeat":' . $now . '}', true ),
@@ -178,10 +180,12 @@ class MainWP_Backup_Lane_Lease_Test extends MainWP_Abilities_Test_Case {
 				$this->assertSame( $raw, $before, $label );
 			}
 			$events = array();
-			$record = static function ( $event ) use ( &$events ) {
+			$tokens = array();
+			$record = static function ( $event, $token ) use ( &$events, &$tokens ) {
 				$events[] = $event;
+				$tokens[] = $token;
 			};
-			add_action( 'mainwp_backup_diag_lane', $record );
+			add_action( 'mainwp_backup_diag_lane', $record, 10, 2 );
 			try {
 				$token = MainWP_Backup_Monitor::acquire_lane_lease();
 				if ( $reclaimed ) {
@@ -189,6 +193,8 @@ class MainWP_Backup_Lane_Lease_Test extends MainWP_Abilities_Test_Case {
 					$this->assertNotSame( '', $token, $label );
 					$this->assertSame( $token, $this->row()['token'], $label );
 					$this->assertSame( array( 'reclaimed_stale', 'acquired' ), $events, $label );
+					$previous = json_decode( $before, true );
+					$this->assertSame( is_string( $previous['token'] ?? null ) ? $previous['token'] : '', $tokens[0], $label . ': previous owner' );
 				} else {
 					$this->assertFalse( $token, $label );
 					$this->assertSame( $before, $this->raw_value(), $label );
@@ -377,5 +383,96 @@ class MainWP_Backup_Lane_Lease_Test extends MainWP_Abilities_Test_Case {
 		update_option( 'mainwp_cron_last_backups_slice', time() - 181 );
 		update_option( 'mainwp_enableNativeBackups', 0 );
 		$this->assertFalse( MainWP_Server_Information::is_backup_slice_stale() );
+	}
+
+	/**
+	 * A failed probe is cached just like a successful probe.
+	 */
+	public function test_backup_loopback_probe_caches_response() {
+		$cases = array(
+			array( new \WP_Error( 'blocked', 'Loopback blocked.' ), false ),
+			array(
+				array(
+					'response' => array( 'code' => 503 ),
+					'body'     => 'MainWP Test',
+				),
+				false,
+			),
+			array(
+				array(
+					'response' => array( 'code' => 200 ),
+					'body'     => 'Login required',
+				),
+				false,
+			),
+			array(
+				array(
+					'response' => array( 'code' => 200 ),
+					'body'     => 'MainWP Test',
+				),
+				true,
+			),
+		);
+		foreach ( $cases as list( $response, $expected ) ) {
+			delete_transient( 'mainwp_backup_loopback_ok' );
+			$calls = array();
+			$http  = static function ( $pre, $args, $url ) use ( &$calls, $response ) {
+				$calls[] = array( $url, $args );
+				return $response;
+			};
+			add_filter( 'pre_http_request', $http, 10, 3 );
+			try {
+				$before = time();
+				$this->assertSame( $expected, MainWP_Server_Information_Handler::is_backup_loopback_ok() );
+				$this->assertSame( $expected, MainWP_Server_Information_Handler::is_backup_loopback_ok() );
+				$this->assertCount( 1, $calls );
+				$this->assertSame( add_query_arg( 'mainwp_run', 'test', site_url( 'wp-cron.php' ) ), $calls[0][0] );
+				$this->assertTrue( $calls[0][1]['blocking'] );
+				$this->assertSame( 15, $calls[0][1]['timeout'] );
+				$this->assertGreaterThanOrEqual( $before + 600, (int) get_option( '_transient_timeout_mainwp_backup_loopback_ok' ) );
+				$this->assertLessThanOrEqual( time() + 600, (int) get_option( '_transient_timeout_mainwp_backup_loopback_ok' ) );
+			} finally {
+				remove_filter( 'pre_http_request', $http );
+				delete_transient( 'mainwp_backup_loopback_ok' );
+			}
+		}
+	}
+
+	/**
+	 * The slice row renders the cached failure without another request.
+	 */
+	public function test_server_information_loopback_warning() {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		update_option( 'mainwp_cron_last_backups_slice', time() );
+		$warning = 'This site cannot reach its own wp-cron.php, so backups cannot keep themselves running. Check loopback requests or add a system cron.';
+		$calls   = 0;
+		$http    = static function () use ( &$calls ) {
+			++$calls;
+			return new \WP_Error( 'unexpected', 'Cached check must not request HTTP.' );
+		};
+		add_filter( 'pre_http_request', $http );
+		try {
+			foreach ( array( 'failed', 'ok' ) as $cached ) {
+				set_transient( 'mainwp_backup_loopback_ok', $cached, 600 );
+				ob_start();
+				try {
+					MainWP_Server_Information::render_cron();
+					$html = ob_get_contents();
+				} finally {
+					ob_end_clean();
+				}
+				if ( 'failed' === $cached ) {
+					$this->assertStringContainsString( $warning, $html );
+					$this->assertStringContainsString( 'ui yellow label', $html );
+				} else {
+					$this->assertStringNotContainsString( $warning, $html );
+				}
+			}
+			$this->assertSame( 0, $calls );
+		} finally {
+			remove_filter( 'pre_http_request', $http );
+			delete_transient( 'mainwp_backup_loopback_ok' );
+		}
 	}
 }

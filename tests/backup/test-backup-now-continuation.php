@@ -33,6 +33,7 @@ class MainWP_Backup_Now_Continuation_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function tear_down() {
 		wp_clear_scheduled_hook( 'mainwp_native_backup_continue_action' );
+		delete_transient( 'doing_cron' );
 		parent::tear_down();
 	}
 
@@ -54,7 +55,9 @@ class MainWP_Backup_Now_Continuation_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function test_kick_schedules_continuation_event() {
 		// Keep spawn_cron from making a real outbound request.
-		$short_circuit = function () {
+		$requests      = 0;
+		$short_circuit = function () use ( &$requests ) {
+			++$requests;
 			return array(
 				'response' => array(
 					'code'    => 200,
@@ -67,11 +70,131 @@ class MainWP_Backup_Now_Continuation_Test extends MainWP_Abilities_Test_Case {
 
 		$this->assertFalse( wp_next_scheduled( 'mainwp_native_backup_continue_action' ), 'No continuation should be pending before the kick.' );
 
+		delete_transient( 'doing_cron' );
 		$this->kick();
+		$this->assertSame( 1, $requests, 'Non-cron kicks must still spawn inline.' );
+		$this->assertFalse( has_action( 'shutdown', array( MainWP_Post_Backup_Handler::class, 'spawn_backup_continuation' ) ) );
 
 		$this->assertNotFalse( wp_next_scheduled( 'mainwp_native_backup_continue_action' ), 'The kick must schedule a continuation event.' );
 
 		remove_filter( 'pre_http_request', $short_circuit );
+	}
+
+	/**
+	 * Cron kicks register once and defer HTTP until shutdown.
+	 */
+	public function test_cron_kick_defers_one_loopback_to_shutdown() {
+		$callback = array( MainWP_Post_Backup_Handler::class, 'spawn_backup_continuation' );
+		$requests = array();
+		$filtered = array();
+		$http     = static function ( $pre, $args, $url ) use ( &$requests ) {
+			$requests[] = array( $url, $args );
+			return array( 'response' => array( 'code' => 200 ) );
+		};
+		$filter   = static function ( $request, $key ) use ( &$filtered ) {
+			$filtered[]                           = array( $request, $key );
+			$request['args']['headers']['X-Test'] = 'filtered';
+			return $request;
+		};
+		add_filter( 'wp_doing_cron', '__return_true' );
+		add_filter( 'pre_http_request', $http, 10, 3 );
+		add_filter( 'cron_request', $filter, 10, 2 );
+		add_filter( 'https_local_ssl_verify', '__return_true' );
+		try {
+			$this->assertFalse( has_action( 'shutdown', $callback ) );
+			$when = time() + 30;
+			MainWP_Post_Backup_Handler::kick_backup_continuation( $when );
+			MainWP_Post_Backup_Handler::kick_backup_continuation( $when + 900 );
+			$this->assertSame( $when, wp_next_scheduled( 'mainwp_native_backup_continue_action' ) );
+			$this->assertSame( 10, has_action( 'shutdown', $callback ) );
+			$this->assertSame( array(), $requests, 'Cron must not spawn inline.' );
+			$this->assertSame( array(), $filtered );
+			$this->assertFalse( get_transient( 'doing_cron' ) );
+
+			// Invoke only this shutdown callback; unrelated callbacks can flush test output.
+			global $wp_filter;
+			$registered = array();
+			foreach ( $wp_filter['shutdown']->callbacks as $callbacks ) {
+				foreach ( $callbacks as $entry ) {
+					if ( $callback === $entry['function'] ) {
+						$registered[] = $entry['function'];
+					}
+				}
+			}
+			$this->assertCount( 1, $registered );
+			call_user_func( $registered[0] );
+			$this->assertTrue( DISABLE_WP_CRON, 'The WordPress test bootstrap disables cron.' );
+			$this->assertSame( array(), $requests, 'Disabled cron must leave the event for system cron.' );
+			$this->assertSame( array(), $filtered );
+			$this->assertFalse( get_transient( 'doing_cron' ) );
+		} finally {
+			remove_action( 'shutdown', $callback );
+			remove_filter( 'wp_doing_cron', '__return_true' );
+			remove_filter( 'pre_http_request', $http );
+			remove_filter( 'cron_request', $filter );
+			remove_filter( 'https_local_ssl_verify', '__return_true' );
+		}
+	}
+
+	/**
+	 * Separate processes let the HTTP callback run with each cron constant.
+	 */
+	public function test_shutdown_loopback_request_and_constant_guards() {
+		// Load the real HTTP and hook APIs without the test bootstrap's DISABLE_WP_CRON.
+		$script = <<<'PHP'
+define( 'ABSPATH', $argv[1] );
+define( 'WPINC', 'wp-includes' );
+if ( 'enabled' !== $argv[3] ) {
+    define( $argv[3], true );
+}
+require ABSPATH . WPINC . '/plugin.php';
+require ABSPATH . WPINC . '/class-wp-http.php';
+require ABSPATH . WPINC . '/http.php';
+require $argv[2] . '/class/class-mainwp-post-base-handler.php';
+require $argv[2] . '/class/class-mainwp-post-backup-handler.php';
+function site_url( $path ) { return 'https://example.org/' . $path; }
+function get_bloginfo( $key ) { return 'url' === $key ? 'https://example.org' : 'test'; }
+function wp_parse_args( $args, $defaults = array() ) { return array_merge( $defaults, $args ); }
+function wp_next_scheduled( $hook ) { return $GLOBALS['pending'] ? time() : false; }
+function set_transient() { throw new RuntimeException( 'The sender must not acquire the cron lock.' ); }
+$pending = true;
+$requests = array();
+$filtered = array();
+add_filter( 'https_local_ssl_verify', static fn() => true );
+add_filter( 'cron_request', static function ( $request, $key ) use ( &$filtered ) {
+    $filtered[] = array( $request, $key );
+    $request['args']['headers']['X-Test'] = 'filtered';
+    return $request;
+}, 10, 2 );
+add_filter( 'pre_http_request', static function ( $pre, $args, $url ) use ( &$requests ) {
+    $requests[] = array( $url, $args );
+    return array( 'response' => array( 'code' => 200 ) );
+}, 10, 3 );
+MainWP\Dashboard\MainWP_Post_Backup_Handler::spawn_backup_continuation();
+$pending = false;
+MainWP\Dashboard\MainWP_Post_Backup_Handler::spawn_backup_continuation();
+echo json_encode( array( 'requests' => $requests, 'filtered' => $filtered ) );
+PHP;
+		foreach ( array( 'enabled', 'DISABLE_WP_CRON', 'ALTERNATE_WP_CRON' ) as $mode ) {
+			$output = shell_exec( escapeshellarg( PHP_BINARY ) . ' -r ' . escapeshellarg( $script ) . ' ' . escapeshellarg( ABSPATH ) . ' ' . escapeshellarg( dirname( __DIR__, 2 ) ) . ' ' . escapeshellarg( $mode ) );
+			$data   = json_decode( (string) $output, true );
+			$this->assertIsArray( $data, $mode . ': ' . $output );
+			if ( 'enabled' !== $mode ) {
+				$this->assertSame( array(), $data['requests'], $mode );
+				$this->assertSame( array(), $data['filtered'], $mode );
+				continue;
+			}
+			$this->assertCount( 1, $data['requests'], 'Removing the pending event must prevent a second request.' );
+			$this->assertCount( 1, $data['filtered'] );
+			$this->assertSame( '', $data['filtered'][0][0]['key'] );
+			$this->assertSame( '', $data['filtered'][0][1] );
+			$this->assertSame( 'https://example.org/wp-cron.php', $data['requests'][0][0] );
+			$this->assertStringNotContainsString( 'doing_wp_cron', $data['requests'][0][0] );
+			$this->assertFalse( $data['requests'][0][1]['blocking'] );
+			$this->assertSame( 0.01, $data['requests'][0][1]['timeout'] );
+			$this->assertTrue( $data['requests'][0][1]['sslverify'] );
+			$this->assertSame( 'filtered', $data['requests'][0][1]['headers']['X-Test'] );
+		}
 	}
 
 	/**
@@ -524,6 +647,151 @@ class MainWP_Backup_Now_Continuation_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Script outcomes through the real slice, including termination precedence.
+	 */
+	public function test_budgeted_slice_termination_matrix() {
+		$moving = array(
+			'sites_visited'  => 1,
+			'sites_advanced' => 1,
+			'sites_finished' => 0,
+		);
+		$idle   = array(
+			'sites_visited'  => 1,
+			'sites_advanced' => 0,
+			'sites_finished' => 0,
+		);
+		$empty  = array(
+			'sites_visited'  => 0,
+			'sites_advanced' => 0,
+			'sites_finished' => 0,
+		);
+		$cases  = array(
+			// Outcomes, budget expires after pick, close on last pick, reason.
+			'budget'           => array( array( $moving, $moving, $moving ), 3, false, 'budget' ),
+			'moving to close'  => array( array( $moving, $moving, $moving, $moving ), 99, true, 'no_work' ),
+			'idle'             => array( array( $idle, $idle, $idle ), 3, false, 'idle' ),
+			'idle reset'       => array( array( $idle, $idle, $moving, $idle, $idle, $idle ), 99, false, 'idle' ),
+			'no visits reset'  => array( array( $idle, $idle, $empty, $idle, $idle, $idle ), 99, false, 'idle' ),
+			'finished reset'   => array(
+				array(
+					$idle,
+					$idle,
+					array(
+						'sites_visited'  => 1,
+						'sites_finished' => 1,
+					),
+					$idle,
+					$idle,
+					$idle,
+				),
+				99,
+				false,
+				'idle',
+			),
+			'no outcome'       => array( array( null ), 1, false, 'no_outcome' ),
+			'no outcome last'  => array( array( $moving, null ), 99, false, 'no_outcome' ),
+			'slot refused'     => array( array( array( 'slot_refused' => true ) ), 1, false, 'slot_refused' ),
+			'lease lost'       => array( array( array( 'lease_lost' => true ) ), 1, false, 'lease_lost' ),
+			'close at budget'  => array( array( $moving ), 1, true, 'no_work' ),
+			'closed with work' => array( array( array( 'run_closed' => true ), $moving ), 2, false, 'budget' ),
+			'no candidates'    => array( array(), 1, false, 'no_work' ),
+		);
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		foreach ( $cases as $label => list( $script, $budget_after, $close, $reason ) ) {
+			$task         = empty( $script ) ? null : $this->open_outcome_task( array() );
+			$lane         = new class() extends MainWP_System_Cron_Jobs {
+				/**
+				 * Scripted outcomes.
+				 *
+				 * @var array
+				 */
+				public $script = array();
+				/**
+				 * Pick order.
+				 *
+				 * @var int[]
+				 */
+				public $picked = array();
+				/**
+				 * Close after the last outcome.
+				 *
+				 * @var bool
+				 */
+				public $close = false;
+
+				/**
+				 * Substitute site work while retaining the lane and database picks.
+				 *
+				 * @param object     $task Task row.
+				 * @param array|null $outcome Scripted outcome.
+				 * @return bool Adapter result.
+				 * @throws \RuntimeException If the tick exceeds the script.
+				 */
+				protected function continue_backup_task( $task, &$outcome = null ) {
+					if ( empty( $this->script ) ) {
+						throw new \RuntimeException( 'Unexpected extra pick.' );
+					}
+					$this->picked[] = (int) $task->id;
+					$outcome        = array_shift( $this->script );
+					if ( $this->close && empty( $this->script ) ) {
+						MainWP_DB_Backup::instance()->update_backup_task_with_values( $task->id, array( 'completed' => $task->last_run ) );
+					}
+					return false;
+				}
+			};
+			$lane->script = $script;
+			$lane->close  = $close;
+			$budget       = static function () use ( $lane, $budget_after ) {
+				return count( $lane->picked ) >= $budget_after ? 0 : 240;
+			};
+			$events       = array();
+			$record       = static function ( $picked, $outcome, $tick ) use ( &$events ) {
+				$events[] = array( $picked, $outcome, $tick );
+			};
+			$http         = static function () {
+				return new \WP_Error( 'test_no_http', 'No real HTTP in tests.' );
+			};
+			add_filter( 'mainwp_backup_slice_tick_budget', $budget );
+			add_filter( 'mainwp_backup_slice_poll_interval', '__return_zero' );
+			add_filter( 'pre_http_request', $http );
+			add_action( 'mainwp_backup_diag_tick', $record, 10, 3 );
+			try {
+				$lane->cron_backups_slice();
+				$this->assertCount( count( $script ), $lane->picked, $label );
+				$this->assertCount( 1, $events, $label );
+				$this->assertSame( $reason, $events[0][2]['ended_by'], $label );
+				$this->assertSame( count( $script ), $events[0][2]['iterations'], $label );
+				$this->assertSame( $task ? (int) $task->id : 0, $events[0][0], $label );
+				$this->assertSame( empty( $script ) ? null : end( $script ), $events[0][1], $label );
+				$this->assertSame( ! $close && null !== $task, $events[0][2]['unfinished_remaining'], $label );
+				$this->assertSame( 'budget' === $reason, (bool) wp_next_scheduled( 'mainwp_native_backup_continue_action' ), $label );
+				if ( 'budget' === $reason ) {
+					$pending      = wp_next_scheduled( 'mainwp_native_backup_continue_action' );
+					$lane->script = array( $moving );
+					$lane->cron_backups_slice();
+					$this->assertSame( $pending, wp_next_scheduled( 'mainwp_native_backup_continue_action' ), $label );
+					$scheduled = 0;
+					foreach ( _get_cron_array() as $hooks ) {
+						$scheduled += count( $hooks['mainwp_native_backup_continue_action'] ?? array() );
+					}
+					$this->assertSame( 1, $scheduled, $label );
+				}
+			} finally {
+				remove_filter( 'mainwp_backup_slice_tick_budget', $budget );
+				remove_filter( 'mainwp_backup_slice_poll_interval', '__return_zero' );
+				remove_filter( 'pre_http_request', $http );
+				remove_action( 'mainwp_backup_diag_tick', $record );
+				wp_clear_scheduled_hook( 'mainwp_native_backup_continue_action' );
+				delete_transient( 'doing_cron' );
+				if ( null !== $task ) {
+					MainWP_DB_Backup::instance()->remove_backup_task( $task->id );
+				}
+			}
+		}
+	}
+
+	/**
 	 * Every queried tick emits one event, even when no task is due.
 	 *
 	 * @dataProvider slice_entry_points
@@ -543,6 +811,8 @@ class MainWP_Backup_Now_Continuation_Test extends MainWP_Abilities_Test_Case {
 			$events[] = array( $picked, $outcome, $tick );
 		};
 		add_action( 'mainwp_backup_diag_tick', $record, 10, 3 );
+		add_filter( 'mainwp_backup_slice_tick_budget', '__return_zero' );
+		add_filter( 'pre_http_request', '__return_empty_array' );
 		try {
 			MainWP_System_Cron_Jobs::instance()->$entry();
 			$this->assertCount( 1, $events );
@@ -566,6 +836,8 @@ class MainWP_Backup_Now_Continuation_Test extends MainWP_Abilities_Test_Case {
 			$this->assertFalse( $events[0][2]['unfinished_remaining'] );
 		} finally {
 			remove_action( 'mainwp_backup_diag_tick', $record );
+			remove_filter( 'mainwp_backup_slice_tick_budget', '__return_zero' );
+			remove_filter( 'pre_http_request', '__return_empty_array' );
 			$db->remove_backup_task( $first->id );
 			$db->remove_backup_task( $second->id );
 			delete_option( 'mainwp_enableNativeBackups' );
@@ -603,6 +875,9 @@ class MainWP_Backup_Now_Continuation_Test extends MainWP_Abilities_Test_Case {
 			$this->assertSame( 0, $events[0][0] );
 			$this->assertNull( $events[0][1] );
 			$this->assertTrue( $events[0][2]['lane_busy'] );
+			$this->assertSame( 'lane_busy', $events[0][2]['ended_by'] );
+			$this->assertSame( 0, $events[0][2]['iterations'] );
+			$this->assertFalse( wp_next_scheduled( 'mainwp_native_backup_continue_action' ) );
 			$this->assertSame( 'slice', $events[0][2]['lane'] );
 			$this->assertSame( array(), $events[0][2]['candidates'] );
 			$this->assertSame( $task->last_continued, MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id )->last_continued );

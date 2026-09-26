@@ -1202,6 +1202,39 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Tick events retain the runner counts and the queue observed by the lane.
+	 *
+	 * @return void
+	 */
+	public function test_diag_tick_event_records_outcome() {
+		$this->enable_recorder();
+		$outcome = array(
+			'sites_visited'  => 3,
+			'sites_advanced' => 2,
+			'sites_finished' => 1,
+			'sites_yielded'  => 1,
+			'slot_refused'   => false,
+			'lease_lost'     => false,
+			'run_closed'     => false,
+			'wall_time'      => 1.25,
+		);
+		$tick    = array(
+			'started'              => 1234.5,
+			'wall_time'            => 2.5,
+			'candidates'           => array( '42', '7' ),
+			'unfinished_remaining' => true,
+		);
+		do_action( 'mainwp_backup_diag_tick', 42, $outcome, $tick );
+		$events = array_values( array_filter( $this->recorded_events(), fn( $event ) => 'tick' === $event['kind'] ) );
+		$this->assertCount( 1, $events );
+		$this->assertSame( 42, $events[0]['task_id'] );
+		$this->assertSame( 0, $events[0]['site_id'] );
+		$tick['candidates'] = array( 42, 7 );
+		$tick['outcome']    = $outcome;
+		$this->assertSame( $tick, $events[0]['payload'] );
+	}
+
+	/**
 	 * Slot acquisition, refusal, and release each leave a diagnostics
 	 * event, so slot exhaustion is no longer traceless.
 	 *

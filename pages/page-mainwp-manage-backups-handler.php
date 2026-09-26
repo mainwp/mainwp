@@ -1107,15 +1107,16 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
     /**
      * Execute the backup task.
      *
-     * @param mixed     $task Task to perform.
-     * @param integer   $nrOfSites Number of Child Sites to perform the task on.
-     * @param bool      $updateRun ture|false.
-     * @param integer   $run_grace_seconds Settle window for opening the run; 0
-     *                                     (every scheduled caller) allows stuck-run
-     *                                     recovery but refuses paused rows.
-     * @param bool|null $claimed Actual atomic claim result, null when no claim was attempted.
-     * @param int       $claimed_started Exact identity returned by a successful claim.
-     * @param bool      $manual_run Stamp the claimed identity as manual before any site work.
+     * @param mixed      $task Task to perform.
+     * @param integer    $nrOfSites Number of Child Sites to perform the task on.
+     * @param bool       $updateRun ture|false.
+     * @param integer    $run_grace_seconds Settle window for opening the run; 0
+     *                                      (every scheduled caller) allows stuck-run
+     *                                      recovery but refuses paused rows.
+     * @param bool|null  $claimed Actual atomic claim result, null when no claim was attempted.
+     * @param int        $claimed_started Exact identity returned by a successful claim.
+     * @param bool       $manual_run Stamp the claimed identity as manual before any site work.
+     * @param array|null $outcome Per-call site counts, refusal flags, and timing.
      *
      * @return mixed $errorOutput.
      *
@@ -1135,7 +1136,19 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      * @uses  \MainWP\Dashboard\MainWP_Utility::get_nice_url()
      * @uses  \MainWP\Dashboard\MainWP_Utility::sanitize()
      */
-    public static function execute_backup_task( $task, $nrOfSites = 0, $updateRun = true, $run_grace_seconds = 0, &$claimed = null, &$claimed_started = 0, $manual_run = false ) { // phpcs:ignore -- NOSONAR - not quite complex function.
+    public static function execute_backup_task( $task, $nrOfSites = 0, $updateRun = true, $run_grace_seconds = 0, &$claimed = null, &$claimed_started = 0, $manual_run = false, &$outcome = null ) { // phpcs:ignore -- NOSONAR - not quite complex function.
+
+        $started = microtime( true );
+        $outcome = array(
+            'sites_visited'  => 0,
+            'sites_advanced' => 0,
+            'sites_finished' => 0,
+            'sites_yielded'  => 0,
+            'slot_refused'   => false,
+            'lease_lost'     => false,
+            'run_closed'     => false,
+            'wall_time'      => 0.0,
+        );
 
         $claimed         = null;
         $claimed_started = 0;
@@ -1146,12 +1159,15 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         $pause_reason = static::resolve_task_scope_pause( $task );
         if ( null !== $pause_reason ) {
             static::pause_task_for_rescope( $task );
+            $outcome['wall_time'] = microtime( true ) - $started;
             return false;
         }
 
         // Cap concurrent backup tasks; a refused task stays queued for the next cron cycle.
         $slot_token = MainWP_Backup_Monitor::acquire_backup_slot( MainWP_Backup_Settings::get_max_concurrent_backups(), 'native' );
         if ( false === $slot_token ) {
+            $outcome['slot_refused'] = true;
+            $outcome['wall_time']    = microtime( true ) - $started;
             return false;
         }
 
@@ -1160,29 +1176,42 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             // is bounded and stamps the slot row, so a driver that dies
             // mid-run frees its slot in minutes instead of two hours.
             MainWP_Backup_Monitor::begin_native_lease( $slot_token );
-            return static::execute_backup_task_run( $task, $nrOfSites, $updateRun, $run_grace_seconds, $claimed, $claimed_started, $manual_run );
+            return static::execute_backup_task_run( $task, $nrOfSites, $updateRun, $run_grace_seconds, $claimed, $claimed_started, $manual_run, $outcome );
         } finally {
             MainWP_Backup_Monitor::end_native_lease( $slot_token );
             MainWP_Backup_Monitor::release_backup_slot( $slot_token );
+            $outcome['wall_time'] = microtime( true ) - $started;
         }
     }
 
     /**
      * Run the backup task once a concurrency slot is held.
      *
-     * @param mixed     $task Task to perform.
-     * @param integer   $nrOfSites Number of Child Sites to perform the task on.
-     * @param bool      $updateRun ture|false.
-     * @param integer   $run_grace_seconds Settle window for opening the run; 0
-     *                                     (every scheduled caller) keeps the
-     *                                     unconditional bump.
-     * @param bool|null $claimed Actual atomic claim result.
-     * @param int       $claimed_started Identity of the claimed run.
-     * @param bool      $manual_run Stamp the claimed identity as manual before any site work.
+     * @param mixed      $task Task to perform.
+     * @param integer    $nrOfSites Number of Child Sites to perform the task on.
+     * @param bool       $updateRun ture|false.
+     * @param integer    $run_grace_seconds Settle window for opening the run; 0
+     *                                      (every scheduled caller) keeps the
+     *                                      unconditional bump.
+     * @param bool|null  $claimed Actual atomic claim result.
+     * @param int        $claimed_started Identity of the claimed run.
+     * @param bool       $manual_run Stamp the claimed identity as manual before any site work.
+     * @param array|null $outcome Per-call site counts, refusal flags, and timing.
      *
      * @return mixed $errorOutput.
      */
-    private static function execute_backup_task_run( $task, $nrOfSites = 0, $updateRun = true, $run_grace_seconds = 0, &$claimed = null, &$claimed_started = 0, $manual_run = false ) { // phpcs:ignore -- NOSONAR - not quite complex function.
+    private static function execute_backup_task_run( $task, $nrOfSites = 0, $updateRun = true, $run_grace_seconds = 0, &$claimed = null, &$claimed_started = 0, $manual_run = false, &$outcome = null ) { // phpcs:ignore -- NOSONAR - not quite complex function.
+
+        $outcome = array(
+            'sites_visited'  => 0,
+            'sites_advanced' => 0,
+            'sites_finished' => 0,
+            'sites_yielded'  => 0,
+            'slot_refused'   => false,
+            'lease_lost'     => false,
+            'run_closed'     => false,
+            'wall_time'      => 0.0,
+        );
 
         if ( $updateRun ) {
             $previous = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
@@ -1349,6 +1378,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             MainWP_System_Utility::set_time_limit( 0 );
 
             if ( MainWP_Backup_Monitor::native_lease_lost() ) {
+                $outcome['lease_lost'] = true;
                 // The slot was reclaimed under this holder and another
                 // process may already own it, so driving another site would
                 // run it under someone else's slot. The rows are left as
@@ -1379,12 +1409,17 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
 
             $_mark_detail = '';
             $backupResult = null;
+            $advanced     = false;
             try {
                 $subfolder = str_replace( '%task%', MainWP_Utility::sanitize( $task->name ), $task->subfolder );
 
-                $backupResult = MainWP_Backup_Executor::backup_site( $siteid, $task, $subfolder );
+                ++$outcome['sites_visited'];
+                $backupResult = MainWP_Backup_Executor::backup_site( $siteid, $task, $subfolder, $advanced );
 
                 if ( false === $backupResult ) {
+                    if ( ! $advanced ) {
+                        ++$outcome['sites_yielded'];
+                    }
                     continue;
                 }
 
@@ -1447,6 +1482,9 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                      * @param string $detail  Exception class, code, and message for error marks.
                      */
                     do_action( 'mainwp_backup_diag_site_mark', (int) $task->id, (int) $siteid, 'yield_already_running', '' );
+                    if ( ! $advanced ) {
+                        ++$outcome['sites_yielded'];
+                    }
                     continue;
                 }
 
@@ -1484,6 +1522,9 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                     MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Backup exception against a still-resumable site; yielding for the retry (' . $_resumable . '): ' . $_mark_detail );
                     /** This action is documented in pages/page-mainwp-manage-backups-handler.php */
                     do_action( 'mainwp_backup_diag_site_mark', (int) $task->id, (int) $siteid, 'yield_resumable', $_mark_detail . ' (' . $_resumable . ')' );
+                    if ( ! $advanced ) {
+                        ++$outcome['sites_yielded'];
+                    }
                     continue;
                 }
 
@@ -1502,6 +1543,9 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                     MainWP_DB_Backup::instance()->update_backup_task_progress( (int) $task->id, (int) $siteid, array( 'child_phase' => MainWP_Backup_Task_Phase::FAILED ) );
                 }
             } finally {
+                if ( $advanced ) {
+                    ++$outcome['sites_advanced'];
+                }
                 // A child request leaves PHP's execution limit at the bound it
                 // gave itself, so the bookkeeping and hashing that follow would
                 // inherit it instead of the cron lanes' no-limit policy.
@@ -1509,6 +1553,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             }
 
             if ( ! MainWP_Backup_Monitor::confirm_native_lease() ) {
+                $outcome['lease_lost'] = true;
                 // The slot went away while this site was being driven, so
                 // whatever the child did or did not do happened outside a
                 // slot this holder owns. Marking the site complete would
@@ -1521,6 +1566,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             do_action( 'mainwp_managesite_schedule_backup', $website, array( 'type' => $task->type ), $_backup_result );
 
             ++$currentCount;
+            ++$outcome['sites_finished'];
 
             $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
 
@@ -1548,6 +1594,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
 
         $lease_lost = ! MainWP_Backup_Monitor::confirm_native_lease();
         if ( $lease_lost ) {
+            $outcome['lease_lost'] = true;
             // Both loop exits above leave the run unfinished, so the reason
             // is recorded once here, on the same path a per-site failure
             // takes to the task row and the failure email.
@@ -1603,6 +1650,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                  * @param string $trigger     Close trigger.
                  * @param int    $sites_total Number of sites in the run.
                  */
+                $outcome['run_closed'] = true;
                 do_action( 'mainwp_backup_diag_run_close', (int) $task->id, (int) $task->last_run, 'all_sites_complete', count( $sites ) );
                 static::maybe_send_backup_error_email( MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id ) );
             }

@@ -996,10 +996,11 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 				/**
 				 * Keep the task unfinished so the test needs no child connection.
 				 *
-				 * @param object $task Backup task.
+				 * @param object     $task Backup task.
+				 * @param array|null $outcome Execution outcome.
 				 * @return bool
 				 */
-				protected function continue_backup_task( $task ) {
+				protected function continue_backup_task( $task, &$outcome = null ) {
 					$this->picked[] = (int) $task->id;
 					return false;
 				}

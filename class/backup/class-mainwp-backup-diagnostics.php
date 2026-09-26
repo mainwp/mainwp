@@ -98,6 +98,7 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
         add_action( 'mainwp_backup_diag_run_reinit', array( $this, 'on_run_reinit' ), 10, 4 );
         add_action( 'mainwp_backup_diag_site_mark', array( $this, 'on_site_mark' ), 10, 4 );
         add_action( 'mainwp_backup_diag_run_close', array( $this, 'on_run_close' ), 10, 4 );
+        add_action( 'mainwp_backup_diag_tick', array( $this, 'on_tick' ), 10, 3 );
         add_action( 'mainwp_backup_diag_preflight', array( $this, 'on_preflight' ), 10, 4 );
         add_action( 'mainwp_backup_diag_slot', array( $this, 'on_slot' ), 10, 4 );
 
@@ -550,6 +551,27 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
                     'sites_total' => (int) $sites_total,
                 )
             );
+        } catch ( \Throwable $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement -- diagnostics must never break a backup.
+            return;
+        }
+    }
+
+    /**
+     * Record the work attempted by one continuation tick.
+     *
+     * @param int        $picked_task_id Attempted task, or zero when none was picked.
+     * @param array|null $outcome        Execution outcome, or null without a pick.
+     * @param array      $tick           Tick timing and queue state.
+     * @return void
+     */
+    public function on_tick( $picked_task_id, $outcome, $tick ): void {
+        try {
+            // The tick's wall time covers queue maintenance too, so the runner's
+            // own timing stays under its own key instead of being merged over.
+            $payload               = $tick;
+            $payload['candidates'] = array_map( 'intval', (array) ( $tick['candidates'] ?? array() ) );
+            $payload['outcome']    = is_array( $outcome ) ? $outcome : null;
+            $this->record( '_global', 'tick', 0, (int) $picked_task_id, $payload );
         } catch ( \Throwable $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement -- diagnostics must never break a backup.
             return;
         }

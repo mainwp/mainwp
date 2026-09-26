@@ -1547,6 +1547,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
      */
     public function cron_backups_continue() {
+        $started = microtime( true );
 
         if ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
             // The toggle governs STARTING work, not abandoning destructive
@@ -1571,63 +1572,83 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
         $tasks = MainWP_DB_Backup::instance()->get_backup_tasks_to_complete();
 
-        MainWP_Logger::instance()->debug( 'backups continue :: Found ' . count( $tasks ) . ' to continue.' );
+        $picked_task_id = 0;
+        $outcome        = null;
+        try {
+            MainWP_Logger::instance()->debug( 'backups continue :: Found ' . count( $tasks ) . ' to continue.' );
 
-        // Completed snapshots upload to their storage destinations on this
-        // same five-minute lane, one resumable job per tick. Retention
-        // follows: one cloud delete job, then one queued task and site pair
-        // from the post-snapshot queue.
-        MainWP_Backup_Upload_Driver::instance()->process_pending_jobs();
-        MainWP_Backup_Cloud_Delete_Driver::instance()->process_pending_delete_jobs();
-        MainWP_Backup_Retention_Scheduler::instance()->process_post_snapshot_queue();
-        MainWP_Backup_Restore_Orchestrator::instance()->process_pending_restore_jobs();
+            // Completed snapshots upload to their storage destinations on this
+            // same five-minute lane, one resumable job per tick. Retention
+            // follows: one cloud delete job, then one queued task and site pair
+            // from the post-snapshot queue.
+            MainWP_Backup_Upload_Driver::instance()->process_pending_jobs();
+            MainWP_Backup_Cloud_Delete_Driver::instance()->process_pending_delete_jobs();
+            MainWP_Backup_Retention_Scheduler::instance()->process_post_snapshot_queue();
+            MainWP_Backup_Restore_Orchestrator::instance()->process_pending_restore_jobs();
 
-        // Sample one snapshot per tick for a verified (sandbox) test-restore.
-        // Runs last and dashboard-side only, so it never delays the real backup
-        // lanes or touches a child site. Placed before the empty-tasks return
-        // below so it still runs on the common tick that has no legacy task.
-        MainWP_Backup_TestRestore_Scheduler::instance()->process_pending_jobs();
+            // Sample one snapshot per tick for a verified (sandbox) test-restore.
+            // Runs last and dashboard-side only, so it never delays the real backup
+            // lanes or touches a child site. Placed before the empty-tasks return
+            // below so it still runs on the common tick that has no legacy task.
+            MainWP_Backup_TestRestore_Scheduler::instance()->process_pending_jobs();
 
-        if ( empty( $tasks ) ) {
-            return;
-        }
-
-        foreach ( $tasks as $task ) {
-            MainWP_Logger::instance()->debug( 'backups continue ::    Task: ' . $task->name );
-        }
-
-        foreach ( $tasks as $task ) {
-            $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
-            // The due query ran before this re-read; a task deleted in between has no row.
-            if ( empty( $task ) ) {
-                continue;
-            }
-            if ( ! empty( $task->paused ) || $task->completed >= $task->last_run ) {
-                continue;
+            if ( empty( $tasks ) ) {
+                return;
             }
 
-            // Stamp before the run so a task whose run dies or whose children always fail
-            // still rotates to the back: starvation was seen on dev.mainwps.com 2026-09-25.
-            if ( MainWP_Install::backup_task_last_continued_ready() ) {
-                MainWP_DB_Backup::instance()->update_backup_task_with_values( $task->id, array( 'last_continued' => time() ) );
+            foreach ( $tasks as $task ) {
+                MainWP_Logger::instance()->debug( 'backups continue ::    Task: ' . $task->name );
             }
 
-            // One call consumes the tick: false also follows real work with site errors,
-            // and a global slot refusal would refuse the next candidate too. The stamp
-            // still rotates a refused or erroring task to the back.
-            $this->continue_backup_task( $task );
-            break;
+            foreach ( $tasks as $task ) {
+                $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+                // The due query ran before this re-read; a task deleted in between has no row.
+                if ( empty( $task ) ) {
+                    continue;
+                }
+                if ( ! empty( $task->paused ) || $task->completed >= $task->last_run ) {
+                    continue;
+                }
+
+                // Stamp before the run so a task whose run dies or whose children always fail
+                // still rotates to the back: starvation was seen on dev.mainwps.com 2026-09-25.
+                if ( MainWP_Install::backup_task_last_continued_ready() ) {
+                    MainWP_DB_Backup::instance()->update_backup_task_with_values( $task->id, array( 'last_continued' => time() ) );
+                }
+
+                // One call consumes the tick: false also follows real work with site errors,
+                // and a global slot refusal would refuse the next candidate too. The stamp
+                // still rotates a refused or erroring task to the back.
+                $picked_task_id = (int) $task->id;
+                $this->continue_backup_task( $task, $outcome );
+                break;
+            }
+        } finally {
+            // The re-query is only for the diagnostics; a Dashboard with no
+            // listener does not pay for it every five minutes.
+            if ( has_action( 'mainwp_backup_diag_tick' ) ) {
+                $tick = array(
+                    'started'              => $started,
+                    'wall_time'            => microtime( true ) - $started,
+                    'candidates'           => array_map( static fn( $task ) => (int) $task->id, $tasks ),
+                    'unfinished_remaining' => ! empty( MainWP_DB_Backup::instance()->get_backup_tasks_to_complete() ),
+                );
+                do_action( 'mainwp_backup_diag_tick', $picked_task_id, $outcome, $tick );
+            }
         }
     }
 
     /**
      * Continue a backup task so a test can substitute the run.
      *
-     * @param object $task Backup task.
+     * @param object     $task Backup task.
+     * @param array|null $outcome Per-call execution outcome.
      * @return mixed Backup execution result.
      */
-    protected function continue_backup_task( $task ) {
-        return MainWP_Manage_Backups_Handler::execute_backup_task( $task, 5, false );
+    protected function continue_backup_task( $task, &$outcome = null ) {
+        $claimed         = null;
+        $claimed_started = 0;
+        return MainWP_Manage_Backups_Handler::execute_backup_task( $task, 5, false, 0, $claimed, $claimed_started, false, $outcome );
     }
 
     /**
@@ -1734,11 +1755,19 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
             $old_last_run = (int) $task->last_run;
 
-            $chunkedBackupTasks = get_option( 'mainwp_chunkedBackupTasks' );
-            MainWP_Manage_Backups_Handler::execute_backup_task( $task, ( 0 !== $chunkedBackupTasks ? 5 : 0 ) );
+            MainWP_Manage_Backups_Handler::execute_backup_task( $task, $this->hourly_site_cap() );
 
             $this->maybe_advance_backup_next_run( $task->id, $old_last_run );
         }
+    }
+
+    /**
+     * Keep the chunking default when the option has not been saved.
+     *
+     * @return int Sites per hourly task, or zero for all sites.
+     */
+    protected function hourly_site_cap(): int {
+        return 0 !== (int) get_option( 'mainwp_chunkedBackupTasks', 1 ) ? 5 : 0;
     }
 
     /**

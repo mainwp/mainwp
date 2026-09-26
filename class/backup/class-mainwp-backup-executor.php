@@ -138,9 +138,10 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      *
      * Backup Child Site.
      *
-     * @param mixed $siteid Child Site ID.
-     * @param mixed $pTask Task to perform.
-     * @param mixed $subfolder Sub folder to place backup.
+     * @param mixed     $siteid Child Site ID.
+     * @param mixed     $pTask Task to perform.
+     * @param mixed     $subfolder Sub folder to place backup.
+     * @param bool|null $advanced Whether this call moved the site forward.
      *
      * @gobal object $wp_filesystem WordPress filesystem instance.
      *
@@ -167,7 +168,8 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @uses \MainWP\Dashboard\MainWP_Utility::value_to_string()
      * @uses \MainWP\Dashboard\MainWP_Backup_File_Manager::get_real_extension()
      */
-    public static function backup_site( $siteid, $pTask, $subfolder ) {
+    public static function backup_site( $siteid, $pTask, $subfolder, &$advanced = null ) {
+        $advanced = false;
         // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber
         // phpcs: ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         if ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
@@ -564,6 +566,8 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     throw new MainWP_Exception( esc_html__( 'The child site did not return a backup task id. Sync the child site and try again.', 'mainwp' ) );
                 }
 
+                $advanced = true;
+
                 // The task is queued on the child; each following cycle
                 // advances it one bounded slice.
                 MainWP_DB_Backup::instance()->update_backup_task_progress(
@@ -577,6 +581,8 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
                 return false;
             }
+
+            $advanced = true;
 
             // The create round trip resolved into a fetch result, so the
             // marker's window is over: clear it in the same write, or every
@@ -682,6 +688,20 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 // Unknown phase strings from newer children stay null and keep polling.
                 $phase = MainWP_Backup_Task_Phase::tryFrom( (string) $temp['phase'] );
 
+                $advanced = is_string( $temp['phase'] ) && sanitize_key( $temp['phase'] ) !== (string) $backupTaskProgress->child_phase;
+                $progress = isset( $temp['progress'] ) && is_array( $temp['progress'] ) ? $temp['progress'] : array();
+                $counters = array(
+                    'bytes_downloaded' => 'bytes_done',
+                    'bytes_expected'   => isset( $progress['total_bytes'] ) ? 'total_bytes' : 'bytes_total',
+                    'files_processed'  => isset( $progress['files_scanned'] ) ? 'files_scanned' : 'files_processed',
+                    'files_total'      => 'files_total',
+                );
+                foreach ( $counters as $column => $source ) {
+                    if ( isset( $progress[ $source ] ) && max( 0, (int) $progress[ $source ] ) !== (int) $backupTaskProgress->$column ) {
+                        $advanced = true;
+                    }
+                }
+
                 self::record_child_progress( $taskId, (int) $website->id, $temp );
 
                 if ( (int) $backupTaskProgress->foreign_refused_since > 0 ) {
@@ -751,6 +771,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Another driver consumed this completed backup task; yielding.' );
                     return false;
                 }
+                $advanced           = true;
                 $backupTaskProgress = MainWP_DB_Backup::instance()->get_backup_task_progress( $taskId, $website->id );
 
                 if ( 'incremental' !== $type ) {
@@ -1011,6 +1032,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                             throw $e;
                         }
                         $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'downloadedDBComplete' => 1 ) );
+                        $advanced           = true;
                     } finally {
                         MainWP_Backup_File_Manager::release_download_lock( $localBackupFile );
                     }
@@ -1082,6 +1104,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         // driver can slip in after the remote artifact is
                         // gone and destroy the local copy with a re-download.
                         $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'downloadedFULLComplete' => 1 ) );
+                        $advanced           = true;
 
                         try {
                             MainWP_Connect::fetch_url_authed( $website, 'delete_backup', array( 'del' => $information['full'] ) );

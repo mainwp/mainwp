@@ -291,7 +291,9 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     $taskId,
                     $website->id,
                     array(
-                        'dtsFetched'             => time(),
+                        // A same-second re-claim can put last_run one second ahead of the clock (GREATEST( ..., last_run + 1 )),
+                        // and every current-run predicate compares dtsFetched to last_run.
+                        'dtsFetched'             => max( time(), (int) $pTask->last_run ),
                         'fetchResult'            => wp_json_encode( array() ),
                         'downloadedDB'           => '',
                         'downloadedDBComplete'   => 0,

@@ -2553,6 +2553,65 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A same-second re-claim puts last_run one second ahead of the clock.
+	 * The create write must still stamp the row as this run's, or the next
+	 * cycle re-creates the Child task and the open-run and sibling-holder
+	 * lookups miss the row for a cycle.
+	 *
+	 * @return void
+	 */
+	public function test_create_stamp_never_behind_same_second_reclaim() {
+		$site_id  = $this->create_test_site();
+		$website  = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$db       = MainWP_DB_Backup::instance();
+		$last_run = time() + 1;
+		$owner    = $db->add_backup_task( $website->userid, 'Reclaimed run', 'daily', 'full', '', (string) $site_id, '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0 );
+		$other    = $db->add_backup_task( $website->userid, 'Refused sibling', 'daily', 'full', '', (string) $site_id, '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0 );
+		$this->assertNotFalse( $owner );
+		$this->assertNotFalse( $other );
+		$db->update_backup_task_with_values(
+			$owner->id,
+			array(
+				'last_run'  => $last_run,
+				'completed' => 0,
+				'paused'    => 0,
+			)
+		);
+		$task = $this->make_task(
+			$website->userid,
+			array(
+				'id'       => (int) $owner->id,
+				'last_run' => $last_run,
+			)
+		);
+
+		$this->mock_child_action( 'backup_preflight', array( 'task_spine' => 1 ) );
+		$this->mock_child_action(
+			'backup_task_create',
+			array(
+				'task_id' => 'task-1749600002-reclm1',
+				'phase'   => 'queued',
+			)
+		);
+
+		try {
+			$this->assertFalse( MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' ), 'Creating the task defers the work to the next cycle.' );
+
+			$progress   = $db->get_backup_task_progress( $task->id, $site_id );
+			$open_ids   = $db->get_open_run_child_task_ids( $site_id );
+			$sibling_of = $db->get_sibling_site_holder( $site_id, (int) $other->id );
+		} finally {
+			$db->remove_backup_task( $owner->id );
+			$db->remove_backup_task( $other->id );
+		}
+
+		$this->assertSame( 'task-1749600002-reclm1', $progress->child_backup_task_id, 'Precondition: the create must record the Child task id.' );
+		$this->assertGreaterThanOrEqual( $last_run, (int) $progress->dtsFetched, 'The first stamp of a run must not fall behind its claim.' );
+		$this->assertContains( 'task-1749600002-reclm1', $open_ids, 'The open-run lookup must see the current run row.' );
+		$this->assertSame( (int) $owner->id, $sibling_of, 'The sibling-holder lookup must see the current run row.' );
+	}
+
+	/**
 	 * Through the full task runner, a same-run collision must leave no trace
 	 * that reads as failure: backup_errors stays empty, the failure email
 	 * never fires, and the run stays open so the owning driver can finish it.

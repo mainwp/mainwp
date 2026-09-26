@@ -2556,7 +2556,8 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 	 * A same-second re-claim puts last_run one second ahead of the clock.
 	 * The create write must still stamp the row as this run's, or the next
 	 * cycle re-creates the Child task and the open-run and sibling-holder
-	 * lookups miss the row for a cycle.
+	 * lookups miss the row for a cycle. The test uses a wider gap so a slow
+	 * run cannot hide a regression.
 	 *
 	 * @return void
 	 */
@@ -2564,37 +2565,37 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 		$site_id  = $this->create_test_site();
 		$website  = MainWP_DB::instance()->get_website_by_id( $site_id );
 		$db       = MainWP_DB_Backup::instance();
-		$last_run = time() + 1;
+		$last_run = time() + 30;
 		$owner    = $db->add_backup_task( $website->userid, 'Reclaimed run', 'daily', 'full', '', (string) $site_id, '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0 );
 		$other    = $db->add_backup_task( $website->userid, 'Refused sibling', 'daily', 'full', '', (string) $site_id, '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0 );
 		$this->assertNotFalse( $owner );
 		$this->assertNotFalse( $other );
-		$db->update_backup_task_with_values(
-			$owner->id,
-			array(
-				'last_run'  => $last_run,
-				'completed' => 0,
-				'paused'    => 0,
-			)
-		);
-		$task = $this->make_task(
-			$website->userid,
-			array(
-				'id'       => (int) $owner->id,
-				'last_run' => $last_run,
-			)
-		);
-
-		$this->mock_child_action( 'backup_preflight', array( 'task_spine' => 1 ) );
-		$this->mock_child_action(
-			'backup_task_create',
-			array(
-				'task_id' => 'task-1749600002-reclm1',
-				'phase'   => 'queued',
-			)
-		);
-
 		try {
+			$db->update_backup_task_with_values(
+				$owner->id,
+				array(
+					'last_run'  => $last_run,
+					'completed' => 0,
+					'paused'    => 0,
+				)
+			);
+			$task = $this->make_task(
+				$website->userid,
+				array(
+					'id'       => (int) $owner->id,
+					'last_run' => $last_run,
+				)
+			);
+
+			$this->mock_child_action( 'backup_preflight', array( 'task_spine' => 1 ) );
+			$this->mock_child_action(
+				'backup_task_create',
+				array(
+					'task_id' => 'task-1749600002-reclm1',
+					'phase'   => 'queued',
+				)
+			);
+
 			$this->assertFalse( MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' ), 'Creating the task defers the work to the next cycle.' );
 
 			$progress   = $db->get_backup_task_progress( $task->id, $site_id );

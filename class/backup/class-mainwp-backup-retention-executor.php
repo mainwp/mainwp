@@ -264,7 +264,8 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
                 || isset( $protected_dirs[ MainWP_Backup_Snapshots::normalise_path( $real ) ] ) ) {
                 continue; // A non-pruned snapshot still owns this directory.
             }
-            if ( isset( $open_run_names[ basename( $dir ) ] ) ) {
+            if ( isset( $open_run_names[ basename( $dir ) ] )
+                || isset( $open_run_names[ basename( $real ) ] ) ) {
                 continue; // An open run still owns this directory.
             }
 

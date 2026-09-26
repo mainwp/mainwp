@@ -1081,36 +1081,36 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 		$db   = \MainWP\Dashboard\MainWP_DB_Backup::instance();
 		$task = $db->add_backup_task( 1, 'Paused open run', 'daily', 'full', '', (string) $this->site_id, '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0 );
 		$this->assertNotFalse( $task );
-		$db->update_backup_task_with_values(
-			$task->id,
-			array(
-				'last_run'  => time() - 8 * HOUR_IN_SECONDS,
-				'completed' => 0,
-				'paused'    => 1,
-			)
-		);
-		$db->add_backup_task_progress( $task->id, $this->site_id, array() );
-		$db->update_backup_task_progress(
-			$task->id,
-			$this->site_id,
-			array(
-				'dtsFetched'           => time() - 7 * HOUR_IN_SECONDS,
-				'child_backup_task_id' => 'open-run-42',
-			)
-		);
-
-		$root     = \MainWP\Dashboard\MainWP_Backup_Private_Root::site_dir( $this->site_id );
-		$open_dir = $root . 'snapshot-open-run-42';
-		$orphan   = $root . 'snapshot-orphan-' . uniqid();
-		foreach ( array( $open_dir, $orphan ) as $dir ) {
-			wp_mkdir_p( $dir );
-			$this->fixture_dirs[] = $dir;
-			file_put_contents( $dir . '/artifact.tar', 'x' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
-			touch( $dir . '/artifact.tar', time() - 7 * HOUR_IN_SECONDS );
-			touch( $dir, time() - 7 * HOUR_IN_SECONDS );
-		}
-
 		try {
+			$db->update_backup_task_with_values(
+				$task->id,
+				array(
+					'last_run'  => time() - 8 * HOUR_IN_SECONDS,
+					'completed' => 0,
+					'paused'    => 1,
+				)
+			);
+			$db->add_backup_task_progress( $task->id, $this->site_id, array() );
+			$db->update_backup_task_progress(
+				$task->id,
+				$this->site_id,
+				array(
+					'dtsFetched'           => time() - 7 * HOUR_IN_SECONDS,
+					'child_backup_task_id' => 'open-run-42',
+				)
+			);
+
+			$root     = \MainWP\Dashboard\MainWP_Backup_Private_Root::site_dir( $this->site_id );
+			$open_dir = $root . 'snapshot-open-run-42';
+			$orphan   = $root . 'snapshot-orphan-' . uniqid();
+			foreach ( array( $open_dir, $orphan ) as $dir ) {
+				wp_mkdir_p( $dir );
+				$this->fixture_dirs[] = $dir;
+				file_put_contents( $dir . '/artifact.tar', 'x' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+				touch( $dir . '/artifact.tar', time() - 7 * HOUR_IN_SECONDS );
+				touch( $dir, time() - 7 * HOUR_IN_SECONDS );
+			}
+
 			$result = MainWP_Backup_Retention_Executor::instance()->cleanup_site_backups( $this->site_id, 1 );
 
 			$this->assertSame( array(), $result['errors'] );
@@ -1119,6 +1119,57 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 			$this->assertDirectoryDoesNotExist( $orphan, 'A directory no run or snapshot owns must still be swept.' );
 		} finally {
 			$db->remove_backup_task( $task->id );
+		}
+	}
+
+	/**
+	 * A symlink alias must not let the sweep delete an open paused run's files.
+	 *
+	 * @return void
+	 */
+	public function test_orphan_sweep_spares_symlink_to_open_paused_run_dir() {
+		$db    = \MainWP\Dashboard\MainWP_DB_Backup::instance();
+		$alias = null;
+		$task  = $db->add_backup_task( 1, 'Paused open run alias', 'daily', 'full', '', (string) $this->site_id, '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0 );
+		$this->assertNotFalse( $task );
+		try {
+			$db->update_backup_task_with_values(
+				$task->id,
+				array(
+					'last_run'  => time() - 8 * HOUR_IN_SECONDS,
+					'completed' => 0,
+					'paused'    => 1,
+				)
+			);
+			$db->add_backup_task_progress( $task->id, $this->site_id, array() );
+			$db->update_backup_task_progress(
+				$task->id,
+				$this->site_id,
+				array(
+					'dtsFetched'           => time() - 7 * HOUR_IN_SECONDS,
+					'child_backup_task_id' => 'open-run-42',
+				)
+			);
+
+			$root     = \MainWP\Dashboard\MainWP_Backup_Private_Root::site_dir( $this->site_id );
+			$open_dir = $root . 'snapshot-open-run-42';
+			$alias    = $root . 'snapshot-alias-' . uniqid();
+			wp_mkdir_p( $open_dir );
+			$this->fixture_dirs[] = $open_dir;
+			file_put_contents( $open_dir . '/artifact.tar', 'x' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+			$this->assertTrue( symlink( $open_dir, $alias ), 'Precondition: the alias must point to the open run directory.' );
+			touch( $open_dir . '/artifact.tar', time() - 7 * HOUR_IN_SECONDS );
+			touch( $alias, time() - 7 * HOUR_IN_SECONDS );
+
+			$result = MainWP_Backup_Retention_Executor::instance()->cleanup_site_backups( $this->site_id, 1 );
+
+			$this->assertSame( array(), $result['errors'] );
+			$this->assertFileExists( $open_dir . '/artifact.tar', 'An alias must not expose an open paused run to the orphan sweep.' );
+		} finally {
+			$db->remove_backup_task( $task->id );
+			if ( null !== $alias && is_link( $alias ) ) {
+				unlink( $alias ); // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- test cleanup.
+			}
 		}
 	}
 

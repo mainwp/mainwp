@@ -1139,14 +1139,82 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
     /**
      * Method mainwp_clients_notes_save()
      *
-     * Post handler for save notes on,
-     * Page: Manage Sites.
+     * Post handler for saving a client note.
      *
-     * @uses \MainWP\Dashboard\MainWP_Manage_Sites_Handler::save_note()
+     * Core has no per-client access list. This requires the same page-level
+     * permission the Clients screen enforces, an existing client, and the
+     * mainwp_check_client_access filter so an extension can deny one client.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Client::save_note()
      */
     public function mainwp_clients_notes_save() {
         $this->secure_request( 'mainwp_clients_notes_save' );
+
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) {
+            $this->exit_json(
+                array(
+                    'error' => sprintf(
+                        esc_html__( 'You do not have sufficient permissions to access this page (%s).', 'mainwp' ),
+                        esc_html__( 'Manage Clients', 'mainwp' )
+                    ),
+                )
+            );
+        }
+
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- nonce verified in secure_request().
+        $client_id = isset( $_POST['clientid'] ) ? intval( $_POST['clientid'] ) : 0;
+        // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+
+        $client = $client_id ? MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client_id ) : null;
+        if ( empty( $client ) ) {
+            $this->exit_json(
+                array(
+                    'error' => esc_html__( 'Client not found. Please try again.', 'mainwp' ),
+                )
+            );
+        }
+
+        $current_user_id = get_current_user_id();
+
+        /**
+         * Filters whether the current user may access a specific client.
+         *
+         * Default is true for any user who passed the manage clients check.
+         * Extensions such as Team Control return false to deny one client.
+         *
+         * @since 6.2
+         *
+         * @param bool $can_access      Whether access is allowed.
+         * @param int  $client_id       Client ID being saved.
+         * @param int  $current_user_id Current user ID.
+         */
+        $can_access = apply_filters( 'mainwp_check_client_access', true, $client_id, $current_user_id );
+        if ( ! $can_access ) {
+            $this->exit_json(
+                array(
+                    'error' => esc_html__( 'You do not have permission to access this client.', 'mainwp' ),
+                )
+            );
+        }
+
         MainWP_Client::save_note();
+    }
+
+    /**
+     * Send a JSON payload and stop the request.
+     *
+     * During an AJAX request this uses wp_die() so the body stays the JSON
+     * string. Otherwise it dies with that same string.
+     *
+     * @param array $payload Response data.
+     * @return void
+     */
+    private function exit_json( $payload ) {
+        $json = wp_json_encode( $payload );
+        if ( function_exists( 'wp_doing_ajax' ) && wp_doing_ajax() ) {
+            wp_die( $json ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON response body.
+        }
+        die( $json ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON response body.
     }
 
     /**

@@ -1435,7 +1435,12 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $client_to_add         = array();
         foreach ( $default_client_fields as $field_name => $item ) {
             if ( ! empty( $item['db_field'] ) && isset( $client_fields['default_field'][ $field_name ] ) ) {
-                $client_to_add[ $item['db_field'] ] = sanitize_text_field( wp_unslash( $client_fields['default_field'][ $field_name ] ) );
+                $field_value = wp_unslash( $client_fields['default_field'][ $field_name ] );
+                if ( 'note' === $item['db_field'] ) {
+                    $client_to_add[ $item['db_field'] ] = MainWP_Utility::esc_content( $field_value );
+                } else {
+                    $client_to_add[ $item['db_field'] ] = sanitize_text_field( $field_value );
+                }
             }
         }
 
@@ -2637,15 +2642,30 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 'note'      => $esc_note,
             );
             MainWP_DB_Client::instance()->update_client( $update );
-            die(
-                wp_json_encode(
-                    array(
-                        'result'           => 'SUCCESS',
-                        'esc_note_content' => $esc_note,
-                    )
+            static::exit_with_json(
+                array(
+                    'result'           => 'SUCCESS',
+                    'esc_note_content' => $esc_note,
                 )
             );
         }
-        die( wp_json_encode( array( 'undefined_error' => true ) ) );
+        static::exit_with_json( array( 'undefined_error' => true ) );
+    }
+
+    /**
+     * Send a JSON payload and stop the request.
+     *
+     * During an AJAX request this uses wp_die() so the body stays the JSON
+     * string. Otherwise it dies with that same string.
+     *
+     * @param array $payload Response data.
+     * @return void
+     */
+    private static function exit_with_json( $payload ) {
+        $json = wp_json_encode( $payload );
+        if ( function_exists( 'wp_doing_ajax' ) && wp_doing_ajax() ) {
+            wp_die( $json ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON response body.
+        }
+        die( $json ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON response body.
     }
 }

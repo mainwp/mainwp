@@ -1170,23 +1170,38 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             return false;
         }
 
-        // Cap concurrent backup tasks; a refused task stays queued for the next cron cycle.
-        $slot_token = MainWP_Backup_Monitor::acquire_backup_slot( MainWP_Backup_Settings::get_max_concurrent_backups(), 'native' );
-        if ( false === $slot_token ) {
+        // Starters and manual polls share the continuation lane. A continuation
+        // caller retains ownership of its outer scope.
+        $owns_lane = ! MainWP_Backup_Monitor::has_lane_lease_scope();
+        if ( $owns_lane && false === MainWP_Backup_Monitor::acquire_lane_lease() ) {
             $outcome['slot_refused'] = true;
             $outcome['wall_time']    = microtime( true ) - $started;
             return false;
         }
-
+        $slot_token = false;
         try {
+            if ( ! MainWP_Backup_Monitor::confirm_lane_lease() ) {
+                return false;
+            }
+            $slot_token = MainWP_Backup_Monitor::acquire_backup_slot( MainWP_Backup_Settings::get_max_concurrent_backups(), 'native' );
+            if ( false === $slot_token ) {
+                $outcome['slot_refused'] = true;
+                return false;
+            }
+
             // Inside the lease scope every child request this driver makes
             // is bounded and stamps the slot row, so a driver that dies
             // mid-run frees its slot in minutes instead of two hours.
             MainWP_Backup_Monitor::begin_native_lease( $slot_token );
             return static::execute_backup_task_run( $task, $nrOfSites, $updateRun, $run_grace_seconds, $claimed, $claimed_started, $manual_run, $outcome );
         } finally {
-            MainWP_Backup_Monitor::end_native_lease( $slot_token );
-            MainWP_Backup_Monitor::release_backup_slot( $slot_token );
+            if ( false !== $slot_token ) {
+                MainWP_Backup_Monitor::end_native_lease( $slot_token );
+                MainWP_Backup_Monitor::release_backup_slot( $slot_token );
+            }
+            if ( $owns_lane ) {
+                MainWP_Backup_Monitor::release_lane_lease();
+            }
             $outcome['wall_time'] = microtime( true ) - $started;
         }
     }

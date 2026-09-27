@@ -996,6 +996,15 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     }
 
     /**
+     * Whether this process already entered the shared lane scope.
+     *
+     * @return bool True until the scope is released, including after lease loss.
+     */
+    public static function has_lane_lease_scope(): bool {
+        return '' !== self::$lane_lease_token;
+    }
+
+    /**
      * Report loss only within this process's lane scope.
      *
      * @return bool Whether the held lease was lost.

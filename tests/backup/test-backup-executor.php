@@ -1842,6 +1842,7 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 					);
 				}
 				if ( 'backup_task_run' === $what ) {
+					$this->assertNotFalse( get_option( MainWP_Backup_Monitor::LANE_LEASE_OPTION, false ), 'The starter must exclude continuation before running the persisted handle.' );
 					$calls[] = 'run-' . $website->id;
 					$row     = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $website->id );
 					$this->assertSame( $row->child_backup_task_id, $params['task_id'], 'Persist the handle before running it.' );
@@ -1859,6 +1860,96 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 		}
 		MainWP_Manage_Backups_Handler::execute_backup_task( $task );
 		$this->assertSame( $expected, $calls );
+		global $wpdb;
+		$this->assertNull( $wpdb->get_var( $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", MainWP_Backup_Monitor::LANE_LEASE_OPTION ) ), 'The starter releases its lane.' );
+	}
+
+	/**
+	 * A competing lane prevents a starter from claiming or contacting a child.
+	 */
+	public function test_fleet_start_yields_to_a_live_continuation_lane() {
+		$site_id = $this->create_test_site();
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$task    = MainWP_DB_Backup::instance()->add_backup_task( $website->userid, 'Lane fixture', 'daily', 'full', '', (string) $site_id, '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0 );
+		$this->assertNotFalse( $task );
+		$calls = array();
+		$this->record_child_actions( $calls );
+		$holder = wp_json_encode(
+			array(
+				'token'     => 'other-worker',
+				'heartbeat' => time(),
+				'lease'     => 600,
+			)
+		);
+		add_option( MainWP_Backup_Monitor::LANE_LEASE_OPTION, $holder );
+		try {
+			$this->assertFalse( MainWP_Manage_Backups_Handler::execute_backup_task( $task ) );
+			$this->assertSame( array(), $calls );
+			$this->assertSame( $holder, get_option( MainWP_Backup_Monitor::LANE_LEASE_OPTION ) );
+			$this->assertSame( $task->last_run, MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id )->last_run );
+		} finally {
+			delete_option( MainWP_Backup_Monitor::LANE_LEASE_OPTION );
+		}
+	}
+
+	/**
+	 * An outer continuation scope survives a nested task driver.
+	 */
+	public function test_task_driver_preserves_the_callers_lane_scope() {
+		$site_id = $this->create_test_site();
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$task    = MainWP_DB_Backup::instance()->add_backup_task( $website->userid, 'Lane fixture', 'daily', 'full', '', (string) $site_id, '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0 );
+		$this->assertNotFalse( $task );
+		$this->mock_child_action( 'backup_preflight', array( 'task_spine' => 1 ) );
+		$this->mock_child_action(
+			'backup_task_create',
+			array(
+				'task_id' => 'nested-task',
+				'phase'   => 'queued',
+			)
+		);
+		$this->assertIsString( MainWP_Backup_Monitor::acquire_lane_lease() );
+		try {
+			MainWP_Manage_Backups_Handler::execute_backup_task( $task );
+			$this->assertTrue( MainWP_Backup_Monitor::has_lane_lease_scope() );
+			$this->assertTrue( MainWP_Backup_Monitor::confirm_lane_lease() );
+		} finally {
+			MainWP_Backup_Monitor::release_lane_lease();
+		}
+	}
+
+	/**
+	 * A response arriving after lane loss cannot advance persisted progress.
+	 */
+	public function test_first_slice_response_is_fenced_after_lane_loss() {
+		$advanced               = false;
+		list( $site_id, $task ) = $this->site_and_task();
+		$this->mock_child_action( 'backup_preflight', array( 'task_spine' => 1 ) );
+		$this->mock_child_action(
+			'backup_task_create',
+			array(
+				'task_id' => 'lost-response',
+				'phase'   => 'queued',
+			)
+		);
+		$this->mock_child_action( 'backup_task_run', array( 'phase' => 'dumping_db' ) );
+		$this->assertIsString( MainWP_Backup_Monitor::acquire_lane_lease() );
+		$before = null;
+		$lose   = static function ( $payload, $duration, $context ) use ( &$before, $task, $site_id ) {
+			if ( 'run' === $context['op'] ) {
+				$before = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+				delete_option( MainWP_Backup_Monitor::LANE_LEASE_OPTION );
+			}
+		};
+		add_action( 'mainwp_backup_diag_poll', $lose, 10, 3 );
+		try {
+			$this->assertFalse( MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups', $advanced, true ) );
+			$this->assertNotNull( $before );
+			$this->assertEquals( $before, MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id ) );
+		} finally {
+			remove_action( 'mainwp_backup_diag_poll', $lose, 10 );
+			MainWP_Backup_Monitor::release_lane_lease();
+		}
 	}
 
 	/**

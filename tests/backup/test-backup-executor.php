@@ -1795,7 +1795,7 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 	 * @return void
 	 */
 	public function test_backup_site_on_spine_capable_site_creates_task_normally() {
-		$advanced = false;
+		$advanced               = false;
 		list( $site_id, $task ) = $this->site_and_task();
 		$this->mock_child_action( 'backup_preflight', array( 'task_spine' => 1 ) );
 		$this->mock_child_action(
@@ -1826,9 +1826,9 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function test_fleet_starts_each_created_task_before_creating_the_next() {
 		$this->mock_child_action( 'backup_preflight', array( 'task_spine' => 1 ) );
-		$sites = array( $this->create_test_site(), $this->create_test_site(), $this->create_test_site() );
+		$sites   = array( $this->create_test_site(), $this->create_test_site(), $this->create_test_site() );
 		$website = MainWP_DB::instance()->get_website_by_id( $sites[0] );
-		$task = MainWP_DB_Backup::instance()->add_backup_task( $website->userid, 'First slices', 'daily', 'full', '', implode( ',', $sites ), '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0 );
+		$task    = MainWP_DB_Backup::instance()->add_backup_task( $website->userid, 'First slices', 'daily', 'full', '', implode( ',', $sites ), '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0 );
 		$this->assertNotFalse( $task );
 		$calls = array();
 		add_filter(
@@ -1836,11 +1836,14 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 			function ( $result, $website, $what, $params ) use ( &$calls, $task ) {
 				if ( 'backup_task_create' === $what ) {
 					$calls[] = 'create-' . $website->id;
-					return array( 'task_id' => 'task-fleet-' . $website->id, 'phase' => 'queued' );
+					return array(
+						'task_id' => 'task-fleet-' . $website->id,
+						'phase'   => 'queued',
+					);
 				}
 				if ( 'backup_task_run' === $what ) {
 					$calls[] = 'run-' . $website->id;
-					$row = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $website->id );
+					$row     = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $website->id );
 					$this->assertSame( $row->child_backup_task_id, $params['task_id'], 'Persist the handle before running it.' );
 					return array( 'phase' => 'dumping_db' );
 				}
@@ -1862,10 +1865,16 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 	 * A lane lost during creation cannot start the returned child task.
 	 */
 	public function test_first_slice_waits_when_creation_loses_the_lane() {
-		$advanced = false;
+		$advanced               = false;
 		list( $site_id, $task ) = $this->site_and_task();
 		$this->mock_child_action( 'backup_preflight', array( 'task_spine' => 1 ) );
-		$this->mock_child_action( 'backup_task_create', array( 'task_id' => 'task-lost-lane', 'phase' => 'queued' ) );
+		$this->mock_child_action(
+			'backup_task_create',
+			array(
+				'task_id' => 'task-lost-lane',
+				'phase'   => 'queued',
+			)
+		);
 		$calls = array();
 		$this->record_child_actions( $calls );
 		$this->assertIsString( MainWP_Backup_Monitor::acquire_lane_lease() );
@@ -1891,10 +1900,16 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 	 * A failed handle write must not run a creating marker on the child.
 	 */
 	public function test_first_slice_waits_until_the_child_handle_is_persisted() {
-		$advanced = false;
+		$advanced               = false;
 		list( $site_id, $task ) = $this->site_and_task();
 		$this->mock_child_action( 'backup_preflight', array( 'task_spine' => 1 ) );
-		$this->mock_child_action( 'backup_task_create', array( 'task_id' => 'task-failed-handle-write', 'phase' => 'queued' ) );
+		$this->mock_child_action(
+			'backup_task_create',
+			array(
+				'task_id' => 'task-failed-handle-write',
+				'phase'   => 'queued',
+			)
+		);
 		$calls = array();
 		$this->record_child_actions( $calls );
 		$skip = static function ( $query ) {
@@ -1919,7 +1934,14 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 		$this->mock_child_action( 'backup_preflight', array( 'task_spine' => 1 ) );
 		$replace = static function ( $result, $website, $what ) use ( $task ) {
 			if ( 'backup_task_create' === $what ) {
-				MainWP_DB_Backup::instance()->update_backup_task_progress( $task->id, $website->id, array( 'child_backup_task_id' => 'task-replacement', 'fetchResult' => '{"replacement":true}' ) );
+				MainWP_DB_Backup::instance()->update_backup_task_progress(
+					$task->id,
+					$website->id,
+					array(
+						'child_backup_task_id' => 'task-replacement',
+						'fetchResult'          => '{"replacement":true}',
+					)
+				);
 				return array( 'error' => 'Create failed.' );
 			}
 			return $result;

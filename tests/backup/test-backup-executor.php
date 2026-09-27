@@ -20,6 +20,7 @@ use MainWP\Dashboard\MainWP_Backup_Snapshots;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_DB_Backup;
 use MainWP\Dashboard\MainWP_Exception;
+use MainWP\Dashboard\MainWP_Logger;
 use MainWP\Dashboard\MainWP_Manage_Backups_Handler;
 use MainWP\Dashboard\MainWP_Post_Backup_Handler;
 
@@ -348,8 +349,15 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 	public function test_thrown_full_download_is_recorded_on_the_diag_seam() {
 		list( $site_id, $task ) = $this->site_and_task();
 		$this->seed_download_ready_progress( $task->id, $site_id, 4096 );
-		MainWP_DB_Backup::instance()->update_backup_task_progress( $task->id, $site_id, array( 'attempts' => 2 ) );
-		$throw = static function () {
+		MainWP_DB_Backup::instance()->update_backup_task_progress(
+			$task->id,
+			$site_id,
+			array(
+				'attempts'             => 2,
+				'child_backup_task_id' => 'download-task',
+			)
+		);
+		$throw     = static function () {
 			throw new MainWP_Exception( 'Backup download failed: the child site returned an unexpected response.', 'HTTP 504', 'mainwp_backup_http_error' );
 		};
 		$downloads = array();
@@ -358,6 +366,19 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 				$downloads[] = array( $payload, $duration, $context );
 			}
 		};
+		$logger    = MainWP_Logger::instance();
+		$priority  = new \ReflectionProperty( $logger, 'logPriority' );
+		$priority->setAccessible( true );
+		$previous = $priority->getValue( $logger );
+		$priority->setValue( $logger, MainWP_Logger::WARNING );
+		$warnings = array();
+		$capture  = static function ( $text ) use ( &$warnings ) {
+			if ( false !== strpos( $text, 'Backup download failed; the next cycle retries it:' ) ) {
+				$warnings[] = $text;
+			}
+		};
+		add_filter( 'mainwp_log_do_to_db', '__return_true' );
+		add_action( 'mainwp_before_log_data', $capture );
 		add_filter( 'mainwp_download_to_file_pre', $throw );
 		add_action( 'mainwp_backup_diag_poll', $listen, 10, 3 );
 		try {
@@ -367,16 +388,127 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 			$this->assertCount( 1, $downloads );
 			list( $payload, $duration, $context ) = $downloads[0];
 			$this->assertTrue( $payload['thrown'] );
+			$this->assertTrue( $payload['sent'] );
+			$this->assertSame( 'download-task', $payload['task_id'] );
+			$this->assertCount( 1, $warnings );
+			$this->assertStringContainsString( '(HTTP 504)', $warnings[0] );
 			$this->assertSame( 'full', $payload['artifact'] );
 			$this->assertSame( 2, $payload['attempt'] );
 			$this->assertSame( 'Backup download failed: the child site returned an unexpected response.', $payload['message'] );
 			$this->assertSame( 'HTTP 504', $payload['extra'] );
 			$this->assertSame( 0, $payload['code'] );
-			$this->assertArrayNotHasKey( 'error_code', $payload );
+			$this->assertSame( 'mainwp_backup_http_error', $payload['error_code'] );
 			$this->assertIsFloat( $duration );
 			$this->assertGreaterThanOrEqual( 0, $duration );
 			$this->assertSame( (int) $task->id, $context['task_id'] );
 			$this->assertSame( (int) $site_id, $context['site_id'] );
+		} finally {
+			$priority->setValue( $logger, $previous );
+			remove_action( 'mainwp_before_log_data', $capture );
+			remove_filter( 'mainwp_log_do_to_db', '__return_true' );
+			remove_filter( 'mainwp_download_to_file_pre', $throw );
+			remove_action( 'mainwp_backup_diag_poll', $listen, 10 );
+		}
+	}
+
+	/**
+	 * Failed database downloads retain the HTTP status and consume one retry.
+	 */
+	public function test_thrown_db_download_is_recorded_on_the_diag_seam() {
+		list( $site_id, $task ) = $this->site_and_task( array( 'type' => 'db' ) );
+		$this->seed_download_ready_progress( $task->id, $site_id, 4096 );
+		MainWP_DB_Backup::instance()->update_backup_task_progress(
+			$task->id,
+			$site_id,
+			array(
+				'attempts'             => 2,
+				'child_backup_task_id' => 'download-task',
+				'fetchResult'          => wp_json_encode(
+					array(
+						'db'   => 'backup.sql.zip',
+						'full' => false,
+						'size' => 4096,
+					)
+				),
+			)
+		);
+		$throw     = static function () {
+			throw new MainWP_Exception( 'Backup download failed: the child site returned an unexpected response.', 'HTTP 504', 'mainwp_backup_http_error' );
+		};
+		$downloads = array();
+		$listen    = static function ( $payload, $duration, $context ) use ( &$downloads ) {
+			if ( 'download' === $context['op'] ) {
+				$downloads[] = array( $payload, $duration, $context );
+			}
+		};
+		$logger    = MainWP_Logger::instance();
+		$priority  = new \ReflectionProperty( $logger, 'logPriority' );
+		$priority->setAccessible( true );
+		$previous = $priority->getValue( $logger );
+		$priority->setValue( $logger, MainWP_Logger::WARNING );
+		$warnings = array();
+		$capture  = static function ( $text ) use ( &$warnings ) {
+			if ( false !== strpos( $text, 'Backup download failed; the next cycle retries it:' ) ) {
+				$warnings[] = $text;
+			}
+		};
+		add_filter( 'mainwp_log_do_to_db', '__return_true' );
+		add_action( 'mainwp_before_log_data', $capture );
+		add_filter( 'mainwp_download_to_file_pre', $throw );
+		add_action( 'mainwp_backup_diag_poll', $listen, 10, 3 );
+		try {
+			$this->assertFalse( MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' ) );
+			$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+			$this->assertSame( 3, (int) $progress->attempts, 'The failed download must consume exactly one retry attempt.' );
+			$this->assertCount( 1, $downloads );
+			list( $payload, $duration, $context ) = $downloads[0];
+			$this->assertTrue( $payload['thrown'] );
+			$this->assertTrue( $payload['sent'] );
+			$this->assertSame( 'download-task', $payload['task_id'] );
+			$this->assertCount( 1, $warnings );
+			$this->assertStringContainsString( '(HTTP 504)', $warnings[0] );
+			$this->assertSame( 'db', $payload['artifact'] );
+			$this->assertSame( 2, $payload['attempt'] );
+			$this->assertSame( 'Backup download failed: the child site returned an unexpected response.', $payload['message'] );
+			$this->assertSame( 'HTTP 504', $payload['extra'] );
+			$this->assertSame( 0, $payload['code'] );
+			$this->assertSame( 'mainwp_backup_http_error', $payload['error_code'] );
+			$this->assertIsFloat( $duration );
+			$this->assertGreaterThanOrEqual( 0, $duration );
+			$this->assertSame( (int) $task->id, $context['task_id'] );
+			$this->assertSame( (int) $site_id, $context['site_id'] );
+		} finally {
+			$priority->setValue( $logger, $previous );
+			remove_action( 'mainwp_before_log_data', $capture );
+			remove_filter( 'mainwp_log_do_to_db', '__return_true' );
+			remove_filter( 'mainwp_download_to_file_pre', $throw );
+			remove_action( 'mainwp_backup_diag_poll', $listen, 10 );
+		}
+	}
+
+	/**
+	 * A diagnostic listener cannot consume the download retry or replace its yield.
+	 */
+	public function test_download_listener_failure_preserves_retry() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$this->seed_download_ready_progress( $task->id, $site_id, 4096 );
+		$throw          = static function () {
+			throw new MainWP_Exception( 'Download failed.', 'HTTP 504', 'mainwp_backup_http_error' );
+		};
+		$listener_calls = 0;
+		$listen         = static function ( $payload, $duration, $context ) use ( &$listener_calls ) {
+			if ( 'download' === $context['op'] ) {
+				++$listener_calls;
+				throw new \Error( 'Diagnostic listener failed.' );
+			}
+		};
+		add_filter( 'mainwp_download_to_file_pre', $throw );
+		add_action( 'mainwp_backup_diag_poll', $listen, 10, 3 );
+		try {
+			$this->assertFalse( MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' ) );
+			$this->assertSame( 1, $listener_calls );
+			$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+			$this->assertSame( 1, (int) $progress->attempts );
 		} finally {
 			remove_filter( 'mainwp_download_to_file_pre', $throw );
 			remove_action( 'mainwp_backup_diag_poll', $listen, 10 );
@@ -1994,6 +2126,94 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A diagnostic listener cannot replace a create failure or strand its marker.
+	 */
+	public function test_thrown_create_clears_marker_when_diag_listener_throws() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$this->mock_child_action( 'backup_preflight', array( 'task_spine' => 1 ) );
+		$failure = new MainWP_Exception( 'Create request failed.', 'HTTP 504', 'mainwp_backup_http_error' );
+		$throw   = static function ( $result, $website, $what ) use ( $failure ) {
+			if ( 'backup_task_create' === $what ) {
+				throw $failure;
+			}
+			return $result;
+		};
+		$creates = array();
+		$listen  = static function ( $payload, $duration, $context ) use ( &$creates ) {
+			if ( 'create' === $context['op'] ) {
+				$creates[] = array( $payload, $duration, $context );
+				throw new \Error( 'Diagnostic listener failed.' );
+			}
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $throw, 20, 3 );
+		add_action( 'mainwp_backup_diag_poll', $listen, 10, 3 );
+		try {
+			try {
+				MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+				$this->fail( 'The original create failure must propagate.' );
+			} catch ( MainWP_Exception $e ) {
+				$this->assertSame( $failure, $e );
+			}
+			$this->assertCount( 1, $creates );
+			list( $payload, $duration, $context ) = $creates[0];
+			$this->assertSame( 'create', $context['op'] );
+			$this->assertTrue( $payload['thrown'] );
+			$this->assertTrue( $payload['sent'] );
+			$this->assertSame( 'mainwp_backup_http_error', $payload['error_code'] );
+			$this->assertSame( 0, $payload['code'] );
+			$this->assertSame( 'HTTP 504', $payload['extra'] );
+			$this->assertGreaterThanOrEqual( 0, $duration );
+			$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+			$this->assertSame( '', $progress->child_backup_task_id );
+		} finally {
+			remove_filter( 'mainwp_fetch_url_authed_pre', $throw, 20 );
+			remove_action( 'mainwp_backup_diag_poll', $listen, 10 );
+		}
+	}
+
+	/**
+	 * A readiness refusal must not look like a create request reached the Child.
+	 */
+	public function test_preflight_refusal_records_create_as_not_sent() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$this->mock_child_action(
+			'backup_preflight',
+			array(
+				'error'      => 'Uploads directory is not writable.',
+				'error_code' => '',
+			)
+		);
+		$requests = array();
+		$capture  = static function ( $result, $website, $what ) use ( &$requests ) {
+			$requests[] = $what;
+			return $result;
+		};
+		$creates  = array();
+		$listen   = static function ( $payload, $duration, $context ) use ( &$creates ) {
+			if ( 'create' === $context['op'] ) {
+				$creates[] = $payload;
+			}
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $capture, 20, 3 );
+		add_action( 'mainwp_backup_diag_poll', $listen, 10, 3 );
+		try {
+			try {
+				MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+				$this->fail( 'Readiness refusal must propagate.' );
+			} catch ( MainWP_Exception $e ) {
+				$this->assertSame( MainWP_Backup_Error_Codes::ERR_CHILD_PREFLIGHT_FAILED, $e->get_message_error_code() );
+			}
+			$this->assertNotContains( 'backup_task_create', $requests );
+			$this->assertCount( 1, $creates );
+			$this->assertFalse( $creates[0]['sent'] );
+			$this->assertSame( MainWP_Backup_Error_Codes::ERR_CHILD_PREFLIGHT_FAILED, $creates[0]['error_code'] );
+		} finally {
+			remove_filter( 'mainwp_fetch_url_authed_pre', $capture, 20 );
+			remove_action( 'mainwp_backup_diag_poll', $listen, 10 );
+		}
+	}
+
+	/**
 	 * A run request that throws still leaves a diag line marked as thrown.
 	 */
 	public function test_thrown_run_request_is_recorded_on_the_diag_seam() {
@@ -2010,7 +2230,7 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 		$throw = static function ( $result, $website, $what ) {
 			unset( $website );
 			if ( 'backup_task_run' === $what ) {
-				throw new MainWP_Exception( 'cURL error 52: Empty reply from server', 'http' );
+				throw new MainWP_Exception( 'HTTPERROR', 'cURL error 52: Empty reply from server' );
 			}
 			return $result;
 		};
@@ -2029,9 +2249,11 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 			list( $payload, $duration, $context ) = $runs[0];
 			$this->assertArrayHasKey( 'thrown', $payload, 'A run payload without the thrown key means the request did not throw.' );
 			$this->assertTrue( $payload['thrown'] );
-			$this->assertSame( 'cURL error 52: Empty reply from server', $payload['message'] );
-			$this->assertSame( 'http', $payload['extra'] );
-			$this->assertArrayNotHasKey( 'error_code', $payload );
+			$this->assertSame( 'HTTPERROR', $payload['message'] );
+			$this->assertSame( 'cURL error 52: Empty reply from server', $payload['extra'] );
+			$this->assertTrue( $payload['sent'] );
+			$this->assertSame( 'thrown-run', $payload['task_id'] );
+			$this->assertSame( '', $payload['error_code'] );
 			$this->assertIsFloat( $duration );
 			$this->assertGreaterThanOrEqual( 0, $duration );
 			$this->assertSame( (int) $task->id, $context['task_id'] );

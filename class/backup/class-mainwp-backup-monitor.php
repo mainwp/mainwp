@@ -197,7 +197,8 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      *
      * Ask the child site for its backup readiness report before starting
      * a backup. Old child sites without the preflight action are detected
-     * by their missing payload and negotiation returns without capabilities.
+     * by an error response without an error_code key; negotiation returns
+     * without capabilities. Current Child runtime errors include that key.
      *
      * Stores the child backup directory hash in site metadata for later
      * operations (sensitive value: stored only, never rendered), blocks
@@ -217,7 +218,7 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      *                                   never claims a switch that did not reach the wire.
      *
      * @return void
-     * @throws MainWP_Exception When the child reports critically low disk space or readiness fails before capabilities are known.
+     * @throws MainWP_Exception When the child reports critically low disk space or readiness fails without previously confirmed task-spine support.
      */
     public static function negotiate_backup_preflight( object &$website, string &$archive_ext = '', ?object $task = null, bool $allow_switch = true ): void { // phpcs:ignore -- NOSONAR - complex.
         $diag_task_id = is_object( $task ) && ! empty( $task->id ) ? (int) $task->id : 0;
@@ -254,11 +255,11 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             // healthy site.
             if ( is_array( $preflight ) && isset( $preflight['error_code'] ) && self::CHILD_INCOMPATIBLE_CODE === $preflight['error_code'] ) {
                 static::record_negotiated_capabilities( $website, array() );
-            } elseif ( is_array( $preflight ) && isset( $preflight['error'] ) && is_string( $preflight['error'] ) && '' !== $preflight['error'] ) {
+            } elseif ( is_array( $preflight ) && array_key_exists( 'error_code', $preflight ) && isset( $preflight['error'] ) && is_string( $preflight['error'] ) && '' !== $preflight['error'] ) {
                 $task_spine_support = MainWP_DB::instance()->get_website_option( $website, 'task_spine_support' );
-                if ( null === $task_spine_support || '' === $task_spine_support ) {
-                    // An error array proves the Child has the preflight action. A never-negotiated
-                    // site needs the Child's message, not a refusal claiming the Child is too old.
+                if ( '1' !== (string) $task_spine_support ) {
+                    // The error_code key distinguishes a current Child readiness failure from an unknown action.
+                    // Only confirmed task-spine support can survive a failed readiness probe.
                     /** This action is documented in class/backup/class-mainwp-backup-monitor.php */
                     do_action( 'mainwp_backup_diag_preflight', (int) $website->id, $diag_task_id, $preflight, 'failed' );
                     // phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- message parts are escaped above.

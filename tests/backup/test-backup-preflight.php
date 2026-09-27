@@ -985,14 +985,14 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 		$this->assertStringContainsString( '0 B', $exception->getMessage(), 'The message must render the free space, not a blank.' );
 	}
 
-	/** An old Child returns no preflight payload and is refused by the task-spine gate. */
+	/** An unknown-action reply must reach the task-spine gate without being mistaken for a readiness failure. */
 	public function test_preflight_error_response_requires_child_update() {
 		$site_id = $this->create_test_site();
 
 		$exception = $this->run_backup_site(
 			$site_id,
 			array(
-				'backup_preflight' => '',
+				'backup_preflight' => array( 'error' => 'Required version has not been detected. Please, make sure that you are using the latest version of the MainWP Child plugin on your site.' ),
 				'backup'           => array(
 					'error'      => 'reached the backup action',
 					'error_code' => 'mainwp_backup_disk_full',
@@ -1028,6 +1028,32 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 		$this->assertNotSame( MainWP_Backup_Error_Codes::ERR_CHILD_UPDATE_REQUIRED, $exception->get_message_error_code() );
 		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
 		$this->assertEmpty( MainWP_DB::instance()->get_website_option( $website, 'task_spine_support' ) );
+	}
+
+	/** A stored incompatibility must not hide a current Child readiness failure. */
+	public function test_preflight_runtime_error_after_child_update_reports_the_child_message() {
+		$site_id = $this->create_test_site();
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		MainWP_DB::instance()->update_website_option( $website, 'task_spine_support', '0' );
+
+		$exception = $this->run_backup_site(
+			$site_id,
+			array(
+				'backup_preflight'   => array(
+					'error'      => 'Unable to create directory wp-content/uploads/mainwp/backup-x/. Is its parent directory writable by the server?',
+					'error_code' => '',
+				),
+				'backup_task_create' => array( 'error' => 'must not reach task creation' ),
+				'backup'             => array( 'error' => 'must not reach the backup action' ),
+			)
+		);
+
+		$this->assertNotNull( $exception );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_CHILD_PREFLIGHT_FAILED, $exception->get_message_error_code() );
+		$this->assertStringContainsString( 'Is its parent directory writable', $exception->getMessage() );
+		$this->assertNotSame( MainWP_Backup_Error_Codes::ERR_CHILD_UPDATE_REQUIRED, $exception->get_message_error_code() );
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$this->assertSame( '0', MainWP_DB::instance()->get_website_option( $website, 'task_spine_support' ) );
 	}
 
 	/** A negotiated site keeps its last capabilities after a Child runtime error. */

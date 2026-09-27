@@ -584,7 +584,7 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @param int    $site_id   Child site id.
      * @param int    $task_id   Backup task id, 0 when none drives the run.
      * @param array  $preflight Child readiness report, empty when unavailable.
-     * @param string $status    ok|unavailable|unsupported.
+     * @param string $status    ok|unavailable|unsupported|failed.
      *
      * @return void
      */

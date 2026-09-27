@@ -1547,9 +1547,10 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                 if ( null === $errorOutput ) {
                     $errorOutput = '';
                 }
-                $errorOutput  .= 'Site: <strong>' . MainWP_Utility::get_nice_url( $website->url ) . '</strong><br />';
-                $_error_code   = $e instanceof MainWP_Exception ? $e->get_message_error_code() : '';
-                $_error_output = in_array( $_error_code, MainWP_Backup_Error_Codes::get_registered_codes(), true ) ? MainWP_Backup_Error_Codes::message( $_error_code ) : MainWP_Error_Helper::get_error_message( $e );
+                $errorOutput .= 'Site: <strong>' . MainWP_Utility::get_nice_url( $website->url ) . '</strong><br />';
+                $_error_code  = $e instanceof MainWP_Exception ? $e->get_message_error_code() : '';
+                // Readiness failures need the Child's reason so the user can correct it.
+                $_error_output = MainWP_Backup_Error_Codes::ERR_CHILD_PREFLIGHT_FAILED !== $_error_code && in_array( $_error_code, MainWP_Backup_Error_Codes::get_registered_codes(), true ) ? MainWP_Backup_Error_Codes::message( $_error_code ) : MainWP_Error_Helper::get_error_message( $e );
                 $errorOutput  .= $_error_output . '<br />';
                 MainWP_DB_Backup::instance()->update_backup_task_progress( (int) $task->id, (int) $siteid, array( 'last_error' => $_error_output ) );
                 $errorEntries[] = 'Site: <strong>' . MainWP_Utility::get_nice_url( $website->url ) . '</strong><br />' . $_error_output;

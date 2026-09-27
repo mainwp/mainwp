@@ -17,6 +17,7 @@
 
 namespace MainWP\Dashboard\Tests;
 
+use MainWP\Dashboard\MainWP_Backup_Error_Codes;
 use MainWP\Dashboard\MainWP_Backup_File_Manager;
 use MainWP\Dashboard\MainWP_Backup_Monitor;
 use MainWP\Dashboard\MainWP_Backup_Snapshots;
@@ -362,6 +363,28 @@ class MainWP_Backup_Mark_Close_Guard_Test extends MainWP_Abilities_Test_Case {
 		$errors = $this->marks( 'error' );
 		$this->assertCount( 1, $errors );
 		$this->assertSame( $site_id, $errors[0]['site_id'] );
+	}
+
+	/**
+	 * The saved-task failure must retain the reason the operator needs to fix.
+	 */
+	public function test_preflight_failure_last_error_retains_child_message() {
+		list( $site_id, $task ) = $this->site_and_open_task();
+		$this->mock_child_action(
+			'backup_preflight',
+			array(
+				'error'      => 'The uploads directory is not writable.',
+				'error_code' => '',
+			)
+		);
+
+		MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, false );
+
+		$errors = $this->marks( 'error' );
+		$this->assertCount( 1, $errors );
+		$this->assertStringContainsString( MainWP_Backup_Error_Codes::ERR_CHILD_PREFLIGHT_FAILED, $errors[0]['detail'] );
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+		$this->assertSame( 'The child site could not get ready for a backup: The uploads directory is not writable.', $progress->last_error );
 	}
 
 	/**

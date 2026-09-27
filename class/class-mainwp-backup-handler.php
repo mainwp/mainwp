@@ -296,7 +296,8 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      *
      * Ask the child site for its backup readiness report before starting
      * a backup. Old child sites without the preflight action are detected
-     * by their error response and the backup proceeds without preflight.
+     * by an error response without an error_code key; negotiation returns
+     * without capabilities. Current Child runtime errors include that key.
      *
      * Stores the child backup directory hash in site metadata for later
      * operations (sensitive value: stored only, never rendered), blocks
@@ -309,6 +310,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @param string $archive_ext Requested archive extension (zip, tar.gz, tar.bz2, tar).
      *
      * @return void
+     * @throws MainWP_Exception When disk space is critically low or readiness fails without previously confirmed task-spine support.
      */
     public static function negotiate_backup_preflight( &$website, $archive_ext = '' ) {
         _deprecated_function( __METHOD__, '6.2', 'MainWP_Backup_Monitor::negotiate_backup_preflight' );

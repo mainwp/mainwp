@@ -25,6 +25,34 @@ if ( ! defined( 'ABSPATH' ) ) {
 class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
     /**
+     * Keep diagnostic listener failures out of backup retry and cleanup paths.
+     *
+     * @param \Throwable $e             Original request failure.
+     * @param float      $elapsed       Elapsed request time in seconds.
+     * @param array      $payload_extra Request identity and dispatch state.
+     * @param array      $context       Backup operation and site context.
+     *
+     * @return void
+     */
+    private static function record_thrown_request( \Throwable $e, float $elapsed, array $payload_extra, array $context ): void {
+        try {
+            $payload = array_merge(
+                array(
+                    'thrown'     => true,
+                    'message'    => $e->getMessage(),
+                    'code'       => (int) $e->getCode(),
+                    'error_code' => $e instanceof MainWP_Exception ? (string) $e->get_message_error_code() : '',
+                    'extra'      => $e instanceof MainWP_Exception ? (string) $e->get_message_extra() : '',
+                ),
+                $payload_extra
+            );
+            /** This action is documented in class/backup/class-mainwp-backup-executor.php */
+            do_action( 'mainwp_backup_diag_poll', $payload, $elapsed, $context );
+        } catch ( \Throwable $listener_error ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement -- diagnostics must not change backup control flow.
+        }
+    }
+
+    /**
      * Backup indicators share a query for each policy during the request.
      *
      * @var array
@@ -432,17 +460,12 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 );
             } catch ( MainWP_Exception $e ) {
                 MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'ERROR: ' . $e->getMessage() . ' (' . $e->get_message_extra() . ')' );
-                // A thrown request otherwise leaves no diag line, so a cut create cannot be told from a Child error payload.
-                /** This action is documented in class/backup/class-mainwp-backup-executor.php */
-                do_action(
-                    'mainwp_backup_diag_poll',
-                    array(
-                        'thrown'  => true,
-                        'message' => $e->getMessage(),
-                        'code'    => (int) $e->getCode(),
-                        'extra'   => (string) $e->get_message_extra(),
-                    ),
+                self::record_thrown_request(
+                    $e,
                     microtime( true ) - ( isset( $diag_start ) ? $diag_start : $start ),
+                    array(
+                        'sent' => isset( $diag_start ),
+                    ),
                     array(
                         'op'      => 'create',
                         'site_id' => (int) $website->id,
@@ -650,17 +673,13 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             } catch ( \Exception $e ) {
                 // The failed run call consumes a retry attempt below instead of being ignored.
                 MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'Backup task run failed: ' . $e->getMessage() );
-                // A thrown request otherwise leaves no diag line, which is what made the live-run cut unattributable.
-                /** This action is documented in class/backup/class-mainwp-backup-executor.php */
-                do_action(
-                    'mainwp_backup_diag_poll',
-                    array(
-                        'thrown'  => true,
-                        'message' => $e->getMessage(),
-                        'code'    => (int) $e->getCode(),
-                        'extra'   => $e instanceof MainWP_Exception ? (string) $e->get_message_extra() : '',
-                    ),
+                self::record_thrown_request(
+                    $e,
                     microtime( true ) - $diag_start,
+                    array(
+                        'sent'    => true,
+                        'task_id' => ! empty( $backupTaskProgress->child_backup_task_id ) ? (string) $backupTaskProgress->child_backup_task_id : '',
+                    ),
                     array(
                         'op'      => 'run',
                         'site_id' => (int) $website->id,
@@ -1065,26 +1084,22 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     }
                     try {
                         try {
+                            $dl_start = microtime( true );
                             // MWP-1548: decrypt at the boundary so download_to_file sees plaintext credentials.
                             $http_user_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_user );
                             $http_pass_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_pass );
-                            $dl_start        = microtime( true );
                             MainWP_Backup_File_Manager::download_backup_artifact( $website, $information['db'], $localBackupFile, $information['size'], $http_user_plain, $http_pass_plain );
                             MainWP_Backup_File_Manager::validate_backup_file( $localBackupFile, $information['size'] );
                         } catch ( \Exception $e ) {
-                            // The live run lost the failed download's HTTP status because nothing recorded the message extra.
-                            /** This action is documented in class/backup/class-mainwp-backup-executor.php */
-                            do_action(
-                                'mainwp_backup_diag_poll',
+                            self::record_thrown_request(
+                                $e,
+                                microtime( true ) - $dl_start,
                                 array(
-                                    'thrown'   => true,
+                                    'sent'     => true,
+                                    'task_id'  => ! empty( $backupTaskProgress->child_backup_task_id ) ? (string) $backupTaskProgress->child_backup_task_id : '',
                                     'artifact' => 'db',
                                     'attempt'  => (int) $backupTaskProgress->attempts,
-                                    'message'  => $e->getMessage(),
-                                    'code'     => (int) $e->getCode(),
-                                    'extra'    => $e instanceof MainWP_Exception ? (string) $e->get_message_extra() : '',
                                 ),
-                                microtime( true ) - $dl_start,
                                 array(
                                     'op'      => 'download',
                                     'site_id' => (int) $website->id,
@@ -1152,26 +1167,22 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     }
                     try {
                         try {
+                            $dl_start = microtime( true );
                             // MWP-1548: decrypt at the boundary so download_to_file sees plaintext credentials.
                             $http_user_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_user );
                             $http_pass_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_pass );
-                            $dl_start        = microtime( true );
                             MainWP_Backup_File_Manager::download_backup_artifact( $website, $information['full'], $localBackupFile, $information['size'], $http_user_plain, $http_pass_plain );
                             MainWP_Backup_File_Manager::validate_backup_file( $localBackupFile, $information['size'] );
                         } catch ( \Exception $e ) {
-                            // The live run lost the failed download's HTTP status because nothing recorded the message extra.
-                            /** This action is documented in class/backup/class-mainwp-backup-executor.php */
-                            do_action(
-                                'mainwp_backup_diag_poll',
+                            self::record_thrown_request(
+                                $e,
+                                microtime( true ) - $dl_start,
                                 array(
-                                    'thrown'   => true,
+                                    'sent'     => true,
+                                    'task_id'  => ! empty( $backupTaskProgress->child_backup_task_id ) ? (string) $backupTaskProgress->child_backup_task_id : '',
                                     'artifact' => 'full',
                                     'attempt'  => (int) $backupTaskProgress->attempts,
-                                    'message'  => $e->getMessage(),
-                                    'code'     => (int) $e->getCode(),
-                                    'extra'    => $e instanceof MainWP_Exception ? (string) $e->get_message_extra() : '',
                                 ),
-                                microtime( true ) - $dl_start,
                                 array(
                                     'op'      => 'download',
                                     'site_id' => (int) $website->id,

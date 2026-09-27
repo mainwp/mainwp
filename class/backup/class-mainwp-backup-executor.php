@@ -142,6 +142,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @param mixed     $pTask Task to perform.
      * @param mixed     $subfolder Sub folder to place backup.
      * @param bool|null $advanced Whether this call moved the site forward.
+     * @param bool      $start_created_task Start a newly created task before returning to the fleet.
      *
      * @gobal object $wp_filesystem WordPress filesystem instance.
      *
@@ -168,7 +169,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @uses \MainWP\Dashboard\MainWP_Utility::value_to_string()
      * @uses \MainWP\Dashboard\MainWP_Backup_File_Manager::get_real_extension()
      */
-    public static function backup_site( $siteid, $pTask, $subfolder, &$advanced = null ) {
+    public static function backup_site( $siteid, $pTask, $subfolder, &$advanced = null, bool $start_created_task = false ) {
         $advanced = false;
         // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber
         // phpcs: ignore -- Current complexity is the only way to achieve desired results, pull request solutions appreciated.
@@ -568,34 +569,34 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
                 $advanced = true;
 
-                // The task is queued on the child; each following cycle
-                // advances it one bounded slice.
-                MainWP_DB_Backup::instance()->update_backup_task_progress(
+                // Persist the task before starting its first slice. Deferring
+                // until the next fleet pass can exceed the child's queued limit.
+                self::hand_off_created_task_after_slot_loss( $website, $taskId, $creating_marker, $information );
+                $backupTaskProgress = MainWP_DB_Backup::instance()->get_backup_task_progress( $taskId, $website->id );
+                if ( ! $start_created_task || ! $backupTaskProgress || sanitize_text_field( $information['task_id'] ) !== $backupTaskProgress->child_backup_task_id ) {
+                    return false;
+                }
+            } else {
+                $advanced = true;
+
+                // The create round trip resolved into a fetch result, so the
+                // marker's window is over: clear it in the same write, or every
+                // later cycle would read it as a create still in flight.
+                $stored = MainWP_DB_Backup::instance()->update_backup_task_progress_if_marker(
                     $taskId,
                     $website->id,
+                    $creating_marker,
                     array(
-                        'child_backup_task_id'  => sanitize_text_field( $information['task_id'] ),
+                        'fetchResult'           => wp_json_encode( $information ),
+                        'child_backup_task_id'  => '',
                         'foreign_refused_since' => 0,
                     )
                 );
-
-                return false;
+                if ( $stored < 1 ) {
+                    return false;
+                }
+                $backupTaskProgress = MainWP_DB_Backup::instance()->get_backup_task_progress( $taskId, $website->id );
             }
-
-            $advanced = true;
-
-            // The create round trip resolved into a fetch result, so the
-            // marker's window is over: clear it in the same write, or every
-            // later cycle would read it as a create still in flight.
-            $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress(
-                $taskId,
-                $website->id,
-                array(
-                    'fetchResult'           => wp_json_encode( $information ),
-                    'child_backup_task_id'  => '',
-                    'foreign_refused_since' => 0,
-                )
-            );
         } elseif ( self::is_creating_marker( $backupTaskProgress->child_backup_task_id ) ) {
             if ( ( time() - (int) $backupTaskProgress->dtsFetched ) < self::CREATE_MARKER_TTL_SECONDS ) {
                 // Another driver's create request for this run has not
@@ -618,7 +619,12 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             );
 
             return false;
-        } elseif ( empty( $backupTaskProgress->fetchResult ) && ! empty( $backupTaskProgress->child_backup_task_id ) ) {
+        }
+
+        if ( empty( $backupTaskProgress->fetchResult ) && ! empty( $backupTaskProgress->child_backup_task_id ) ) {
+            if ( ! MainWP_Backup_Monitor::confirm_native_lease() || ! MainWP_Backup_Monitor::confirm_lane_lease() ) {
+                return false;
+            }
             $temp       = false;
             $diag_start = microtime( true );
             try {

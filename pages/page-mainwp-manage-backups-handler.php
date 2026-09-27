@@ -1412,7 +1412,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                 $subfolder = str_replace( '%task%', MainWP_Utility::sanitize( $task->name ), $task->subfolder );
 
                 ++$outcome['sites_visited'];
-                $backupResult = MainWP_Backup_Executor::backup_site( $siteid, $task, $subfolder, $advanced );
+                $backupResult = MainWP_Backup_Executor::backup_site( $siteid, $task, $subfolder, $advanced, count( $sites ) > 1 );
 
                 if ( false === $backupResult ) {
                     if ( ! $advanced ) {

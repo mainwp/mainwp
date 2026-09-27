@@ -13,6 +13,7 @@ namespace MainWP\Dashboard\Tests;
 require_once __DIR__ . '/trait-backup-private-root-fixture.php';
 
 use MainWP\Dashboard\MainWP_Backup_Executor;
+use MainWP\Dashboard\MainWP_Backup_Monitor;
 use MainWP\Dashboard\MainWP_Backup_Error_Codes;
 use MainWP\Dashboard\MainWP_Backup_File_Manager;
 use MainWP\Dashboard\MainWP_Backup_Snapshots;
@@ -1789,12 +1790,12 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 
 	/**
 	 * A child that advertises the resumable task machine gets a task
-	 * created on the first call; the task id lands on the progress row and
-	 * the run defers to the next cycle.
+	 * created and started on the first call; continuation handles later slices.
 	 *
 	 * @return void
 	 */
 	public function test_backup_site_on_spine_capable_site_creates_task_normally() {
+		$advanced = false;
 		list( $site_id, $task ) = $this->site_and_task();
 		$this->mock_child_action( 'backup_preflight', array( 'task_spine' => 1 ) );
 		$this->mock_child_action(
@@ -1805,17 +1806,134 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 			)
 		);
 
+		$this->mock_child_action( 'backup_task_run', array( 'phase' => 'dumping_db' ) );
+
 		$called = array();
 		$this->record_child_actions( $called );
 
-		$result = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+		$result = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups', $advanced, true );
 
-		$this->assertFalse( $result, 'Creating the task defers the work to the next cycle.' );
-		$this->assertContains( 'backup_task_create', $called );
+		$this->assertFalse( $result, 'A running first slice leaves the task open for continuation.' );
+		$this->assertSame( array( 'backup_preflight', 'backup_task_create', 'backup_task_run' ), $called, 'Run the first slice before returning to the fleet.' );
 		$this->assertNotContains( 'backup', $called, 'The legacy backup action must not fire on the resumable path.' );
 
 		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
 		$this->assertSame( 'task-1749600000-abcdef', $progress->child_backup_task_id );
+	}
+
+	/**
+	 * Each fleet member starts before the next child task is queued.
+	 */
+	public function test_fleet_starts_each_created_task_before_creating_the_next() {
+		$this->mock_child_action( 'backup_preflight', array( 'task_spine' => 1 ) );
+		$sites = array( $this->create_test_site(), $this->create_test_site(), $this->create_test_site() );
+		$website = MainWP_DB::instance()->get_website_by_id( $sites[0] );
+		$task = MainWP_DB_Backup::instance()->add_backup_task( $website->userid, 'First slices', 'daily', 'full', '', implode( ',', $sites ), '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0 );
+		$this->assertNotFalse( $task );
+		$calls = array();
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			function ( $result, $website, $what, $params ) use ( &$calls, $task ) {
+				if ( 'backup_task_create' === $what ) {
+					$calls[] = 'create-' . $website->id;
+					return array( 'task_id' => 'task-fleet-' . $website->id, 'phase' => 'queued' );
+				}
+				if ( 'backup_task_run' === $what ) {
+					$calls[] = 'run-' . $website->id;
+					$row = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $website->id );
+					$this->assertSame( $row->child_backup_task_id, $params['task_id'], 'Persist the handle before running it.' );
+					return array( 'phase' => 'dumping_db' );
+				}
+				return $result;
+			},
+			20,
+			4
+		);
+		$expected = array();
+		foreach ( $sites as $site_id ) {
+			$expected[] = 'create-' . $site_id;
+			$expected[] = 'run-' . $site_id;
+		}
+		MainWP_Manage_Backups_Handler::execute_backup_task( $task );
+		$this->assertSame( $expected, $calls );
+	}
+
+	/**
+	 * A lane lost during creation cannot start the returned child task.
+	 */
+	public function test_first_slice_waits_when_creation_loses_the_lane() {
+		$advanced = false;
+		list( $site_id, $task ) = $this->site_and_task();
+		$this->mock_child_action( 'backup_preflight', array( 'task_spine' => 1 ) );
+		$this->mock_child_action( 'backup_task_create', array( 'task_id' => 'task-lost-lane', 'phase' => 'queued' ) );
+		$calls = array();
+		$this->record_child_actions( $calls );
+		$this->assertIsString( MainWP_Backup_Monitor::acquire_lane_lease() );
+		$lose = static function ( $payload, $duration, $context ) {
+			if ( 'create' === $context['op'] ) {
+				delete_option( MainWP_Backup_Monitor::LANE_LEASE_OPTION );
+			}
+		};
+		add_action( 'mainwp_backup_diag_poll', $lose, 10, 3 );
+		try {
+			$this->assertFalse( MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups', $advanced, true ) );
+			$this->assertNotContains( 'backup_task_run', $calls );
+			$row = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+			$this->assertSame( 'task-lost-lane', $row->child_backup_task_id, 'Keep the handle for a later owner.' );
+		} finally {
+			remove_action( 'mainwp_backup_diag_poll', $lose, 10 );
+			MainWP_Backup_Monitor::release_lane_lease();
+			delete_option( MainWP_Backup_Monitor::LANE_LEASE_OPTION );
+		}
+	}
+
+	/**
+	 * A failed handle write must not run a creating marker on the child.
+	 */
+	public function test_first_slice_waits_until_the_child_handle_is_persisted() {
+		$advanced = false;
+		list( $site_id, $task ) = $this->site_and_task();
+		$this->mock_child_action( 'backup_preflight', array( 'task_spine' => 1 ) );
+		$this->mock_child_action( 'backup_task_create', array( 'task_id' => 'task-failed-handle-write', 'phase' => 'queued' ) );
+		$calls = array();
+		$this->record_child_actions( $calls );
+		$skip = static function ( $query ) {
+			return str_starts_with( $query, 'UPDATE ' ) && str_contains( $query, 'mainwp_wp_backup_progress' ) && str_contains( $query, 'task-failed-handle-write' ) ? $query . ' AND 1 = 0' : $query;
+		};
+		add_filter( 'query', $skip );
+		try {
+			$this->assertFalse( MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups', $advanced, true ) );
+			$this->assertNotContains( 'backup_task_run', $calls );
+			$pending = MainWP_DB::instance()->get_website_option( $site_id, MainWP_Manage_Backups_Handler::PENDING_CANCEL_OPTION, null, true );
+			$this->assertArrayHasKey( 'task-failed-handle-write', $pending, 'Retain cancellation ownership when the handle cannot be saved.' );
+		} finally {
+			remove_filter( 'query', $skip );
+		}
+	}
+
+	/**
+	 * A late create error cannot erase a replacement driver's task.
+	 */
+	public function test_first_slice_preserves_a_replacement_after_create_error() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$this->mock_child_action( 'backup_preflight', array( 'task_spine' => 1 ) );
+		$replace = static function ( $result, $website, $what ) use ( $task ) {
+			if ( 'backup_task_create' === $what ) {
+				MainWP_DB_Backup::instance()->update_backup_task_progress( $task->id, $website->id, array( 'child_backup_task_id' => 'task-replacement', 'fetchResult' => '{"replacement":true}' ) );
+				return array( 'error' => 'Create failed.' );
+			}
+			return $result;
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $replace, 20, 3 );
+		try {
+			$advanced = false;
+			$this->assertFalse( MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups', $advanced, true ) );
+			$row = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+			$this->assertSame( 'task-replacement', $row->child_backup_task_id );
+			$this->assertSame( array( 'replacement' => true ), $row->fetchResult );
+		} finally {
+			remove_filter( 'mainwp_fetch_url_authed_pre', $replace, 20 );
+		}
 	}
 
 	/**

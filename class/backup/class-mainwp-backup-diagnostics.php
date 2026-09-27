@@ -1084,6 +1084,11 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 if ( null !== $allowed_sites && 0 !== $task_id && ! in_array( $task_id, $allowed_tasks, true ) ) {
                     continue;
                 }
+                // A tick line passes on its picked task, but its candidate list
+                // came from the unscoped due query and would name other users' tasks.
+                if ( null !== $allowed_sites && 'tick' === ( $event['kind'] ?? '' ) && isset( $event['payload']['candidates'] ) ) {
+                    $event['payload']['candidates'] = array_values( array_filter( array_map( 'intval', (array) $event['payload']['candidates'] ), static fn( $id ) => in_array( $id, $allowed_tasks, true ) ) );
+                }
                 $redacted = wp_json_encode( $this->redact_restore_secrets( $event ) );
                 if ( false === $redacted ) {
                     throw new \RuntimeException( 'Could not encode a diagnostics event.' );

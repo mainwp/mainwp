@@ -1448,6 +1448,17 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 		do_action( 'mainwp_log_info', 'Restore denied guardrail', $site_denied, 0 );
 		do_action( 'mainwp_log_warning', 'Backup host guardrail' );
 		do_action( 'mainwp_log_info', 'Restore host guardrail' );
+		do_action(
+			'mainwp_backup_diag_tick',
+			(int) $task_allowed->id,
+			null,
+			array(
+				'started'              => 1.0,
+				'wall_time'            => 0.5,
+				'candidates'           => array( (int) $task_allowed->id, (int) $task_denied->id ),
+				'unfinished_remaining' => true,
+			)
+		);
 
 		$deny = function ( $allowed, $cap_type, $cap ) use ( $site_denied ) {
 			if ( 'site' === $cap_type && (int) $cap === (int) $site_denied ) {
@@ -1495,6 +1506,10 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 		$this->assertStringNotContainsString( 'Restore denied guardrail', $global );
 		$this->assertStringContainsString( 'Backup host guardrail', $global );
 		$this->assertStringContainsString( 'Restore host guardrail', $global );
+
+		$ticks = array_values( array_filter( array_map( fn( $line ) => json_decode( $line, true ), explode( "\n", trim( $global ) ) ), fn( $event ) => is_array( $event ) && 'tick' === $event['kind'] ) );
+		$this->assertCount( 1, $ticks, 'The tick line on the caller\'s own task rides along.' );
+		$this->assertSame( array( (int) $task_allowed->id ), $ticks[0]['payload']['candidates'], 'A scoped bundle must not name out-of-scope candidate tasks.' );
 	}
 
 	/**

@@ -1257,7 +1257,8 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
         ?>
         <span class="ui yellow label"><i class="exclamation icon"></i>
         <?php
-        if ( $use_wp_cron ) {
+        // A stale slice means the server cron is not firing either, so the milder copy would be false.
+        if ( $use_wp_cron || static::is_backup_slice_stale() ) {
             esc_html_e( 'This site cannot reach its own wp-cron.php, so backups cannot keep themselves running. Check loopback requests or add a system cron.', 'mainwp' );
         } else {
             // The slice cron keeps continuation alive here; only the same-request chain after a budget exit is lost.

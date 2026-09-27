@@ -590,22 +590,35 @@ PHP;
 	}
 
 	/**
-	 * Server-cron mode warns about a delayed continuation, not a WP-Cron symptom.
+	 * Server-cron mode warns about a delayed continuation only while its slice cron is firing.
 	 */
 	public function test_server_information_loopback_warning_in_server_cron_mode() {
 		$wp_cron_warning     = 'This site cannot reach its own wp-cron.php, so backups cannot keep themselves running. Check loopback requests or add a system cron.';
 		$server_cron_warning = 'This site cannot reach its own wp-cron.php. Your system cron keeps backups moving, but a backup that uses its full time budget waits for the next slice tick instead of continuing right away.';
-		foreach ( array( false => $server_cron_warning, true => $wp_cron_warning ) as $use_wp_cron => $expected ) {
-			ob_start();
-			try {
-				MainWP_Server_Information::render_backup_loopback_warning( (bool) $use_wp_cron );
-				$html = ob_get_contents();
-			} finally {
-				ob_end_clean();
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		$cases = array(
+			'server cron, slice firing' => array( false, time(), $server_cron_warning, $wp_cron_warning ),
+			'server cron, slice stale'  => array( false, time() - 600, $wp_cron_warning, $server_cron_warning ),
+			'WP-Cron, slice firing'     => array( true, time(), $wp_cron_warning, $server_cron_warning ),
+			'WP-Cron, slice stale'      => array( true, time() - 600, $wp_cron_warning, $server_cron_warning ),
+		);
+		try {
+			foreach ( $cases as $label => list( $use_wp_cron, $last_slice, $expected, $absent ) ) {
+				update_option( 'mainwp_cron_last_backups_slice', $last_slice );
+				ob_start();
+				try {
+					MainWP_Server_Information::render_backup_loopback_warning( $use_wp_cron );
+					$html = ob_get_contents();
+				} finally {
+					ob_end_clean();
+				}
+				$this->assertStringContainsString( 'ui yellow label', $html, $label );
+				$this->assertStringContainsString( $expected, $html, $label );
+				$this->assertStringNotContainsString( $absent, $html, $label );
 			}
-			$this->assertStringContainsString( 'ui yellow label', $html );
-			$this->assertStringContainsString( $expected, $html );
-			$this->assertStringNotContainsString( $use_wp_cron ? $server_cron_warning : $wp_cron_warning, $html );
+		} finally {
+			delete_option( 'mainwp_enableNativeBackups' );
+			delete_option( 'mainwp_cron_last_backups_slice' );
 		}
 	}
 }

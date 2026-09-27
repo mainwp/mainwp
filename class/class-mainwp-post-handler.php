@@ -1159,6 +1159,11 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
      */
     public function mainwp_clients_suspend_client() {
         $this->secure_request( 'mainwp_clients_suspend_client' );
+
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) {
+            wp_die( 'Error - insufficient permissions!' );
+        }
+
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $clientid  = isset( $_POST['clientid'] ) ? intval( $_POST['clientid'] ) : 0;
         $suspended = isset( $_POST['suspend_status'] ) && ! empty( $_POST['suspend_status'] ) ? 1 : 0;

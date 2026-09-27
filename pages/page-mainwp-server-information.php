@@ -1248,6 +1248,27 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
     }
 
     /**
+     * Render the slice row's loopback warning for the cron mode MainWP is running in.
+     *
+     * @param bool $use_wp_cron Whether MainWP schedules run on WP-Cron rather than the cron/ scripts.
+     * @return void
+     */
+    public static function render_backup_loopback_warning( bool $use_wp_cron ): void {
+        ?>
+        <span class="ui yellow label"><i class="exclamation icon"></i>
+        <?php
+        if ( $use_wp_cron ) {
+            esc_html_e( 'This site cannot reach its own wp-cron.php, so backups cannot keep themselves running. Check loopback requests or add a system cron.', 'mainwp' );
+        } else {
+            // The slice cron keeps continuation alive here; only the same-request chain after a budget exit is lost.
+            esc_html_e( 'This site cannot reach its own wp-cron.php. Your system cron keeps backups moving, but a backup that uses its full time budget waits for the next slice tick instead of continuing right away.', 'mainwp' );
+        }
+        ?>
+        </span>
+        <?php
+    }
+
+    /**
      * Renders the Cron Schedule page.
      *
      * @return void
@@ -1397,11 +1418,11 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                                 ?>
                                 </span>
                             <?php endif; ?>
-                            <?php if ( 'mainwp_cronbackups_slice_action' === $job_action && MainWP_Backup_Settings::is_native_backups_enabled() && ! MainWP_Server_Information_Handler::is_backup_loopback_ok() ) : ?>
-                                <span class="ui yellow label"><i class="exclamation icon"></i>
-                                <?php esc_html_e( 'This site cannot reach its own wp-cron.php, so backups cannot keep themselves running. Check loopback requests or add a system cron.', 'mainwp' ); ?>
-                                </span>
-                            <?php endif; ?>
+                            <?php
+                            if ( 'mainwp_cronbackups_slice_action' === $job_action && MainWP_Backup_Settings::is_native_backups_enabled() && ! MainWP_Server_Information_Handler::is_backup_loopback_ok() ) {
+                                static::render_backup_loopback_warning( $useWPCron );
+                            }
+                            ?>
                         </td>
                         <td><?php echo ! empty( $job_next_run ) ? esc_html( $job_next_run ) : ''; ?></td>
                     </tr>

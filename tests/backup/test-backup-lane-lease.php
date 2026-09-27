@@ -386,11 +386,14 @@ class MainWP_Backup_Lane_Lease_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * A failed probe is cached just like a successful probe.
+	 * Builds the subprocess script shared by the loopback probe tests.
+	 *
+	 * Loads real HTTP and hook APIs without the bootstrap's DISABLE_WP_CRON.
+	 *
+	 * @return string PHP source for a standalone subprocess run.
 	 */
-	public function test_backup_loopback_probe_caches_response() {
-		// Load real HTTP and hook APIs without the bootstrap's DISABLE_WP_CRON.
-		$script = <<<'PHP'
+	private function loopback_probe_script(): string {
+		return <<<'PHP'
 define( 'ABSPATH', $argv[1] );
 define( 'WPINC', 'wp-includes' );
 define( 'MINUTE_IN_SECONDS', 60 );
@@ -435,6 +438,18 @@ add_filter( 'cron_request', static function ( $request, $key ) {
     $request['args']['redirection'] = 5;
     return $request;
 }, 10, 2 );
+$cached = 'failed';
+$ttl = null;
+$calls = array();
+$stale_http = static function ( $pre, $args, $url ) use ( &$calls ) {
+    $calls[] = array( $url, $args );
+    return array( 'response' => array( 'code' => 200 ), 'body' => '' );
+};
+add_filter( 'pre_http_request', $stale_http, 10, 3 );
+$stale_result = MainWP\Dashboard\MainWP_Server_Information_Handler::is_backup_loopback_ok();
+$stale = array( $stale_result, $cached, $calls );
+remove_filter( 'pre_http_request', $stale_http );
+$cached = false;
 $cases = array(
     array( 'response' => array( 'code' => 200 ), 'body' => '' ),
     array( 'response' => array( 'code' => 202 ), 'body' => '' ),
@@ -443,6 +458,7 @@ $cases = array(
     array( 'response' => array( 'code' => 403 ), 'body' => '' ),
     array( 'response' => array( 'code' => 500 ), 'body' => '' ),
     new WP_Error( 'blocked', 'Loopback blocked.' ),
+    array( 'response' => array( 'code' => 503 ), 'body' => '' ),
 );
 $results = array();
 foreach ( $cases as $response ) {
@@ -462,14 +478,21 @@ foreach ( $cases as $response ) {
     $results[] = array( $first, $second, $cached, $ttl, $calls );
     remove_filter( 'pre_http_request', $http );
 }
-echo json_encode( $results );
+echo json_encode( array( 'stale' => $stale, 'cases' => $results ) );
 PHP;
+	}
+
+	/**
+	 * A failed probe is cached just like a successful probe.
+	 */
+	public function test_backup_loopback_probe_caches_response() {
+		$script = $this->loopback_probe_script();
 		foreach ( array( 'enabled', 'DISABLE_WP_CRON', 'ALTERNATE_WP_CRON' ) as $mode ) {
 			$output = shell_exec( escapeshellarg( PHP_BINARY ) . ' -r ' . escapeshellarg( $script ) . ' ' . escapeshellarg( ABSPATH ) . ' ' . escapeshellarg( dirname( __DIR__, 2 ) ) . ' ' . escapeshellarg( $mode ) );
 			$data   = json_decode( (string) $output, true );
 			$this->assertIsArray( $data, $mode . ': ' . $output );
-			$this->assertCount( 7, $data, $mode );
-			foreach ( $data as $index => list( $first, $second, $cached, $ttl, $calls ) ) {
+			$this->assertCount( 8, $data['cases'], $mode );
+			foreach ( $data['cases'] as $index => list( $first, $second, $cached, $ttl, $calls ) ) {
 				$expected = 'enabled' !== $mode || 0 === $index;
 				$this->assertSame( $expected, $first, $mode . ': ' . $index );
 				$this->assertSame( $expected, $second, $mode . ': ' . $index );
@@ -479,7 +502,7 @@ PHP;
 					continue;
 				}
 				$this->assertSame( $expected ? 'ok' : 'failed', $cached );
-				$this->assertSame( 600, $ttl );
+				$this->assertSame( 7 === $index ? 60 : 600, $ttl, 'index ' . $index );
 				$this->assertCount( 1, $calls, 'The second call must use the cached result.' );
 				$this->assertSame( 'https://127.0.0.1/wp-cron.php?doing_wp_cron=mainwp-loopback-probe', $calls[0][0] );
 				$this->assertSame( 'Basic dGVzdDp0ZXN0', $calls[0][1]['headers']['Authorization'] );
@@ -493,17 +516,57 @@ PHP;
 	}
 
 	/**
-	 * The slice row renders the cached failure without another request.
+	 * A cached failure cannot outlive a switch to a cron mode that makes no loopback request.
+	 */
+	public function test_backup_loopback_cached_failure_ignored_when_cron_mode_needs_no_loopback() {
+		$script = $this->loopback_probe_script();
+		foreach ( array( 'enabled', 'DISABLE_WP_CRON', 'ALTERNATE_WP_CRON' ) as $mode ) {
+			$output = shell_exec( escapeshellarg( PHP_BINARY ) . ' -r ' . escapeshellarg( $script ) . ' ' . escapeshellarg( ABSPATH ) . ' ' . escapeshellarg( dirname( __DIR__, 2 ) ) . ' ' . escapeshellarg( $mode ) );
+			$data   = json_decode( (string) $output, true );
+			$this->assertIsArray( $data, $mode . ': ' . $output );
+			list( $result, $cached, $calls ) = $data['stale'];
+			if ( 'enabled' !== $mode ) {
+				$this->assertTrue( $result, $mode );
+				$this->assertSame( 'failed', $cached, $mode );
+				$this->assertSame( array(), $calls, $mode );
+			} else {
+				$this->assertFalse( $result, $mode );
+				$this->assertSame( array(), $calls, $mode );
+			}
+		}
+	}
+
+	/**
+	 * A 503 is re-probed after a minute instead of the usual ten.
+	 */
+	public function test_backup_loopback_503_is_cached_briefly() {
+		$script = $this->loopback_probe_script();
+		$output = shell_exec( escapeshellarg( PHP_BINARY ) . ' -r ' . escapeshellarg( $script ) . ' ' . escapeshellarg( ABSPATH ) . ' ' . escapeshellarg( dirname( __DIR__, 2 ) ) . ' ' . escapeshellarg( 'enabled' ) );
+		$data   = json_decode( (string) $output, true );
+		$this->assertIsArray( $data, $output );
+		list( $first, $second, $cached, $ttl, $calls ) = $data['cases'][7];
+		$this->assertFalse( $first );
+		$this->assertFalse( $second );
+		$this->assertSame( 'failed', $cached );
+		$this->assertSame( 60, $ttl );
+		$this->assertCount( 1, $calls );
+		list( , , , $ttl_500, ) = $data['cases'][5];
+		$this->assertSame( 600, $ttl_500 );
+	}
+
+	/**
+	 * Under the test bootstrap's DISABLE_WP_CRON a cached failure renders no warning and sends no request.
 	 */
 	public function test_server_information_loopback_warning() {
+		$this->assertTrue( defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON );
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
 		update_option( 'mainwp_enableNativeBackups', 1 );
 		update_option( 'mainwp_cron_last_backups_slice', time() );
-		$warning = 'This site cannot reach its own wp-cron.php, so backups cannot keep themselves running. Check loopback requests or add a system cron.';
+		$warning = 'This site cannot reach its own wp-cron.php';
 		$calls   = 0;
 		$http    = static function () use ( &$calls ) {
 			++$calls;
-			return new \WP_Error( 'unexpected', 'Cached check must not request HTTP.' );
+			return new \WP_Error( 'unexpected', 'A cron mode that needs no loopback must not request HTTP.' );
 		};
 		add_filter( 'pre_http_request', $http );
 		try {
@@ -516,17 +579,33 @@ PHP;
 				} finally {
 					ob_end_clean();
 				}
-				if ( 'failed' === $cached ) {
-					$this->assertStringContainsString( $warning, $html );
-					$this->assertStringContainsString( 'ui yellow label', $html );
-				} else {
-					$this->assertStringNotContainsString( $warning, $html );
-				}
+				$this->assertStringContainsString( 'mainwp_cronbackups_slice_action', $html );
+				$this->assertStringNotContainsString( $warning, $html, $cached );
 			}
 			$this->assertSame( 0, $calls );
 		} finally {
 			remove_filter( 'pre_http_request', $http );
 			delete_transient( 'mainwp_backup_loopback_ok' );
+		}
+	}
+
+	/**
+	 * Server-cron mode warns about a delayed continuation, not a WP-Cron symptom.
+	 */
+	public function test_server_information_loopback_warning_in_server_cron_mode() {
+		$wp_cron_warning     = 'This site cannot reach its own wp-cron.php, so backups cannot keep themselves running. Check loopback requests or add a system cron.';
+		$server_cron_warning = 'This site cannot reach its own wp-cron.php. Your system cron keeps backups moving, but a backup that uses its full time budget waits for the next slice tick instead of continuing right away.';
+		foreach ( array( false => $server_cron_warning, true => $wp_cron_warning ) as $use_wp_cron => $expected ) {
+			ob_start();
+			try {
+				MainWP_Server_Information::render_backup_loopback_warning( (bool) $use_wp_cron );
+				$html = ob_get_contents();
+			} finally {
+				ob_end_clean();
+			}
+			$this->assertStringContainsString( 'ui yellow label', $html );
+			$this->assertStringContainsString( $expected, $html );
+			$this->assertStringNotContainsString( $use_wp_cron ? $server_cron_warning : $wp_cron_warning, $html );
 		}
 	}
 }

@@ -679,15 +679,17 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
      * @return bool Whether loopback is reachable or the cron mode needs no loopback.
      */
     public static function is_backup_loopback_ok(): bool {
-        $cached = get_transient( 'mainwp_backup_loopback_ok' );
-        if ( false !== $cached ) {
-            return 'ok' === $cached;
-        }
-
-        // The continuation sender makes no loopback request in either mode, so there is nothing to probe.
+        // The continuation sender makes no loopback request in either mode, so there is nothing to
+        // probe. Checked before the cache so a failure cached under WP-Cron cannot outlive a switch
+        // to system cron.
         if ( ( defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON )
             || ( defined( 'ALTERNATE_WP_CRON' ) && ALTERNATE_WP_CRON ) ) {
             return true;
+        }
+
+        $cached = get_transient( 'mainwp_backup_loopback_ok' );
+        if ( false !== $cached ) {
+            return 'ok' === $cached;
         }
 
         // This proves self-reachability, not delivery of the 0.01 s non-blocking spawn;
@@ -710,7 +712,9 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
         );
         $code        = (int) wp_remote_retrieve_response_code( $response );
         $loopback_ok = ! is_wp_error( $response ) && 200 === $code;
-        set_transient( 'mainwp_backup_loopback_ok', $loopback_ok ? 'ok' : 'failed', 10 * MINUTE_IN_SECONDS );
+        // A 503 is usually a maintenance window, so it is re-probed after a minute rather than ten.
+        $ttl = ( ! $loopback_ok && 503 === $code ) ? MINUTE_IN_SECONDS : 10 * MINUTE_IN_SECONDS;
+        set_transient( 'mainwp_backup_loopback_ok', $loopback_ok ? 'ok' : 'failed', $ttl );
         return $loopback_ok;
     }
 

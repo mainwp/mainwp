@@ -1105,6 +1105,22 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
     }
 
     /**
+     * Zeroed outcome shape shared by execute_backup_task() and execute_backup_task_run().
+     */
+    private static function default_execute_outcome(): array {
+        return array(
+            'sites_visited'  => 0,
+            'sites_advanced' => 0,
+            'sites_finished' => 0,
+            'sites_yielded'  => 0,
+            'slot_refused'   => false,
+            'lease_lost'     => false,
+            'run_closed'     => false,
+            'wall_time'      => 0.0,
+        );
+    }
+
+    /**
      * Execute the backup task.
      *
      * @param mixed      $task Task to perform.
@@ -1139,16 +1155,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
     public static function execute_backup_task( $task, $nrOfSites = 0, $updateRun = true, $run_grace_seconds = 0, &$claimed = null, &$claimed_started = 0, $manual_run = false, &$outcome = null ) { // phpcs:ignore -- NOSONAR - not quite complex function.
 
         $started = microtime( true );
-        $outcome = array(
-            'sites_visited'  => 0,
-            'sites_advanced' => 0,
-            'sites_finished' => 0,
-            'sites_yielded'  => 0,
-            'slot_refused'   => false,
-            'lease_lost'     => false,
-            'run_closed'     => false,
-            'wall_time'      => 0.0,
-        );
+        $outcome = static::default_execute_outcome();
 
         $claimed         = null;
         $claimed_started = 0;
@@ -1202,16 +1209,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      */
     private static function execute_backup_task_run( $task, $nrOfSites = 0, $updateRun = true, $run_grace_seconds = 0, &$claimed = null, &$claimed_started = 0, $manual_run = false, &$outcome = null ) { // phpcs:ignore -- NOSONAR - not quite complex function.
 
-        $outcome = array(
-            'sites_visited'  => 0,
-            'sites_advanced' => 0,
-            'sites_finished' => 0,
-            'sites_yielded'  => 0,
-            'slot_refused'   => false,
-            'lease_lost'     => false,
-            'run_closed'     => false,
-            'wall_time'      => 0.0,
-        );
+        $outcome = static::default_execute_outcome();
 
         if ( $updateRun ) {
             $previous = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );

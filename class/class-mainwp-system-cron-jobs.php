@@ -1701,7 +1701,14 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
                 if ( empty( $remaining_tasks ) ) {
                     break;
                 }
-                $idle_polls = empty( $outcome['sites_advanced'] ) && empty( $outcome['sites_finished'] ) && empty( $outcome['run_closed'] ) ? $idle_polls + 1 : 0;
+                $advanced = ! empty( $outcome['sites_advanced'] );
+                $finished = ! empty( $outcome['sites_finished'] );
+                $closed   = ! empty( $outcome['run_closed'] );
+                if ( ! $advanced && ! $finished && ! $closed ) {
+                    ++$idle_polls;
+                } else {
+                    $idle_polls = 0;
+                }
                 if ( 3 <= $idle_polls ) {
                     $ended_by = 'idle';
                     break;

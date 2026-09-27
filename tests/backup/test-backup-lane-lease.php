@@ -590,21 +590,29 @@ PHP;
 	}
 
 	/**
-	 * Server-cron mode warns about a delayed continuation only while its slice cron is firing.
+	 * The loopback copy follows the cron mode alone, whatever the slice and continue jobs are doing.
 	 */
-	public function test_server_information_loopback_warning_in_server_cron_mode() {
+	public function test_server_information_loopback_warning_copy_matrix() {
 		$wp_cron_warning     = 'This site cannot reach its own wp-cron.php, so backups cannot keep themselves running. Check loopback requests or add a system cron.';
-		$server_cron_warning = 'This site cannot reach its own wp-cron.php. Your system cron keeps backups moving, but a backup that uses its full time budget waits for the next slice tick instead of continuing right away.';
+		$server_cron_warning = 'This site cannot reach its own wp-cron.php. A backup that uses its full time budget waits for the next server cron run instead of continuing right away.';
+		$fresh               = time();
+		$stale               = time() - 3600;
 		update_option( 'mainwp_enableNativeBackups', 1 );
 		$cases = array(
-			'server cron, slice firing' => array( false, time(), $server_cron_warning, $wp_cron_warning ),
-			'server cron, slice stale'  => array( false, time() - 600, $wp_cron_warning, $server_cron_warning ),
-			'WP-Cron, slice firing'     => array( true, time(), $wp_cron_warning, $server_cron_warning ),
-			'WP-Cron, slice stale'      => array( true, time() - 600, $wp_cron_warning, $server_cron_warning ),
+			// use WP-Cron, last slice, last continue, expected copy.
+			'server cron, slice fresh, continue fresh' => array( false, $fresh, $fresh, $server_cron_warning ),
+			'server cron, slice fresh, continue stale' => array( false, $fresh, $stale, $server_cron_warning ),
+			'server cron, slice stale, continue fresh' => array( false, $stale, $fresh, $server_cron_warning ),
+			'server cron, slice stale, continue stale' => array( false, $stale, $stale, $server_cron_warning ),
+			'WP-Cron, slice fresh, continue fresh'     => array( true, $fresh, $fresh, $wp_cron_warning ),
+			'WP-Cron, slice fresh, continue stale'     => array( true, $fresh, $stale, $wp_cron_warning ),
+			'WP-Cron, slice stale, continue fresh'     => array( true, $stale, $fresh, $wp_cron_warning ),
+			'WP-Cron, slice stale, continue stale'     => array( true, $stale, $stale, $wp_cron_warning ),
 		);
 		try {
-			foreach ( $cases as $label => list( $use_wp_cron, $last_slice, $expected, $absent ) ) {
+			foreach ( $cases as $label => list( $use_wp_cron, $last_slice, $last_continue, $expected ) ) {
 				update_option( 'mainwp_cron_last_backups_slice', $last_slice );
+				update_option( 'mainwp_cron_last_backups_continue', $last_continue );
 				ob_start();
 				try {
 					MainWP_Server_Information::render_backup_loopback_warning( $use_wp_cron );
@@ -614,11 +622,13 @@ PHP;
 				}
 				$this->assertStringContainsString( 'ui yellow label', $html, $label );
 				$this->assertStringContainsString( $expected, $html, $label );
-				$this->assertStringNotContainsString( $absent, $html, $label );
+				$this->assertStringNotContainsString( $expected === $wp_cron_warning ? $server_cron_warning : $wp_cron_warning, $html, $label );
+				$this->assertStringNotContainsString( 'keeps backups moving', $html, $label );
 			}
 		} finally {
 			delete_option( 'mainwp_enableNativeBackups' );
 			delete_option( 'mainwp_cron_last_backups_slice' );
+			delete_option( 'mainwp_cron_last_backups_continue' );
 		}
 	}
 }

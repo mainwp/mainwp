@@ -1155,7 +1155,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
     public static function execute_backup_task( $task, $nrOfSites = 0, $updateRun = true, $run_grace_seconds = 0, &$claimed = null, &$claimed_started = 0, $manual_run = false, &$outcome = null ) { // phpcs:ignore -- NOSONAR - not quite complex function.
 
         $started = microtime( true );
-        $outcome = static::default_execute_outcome();
+        $outcome = self::default_execute_outcome();
 
         $claimed         = null;
         $claimed_started = 0;
@@ -1209,7 +1209,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      */
     private static function execute_backup_task_run( $task, $nrOfSites = 0, $updateRun = true, $run_grace_seconds = 0, &$claimed = null, &$claimed_started = 0, $manual_run = false, &$outcome = null ) { // phpcs:ignore -- NOSONAR - not quite complex function.
 
-        $outcome = static::default_execute_outcome();
+        $outcome = self::default_execute_outcome();
 
         if ( $updateRun ) {
             $previous = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );

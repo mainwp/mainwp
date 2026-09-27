@@ -1250,6 +1250,9 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
     /**
      * Render the slice row's loopback warning for the cron mode MainWP is running in.
      *
+     * The copy depends on the cron mode alone. Whether the server cron is firing is the
+     * stale-slice warning's job, so this copy makes no claim about it.
+     *
      * @param bool $use_wp_cron Whether MainWP schedules run on WP-Cron rather than the cron/ scripts.
      * @return void
      */
@@ -1257,12 +1260,11 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
         ?>
         <span class="ui yellow label"><i class="exclamation icon"></i>
         <?php
-        // A stale slice means the server cron is not firing either, so the milder copy would be false.
-        if ( $use_wp_cron || static::is_backup_slice_stale() ) {
+        if ( $use_wp_cron ) {
             esc_html_e( 'This site cannot reach its own wp-cron.php, so backups cannot keep themselves running. Check loopback requests or add a system cron.', 'mainwp' );
         } else {
-            // The slice cron keeps continuation alive here; only the same-request chain after a budget exit is lost.
-            esc_html_e( 'This site cannot reach its own wp-cron.php. Your system cron keeps backups moving, but a backup that uses its full time budget waits for the next slice tick instead of continuing right away.', 'mainwp' );
+            // The cron/ scripts drive continuation here; only the same-request chain after a budget exit is lost.
+            esc_html_e( 'This site cannot reach its own wp-cron.php. A backup that uses its full time budget waits for the next server cron run instead of continuing right away.', 'mainwp' );
         }
         ?>
         </span>

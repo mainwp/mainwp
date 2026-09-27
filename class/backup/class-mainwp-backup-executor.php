@@ -648,7 +648,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 );
             }
 
-            if ( ! MainWP_Backup_Monitor::confirm_native_lease() || ! MainWP_Backup_Monitor::confirm_lane_lease() ) {
+            if ( ! MainWP_Backup_Monitor::confirm_native_lease() || ! MainWP_Backup_Monitor::refresh_lane_lease() ) {
                 return false; // Same stop as a slice that is still working: the row is untouched and the next cycle runs it again.
             }
 

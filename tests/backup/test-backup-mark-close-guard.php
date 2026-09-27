@@ -365,6 +365,36 @@ class MainWP_Backup_Mark_Close_Guard_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * An exhausted download failure keeps its HTTP status in the site mark.
+	 */
+	public function test_download_failure_site_mark_retains_http_status() {
+		list( $site_id, $task ) = $this->site_and_open_task();
+		$this->give_site_real_privkey( $site_id );
+		$this->seed_progress(
+			(int) $task->id,
+			$site_id,
+			array(
+				'attempts'    => 5,
+				'fetchResult' => wp_json_encode( array( 'full' => 'backup-file.zip', 'db' => false, 'size' => 4096 ) ),
+			)
+		);
+		$throw = static function () {
+			throw new MainWP_Exception( 'Backup download failed: the child site returned an unexpected response.', 'HTTP 504', 'mainwp_backup_http_error' );
+		};
+		add_filter( 'mainwp_download_to_file_pre', $throw );
+		try {
+			MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, false );
+			$errors = $this->marks( 'error' );
+			$this->assertCount( 1, $errors );
+			$this->assertSame( $site_id, $errors[0]['site_id'] );
+			$this->assertStringContainsString( '(HTTP 504)', $errors[0]['detail'] );
+			$this->assertSame( MainWP_Exception::class . ' [mainwp_backup_http_error]: Backup download failed: the child site returned an unexpected response. (HTTP 504)', $errors[0]['detail'] );
+		} finally {
+			remove_filter( 'mainwp_download_to_file_pre', $throw );
+		}
+	}
+
+	/**
 	 * A throw that repeats identically on every pass - a stored
 	 * projection that re-throws from the row itself - cannot yield
 	 * forever: each yield consumes budget and the site marks within the

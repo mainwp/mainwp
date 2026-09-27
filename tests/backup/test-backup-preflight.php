@@ -985,18 +985,14 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 		$this->assertStringContainsString( '0 B', $exception->getMessage(), 'The message must render the free space, not a blank.' );
 	}
 
-	/**
-	 * An old child without the preflight action is refused by the task-spine gate.
-	 *
-	 * @return void
-	 */
+	/** An old Child returns no preflight payload and is refused by the task-spine gate. */
 	public function test_preflight_error_response_requires_child_update() {
 		$site_id = $this->create_test_site();
 
 		$exception = $this->run_backup_site(
 			$site_id,
 			array(
-				'backup_preflight' => array( 'error' => 'Unknown action' ),
+				'backup_preflight' => '',
 				'backup'           => array(
 					'error'      => 'reached the backup action',
 					'error_code' => 'mainwp_backup_disk_full',
@@ -1005,7 +1001,62 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 		);
 
 		$this->assertNotNull( $exception );
-		$this->assertSame( 'mainwp_backup_child_update_required', $exception->get_message_error_code() );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_CHILD_UPDATE_REQUIRED, $exception->get_message_error_code() );
+	}
+
+	/** A never-negotiated site reports the Child's runtime error without recording capabilities. */
+	public function test_preflight_runtime_error_on_a_never_negotiated_site_reports_the_child_message() {
+		$site_id = $this->create_test_site();
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$this->assertEmpty( MainWP_DB::instance()->get_website_option( $website, 'task_spine_support' ), 'Precondition: a fresh site has no capability flag yet.' );
+
+		$exception = $this->run_backup_site(
+			$site_id,
+			array(
+				'backup_preflight'   => array(
+					'error'      => 'Unable to create directory wp-content/uploads/mainwp/backup-x/. Is its parent directory writable by the server?',
+					'error_code' => '',
+				),
+				'backup_task_create' => array( 'error' => 'must not reach task creation' ),
+				'backup'             => array( 'error' => 'must not reach the backup action' ),
+			)
+		);
+
+		$this->assertNotNull( $exception );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_CHILD_PREFLIGHT_FAILED, $exception->get_message_error_code() );
+		$this->assertStringContainsString( 'Is its parent directory writable', $exception->getMessage() );
+		$this->assertNotSame( MainWP_Backup_Error_Codes::ERR_CHILD_UPDATE_REQUIRED, $exception->get_message_error_code() );
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$this->assertEmpty( MainWP_DB::instance()->get_website_option( $website, 'task_spine_support' ) );
+	}
+
+	/** A negotiated site keeps its last capabilities after a Child runtime error. */
+	public function test_preflight_runtime_error_on_a_negotiated_site_keeps_the_last_capabilities() {
+		$site_id = $this->create_test_site();
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		MainWP_DB::instance()->update_website_option( $website, 'task_spine_support', '1' );
+
+		$exception = $this->run_backup_site(
+			$site_id,
+			array(
+				'backup_preflight'   => array(
+					'error'      => 'Unable to create directory wp-content/uploads/mainwp/backup-x/. Is its parent directory writable by the server?',
+					'error_code' => '',
+				),
+				'backup_task_create' => array(
+					'error'      => 'reached task creation, past the gate',
+					'error_code' => MainWP_Backup_Error_Codes::ERR_DISK_FULL,
+				),
+				'backup'             => array( 'error' => 'must not reach the backup action' ),
+			)
+		);
+
+		$this->assertNotNull( $exception );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_DISK_FULL, $exception->get_message_error_code() );
+		$this->assertStringContainsString( 'reached task creation, past the gate', $exception->getMessage() );
+		$this->assertNotSame( MainWP_Backup_Error_Codes::ERR_CHILD_PREFLIGHT_FAILED, $exception->get_message_error_code() );
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$this->assertSame( '1', MainWP_DB::instance()->get_website_option( $website, 'task_spine_support' ) );
 	}
 
 	/**

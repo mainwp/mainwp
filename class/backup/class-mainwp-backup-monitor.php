@@ -197,7 +197,7 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      *
      * Ask the child site for its backup readiness report before starting
      * a backup. Old child sites without the preflight action are detected
-     * by their error response and the backup proceeds without preflight.
+     * by their missing payload and negotiation returns without capabilities.
      *
      * Stores the child backup directory hash in site metadata for later
      * operations (sensitive value: stored only, never rendered), blocks
@@ -217,7 +217,7 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      *                                   never claims a switch that did not reach the wire.
      *
      * @return void
-     * @throws MainWP_Exception When the child reports critically low disk space.
+     * @throws MainWP_Exception When the child reports critically low disk space or readiness fails before capabilities are known.
      */
     public static function negotiate_backup_preflight( object &$website, string &$archive_ext = '', ?object $task = null, bool $allow_switch = true ): void { // phpcs:ignore -- NOSONAR - complex.
         $diag_task_id = is_object( $task ) && ! empty( $task->id ) ? (int) $task->id : 0;
@@ -234,7 +234,7 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
              * @param int    $site_id   Child site id.
              * @param int    $task_id   Backup task id, 0 when none drives the run.
              * @param array  $preflight Child readiness report, empty when unavailable.
-             * @param string $status    ok|unavailable|unsupported.
+             * @param string $status    ok|unavailable|unsupported|failed.
              */
             do_action( 'mainwp_backup_diag_preflight', (int) $website->id, $diag_task_id, array(), 'unavailable' );
             return; // Capability unknown - proceed for backwards compatibility.
@@ -254,6 +254,25 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             // healthy site.
             if ( is_array( $preflight ) && isset( $preflight['error_code'] ) && self::CHILD_INCOMPATIBLE_CODE === $preflight['error_code'] ) {
                 static::record_negotiated_capabilities( $website, array() );
+            } elseif ( is_array( $preflight ) && isset( $preflight['error'] ) && is_string( $preflight['error'] ) && '' !== $preflight['error'] ) {
+                $task_spine_support = MainWP_DB::instance()->get_website_option( $website, 'task_spine_support' );
+                if ( null === $task_spine_support || '' === $task_spine_support ) {
+                    // An error array proves the Child has the preflight action. A never-negotiated
+                    // site needs the Child's message, not a refusal claiming the Child is too old.
+                    /** This action is documented in class/backup/class-mainwp-backup-monitor.php */
+                    do_action( 'mainwp_backup_diag_preflight', (int) $website->id, $diag_task_id, $preflight, 'failed' );
+                    // phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- message parts are escaped above.
+                    throw new MainWP_Exception(
+                        sprintf(
+                            /* translators: %s: child site readiness error */
+                            esc_html__( 'The child site could not get ready for a backup: %s', 'mainwp' ),
+                            esc_html( MainWP_Backup_Error_Codes::sanitize_message( $preflight['error'] ) )
+                        ),
+                        null,
+                        MainWP_Backup_Error_Codes::ERR_CHILD_PREFLIGHT_FAILED
+                    );
+                    // phpcs:enable WordPress.Security.EscapeOutput.ExceptionNotEscaped
+                }
             }
 
             MainWP_Logger::instance()->info_for_website( $website, 'backup', 'Backup preflight not supported by the child site; proceeding without it.' );

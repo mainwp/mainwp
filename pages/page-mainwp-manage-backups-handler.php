@@ -1506,6 +1506,9 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                     $_mark_detail .= ' [' . (string) $e->get_message_error_code() . ']';
                 }
                 $_mark_detail .= ': ' . substr( (string) $e->getMessage(), 0, 500 );
+                if ( $e instanceof MainWP_Exception && '' !== (string) $e->get_message_extra() ) {
+                    $_mark_detail .= ' (' . (string) $e->get_message_extra() . ')';
+                }
 
                 // The loop's task view can be seconds old, and that staleness
                 // is exactly the race window: decide the site's fate against

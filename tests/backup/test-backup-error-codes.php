@@ -169,6 +169,17 @@ class MainWP_Backup_Error_Codes_Test extends \WP_UnitTestCase {
 		$this->assertSame( 'error', MainWP_Backup_Error_Codes::severity( MainWP_Backup_Error_Codes::ERR_CHILD_UPDATE_REQUIRED ) );
 	}
 
+	/** Child readiness failures have a registered message and error severity. */
+	public function test_child_preflight_failed_code_is_registered_with_message() {
+		$this->assertSame( 'mainwp_backup_child_preflight_failed', MainWP_Backup_Error_Codes::ERR_CHILD_PREFLIGHT_FAILED );
+		$this->assertContains( MainWP_Backup_Error_Codes::ERR_CHILD_PREFLIGHT_FAILED, MainWP_Backup_Error_Codes::get_registered_codes() );
+		$this->assertSame(
+			'The child site could not get ready for a backup. Fix the problem it reported on the site, then try again.',
+			MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_CHILD_PREFLIGHT_FAILED )
+		);
+		$this->assertSame( 'error', MainWP_Backup_Error_Codes::severity( MainWP_Backup_Error_Codes::ERR_CHILD_PREFLIGHT_FAILED ) );
+	}
+
 	/**
 	 * The incremental backup codes are registered: the child reports a
 	 * missing or unusable parent manifest (the dashboard reruns the site as

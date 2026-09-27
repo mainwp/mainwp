@@ -343,6 +343,47 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Failed full downloads retain the HTTP status and consume one retry.
+	 */
+	public function test_thrown_full_download_is_recorded_on_the_diag_seam() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$this->seed_download_ready_progress( $task->id, $site_id, 4096 );
+		MainWP_DB_Backup::instance()->update_backup_task_progress( $task->id, $site_id, array( 'attempts' => 2 ) );
+		$throw = static function () {
+			throw new MainWP_Exception( 'Backup download failed: the child site returned an unexpected response.', 'HTTP 504', 'mainwp_backup_http_error' );
+		};
+		$downloads = array();
+		$listen    = static function ( $payload, $duration, $context ) use ( &$downloads ) {
+			if ( 'download' === $context['op'] ) {
+				$downloads[] = array( $payload, $duration, $context );
+			}
+		};
+		add_filter( 'mainwp_download_to_file_pre', $throw );
+		add_action( 'mainwp_backup_diag_poll', $listen, 10, 3 );
+		try {
+			$this->assertFalse( MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' ) );
+			$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+			$this->assertSame( 3, (int) $progress->attempts, 'The failed download must consume exactly one retry attempt.' );
+			$this->assertCount( 1, $downloads );
+			list( $payload, $duration, $context ) = $downloads[0];
+			$this->assertTrue( $payload['thrown'] );
+			$this->assertSame( 'full', $payload['artifact'] );
+			$this->assertSame( 2, $payload['attempt'] );
+			$this->assertSame( 'Backup download failed: the child site returned an unexpected response.', $payload['message'] );
+			$this->assertSame( 'HTTP 504', $payload['extra'] );
+			$this->assertSame( 0, $payload['code'] );
+			$this->assertArrayNotHasKey( 'error_code', $payload );
+			$this->assertIsFloat( $duration );
+			$this->assertGreaterThanOrEqual( 0, $duration );
+			$this->assertSame( (int) $task->id, $context['task_id'] );
+			$this->assertSame( (int) $site_id, $context['site_id'] );
+		} finally {
+			remove_filter( 'mainwp_download_to_file_pre', $throw );
+			remove_action( 'mainwp_backup_diag_poll', $listen, 10 );
+		}
+	}
+
+	/**
 	 * A held download lock stops a second process from downloading the
 	 * same backup file.
 	 *
@@ -1948,6 +1989,56 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 			$this->assertEquals( $before, MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id ) );
 		} finally {
 			remove_action( 'mainwp_backup_diag_poll', $lose, 10 );
+			MainWP_Backup_Monitor::release_lane_lease();
+		}
+	}
+
+	/**
+	 * A run request that throws still leaves a diag line marked as thrown.
+	 */
+	public function test_thrown_run_request_is_recorded_on_the_diag_seam() {
+		$advanced               = false;
+		list( $site_id, $task ) = $this->site_and_task();
+		$this->mock_child_action( 'backup_preflight', array( 'task_spine' => 1 ) );
+		$this->mock_child_action(
+			'backup_task_create',
+			array(
+				'task_id' => 'thrown-run',
+				'phase'   => 'queued',
+			)
+		);
+		$throw = static function ( $result, $website, $what ) {
+			unset( $website );
+			if ( 'backup_task_run' === $what ) {
+				throw new MainWP_Exception( 'cURL error 52: Empty reply from server', 'http' );
+			}
+			return $result;
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $throw, 20, 3 );
+		$runs   = array();
+		$listen = static function ( $payload, $duration, $context ) use ( &$runs ) {
+			if ( 'run' === $context['op'] ) {
+				$runs[] = array( $payload, $duration, $context );
+			}
+		};
+		add_action( 'mainwp_backup_diag_poll', $listen, 10, 3 );
+		$this->assertIsString( MainWP_Backup_Monitor::acquire_lane_lease() );
+		try {
+			MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups', $advanced, true );
+			$this->assertCount( 1, $runs );
+			list( $payload, $duration, $context ) = $runs[0];
+			$this->assertArrayHasKey( 'thrown', $payload, 'A run payload without the thrown key means the request did not throw.' );
+			$this->assertTrue( $payload['thrown'] );
+			$this->assertSame( 'cURL error 52: Empty reply from server', $payload['message'] );
+			$this->assertSame( 'http', $payload['extra'] );
+			$this->assertArrayNotHasKey( 'error_code', $payload );
+			$this->assertIsFloat( $duration );
+			$this->assertGreaterThanOrEqual( 0, $duration );
+			$this->assertSame( (int) $task->id, $context['task_id'] );
+			$this->assertSame( (int) $site_id, $context['site_id'] );
+		} finally {
+			remove_action( 'mainwp_backup_diag_poll', $listen, 10 );
+			remove_filter( 'mainwp_fetch_url_authed_pre', $throw, 20 );
 			MainWP_Backup_Monitor::release_lane_lease();
 		}
 	}

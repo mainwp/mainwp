@@ -2308,6 +2308,49 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A budgeted run failure must survive a throwing diagnostic listener.
+	 */
+	public function test_thrown_budgeted_run_survives_diag_listener_failure() {
+		$site_id = $this->create_test_site();
+		$failure = new MainWP_Exception( 'HTTPERROR', 'cURL error 52: Empty reply from server' );
+		$throw   = static function ( $result, $website, $what ) use ( $failure ) {
+			if ( 'backup_task_run' === $what ) {
+				throw $failure;
+			}
+			return $result;
+		};
+		$polls   = array();
+		$listen  = static function ( $payload, $duration, $context ) use ( &$polls ) {
+			$polls[] = array( $payload, $duration, $context );
+			throw new \Error( 'Diagnostic listener failed.' );
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $throw, 20, 3 );
+		add_action( 'mainwp_backup_diag_poll', $listen, 10, 3 );
+		try {
+			try {
+				MainWP_Backup_Executor::get_backup_task_status( $site_id, 'run-handle', 1 );
+				$this->fail( 'The original run failure must propagate.' );
+			} catch ( MainWP_Exception $e ) {
+				$this->assertSame( $failure, $e );
+			}
+			$this->assertCount( 1, $polls );
+			list( $payload, $duration, $context ) = $polls[0];
+			$this->assertSame( 'run', $context['op'] );
+			$this->assertSame( (int) $site_id, $context['site_id'] );
+			$this->assertSame( 0, $context['task_id'] );
+			$this->assertTrue( $payload['thrown'] );
+			$this->assertTrue( $payload['sent'] );
+			$this->assertSame( 'run-handle', $payload['task_id'] );
+			$this->assertSame( 'HTTPERROR', $payload['message'] );
+			$this->assertSame( 'cURL error 52: Empty reply from server', $payload['extra'] );
+			$this->assertGreaterThanOrEqual( 0, $duration );
+		} finally {
+			remove_filter( 'mainwp_fetch_url_authed_pre', $throw, 20 );
+			remove_action( 'mainwp_backup_diag_poll', $listen, 10 );
+		}
+	}
+
+	/**
 	 * A lane lost during creation cannot start the returned child task.
 	 */
 	public function test_first_slice_waits_when_creation_loses_the_lane() {

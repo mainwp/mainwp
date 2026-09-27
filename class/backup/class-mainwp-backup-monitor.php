@@ -196,10 +196,9 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * Method negotiate_backup_preflight()
      *
      * Ask the child site for its backup readiness report before starting
-     * a backup. The error_code key identifies coded Child errors. Except for
-     * explicit incompatibility or previously confirmed task-spine support,
-     * the Child's message is shown. Pre-6.0 replies omit the key and fall
-     * through to the update-required gate.
+     * a backup. Empty or mainwp_backup_ error codes surface the Child's
+     * readiness message unless task-spine support was already confirmed.
+     * Other errors return to the task-spine gate without a readiness failure.
      *
      * Stores the child backup directory hash in site metadata for later
      * operations (sensitive value: stored only, never rendered), blocks
@@ -257,9 +256,10 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             if ( is_array( $preflight ) && isset( $preflight['error_code'] ) && self::CHILD_INCOMPATIBLE_CODE === $preflight['error_code'] ) {
                 static::record_negotiated_capabilities( $website, array() );
             } elseif ( is_array( $preflight ) && array_key_exists( 'error_code', $preflight ) && isset( $preflight['error'] ) && is_string( $preflight['error'] ) && '' !== $preflight['error'] ) {
+                $readiness_code     = is_string( $preflight['error_code'] ) && ( '' === $preflight['error_code'] || 0 === strpos( $preflight['error_code'], 'mainwp_backup_' ) );
                 $task_spine_support = MainWP_DB::instance()->get_website_option( $website, 'task_spine_support' );
-                if ( '1' !== (string) $task_spine_support ) {
-                    // The key identifies coded Child errors whose message should be shown; pre-6.0 replies reach the update-required gate.
+                if ( $readiness_code && '1' !== (string) $task_spine_support ) {
+                    // Only empty or mainwp_backup_ codes describe readiness failures; request refusals still reach the task-spine gate.
                     try {
                         /** This action is documented in class/backup/class-mainwp-backup-monitor.php */
                         do_action( 'mainwp_backup_diag_preflight', (int) $website->id, $diag_task_id, $preflight, 'failed' );

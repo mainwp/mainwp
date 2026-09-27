@@ -1004,6 +1004,41 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( MainWP_Backup_Error_Codes::ERR_CHILD_UPDATE_REQUIRED, $exception->get_message_error_code() );
 	}
 
+	/** An auth-layer refusal must retain the task-spine gate's preflight fallback. */
+	public function test_preflight_auth_error_requires_child_update() {
+		$site_id = $this->create_test_site();
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$this->assertEmpty( MainWP_DB::instance()->get_website_option( $website, 'task_spine_support' ) );
+		$exception = $this->run_backup_site(
+			$site_id,
+			array(
+				'backup_preflight' => array(
+					'error'      => 'This request has already been used.',
+					'error_code' => 'AUTH_ERROR2',
+				),
+			)
+		);
+		$this->assertNotNull( $exception );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_CHILD_UPDATE_REQUIRED, $exception->get_message_error_code() );
+	}
+
+	/** A backup-domain code must preserve the Child's actionable readiness message. */
+	public function test_preflight_backup_error_reports_child_message() {
+		$site_id   = $this->create_test_site();
+		$exception = $this->run_backup_site(
+			$site_id,
+			array(
+				'backup_preflight' => array(
+					'error'      => 'The backup directory is not writable.',
+					'error_code' => 'mainwp_backup_dir_not_writable',
+				),
+			)
+		);
+		$this->assertNotNull( $exception );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_CHILD_PREFLIGHT_FAILED, $exception->get_message_error_code() );
+		$this->assertStringContainsString( 'The backup directory is not writable.', $exception->getMessage() );
+	}
+
 	/** A never-negotiated site reports the Child's runtime error without recording capabilities. */
 	public function test_preflight_runtime_error_on_a_never_negotiated_site_reports_the_child_message() {
 		$site_id = $this->create_test_site();
@@ -1046,15 +1081,15 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 				$site_id,
 				array(
 					'backup_preflight' => array(
-						'error'      => 'Uploads directory is not writable.',
-						'error_code' => '',
+						'error'      => 'The backup directory is not writable.',
+						'error_code' => 'mainwp_backup_dir_not_writable',
 					),
 				)
 			);
 			$this->assertSame( 1, $listener_calls );
 			$this->assertNotNull( $exception );
 			$this->assertSame( MainWP_Backup_Error_Codes::ERR_CHILD_PREFLIGHT_FAILED, $exception->get_message_error_code() );
-			$this->assertStringContainsString( 'Uploads directory is not writable.', $exception->getMessage() );
+			$this->assertStringContainsString( 'The backup directory is not writable.', $exception->getMessage() );
 			$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( 1, $site_id );
 			$this->assertSame( '', $progress->child_backup_task_id );
 		} finally {
@@ -1072,8 +1107,8 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 			$site_id,
 			array(
 				'backup_preflight'   => array(
-					'error'      => 'Unable to create directory wp-content/uploads/mainwp/backup-x/. Is its parent directory writable by the server?',
-					'error_code' => '',
+					'error'      => 'The backup directory is not writable.',
+					'error_code' => 'mainwp_backup_dir_not_writable',
 				),
 				'backup_task_create' => array( 'error' => 'must not reach task creation' ),
 				'backup'             => array( 'error' => 'must not reach the backup action' ),
@@ -1082,7 +1117,7 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 
 		$this->assertNotNull( $exception );
 		$this->assertSame( MainWP_Backup_Error_Codes::ERR_CHILD_PREFLIGHT_FAILED, $exception->get_message_error_code() );
-		$this->assertStringContainsString( 'Is its parent directory writable', $exception->getMessage() );
+		$this->assertStringContainsString( 'The backup directory is not writable.', $exception->getMessage() );
 		$this->assertNotSame( MainWP_Backup_Error_Codes::ERR_CHILD_UPDATE_REQUIRED, $exception->get_message_error_code() );
 		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
 		$this->assertSame( '0', MainWP_DB::instance()->get_website_option( $website, 'task_spine_support' ) );
@@ -1098,8 +1133,8 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 			$site_id,
 			array(
 				'backup_preflight'   => array(
-					'error'      => 'Unable to create directory wp-content/uploads/mainwp/backup-x/. Is its parent directory writable by the server?',
-					'error_code' => '',
+					'error'      => 'The backup directory is not writable.',
+					'error_code' => 'mainwp_backup_dir_not_writable',
 				),
 				'backup_task_create' => array(
 					'error'      => 'reached task creation, past the gate',

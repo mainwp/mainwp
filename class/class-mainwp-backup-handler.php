@@ -295,10 +295,9 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * Method negotiate_backup_preflight()
      *
      * Ask the child site for its backup readiness report before starting
-     * a backup. The error_code key identifies coded Child errors. Except for
-     * explicit incompatibility or previously confirmed task-spine support,
-     * the Child's message is shown. Pre-6.0 replies omit the key and fall
-     * through to the update-required gate.
+     * a backup. Empty or mainwp_backup_ error codes surface the Child's
+     * readiness message unless task-spine support was already confirmed.
+     * Other errors return to the task-spine gate without a readiness failure.
      *
      * Stores the child backup directory hash in site metadata for later
      * operations (sensitive value: stored only, never rendered), blocks

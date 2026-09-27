@@ -196,9 +196,10 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * Method negotiate_backup_preflight()
      *
      * Ask the child site for its backup readiness report before starting
-     * a backup. Old child sites without the preflight action are detected
-     * by an error response without an error_code key; negotiation returns
-     * without capabilities. Current Child runtime errors include that key.
+     * a backup. The error_code key identifies coded Child errors. Except for
+     * explicit incompatibility or previously confirmed task-spine support,
+     * the Child's message is shown. Pre-6.0 replies omit the key and fall
+     * through to the update-required gate.
      *
      * Stores the child backup directory hash in site metadata for later
      * operations (sensitive value: stored only, never rendered), blocks
@@ -258,10 +259,12 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             } elseif ( is_array( $preflight ) && array_key_exists( 'error_code', $preflight ) && isset( $preflight['error'] ) && is_string( $preflight['error'] ) && '' !== $preflight['error'] ) {
                 $task_spine_support = MainWP_DB::instance()->get_website_option( $website, 'task_spine_support' );
                 if ( '1' !== (string) $task_spine_support ) {
-                    // The error_code key distinguishes a current Child readiness failure from an unknown action.
-                    // Only confirmed task-spine support can survive a failed readiness probe.
-                    /** This action is documented in class/backup/class-mainwp-backup-monitor.php */
-                    do_action( 'mainwp_backup_diag_preflight', (int) $website->id, $diag_task_id, $preflight, 'failed' );
+                    // The key identifies coded Child errors whose message should be shown; pre-6.0 replies reach the update-required gate.
+                    try {
+                        /** This action is documented in class/backup/class-mainwp-backup-monitor.php */
+                        do_action( 'mainwp_backup_diag_preflight', (int) $website->id, $diag_task_id, $preflight, 'failed' );
+                    } catch ( \Throwable $listener_error ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement -- diagnostics must not change backup control flow.
+                    }
                     // phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- message parts are escaped above.
                     throw new MainWP_Exception(
                         sprintf(

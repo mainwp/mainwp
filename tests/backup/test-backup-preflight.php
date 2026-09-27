@@ -1030,6 +1030,38 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 		$this->assertEmpty( MainWP_DB::instance()->get_website_option( $website, 'task_spine_support' ) );
 	}
 
+	/** A diagnostic failure must not replace the Child error or strand the creating marker. */
+	public function test_failed_preflight_listener_preserves_child_error_and_cleanup() {
+		$site_id        = $this->create_test_site();
+		$listener_calls = 0;
+		$listen         = static function ( $site, $task, $payload, $status ) use ( &$listener_calls ) {
+			if ( 'failed' === $status ) {
+				++$listener_calls;
+				throw new \Error( 'Diagnostic listener failed.' );
+			}
+		};
+		add_action( 'mainwp_backup_diag_preflight', $listen, 10, 4 );
+		try {
+			$exception = $this->run_backup_site(
+				$site_id,
+				array(
+					'backup_preflight' => array(
+						'error'      => 'Uploads directory is not writable.',
+						'error_code' => '',
+					),
+				)
+			);
+			$this->assertSame( 1, $listener_calls );
+			$this->assertNotNull( $exception );
+			$this->assertSame( MainWP_Backup_Error_Codes::ERR_CHILD_PREFLIGHT_FAILED, $exception->get_message_error_code() );
+			$this->assertStringContainsString( 'Uploads directory is not writable.', $exception->getMessage() );
+			$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( 1, $site_id );
+			$this->assertSame( '', $progress->child_backup_task_id );
+		} finally {
+			remove_action( 'mainwp_backup_diag_preflight', $listen, 10 );
+		}
+	}
+
 	/** A stored incompatibility must not hide a current Child readiness failure. */
 	public function test_preflight_runtime_error_after_child_update_reports_the_child_message() {
 		$site_id = $this->create_test_site();

@@ -2749,6 +2749,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      *
      * @return array Status array: status (running|completed|failed) and meta (phase, file, size, local, error, error_code).
      * @throws MainWP_Exception When the site is unknown or the child is unreachable.
+     * @throws \Exception When a status or run request fails; the original exception propagates.
      */
     public static function get_backup_task_status( int $site_id, string $task_id, int $budget_seconds = 0 ): array {
         $website = MainWP_DB::instance()->get_website_by_id( $site_id );
@@ -2758,7 +2759,24 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
         if ( $budget_seconds <= 0 ) {
             $diag_start = microtime( true );
-            $payload    = MainWP_Connect::fetch_url_authed( $website, 'backup_task_status', array( 'task_id' => $task_id ), false, false, false );
+            try {
+                $payload = MainWP_Connect::fetch_url_authed( $website, 'backup_task_status', array( 'task_id' => $task_id ), false, false, false );
+            } catch ( \Exception $e ) {
+                self::record_thrown_request(
+                    $e,
+                    microtime( true ) - $diag_start,
+                    array(
+                        'sent'    => true,
+                        'task_id' => $task_id,
+                    ),
+                    array(
+                        'op'      => 'status',
+                        'site_id' => (int) $site_id,
+                        'task_id' => 0,
+                    )
+                );
+                throw $e;
+            }
             /** This action is documented in class/backup/class-mainwp-backup-executor.php */
             do_action(
                 'mainwp_backup_diag_poll',
@@ -2776,7 +2794,24 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         $deadline = time() + $budget_seconds;
         do {
             $diag_start = microtime( true );
-            $payload    = MainWP_Connect::fetch_url_authed( $website, 'backup_task_run', array( 'task_id' => $task_id ), false, false, false );
+            try {
+                $payload = MainWP_Connect::fetch_url_authed( $website, 'backup_task_run', array( 'task_id' => $task_id ), false, false, false );
+            } catch ( \Exception $e ) {
+                self::record_thrown_request(
+                    $e,
+                    microtime( true ) - $diag_start,
+                    array(
+                        'sent'    => true,
+                        'task_id' => $task_id,
+                    ),
+                    array(
+                        'op'      => 'run',
+                        'site_id' => (int) $site_id,
+                        'task_id' => 0,
+                    )
+                );
+                throw $e;
+            }
             /** This action is documented in class/backup/class-mainwp-backup-executor.php */
             do_action(
                 'mainwp_backup_diag_poll',

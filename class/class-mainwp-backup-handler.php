@@ -295,9 +295,10 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * Method negotiate_backup_preflight()
      *
      * Ask the child site for its backup readiness report before starting
-     * a backup. Old child sites without the preflight action are detected
-     * by an error response without an error_code key; negotiation returns
-     * without capabilities. Current Child runtime errors include that key.
+     * a backup. The error_code key identifies coded Child errors. Except for
+     * explicit incompatibility or previously confirmed task-spine support,
+     * the Child's message is shown. Pre-6.0 replies omit the key and fall
+     * through to the update-required gate.
      *
      * Stores the child backup directory hash in site metadata for later
      * operations (sensitive value: stored only, never rendered), blocks

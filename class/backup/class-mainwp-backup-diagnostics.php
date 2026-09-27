@@ -1087,7 +1087,10 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 // A tick line passes on its picked task, but its candidate list
                 // came from the unscoped due query and would name other users' tasks.
                 if ( null !== $allowed_sites && 'tick' === ( $event['kind'] ?? '' ) && isset( $event['payload']['candidates'] ) ) {
-                    $event['payload']['candidates'] = array_values( array_filter( array_map( 'intval', (array) $event['payload']['candidates'] ), static fn( $id ) => in_array( $id, $allowed_tasks, true ) ) );
+                    $candidates = array_map( 'intval', (array) $event['payload']['candidates'] );
+                    $candidates = array_filter( $candidates, static fn( $id ) => in_array( $id, $allowed_tasks, true ) );
+
+                    $event['payload']['candidates'] = array_values( $candidates );
                 }
                 $redacted = wp_json_encode( $this->redact_restore_secrets( $event ) );
                 if ( false === $redacted ) {

@@ -1141,9 +1141,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
      *
      * Post handler for saving a client note.
      *
-     * Core has no per-client access list. This requires the same page-level
-     * permission the Clients screen enforces, an existing client, and the
-     * mainwp_check_client_access filter so an extension can deny one client.
+     * Requires the same page-level permission the Clients screen enforces,
+     * and an existing client. Per-client scoping is left to Team Control.
      *
      * @uses \MainWP\Dashboard\MainWP_Client::save_note()
      */
@@ -1170,29 +1169,6 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
             $this->exit_json(
                 array(
                     'error' => esc_html__( 'Client not found. Please try again.', 'mainwp' ),
-                )
-            );
-        }
-
-        $current_user_id = get_current_user_id();
-
-        /**
-         * Filters whether the current user may access a specific client.
-         *
-         * Default is true for any user who passed the manage clients check.
-         * Extensions such as Team Control return false to deny one client.
-         *
-         * @since 6.2
-         *
-         * @param bool $can_access      Whether access is allowed.
-         * @param int  $client_id       Client ID being saved.
-         * @param int  $current_user_id Current user ID.
-         */
-        $can_access = apply_filters( 'mainwp_check_client_access', true, $client_id, $current_user_id );
-        if ( ! $can_access ) {
-            $this->exit_json(
-                array(
-                    'error' => esc_html__( 'You do not have permission to access this client.', 'mainwp' ),
                 )
             );
         }

@@ -65,7 +65,6 @@ class Test_MWP_1802_Client_Notes extends \WP_UnitTestCase {
 		global $wpdb;
 
 		remove_filter( 'mainwp_currentusercan', array( $this, 'deny_manage_clients' ), 10 );
-		remove_all_filters( 'mainwp_check_client_access' );
 		remove_filter( 'wp_doing_ajax', '__return_true' );
 
 		$_POST    = array();
@@ -124,21 +123,6 @@ class Test_MWP_1802_Client_Notes extends \WP_UnitTestCase {
 
 		$this->assertSame( 'SUCCESS', $response['result'] );
 		$this->assertSame( 'saved note', $this->read_note( $client_id ) );
-	}
-
-	/**
-	 * The per-client filter can block a save that the page permission would allow.
-	 *
-	 * @return void
-	 */
-	public function test_client_access_filter_false_blocks_save(): void {
-		$client_id = $this->create_client( 'original note' );
-		add_filter( 'mainwp_check_client_access', '__return_false' );
-
-		$response = $this->dispatch_notes_save( $client_id, 'replaced note' );
-
-		$this->assertArrayHasKey( 'error', $response );
-		$this->assertSame( 'original note', $this->read_note( $client_id ) );
 	}
 
 	/**

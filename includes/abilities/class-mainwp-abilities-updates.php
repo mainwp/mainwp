@@ -129,7 +129,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 'input_schema'        => self::get_run_updates_input_schema(),
                 'output_schema'       => self::get_run_updates_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_run_updates' ),
-                'permission_callback' => array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ),
+                'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/run-updates-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
@@ -187,7 +187,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 'input_schema'        => self::get_set_ignored_updates_input_schema(),
                 'output_schema'       => self::get_set_ignored_updates_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_set_ignored_updates' ),
-                'permission_callback' => MainWP_Abilities_Util::make_site_permission_callback( 'site_id_or_domain' ),
+                'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/set-ignored-updates-v1', MainWP_Abilities_Util::make_site_permission_callback( 'site_id_or_domain' ) ),
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
@@ -245,7 +245,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 'input_schema'        => self::get_update_site_core_input_schema(),
                 'output_schema'       => self::get_update_site_core_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_update_site_core' ),
-                'permission_callback' => MainWP_Abilities_Util::make_site_permission_callback( 'site_id_or_domain' ),
+                'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/update-site-core-v1', MainWP_Abilities_Util::make_site_permission_callback( 'site_id_or_domain' ) ),
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
@@ -274,7 +274,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 'input_schema'        => self::get_update_site_plugins_input_schema(),
                 'output_schema'       => self::get_update_site_plugins_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_update_site_plugins' ),
-                'permission_callback' => MainWP_Abilities_Util::make_site_permission_callback( 'site_id_or_domain' ),
+                'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/update-site-plugins-v1', MainWP_Abilities_Util::make_site_permission_callback( 'site_id_or_domain' ) ),
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
@@ -303,7 +303,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 'input_schema'        => self::get_update_site_themes_input_schema(),
                 'output_schema'       => self::get_update_site_themes_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_update_site_themes' ),
-                'permission_callback' => MainWP_Abilities_Util::make_site_permission_callback( 'site_id_or_domain' ),
+                'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/update-site-themes-v1', MainWP_Abilities_Util::make_site_permission_callback( 'site_id_or_domain' ) ),
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
@@ -332,7 +332,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 'input_schema'        => self::get_update_site_translations_input_schema(),
                 'output_schema'       => self::get_update_site_translations_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_update_site_translations' ),
-                'permission_callback' => MainWP_Abilities_Util::make_site_permission_callback( 'site_id_or_domain' ),
+                'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/update-site-translations-v1', MainWP_Abilities_Util::make_site_permission_callback( 'site_id_or_domain' ) ),
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
@@ -361,7 +361,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 'input_schema'        => self::get_ignore_site_core_input_schema(),
                 'output_schema'       => self::get_ignore_site_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_ignore_site_core' ),
-                'permission_callback' => MainWP_Abilities_Util::make_site_permission_callback( 'site_id_or_domain' ),
+                'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/ignore-site-core-v1', MainWP_Abilities_Util::make_site_permission_callback( 'site_id_or_domain' ) ),
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
@@ -390,7 +390,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 'input_schema'        => self::get_ignore_site_plugins_input_schema(),
                 'output_schema'       => self::get_ignore_site_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_ignore_site_plugins' ),
-                'permission_callback' => MainWP_Abilities_Util::make_site_permission_callback( 'site_id_or_domain' ),
+                'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/ignore-site-plugins-v1', MainWP_Abilities_Util::make_site_permission_callback( 'site_id_or_domain' ) ),
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
@@ -419,7 +419,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 'input_schema'        => self::get_ignore_site_themes_input_schema(),
                 'output_schema'       => self::get_ignore_site_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_ignore_site_themes' ),
-                'permission_callback' => MainWP_Abilities_Util::make_site_permission_callback( 'site_id_or_domain' ),
+                'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/ignore-site-themes-v1', MainWP_Abilities_Util::make_site_permission_callback( 'site_id_or_domain' ) ),
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
@@ -448,7 +448,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 'input_schema'        => self::get_update_all_input_schema(),
                 'output_schema'       => self::get_update_all_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_update_all' ),
-                'permission_callback' => array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ),
+                'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/update-all-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(

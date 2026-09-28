@@ -35,6 +35,157 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
     const MIN_CHILD_VERSION_FOR_ABILITIES = '4.0.0';
 
     /**
+     * Ability → granular Team Control dashboard right required to run it.
+     *
+     * Read-only abilities (list/get/count) are intentionally absent: they are
+     * gated by manage_options plus site scoping and are out of scope for
+     * granular rights.
+     *
+     * The update family (run-updates / update-all) is intentionally absent
+     * here: it needs per-type rights derived from its `types` input, handled
+     * in required_rights_for_ability().
+     *
+     * @since 6.0.0
+     * @var array<string,string>
+     */
+    const ABILITY_OPERATION_RIGHTS = array(
+        // Site lifecycle.
+        'mainwp/add-site-v1'                 => 'add_sites',
+        'mainwp/update-site-v1'              => 'edit_sites',
+        'mainwp/delete-site-v1'              => 'delete_sites',
+        'mainwp/reconnect-site-v1'           => 'edit_sites',
+        'mainwp/reconnect-sites-v1'          => 'edit_sites',
+        'mainwp/disconnect-site-v1'          => 'edit_sites',
+        'mainwp/disconnect-sites-v1'         => 'edit_sites',
+        'mainwp/suspend-site-v1'             => 'edit_sites',
+        'mainwp/suspend-sites-v1'            => 'edit_sites',
+        'mainwp/unsuspend-site-v1'           => 'edit_sites',
+        'mainwp/check-site-v1'               => 'edit_sites',
+        'mainwp/check-sites-v1'              => 'edit_sites',
+        // Plugins / themes on a site.
+        'mainwp/activate-site-plugins-v1'    => 'activate_deactivate_plugins',
+        'mainwp/deactivate-site-plugins-v1'  => 'activate_deactivate_plugins',
+        'mainwp/delete-site-plugins-v1'      => 'delete_plugins',
+        'mainwp/activate-site-theme-v1'      => 'activate_themes',
+        'mainwp/delete-site-themes-v1'       => 'delete_themes',
+        // Per-type single-site updates.
+        'mainwp/update-site-core-v1'         => 'update_wordpress',
+        'mainwp/update-site-plugins-v1'      => 'update_plugins',
+        'mainwp/update-site-themes-v1'       => 'update_themes',
+        'mainwp/update-site-translations-v1' => 'update_translations',
+        // Ignore / unignore updates.
+        'mainwp/set-ignored-updates-v1'      => 'ignore_unignore_updates',
+        'mainwp/ignore-site-core-v1'         => 'ignore_unignore_updates',
+        'mainwp/ignore-site-plugins-v1'      => 'ignore_unignore_updates',
+        'mainwp/ignore-site-themes-v1'       => 'ignore_unignore_updates',
+        // Clients.
+        'mainwp/add-client-v1'               => 'manage_clients',
+        'mainwp/update-client-v1'            => 'manage_clients',
+        'mainwp/delete-client-v1'            => 'manage_clients',
+        'mainwp/suspend-client-v1'           => 'manage_clients',
+        'mainwp/unsuspend-client-v1'         => 'manage_clients',
+        // Tags (groups).
+        'mainwp/add-tag-v1'                  => 'manage_groups',
+        'mainwp/update-tag-v1'               => 'manage_groups',
+        'mainwp/delete-tag-v1'               => 'manage_groups',
+    );
+
+    /**
+     * Update-type → dashboard right for the multi-type update abilities.
+     *
+     * @since 6.0.0
+     * @var array<string,string>
+     */
+    const UPDATE_TYPE_RIGHTS = array(
+        'core'         => 'update_wordpress',
+        'plugins'      => 'update_plugins',
+        'themes'       => 'update_themes',
+        'translations' => 'update_translations',
+    );
+
+    /**
+     * Test seam for machine-context detection: WP_CLI / MAINWP_REST_API_DOING
+     * cannot be defined per-test, so tests force this via reflection. Never
+     * set in production code; null means real constant detection.
+     *
+     * @var bool|null
+     */
+    private static $machine_context_override = null;
+
+    /**
+     * Whether this request runs in WP_CLI or API-key REST.
+     *
+     * On its own this is NOT a bypass: current_user_has_operation_right()
+     * additionally requires that no user is authenticated. DOING_CRON is
+     * deliberately absent: the batch worker restores the job owner via
+     * wp_set_current_user() and wants real evaluation of that owner's rights.
+     *
+     * @return bool True in a machine execution context.
+     */
+    private static function is_machine_execution_context(): bool {
+        if ( null !== self::$machine_context_override ) {
+            return self::$machine_context_override;
+        }
+
+        if ( defined( 'WP_CLI' ) && WP_CLI ) {
+            return true;
+        }
+
+        return defined( 'MAINWP_REST_API_DOING' ) && MAINWP_REST_API_DOING;
+    }
+
+    /**
+     * Whether the current user holds a granular Team Control dashboard right.
+     *
+     * The global rights wrapper bypasses checks under DOING_CRON, so queued
+     * jobs need the direct filter to enforce their owner's rights.
+     * Without Team Control the filter defaults to true.
+     *
+     * Team Control denies an empty current user. Allowing machine requests
+     * without a user preserves WP-CLI automation. API-key REST authenticates
+     * as the key owner, whose Team Control rights must still apply.
+     *
+     * @param string $right Dashboard right slug (delete_sites, update_plugins, ...).
+     * @return bool True when the operation right is held.
+     */
+    public static function current_user_has_operation_right( string $right ): bool {
+        if ( self::is_machine_execution_context() && 0 === get_current_user_id() ) {
+            return true;
+        }
+
+        return (bool) apply_filters( 'mainwp_currentusercan', true, 'dashboard', $right );
+    }
+
+    /**
+     * Resolve the granular rights an ability requires, including the update
+     * family's per-type derivation from its `types` input (empty or missing
+     * types means every type).
+     *
+     * @param string $ability_name Ability id being executed.
+     * @param mixed  $input        Ability input (read for the update family's types).
+     * @return string[] Required right slugs; empty for unmapped/read-only abilities.
+     */
+    public static function required_rights_for_ability( string $ability_name, $input = array() ): array {
+        $required = array();
+
+        if ( isset( self::ABILITY_OPERATION_RIGHTS[ $ability_name ] ) ) {
+            $required[] = self::ABILITY_OPERATION_RIGHTS[ $ability_name ];
+        } elseif ( 'mainwp/run-updates-v1' === $ability_name || 'mainwp/update-all-v1' === $ability_name ) {
+            $types = ( is_array( $input ) && ! empty( $input['types'] ) && is_array( $input['types'] ) )
+                ? array_map( 'strval', $input['types'] )
+                : array_keys( self::UPDATE_TYPE_RIGHTS ); // Empty means every type.
+
+            foreach ( $types as $type ) {
+                if ( isset( self::UPDATE_TYPE_RIGHTS[ $type ] ) ) {
+                    $required[] = self::UPDATE_TYPE_RIGHTS[ $type ];
+                }
+            }
+        }
+
+        return array_values( array_unique( $required ) );
+    }
+
+    /**
      * Check if current request has REST API permission.
      *
      * Prioritizes REST API key authentication; falls back to session-based
@@ -957,6 +1108,48 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
     }
 
     /**
+     * Wrap a permission callback with the granular operation-right check for
+     * a mutating ability.
+     *
+     * Mirrors make_site_permission_callback: registration passes the ability
+     * name so the callback can resolve the required rights (including the
+     * update family's per-type derivation from the input the Abilities API
+     * hands every permission callback). The base callback runs first so
+     * authentication/site-scope errors keep their existing codes; the rights
+     * check then denies with mainwp_insufficient_right before any execute
+     * callback can touch a site. Only an unauthenticated machine context
+     * (WP_CLI with no --user) bypasses inside
+     * current_user_has_operation_right().
+     *
+     * @param string   $ability_name Ability id the callback guards.
+     * @param callable $base         Base permission callback to run first.
+     * @return callable Permission callback closure.
+     */
+    public static function make_operation_permission_callback( string $ability_name, callable $base ): callable {
+        return function ( $input = null ) use ( $ability_name, $base ) {
+            $base_check = $base( $input );
+            if ( is_wp_error( $base_check ) || true !== $base_check ) {
+                return $base_check;
+            }
+
+            foreach ( self::required_rights_for_ability( $ability_name, $input ) as $right ) {
+                if ( ! self::current_user_has_operation_right( $right ) ) {
+                    return new \WP_Error(
+                        'mainwp_insufficient_right',
+                        __( 'Your role does not permit this operation.', 'mainwp' ),
+                        array(
+                            'status' => 403,
+                            'right'  => $right,
+                        )
+                    );
+                }
+            }
+
+            return true;
+        };
+    }
+
+    /**
      * Map a site object to the standard output format.
      *
      * @param object $site          Site object from database.
@@ -1097,17 +1290,19 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
         // Structure aligns with REST v2 job status endpoint expectations.
         // Status values: 'queued' -> 'processing' -> 'completed' | 'failed'.
         $job_data = array(
-            'job_type'  => 'sync',                  // Distinguishes from 'update' jobs.
-            'sites'     => $site_ids,
-            'status'    => 'queued',                // queued | processing | completed | failed.
-            'created'   => time(),
-            'started'   => null,
-            'completed' => null,
-            'synced'    => array(),                 // Successfully synced sites.
-            'errors'    => array(),                 // Failed syncs array.
-            'progress'  => 0,                       // 0-100 percentage.
-            'total'     => count( $site_ids ),      // Total sites to process.
-            'processed' => 0,                       // Sites processed so far.
+            'job_type'        => 'sync',                  // Distinguishes from 'update' jobs.
+            'user_id'         => get_current_user_id(),   // Polling must enforce ownership.
+            'sites'           => $site_ids,
+            'required_rights' => array(),                 // Sync has no mapped operation right.
+            'status'          => 'queued',                // queued | processing | completed | failed.
+            'created'         => time(),
+            'started'         => null,
+            'completed'       => null,
+            'synced'          => array(),                 // Successfully synced sites.
+            'errors'          => array(),                 // Failed syncs array.
+            'progress'        => 0,                       // 0-100 percentage.
+            'total'           => count( $site_ids ),      // Total sites to process.
+            'processed'       => 0,                       // Sites processed so far.
         );
 
         set_transient( 'mainwp_sync_job_' . $job_id, $job_data, DAY_IN_SECONDS );
@@ -1183,19 +1378,22 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
         // Structure aligns with REST v2 job status endpoint expectations.
         // Status values: 'queued' -> 'processing' -> 'completed' | 'failed'.
         $job_data = array(
-            'job_type'       => 'update',            // Distinguishes from 'sync' jobs.
-            'sites'          => $site_ids,
-            'types'          => $types,
-            'specific_items' => $specific_items,
-            'status'         => 'queued',            // queued | processing | completed | failed.
-            'created'        => time(),
-            'started'        => null,
-            'completed'      => null,
-            'updated'        => array(),             // Successful updates array.
-            'errors'         => array(),             // Failed updates array.
-            'progress'       => 0,                   // 0-100 percentage.
-            'total'          => count( $site_ids ),  // Total sites to process.
-            'processed'      => 0,                   // Sites processed so far.
+            'job_type'        => 'update',            // Distinguishes from 'sync' jobs.
+            'user_id'         => get_current_user_id(), // Polling must enforce ownership.
+            'sites'           => $site_ids,
+            'types'           => $types,
+            'specific_items'  => $specific_items,
+            // Rights can change between chunks; empty types require every update right.
+            'required_rights' => self::required_rights_for_ability( 'mainwp/run-updates-v1', array( 'types' => $types ) ),
+            'status'          => 'queued',            // queued | processing | completed | failed.
+            'created'         => time(),
+            'started'         => null,
+            'completed'       => null,
+            'updated'         => array(),             // Successful updates array.
+            'errors'          => array(),             // Failed updates array.
+            'progress'        => 0,                   // 0-100 percentage.
+            'total'           => count( $site_ids ),  // Total sites to process.
+            'processed'       => 0,                   // Sites processed so far.
         );
 
         set_transient( 'mainwp_update_job_' . $job_id, $job_data, DAY_IN_SECONDS );
@@ -1265,17 +1463,20 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
         // Store job data in transient (expires in 24 hours).
         // Status values: 'queued' -> 'processing' -> 'completed' | 'failed'.
         $job_data = array(
-            'job_type'   => $operation_type,
-            'sites'      => $site_ids,
-            'status'     => 'queued',
-            'created'    => time(),
-            'started'    => null,
-            'completed'  => null,
-            'successful' => array(),  // Successfully processed sites.
-            'errors'     => array(),  // Failed operations array.
-            'progress'   => 0,        // 0-100 percentage.
-            'total'      => count( $site_ids ),
-            'processed'  => 0,        // Sites processed so far.
+            'job_type'        => $operation_type,
+            'user_id'         => get_current_user_id(), // Polling must enforce ownership.
+            'sites'           => $site_ids,
+            // Site-edit rights can change between chunks.
+            'required_rights' => array( 'edit_sites' ),
+            'status'          => 'queued',
+            'created'         => time(),
+            'started'         => null,
+            'completed'       => null,
+            'successful'      => array(),  // Successfully processed sites.
+            'errors'          => array(),  // Failed operations array.
+            'progress'        => 0,        // 0-100 percentage.
+            'total'           => count( $site_ids ),
+            'processed'       => 0,        // Sites processed so far.
         );
 
         set_transient( 'mainwp_batch_job_' . $job_id, $job_data, DAY_IN_SECONDS );

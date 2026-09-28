@@ -119,7 +119,7 @@ class MainWP_Abilities_Tags { //phpcs:ignore -- NOSONAR - multi methods.
                 'input_schema'        => self::get_add_tag_input_schema(),
                 'output_schema'       => self::get_tag_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_add_tag' ),
-                'permission_callback' => array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ),
+                'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/add-tag-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
@@ -148,7 +148,7 @@ class MainWP_Abilities_Tags { //phpcs:ignore -- NOSONAR - multi methods.
                 'input_schema'        => self::get_update_tag_input_schema(),
                 'output_schema'       => self::get_tag_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_update_tag' ),
-                'permission_callback' => array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ),
+                'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/update-tag-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
@@ -177,7 +177,7 @@ class MainWP_Abilities_Tags { //phpcs:ignore -- NOSONAR - multi methods.
                 'input_schema'        => self::get_delete_tag_input_schema(),
                 'output_schema'       => self::get_delete_tag_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_delete_tag' ),
-                'permission_callback' => array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ),
+                'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/delete-tag-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(

@@ -2748,6 +2748,22 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
     }
 
     /**
+     * Read a site before post-create hooks grant its creator access.
+     *
+     * Callers must authorize access before using this unscoped lookup.
+     *
+     * @param int    $id           Child site ID.
+     * @param bool   $selectGroups Include group fields.
+     * @param array  $extra_view   Extra option fields.
+     * @param string $obj          OBJECT|ARRAY_A.
+     *
+     * @return object|array|null Database row or null when no row is found.
+     */
+    public function get_website_by_id_unscoped( $id, $selectGroups = false, $extra_view = array(), $obj = OBJECT ) {
+        return $this->get_row_result( $this->get_sql_website_by_id_with_access( $id, $selectGroups, $extra_view, '' ), $obj );
+    }
+
+    /**
      * Get child site by id via SQL.
      *
      * @param int   $id           Child site ID.
@@ -2759,7 +2775,20 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      */
     public function get_sql_website_by_id( $id, $selectGroups = false, $extra_view = array() ) {
+        return $this->get_sql_website_by_id_with_access( $id, $selectGroups, $extra_view, $this->get_sql_where_allow_access_sites( 'wp', 'nocheckstaging' ) );
+    }
 
+    /**
+     * Keep scoped and unscoped lookups consistent in their selected fields and joins.
+     *
+     * @param int    $id           Child site ID.
+     * @param bool   $selectGroups Include group fields.
+     * @param mixed  $extra_view   Extra option fields.
+     * @param string $where        Internally generated access clause, or an empty string.
+     *
+     * @return string|null SQL query or null for an invalid ID.
+     */
+    private function get_sql_website_by_id_with_access( $id, $selectGroups, $extra_view, $where ) {
         if ( ! is_array( $extra_view ) || empty( $extra_view ) ) {
             $extra_view = array( 'favi_icon', 'site_info' );
         }
@@ -2776,23 +2805,26 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 $view_joins   = $opts_view['joins'];
             }
 
-            $where = $this->get_sql_where_allow_access_sites( 'wp', 'nocheckstaging' );
             if ( $selectGroups ) {
-                return 'SELECT wp.*,wp_sync.*' . $view_selects . ', GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ",") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.name SEPARATOR ",") as wpgroupids, GROUP_CONCAT(gr.color ORDER BY gr.name SEPARATOR ",") as wpgroups_colors
+                $sql = 'SELECT wp.*,wp_sync.*' . $view_selects . ', GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ",") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.name SEPARATOR ",") as wpgroupids, GROUP_CONCAT(gr.color ORDER BY gr.name SEPARATOR ",") as wpgroups_colors
                 FROM ' . $this->table_name( 'wp' ) . ' wp
                 LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgr ON wp.id = wpgr.wpid
                 LEFT JOIN ' . $this->table_name( 'group' ) . ' gr ON wpgr.groupid = gr.id
                 JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
                 ' . $view_joins . '
-                WHERE wp.id = ' . $id . $where . '
+                WHERE wp.id = %d' . $where . '
                 GROUP BY wp.id, wp_sync.sync_id';
+
+                return $this->wpdb->prepare( $sql, (int) $id ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- selects and joins come from allowlisted option names.
             }
 
-            return 'SELECT wp.*,wp_sync.*' . $view_selects . '
+            $sql = 'SELECT wp.*,wp_sync.*' . $view_selects . '
                     FROM ' . $this->table_name( 'wp' ) . ' wp
                     JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
                     ' . $view_joins . '
-                    WHERE id = ' . $id . $where;
+                    WHERE id = %d' . $where;
+
+            return $this->wpdb->prepare( $sql, (int) $id ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- selects and joins come from allowlisted option names.
         }
 
         return null;

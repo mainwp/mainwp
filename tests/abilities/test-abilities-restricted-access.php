@@ -276,4 +276,53 @@ class Test_Abilities_Restricted_Access extends MainWP_Abilities_Test_Case {
         $this->assertNotContains( $tag_id, array_column( $scoped['items'], 'id' ) );
     }
 
+    /**
+     * Equal administrator privileges must not grant access to another owner's job.
+     *
+     * @return void
+     */
+    public function test_get_batch_job_status_denies_non_owner() {
+        $this->skip_if_no_abilities_api();
+
+        $owner_id = $this->set_current_user_as_admin();
+        $job_id   = 'sync_gate_owner_' . wp_generate_uuid4();
+        $this->track_sync_job( $job_id );
+
+        set_transient(
+            'mainwp_sync_job_' . $job_id,
+            array(
+                'job_type'  => 'sync',
+                'status'    => 'queued',
+                'progress'  => 0,
+                'processed' => 0,
+                'total'     => 1,
+                'synced'    => array(),
+                'errors'    => array(),
+                'created'   => time(),
+                'started'   => null,
+                'completed' => null,
+                'user_id'   => $owner_id,
+            ),
+            DAY_IN_SECONDS
+        );
+
+        // Switch to a second, equally privileged admin who did not queue the job.
+        $this->set_current_user_as_admin();
+
+        $result = $this->execute_ability( 'mainwp/get-batch-job-status-v1', array( 'job_id' => $job_id ) );
+
+        $this->assertWPError( $result, 'A non-owner admin must be denied another user\'s batch job status.' );
+        $this->assertSame(
+            'mainwp_permission_denied',
+            $result->get_error_code(),
+            'The denial must be an ownership error, not a masquerading not-found error.'
+        );
+
+        // The owner must still be able to read their own job (happy-path control).
+        wp_set_current_user( $owner_id );
+        $owner_result = $this->execute_ability( 'mainwp/get-batch-job-status-v1', array( 'job_id' => $job_id ) );
+
+        $this->assertNotWPError( $owner_result, 'The job owner must still be able to read their own batch job status.' );
+        $this->assertSame( $job_id, $owner_result['job_id'] );
+    }
 }

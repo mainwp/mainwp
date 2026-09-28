@@ -398,7 +398,13 @@ class MainWP_Backup_Mark_Close_Guard_Test extends MainWP_Abilities_Test_Case {
 			$site_id,
 			array(
 				'attempts'    => 5,
-				'fetchResult' => wp_json_encode( array( 'full' => 'backup-file.zip', 'db' => false, 'size' => 4096 ) ),
+				'fetchResult' => wp_json_encode(
+					array(
+						'full' => 'backup-file.zip',
+						'db'   => false,
+						'size' => 4096,
+					)
+				),
 			)
 		);
 		$throw = static function () {

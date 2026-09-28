@@ -345,39 +345,39 @@ class MainWP_Backup_Error_Codes_Test extends \WP_UnitTestCase {
 	 */
 	public function test_sanitize_redacts_backup_dir_hash() {
 		$cases = array(
-			'check_dir message, trailing slash'  => array(
+			'check_dir message, trailing slash' => array(
 				'Unable to create directory wp-content/uploads/mainwp/backup-tnQjEHx99TA2ZYTh/. Is its parent directory writable by the server?',
 				'Unable to create directory wp-content/uploads/mainwp/backup-[redacted]/. Is its parent directory writable by the server?',
 			),
-			'hash at the end of the message'     => array(
+			'hash at the end of the message'    => array(
 				'Missing directory wp-content/uploads/mainwp/backup-AbCdEfGhIjKlMnOp',
 				'Missing directory wp-content/uploads/mainwp/backup-[redacted]',
 			),
-			'absolute path with the hash'        => array(
+			'absolute path with the hash'       => array(
 				'Could not open ' . ABSPATH . 'wp-content/uploads/mainwp/backup-0123456789abcdef/x.zip',
 				'Could not open wp-content/uploads/mainwp/backup-[redacted]/x.zip',
 			),
-			'two hashes'                         => array(
+			'two hashes'                        => array(
 				'backup-tnQjEHx99TA2ZYTh and backup-AbCdEfGhIjKlMnOp',
 				'backup-[redacted] and backup-[redacted]',
 			),
-			'short token stays'                  => array(
+			'short token stays'                 => array(
 				'Unable to create directory wp-content/uploads/mainwp/backup-x/.',
 				'Unable to create directory wp-content/uploads/mainwp/backup-x/.',
 			),
-			'15 characters stays'                => array(
+			'15 characters stays'               => array(
 				'backup-tnQjEHx99TA2ZYT/',
 				'backup-tnQjEHx99TA2ZYT/',
 			),
-			'17 characters stays'                => array(
+			'17 characters stays'               => array(
 				'backup-tnQjEHx99TA2ZYThZ/',
 				'backup-tnQjEHx99TA2ZYThZ/',
 			),
-			'archive name stays'                 => array(
+			'archive name stays'                => array(
 				'Deleted backup-example.com-20260927-1200.tar.gz',
 				'Deleted backup-example.com-20260927-1200.tar.gz',
 			),
-			'word prefix does not count'         => array(
+			'word prefix does not count'        => array(
 				'prebackup-tnQjEHx99TA2ZYTh/',
 				'prebackup-tnQjEHx99TA2ZYTh/',
 			),

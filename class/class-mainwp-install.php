@@ -51,44 +51,6 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     const WP_GROUP_MISSING_PRIMARY_KEY_REPAIR_PENDING = 'mainwp_wp_group_missing_primary_key_repair_pending';
 
     /**
-     * Autoloaded option. "complete" means this install will not scan site notes.
-     *
-     * Stored notes are not rewritten. Nothing in a row proves it was double-escaped.
-     * This is not a database version, so it does not collide with other migrations.
-     */
-    const SITE_NOTE_SLASH_REPAIR_OPTION = 'mainwp_site_note_slash_repair';
-
-    /**
-     * Old resume marker. Cleared when the flag is set. The repair does not write it.
-     */
-    const SITE_NOTE_SLASH_REPAIR_LAST_ID = 'mainwp_site_note_slash_repair_last_id';
-
-    /**
-     * Old scan ceiling. Cleared when the flag is set. The repair does not write it.
-     */
-    const SITE_NOTE_SLASH_REPAIR_MAX_ID = 'mainwp_site_note_slash_repair_max_id';
-
-    /**
-     * Prefix for skip rows an older build of this repair inserted. Cleared with the flag.
-     */
-    const SITE_NOTE_SLASH_REPAIR_SKIP_PREFIX = 'mainwp_site_note_slash_repair_skip_';
-
-    /**
-     * Old in-progress marker. Cleared when the flag is set. The repair does not write it.
-     */
-    const SITE_NOTE_SLASH_REPAIR_INFLIGHT = 'mainwp_site_note_slash_repair_inflight';
-
-    /**
-     * Old hourly retry. Cleared when the flag is set. The repair does not write it.
-     */
-    const SITE_NOTE_SLASH_REPAIR_RETRY = 'mainwp_site_note_slash_repair_retry';
-
-    /**
-     * Old repair lock. The repair does not take it. Cleared so a leftover row is not reused.
-     */
-    const SITE_NOTE_SLASH_REPAIR_LOCK = 'mainwp_site_note_slash_repair_lock';
-
-    /**
      * Private static variable to hold the single instance of the class.
      *
      * @static
@@ -127,8 +89,6 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     public function install() { // phpcs:ignore -- NOSONAR - complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         // get_site_option is multisite aware!
         $currentVersion = get_site_option( $this->option_db_key );
-        // An empty version is the new-install path. Mark the note repair done at the end without scanning.
-        $fresh_install = empty( $currentVersion );
 
         if ( empty( $currentVersion ) ) {
             update_option( 'mainwp_run_quick_setup', 'yes' );
@@ -146,7 +106,6 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         $rslt = static::instance()->query( "SHOW TABLES LIKE '{$wp_table}'" );
         if ( empty( static::num_rows( $rslt ) ) ) {
             $currentVersion = false;
-            $fresh_install  = true;
         }
 
         if ( $currentVersion === $this->mainwp_db_version ) {
@@ -156,6 +115,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             $this->maybe_retry_backup_progress_index_repair();
 
             $this->maybe_retry_repair_wp_group_primary_key();
+            $this->maybe_delete_legacy_site_note_repair_options();
             return;
         }
 
@@ -510,10 +470,8 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             update_site_option( $this->option_db_key, $this->mainwp_db_version );
         }
 
-        // A new install has no notes to leave alone. Record that the scan will not run.
-        if ( $fresh_install ) {
-            $this->mark_site_note_slash_repair_complete();
-        }
+        // Fresh installs and upgrades both drop options left by the removed note rewrite.
+        $this->delete_legacy_site_note_repair_options();
     }
 
     /**
@@ -756,117 +714,55 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     }
 
     /**
-     * Mark the site-note repair complete on a normal admin page load.
+     * Drop note-repair options when an earlier build of this install left any behind.
      *
-     * The option is autoloaded, so the usual admin request only reads memory and returns.
-     * The repair does not read or write note rows.
-     *
-     * @return void
-     */
-    public function maybe_repair_site_note_slashes() {
-        if ( 'complete' === get_option( self::SITE_NOTE_SLASH_REPAIR_OPTION ) ) {
-            return;
-        }
-
-        // Heartbeat is an admin-ajax request. Only a normal admin page load should repair.
-        if ( $this->site_note_slash_repair_request_is_background() ) {
-            return;
-        }
-
-        // admin-ajax.php fires admin_init for logged-out callers. Do not repair for them.
-        if ( ! current_user_can( 'manage_options' ) ) {
-            return;
-        }
-
-        if ( false !== get_transient( self::SITE_NOTE_SLASH_REPAIR_RETRY ) ) {
-            return;
-        }
-
-        $this->repair_site_note_slashes();
-    }
-
-    /**
-     * Record that stored site notes are left as they are.
-     *
-     * Before March 2020 a note was saved with one escaping pass, so the column
-     * holds what was typed. A later writer stored an extra escape layer. Nothing
-     * in the row says which writer stored it. A backslash before a quote is not
-     * proof either, because the user may have typed that pair. Leaving an old
-     * note a little off on screen is acceptable. Changing the stored text is not.
+     * A current database version does not run the migration body, so this check is what
+     * clears those rows on the next load. It does not read or write site notes.
      *
      * @return void
      */
-    public function repair_site_note_slashes() {
-        $this->mark_site_note_slash_repair_complete();
+    private function maybe_delete_legacy_site_note_repair_options() {
+        if ( false === get_option( 'mainwp_site_note_slash_repair', false )
+            && false === get_option( 'mainwp_site_note_slash_repair_skip', false )
+            && false === get_option( 'mainwp_site_note_slash_repair_last_id', false )
+            && false === get_transient( 'mainwp_site_note_slash_repair_retry' ) ) {
+            return;
+        }
+
+        $this->delete_legacy_site_note_repair_options();
     }
 
     /**
-     * Whether this admin_init belongs to ajax, heartbeat, cron, or REST.
+     * Delete options written by the removed site-note slash rewrite.
      *
-     * Those requests wait. A normal admin page load records that notes are not scanned.
+     * The single skip option has no site id. A LIKE pattern that requires a trailing
+     * underscore does not match that name, so it is deleted on its own.
      *
-     * @return bool True when the flag should wait for a normal admin page load.
+     * @return void
      */
-    private function site_note_slash_repair_request_is_background() {
-        if ( function_exists( 'wp_doing_ajax' ) && wp_doing_ajax() ) {
-            return true;
-        }
-        if ( function_exists( 'wp_doing_cron' ) && wp_doing_cron() ) {
-            return true;
-        }
+    private function delete_legacy_site_note_repair_options() {
+        delete_option( 'mainwp_site_note_slash_repair' );
+        delete_option( 'mainwp_site_note_slash_repair_last_id' );
+        delete_option( 'mainwp_site_note_slash_repair_max_id' );
+        delete_option( 'mainwp_site_note_slash_repair_inflight' );
+        delete_option( 'mainwp_site_note_slash_repair_lock' );
+        delete_option( 'mainwp_site_note_slash_repair_skip' );
+        delete_transient( 'mainwp_site_note_slash_repair_retry' );
 
-        return defined( 'REST_REQUEST' ) && REST_REQUEST;
-    }
-
-    /**
-     * Mark the repair complete and drop leftover markers.
-     *
-     * The update_option() function returns false when the value is already complete, so the
-     * stored value is what decides success. The option is autoloaded.
-     *
-     * @return bool True when the flag reads back as complete.
-     */
-    private function mark_site_note_slash_repair_complete() {
-        $option = self::SITE_NOTE_SLASH_REPAIR_OPTION;
-
-        if ( false === get_option( $option, false ) ) {
-            add_option( $option, 'complete', '', 'yes' );
-        } else {
-            update_option( $option, 'complete' );
-        }
-
-        if ( 'complete' !== get_option( $option ) ) {
-            return false;
-        }
-
-        // Leftover markers from an earlier build are removed only after the flag is stored.
-        delete_option( self::SITE_NOTE_SLASH_REPAIR_LAST_ID );
-        delete_option( self::SITE_NOTE_SLASH_REPAIR_MAX_ID );
-        delete_option( self::SITE_NOTE_SLASH_REPAIR_INFLIGHT );
-        delete_option( self::SITE_NOTE_SLASH_REPAIR_LOCK );
-        if ( ! $this->delete_site_note_slash_repair_skip_rows() ) {
-            return false;
-        }
-        delete_transient( self::SITE_NOTE_SLASH_REPAIR_RETRY );
-        return true;
-    }
-
-    /**
-     * Delete every per-site skip row.
-     *
-     * @return bool False when the delete query failed.
-     */
-    private function delete_site_note_slash_repair_skip_rows() {
-        $like    = $this->wpdb->esc_like( self::SITE_NOTE_SLASH_REPAIR_SKIP_PREFIX ) . '%';
-        $deleted = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- One delete for every per-site skip row.
+        $like  = $this->wpdb->esc_like( 'mainwp_site_note_slash_repair_skip_' ) . '%';
+        $names = $this->wpdb->get_col( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Find per-site skip rows so delete_option() can drop their cache.
             $this->wpdb->prepare(
-                'DELETE FROM %i WHERE option_name LIKE %s',
+                'SELECT option_name FROM %i WHERE option_name LIKE %s',
                 $this->wpdb->options,
                 $like
             )
         );
-
-        return false !== $deleted && '' === (string) $this->wpdb->last_error;
+        if ( ! is_array( $names ) ) {
+            return;
+        }
+        foreach ( $names as $name ) {
+            delete_option( $name );
+        }
     }
 
     /**

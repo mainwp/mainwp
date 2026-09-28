@@ -409,7 +409,7 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
                 'input_schema'        => self::get_add_client_input_schema(),
                 'output_schema'       => self::get_client_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_add_client' ),
-                'permission_callback' => array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ),
+                'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/add-client-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
@@ -566,7 +566,7 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
                 'input_schema'        => self::get_update_client_input_schema(),
                 'output_schema'       => self::get_client_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_update_client' ),
-                'permission_callback' => array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ),
+                'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/update-client-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
@@ -714,7 +714,7 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
                 'input_schema'        => self::get_delete_client_input_schema(),
                 'output_schema'       => self::get_delete_client_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_delete_client' ),
-                'permission_callback' => array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ),
+                'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/delete-client-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
@@ -1246,7 +1246,7 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
                 'input_schema'        => self::get_suspend_client_input_schema(),
                 'output_schema'       => self::get_client_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_suspend_client' ),
-                'permission_callback' => array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ),
+                'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/suspend-client-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
@@ -1338,7 +1338,7 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
                 'input_schema'        => self::get_unsuspend_client_input_schema(),
                 'output_schema'       => self::get_client_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_unsuspend_client' ),
-                'permission_callback' => array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ),
+                'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/unsuspend-client-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(

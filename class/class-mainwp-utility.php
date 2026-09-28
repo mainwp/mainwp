@@ -1025,9 +1025,10 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     /**
      * Note text shown in the editor.
      *
-     * Inverts only the entities this sanitizer writes (&amp; &lt; &gt;
-     * &quot; &#039;), once, and does not rescan. "&amp;lt;" becomes "&lt;",
-     * "&amp;quot;" stays "&quot;", and "&copy;" is left as typed.
+     * Inverts only &amp; &lt; &gt;, once, and does not rescan. "&amp;lt;"
+     * becomes "&lt;". "&quot;" and "&#039;" stay typed, so a stored
+     * code sample is not rewritten into a quote character. "&copy;" is
+     * left as typed.
      *
      * @param mixed $note Stored note.
      * @return string
@@ -1480,14 +1481,18 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      *
      * &, <, and > are encoded. Quotes are left as typed unless the value
      * contains the wrapper quote, in which case only that quote is encoded.
-     * An unquoted value is returned without added quotes.
+     * An existing &quot; or &#039; is kept, so a re-save does not turn it
+     * into &amp;quot; or a raw quote. An unquoted value is returned without
+     * added quotes.
      *
      * @param string $value Attribute value.
      * @param string $quote Double quote, single quote, or empty when unquoted.
      * @return string
      */
     private static function client_note_format_attribute_value( $value, $quote ) {
-        $encoded = self::client_note_encode_text( $value );
+        $encoded = self::client_note_restore_quote_entities(
+            self::client_note_encode_text( self::client_note_shield_quote_entities( $value ) )
+        );
         if ( '' === $quote ) {
             return $encoded;
         }
@@ -1527,6 +1532,42 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     }
 
     /**
+     * Hide &quot; and &#039; so a later &amp; encode does not double them.
+     *
+     * The editor does not turn these entities into quote characters. Keeping
+     * them intact makes a re-save of that attribute byte-stable.
+     *
+     * @param string $value Attribute value.
+     * @return string
+     */
+    private static function client_note_shield_quote_entities( $value ) {
+        $marker = "\x1B";
+        if ( false !== strpos( $value, $marker ) ) {
+            return $value;
+        }
+        return str_replace(
+            array( '&quot;', '&#039;' ),
+            array( $marker . 'q;', $marker . 'a;' ),
+            $value
+        );
+    }
+
+    /**
+     * Restore quote entities hidden before encoding.
+     *
+     * @param string $value Attribute value.
+     * @return string
+     */
+    private static function client_note_restore_quote_entities( $value ) {
+        $marker = "\x1B";
+        return str_replace(
+            array( $marker . 'q;', $marker . 'a;' ),
+            array( '&quot;', '&#039;' ),
+            $value
+        );
+    }
+
+    /**
      * Escape an attribute value without decoding entities the user typed.
      *
      * Attribute escaping decodes &amp; and &lt; before it encodes. A marker
@@ -1546,17 +1587,18 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     }
 
     /**
-     * Invert one level of &amp; &lt; &gt; &quot; &#039; and nothing else.
+     * Invert one level of &amp; &lt; &gt; and nothing else.
      *
-     * "&amp;lt;" becomes "&lt;", not "<". "&amp;quot;" stays "&quot;".
-     * "&copy;" is not a storage entity. The search does not rescan.
+     * "&amp;lt;" becomes "&lt;", not "<". "&quot;" and "&#039;" are not
+     * storage entities: a note that already contains those spellings keeps
+     * them. "&copy;" is left as typed. The search does not rescan.
      *
      * @param string $note Stored note.
      * @return string
      */
     private static function client_note_decode_storage_entities( $note ) {
         $decoded = preg_replace_callback(
-            '/&(?:amp|lt|gt|quot|#039);/',
+            '/&(?:amp|lt|gt);/',
             array( self::class, 'client_note_replace_storage_entity' ),
             $note
         );
@@ -1576,13 +1618,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         if ( '&lt;' === $entity[0] ) {
             return '<';
         }
-        if ( '&gt;' === $entity[0] ) {
-            return '>';
-        }
-        if ( '&quot;' === $entity[0] ) {
-            return '"';
-        }
-        return "'";
+        return '>';
     }
 
     /**

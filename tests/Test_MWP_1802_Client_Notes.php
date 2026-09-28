@@ -968,15 +968,20 @@ class Test_MWP_1802_Client_Notes extends \WP_UnitTestCase {
 		$this->assertSame( 'Bob\'s note', $link->getAttribute( 'title' ) );
 		$this->assertSame( 'https://example.com/?q="hi"', $link->getAttribute( 'href' ) );
 
-		$legacy = '<a title="Bob&#039;s note" href="https://example.com">x</a>';
-		$editor = MainWP_Utility::client_note_for_editor( $legacy );
-		$this->assertSame( '<a title="Bob\'s note" href="https://example.com">x</a>', $editor );
-		$resaved = MainWP_Utility::sanitize_client_note( $editor );
-		$this->assertSame( $editor, $resaved );
-		$this->assertStringNotContainsString( '&#039;', $resaved );
-		$this->assertStringNotContainsString( '&amp;#039;', $resaved );
+		$literal = 'Use &quot;quotes&quot; and &#039;ok&#039;';
+		$this->assertSame( $literal, MainWP_Utility::client_note_for_editor( $literal ) );
+		$this->assertSame( $literal, MainWP_Utility::client_note_plain_text( $literal ) );
+		$stored_literal = MainWP_Utility::sanitize_client_note( $literal );
+		$this->assertStringContainsString( '&amp;quot;', $stored_literal );
+		$this->assertStringContainsString( '&amp;#039;', $stored_literal );
+		$this->assertSame( $literal, MainWP_Utility::client_note_for_editor( $stored_literal ) );
+		$this->assertStringNotContainsString( '"quotes"', MainWP_Utility::client_note_for_editor( $stored_literal ) );
 
-		$this->assertSame( 'say "it\'s"', MainWP_Utility::client_note_plain_text( 'say &quot;it&#039;s&quot;' ) );
+		$legacy = '<a title="Bob&#039;s note" href="https://example.com">x</a>';
+		$this->assertSame( $legacy, MainWP_Utility::client_note_for_editor( $legacy ) );
+		$this->assertSame( $legacy, MainWP_Utility::sanitize_client_note( $legacy ) );
+
+		$this->assertSame( 'say &quot;it&#039;s&quot;', MainWP_Utility::client_note_plain_text( 'say &quot;it&#039;s&quot;' ) );
 		$this->assertSame( '&quot;', MainWP_Utility::client_note_plain_text( '&amp;quot;' ) );
 		$this->assertSame( '&#039;', MainWP_Utility::client_note_plain_text( '&amp;#039;' ) );
 
@@ -985,13 +990,14 @@ class Test_MWP_1802_Client_Notes extends \WP_UnitTestCase {
 		$both_quotes = 'Bob\'s "hi"';
 		$formatted   = $method->invoke( null, $both_quotes, '"' );
 		$this->assertSame( '"Bob\'s &quot;hi&quot;"', $formatted );
-		$this->assertSame( $both_quotes, MainWP_Utility::client_note_plain_text( substr( $formatted, 1, -1 ) ) );
+		$this->assertSame( 'Bob\'s &quot;hi&quot;', MainWP_Utility::client_note_plain_text( substr( $formatted, 1, -1 ) ) );
 		$this->assertSame( $formatted, $method->invoke( null, $both_quotes, '"' ) );
+		$this->assertSame( $formatted, $method->invoke( null, 'Bob\'s &quot;hi&quot;', '"' ) );
 
 		$formatted = $method->invoke( null, $both_quotes, "'" );
 		$this->assertSame( '\'Bob&#039;s "hi"\'', $formatted );
-		$this->assertSame( $both_quotes, MainWP_Utility::client_note_plain_text( substr( $formatted, 1, -1 ) ) );
-		$this->assertSame( $formatted, $method->invoke( null, MainWP_Utility::client_note_plain_text( substr( $formatted, 1, -1 ) ), "'" ) );
+		$this->assertSame( 'Bob&#039;s "hi"', MainWP_Utility::client_note_plain_text( substr( $formatted, 1, -1 ) ) );
+		$this->assertSame( $formatted, $method->invoke( null, 'Bob&#039;s "hi"', "'" ) );
 	}
 
 	/**

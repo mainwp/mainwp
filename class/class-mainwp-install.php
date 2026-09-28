@@ -115,7 +115,6 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             $this->maybe_retry_backup_progress_index_repair();
 
             $this->maybe_retry_repair_wp_group_primary_key();
-            $this->maybe_delete_legacy_site_note_repair_options();
             return;
         }
 
@@ -469,9 +468,6 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         } else {
             update_site_option( $this->option_db_key, $this->mainwp_db_version );
         }
-
-        // Fresh installs and upgrades both drop options left by the removed note rewrite.
-        $this->delete_legacy_site_note_repair_options();
     }
 
     /**
@@ -710,58 +706,6 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         } else {
             // A timestamp, not a formatted date: the retry throttle compares it against time().
             update_site_option( self::WP_GROUP_MISSING_PRIMARY_KEY_REPAIR_PENDING, time() );
-        }
-    }
-
-    /**
-     * Drop note-repair options when an earlier build of this install left any behind.
-     *
-     * A current database version does not run the migration body, so this check is what
-     * clears those rows on the next load. It does not read or write site notes.
-     *
-     * @return void
-     */
-    private function maybe_delete_legacy_site_note_repair_options() {
-        if ( false === get_option( 'mainwp_site_note_slash_repair', false )
-            && false === get_option( 'mainwp_site_note_slash_repair_skip', false )
-            && false === get_option( 'mainwp_site_note_slash_repair_last_id', false )
-            && false === get_transient( 'mainwp_site_note_slash_repair_retry' ) ) {
-            return;
-        }
-
-        $this->delete_legacy_site_note_repair_options();
-    }
-
-    /**
-     * Delete options written by the removed site-note slash rewrite.
-     *
-     * The single skip option has no site id. A LIKE pattern that requires a trailing
-     * underscore does not match that name, so it is deleted on its own.
-     *
-     * @return void
-     */
-    private function delete_legacy_site_note_repair_options() {
-        delete_option( 'mainwp_site_note_slash_repair' );
-        delete_option( 'mainwp_site_note_slash_repair_last_id' );
-        delete_option( 'mainwp_site_note_slash_repair_max_id' );
-        delete_option( 'mainwp_site_note_slash_repair_inflight' );
-        delete_option( 'mainwp_site_note_slash_repair_lock' );
-        delete_option( 'mainwp_site_note_slash_repair_skip' );
-        delete_transient( 'mainwp_site_note_slash_repair_retry' );
-
-        $like  = $this->wpdb->esc_like( 'mainwp_site_note_slash_repair_skip_' ) . '%';
-        $names = $this->wpdb->get_col( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Find per-site skip rows so delete_option() can drop their cache.
-            $this->wpdb->prepare(
-                'SELECT option_name FROM %i WHERE option_name LIKE %s',
-                $this->wpdb->options,
-                $like
-            )
-        );
-        if ( ! is_array( $names ) ) {
-            return;
-        }
-        foreach ( $names as $name ) {
-            delete_option( $name );
         }
     }
 

@@ -337,7 +337,7 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
                     );
                 }
 
-                die(
+                wp_die(
                     wp_json_encode(
                         array(
                             'result'           => 'SUCCESS',

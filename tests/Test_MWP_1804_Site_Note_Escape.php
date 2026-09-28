@@ -8,7 +8,6 @@
 namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_DB_Common;
-use MainWP\Dashboard\MainWP_Install;
 use MainWP\Dashboard\MainWP_Manage_Groups;
 use MainWP\Dashboard\MainWP_Manage_Sites_Handler;
 use MainWP\Dashboard\MainWP_Manage_Sites_List_Table;
@@ -33,17 +32,7 @@ class Test_MWP_1804_Site_Note_Escape extends \WP_UnitTestCase {
     private $site_ids = array();
 
     /**
-     * Reset leftover repair options before each case.
-     *
-     * @return void
-     */
-    public function setUp(): void {
-        parent::setUp();
-        $this->delete_legacy_repair_options( 0 );
-    }
-
-    /**
-     * Remove the site rows and repair options this case inserted.
+     * Remove the site rows this case inserted.
      *
      * @return void
      */
@@ -51,16 +40,15 @@ class Test_MWP_1804_Site_Note_Escape extends \WP_UnitTestCase {
         global $wpdb;
 
         remove_filter( 'query', array( $this, 'fail_note_writes' ) );
+        remove_filter( 'query', array( $this, 'fail_note_existence_select' ) );
         unset( $_POST['websiteid'], $_POST['note'] );
 
         foreach ( $this->site_ids as $site_id ) {
             $wpdb->delete( $wpdb->prefix . 'mainwp_wp', array( 'id' => $site_id ), array( '%d' ) );
             $wpdb->delete( $wpdb->prefix . 'mainwp_wp_options', array( 'wpid' => $site_id ), array( '%d' ) );
             $wpdb->delete( $wpdb->prefix . 'mainwp_wp_sync', array( 'wpid' => $site_id ), array( '%d' ) );
-            $this->delete_legacy_repair_options( $site_id );
         }
 
-        $this->delete_legacy_repair_options( 0 );
         MainWP_System_Utility::set_current_wpid( 0 );
         wp_set_current_user( 0 );
         parent::tearDown();
@@ -166,8 +154,6 @@ class Test_MWP_1804_Site_Note_Escape extends \WP_UnitTestCase {
         $site_id = $this->create_note_site();
         $this->store_raw_note( $site_id, $legacy );
 
-        $this->assertFalse( has_action( 'admin_init', array( MainWP_Install::instance(), 'maybe_repair_site_note_slashes' ) ) );
-
         $shown = MainWP_Utility::esc_content( html_entity_decode( $legacy ) );
         $html  = $this->render_notes_widget( $site_id );
 
@@ -178,73 +164,113 @@ class Test_MWP_1804_Site_Note_Escape extends \WP_UnitTestCase {
     }
 
     /**
-     * A new install does not rewrite notes and does not leave repair options behind.
+     * Paths, a literal backslash-n, and quotes stay typed text on every note surface.
+     *
+     * Each value is saved, shown, and saved again. The second save is the same text.
+     *
+     * @param string $note Note as the user typed it.
      *
      * @return void
+     *
+     * @dataProvider typed_note_provider
      */
-    public function test_fresh_install_leaves_notes_and_clears_repair_options(): void {
-        $reports = 'D:\\reports';
+    public function test_typed_note_round_trips_through_save_and_display( $note ): void {
         $site_id = $this->create_note_site();
-        $this->store_raw_note( $site_id, $reports );
-        $this->plant_legacy_repair_options( $site_id );
 
-        delete_site_option( 'mainwp_db_version' );
-        MainWP_Install::instance()->install();
+        $this->assert_update_note_result( $site_id, $note, true );
+        $this->assertSame( $note, $this->stored_note( $site_id ) );
 
-        $this->assertSame( $reports, $this->stored_note( $site_id ) );
-        $this->assertSame( '9.0.2.5', get_site_option( 'mainwp_db_version' ) );
-        $this->assert_no_legacy_repair_options( $site_id );
+        $widget = $this->render_notes_widget( $site_id );
+        $this->assertSame( $note, $this->visible_note( $widget ) );
+        $this->assertSame( $note, $this->editor_note( $widget, $site_id ) );
+
+        foreach ( $this->list_and_groups_note_html( $site_id ) as $html ) {
+            $this->assertSame( $note, $this->editor_note( $html, $site_id ) );
+            $this->assertSame( $note, $this->tooltip_note( $html, $site_id ) );
+        }
+
+        $this->assert_update_note_result( $site_id, $note, true );
+        $this->assertSame( $note, $this->stored_note( $site_id ) );
     }
 
     /**
-     * An upgrade deletes the old repair options, including the single skip row, and leaves notes alone.
+     * Notes whose backslashes must survive a save and every display path.
      *
-     * @return void
+     * @return array
      */
-    public function test_upgrade_clears_repair_options_without_changing_notes(): void {
-        $reports = 'D:\\reports';
-        $share   = '\\\\server\\share';
-        $literal = 'See \\n in the note';
-        $windows = 'C:\\new';
-
-        $reports_id = $this->create_note_site( 'MWP-1804 Reports' );
-        $share_id   = $this->create_note_site( 'MWP-1804 Share' );
-        $literal_id = $this->create_note_site( 'MWP-1804 Literal' );
-        $windows_id = $this->create_note_site( 'MWP-1804 Windows' );
-        $this->store_raw_note( $reports_id, $reports );
-        $this->store_raw_note( $share_id, $share );
-        $this->store_raw_note( $literal_id, $literal );
-        $this->store_raw_note( $windows_id, $windows );
-        $this->plant_legacy_repair_options( $reports_id );
-
-        update_site_option( 'mainwp_db_version', '9.0.2.4' );
-        MainWP_Install::instance()->install();
-
-        $this->assertSame( $reports, $this->stored_note( $reports_id ) );
-        $this->assertSame( $share, $this->stored_note( $share_id ) );
-        $this->assertSame( $literal, $this->stored_note( $literal_id ) );
-        $this->assertSame( $windows, $this->stored_note( $windows_id ) );
-        $this->assertSame( '9.0.2.5', get_site_option( 'mainwp_db_version' ) );
-        $this->assert_no_legacy_repair_options( $reports_id );
+    public function typed_note_provider() {
+        return array(
+            'reports'                => array( 'D:\\reports' ),
+            'share'                  => array( '\\\\server\\share' ),
+            'literal n'              => array( 'See \\n in the note' ),
+            'windows'                => array( 'C:\\new' ),
+            'nas'                    => array( '\\\\nas' ),
+            'quotes and backslashes' => array( 'Client said "don\'t" store this at C:\\backup\\site' ),
+        );
     }
 
     /**
-     * A database that is already current still drops repair options left by an earlier build.
+     * Saving the note that is already stored returns SUCCESS from the handler.
      *
      * @return void
      */
-    public function test_current_install_clears_leftover_repair_options(): void {
-        $note    = '\\\\server\\share';
+    public function test_identical_resave_returns_success(): void {
+        $note    = 'C:\\new';
         $site_id = $this->create_note_site();
         $this->store_raw_note( $site_id, $note );
-        update_site_option( 'mainwp_db_version', '9.0.2.5' );
-        $this->plant_legacy_repair_options( $site_id );
 
-        MainWP_Install::instance()->install();
+        $_POST['websiteid'] = $site_id;
+        $_POST['note']      = wp_slash( $note );
 
+        $message = '';
+        try {
+            MainWP_Manage_Sites_Handler::save_note();
+            $this->fail( 'An identical note save must return SUCCESS.' );
+        } catch ( \WPDieException $exception ) {
+            $message = $exception->getMessage();
+        } finally {
+            unset( $_POST['websiteid'], $_POST['note'] );
+        }
+
+        $payload = json_decode( $message, true );
+        $this->assertIsArray( $payload );
+        $this->assertSame( 'SUCCESS', isset( $payload['result'] ) ? $payload['result'] : null );
+        $this->assertArrayNotHasKey( 'error', $payload );
         $this->assertSame( $note, $this->stored_note( $site_id ) );
-        $this->assertSame( '9.0.2.5', get_site_option( 'mainwp_db_version' ) );
-        $this->assert_no_legacy_repair_options( $site_id );
+    }
+
+    /**
+     * A failed existence check is an AJAX error and leaves the stored note alone.
+     *
+     * The note is already stored, so the UPDATE changes no rows and the SELECT runs.
+     *
+     * @return void
+     */
+    public function test_failed_existence_select_returns_an_error_and_leaves_the_note(): void {
+        $note    = 'C:\\new';
+        $site_id = $this->create_note_site( 'MWP-1804 Select Fail' );
+        $this->store_raw_note( $site_id, $note );
+
+        $_POST['websiteid'] = $site_id;
+        $_POST['note']      = wp_slash( $note );
+
+        add_filter( 'query', array( $this, 'fail_note_existence_select' ) );
+        $message = '';
+        try {
+            MainWP_Manage_Sites_Handler::save_note();
+            $this->fail( 'A failed existence check must not report success.' );
+        } catch ( \WPDieException $exception ) {
+            $message = $exception->getMessage();
+        } finally {
+            unset( $_POST['websiteid'], $_POST['note'] );
+            remove_filter( 'query', array( $this, 'fail_note_existence_select' ) );
+        }
+
+        $payload = json_decode( $message, true );
+        $this->assertIsArray( $payload );
+        $this->assertArrayHasKey( 'error', $payload );
+        $this->assertNotSame( 'SUCCESS', isset( $payload['result'] ) ? $payload['result'] : null );
+        $this->assertSame( $note, $this->stored_note( $site_id ) );
     }
 
     /**
@@ -343,6 +369,20 @@ class Test_MWP_1804_Site_Note_Escape extends \WP_UnitTestCase {
      */
     public function fail_note_writes( $query ) {
         if ( is_string( $query ) && false !== stripos( $query, 'UPDATE' ) && false !== stripos( $query, 'SET note=' ) ) {
+            return '';
+        }
+        return $query;
+    }
+
+    /**
+     * Blank only the existence SELECT that follows an unchanged note UPDATE.
+     *
+     * @param string $query SQL.
+     *
+     * @return string
+     */
+    public function fail_note_existence_select( $query ) {
+        if ( is_string( $query ) && false !== stripos( $query, 'SELECT id FROM' ) && false !== stripos( $query, 'WHERE id' ) ) {
             return '';
         }
         return $query;
@@ -466,77 +506,60 @@ class Test_MWP_1804_Site_Note_Escape extends \WP_UnitTestCase {
     }
 
     /**
-     * Option names left by the removed note rewrite.
+     * Notes HTML from the ajax table, the grid row, and the groups page.
      *
-     * @param int $site_id Site id used in the per-site skip row.
+     * @param int $site_id Site ID.
      *
      * @return string[]
      */
-    private function legacy_repair_option_names( $site_id ) {
-        return array(
-            'mainwp_site_note_slash_repair',
-            'mainwp_site_note_slash_repair_last_id',
-            'mainwp_site_note_slash_repair_max_id',
-            'mainwp_site_note_slash_repair_inflight',
-            'mainwp_site_note_slash_repair_lock',
-            'mainwp_site_note_slash_repair_skip',
-            'mainwp_site_note_slash_repair_skip_' . (int) $site_id,
-        );
+    private function list_and_groups_note_html( $site_id ) {
+        update_option( 'mainwp_use_favicon', 0 );
+        $row = $this->website_row( $site_id );
+
+        add_filter( 'mainwp_sitestable_getcolumns', array( $this, 'notes_column_only' ) );
+        add_filter( 'mainwp_sitestable_display_row_columns', array( $this, 'skip_site_actions' ), 10, 2 );
+        $ajax        = new MainWP_Manage_Sites_List_Table();
+        $ajax->items = array( $row );
+        $ajax_rows   = $ajax->ajax_get_datatable_rows();
+        $ajax_notes  = $ajax_rows['data'][0]['notes'];
+        remove_filter( 'mainwp_sitestable_getcolumns', array( $this, 'notes_column_only' ) );
+        remove_filter( 'mainwp_sitestable_display_row_columns', array( $this, 'skip_site_actions' ) );
+
+        $grid = new class() extends MainWP_Manage_Sites_List_Table {
+
+            /**
+             * Render the notes column and nothing else.
+             *
+             * @return void
+             */
+            public function use_notes_column_only() {
+                $this->column_headers = array( array( 'notes' => 'Notes' ) );
+            }
+        };
+        $grid->use_notes_column_only();
+        ob_start();
+        $grid->single_row( $row );
+        $grid_html = ob_get_clean();
+
+        ob_start();
+        MainWP_Manage_Groups::get_website_list_content();
+        $groups_html = ob_get_clean();
+
+        return array( $ajax_notes, $grid_html, $groups_html );
     }
 
     /**
-     * Insert the old repair options, including the single skip row the trailing-underscore LIKE misses.
+     * Visible tooltip text on a manage-sites or groups note control.
      *
-     * @param int $site_id Site id.
+     * @param string $html    Row markup.
+     * @param int    $site_id Site ID.
      *
-     * @return void
+     * @return string
      */
-    private function plant_legacy_repair_options( $site_id ) {
-        foreach ( $this->legacy_repair_option_names( $site_id ) as $name ) {
-            delete_option( $name );
-            add_option( $name, '1', '', 'no' );
-        }
-        set_transient( 'mainwp_site_note_slash_repair_retry', '1', HOUR_IN_SECONDS );
-    }
-
-    /**
-     * Assert none of the old repair options remain.
-     *
-     * @param int $site_id Site id.
-     *
-     * @return void
-     */
-    private function assert_no_legacy_repair_options( $site_id ) {
-        global $wpdb;
-
-        foreach ( $this->legacy_repair_option_names( $site_id ) as $name ) {
-            $this->assertFalse( get_option( $name, false ), $name );
-        }
-        $this->assertFalse( get_transient( 'mainwp_site_note_slash_repair_retry' ) );
-
-        $like  = $wpdb->esc_like( 'mainwp_site_note_slash_repair_skip_' ) . '%';
-        $count = $wpdb->get_var(
-            $wpdb->prepare(
-                "SELECT COUNT(*) FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name = %s",
-                $like,
-                'mainwp_site_note_slash_repair_skip'
-            )
-        );
-        $this->assertSame( 0, (int) $count );
-    }
-
-    /**
-     * Delete repair options so one case cannot leak into the next.
-     *
-     * @param int $site_id Site id.
-     *
-     * @return void
-     */
-    private function delete_legacy_repair_options( $site_id ) {
-        foreach ( $this->legacy_repair_option_names( $site_id ) as $name ) {
-            delete_option( $name );
-        }
-        delete_transient( 'mainwp_site_note_slash_repair_retry' );
+    private function tooltip_note( $html, $site_id ) {
+        $id = 'mainwp-notes-' . (int) $site_id;
+        $this->assertSame( 1, preg_match( '/id="' . preg_quote( $id, '/' ) . '"[^>]*data-tooltip="([^"]*)"/', $html, $matches ) );
+        return html_entity_decode( $matches[1], ENT_QUOTES, 'UTF-8' );
     }
 
     /**

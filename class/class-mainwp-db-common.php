@@ -833,7 +833,8 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         // Pass $note unescaped. prepare() already escapes %s, and escaping first stores quotes as \'.
         $updated = $this->wpdb->query( $this->wpdb->prepare( "UPDATE `{$table_wp}` SET note= %s WHERE id=%d", $note, $websiteid ) );
 
-        if ( false === $updated || '' !== (string) $this->wpdb->last_error ) {
+        // query() is false when the UPDATE fails. A failed existence read returns null, same as a missing site.
+        if ( false === $updated ) {
             return false;
         }
 
@@ -849,10 +850,6 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
                 $websiteid
             )
         );
-
-        if ( '' !== (string) $this->wpdb->last_error ) {
-            return false;
-        }
 
         return null !== $exists;
     }

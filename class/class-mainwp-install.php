@@ -99,9 +99,9 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     const SITE_NOTE_SLASH_REPAIR_BATCH = 100;
 
     /**
-     * Seconds a repair may run before it stops and lets the next request resume.
+     * Seconds an admin page load may spend in the repair before the next request resumes.
      */
-    const SITE_NOTE_SLASH_REPAIR_TIME_BUDGET = 20;
+    const SITE_NOTE_SLASH_REPAIR_TIME_BUDGET = 3;
 
     /**
      * Characters mysqli_real_escape_string may place after a backslash.
@@ -801,6 +801,11 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             return;
         }
 
+        // Heartbeat is an admin-ajax request. Only a normal admin page load should repair.
+        if ( $this->site_note_slash_repair_request_is_background() ) {
+            return;
+        }
+
         // admin-ajax.php fires admin_init for logged-out callers. Do not repair for them.
         if ( ! current_user_can( 'manage_options' ) ) {
             return;
@@ -1013,6 +1018,11 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
                 }
                 $last_id = (int) $row->id;
             }
+
+            // Unchanged rows share one checkpoint at the end of the batch.
+            if ( ! $this->save_site_note_slash_repair_last_id( $last_id ) ) {
+                return false;
+            }
         }
     }
 
@@ -1029,9 +1039,10 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      * @return bool False when the update or the checkpoint failed.
      */
     private function repair_one_site_note_row( $table, $row, $token ) {
-        $id    = (int) $row->id;
-        $note  = (string) $row->note;
-        $armed = false;
+        $id      = (int) $row->id;
+        $note    = (string) $row->note;
+        $armed   = false;
+        $changed = false;
 
         if ( $this->site_note_is_legacy_escaped( $note ) ) {
             $skipped = $this->site_note_slash_repair_skips_id( $id );
@@ -1062,15 +1073,17 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
                     if ( ! $this->update_legacy_site_note( $table, $id, $note, $fixed ) ) {
                         return false;
                     }
+                    $changed = true;
                 }
             }
         }
 
-        if ( ! $this->save_site_note_slash_repair_last_id( $id ) ) {
+        // A row that did not change waits for the batch checkpoint.
+        if ( $changed && ! $this->save_site_note_slash_repair_last_id( $id ) ) {
             return false;
         }
 
-        if ( $armed && ! $this->clear_site_note_slash_repair_inflight() ) {
+        if ( $armed && ! $this->clear_site_note_slash_repair_inflight( $id, $note ) ) {
             return false;
         }
 
@@ -1139,7 +1152,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             return false;
         }
 
-        return $this->clear_site_note_slash_repair_inflight();
+        return $this->clear_site_note_slash_repair_inflight( $id, $note );
     }
 
     /**
@@ -1426,7 +1439,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      * Whether this request has used its repair time.
      *
      * A budget of zero stops before the first row. The cap also stays inside max_execution_time
-     * when PHP has set one, so a large install resumes on the next eligible request.
+     * when PHP has set one, so a large install resumes on the next admin page load.
      *
      * @return bool True when the repair should stop without treating the stop as a failure.
      */
@@ -1450,26 +1463,141 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     }
 
     /**
-     * Remember the last site id that was fully handled.
+     * Move the checkpoint forward, or insert it when the row is missing.
      *
-     * Called after each successful row, before the next row is read.
+     * A stalled request must not write an older id over the request that took over.
      *
      * @param int $last_id Site id.
      *
-     * @return bool True when the stored id matches.
+     * @return bool True when the stored id is this id or a later one.
      */
     private function save_site_note_slash_repair_last_id( $last_id ) {
         $option  = self::SITE_NOTE_SLASH_REPAIR_LAST_ID;
         $last_id = (int) $last_id;
-        $current = get_option( $option, false );
-
-        if ( false === $current ) {
-            add_option( $option, (string) $last_id, '', 'no' );
-        } elseif ( (int) $current !== $last_id ) {
-            update_option( $option, (string) $last_id );
+        $updated = $this->forward_site_note_slash_repair_last_id( $option, $last_id );
+        if ( false === $updated ) {
+            return false;
+        }
+        if ( $updated > 0 ) {
+            $this->forget_site_note_repair_option_cache( $option );
+            return true;
         }
 
-        return (int) get_option( $option ) === $last_id;
+        $current = $this->read_site_note_slash_repair_last_id_row();
+        if ( false === $current ) {
+            return false;
+        }
+        if ( null !== $current ) {
+            return (int) $current >= $last_id;
+        }
+
+        return $this->insert_site_note_slash_repair_last_id( $option, $last_id );
+    }
+
+    /**
+     * Advance the checkpoint only while the stored id is lower.
+     *
+     * @param string $option  Option name.
+     * @param int    $last_id Site id to store.
+     *
+     * @return int|false Rows updated, or false when the query failed.
+     */
+    private function forward_site_note_slash_repair_last_id( $option, $last_id ) {
+        $updated = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Forward-only checkpoint. A lower id must not replace a higher one.
+            $this->wpdb->prepare(
+                'UPDATE %i SET option_value=%s WHERE option_name=%s AND CAST(option_value AS UNSIGNED) < %d',
+                $this->wpdb->options,
+                (string) $last_id,
+                $option,
+                $last_id
+            )
+        );
+
+        if ( false === $updated || '' !== (string) $this->wpdb->last_error ) {
+            return false;
+        }
+
+        return (int) $updated;
+    }
+
+    /**
+     * Insert the checkpoint when the option row does not exist yet.
+     *
+     * @param string $option  Option name.
+     * @param int    $last_id Site id to store.
+     *
+     * @return bool True when the stored id is this id or a later one.
+     */
+    private function insert_site_note_slash_repair_last_id( $option, $last_id ) {
+        $suppress = $this->wpdb->suppress_errors( true );
+        $added    = $this->wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Inserts the checkpoint only when the row is missing.
+            $this->wpdb->options,
+            array(
+                'option_name'  => $option,
+                'option_value' => (string) $last_id,
+                'autoload'     => 'no',
+            ),
+            array( '%s', '%s', '%s' )
+        );
+        $this->wpdb->suppress_errors( $suppress );
+        $this->wpdb->last_error = '';
+
+        if ( false !== $added ) {
+            $this->forget_site_note_repair_option_cache( $option );
+            return true;
+        }
+
+        // Another request inserted the row first. Move it forward only.
+        $updated = $this->forward_site_note_slash_repair_last_id( $option, $last_id );
+        if ( false === $updated ) {
+            return false;
+        }
+        if ( $updated > 0 ) {
+            $this->forget_site_note_repair_option_cache( $option );
+            return true;
+        }
+
+        $current = $this->read_site_note_slash_repair_last_id_row();
+        return null !== $current && false !== $current && (int) $current >= $last_id;
+    }
+
+    /**
+     * Read the checkpoint column, distinguishing a missing row from id 0.
+     *
+     * @return string|null|false Stored value, null when the row is missing, false on error.
+     */
+    private function read_site_note_slash_repair_last_id_row() {
+        $value = $this->wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- The forward-only update must see the stored id.
+            $this->wpdb->prepare(
+                'SELECT option_value FROM %i WHERE option_name = %s LIMIT 1',
+                $this->wpdb->options,
+                self::SITE_NOTE_SLASH_REPAIR_LAST_ID
+            )
+        );
+
+        if ( '' !== (string) $this->wpdb->last_error ) {
+            return false;
+        }
+
+        return $value;
+    }
+
+    /**
+     * Whether this admin_init belongs to ajax, heartbeat, cron, or REST.
+     *
+     * Those requests must not spend the page-load budget. The next admin screen resumes.
+     *
+     * @return bool True when the repair should wait for a normal admin page load.
+     */
+    private function site_note_slash_repair_request_is_background() {
+        if ( function_exists( 'wp_doing_ajax' ) && wp_doing_ajax() ) {
+            return true;
+        }
+        if ( function_exists( 'wp_doing_cron' ) && wp_doing_cron() ) {
+            return true;
+        }
+
+        return defined( 'REST_REQUEST' ) && REST_REQUEST;
     }
 
     /**
@@ -1641,6 +1769,8 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     /**
      * Remember the note value that the in-progress update is allowed to replace.
      *
+     * The insert does not replace a marker another request already stored.
+     *
      * @param int    $id   Site id.
      * @param string $note Note value read before the update.
      *
@@ -1653,10 +1783,21 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             'note' => (string) $note,
         );
 
-        if ( false === get_option( $option, false ) ) {
-            add_option( $option, $payload, '', 'no' );
-        } else {
-            update_option( $option, $payload );
+        $suppress = $this->wpdb->suppress_errors( true );
+        $added    = $this->wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Insert-only marker. A second request must not overwrite it.
+            $this->wpdb->options,
+            array(
+                'option_name'  => $option,
+                'option_value' => maybe_serialize( $payload ),
+                'autoload'     => 'no',
+            ),
+            array( '%s', '%s', '%s' )
+        );
+        $this->wpdb->suppress_errors( $suppress );
+        $this->wpdb->last_error = '';
+
+        if ( false !== $added ) {
+            $this->forget_site_note_repair_option_cache( $option );
         }
 
         $stored = $this->read_site_note_slash_repair_inflight();
@@ -1694,14 +1835,41 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     }
 
     /**
-     * Drop the in-progress marker after the finished id is stored.
+     * Drop the in-progress marker when it still holds this run's value.
      *
-     * @return bool True when the database no longer has the marker.
+     * @param int    $id   Site id stored in the marker.
+     * @param string $note Note value stored in the marker.
+     *
+     * @return bool True when this run's marker is gone. Another run's marker is left in place.
      */
-    private function clear_site_note_slash_repair_inflight() {
-        delete_option( self::SITE_NOTE_SLASH_REPAIR_INFLIGHT );
-        $this->forget_site_note_repair_option_cache( self::SITE_NOTE_SLASH_REPAIR_INFLIGHT );
-        return null === $this->read_site_note_slash_repair_inflight();
+    private function clear_site_note_slash_repair_inflight( $id, $note ) {
+        $option  = self::SITE_NOTE_SLASH_REPAIR_INFLIGHT;
+        $payload = array(
+            'id'   => (int) $id,
+            'note' => (string) $note,
+        );
+        $deleted = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Compare-and-swap delete. A newer marker must stay.
+            $this->wpdb->prepare(
+                'DELETE FROM %i WHERE option_name = %s AND option_value = %s',
+                $this->wpdb->options,
+                $option,
+                maybe_serialize( $payload )
+            )
+        );
+        if ( false === $deleted || '' !== (string) $this->wpdb->last_error ) {
+            return false;
+        }
+
+        $this->forget_site_note_repair_option_cache( $option );
+        $stored = $this->read_site_note_slash_repair_inflight();
+        if ( false === $stored ) {
+            return false;
+        }
+        if ( null === $stored ) {
+            return true;
+        }
+
+        return ! ( (int) $stored['id'] === (int) $id && (string) $stored['note'] === (string) $note );
     }
 
     /**

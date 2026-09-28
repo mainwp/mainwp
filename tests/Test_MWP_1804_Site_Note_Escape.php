@@ -116,6 +116,10 @@ class Test_MWP_1804_Site_Note_Escape extends \WP_UnitTestCase {
         remove_filter( 'query', array( $this, 'fail_checkpoint_after_note_write' ) );
         remove_filter( 'query', array( $this, 'complete_repair_before_skip_readback' ) );
         remove_filter( 'query', array( $this, 'steal_lock_on_second_repair_select' ) );
+        remove_filter( 'query', array( $this, 'takeover_during_first_note_update' ) );
+        remove_filter( 'query', array( $this, 'crash_takeover_before_site_three_checkpoint' ) );
+        remove_filter( 'wp_doing_ajax', '__return_true' );
+        remove_filter( 'wp_doing_cron', '__return_true' );
         remove_filter( 'mainwp_site_note_slash_repair_time_budget', array( $this, 'repair_budget_of_zero' ) );
         remove_filter( 'mainwp_site_note_slash_repair_batch_size', array( $this, 'repair_batch_of_one' ) );
         remove_filter( 'mainwp_site_note_slash_repair_batch_size', array( $this, 'repair_batch_of_ten' ) );
@@ -768,6 +772,88 @@ class Test_MWP_1804_Site_Note_Escape extends \WP_UnitTestCase {
     }
 
     /**
+     * A stalled holder cannot rewind the checkpoint or delete the new holder's marker.
+     *
+     * The new holder fixes the later rows and stops before its own checkpoint. The resume
+     * must not unescape a row that was already fixed.
+     *
+     * @return void
+     */
+    public function test_stalled_holder_cannot_rewind_checkpoint_after_takeover(): void {
+        $newline        = 'use \n as newline';
+        $reports        = 'D:\\reports';
+        $nas            = '\\nas';
+        $newline_legacy = MainWP_DB_Common::instance()->escape( $newline );
+        $reports_legacy = MainWP_DB_Common::instance()->escape( $reports );
+        $nas_legacy     = MainWP_DB_Common::instance()->escape( $nas );
+        $first_id       = $this->create_note_site( 'MWP-1804 Rewind Newline' );
+        $second_id      = $this->create_note_site( 'MWP-1804 Rewind Reports' );
+        $third_id       = $this->create_note_site( 'MWP-1804 Rewind Nas' );
+        $this->store_raw_note( $first_id, $newline_legacy );
+        $this->store_raw_note( $second_id, $reports_legacy );
+        $this->store_raw_note( $third_id, $nas_legacy );
+
+        add_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_LAST_ID, (string) ( $first_id - 1 ), '', 'no' );
+        add_filter( 'mainwp_site_note_slash_repair_batch_size', array( $this, 'repair_batch_of_one' ) );
+        add_filter( 'query', array( $this, 'takeover_during_first_note_update' ) );
+        MainWP_Install::instance()->repair_site_note_slashes();
+        remove_filter( 'query', array( $this, 'takeover_during_first_note_update' ) );
+        remove_filter( 'mainwp_site_note_slash_repair_batch_size', array( $this, 'repair_batch_of_one' ) );
+
+        $this->assertSame( $newline, $this->stored_note( $first_id ) );
+        $this->assertSame( $reports, $this->stored_note( $second_id ) );
+        $this->assertSame( $nas, $this->stored_note( $third_id ) );
+        $this->assertSame( (string) $second_id, (string) get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_LAST_ID ) );
+        $inflight = $this->inflight_payload();
+        $this->assertIsArray( $inflight );
+        $this->assertSame( $third_id, (int) $inflight['id'] );
+        $this->assertSame( $nas_legacy, (string) $inflight['note'] );
+
+        delete_transient( MainWP_Install::SITE_NOTE_SLASH_REPAIR_RETRY );
+        MainWP_Install::instance()->repair_site_note_slashes();
+
+        $this->assertSame( $newline, $this->stored_note( $first_id ) );
+        $this->assertSame( $reports, $this->stored_note( $second_id ) );
+        $this->assertSame( $nas, $this->stored_note( $third_id ) );
+        $this->assertNotSame( "use \n as newline", $this->stored_note( $first_id ) );
+        $this->assertNotSame( 'D:' . "\r" . 'eports', $this->stored_note( $second_id ) );
+        $this->assertNotSame( "\nas", $this->stored_note( $third_id ) );
+        $this->assertNull( $this->inflight_payload() );
+        $this->assertSame( 'complete', get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_OPTION ) );
+    }
+
+    /**
+     * Ajax, heartbeat, and cron requests leave the repair for a normal admin page load.
+     *
+     * @return void
+     */
+    public function test_background_requests_do_not_run_the_repair(): void {
+        $typed   = 'use \n as newline';
+        $legacy  = MainWP_DB_Common::instance()->escape( $typed );
+        $site_id = $this->create_note_site( 'MWP-1804 Background' );
+        $this->store_raw_note( $site_id, $legacy );
+        wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+
+        add_filter( 'wp_doing_ajax', '__return_true' );
+        MainWP_Install::instance()->maybe_repair_site_note_slashes();
+        remove_filter( 'wp_doing_ajax', '__return_true' );
+
+        $this->assertSame( $legacy, $this->stored_note( $site_id ) );
+        $this->assertNotSame( 'complete', get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_OPTION, false ) );
+
+        add_filter( 'wp_doing_cron', '__return_true' );
+        MainWP_Install::instance()->maybe_repair_site_note_slashes();
+        remove_filter( 'wp_doing_cron', '__return_true' );
+
+        $this->assertSame( $legacy, $this->stored_note( $site_id ) );
+
+        MainWP_Install::instance()->maybe_repair_site_note_slashes();
+
+        $this->assertSame( $typed, $this->stored_note( $site_id ) );
+        $this->assertSame( 'complete', get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_OPTION ) );
+    }
+
+    /**
      * Drop repair reads so the caller can see the failure.
      *
      * @param string $query SQL.
@@ -963,6 +1049,72 @@ class Test_MWP_1804_Site_Note_Escape extends \WP_UnitTestCase {
         wp_cache_set( MainWP_Install::SITE_NOTE_SLASH_REPAIR_LAST_ID, '0', 'options' );
         MainWP_Install::instance()->repair_site_note_slashes();
 
+        return $query;
+    }
+
+    /**
+     * Let a second repair take over during the first note update, then stop that repair.
+     *
+     * The new holder is crashed after it fixes the third site and before it saves that id.
+     *
+     * @param string $query SQL.
+     *
+     * @return string
+     */
+    public function takeover_during_first_note_update( $query ) {
+        if ( $this->inside_save || ! is_string( $query ) ) {
+            return $query;
+        }
+        if ( false === stripos( $query, 'UPDATE' ) || false === stripos( $query, 'SET note=' ) ) {
+            return $query;
+        }
+
+        global $wpdb;
+
+        $this->inside_save   = true;
+        $this->repair_writes = 0;
+        $option              = MainWP_Install::SITE_NOTE_SLASH_REPAIR_LOCK;
+        $current             = $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s",
+                $option
+            )
+        );
+        $token               = is_string( $current ) ? explode( '|', $current, 2 )[0] : '';
+        $wpdb->update(
+            $wpdb->options,
+            array( 'option_value' => $token . '|1' ),
+            array( 'option_name' => $option ),
+            array( '%s' ),
+            array( '%s' )
+        );
+        wp_cache_delete( $option, 'options' );
+        add_filter( 'query', array( $this, 'crash_takeover_before_site_three_checkpoint' ) );
+        MainWP_Install::instance()->repair_site_note_slashes();
+        remove_filter( 'query', array( $this, 'crash_takeover_before_site_three_checkpoint' ) );
+
+        return $query;
+    }
+
+    /**
+     * Drop the checkpoint write after the takeover has updated the third note.
+     *
+     * @param string $query SQL.
+     *
+     * @return string
+     */
+    public function crash_takeover_before_site_three_checkpoint( $query ) {
+        if ( ! is_string( $query ) ) {
+            return $query;
+        }
+        if ( false !== stripos( $query, 'UPDATE' ) && false !== stripos( $query, 'SET note=' ) ) {
+            ++$this->repair_writes;
+        }
+        $writes_last_id = false !== stripos( $query, MainWP_Install::SITE_NOTE_SLASH_REPAIR_LAST_ID );
+        $is_write       = false !== stripos( $query, 'UPDATE' ) || false !== stripos( $query, 'INSERT' );
+        if ( $this->repair_writes >= 3 && $writes_last_id && $is_write ) {
+            return '';
+        }
         return $query;
     }
 

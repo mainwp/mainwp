@@ -1254,7 +1254,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'input_schema'        => self::get_add_site_input_schema(),
                 'output_schema'       => self::get_site_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_add_site' ),
-                'permission_callback' => array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ),
+                'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/add-site-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
@@ -1495,7 +1495,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'input_schema'        => self::get_update_site_input_schema(),
                 'output_schema'       => self::get_site_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_update_site' ),
-                'permission_callback' => array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ),
+                'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/update-site-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
@@ -1722,7 +1722,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'input_schema'        => self::get_delete_site_input_schema(),
                 'output_schema'       => self::get_delete_site_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_delete_site' ),
-                'permission_callback' => array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ),
+                'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/delete-site-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
@@ -1895,7 +1895,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'input_schema'        => self::get_single_site_input_schema(),
                 'output_schema'       => self::get_reconnect_site_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_reconnect_site' ),
-                'permission_callback' => array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ),
+                'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/reconnect-site-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
@@ -2009,7 +2009,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'input_schema'        => self::get_single_site_input_schema(),
                 'output_schema'       => self::get_disconnect_site_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_disconnect_site' ),
-                'permission_callback' => array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ),
+                'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/disconnect-site-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
@@ -2088,7 +2088,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'input_schema'        => self::get_single_site_input_schema(),
                 'output_schema'       => self::get_suspend_site_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_suspend_site' ),
-                'permission_callback' => array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ),
+                'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/suspend-site-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
@@ -2169,7 +2169,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'input_schema'        => self::get_single_site_input_schema(),
                 'output_schema'       => self::get_unsuspend_site_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_unsuspend_site' ),
-                'permission_callback' => array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ),
+                'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/unsuspend-site-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
@@ -2250,7 +2250,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'input_schema'        => self::get_single_site_input_schema(),
                 'output_schema'       => self::get_check_site_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_check_site' ),
-                'permission_callback' => array( MainWP_Abilities_Util::class, 'check_rest_api_permission' ),
+                'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/check-site-v1', array( MainWP_Abilities_Util::class, 'check_rest_api_permission' ) ),
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
@@ -2390,7 +2390,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'input_schema'        => self::get_activate_site_plugins_input_schema(),
                 'output_schema'       => self::get_activate_plugins_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_activate_site_plugins' ),
-                'permission_callback' => array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ),
+                'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/activate-site-plugins-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
@@ -2574,7 +2574,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'input_schema'        => self::get_deactivate_site_plugins_input_schema(),
                 'output_schema'       => self::get_deactivate_plugins_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_deactivate_site_plugins' ),
-                'permission_callback' => array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ),
+                'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/deactivate-site-plugins-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
@@ -2698,7 +2698,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'input_schema'        => self::get_delete_site_plugins_input_schema(),
                 'output_schema'       => self::get_delete_plugins_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_delete_site_plugins' ),
-                'permission_callback' => array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ),
+                'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/delete-site-plugins-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
@@ -3130,7 +3130,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'input_schema'        => self::get_activate_site_theme_input_schema(),
                 'output_schema'       => self::get_activate_theme_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_activate_site_theme' ),
-                'permission_callback' => array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ),
+                'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/activate-site-theme-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
@@ -3255,7 +3255,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'input_schema'        => self::get_delete_site_themes_input_schema(),
                 'output_schema'       => self::get_delete_themes_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_delete_site_themes' ),
-                'permission_callback' => array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ),
+                'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/delete-site-themes-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
@@ -4201,7 +4201,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'input_schema'        => self::get_batch_sites_input_schema(),
                 'output_schema'       => self::get_batch_operation_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_reconnect_sites' ),
-                'permission_callback' => array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ),
+                'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/reconnect-sites-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
@@ -4398,7 +4398,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'input_schema'        => self::get_batch_sites_input_schema(),
                 'output_schema'       => self::get_batch_operation_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_disconnect_sites' ),
-                'permission_callback' => array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ),
+                'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/disconnect-sites-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
@@ -4514,7 +4514,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'input_schema'        => self::get_batch_sites_input_schema(),
                 'output_schema'       => self::get_batch_operation_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_check_sites' ),
-                'permission_callback' => array( MainWP_Abilities_Util::class, 'check_rest_api_permission' ),
+                'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/check-sites-v1', array( MainWP_Abilities_Util::class, 'check_rest_api_permission' ) ),
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
@@ -4656,7 +4656,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'input_schema'        => self::get_batch_sites_input_schema(),
                 'output_schema'       => self::get_batch_operation_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_suspend_sites' ),
-                'permission_callback' => array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ),
+                'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/suspend-sites-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(

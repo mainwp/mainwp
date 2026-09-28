@@ -455,20 +455,21 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
     }
 
     /**
-     * A restricted key pages in PHP after scoping, so hidden monitors cannot consume a page.
+     * A restricted key scopes the monitor query to its allowed sites before the SQL
+     * LIMIT, so hidden monitors neither consume a page nor get loaded at all.
      *
      * @param array $params Monitor query parameters including page and per_page.
      * @return array|false Monitors for the requested page.
      */
     private function get_scoped_monitors_page( array $params ) {
-        if ( 'all' === \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_site_ids_or_all() ) {
-            return $this->db->get_monitors( $params );
+        $allowed = \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+        if ( 'all' !== $allowed ) {
+            if ( empty( $allowed ) ) {
+                return array();
+            }
+            $params['custom_where'] = ( $params['custom_where'] ?? '' ) . ' AND mo.wpid IN (' . implode( ',', array_map( 'intval', $allowed ) ) . ')';
         }
-        $page     = $params['page'];
-        $per_page = $params['per_page'];
-        unset( $params['page'], $params['per_page'] );
-        $monitors = $this->filter_scoped_sites( $this->db->get_monitors( $params ) );
-        return array_slice( array_values( $monitors ), ( $page - 1 ) * $per_page, $per_page );
+        return $this->db->get_monitors( $params );
     }
 
     /**

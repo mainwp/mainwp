@@ -99,7 +99,7 @@ class MainWP_Client_Overview_Note { // phpcs:ignore Generic.Classes.OpeningBrace
                 ?>
 
 
-                <div style="display:none" id="mainwp-notes-<?php echo intval( $client_info['client_id'] ); ?>-note" data-note="<?php echo MainWP_Utility::client_note_editor_attr( $edit_note ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped for an attribute without decoding typed entities. ?>"><?php echo wp_unslash( $esc_note ); // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
+                <div style="display:none" id="mainwp-notes-<?php echo intval( $client_info['client_id'] ); ?>-note" data-note="<?php echo MainWP_Utility::client_note_editor_attr( $edit_note ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped for an attribute without decoding typed entities. ?>"><?php echo $esc_note; // phpcs:ignore WordPress.Security.EscapeOutput -- client_note_html() returns display HTML. ?></div>
 
                 <?php
 

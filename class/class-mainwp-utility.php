@@ -1482,17 +1482,15 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * &, <, and > are encoded. Quotes are left as typed unless the value
      * contains the wrapper quote, in which case only that quote is encoded.
      * An existing &quot; or &#039; is kept, so a re-save does not turn it
-     * into &amp;quot; or a raw quote. An unquoted value is returned without
-     * added quotes.
+     * into &amp;quot; or a raw quote. No stand-in byte is used. An unquoted
+     * value is returned without added quotes.
      *
      * @param string $value Attribute value.
      * @param string $quote Double quote, single quote, or empty when unquoted.
      * @return string
      */
     private static function client_note_format_attribute_value( $value, $quote ) {
-        $encoded = self::client_note_restore_quote_entities(
-            self::client_note_encode_text( self::client_note_shield_quote_entities( $value ) )
-        );
+        $encoded = self::client_note_encode_attribute_text( $value );
         if ( '' === $quote ) {
             return $encoded;
         }
@@ -1532,39 +1530,40 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     }
 
     /**
-     * Hide &quot; and &#039; so a later &amp; encode does not double them.
+     * Encode &, <, and > in an attribute value without a stand-in byte.
      *
-     * The editor does not turn these entities into quote characters. Keeping
-     * them intact makes a re-save of that attribute byte-stable.
+     * &quot; and &#039; are kept whole. A typed ESC byte is not a marker
+     * and is left in the value.
      *
      * @param string $value Attribute value.
      * @return string
      */
-    private static function client_note_shield_quote_entities( $value ) {
-        $marker = "\x1B";
-        if ( false !== strpos( $value, $marker ) ) {
-            return $value;
-        }
-        return str_replace(
-            array( '&quot;', '&#039;' ),
-            array( $marker . 'q;', $marker . 'a;' ),
+    private static function client_note_encode_attribute_text( $value ) {
+        $encoded = preg_replace_callback(
+            '/&(?:quot|#039);|&|<|>/',
+            array( self::class, 'client_note_encode_attribute_character' ),
             $value
         );
+        return is_string( $encoded ) ? $encoded : $value;
     }
 
     /**
-     * Restore quote entities hidden before encoding.
+     * Encode one character from an attribute value, or keep a quote entity.
      *
-     * @param string $value Attribute value.
+     * @param array<int, string> $entity Regex match. Index 0 is the text.
      * @return string
      */
-    private static function client_note_restore_quote_entities( $value ) {
-        $marker = "\x1B";
-        return str_replace(
-            array( $marker . 'q;', $marker . 'a;' ),
-            array( '&quot;', '&#039;' ),
-            $value
-        );
+    private static function client_note_encode_attribute_character( $entity ) {
+        if ( '&quot;' === $entity[0] || '&#039;' === $entity[0] ) {
+            return $entity[0];
+        }
+        if ( '&' === $entity[0] ) {
+            return '&amp;';
+        }
+        if ( '<' === $entity[0] ) {
+            return '&lt;';
+        }
+        return '&gt;';
     }
 
     /**

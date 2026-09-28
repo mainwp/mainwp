@@ -1137,6 +1137,143 @@ class Test_MWP_1802_Client_Notes extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * A typed entity stays typed in the tooltip, and an empty tooltip uses the default label.
+	 *
+	 * @return void
+	 */
+	public function test_tooltip_keeps_typed_entities_and_uses_the_default_label_when_empty(): void {
+		$typed  = 'see &copy; &amp;';
+		$stored = MainWP_Utility::sanitize_client_note( $typed );
+		$html   = $this->render_notes_column( 1, $stored );
+
+		$this->assertSame( $typed, $this->read_data_tooltip( $html ) );
+		$this->assertSame( $typed, $this->read_holder_text( $html, 1 ) );
+		$this->assertMatchesRegularExpression( '/data-tooltip="see &amp;copy; &amp;amp;"/', $html );
+		$this->assertStringNotContainsString( '©', $html );
+
+		$empty = $this->render_notes_column( 1, '<br>' );
+		$this->assertSame( 'Edit client notes.', $this->read_data_tooltip( $empty ) );
+	}
+
+	/**
+	 * The tooltip keeps a 4-byte emoji and a CJK character that sit on the 100-character cut.
+	 *
+	 * @return void
+	 */
+	public function test_client_list_tooltip_keeps_emoji_and_cjk_at_the_boundary(): void {
+		$emoji = "\u{1F600}";
+		$this->assertSame( 4, strlen( $emoji ) );
+		$this->assertSame( 1, mb_strlen( $emoji, 'UTF-8' ) );
+		$emoji_expected = str_repeat( 'a', 99 ) . $emoji;
+		$this->assertSame( 100, mb_strlen( $emoji_expected, 'UTF-8' ) );
+		$emoji_html = $this->render_notes_column( 1, $emoji_expected . str_repeat( 'b', 10 ) );
+		$this->assertSame( $emoji_expected, $this->read_tooltip_text( $emoji_html ) );
+		$this->assertStringNotContainsString( 'Edit client notes.', $emoji_html );
+
+		$cjk = '字';
+		$this->assertSame( 3, strlen( $cjk ) );
+		$this->assertSame( 1, mb_strlen( $cjk, 'UTF-8' ) );
+		$cjk_expected = str_repeat( 'a', 99 ) . $cjk;
+		$this->assertSame( 100, mb_strlen( $cjk_expected, 'UTF-8' ) );
+		$cjk_html = $this->render_notes_column( 1, $cjk_expected . str_repeat( 'b', 10 ) );
+		$this->assertSame( $cjk_expected, $this->read_tooltip_text( $cjk_html ) );
+	}
+
+	/**
+	 * A typed ESC byte in an attribute is stored as that byte.
+	 *
+	 * @return void
+	 */
+	public function test_esc_byte_in_an_attribute_is_not_rewritten(): void {
+		$note   = '<a title="a' . "\x1B" . 'q;b" href="https://example.com">x</a>';
+		$stored = MainWP_Utility::sanitize_client_note( $note );
+		$this->assertSame( $note, $stored );
+		$this->assertStringContainsString( "a\x1Bq;b", $stored );
+		$this->assertStringNotContainsString( '&quot;', $stored );
+		$this->assertSame( $note, MainWP_Utility::client_note_for_editor( $stored ) );
+
+		$with_entity = '<a title="a' . "\x1B" . 'q; &quot;b">x</a>';
+		$stored_both = MainWP_Utility::sanitize_client_note( $with_entity );
+		$this->assertStringContainsString( "a\x1Bq; &quot;b", $stored_both );
+		$this->assertStringNotContainsString( '&amp;quot;', $stored_both );
+		$this->assertSame( $with_entity, MainWP_Utility::client_note_for_editor( $stored_both ) );
+
+		$body = "keep \x1Bq; and the rest";
+		$this->assertSame( $body, MainWP_Utility::sanitize_client_note( $body ) );
+		$this->assertSame( $body, MainWP_Utility::client_note_for_editor( $body ) );
+	}
+
+	/**
+	 * Displayed client notes keep backslashes in the list and the overview widget.
+	 *
+	 * @return void
+	 */
+	public function test_note_display_keeps_backslashes(): void {
+		$note      = 'C:\\Users\\bob';
+		$client_id = $this->create_client( $note );
+
+		$column = $this->render_notes_column( $client_id, $note );
+		$this->assertSame( $note, $this->read_holder_text( $column, $client_id ) );
+		$this->assertSame( $note, $this->read_data_note( $column, $client_id ) );
+		$this->assertStringNotContainsString( 'C:Usersbob', $column );
+
+		ob_start();
+		\MainWP\Dashboard\MainWP_Client_Overview_Note::render_addition_info( $client_id );
+		$widget = ob_get_clean();
+		$this->assertSame( $note, $this->read_holder_text( $widget, $client_id ) );
+		$this->assertSame( $note, $this->read_data_note( $widget, $client_id ) );
+		$this->assertStringNotContainsString( 'C:Usersbob', $widget );
+	}
+
+	/**
+	 * Quoted and mixed-quote titles at exactly 10,000 characters still render as tags.
+	 *
+	 * @return void
+	 */
+	public function test_exactly_10000_character_note_with_quoted_titles_stays_a_tag(): void {
+		$cases = array(
+			'<a title="Bob\'s note">' => array(
+				'href'  => '',
+				'title' => 'Bob\'s note',
+			),
+			'<a title="Bob\'s note" href=\'https://example.com/?q="hi"\'>' => array(
+				'href'  => 'https://example.com/?q="hi"',
+				'title' => 'Bob\'s note',
+			),
+		);
+
+		foreach ( $cases as $prefix => $expected ) {
+			$this->assertLessThan( MainWP_Utility::CLIENT_NOTE_MAX_LENGTH, mb_strlen( $prefix, 'UTF-8' ), $prefix );
+			$typed = $prefix . str_repeat( 'n', MainWP_Utility::CLIENT_NOTE_MAX_LENGTH - mb_strlen( $prefix, 'UTF-8' ) );
+			$this->assertSame( MainWP_Utility::CLIENT_NOTE_MAX_LENGTH, mb_strlen( $typed, 'UTF-8' ), $prefix );
+
+			$stored = MainWP_Utility::sanitize_client_note( $typed );
+			$this->assertSame( $typed, $stored, $prefix );
+			$this->assertSame( $typed, MainWP_Utility::client_note_for_editor( $stored ), $prefix );
+			$this->assertSame( MainWP_Utility::CLIENT_NOTE_MAX_LENGTH, mb_strlen( MainWP_Utility::client_note_for_editor( $stored ), 'UTF-8' ), $prefix );
+
+			$html = MainWP_Utility::client_note_html( $stored );
+			$this->assertStringContainsString( '<a ', $html, $prefix );
+			$this->assertStringNotContainsString( '&lt;a', $html, $prefix );
+			$root = $this->note_root( $html );
+			$this->assertNotNull( $root, $prefix );
+			$this->assert_note_link( $root, $expected['href'], $expected['title'] );
+
+			$client_id = $this->create_client( 'original note' );
+			$response  = $this->dispatch_notes_save( $client_id, $typed );
+			$this->assertSame( 'SUCCESS', $response['result'], $prefix );
+			$this->assertSame( $typed, $response['note'], $prefix );
+			$this->assertSame( $stored, $this->read_note( $client_id ), $prefix );
+
+			$column = $this->render_notes_column( $client_id, $this->read_note( $client_id ) );
+			$this->assertSame( $typed, $this->read_data_note( $column, $client_id ) );
+			$column_root = $this->note_root( $column );
+			$this->assertNotNull( $column_root, $prefix );
+			$this->assert_note_link( $column_root, $expected['href'], $expected['title'] );
+		}
+	}
+
+	/**
 	 * Read the notes tooltip from a rendered list cell.
 	 *
 	 * @param string $html Rendered markup.
@@ -1151,6 +1288,38 @@ class Test_MWP_1802_Client_Notes extends \WP_UnitTestCase {
 		$nodes = $xpath->query( '//a[contains(@class, "mainwp-edit-client-note")]' );
 		$this->assertSame( 1, $nodes->length, $html );
 		return $nodes->item( 0 )->getAttribute( 'data-tooltip' );
+	}
+
+	/**
+	 * Tooltip text, using the raw attribute when the DOM drops a 4-byte character.
+	 *
+	 * @param string $html Rendered markup.
+	 * @return string
+	 */
+	private function read_tooltip_text( $html ) {
+		$from_dom = $this->read_data_tooltip( $html );
+		if ( '' !== $from_dom ) {
+			return $from_dom;
+		}
+		$this->assertSame( 1, preg_match( '/data-tooltip="([^"]*)"/u', $html, $matches ), $html );
+		return html_entity_decode( $matches[1], ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+	}
+
+	/**
+	 * Text of the hidden note holder.
+	 *
+	 * @param string $html      Rendered markup.
+	 * @param int    $client_id Client ID.
+	 * @return string
+	 */
+	private function read_holder_text( $html, $client_id ) {
+		$dom = new \DOMDocument();
+		libxml_use_internal_errors( true );
+		$dom->loadHTML( '<?xml encoding="utf-8" ?>' . $html );
+		libxml_clear_errors();
+		$node = $dom->getElementById( 'mainwp-notes-' . $client_id . '-note' );
+		$this->assertNotNull( $node, $html );
+		return $node->textContent;
 	}
 
 	/**

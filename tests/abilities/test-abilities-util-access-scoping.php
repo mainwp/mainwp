@@ -7,6 +7,7 @@
 
 namespace MainWP\Dashboard\Tests;
 
+use MainWP\Dashboard\MainWP_Abilities_Sites;
 use MainWP\Dashboard\MainWP_Abilities_Util;
 
 /**
@@ -443,8 +444,40 @@ class Test_Abilities_Util_Access_Scoping extends MainWP_Abilities_Test_Case {
 		$this->assertSame( str_replace( (string) PHP_INT_MAX, (string) $site_id, $missing->get_error_message() ), $result->get_error_message() );
 	}
 
-	public function test_restricted_site_abilities_domain_denial_matches_missing_domain() {
+	public static function site_abilities_with_execute_access_checks() {
+		return array(
+			'update-site'             => array( 'mainwp/update-site-v1', array() ),
+			'delete-site'             => array( 'mainwp/delete-site-v1', array( 'dry_run' => true ) ),
+			'reconnect-site'          => array( 'mainwp/reconnect-site-v1', array() ),
+			'disconnect-site'         => array( 'mainwp/disconnect-site-v1', array() ),
+			'suspend-site'            => array( 'mainwp/suspend-site-v1', array() ),
+			'unsuspend-site'          => array( 'mainwp/unsuspend-site-v1', array() ),
+			'check-site'              => array( 'mainwp/check-site-v1', array() ),
+			'activate-site-plugins'   => array( 'mainwp/activate-site-plugins-v1', array( 'plugins' => array( 'scope-test/plugin.php' ) ) ),
+			'deactivate-site-plugins' => array( 'mainwp/deactivate-site-plugins-v1', array( 'plugins' => array( 'scope-test/plugin.php' ) ) ),
+			'delete-site-plugins'     => array( 'mainwp/delete-site-plugins-v1', array( 'plugins' => array( 'scope-test/plugin.php' ), 'dry_run' => true ) ),
+			'delete-site-themes'      => array( 'mainwp/delete-site-themes-v1', array( 'themes' => array( 'scope-test' ), 'dry_run' => true ) ),
+			'get-abandoned-plugins'   => array( 'mainwp/get-abandoned-plugins-v1', array(), 'execute_get_abandoned_plugins' ),
+			'activate-site-theme'     => array( 'mainwp/activate-site-theme-v1', array( 'theme' => 'scope-test' ) ),
+			'get-abandoned-themes'    => array( 'mainwp/get-abandoned-themes-v1', array(), 'execute_get_abandoned_themes' ),
+			'get-site-security'       => array( 'mainwp/get-site-security-v1', array(), 'execute_get_site_security' ),
+			'get-site-changes'        => array( 'mainwp/get-site-changes-v1', array(), 'execute_get_site_changes' ),
+			'get-site-client'         => array( 'mainwp/get-site-client-v1', array(), 'execute_get_site_client' ),
+			'get-site-costs'          => array( 'mainwp/get-site-costs-v1', array(), 'execute_get_site_costs' ),
+		);
+	}
+
+	/**
+	 * Read abilities reject out-of-scope sites in their permission callback first, so their own
+	 * execute-level check is only reachable by calling the execute method directly.
+	 *
+	 * @dataProvider site_abilities_with_execute_access_checks
+	 */
+	public function test_restricted_site_abilities_domain_denial_matches_missing_domain( $ability_name, $extra_input, $execute_method = null ) {
 		$this->skip_if_no_abilities_api();
+		if ( 'mainwp/get-site-costs-v1' === $ability_name && ! class_exists( 'MainWP\\Dashboard\\Module\\CostTracker\\Cost_Tracker_Manager' ) ) {
+			$this->markTestSkipped( 'Cost Tracker module not active; get-site-costs ability not registered.' );
+		}
 		$this->set_current_user_as_admin();
 		$site_a = $this->create_test_site();
 		$url = 'https://test-' . wp_generate_uuid4() . '.example.com/';
@@ -456,18 +489,21 @@ class Test_Abilities_Util_Access_Scoping extends MainWP_Abilities_Test_Case {
 		$this->assertNotWPError( $resolved );
 		$this->assertSame( $site_b, (int) $resolved->id );
 
-		foreach ( array( 'mainwp/update-site-v1', 'mainwp/check-site-v1' ) as $ability_name ) {
-			$result = $this->execute_ability( $ability_name, array( 'site_id_or_domain' => $url ) );
-			$missing = $this->execute_ability( $ability_name, array( 'site_id_or_domain' => $missing_url ) );
-			$this->assertWPError( $result, $ability_name );
-			$this->assertWPError( $missing, $ability_name );
-			$this->assertSame( 'mainwp_site_not_found', $result->get_error_code(), $ability_name );
-			$this->assertSame( $missing->get_error_code(), $result->get_error_code(), $ability_name );
-			$this->assertSame( 404, $result->get_error_data()['status'], $ability_name );
-			$this->assertSame( $missing->get_error_data()['status'], $result->get_error_data()['status'], $ability_name );
-			$this->assertSame( sprintf( 'No site found matching "%s".', $url ), $result->get_error_message(), $ability_name );
-			$this->assertSame( str_replace( $missing_url, $url, $missing->get_error_message() ), $result->get_error_message(), $ability_name );
-		}
+		$run = function ( array $input ) use ( $ability_name, $execute_method ) {
+			return null === $execute_method
+				? $this->execute_ability( $ability_name, $input )
+				: call_user_func( array( MainWP_Abilities_Sites::class, $execute_method ), $input );
+		};
+		$result = $run( array_merge( $extra_input, array( 'site_id_or_domain' => $url ) ) );
+		$missing = $run( array_merge( $extra_input, array( 'site_id_or_domain' => $missing_url ) ) );
+		$this->assertWPError( $result, $ability_name );
+		$this->assertWPError( $missing, $ability_name );
+		$this->assertSame( 'mainwp_site_not_found', $result->get_error_code(), $ability_name );
+		$this->assertSame( $missing->get_error_code(), $result->get_error_code(), $ability_name );
+		$this->assertSame( 404, $result->get_error_data()['status'], $ability_name );
+		$this->assertSame( $missing->get_error_data()['status'], $result->get_error_data()['status'], $ability_name );
+		$this->assertSame( sprintf( 'No site found matching "%s".', $url ), $result->get_error_message(), $ability_name );
+		$this->assertSame( str_replace( $missing_url, $url, $missing->get_error_message() ), $result->get_error_message(), $ability_name );
 	}
 
 	public function test_restricted_tag_denial_matches_missing_tag() {

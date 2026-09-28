@@ -163,6 +163,36 @@ class Test_Abilities_Api_Key_Scoping extends MainWP_Abilities_Test_Case {
         $this->assertSame( array(), $result['errors'], $ability_name );
     }
 
+    public static function partial_scope_batch_abilities() {
+        return array(
+            'suspend-sites'    => array( 'mainwp/suspend-sites-v1', 'suspended' ),
+            'disconnect-sites' => array( 'mainwp/disconnect-sites-v1', 'disconnected' ),
+        );
+    }
+
+    /**
+     * @dataProvider partial_scope_batch_abilities
+     */
+    public function test_all_sites_batch_with_partial_scope_excludes_outside_site( $ability_name, $result_key ) {
+        $this->skip_if_no_abilities_api();
+        $this->set_current_user_as_admin();
+        $allowed = $this->create_test_site( array( 'url' => 'https://test-allowed.example.com/' ) );
+        $outside = $this->create_test_site( array( 'url' => 'https://test-outside.example.com/' ) );
+        $this->restrict_ability_layer_only( array( $allowed ) );
+
+        $result = $this->execute_ability( $ability_name, array() );
+
+        $this->assertNotWPError( $result );
+        $this->assertIsArray( $result );
+        $ids = array_column( $result[ $result_key ], 'id' );
+        $this->assertContains( $allowed, $ids );
+        $this->assertNotContains( $outside, $ids );
+        $this->assertSame( array(), $result['errors'] );
+        $encoded = json_encode( $result );
+        $this->assertIsString( $encoded );
+        $this->assertDoesNotMatchRegularExpression( '/(?<![0-9])' . $outside . '(?![0-9])/', $encoded );
+    }
+
     public function test_list_updates_scopes_rows_summary_and_total() {
         $this->skip_if_no_abilities_api();
         $this->set_current_user_as_admin();

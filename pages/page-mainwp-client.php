@@ -1438,7 +1438,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 if ( 'note' === $item['db_field'] ) {
                     // client_fields is already unslashed. A non-string note is stored as empty.
                     $field_value                        = $client_fields['default_field'][ $field_name ];
-                    $client_to_add[ $item['db_field'] ] = is_string( $field_value ) ? MainWP_Utility::esc_content( $field_value ) : '';
+                    $client_to_add[ $item['db_field'] ] = is_string( $field_value ) ? MainWP_Utility::sanitize_client_note( $field_value ) : '';
                 } else {
                     $field_value                        = wp_unslash( $client_fields['default_field'][ $field_name ] );
                     $client_to_add[ $item['db_field'] ] = sanitize_text_field( $field_value );
@@ -2637,17 +2637,18 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
          */
     public static function save_note() {
         if ( isset( $_POST['clientid'] ) && ! empty( $_POST['clientid'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-            $note     = isset( $_POST['note'] ) ? wp_unslash( $_POST['note'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-            $esc_note = MainWP_Utility::esc_content( $note );
-            $update   = array(
+            $note   = isset( $_POST['note'] ) ? wp_unslash( $_POST['note'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+            $stored = MainWP_Utility::sanitize_client_note( $note );
+            $update = array(
                 'client_id' => intval( $_POST['clientid'] ), // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-                'note'      => $esc_note,
+                'note'      => $stored,
             );
             MainWP_DB_Client::instance()->update_client( $update );
             self::exit_json(
                 array(
                     'result'           => 'SUCCESS',
-                    'esc_note_content' => $esc_note,
+                    'note'             => $stored,
+                    'esc_note_content' => MainWP_Utility::client_note_html( $stored ),
                 )
             );
         }

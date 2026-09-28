@@ -52,12 +52,13 @@ class MainWP_Client_Overview_Note { // phpcs:ignore Generic.Classes.OpeningBrace
 
         $client_info = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client_id, ARRAY_A );
 
-        $note     = '';
-        $esc_note = '';
-
+        $note        = '';
+        $esc_note    = '';
+        $stored_note = '';
         if ( $client_info ) {
-            $note     = html_entity_decode( $client_info['note'] );
-            $esc_note = MainWP_Utility::esc_content( $note );
+            $note        = html_entity_decode( (string) $client_info['note'] );
+            $stored_note = MainWP_Utility::sanitize_client_note( $note );
+            $esc_note    = MainWP_Utility::client_note_html( $stored_note );
         }
 
         ?>
@@ -98,7 +99,7 @@ class MainWP_Client_Overview_Note { // phpcs:ignore Generic.Classes.OpeningBrace
                 ?>
 
 
-                <div style="display:none" id="mainwp-notes-<?php echo intval( $client_info['client_id'] ); ?>-note"><?php echo wp_unslash( $esc_note ); // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
+                <div style="display:none" id="mainwp-notes-<?php echo intval( $client_info['client_id'] ); ?>-note" data-note="<?php echo esc_attr( $stored_note ); ?>"><?php echo wp_unslash( $esc_note ); // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
 
                 <?php
 

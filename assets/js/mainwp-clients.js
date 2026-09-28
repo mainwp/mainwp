@@ -742,8 +742,14 @@ jQuery(document).on('click', '#mainwp-clients-delete-individual-field', function
 
 jQuery(document).on('click', '.mainwp-edit-client-note', function () {
   let id = jQuery(this).attr('id').substring(13);
-  let note = jQuery('#mainwp-notes-' + id + '-note').html();
-  jQuery('#mainwp-notes-html').html(note == '' ? MainWP.I18n.t('No saved notes. Click the Edit button to edit site notes.') : note);
+  let holder = jQuery('#mainwp-notes-' + id + '-note');
+  // data-note is the stored text. The element's HTML is encoded for display.
+  let note = holder.attr('data-note');
+  if (typeof note === 'undefined') {
+    note = holder.html();
+  }
+  let html = holder.html();
+  jQuery('#mainwp-notes-html').html(note == '' ? MainWP.I18n.t('No saved notes. Click the Edit button to edit site notes.') : html);
   jQuery('#mainwp-notes-note').val(note);
   jQuery('#mainwp-notes-itemid').val(id);
   jQuery('#mainwp-which-note').val('client'); // to fix conflict.
@@ -770,7 +776,11 @@ let mainwp_notes_client_save = function () {
     } else if (response.result == 'SUCCESS') {
       jQuery('#mainwp-notes-status').html(MainWP.I18n.t('Note saved successfully.')).addClass('green');
       if (jQuery('#mainwp-notes-' + normalid + '-note').length > 0) {
-        jQuery('#mainwp-notes-' + normalid + '-note').html(response?.esc_note_content??'');
+        let holder = jQuery('#mainwp-notes-' + normalid + '-note');
+        holder.html(response?.esc_note_content??'');
+        if (typeof response.note === 'string') {
+          holder.attr('data-note', response.note);
+        }
         jQuery('#mainwp-notes-html').html(response?.esc_note_content??'');
       }
     } else {

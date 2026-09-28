@@ -12,6 +12,7 @@ use MainWP\Dashboard\MainWP_Client_Handler;
 use MainWP\Dashboard\MainWP_DB_Client;
 use MainWP\Dashboard\MainWP_Post_Handler;
 use MainWP\Dashboard\MainWP_System_Utility;
+use MainWP\Dashboard\MainWP_Utility;
 
 // phpcs:disable WordPress.Files.FileName.InvalidClassFileName -- Test classes follow the existing Test_* convention.
 
@@ -185,6 +186,65 @@ class Test_MWP_1802_Client_Notes extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Comparison text keeps its < and > characters on every write path.
+	 *
+	 * @return void
+	 */
+	public function test_plain_angle_brackets_round_trip(): void {
+		$samples = array(
+			'a < b and c > d',
+			'x<y',
+			'5 > 3',
+		);
+
+		foreach ( $samples as $note ) {
+			foreach ( $this->store_note_on_every_path( $note ) as $stored ) {
+				$this->assertSame( $note, $stored );
+			}
+		}
+
+		$note      = 'a < b and c > d';
+		$client_id = $this->create_client( 'original note' );
+		$response  = $this->dispatch_notes_save( $client_id, $note );
+		$stored    = $this->read_note( $client_id );
+
+		$this->assertSame( $note, $stored );
+		$this->assertSame( $note, $response['note'] );
+		$this->assertSame( 'a &lt; b and c &gt; d', $response['esc_note_content'] );
+		$this->assertStringNotContainsString( '&amp;', $response['esc_note_content'] );
+		$this->assertSame( 'a &lt; b and c &gt; d', esc_html( $stored ) );
+		$this->assertSame(
+			$response['esc_note_content'],
+			MainWP_Utility::client_note_html( $response['esc_note_content'] )
+		);
+
+		$this->save_note_through_edit_form( $client_id, $stored );
+		$this->assertSame( $note, $this->read_note( $client_id ) );
+	}
+
+	/**
+	 * Script tags, javascript: links, and on* attributes do not survive a save.
+	 *
+	 * @return void
+	 */
+	public function test_dangerous_note_markup_is_neutralized(): void {
+		$samples = array(
+			'<script>alert(1)</script>',
+			'<a href="javascript:alert(1)">x</a>',
+			'<b onclick="x">y</b>',
+		);
+
+		foreach ( $samples as $note ) {
+			foreach ( $this->store_note_on_every_path( $note ) as $stored ) {
+				$this->assertStringNotContainsString( '<script', strtolower( $stored ) );
+				$this->assertStringNotContainsString( 'javascript:', strtolower( $stored ) );
+				$this->assertStringNotContainsString( '<b', strtolower( $stored ) );
+				$this->assertDoesNotMatchRegularExpression( '/\son[a-z0-9_-]*\s*=/i', $stored );
+			}
+		}
+	}
+
+	/**
 	 * Ordinary text, including newlines, is stored and read back unchanged.
 	 *
 	 * @return void
@@ -198,6 +258,51 @@ class Test_MWP_1802_Client_Notes extends \WP_UnitTestCase {
 		$this->assertSame( 'SUCCESS', $response['result'] );
 		$this->assertSame( $note, $response['esc_note_content'] );
 		$this->assertSame( $note, $this->read_note( $client_id ) );
+	}
+
+	/**
+	 * Save a note through the modal, the edit form, and both REST branches.
+	 *
+	 * @param string $note Note field.
+	 * @return string[] Stored notes, one per path.
+	 */
+	private function store_note_on_every_path( $note ) {
+		$stored = array();
+
+		$modal_id        = $this->create_client( 'original note' );
+		$modal           = $this->dispatch_notes_save( $modal_id, $note );
+		$this->assertSame( 'SUCCESS', $modal['result'] );
+		$stored['modal'] = $this->read_note( $modal_id );
+
+		$form_id = $this->create_client( 'original note' );
+		$this->save_note_through_edit_form( $form_id, $note );
+		$stored['form'] = $this->read_note( $form_id );
+
+		$edit_id = $this->create_client( 'original note' );
+		$edited  = MainWP_Client_Handler::rest_api_add_client(
+			array(
+				'client_id' => $edit_id,
+				'note'      => $note,
+			),
+			true
+		);
+		$this->assertTrue( ! empty( $edited['success'] ) );
+		$stored['rest_edit'] = $this->read_note( $edit_id );
+
+		$added = MainWP_Client_Handler::rest_api_add_client(
+			array(
+				'name'         => 'Test Client MWP-1802 note ' . wp_generate_password( 6, false ),
+				'client_email' => 'test-mwp1802-note-' . wp_generate_password( 8, false ) . '@example.com',
+				'note'         => $note,
+			),
+			false
+		);
+		$this->assertTrue( ! empty( $added['success'] ) );
+		$added_id           = (int) $added['client_id'];
+		$this->client_ids[] = $added_id;
+		$stored['rest_add'] = $this->read_note( $added_id );
+
+		return $stored;
 	}
 
 	/**

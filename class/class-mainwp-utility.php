@@ -962,6 +962,89 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
 
     /**
+     * Sanitize a client note for storage.
+     *
+     * Angle brackets that are not part of a tag are kept as the characters the
+     * user typed. Real tags still go through esc_content(), which drops script
+     * tags, javascript: links, and on* attributes.
+     *
+     * @param mixed $note Note field.
+     * @return string Sanitized note, or an empty string when $note is not a string.
+     */
+    public static function sanitize_client_note( $note ) {
+        if ( ! is_string( $note ) ) {
+            return '';
+        }
+
+        $lt        = self::client_note_token( $note, 'lt' );
+        $gt        = self::client_note_token( $note, 'gt' );
+        $protected = self::replace_plain_angle_brackets( $note, $lt, $gt );
+        $clean     = self::esc_content( $protected, 'note' );
+
+        return str_replace( array( $lt, $gt ), array( '<', '>' ), $clean );
+    }
+
+    /**
+     * Format a client note for HTML display.
+     *
+     * Allowed tags stay as tags. Other < and > characters are encoded once,
+     * so the page shows them as typed and a second pass does not turn them
+     * into &amp;lt;.
+     *
+     * @param mixed $note Note field.
+     * @return string HTML-safe note.
+     */
+    public static function client_note_html( $note ) {
+        $note = self::sanitize_client_note( $note );
+        return self::replace_plain_angle_brackets( $note, '&lt;', '&gt;' );
+    }
+
+    /**
+     * Build a placeholder that does not already occur in the note.
+     *
+     * @param string $note  Note text.
+     * @param string $which Token label.
+     * @return string
+     */
+    private static function client_note_token( $note, $which ) {
+        do {
+            $token = 'mwpn' . $which . wp_generate_password( 12, false );
+        } while ( false !== strpos( $note, $token ) );
+
+        return $token;
+    }
+
+    /**
+     * Replace < and > that are not part of a tag.
+     *
+     * A tag is < or </, a letter, then anything except < or >, then >.
+     * Comparison text such as "a < b" does not match, so those characters
+     * are replaced instead of being parsed as markup.
+     *
+     * @param string $content Note text.
+     * @param string $lt      Replacement for a stray <.
+     * @param string $gt      Replacement for a stray >.
+     * @return string
+     */
+    private static function replace_plain_angle_brackets( $content, $lt, $gt ) {
+        $parts = preg_split( '/(<\/?[a-zA-Z][^<>]*>)/', $content, -1, PREG_SPLIT_DELIM_CAPTURE );
+        if ( ! is_array( $parts ) ) {
+            return str_replace( array( '<', '>' ), array( $lt, $gt ), $content );
+        }
+
+        $out = '';
+        foreach ( $parts as $part ) {
+            if ( 1 === preg_match( '/^<\/?[a-zA-Z][^<>]*>$/', $part ) ) {
+                $out .= $part;
+            } else {
+                $out .= str_replace( array( '<', '>' ), array( $lt, $gt ), $part );
+            }
+        }
+
+        return $out;
+    }
+
+    /**
      * Method esc_content()
      *
      * Escape content,

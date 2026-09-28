@@ -927,12 +927,12 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         try {
             $information = MainWP_Connect::fetch_url_authed( $website, 'backup_task_cancel', array( 'task_id' => $child_task_id ), false, false, false );
         } catch ( \Exception $e ) {
-            wp_send_json( array( 'error' => $e->getMessage() ) );
+            wp_send_json( array( 'error' => MainWP_Backup_Error_Codes::sanitize_message( $e->getMessage() ) ) );
             return;
         }
 
         if ( isset( $information['error'] ) ) {
-            wp_send_json( array( 'error' => is_string( $information['error'] ) ? $information['error'] : esc_html__( 'The child site could not cancel the backup.', 'mainwp' ) ) );
+            wp_send_json( array( 'error' => is_string( $information['error'] ) ? MainWP_Backup_Error_Codes::sanitize_message( $information['error'] ) : esc_html__( 'The child site could not cancel the backup.', 'mainwp' ) ) );
             return;
         }
 

@@ -3787,6 +3787,23 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
+	 * Stored safety-backup errors reach the restore modal and must not expose its secret directory.
+	 */
+	public function test_pre_snapshot_failure_redacts_backup_directory_in_last_error() {
+		$this->responses['backup_task_run'] = array(
+			'task_id' => 'task-7-pre',
+			'phase'   => 'failed',
+			'error'   => 'Unable to create directory wp-content/uploads/mainwp/backup-tnQjEHx99TA2ZYTh/. Is its parent directory writable by the server?',
+		);
+		$job = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT, array( 'pre_snapshot_task_id' => 'task-7-pre' ) );
+		$job = $this->tick( $job );
+
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
+		$this->assertStringContainsString( 'backup-[redacted]', $job->last_error );
+		$this->assertStringNotContainsString( 'tnQjEHx99TA2ZYTh', $job->last_error );
+	}
+
+	/**
 	 * An unreadable response cannot establish that the child task stopped.
 	 *
 	 * @dataProvider pre_snapshot_answer_shapes

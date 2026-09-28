@@ -183,6 +183,25 @@ class MainWP_Backup_Cancel_Handler_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Child errors must not expose the secret directory that protects backups.
+	 *
+	 * @return void
+	 */
+	public function test_cancel_child_error_redacts_backup_directory() {
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		list( $site_id, ) = $this->make_in_flight_run();
+
+		list( $response, ) = $this->invoke_cancel(
+			$site_id,
+			array( 'error' => 'Unable to create directory wp-content/uploads/mainwp/backup-tnQjEHx99TA2ZYTh/. Is its parent directory writable by the server?' )
+		);
+
+		$this->assertIsArray( $response );
+		$this->assertStringContainsString( 'backup-[redacted]', (string) ( $response['error'] ?? '' ) );
+		$this->assertStringNotContainsString( 'tnQjEHx99TA2ZYTh', (string) ( $response['error'] ?? '' ) );
+	}
+
+	/**
 	 * A child-side refusal is surfaced verbatim and the local run stays open:
 	 * the child task was not cancelled, so the dashboard must not pretend the
 	 * run ended.

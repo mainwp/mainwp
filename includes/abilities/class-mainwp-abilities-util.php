@@ -98,6 +98,230 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
     }
 
     /**
+     * Check that the current user has unrestricted access to all sites.
+     *
+     * The mainwp_currentuserallowedaccesssites filter is applied directly here
+     * rather than through MainWP_DB::get_sql_where_allow_access_sites(), which
+     * skips the filter while DOING_CRON, WP_CLI, or MAINWP_REST_API_DOING is
+     * defined. Going through that wrapper would turn this guard into a no-op on
+     * the REST and MCP surfaces it exists to cover.
+     *
+     * @param mixed $_input The ability input (unused but required by callback signature).
+     * @return true|\WP_Error True when unrestricted, WP_Error otherwise.
+     */
+    public static function check_unrestricted_access( $_input = null ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Required by callback signature NOSONAR .
+        $allowed_sites = apply_filters( 'mainwp_currentuserallowedaccesssites', 'all' );
+
+        if ( 'all' !== $allowed_sites ) {
+            return new \WP_Error(
+                'mainwp_restricted_account',
+                __( 'This action is not available for accounts restricted to a subset of sites.', 'mainwp' ),
+                array( 'status' => 403 )
+            );
+        }
+
+        return true;
+    }
+
+    /**
+     * Get the current user's allowed site IDs.
+     *
+     * Applies the mainwp_currentuserallowedaccesssites filter directly,
+     * not through MainWP_DB::get_sql_where_allow_access_sites(), which
+     * skips the filter entirely while DOING_CRON, WP_CLI, or
+     * MAINWP_REST_API_DOING is defined. Every scoping check below builds on
+     * this helper so REST/MCP surfaces stay covered.
+     *
+     * @return string|int[] 'all' when unrestricted, otherwise a (possibly
+     *                      empty) unique int list. Unexpected filter shapes
+     *                      fail closed to an empty list.
+     */
+    public static function get_allowed_site_ids() {
+        $allowed = apply_filters( 'mainwp_currentuserallowedaccesssites', 'all' );
+
+        if ( 'all' === $allowed ) {
+            return 'all';
+        }
+
+        if ( is_array( $allowed ) ) {
+            return array_values( array_unique( array_map( 'intval', array_filter( $allowed, 'is_numeric' ) ) ) );
+        }
+
+        return array();
+    }
+
+    /**
+     * Get the current user's allowed group (tag) IDs.
+     *
+     * Same direct-filter contract as get_allowed_site_ids(), for the
+     * mainwp_currentuserallowedaccessgroups filter Team Control hooks
+     * alongside the sites one.
+     *
+     * @return string|int[] 'all' when unrestricted, otherwise a (possibly
+     *                      empty) unique int list.
+     */
+    public static function get_allowed_group_ids() {
+        $allowed = apply_filters( 'mainwp_currentuserallowedaccessgroups', 'all' );
+
+        if ( 'all' === $allowed ) {
+            return 'all';
+        }
+
+        if ( is_array( $allowed ) ) {
+            return array_values( array_unique( array_map( 'intval', array_filter( $allowed, 'is_numeric' ) ) ) );
+        }
+
+        return array();
+    }
+
+    /**
+     * Get the site IDs attached to a client, ignoring per-user scoping.
+     *
+     * Full coverage checks need the complete roster, including sites hidden
+     * from the caller by the DB layer's permission filter.
+     *
+     * @param int $client_id Client ID.
+     *
+     * @return int[] Site IDs attached to the client.
+     */
+    private static function get_client_site_ids( $client_id ) {
+        $sites = MainWP_DB_Client::instance()->get_websites_by_client_ids( (int) $client_id, array( 'no_perm_check' => true ) );
+
+        if ( ! is_array( $sites ) ) {
+            return array();
+        }
+
+        return array_map( static fn( $site ) => (int) $site->id, $sites );
+    }
+
+    /**
+     * Check if the current user can access a specific client.
+     *
+     * A client is accessible when at least one of its sites is in the
+     * caller's allowed set. Destructive operations (delete, suspend,
+     * unsuspend) pass $require_full_coverage to demand the allowed set cover
+     * all the client's sites: partial managers can read but not act on
+     * sites they cannot see.
+     *
+     * @param int|object $client                Client ID or client object.
+     * @param mixed      $input                 The ability input (unused, callback signature).
+     * @param bool       $require_full_coverage Whether every client site must be allowed.
+     *
+     * @return true|\WP_Error True on success, WP_Error on failure.
+     */
+    public static function check_client_access( $client, $input = null, $require_full_coverage = false ) {
+        $base_check = self::check_rest_api_permission( $input );
+        if ( is_wp_error( $base_check ) ) {
+            return $base_check;
+        }
+
+        $allowed = self::get_allowed_site_ids();
+        if ( 'all' === $allowed ) {
+            return true;
+        }
+
+        $client_id = is_object( $client ) ? (int) $client->client_id : (int) $client;
+        $site_ids  = self::get_client_site_ids( $client_id );
+        $overlap   = array_intersect( $site_ids, $allowed );
+
+        $accessible = $require_full_coverage
+            ? ( ! empty( $site_ids ) && count( $overlap ) === count( $site_ids ) )
+            : ! empty( $overlap );
+
+        if ( ! $accessible ) {
+            return new \WP_Error(
+                'mainwp_access_denied',
+                __( 'You do not have permission to access this client.', 'mainwp' ),
+                array( 'status' => 403 )
+            );
+        }
+
+        return true;
+    }
+
+    /**
+     * Check client access and return boolean.
+     *
+     * @param int|object $client Client ID or client object.
+     * @param mixed      $input  The ability input.
+     *
+     * @return bool True if access allowed, false otherwise.
+     */
+    public static function can_access_client( $client, $input = null ): bool {
+        return true === self::check_client_access( $client, $input );
+    }
+
+    /**
+     * Check if the current user can access a specific tag (group).
+     *
+     * Rides the groups filter rather than deriving from the tag's sites:
+     * Team Control grants groups as their own dimension, and a freshly
+     * created tag with no sites must stay visible to the users granted it.
+     * Per-site data inside tag responses still needs trimming against
+     * get_allowed_site_ids() separately, since a group grant does not imply every
+     * member site is allowed.
+     *
+     * @param int|object $tag   Tag ID or tag object.
+     * @param mixed      $input The ability input (unused, callback signature).
+     *
+     * @return true|\WP_Error True on success, WP_Error on failure.
+     */
+    public static function check_tag_access( $tag, $input = null ) {
+        $base_check = self::check_rest_api_permission( $input );
+        if ( is_wp_error( $base_check ) ) {
+            return $base_check;
+        }
+
+        $allowed = self::get_allowed_group_ids();
+        if ( 'all' === $allowed ) {
+            return true;
+        }
+
+        $tag_id = is_object( $tag ) ? (int) $tag->id : (int) $tag;
+
+        if ( ! in_array( $tag_id, $allowed, true ) ) {
+            return new \WP_Error(
+                'mainwp_access_denied',
+                __( 'You do not have permission to access this tag.', 'mainwp' ),
+                array( 'status' => 403 )
+            );
+        }
+
+        return true;
+    }
+
+    /**
+     * Get the client IDs reachable from a set of site IDs.
+     *
+     * Backs list/count client abilities for restricted callers: a client is
+     * listed when at least one of its sites is in the caller's allowed set.
+     *
+     * @param int[] $site_ids Allowed site IDs.
+     *
+     * @return int[] Client IDs with at least one site in the set.
+     */
+    public static function get_accessible_client_ids( array $site_ids ) {
+        global $wpdb;
+
+        $site_ids = array_values( array_unique( array_map( 'intval', array_filter( $site_ids, 'is_numeric' ) ) ) );
+        if ( empty( $site_ids ) ) {
+            return array();
+        }
+
+        $placeholders = implode( ',', array_fill( 0, count( $site_ids ), '%d' ) );
+        // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- Direct lookup for the client scope map; placeholder list is a counted %d fill, values bound via prepare(), table name from $wpdb->prefix.
+        $client_ids = $wpdb->get_col(
+            $wpdb->prepare(
+                "SELECT DISTINCT client_id FROM {$wpdb->prefix}mainwp_wp WHERE client_id > 0 AND id IN ({$placeholders})",
+                $site_ids
+            )
+        );
+        // phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+
+        return array_map( 'intval', is_array( $client_ids ) ? $client_ids : array() );
+    }
+
+    /**
      * Check if current user can manage sites (write operations).
      *
      * Currently a wrapper over check_rest_api_permission() which already verifies
@@ -141,16 +365,15 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
 
         $site_id = is_object( $site ) ? (int) $site->id : (int) $site;
 
-        // Use MainWP's existing per-site access control.
-        if ( class_exists( 'MainWP_System' ) ) {
-            $system = MainWP_System::instance();
-            if ( method_exists( $system, 'check_site_access' ) && ! $system->check_site_access( $site_id ) ) {
-                return new \WP_Error(
-                    'mainwp_access_denied',
-                    __( 'You do not have permission to access this site.', 'mainwp' ),
-                    array( 'status' => 403 )
-                );
-            }
+        // The DB layer bypasses scoping under REST, cron and CLI, so check
+        // the allowed-sites filter directly on these execution paths.
+        $allowed_sites = self::get_allowed_site_ids();
+        if ( 'all' !== $allowed_sites && ! in_array( $site_id, $allowed_sites, true ) ) {
+            return new \WP_Error(
+                'mainwp_access_denied',
+                __( 'You do not have permission to access this site.', 'mainwp' ),
+                array( 'status' => 403 )
+            );
         }
 
         /**

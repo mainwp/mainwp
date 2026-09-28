@@ -2248,7 +2248,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
      * @uses \MainWP\Dashboard\MainWP_DB_Common::get_group_by_name()
      * @uses \MainWP\Dashboard\MainWP_DB::add_website()
-     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id_unscoped()
      * @uses \MainWP\Dashboard\MainWP_Exception
      * @uses \MainWP\Dashboard\MainWP_Sync::get_wp_icon()
      * @uses \MainWP\Dashboard\MainWP_Sync::sync_information_array()
@@ -2493,7 +2493,8 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         $message = sprintf( esc_html__( 'Site successfully added - Visit the Site\'s %1$sDashboard%2$s now.%3$s', 'mainwp' ), '<a href="admin.php?page=managesites&dashboard=' . $id . '" style="text-decoration: none;" title="' . esc_html__( 'Dashboard', 'mainwp' ) . '">', '</a>', '<br/>' );
                     }
 
-                    $website = MainWP_DB::instance()->get_website_by_id( $id );
+                    // The creator's access is granted by the post-create hooks below.
+                    $website = MainWP_DB::instance()->get_website_by_id_unscoped( $id );
 
                     if ( $website ) { // to fix.
 

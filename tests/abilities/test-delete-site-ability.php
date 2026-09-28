@@ -196,4 +196,226 @@ class Test_DeleteSite_Ability extends MainWP_Abilities_Test_Case {
         $this->assertWPError( $result );
         $this->assertEquals( 'mainwp_invalid_input', $result->get_error_code() );
     }
+
+    /**
+     * Test that a confirmed delete fires the site-deletion hooks once.
+     *
+     * MainWP_Manage_Sites_Handler::remove_website() fires mainwp_delete_site
+     * and then mainwp_site_deleted, each with the website object.
+     *
+     * @return void
+     */
+    public function test_delete_site_fires_deletion_hooks() {
+        $this->skip_if_no_abilities_api();
+        $this->set_current_user_as_admin();
+
+        $site_url = 'https://test-delete-site-hooks.example.com/';
+        $site_id  = $this->create_test_site(
+            [
+                'name' => 'Test Site Hooks',
+                'url'  => $site_url,
+            ]
+        );
+
+        $fired = [];
+
+        $on_delete_site  = static function () use ( &$fired ) {
+            $fired[] = [
+                'hook' => 'mainwp_delete_site',
+                'args' => func_get_args(),
+            ];
+        };
+        $on_site_deleted = static function () use ( &$fired ) {
+            $fired[] = [
+                'hook' => 'mainwp_site_deleted',
+                'args' => func_get_args(),
+            ];
+        };
+
+        add_action( 'mainwp_delete_site', $on_delete_site, 10, 10 );
+        add_action( 'mainwp_site_deleted', $on_site_deleted, 10, 10 );
+
+        try {
+            $result = $this->execute_ability(
+                'mainwp/delete-site-v1',
+                [
+                    'site_id_or_domain' => $site_id,
+                    'confirm'           => true,
+                ]
+            );
+        } finally {
+            remove_action( 'mainwp_delete_site', $on_delete_site, 10 );
+            remove_action( 'mainwp_site_deleted', $on_site_deleted, 10 );
+        }
+
+        $this->assertNotWPError( $result, 'Should return successful result.' );
+        $this->assertTrue( $result['deleted'], 'deleted should be true.' );
+        $this->assertNull(
+            \MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( $site_id ),
+            'The site row should be removed.'
+        );
+
+        $this->assertCount( 2, $fired, 'Both deletion hooks should fire exactly once.' );
+        $this->assertSame( 'mainwp_delete_site', $fired[0]['hook'], 'mainwp_delete_site fires first.' );
+        $this->assertSame( 'mainwp_site_deleted', $fired[1]['hook'], 'mainwp_site_deleted fires second.' );
+
+        foreach ( $fired as $call ) {
+            $this->assertCount( 1, $call['args'], 'The handler passes only the website object.' );
+            $this->assertIsObject( $call['args'][0] );
+            $this->assertSame( $site_id, (int) $call['args'][0]->id, 'Hook argument should be the deleted site.' );
+            $this->assertSame( $site_url, $call['args'][0]->url, 'Hook argument should be the site object, not an id.' );
+        }
+    }
+
+    /**
+     * Test that a dry-run does not fire deletion hooks or remove the site.
+     *
+     * @return void
+     */
+    public function test_delete_site_dry_run_does_not_fire_deletion_hooks() {
+        $this->skip_if_no_abilities_api();
+        $this->set_current_user_as_admin();
+
+        $site_id = $this->create_test_site(
+            [
+                'name' => 'Test Site Dry Run Hooks',
+                'url'  => 'https://test-delete-site-dry-run-hooks.example.com/',
+            ]
+        );
+
+        $this->record_deletion_hooks();
+
+        try {
+            $result = $this->execute_ability(
+                'mainwp/delete-site-v1',
+                [
+                    'site_id_or_domain' => $site_id,
+                    'dry_run'           => true,
+                ]
+            );
+        } finally {
+            $this->remove_deletion_hook_recorders();
+        }
+
+        $this->assertNotWPError( $result );
+        $this->assertTrue( $result['dry_run'] );
+        $this->assertSame( [], $this->deletion_hook_fired, 'A dry-run must not fire mainwp_delete_site or mainwp_site_deleted.' );
+
+        $site = \MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( $site_id );
+        $this->assertNotNull( $site, 'A dry-run must leave the site row in place.' );
+        $this->assertSame( $site_id, (int) $site->id );
+    }
+
+    /**
+     * Test that deleting a demo site skips both deletion hooks.
+     *
+     * MainWP_Manage_Sites_Handler::remove_website() does not fire
+     * mainwp_delete_site or mainwp_site_deleted for demo sites.
+     *
+     * @return void
+     */
+    public function test_delete_demo_site_skips_deletion_hooks() {
+        $this->skip_if_no_abilities_api();
+        $this->set_current_user_as_admin();
+
+        $site_id = $this->create_test_site(
+            [
+                'name' => 'Test Demo Site Hooks',
+                'url'  => 'https://test-delete-demo-site-hooks.example.com/',
+            ]
+        );
+
+        $demo     = \MainWP\Dashboard\MainWP_Demo_Handle::get_instance();
+        $property = new \ReflectionProperty( \MainWP\Dashboard\MainWP_Demo_Handle::class, 'demo_website_ids' );
+        $property->setAccessible( true );
+        $previous = $property->getValue( null );
+        $demo_ids = is_array( $previous ) ? $previous : [];
+        $demo_ids[] = $site_id;
+
+        $this->record_deletion_hooks();
+
+        try {
+            $property->setValue( null, $demo_ids );
+
+            $site = \MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( $site_id );
+            $this->assertTrue( $demo->is_demo_website( $site ), 'The fixture site should be treated as a demo site.' );
+
+            $result = $this->execute_ability(
+                'mainwp/delete-site-v1',
+                [
+                    'site_id_or_domain' => $site_id,
+                    'confirm'           => true,
+                ]
+            );
+        } finally {
+            $property->setValue( null, $previous );
+            $this->remove_deletion_hook_recorders();
+        }
+
+        $this->assertNotWPError( $result, 'Should return successful result.' );
+        $this->assertTrue( $result['deleted'], 'deleted should be true.' );
+        $this->assertNull(
+            \MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( $site_id ),
+            'The demo site row should still be removed.'
+        );
+        $this->assertSame( [], $this->deletion_hook_fired, 'Demo site deletion must not fire mainwp_delete_site or mainwp_site_deleted.' );
+    }
+
+    /**
+     * Calls recorded by record_deletion_hooks().
+     *
+     * @var array<int, array{hook: string, args: array}>
+     */
+    private $deletion_hook_fired = [];
+
+    /**
+     * Listeners registered by record_deletion_hooks().
+     *
+     * @var array<int, callable>
+     */
+    private $deletion_hook_recorders = [];
+
+    /**
+     * Record mainwp_delete_site and mainwp_site_deleted calls.
+     *
+     * Results are appended to $this->deletion_hook_fired.
+     *
+     * @return void
+     */
+    private function record_deletion_hooks(): void {
+        $this->deletion_hook_fired = [];
+
+        $on_delete_site = function () {
+            $this->deletion_hook_fired[] = [
+                'hook' => 'mainwp_delete_site',
+                'args' => func_get_args(),
+            ];
+        };
+        $on_site_deleted = function () {
+            $this->deletion_hook_fired[] = [
+                'hook' => 'mainwp_site_deleted',
+                'args' => func_get_args(),
+            ];
+        };
+
+        add_action( 'mainwp_delete_site', $on_delete_site, 10, 10 );
+        add_action( 'mainwp_site_deleted', $on_site_deleted, 10, 10 );
+
+        $this->deletion_hook_recorders = [ $on_delete_site, $on_site_deleted ];
+    }
+
+    /**
+     * Remove listeners registered by record_deletion_hooks().
+     *
+     * @return void
+     */
+    private function remove_deletion_hook_recorders(): void {
+        if ( isset( $this->deletion_hook_recorders[0] ) ) {
+            remove_action( 'mainwp_delete_site', $this->deletion_hook_recorders[0], 10 );
+        }
+        if ( isset( $this->deletion_hook_recorders[1] ) ) {
+            remove_action( 'mainwp_site_deleted', $this->deletion_hook_recorders[1], 10 );
+        }
+        $this->deletion_hook_recorders = [];
+    }
 }

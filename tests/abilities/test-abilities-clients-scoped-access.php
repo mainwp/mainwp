@@ -400,6 +400,39 @@ class Test_Abilities_Clients_Scoped_Access extends MainWP_Abilities_Test_Case {
     }
 
     // =========================================================================
+    // mainwp/unsuspend-client-v1 (full coverage required)
+    // =========================================================================
+
+    /**
+     * Partial site overlap denies unsuspension.
+     *
+     * @return void
+     */
+    public function test_unsuspend_client_denies_partial_overlap() {
+        $this->skip_if_no_abilities_api();
+        $this->set_current_user_as_admin();
+
+        $client_id = $this->create_test_client(
+            array(
+                'name'      => 'Test Client Scoped Unsuspend Partial',
+                'suspended' => 1,
+            )
+        );
+        $site_allowed = $this->create_test_site( array( 'client_id' => $client_id ) );
+        $this->create_test_site( array( 'client_id' => $client_id ) );
+
+        $this->restrict_current_user_to_sites( array( $site_allowed ) );
+
+        $result = $this->execute_ability( 'mainwp/unsuspend-client-v1', array( 'client_id_or_email' => $client_id ) );
+
+        $this->assertWPError( $result, 'Partial site coverage must deny an unsuspend-client call.' );
+        $this->assertSame( 'mainwp_access_denied', $result->get_error_code() );
+
+        $unchanged = $this->get_test_client( $client_id );
+        $this->assertSame( 1, (int) $unchanged->suspended, 'The client must remain suspended when access is denied.' );
+    }
+
+    // =========================================================================
     // mainwp/add-client-v1
     // =========================================================================
 

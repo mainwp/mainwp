@@ -547,4 +547,37 @@ class Test_Abilities_Tags_Scoped_Access extends MainWP_Abilities_Test_Case {
         $this->assertWPError( $denied );
         $this->assertSame( 'mainwp_access_denied', $denied->get_error_code() );
     }
+
+    /**
+     * A client is returned only when an allowed site carries the tag relation.
+     *
+     * @return void
+     */
+    public function test_get_tag_clients_requires_tag_on_allowed_client_site() {
+        $this->skip_if_no_abilities_api();
+        $this->set_current_user_as_admin();
+
+        $tag_id       = $this->create_test_tag( array( 'name' => 'Test Tag Scoped Client Relation' ) );
+        $client_id    = $this->create_test_client( array( 'name' => 'Test Client Scoped Tag Relation' ) );
+        $site_allowed = $this->create_test_site( array( 'client_id' => $client_id ) );
+        $site_hidden  = $this->create_test_site( array( 'client_id' => $client_id ) );
+        $this->assign_site_to_tag( $site_hidden, $tag_id );
+
+        $this->restrict_current_user_to_groups( array( $tag_id ) );
+        $this->restrict_current_user_to_sites( array( $site_allowed ) );
+
+        $result = $this->execute_ability( 'mainwp/get-tag-clients-v1', array( 'tag_id' => $tag_id ) );
+
+        $this->assertNotWPError( $result );
+        $this->assertSame( array(), $result['items'], 'A tag relation carried only by a hidden site must not expose the client.' );
+        $this->assertSame( 0, $result['total'] );
+
+        $this->assign_site_to_tag( $site_allowed, $tag_id );
+        $visible = $this->execute_ability( 'mainwp/get-tag-clients-v1', array( 'tag_id' => $tag_id ) );
+
+        $this->assertNotWPError( $visible );
+        $this->assertSame( 1, $visible['total'] );
+        $this->assertCount( 1, $visible['items'] );
+        $this->assertEquals( $client_id, $visible['items'][0]['id'], 'The client must be returned when its allowed site also carries the tag.' );
+    }
 }

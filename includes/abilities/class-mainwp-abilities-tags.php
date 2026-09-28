@@ -1308,8 +1308,8 @@ class MainWP_Abilities_Tags { //phpcs:ignore -- NOSONAR - multi methods.
                 );
             }
         } else {
-            // Restricted callers only see clients they can access, so the
-            // full membership is fetched and filtered before pagination.
+            // The tag relation must come from an allowed site belonging to the client.
+            $sites   = MainWP_DB::instance()->get_websites_by_group_ids( array( $tag_id ) );
             $clients = MainWP_DB_Client::instance()->get_wp_client_by(
                 'all',
                 null,
@@ -1319,7 +1319,7 @@ class MainWP_Abilities_Tags { //phpcs:ignore -- NOSONAR - multi methods.
                 )
             );
 
-            if ( ! is_array( $clients ) ) {
+            if ( ! is_array( $sites ) || ! is_array( $clients ) ) {
                 return new \WP_Error(
                     'mainwp_operation_failed',
                     __( 'Failed to retrieve clients for tag.', 'mainwp' ),
@@ -1327,10 +1327,17 @@ class MainWP_Abilities_Tags { //phpcs:ignore -- NOSONAR - multi methods.
                 );
             }
 
+            $eligible_client_ids = array();
+            foreach ( $sites as $site ) {
+                if ( in_array( (int) $site->id, $allowed_sites, true ) && (int) $site->client_id > 0 ) {
+                    $eligible_client_ids[ (int) $site->client_id ] = true;
+                }
+            }
+
             $clients = array_values(
                 array_filter(
                     $clients,
-                    static fn( $client ) => MainWP_Abilities_Util::can_access_client( $client )
+                    static fn( $client ) => isset( $eligible_client_ids[ (int) $client->client_id ] )
                 )
             );
             $total   = count( $clients );

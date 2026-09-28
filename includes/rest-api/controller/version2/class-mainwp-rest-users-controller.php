@@ -706,7 +706,7 @@ class MainWP_Rest_Users_Controller extends MainWP_REST_Controller { //phpcs:igno
             $group_names = array_filter( array_map( 'trim', explode( ';', $user_data['select_groups'] ) ) );
 
             foreach ( $group_names as $group_name ) {
-                $group = \MainWP\Dashboard\MainWP_DB_Common::instance()->get_group_by_name( $group_name );
+                $group = $this->get_scoped_group_by_name( $group_name );
                 if ( ! $group ) {
                     continue;
                 }

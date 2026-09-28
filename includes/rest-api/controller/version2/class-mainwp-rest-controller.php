@@ -174,14 +174,15 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
      * @return array|object The same structure with hidden relationship ids removed.
      */
     protected function scope_cost_relationship_fields( $costs ) {
-        $allowed = \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_site_ids_or_all();
-        if ( 'all' === $allowed ) {
+        $allowed        = \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+        $allowed_groups = \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_group_ids_or_all();
+        if ( 'all' === $allowed && 'all' === $allowed_groups ) {
             return $costs;
         }
         $keep      = array(
             'sites'   => $allowed,
-            'groups'  => \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_group_ids_or_all(),
-            'clients' => \MainWP\Dashboard\MainWP_Abilities_Util::get_accessible_client_ids( $allowed ),
+            'groups'  => $allowed_groups,
+            'clients' => 'all' === $allowed ? 'all' : \MainWP\Dashboard\MainWP_Abilities_Util::get_accessible_client_ids( $allowed ),
         );
         $scope_one = static function ( $cost ) use ( $keep ) {
             foreach ( $keep as $field => $ids ) {

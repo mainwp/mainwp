@@ -686,7 +686,8 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         $fields = array_filter(
             $fields,
             function ( $name ) {
-                return 'health_site_status' !== $name && preg_match( '/^[A-Za-z0-9_]+$/', $name );
+                // The raw tag aggregates would bypass the scoped tags field.
+                return ! in_array( $name, array( 'health_site_status', 'wpgroups', 'wpgroupids', 'wpgroups_colors' ), true ) && preg_match( '/^[A-Za-z0-9_]+$/', $name );
             }
         );
 
@@ -3469,7 +3470,16 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         if ( 'all' === $allowed_groups ) {
             return true;
         }
-        $requested = array_values( array_filter( array_map( 'intval', explode( ',', $request['groupids'] ) ) ) );
+        // Validate before merging, or a malformed value would collapse to an empty list
+        // and strip every tag the caller is allowed to see.
+        $requested = MainWP_DB_Common::instance()->validate_site_group_ids( $request['groupids'] );
+        if ( false === $requested ) {
+            return new \WP_Error(
+                'rest_invalid_param',
+                __( 'The groupids parameter must be a comma-separated string of positive integers.', 'mainwp' ),
+                array( 'status' => 400 )
+            );
+        }
         if ( array_diff( $requested, $allowed_groups ) ) {
             return $this->get_rest_data_error( 'id', 'tag' );
         }

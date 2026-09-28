@@ -515,7 +515,7 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
                 'message' => $deleted
                     ? esc_html__( 'Cost deleted successfully.', 'mainwp' )
                     : esc_html__( 'Failed to delete cost.', 'mainwp' ),
-                'data'    => $cost,
+                'data'    => $this->scope_cost_relationship_fields( $cost ),
             )
         );
     }

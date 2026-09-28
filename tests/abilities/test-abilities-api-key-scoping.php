@@ -1363,6 +1363,74 @@ class Test_Abilities_Api_Key_Scoping extends MainWP_Abilities_Test_Case {
         $this->assertWPError( $hidden );
     }
 
+    /** @dataProvider malformed_groupids_values */
+    public function test_rest_site_edit_rejects_malformed_groupids_for_restricted_caller( $value ) {
+        $this->set_current_user_as_admin();
+        $visible_tag = $this->create_test_tag();
+        $allowed     = $this->create_test_site();
+        $this->assign_site_to_tag( $allowed, $visible_tag );
+        $this->restrict_ability_layer_only( array( $allowed ) );
+        $this->restrict_groups_ability_layer_only( array( $visible_tag ) );
+
+        $response = $this->dispatch_v2_request( 'PUT', '/mainwp/v2/sites/' . $allowed . '/edit', array( 'groupids' => str_replace( '{tag}', (string) $visible_tag, $value ) ) );
+        $this->assertSame( 400, $response->get_status(), 'A malformed groupids value must be rejected, not emptied.' );
+        $this->assertSame( 'rest_invalid_param', $response->get_data()['code'] );
+        $memberships = array_map( 'intval', array_keys( (array) \MainWP\Dashboard\MainWP_DB_Common::instance()->get_groups_by_website_id( $allowed ) ) );
+        $this->assertSame( array( $visible_tag ), $memberships, 'The visible tag must survive a rejected edit.' );
+    }
+
+    public static function malformed_groupids_values() {
+        return array( 'zero' => array( '0' ), 'text' => array( 'abc' ), 'mixed' => array( '{tag},abc' ) );
+    }
+
+    public function test_rest_site_custom_fields_cannot_expose_hidden_tags() {
+        $this->set_current_user_as_admin();
+        $visible_tag = $this->create_test_tag();
+        $hidden_tag  = $this->create_test_tag();
+        $allowed     = $this->create_test_site();
+        $this->assign_site_to_tag( $allowed, $visible_tag );
+        $this->assign_site_to_tag( $allowed, $hidden_tag );
+        $this->restrict_ability_layer_only( array( $allowed ) );
+        $this->restrict_groups_ability_layer_only( array( $visible_tag ) );
+
+        foreach ( array( '/mainwp/v2/sites/' . $allowed, '/mainwp/v2/sites' ) as $route ) {
+            $body = wp_json_encode( $this->dispatch_v2_get( $route, array( 'custom_fields' => 'wpgroups,wpgroupids,wpgroups_colors' ) )->get_data() );
+            $this->assertStringNotContainsString( '"wpgroupids"', $body, $route );
+            $this->assertStringNotContainsString( '"' . $hidden_tag . '"', $body, $route . ' must not carry the hidden tag id through a custom field.' );
+        }
+    }
+
+    public function test_rest_cost_relationship_fields_hide_out_of_group_tags_for_group_only_restriction() {
+        $this->set_current_user_as_admin();
+        $visible_tag = $this->create_test_tag();
+        $hidden_tag  = $this->create_test_tag();
+        $client      = $this->create_test_client();
+        $site        = $this->create_test_site( array( 'client_id' => $client ) );
+        $cost        = $this->create_scope_cost( array( $site ), array( $visible_tag, $hidden_tag ), array( $client ) );
+        $this->restrict_groups_ability_layer_only( array( $visible_tag ) );
+
+        foreach ( array( '/mainwp/v2/costs', '/mainwp/v2/sites/' . $site . '/costs', '/mainwp/v2/clients/' . $client . '/costs' ) as $route ) {
+            $data = $this->dispatch_v2_get( $route )->get_data();
+            $this->assertArrayHasKey( 'data', $data, $route . ' ' . wp_json_encode( $data ) );
+            $this->assertSame( array( $visible_tag ), array_map( 'intval', json_decode( $data['data'][ $cost ]['groups'], true ) ), $route );
+            $this->assertSame( array( $site ), array_map( 'intval', json_decode( html_entity_decode( $data['data'][ $cost ]['sites'] ), true ) ), $route . ' keeps sites when only groups are restricted' );
+        }
+        $single = $this->dispatch_v2_get( '/mainwp/v2/costs/' . $cost )->get_data();
+        $this->assertSame( array( $visible_tag ), array_map( 'intval', json_decode( $single['data']->groups, true ) ) );
+    }
+
+    public function test_rest_cost_delete_response_hides_out_of_scope_ids() {
+        $this->set_current_user_as_admin();
+        $allowed = $this->create_test_site();
+        $outside = $this->create_test_site();
+        $cost    = $this->create_scope_cost( array( $allowed, $outside ) );
+        $this->restrict_ability_layer_only( array( $allowed ) );
+
+        $response = $this->dispatch_v2_request( 'DELETE', '/mainwp/v2/costs/' . $cost . '/remove', array() );
+        $this->assertSame( 1, $response->get_data()['success'] );
+        $this->assertSame( array( $allowed ), array_map( 'intval', json_decode( $response->get_data()['data']->sites, true ) ), 'The deleted record must not echo hidden site ids.' );
+    }
+
     public static function monitor_list_routes() {
         return array( 'full' => array( '/mainwp/v2/monitors' ), 'basic' => array( '/mainwp/v2/monitors/basic' ), 'count' => array( '/mainwp/v2/monitors/count' ) );
     }

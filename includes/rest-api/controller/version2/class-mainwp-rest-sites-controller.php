@@ -9,6 +9,7 @@
 
 use MainWP\Dashboard\MainWP_Sync;
 use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_Abilities_Util;
 use MainWP\Dashboard\MainWP_Manage_Sites_View;
 use MainWP\Dashboard\MainWP_Manage_Sites_Handler;
 use MainWP\Dashboard\MainWP_Connect;
@@ -915,6 +916,17 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         $args_fields        = isset( $args['fields'] ) && is_array( $args['fields'] ) ? $args['fields'] : array();
         $args['fields']     = array_merge( array( 'health_site_status' ), $args_fields );
 
+        $args = $this->scope_site_query_args( $args );
+        if ( null === $args ) {
+            return rest_ensure_response(
+                array(
+                    'success' => 1,
+                    'total'   => 0,
+                    'data'    => array(),
+                )
+            );
+        }
+
         // get data.
         $websites = MainWP_DB::instance()->get_websites_for_current_user( $args );
 
@@ -958,6 +970,17 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         $args['extra_view'] = array( 'health_site_status' );
         $args_fields        = isset( $args['fields'] ) && is_array( $args['fields'] ) ? $args['fields'] : array();
         $args['fields']     = array_merge( array( 'health_site_status' ), $args_fields );
+
+        $args = $this->scope_site_query_args( $args );
+        if ( null === $args ) {
+            return rest_ensure_response(
+                array(
+                    'success' => 1,
+                    'total'   => 0,
+                    'data'    => array(),
+                )
+            );
+        }
 
         // get data.
         $websites = MainWP_DB::instance()->get_websites_for_current_user( $args );
@@ -1011,12 +1034,39 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             'status'  => isset( $args['status'] ) ? $args['status'] : array(),
         );
 
+        $params = $this->scope_site_query_args( $params );
+        if ( null === $params ) {
+            return rest_ensure_response( array( 'count' => 0 ) );
+        }
+
         // get data.
         $websites = MainWP_DB::instance()->get_websites_for_current_user( $params );
         $data     = array(
             'count' => count( $websites ),
         );
         return rest_ensure_response( $data );
+    }
+
+    /**
+     * Keep API-key queries within the owner's scope when the DB bypasses its ACL.
+     *
+     * @param array $args Site query arguments.
+     * @return array|null Scoped arguments, or null when no sites are accessible.
+     */
+    private function scope_site_query_args( $args ) {
+        $allowed = MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+        if ( 'all' === $allowed ) {
+            return $args;
+        }
+
+        $include = ! empty( $args['include'] ) ? array_values( array_intersect( wp_parse_id_list( $args['include'] ), $allowed ) ) : $allowed;
+        // An empty include would remove the DB filter and expose every site.
+        if ( empty( $include ) ) {
+            return null;
+        }
+
+        $args['include'] = $include;
+        return $args;
     }
 
     /**

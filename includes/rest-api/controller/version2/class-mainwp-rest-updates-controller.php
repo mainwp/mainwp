@@ -8,6 +8,7 @@
  */
 
 use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_Abilities_Util;
 use MainWP\Dashboard\MainWP_Updates_Helper;
 use MainWP\Dashboard\MainWP_DB_Common;
 use MainWP\Dashboard\MainWP_Updates_Handler;
@@ -293,7 +294,6 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
             // returns ALL updates (no page/per_page constraints), so we omit pagination
             // to maintain consistent behavior. Callers who need paginated results should
             // use the ability directly with explicit page/per_page values.
-            // See: .mwpdev/plans/abilities-api/phase-3-rest-integration-notes.md
 
             // Determine site IDs to include.
             // The ability uses site_ids_or_domains (array of IDs or domains).
@@ -338,6 +338,16 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
         }
 
         // Fallback: Legacy logic when Abilities API is not available.
+        $allowed = MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+        if ( array() === $allowed ) {
+            return rest_ensure_response(
+                array(
+                    'success' => 1,
+                    'data'    => array(),
+                )
+            );
+        }
+
         $all_updates = array();
         $websites    = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( true, null, 'wp.url', false, false, null, false, array( 'ignored_wp_upgrades', 'rollback_updates_data' ) ) );
 
@@ -365,6 +375,10 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
         }
 
         while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
+
+            if ( is_array( $allowed ) && ! in_array( (int) $website->id, $allowed, true ) ) {
+                continue;
+            }
 
             if ( ! empty( $exclud ) && in_array( $website->id, $exclud ) ) {
                 continue;
@@ -692,29 +706,33 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
         $ability = function_exists( 'wp_get_ability' ) ? wp_get_ability( 'mainwp/list-ignored-updates-v1' ) : null;
 
         if ( null !== $ability ) {
-            // Build ability input using normalized type.
-            $ability_input = array(
-                'scope'  => 'global',
-                'type'   => $type,
-                'search' => $s,
-            );
+            $ability_input = array();
+            if ( ! in_array( 'all', $type, true ) ) {
+                $ability_input['types'] = $type;
+            }
 
             $result = $ability->execute( $ability_input );
 
-            if ( is_wp_error( $result ) ) {
-                $error_data = $result->get_error_data();
-                $status     = isset( $error_data['status'] ) ? $error_data['status'] : 500;
-                return new WP_Error( $result->get_error_code(), $result->get_error_message(), array( 'status' => $status ) );
-            }
+            if ( ! is_wp_error( $result ) ) {
+                $ignored = isset( $result['ignored'] ) ? $result['ignored'] : array();
+                if ( ! empty( $s ) ) {
+                    $ignored = array_values(
+                        array_filter(
+                            $ignored,
+                            static function ( $item ) use ( $s ) {
+                                return false !== stripos( $item['name'], $s ) || false !== stripos( $item['slug'], $s );
+                            }
+                        )
+                    );
+                }
 
-            // Transform ability output to REST response format.
-            // Ability returns 'ignored' object with 'plugins' and 'themes' keys.
-            return rest_ensure_response(
-                array(
-                    'success' => 1,
-                    'data'    => isset( $result['ignored'] ) ? $result['ignored'] : array(),
-                )
-            );
+                return rest_ensure_response(
+                    array(
+                        'success' => 1,
+                        'data'    => $ignored,
+                    )
+                );
+            }
         }
 
         // Fallback: Legacy logic when Abilities API is not available.
@@ -786,30 +804,33 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
         $ability = function_exists( 'wp_get_ability' ) ? wp_get_ability( 'mainwp/list-ignored-updates-v1' ) : null;
 
         if ( null !== $ability ) {
-            // Build ability input using normalized type.
-            $ability_input = array(
-                'scope'              => 'site',
-                'site_id_or_domain'  => (int) $website->id,
-                'type'               => $type,
-                'search'             => $s,
-            );
+            $ability_input = array( 'site_ids_or_domains' => array( (int) $website->id ) );
+            if ( ! in_array( 'all', $type, true ) ) {
+                $ability_input['types'] = $type;
+            }
 
             $result = $ability->execute( $ability_input );
 
-            if ( is_wp_error( $result ) ) {
-                $error_data = $result->get_error_data();
-                $status     = isset( $error_data['status'] ) ? $error_data['status'] : 500;
-                return new WP_Error( $result->get_error_code(), $result->get_error_message(), array( 'status' => $status ) );
-            }
+            if ( ! is_wp_error( $result ) ) {
+                $ignored = isset( $result['ignored'] ) ? $result['ignored'] : array();
+                if ( ! empty( $s ) ) {
+                    $ignored = array_values(
+                        array_filter(
+                            $ignored,
+                            static function ( $item ) use ( $s ) {
+                                return false !== stripos( $item['name'], $s ) || false !== stripos( $item['slug'], $s );
+                            }
+                        )
+                    );
+                }
 
-            // Transform ability output to REST response format.
-            // Ability merges per-site and global ignores, matching REST behavior.
-            return rest_ensure_response(
-                array(
-                    'success' => 1,
-                    'data'    => isset( $result['ignored'] ) ? $result['ignored'] : array(),
-                )
-            );
+                return rest_ensure_response(
+                    array(
+                        'success' => 1,
+                        'data'    => $ignored,
+                    )
+                );
+            }
         }
 
         // Fallback: Legacy logic when Abilities API is not available.
@@ -1366,7 +1387,7 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
                     'list' => urldecode( implode( ',', $slugs ) ),
                 )
             );
-            $result = Rest_Api_V1_Helper::instance()->handle_site_update_item( $website->id, 'translation', $information );
+            $result      = Rest_Api_V1_Helper::instance()->handle_site_update_item( $website->id, 'translation', $information );
         } catch ( \Exception $e ) {
             return new \WP_Error( 'mainwp_rest_upgrade_translations_of_site_error', $e->getMessage() );
         }

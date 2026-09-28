@@ -1778,6 +1778,17 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
         // Handle null input (when called without input parameter).
         $input = $input ?? array();
 
+        foreach ( array( 'site_ids_or_domains', 'types', 'specific_items' ) as $parameter ) {
+            if ( array_key_exists( $parameter, $input ) && ! is_array( $input[ $parameter ] ) ) {
+                return new \WP_Error(
+                    'mainwp_invalid_input',
+                    /* translators: %s: input parameter name. */
+                    sprintf( __( 'The %s parameter must be an array.', 'mainwp' ), $parameter ),
+                    array( 'status' => 400 )
+                );
+            }
+        }
+
         $site_ids_or_domains = $input['site_ids_or_domains'] ?? array();
         $types               = $input['types'] ?? array();
         $specific_items      = $input['specific_items'] ?? array();
@@ -2937,7 +2948,19 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
      * @return array|\WP_Error
      */
     public static function execute_update_all( $input ) { // phpcs:ignore -- NOSONAR - complex method.
-        $input               = is_array( $input ) ? $input : array();
+        $input = is_array( $input ) ? $input : array();
+
+        foreach ( array( 'site_ids_or_domains', 'types', 'specific_items' ) as $parameter ) {
+            if ( array_key_exists( $parameter, $input ) && ! is_array( $input[ $parameter ] ) ) {
+                return new \WP_Error(
+                    'mainwp_invalid_input',
+                    /* translators: %s: input parameter name. */
+                    sprintf( __( 'The %s parameter must be an array.', 'mainwp' ), $parameter ),
+                    array( 'status' => 400 )
+                );
+            }
+        }
+
         $site_ids_or_domains = $input['site_ids_or_domains'] ?? array();
         $types               = $input['types'] ?? array( 'core', 'plugins', 'themes', 'translations' );
 

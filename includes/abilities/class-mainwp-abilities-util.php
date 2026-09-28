@@ -304,7 +304,7 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
     }
 
     /**
-     * Preserve userless cron and CLI access when Team Control denies user zero.
+     * Preserve userless CLI and REST access when Team Control denies user zero.
      * API-key requests carry a user whose site restrictions still apply.
      *
      * @return int[]|string Allowed site IDs, or 'all' for unrestricted access.

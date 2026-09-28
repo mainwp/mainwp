@@ -767,7 +767,11 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
         $input = is_array( $input ) ? $input : array();
         $db    = MainWP_DB::instance();
 
-        $allowed = MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+        $allowed        = MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+        $allowed_groups = MainWP_Abilities_Util::get_allowed_group_ids();
+        if ( isset( $input['tag_id'] ) && 'all' !== $allowed_groups && ! in_array( (int) $input['tag_id'], $allowed_groups, true ) ) {
+            $allowed = array();
+        }
         if ( array() === $allowed ) {
             return array(
                 'items'    => array(),
@@ -4026,6 +4030,15 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
         $input = MainWP_Abilities_Util::normalize_input( $input );
 
         $allowed = MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+        if ( ! empty( $input['tag_ids'] ) && is_array( $input['tag_ids'] ) ) {
+            $allowed_groups = MainWP_Abilities_Util::get_allowed_group_ids();
+            if ( 'all' !== $allowed_groups ) {
+                $input['tag_ids'] = array_values( array_intersect( array_map( 'intval', $input['tag_ids'] ), $allowed_groups ) );
+                if ( empty( $input['tag_ids'] ) ) {
+                    $allowed = array();
+                }
+            }
+        }
         if ( array() === $allowed ) {
             return array( 'total' => 0 );
         }
@@ -4164,6 +4177,15 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
         $per_page = max( 1, min( 100, (int) $input['per_page'] ) );
 
         $allowed = MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+        if ( ! empty( $input['tag_ids'] ) && is_array( $input['tag_ids'] ) ) {
+            $allowed_groups = MainWP_Abilities_Util::get_allowed_group_ids();
+            if ( 'all' !== $allowed_groups ) {
+                $input['tag_ids'] = array_values( array_intersect( array_map( 'intval', $input['tag_ids'] ), $allowed_groups ) );
+                if ( empty( $input['tag_ids'] ) ) {
+                    $allowed = array();
+                }
+            }
+        }
         if ( array() === $allowed ) {
             return array(
                 'items'    => array(),

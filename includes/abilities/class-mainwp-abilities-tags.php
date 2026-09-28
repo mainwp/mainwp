@@ -1086,57 +1086,25 @@ class MainWP_Abilities_Tags { //phpcs:ignore -- NOSONAR - multi methods.
         }
 
         if ( $dry_run ) {
-            $allowed_sites = MainWP_Abilities_Util::get_allowed_site_ids();
-
-            if ( 'all' === $allowed_sites ) {
-                // Get sites count efficiently using get_tags() which already computes count_sites.
-                $tag_data    = MainWP_DB_Common::instance()->get_tags( array( 'include' => array( $tag_id ) ) );
-                $sites_count = 0;
-                if ( ! empty( $tag_data ) && is_array( $tag_data ) ) {
-                    $tag_obj     = reset( $tag_data );
-                    $sites_count = isset( $tag_obj->count_sites ) ? (int) $tag_obj->count_sites : 0;
-                }
-
-                // Get clients count efficiently using count_only option (avoids loading all client objects).
-                $clients_count = MainWP_DB_Client::instance()->get_wp_client_by(
-                    'all',
-                    null,
-                    OBJECT,
-                    array(
-                        'by_tags'    => array( $tag_id ),
-                        'count_only' => true,
-                    )
-                );
-                $clients_count = is_numeric( $clients_count ) ? (int) $clients_count : 0;
-            } else {
-                // Restricted callers get impact from their slice only, the same
-                // trim get-tag-sites and get-tag-clients apply, so the dry-run
-                // does not leak global membership counts.
-                $sites       = MainWP_DB::instance()->get_websites_by_group_id( $tag_id );
-                $sites_count = is_array( $sites )
-                    ? count(
-                        array_filter(
-                            $sites,
-                            static fn( $site ) => in_array( (int) $site->id, $allowed_sites, true )
-                        )
-                    )
-                    : 0;
-
-                $clients       = MainWP_DB_Client::instance()->get_wp_client_by(
-                    'all',
-                    null,
-                    OBJECT,
-                    array( 'by_tags' => array( $tag_id ) )
-                );
-                $clients_count = is_array( $clients )
-                    ? count(
-                        array_filter(
-                            $clients,
-                            static fn( $client ) => MainWP_Abilities_Util::can_access_client( $client )
-                        )
-                    )
-                    : 0;
+            // The full-coverage check above already proved every site in the
+            // tag is allowed, so the global counts are the caller's counts.
+            $tag_data    = MainWP_DB_Common::instance()->get_tags( array( 'include' => array( $tag_id ) ) );
+            $sites_count = 0;
+            if ( ! empty( $tag_data ) && is_array( $tag_data ) ) {
+                $tag_obj     = reset( $tag_data );
+                $sites_count = isset( $tag_obj->count_sites ) ? (int) $tag_obj->count_sites : 0;
             }
+
+            $clients_count = MainWP_DB_Client::instance()->get_wp_client_by(
+                'all',
+                null,
+                OBJECT,
+                array(
+                    'by_tags'    => array( $tag_id ),
+                    'count_only' => true,
+                )
+            );
+            $clients_count = is_numeric( $clients_count ) ? (int) $clients_count : 0;
 
             return array(
                 'dry_run'      => true,

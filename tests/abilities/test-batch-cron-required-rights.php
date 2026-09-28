@@ -44,7 +44,18 @@ class Test_Batch_Cron_Required_Rights extends MainWP_Abilities_Test_Case {
 	 */
 	private $chunk_filter = null;
 
+	/**
+	 * The site-scope filter, for targeted removal.
+	 *
+	 * @var callable|null
+	 */
+	private $scope_filter = null;
+
 	public function tearDown(): void {
+		if ( null !== $this->scope_filter ) {
+			remove_filter( 'mainwp_currentuserallowedaccesssites', $this->scope_filter, 10 );
+			$this->scope_filter = null;
+		}
 		if ( null !== $this->right_filter ) {
 			remove_filter( 'mainwp_currentusercan', $this->right_filter, 10 );
 			$this->right_filter = null;
@@ -282,5 +293,33 @@ class Test_Batch_Cron_Required_Rights extends MainWP_Abilities_Test_Case {
 		}
 		$this->assertSame( $site_ids, $revoked_ids, 'Every site must be marked access_revoked before any work.' );
 		$this->assertSame( array(), $this->remote_calls, 'No child site may be contacted.' );
+	}
+
+	/**
+	 * Legacy jobs keep their queued scope when cron has no current user.
+	 */
+	public function test_legacy_update_job_without_owner_attempts_site() {
+		$owner_id = $this->set_current_user_as_admin();
+		$site_id  = $this->create_test_site( [ 'name' => 'Legacy Ownerless Update' ] );
+		$this->spy_on_remote_calls();
+		$job_id = 'update_ownerless_legacy';
+		$job    = $this->seed_owned_update_job( $job_id, $owner_id, [ $site_id ], null, [ 'types' => [ 'core' ] ] );
+		unset( $job['user_id'] );
+		set_transient( 'mainwp_update_job_' . $job_id, $job, DAY_IN_SECONDS );
+
+		$this->scope_filter = static function () {
+			return current_user_can( 'administrator' ) ? 'all' : [];
+		};
+		add_filter( 'mainwp_currentuserallowedaccesssites', $this->scope_filter, 10 );
+		wp_set_current_user( 0 );
+
+		MainWP_Abilities_Cron::instance()->process_update_job( $job_id );
+
+		$job = get_transient( 'mainwp_update_job_' . $job_id );
+		$this->assertSame( 'completed', $job['status'] );
+		$this->assertNotContains( 'access_revoked', array_column( $job['errors'], 'code' ) );
+		// Production cron skips DB-layer scoping under DOING_CRON; phpunit cannot define it,
+		// so the lookup after the per-site gate still sees the filter. Assert the gate only.
+		$this->assertSame( 1, $job['processed'], 'The legacy site must pass the per-site gate.' );
 	}
 }

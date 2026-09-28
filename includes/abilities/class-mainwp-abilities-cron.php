@@ -96,16 +96,16 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
     }
 
     /**
-     * Restore the job owner and confirm the account still exists.
+     * Restore the job owner and confirm the account can still manage sites.
      *
      * Cron has no authenticated owner by default. Site scope and rights must
-     * be checked as the user who queued the job, and a deleted account must
-     * not continue driving remote calls.
+     * be checked as the user who queued the job. Deleted accounts and accounts
+     * that lost manage_options must not continue driving remote calls.
      *
      * @param array $job Job data (reads user_id).
      *
      * @return bool True when the owner is valid (or the job predates owner
-     *              stamping), false when a stamped owner no longer exists.
+     *              stamping), false when a stamped owner no longer exists or cannot manage sites.
      */
     private function restore_job_owner( array $job ): bool {
         $owner_id = isset( $job['user_id'] ) ? (int) $job['user_id'] : 0;
@@ -120,8 +120,24 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
             return false;
         }
 
+        if ( ! user_can( $owner_id, 'manage_options' ) ) {
+            return false;
+        }
+
         wp_set_current_user( $owner_id );
         return true;
+    }
+
+    /**
+     * Preserve enqueue-time scope for legacy jobs without an owner to recheck.
+     *
+     * @param array $job Job data (reads user_id).
+     * @return string|int[] 'all' for legacy jobs or the owner's allowed site IDs.
+     */
+    private function get_job_allowed_site_ids( array $job ) {
+        $owner_id = isset( $job['user_id'] ) ? (int) $job['user_id'] : 0;
+
+        return $owner_id <= 0 ? 'all' : MainWP_Abilities_Util::get_allowed_site_ids();
     }
 
     /**
@@ -137,7 +153,9 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
     }
 
     /**
-     * Fail a whole job because its owner no longer exists.
+     * Fail a whole job because its owner no longer exists or cannot manage sites.
+     *
+     * Remaining sites must not run after the owner loses enqueue permission.
      *
      * @param array  $job          Job data.
      * @param string $transient_key Transient key prefix.
@@ -152,10 +170,10 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
         $job['errors'][]  = array(
             'site_id' => 0,
             'code'    => 'access_revoked',
-            'message' => __( 'The account that queued this job no longer exists; remaining sites were not processed.', 'mainwp' ),
+            'message' => __( 'The account that queued this job no longer exists or can no longer manage sites; remaining sites were not processed.', 'mainwp' ),
         );
         set_transient( $transient_key . $job_id, $job, DAY_IN_SECONDS );
-        $this->log_debug( 'Job owner no longer exists, failing job: ' . $job_id );
+        $this->log_debug( 'Job owner no longer exists or cannot manage sites, failing job: ' . $job_id );
     }
 
     /**
@@ -275,7 +293,7 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
                 $this->fail_job_rights_revoked( $job, 'mainwp_sync_job_', $job_id, 'synced' );
                 return;
             }
-            $allowed_sites = MainWP_Abilities_Util::get_allowed_site_ids();
+            $allowed_sites = $this->get_job_allowed_site_ids( $job );
 
             // Status transition: queued -> processing.
             if ( 'queued' === $job['status'] ) {
@@ -457,7 +475,7 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
                 $this->fail_job_rights_revoked( $job, 'mainwp_update_job_', $job_id, 'updated' );
                 return;
             }
-            $allowed_sites = MainWP_Abilities_Util::get_allowed_site_ids();
+            $allowed_sites = $this->get_job_allowed_site_ids( $job );
 
             // Status transition: queued -> processing.
             if ( 'queued' === $job['status'] ) {
@@ -1064,7 +1082,7 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
                 $this->fail_job_rights_revoked( $job, 'mainwp_batch_job_', $job_id, 'successful' );
                 return;
             }
-            $allowed_sites = MainWP_Abilities_Util::get_allowed_site_ids();
+            $allowed_sites = $this->get_job_allowed_site_ids( $job );
 
             // Status transition: queued -> processing.
             if ( 'queued' === $job['status'] ) {

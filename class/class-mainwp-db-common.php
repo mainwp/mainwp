@@ -826,16 +826,14 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * @param mixed $websiteid Child Site ID.
      * @param mixed $note Note data.
      *
-     * @return void
+     * @return bool True when the note row was updated.
      */
     public function update_note( $websiteid, $note ) {
         $table_wp = esc_sql( $this->table_name( 'wp' ) );
-        // Register the skip row first. A repair between the write and the marker would treat C:\new as legacy.
-        if ( ! MainWP_Install::instance()->note_saved_during_site_note_slash_repair( $websiteid ) ) {
-            return;
-        }
         // Pass $note unescaped. prepare() already escapes %s, and escaping first stores quotes as \'.
-        $this->wpdb->query( $this->wpdb->prepare( "UPDATE `{$table_wp}` SET note= %s WHERE id=%d", $note, $websiteid ) );
+        $updated = $this->wpdb->query( $this->wpdb->prepare( "UPDATE `{$table_wp}` SET note= %s WHERE id=%d", $note, $websiteid ) );
+
+        return false !== $updated && (int) $updated > 0 && '' === (string) $this->wpdb->last_error;
     }
 
     /**

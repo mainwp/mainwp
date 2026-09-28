@@ -10,6 +10,7 @@ namespace MainWP\Dashboard\Tests;
 use MainWP\Dashboard\MainWP_DB_Common;
 use MainWP\Dashboard\MainWP_Install;
 use MainWP\Dashboard\MainWP_Manage_Groups;
+use MainWP\Dashboard\MainWP_Manage_Sites_Handler;
 use MainWP\Dashboard\MainWP_Manage_Sites_List_Table;
 use MainWP\Dashboard\MainWP_Notes;
 use MainWP\Dashboard\MainWP_System_Utility;
@@ -111,7 +112,7 @@ class Test_MWP_1804_Site_Note_Escape extends \WP_UnitTestCase {
         remove_filter( 'query', array( $this, 'fail_second_note_read' ) );
         remove_filter( 'query', array( $this, 'fail_note_writes' ) );
         remove_filter( 'query', array( $this, 'fail_second_note_write' ) );
-        remove_filter( 'query', array( $this, 'assert_skip_before_note_write' ) );
+        remove_filter( 'query', array( $this, 'assert_no_skip_before_note_write' ) );
         remove_filter( 'query', array( $this, 'save_note_during_repair_select' ) );
         remove_filter( 'query', array( $this, 'fail_checkpoint_after_note_write' ) );
         remove_filter( 'query', array( $this, 'complete_repair_before_skip_readback' ) );
@@ -181,11 +182,11 @@ class Test_MWP_1804_Site_Note_Escape extends \WP_UnitTestCase {
     }
 
     /**
-     * An already-escaped note is reversed once, then left alone, and still displays as typed.
+     * An already-escaped note is left byte for byte, and the screen shows that stored text.
      *
      * @return void
      */
-    public function test_legacy_escaped_note_is_corrected_once_and_displays_as_before(): void {
+    public function test_legacy_escaped_note_is_left_as_stored(): void {
         $typed   = $this->sample_note();
         $legacy  = MainWP_DB_Common::instance()->escape( $typed );
         $site_id = $this->create_note_site();
@@ -199,22 +200,25 @@ class Test_MWP_1804_Site_Note_Escape extends \WP_UnitTestCase {
         // admin-ajax.php runs admin_init with no user. That request must not rewrite notes.
         MainWP_Install::instance()->maybe_repair_site_note_slashes();
         $this->assertSame( $legacy, $this->stored_note( $site_id ) );
+        $this->assertNotSame( 'complete', get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_OPTION, false ) );
 
         wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
         MainWP_Install::instance()->maybe_repair_site_note_slashes();
 
-        $this->assertSame( $typed, $this->stored_note( $site_id ) );
+        $shown = MainWP_Utility::esc_content( html_entity_decode( $legacy ) );
+        $this->assertSame( $legacy, $this->stored_note( $site_id ) );
+        $this->assertNotSame( $typed, $this->stored_note( $site_id ) );
         $this->assertSame( 'No slashes here', $this->stored_note( $plain_id ) );
         $this->assertSame( '9.0.2.5', get_site_option( 'mainwp_db_version' ) );
         $this->assertSame( 'complete', get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_OPTION ) );
 
         $html = $this->render_notes_widget( $site_id );
-        $this->assertSame( $typed, $this->visible_note( $html ) );
-        $this->assertSame( $typed, $this->editor_note( $html, $site_id ) );
+        $this->assertSame( $shown, $this->visible_note( $html ) );
+        $this->assertSame( $shown, $this->editor_note( $html, $site_id ) );
 
         MainWP_Install::instance()->repair_site_note_slashes();
 
-        $this->assertSame( $typed, $this->stored_note( $site_id ) );
+        $this->assertSame( $legacy, $this->stored_note( $site_id ) );
         $this->assertSame( 'No slashes here', $this->stored_note( $plain_id ) );
     }
 
@@ -239,11 +243,11 @@ class Test_MWP_1804_Site_Note_Escape extends \WP_UnitTestCase {
     }
 
     /**
-     * A failed note read leaves the repair incomplete and the column unchanged.
+     * A failed note read cannot block completion, because the repair does not read notes.
      *
      * @return void
      */
-    public function test_read_failure_leaves_the_flag_incomplete(): void {
+    public function test_repair_completes_without_reading_notes(): void {
         $legacy  = MainWP_DB_Common::instance()->escape( $this->sample_note() );
         $site_id = $this->create_note_site();
         $this->store_raw_note( $site_id, $legacy );
@@ -253,16 +257,16 @@ class Test_MWP_1804_Site_Note_Escape extends \WP_UnitTestCase {
         remove_filter( 'query', array( $this, 'fail_note_reads' ) );
 
         $this->assertSame( $legacy, $this->stored_note( $site_id ) );
-        $this->assertNotSame( 'complete', get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_OPTION, false ) );
+        $this->assertSame( 'complete', get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_OPTION ) );
         $this->assertFalse( get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_LAST_ID, false ) );
     }
 
     /**
-     * A failed note update leaves the repair incomplete and the column unchanged.
+     * A failed note update cannot rewrite a row, because the repair does not update notes.
      *
      * @return void
      */
-    public function test_update_failure_leaves_the_flag_incomplete(): void {
+    public function test_repair_completes_without_updating_notes(): void {
         $legacy  = MainWP_DB_Common::instance()->escape( $this->sample_note() );
         $site_id = $this->create_note_site();
         $this->store_raw_note( $site_id, $legacy );
@@ -272,9 +276,8 @@ class Test_MWP_1804_Site_Note_Escape extends \WP_UnitTestCase {
         remove_filter( 'query', array( $this, 'fail_note_writes' ) );
 
         $this->assertSame( $legacy, $this->stored_note( $site_id ) );
-        $this->assertNotSame( 'complete', get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_OPTION, false ) );
-        $checkpoint = get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_LAST_ID, false );
-        $this->assertTrue( false === $checkpoint || (int) $checkpoint < $site_id );
+        $this->assertSame( 'complete', get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_OPTION ) );
+        $this->assertFalse( get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_LAST_ID, false ) );
     }
 
     /**
@@ -298,18 +301,17 @@ class Test_MWP_1804_Site_Note_Escape extends \WP_UnitTestCase {
 
         $this->assertSame( $path, $this->stored_note( $path_id ) );
         $this->assertSame( $quoted, $this->stored_note( $quote_id ) );
-        $this->assertSame( 'old \\ path', $this->stored_note( $old_id ) );
+        $this->assertSame( $legacy, $this->stored_note( $old_id ) );
         $this->assertSame( 'complete', get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_OPTION ) );
     }
 
     /**
-     * A held lock blocks the second run, and a later run does not strip twice.
+     * A held lock does not make the repair rewrite a note.
      *
      * @return void
      */
-    public function test_overlapping_runs_strip_nothing_twice(): void {
-        $typed   = $this->sample_note();
-        $legacy  = MainWP_DB_Common::instance()->escape( $typed );
+    public function test_repair_ignores_a_held_lock_and_does_not_rewrite(): void {
+        $legacy  = MainWP_DB_Common::instance()->escape( $this->sample_note() );
         $site_id = $this->create_note_site();
         $this->store_raw_note( $site_id, $legacy );
 
@@ -318,53 +320,38 @@ class Test_MWP_1804_Site_Note_Escape extends \WP_UnitTestCase {
         MainWP_Install::instance()->repair_site_note_slashes();
 
         $this->assertSame( $legacy, $this->stored_note( $site_id ) );
-        $this->assertNotSame( 'complete', get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_OPTION, false ) );
-
-        delete_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_LOCK );
-        wp_cache_delete( MainWP_Install::SITE_NOTE_SLASH_REPAIR_LOCK, 'options' );
-
-        MainWP_Install::instance()->repair_site_note_slashes();
-        $this->assertSame( $typed, $this->stored_note( $site_id ) );
         $this->assertSame( 'complete', get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_OPTION ) );
 
         delete_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_OPTION );
         wp_cache_delete( 'alloptions', 'options' );
 
         MainWP_Install::instance()->repair_site_note_slashes();
-        $this->assertSame( $typed, $this->stored_note( $site_id ) );
+        $this->assertSame( $legacy, $this->stored_note( $site_id ) );
         $this->assertSame( 'complete', get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_OPTION ) );
     }
 
     /**
-     * A note saved after the read and before the update is kept.
+     * The repair does not replace a note it never reads.
      *
      * @return void
      */
-    public function test_note_changed_between_read_and_update_is_not_overwritten(): void {
-        $legacy     = MainWP_DB_Common::instance()->escape( $this->sample_note() );
-        $site_id    = $this->create_note_site();
-        $concurrent = 'Saved while the repair was reading';
+    public function test_repair_does_not_replace_a_note(): void {
+        $legacy  = MainWP_DB_Common::instance()->escape( $this->sample_note() );
+        $site_id = $this->create_note_site();
         $this->store_raw_note( $site_id, $legacy );
-
-        add_action(
-            'mainwp_site_note_slash_repair_before_update',
-            function ( $id ) use ( $concurrent ) {
-                $this->store_raw_note( $id, $concurrent );
-            }
-        );
 
         MainWP_Install::instance()->repair_site_note_slashes();
 
-        $this->assertSame( $concurrent, $this->stored_note( $site_id ) );
+        $this->assertSame( $legacy, $this->stored_note( $site_id ) );
         $this->assertSame( 'complete', get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_OPTION ) );
     }
 
     /**
-     * A stored newline marker comes back as a real line break, and the other escapes do too.
+     * Stored escape sequences stay as text. They are not turned into control characters.
      *
      * @return void
      */
-    public function test_legacy_newline_and_escape_sequences_come_back(): void {
+    public function test_escape_sequences_are_not_turned_into_control_characters(): void {
         $newline  = "line1\nline2";
         $stored_n = MainWP_DB_Common::instance()->escape( $newline );
         $this->assertSame( 'line1\\nline2', $stored_n );
@@ -379,80 +366,65 @@ class Test_MWP_1804_Site_Note_Escape extends \WP_UnitTestCase {
 
         MainWP_Install::instance()->repair_site_note_slashes();
 
-        $this->assertSame( $newline, $this->stored_note( $newline_id ) );
-        $this->assertSame( $typed, $this->stored_note( $full_id ) );
+        $this->assertSame( $stored_n, $this->stored_note( $newline_id ) );
+        $this->assertSame( $legacy, $this->stored_note( $full_id ) );
+        $this->assertNotSame( $newline, $this->stored_note( $newline_id ) );
+        $this->assertNotSame( $typed, $this->stored_note( $full_id ) );
     }
 
     /**
-     * A timeout after the first id resumes on the next run and does not strip the first note again.
+     * A partial-batch marker does not make the repair rewrite either note.
      *
      * @return void
      */
-    public function test_repair_resumes_after_a_partial_batch(): void {
-        $first         = 'first C:\\backup';
-        $second        = 'second C:\\backup';
-        $first_legacy  = MainWP_DB_Common::instance()->escape( $first );
-        $second_legacy = MainWP_DB_Common::instance()->escape( $second );
+    public function test_repair_does_not_resume_by_rewriting_rows(): void {
+        $first_legacy  = MainWP_DB_Common::instance()->escape( 'first C:\\backup' );
+        $second_legacy = MainWP_DB_Common::instance()->escape( 'second C:\\backup' );
         $first_id      = $this->create_note_site( 'MWP-1804 First' );
         $second_id     = $this->create_note_site( 'MWP-1804 Second' );
         $this->store_raw_note( $first_id, $first_legacy );
         $this->store_raw_note( $second_id, $second_legacy );
 
         add_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_LAST_ID, (string) ( $first_id - 1 ), '', 'no' );
-        add_filter( 'mainwp_site_note_slash_repair_batch_size', array( $this, 'repair_batch_of_one' ) );
-        add_filter( 'query', array( $this, 'fail_second_note_read' ) );
         MainWP_Install::instance()->repair_site_note_slashes();
-        remove_filter( 'query', array( $this, 'fail_second_note_read' ) );
 
-        $this->assertSame( $first, $this->stored_note( $first_id ) );
+        $this->assertSame( $first_legacy, $this->stored_note( $first_id ) );
         $this->assertSame( $second_legacy, $this->stored_note( $second_id ) );
-        $this->assertSame( (string) $first_id, (string) get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_LAST_ID ) );
-        $this->assertNotSame( 'complete', get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_OPTION, false ) );
+        $this->assertFalse( get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_LAST_ID, false ) );
+        $this->assertSame( 'complete', get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_OPTION ) );
 
         MainWP_Install::instance()->repair_site_note_slashes();
-        remove_filter( 'mainwp_site_note_slash_repair_batch_size', array( $this, 'repair_batch_of_one' ) );
 
-        $this->assertSame( $first, $this->stored_note( $first_id ) );
-        $this->assertSame( $second, $this->stored_note( $second_id ) );
-        $this->assertSame( 'complete', get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_OPTION ) );
+        $this->assertSame( $first_legacy, $this->stored_note( $first_id ) );
+        $this->assertSame( $second_legacy, $this->stored_note( $second_id ) );
     }
 
     /**
-     * A batch of more than one row checkpoints each fixed note before a later row fails.
-     *
-     * C:\new is what one repair of the old \\new value produces. Reading it again would
-     * turn the backslash-n into a real line break.
+     * Escape-alphabet rows such as C:\new and \\nas stay byte for byte.
      *
      * @return void
      */
-    public function test_mid_batch_failure_leaves_fixed_rows_untouched(): void {
-        $fixed         = 'C:\\new';
-        $legacy        = MainWP_DB_Common::instance()->escape( $fixed );
-        $second_typed  = '\\nas';
-        $second_legacy = MainWP_DB_Common::instance()->escape( $second_typed );
+    public function test_repair_leaves_escape_alphabet_rows_untouched(): void {
+        $legacy        = MainWP_DB_Common::instance()->escape( 'C:\\new' );
+        $second_legacy = MainWP_DB_Common::instance()->escape( '\\nas' );
         $first_id      = $this->create_note_site( 'MWP-1804 New' );
         $second_id     = $this->create_note_site( 'MWP-1804 Nas' );
         $this->store_raw_note( $first_id, $legacy );
         $this->store_raw_note( $second_id, $second_legacy );
-        $this->assertNotSame( $fixed, $legacy );
 
-        add_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_LAST_ID, (string) ( $first_id - 1 ), '', 'no' );
-        add_filter( 'mainwp_site_note_slash_repair_batch_size', array( $this, 'repair_batch_of_ten' ) );
-        add_filter( 'query', array( $this, 'fail_second_note_write' ) );
+        add_filter( 'query', array( $this, 'fail_note_writes' ) );
         MainWP_Install::instance()->repair_site_note_slashes();
-        remove_filter( 'query', array( $this, 'fail_second_note_write' ) );
+        remove_filter( 'query', array( $this, 'fail_note_writes' ) );
 
-        $this->assertSame( $fixed, $this->stored_note( $first_id ) );
+        $this->assertSame( $legacy, $this->stored_note( $first_id ) );
         $this->assertSame( $second_legacy, $this->stored_note( $second_id ) );
-        $this->assertSame( (string) $first_id, (string) get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_LAST_ID ) );
-        $this->assertNotSame( 'complete', get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_OPTION, false ) );
+        $this->assertFalse( get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_LAST_ID, false ) );
+        $this->assertSame( 'complete', get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_OPTION ) );
 
         MainWP_Install::instance()->repair_site_note_slashes();
-        remove_filter( 'mainwp_site_note_slash_repair_batch_size', array( $this, 'repair_batch_of_ten' ) );
 
-        $this->assertSame( $fixed, $this->stored_note( $first_id ) );
-        $this->assertSame( $second_typed, $this->stored_note( $second_id ) );
-        $this->assertSame( 'complete', get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_OPTION ) );
+        $this->assertSame( $legacy, $this->stored_note( $first_id ) );
+        $this->assertSame( $second_legacy, $this->stored_note( $second_id ) );
     }
 
     /**
@@ -473,77 +445,72 @@ class Test_MWP_1804_Site_Note_Escape extends \WP_UnitTestCase {
         MainWP_Install::instance()->repair_site_note_slashes();
 
         $this->assertSame( $note, $this->stored_note( $site_id ) );
-        $this->assertSame( 'old \\ path', $this->stored_note( $old_id ) );
+        $this->assertSame( $legacy, $this->stored_note( $old_id ) );
         $this->assertSame( 'complete', get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_OPTION ) );
         $this->assertNull( $this->skip_row_value( $site_id ) );
     }
 
     /**
-     * The skip row is stored before the note column changes.
+     * A note save does not insert a skip row before or after the update.
      *
      * @return void
      */
-    public function test_skip_row_is_inserted_before_the_note_update(): void {
+    public function test_update_note_does_not_insert_a_skip_row(): void {
         $site_id = $this->create_note_site( 'MWP-1804 Order' );
         $this->store_raw_note( $site_id, 'before' );
         $this->order_site_id = $site_id;
 
-        add_filter( 'query', array( $this, 'assert_skip_before_note_write' ) );
-        MainWP_DB_Common::instance()->update_note( $site_id, 'C:\\new' );
-        remove_filter( 'query', array( $this, 'assert_skip_before_note_write' ) );
+        add_filter( 'query', array( $this, 'assert_no_skip_before_note_write' ) );
+        $saved = MainWP_DB_Common::instance()->update_note( $site_id, 'C:\\new' );
+        remove_filter( 'query', array( $this, 'assert_no_skip_before_note_write' ) );
 
+        $this->assertTrue( $saved );
         $this->assertTrue( $this->saw_note_write );
         $this->assertSame( 'C:\\new', $this->stored_note( $site_id ) );
-        $this->assertSame( '1', $this->skip_row_value( $site_id ) );
+        $this->assertNull( $this->skip_row_value( $site_id ) );
     }
 
     /**
-     * A save that lands while the repair is reading is not treated as a legacy note.
+     * The repair does not select notes, so a row stored as escaped text stays escaped.
      *
      * @return void
      */
-    public function test_save_during_repair_leaves_the_new_note_unchanged(): void {
-        $site_id = $this->create_note_site( 'MWP-1804 During' );
-        $this->store_raw_note( $site_id, MainWP_DB_Common::instance()->escape( 'old \\ path' ) );
-        $this->during_id = $site_id;
+    public function test_repair_does_not_select_or_rewrite_notes(): void {
+        $stored       = MainWP_DB_Common::instance()->escape( 'old \\ path' );
+        $sibling_note = MainWP_DB_Common::instance()->escape( 'keep \\ this' );
+        $site_id      = $this->create_note_site( 'MWP-1804 During' );
+        $this->store_raw_note( $site_id, $stored );
 
         $sibling = $this->create_note_site( 'MWP-1804 During Sibling' );
-        $this->store_raw_note( $sibling, MainWP_DB_Common::instance()->escape( 'keep \\ this' ) );
+        $this->store_raw_note( $sibling, $sibling_note );
 
-        add_filter( 'query', array( $this, 'save_note_during_repair_select' ) );
         MainWP_Install::instance()->repair_site_note_slashes();
-        remove_filter( 'query', array( $this, 'save_note_during_repair_select' ) );
 
-        $this->assertSame( 'C:\\new', $this->stored_note( $site_id ) );
-        $this->assertNotSame( "C:\new", $this->stored_note( $site_id ) );
-        $this->assertSame( 'keep \\ this', $this->stored_note( $sibling ) );
+        $this->assertSame( $stored, $this->stored_note( $site_id ) );
+        $this->assertSame( $sibling_note, $this->stored_note( $sibling ) );
         $this->assertSame( 'complete', get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_OPTION ) );
     }
 
     /**
-     * Two saves keep two skip rows. One save does not rewrite the other site's row.
+     * Two saves store each note and leave no skip rows behind.
      *
      * @return void
      */
-    public function test_two_saves_keep_separate_skip_rows(): void {
+    public function test_two_saves_store_notes_without_skip_rows(): void {
         $first  = $this->create_note_site( 'MWP-1804 Skip A' );
         $second = $this->create_note_site( 'MWP-1804 Skip B' );
 
         MainWP_DB_Common::instance()->update_note( $first, 'C:\\new' );
         MainWP_DB_Common::instance()->update_note( $second, '\\\\nas' );
 
-        $this->assertSame( '1', $this->skip_row_value( $first ) );
-        $this->assertSame( '1', $this->skip_row_value( $second ) );
-        $this->assertNotSame(
-            MainWP_Install::SITE_NOTE_SLASH_REPAIR_SKIP_PREFIX . $first,
-            MainWP_Install::SITE_NOTE_SLASH_REPAIR_SKIP_PREFIX . $second
-        );
+        $this->assertNull( $this->skip_row_value( $first ) );
+        $this->assertNull( $this->skip_row_value( $second ) );
         $this->assertSame( 'C:\\new', $this->stored_note( $first ) );
         $this->assertSame( '\\\\nas', $this->stored_note( $second ) );
     }
 
     /**
-     * A cached "missing" skip option does not hide the database row.
+     * A cached "missing" skip option does not cause the stored note to change.
      *
      * @return void
      */
@@ -570,45 +537,35 @@ class Test_MWP_1804_Site_Note_Escape extends \WP_UnitTestCase {
 
         $this->assertSame( $note, $this->stored_note( $site_id ) );
         $this->assertNotSame( "C:\new", $this->stored_note( $site_id ) );
-        $this->assertSame( 'old \\ path', $this->stored_note( $old_id ) );
+        $this->assertSame( $legacy, $this->stored_note( $old_id ) );
         $this->assertSame( 'complete', get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_OPTION ) );
     }
 
     /**
-     * A crash after the note update and before the finished id does not unescape the row twice.
-     *
-     * C:\new is one repair of the stored \\new value. A second repair would turn the backslash-n
-     * into a real line break. The in-progress marker holds the old value, so the resume matches
-     * zero rows.
+     * A dropped checkpoint write does not unescape a stored C:\new escape layer.
      *
      * @return void
      */
-    public function test_crash_between_update_and_checkpoint_does_not_unescape_twice(): void {
-        $fixed   = 'C:\\new';
-        $legacy  = MainWP_DB_Common::instance()->escape( $fixed );
+    public function test_repair_does_not_unescape_when_a_checkpoint_write_fails(): void {
+        $legacy  = MainWP_DB_Common::instance()->escape( 'C:\\new' );
         $site_id = $this->create_note_site( 'MWP-1804 Crash' );
         $this->store_raw_note( $site_id, $legacy );
-        $this->assertNotSame( $fixed, $legacy );
 
         add_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_LAST_ID, (string) ( $site_id - 1 ), '', 'no' );
         add_filter( 'query', array( $this, 'fail_checkpoint_after_note_write' ) );
         MainWP_Install::instance()->repair_site_note_slashes();
         remove_filter( 'query', array( $this, 'fail_checkpoint_after_note_write' ) );
 
-        $this->assertSame( $fixed, $this->stored_note( $site_id ) );
-        $this->assertNotSame( "C:\new", $this->stored_note( $site_id ) );
-        $this->assertSame( (string) ( $site_id - 1 ), (string) get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_LAST_ID ) );
-        $inflight = $this->inflight_payload();
-        $this->assertIsArray( $inflight );
-        $this->assertSame( $site_id, (int) $inflight['id'] );
-        $this->assertSame( $legacy, (string) $inflight['note'] );
-        $this->assertNotSame( 'complete', get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_OPTION, false ) );
+        $this->assertSame( $legacy, $this->stored_note( $site_id ) );
+        $this->assertNotSame( 'C:\\new', $this->stored_note( $site_id ) );
+        $this->assertFalse( get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_LAST_ID, false ) );
+        $this->assertNull( $this->inflight_payload() );
+        $this->assertSame( 'complete', get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_OPTION ) );
 
         MainWP_Install::instance()->repair_site_note_slashes();
 
-        $this->assertSame( $fixed, $this->stored_note( $site_id ) );
+        $this->assertSame( $legacy, $this->stored_note( $site_id ) );
         $this->assertNull( $this->inflight_payload() );
-        $this->assertSame( 'complete', get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_OPTION ) );
     }
 
     /**
@@ -664,7 +621,7 @@ class Test_MWP_1804_Site_Note_Escape extends \WP_UnitTestCase {
     }
 
     /**
-     * A completion DELETE between INSERT IGNORE and its read-back still stores the note.
+     * A note save still stores the text when no skip row is written.
      *
      * @return void
      */
@@ -682,9 +639,7 @@ class Test_MWP_1804_Site_Note_Escape extends \WP_UnitTestCase {
     }
 
     /**
-     * A skip row inserted after the flag is already complete is removed.
-     *
-     * The cached option still says the repair is open, so update_note() inserts the row.
+     * A save after the flag is complete writes the note and does not leave a skip row.
      *
      * @return void
      */
@@ -714,13 +669,11 @@ class Test_MWP_1804_Site_Note_Escape extends \WP_UnitTestCase {
     }
 
     /**
-     * A stalled holder stops after another request takes the lock, and the new holder does not restart at id 0.
-     *
-     * The values use \n as newline and D:\reports still match the old escape alphabet after one repair.
+     * Stolen-lock filters do not make the repair turn \n or D:\reports into control characters.
      *
      * @return void
      */
-    public function test_stalled_holder_does_not_unescape_after_takeover(): void {
+    public function test_repair_does_not_unescape_when_a_lock_is_stolen(): void {
         $newline        = 'use \n as newline';
         $reports        = 'D:\\reports';
         $newline_legacy = MainWP_DB_Common::instance()->escape( $newline );
@@ -737,8 +690,8 @@ class Test_MWP_1804_Site_Note_Escape extends \WP_UnitTestCase {
         remove_filter( 'query', array( $this, 'steal_lock_on_second_repair_select' ) );
         remove_filter( 'mainwp_site_note_slash_repair_batch_size', array( $this, 'repair_batch_of_one' ) );
 
-        $this->assertSame( $newline, $this->stored_note( $first_id ) );
-        $this->assertSame( $reports, $this->stored_note( $second_id ) );
+        $this->assertSame( $newline_legacy, $this->stored_note( $first_id ) );
+        $this->assertSame( $reports_legacy, $this->stored_note( $second_id ) );
         $this->assertNotSame( "use \n as newline", $this->stored_note( $first_id ) );
         $this->assertNotSame( 'D:' . "\r" . 'eports', $this->stored_note( $second_id ) );
         $this->assertSame( 'complete', get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_OPTION ) );
@@ -746,11 +699,11 @@ class Test_MWP_1804_Site_Note_Escape extends \WP_UnitTestCase {
     }
 
     /**
-     * A repair that hits its time budget stops without the hourly retry and resumes later.
+     * The repair finishes without pausing, and it does not unescape the stored note.
      *
      * @return void
      */
-    public function test_time_budget_pauses_without_the_retry_transient(): void {
+    public function test_repair_completes_without_a_time_budget_pause(): void {
         $typed   = 'use \n as newline';
         $legacy  = MainWP_DB_Common::instance()->escape( $typed );
         $site_id = $this->create_note_site( 'MWP-1804 Budget' );
@@ -761,25 +714,22 @@ class Test_MWP_1804_Site_Note_Escape extends \WP_UnitTestCase {
         remove_filter( 'mainwp_site_note_slash_repair_time_budget', array( $this, 'repair_budget_of_zero' ) );
 
         $this->assertSame( $legacy, $this->stored_note( $site_id ) );
-        $this->assertNotSame( 'complete', get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_OPTION, false ) );
+        $this->assertSame( 'complete', get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_OPTION ) );
         $this->assertFalse( get_transient( MainWP_Install::SITE_NOTE_SLASH_REPAIR_RETRY ) );
         $this->assertFalse( get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_LOCK, false ) );
 
         MainWP_Install::instance()->repair_site_note_slashes();
 
-        $this->assertSame( $typed, $this->stored_note( $site_id ) );
-        $this->assertSame( 'complete', get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_OPTION ) );
+        $this->assertSame( $legacy, $this->stored_note( $site_id ) );
+        $this->assertNotSame( $typed, $this->stored_note( $site_id ) );
     }
 
     /**
-     * A stalled holder cannot rewind the checkpoint or delete the new holder's marker.
-     *
-     * The new holder fixes the later rows and stops before its own checkpoint. The resume
-     * must not unescape a row that was already fixed.
+     * A takeover during a note update cannot rewind stored escape-alphabet notes.
      *
      * @return void
      */
-    public function test_stalled_holder_cannot_rewind_checkpoint_after_takeover(): void {
+    public function test_repair_does_not_rewind_or_rewrite_notes(): void {
         $newline        = 'use \n as newline';
         $reports        = 'D:\\reports';
         $nas            = '\\nas';
@@ -800,21 +750,18 @@ class Test_MWP_1804_Site_Note_Escape extends \WP_UnitTestCase {
         remove_filter( 'query', array( $this, 'takeover_during_first_note_update' ) );
         remove_filter( 'mainwp_site_note_slash_repair_batch_size', array( $this, 'repair_batch_of_one' ) );
 
-        $this->assertSame( $newline, $this->stored_note( $first_id ) );
-        $this->assertSame( $reports, $this->stored_note( $second_id ) );
-        $this->assertSame( $nas, $this->stored_note( $third_id ) );
-        $this->assertSame( (string) $second_id, (string) get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_LAST_ID ) );
-        $inflight = $this->inflight_payload();
-        $this->assertIsArray( $inflight );
-        $this->assertSame( $third_id, (int) $inflight['id'] );
-        $this->assertSame( $nas_legacy, (string) $inflight['note'] );
+        $this->assertSame( $newline_legacy, $this->stored_note( $first_id ) );
+        $this->assertSame( $reports_legacy, $this->stored_note( $second_id ) );
+        $this->assertSame( $nas_legacy, $this->stored_note( $third_id ) );
+        $this->assertFalse( get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_LAST_ID, false ) );
+        $this->assertNull( $this->inflight_payload() );
 
         delete_transient( MainWP_Install::SITE_NOTE_SLASH_REPAIR_RETRY );
         MainWP_Install::instance()->repair_site_note_slashes();
 
-        $this->assertSame( $newline, $this->stored_note( $first_id ) );
-        $this->assertSame( $reports, $this->stored_note( $second_id ) );
-        $this->assertSame( $nas, $this->stored_note( $third_id ) );
+        $this->assertSame( $newline_legacy, $this->stored_note( $first_id ) );
+        $this->assertSame( $reports_legacy, $this->stored_note( $second_id ) );
+        $this->assertSame( $nas_legacy, $this->stored_note( $third_id ) );
         $this->assertNotSame( "use \n as newline", $this->stored_note( $first_id ) );
         $this->assertNotSame( 'D:' . "\r" . 'eports', $this->stored_note( $second_id ) );
         $this->assertNotSame( "\nas", $this->stored_note( $third_id ) );
@@ -849,8 +796,71 @@ class Test_MWP_1804_Site_Note_Escape extends \WP_UnitTestCase {
 
         MainWP_Install::instance()->maybe_repair_site_note_slashes();
 
-        $this->assertSame( $typed, $this->stored_note( $site_id ) );
+        $this->assertSame( $legacy, $this->stored_note( $site_id ) );
+        $this->assertNotSame( $typed, $this->stored_note( $site_id ) );
         $this->assertSame( 'complete', get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_OPTION ) );
+    }
+
+    /**
+     * Pre-2020 notes that were stored correctly stay byte for byte after the repair.
+     *
+     * @return void
+     */
+    public function test_pre_2020_notes_are_unchanged_by_the_repair(): void {
+        $reports = 'D:\\reports';
+        $share   = '\\\\server\\share';
+        $literal = 'See \\n in the note';
+        $windows = 'C:\\new';
+
+        $reports_id = $this->create_note_site( 'MWP-1804 Pre Reports' );
+        $share_id   = $this->create_note_site( 'MWP-1804 Pre Share' );
+        $literal_id = $this->create_note_site( 'MWP-1804 Pre Literal' );
+        $windows_id = $this->create_note_site( 'MWP-1804 Pre Windows' );
+        $this->store_raw_note( $reports_id, $reports );
+        $this->store_raw_note( $share_id, $share );
+        $this->store_raw_note( $literal_id, $literal );
+        $this->store_raw_note( $windows_id, $windows );
+
+        MainWP_Install::instance()->repair_site_note_slashes();
+
+        $this->assertSame( $reports, $this->stored_note( $reports_id ) );
+        $this->assertSame( $share, $this->stored_note( $share_id ) );
+        $this->assertSame( $literal, $this->stored_note( $literal_id ) );
+        $this->assertSame( $windows, $this->stored_note( $windows_id ) );
+        $this->assertSame( 'complete', get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_OPTION ) );
+    }
+
+    /**
+     * A failed note UPDATE is reported as an error and leaves the old note and no skip row.
+     *
+     * @return void
+     */
+    public function test_failed_note_update_returns_an_error_and_leaves_no_skip_marker(): void {
+        $site_id = $this->create_note_site( 'MWP-1804 Failed Save' );
+        $this->store_raw_note( $site_id, 'before' );
+
+        $_POST['websiteid'] = $site_id;
+        $_POST['note']      = wp_slash( 'after' );
+
+        add_filter( 'query', array( $this, 'fail_note_writes' ) );
+
+        $message = '';
+        try {
+            MainWP_Manage_Sites_Handler::save_note();
+            $this->fail( 'A failed note save must not report success.' );
+        } catch ( \WPDieException $exception ) {
+            $message = $exception->getMessage();
+        } finally {
+            unset( $_POST['websiteid'], $_POST['note'] );
+            remove_filter( 'query', array( $this, 'fail_note_writes' ) );
+        }
+
+        $payload = json_decode( $message, true );
+        $this->assertIsArray( $payload );
+        $this->assertArrayHasKey( 'error', $payload );
+        $this->assertNotSame( 'SUCCESS', isset( $payload['result'] ) ? $payload['result'] : null );
+        $this->assertSame( 'before', $this->stored_note( $site_id ) );
+        $this->assertNull( $this->skip_row_value( $site_id ) );
     }
 
     /**
@@ -916,16 +926,16 @@ class Test_MWP_1804_Site_Note_Escape extends \WP_UnitTestCase {
     }
 
     /**
-     * Assert the skip row exists before the note UPDATE runs.
+     * Assert no skip row exists when the note UPDATE runs.
      *
      * @param string $query SQL.
      *
      * @return string
      */
-    public function assert_skip_before_note_write( $query ) {
+    public function assert_no_skip_before_note_write( $query ) {
         if ( is_string( $query ) && false !== stripos( $query, 'UPDATE' ) && false !== stripos( $query, 'SET note=' ) ) {
             $this->saw_note_write = true;
-            $this->assertSame( '1', $this->skip_row_value( $this->order_site_id ) );
+            $this->assertNull( $this->skip_row_value( $this->order_site_id ) );
             $this->assertSame( 'before', $this->stored_note( $this->order_site_id ) );
         }
         return $query;

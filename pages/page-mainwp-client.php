@@ -2089,7 +2089,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         $el_id_fln_1 = $field_name;
                         ?>
                             <div class="editor">
-                            <textarea class="code settings-field-value-change-handler" cols="80" rows="10" id="client_fields[default_field][<?php echo esc_attr( $el_id_fln_1 ); ?>]" name="client_fields[default_field][<?php echo esc_attr( $field_name ); ?>]"><?php echo esc_html( MainWP_Utility::client_note_for_editor( (string) $val ) ); ?></textarea>
+                            <textarea class="code settings-field-value-change-handler" cols="80" rows="10" id="client_fields[default_field][<?php echo esc_attr( $el_id_fln_1 ); ?>]" name="client_fields[default_field][<?php echo esc_attr( $field_name ); ?>]"><?php echo esc_textarea( MainWP_Utility::client_note_for_editor( (string) $val ) ); ?></textarea>
                             </div>
                             <?php
                     } elseif ( $client_id && 'client.created' === $field_name ) {

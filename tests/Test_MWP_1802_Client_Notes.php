@@ -615,8 +615,24 @@ class Test_MWP_1802_Client_Notes extends \WP_UnitTestCase {
 					$this->assertNotSame( 0, strpos( $attr_name, 'on' ), $context );
 					$this->assertNotSame( 'style', $attr_name, $context );
 					$this->assertNotContains( $attr_name, array( 'autofocus', 'tabindex', 'form', 'id' ), $context );
-					if ( in_array( $attr_name, array( 'href', 'src', 'action' ), true ) ) {
-						$this->assertStringNotContainsString( 'javascript:', strtolower( $attr->nodeValue ) );
+					$urls = array(
+						'href',
+						'src',
+						'action',
+						'formaction',
+						'poster',
+						'cite',
+						'background',
+						'data',
+						'codebase',
+						'srcset',
+						'dynsrc',
+						'lowsrc',
+						'xlink:href',
+					);
+					if ( in_array( $attr_name, $urls, true ) ) {
+						$value = $attr->nodeValue;
+						$this->assertSame( $value, wp_kses_bad_protocol( $value, wp_allowed_protocols() ), $context );
 					}
 				}
 			}
@@ -634,9 +650,12 @@ class Test_MWP_1802_Client_Notes extends \WP_UnitTestCase {
 		foreach ( $this->store_note_on_every_path( $note ) as $stored ) {
 			$this->assert_note_not_live( $stored );
 			$this->assertSame( $note, MainWP_Utility::client_note_for_editor( $stored ), $note );
-			$this->assertStringNotContainsString( '&amp;lt;', $stored, $note );
-			$this->assertStringNotContainsString( '&amp;gt;', $stored, $note );
-			$this->assertSame( $stored, MainWP_Utility::sanitize_client_note( $stored ), $note );
+			$this->assertSame( $note, MainWP_Utility::client_note_plain_text( $stored ), $note );
+			if ( false === strpos( $note, '&' ) ) {
+				$this->assertStringNotContainsString( '&amp;lt;', $stored, $note );
+				$this->assertStringNotContainsString( '&amp;gt;', $stored, $note );
+			}
+			$this->assertSame( $stored, MainWP_Utility::sanitize_client_note( MainWP_Utility::client_note_for_editor( $stored ) ), $note );
 			$this->assert_visible_note( $note, MainWP_Utility::client_note_html( $stored ) );
 		}
 
@@ -651,7 +670,9 @@ class Test_MWP_1802_Client_Notes extends \WP_UnitTestCase {
 			MainWP_Utility::client_note_html( $response['esc_note_content'] ),
 			$note
 		);
-		$this->assertStringNotContainsString( '&amp;lt;', $stored, $note );
+		if ( false === strpos( $note, '&' ) ) {
+			$this->assertStringNotContainsString( '&amp;lt;', $stored, $note );
+		}
 
 		$column = $this->render_notes_column( $client_id, $stored );
 		$this->assertSame( $note, $this->read_data_note( $column, $client_id ), $note );
@@ -668,7 +689,7 @@ class Test_MWP_1802_Client_Notes extends \WP_UnitTestCase {
 		$this->assertSame( $stored, $this->read_note( $client_id ), $note );
 		$this->save_note_through_edit_form( $client_id, $response['note'] );
 		$this->assertSame( $stored, $this->read_note( $client_id ), $note );
-		$this->dispatch_notes_save( $client_id, $stored );
+		$this->dispatch_notes_save( $client_id, $this->read_note_textarea( $this->render_edit_form( $client_id ) ) );
 		$this->assertSame( $stored, $this->read_note( $client_id ), $note );
 	}
 
@@ -692,6 +713,14 @@ class Test_MWP_1802_Client_Notes extends \WP_UnitTestCase {
 		}
 		if ( '<p>Hi</p>' === $typed ) {
 			$this->assertSame( 'Hi', $root->getElementsByTagName( 'p' )->item( 0 )->textContent );
+			return;
+		}
+		if ( '<a title="a<b &copy;" href="https://example.com">x</a>' === $typed ) {
+			$link = $root->getElementsByTagName( 'a' )->item( 0 );
+			$this->assertInstanceOf( \DOMElement::class, $link );
+			$this->assertSame( 'x', $link->textContent );
+			$this->assertSame( 'a<b &copy;', $link->getAttribute( 'title' ) );
+			$this->assertSame( 'https://example.com', $link->getAttribute( 'href' ) );
 			return;
 		}
 		$this->assertSame( $typed, $root->textContent, $typed );
@@ -790,6 +819,131 @@ class Test_MWP_1802_Client_Notes extends \WP_UnitTestCase {
 		$this->assertStringNotContainsString( '<', $stored );
 		$this->assertStringNotContainsString( '>', $stored );
 		$this->assertStringContainsString( '&lt;', $stored );
+	}
+
+	/**
+	 * Entities the user types are stored encoded and come back unchanged.
+	 *
+	 * @return void
+	 */
+	public function test_typed_entities_round_trip_on_the_first_save_and_later_saves(): void {
+		$samples = array(
+			'&lt;',
+			'&amp;',
+			'&copy;',
+			'&lt;p&gt;',
+			'Tom &amp; Jerry',
+		);
+
+		foreach ( $samples as $note ) {
+			$this->assert_editor_round_trip( $note );
+			$stored = MainWP_Utility::sanitize_client_note( $note );
+			$html   = MainWP_Utility::client_note_html( $stored );
+			$root   = $this->note_root( $html );
+			$this->assertNotNull( $root, $note );
+			$this->assertSame( 0, $root->getElementsByTagName( 'p' )->length, $note );
+			$this->assertSame( $note, $root->textContent, $note );
+			$this->assertStringNotContainsString( '©', $html, $note );
+			$this->assertSame( $note, MainWP_Utility::client_note_plain_text( $stored ), $note );
+		}
+
+		$with_title = '<a title="a<b &copy;" href="https://example.com">x</a>';
+		$stored     = MainWP_Utility::sanitize_client_note( $with_title );
+		$this->assertStringContainsString( 'title="a&lt;b &amp;copy;"', $stored );
+		$this->assertDoesNotMatchRegularExpression( '/title="[^"]*</', $stored );
+		$this->assertSame( $with_title, MainWP_Utility::client_note_for_editor( $stored ) );
+		$this->assert_editor_round_trip( $with_title );
+	}
+
+	/**
+	 * A note accepted at the typed cap still renders when storage is longer.
+	 *
+	 * @return void
+	 */
+	public function test_display_cap_uses_the_typed_length(): void {
+		$inner = str_repeat( 'a<', 4416 ) . 'b';
+		$typed = '<strong>' . $inner . '</strong>';
+		$this->assertSame( 8850, mb_strlen( $typed, 'UTF-8' ) );
+
+		$stored = MainWP_Utility::sanitize_client_note( $typed );
+		$this->assertGreaterThan( MainWP_Utility::CLIENT_NOTE_MAX_LENGTH, mb_strlen( $stored, 'UTF-8' ) );
+		$this->assertSame( $typed, MainWP_Utility::client_note_for_editor( $stored ) );
+
+		$html = MainWP_Utility::client_note_html( $stored );
+		$this->assertStringContainsString( '<strong>', $html );
+		$this->assertStringNotContainsString( '&lt;strong&gt;', $html );
+		$root = $this->note_root( $html );
+		$this->assertNotNull( $root );
+		$this->assertSame( 1, $root->getElementsByTagName( 'strong' )->length );
+		$this->assertStringContainsString( 'a<', $root->getElementsByTagName( 'strong' )->item( 0 )->textContent );
+
+		$client_id = $this->create_client( $stored );
+		$column    = $this->render_notes_column( $client_id, $stored );
+		$this->assertSame( $typed, $this->read_data_note( $column, $client_id ) );
+		$column_root = $this->note_root( $column );
+		$this->assertNotNull( $column_root );
+		$this->assertSame( 1, $column_root->getElementsByTagName( 'strong' )->length );
+
+		ob_start();
+		\MainWP\Dashboard\MainWP_Client_Overview_Note::render_addition_info( $client_id );
+		$widget = ob_get_clean();
+		$this->assertSame( $typed, $this->read_data_note( $widget, $client_id ) );
+		$widget_root = $this->note_root( $widget );
+		$this->assertNotNull( $widget_root );
+		$this->assertGreaterThanOrEqual( 1, $widget_root->getElementsByTagName( 'strong' )->length );
+	}
+
+	/**
+	 * Notes written by the previous sanitizer still edit and display.
+	 *
+	 * @return void
+	 */
+	public function test_legacy_stored_notes_still_display_and_edit(): void {
+		$cases = array(
+			'<strong>Hello</strong>'           => '<strong>Hello</strong>',
+			'a &lt; b &amp; c'                  => 'a < b & c',
+			'<p>Already decoded</p>'           => '<p>Already decoded</p>',
+			'©'                                 => '©',
+			'<img src=x onerror=alert(1)>'     => '<img src=x onerror=alert(1)>',
+		);
+
+		foreach ( $cases as $stored_note => $editor ) {
+			$client_id = $this->create_client( $stored_note );
+			$this->assertSame( $editor, $this->read_note_textarea( $this->render_edit_form( $client_id ) ), $stored_note );
+			$this->assertSame( $editor, MainWP_Utility::client_note_for_editor( $stored_note ), $stored_note );
+
+			$html = MainWP_Utility::client_note_html( $stored_note );
+			$this->assert_note_not_live( $html );
+			if ( '<img src=x onerror=alert(1)>' === $stored_note ) {
+				$this->assertStringNotContainsString( '<img', $html );
+				$this->assertStringContainsString( '&lt;img src=x onerror=alert(1)&gt;', $html );
+			}
+
+			$this->save_note_through_edit_form( $client_id, $editor );
+			$this->assertSame( $editor, MainWP_Utility::client_note_for_editor( $this->read_note( $client_id ) ), $stored_note );
+			$this->dispatch_notes_save( $client_id, $editor );
+			$this->assertSame( $editor, MainWP_Utility::client_note_for_editor( $this->read_note( $client_id ) ), $stored_note );
+		}
+	}
+
+	/**
+	 * Plain text inverts storage entities and does not decode anything else.
+	 *
+	 * @return void
+	 */
+	public function test_plain_text_decodes_only_storage_entities(): void {
+		$typed  = 'Cost &amp; <extra> &copy; &lt;p&gt;';
+		$stored = MainWP_Utility::sanitize_client_note( $typed );
+
+		$this->assertSame( $typed, MainWP_Utility::client_note_plain_text( $stored ) );
+		$this->assertNotSame( $typed, $stored );
+		$this->assertStringContainsString( '&amp;amp;', $stored );
+		$this->assertStringContainsString( '&amp;copy;', $stored );
+		$this->assertStringContainsString( '&amp;lt;p&amp;gt;', $stored );
+		$this->assertStringNotContainsString( '©', MainWP_Utility::client_note_plain_text( $stored ) );
+		$this->assertStringNotContainsString( '<p>', MainWP_Utility::client_note_plain_text( $stored ) );
+		$this->assertSame( '&amp;lt;', MainWP_Utility::client_note_plain_text( '&amp;amp;lt;' ) );
+		$this->assertSame( '&copy;', MainWP_Utility::client_note_plain_text( '&amp;copy;' ) );
 	}
 
 	/**

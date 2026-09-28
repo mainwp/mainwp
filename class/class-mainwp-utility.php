@@ -1002,9 +1002,10 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      *
      * Raw markup is kept only for a complete, well-formed tag on the note
      * allowlist whose attributes are allowed. Every other < and > is stored
-     * as &lt; and &gt;, including comparison text, unknown tags, and an
-     * unfinished tag at the end of the note. A non-string is stored as empty.
-     * A note over the length cap is escaped without tokenizing.
+     * as &lt; and &gt;. A typed ampersand is stored as &amp; and is not
+     * decoded, so "&copy;" and "&lt;p&gt;" stay text. A non-string is stored
+     * as empty. A note over the length cap is escaped without tokenizing.
+     * The cap counts the typed text, which is the string passed here.
      *
      * @param mixed $note Note field.
      * @return string Sanitized note.
@@ -1018,36 +1019,62 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             return self::client_note_fail_closed( $note );
         }
 
-        $note = self::decode_client_note_entities( $note );
-        if ( self::client_note_exceeds_limit( $note ) ) {
-            return self::client_note_fail_closed( $note );
-        }
-
         return self::client_note_tokenize( $note );
     }
 
     /**
      * Note text shown in the editor.
      *
-     * Storage encodes brackets that are not an allowlisted tag. The editor
-     * shows those brackets as the user typed them.
+     * Inverts only the entities this sanitizer writes (&amp; &lt; &gt;),
+     * once. "&amp;lt;" becomes "&lt;", and "&copy;" is left as typed.
      *
      * @param mixed $note Stored note.
      * @return string
      */
     public static function client_note_for_editor( $note ) {
+        return self::client_note_plain_text( $note );
+    }
+
+    /**
+     * Stored note for a plain-text context.
+     *
+     * HTML, REST, and abilities keep the stored string. Plain text (a
+     * plain-text email, a CSV cell, or a text-only report token) needs this
+     * so "&amp;" is shown as "&". The decode is the same one the editor uses.
+     *
+     * @param mixed $note Stored note.
+     * @return string
+     */
+    public static function client_note_plain_text( $note ) {
         if ( ! is_string( $note ) ) {
             return '';
         }
-        return self::decode_client_note_entities( $note );
+        return self::client_note_decode_storage_entities( $note );
+    }
+
+    /**
+     * Escape editor text for an HTML attribute.
+     *
+     * Attribute escaping decodes &lt; before encoding, so a typed "&lt;"
+     * would show up as "<" in the modal. Ampersands are protected first.
+     *
+     * @param string $note Editor text.
+     * @return string
+     */
+    public static function client_note_editor_attr( $note ) {
+        if ( ! is_string( $note ) ) {
+            return '';
+        }
+        return self::client_note_esc_attr( $note );
     }
 
     /**
      * Format a client note for HTML display.
      *
-     * Allowed tags stay as tags. Other brackets are encoded once, so the page
-     * shows them as typed and a second pass does not produce &amp;lt;. A note
-     * over the length cap is escaped, with line breaks, and is not tokenized.
+     * The length cap uses the typed length, matching a save. An accepted note
+     * whose stored form is longer only because brackets were encoded still
+     * renders its allowlisted tags. A typed note over the cap is escaped,
+     * with line breaks, and is not tokenized.
      *
      * @param mixed $note Note field.
      * @return string HTML-safe note.
@@ -1057,11 +1084,12 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             return '';
         }
 
-        if ( self::client_note_exceeds_limit( $note ) ) {
+        $typed = self::client_note_for_editor( $note );
+        if ( self::client_note_exceeds_limit( $typed ) ) {
             return nl2br( esc_html( $note ), false );
         }
 
-        return self::sanitize_client_note( $note );
+        return self::sanitize_client_note( $typed );
     }
 
     /**
@@ -1085,7 +1113,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     /**
      * Encode every bracket that is not a verified allowlisted tag.
      *
-     * @param string $note Decoded note.
+     * @param string $note Typed note. Ampersands are encoded, not decoded.
      * @return string
      */
     private static function client_note_tokenize( $note ) {
@@ -1118,7 +1146,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             }
 
             if ( self::client_note_tag_is_safe( $tag ) ) {
-                $out .= $tag['raw'];
+                $out .= self::client_note_emit_safe_tag( $tag );
             } else {
                 $out .= self::client_note_encode_text( $tag['raw'] );
             }
@@ -1368,6 +1396,81 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             array( '&amp;', '&lt;', '&gt;' ),
             $text
         );
+    }
+
+    /**
+     * Write one allowlisted tag, with attribute values passed through esc_attr().
+     *
+     * The raw span is not copied. A "<" typed inside title="..." is encoded.
+     *
+     * @param array<string, mixed> $tag Parsed tag.
+     * @return string
+     */
+    private static function client_note_emit_safe_tag( $tag ) {
+        if ( ! empty( $tag['closer'] ) ) {
+            return '</' . $tag['name'] . '>';
+        }
+
+        $html = '<' . $tag['name'];
+        foreach ( $tag['attrs'] as $attr ) {
+            $html .= ' ' . $attr['name'];
+            if ( null !== $attr['value'] ) {
+                $html .= '="' . self::client_note_esc_attr( $attr['value'] ) . '"';
+            }
+        }
+        return $html . '>';
+    }
+
+    /**
+     * Escape an attribute value without decoding entities the user typed.
+     *
+     * Attribute escaping decodes &amp; and &lt; before it encodes. A marker
+     * keeps a typed ampersand as text, so "&copy;" is stored as "&amp;copy;".
+     *
+     * @param string $value Attribute value.
+     * @return string
+     */
+    private static function client_note_esc_attr( $value ) {
+        $marker = "\x1A";
+        if ( false !== strpos( $value, $marker ) ) {
+            return htmlspecialchars( $value, ENT_QUOTES, 'UTF-8', true );
+        }
+
+        $escaped = esc_attr( str_replace( '&', $marker, $value ) );
+        return str_replace( $marker, '&amp;', $escaped );
+    }
+
+    /**
+     * Invert one level of &amp; &lt; &gt; and nothing else.
+     *
+     * "&amp;lt;" becomes "&lt;", not "<". "&copy;" is not a storage entity.
+     *
+     * @param string $note Stored note.
+     * @return string
+     */
+    private static function client_note_decode_storage_entities( $note ) {
+        $decoded = preg_replace_callback(
+            '/&(?:amp|lt|gt);/',
+            array( self::class, 'client_note_replace_storage_entity' ),
+            $note
+        );
+        return is_string( $decoded ) ? $decoded : $note;
+    }
+
+    /**
+     * Replace one storage entity. The search does not rescan the replacement.
+     *
+     * @param array<int, string> $entity Regex match. Index 0 is the entity.
+     * @return string
+     */
+    private static function client_note_replace_storage_entity( $entity ) {
+        if ( '&amp;' === $entity[0] ) {
+            return '&';
+        }
+        if ( '&lt;' === $entity[0] ) {
+            return '<';
+        }
+        return '>';
     }
 
     /**

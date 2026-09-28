@@ -964,18 +964,54 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     /**
      * Sanitize a client note for storage.
      *
-     * Angle brackets that are not part of a tag are kept as the characters the
-     * user typed. Real tags still go through esc_content(), which drops script
-     * tags, javascript: links, and on* attributes.
+     * Entities are decoded first. Each pass holds non-tag < and > aside, runs
+     * the note allowlist, then puts those characters back. Stripping a nested
+     * tag can assemble a new one, so the pass repeats until the string stops
+     * changing, and kses runs once more on that result. Comparison text such
+     * as "a < b" stays as typed. A non-string is stored as empty.
      *
      * @param mixed $note Note field.
-     * @return string Sanitized note, or an empty string when $note is not a string.
+     * @return string Sanitized note.
      */
     public static function sanitize_client_note( $note ) {
         if ( ! is_string( $note ) ) {
             return '';
         }
 
+        $note     = self::decode_client_note_entities( $note );
+        $previous = null;
+        for ( $pass = 0; $pass < 16 && $note !== $previous; $pass++ ) {
+            $previous = $note;
+            $note     = self::client_note_pass( $note );
+        }
+
+        return self::client_note_pass( $note );
+    }
+
+    /**
+     * Decode entities until the text stops changing.
+     *
+     * One decode is not enough for a value that was encoded more than once.
+     *
+     * @param string $note Note text.
+     * @return string
+     */
+    private static function decode_client_note_entities( $note ) {
+        $previous = null;
+        for ( $pass = 0; $pass < 16 && $note !== $previous; $pass++ ) {
+            $previous = $note;
+            $note     = html_entity_decode( $note, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+        }
+        return $note;
+    }
+
+    /**
+     * Run one allowlist pass and restore non-tag brackets.
+     *
+     * @param string $note Note text.
+     * @return string
+     */
+    private static function client_note_pass( $note ) {
         $lt        = self::client_note_token( $note, 'lt' );
         $gt        = self::client_note_token( $note, 'gt' );
         $protected = self::replace_plain_angle_brackets( $note, $lt, $gt );

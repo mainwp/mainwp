@@ -245,6 +245,109 @@ class Test_MWP_1802_Client_Notes extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Nested tags and their entity-encoded forms cannot rebuild a live tag.
+	 *
+	 * @return void
+	 */
+	public function test_nested_note_markup_stays_neutral_at_every_depth(): void {
+		$bases = array(
+			'<<script>script>alert(1)<</script>/script>',
+			'<scr<b>ipt>',
+			'<<b>img src=x onerror=alert(1)>',
+			'<<b>a href="javascript:alert(1)">',
+		);
+
+		for ( $level = 2; $level <= 5; $level++ ) {
+			foreach ( $bases as $base ) {
+				$nested = $this->nest_note_payload( $base, $level );
+				$forms  = array(
+					$nested,
+					str_replace( array( '<', '>' ), array( '&lt;', '&gt;' ), $nested ),
+				);
+				foreach ( $forms as $note ) {
+					foreach ( $this->store_note_on_every_path( $note ) as $stored ) {
+						$this->assert_note_neutralized( $stored );
+					}
+					$this->assert_note_neutralized( MainWP_Utility::client_note_html( $note ) );
+					$this->assert_note_neutralized( MainWP_Utility::sanitize_client_note( html_entity_decode( $note, ENT_QUOTES | ENT_HTML5, 'UTF-8' ) ) );
+				}
+			}
+		}
+	}
+
+	/**
+	 * A quote inside comparison text cannot break out of the notes tooltip.
+	 *
+	 * @return void
+	 */
+	public function test_client_list_tooltip_escapes_attribute_breakout(): void {
+		$note  = 'x < a" onmouseover="alert(1)" > y';
+		$table = new class() extends \MainWP\Dashboard\MainWP_Client_List_Table {
+			/**
+			 * Render only the notes column.
+			 *
+			 * @param array $item Client row.
+			 * @return string
+			 */
+			public function render_notes_column( $item ) {
+				$this->column_headers = array(
+					array( 'notes' => 'Notes' ),
+					array(),
+					array(),
+				);
+				ob_start();
+				$this->single_row_columns( $item );
+				return ob_get_clean();
+			}
+		};
+
+		$html = $table->render_notes_column(
+			array(
+				'client_id' => 1,
+				'note'      => $note,
+			)
+		);
+
+		$this->assertMatchesRegularExpression( '/data-tooltip="[^"]*"/', $html );
+		$this->assertDoesNotMatchRegularExpression( '/data-tooltip="[^"]*"\s+onmouseover\s*=/i', $html );
+		$this->assertStringContainsString( 'onmouseover=&quot;alert(1)&quot;', $html );
+	}
+
+	/**
+	 * Wrap each < so one kses pass reveals the previous payload.
+	 *
+	 * Level 2 is the payload itself.
+	 *
+	 * @param string $payload Base payload.
+	 * @param int    $level   Nesting level, 2 through 5.
+	 * @return string
+	 */
+	private function nest_note_payload( $payload, $level ) {
+		$nested = $payload;
+		for ( $depth = 2; $depth < $level; $depth++ ) {
+			$nested = str_replace( '<', '<<b>', $nested );
+		}
+		return $nested;
+	}
+
+	/**
+	 * A stored or displayed note must not contain an executable tag.
+	 *
+	 * @param string $stored Note text.
+	 * @return void
+	 */
+	private function assert_note_neutralized( $stored ) {
+		$this->assertIsString( $stored );
+		$lower = strtolower( $stored );
+		$this->assertStringNotContainsString( '<script', $lower );
+		$this->assertStringNotContainsString( '</script', $lower );
+		$this->assertStringNotContainsString( 'javascript:', $lower );
+		$this->assertStringNotContainsString( 'onerror', $lower );
+		$this->assertStringNotContainsString( '<img', $lower );
+		$this->assertDoesNotMatchRegularExpression( '/\son[a-z0-9_-]*\s*=/i', $stored );
+	}
+
+	/**
 	 * Ordinary text, including newlines, is stored and read back unchanged.
 	 *
 	 * @return void

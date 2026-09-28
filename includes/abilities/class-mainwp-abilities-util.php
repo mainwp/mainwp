@@ -1512,30 +1512,6 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
     }
 
     /**
-     * Status polling needs an owner check because job IDs are shared across
-     * the three job types. A null owner preserves access to legacy jobs
-     * without a stamp; callers handle missing jobs separately.
-     *
-     * @param string $job_id Job identifier.
-     * @return int|null Owner user ID, or null if unknown.
-     */
-    public static function get_batch_job_owner( string $job_id ): ?int {
-        $job_data = self::get_batch_sync_status( $job_id );
-        if ( null === $job_data ) {
-            $job_data = self::get_batch_update_status( $job_id );
-        }
-        if ( null === $job_data ) {
-            $job_data = self::get_batch_operation_status( $job_id );
-        }
-
-        if ( is_array( $job_data ) && isset( $job_data['user_id'] ) ) {
-            return (int) $job_data['user_id'];
-        }
-
-        return null;
-    }
-
-    /**
      * Normalize ability input to ensure it's always an array.
      *
      * Workaround for Abilities API REST controller bug where missing or empty

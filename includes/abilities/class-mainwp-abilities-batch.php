@@ -256,7 +256,7 @@ class MainWP_Abilities_Batch { //phpcs:ignore -- NOSONAR - multi methods.
 
         // A job ID alone must not grant access to another user's status.
         // Legacy jobs have no owner stamp and remain readable.
-        $job_owner = MainWP_Abilities_Util::get_batch_job_owner( $job_id );
+        $job_owner = isset( $job_data['user_id'] ) ? (int) $job_data['user_id'] : null;
         if ( null !== $job_owner && get_current_user_id() !== $job_owner ) {
             return new \WP_Error(
                 'mainwp_permission_denied',

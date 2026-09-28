@@ -58,6 +58,7 @@ class Test_MWP_1802_Client_Notes extends \WP_UnitTestCase {
 
 		remove_filter( 'mainwp_currentusercan', array( $this, 'deny_manage_clients' ), 10 );
 		remove_filter( 'wp_doing_ajax', '__return_true' );
+		$this->set_note_pass_cap( null );
 
 		$_POST    = array();
 		$_REQUEST = array();
@@ -276,6 +277,45 @@ class Test_MWP_1802_Client_Notes extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Nesting past the old 16-pass cap cannot leave a live tag.
+	 *
+	 * @return void
+	 */
+	public function test_deep_nested_note_markup_stays_neutral(): void {
+		$tails = array(
+			'img src=x onerror=alert(1)>',
+			'a href="javascript:alert(1)">',
+			'script>alert(1)</script>',
+		);
+
+		foreach ( array( 18, 52 ) as $level ) {
+			foreach ( $tails as $tail ) {
+				$note = str_repeat( '<', $level ) . str_repeat( 'b>', $level - 1 ) . $tail;
+				foreach ( $this->store_note_on_every_path( $note ) as $stored ) {
+					$this->assert_note_neutralized( $stored );
+				}
+				$this->assert_note_neutralized( MainWP_Utility::client_note_html( $note ) );
+			}
+		}
+	}
+
+	/**
+	 * A note that is still changing at the pass cap is stored with no raw brackets.
+	 *
+	 * @return void
+	 */
+	public function test_note_sanitize_fails_closed_when_the_pass_cap_is_hit(): void {
+		$note = 'a < b <<b>img src=x onerror=alert(1)>';
+		$this->set_note_pass_cap( 1 );
+
+		foreach ( $this->store_note_on_every_path( $note ) as $stored ) {
+			$this->assert_fail_closed_note( $stored );
+		}
+		$this->assert_fail_closed_note( MainWP_Utility::client_note_html( $note ) );
+		$this->assert_fail_closed_note( MainWP_Utility::sanitize_client_note( $note ) );
+	}
+
+	/**
 	 * A quote inside comparison text cannot break out of the notes tooltip.
 	 *
 	 * @return void
@@ -345,6 +385,31 @@ class Test_MWP_1802_Client_Notes extends \WP_UnitTestCase {
 		$this->assertStringNotContainsString( 'onerror', $lower );
 		$this->assertStringNotContainsString( '<img', $lower );
 		$this->assertDoesNotMatchRegularExpression( '/\son[a-z0-9_-]*\s*=/i', $stored );
+	}
+
+	/**
+	 * The fail-closed result has no raw brackets and no live handler.
+	 *
+	 * @param string $stored Note text.
+	 * @return void
+	 */
+	private function assert_fail_closed_note( $stored ) {
+		$this->assert_note_neutralized( $stored );
+		$this->assertStringNotContainsString( '<', $stored );
+		$this->assertStringNotContainsString( '>', $stored );
+		$this->assertStringContainsString( '&lt;', $stored );
+	}
+
+	/**
+	 * Override the allowlist pass cap. Null restores the decoded-length bound.
+	 *
+	 * @param int|null $cap Pass cap.
+	 * @return void
+	 */
+	private function set_note_pass_cap( $cap ) {
+		$property = new \ReflectionProperty( MainWP_Utility::class, 'client_note_pass_cap' );
+		$property->setAccessible( true );
+		$property->setValue( null, $cap );
 	}
 
 	/**

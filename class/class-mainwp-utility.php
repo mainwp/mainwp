@@ -66,6 +66,15 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     private static $instance = null;
 
     /**
+     * Allowlist-pass cap for a client note. Null uses the decoded length plus two.
+     *
+     * @static
+     *
+     * @var int|null
+     */
+    private static $client_note_pass_cap = null;
+
+    /**
      * Store the disabled php functions.
      *
      * @static
@@ -967,8 +976,10 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * Entities are decoded first. Each pass holds non-tag < and > aside, runs
      * the note allowlist, then puts those characters back. Stripping a nested
      * tag can assemble a new one, so the pass repeats until the string stops
-     * changing, and kses runs once more on that result. Comparison text such
-     * as "a < b" stays as typed. A non-string is stored as empty.
+     * changing. The number of passes is the decoded length plus two. If the
+     * string is still changing when that bound is hit, every tag is stripped
+     * and the remaining brackets are encoded. Comparison text such as "a < b"
+     * stays as typed. A non-string is stored as empty.
      *
      * @param mixed $note Note field.
      * @return string Sanitized note.
@@ -979,13 +990,42 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         }
 
         $note     = self::decode_client_note_entities( $note );
+        $limit    = self::client_note_pass_limit( $note );
         $previous = null;
-        for ( $pass = 0; $pass < 16 && $note !== $previous; $pass++ ) {
+        for ( $pass = 0; $pass < $limit && $note !== $previous; $pass++ ) {
             $previous = $note;
             $note     = self::client_note_pass( $note );
         }
 
-        return self::client_note_pass( $note );
+        if ( $note !== $previous ) {
+            return self::client_note_fail_closed( $note );
+        }
+
+        return $note;
+    }
+
+    /**
+     * How many allowlist passes to run before failing closed.
+     *
+     * @param string $note Decoded note.
+     * @return int
+     */
+    private static function client_note_pass_limit( $note ) {
+        if ( null !== self::$client_note_pass_cap ) {
+            return (int) self::$client_note_pass_cap;
+        }
+        return strlen( $note ) + 2;
+    }
+
+    /**
+     * Strip tags and encode brackets when the allowlist pass does not settle.
+     *
+     * @param string $note Partial note.
+     * @return string
+     */
+    private static function client_note_fail_closed( $note ) {
+        $note = wp_strip_all_tags( $note );
+        return str_replace( array( '<', '>' ), array( '&lt;', '&gt;' ), $note );
     }
 
     /**

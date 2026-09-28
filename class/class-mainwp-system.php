@@ -144,6 +144,8 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $this->load_all_options();
 
         $this->update_install();
+        // After install(), so a fresh install has already marked the note repair complete.
+        add_action( 'admin_init', array( MainWP_Install::instance(), 'maybe_repair_site_note_slashes' ) );
         $this->plugin_slug = plugin_basename( $mainwp_plugin_file );
 
         add_action( 'shutdown', array( $this, 'hook_wp_shutdown' ) );

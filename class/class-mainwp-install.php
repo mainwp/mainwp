@@ -31,7 +31,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * @var string DB version info.
      */
-    protected $mainwp_db_version = '9.0.2.6'; // NOSONAR - no IP. 9.0.2.6 stripslashes child site notes once (MWP-1804). 9.0.2.5 repairs a missing wp_group primary key. 9.0.2.4 drops the stray unique index on backup progress task_id. Bumped for MWP-1566 sibling-dir chmod migration (MWP-1558 follow-up). Original 9.0.2.0 bump for MWP-1557/1558.
+    protected $mainwp_db_version = '9.0.2.5'; // NOSONAR - no IP. 9.0.2.4 drops the stray unique index on backup progress task_id. Bumped for MWP-1566 sibling-dir chmod migration (MWP-1558 follow-up). Original 9.0.2.0 bump for MWP-1557/1558.
 
     /**
      * Protected variable to hold the database option name.
@@ -51,9 +51,37 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     const WP_GROUP_MISSING_PRIMARY_KEY_REPAIR_PENDING = 'mainwp_wp_group_missing_primary_key_repair_pending';
 
     /**
-     * Set after the one-time site-note slash repair so a second pass does not strip again.
+     * Autoloaded option. "complete" means the site-note slash repair finished.
+     *
+     * Read on admin_init. Any other value means the repair still has to run.
+     * This is not a database version, so it does not collide with other migrations.
      */
     const SITE_NOTE_SLASH_REPAIR_OPTION = 'mainwp_site_note_slash_repair';
+
+    /**
+     * Last site id whose batch finished. Autoload is off, so a timeout can resume after it.
+     */
+    const SITE_NOTE_SLASH_REPAIR_LAST_ID = 'mainwp_site_note_slash_repair_last_id';
+
+    /**
+     * Lock row so two admin requests cannot repair the same notes at once. Autoload is off.
+     */
+    const SITE_NOTE_SLASH_REPAIR_LOCK = 'mainwp_site_note_slash_repair_lock';
+
+    /**
+     * Seconds a crashed request may hold the repair lock.
+     */
+    const SITE_NOTE_SLASH_REPAIR_LOCK_TTL = 300;
+
+    /**
+     * Site rows read per batch. Tests may lower this through a filter.
+     */
+    const SITE_NOTE_SLASH_REPAIR_BATCH = 100;
+
+    /**
+     * Characters mysqli_real_escape_string may place after a backslash.
+     */
+    const SITE_NOTE_SLASH_REPAIR_ESCAPED = "\\'\"nr0Z";
 
     /**
      * Private static variable to hold the single instance of the class.
@@ -94,6 +122,8 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     public function install() { // phpcs:ignore -- NOSONAR - complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
         // get_site_option is multisite aware!
         $currentVersion = get_site_option( $this->option_db_key );
+        // An empty version is the new-install path. Mark the note repair done at the end without scanning.
+        $fresh_install = empty( $currentVersion );
 
         if ( empty( $currentVersion ) ) {
             update_option( 'mainwp_run_quick_setup', 'yes' );
@@ -111,6 +141,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         $rslt = static::instance()->query( "SHOW TABLES LIKE '{$wp_table}'" );
         if ( empty( static::num_rows( $rslt ) ) ) {
             $currentVersion = false;
+            $fresh_install  = true;
         }
 
         if ( $currentVersion === $this->mainwp_db_version ) {
@@ -473,6 +504,11 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         } else {
             update_site_option( $this->option_db_key, $this->mainwp_db_version );
         }
+
+        // No legacy notes exist on a new install. Skip the row scan.
+        if ( $fresh_install ) {
+            $this->mark_site_note_slash_repair_complete();
+        }
     }
 
     /**
@@ -592,12 +628,6 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
 
         if ( ! empty( $currentVersion ) && version_compare( $currentVersion, '9.0.2.5', '<' ) ) { // NOSONAR - no ip.
             $this->repair_wp_group_primary_key();
-        }
-
-        // MWP-1804: notes saved before prepare() stopped seeing an already-escaped value
-        // kept one extra slash layer. Strip it once. Later writes store the typed text.
-        if ( ! empty( $currentVersion ) && version_compare( $currentVersion, '9.0.2.6', '<' ) ) { // NOSONAR - no ip.
-            $this->repair_site_note_slashes();
         }
 
         $this->wpdb->suppress_errors( $suppress );
@@ -721,46 +751,311 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     }
 
     /**
-     * Strip the extra slash layer that update_note() used to store.
+     * Run the site-note slash repair unless it is already complete.
      *
-     * The previous write ran esc_sql() before prepare(), so the column kept quotes as \'
-     * and doubled backslashes. The screen used to wp_unslash() that away. stripslashes()
-     * is that same reversal, applied once to rows that still contain a backslash. The
-     * option flag makes a second call a no-op, including a backslash saved later.
+     * The option is autoloaded, so the usual admin request only reads memory and returns.
+     *
+     * @return void
+     */
+    public function maybe_repair_site_note_slashes() {
+        if ( 'complete' === get_option( self::SITE_NOTE_SLASH_REPAIR_OPTION ) ) {
+            return;
+        }
+
+        $this->repair_site_note_slashes();
+    }
+
+    /**
+     * Reverse the extra slash layer that update_note() used to store.
+     *
+     * The old write passed esc_sql() into prepare(), and MySQL kept one escape layer.
+     * This walks that layer back. It does not follow the database version, because other
+     * open migrations already claim the next version numbers.
      *
      * @return void
      */
     public function repair_site_note_slashes() {
-        if ( get_site_option( self::SITE_NOTE_SLASH_REPAIR_OPTION ) ) {
+        $token = $this->acquire_site_note_slash_repair_lock();
+        if ( false === $token ) {
             return;
         }
 
-        $table = esc_sql( $this->table_name( 'wp' ) );
-        $like  = '%' . $this->wpdb->esc_like( '\\' ) . '%';
-        $rows  = $this->wpdb->get_results(
-            $this->wpdb->prepare(
-                "SELECT id, note FROM `{$table}` WHERE note LIKE %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name escaped via esc_sql.
-                $like
-            )
-        );
-
-        if ( is_array( $rows ) ) {
-            foreach ( $rows as $row ) {
-                $fixed = stripslashes( (string) $row->note );
-                if ( $fixed === $row->note ) {
-                    continue;
-                }
-                $this->wpdb->update(
-                    $this->table_name( 'wp' ),
-                    array( 'note' => $fixed ),
-                    array( 'id' => (int) $row->id ),
-                    array( '%s' ),
-                    array( '%d' )
-                );
-            }
+        // Re-check inside the lock so the request that just finished is not run again.
+        if ( 'complete' === get_option( self::SITE_NOTE_SLASH_REPAIR_OPTION ) ) {
+            $this->release_site_note_slash_repair_lock( $token );
+            return;
         }
 
-        update_site_option( self::SITE_NOTE_SLASH_REPAIR_OPTION, $this->mainwp_db_version );
+        $finished = $this->repair_site_note_slash_batches();
+        $this->release_site_note_slash_repair_lock( $token );
+
+        if ( $finished ) {
+            $this->mark_site_note_slash_repair_complete();
+        }
+    }
+
+    /**
+     * Repair notes in id order, saving the last finished id after each full batch.
+     *
+     * A failed read or update returns before that save and before the complete flag,
+     * so the next admin request retries the unfinished rows.
+     *
+     * @return bool True when every row was read and every needed update succeeded.
+     */
+    private function repair_site_note_slash_batches() {
+        $table   = esc_sql( $this->table_name( 'wp' ) );
+        $batch   = (int) apply_filters( 'mainwp_site_note_slash_repair_batch_size', self::SITE_NOTE_SLASH_REPAIR_BATCH );
+        $last_id = (int) get_option( self::SITE_NOTE_SLASH_REPAIR_LAST_ID, 0 );
+
+        if ( $batch < 1 ) {
+            $batch = self::SITE_NOTE_SLASH_REPAIR_BATCH;
+        }
+
+        while ( true ) {
+            $sql     = $this->wpdb->prepare(
+                "SELECT id, note FROM `{$table}` WHERE id > %d ORDER BY id ASC LIMIT %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name escaped via esc_sql.
+                $last_id,
+                $batch
+            );
+            $queried = $this->wpdb->query( $sql ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Batched repair read; failure must stay visible to the caller.
+            if ( false === $queried || '' !== (string) $this->wpdb->last_error ) {
+                return false;
+            }
+
+            $rows = $this->wpdb->last_result;
+            if ( ! is_array( $rows ) || empty( $rows ) ) {
+                return true;
+            }
+
+            $batch_last = $last_id;
+            foreach ( $rows as $row ) {
+                $note = (string) $row->note;
+                $id   = (int) $row->id;
+
+                if ( $this->site_note_is_legacy_escaped( $note ) ) {
+                    $fixed = $this->unescape_legacy_site_note( $note );
+                    do_action( 'mainwp_site_note_slash_repair_before_update', $id, $note, $fixed );
+                    $updated = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Compare-and-swap write; zero matched rows is success.
+                        $this->wpdb->prepare(
+                            "UPDATE `{$table}` SET note=%s WHERE id=%d AND note=%s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name escaped via esc_sql.
+                            $fixed,
+                            $id,
+                            $note
+                        )
+                    );
+                    // Zero rows means the note changed after the read. That is not a database error.
+                    if ( false === $updated || '' !== (string) $this->wpdb->last_error ) {
+                        return false;
+                    }
+                }
+
+                $batch_last = $id;
+            }
+
+            if ( $batch_last <= $last_id || ! $this->save_site_note_slash_repair_last_id( $batch_last ) ) {
+                return false;
+            }
+
+            $last_id = $batch_last;
+        }
+    }
+
+    /**
+     * Whether this column value can only have been written by the old esc_sql() path.
+     *
+     * That escape never left a bare quote, and it only wrote a backslash before
+     * backslash, quote, double quote, n, r, 0, or Z. Anything else was stored later.
+     *
+     * @param string $note Raw note column.
+     *
+     * @return bool True when the note still has a reversible escape sequence.
+     */
+    private function site_note_is_legacy_escaped( $note ) {
+        $length     = strlen( $note );
+        $saw_escape = false;
+
+        for ( $i = 0; $i < $length; $i++ ) {
+            $char = $note[ $i ];
+            if ( "'" === $char || '"' === $char ) {
+                return false;
+            }
+            if ( '\\' !== $char ) {
+                continue;
+            }
+            if ( $i + 1 >= $length || false === strpos( self::SITE_NOTE_SLASH_REPAIR_ESCAPED, $note[ $i + 1 ] ) ) {
+                return false;
+            }
+            $saw_escape = true;
+            ++$i;
+        }
+
+        return $saw_escape;
+    }
+
+    /**
+     * Reverse one mysqli_real_escape_string layer, including real line breaks.
+     *
+     * The stripslashes() function turns a stored newline marker into the letter n. This walks
+     * the same pairs the old writer produced and puts the original character back.
+     *
+     * @param string $note Legacy note column.
+     *
+     * @return string Note with that one escape layer removed.
+     */
+    private function unescape_legacy_site_note( $note ) {
+        $out    = '';
+        $length = strlen( $note );
+        $map    = array(
+            '\\' => '\\',
+            "'"  => "'",
+            '"'  => '"',
+            'n'  => "\n",
+            'r'  => "\r",
+            '0'  => "\0",
+            'Z'  => "\x1A",
+        );
+
+        for ( $i = 0; $i < $length; $i++ ) {
+            if ( '\\' === $note[ $i ] && $i + 1 < $length && isset( $map[ $note[ $i + 1 ] ] ) ) {
+                $out .= $map[ $note[ $i + 1 ] ];
+                ++$i;
+                continue;
+            }
+            $out .= $note[ $i ];
+        }
+
+        return $out;
+    }
+
+    /**
+     * Take the repair lock before any note row is read.
+     *
+     * The add_option() function on current WordPress updates the row when the name exists, so it
+     * cannot keep a second request out. A plain INSERT fails on that duplicate and
+     * only one request continues. An expired lock is removed first.
+     *
+     * @return string|false Lock token, or false when another request holds it.
+     */
+    private function acquire_site_note_slash_repair_lock() {
+        $option   = self::SITE_NOTE_SLASH_REPAIR_LOCK;
+        $now      = time();
+        $existing = get_option( $option, false );
+
+        if ( is_string( $existing ) ) {
+            $parts   = explode( '|', $existing, 2 );
+            $expires = isset( $parts[1] ) ? (int) $parts[1] : 0;
+            if ( $expires > $now ) {
+                return false;
+            }
+            delete_option( $option );
+        }
+
+        $token = wp_generate_password( 12, false );
+        $value = $token . '|' . ( $now + self::SITE_NOTE_SLASH_REPAIR_LOCK_TTL );
+        $added = $this->wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- The insert must fail when the lock row already exists.
+            $this->wpdb->options,
+            array(
+                'option_name'  => $option,
+                'option_value' => $value,
+                'autoload'     => 'no',
+            ),
+            array( '%s', '%s', '%s' )
+        );
+
+        if ( false === $added ) {
+            return false;
+        }
+
+        $this->forget_site_note_repair_option_cache( $option );
+        if ( get_option( $option ) !== $value ) {
+            return false;
+        }
+
+        return $token;
+    }
+
+    /**
+     * Release the repair lock when this request still owns it.
+     *
+     * @param string $token Token returned by the acquire call.
+     *
+     * @return void
+     */
+    private function release_site_note_slash_repair_lock( $token ) {
+        $option   = self::SITE_NOTE_SLASH_REPAIR_LOCK;
+        $existing = get_option( $option, false );
+        if ( ! is_string( $existing ) ) {
+            return;
+        }
+
+        $parts = explode( '|', $existing, 2 );
+        if ( ! isset( $parts[0] ) || ! hash_equals( (string) $parts[0], (string) $token ) ) {
+            return;
+        }
+
+        delete_option( $option );
+    }
+
+    /**
+     * Remember the last site id of a batch that fully succeeded.
+     *
+     * @param int $last_id Site id.
+     *
+     * @return bool True when the stored id matches.
+     */
+    private function save_site_note_slash_repair_last_id( $last_id ) {
+        $option  = self::SITE_NOTE_SLASH_REPAIR_LAST_ID;
+        $last_id = (int) $last_id;
+        $current = get_option( $option, false );
+
+        if ( false === $current ) {
+            add_option( $option, (string) $last_id, '', 'no' );
+        } elseif ( (int) $current !== $last_id ) {
+            update_option( $option, (string) $last_id );
+        }
+
+        return (int) get_option( $option ) === $last_id;
+    }
+
+    /**
+     * Mark the repair complete and drop the resume marker.
+     *
+     * The update_option() function returns false when the value is already complete, so the
+     * stored value is what decides success. The option is autoloaded.
+     *
+     * @return bool True when the flag reads back as complete.
+     */
+    private function mark_site_note_slash_repair_complete() {
+        $option = self::SITE_NOTE_SLASH_REPAIR_OPTION;
+
+        if ( false === get_option( $option, false ) ) {
+            add_option( $option, 'complete', '', 'yes' );
+        } else {
+            update_option( $option, 'complete' );
+        }
+
+        if ( 'complete' !== get_option( $option ) ) {
+            return false;
+        }
+
+        delete_option( self::SITE_NOTE_SLASH_REPAIR_LAST_ID );
+        return true;
+    }
+
+    /**
+     * Drop a cached "missing option" entry after a direct insert.
+     *
+     * @param string $option Option name.
+     *
+     * @return void
+     */
+    private function forget_site_note_repair_option_cache( $option ) {
+        $notoptions = wp_cache_get( 'notoptions', 'options' );
+        if ( is_array( $notoptions ) && isset( $notoptions[ $option ] ) ) {
+            unset( $notoptions[ $option ] );
+            wp_cache_set( 'notoptions', $notoptions, 'options' );
+        }
+        wp_cache_delete( $option, 'options' );
     }
 
     /**

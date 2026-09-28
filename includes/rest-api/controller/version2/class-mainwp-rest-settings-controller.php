@@ -3958,8 +3958,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return object|null
      */
     private function get_website_by_id( $website_id, &$process_data ) {
+        // Workers run from cron as user 0, where the scope check would fail every site;
+        // the site list was scoped when the job was queued and the status routes are
+        // guarded by can_access_job_sites().
         $website = MainWP_DB::instance()->get_website_by_id( $website_id );
-        if ( empty( $website ) || empty( $this->filter_scoped_sites( array( $website ) ) ) ) {
+        if ( empty( $website ) ) {
             ++$process_data['failed'];
             ++$process_data['processed'];
             $process_data['errors'][] = array(

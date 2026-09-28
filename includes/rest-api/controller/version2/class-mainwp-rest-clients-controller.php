@@ -705,7 +705,7 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
         }
 
         if ( $client_costs ) {
-            $data               = Cost_Tracker_Rest_Api_Handle_V1::instance()->prepare_api_costs_data( $client_costs );
+            $data               = $this->scope_cost_relationship_fields( Cost_Tracker_Rest_Api_Handle_V1::instance()->prepare_api_costs_data( $client_costs ) );
             $resp_data['total'] = is_array( $data ) ? count( $data ) : 0;
             $resp_data['data']  = $data;
         } else {

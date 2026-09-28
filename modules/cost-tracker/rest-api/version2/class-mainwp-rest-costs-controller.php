@@ -274,7 +274,7 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
         $args = $this->prepare_objects_query( $request );
 
         $costs = Cost_Tracker_DB::get_instance()->get_cost_tracker_by( 'all', null, $args );
-        $data  = Cost_Tracker_Rest_Api_Handle_V1::instance()->prepare_api_costs_data( $costs );
+        $data  = $this->scope_cost_relationship_fields( Cost_Tracker_Rest_Api_Handle_V1::instance()->prepare_api_costs_data( $costs ) );
 
         $resp_data = array(
             'success' => 1,
@@ -467,7 +467,7 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
         return rest_ensure_response(
             array(
                 'success' => 1,
-                'data'    => $cost,
+                'data'    => $this->scope_cost_relationship_fields( $cost ),
             )
         );
     }

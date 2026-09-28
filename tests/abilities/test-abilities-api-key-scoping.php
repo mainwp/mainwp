@@ -312,6 +312,29 @@ class Test_Abilities_Api_Key_Scoping extends MainWP_Abilities_Test_Case {
         $this->assertSame( 400, $result->get_error_data()['status'] );
     }
 
+    /**
+     * Groups twin of restrict_ability_layer_only(): the DB layer keeps seeing 'all',
+     * the ability and controller layers see the list.
+     *
+     * @param int[] $group_ids Allowed group IDs in the ability layer.
+     * @return void
+     */
+    private function restrict_groups_ability_layer_only( array $group_ids ): void {
+        if ( isset( $this->scope_filters['mainwp_currentuserallowedaccessgroups'] ) ) {
+            remove_filter( 'mainwp_currentuserallowedaccessgroups', $this->scope_filters['mainwp_currentuserallowedaccessgroups'] );
+        }
+        $callback = static function () use ( $group_ids ) {
+            foreach ( debug_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS, 8 ) as $frame ) {
+                if ( MainWP_DB::class === ( $frame['class'] ?? '' ) ) {
+                    return 'all';
+                }
+            }
+            return $group_ids;
+        };
+        $this->scope_filters['mainwp_currentuserallowedaccessgroups'] = $callback;
+        add_filter( 'mainwp_currentuserallowedaccessgroups', $callback );
+    }
+
     private function restrict_current_user_to_groups( array $group_ids ): void {
         if ( isset( $this->scope_filters['mainwp_currentuserallowedaccessgroups'] ) ) {
             remove_filter( 'mainwp_currentuserallowedaccessgroups', $this->scope_filters['mainwp_currentuserallowedaccessgroups'] );
@@ -1217,9 +1240,11 @@ class Test_Abilities_Api_Key_Scoping extends MainWP_Abilities_Test_Case {
         $lookup = new \ReflectionMethod( $controller, 'get_website_by_id' );
         $lookup->setAccessible( true );
         $process = array( 'failed' => 0, 'processed' => 0, 'errors' => array() );
-        $this->assertNull( $lookup->invokeArgs( $controller, array( $outside, &$process ) ) );
-        $this->assertSame( 1, $process['failed'] );
-        $this->assertSame( 1, $process['processed'] );
+        // The worker lookup must not re-check scope: cron runs it as user 0, where Team
+        // Control answers an empty allowed set and every queued site would fail.
+        $this->assertSame( $outside, (int) $lookup->invokeArgs( $controller, array( $outside, &$process ) )->id );
+        $this->assertSame( 0, $process['failed'] );
+        $this->assertNull( $lookup->invokeArgs( $controller, array( 999999, &$process ) ) );
         $this->assertSame( 'Website not found.', $process['errors'][0]['error'] );
         $this->restrict_ability_layer_only( array() );
         $this->assertWPError( $method->invoke( $controller ) );
@@ -1238,6 +1263,104 @@ class Test_Abilities_Api_Key_Scoping extends MainWP_Abilities_Test_Case {
             $this->assertGreaterThan( 0, (int) MainWP_DB::instance()->get_website_by_id( $allowed )->dtsAutomaticSyncStart );
             $this->assertSame( 0, (int) MainWP_DB::instance()->get_website_by_id( $outside )->dtsAutomaticSyncStart );
         } );
+    }
+
+    public function test_rest_site_add_and_edit_reject_hidden_client() {
+        $this->set_current_user_as_admin();
+        $visible_client = $this->create_test_client();
+        $hidden_client  = $this->create_test_client();
+        $allowed        = $this->create_test_site( array( 'client_id' => $visible_client ) );
+        $this->create_test_site( array( 'client_id' => $hidden_client ) );
+        $this->restrict_ability_layer_only( array( $allowed ) );
+
+        $add = $this->dispatch_v2_request( 'POST', '/mainwp/v2/sites/add', array( 'url' => 'https://test-add.example/', 'client_id' => $hidden_client ) );
+        $this->assertSame( 404, $add->get_status(), 'A hidden client id on add must read as not found.' );
+        $this->assertSame( 'mainwp_rest_invalid_client_id', $add->get_data()['code'] );
+
+        $edit = $this->dispatch_v2_request( 'PUT', '/mainwp/v2/sites/' . $allowed . '/edit', array( 'client_id' => $hidden_client ) );
+        $this->assertSame( 404, $edit->get_status() );
+        $this->assertSame( 'mainwp_rest_invalid_client_id', $edit->get_data()['code'] );
+        $this->assertSame( $visible_client, (int) MainWP_DB::instance()->get_website_by_id( $allowed )->client_id, 'The hidden client must not be attached.' );
+
+        $ok = $this->dispatch_v2_request( 'PUT', '/mainwp/v2/sites/' . $allowed . '/edit', array( 'client_id' => $visible_client ) );
+        $this->assertSame( 1, $ok->get_data()['success'] );
+    }
+
+    public function test_rest_site_edit_hides_out_of_group_tags_and_keeps_hidden_memberships() {
+        $this->set_current_user_as_admin();
+        $visible_tag = $this->create_test_tag();
+        $hidden_tag  = $this->create_test_tag();
+        $allowed     = $this->create_test_site();
+        $this->assign_site_to_tag( $allowed, $hidden_tag );
+        $this->restrict_ability_layer_only( array( $allowed ) );
+        $this->restrict_groups_ability_layer_only( array( $visible_tag ) );
+
+        $denied = $this->dispatch_v2_request( 'PUT', '/mainwp/v2/sites/' . $allowed . '/edit', array( 'groupids' => (string) $hidden_tag ) );
+        $this->assertSame( 404, $denied->get_status(), 'A hidden tag id must read as not found.' );
+        $this->assertSame( 'mainwp_rest_invalid_tag_id', $denied->get_data()['code'] );
+
+        $ok = $this->dispatch_v2_request( 'PUT', '/mainwp/v2/sites/' . $allowed . '/edit', array( 'groupids' => (string) $visible_tag ) );
+        $this->assertSame( 1, $ok->get_data()['success'], wp_json_encode( $ok->get_data() ) );
+        $memberships = array_map( 'intval', array_keys( (array) \MainWP\Dashboard\MainWP_DB_Common::instance()->get_groups_by_website_id( $allowed ) ) );
+        sort( $memberships );
+        $expected = array( $visible_tag, $hidden_tag );
+        sort( $expected );
+        $this->assertSame( $expected, $memberships, 'An edit must keep tag memberships the caller cannot see.' );
+        if ( isset( $ok->get_data()['data']['tags'] ) ) {
+            $this->assertArrayNotHasKey( $hidden_tag, $ok->get_data()['data']['tags'], 'Hidden tags stay out of the response.' );
+        }
+    }
+
+    public function test_rest_cost_relationship_fields_hide_out_of_scope_ids() {
+        $this->set_current_user_as_admin();
+        $visible_client = $this->create_test_client();
+        $hidden_client  = $this->create_test_client();
+        $allowed        = $this->create_test_site( array( 'client_id' => $visible_client ) );
+        $outside        = $this->create_test_site( array( 'client_id' => $hidden_client ) );
+        $cost           = $this->create_scope_cost( array( $allowed, $outside ), array(), array( $visible_client, $hidden_client ) );
+
+        $control = $this->dispatch_v2_get( '/mainwp/v2/sites/' . $allowed . '/costs' )->get_data();
+        $this->assertSame( array( $allowed, $outside ), array_map( 'intval', json_decode( html_entity_decode( $control['data'][ $cost ]['sites'] ), true ) ) );
+
+        $this->restrict_ability_layer_only( array( $allowed ) );
+        foreach ( array( '/mainwp/v2/sites/' . $allowed . '/costs', '/mainwp/v2/clients/' . $visible_client . '/costs', '/mainwp/v2/costs' ) as $route ) {
+            $data = $this->dispatch_v2_get( $route )->get_data();
+            $this->assertArrayHasKey( $cost, $data['data'], $route );
+            $this->assertSame( array( $allowed ), array_map( 'intval', json_decode( $data['data'][ $cost ]['sites'], true ) ), $route );
+            $this->assertSame( array( $visible_client ), array_map( 'intval', json_decode( $data['data'][ $cost ]['clients'], true ) ), $route );
+        }
+        $single = $this->dispatch_v2_get( '/mainwp/v2/costs/' . $cost )->get_data();
+        $this->assertSame( array( $allowed ), array_map( 'intval', json_decode( $single['data']->sites, true ) ) );
+    }
+
+    public function test_rest_validators_treat_hidden_client_and_tag_as_missing() {
+        $this->set_current_user_as_admin();
+        $visible_client = $this->create_test_client();
+        $hidden_client  = $this->create_test_client();
+        $allowed        = $this->create_test_site( array( 'client_id' => $visible_client ) );
+        $this->create_test_site( array( 'client_id' => $hidden_client ) );
+        $visible_tag_name = 'Test Tag visible ' . wp_generate_uuid4();
+        $hidden_tag_name  = 'Test Tag hidden ' . wp_generate_uuid4();
+        $visible_tag      = $this->create_test_tag( array( 'name' => $visible_tag_name ) );
+        $this->create_test_tag( array( 'name' => $hidden_tag_name ) );
+        $controller = new \MainWP_Rest_Sites_Controller();
+        $request    = new \WP_REST_Request( 'GET', '/mainwp/v2/sites' );
+
+        $this->assertTrue( $controller->validate_clients( (string) $hidden_client, $request ), 'Unrestricted control.' );
+        $this->assertTrue( $controller->validate_groups( $hidden_tag_name, $request ), 'Unrestricted control.' );
+
+        $this->restrict_ability_layer_only( array( $allowed ) );
+        $this->restrict_current_user_to_groups( array( $visible_tag ) );
+        $this->assertTrue( $controller->validate_clients( (string) $visible_client, $request ) );
+        $hidden = $controller->validate_clients( (string) $hidden_client, $request );
+        $this->assertWPError( $hidden );
+        $this->assertSame( 'invalid_client', $hidden->get_error_code(), 'A hidden client validates like a missing one.' );
+        $this->assertTrue( $controller->validate_groups( $visible_tag_name, $request ) );
+        $hidden = $controller->validate_groups( $hidden_tag_name, $request );
+        $this->assertWPError( $hidden );
+        $this->assertSame( 'invalid_group', $hidden->get_error_code(), 'A hidden tag validates like a missing one.' );
+        $hidden = $controller->sanitize_groups_text_field( $hidden_tag_name );
+        $this->assertWPError( $hidden );
     }
 
     public static function monitor_list_routes() {

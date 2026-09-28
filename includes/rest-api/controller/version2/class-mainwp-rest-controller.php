@@ -151,6 +151,66 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
     }
 
     /**
+     * Tag names resolve for everyone, so a tag outside the caller's allowed groups
+     * is dropped here and reads as unknown, the same as a missing name.
+     *
+     * @param string $name Tag name.
+     * @return object|null Tag row, or null when missing or hidden.
+     */
+    protected function get_scoped_group_by_name( $name ) {
+        $group = \MainWP\Dashboard\MainWP_DB_Common::instance()->get_group_by_name( $name );
+        if ( ! $group ) {
+            return null;
+        }
+        $allowed = \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_group_ids_or_all();
+        return ( 'all' === $allowed || in_array( (int) $group->id, $allowed, true ) ) ? $group : null;
+    }
+
+    /**
+     * Cost objects are not scoped, but their site, tag and client id lists are:
+     * a restricted caller must not learn hidden ids through a cost record.
+     *
+     * @param array|object $costs Cost rows or formatted cost items.
+     * @return array|object The same structure with hidden relationship ids removed.
+     */
+    protected function scope_cost_relationship_fields( $costs ) {
+        $allowed = \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+        if ( 'all' === $allowed ) {
+            return $costs;
+        }
+        $keep      = array(
+            'sites'   => $allowed,
+            'groups'  => \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_group_ids_or_all(),
+            'clients' => \MainWP\Dashboard\MainWP_Abilities_Util::get_accessible_client_ids( $allowed ),
+        );
+        $scope_one = static function ( $cost ) use ( $keep ) {
+            foreach ( $keep as $field => $ids ) {
+                if ( 'all' === $ids ) {
+                    continue;
+                }
+                $raw     = is_array( $cost ) ? ( $cost[ $field ] ?? '' ) : ( $cost->$field ?? '' );
+                $current = json_decode( html_entity_decode( (string) $raw ), true );
+                $scoped  = is_array( $current ) ? array_values( array_intersect( array_map( 'intval', $current ), $ids ) ) : array();
+                if ( is_array( $cost ) ) {
+                    $cost[ $field ] = wp_json_encode( $scoped );
+                } else {
+                    $cost->$field = wp_json_encode( $scoped );
+                }
+            }
+            return $cost;
+        };
+        if ( is_object( $costs ) ) {
+            return $scope_one( $costs );
+        }
+        if ( is_array( $costs ) ) {
+            foreach ( $costs as $key => $cost ) {
+                $costs[ $key ] = $scope_one( $cost );
+            }
+        }
+        return $costs;
+    }
+
+    /**
      * The REST SQL bypass must not expose clients without any accessible sites.
      *
      * @param array|false $clients Candidate client rows.
@@ -1912,8 +1972,9 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
         $clients = array_map( 'trim', explode( ',', $value ) );
 
         foreach ( $clients as $client ) {
-            $db_client = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client );
-            if ( ! $db_client ) {
+            // Scoped lookup: a hidden client fails the same way a missing one does.
+            $db_client = $this->get_client_by( 'id', $client );
+            if ( is_wp_error( $db_client ) ) {
                 return new WP_Error(
                     'invalid_client',
                     sprintf(
@@ -1941,7 +2002,7 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
         $group_ids = array();
         $groups    = array_map( 'trim', explode( ',', $value ) );
         foreach ( $groups as $group ) {
-            $db_group = \MainWP\Dashboard\MainWP_DB_Common::instance()->get_group_by_name( $group );
+            $db_group = $this->get_scoped_group_by_name( $group );
             if ( ! $db_group ) {
                 return new WP_Error(
                     'invalid_group',
@@ -1971,7 +2032,7 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
         $value  = $this->sanitize_field( $value );
         $groups = array_map( 'trim', explode( ',', $value ) );
         foreach ( $groups as $group ) {
-            $db_group = \MainWP\Dashboard\MainWP_DB_Common::instance()->get_group_by_name( $group );
+            $db_group = $this->get_scoped_group_by_name( $group );
             if ( ! $db_group ) {
                 return new WP_Error(
                     'invalid_group',

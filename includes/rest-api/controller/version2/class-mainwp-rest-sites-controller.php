@@ -2418,7 +2418,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         );
         $costs     = Cost_Tracker_DB::get_instance()->get_cost_tracker_by( 'site_id', $website->id );
         if ( $costs ) {
-            $data               = Cost_Tracker_Rest_Api_Handle_V1::instance()->prepare_api_costs_data( $costs );
+            $data               = $this->scope_cost_relationship_fields( Cost_Tracker_Rest_Api_Handle_V1::instance()->prepare_api_costs_data( $costs ) );
             $resp_data['total'] = is_array( $data ) ? count( $data ) : 0;
             $resp_data['data']  = $data;
         } else {
@@ -3251,9 +3251,13 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             $wpgroupids = ! empty( $item->wpgroupids ) ? explode( ',', $item->wpgroupids ) : array();
             $wpgroups   = ! empty( $item->wpgroups ) ? explode( ',', $item->wpgroups ) : array();
 
-            $tags = array();
+            $tags           = array();
+            $allowed_groups = MainWP_Abilities_Util::get_scoped_group_ids_or_all();
             if ( is_array( $wpgroupids ) ) {
                 foreach ( $wpgroupids as $gidx => $groupid ) {
+                    if ( 'all' !== $allowed_groups && ! in_array( (int) $groupid, $allowed_groups, true ) ) {
+                        continue; // Hidden tag memberships stay out of API-key responses.
+                    }
                     if ( $groupid && ! isset( $tags[ $groupid ] ) ) {
                         $tags[ $groupid ] = isset( $wpgroups[ $gidx ] ) ? $wpgroups[ $gidx ] : '';
                     }
@@ -3402,6 +3406,11 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                 );
             }
 
+            $scope = $this->check_site_relationship_scope( $request );
+            if ( is_wp_error( $scope ) ) {
+                return $scope;
+            }
+
             $item = $this->prepare_object_for_database( $request );
 
             if ( empty( $item['name'] ) && ! empty( $item['url'] ) ) {
@@ -3437,6 +3446,42 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
     }
 
     /**
+     * A restricted key must not attach a site to a hidden client or tag, and an edit
+     * must not drop tag memberships the caller cannot see. The DB tag clause is
+     * bypassed under an API key, so the checks live here, mirroring add-site-v1.
+     *
+     * @param WP_REST_Request $request Request object.
+     * @param object|null     $website Site being edited, null on create.
+     * @return true|WP_Error
+     */
+    private function check_site_relationship_scope( $request, $website = null ) {
+        if ( ! empty( $request['client_id'] ) ) {
+            $client = $this->get_client_by( 'id', (int) $request['client_id'] );
+            if ( is_wp_error( $client ) ) {
+                return $client;
+            }
+        }
+
+        if ( ! $request->has_param( 'groupids' ) || ! is_string( $request['groupids'] ) ) {
+            return true;
+        }
+        $allowed_groups = MainWP_Abilities_Util::get_scoped_group_ids_or_all();
+        if ( 'all' === $allowed_groups ) {
+            return true;
+        }
+        $requested = array_values( array_filter( array_map( 'intval', explode( ',', $request['groupids'] ) ) ) );
+        if ( array_diff( $requested, $allowed_groups ) ) {
+            return $this->get_rest_data_error( 'id', 'tag' );
+        }
+        if ( $website ) {
+            $current             = MainWP_DB_Common::instance()->get_groups_by_website_id( $website->id );
+            $hidden              = array_diff( array_map( 'intval', array_keys( (array) $current ) ), $allowed_groups );
+            $request['groupids'] = implode( ',', array_unique( array_merge( $requested, $hidden ) ) );
+        }
+        return true;
+    }
+
+    /**
      * Update site.
      *
      * @param  WP_REST_Request $request Request object.
@@ -3467,6 +3512,11 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                     'status' => 400,
                 )
             );
+        }
+
+        $scope = $this->check_site_relationship_scope( $request, $website );
+        if ( is_wp_error( $scope ) ) {
+            return $scope;
         }
 
         $resp_data            = array();

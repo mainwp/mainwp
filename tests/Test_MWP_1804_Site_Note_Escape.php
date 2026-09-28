@@ -39,6 +39,13 @@ class Test_MWP_1804_Site_Note_Escape extends \WP_UnitTestCase {
     private $repair_selects = 0;
 
     /**
+     * Repair note updates seen by the mid-batch filter.
+     *
+     * @var int
+     */
+    private $repair_writes = 0;
+
+    /**
      * Reset the repair markers before each case.
      *
      * @return void
@@ -46,6 +53,7 @@ class Test_MWP_1804_Site_Note_Escape extends \WP_UnitTestCase {
     public function setUp(): void {
         parent::setUp();
         $this->repair_selects = 0;
+        $this->repair_writes  = 0;
         $this->clear_repair_options();
     }
 
@@ -70,7 +78,9 @@ class Test_MWP_1804_Site_Note_Escape extends \WP_UnitTestCase {
         remove_filter( 'query', array( $this, 'fail_note_reads' ) );
         remove_filter( 'query', array( $this, 'fail_second_note_read' ) );
         remove_filter( 'query', array( $this, 'fail_note_writes' ) );
+        remove_filter( 'query', array( $this, 'fail_second_note_write' ) );
         remove_filter( 'mainwp_site_note_slash_repair_batch_size', array( $this, 'repair_batch_of_one' ) );
+        remove_filter( 'mainwp_site_note_slash_repair_batch_size', array( $this, 'repair_batch_of_ten' ) );
         remove_filter( 'mainwp_sitestable_getcolumns', array( $this, 'notes_column_only' ) );
         remove_filter( 'mainwp_sitestable_display_row_columns', array( $this, 'skip_site_actions' ) );
         remove_all_actions( 'mainwp_site_note_slash_repair_before_update' );
@@ -83,6 +93,7 @@ class Test_MWP_1804_Site_Note_Escape extends \WP_UnitTestCase {
 
         $this->clear_repair_options();
         MainWP_System_Utility::set_current_wpid( 0 );
+        wp_set_current_user( 0 );
         parent::tearDown();
         wp_cache_flush();
     }
@@ -143,6 +154,11 @@ class Test_MWP_1804_Site_Note_Escape extends \WP_UnitTestCase {
 
         $this->assertNotFalse( has_action( 'admin_init', array( MainWP_Install::instance(), 'maybe_repair_site_note_slashes' ) ) );
 
+        // admin-ajax.php runs admin_init with no user. That request must not rewrite notes.
+        MainWP_Install::instance()->maybe_repair_site_note_slashes();
+        $this->assertSame( $legacy, $this->stored_note( $site_id ) );
+
+        wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
         MainWP_Install::instance()->maybe_repair_site_note_slashes();
 
         $this->assertSame( $typed, $this->stored_note( $site_id ) );
@@ -215,7 +231,8 @@ class Test_MWP_1804_Site_Note_Escape extends \WP_UnitTestCase {
 
         $this->assertSame( $legacy, $this->stored_note( $site_id ) );
         $this->assertNotSame( 'complete', get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_OPTION, false ) );
-        $this->assertFalse( get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_LAST_ID, false ) );
+        $checkpoint = get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_LAST_ID, false );
+        $this->assertTrue( false === $checkpoint || (int) $checkpoint < $site_id );
     }
 
     /**
@@ -359,6 +376,66 @@ class Test_MWP_1804_Site_Note_Escape extends \WP_UnitTestCase {
     }
 
     /**
+     * A batch of more than one row checkpoints each fixed note before a later row fails.
+     *
+     * C:\new is what one repair of the old \\new value produces. Reading it again would
+     * turn the backslash-n into a real line break.
+     *
+     * @return void
+     */
+    public function test_mid_batch_failure_leaves_fixed_rows_untouched(): void {
+        $fixed         = 'C:\\new';
+        $legacy        = MainWP_DB_Common::instance()->escape( $fixed );
+        $second_typed  = '\\nas';
+        $second_legacy = MainWP_DB_Common::instance()->escape( $second_typed );
+        $first_id      = $this->create_note_site( 'MWP-1804 New' );
+        $second_id     = $this->create_note_site( 'MWP-1804 Nas' );
+        $this->store_raw_note( $first_id, $legacy );
+        $this->store_raw_note( $second_id, $second_legacy );
+        $this->assertNotSame( $fixed, $legacy );
+
+        add_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_LAST_ID, (string) ( $first_id - 1 ), '', 'no' );
+        add_filter( 'mainwp_site_note_slash_repair_batch_size', array( $this, 'repair_batch_of_ten' ) );
+        add_filter( 'query', array( $this, 'fail_second_note_write' ) );
+        MainWP_Install::instance()->repair_site_note_slashes();
+        remove_filter( 'query', array( $this, 'fail_second_note_write' ) );
+
+        $this->assertSame( $fixed, $this->stored_note( $first_id ) );
+        $this->assertSame( $second_legacy, $this->stored_note( $second_id ) );
+        $this->assertSame( (string) $first_id, (string) get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_LAST_ID ) );
+        $this->assertNotSame( 'complete', get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_OPTION, false ) );
+
+        MainWP_Install::instance()->repair_site_note_slashes();
+        remove_filter( 'mainwp_site_note_slash_repair_batch_size', array( $this, 'repair_batch_of_ten' ) );
+
+        $this->assertSame( $fixed, $this->stored_note( $first_id ) );
+        $this->assertSame( $second_typed, $this->stored_note( $second_id ) );
+        $this->assertSame( 'complete', get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_OPTION ) );
+    }
+
+    /**
+     * A note saved on an existing site before the flag is complete is not rewritten.
+     *
+     * @return void
+     */
+    public function test_note_saved_before_repair_finishes_is_unchanged(): void {
+        $note    = 'C:\\new';
+        $site_id = $this->create_note_site( 'MWP-1804 Saved Early' );
+        MainWP_DB_Common::instance()->update_note( $site_id, $note );
+        $this->assertSame( $note, $this->stored_note( $site_id ) );
+
+        $legacy = MainWP_DB_Common::instance()->escape( 'old \\ path' );
+        $old_id = $this->create_note_site( 'MWP-1804 Still Old' );
+        $this->store_raw_note( $old_id, $legacy );
+
+        MainWP_Install::instance()->repair_site_note_slashes();
+
+        $this->assertSame( $note, $this->stored_note( $site_id ) );
+        $this->assertSame( 'old \\ path', $this->stored_note( $old_id ) );
+        $this->assertSame( 'complete', get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_OPTION ) );
+    }
+
+    /**
      * Manage Sites and Groups put the note tooltip through esc_attr().
      *
      * @return void
@@ -456,12 +533,38 @@ class Test_MWP_1804_Site_Note_Escape extends \WP_UnitTestCase {
     }
 
     /**
+     * Fail the second note update inside one batch.
+     *
+     * @param string $query SQL.
+     *
+     * @return string
+     */
+    public function fail_second_note_write( $query ) {
+        if ( is_string( $query ) && false !== stripos( $query, 'UPDATE' ) && false !== stripos( $query, 'SET note=' ) ) {
+            ++$this->repair_writes;
+            if ( $this->repair_writes >= 2 ) {
+                return '';
+            }
+        }
+        return $query;
+    }
+
+    /**
      * One site row per repair batch.
      *
      * @return int
      */
     public function repair_batch_of_one() {
         return 1;
+    }
+
+    /**
+     * Several site rows per repair batch.
+     *
+     * @return int
+     */
+    public function repair_batch_of_ten() {
+        return 10;
     }
 
     /**
@@ -580,11 +683,16 @@ class Test_MWP_1804_Site_Note_Escape extends \WP_UnitTestCase {
     private function clear_repair_options() {
         delete_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_OPTION );
         delete_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_LAST_ID );
+        delete_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_MAX_ID );
+        delete_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_SKIP );
         delete_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_LOCK );
+        delete_transient( MainWP_Install::SITE_NOTE_SLASH_REPAIR_RETRY );
         wp_cache_delete( 'alloptions', 'options' );
         wp_cache_delete( 'notoptions', 'options' );
         wp_cache_delete( MainWP_Install::SITE_NOTE_SLASH_REPAIR_OPTION, 'options' );
         wp_cache_delete( MainWP_Install::SITE_NOTE_SLASH_REPAIR_LAST_ID, 'options' );
+        wp_cache_delete( MainWP_Install::SITE_NOTE_SLASH_REPAIR_MAX_ID, 'options' );
+        wp_cache_delete( MainWP_Install::SITE_NOTE_SLASH_REPAIR_SKIP, 'options' );
         wp_cache_delete( MainWP_Install::SITE_NOTE_SLASH_REPAIR_LOCK, 'options' );
     }
 

@@ -831,7 +831,10 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
     public function update_note( $websiteid, $note ) {
         $table_wp = esc_sql( $this->table_name( 'wp' ) );
         // Pass $note unescaped. prepare() already escapes %s, and escaping first stores quotes as \'.
-        $this->wpdb->query( $this->wpdb->prepare( "UPDATE `{$table_wp}` SET note= %s WHERE id=%d", $note, $websiteid ) );
+        $updated = $this->wpdb->query( $this->wpdb->prepare( "UPDATE `{$table_wp}` SET note= %s WHERE id=%d", $note, $websiteid ) );
+        if ( false !== $updated ) {
+            MainWP_Install::instance()->note_saved_during_site_note_slash_repair( $websiteid );
+        }
     }
 
     /**

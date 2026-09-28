@@ -177,8 +177,9 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
     /**
      * Strip sensitive server details from a user-facing message.
      *
-     * Removes the absolute site path, SQL statement fragments, and table name
-     * references. Full context should be logged server-side before sanitizing.
+     * Removes the absolute site path, SQL statement fragments, table name
+     * references, and the Child's secret backup directory name. Full context
+     * should be logged server-side before sanitizing.
      *
      * @param mixed $message Raw message.
      *
@@ -209,6 +210,11 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
         // Redact backticked identifiers and MySQL "Table '...'" references.
         $message = preg_replace( '/`[^`]+`/', '[redacted]', $message );
         $message = preg_replace( "/(Table\s+')[^']+(')/i", '$1[redacted]$2', $message );
+
+        // The Child's backup directory is backup-<16 alphanumerics> (wp_generate_password
+        // without symbols). Without Apache that name is the only thing keeping archives
+        // off a guessable URL, and the Child's check_dir() error quotes it.
+        $message = preg_replace( '/(?<![A-Za-z0-9])backup-[A-Za-z0-9]{16}(?![A-Za-z0-9])/', 'backup-[redacted]', $message );
 
         return $message;
     }

@@ -1049,7 +1049,7 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 			$site_id,
 			array(
 				'backup_preflight'   => array(
-					'error'      => 'Unable to create directory wp-content/uploads/mainwp/backup-x/. Is its parent directory writable by the server?',
+					'error'      => 'Unable to create directory wp-content/uploads/mainwp/backup-tnQjEHx99TA2ZYTh/. Is its parent directory writable by the server?',
 					'error_code' => '',
 				),
 				'backup_task_create' => array( 'error' => 'must not reach task creation' ),
@@ -1060,6 +1060,8 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 		$this->assertNotNull( $exception );
 		$this->assertSame( MainWP_Backup_Error_Codes::ERR_CHILD_PREFLIGHT_FAILED, $exception->get_message_error_code() );
 		$this->assertStringContainsString( 'Is its parent directory writable', $exception->getMessage() );
+		$this->assertStringContainsString( 'wp-content/uploads/mainwp/backup-[redacted]/', $exception->getMessage(), 'The directory stays readable with its secret removed.' );
+		$this->assertStringNotContainsString( 'tnQjEHx99TA2ZYTh', $exception->getMessage(), 'The backup directory hash must not reach the user.' );
 		$this->assertNotSame( MainWP_Backup_Error_Codes::ERR_CHILD_UPDATE_REQUIRED, $exception->get_message_error_code() );
 		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
 		$this->assertEmpty( MainWP_DB::instance()->get_website_option( $website, 'task_spine_support' ) );

@@ -368,7 +368,8 @@ class Test_Abilities_Tags_Scoped_Access extends MainWP_Abilities_Test_Case {
         $this->restrict_current_user_to_groups( array() );
         $denied = $this->execute_ability( 'mainwp/delete-tag-v1', array( 'tag_id' => $tag_id, 'confirm' => true ) );
         $this->assertWPError( $denied );
-        $this->assertSame( 'mainwp_access_denied', $denied->get_error_code() );
+        $this->assertSame( 'mainwp_tag_not_found', $denied->get_error_code() );
+        $this->assertSame( 404, $denied->get_error_data()['status'] );
 
         $this->restrict_current_user_to_groups( array( $tag_id ) );
 
@@ -508,7 +509,8 @@ class Test_Abilities_Tags_Scoped_Access extends MainWP_Abilities_Test_Case {
         $this->restrict_current_user_to_groups( array() );
         $denied = $this->execute_ability( 'mainwp/get-tag-sites-v1', array( 'tag_id' => $tag_id ) );
         $this->assertWPError( $denied );
-        $this->assertSame( 'mainwp_access_denied', $denied->get_error_code() );
+        $this->assertSame( 'mainwp_tag_not_found', $denied->get_error_code() );
+        $this->assertSame( 404, $denied->get_error_data()['status'] );
     }
 
     // =========================================================================
@@ -545,7 +547,8 @@ class Test_Abilities_Tags_Scoped_Access extends MainWP_Abilities_Test_Case {
         $this->restrict_current_user_to_groups( array() );
         $denied = $this->execute_ability( 'mainwp/get-tag-clients-v1', array( 'tag_id' => $tag_id ) );
         $this->assertWPError( $denied );
-        $this->assertSame( 'mainwp_access_denied', $denied->get_error_code() );
+        $this->assertSame( 'mainwp_tag_not_found', $denied->get_error_code() );
+        $this->assertSame( 404, $denied->get_error_data()['status'] );
     }
 
     /**

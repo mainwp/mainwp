@@ -1642,7 +1642,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
         $errors = array();
 
         // When specific site identifiers are provided, enforce per-site ACLs.
-        // When empty (all sites), rely on get_websites_for_current_user() which respects user access.
+        // API-key authentication bypasses DB scoping, so all-sites results need an explicit intersection.
         if ( ! empty( $site_ids_or_domains ) ) {
             // Check per-site ACLs and filter to allowed sites.
             $access_check = MainWP_Abilities_Util::check_batch_site_access( $site_ids_or_domains, $input );
@@ -1662,7 +1662,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 );
             }
         } else {
-            // Get all sites for current user (respects user access by default).
+            // Apply the ability scope below because API-key requests bypass DB scoping.
             // Must request update fields explicitly - default only returns id, url, name, client_id.
             $websites = MainWP_DB::instance()->get_websites_for_current_user(
                 array(
@@ -1684,7 +1684,11 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 return $websites;
             }
 
-            $sites = $websites ? $websites : array();
+            $sites   = $websites ? $websites : array();
+            $allowed = MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+            if ( 'all' !== $allowed ) {
+                $sites = array_intersect_key( $sites, array_flip( $allowed ) );
+            }
         }
 
         // Get global ignored lists.
@@ -2049,7 +2053,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
         $errors = array();
 
         // When specific site identifiers are provided, enforce per-site ACLs.
-        // When empty (all sites), rely on get_websites_for_current_user() which respects user access.
+        // API-key authentication bypasses DB scoping, so all-sites results need an explicit intersection.
         if ( ! empty( $site_ids_or_domains ) ) {
             // Check per-site ACLs and filter to allowed sites.
             $access_check = MainWP_Abilities_Util::check_batch_site_access( $site_ids_or_domains, $input );
@@ -2069,7 +2073,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 );
             }
         } else {
-            // Get all sites for current user (respects user access by default).
+            // Apply the ability scope below because API-key requests bypass DB scoping.
             // Must request ignored fields explicitly - default only returns id, url, name, client_id.
             $websites = MainWP_DB::instance()->get_websites_for_current_user(
                 array(
@@ -2085,7 +2089,11 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 return $websites;
             }
 
-            $sites = $websites ? $websites : array();
+            $sites   = $websites ? $websites : array();
+            $allowed = MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+            if ( 'all' !== $allowed ) {
+                $sites = array_intersect_key( $sites, array_flip( $allowed ) );
+            }
         }
 
         // Get global ignored lists.

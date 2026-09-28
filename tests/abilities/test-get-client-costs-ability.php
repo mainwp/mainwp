@@ -380,7 +380,8 @@ class Test_Get_Client_Costs_Ability extends MainWP_Abilities_Test_Case {
 		);
 
 		$this->assertWPError( $result );
-		$this->assertSame( 'mainwp_access_denied', $result->get_error_code() );
+		$this->assertSame( 'mainwp_client_not_found', $result->get_error_code() );
+		$this->assertSame( 404, $result->get_error_data()['status'] );
 	}
 
 	/**

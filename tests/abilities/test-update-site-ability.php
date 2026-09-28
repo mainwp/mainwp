@@ -226,7 +226,8 @@ class Test_UpdateSite_Ability extends MainWP_Abilities_Test_Case {
         ] );
 
         $this->assertWPError( $result, 'Assigning a site to an out-of-scope client must be denied.' );
-        $this->assertSame( 'mainwp_access_denied', $result->get_error_code() );
+        $this->assertSame( 'mainwp_client_not_found', $result->get_error_code() );
+        $this->assertSame( 404, $result->get_error_data()['status'] );
 
         $site = \MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( $site_x );
         $this->assertSame( 0, (int) $site->client_id, 'The site must not be attached to the denied client.' );
@@ -279,7 +280,8 @@ class Test_UpdateSite_Ability extends MainWP_Abilities_Test_Case {
         ] );
 
         $this->assertWPError( $result, 'A tag outside the allowed group set must be denied.' );
-        $this->assertSame( 'mainwp_access_denied', $result->get_error_code() );
+        $this->assertSame( 'mainwp_tag_not_found', $result->get_error_code() );
+        $this->assertSame( 404, $result->get_error_data()['status'] );
     }
 
     /**

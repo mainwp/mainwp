@@ -302,6 +302,20 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
     }
 
     /**
+     * Preserve userless cron and CLI access when Team Control denies user zero.
+     * API-key requests carry a user whose site restrictions still apply.
+     *
+     * @return int[]|string Allowed site IDs, or 'all' for unrestricted access.
+     */
+    public static function get_scoped_site_ids_or_all() {
+        if ( self::is_machine_execution_context() && 0 === get_current_user_id() ) {
+            return 'all';
+        }
+
+        return self::get_allowed_site_ids();
+    }
+
+    /**
      * Get the current user's allowed group (tag) IDs.
      *
      * Same direct-filter contract as get_allowed_site_ids(), for the
@@ -375,6 +389,19 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
         $site_ids  = self::get_client_site_ids( $client_id );
         $overlap   = array_intersect( $site_ids, $allowed );
 
+        if ( empty( $overlap ) ) {
+            $identifier = $input['client_id_or_email'] ?? $client_id;
+            return new \WP_Error(
+                'mainwp_client_not_found',
+                is_numeric( $identifier )
+                    /* translators: %d: client ID */
+                    ? sprintf( __( 'No client found with ID %d.', 'mainwp' ), (int) $identifier )
+                    /* translators: %s: email address */
+                    : sprintf( __( 'No client found with email "%s".', 'mainwp' ), $identifier ),
+                array( 'status' => 404 )
+            );
+        }
+
         $accessible = $require_full_coverage
             ? ( ! empty( $site_ids ) && count( $overlap ) === count( $site_ids ) )
             : ! empty( $overlap );
@@ -431,6 +458,14 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
         $tag_id = is_object( $tag ) ? (int) $tag->id : (int) $tag;
 
         if ( ! in_array( $tag_id, $allowed, true ) ) {
+            if ( 'all' !== self::get_allowed_site_ids() ) {
+                return new \WP_Error(
+                    'mainwp_tag_not_found',
+                    /* translators: %d: tag ID */
+                    sprintf( __( 'No tag found with ID %d.', 'mainwp' ), $tag_id ),
+                    array( 'status' => 404 )
+                );
+            }
             return new \WP_Error(
                 'mainwp_access_denied',
                 __( 'You do not have permission to access this tag.', 'mainwp' ),
@@ -499,6 +534,7 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
      *
      * This enforces per-site ACLs beyond the basic REST API permission check.
      * Use this for all site-specific operations (get, sync, update, plugins, themes).
+     * Restricted callers get not-found errors to prevent object existence probes.
      *
      * IMPORTANT: Returns true on success or WP_Error on failure.
      * For execute callbacks that need a boolean check, use the helper method below.
@@ -521,9 +557,9 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
         $allowed_sites = self::get_allowed_site_ids();
         if ( 'all' !== $allowed_sites && ! in_array( $site_id, $allowed_sites, true ) ) {
             return new \WP_Error(
-                'mainwp_access_denied',
-                __( 'You do not have permission to access this site.', 'mainwp' ),
-                array( 'status' => 403 )
+                'mainwp_site_not_found',
+                self::site_not_found_message( $input['site_id_or_domain'] ?? $site_id ),
+                array( 'status' => 404 )
             );
         }
 
@@ -541,6 +577,13 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
         $can_access = apply_filters( 'mainwp_check_site_access', true, $site_id, $input );
 
         if ( ! $can_access ) {
+            if ( 'all' !== $allowed_sites ) {
+                return new \WP_Error(
+                    'mainwp_site_not_found',
+                    self::site_not_found_message( $input['site_id_or_domain'] ?? $site_id ),
+                    array( 'status' => 404 )
+                );
+            }
             return new \WP_Error(
                 'mainwp_access_denied',
                 __( 'You do not have permission to access this site.', 'mainwp' ),
@@ -549,6 +592,20 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
         }
 
         return true;
+    }
+
+    /**
+     * Keep denied and missing lookups indistinguishable for existence probes.
+     *
+     * @param int|string $identifier Site ID or domain supplied by the caller.
+     * @return string Not-found message.
+     */
+    private static function site_not_found_message( $identifier ): string {
+        return is_numeric( $identifier )
+            /* translators: %d: site ID */
+            ? sprintf( __( 'No site found with ID %d.', 'mainwp' ), (int) $identifier )
+            /* translators: %s: domain or URL */
+            : sprintf( __( 'No site found matching "%s".', 'mainwp' ), $identifier );
     }
 
     /**
@@ -647,7 +704,7 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
                 $denied[]   = array(
                     'identifier' => $identifier,
                     'code'       => $access_check->get_error_code(),
-                    'message'    => $access_check->get_error_message(),
+                    'message'    => 'mainwp_site_not_found' === $access_check->get_error_code() ? self::site_not_found_message( $identifier ) : $access_check->get_error_message(),
                     'status'     => isset( $error_data['status'] ) ? $error_data['status'] : null,
                 );
                 continue;

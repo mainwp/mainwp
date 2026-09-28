@@ -181,7 +181,8 @@ class Test_Abilities_Util_Access_Scoping extends MainWP_Abilities_Test_Case {
 
 		$result = MainWP_Abilities_Util::check_client_access( $client_id );
 		$this->assertWPError( $result );
-		$this->assertSame( 'mainwp_access_denied', $result->get_error_code() );
+		$this->assertSame( 'mainwp_client_not_found', $result->get_error_code() );
+		$this->assertSame( 404, $result->get_error_data()['status'] );
 	}
 
 	/**
@@ -201,6 +202,7 @@ class Test_Abilities_Util_Access_Scoping extends MainWP_Abilities_Test_Case {
 		$result = MainWP_Abilities_Util::check_client_access( $client_id, null, true );
 		$this->assertWPError( $result );
 		$this->assertSame( 'mainwp_access_denied', $result->get_error_code() );
+		$this->assertSame( 403, $result->get_error_data()['status'] );
 	}
 
 	/**
@@ -321,7 +323,8 @@ class Test_Abilities_Util_Access_Scoping extends MainWP_Abilities_Test_Case {
 
 		$result = MainWP_Abilities_Util::check_site_access( $outside );
 		$this->assertWPError( $result );
-		$this->assertSame( 'mainwp_access_denied', $result->get_error_code() );
+		$this->assertSame( 'mainwp_site_not_found', $result->get_error_code() );
+		$this->assertSame( 404, $result->get_error_data()['status'] );
 	}
 
 	/**
@@ -340,7 +343,8 @@ class Test_Abilities_Util_Access_Scoping extends MainWP_Abilities_Test_Case {
 		$outside = $this->create_test_site();
 		$denied  = MainWP_Abilities_Util::check_site_access( $outside );
 		$this->assertWPError( $denied );
-		$this->assertSame( 'mainwp_access_denied', $denied->get_error_code() );
+		$this->assertSame( 'mainwp_site_not_found', $denied->get_error_code() );
+		$this->assertSame( 404, $denied->get_error_data()['status'] );
 	}
 
 	/**
@@ -364,7 +368,8 @@ class Test_Abilities_Util_Access_Scoping extends MainWP_Abilities_Test_Case {
 		$this->assertNotContains( $outside, $allowed_ids );
 		$this->assertCount( 1, $result['denied'] );
 		$this->assertSame( $outside_url, $result['denied'][0]['identifier'] );
-		$this->assertSame( 'mainwp_access_denied', $result['denied'][0]['code'] );
+		$this->assertSame( 'mainwp_site_not_found', $result['denied'][0]['code'] );
+		$this->assertSame( 404, $result['denied'][0]['status'] );
 	}
 
 	/**
@@ -390,4 +395,94 @@ class Test_Abilities_Util_Access_Scoping extends MainWP_Abilities_Test_Case {
 		$this->assertCount( 1, $scoped['denied'] );
 	}
 
+	public function test_partial_client_visibility_does_not_grant_full_coverage() {
+		$this->set_current_user_as_admin();
+		$client_id = $this->create_test_client();
+		$allowed = $this->create_test_site( array( 'client_id' => $client_id ) );
+		$this->create_test_site( array( 'client_id' => $client_id ) );
+		$this->restrict_current_user_to_sites( array( $allowed ) );
+
+		$this->assertTrue( MainWP_Abilities_Util::check_client_access( $client_id ) );
+		$result = MainWP_Abilities_Util::check_client_access( $client_id, null, true );
+		$this->assertWPError( $result );
+		$this->assertSame( 'mainwp_access_denied', $result->get_error_code() );
+		$this->assertSame( 403, $result->get_error_data()['status'] );
+	}
+
+	public function test_unrestricted_site_filter_denial_remains_forbidden() {
+		$this->set_current_user_as_admin();
+		$site_id = $this->create_test_site();
+		$this->scope_filters['mainwp_check_site_access'] = static function () {
+			return false;
+		};
+		add_filter( 'mainwp_check_site_access', $this->scope_filters['mainwp_check_site_access'] );
+
+		$this->assertSame( 'all', MainWP_Abilities_Util::get_allowed_site_ids() );
+		$result = MainWP_Abilities_Util::check_site_access( $site_id );
+		$this->assertWPError( $result );
+		$this->assertSame( 'mainwp_access_denied', $result->get_error_code() );
+		$this->assertSame( 403, $result->get_error_data()['status'] );
+	}
+
+	public function test_restricted_site_filter_denial_matches_missing_site() {
+		$this->set_current_user_as_admin();
+		$site_id = $this->create_test_site();
+		$this->restrict_current_user_to_sites( array( $site_id ) );
+		$this->scope_filters['mainwp_check_site_access'] = static function () {
+			return false;
+		};
+		add_filter( 'mainwp_check_site_access', $this->scope_filters['mainwp_check_site_access'] );
+
+		$result = MainWP_Abilities_Util::check_site_access( $site_id );
+		$missing = MainWP_Abilities_Util::resolve_site( PHP_INT_MAX );
+		$this->assertWPError( $result );
+		$this->assertWPError( $missing );
+		$this->assertSame( 'mainwp_site_not_found', $result->get_error_code() );
+		$this->assertSame( 404, $result->get_error_data()['status'] );
+		$this->assertSame( str_replace( (string) PHP_INT_MAX, (string) $site_id, $missing->get_error_message() ), $result->get_error_message() );
+	}
+
+	public function test_restricted_tag_denial_matches_missing_tag() {
+		$this->set_current_user_as_admin();
+		$tag_id = $this->create_test_tag();
+		$this->restrict_current_user_to_sites( array() );
+		$this->restrict_current_user_to_groups( array() );
+
+		$result = MainWP_Abilities_Util::check_tag_access( $tag_id );
+		$missing = MainWP_Abilities_Util::resolve_tag( PHP_INT_MAX );
+		$this->assertWPError( $result );
+		$this->assertWPError( $missing );
+		$this->assertSame( 'mainwp_tag_not_found', $result->get_error_code() );
+		$this->assertSame( 404, $result->get_error_data()['status'] );
+		$this->assertSame( str_replace( (string) PHP_INT_MAX, (string) $tag_id, $missing->get_error_message() ), $result->get_error_message() );
+	}
+
+	public function test_restricted_batch_domain_denial_matches_missing_domain() {
+		$this->set_current_user_as_admin();
+		$url = 'https://test-' . wp_generate_uuid4() . '.example.com/';
+		$this->create_test_site( array( 'url' => $url ) );
+		$this->restrict_current_user_to_sites( array() );
+
+		$result = MainWP_Abilities_Util::check_batch_site_access( array( $url, 'https://missing.example.com/' ) );
+		$this->assertCount( 2, $result['denied'] );
+		$this->assertSame( 'mainwp_site_not_found', $result['denied'][0]['code'] );
+		$this->assertSame( 404, $result['denied'][0]['status'] );
+		$this->assertSame( str_replace( 'https://missing.example.com/', $url, $result['denied'][1]['message'] ), $result['denied'][0]['message'] );
+	}
+
+	public function test_restricted_client_email_denial_matches_missing_email() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$email = 'scope-' . wp_generate_uuid4() . '@example.com';
+		$this->create_test_client( array( 'client_email' => $email ) );
+		$this->restrict_current_user_to_sites( array() );
+
+		$result = $this->execute_ability( 'mainwp/get-client-v1', array( 'client_id_or_email' => $email ) );
+		$missing = $this->execute_ability( 'mainwp/get-client-v1', array( 'client_id_or_email' => 'missing@example.com' ) );
+		$this->assertWPError( $result );
+		$this->assertWPError( $missing );
+		$this->assertSame( 'mainwp_client_not_found', $result->get_error_code() );
+		$this->assertSame( 404, $result->get_error_data()['status'] );
+		$this->assertSame( str_replace( 'missing@example.com', $email, $missing->get_error_message() ), $result->get_error_message() );
+	}
 }

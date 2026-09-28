@@ -482,10 +482,12 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
         $out_of_scope = array_diff( $selected, $allowed_sites );
 
         if ( ! empty( $out_of_scope ) ) {
+            // Only a restricted caller reaches this leg, so the unseen site reads as missing.
             return new \WP_Error(
-                'mainwp_access_denied',
-                __( 'selected_sites contains sites you do not have permission to access.', 'mainwp' ),
-                array( 'status' => 403 )
+                'mainwp_site_not_found',
+                /* translators: %d: site ID */
+                sprintf( __( 'No site found with ID %d.', 'mainwp' ), (int) reset( $out_of_scope ) ),
+                array( 'status' => 404 )
             );
         }
 

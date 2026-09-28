@@ -783,12 +783,13 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                 <?php echo '</td>'; ?>
                 <?php
             } elseif ( 'notes' === $column_name ) {
-                $note = html_entity_decode( (string) $item['note'] );
+                $note = isset( $item['note'] ) ? (string) $item['note'] : '';
                 if ( MainWP_Utility::client_note_exceeds_limit( $note ) ) {
-                    $stored   = $note;
+                    $edit     = MainWP_Utility::client_note_for_editor( $note );
                     $esc_note = MainWP_Utility::client_note_html( $note );
                 } else {
                     $stored   = MainWP_Utility::sanitize_client_note( $note );
+                    $edit     = MainWP_Utility::client_note_for_editor( $stored );
                     $esc_note = MainWP_Utility::client_note_html( $stored );
                 }
                 $strip_note = wp_strip_all_tags( $esc_note );
@@ -801,7 +802,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                     $cl_id2 = $item['client_id']; ?>
                     <a href="javascript:void(0)" class="mainwp-edit-client-note ui mini icon button" id="mainwp-notes-<?php echo intval( $cl_id2 ); ?>" data-tooltip="<?php echo esc_attr( substr( wp_unslash( $strip_note ), 0, 100 ) ); ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
                     <?php endif; ?>
-                    <span style="display: none" id="mainwp-notes-<?php echo intval( $item['client_id'] ); ?>-note" data-note="<?php echo esc_attr( $stored ); ?>"><?php echo wp_unslash( $esc_note ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
+                    <span style="display: none" id="mainwp-notes-<?php echo intval( $item['client_id'] ); ?>-note" data-note="<?php echo esc_attr( $edit ); ?>"><?php echo wp_unslash( $esc_note ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
                 <?php echo '</td>'; ?>
             <?php } elseif ( 'client_actions' === $column_name ) { ?>
                 <?php $selected_sites = isset( $item['selected_sites'] ) ? trim( $item['selected_sites'] ) : ''; ?>

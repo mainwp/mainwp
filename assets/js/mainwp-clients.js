@@ -743,7 +743,7 @@ jQuery(document).on('click', '#mainwp-clients-delete-individual-field', function
 jQuery(document).on('click', '.mainwp-edit-client-note', function () {
   let id = jQuery(this).attr('id').substring(13);
   let holder = jQuery('#mainwp-notes-' + id + '-note');
-  // data-note is the stored text. The element's HTML is the server-sanitized display copy.
+  // data-note is the text shown in the editor. The element's HTML is the display copy.
   let note = holder.attr('data-note');
   if (typeof note === 'undefined') {
     note = holder.text();

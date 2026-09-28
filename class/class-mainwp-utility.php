@@ -42,7 +42,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * Longest client note that may be saved, in characters.
      *
      * A longer note is rejected on write. Display escapes it instead of
-     * running the iterative sanitizer.
+     * tokenizing it. The count is characters, not bytes.
      */
     const CLIENT_NOTE_MAX_LENGTH = 10000;
 
@@ -72,15 +72,6 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @var mixed Default null
      */
     private static $instance = null;
-
-    /**
-     * Allowlist-pass cap for a client note. Null uses the decoded length plus two.
-     *
-     * @static
-     *
-     * @var int|null
-     */
-    private static $client_note_pass_cap = null;
 
     /**
      * Store the disabled php functions.
@@ -981,11 +972,16 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     /**
      * Whether a note is longer than the save cap.
      *
+     * Counted in characters so a multibyte note matches the error message.
+     *
      * @param mixed $note Note field.
      * @return bool
      */
     public static function client_note_exceeds_limit( $note ) {
-        return is_string( $note ) && strlen( $note ) > self::CLIENT_NOTE_MAX_LENGTH;
+        if ( ! is_string( $note ) ) {
+            return false;
+        }
+        return mb_strlen( $note, 'UTF-8' ) > self::CLIENT_NOTE_MAX_LENGTH;
     }
 
     /**
@@ -1004,15 +1000,11 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     /**
      * Sanitize a client note for storage.
      *
-     * Entities are decoded first. Each pass holds brackets that are not an
-     * allowlisted tag, runs the note allowlist, then puts those characters
-     * back. The pass repeats until the string stops changing, bounded by the
-     * decoded length plus two. The result is then checked with
-     * WP_HTML_Tag_Processor. A note that is still changing at the bound, or
-     * that still contains a tag or attribute outside the allowlist, fails
-     * closed: every tag is stripped and the remaining brackets are encoded.
-     * Comparison text such as "a < b" stays as typed. A non-string is stored
-     * as empty. A note over the length cap skips the iterative pass.
+     * Raw markup is kept only for a complete, well-formed tag on the note
+     * allowlist whose attributes are allowed. Every other < and > is stored
+     * as &lt; and &gt;, including comparison text, unknown tags, and an
+     * unfinished tag at the end of the note. A non-string is stored as empty.
+     * A note over the length cap is escaped without tokenizing.
      *
      * @param mixed $note Note field.
      * @return string Sanitized note.
@@ -1031,48 +1023,52 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             return self::client_note_fail_closed( $note );
         }
 
-        $limit    = self::client_note_pass_limit( $note );
-        $previous = null;
-        for ( $pass = 0; $pass < $limit && $note !== $previous; $pass++ ) {
-            $previous = $note;
-            $note     = self::client_note_pass( $note );
-        }
-
-        if ( $note !== $previous || ! self::client_note_output_is_allowed( $note ) ) {
-            return self::client_note_fail_closed( $note );
-        }
-
-        return $note;
+        return self::client_note_tokenize( $note );
     }
 
     /**
-     * How many allowlist passes to run before failing closed.
+     * Note text shown in the editor.
      *
-     * @param string $note Decoded note.
-     * @return int
-     */
-    private static function client_note_pass_limit( $note ) {
-        if ( null !== self::$client_note_pass_cap ) {
-            return (int) self::$client_note_pass_cap;
-        }
-        return strlen( $note ) + 2;
-    }
-
-    /**
-     * Strip tags and encode brackets when the allowlist pass does not settle.
+     * Storage encodes brackets that are not an allowlisted tag. The editor
+     * shows those brackets as the user typed them.
      *
-     * @param string $note Partial note.
+     * @param mixed $note Stored note.
      * @return string
      */
-    private static function client_note_fail_closed( $note ) {
-        $note = wp_strip_all_tags( $note );
-        return str_replace( array( '<', '>' ), array( '&lt;', '&gt;' ), $note );
+    public static function client_note_for_editor( $note ) {
+        if ( ! is_string( $note ) ) {
+            return '';
+        }
+        return self::decode_client_note_entities( $note );
+    }
+
+    /**
+     * Format a client note for HTML display.
+     *
+     * Allowed tags stay as tags. Other brackets are encoded once, so the page
+     * shows them as typed and a second pass does not produce &amp;lt;. A note
+     * over the length cap is escaped, with line breaks, and is not tokenized.
+     *
+     * @param mixed $note Note field.
+     * @return string HTML-safe note.
+     */
+    public static function client_note_html( $note ) {
+        if ( ! is_string( $note ) ) {
+            return '';
+        }
+
+        if ( self::client_note_exceeds_limit( $note ) ) {
+            return nl2br( esc_html( $note ), false );
+        }
+
+        return self::sanitize_client_note( $note );
     }
 
     /**
      * Decode entities until the text stops changing.
      *
      * One decode is not enough for a value that was encoded more than once.
+     * "& a<b." is not an entity and is left unchanged.
      *
      * @param string $note Note text.
      * @return string
@@ -1087,42 +1083,331 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     }
 
     /**
-     * Run one allowlist pass and restore non-tag brackets.
+     * Encode every bracket that is not a verified allowlisted tag.
      *
-     * @param string $note Note text.
+     * @param string $note Decoded note.
      * @return string
      */
-    private static function client_note_pass( $note ) {
-        $lt        = self::client_note_token( $note, 'lt' );
-        $gt        = self::client_note_token( $note, 'gt' );
-        $protected = self::replace_plain_angle_brackets( $note, $lt, $gt );
-        $clean     = self::esc_content( $protected, 'note' );
+    private static function client_note_tokenize( $note ) {
+        $out    = '';
+        $length = strlen( $note );
+        $offset = 0;
 
-        return str_replace( array( $lt, $gt ), array( '<', '>' ), $clean );
+        while ( $offset < $length ) {
+            if ( '<' !== $note[ $offset ] ) {
+                $next = strpos( $note, '<', $offset );
+                if ( false === $next ) {
+                    $out .= self::client_note_encode_text( substr( $note, $offset ) );
+                    break;
+                }
+                $out   .= self::client_note_encode_text( substr( $note, $offset, $next - $offset ) );
+                $offset = $next;
+                continue;
+            }
+
+            $tag = self::client_note_read_tag( $note, $offset );
+            if ( null === $tag ) {
+                $out .= '&lt;';
+                ++$offset;
+                continue;
+            }
+
+            if ( ! empty( $tag['incomplete'] ) ) {
+                $out .= self::client_note_encode_text( substr( $note, $offset ) );
+                break;
+            }
+
+            if ( self::client_note_tag_is_safe( $tag ) ) {
+                $out .= $tag['raw'];
+            } else {
+                $out .= self::client_note_encode_text( $tag['raw'] );
+            }
+            $offset = (int) $tag['end'];
+        }
+
+        return $out;
     }
 
     /**
-     * Format a client note for HTML display.
+     * Read one well-formed tag, or null when the "<" is ordinary text.
      *
-     * Allowed tags stay as tags. Other < and > characters are encoded once,
-     * so the page shows them as typed and a second pass does not turn them
-     * into &amp;lt;. A note over the length cap is escaped, with line breaks,
-     * and does not run the iterative sanitizer.
+     * An unfinished tag at the end of the string is incomplete and must be
+     * encoded. A "<" that does not begin a complete tag is ordinary text.
      *
-     * @param mixed $note Note field.
-     * @return string HTML-safe note.
+     * @param string $note   Note text.
+     * @param int    $offset Offset of the "<".
+     * @return array<string, mixed>|null
      */
-    public static function client_note_html( $note ) {
-        if ( ! is_string( $note ) ) {
-            return '';
+    private static function client_note_read_tag( $note, $offset ) {
+        $length = strlen( $note );
+        $cursor = $offset + 1;
+        $closer = false;
+
+        if ( $cursor < $length && '/' === $note[ $cursor ] ) {
+            $closer = true;
+            ++$cursor;
         }
 
-        if ( self::client_note_exceeds_limit( $note ) ) {
-            return nl2br( esc_html( $note ), false );
+        if ( $cursor >= $length || ! self::client_note_is_name_start( $note[ $cursor ] ) ) {
+            return null;
         }
 
-        $note = self::sanitize_client_note( $note );
-        return self::replace_plain_angle_brackets( $note, '&lt;', '&gt;' );
+        $name_start = $cursor;
+        ++$cursor;
+        while ( $cursor < $length && self::client_note_is_name_char( $note[ $cursor ] ) ) {
+            ++$cursor;
+        }
+
+        if ( $cursor >= $length ) {
+            return array( 'incomplete' => true );
+        }
+
+        $name  = substr( $note, $name_start, $cursor - $name_start );
+        $attrs = array();
+
+        if ( ! $closer ) {
+            $parsed = self::client_note_read_attributes( $note, $cursor );
+            if ( null === $parsed ) {
+                return null;
+            }
+            if ( ! empty( $parsed['incomplete'] ) ) {
+                return array( 'incomplete' => true );
+            }
+            $attrs  = $parsed['attrs'];
+            $cursor = $parsed['offset'];
+        } else {
+            $cursor += strspn( $note, " \t\n\r\f", $cursor );
+        }
+
+        if ( $cursor >= $length ) {
+            return array( 'incomplete' => true );
+        }
+
+        if ( ! $closer && '/' === $note[ $cursor ] ) {
+            ++$cursor;
+            if ( $cursor >= $length ) {
+                return array( 'incomplete' => true );
+            }
+            $cursor += strspn( $note, " \t\n\r\f", $cursor );
+            if ( $cursor >= $length ) {
+                return array( 'incomplete' => true );
+            }
+        }
+
+        if ( '>' !== $note[ $cursor ] ) {
+            return null;
+        }
+
+        $end = $cursor + 1;
+        return array(
+            'incomplete' => false,
+            'raw'        => substr( $note, $offset, $end - $offset ),
+            'name'       => $name,
+            'closer'     => $closer,
+            'attrs'      => $attrs,
+            'end'        => $end,
+        );
+    }
+
+    /**
+     * Read the attributes of an opening tag.
+     *
+     * @param string $note   Note text.
+     * @param int    $cursor Offset after the tag name.
+     * @return array<string, mixed>|null Null when the tag is not well-formed.
+     */
+    private static function client_note_read_attributes( $note, $cursor ) {
+        $length = strlen( $note );
+        $attrs  = array();
+
+        while ( $cursor < $length ) {
+            $whitespace = strspn( $note, " \t\n\r\f", $cursor );
+            if ( 0 === $whitespace ) {
+                break;
+            }
+            $cursor += $whitespace;
+            if ( $cursor >= $length ) {
+                return array( 'incomplete' => true );
+            }
+            if ( '>' === $note[ $cursor ] || '/' === $note[ $cursor ] ) {
+                break;
+            }
+            if ( ! self::client_note_is_attr_start( $note[ $cursor ] ) ) {
+                return null;
+            }
+
+            $name_start = $cursor;
+            ++$cursor;
+            while ( $cursor < $length && self::client_note_is_attr_char( $note[ $cursor ] ) ) {
+                ++$cursor;
+            }
+            if ( $cursor >= $length ) {
+                return array( 'incomplete' => true );
+            }
+
+            $attr_name = substr( $note, $name_start, $cursor - $name_start );
+            $cursor   += strspn( $note, " \t\n\r\f", $cursor );
+            if ( $cursor >= $length ) {
+                return array( 'incomplete' => true );
+            }
+
+            $value = null;
+            if ( '=' === $note[ $cursor ] ) {
+                ++$cursor;
+                $cursor += strspn( $note, " \t\n\r\f", $cursor );
+                if ( $cursor >= $length ) {
+                    return array( 'incomplete' => true );
+                }
+                $parsed = self::client_note_read_attribute_value( $note, $cursor );
+                if ( null === $parsed ) {
+                    return null;
+                }
+                if ( ! empty( $parsed['incomplete'] ) ) {
+                    return array( 'incomplete' => true );
+                }
+                $value  = $parsed['value'];
+                $cursor = $parsed['offset'];
+            }
+
+            $attrs[] = array(
+                'name'  => $attr_name,
+                'value' => $value,
+            );
+        }
+
+        return array(
+            'incomplete' => false,
+            'attrs'      => $attrs,
+            'offset'     => $cursor,
+        );
+    }
+
+    /**
+     * Read one attribute value.
+     *
+     * @param string $note   Note text.
+     * @param int    $cursor Offset of the value.
+     * @return array<string, mixed>|null
+     */
+    private static function client_note_read_attribute_value( $note, $cursor ) {
+        $length = strlen( $note );
+        $quote  = $note[ $cursor ];
+
+        if ( '"' === $quote || "'" === $quote ) {
+            ++$cursor;
+            $end = strpos( $note, $quote, $cursor );
+            if ( false === $end ) {
+                return array( 'incomplete' => true );
+            }
+            return array(
+                'incomplete' => false,
+                'value'      => substr( $note, $cursor, $end - $cursor ),
+                'offset'     => $end + 1,
+            );
+        }
+
+        if ( false !== strpos( " \t\n\r\f\"'=<>", $quote ) ) {
+            return null;
+        }
+
+        $start = $cursor;
+        ++$cursor;
+        while ( $cursor < $length && false === strpos( " \t\n\r\f\"'=<>", $note[ $cursor ] ) ) {
+            ++$cursor;
+        }
+        if ( $cursor >= $length ) {
+            return array( 'incomplete' => true );
+        }
+
+        return array(
+            'incomplete' => false,
+            'value'      => substr( $note, $start, $cursor - $start ),
+            'offset'     => $cursor,
+        );
+    }
+
+    /**
+     * Whether a parsed tag may be stored as markup.
+     *
+     * @param array<string, mixed> $tag Parsed tag.
+     * @return bool
+     */
+    private static function client_note_tag_is_safe( $tag ) {
+        $allowed = self::client_note_allowed_html();
+        $name    = strtolower( $tag['name'] );
+        if ( ! isset( $allowed[ $name ] ) ) {
+            return false;
+        }
+
+        if ( ! empty( $tag['closer'] ) ) {
+            return empty( $tag['attrs'] );
+        }
+
+        foreach ( $tag['attrs'] as $attr ) {
+            $attr_name = strtolower( $attr['name'] );
+            if ( ! isset( $allowed[ $name ][ $attr_name ] ) ) {
+                return false;
+            }
+            if ( self::client_note_attribute_is_unsafe( $attr_name, $attr['value'] ) ) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Encode &, <, and > in text.
+     *
+     * @param string $text Plain text.
+     * @return string
+     */
+    private static function client_note_encode_text( $text ) {
+        return str_replace(
+            array( '&', '<', '>' ),
+            array( '&amp;', '&lt;', '&gt;' ),
+            $text
+        );
+    }
+
+    /**
+     * Whether a byte can start an HTML tag name.
+     *
+     * @param string $byte One byte.
+     * @return bool
+     */
+    private static function client_note_is_name_start( $byte ) {
+        return ( $byte >= 'A' && $byte <= 'Z' ) || ( $byte >= 'a' && $byte <= 'z' );
+    }
+
+    /**
+     * Whether a byte can continue an HTML tag name.
+     *
+     * @param string $byte One byte.
+     * @return bool
+     */
+    private static function client_note_is_name_char( $byte ) {
+        return self::client_note_is_name_start( $byte ) || ( $byte >= '0' && $byte <= '9' );
+    }
+
+    /**
+     * Whether a byte can start an attribute name.
+     *
+     * @param string $byte One byte.
+     * @return bool
+     */
+    private static function client_note_is_attr_start( $byte ) {
+        return self::client_note_is_name_start( $byte ) || '_' === $byte || ':' === $byte;
+    }
+
+    /**
+     * Whether a byte can continue an attribute name.
+     *
+     * @param string $byte One byte.
+     * @return bool
+     */
+    private static function client_note_is_attr_char( $byte ) {
+        return self::client_note_is_attr_start( $byte ) || ( $byte >= '0' && $byte <= '9' ) || '.' === $byte || '-' === $byte;
     }
 
     /**
@@ -1150,358 +1435,49 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     }
 
     /**
-     * Whether a parsed note contains only allowlisted tags and attributes.
-     *
-     * Event-handler attributes and unsafe URL protocols are rejected. An HTML
-     * element that is not in the note allowlist is rejected. Text such as
-     * "<int>" is not such an element, so it can be kept.
-     *
-     * @param string $note Settled note.
-     * @return bool
-     */
-    private static function client_note_output_is_allowed( $note ) {
-        if ( ! class_exists( '\WP_HTML_Tag_Processor' ) ) {
-            return false;
-        }
-
-        $allowed   = self::client_note_allowed_html();
-        $processor = new \WP_HTML_Tag_Processor( $note );
-        while ( $processor->next_tag( array( 'tag_closers' => 'visit' ) ) ) {
-            $tag = strtolower( (string) $processor->get_tag() );
-            // The processor keeps "<" inside a tag name. A browser starts a new tag there.
-            if ( false !== strpos( $tag, '<' ) || self::client_note_tag_is_blocked( $tag ) ) {
-                return false;
-            }
-
-            if ( $processor->is_tag_closer() ) {
-                continue;
-            }
-
-            $names = $processor->get_attribute_names_with_prefix( '' );
-            if ( ! is_array( $names ) ) {
-                continue;
-            }
-
-            foreach ( $names as $name ) {
-                $name  = strtolower( (string) $name );
-                $value = $processor->get_attribute( $name );
-                if ( self::client_note_attribute_is_unsafe( $name, $value ) ) {
-                    return false;
-                }
-                if ( isset( $allowed[ $tag ] ) && ! isset( $allowed[ $tag ][ $name ] ) ) {
-                    return false;
-                }
-            }
-        }
-
-        return ! self::client_note_has_raw_blocked_tag( $note );
-    }
-
-    /**
-     * HTML elements that cannot be stored, even without an event handler.
-     *
-     * @return array<string, bool>
-     */
-    private static function client_note_blocked_tags() {
-        static $blocked = null;
-        if ( null === $blocked ) {
-            $blocked = array_fill_keys(
-                array(
-                    'applet',
-                    'audio',
-                    'base',
-                    'embed',
-                    'form',
-                    'frame',
-                    'frameset',
-                    'iframe',
-                    'image',
-                    'img',
-                    'link',
-                    'math',
-                    'meta',
-                    'object',
-                    'portal',
-                    'script',
-                    'source',
-                    'style',
-                    'svg',
-                    'template',
-                    'textarea',
-                    'title',
-                    'track',
-                    'video',
-                    'foreignobject',
-                    'use',
-                    'animate',
-                    'set',
-                ),
-                true
-            );
-        }
-        return $blocked;
-    }
-
-    /**
-     * Whether a name is an element that cannot be stored.
-     *
-     * @param string $tag Lowercase tag name.
-     * @return bool
-     */
-    private static function client_note_tag_is_blocked( $tag ) {
-        $blocked = self::client_note_blocked_tags();
-        return isset( $blocked[ $tag ] );
-    }
-
-    /**
-     * Whether the note still contains a blocked tag the processor did not close.
-     *
-     * An unclosed "<svg" at the end of the string is skipped by the processor
-     * and is still a tag in a browser.
-     *
-     * @param string $note Settled note.
-     * @return bool
-     */
-    private static function client_note_has_raw_blocked_tag( $note ) {
-        $names = implode( '|', array_keys( self::client_note_blocked_tags() ) );
-        return 1 === preg_match( '/<\s*\/?\s*(' . $names . ')\b/i', $note );
-    }
-
-    /**
-     * Whether an attribute is an event handler or an unsafe URL.
+     * Whether an attribute is a style, an event handler, or an unsafe URL.
      *
      * @param string $name  Lowercase attribute name.
-     * @param mixed  $value Attribute value.
+     * @param mixed  $value Attribute value. Null is a boolean attribute.
      * @return bool
      */
     private static function client_note_attribute_is_unsafe( $name, $value ) {
-        if ( 0 === strpos( $name, 'on' ) ) {
+        if ( 'style' === $name || 0 === strpos( $name, 'on' ) ) {
             return true;
         }
 
-        $urls = array( 'href', 'src', 'action', 'formaction', 'poster', 'cite', 'background', 'data', 'codebase', 'srcset', 'dynsrc', 'lowsrc', 'xlink:href' );
+        $urls = array(
+            'href',
+            'src',
+            'action',
+            'formaction',
+            'poster',
+            'cite',
+            'background',
+            'data',
+            'codebase',
+            'srcset',
+            'dynsrc',
+            'lowsrc',
+            'xlink:href',
+        );
         if ( ! in_array( $name, $urls, true ) || ! is_string( $value ) ) {
             return false;
         }
 
+        $value = self::decode_client_note_entities( $value );
         return wp_kses_bad_protocol( $value, wp_allowed_protocols() ) !== $value;
     }
 
     /**
-     * Build a placeholder that does not already occur in the note.
+     * Escape a note that is too long to tokenize.
      *
-     * @param string $note  Note text.
-     * @param string $which Token label.
+     * @param string $note Note text.
      * @return string
      */
-    private static function client_note_token( $note, $which ) {
-        do {
-            $token = 'mwpn' . $which . wp_generate_password( 12, false );
-        } while ( false !== strpos( $note, $token ) );
-
-        return $token;
-    }
-
-    /**
-     * Replace < and > that are not part of a tag.
-     *
-     * Only an allowlisted tag is left in place. Every other "<...>" is
-     * literal text, so "<int>" and "<john@example.com>" are kept. Comparison
-     * text such as "a < b" does not match a tag, so those characters are
-     * replaced as well.
-     *
-     * @param string $content Note text.
-     * @param string $lt      Replacement for a stray <.
-     * @param string $gt      Replacement for a stray >.
-     * @return string
-     */
-    private static function replace_plain_angle_brackets( $content, $lt, $gt ) {
-        $parts = preg_split( '/(<\/?[a-zA-Z][^<>]*>)/', $content, -1, PREG_SPLIT_DELIM_CAPTURE );
-        if ( ! is_array( $parts ) ) {
-            return str_replace( array( '<', '>' ), array( $lt, $gt ), $content );
-        }
-
-        $out = '';
-        foreach ( $parts as $part ) {
-            if ( self::client_note_span_is_markup( $part ) ) {
-                $out .= $part;
-            } else {
-                $out .= str_replace( array( '<', '>' ), array( $lt, $gt ), $part );
-            }
-        }
-
-        return $out;
-    }
-
-    /**
-     * Whether a bracket span should be parsed as markup.
-     *
-     * Allowlisted tags stay. A real HTML element with a normal attribute
-     * list is also left for kses, which strips it when it is not allowlisted.
-     * "<int>", "<john@example.com>", and "<b, c>" are not markup.
-     *
-     * @param string $part Candidate tag.
-     * @return bool
-     */
-    private static function client_note_span_is_markup( $part ) {
-        if ( 1 !== preg_match( '/^<\/?([a-zA-Z][a-zA-Z0-9]*)([^<>]*)>$/', $part, $matches ) ) {
-            return false;
-        }
-
-        $name    = strtolower( $matches[1] );
-        $rest    = $matches[2];
-        $allowed = self::client_note_allowed_html();
-        if ( isset( $allowed[ $name ] ) ) {
-            return true;
-        }
-
-        if ( ! self::client_note_is_html_element( $name ) ) {
-            return false;
-        }
-
-        return '' === $rest || '/' === $rest || 1 === preg_match( '/^\s/', $rest );
-    }
-
-    /**
-     * Whether a name is an HTML element kses should see.
-     *
-     * @param string $name Lowercase tag name.
-     * @return bool
-     */
-    private static function client_note_is_html_element( $name ) {
-        static $elements = null;
-        if ( null === $elements ) {
-            $elements = array_fill_keys(
-                array(
-                    'a',
-                    'abbr',
-                    'address',
-                    'area',
-                    'article',
-                    'aside',
-                    'audio',
-                    'b',
-                    'base',
-                    'bdi',
-                    'bdo',
-                    'blockquote',
-                    'body',
-                    'br',
-                    'button',
-                    'canvas',
-                    'caption',
-                    'cite',
-                    'code',
-                    'col',
-                    'colgroup',
-                    'data',
-                    'datalist',
-                    'dd',
-                    'del',
-                    'details',
-                    'dfn',
-                    'dialog',
-                    'div',
-                    'dl',
-                    'dt',
-                    'em',
-                    'embed',
-                    'fieldset',
-                    'figcaption',
-                    'figure',
-                    'footer',
-                    'form',
-                    'h1',
-                    'h2',
-                    'h3',
-                    'h4',
-                    'h5',
-                    'h6',
-                    'head',
-                    'header',
-                    'hgroup',
-                    'hr',
-                    'html',
-                    'i',
-                    'iframe',
-                    'img',
-                    'input',
-                    'ins',
-                    'kbd',
-                    'label',
-                    'legend',
-                    'li',
-                    'link',
-                    'main',
-                    'map',
-                    'mark',
-                    'menu',
-                    'meta',
-                    'meter',
-                    'nav',
-                    'noscript',
-                    'object',
-                    'ol',
-                    'optgroup',
-                    'option',
-                    'output',
-                    'p',
-                    'picture',
-                    'pre',
-                    'progress',
-                    'q',
-                    'rp',
-                    'rt',
-                    'ruby',
-                    's',
-                    'samp',
-                    'script',
-                    'search',
-                    'section',
-                    'select',
-                    'slot',
-                    'small',
-                    'source',
-                    'span',
-                    'strong',
-                    'style',
-                    'sub',
-                    'summary',
-                    'sup',
-                    'svg',
-                    'table',
-                    'tbody',
-                    'td',
-                    'template',
-                    'textarea',
-                    'tfoot',
-                    'th',
-                    'thead',
-                    'time',
-                    'title',
-                    'tr',
-                    'track',
-                    'u',
-                    'ul',
-                    'var',
-                    'video',
-                    'wbr',
-                    'math',
-                    'image',
-                    'foreignobject',
-                    'use',
-                    'animate',
-                    'set',
-                    'portal',
-                    'marquee',
-                    'applet',
-                    'frame',
-                    'frameset',
-                ),
-                true
-            );
-        }
-        return isset( $elements[ $name ] );
+    private static function client_note_fail_closed( $note ) {
+        $note = wp_strip_all_tags( $note );
+        return self::client_note_encode_text( $note );
     }
 
     /**

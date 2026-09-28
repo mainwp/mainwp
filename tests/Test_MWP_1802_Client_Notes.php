@@ -58,7 +58,6 @@ class Test_MWP_1802_Client_Notes extends \WP_UnitTestCase {
 
 		remove_filter( 'mainwp_currentusercan', array( $this, 'deny_manage_clients' ), 10 );
 		remove_filter( 'wp_doing_ajax', '__return_true' );
-		$this->set_note_pass_cap( null );
 
 		$_POST    = array();
 		$_REQUEST = array();
@@ -131,7 +130,7 @@ class Test_MWP_1802_Client_Notes extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * javascript: links and on* attributes are removed from a saved note.
+	 * javascript: links and on* attributes are not live markup in a saved note.
 	 *
 	 * @return void
 	 */
@@ -143,10 +142,9 @@ class Test_MWP_1802_Client_Notes extends \WP_UnitTestCase {
 		$stored   = $this->read_note( $client_id );
 
 		$this->assertSame( 'SUCCESS', $response['result'] );
-		$this->assertStringNotContainsString( 'javascript:', $stored );
-		$this->assertStringNotContainsString( 'javascript:', $response['esc_note_content'] );
-		$this->assertDoesNotMatchRegularExpression( '/\son[a-z0-9_-]*\s*=/i', $stored );
-		$this->assertDoesNotMatchRegularExpression( '/\son[a-z0-9_-]*\s*=/i', $response['esc_note_content'] );
+		$this->assert_note_not_live( $stored );
+		$this->assert_note_not_live( $response['esc_note_content'] );
+		$this->assertSame( $note, $response['note'] );
 		$this->assertStringContainsString( 'click', $stored );
 	}
 
@@ -187,40 +185,29 @@ class Test_MWP_1802_Client_Notes extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * Comparison text keeps its < and > characters on every write path.
+	 * Bracket text is stored encoded and comes back as typed in the editor.
 	 *
 	 * @return void
 	 */
 	public function test_plain_angle_brackets_round_trip(): void {
 		$samples = array(
+			'a < b',
 			'a < b and c > d',
 			'x<y',
 			'5 > 3',
+			'<john@example.com>',
+			'<https://example.com>',
+			'Array<int>',
+			'std::vector<std::string>',
+			'x<y>z',
+			'<strong>5 > 3</strong> and <em>x<y</em>',
+			'& a<b.',
+			'<p>Hi</p>',
 		);
 
 		foreach ( $samples as $note ) {
-			foreach ( $this->store_note_on_every_path( $note ) as $stored ) {
-				$this->assertSame( $note, $stored );
-			}
+			$this->assert_editor_round_trip( $note );
 		}
-
-		$note      = 'a < b and c > d';
-		$client_id = $this->create_client( 'original note' );
-		$response  = $this->dispatch_notes_save( $client_id, $note );
-		$stored    = $this->read_note( $client_id );
-
-		$this->assertSame( $note, $stored );
-		$this->assertSame( $note, $response['note'] );
-		$this->assertSame( 'a &lt; b and c &gt; d', $response['esc_note_content'] );
-		$this->assertStringNotContainsString( '&amp;', $response['esc_note_content'] );
-		$this->assertSame( 'a &lt; b and c &gt; d', esc_html( $stored ) );
-		$this->assertSame(
-			$response['esc_note_content'],
-			MainWP_Utility::client_note_html( $response['esc_note_content'] )
-		);
-
-		$this->save_note_through_edit_form( $client_id, $stored );
-		$this->assertSame( $note, $this->read_note( $client_id ) );
 	}
 
 	/**
@@ -237,10 +224,8 @@ class Test_MWP_1802_Client_Notes extends \WP_UnitTestCase {
 
 		foreach ( $samples as $note ) {
 			foreach ( $this->store_note_on_every_path( $note ) as $stored ) {
-				$this->assertStringNotContainsString( '<script', strtolower( $stored ) );
-				$this->assertStringNotContainsString( 'javascript:', strtolower( $stored ) );
-				$this->assertStringNotContainsString( '<b', strtolower( $stored ) );
-				$this->assertDoesNotMatchRegularExpression( '/\son[a-z0-9_-]*\s*=/i', $stored );
+				$this->assert_note_neutralized( $stored );
+				$this->assertSame( $note, MainWP_Utility::client_note_for_editor( $stored ) );
 			}
 		}
 	}
@@ -300,19 +285,42 @@ class Test_MWP_1802_Client_Notes extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * A note that is still changing at the pass cap is stored with no raw brackets.
+	 * A nested handler that is not an allowlisted tag is stored with no raw brackets.
 	 *
 	 * @return void
 	 */
 	public function test_note_sanitize_fails_closed_when_the_pass_cap_is_hit(): void {
 		$note = 'a < b <<b>img src=x onerror=alert(1)>';
-		$this->set_note_pass_cap( 1 );
 
 		foreach ( $this->store_note_on_every_path( $note ) as $stored ) {
 			$this->assert_fail_closed_note( $stored );
 		}
 		$this->assert_fail_closed_note( MainWP_Utility::client_note_html( $note ) );
 		$this->assert_fail_closed_note( MainWP_Utility::sanitize_client_note( $note ) );
+	}
+
+	/**
+	 * An unfinished tag, and tags that swallow or carry extra attributes, stay text.
+	 *
+	 * @return void
+	 */
+	public function test_incomplete_tail_and_swallow_tags_stay_text(): void {
+		$samples = array(
+			'x <details open ontoggle=alert(1) ',
+			'x <p onclick=alert(1) ',
+			'x <strong tabindex=1 autofocus onfocus=alert(1) ',
+			'Note: <a href="javascript:alert(document.cookie)" ',
+			'<xmp>rest of the report',
+			'<noembed>rest of the report',
+			'<noframes>rest of the report',
+			'<plaintext>rest of the report',
+			'<listing>rest of the report',
+			'<zzz style="color:red" id="i" form="f" tabindex="1" autofocus>rest</zzz>',
+		);
+
+		foreach ( $samples as $note ) {
+			$this->assert_editor_round_trip( $note );
+		}
 	}
 
 	/**
@@ -377,7 +385,7 @@ class Test_MWP_1802_Client_Notes extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * Bracket text that is not an allowlisted tag is stored as typed.
+	 * Bracket text that is not an allowlisted tag is edited as typed.
 	 *
 	 * @return void
 	 */
@@ -392,11 +400,9 @@ class Test_MWP_1802_Client_Notes extends \WP_UnitTestCase {
 		);
 
 		foreach ( $samples as $note ) {
-			foreach ( $this->store_note_on_every_path( $note ) as $stored ) {
-				$this->assertSame( $note, $stored );
-			}
+			$this->assert_editor_round_trip( $note );
 			$html = MainWP_Utility::client_note_html( $note );
-			$this->assert_note_neutralized( $html );
+			$this->assert_note_not_live( $html );
 			if ( '<p>Hi</p>' === $note ) {
 				$this->assertSame( $note, $html );
 			} else {
@@ -455,10 +461,16 @@ class Test_MWP_1802_Client_Notes extends \WP_UnitTestCase {
 		$this->assertSame( MainWP_Utility::client_note_length_error(), $added['error'] );
 		$this->assertArrayNotHasKey( 'client_id', $added );
 
+		$multibyte = str_repeat( 'é', MainWP_Utility::CLIENT_NOTE_MAX_LENGTH );
+		$this->assertFalse( MainWP_Utility::client_note_exceeds_limit( $multibyte ) );
+		$this->assertTrue( MainWP_Utility::client_note_exceeds_limit( $multibyte . 'é' ) );
+		$this->assertGreaterThan( MainWP_Utility::CLIENT_NOTE_MAX_LENGTH, strlen( $multibyte ) );
+
 		$level = 3325;
 		$tail  = 'img src=x onerror=alert(1)>';
 		$worst = str_repeat( '<', $level ) . str_repeat( 'b>', $level - 1 ) . $tail;
 		$this->assertSame( MainWP_Utility::CLIENT_NOTE_MAX_LENGTH, strlen( $worst ) );
+		$this->assertSame( MainWP_Utility::CLIENT_NOTE_MAX_LENGTH, mb_strlen( $worst, 'UTF-8' ) );
 
 		$started = microtime( true );
 		$stored  = MainWP_Utility::sanitize_client_note( $worst );
@@ -539,44 +551,232 @@ class Test_MWP_1802_Client_Notes extends \WP_UnitTestCase {
 	 * @return void
 	 */
 	private function assert_note_neutralized( $stored ) {
-		$this->assertIsString( $stored );
-		$lower = strtolower( $stored );
-		$this->assertStringNotContainsString( '<script', $lower );
-		$this->assertStringNotContainsString( '</script', $lower );
-		$this->assertStringNotContainsString( 'javascript:', $lower );
-		$this->assertStringNotContainsString( 'onerror', $lower );
-		$this->assertStringNotContainsString( '<img', $lower );
-		$this->assertDoesNotMatchRegularExpression( '/\son[a-z0-9_-]*\s*=/i', $stored );
+		$this->assert_note_not_live( $stored );
+		$this->assertDoesNotMatchRegularExpression( '/<\s*\/?\s*script\b/i', $stored );
+		$this->assertDoesNotMatchRegularExpression( '/<\s*\/?\s*img\b/i', $stored );
+		$this->assertDoesNotMatchRegularExpression( '/<\s*\/?\s*svg\b/i', $stored );
 	}
 
 	/**
-	 * A stored note must not parse as an executable tag.
+	 * A stored note must not become live markup, including after a template closer.
 	 *
-	 * Plain text may still contain the letters of a handler. It is live only
-	 * when a tag or attribute carries them.
+	 * Liveness is judged with an HTML5 parser, not the note tokenizer. The
+	 * letters of a handler may remain as text.
 	 *
 	 * @param string $stored Note text.
 	 * @return void
 	 */
 	private function assert_note_not_live( $stored ) {
 		$this->assertIsString( $stored );
-		$this->assertDoesNotMatchRegularExpression( '/<\s*\/?\s*script\b/i', $stored );
-		$this->assertDoesNotMatchRegularExpression( '/<\s*\/?\s*img\b/i', $stored );
-		$this->assertDoesNotMatchRegularExpression( '/<\s*\/?\s*svg\b/i', $stored );
+		$suffixes = array( '', '</p>', '<br>', '</td>', '</p><br></td>' );
+		foreach ( $suffixes as $suffix ) {
+			$context = $stored . $suffix;
+			$root    = $this->note_root( $context );
+			$this->assertNotNull( $root, $context );
+			$this->assert_note_tree_is_safe( $root, $context );
+		}
+	}
 
-		$processor = new \WP_HTML_Tag_Processor( $stored );
-		while ( $processor->next_tag( array( 'tag_closers' => 'visit' ) ) ) {
-			$tag = strtolower( (string) $processor->get_tag() );
-			$this->assertStringNotContainsString( '<', $tag );
-			$handlers = $processor->get_attribute_names_with_prefix( 'on' );
-			$this->assertTrue( empty( $handlers ), $stored );
-			foreach ( array( 'href', 'src', 'action' ) as $url_name ) {
-				$value = $processor->get_attribute( $url_name );
-				if ( is_string( $value ) ) {
-					$this->assertStringNotContainsString( 'javascript:', strtolower( $value ) );
+	/**
+	 * Parse a note the way a browser would, inside a container.
+	 *
+	 * @param string $html Note HTML, possibly followed by a template closer.
+	 * @return \DOMElement|null
+	 */
+	private function note_root( $html ) {
+		$parser = new \Masterminds\HTML5();
+		$dom    = $parser->loadHTML( '<!DOCTYPE html><html><body><div id="note-root">' . $html . '</div></body></html>' );
+		$nodes  = ( new \DOMXPath( $dom ) )->query( '//*[@id="note-root"]' );
+		if ( ! $nodes || 0 === $nodes->length ) {
+			return null;
+		}
+		$node = $nodes->item( 0 );
+		return $node instanceof \DOMElement ? $node : null;
+	}
+
+	/**
+	 * Allowlisted tags may remain. Handlers, unsafe URLs, and other elements may not.
+	 *
+	 * @param \DOMNode $node    Node to walk.
+	 * @param string   $context Note HTML being judged.
+	 * @return void
+	 */
+	private function assert_note_tree_is_safe( $node, $context ) {
+		$allowed = array( 'a', 'br', 'em', 'strong', 'p', 'hr', 'ul', 'ol', 'li', 'h1', 'h2' );
+		foreach ( $node->childNodes as $child ) {
+			if ( XML_ELEMENT_NODE !== $child->nodeType ) {
+				continue;
+			}
+			$name = strtolower( $child->nodeName );
+			$this->assertContains( $name, $allowed, $context );
+			if ( $child->hasAttributes() ) {
+				foreach ( $child->attributes as $attr ) {
+					$attr_name = strtolower( $attr->nodeName );
+					$this->assertNotSame( 0, strpos( $attr_name, 'on' ), $context );
+					$this->assertNotSame( 'style', $attr_name, $context );
+					$this->assertNotContains( $attr_name, array( 'autofocus', 'tabindex', 'form', 'id' ), $context );
+					if ( in_array( $attr_name, array( 'href', 'src', 'action' ), true ) ) {
+						$this->assertStringNotContainsString( 'javascript:', strtolower( $attr->nodeValue ) );
+					}
 				}
 			}
+			$this->assert_note_tree_is_safe( $child, $context );
 		}
+	}
+
+	/**
+	 * Saving, loading, and saving again keeps the typed note and does not double-encode.
+	 *
+	 * @param string $note Typed note.
+	 * @return void
+	 */
+	private function assert_editor_round_trip( $note ) {
+		foreach ( $this->store_note_on_every_path( $note ) as $stored ) {
+			$this->assert_note_not_live( $stored );
+			$this->assertSame( $note, MainWP_Utility::client_note_for_editor( $stored ), $note );
+			$this->assertStringNotContainsString( '&amp;lt;', $stored, $note );
+			$this->assertStringNotContainsString( '&amp;gt;', $stored, $note );
+			$this->assertSame( $stored, MainWP_Utility::sanitize_client_note( $stored ), $note );
+			$this->assert_visible_note( $note, MainWP_Utility::client_note_html( $stored ) );
+		}
+
+		$client_id = $this->create_client( 'original note' );
+		$response  = $this->dispatch_notes_save( $client_id, $note );
+		$stored    = $this->read_note( $client_id );
+
+		$this->assertSame( $note, $response['note'], $note );
+		$this->assertSame( $stored, $response['esc_note_content'], $note );
+		$this->assertSame(
+			$response['esc_note_content'],
+			MainWP_Utility::client_note_html( $response['esc_note_content'] ),
+			$note
+		);
+		$this->assertStringNotContainsString( '&amp;lt;', $stored, $note );
+
+		$column = $this->render_notes_column( $client_id, $stored );
+		$this->assertSame( $note, $this->read_data_note( $column, $client_id ), $note );
+
+		ob_start();
+		\MainWP\Dashboard\MainWP_Client_Overview_Note::render_addition_info( $client_id );
+		$widget = ob_get_clean();
+		$this->assertSame( $note, $this->read_data_note( $widget, $client_id ), $note );
+
+		$form = $this->render_edit_form( $client_id );
+		$this->assertSame( $note, $this->read_note_textarea( $form ), $note );
+
+		$this->dispatch_notes_save( $client_id, $response['note'] );
+		$this->assertSame( $stored, $this->read_note( $client_id ), $note );
+		$this->save_note_through_edit_form( $client_id, $response['note'] );
+		$this->assertSame( $stored, $this->read_note( $client_id ), $note );
+		$this->dispatch_notes_save( $client_id, $stored );
+		$this->assertSame( $stored, $this->read_note( $client_id ), $note );
+	}
+
+	/**
+	 * The visible text of a display note matches what was typed.
+	 *
+	 * @param string $typed Typed note.
+	 * @param string $html  Display HTML.
+	 * @return void
+	 */
+	private function assert_visible_note( $typed, $html ) {
+		$root = $this->note_root( $html );
+		$this->assertNotNull( $root, $typed );
+		if ( '<strong>5 > 3</strong> and <em>x<y</em>' === $typed ) {
+			$this->assertSame( '5 > 3 and x<y', $root->textContent );
+			$this->assertSame( 1, $root->getElementsByTagName( 'strong' )->length );
+			$this->assertSame( 1, $root->getElementsByTagName( 'em' )->length );
+			$this->assertSame( '5 > 3', $root->getElementsByTagName( 'strong' )->item( 0 )->textContent );
+			$this->assertSame( 'x<y', $root->getElementsByTagName( 'em' )->item( 0 )->textContent );
+			return;
+		}
+		if ( '<p>Hi</p>' === $typed ) {
+			$this->assertSame( 'Hi', $root->getElementsByTagName( 'p' )->item( 0 )->textContent );
+			return;
+		}
+		$this->assertSame( $typed, $root->textContent, $typed );
+	}
+
+	/**
+	 * Render the clients-table notes cell.
+	 *
+	 * @param int    $client_id Client ID.
+	 * @param string $note      Stored note.
+	 * @return string
+	 */
+	private function render_notes_column( $client_id, $note ) {
+		$table = new class() extends \MainWP\Dashboard\MainWP_Client_List_Table {
+			/**
+			 * Render only the notes column.
+			 *
+			 * @param array $item Client row.
+			 * @return string
+			 */
+			public function render_notes_column( $item ) {
+				$this->column_headers = array(
+					array( 'notes' => 'Notes' ),
+					array(),
+					array(),
+				);
+				ob_start();
+				$this->single_row_columns( $item );
+				return ob_get_clean();
+			}
+		};
+
+		return $table->render_notes_column(
+			array(
+				'client_id' => $client_id,
+				'note'      => $note,
+			)
+		);
+	}
+
+	/**
+	 * Read the editor text from a rendered data-note attribute.
+	 *
+	 * @param string $html      Rendered markup.
+	 * @param int    $client_id Client ID.
+	 * @return string
+	 */
+	private function read_data_note( $html, $client_id ) {
+		$dom = new \DOMDocument();
+		libxml_use_internal_errors( true );
+		$dom->loadHTML( '<?xml encoding="utf-8" ?>' . $html );
+		libxml_clear_errors();
+		$node = $dom->getElementById( 'mainwp-notes-' . $client_id . '-note' );
+		$this->assertNotNull( $node, $html );
+		return $node->getAttribute( 'data-note' );
+	}
+
+	/**
+	 * Render the client edit form.
+	 *
+	 * @param int $client_id Client ID.
+	 * @return string
+	 */
+	private function render_edit_form( $client_id ) {
+		$client = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client_id );
+		ob_start();
+		MainWP_Client::render_add_client_content( $client );
+		return ob_get_clean();
+	}
+
+	/**
+	 * Read the note textarea from the edit form.
+	 *
+	 * @param string $html Rendered form.
+	 * @return string
+	 */
+	private function read_note_textarea( $html ) {
+		$dom = new \DOMDocument();
+		libxml_use_internal_errors( true );
+		$dom->loadHTML( '<?xml encoding="utf-8" ?>' . $html );
+		libxml_clear_errors();
+		$xpath = new \DOMXPath( $dom );
+		$nodes = $xpath->query( '//textarea[contains(@name, "client.note")]' );
+		$this->assertSame( 1, $nodes->length, $html );
+		return $nodes->item( 0 )->textContent;
 	}
 
 	/**
@@ -590,18 +790,6 @@ class Test_MWP_1802_Client_Notes extends \WP_UnitTestCase {
 		$this->assertStringNotContainsString( '<', $stored );
 		$this->assertStringNotContainsString( '>', $stored );
 		$this->assertStringContainsString( '&lt;', $stored );
-	}
-
-	/**
-	 * Override the allowlist pass cap. Null restores the decoded-length bound.
-	 *
-	 * @param int|null $cap Pass cap.
-	 * @return void
-	 */
-	private function set_note_pass_cap( $cap ) {
-		$property = new \ReflectionProperty( MainWP_Utility::class, 'client_note_pass_cap' );
-		$property->setAccessible( true );
-		$property->setValue( null, $cap );
 	}
 
 	/**

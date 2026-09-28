@@ -52,17 +52,18 @@ class MainWP_Client_Overview_Note { // phpcs:ignore Generic.Classes.OpeningBrace
 
         $client_info = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client_id, ARRAY_A );
 
-        $note        = '';
-        $esc_note    = '';
-        $stored_note = '';
+        $note      = '';
+        $esc_note  = '';
+        $edit_note = '';
         if ( $client_info ) {
-            $note = html_entity_decode( (string) $client_info['note'] );
+            $note = (string) $client_info['note'];
             if ( MainWP_Utility::client_note_exceeds_limit( $note ) ) {
-                $stored_note = $note;
-                $esc_note    = MainWP_Utility::client_note_html( $note );
+                $edit_note = MainWP_Utility::client_note_for_editor( $note );
+                $esc_note  = MainWP_Utility::client_note_html( $note );
             } else {
-                $stored_note = MainWP_Utility::sanitize_client_note( $note );
-                $esc_note    = MainWP_Utility::client_note_html( $stored_note );
+                $stored    = MainWP_Utility::sanitize_client_note( $note );
+                $edit_note = MainWP_Utility::client_note_for_editor( $stored );
+                $esc_note  = MainWP_Utility::client_note_html( $stored );
             }
         }
 
@@ -104,7 +105,7 @@ class MainWP_Client_Overview_Note { // phpcs:ignore Generic.Classes.OpeningBrace
                 ?>
 
 
-                <div style="display:none" id="mainwp-notes-<?php echo intval( $client_info['client_id'] ); ?>-note" data-note="<?php echo esc_attr( $stored_note ); ?>"><?php echo wp_unslash( $esc_note ); // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
+                <div style="display:none" id="mainwp-notes-<?php echo intval( $client_info['client_id'] ); ?>-note" data-note="<?php echo esc_attr( $edit_note ); ?>"><?php echo wp_unslash( $esc_note ); // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
 
                 <?php
 

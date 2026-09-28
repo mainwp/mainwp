@@ -316,6 +316,168 @@ class Test_MWP_1802_Client_Notes extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * An allowlisted tag hidden inside an outer tag cannot leave a live handler.
+	 *
+	 * @return void
+	 */
+	public function test_allowlisted_tag_inside_outer_brackets_stays_neutral(): void {
+		$samples = array(
+			'<img src=x onerror=alert(1)<p>x>',
+			'<svg onload=alert(1)<br>>',
+			'<img src=x onerror=alert(1)<a href=#>>',
+			'x<img "</a>>',
+		);
+
+		foreach ( $samples as $note ) {
+			foreach ( $this->store_note_on_every_path( $note ) as $stored ) {
+				$this->assert_note_neutralized( $stored );
+			}
+			$this->assert_note_neutralized( MainWP_Utility::client_note_html( $note ) );
+		}
+	}
+
+	/**
+	 * Random mixes of tags and handlers do not survive a save.
+	 *
+	 * @return void
+	 */
+	public function test_fuzzed_note_markup_stays_neutral(): void {
+		mt_srand( 1802 );
+		$chunks = array(
+			'<p>',
+			'</p>',
+			'<br>',
+			'<a href=#>',
+			'</a>',
+			'<img',
+			' src=x',
+			' onerror=alert(1)',
+			'<svg',
+			' onload=alert(1)',
+			'javascript:alert(1)',
+			'<script>',
+			'</script>',
+			'<',
+			'>',
+			'"',
+			'x',
+		);
+
+		for ( $i = 0; $i < 24; $i++ ) {
+			$note = '';
+			$span = mt_rand( 4, 14 );
+			for ( $piece = 0; $piece < $span; $piece++ ) {
+				$note .= $chunks[ mt_rand( 0, count( $chunks ) - 1 ) ];
+			}
+			foreach ( $this->store_note_on_every_path( $note ) as $stored ) {
+				$this->assert_note_not_live( $stored );
+			}
+			$this->assert_note_not_live( MainWP_Utility::client_note_html( $note ) );
+		}
+	}
+
+	/**
+	 * Bracket text that is not an allowlisted tag is stored as typed.
+	 *
+	 * @return void
+	 */
+	public function test_non_allowlisted_bracket_text_round_trips(): void {
+		$samples = array(
+			'<john@example.com>',
+			'<https://example.com>',
+			'Array<int>',
+			'a<b, c>d',
+			'x<y>z',
+			'<p>Hi</p>',
+		);
+
+		foreach ( $samples as $note ) {
+			foreach ( $this->store_note_on_every_path( $note ) as $stored ) {
+				$this->assertSame( $note, $stored );
+			}
+			$html = MainWP_Utility::client_note_html( $note );
+			$this->assert_note_neutralized( $html );
+			if ( '<p>Hi</p>' === $note ) {
+				$this->assertSame( $note, $html );
+			} else {
+				$this->assertStringNotContainsString( '<', $html );
+				$this->assertStringContainsString( '&lt;', $html );
+			}
+		}
+	}
+
+	/**
+	 * Notes longer than the cap are rejected, and a full-size nested note stays fast.
+	 *
+	 * @return void
+	 */
+	public function test_note_length_cap_rejects_writes_and_display_stays_fast(): void {
+		$client_id = $this->create_client( 'original note' );
+		$too_long  = str_repeat( 'a', MainWP_Utility::CLIENT_NOTE_MAX_LENGTH + 1 );
+
+		$modal = $this->dispatch_notes_save( $client_id, $too_long );
+		$this->assertSame( MainWP_Utility::client_note_length_error(), $modal['error'] );
+		$this->assertSame( 'original note', $this->read_note( $client_id ) );
+
+		$_POST = array(
+			'nonce_client_id' => wp_create_nonce( 'editing-client-' . $client_id ),
+			'client_fields'   => array(
+				'client_id'     => $client_id,
+				'default_field' => array(
+					'client.name' => 'Test Client MWP-1802',
+					'client.note' => $too_long,
+				),
+			),
+		);
+		ob_start();
+		MainWP_Client::add_client();
+		$form = json_decode( ob_get_clean(), true );
+		$this->assertSame( MainWP_Utility::client_note_length_error(), $form['error'] );
+		$this->assertSame( 'original note', $this->read_note( $client_id ) );
+
+		$edited = MainWP_Client_Handler::rest_api_add_client(
+			array(
+				'client_id' => $client_id,
+				'note'      => $too_long,
+			),
+			true
+		);
+		$this->assertSame( MainWP_Utility::client_note_length_error(), $edited['error'] );
+		$this->assertSame( 'original note', $this->read_note( $client_id ) );
+
+		$added = MainWP_Client_Handler::rest_api_add_client(
+			array(
+				'name' => 'Test Client MWP-1802 long',
+				'note' => $too_long,
+			),
+			false
+		);
+		$this->assertSame( MainWP_Utility::client_note_length_error(), $added['error'] );
+		$this->assertArrayNotHasKey( 'client_id', $added );
+
+		$level = 3325;
+		$tail  = 'img src=x onerror=alert(1)>';
+		$worst = str_repeat( '<', $level ) . str_repeat( 'b>', $level - 1 ) . $tail;
+		$this->assertSame( MainWP_Utility::CLIENT_NOTE_MAX_LENGTH, strlen( $worst ) );
+
+		$started = microtime( true );
+		$stored  = MainWP_Utility::sanitize_client_note( $worst );
+		$elapsed = microtime( true ) - $started;
+		$this->assertLessThan( 2, $elapsed );
+		$this->assert_note_neutralized( $stored );
+
+		$legacy = $too_long . "\n<img src=x onerror=alert(1)>";
+		$this->create_client( $legacy );
+		$started = microtime( true );
+		$html    = MainWP_Utility::client_note_html( $legacy );
+		$elapsed = microtime( true ) - $started;
+		$this->assertLessThan( 2, $elapsed );
+		$this->assertStringContainsString( '&lt;img src=x onerror=alert(1)&gt;', $html );
+		$this->assertStringContainsString( '<br>', $html );
+		$this->assertStringNotContainsString( '<img', $html );
+	}
+
+	/**
 	 * A quote inside comparison text cannot break out of the notes tooltip.
 	 *
 	 * @return void
@@ -385,6 +547,36 @@ class Test_MWP_1802_Client_Notes extends \WP_UnitTestCase {
 		$this->assertStringNotContainsString( 'onerror', $lower );
 		$this->assertStringNotContainsString( '<img', $lower );
 		$this->assertDoesNotMatchRegularExpression( '/\son[a-z0-9_-]*\s*=/i', $stored );
+	}
+
+	/**
+	 * A stored note must not parse as an executable tag.
+	 *
+	 * Plain text may still contain the letters of a handler. It is live only
+	 * when a tag or attribute carries them.
+	 *
+	 * @param string $stored Note text.
+	 * @return void
+	 */
+	private function assert_note_not_live( $stored ) {
+		$this->assertIsString( $stored );
+		$this->assertDoesNotMatchRegularExpression( '/<\s*\/?\s*script\b/i', $stored );
+		$this->assertDoesNotMatchRegularExpression( '/<\s*\/?\s*img\b/i', $stored );
+		$this->assertDoesNotMatchRegularExpression( '/<\s*\/?\s*svg\b/i', $stored );
+
+		$processor = new \WP_HTML_Tag_Processor( $stored );
+		while ( $processor->next_tag( array( 'tag_closers' => 'visit' ) ) ) {
+			$tag = strtolower( (string) $processor->get_tag() );
+			$this->assertStringNotContainsString( '<', $tag );
+			$handlers = $processor->get_attribute_names_with_prefix( 'on' );
+			$this->assertTrue( empty( $handlers ), $stored );
+			foreach ( array( 'href', 'src', 'action' ) as $url_name ) {
+				$value = $processor->get_attribute( $url_name );
+				if ( is_string( $value ) ) {
+					$this->assertStringNotContainsString( 'javascript:', strtolower( $value ) );
+				}
+			}
+		}
 	}
 
 	/**

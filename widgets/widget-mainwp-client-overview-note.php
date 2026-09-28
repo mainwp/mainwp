@@ -56,9 +56,14 @@ class MainWP_Client_Overview_Note { // phpcs:ignore Generic.Classes.OpeningBrace
         $esc_note    = '';
         $stored_note = '';
         if ( $client_info ) {
-            $note        = html_entity_decode( (string) $client_info['note'] );
-            $stored_note = MainWP_Utility::sanitize_client_note( $note );
-            $esc_note    = MainWP_Utility::client_note_html( $stored_note );
+            $note = html_entity_decode( (string) $client_info['note'] );
+            if ( MainWP_Utility::client_note_exceeds_limit( $note ) ) {
+                $stored_note = $note;
+                $esc_note    = MainWP_Utility::client_note_html( $note );
+            } else {
+                $stored_note = MainWP_Utility::sanitize_client_note( $note );
+                $esc_note    = MainWP_Utility::client_note_html( $stored_note );
+            }
         }
 
         ?>

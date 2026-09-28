@@ -1429,6 +1429,12 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             return;
         }
 
+        $posted_note = isset( $client_fields['default_field']['client.note'] ) ? $client_fields['default_field']['client.note'] : null;
+        if ( MainWP_Utility::client_note_exceeds_limit( $posted_note ) ) {
+            echo wp_json_encode( array( 'error' => MainWP_Utility::client_note_length_error() ) );
+            return;
+        }
+
         $add_new = true;
 
         $default_client_fields = MainWP_Client_Handler::get_default_client_fields();
@@ -2637,7 +2643,17 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
          */
     public static function save_note() {
         if ( isset( $_POST['clientid'] ) && ! empty( $_POST['clientid'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-            $note   = isset( $_POST['note'] ) ? wp_unslash( $_POST['note'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+            $note = isset( $_POST['note'] ) ? wp_unslash( $_POST['note'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+            if ( ! is_string( $note ) ) {
+                $note = '';
+            }
+            if ( MainWP_Utility::client_note_exceeds_limit( $note ) ) {
+                self::exit_json(
+                    array(
+                        'error' => MainWP_Utility::client_note_length_error(),
+                    )
+                );
+            }
             $stored = MainWP_Utility::sanitize_client_note( $note );
             $update = array(
                 'client_id' => intval( $_POST['clientid'] ), // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized

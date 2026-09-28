@@ -38,6 +38,14 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      */
     const SHORT_TERM_NOTICE_TTL = MONTH_IN_SECONDS;
 
+    /**
+     * Longest client note that may be saved, in characters.
+     *
+     * A longer note is rejected on write. Display escapes it instead of
+     * running the iterative sanitizer.
+     */
+    const CLIENT_NOTE_MAX_LENGTH = 10000;
+
 
     /**
      * Yoast SEO is enabled return true else return null.
@@ -971,15 +979,40 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
 
     /**
+     * Whether a note is longer than the save cap.
+     *
+     * @param mixed $note Note field.
+     * @return bool
+     */
+    public static function client_note_exceeds_limit( $note ) {
+        return is_string( $note ) && strlen( $note ) > self::CLIENT_NOTE_MAX_LENGTH;
+    }
+
+    /**
+     * Error shown when a note is too long to save.
+     *
+     * @return string
+     */
+    public static function client_note_length_error() {
+        return sprintf(
+            /* translators: %d: maximum number of characters allowed in a client note. */
+            esc_html__( 'Client notes cannot be longer than %d characters.', 'mainwp' ),
+            self::CLIENT_NOTE_MAX_LENGTH
+        );
+    }
+
+    /**
      * Sanitize a client note for storage.
      *
-     * Entities are decoded first. Each pass holds non-tag < and > aside, runs
-     * the note allowlist, then puts those characters back. Stripping a nested
-     * tag can assemble a new one, so the pass repeats until the string stops
-     * changing. The number of passes is the decoded length plus two. If the
-     * string is still changing when that bound is hit, every tag is stripped
-     * and the remaining brackets are encoded. Comparison text such as "a < b"
-     * stays as typed. A non-string is stored as empty.
+     * Entities are decoded first. Each pass holds brackets that are not an
+     * allowlisted tag, runs the note allowlist, then puts those characters
+     * back. The pass repeats until the string stops changing, bounded by the
+     * decoded length plus two. The result is then checked with
+     * WP_HTML_Tag_Processor. A note that is still changing at the bound, or
+     * that still contains a tag or attribute outside the allowlist, fails
+     * closed: every tag is stripped and the remaining brackets are encoded.
+     * Comparison text such as "a < b" stays as typed. A non-string is stored
+     * as empty. A note over the length cap skips the iterative pass.
      *
      * @param mixed $note Note field.
      * @return string Sanitized note.
@@ -989,7 +1022,15 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             return '';
         }
 
-        $note     = self::decode_client_note_entities( $note );
+        if ( self::client_note_exceeds_limit( $note ) ) {
+            return self::client_note_fail_closed( $note );
+        }
+
+        $note = self::decode_client_note_entities( $note );
+        if ( self::client_note_exceeds_limit( $note ) ) {
+            return self::client_note_fail_closed( $note );
+        }
+
         $limit    = self::client_note_pass_limit( $note );
         $previous = null;
         for ( $pass = 0; $pass < $limit && $note !== $previous; $pass++ ) {
@@ -997,7 +1038,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $note     = self::client_note_pass( $note );
         }
 
-        if ( $note !== $previous ) {
+        if ( $note !== $previous || ! self::client_note_output_is_allowed( $note ) ) {
             return self::client_note_fail_closed( $note );
         }
 
@@ -1065,14 +1106,185 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      *
      * Allowed tags stay as tags. Other < and > characters are encoded once,
      * so the page shows them as typed and a second pass does not turn them
-     * into &amp;lt;.
+     * into &amp;lt;. A note over the length cap is escaped, with line breaks,
+     * and does not run the iterative sanitizer.
      *
      * @param mixed $note Note field.
      * @return string HTML-safe note.
      */
     public static function client_note_html( $note ) {
+        if ( ! is_string( $note ) ) {
+            return '';
+        }
+
+        if ( self::client_note_exceeds_limit( $note ) ) {
+            return nl2br( esc_html( $note ), false );
+        }
+
         $note = self::sanitize_client_note( $note );
         return self::replace_plain_angle_brackets( $note, '&lt;', '&gt;' );
+    }
+
+    /**
+     * Tags and attributes a client note may contain.
+     *
+     * @return array<string, array<string, array>>
+     */
+    private static function client_note_allowed_html() {
+        return array(
+            'a'      => array(
+                'href'  => array(),
+                'title' => array(),
+            ),
+            'br'     => array(),
+            'em'     => array(),
+            'strong' => array(),
+            'p'      => array(),
+            'hr'     => array(),
+            'ul'     => array(),
+            'ol'     => array(),
+            'li'     => array(),
+            'h1'     => array(),
+            'h2'     => array(),
+        );
+    }
+
+    /**
+     * Whether a parsed note contains only allowlisted tags and attributes.
+     *
+     * Event-handler attributes and unsafe URL protocols are rejected. An HTML
+     * element that is not in the note allowlist is rejected. Text such as
+     * "<int>" is not such an element, so it can be kept.
+     *
+     * @param string $note Settled note.
+     * @return bool
+     */
+    private static function client_note_output_is_allowed( $note ) {
+        if ( ! class_exists( '\WP_HTML_Tag_Processor' ) ) {
+            return false;
+        }
+
+        $allowed   = self::client_note_allowed_html();
+        $processor = new \WP_HTML_Tag_Processor( $note );
+        while ( $processor->next_tag( array( 'tag_closers' => 'visit' ) ) ) {
+            $tag = strtolower( (string) $processor->get_tag() );
+            // The processor keeps "<" inside a tag name. A browser starts a new tag there.
+            if ( false !== strpos( $tag, '<' ) || self::client_note_tag_is_blocked( $tag ) ) {
+                return false;
+            }
+
+            if ( $processor->is_tag_closer() ) {
+                continue;
+            }
+
+            $names = $processor->get_attribute_names_with_prefix( '' );
+            if ( ! is_array( $names ) ) {
+                continue;
+            }
+
+            foreach ( $names as $name ) {
+                $name  = strtolower( (string) $name );
+                $value = $processor->get_attribute( $name );
+                if ( self::client_note_attribute_is_unsafe( $name, $value ) ) {
+                    return false;
+                }
+                if ( isset( $allowed[ $tag ] ) && ! isset( $allowed[ $tag ][ $name ] ) ) {
+                    return false;
+                }
+            }
+        }
+
+        return ! self::client_note_has_raw_blocked_tag( $note );
+    }
+
+    /**
+     * HTML elements that cannot be stored, even without an event handler.
+     *
+     * @return array<string, bool>
+     */
+    private static function client_note_blocked_tags() {
+        static $blocked = null;
+        if ( null === $blocked ) {
+            $blocked = array_fill_keys(
+                array(
+                    'applet',
+                    'audio',
+                    'base',
+                    'embed',
+                    'form',
+                    'frame',
+                    'frameset',
+                    'iframe',
+                    'image',
+                    'img',
+                    'link',
+                    'math',
+                    'meta',
+                    'object',
+                    'portal',
+                    'script',
+                    'source',
+                    'style',
+                    'svg',
+                    'template',
+                    'textarea',
+                    'title',
+                    'track',
+                    'video',
+                    'foreignobject',
+                    'use',
+                    'animate',
+                    'set',
+                ),
+                true
+            );
+        }
+        return $blocked;
+    }
+
+    /**
+     * Whether a name is an element that cannot be stored.
+     *
+     * @param string $tag Lowercase tag name.
+     * @return bool
+     */
+    private static function client_note_tag_is_blocked( $tag ) {
+        $blocked = self::client_note_blocked_tags();
+        return isset( $blocked[ $tag ] );
+    }
+
+    /**
+     * Whether the note still contains a blocked tag the processor did not close.
+     *
+     * An unclosed "<svg" at the end of the string is skipped by the processor
+     * and is still a tag in a browser.
+     *
+     * @param string $note Settled note.
+     * @return bool
+     */
+    private static function client_note_has_raw_blocked_tag( $note ) {
+        $names = implode( '|', array_keys( self::client_note_blocked_tags() ) );
+        return 1 === preg_match( '/<\s*\/?\s*(' . $names . ')\b/i', $note );
+    }
+
+    /**
+     * Whether an attribute is an event handler or an unsafe URL.
+     *
+     * @param string $name  Lowercase attribute name.
+     * @param mixed  $value Attribute value.
+     * @return bool
+     */
+    private static function client_note_attribute_is_unsafe( $name, $value ) {
+        if ( 0 === strpos( $name, 'on' ) ) {
+            return true;
+        }
+
+        $urls = array( 'href', 'src', 'action', 'formaction', 'poster', 'cite', 'background', 'data', 'codebase', 'srcset', 'dynsrc', 'lowsrc', 'xlink:href' );
+        if ( ! in_array( $name, $urls, true ) || ! is_string( $value ) ) {
+            return false;
+        }
+
+        return wp_kses_bad_protocol( $value, wp_allowed_protocols() ) !== $value;
     }
 
     /**
@@ -1093,9 +1305,10 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     /**
      * Replace < and > that are not part of a tag.
      *
-     * A tag is < or </, a letter, then anything except < or >, then >.
-     * Comparison text such as "a < b" does not match, so those characters
-     * are replaced instead of being parsed as markup.
+     * Only an allowlisted tag is left in place. Every other "<...>" is
+     * literal text, so "<int>" and "<john@example.com>" are kept. Comparison
+     * text such as "a < b" does not match a tag, so those characters are
+     * replaced as well.
      *
      * @param string $content Note text.
      * @param string $lt      Replacement for a stray <.
@@ -1110,7 +1323,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         $out = '';
         foreach ( $parts as $part ) {
-            if ( 1 === preg_match( '/^<\/?[a-zA-Z][^<>]*>$/', $part ) ) {
+            if ( self::client_note_span_is_markup( $part ) ) {
                 $out .= $part;
             } else {
                 $out .= str_replace( array( '<', '>' ), array( $lt, $gt ), $part );
@@ -1118,6 +1331,177 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         }
 
         return $out;
+    }
+
+    /**
+     * Whether a bracket span should be parsed as markup.
+     *
+     * Allowlisted tags stay. A real HTML element with a normal attribute
+     * list is also left for kses, which strips it when it is not allowlisted.
+     * "<int>", "<john@example.com>", and "<b, c>" are not markup.
+     *
+     * @param string $part Candidate tag.
+     * @return bool
+     */
+    private static function client_note_span_is_markup( $part ) {
+        if ( 1 !== preg_match( '/^<\/?([a-zA-Z][a-zA-Z0-9]*)([^<>]*)>$/', $part, $matches ) ) {
+            return false;
+        }
+
+        $name    = strtolower( $matches[1] );
+        $rest    = $matches[2];
+        $allowed = self::client_note_allowed_html();
+        if ( isset( $allowed[ $name ] ) ) {
+            return true;
+        }
+
+        if ( ! self::client_note_is_html_element( $name ) ) {
+            return false;
+        }
+
+        return '' === $rest || '/' === $rest || 1 === preg_match( '/^\s/', $rest );
+    }
+
+    /**
+     * Whether a name is an HTML element kses should see.
+     *
+     * @param string $name Lowercase tag name.
+     * @return bool
+     */
+    private static function client_note_is_html_element( $name ) {
+        static $elements = null;
+        if ( null === $elements ) {
+            $elements = array_fill_keys(
+                array(
+                    'a',
+                    'abbr',
+                    'address',
+                    'area',
+                    'article',
+                    'aside',
+                    'audio',
+                    'b',
+                    'base',
+                    'bdi',
+                    'bdo',
+                    'blockquote',
+                    'body',
+                    'br',
+                    'button',
+                    'canvas',
+                    'caption',
+                    'cite',
+                    'code',
+                    'col',
+                    'colgroup',
+                    'data',
+                    'datalist',
+                    'dd',
+                    'del',
+                    'details',
+                    'dfn',
+                    'dialog',
+                    'div',
+                    'dl',
+                    'dt',
+                    'em',
+                    'embed',
+                    'fieldset',
+                    'figcaption',
+                    'figure',
+                    'footer',
+                    'form',
+                    'h1',
+                    'h2',
+                    'h3',
+                    'h4',
+                    'h5',
+                    'h6',
+                    'head',
+                    'header',
+                    'hgroup',
+                    'hr',
+                    'html',
+                    'i',
+                    'iframe',
+                    'img',
+                    'input',
+                    'ins',
+                    'kbd',
+                    'label',
+                    'legend',
+                    'li',
+                    'link',
+                    'main',
+                    'map',
+                    'mark',
+                    'menu',
+                    'meta',
+                    'meter',
+                    'nav',
+                    'noscript',
+                    'object',
+                    'ol',
+                    'optgroup',
+                    'option',
+                    'output',
+                    'p',
+                    'picture',
+                    'pre',
+                    'progress',
+                    'q',
+                    'rp',
+                    'rt',
+                    'ruby',
+                    's',
+                    'samp',
+                    'script',
+                    'search',
+                    'section',
+                    'select',
+                    'slot',
+                    'small',
+                    'source',
+                    'span',
+                    'strong',
+                    'style',
+                    'sub',
+                    'summary',
+                    'sup',
+                    'svg',
+                    'table',
+                    'tbody',
+                    'td',
+                    'template',
+                    'textarea',
+                    'tfoot',
+                    'th',
+                    'thead',
+                    'time',
+                    'title',
+                    'tr',
+                    'track',
+                    'u',
+                    'ul',
+                    'var',
+                    'video',
+                    'wbr',
+                    'math',
+                    'image',
+                    'foreignobject',
+                    'use',
+                    'animate',
+                    'set',
+                    'portal',
+                    'marquee',
+                    'applet',
+                    'frame',
+                    'frameset',
+                ),
+                true
+            );
+        }
+        return isset( $elements[ $name ] );
     }
 
     /**
@@ -1139,22 +1523,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         if ( 'note' === $type ) {
 
-            $allowed_html = array(
-                'a'      => array(
-                    'href'  => array(),
-                    'title' => array(),
-                ),
-                'br'     => array(),
-                'em'     => array(),
-                'strong' => array(),
-                'p'      => array(),
-                'hr'     => array(),
-                'ul'     => array(),
-                'ol'     => array(),
-                'li'     => array(),
-                'h1'     => array(),
-                'h2'     => array(),
-            );
+            $allowed_html = self::client_note_allowed_html();
 
             if ( is_array( $more_allowed ) && ! empty( $more_allowed ) ) {
                 $allowed_html = array_merge( $allowed_html, $more_allowed );

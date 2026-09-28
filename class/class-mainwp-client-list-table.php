@@ -783,9 +783,14 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                 <?php echo '</td>'; ?>
                 <?php
             } elseif ( 'notes' === $column_name ) {
-                $note       = html_entity_decode( (string) $item['note'] );
-                $stored     = MainWP_Utility::sanitize_client_note( $note );
-                $esc_note   = MainWP_Utility::client_note_html( $stored );
+                $note = html_entity_decode( (string) $item['note'] );
+                if ( MainWP_Utility::client_note_exceeds_limit( $note ) ) {
+                    $stored   = $note;
+                    $esc_note = MainWP_Utility::client_note_html( $note );
+                } else {
+                    $stored   = MainWP_Utility::sanitize_client_note( $note );
+                    $esc_note = MainWP_Utility::client_note_html( $stored );
+                }
                 $strip_note = wp_strip_all_tags( $esc_note );
                 echo "<td $attributes>"; // phpcs:ignore WordPress.Security.EscapeOutput
                 if ( empty( $item['note'] ) ) :

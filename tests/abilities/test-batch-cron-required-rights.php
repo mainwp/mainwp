@@ -249,6 +249,31 @@ class Test_Batch_Cron_Required_Rights extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A job queued with no owner but with stamped rights (a WP-CLI enqueue
+	 * without --user) has no user to recheck, so a denying filter under
+	 * wp-cron must not fail it.
+	 */
+	public function test_ownerless_job_with_stamped_rights_is_not_rechecked() {
+		$this->set_current_user_as_admin();
+		$this->spy_on_remote_calls();
+		$this->withhold_right( 'update_plugins' );
+		wp_set_current_user( 0 );
+
+		$site_ids = array( $this->create_test_site( array( 'name' => 'Ownerless Job Site' ) ) );
+
+		$job_id = 'update_rights_ownerless';
+		$this->seed_owned_update_job( $job_id, 0, $site_ids, array( 'update_plugins' ) );
+
+		MainWP_Abilities_Cron::instance()->process_update_job( $job_id );
+
+		$job = get_transient( 'mainwp_update_job_' . $job_id );
+		$this->assertSame( 'completed', $job['status'], 'An ownerless job has no rights to re-evaluate.' );
+		foreach ( $job['errors'] as $error ) {
+			$this->assertNotSame( 'access_revoked', $error['code'] );
+		}
+	}
+
+	/**
 	 * The batch-operation path enforces its stamped edit_sites right too.
 	 */
 	public function test_batch_operation_job_denied_right_marks_all_sites_revoked() {

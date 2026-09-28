@@ -191,6 +191,15 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
      * @return bool True when every stamped right is still held.
      */
     private function owner_holds_required_rights( array $job ): bool {
+        // No stamped owner (legacy job, or a WP-CLI enqueue without --user that
+        // passed the machine-context bypass): there is no user whose rights
+        // could have changed, and evaluating the filter for user 0 under
+        // wp-cron would fail every such job once Team Control is active.
+        $owner_id = isset( $job['user_id'] ) ? (int) $job['user_id'] : 0;
+        if ( $owner_id <= 0 ) {
+            return true;
+        }
+
         $rights = isset( $job['required_rights'] ) && is_array( $job['required_rights'] ) ? $job['required_rights'] : array();
 
         foreach ( $rights as $right ) {

@@ -1150,10 +1150,12 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
         $this->secure_request( 'mainwp_clients_notes_save' );
 
         if ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) {
-            $this->exit_json(
+            MainWP_Client::exit_json(
                 array(
                     'error' => sprintf(
+                        /* translators: %s: page name. */
                         esc_html__( 'You do not have sufficient permissions to access this page (%s).', 'mainwp' ),
+                        /* translators: Page name shown when client note access is denied. */
                         esc_html__( 'Manage Clients', 'mainwp' )
                     ),
                 )
@@ -1166,31 +1168,16 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
 
         $client = $client_id ? MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client_id ) : null;
         if ( empty( $client ) ) {
-            $this->exit_json(
+            /* translators: Error when the client id does not match a client. */
+            $missing_client = esc_html__( 'Client not found. Please try again.', 'mainwp' );
+            MainWP_Client::exit_json(
                 array(
-                    'error' => esc_html__( 'Client not found. Please try again.', 'mainwp' ),
+                    'error' => $missing_client,
                 )
             );
         }
 
         MainWP_Client::save_note();
-    }
-
-    /**
-     * Send a JSON payload and stop the request.
-     *
-     * During an AJAX request this uses wp_die() so the body stays the JSON
-     * string. Otherwise it dies with that same string.
-     *
-     * @param array $payload Response data.
-     * @return void
-     */
-    private function exit_json( $payload ) {
-        $json = wp_json_encode( $payload );
-        if ( function_exists( 'wp_doing_ajax' ) && wp_doing_ajax() ) {
-            wp_die( $json ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON response body.
-        }
-        die( $json ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON response body.
     }
 
     /**

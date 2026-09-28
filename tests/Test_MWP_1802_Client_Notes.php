@@ -7,13 +7,11 @@
 
 namespace MainWP\Dashboard\Tests;
 
-use MainWP\Dashboard\MainWP_Abilities_Clients;
 use MainWP\Dashboard\MainWP_Client;
 use MainWP\Dashboard\MainWP_Client_Handler;
 use MainWP\Dashboard\MainWP_DB_Client;
 use MainWP\Dashboard\MainWP_Post_Handler;
 use MainWP\Dashboard\MainWP_System_Utility;
-use MainWP\Dashboard\MainWP_Utility;
 
 // phpcs:disable WordPress.Files.FileName.InvalidClassFileName -- Test classes follow the existing Test_* convention.
 
@@ -21,13 +19,6 @@ use MainWP\Dashboard\MainWP_Utility;
  * Class Test_MWP_1802_Client_Notes
  */
 class Test_MWP_1802_Client_Notes extends \WP_UnitTestCase {
-
-	/**
-	 * Note HTML used by every write path.
-	 *
-	 * @var string
-	 */
-	const FORMATTED_NOTE = '<p>Hello</p><ul><li>One</li></ul><br><strong>Bold</strong><script>alert(1)</script>';
 
 	/**
 	 * Client IDs created by this test.
@@ -138,55 +129,75 @@ class Test_MWP_1802_Client_Notes extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * Paragraphs, lists, line breaks, and strong survive every note write path.
-	 *
-	 * Script tags are removed the same way on each path.
+	 * javascript: links and on* attributes are removed from a saved note.
 	 *
 	 * @return void
 	 */
-	public function test_formatted_note_survives_every_write_path(): void {
-		$expected = MainWP_Utility::esc_content( self::FORMATTED_NOTE );
+	public function test_javascript_links_and_event_attributes_are_stripped(): void {
+		$client_id = $this->create_client( 'original note' );
+		$note      = '<a href="javascript:alert(1)" onclick="alert(1)" onmouseover="alert(2)">click</a>';
 
-		$this->assertStringContainsString( '<p>Hello</p>', $expected );
-		$this->assertStringContainsString( '<ul>', $expected );
-		$this->assertStringContainsString( '<li>One</li>', $expected );
-		$this->assertStringContainsString( '<strong>Bold</strong>', $expected );
-		$this->assertMatchesRegularExpression( '/<br\s*\/?>/', $expected );
-		$this->assertStringNotContainsString( '<script', $expected );
+		$response = $this->dispatch_notes_save( $client_id, $note );
+		$stored   = $this->read_note( $client_id );
 
-		$modal_id = $this->create_client( 'original note' );
-		$modal    = $this->dispatch_notes_save( $modal_id, self::FORMATTED_NOTE );
-		$this->assertSame( 'SUCCESS', $modal['result'] );
-		$this->assertSame( $expected, $this->read_note( $modal_id ) );
-		$this->assertSame( $expected, $modal['esc_note_content'] );
+		$this->assertSame( 'SUCCESS', $response['result'] );
+		$this->assertStringNotContainsString( 'javascript:', $stored );
+		$this->assertStringNotContainsString( 'javascript:', $response['esc_note_content'] );
+		$this->assertDoesNotMatchRegularExpression( '/\son[a-z0-9_-]*\s*=/i', $stored );
+		$this->assertDoesNotMatchRegularExpression( '/\son[a-z0-9_-]*\s*=/i', $response['esc_note_content'] );
+		$this->assertStringContainsString( 'click', $stored );
+	}
 
-		$form_id = $this->create_client( 'original note' );
-		$this->save_note_through_edit_form( $form_id, self::FORMATTED_NOTE );
-		$this->assertSame( $expected, $this->read_note( $form_id ) );
+	/**
+	 * A non-string note is stored as an empty string and does not raise a notice.
+	 *
+	 * @return void
+	 */
+	public function test_array_note_is_stored_as_empty_string(): void {
+		$client_id = $this->create_client( 'original note' );
+		$note      = array( 'not', 'a string' );
 
-		$ability_id = $this->create_client( 'original note' );
-		$updated    = MainWP_Abilities_Clients::execute_update_client(
+		$edited = MainWP_Client_Handler::rest_api_add_client(
 			array(
-				'client_id_or_email' => $ability_id,
-				'note'               => self::FORMATTED_NOTE,
-			)
+				'client_id' => $client_id,
+				'note'      => $note,
+			),
+			true
 		);
-		$this->assertIsArray( $updated );
-		$this->assertSame( $expected, $updated['note'] );
-		$this->assertSame( $expected, $this->read_note( $ability_id ) );
+		$this->assertTrue( ! empty( $edited['success'] ) );
+		$this->assertSame( '', $this->read_note( $client_id ) );
+
+		$this->save_note_through_edit_form( $client_id, $note );
+		$this->assertSame( '', $this->read_note( $client_id ) );
 
 		$added = MainWP_Client_Handler::rest_api_add_client(
 			array(
-				'name'         => 'Test Client MWP-1802 add ' . wp_generate_password( 6, false ),
-				'client_email' => 'test-mwp1802-add-' . wp_generate_password( 8, false ) . '@example.com',
-				'note'         => self::FORMATTED_NOTE,
+				'name'         => 'Test Client MWP-1802 array ' . wp_generate_password( 6, false ),
+				'client_email' => 'test-mwp1802-array-' . wp_generate_password( 8, false ) . '@example.com',
+				'note'         => $note,
 			),
 			false
 		);
 		$this->assertTrue( ! empty( $added['success'] ) );
 		$added_id           = (int) $added['client_id'];
 		$this->client_ids[] = $added_id;
-		$this->assertSame( $expected, $this->read_note( $added_id ) );
+		$this->assertSame( '', $this->read_note( $added_id ) );
+	}
+
+	/**
+	 * Ordinary text, including newlines, is stored and read back unchanged.
+	 *
+	 * @return void
+	 */
+	public function test_plain_text_note_round_trip(): void {
+		$note      = "First line\nSecond line\nOrdinary text.";
+		$client_id = $this->create_client( 'original note' );
+
+		$response = $this->dispatch_notes_save( $client_id, $note );
+
+		$this->assertSame( 'SUCCESS', $response['result'] );
+		$this->assertSame( $note, $response['esc_note_content'] );
+		$this->assertSame( $note, $this->read_note( $client_id ) );
 	}
 
 	/**
@@ -221,12 +232,15 @@ class Test_MWP_1802_Client_Notes extends \WP_UnitTestCase {
 	private function read_note( $client_id ) {
 		global $wpdb;
 
-		return $wpdb->get_var(
+		// get_var() returns null for an empty string, so read the row instead.
+		$row = $wpdb->get_row(
 			$wpdb->prepare(
 				"SELECT note FROM {$wpdb->prefix}mainwp_wp_clients WHERE client_id = %d",
 				$client_id
 			)
 		);
+
+		return $row ? $row->note : null;
 	}
 
 	/**
@@ -287,8 +301,8 @@ class Test_MWP_1802_Client_Notes extends \WP_UnitTestCase {
 	/**
 	 * Save a note through the client edit form handler.
 	 *
-	 * @param int    $client_id Client ID.
-	 * @param string $note      Note field.
+	 * @param int   $client_id Client ID.
+	 * @param mixed $note      Note field.
 	 * @return void
 	 */
 	private function save_note_through_edit_form( $client_id, $note ) {

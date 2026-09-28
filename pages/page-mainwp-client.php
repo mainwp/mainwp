@@ -1435,10 +1435,12 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $client_to_add         = array();
         foreach ( $default_client_fields as $field_name => $item ) {
             if ( ! empty( $item['db_field'] ) && isset( $client_fields['default_field'][ $field_name ] ) ) {
-                $field_value = wp_unslash( $client_fields['default_field'][ $field_name ] );
                 if ( 'note' === $item['db_field'] ) {
-                    $client_to_add[ $item['db_field'] ] = MainWP_Utility::esc_content( $field_value );
+                    // client_fields is already unslashed. A non-string note is stored as empty.
+                    $field_value                        = $client_fields['default_field'][ $field_name ];
+                    $client_to_add[ $item['db_field'] ] = is_string( $field_value ) ? MainWP_Utility::esc_content( $field_value ) : '';
                 } else {
+                    $field_value                        = wp_unslash( $client_fields['default_field'][ $field_name ] );
                     $client_to_add[ $item['db_field'] ] = sanitize_text_field( $field_value );
                 }
             }
@@ -2642,26 +2644,28 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 'note'      => $esc_note,
             );
             MainWP_DB_Client::instance()->update_client( $update );
-            static::exit_with_json(
+            self::exit_json(
                 array(
                     'result'           => 'SUCCESS',
                     'esc_note_content' => $esc_note,
                 )
             );
         }
-        static::exit_with_json( array( 'undefined_error' => true ) );
+        self::exit_json( array( 'undefined_error' => true ) );
     }
 
     /**
      * Send a JSON payload and stop the request.
      *
-     * During an AJAX request this uses wp_die() so the body stays the JSON
-     * string. Otherwise it dies with that same string.
+     * During an AJAX request this uses wp_die() so the status stays HTTP 200
+     * and the body stays the JSON string. Otherwise it dies with that string.
+     *
+     * Shared by the notes modal and the clients notes AJAX handler.
      *
      * @param array $payload Response data.
      * @return void
      */
-    private static function exit_with_json( $payload ) {
+    public static function exit_json( $payload ) {
         $json = wp_json_encode( $payload );
         if ( function_exists( 'wp_doing_ajax' ) && wp_doing_ajax() ) {
             wp_die( $json ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON response body.

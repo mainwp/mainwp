@@ -1072,6 +1072,19 @@ class MainWP_Abilities_Tags { //phpcs:ignore -- NOSONAR - multi methods.
             return $access;
         }
 
+        $allowed_sites = MainWP_Abilities_Util::get_allowed_site_ids();
+        if ( 'all' !== $allowed_sites ) {
+            // Deletion removes every membership, so check the unscoped roster.
+            $sites = MainWP_DB::instance()->get_websites_by_group_ids( array( $tag_id ) );
+            if ( ! is_array( $sites ) || array_diff( array_map( static fn( $site ) => (int) $site->id, $sites ), $allowed_sites ) ) {
+                return new \WP_Error(
+                    'mainwp_access_denied',
+                    __( 'You do not have permission to access all sites in this tag.', 'mainwp' ),
+                    array( 'status' => 403 )
+                );
+            }
+        }
+
         if ( $dry_run ) {
             $allowed_sites = MainWP_Abilities_Util::get_allowed_site_ids();
 

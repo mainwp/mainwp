@@ -270,6 +270,36 @@ class Test_Abilities_Clients_Scoped_Access extends MainWP_Abilities_Test_Case {
         $this->assertSame( 'mainwp_access_denied', $denied->get_error_code() );
     }
 
+    /**
+     * Client site lists and counts exclude staging sites for unrestricted admins.
+     *
+     * @return void
+     */
+    public function test_get_and_count_client_sites_exclude_staging_for_unrestricted_admin() {
+        $this->skip_if_no_abilities_api();
+        $this->set_current_user_as_admin();
+
+        $client_id    = $this->create_test_client( array( 'name' => 'Test Client Staging Sites' ) );
+        $live_site    = $this->create_test_site( array( 'client_id' => $client_id ) );
+        $staging_site = $this->create_test_site(
+            array(
+                'client_id'  => $client_id,
+                'is_staging' => 1,
+            )
+        );
+
+        $result = $this->execute_ability( 'mainwp/get-client-sites-v1', array( 'client_id_or_email' => $client_id ) );
+        $this->assertNotWPError( $result );
+        $ids = array_column( $result['items'], 'id' );
+        $this->assertContains( $live_site, $ids );
+        $this->assertNotContains( $staging_site, $ids );
+        $this->assertSame( 1, $result['total'] );
+
+        $count = $this->execute_ability( 'mainwp/count-client-sites-v1', array( 'client_id_or_email' => $client_id ) );
+        $this->assertNotWPError( $count );
+        $this->assertSame( 1, $count['total'] );
+    }
+
     // =========================================================================
     // mainwp/delete-client-v1 (destructive, full coverage required)
     // =========================================================================

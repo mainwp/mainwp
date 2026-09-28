@@ -351,17 +351,20 @@ class Test_Abilities_Util_Access_Scoping extends MainWP_Abilities_Test_Case {
 	 */
 	public function test_check_batch_site_access_filters_out_of_scope_sites() {
 		$this->set_current_user_as_admin();
-		$in_scope = $this->create_test_site();
-		$outside  = $this->create_test_site();
+		$in_scope    = $this->create_test_site();
+		$outside_url = 'https://test-' . wp_generate_uuid4() . '.example.com/';
+		$outside     = $this->create_test_site( array( 'url' => $outside_url ) );
 
 		$this->restrict_current_user_to_sites( array( $in_scope ) );
 
-		$result = MainWP_Abilities_Util::check_batch_site_access( array( $in_scope, $outside ) );
+		$result = MainWP_Abilities_Util::check_batch_site_access( array( $in_scope, $outside_url ) );
 
 		$allowed_ids = array_map( static fn( $site ) => (int) $site->id, $result['allowed'] );
 		$this->assertContains( $in_scope, $allowed_ids );
 		$this->assertNotContains( $outside, $allowed_ids );
-		$this->assertNotEmpty( $result['denied'] );
+		$this->assertCount( 1, $result['denied'] );
+		$this->assertSame( $outside_url, $result['denied'][0]['identifier'] );
+		$this->assertSame( 'mainwp_access_denied', $result['denied'][0]['code'] );
 	}
 
 	/**

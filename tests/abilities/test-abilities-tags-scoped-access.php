@@ -363,6 +363,7 @@ class Test_Abilities_Tags_Scoped_Access extends MainWP_Abilities_Test_Case {
         $this->set_current_user_as_admin();
 
         $tag_id = $this->create_test_tag( array( 'name' => 'Test Tag Scoped Delete Allowed' ) );
+        $this->restrict_current_user_to_sites( array() );
 
         $this->restrict_current_user_to_groups( array() );
         $denied = $this->execute_ability( 'mainwp/delete-tag-v1', array( 'tag_id' => $tag_id, 'confirm' => true ) );
@@ -386,11 +387,50 @@ class Test_Abilities_Tags_Scoped_Access extends MainWP_Abilities_Test_Case {
     }
 
     /**
-     * The delete dry-run reports impact from the caller's slice, not global counts.
+     * Partial site coverage denies deletion and preserves the tag memberships.
      *
      * @return void
      */
-    public function test_delete_tag_dry_run_scopes_counts_to_allowed_sites() {
+    public function test_delete_tag_denies_partial_coverage_and_preserves_memberships() {
+        $this->skip_if_no_abilities_api();
+        $this->set_current_user_as_admin();
+
+        $tag_id = $this->create_test_tag( array( 'name' => 'Test Tag Scoped Delete Partial' ) );
+        $site_x = $this->create_test_site();
+        $site_y = $this->create_test_site();
+        $this->assign_site_to_tag( $site_x, $tag_id );
+        $this->assign_site_to_tag( $site_y, $tag_id );
+
+        $this->restrict_current_user_to_groups( array( $tag_id ) );
+        $this->restrict_current_user_to_sites( array( $site_x ) );
+
+        $result = $this->execute_ability(
+            'mainwp/delete-tag-v1',
+            array( 'tag_id' => $tag_id, 'confirm' => true )
+        );
+
+        $this->assertWPError( $result );
+        $this->assertSame( 'mainwp_access_denied', $result->get_error_code() );
+        $this->assertSame( 403, $result->get_error_data()['status'] );
+        $this->assertNotEmpty( MainWP_DB_Common::instance()->get_group_by_id( $tag_id ) );
+
+        global $wpdb;
+        $membership_count = $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT COUNT(*) FROM {$wpdb->prefix}mainwp_wp_group WHERE groupid = %d AND wpid = %d",
+                $tag_id,
+                $site_y
+            )
+        );
+        $this->assertSame( 1, (int) $membership_count, 'The out-of-scope membership must remain after denial.' );
+    }
+
+    /**
+     * Dry-run and deletion require access to every site in the tag.
+     *
+     * @return void
+     */
+    public function test_delete_tag_dry_run_and_delete_require_full_coverage() {
         $this->skip_if_no_abilities_api();
         $this->set_current_user_as_admin();
 
@@ -413,9 +453,27 @@ class Test_Abilities_Tags_Scoped_Access extends MainWP_Abilities_Test_Case {
             )
         );
 
-        $this->assertNotWPError( $result, 'A dry-run on an allowed tag must succeed for a restricted caller.' );
-        $this->assertSame( 1, $result['would_affect']['sites_count'], 'Dry-run sites_count must reflect only the allowed slice.' );
-        $this->assertSame( 1, $result['would_affect']['clients_count'], 'Dry-run clients_count must reflect only reachable clients.' );
+        $this->assertWPError( $result );
+        $this->assertSame( 'mainwp_access_denied', $result->get_error_code() );
+        $this->assertSame( 403, $result->get_error_data()['status'] );
+
+        $this->restrict_current_user_to_sites( array( $site_x, $site_y ) );
+        $dry_run = $this->execute_ability(
+            'mainwp/delete-tag-v1',
+            array( 'tag_id' => $tag_id, 'dry_run' => true )
+        );
+        $this->assertNotWPError( $dry_run );
+        $this->assertTrue( $dry_run['dry_run'] );
+        $this->assertSame( 2, $dry_run['would_affect']['sites_count'] );
+        $this->assertNotEmpty( MainWP_DB_Common::instance()->get_group_by_id( $tag_id ) );
+
+        $deleted = $this->execute_ability(
+            'mainwp/delete-tag-v1',
+            array( 'tag_id' => $tag_id, 'confirm' => true )
+        );
+        $this->assertNotWPError( $deleted );
+        $this->assertTrue( $deleted['deleted'] );
+        $this->assertEmpty( MainWP_DB_Common::instance()->get_group_by_id( $tag_id ) );
     }
 
     // =========================================================================

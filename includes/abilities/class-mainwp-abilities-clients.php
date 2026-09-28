@@ -954,7 +954,13 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
         }
 
         $allowed_sites = MainWP_Abilities_Util::get_allowed_site_ids();
-        $sites         = MainWP_DB_Client::instance()->get_websites_by_client_ids( $client->client_id, array( 'no_perm_check' => true ) );
+        $sites         = MainWP_DB_Client::instance()->get_websites_by_client_ids(
+            $client->client_id,
+            array(
+                'no_perm_check' => true,
+                'where'         => 'wp.is_staging = 0',
+            )
+        );
 
         $items = array();
         if ( is_array( $sites ) ) {
@@ -1050,7 +1056,13 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
         }
 
         $allowed_sites = MainWP_Abilities_Util::get_allowed_site_ids();
-        $sites         = MainWP_DB_Client::instance()->get_websites_by_client_ids( $client->client_id, array( 'no_perm_check' => true ) );
+        $sites         = MainWP_DB_Client::instance()->get_websites_by_client_ids(
+            $client->client_id,
+            array(
+                'no_perm_check' => true,
+                'where'         => 'wp.is_staging = 0',
+            )
+        );
 
         $count = 0;
         if ( is_array( $sites ) ) {

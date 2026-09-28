@@ -104,6 +104,65 @@ class Test_Abilities_Api_Key_Scoping extends MainWP_Abilities_Test_Case {
         $this->assertCount( 1, $result['items'] );
     }
 
+    public function test_allowed_site_ids_drops_zero() {
+        $this->set_current_user_as_admin();
+        $this->restrict_ability_layer_only( array( 0 ) );
+
+        $this->assertSame( array(), MainWP_Abilities_Util::get_allowed_site_ids() );
+    }
+
+    public function test_count_sites_with_zero_scope_returns_zero() {
+        $this->skip_if_no_abilities_api();
+        $this->set_current_user_as_admin();
+        $this->create_test_site();
+        $this->restrict_ability_layer_only( array( 0 ) );
+
+        $result = $this->execute_ability( 'mainwp/count-sites-v1', array() );
+
+        $this->assertNotWPError( $result );
+        $this->assertSame( 0, $result['total'] );
+    }
+
+    public static function all_sites_batch_abilities() {
+        return array(
+            'sync-sites'  => array( 'mainwp/sync-sites-v1' ),
+            'update-all'  => array( 'mainwp/update-all-v1' ),
+            'run-updates' => array( 'mainwp/run-updates-v1' ),
+        );
+    }
+
+    /**
+     * An empty scope prevents child calls, including before the enumeration fix.
+     *
+     * @dataProvider all_sites_batch_abilities
+     */
+    public function test_all_sites_batch_does_not_disclose_out_of_scope_ids( $ability_name ) {
+        $this->skip_if_no_abilities_api();
+        $this->set_current_user_as_admin();
+        $outside = $this->create_test_site();
+        $this->restrict_ability_layer_only( array() );
+
+        $result = $this->execute_ability( $ability_name, array() );
+
+        $this->assertNotWPError( $result );
+        $this->assertIsArray( $result );
+        $this->assertArrayHasKey( 'errors', $result );
+        foreach ( $result['errors'] as $error ) {
+            foreach ( array( 'identifier', 'site_url', 'message' ) as $field ) {
+                $this->assertStringNotContainsString( (string) $outside, (string) ( $error[ $field ] ?? '' ), $ability_name . ': ' . $field );
+            }
+        }
+        array_walk_recursive(
+            $result,
+            function ( $value, $key ) use ( $outside, $ability_name ) {
+                if ( 'message' === $key ) {
+                    $this->assertStringNotContainsString( (string) $outside, (string) $value, $ability_name );
+                }
+            }
+        );
+        $this->assertSame( array(), $result['errors'], $ability_name );
+    }
+
     public function test_list_updates_scopes_rows_summary_and_total() {
         $this->skip_if_no_abilities_api();
         $this->set_current_user_as_admin();

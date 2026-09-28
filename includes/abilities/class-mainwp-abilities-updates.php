@@ -1795,6 +1795,11 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 return $all_sites;
             }
 
+            $allowed = MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+            if ( 'all' !== $allowed ) {
+                $all_sites = array_intersect_key( $all_sites ? $all_sites : array(), array_flip( $allowed ) );
+            }
+
             $site_ids_or_domains = array_map(
                 function ( $s ) {
                     return (int) $s->id;
@@ -2942,6 +2947,11 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
 
             if ( is_wp_error( $all_sites ) ) {
                 return $all_sites;
+            }
+
+            $allowed = MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+            if ( 'all' !== $allowed ) {
+                $all_sites = array_intersect_key( $all_sites ? $all_sites : array(), array_flip( $allowed ) );
             }
 
             $site_ids_or_domains = array_map(

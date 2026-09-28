@@ -925,6 +925,12 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 return $all_sites;
             }
 
+            // API-key authentication bypasses DB site scoping.
+            $allowed = MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+            if ( 'all' !== $allowed ) {
+                $all_sites = array_intersect_key( $all_sites ? $all_sites : array(), array_flip( $allowed ) );
+            }
+
             $site_ids_or_domains = array();
             if ( ! empty( $all_sites ) ) {
                 foreach ( $all_sites as $s ) {
@@ -4345,6 +4351,11 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 return $all_sites;
             }
 
+            $allowed = MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+            if ( 'all' !== $allowed ) {
+                $all_sites = array_intersect_key( $all_sites ? $all_sites : array(), array_flip( $allowed ) );
+            }
+
             $identifiers = array_map(
                 function ( $s ) {
                     return (int) $s->id;
@@ -4479,6 +4490,11 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 return $all_sites;
             }
 
+            $allowed = MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+            if ( 'all' !== $allowed ) {
+                $all_sites = array_intersect_key( $all_sites ? $all_sites : array(), array_flip( $allowed ) );
+            }
+
             $identifiers = array_map(
                 function ( $s ) {
                     return (int) $s->id;
@@ -4593,6 +4609,11 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             // Handle potential errors from DB query.
             if ( is_wp_error( $all_sites ) ) {
                 return $all_sites;
+            }
+
+            $allowed = MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+            if ( 'all' !== $allowed ) {
+                $all_sites = array_intersect_key( $all_sites ? $all_sites : array(), array_flip( $allowed ) );
             }
 
             $identifiers = array_map(
@@ -4735,6 +4756,11 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             // Handle potential errors from DB query.
             if ( is_wp_error( $all_sites ) ) {
                 return $all_sites;
+            }
+
+            $allowed = MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+            if ( 'all' !== $allowed ) {
+                $all_sites = array_intersect_key( $all_sites ? $all_sites : array(), array_flip( $allowed ) );
             }
 
             $identifiers = array_map(

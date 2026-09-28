@@ -295,7 +295,9 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
         }
 
         if ( is_array( $allowed ) ) {
-            return array_values( array_unique( array_map( 'intval', array_filter( $allowed, 'is_numeric' ) ) ) );
+            $allowed = array_map( 'intval', array_filter( $allowed, 'is_numeric' ) );
+            $allowed = array_filter( $allowed, static fn( $id ) => $id > 0 );
+            return array_values( array_unique( $allowed ) );
         }
 
         return array();

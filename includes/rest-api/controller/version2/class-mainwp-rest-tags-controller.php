@@ -222,7 +222,7 @@ class MainWP_Rest_Tags_Controller extends MainWP_REST_Controller{ //phpcs:ignore
 
         $prepared_args['with_sites_ids'] = true;
 
-        $allowed = \MainWP\Dashboard\MainWP_Abilities_Util::get_allowed_group_ids();
+        $allowed = \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_group_ids_or_all();
         if ( is_array( $allowed ) ) {
             $prepared_args['include'] = empty( $prepared_args['include'] ) ? $allowed : array_values( array_intersect( wp_parse_id_list( $prepared_args['include'] ), $allowed ) );
             if ( empty( $prepared_args['include'] ) ) {
@@ -265,7 +265,7 @@ class MainWP_Rest_Tags_Controller extends MainWP_REST_Controller{ //phpcs:ignore
         if ( empty( $item ) ) {
             return $this->get_rest_data_error( 'id', 'tag' );
         }
-        $allowed = \MainWP\Dashboard\MainWP_Abilities_Util::get_allowed_group_ids();
+        $allowed = \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_group_ids_or_all();
         if ( is_array( $allowed ) && ! in_array( (int) $item->id, $allowed, true ) ) {
             return $this->get_rest_data_error( 'id', 'tag' );
         }
@@ -313,6 +313,13 @@ class MainWP_Rest_Tags_Controller extends MainWP_REST_Controller{ //phpcs:ignore
      * @return WP_Error|WP_REST_Response
      */
     public function create_item( $request ) {
+        if ( ! empty( $request['id'] ) ) {
+            // add_tag() treats an ID as an update, even on the creation route.
+            $existing = $this->get_request_item( $request );
+            if ( is_wp_error( $existing ) ) {
+                return $existing;
+            }
+        }
         $resp_data            = array();
         $resp_data['success'] = 0;
         try {
@@ -392,6 +399,19 @@ class MainWP_Rest_Tags_Controller extends MainWP_REST_Controller{ //phpcs:ignore
             return $item;
         }
 
+        $allowed = \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+        if ( 'all' !== $allowed ) {
+            // Removing the tag also removes memberships the caller may not see.
+            $sites    = MainWP_DB::instance()->get_websites_by_group_ids( array( $tag_id ) );
+            $site_ids = array_map( static fn( $site ) => (int) $site->id, (array) $sites );
+            if ( ! empty( $site_ids ) && empty( array_intersect( $site_ids, $allowed ) ) ) {
+                return $this->get_rest_data_error( 'id', 'tag' );
+            }
+            if ( ! is_array( $sites ) || array_diff( $site_ids, $allowed ) ) {
+                return new WP_Error( 'mainwp_access_denied', __( 'You do not have permission to access all sites in this tag.', 'mainwp' ), array( 'status' => 403 ) );
+            }
+        }
+
         $success = MainWP_DB_Common::instance()->remove_group( $tag_id );
 
         $resp_data = array( 'success' => $success ? 1 : 0 );
@@ -452,6 +472,7 @@ class MainWP_Rest_Tags_Controller extends MainWP_REST_Controller{ //phpcs:ignore
         }
 
         $clients = MainWP_DB_Client::instance()->get_wp_client_by( 'all', null, OBJECT, array( 'by_tags' => array( $item->id ) ) );
+        $clients = $this->filter_scoped_clients( $clients );
         $data    = array();
 
         if ( is_array( $clients ) ) {

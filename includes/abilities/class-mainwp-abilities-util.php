@@ -318,6 +318,19 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
     }
 
     /**
+     * Preserve userless CLI and REST access when Team Control denies user zero.
+     *
+     * @return int[]|string Allowed group IDs, or 'all' for unrestricted access.
+     */
+    public static function get_scoped_group_ids_or_all() {
+        if ( self::is_machine_execution_context() && 0 === get_current_user_id() ) {
+            return 'all';
+        }
+
+        return self::get_allowed_group_ids();
+    }
+
+    /**
      * Get the current user's allowed group (tag) IDs.
      *
      * Same direct-filter contract as get_allowed_site_ids(), for the

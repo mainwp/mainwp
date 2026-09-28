@@ -468,7 +468,7 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
      * @param array $input Ability input, possibly carrying selected_sites.
      * @return true|\WP_Error True when in scope, WP_Error otherwise.
      */
-    private static function check_selected_sites_scope( array $input ) {
+    public static function check_selected_sites_scope( array $input ) {
         if ( empty( $input['selected_sites'] ) || ! is_array( $input['selected_sites'] ) ) {
             return true;
         }

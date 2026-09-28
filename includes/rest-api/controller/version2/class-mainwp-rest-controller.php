@@ -144,7 +144,25 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
         if ( empty( $client ) ) {
             return $this->get_rest_data_error( $by, 'client' );
         }
+        if ( empty( $this->filter_scoped_clients( array( $client ) ) ) ) {
+            return $this->get_rest_data_error( $by, 'client' );
+        }
         return $client;
+    }
+
+    /**
+     * The REST SQL bypass must not expose clients without any accessible sites.
+     *
+     * @param array|false $clients Candidate client rows.
+     * @return array|false Scoped client rows.
+     */
+    protected function filter_scoped_clients( $clients ) {
+        $allowed = \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+        if ( 'all' === $allowed ) {
+            return $clients;
+        }
+        $ids = \MainWP\Dashboard\MainWP_Abilities_Util::get_accessible_client_ids( $allowed );
+        return array_values( array_filter( (array) $clients, static fn( $client ) => in_array( (int) ( (array) $client )['client_id'], $ids, true ) ) );
     }
 
     /**

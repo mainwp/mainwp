@@ -703,11 +703,17 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
         // The ability enforces access; the v2 response retains its stored-value contract.
         $ability = function_exists( 'wp_get_ability' ) ? wp_get_ability( 'mainwp/list-ignored-updates-v1' ) : null;
         if ( null !== $ability ) {
-            $result = $ability->execute( array() );
+            $result = $ability->check_permissions( array() );
+            if ( ! is_wp_error( $result ) && true !== $result ) {
+                $result = new WP_Error(
+                    'ability_invalid_permissions',
+                    /* translators: %s: ability name. */
+                    sprintf( __( 'Ability "%s" does not have necessary permission.', 'mainwp' ), $ability->get_name() ),
+                    array( 'status' => 403 )
+                );
+            }
             if ( is_wp_error( $result ) ) {
-                $error_data = $result->get_error_data();
-                $status     = isset( $error_data['status'] ) ? $error_data['status'] : 500;
-                return new WP_Error( $result->get_error_code(), $result->get_error_message(), array( 'status' => $status ) );
+                return $this->ignored_updates_error( $result );
             }
         }
         $userExtension   = MainWP_DB_Common::instance()->get_user_extension();
@@ -776,9 +782,15 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
         if ( null !== $ability ) {
             $result = $ability->execute( array( 'site_ids_or_domains' => array( (int) $website->id ) ) );
             if ( is_wp_error( $result ) ) {
-                $error_data = $result->get_error_data();
-                $status     = isset( $error_data['status'] ) ? $error_data['status'] : 500;
-                return new WP_Error( $result->get_error_code(), $result->get_error_message(), array( 'status' => $status ) );
+                return $this->ignored_updates_error( $result, $request );
+            }
+            if ( ! empty( $result['errors'] ) ) {
+                $error  = reset( $result['errors'] );
+                $status = $error['status'] ?? ( 'mainwp_site_not_found' === $error['code'] ? 404 : 403 );
+                if ( 'mainwp_site_not_found' === $error['code'] ) {
+                    return $this->get_rest_data_error( is_numeric( $request['id_domain'] ) ? 'id' : 'domain', 'site' );
+                }
+                return $this->ignored_updates_error( new WP_Error( $error['code'], $error['message'], array( 'status' => $status ) ), $request );
             }
         }
         $ignored_plugins = ! empty( $website->ignored_plugins ) ? json_decode( $website->ignored_plugins, true ) : array();
@@ -830,6 +842,26 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
         return rest_ensure_response( $resp_data );
     }
 
+
+    /**
+     * Keep permission denials consistent with the route's missing-site response.
+     *
+     * @param WP_Error             $error Ability error.
+     * @param WP_REST_Request|null $request Per-site request, when applicable.
+     * @return WP_Error
+     */
+    protected function ignored_updates_error( $error, $request = null ) {
+        $code = $error->get_error_code();
+        if ( null !== $request && 'ability_invalid_permissions' === $code && 'all' !== \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_site_ids_or_all() ) {
+            return $this->get_rest_data_error( is_numeric( $request['id_domain'] ) ? 'id' : 'domain', 'site' );
+        }
+        if ( 'ability_invalid_permissions' === $code ) {
+            $data           = (array) $error->get_error_data();
+            $data['status'] = 403;
+            $error->add_data( $data );
+        }
+        return $error;
+    }
 
     /**
      * Update all items.
@@ -901,18 +933,24 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
         MainWP_Utility::update_option( 'mainwp_batch_updates_start_time', $start_time );
         MainWP_Utility::update_option( 'mainwp_batch_updates_is_running', 1 ); // to start perform batch update job.
 
+        $queued   = false;
         $websites = MainWP_Auto_Updates_DB::instance()->get_websites_to_start_updates( true, true );
         while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
             if ( empty( $this->filter_scoped_sites( array( $website ) ) ) ) {
                 continue;
             }
             MainWP_Cron_Jobs_Batch::instance()->prepare_bulk_updates( $website );
+            $queued        = true;
             $websiteValues = array(
                 'dtsAutomaticSyncStart' => $start_time,
             );
             MainWP_DB::instance()->update_website_sync_values( $website->id, $websiteValues );
         }
         MainWP_DB::free_result( $websites );
+
+        if ( ! $queued ) {
+            MainWP_Utility::update_option( 'mainwp_batch_updates_is_running', 0 );
+        }
 
         MainWP_Logger::instance()->log_update_check( 'Batch updates started' );
 

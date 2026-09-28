@@ -334,10 +334,11 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
      * Get site by.
      *
      * @param WP_REST_Request $request Full details about the request.
+     * @param bool            $require_full_coverage Whether all client sites must be accessible.
      *
      * @return WP_Error|bool|Object Item.
      */
-    public function get_request_item( $request ) {
+    public function get_request_item( $request, $require_full_coverage = false ) {
         $route = $request->get_route();
 
         if ( MainWP_Utility::string_ends_by( $route, '/batch' ) ) {
@@ -352,7 +353,38 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
                 $value = wp_unslash( $value );
             }
         }
-        return $this->get_client_by( $by, $value );
+        $client = $this->get_client_by( $by, $value );
+        if ( ! is_wp_error( $client ) && $require_full_coverage && 'all' !== \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_site_ids_or_all() ) {
+            $access = \MainWP\Dashboard\MainWP_Abilities_Util::check_client_access( $client, array( 'client_id_or_email' => $value ), true );
+            if ( is_wp_error( $access ) ) {
+                return $access;
+            }
+        }
+        return $client;
+    }
+
+    /**
+     * Replacing a client's roster must preserve memberships hidden from the caller.
+     *
+     * @param array $data Client fields, including selected_sites when supplied.
+     * @param int   $client_id Existing client ID, or zero for creation.
+     * @return true|WP_Error
+     */
+    protected function prepare_client_sites( &$data, $client_id = 0 ) {
+        $allowed = \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+        if ( 'all' === $allowed || ! isset( $data['selected_sites'] ) ) {
+            return true;
+        }
+        $access = \MainWP\Dashboard\MainWP_Abilities_Clients::check_selected_sites_scope( $data );
+        if ( is_wp_error( $access ) ) {
+            return $access;
+        }
+        if ( $client_id ) {
+            $sites                  = MainWP_DB_Client::instance()->get_websites_by_client_ids( $client_id, array( 'no_perm_check' => true ) );
+            $unseen                 = array_diff( array_map( static fn( $site ) => (int) $site->id, (array) $sites ), $allowed );
+            $data['selected_sites'] = array_values( array_unique( array_merge( array_map( 'intval', $data['selected_sites'] ), $unseen ) ) );
+        }
+        return true;
     }
 
     /**
@@ -448,16 +480,21 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
             'with_contacts' => isset( $request['with_contacts'] ) && $request['with_contacts'] ? true : false,
         );
 
-        if ( false !== $page ) {
+        $allowed = \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+        if ( 'all' === $allowed && false !== $page ) {
             $prepared_args['page'] = $page;
         }
-        if ( false !== $per_page ) {
+        if ( 'all' === $allowed && false !== $per_page ) {
             $prepared_args['per_page'] = $per_page;
         }
 
         // get data.
         $clients = MainWP_DB_Client::instance()->get_wp_clients( $prepared_args );
-        $data    = array();
+        $clients = $this->filter_scoped_clients( $clients );
+        if ( 'all' !== $allowed && $page > 0 && $per_page > 0 ) {
+            $clients = array_slice( $clients, ( $page - 1 ) * $per_page, $per_page );
+        }
+        $data = array();
         if ( is_array( $clients ) ) {
             foreach ( $clients as $client ) {
                 $data[] = $this->filter_response_data_by_allowed_fields( $client );
@@ -479,11 +516,15 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
      * @return WP_Error|WP_REST_Response
      */
     public function count_items( $request ) {
+        $allowed       = \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_site_ids_or_all();
         $prepared_args = array(
-            'count_only' => true,
+            'count_only' => 'all' === $allowed,
         );
         // get data.
         $value = MainWP_DB_Client::instance()->get_wp_clients( $prepared_args );
+        if ( 'all' !== $allowed ) {
+            $value = count( $this->filter_scoped_clients( $value ) );
+        }
         return rest_ensure_response(
             array(
                 'success' => 1,
@@ -505,6 +546,10 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
             $item = array_filter( $request->get_params() );
             if ( isset( $item['selected_sites'] ) ) {
                 $item['selected_sites'] = array_unique( wp_parse_list( $item['selected_sites'] ) );
+            }
+            $scope = $this->prepare_client_sites( $item );
+            if ( is_wp_error( $scope ) ) {
+                return $scope;
             }
             $result = MainWP_Client_Handler::rest_api_add_client( $item );
             if ( is_array( $result ) && isset( $result['client_id'] ) ) {
@@ -542,11 +587,18 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
         $resp_data['success'] = 0;
         try {
             $data = array_filter( $request->get_params() );
+            if ( null !== $request->get_param( 'selected_sites' ) && 'all' !== \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_site_ids_or_all() ) {
+                $data['selected_sites'] = $request->get_param( 'selected_sites' );
+            }
             if ( is_array( $data ) ) {
                 $data['client_id'] = $item->client_id;
             }
             if ( isset( $data['selected_sites'] ) ) {
                 $data['selected_sites'] = array_unique( wp_parse_list( $data['selected_sites'] ) );
+            }
+            $scope = $this->prepare_client_sites( $data, $item->client_id );
+            if ( is_wp_error( $scope ) ) {
+                return $scope;
             }
             $result = MainWP_Client_Handler::rest_api_add_client( $data, true );
             if ( is_array( $result ) && isset( $result['client_id'] ) ) {
@@ -573,7 +625,7 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
      * @return WP_Error|WP_REST_Response
      */
     public function delete_item( $request ) {
-        $item = $this->get_request_item( $request );
+        $item = $this->get_request_item( $request, true );
         if ( is_wp_error( $item ) ) {
             return $item;
         }
@@ -641,10 +693,15 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
             'success' => 1,
         );
 
-        $client_costs = Cost_Tracker_DB::get_instance()->get_all_cost_trackers_by_clients( array( $item->client_id ) );
+        $client_costs = Cost_Tracker_DB::get_instance()->get_all_cost_trackers_by_clients( array( $item->client_id ), array( 'get_cost_sites' => true ) );
 
         if ( is_array( $client_costs ) ) {
             $client_costs = current( $client_costs ); // for current client.
+        }
+
+        $allowed = \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+        if ( 'all' !== $allowed && is_array( $client_costs ) ) {
+            $client_costs = array_values( array_filter( $client_costs, static fn( $cost ) => ! empty( array_intersect( (array) $cost->cost_sites_ids, $allowed ) ) ) );
         }
 
         if ( $client_costs ) {
@@ -686,7 +743,7 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
      * @return WP_Error|WP_REST_Response
      */
     public function suspend_client( $request ) {
-        $item = $this->get_request_item( $request );
+        $item = $this->get_request_item( $request, true );
         if ( is_wp_error( $item ) ) {
             return $item;
         }
@@ -716,7 +773,7 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
      * @return WP_Error|WP_REST_Response
      */
     public function unsuspend_client( $request ) {
-        $item = $this->get_request_item( $request );
+        $item = $this->get_request_item( $request, true );
         if ( is_wp_error( $item ) ) {
             return $item;
         }

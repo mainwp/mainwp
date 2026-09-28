@@ -21,7 +21,13 @@ class Test_Abilities_Api_Key_Scoping extends MainWP_Abilities_Test_Case {
      */
     private $scope_filters = array();
 
+    private $scope_cost_ids = array();
+
     public function tearDown(): void {
+        foreach ( $this->scope_cost_ids as $id ) {
+            \MainWP\Dashboard\Module\CostTracker\Cost_Tracker_DB::get_instance()->delete_cost_tracker( 'id', $id );
+        }
+        $this->scope_cost_ids = array();
         foreach ( $this->scope_filters as $hook => $callback ) {
             remove_filter( $hook, $callback );
         }
@@ -380,6 +386,8 @@ class Test_Abilities_Api_Key_Scoping extends MainWP_Abilities_Test_Case {
         $user_property->setAccessible( true );
         $previous_user = $user_property->getValue( $auth );
         $user_property->setValue( $auth, (object) array( 'user_id' => get_current_user_id(), 'permissions' => 'GET' === $method ? 'read' : 'read_write' ) );
+        $client_filter = array( \MainWP_Rest_Clients_Controller::instance(), 'hook_filter_allowed_fields_by_context' );
+        $had_client_filter = has_filter( 'mainwp_rest_routes_clients_controller_filter_allowed_fields_by_context', $client_filter );
 
         // check_user_permissions() would define MAINWP_REST_API_DOING for the rest of the
         // process and flip every later test into machine context; the DB bypass it stands
@@ -389,15 +397,22 @@ class Test_Abilities_Api_Key_Scoping extends MainWP_Abilities_Test_Case {
         try {
             $wp_rest_server = new \WP_REST_Server();
             do_action( 'rest_api_init' );
-            ( new \MainWP_Rest_Sites_Controller() )->register_routes();
+            \MainWP_Rest_Sites_Controller::instance()->register_routes();
             ( new \MainWP_Rest_Updates_Controller() )->register_routes();
             ( new \MainWP_Rest_Tags_Controller() )->register_routes();
-            ( new \MainWP_Rest_Clients_Controller() )->register_routes();
+            \MainWP_Rest_Clients_Controller::instance()->register_routes();
+            add_filter( 'mainwp_rest_routes_clients_controller_filter_allowed_fields_by_context', $client_filter, 10, 2 );
             ( new \MainWP_Rest_Monitors_Controller() )->register_routes();
+            ( new \MainWP_Rest_Settings_Controller() )->register_routes();
+            require_once dirname( __DIR__, 2 ) . '/modules/cost-tracker/rest-api/version2/class-mainwp-rest-costs-controller.php';
+            ( new \MainWP_Rest_Costs_Controller() )->register_routes();
             $request = new \WP_REST_Request( $method, $route );
             $request->set_query_params( $params );
             return rest_get_server()->dispatch( $request );
         } finally {
+            if ( false === $had_client_filter ) {
+                remove_filter( 'mainwp_rest_routes_clients_controller_filter_allowed_fields_by_context', $client_filter, 10 );
+            }
             add_filter( 'rest_pre_dispatch', array( $auth, 'check_user_permissions' ), 10, 3 );
             $user_property->setValue( $auth, $previous_user );
             $wp_rest_server = $previous_server;
@@ -564,11 +579,9 @@ class Test_Abilities_Api_Key_Scoping extends MainWP_Abilities_Test_Case {
 
     public static function ignored_error_cases() {
         return array(
-            'global denial' => array( false, 'permission_callback', null, 500 ),
-            'site denial' => array( true, 'permission_callback', null, 500 ),
-            'global status' => array( false, 'execute_callback', array( 'status' => 403 ), 403 ),
+            'global denial' => array( false, 'permission_callback', null, 403 ),
+            'site denial' => array( true, 'permission_callback', null, 403 ),
             'site status' => array( true, 'execute_callback', array( 'status' => 403 ), 403 ),
-            'global default' => array( false, 'execute_callback', null, 500 ),
             'site default' => array( true, 'execute_callback', null, 500 ),
         );
     }
@@ -603,6 +616,381 @@ class Test_Abilities_Api_Key_Scoping extends MainWP_Abilities_Test_Case {
             $this->assertSame( $expected->get_error_message(), $response->get_data()['message'] );
         } finally {
             $property->setValue( $ability, $callback );
+        }
+    }
+
+    public static function ignored_scope_denials() {
+        return array(
+            'restricted filter' => array( true, false ),
+            'admin filter' => array( false, false ),
+            'restricted permission' => array( true, true ),
+        );
+    }
+
+    /** @dataProvider ignored_scope_denials */
+    public function test_rest_scope_ignored_denials( $restricted, $permission ) {
+        $this->set_current_user_as_admin();
+        $site = $this->create_test_site();
+        if ( $restricted ) {
+            $this->restrict_ability_layer_only( array( $site ) );
+        }
+        $ability = wp_get_ability( 'mainwp/list-ignored-updates-v1' );
+        $property = new \ReflectionProperty( $ability, 'permission_callback' );
+        $property->setAccessible( true );
+        $original = $property->getValue( $ability );
+        if ( $permission ) {
+            $property->setValue( $ability, '__return_false' );
+        } else {
+            $this->scope_filters['mainwp_check_site_access'] = '__return_false';
+            add_filter( 'mainwp_check_site_access', '__return_false' );
+        }
+        try {
+            $response = $this->dispatch_v2_get( '/mainwp/v2/updates/' . $site . '/ignored' );
+            if ( $restricted ) {
+                $missing = $this->dispatch_v2_get( '/mainwp/v2/updates/99999999/ignored' );
+                $this->assertSame( $missing->get_data(), $response->get_data() );
+                $this->assertSame( 404, $response->get_status() );
+            } else {
+                $this->assertSame( 403, $response->get_status() );
+                $this->assertSame( 'mainwp_access_denied', $response->get_data()['code'] );
+            }
+        } finally {
+            $property->setValue( $ability, $original );
+        }
+    }
+
+    public function test_rest_scope_global_ignored_only_checks_permissions() {
+        $this->set_current_user_as_admin();
+        $ability = wp_get_ability( 'mainwp/list-ignored-updates-v1' );
+        $property = new \ReflectionProperty( $ability, 'execute_callback' );
+        $property->setAccessible( true );
+        $original = $property->getValue( $ability );
+        $calls = 0;
+        $property->setValue( $ability, static function () use ( &$calls ) {
+            ++$calls;
+            return new \WP_Error( 'unexpected_execution', 'Global ignores do not need site enumeration.' );
+        } );
+        try {
+            $response = $this->dispatch_v2_get( '/mainwp/v2/updates/ignored' );
+            $this->assertSame( 0, $calls );
+            $this->assertSame( 200, $response->get_status() );
+        } finally {
+            $property->setValue( $ability, $original );
+        }
+    }
+
+    public function test_rest_scope_ignored_preserves_error_identity() {
+        $this->set_current_user_as_admin();
+        $site = $this->create_test_site();
+        $ability = wp_get_ability( 'mainwp/list-ignored-updates-v1' );
+        $property = new \ReflectionProperty( $ability, 'execute_callback' );
+        $property->setAccessible( true );
+        $original = $property->getValue( $ability );
+        $error = new \WP_Error( 'unavailable', 'Unavailable.', array( 'status' => 409, 'detail' => 'preserve' ) );
+        $property->setValue( $ability, static fn() => $error );
+        try {
+            $request = new \WP_REST_Request( 'GET', '/mainwp/v2/updates/' . $site . '/ignored' );
+            $request['id_domain'] = $site;
+            $this->assertSame( $error, ( new \MainWP_Rest_Updates_Controller() )->get_ignored_updates_of_site( $request ) );
+        } finally {
+            $property->setValue( $ability, $original );
+        }
+    }
+
+    public function test_rest_scope_empty_batch_clears_running_flag() {
+        $this->set_current_user_as_admin();
+        $site = $this->create_test_site( array( 'plugin_upgrades' => '[]', 'theme_upgrades' => '[]' ) );
+        $this->restrict_ability_layer_only( array() );
+        update_option( 'mainwp_batch_updates_is_running', 0 );
+        $this->without_ability( 'mainwp/run-updates-v1', function () use ( $site ) {
+            $response = $this->dispatch_v2_post( '/mainwp/v2/updates/update' );
+            $this->assertSame( 0, (int) get_option( 'mainwp_batch_updates_is_running' ) );
+            $this->assertSame( 200, $response->get_status() );
+            $this->assertSame( 1, $response->get_data()['success'] );
+            $this->assertSame( 0, (int) MainWP_DB::instance()->get_website_by_id( $site )->dtsAutomaticSyncStart );
+        } );
+    }
+
+    /** @dataProvider tag_filtered_site_abilities */
+    public function test_rest_scope_userless_machine_tag_filters( $ability_name, $parameter ) {
+        $this->set_current_user_as_admin();
+        $tag = $this->create_test_tag();
+        $site = $this->create_test_site();
+        $this->assign_site_to_tag( $site, $tag );
+        $this->restrict_current_user_to_groups( array() );
+        $this->set_machine_context_override( true );
+        wp_set_current_user( 0 );
+        $method = 'mainwp/count-sites-v1' === $ability_name ? 'execute_count_sites' : ( 'tag_id' === $parameter ? 'execute_list_sites' : 'execute_get_sites_basic' );
+        $result = \MainWP\Dashboard\MainWP_Abilities_Sites::$method( array( $parameter => 'tag_id' === $parameter ? $tag : array( $tag ) ) );
+        $this->assertNotWPError( $result );
+        $this->assertSame( 1, $result['total'] );
+    }
+
+    public function test_rest_scope_userless_machine_lists_and_resolves_tags() {
+        $this->set_current_user_as_admin();
+        $tag = $this->create_test_tag();
+        $this->restrict_current_user_to_groups( array() );
+        $this->set_machine_context_override( true );
+        wp_set_current_user( 0 );
+        $controller = new \MainWP_Rest_Tags_Controller();
+        $request = new \WP_REST_Request( 'GET', '/mainwp/v2/tags' );
+        $request['include'] = (string) $tag;
+        $this->assertArrayHasKey( $tag, $controller->get_items( $request )->get_data()['data'] );
+        $request['id'] = $tag;
+        $this->assertNotWPError( $controller->get_item( $request ) );
+    }
+
+    public static function hidden_client_routes() {
+        return array(
+            'read' => array( 'GET', '' ),
+            'edit' => array( 'PUT', '/edit' ),
+            'delete' => array( 'DELETE', '/remove' ),
+            'suspend' => array( 'PUT', '/suspend' ),
+            'unsuspend' => array( 'PUT', '/unsuspend' ),
+            'sites' => array( 'GET', '/sites' ),
+            'count' => array( 'GET', '/sites/count' ),
+            'costs' => array( 'GET', '/costs' ),
+        );
+    }
+
+    /** @dataProvider hidden_client_routes */
+    public function test_rest_scope_hidden_client_matches_missing( $method, $suffix ) {
+        $this->set_current_user_as_admin();
+        $client = $this->create_test_client();
+        $site = $this->create_test_site( array( 'client_id' => $client ) );
+        $this->restrict_ability_layer_only( array() );
+        $response = $this->dispatch_v2_request( $method, '/mainwp/v2/clients/' . $client . $suffix, array() );
+        $missing = $this->dispatch_v2_request( $method, '/mainwp/v2/clients/99999999' . $suffix, array() );
+        $this->assertSame( $missing->get_data(), $response->get_data() );
+        $this->assertSame( 404, $response->get_status() );
+        $this->assertSame( $client, (int) MainWP_DB::instance()->get_website_by_id( $site )->client_id );
+    }
+
+    public static function client_collections() {
+        return array( 'list' => array( false ), 'count' => array( true ) );
+    }
+
+    /** @dataProvider client_collections */
+    public function test_rest_scope_client_collections( $count ) {
+        $this->set_current_user_as_admin();
+        $visible = $this->create_test_client( array( 'name' => 'Z visible' ) );
+        $hidden = $this->create_test_client( array( 'name' => 'A hidden' ) );
+        $site = $this->create_test_site( array( 'client_id' => $visible ) );
+        $this->create_test_site( array( 'client_id' => $hidden ) );
+        $route = '/mainwp/v2/clients' . ( $count ? '/count' : '' );
+        $control = $this->dispatch_v2_get( $route )->get_data();
+        $this->assertGreaterThanOrEqual( 2, (int) $control['total'] );
+        $this->restrict_ability_layer_only( array( $site ) );
+        $data = $this->dispatch_v2_get( $route, array( 'page' => 1, 'per_page' => 1 ) )->get_data();
+        $this->assertSame( 1, (int) $data['total'] );
+        if ( ! $count ) {
+            $this->assertSame( array( $visible ), array_map( 'intval', array_column( $data['data'], 'id' ) ) );
+            $this->assertSame( array(), $this->dispatch_v2_get( $route, array( 'page' => 2, 'per_page' => 1 ) )->get_data()['data'] );
+        }
+        $this->restrict_ability_layer_only( array() );
+        $this->assertSame( 0, (int) $this->dispatch_v2_get( $route )->get_data()['total'] );
+    }
+
+    public static function client_write_modes() {
+        return array( 'add' => array( false ), 'edit' => array( true ) );
+    }
+
+    /** @dataProvider client_write_modes */
+    public function test_rest_scope_client_rejects_outside_selection( $edit ) {
+        $this->set_current_user_as_admin();
+        $client = $this->create_test_client();
+        $allowed = $this->create_test_site( array( 'client_id' => $client ) );
+        $outside = $this->create_test_site();
+        $this->restrict_ability_layer_only( array( $allowed ) );
+        $response = $this->dispatch_v2_request( $edit ? 'PUT' : 'POST', '/mainwp/v2/clients/' . ( $edit ? $client . '/edit' : 'add' ), array( 'name' => 'Scoped edit', 'selected_sites' => array( $allowed, $outside ) ) );
+        $this->assertSame( 404, $response->get_status() );
+        $this->assertSame( 'mainwp_site_not_found', $response->get_data()['code'] );
+        $this->assertSame( 'No site found with ID ' . $outside . '.', $response->get_data()['message'] );
+        $this->assertSame( 0, (int) MainWP_DB::instance()->get_website_by_id( $outside )->client_id );
+    }
+
+    public static function client_membership_updates() {
+        return array( 'replace' => array( false ), 'clear' => array( true ) );
+    }
+
+    /** @dataProvider client_membership_updates */
+    public function test_rest_scope_client_preserves_hidden_memberships( $clear ) {
+        $this->set_current_user_as_admin();
+        $client = $this->create_test_client();
+        $visible = $this->create_test_site( array( 'client_id' => $client ) );
+        $hidden = $this->create_test_site( array( 'client_id' => $client ) );
+        $replacement = $this->create_test_site();
+        $this->restrict_ability_layer_only( array( $visible, $replacement ) );
+        $response = $this->dispatch_v2_request( 'PUT', '/mainwp/v2/clients/' . $client . '/edit', array( 'selected_sites' => $clear ? array() : array( $replacement ) ) );
+        $this->assertSame( 200, $response->get_status() );
+        $this->assertSame( 1, $response->get_data()['success'] );
+        $this->assertSame( $client, (int) MainWP_DB::instance()->get_website_by_id( $hidden )->client_id );
+        $this->assertSame( 0, (int) MainWP_DB::instance()->get_website_by_id( $visible )->client_id );
+        $this->assertSame( $clear ? 0 : $client, (int) MainWP_DB::instance()->get_website_by_id( $replacement )->client_id );
+        remove_filter( 'mainwp_currentuserallowedaccesssites', $this->scope_filters['mainwp_currentuserallowedaccesssites'] );
+        $control = $this->dispatch_v2_request( 'PUT', '/mainwp/v2/clients/' . $client . '/edit', array( 'selected_sites' => array( $visible ) ) );
+        $this->assertSame( 1, $control->get_data()['success'] );
+        $this->assertSame( 0, (int) MainWP_DB::instance()->get_website_by_id( $hidden )->client_id );
+    }
+
+    public static function destructive_client_routes() {
+        return array( 'delete' => array( 'DELETE', '/remove' ), 'suspend' => array( 'PUT', '/suspend' ), 'unsuspend' => array( 'PUT', '/unsuspend' ) );
+    }
+
+    /** @dataProvider destructive_client_routes */
+    public function test_rest_scope_partial_client_requires_full_coverage( $method, $suffix ) {
+        $this->set_current_user_as_admin();
+        $client = $this->create_test_client();
+        $site = $this->create_test_site( array( 'client_id' => $client ) );
+        $this->create_test_site( array( 'client_id' => $client ) );
+        $this->restrict_ability_layer_only( array( $site ) );
+        $route = '/mainwp/v2/clients/' . $client . $suffix;
+        $response = $this->dispatch_v2_request( $method, $route, array() );
+        $this->assertSame( 403, $response->get_status() );
+        $this->assertSame( 'mainwp_access_denied', $response->get_data()['code'] );
+        remove_filter( 'mainwp_currentuserallowedaccesssites', $this->scope_filters['mainwp_currentuserallowedaccesssites'] );
+        $control = $this->dispatch_v2_request( $method, $route, array() );
+        $this->assertSame( 200, $control->get_status() );
+        $this->assertSame( 1, $control->get_data()['success'] );
+    }
+
+    public function test_rest_scope_tag_clients_are_accessible() {
+        $this->set_current_user_as_admin();
+        $tag = $this->create_test_tag();
+        $visible = $this->create_test_client( array( 'groups' => array( $tag ) ) );
+        $hidden = $this->create_test_client( array( 'groups' => array( $tag ) ) );
+        $site = $this->create_test_site( array( 'client_id' => $visible ) );
+        $this->create_test_site( array( 'client_id' => $hidden ) );
+        $this->restrict_ability_layer_only( array( $site ) );
+        $data = $this->dispatch_v2_get( '/mainwp/v2/tags/' . $tag . '/clients' )->get_data();
+        $this->assertSame( 1, $data['total'] );
+        $this->assertSame( array( $visible ), array_map( 'intval', array_column( $data['data'], 'id' ) ) );
+    }
+
+    public function test_rest_scope_tag_add_cannot_update_hidden_tag() {
+        $this->set_current_user_as_admin();
+        $tag = $this->create_test_tag( array( 'name' => 'Test Tag Original' ) );
+        $this->restrict_current_user_to_groups( array() );
+        $response = $this->dispatch_v2_post( '/mainwp/v2/tags/add', array( 'id' => $tag, 'name' => 'Test Tag Replaced' ) );
+        $missing = $this->dispatch_v2_get( '/mainwp/v2/tags/99999999' );
+        $this->assertSame( $missing->get_data(), $response->get_data() );
+        $this->assertSame( 404, $response->get_status() );
+        $this->assertSame( 'Test Tag Original', \MainWP\Dashboard\MainWP_DB_Common::instance()->get_group_by_id( $tag )->name );
+        remove_filter( 'mainwp_currentuserallowedaccessgroups', $this->scope_filters['mainwp_currentuserallowedaccessgroups'] );
+        $control = $this->dispatch_v2_post( '/mainwp/v2/tags/add', array( 'id' => $tag, 'name' => 'Test Tag Replaced' ) );
+        $this->assertSame( 1, $control->get_data()['success'] );
+        $this->assertSame( 'Test Tag Replaced', \MainWP\Dashboard\MainWP_DB_Common::instance()->get_group_by_id( $tag )->name );
+    }
+
+    public static function tag_deletion_scopes() {
+        return array( 'partial' => array( true ), 'none' => array( false ) );
+    }
+
+    /** @dataProvider tag_deletion_scopes */
+    public function test_rest_scope_tag_delete_requires_coverage( $partial ) {
+        $this->set_current_user_as_admin();
+        $tag = $this->create_test_tag();
+        $visible = $this->create_test_site();
+        $hidden = $this->create_test_site();
+        $this->assign_site_to_tag( $visible, $tag );
+        $this->assign_site_to_tag( $hidden, $tag );
+        $this->restrict_ability_layer_only( $partial ? array( $visible ) : array() );
+        $route = '/mainwp/v2/tags/' . $tag . '/remove';
+        $response = $this->dispatch_v2_request( 'DELETE', $route, array() );
+        $this->assertSame( $partial ? 403 : 404, $response->get_status() );
+        if ( ! $partial ) {
+            $this->assertSame( $this->dispatch_v2_request( 'DELETE', '/mainwp/v2/tags/99999999/remove', array() )->get_data(), $response->get_data() );
+        }
+        remove_filter( 'mainwp_currentuserallowedaccesssites', $this->scope_filters['mainwp_currentuserallowedaccesssites'] );
+        $this->assertSame( 1, $this->dispatch_v2_request( 'DELETE', $route, array() )->get_data()['success'] );
+    }
+
+    private function create_scope_cost( array $sites, array $groups = array(), array $clients = array() ): int {
+        $cost = \MainWP\Dashboard\Module\CostTracker\Cost_Tracker_DB::get_instance()->update_cost_tracker(
+            array(
+                'name' => 'Scope cost', 'url' => 'https://vendor.example/', 'type' => 'subscription',
+                'product_type' => 'plugin', 'slug' => '', 'license_type' => 'single', 'cost_status' => 'active',
+                'payment_method' => 'manual', 'price' => 10, 'renewal_type' => 'yearly', 'last_renewal' => 0,
+                'next_renewal' => 0, 'next_renewal_today' => 0, 'last_alert' => 0, 'note' => '',
+                'sites' => wp_json_encode( $sites ), 'groups' => wp_json_encode( $groups ), 'clients' => wp_json_encode( $clients ),
+            )
+        );
+        $this->assertIsObject( $cost );
+        $this->scope_cost_ids[] = (int) $cost->id;
+        return (int) $cost->id;
+    }
+
+    public static function cost_relationship_routes() {
+        return array( 'sites' => array( 'sites' ), 'clients' => array( 'clients' ) );
+    }
+
+    /** @dataProvider cost_relationship_routes */
+    public function test_rest_scope_cost_relationships( $kind ) {
+        $this->set_current_user_as_admin();
+        $visible = $this->create_test_client();
+        $hidden = $this->create_test_client();
+        $site = $this->create_test_site( array( 'client_id' => $visible ) );
+        $outside = $this->create_test_site( array( 'client_id' => $hidden ) );
+        $cost = $this->create_scope_cost( array( $site, $outside ) );
+        $route = '/mainwp/v2/costs/' . $cost . '/' . $kind;
+        $control = $this->dispatch_v2_get( $route );
+        $this->assertSame( 200, $control->get_status() );
+        $this->assertSame( 2, $control->get_data()['total'] );
+        $this->restrict_ability_layer_only( array( $site ) );
+        $data = $this->dispatch_v2_get( $route )->get_data();
+        $this->assertSame( 1, $data['total'] );
+        $this->assertSame( array( 'sites' === $kind ? $site : $visible ), array_map( 'intval', array_column( $data['data'], 'id' ) ) );
+        $this->restrict_ability_layer_only( array() );
+        $this->assertSame( 0, $this->dispatch_v2_get( $route )->get_data()['total'] );
+    }
+
+    public function test_rest_scope_client_costs_require_site_overlap() {
+        $this->set_current_user_as_admin();
+        $client = $this->create_test_client();
+        $visible = $this->create_test_site( array( 'client_id' => $client ) );
+        $hidden = $this->create_test_site( array( 'client_id' => $client ) );
+        $visible_cost = $this->create_scope_cost( array( $visible ) );
+        $hidden_cost = $this->create_scope_cost( array( $hidden ) );
+        $route = '/mainwp/v2/clients/' . $client . '/costs';
+        $control = $this->dispatch_v2_get( $route )->get_data();
+        $this->assertSame( 2, $control['total'] );
+        $this->restrict_ability_layer_only( array( $visible ) );
+        $data = $this->dispatch_v2_get( $route )->get_data();
+        $this->assertSame( 1, $data['total'] );
+        $this->assertSame( array( $visible_cost ), array_map( 'intval', array_column( $data['data'], 'id' ) ) );
+        $this->assertNotContains( $hidden_cost, array_map( 'intval', array_column( $data['data'], 'id' ) ) );
+    }
+
+    public static function settings_status_routes() {
+        return array(
+            'destroy' => array( 'destroy', 'destroy_id', 'destroy-sessions-status' ),
+            'renew' => array( 'renew', 'renew_id', 'renew-connections-status' ),
+            'disconnect' => array( 'disconnect', 'disconnect_id', 'disconnect-all-sites-status' ),
+        );
+    }
+
+    /** @dataProvider settings_status_routes */
+    public function test_rest_scope_settings_status_hides_jobs_with_outside_sites( $kind, $parameter, $path ) {
+        $this->set_current_user_as_admin();
+        $visible = $this->create_test_site();
+        $hidden = $this->create_test_site();
+        $job_id = 'scope_test';
+        $key = 'mainwp_tool_' . $kind . '_job_' . $job_id;
+        set_transient( $key, array(
+            'status' => 'completed', 'total' => 2, 'processed' => 2, 'failed' => 1,
+            'websites' => array( $visible, $hidden ), 'started_at' => time(),
+            'errors' => array( array( 'site_id' => $hidden, 'error' => 'Hidden failure.' ) ),
+        ), 60 );
+        try {
+            $route = '/mainwp/v2/settings/tools/' . $path . '/';
+            $this->assertSame( 200, $this->dispatch_v2_get( $route . $job_id )->get_status() );
+            $this->restrict_ability_layer_only( array( $visible ) );
+            $response = $this->dispatch_v2_get( $route . $job_id );
+            $missing = $this->dispatch_v2_get( $route . 'missing_job' );
+            $this->assertSame( 404, $response->get_status() );
+            $this->assertSame( $missing->get_data(), $response->get_data() );
+        } finally {
+            delete_transient( $key );
         }
     }
 
@@ -755,7 +1143,13 @@ class Test_Abilities_Api_Key_Scoping extends MainWP_Abilities_Test_Case {
             $this->assertSame( array( $allowed ), array_map( 'intval', array_column( $response->get_data()['data'], 'id' ) ) );
         }
         $this->restrict_ability_layer_only( array() );
-        $this->assertSame( 0, $this->dispatch_v2_get( $route )->get_data()['total'] );
+        $empty = $this->dispatch_v2_get( $route );
+        if ( 'tag' === $kind ) {
+            $this->assertSame( 0, $empty->get_data()['total'] );
+        } else {
+            $this->assertSame( 404, $empty->get_status() );
+            $this->assertSame( 'mainwp_rest_invalid_client_id', $empty->get_data()['code'] );
+        }
     }
 
     public function test_rest_tag_route_hides_disallowed_tag() {

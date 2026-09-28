@@ -768,7 +768,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
         $db    = MainWP_DB::instance();
 
         $allowed        = MainWP_Abilities_Util::get_scoped_site_ids_or_all();
-        $allowed_groups = MainWP_Abilities_Util::get_allowed_group_ids();
+        $allowed_groups = MainWP_Abilities_Util::get_scoped_group_ids_or_all();
         if ( isset( $input['tag_id'] ) && 'all' !== $allowed_groups && ! in_array( (int) $input['tag_id'], $allowed_groups, true ) ) {
             $allowed = array();
         }
@@ -4031,7 +4031,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
 
         $allowed = MainWP_Abilities_Util::get_scoped_site_ids_or_all();
         if ( ! empty( $input['tag_ids'] ) && is_array( $input['tag_ids'] ) ) {
-            $allowed_groups = MainWP_Abilities_Util::get_allowed_group_ids();
+            $allowed_groups = MainWP_Abilities_Util::get_scoped_group_ids_or_all();
             if ( 'all' !== $allowed_groups ) {
                 $input['tag_ids'] = array_values( array_intersect( array_map( 'intval', $input['tag_ids'] ), $allowed_groups ) );
                 if ( empty( $input['tag_ids'] ) ) {
@@ -4178,7 +4178,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
 
         $allowed = MainWP_Abilities_Util::get_scoped_site_ids_or_all();
         if ( ! empty( $input['tag_ids'] ) && is_array( $input['tag_ids'] ) ) {
-            $allowed_groups = MainWP_Abilities_Util::get_allowed_group_ids();
+            $allowed_groups = MainWP_Abilities_Util::get_scoped_group_ids_or_all();
             if ( 'all' !== $allowed_groups ) {
                 $input['tag_ids'] = array_values( array_intersect( array_map( 'intval', $input['tag_ids'] ), $allowed_groups ) );
                 if ( empty( $input['tag_ids'] ) ) {

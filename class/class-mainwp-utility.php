@@ -1025,8 +1025,9 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     /**
      * Note text shown in the editor.
      *
-     * Inverts only the entities this sanitizer writes (&amp; &lt; &gt;),
-     * once. "&amp;lt;" becomes "&lt;", and "&copy;" is left as typed.
+     * Inverts only the entities this sanitizer writes (&amp; &lt; &gt;
+     * &quot; &#039;), once, and does not rescan. "&amp;lt;" becomes "&lt;",
+     * "&amp;quot;" stays "&quot;", and "&copy;" is left as typed.
      *
      * @param mixed $note Stored note.
      * @return string
@@ -1071,10 +1072,11 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     /**
      * Format a client note for HTML display.
      *
-     * The length cap uses the typed length, matching a save. An accepted note
-     * whose stored form is longer only because brackets were encoded still
-     * renders its allowlisted tags. A typed note over the cap is escaped,
-     * with line breaks, and is not tokenized.
+     * The length cap uses the typed length, matching a save. Kept tags keep
+     * the quotes and spacing the user typed, so that length does not grow.
+     * An accepted note whose stored form is longer only because brackets
+     * were encoded still renders its allowlisted tags. A typed note over
+     * the cap is escaped, with line breaks, and is not tokenized.
      *
      * @param mixed $note Note field.
      * @return string HTML-safe note.
@@ -1090,6 +1092,25 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         }
 
         return self::sanitize_client_note( $typed );
+    }
+
+    /**
+     * Plain tooltip text for a displayed client note.
+     *
+     * Tags are removed first, then entities are decoded once, then the text
+     * is cut to 100 characters. Cutting the encoded HTML on bytes splits a
+     * UTF-8 character or an entity.
+     *
+     * @param string $html Display HTML from client_note_html().
+     * @return string
+     */
+    public static function client_note_tooltip_text( $html ) {
+        if ( ! is_string( $html ) ) {
+            return '';
+        }
+        $text = wp_strip_all_tags( $html );
+        $text = html_entity_decode( $text, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+        return mb_substr( $text, 0, 100, 'UTF-8' );
     }
 
     /**
@@ -1227,6 +1248,13 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         }
 
         $end = $cursor + 1;
+        foreach ( $attrs as $index => $attr ) {
+            if ( ! isset( $attr['value_start'] ) ) {
+                continue;
+            }
+            $attrs[ $index ]['value_start'] -= $offset;
+            $attrs[ $index ]['value_end']   -= $offset;
+        }
         return array(
             'incomplete' => false,
             'raw'        => substr( $note, $offset, $end - $offset ),
@@ -1297,10 +1325,16 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 $cursor = $parsed['offset'];
             }
 
-            $attrs[] = array(
+            $attr = array(
                 'name'  => $attr_name,
                 'value' => $value,
             );
+            if ( null !== $value ) {
+                $attr['quote']       = $parsed['quote'];
+                $attr['value_start'] = $parsed['value_start'];
+                $attr['value_end']   = $parsed['value_end'];
+            }
+            $attrs[] = $attr;
         }
 
         return array(
@@ -1328,9 +1362,12 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 return array( 'incomplete' => true );
             }
             return array(
-                'incomplete' => false,
-                'value'      => substr( $note, $cursor, $end - $cursor ),
-                'offset'     => $end + 1,
+                'incomplete'  => false,
+                'value'       => substr( $note, $cursor, $end - $cursor ),
+                'offset'      => $end + 1,
+                'quote'       => $quote,
+                'value_start' => $cursor,
+                'value_end'   => $end,
             );
         }
 
@@ -1348,9 +1385,12 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         }
 
         return array(
-            'incomplete' => false,
-            'value'      => substr( $note, $start, $cursor - $start ),
-            'offset'     => $cursor,
+            'incomplete'  => false,
+            'value'       => substr( $note, $start, $cursor - $start ),
+            'offset'      => $cursor,
+            'quote'       => '',
+            'value_start' => $start,
+            'value_end'   => $cursor,
         );
     }
 
@@ -1399,26 +1439,91 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     }
 
     /**
-     * Write one allowlisted tag, with attribute values passed through esc_attr().
+     * Write one allowlisted tag without changing its quotes or spacing.
      *
-     * The raw span is not copied. A "<" typed inside title="..." is encoded.
+     * Attribute values encode &, <, and > only. Each value keeps a quote
+     * character it does not contain, preferring the one the user typed.
+     * An unquoted value stays unquoted. A value that contains both quotes
+     * encodes only the wrapper quote. A "<" typed inside title="..." is encoded.
      *
      * @param array<string, mixed> $tag Parsed tag.
      * @return string
      */
     private static function client_note_emit_safe_tag( $tag ) {
-        if ( ! empty( $tag['closer'] ) ) {
-            return '</' . $tag['name'] . '>';
+        $raw = $tag['raw'];
+        if ( empty( $tag['attrs'] ) ) {
+            return $raw;
         }
 
-        $html = '<' . $tag['name'];
+        $out    = '';
+        $cursor = 0;
         foreach ( $tag['attrs'] as $attr ) {
-            $html .= ' ' . $attr['name'];
-            if ( null !== $attr['value'] ) {
-                $html .= '="' . self::client_note_esc_attr( $attr['value'] ) . '"';
+            if ( null === $attr['value'] || ! isset( $attr['value_start'] ) ) {
+                continue;
             }
+            $quote = isset( $attr['quote'] ) ? $attr['quote'] : '';
+            $start = (int) $attr['value_start'];
+            $end   = (int) $attr['value_end'];
+            if ( '' !== $quote ) {
+                --$start;
+                ++$end;
+            }
+            $out   .= substr( $raw, $cursor, $start - $cursor );
+            $out   .= self::client_note_format_attribute_value( $attr['value'], $quote );
+            $cursor = $end;
         }
-        return $html . '>';
+        return $out . substr( $raw, $cursor );
+    }
+
+    /**
+     * Encode one attribute value and wrap it in a quote it does not contain.
+     *
+     * &, <, and > are encoded. Quotes are left as typed unless the value
+     * contains the wrapper quote, in which case only that quote is encoded.
+     * An unquoted value is returned without added quotes.
+     *
+     * @param string $value Attribute value.
+     * @param string $quote Double quote, single quote, or empty when unquoted.
+     * @return string
+     */
+    private static function client_note_format_attribute_value( $value, $quote ) {
+        $encoded = self::client_note_encode_text( $value );
+        if ( '' === $quote ) {
+            return $encoded;
+        }
+
+        $wrapper = self::client_note_attribute_wrapper( $encoded, $quote );
+        if ( '"' === $wrapper ) {
+            $encoded = str_replace( '"', '&quot;', $encoded );
+        } else {
+            $encoded = str_replace( "'", '&#039;', $encoded );
+        }
+        return $wrapper . $encoded . $wrapper;
+    }
+
+    /**
+     * Quote character for an attribute value.
+     *
+     * Prefer a quote the value does not contain. When it contains neither,
+     * or both, keep the quote the user typed.
+     *
+     * @param string $encoded Value after & < > encoding.
+     * @param string $quote   Quote the user typed.
+     * @return string
+     */
+    private static function client_note_attribute_wrapper( $encoded, $quote ) {
+        $has_double = false !== strpos( $encoded, '"' );
+        $has_single = false !== strpos( $encoded, "'" );
+        if ( $has_double && ! $has_single ) {
+            return "'";
+        }
+        if ( $has_single && ! $has_double ) {
+            return '"';
+        }
+        if ( '"' === $quote || "'" === $quote ) {
+            return $quote;
+        }
+        return '"';
     }
 
     /**
@@ -1441,16 +1546,17 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     }
 
     /**
-     * Invert one level of &amp; &lt; &gt; and nothing else.
+     * Invert one level of &amp; &lt; &gt; &quot; &#039; and nothing else.
      *
-     * "&amp;lt;" becomes "&lt;", not "<". "&copy;" is not a storage entity.
+     * "&amp;lt;" becomes "&lt;", not "<". "&amp;quot;" stays "&quot;".
+     * "&copy;" is not a storage entity. The search does not rescan.
      *
      * @param string $note Stored note.
      * @return string
      */
     private static function client_note_decode_storage_entities( $note ) {
         $decoded = preg_replace_callback(
-            '/&(?:amp|lt|gt);/',
+            '/&(?:amp|lt|gt|quot|#039);/',
             array( self::class, 'client_note_replace_storage_entity' ),
             $note
         );
@@ -1470,7 +1576,13 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         if ( '&lt;' === $entity[0] ) {
             return '<';
         }
-        return '>';
+        if ( '&gt;' === $entity[0] ) {
+            return '>';
+        }
+        if ( '&quot;' === $entity[0] ) {
+            return '"';
+        }
+        return "'";
     }
 
     /**

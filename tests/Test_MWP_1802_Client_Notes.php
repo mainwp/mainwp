@@ -927,6 +927,227 @@ class Test_MWP_1802_Client_Notes extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Quote characters in attributes stay typed, and re-saves do not grow entities.
+	 *
+	 * @return void
+	 */
+	public function test_attribute_quotes_round_trip(): void {
+		$samples = array(
+			'<a title="Bob\'s note" href="https://example.com">x</a>',
+			'<a title=\'say "hi"\' href="https://example.com">x</a>',
+			'<a title="Bob\'s note" href=\'https://example.com/?q="hi"\'>x</a>',
+		);
+
+		foreach ( $samples as $note ) {
+			$stored = MainWP_Utility::sanitize_client_note( $note );
+			$this->assertSame( $note, $stored, $note );
+			$this->assertSame( $note, MainWP_Utility::client_note_for_editor( $stored ), $note );
+			$this->assertStringNotContainsString( '&#039;', $stored, $note );
+			$this->assertStringNotContainsString( '&quot;', $stored, $note );
+			$this->assertStringNotContainsString( '&amp;#039;', $stored, $note );
+			$this->assert_note_not_live( $stored );
+
+			$root = $this->note_root( MainWP_Utility::client_note_html( $stored ) );
+			$this->assertNotNull( $root, $note );
+			$link = $root->getElementsByTagName( 'a' )->item( 0 );
+			$this->assertInstanceOf( \DOMElement::class, $link, $note );
+			$this->assertNotSame( '', $link->getAttribute( 'title' ) . $link->getAttribute( 'href' ), $note );
+		}
+
+		$apostrophe = $samples[0];
+		$link       = $this->note_root( MainWP_Utility::client_note_html( $apostrophe ) )->getElementsByTagName( 'a' )->item( 0 );
+		$this->assertSame( 'Bob\'s note', $link->getAttribute( 'title' ) );
+		$this->assertSame( 'https://example.com', $link->getAttribute( 'href' ) );
+
+		$quoted = $samples[1];
+		$link   = $this->note_root( MainWP_Utility::client_note_html( $quoted ) )->getElementsByTagName( 'a' )->item( 0 );
+		$this->assertSame( 'say "hi"', $link->getAttribute( 'title' ) );
+
+		$both = $samples[2];
+		$link = $this->note_root( MainWP_Utility::client_note_html( $both ) )->getElementsByTagName( 'a' )->item( 0 );
+		$this->assertSame( 'Bob\'s note', $link->getAttribute( 'title' ) );
+		$this->assertSame( 'https://example.com/?q="hi"', $link->getAttribute( 'href' ) );
+
+		$legacy = '<a title="Bob&#039;s note" href="https://example.com">x</a>';
+		$editor = MainWP_Utility::client_note_for_editor( $legacy );
+		$this->assertSame( '<a title="Bob\'s note" href="https://example.com">x</a>', $editor );
+		$resaved = MainWP_Utility::sanitize_client_note( $editor );
+		$this->assertSame( $editor, $resaved );
+		$this->assertStringNotContainsString( '&#039;', $resaved );
+		$this->assertStringNotContainsString( '&amp;#039;', $resaved );
+
+		$this->assertSame( 'say "it\'s"', MainWP_Utility::client_note_plain_text( 'say &quot;it&#039;s&quot;' ) );
+		$this->assertSame( '&quot;', MainWP_Utility::client_note_plain_text( '&amp;quot;' ) );
+		$this->assertSame( '&#039;', MainWP_Utility::client_note_plain_text( '&amp;#039;' ) );
+
+		$method = new \ReflectionMethod( MainWP_Utility::class, 'client_note_format_attribute_value' );
+		$method->setAccessible( true );
+		$both_quotes = 'Bob\'s "hi"';
+		$formatted   = $method->invoke( null, $both_quotes, '"' );
+		$this->assertSame( '"Bob\'s &quot;hi&quot;"', $formatted );
+		$this->assertSame( $both_quotes, MainWP_Utility::client_note_plain_text( substr( $formatted, 1, -1 ) ) );
+		$this->assertSame( $formatted, $method->invoke( null, $both_quotes, '"' ) );
+
+		$formatted = $method->invoke( null, $both_quotes, "'" );
+		$this->assertSame( '\'Bob&#039;s "hi"\'', $formatted );
+		$this->assertSame( $both_quotes, MainWP_Utility::client_note_plain_text( substr( $formatted, 1, -1 ) ) );
+		$this->assertSame( $formatted, $method->invoke( null, MainWP_Utility::client_note_plain_text( substr( $formatted, 1, -1 ) ), "'" ) );
+	}
+
+	/**
+	 * Unquoted attributes and the spaces around them are stored as typed.
+	 *
+	 * @return void
+	 */
+	public function test_unquoted_attributes_keep_their_typed_form(): void {
+		$samples = array(
+			'<a href=https://example.com>x</a>',
+			'<a href=x>x</a>',
+			'<a  href = x >x</a>',
+		);
+
+		foreach ( $samples as $note ) {
+			$stored = MainWP_Utility::sanitize_client_note( $note );
+			$this->assertSame( $note, $stored, $note );
+			$this->assertSame( $note, MainWP_Utility::client_note_for_editor( $stored ), $note );
+			$this->assertSame( mb_strlen( $note, 'UTF-8' ), mb_strlen( MainWP_Utility::client_note_for_editor( $stored ), 'UTF-8' ), $note );
+			$this->assertStringNotContainsString( 'href="', $stored, $note );
+			$this->assert_note_not_live( $stored );
+			$html = MainWP_Utility::client_note_html( $stored );
+			$this->assertStringContainsString( '<a ', $html, $note );
+			$this->assertStringNotContainsString( '&lt;a', $html, $note );
+		}
+	}
+
+	/**
+	 * A 10,000-character note that contains a tag still renders that tag.
+	 *
+	 * @return void
+	 */
+	public function test_exactly_10000_character_note_with_a_tag_stays_at_the_cap(): void {
+		$prefix = '<a href=x title="a<b">';
+		$this->assertLessThan( MainWP_Utility::CLIENT_NOTE_MAX_LENGTH, strlen( $prefix ) );
+		$typed = $prefix . str_repeat( 'n', MainWP_Utility::CLIENT_NOTE_MAX_LENGTH - strlen( $prefix ) );
+		$this->assertSame( MainWP_Utility::CLIENT_NOTE_MAX_LENGTH, mb_strlen( $typed, 'UTF-8' ) );
+		$this->assertSame( MainWP_Utility::CLIENT_NOTE_MAX_LENGTH, strlen( $typed ) );
+
+		$stored = MainWP_Utility::sanitize_client_note( $typed );
+		$this->assertGreaterThan( MainWP_Utility::CLIENT_NOTE_MAX_LENGTH, strlen( $stored ) );
+		$this->assertSame( $typed, MainWP_Utility::client_note_for_editor( $stored ) );
+		$this->assertSame( MainWP_Utility::CLIENT_NOTE_MAX_LENGTH, mb_strlen( MainWP_Utility::client_note_for_editor( $stored ), 'UTF-8' ) );
+		$this->assertStringContainsString( 'title="a&lt;b"', $stored );
+		$this->assertStringContainsString( 'href=x', $stored );
+		$this->assertStringNotContainsString( 'href="x"', $stored );
+
+		$html = MainWP_Utility::client_note_html( $stored );
+		$this->assertStringContainsString( '<a href=x', $html );
+		$this->assertStringNotContainsString( '&lt;a', $html );
+		$root = $this->note_root( $html );
+		$this->assertNotNull( $root );
+		$link = $root->getElementsByTagName( 'a' )->item( 0 );
+		$this->assertInstanceOf( \DOMElement::class, $link );
+		$this->assertSame( 'a<b', $link->getAttribute( 'title' ) );
+		$this->assertSame( 'x', $link->getAttribute( 'href' ) );
+
+		$client_id = $this->create_client( 'original note' );
+		$response  = $this->dispatch_notes_save( $client_id, $typed );
+		$this->assertSame( 'SUCCESS', $response['result'] );
+		$this->assertSame( $typed, $response['note'] );
+		$this->assertSame( $stored, $this->read_note( $client_id ) );
+
+		$column = $this->render_notes_column( $client_id, $this->read_note( $client_id ) );
+		$this->assertSame( $typed, $this->read_data_note( $column, $client_id ) );
+		$column_root = $this->note_root( $column );
+		$this->assertNotNull( $column_root );
+		$this->assert_note_link( $column_root, 'x', 'a<b' );
+
+		ob_start();
+		\MainWP\Dashboard\MainWP_Client_Overview_Note::render_addition_info( $client_id );
+		$widget = ob_get_clean();
+		$this->assertSame( $typed, $this->read_data_note( $widget, $client_id ) );
+		$widget_root = $this->note_root( $widget );
+		$this->assertNotNull( $widget_root );
+		$this->assert_note_link( $widget_root, 'x', 'a<b' );
+	}
+
+	/**
+	 * Find a rendered note link by its href.
+	 *
+	 * @param \DOMNode $root  Parsed note container.
+	 * @param string   $href  Expected href.
+	 * @param string   $title Expected title.
+	 * @return void
+	 */
+	private function assert_note_link( $root, $href, $title ) {
+		foreach ( $root->getElementsByTagName( 'a' ) as $link ) {
+			if ( $href === $link->getAttribute( 'href' ) ) {
+				$this->assertSame( $title, $link->getAttribute( 'title' ) );
+				return;
+			}
+		}
+		$this->fail( 'Missing note link with href ' . $href );
+	}
+
+	/**
+	 * Saving the editor text again leaves the stored note byte for byte.
+	 *
+	 * @return void
+	 */
+	public function test_resaving_a_note_four_times_is_byte_stable(): void {
+		$note      = '<a title="Bob\'s note" href=https://example.com>x</a> <a title=\'say "hi"\'>y</a>';
+		$client_id = $this->create_client( 'original note' );
+		$this->dispatch_notes_save( $client_id, $note );
+		$stored = $this->read_note( $client_id );
+		$this->assertSame( $note, $stored );
+		$this->assertSame( $note, MainWP_Utility::client_note_for_editor( $stored ) );
+
+		for ( $cycle = 0; $cycle < 4; $cycle++ ) {
+			$editor = MainWP_Utility::client_note_for_editor( $this->read_note( $client_id ) );
+			if ( 0 === $cycle % 2 ) {
+				$this->dispatch_notes_save( $client_id, $editor );
+			} else {
+				$this->save_note_through_edit_form( $client_id, $editor );
+			}
+			$this->assertSame( $stored, $this->read_note( $client_id ), 'cycle ' . $cycle );
+		}
+	}
+
+	/**
+	 * The notes tooltip cuts characters after decoding, not bytes of entities.
+	 *
+	 * @return void
+	 */
+	public function test_client_list_tooltip_counts_characters_and_whole_entities(): void {
+		$note = 'x' . str_repeat( 'é', 48 ) . '&' . str_repeat( 'é', 80 );
+		$html = $this->render_notes_column( 1, $note );
+		$expected = 'x' . str_repeat( 'é', 48 ) . '&' . str_repeat( 'é', 50 );
+		$this->assertSame( 100, mb_strlen( $expected, 'UTF-8' ) );
+		$this->assertSame( $expected, $this->read_data_tooltip( $html ) );
+		$this->assertDoesNotMatchRegularExpression( '/data-tooltip="[^"]*&am"/', $html );
+
+		$multibyte = 'x' . str_repeat( 'é', 80 );
+		$html      = $this->render_notes_column( 1, $multibyte );
+		$this->assertSame( $multibyte, $this->read_data_tooltip( $html ) );
+	}
+
+	/**
+	 * Read the notes tooltip from a rendered list cell.
+	 *
+	 * @param string $html Rendered markup.
+	 * @return string
+	 */
+	private function read_data_tooltip( $html ) {
+		$dom = new \DOMDocument();
+		libxml_use_internal_errors( true );
+		$dom->loadHTML( '<?xml encoding="utf-8" ?>' . $html );
+		libxml_clear_errors();
+		$xpath = new \DOMXPath( $dom );
+		$nodes = $xpath->query( '//a[contains(@class, "mainwp-edit-client-note")]' );
+		$this->assertSame( 1, $nodes->length, $html );
+		return $nodes->item( 0 )->getAttribute( 'data-tooltip' );
+	}
+
+	/**
 	 * Plain text inverts storage entities and does not decode anything else.
 	 *
 	 * @return void

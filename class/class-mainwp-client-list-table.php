@@ -783,10 +783,9 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                 <?php echo '</td>'; ?>
                 <?php
             } elseif ( 'notes' === $column_name ) {
-                $note       = isset( $item['note'] ) ? (string) $item['note'] : '';
-                $edit       = MainWP_Utility::client_note_for_editor( $note );
-                $esc_note   = MainWP_Utility::client_note_html( $note );
-                $strip_note = wp_strip_all_tags( $esc_note );
+                $note     = isset( $item['note'] ) ? (string) $item['note'] : '';
+                $edit     = MainWP_Utility::client_note_for_editor( $note );
+                $esc_note = MainWP_Utility::client_note_html( $note );
                 echo "<td $attributes>"; // phpcs:ignore WordPress.Security.EscapeOutput
                 if ( empty( $item['note'] ) ) :
                     $cl_id1 = $item['client_id'];
@@ -794,7 +793,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                     <a href="javascript:void(0)" class="mainwp-edit-client-note ui mini icon button" id="mainwp-notes-<?php echo intval( $cl_id1 ); ?>" data-tooltip="<?php esc_attr_e( 'Edit client notes.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><i class="sticky note outline icon"></i></a>
                     <?php else :
                     $cl_id2 = $item['client_id']; ?>
-                    <a href="javascript:void(0)" class="mainwp-edit-client-note ui mini icon button" id="mainwp-notes-<?php echo intval( $cl_id2 ); ?>" data-tooltip="<?php echo esc_attr( substr( wp_unslash( $strip_note ), 0, 100 ) ); ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
+                    <a href="javascript:void(0)" class="mainwp-edit-client-note ui mini icon button" id="mainwp-notes-<?php echo intval( $cl_id2 ); ?>" data-tooltip="<?php echo esc_attr( MainWP_Utility::client_note_tooltip_text( $esc_note ) ); ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
                     <?php endif; ?>
                     <span style="display: none" id="mainwp-notes-<?php echo intval( $item['client_id'] ); ?>-note" data-note="<?php echo MainWP_Utility::client_note_editor_attr( $edit ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped for an attribute without decoding typed entities. ?>"><?php echo wp_unslash( $esc_note ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
                 <?php echo '</td>'; ?>

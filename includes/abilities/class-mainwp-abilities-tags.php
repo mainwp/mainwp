@@ -748,12 +748,40 @@ class MainWP_Abilities_Tags { //phpcs:ignore -- NOSONAR - multi methods.
     // =========================================================================
 
     /**
+     * Trim per-site data in a formatted tag to the caller's allowed sites.
+     *
+     * A group grant does not imply every member site is allowed, because the
+     * sites and groups filters are independent Team Control dimensions, so
+     * sites_ids and sites_count must reflect only the caller's slice.
+     *
+     * @param array $formatted Formatted tag from format_tag_for_output().
+     * @return array Formatted tag with scoped per-site data.
+     */
+    private static function scope_tag_output( array $formatted ) {
+        $allowed_sites = MainWP_Abilities_Util::get_allowed_site_ids();
+        if ( 'all' === $allowed_sites ) {
+            return $formatted;
+        }
+
+        if ( isset( $formatted['sites_ids'] ) && is_array( $formatted['sites_ids'] ) ) {
+            $formatted['sites_ids']   = array_values( array_intersect( $formatted['sites_ids'], $allowed_sites ) );
+            $formatted['sites_count'] = count( $formatted['sites_ids'] );
+        } else {
+            $formatted['sites_count'] = 0;
+        }
+
+        return $formatted;
+    }
+
+    /**
      * Execute list-tags-v1 ability.
      *
      * @param array $input Input parameters.
      * @return array|WP_Error List of tags with pagination or error.
      */
     public static function execute_list_tags( $input ) {
+        $allowed_groups = MainWP_Abilities_Util::get_allowed_group_ids();
+
         $input = ! is_null( $input ) ? (array) $input : array();
 
         // Sanitize and bound pagination parameters.
@@ -770,6 +798,21 @@ class MainWP_Abilities_Tags { //phpcs:ignore -- NOSONAR - multi methods.
         $exclude = isset( $input['exclude'] ) && is_array( $input['exclude'] )
             ? array_map( 'absint', $input['exclude'] )
             : array();
+
+        if ( 'all' !== $allowed_groups ) {
+            $include = empty( $include )
+                ? $allowed_groups
+                : array_values( array_intersect( $include, $allowed_groups ) );
+
+            if ( empty( $include ) ) {
+                return array(
+                    'items'    => array(),
+                    'page'     => $page,
+                    'per_page' => $per_page,
+                    'total'    => 0,
+                );
+            }
+        }
 
         $params = array(
             'page'           => $page,
@@ -801,7 +844,7 @@ class MainWP_Abilities_Tags { //phpcs:ignore -- NOSONAR - multi methods.
 
         $formatted_tags = array();
         foreach ( $tags as $tag ) {
-            $formatted_tags[] = MainWP_Abilities_Util::format_tag_for_output( $tag );
+            $formatted_tags[] = self::scope_tag_output( MainWP_Abilities_Util::format_tag_for_output( $tag ) );
         }
 
         return array(
@@ -827,6 +870,11 @@ class MainWP_Abilities_Tags { //phpcs:ignore -- NOSONAR - multi methods.
             return $tag;
         }
 
+        $access = MainWP_Abilities_Util::check_tag_access( $tag, $input );
+        if ( is_wp_error( $access ) ) {
+            return $access;
+        }
+
         $params = array(
             'include'        => array( $tag_id ),
             'with_sites_ids' => true,
@@ -844,7 +892,7 @@ class MainWP_Abilities_Tags { //phpcs:ignore -- NOSONAR - multi methods.
 
         $tag_with_data = reset( $tags );
 
-        return MainWP_Abilities_Util::format_tag_for_output( $tag_with_data );
+        return self::scope_tag_output( MainWP_Abilities_Util::format_tag_for_output( $tag_with_data ) );
     }
 
     /**
@@ -925,6 +973,11 @@ class MainWP_Abilities_Tags { //phpcs:ignore -- NOSONAR - multi methods.
             return $tag;
         }
 
+        $access = MainWP_Abilities_Util::check_tag_access( $tag, $input );
+        if ( is_wp_error( $access ) ) {
+            return $access;
+        }
+
         $params = array(
             'id' => $tag_id,
         );
@@ -986,7 +1039,7 @@ class MainWP_Abilities_Tags { //phpcs:ignore -- NOSONAR - multi methods.
             );
         }
 
-        return MainWP_Abilities_Util::format_tag_for_output( reset( $tags ) );
+        return self::scope_tag_output( MainWP_Abilities_Util::format_tag_for_output( reset( $tags ) ) );
     }
 
     /**
@@ -1014,8 +1067,27 @@ class MainWP_Abilities_Tags { //phpcs:ignore -- NOSONAR - multi methods.
             return $tag;
         }
 
+        $access = MainWP_Abilities_Util::check_tag_access( $tag, $input );
+        if ( is_wp_error( $access ) ) {
+            return $access;
+        }
+
+        $allowed_sites = MainWP_Abilities_Util::get_allowed_site_ids();
+        if ( 'all' !== $allowed_sites ) {
+            // Deletion removes every membership, so check the unscoped roster.
+            $sites = MainWP_DB::instance()->get_websites_by_group_ids( array( $tag_id ) );
+            if ( ! is_array( $sites ) || array_diff( array_map( static fn( $site ) => (int) $site->id, $sites ), $allowed_sites ) ) {
+                return new \WP_Error(
+                    'mainwp_access_denied',
+                    __( 'You do not have permission to access all sites in this tag.', 'mainwp' ),
+                    array( 'status' => 403 )
+                );
+            }
+        }
+
         if ( $dry_run ) {
-            // Get sites count efficiently using get_tags() which already computes count_sites.
+            // The full-coverage check above already proved every site in the
+            // tag is allowed, so the global counts are the caller's counts.
             $tag_data    = MainWP_DB_Common::instance()->get_tags( array( 'include' => array( $tag_id ) ) );
             $sites_count = 0;
             if ( ! empty( $tag_data ) && is_array( $tag_data ) ) {
@@ -1023,7 +1095,6 @@ class MainWP_Abilities_Tags { //phpcs:ignore -- NOSONAR - multi methods.
                 $sites_count = isset( $tag_obj->count_sites ) ? (int) $tag_obj->count_sites : 0;
             }
 
-            // Get clients count efficiently using count_only option (avoids loading all client objects).
             $clients_count = MainWP_DB_Client::instance()->get_wp_client_by(
                 'all',
                 null,
@@ -1091,18 +1162,49 @@ class MainWP_Abilities_Tags { //phpcs:ignore -- NOSONAR - multi methods.
             return $tag;
         }
 
-        $offset = ( $page - 1 ) * $per_page;
-        $sites  = MainWP_DB::instance()->get_websites_by_group_id( $tag_id, false, 'wp.url', $offset, $per_page );
-
-        if ( ! is_array( $sites ) ) {
-            return new \WP_Error(
-                'mainwp_operation_failed',
-                __( 'Failed to retrieve sites for tag.', 'mainwp' ),
-                array( 'status' => 500 )
-            );
+        $access = MainWP_Abilities_Util::check_tag_access( $tag, $input );
+        if ( is_wp_error( $access ) ) {
+            return $access;
         }
 
-        $total = MainWP_DB::instance()->get_websites_count_by_group_id( $tag_id );
+        $allowed_sites = MainWP_Abilities_Util::get_allowed_site_ids();
+        $offset        = ( $page - 1 ) * $per_page;
+
+        if ( 'all' === $allowed_sites ) {
+            $sites = MainWP_DB::instance()->get_websites_by_group_id( $tag_id, false, 'wp.url', $offset, $per_page );
+
+            if ( ! is_array( $sites ) ) {
+                return new \WP_Error(
+                    'mainwp_operation_failed',
+                    __( 'Failed to retrieve sites for tag.', 'mainwp' ),
+                    array( 'status' => 500 )
+                );
+            }
+
+            $total = MainWP_DB::instance()->get_websites_count_by_group_id( $tag_id );
+        } else {
+            // A group grant does not imply every member site is allowed:
+            // fetch the full membership, trim to the caller's slice, and
+            // paginate in PHP (SQL LIMIT would page before the trim).
+            $sites = MainWP_DB::instance()->get_websites_by_group_id( $tag_id );
+
+            if ( ! is_array( $sites ) ) {
+                return new \WP_Error(
+                    'mainwp_operation_failed',
+                    __( 'Failed to retrieve sites for tag.', 'mainwp' ),
+                    array( 'status' => 500 )
+                );
+            }
+
+            $sites = array_values(
+                array_filter(
+                    $sites,
+                    static fn( $site ) => in_array( (int) $site->id, $allowed_sites, true )
+                )
+            );
+            $total = count( $sites );
+            $sites = array_slice( $sites, $offset, $per_page );
+        }
 
         $formatted_sites = array();
         foreach ( $sites as $site ) {
@@ -1134,37 +1236,80 @@ class MainWP_Abilities_Tags { //phpcs:ignore -- NOSONAR - multi methods.
             return $tag;
         }
 
-        $offset = ( $page - 1 ) * $per_page;
+        $access = MainWP_Abilities_Util::check_tag_access( $tag, $input );
+        if ( is_wp_error( $access ) ) {
+            return $access;
+        }
 
-        // Get total count via efficient COUNT query.
-        $total = MainWP_DB_Client::instance()->get_wp_client_by(
-            'all',
-            null,
-            OBJECT,
-            array(
-                'by_tags'    => array( $tag_id ),
-                'count_only' => true,
-            )
-        );
+        $allowed_sites = MainWP_Abilities_Util::get_allowed_site_ids();
+        $offset        = ( $page - 1 ) * $per_page;
 
-        // Get only the page of clients we need via SQL LIMIT/OFFSET.
-        $clients = MainWP_DB_Client::instance()->get_wp_client_by(
-            'all',
-            null,
-            OBJECT,
-            array(
-                'by_tags' => array( $tag_id ),
-                'offset'  => $offset,
-                'limit'   => $per_page,
-            )
-        );
-
-        if ( ! is_array( $clients ) ) {
-            return new \WP_Error(
-                'mainwp_operation_failed',
-                __( 'Failed to retrieve clients for tag.', 'mainwp' ),
-                array( 'status' => 500 )
+        if ( 'all' === $allowed_sites ) {
+            // Get total count via efficient COUNT query.
+            $total = MainWP_DB_Client::instance()->get_wp_client_by(
+                'all',
+                null,
+                OBJECT,
+                array(
+                    'by_tags'    => array( $tag_id ),
+                    'count_only' => true,
+                )
             );
+
+            // Get only the page of clients we need via SQL LIMIT/OFFSET.
+            $clients = MainWP_DB_Client::instance()->get_wp_client_by(
+                'all',
+                null,
+                OBJECT,
+                array(
+                    'by_tags' => array( $tag_id ),
+                    'offset'  => $offset,
+                    'limit'   => $per_page,
+                )
+            );
+
+            if ( ! is_array( $clients ) ) {
+                return new \WP_Error(
+                    'mainwp_operation_failed',
+                    __( 'Failed to retrieve clients for tag.', 'mainwp' ),
+                    array( 'status' => 500 )
+                );
+            }
+        } else {
+            // The tag relation must come from an allowed site belonging to the client.
+            $sites   = MainWP_DB::instance()->get_websites_by_group_ids( array( $tag_id ) );
+            $clients = MainWP_DB_Client::instance()->get_wp_client_by(
+                'all',
+                null,
+                OBJECT,
+                array(
+                    'by_tags' => array( $tag_id ),
+                )
+            );
+
+            if ( ! is_array( $sites ) || ! is_array( $clients ) ) {
+                return new \WP_Error(
+                    'mainwp_operation_failed',
+                    __( 'Failed to retrieve clients for tag.', 'mainwp' ),
+                    array( 'status' => 500 )
+                );
+            }
+
+            $eligible_client_ids = array();
+            foreach ( $sites as $site ) {
+                if ( in_array( (int) $site->id, $allowed_sites, true ) && (int) $site->client_id > 0 ) {
+                    $eligible_client_ids[ (int) $site->client_id ] = true;
+                }
+            }
+
+            $clients = array_values(
+                array_filter(
+                    $clients,
+                    static fn( $client ) => isset( $eligible_client_ids[ (int) $client->client_id ] )
+                )
+            );
+            $total   = count( $clients );
+            $clients = array_slice( $clients, $offset, $per_page );
         }
 
         $formatted_clients = array();

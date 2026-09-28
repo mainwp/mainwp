@@ -1364,6 +1364,35 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             );
         }
 
+        // Reject inaccessible relations before connecting the site, so a
+        // denied tag or client assignment cannot leave a new site behind.
+        $validated_tag_ids = array();
+        if ( ! empty( $input['tag_ids'] ) && is_array( $input['tag_ids'] ) ) {
+            foreach ( array_values( array_unique( array_map( 'intval', $input['tag_ids'] ) ) ) as $tag_id ) {
+                $tag = MainWP_Abilities_Util::resolve_tag( $tag_id );
+                if ( is_wp_error( $tag ) ) {
+                    return $tag;
+                }
+                $tag_access = MainWP_Abilities_Util::check_tag_access( $tag, $input );
+                if ( is_wp_error( $tag_access ) ) {
+                    return $tag_access;
+                }
+                $validated_tag_ids[] = $tag_id;
+            }
+        }
+
+        $client_id = ! empty( $input['client_id'] ) ? (int) $input['client_id'] : 0;
+        if ( $client_id > 0 ) {
+            $client = MainWP_Abilities_Util::resolve_client( $client_id );
+            if ( is_wp_error( $client ) ) {
+                return $client;
+            }
+            $client_access = MainWP_Abilities_Util::check_client_access( $client, $input );
+            if ( is_wp_error( $client_access ) ) {
+                return $client_access;
+            }
+        }
+
         // Normalize URL for consistent storage and duplicate detection.
         // This lowercases the host (per RFC 4343) and ensures trailing slash.
         $url = MainWP_Abilities_Util::normalize_site_url( $url );
@@ -1437,16 +1466,12 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             );
         }
 
-        // Assign tags if provided.
-        if ( ! empty( $input['tag_ids'] ) && is_array( $input['tag_ids'] ) ) {
-            foreach ( $input['tag_ids'] as $tag_id ) {
-                MainWP_DB_Common::instance()->update_group_site( (int) $tag_id, $site_id );
-            }
+        foreach ( $validated_tag_ids as $tag_id ) {
+            MainWP_DB_Common::instance()->update_group_site( $tag_id, $site_id );
         }
 
-        // Assign client if provided.
-        if ( ! empty( $input['client_id'] ) ) {
-            MainWP_DB::instance()->update_website_values( $site_id, array( 'client_id' => (int) $input['client_id'] ) );
+        if ( $client_id > 0 ) {
+            MainWP_DB::instance()->update_website_values( $site_id, array( 'client_id' => $client_id ) );
         }
 
         // Re-fetch site to get updated data.
@@ -1567,6 +1592,46 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             return $access_check;
         }
 
+        // Check relations before any write: attaching a site to an inaccessible
+        // client would itself create the overlap used to grant client access.
+        $validated_tag_ids = null;
+        if ( isset( $input['tag_ids'] ) && is_array( $input['tag_ids'] ) ) {
+            $validated_tag_ids = array();
+            foreach ( array_values( array_unique( array_map( 'intval', $input['tag_ids'] ) ) ) as $tag_id ) {
+                $tag = MainWP_Abilities_Util::resolve_tag( $tag_id );
+                if ( is_wp_error( $tag ) ) {
+                    return $tag;
+                }
+                $tag_access = MainWP_Abilities_Util::check_tag_access( $tag, $input );
+                if ( is_wp_error( $tag_access ) ) {
+                    return $tag_access;
+                }
+                $validated_tag_ids[] = $tag_id;
+            }
+        }
+
+        $new_client_id = null;
+        if ( isset( $input['client_id'] ) ) {
+            $new_client_id = (int) $input['client_id'];
+            if ( $new_client_id < 0 ) {
+                return new \WP_Error(
+                    'mainwp_invalid_input',
+                    __( 'client_id must be 0 to unassign or a positive client ID.', 'mainwp' ),
+                    array( 'status' => 400 )
+                );
+            }
+            if ( $new_client_id > 0 ) {
+                $client = MainWP_Abilities_Util::resolve_client( $new_client_id );
+                if ( is_wp_error( $client ) ) {
+                    return $client;
+                }
+                $client_access = MainWP_Abilities_Util::check_client_access( $client, $input );
+                if ( is_wp_error( $client_access ) ) {
+                    return $client_access;
+                }
+            }
+        }
+
         $update_data = array();
 
         if ( isset( $input['name'] ) ) {
@@ -1602,7 +1667,22 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             }
         }
 
-        if ( isset( $input['tag_ids'] ) && is_array( $input['tag_ids'] ) ) {
+        if ( null !== $validated_tag_ids ) {
+            // A groups-restricted caller only manages their slice of the tag
+            // set: associations outside the allowed groups are invisible to
+            // them and must survive the replace.
+            $allowed_groups = MainWP_Abilities_Util::get_allowed_group_ids();
+            $preserved      = array();
+            if ( 'all' !== $allowed_groups ) {
+                $existing_groups = MainWP_DB_Common::instance()->get_groups_by_website_id( $site->id );
+                foreach ( (array) $existing_groups as $existing_group ) {
+                    $existing_id = (int) $existing_group->id;
+                    if ( ! in_array( $existing_id, $allowed_groups, true ) ) {
+                        $preserved[] = $existing_id;
+                    }
+                }
+            }
+
             global $wpdb;
             // Clear existing tag associations for this site.
             //phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.DirectQuery -- for testing results.
@@ -1613,13 +1693,13 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 )
             );
             // Add new tag associations.
-            foreach ( $input['tag_ids'] as $tag_id ) {
+            foreach ( array_unique( array_merge( $preserved, $validated_tag_ids ) ) as $tag_id ) {
                 MainWP_DB_Common::instance()->update_group_site( (int) $tag_id, $site->id );
             }
         }
 
-        if ( isset( $input['client_id'] ) ) {
-            MainWP_DB::instance()->update_website_values( $site->id, array( 'client_id' => (int) $input['client_id'] ) );
+        if ( null !== $new_client_id ) {
+            MainWP_DB::instance()->update_website_values( $site->id, array( 'client_id' => $new_client_id ) );
         }
 
         $site = MainWP_DB::instance()->get_website_by_id( $site->id );

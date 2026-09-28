@@ -696,47 +696,20 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
         $type = array_filter( array_map( 'trim', $type ) );
         $s    = isset( $args['s'] ) ? trim( $args['s'] ) : '';
 
-        // Normalize type array: add 'all' if empty or missing both 'plugins' and 'themes'.
-        // This ensures consistent behavior between ability and legacy paths.
         if ( empty( $type ) || ( ! in_array( 'plugins', $type ) && ! in_array( 'themes', $type ) ) ) {
             $type[] = 'all';
         }
 
-        // Try abilities-first approach (with fallback to legacy logic).
+        // The ability enforces access; the v2 response retains its stored-value contract.
         $ability = function_exists( 'wp_get_ability' ) ? wp_get_ability( 'mainwp/list-ignored-updates-v1' ) : null;
-
         if ( null !== $ability ) {
-            $ability_input = array();
-            if ( ! in_array( 'all', $type, true ) ) {
-                $ability_input['types'] = $type;
-            }
-
-            $result = $ability->execute( $ability_input );
-
-            if ( ! is_wp_error( $result ) ) {
-                $ignored = isset( $result['ignored'] ) ? $result['ignored'] : array();
-                if ( ! empty( $s ) ) {
-                    $ignored = array_values(
-                        array_filter(
-                            $ignored,
-                            static function ( $item ) use ( $s ) {
-                                return false !== stripos( $item['name'], $s ) || false !== stripos( $item['slug'], $s );
-                            }
-                        )
-                    );
-                }
-
-                return rest_ensure_response(
-                    array(
-                        'success' => 1,
-                        'data'    => $ignored,
-                    )
-                );
+            $result = $ability->execute( array() );
+            if ( is_wp_error( $result ) ) {
+                $error_data = $result->get_error_data();
+                $status     = isset( $error_data['status'] ) ? $error_data['status'] : 500;
+                return new WP_Error( $result->get_error_code(), $result->get_error_message(), array( 'status' => $status ) );
             }
         }
-
-        // Fallback: Legacy logic when Abilities API is not available.
-        // Note: $type is already normalized above before the ability check.
         $userExtension   = MainWP_DB_Common::instance()->get_user_extension();
         $ignored_plugins = ! empty( $userExtension->ignored_plugins ) ? json_decode( $userExtension->ignored_plugins, true ) : array();
         $ignored_themes  = ! empty( $userExtension->ignored_themes ) ? json_decode( $userExtension->ignored_themes, true ) : array();
@@ -794,47 +767,20 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
         $type = array_filter( array_map( 'trim', $type ) );
         $s    = isset( $args['s'] ) ? trim( $args['s'] ) : '';
 
-        // Normalize type array: add 'all' if empty or missing both 'plugins' and 'themes'.
-        // This ensures consistent behavior between ability and legacy paths.
         if ( empty( $type ) || ( ! in_array( 'plugins', $type ) && ! in_array( 'themes', $type ) ) ) {
             $type[] = 'all';
         }
 
-        // Try abilities-first approach (with fallback to legacy logic).
+        // The ability enforces access; the v2 response retains its stored-value contract.
         $ability = function_exists( 'wp_get_ability' ) ? wp_get_ability( 'mainwp/list-ignored-updates-v1' ) : null;
-
         if ( null !== $ability ) {
-            $ability_input = array( 'site_ids_or_domains' => array( (int) $website->id ) );
-            if ( ! in_array( 'all', $type, true ) ) {
-                $ability_input['types'] = $type;
-            }
-
-            $result = $ability->execute( $ability_input );
-
-            if ( ! is_wp_error( $result ) ) {
-                $ignored = isset( $result['ignored'] ) ? $result['ignored'] : array();
-                if ( ! empty( $s ) ) {
-                    $ignored = array_values(
-                        array_filter(
-                            $ignored,
-                            static function ( $item ) use ( $s ) {
-                                return false !== stripos( $item['name'], $s ) || false !== stripos( $item['slug'], $s );
-                            }
-                        )
-                    );
-                }
-
-                return rest_ensure_response(
-                    array(
-                        'success' => 1,
-                        'data'    => $ignored,
-                    )
-                );
+            $result = $ability->execute( array( 'site_ids_or_domains' => array( (int) $website->id ) ) );
+            if ( is_wp_error( $result ) ) {
+                $error_data = $result->get_error_data();
+                $status     = isset( $error_data['status'] ) ? $error_data['status'] : 500;
+                return new WP_Error( $result->get_error_code(), $result->get_error_message(), array( 'status' => $status ) );
             }
         }
-
-        // Fallback: Legacy logic when Abilities API is not available.
-        // Note: $type is already normalized above before the ability check.
         $ignored_plugins = ! empty( $website->ignored_plugins ) ? json_decode( $website->ignored_plugins, true ) : array();
         $ignored_themes  = ! empty( $website->ignored_themes ) ? json_decode( $website->ignored_themes, true ) : array();
 
@@ -847,7 +793,7 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
 
         $userExtension    = MainWP_DB_Common::instance()->get_user_extension();
         $ignored_plugins2 = ! empty( $userExtension->ignored_plugins ) ? json_decode( $userExtension->ignored_plugins, true ) : array();
-        $ignored_themes2  = ! empty( $userExtension->ignored_plugins ) ? json_decode( $userExtension->ignored_themes, true ) : array();
+        $ignored_themes2  = ! empty( $userExtension->ignored_themes ) ? json_decode( $userExtension->ignored_themes, true ) : array();
 
         if ( ! is_array( $ignored_plugins2 ) ) {
             $ignored_plugins2 = array();
@@ -957,6 +903,9 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
 
         $websites = MainWP_Auto_Updates_DB::instance()->get_websites_to_start_updates( true, true );
         while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
+            if ( empty( $this->filter_scoped_sites( array( $website ) ) ) ) {
+                continue;
+            }
             MainWP_Cron_Jobs_Batch::instance()->prepare_bulk_updates( $website );
             $websiteValues = array(
                 'dtsAutomaticSyncStart' => $start_time,

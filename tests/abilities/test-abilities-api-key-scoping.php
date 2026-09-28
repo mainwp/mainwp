@@ -365,13 +365,21 @@ class Test_Abilities_Api_Key_Scoping extends MainWP_Abilities_Test_Case {
      * Authentication transport is outside this test; the DB bypass uses our seam.
      */
     private function dispatch_v2_get( $route, array $params = array() ) {
+        return $this->dispatch_v2_request( 'GET', $route, $params );
+    }
+
+    private function dispatch_v2_post( $route, array $params = array() ) {
+        return $this->dispatch_v2_request( 'POST', $route, $params );
+    }
+
+    private function dispatch_v2_request( $method, $route, array $params ) {
         global $wp_rest_server;
         $previous_server = $wp_rest_server;
         $auth = \MainWP_REST_Authentication::get_instance();
         $user_property = new \ReflectionProperty( $auth, 'user' );
         $user_property->setAccessible( true );
         $previous_user = $user_property->getValue( $auth );
-        $user_property->setValue( $auth, (object) array( 'user_id' => get_current_user_id(), 'permissions' => 'read' ) );
+        $user_property->setValue( $auth, (object) array( 'user_id' => get_current_user_id(), 'permissions' => 'GET' === $method ? 'read' : 'read_write' ) );
 
         // check_user_permissions() would define MAINWP_REST_API_DOING for the rest of the
         // process and flip every later test into machine context; the DB bypass it stands
@@ -383,7 +391,10 @@ class Test_Abilities_Api_Key_Scoping extends MainWP_Abilities_Test_Case {
             do_action( 'rest_api_init' );
             ( new \MainWP_Rest_Sites_Controller() )->register_routes();
             ( new \MainWP_Rest_Updates_Controller() )->register_routes();
-            $request = new \WP_REST_Request( 'GET', $route );
+            ( new \MainWP_Rest_Tags_Controller() )->register_routes();
+            ( new \MainWP_Rest_Clients_Controller() )->register_routes();
+            ( new \MainWP_Rest_Monitors_Controller() )->register_routes();
+            $request = new \WP_REST_Request( $method, $route );
             $request->set_query_params( $params );
             return rest_get_server()->dispatch( $request );
         } finally {
@@ -500,80 +511,428 @@ class Test_Abilities_Api_Key_Scoping extends MainWP_Abilities_Test_Case {
     }
 
     public static function ignored_update_routes() {
-        return array( 'all' => array( false ), 'site' => array( true ) );
+        return array( 'global' => array( false ), 'site' => array( true ) );
     }
 
     /**
      * @dataProvider ignored_update_routes
      */
-    public function test_rest_ignored_updates_accepts_schema_and_filters_search( $site_route ) {
+    public function test_rest_ignored_updates_preserves_legacy_body( $site_route ) {
         $this->skip_if_no_abilities_api();
         $this->set_current_user_as_admin();
         $site_id = $this->create_test_site();
         $outside = $this->create_test_site();
-        $this->set_site_ignored_plugins( $site_id, array( 'scope-test/plugin.php' => 'Scope Test', 'other/plugin.php' => 'Other Plugin' ) );
-        $this->set_site_ignored_plugins( $outside, array( 'outside/plugin.php' => 'Outside Plugin' ) );
-        $this->set_site_ignored_themes( $site_id, array( 'scope-theme' => 'Scope Theme' ) );
+        $global_plugins = array( 'shared/plugin.php' => array( 'Name' => 'Global Shared' ), 'global/plugin.php' => array( 'Name' => 'Global Plugin' ) );
+        $global_themes = array( 'global-theme' => array( 'Name' => 'Global Theme' ) );
+        $site_plugins = array( 'shared/plugin.php' => array( 'Name' => 'Site Shared' ), 'site/plugin.php' => array( 'Name' => 'Site Plugin' ) );
+        $site_themes = array( 'site-theme' => array( 'Name' => 'Site Theme' ) );
+        $this->set_site_ignored_plugins( $site_id, $site_plugins );
+        $this->set_site_ignored_themes( $site_id, $site_themes );
+        $this->set_site_ignored_plugins( $outside, array( 'outside/plugin.php' => array( 'Name' => 'Outside Plugin' ) ) );
+        $extension = \MainWP\Dashboard\MainWP_DB_Common::instance()->get_user_extension();
+        \MainWP\Dashboard\MainWP_DB_Common::instance()->update_user_extension(
+            array( 'userid' => $extension->userid, 'ignored_plugins' => wp_json_encode( $global_plugins ), 'ignored_themes' => wp_json_encode( $global_themes ) )
+        );
         $this->restrict_ability_layer_only( array( $site_id ) );
         $route = '/mainwp/v2/updates' . ( $site_route ? '/' . $site_id : '' ) . '/ignored';
-
+        $plugins = $site_route ? $site_plugins + $global_plugins : $global_plugins;
+        $themes = $site_route ? $site_themes + $global_themes : $global_themes;
+        $expected = array( 'success' => 1, 'data' => array( 'plugins' => $plugins, 'themes' => $themes ) );
         $response = $this->dispatch_v2_get( $route );
         $this->assertSame( 200, $response->get_status() );
-        $data = $response->get_data();
-        $this->assertSame( array( 'success', 'data' ), array_keys( $data ) );
-        $this->assertSame( 1, $data['success'] );
-        $this->assertContains( 'scope-test/plugin.php', array_column( $data['data'], 'slug' ) );
-        $this->assertNotContains( 'outside/plugin.php', array_column( $data['data'], 'slug' ) );
-        $this->assertSame( array( $site_id ), array_values( array_unique( array_column( $data['data'], 'site_id' ) ) ) );
-
-        if ( $site_route ) {
-            $this->restrict_ability_layer_only( array( $site_id, $outside ) );
-            $specific = $this->dispatch_v2_get( $route );
-            $this->assertSame( 200, $specific->get_status() );
-            $this->assertNotContains( 'outside/plugin.php', array_column( $specific->get_data()['data'], 'slug' ) );
+        $this->assertSame( $expected, $response->get_data() );
+        foreach ( array( 'plugins', 'themes', 'translations', 'plugins,translations' ) as $type ) {
+            $data = 'themes' === $type ? array( 'themes' => $themes ) : ( 'translations' === $type ? $expected['data'] : array( 'plugins' => $plugins ) );
+            $this->assertSame( array( 'success' => 1, 'data' => $data ), $this->dispatch_v2_get( $route, array( 'type' => $type ) )->get_data() );
         }
-
-        foreach ( array( 'Scope Test', 'scope-test/' ) as $search ) {
-            $filtered = $this->dispatch_v2_get( $route, array( 'type' => 'plugins', 'search' => $search ) );
-            $this->assertSame( 200, $filtered->get_status() );
-            $this->assertSame( array( 'scope-test/plugin.php' ), array_column( $filtered->get_data()['data'], 'slug' ) );
-        }
-        $missing = $this->dispatch_v2_get( $route, array( 'search' => 'no-such-ignored-update' ) );
-        $this->assertSame( array( 'success' => 1, 'data' => array() ), $missing->get_data() );
+        $this->assertSame(
+            array( 'success' => 1, 'data' => array( 'plugins' => array( 'global/plugin.php' => $global_plugins['global/plugin.php'] ) ) ),
+            $this->dispatch_v2_get( $route, array( 'search' => 'Global Plugin', 'type' => 'plugins' ) )->get_data()
+        );
+        $this->assertSame( array( 'success' => 1, 'data' => array() ), $this->dispatch_v2_get( $route, array( 'search' => 'no-such-ignored-update' ) )->get_data() );
+        $this->without_ability( 'mainwp/list-ignored-updates-v1', function () use ( $route, $expected ) {
+            $this->assertSame( $expected, $this->dispatch_v2_get( $route )->get_data() );
+        } );
+        \MainWP\Dashboard\MainWP_DB_Common::instance()->update_user_extension(
+            array( 'userid' => $extension->userid, 'ignored_plugins' => '' )
+        );
+        $this->assertSame(
+            array( 'success' => 1, 'data' => array( 'themes' => $themes ) ),
+            $this->dispatch_v2_get( $route, array( 'type' => 'themes' ) )->get_data()
+        );
     }
 
+    public static function ignored_error_cases() {
+        return array(
+            'global denial' => array( false, 'permission_callback', null, 500 ),
+            'site denial' => array( true, 'permission_callback', null, 500 ),
+            'global status' => array( false, 'execute_callback', array( 'status' => 403 ), 403 ),
+            'site status' => array( true, 'execute_callback', array( 'status' => 403 ), 403 ),
+            'global default' => array( false, 'execute_callback', null, 500 ),
+            'site default' => array( true, 'execute_callback', null, 500 ),
+        );
+    }
 
     /**
-     * @dataProvider ignored_update_routes
+     * @dataProvider ignored_error_cases
      */
-    public function test_rest_ignored_updates_falls_back_on_ability_error( $site_route ) {
+    public function test_rest_ignored_updates_passes_through_ability_error( $site_route, $callback_name, $error_data, $status ) {
         $this->skip_if_no_abilities_api();
         $this->set_current_user_as_admin();
         $site_id = $this->create_test_site();
-        $this->set_site_ignored_plugins( $site_id, array( 'fallback/plugin.php' => 'Fallback Plugin' ) );
         $route = '/mainwp/v2/updates' . ( $site_route ? '/' . $site_id : '' ) . '/ignored';
         $ability = wp_get_ability( 'mainwp/list-ignored-updates-v1' );
-        $property = new \ReflectionProperty( $ability, 'execute_callback' );
+        $property = new \ReflectionProperty( $ability, $callback_name );
         $property->setAccessible( true );
         $callback = $property->getValue( $ability );
         $called = false;
-        $property->setValue( $ability, static function () use ( &$called ) {
+        $property->setValue( $ability, static function () use ( &$called, $error_data, $callback_name ) {
             $called = true;
-            return new \WP_Error( 'test_ability_failure', 'Exercise the legacy fallback.', array( 'status' => 500 ) );
+            if ( 'permission_callback' === $callback_name ) {
+                return false;
+            }
+            return new \WP_Error( 'test_ability_denied', 'Ignored updates are unavailable.', $error_data );
         } );
         try {
             $response = $this->dispatch_v2_get( $route, array( 'type' => 'plugins' ) );
-            $this->assertSame( 200, $response->get_status() );
-            $this->assertTrue( $called, 'The schema-valid input must reach the failing callback.' );
-            $data = $response->get_data();
-            $this->assertSame( array( 'success', 'data' ), array_keys( $data ) );
-            $this->assertSame( 1, $data['success'] );
-            if ( $site_route ) {
-                $this->assertSame( 'Fallback Plugin', $data['data']['plugins']['fallback/plugin.php'] );
-            }
+            $this->assertTrue( $called );
+            $this->assertSame( $status, $response->get_status() );
+            $expected = $ability->execute( $site_route ? array( 'site_ids_or_domains' => array( $site_id ) ) : array() );
+            $this->assertWPError( $expected );
+            $this->assertSame( $expected->get_error_code(), $response->get_data()['code'] );
+            $this->assertSame( $expected->get_error_message(), $response->get_data()['message'] );
         } finally {
             $property->setValue( $ability, $callback );
         }
     }
 
+    public static function hidden_site_identifiers() {
+        return array( 'id' => array( false, '' ), 'domain' => array( true, '' ), 'unsupported type' => array( false, 'plugins,translations' ) );
+    }
+
+    /**
+     * @dataProvider hidden_site_identifiers
+     */
+    public function test_rest_ignored_updates_hides_outside_site( $domain, $type ) {
+        $this->set_current_user_as_admin();
+        $outside = $this->create_test_site( array( 'url' => 'https://outside.example.com/' ) );
+        $this->set_site_ignored_plugins( $outside, array( 'secret/plugin.php' => array( 'Name' => 'Secret Plugin' ) ) );
+        $this->restrict_ability_layer_only( array() );
+        $identifier = $domain ? 'outside.example.com' : $outside;
+        $missing = $domain ? 'missing.example.com' : 99999999;
+        $params = array( 'type' => $type );
+        $hidden = $this->dispatch_v2_get( '/mainwp/v2/updates/' . $identifier . '/ignored', $params );
+        $absent = $this->dispatch_v2_get( '/mainwp/v2/updates/' . $missing . '/ignored', $params );
+        $this->assertSame( $absent->get_status(), $hidden->get_status() );
+        $this->assertSame( $absent->get_data(), $hidden->get_data() );
+        $this->restrict_ability_layer_only( array( $outside ) );
+        $this->assertSame( 200, $this->dispatch_v2_get( '/mainwp/v2/updates/' . $identifier . '/ignored', $params )->get_status() );
+    }
+
+    private function without_ability( $name, callable $run ) {
+        $registry = \WP_Abilities_Registry::get_instance();
+        $property = new \ReflectionProperty( $registry, 'registered_abilities' );
+        $property->setAccessible( true );
+        $abilities = $property->getValue( $registry );
+        $remaining = $abilities;
+        unset( $remaining[ $name ] );
+        $property->setValue( $registry, $remaining );
+        $this->setExpectedIncorrectUsage( 'WP_Abilities_Registry::get_registered' );
+        try {
+            return $run();
+        } finally {
+            $property->setValue( $registry, $abilities );
+        }
+    }
+
+    public static function rest_batch_routes() {
+        return array( 'reconnect' => array( 'reconnect' ), 'disconnect' => array( 'disconnect' ), 'check' => array( 'check' ), 'sync legacy' => array( 'sync' ) );
+    }
+
+    /**
+     * @dataProvider rest_batch_routes
+     */
+    public function test_rest_batch_scopes_child_calls_and_results( $action ) {
+        $this->set_current_user_as_admin();
+        $args = array( 'sync_errors' => 'reconnect' === $action ? 'Disconnected' : '' );
+        $allowed = $this->create_test_site( $args + array( 'url' => 'https://a-allowed.example.com/' ) );
+        $outside = $this->create_test_site( $args + array( 'url' => 'https://z-outside.example.com/' ) );
+        if ( 'check' === $action ) {
+            foreach ( array( $allowed, $outside ) as $site_id ) {
+                \MainWP\Dashboard\MainWP_DB_Uptime_Monitoring::instance()->update_wp_monitor( array( 'wpid' => $site_id, 'issub' => 0 ) );
+            }
+        }
+        $hits = array();
+        $callback = static function ( $pre, $website ) use ( &$hits ) {
+            $hits[] = (int) $website->id;
+            return array( 'result' => true, 'wpversion' => '6.4.0', 'siteurl' => $website->url, 'site_info' => array(), 'wp_updates' => array(), 'httpCode' => 200 );
+        };
+        add_filter( 'mainwp_fetch_url_authed_pre', $callback, 10, 2 );
+        // Site checks use the uptime transport rather than authenticated child requests.
+        add_filter( 'mainwp_fetch_uptime_monitor_pre', $callback, 10, 2 );
+        $run = function () use ( $action, $allowed, &$hits ) {
+            $this->restrict_ability_layer_only( array( $allowed ) );
+            $response = $this->dispatch_v2_post( '/mainwp/v2/sites/' . $action );
+            $this->assertSame( 200, $response->get_status() );
+            $this->assertSame( array( $allowed ), array_values( array_unique( $hits ) ) );
+            $this->assertSame( array( $allowed ), array_map( 'intval', array_keys( $response->get_data()['data'] ) ) );
+            $this->assertSame( 1, $response->get_data()['total'] );
+            $hits = array();
+            $this->restrict_ability_layer_only( array() );
+            $this->assertSame( array( 'total' => 0, 'data' => array() ), $this->dispatch_v2_post( '/mainwp/v2/sites/' . $action )->get_data() );
+            $this->assertSame( array(), $hits );
+        };
+        try {
+            if ( 'sync' === $action ) {
+                $this->without_ability( 'mainwp/sync-sites-v1', $run );
+            } else {
+                $run();
+            }
+        } finally {
+            remove_filter( 'mainwp_fetch_url_authed_pre', $callback, 10 );
+            remove_filter( 'mainwp_fetch_uptime_monitor_pre', $callback, 10 );
+        }
+    }
+
+    public static function site_resolvers() {
+        return array( 'base' => array( 'MainWP_Rest_Sites_Controller' ), 'posts' => array( 'MainWP_Rest_Posts_Controller' ), 'pages' => array( 'MainWP_Rest_Pages_Controller' ) );
+    }
+
+    /**
+     * @dataProvider site_resolvers
+     */
+    public function test_rest_site_resolvers_hide_ids_and_domains( $class ) {
+        $this->set_current_user_as_admin();
+        $outside = $this->create_test_site( array( 'url' => 'https://hidden.example.com/' ) );
+        $this->restrict_ability_layer_only( array() );
+        $controller = new $class();
+        foreach ( array( 'id' => array( $outside, 99999999 ), 'domain' => array( 'hidden.example.com', 'missing.example.com' ) ) as $by => $values ) {
+            $hidden = $controller->get_site_by( $by, $values[0] );
+            $missing = $controller->get_site_by( $by, $values[1] );
+            $this->assertWPError( $hidden );
+            $this->assertSame( $missing->get_error_code(), $hidden->get_error_code() );
+            $this->assertSame( $missing->get_error_message(), $hidden->get_error_message() );
+            $this->assertSame( $missing->get_error_data(), $hidden->get_error_data() );
+            if ( 'MainWP_Rest_Sites_Controller' !== $class ) {
+                $suffix = 'MainWP_Rest_Posts_Controller' === $class ? 'post' : 'page';
+                foreach ( array( 'get_', 'create_', 'edit_', 'update_status_', 'delete_' ) as $prefix ) {
+                    $method = $prefix . $suffix;
+                    $request = new \WP_REST_Request();
+                    $request->set_param( 'id_domain', (string) $values[0] );
+                    $response = $controller->$method( $request );
+                    $this->assertWPError( $response, $method );
+                    $this->assertSame( $missing->get_error_code(), $response->get_error_code(), $method );
+                    $this->assertSame( $missing->get_error_message(), $response->get_error_message(), $method );
+                    $this->assertSame( $missing->get_error_data(), $response->get_error_data(), $method );
+                }
+            }
+        }
+        $this->restrict_ability_layer_only( array( $outside ) );
+        $this->assertSame( $outside, (int) $controller->get_site_by( 'id', $outside )->id );
+    }
+
+    public static function related_site_lists() {
+        return array( 'tag' => array( 'tag' ), 'client list' => array( 'client' ), 'client count' => array( 'count' ) );
+    }
+
+    /**
+     * @dataProvider related_site_lists
+     */
+    public function test_rest_related_site_lists_scope_rows_and_totals( $kind ) {
+        $this->set_current_user_as_admin();
+        $client = $this->create_test_client();
+        $tag = $this->create_test_tag();
+        $allowed = $this->create_test_site( array( 'client_id' => $client ) );
+        $outside = $this->create_test_site( array( 'client_id' => $client ) );
+        $this->assign_site_to_tag( $allowed, $tag );
+        $this->assign_site_to_tag( $outside, $tag );
+        $route = 'tag' === $kind ? '/mainwp/v2/tags/' . $tag . '/sites' : '/mainwp/v2/clients/' . $client . '/sites' . ( 'count' === $kind ? '/count' : '' );
+        $this->restrict_ability_layer_only( array( $allowed ) );
+        $response = $this->dispatch_v2_get( $route );
+        $this->assertSame( 200, $response->get_status() );
+        $this->assertSame( 1, $response->get_data()['total'] );
+        if ( 'count' !== $kind ) {
+            $this->assertSame( array( $allowed ), array_map( 'intval', array_column( $response->get_data()['data'], 'id' ) ) );
+        }
+        $this->restrict_ability_layer_only( array() );
+        $this->assertSame( 0, $this->dispatch_v2_get( $route )->get_data()['total'] );
+    }
+
+    public function test_rest_tag_route_hides_disallowed_tag() {
+        $this->set_current_user_as_admin();
+        $tag = $this->create_test_tag();
+        $this->restrict_current_user_to_groups( array() );
+        $hidden = $this->dispatch_v2_get( '/mainwp/v2/tags/' . $tag . '/sites' );
+        $missing = $this->dispatch_v2_get( '/mainwp/v2/tags/99999999/sites' );
+        $this->assertSame( $missing->get_status(), $hidden->get_status() );
+        $this->assertSame( $missing->get_data(), $hidden->get_data() );
+        $this->assertSame( array( 'success' => 1, 'total' => 0, 'data' => array() ), $this->dispatch_v2_get( '/mainwp/v2/tags' )->get_data() );
+    }
+
+    public static function tag_metadata_routes() {
+        return array( 'list' => array( false ), 'item' => array( true ) );
+    }
+
+    /**
+     * @dataProvider tag_metadata_routes
+     */
+    public function test_rest_tags_scope_embedded_site_ids_and_count( $single ) {
+        $this->set_current_user_as_admin();
+        $tag = $this->create_test_tag();
+        $allowed = $this->create_test_site();
+        $outside = $this->create_test_site();
+        $this->assign_site_to_tag( $allowed, $tag );
+        $this->assign_site_to_tag( $outside, $tag );
+        $this->restrict_ability_layer_only( array( $allowed ) );
+        $route = '/mainwp/v2/tags' . ( $single ? '/' . $tag : '' );
+        $response = $this->dispatch_v2_get( $route );
+        $this->assertSame( 200, $response->get_status() );
+        $data = $single ? $response->get_data()['data'] : $response->get_data()['data'][ $tag ];
+        $this->assertSame( 1, $data['count_sites'] );
+        $this->assertSame( array( $allowed ), wp_parse_id_list( $data['sites_ids'] ) );
+        $this->restrict_ability_layer_only( array() );
+        $empty = $this->dispatch_v2_get( $route )->get_data()['data'];
+        $empty = $single ? $empty : $empty[ $tag ];
+        $this->assertSame( 0, $empty['count_sites'] );
+        $this->assertSame( '', $empty['sites_ids'] );
+    }
+
+    public function test_rest_client_selected_sites_response_is_scoped() {
+        $this->set_current_user_as_admin();
+        $allowed = $this->create_test_site();
+        $outside = $this->create_test_site();
+        $this->restrict_ability_layer_only( array( $allowed ) );
+        $controller = new \MainWP_Rest_Clients_Controller();
+        $item = array( 'client_id' => 1, 'selected_sites' => $allowed . ',' . $outside );
+        $data = $controller->filter_response_data_by_allowed_fields( $item, 'simple_view', array( 'selected_sites' ) );
+        $this->assertSame( (string) $allowed, $data['selected_sites'] );
+        $this->restrict_ability_layer_only( array() );
+        $data = $controller->filter_response_data_by_allowed_fields( $item, 'simple_view', array( 'selected_sites' ) );
+        $this->assertSame( '', $data['selected_sites'] );
+    }
+
+    public function test_rest_settings_jobs_scope_site_selection() {
+        $this->set_current_user_as_admin();
+        $allowed = $this->create_test_site();
+        $outside = $this->create_test_site();
+        $this->restrict_ability_layer_only( array( $allowed ) );
+        $controller = new \MainWP_Rest_Settings_Controller();
+        $method = new \ReflectionMethod( $controller, 'get_websites' );
+        $method->setAccessible( true );
+        $this->assertSame( array( $allowed ), array_map( 'intval', array_column( $method->invoke( $controller ), 'id' ) ) );
+        $lookup = new \ReflectionMethod( $controller, 'get_website_by_id' );
+        $lookup->setAccessible( true );
+        $process = array( 'failed' => 0, 'processed' => 0, 'errors' => array() );
+        $this->assertNull( $lookup->invokeArgs( $controller, array( $outside, &$process ) ) );
+        $this->assertSame( 1, $process['failed'] );
+        $this->assertSame( 1, $process['processed'] );
+        $this->assertSame( 'Website not found.', $process['errors'][0]['error'] );
+        $this->restrict_ability_layer_only( array() );
+        $this->assertWPError( $method->invoke( $controller ) );
+    }
+
+    public function test_rest_update_all_legacy_scopes_queued_sites() {
+        $this->set_current_user_as_admin();
+        $allowed = $this->create_test_site( array( 'plugin_upgrades' => '[]', 'theme_upgrades' => '[]' ) );
+        $outside = $this->create_test_site( array( 'plugin_upgrades' => '[]', 'theme_upgrades' => '[]' ) );
+        $this->restrict_ability_layer_only( array( $allowed ) );
+        update_option( 'mainwp_batch_updates_is_running', 0 );
+        $this->without_ability( 'mainwp/run-updates-v1', function () use ( $allowed, $outside ) {
+            $controller = new \MainWP_Rest_Updates_Controller();
+            $response = $controller->update_all_items_start( new \WP_REST_Request( 'POST', '/mainwp/v2/updates' ) );
+            $this->assertNotWPError( $response );
+            $this->assertGreaterThan( 0, (int) MainWP_DB::instance()->get_website_by_id( $allowed )->dtsAutomaticSyncStart );
+            $this->assertSame( 0, (int) MainWP_DB::instance()->get_website_by_id( $outside )->dtsAutomaticSyncStart );
+        } );
+    }
+
+    public static function monitor_list_routes() {
+        return array( 'full' => array( '/mainwp/v2/monitors' ), 'basic' => array( '/mainwp/v2/monitors/basic' ), 'count' => array( '/mainwp/v2/monitors/count' ) );
+    }
+
+    /**
+     * @dataProvider monitor_list_routes
+     */
+    public function test_rest_monitors_scope_lists_and_counts( $route ) {
+        $this->set_current_user_as_admin();
+        $outside = $this->create_test_site( array( 'url' => 'https://a-outside.example.com/' ) );
+        $allowed = $this->create_test_site( array( 'url' => 'https://z-allowed.example.com/' ) );
+        $db = \MainWP\Dashboard\MainWP_DB_Uptime_Monitoring::instance();
+        foreach ( array( $outside, $allowed ) as $site_id ) {
+            $db->update_wp_monitor( array( 'wpid' => $site_id, 'issub' => 0 ) );
+        }
+        $monitor = $db->get_monitor_by( $allowed, 'issub', 0 );
+        $this->restrict_ability_layer_only( array( $allowed ) );
+        $response = $this->dispatch_v2_get( $route );
+        $this->assertSame( 200, $response->get_status() );
+        $count = str_ends_with( $route, '/count' );
+        $this->assertSame( 1, $response->get_data()[ $count ? 'count' : 'total' ] );
+        if ( ! $count ) {
+            $this->assertSame( array( (int) $monitor->monitor_id ), array_map( 'intval', array_column( $response->get_data()['data'], 'id' ) ) );
+            $paged = $this->dispatch_v2_get( $route, array( 'page' => 1, 'per_page' => 1 ) );
+            $this->assertSame( $response->get_data(), $paged->get_data() );
+        }
+        $this->restrict_ability_layer_only( array() );
+        $this->assertSame( 0, $this->dispatch_v2_get( $route )->get_data()[ $count ? 'count' : 'total' ] );
+    }
+
+    public function test_rest_monitor_lookup_hides_outside_id_and_domain() {
+        $this->set_current_user_as_admin();
+        $outside = $this->create_test_site( array( 'url' => 'https://hidden-monitor.example.com/' ) );
+        $db = \MainWP\Dashboard\MainWP_DB_Uptime_Monitoring::instance();
+        $db->update_wp_monitor( array( 'wpid' => $outside, 'issub' => 0 ) );
+        $monitor = $db->get_monitor_by( $outside, 'issub', 0 );
+        $this->restrict_ability_layer_only( array() );
+        foreach ( array( array( $monitor->monitor_id, 99999999 ), array( 'hidden-monitor.example.com', 'missing-monitor.example.com' ) ) as $identifiers ) {
+            $hidden = $this->dispatch_v2_get( '/mainwp/v2/monitors/' . $identifiers[0] );
+            $missing = $this->dispatch_v2_get( '/mainwp/v2/monitors/' . $identifiers[1] );
+            $this->assertSame( $missing->get_status(), $hidden->get_status() );
+            $this->assertSame( $missing->get_data(), $hidden->get_data() );
+        }
+    }
+
+    public function test_rest_site_validation_hides_outside_site() {
+        $this->set_current_user_as_admin();
+        $outside = $this->create_test_site();
+        $this->restrict_ability_layer_only( array() );
+        $controller = new \MainWP_Rest_Sites_Controller();
+        $error = $controller->validate_site_ids( (string) $outside, new \WP_REST_Request() );
+        $this->assertWPError( $error );
+        $this->assertSame( 'invalid_site', $error->get_error_code() );
+    }
+
+    public static function site_selection_sources() {
+        return array( 'sites' => array( 'sites' ), 'groups' => array( 'groups' ), 'clients' => array( 'clients' ), 'csv sites' => array( 'select_sites' ), 'csv groups' => array( 'select_groups' ) );
+    }
+
+    /**
+     * @dataProvider site_selection_sources
+     */
+    public function test_rest_site_selection_scopes_all_sources( $source ) {
+        $this->set_current_user_as_admin();
+        $client = $this->create_test_client();
+        $tag = $this->create_test_tag( array( 'name' => 'Scope Tag' ) );
+        $allowed = $this->create_test_site( array( 'client_id' => $client, 'url' => 'https://allowed.example.com/' ) );
+        $outside = $this->create_test_site( array( 'client_id' => $client, 'url' => 'https://outside.example.com/' ) );
+        $this->assign_site_to_tag( $allowed, $tag );
+        $this->assign_site_to_tag( $outside, $tag );
+        $this->restrict_ability_layer_only( array( $allowed ) );
+        $controller = new \MainWP_Rest_Users_Controller();
+        $csv = str_starts_with( $source, 'select_' );
+        $method = new \ReflectionMethod( $controller, $csv ? 'get_websites_for_csv_user' : 'get_db_websites_by_filter' );
+        $method->setAccessible( true );
+        $input = $csv ? array( array( $source => 'select_sites' === $source ? 'allowed.example.com;outside.example.com' : 'Scope Tag' ) ) : array(
+            'sites' === $source ? array( $allowed, $outside ) : array(),
+            'groups' === $source ? array( $tag ) : array(),
+            'clients' === $source ? array( $client ) : array(),
+        );
+        $result = $method->invokeArgs( $controller, $input );
+        $this->assertSame( array( $allowed ), array_map( 'intval', array_keys( $csv ? $result : $result['db_websites'] ) ) );
+        if ( ! $csv ) {
+            $this->assertSame( array( $allowed ), array_map( 'intval', array_keys( $result['website_url'] ) ) );
+        }
+        $this->restrict_ability_layer_only( array() );
+        $empty = $method->invokeArgs( $controller, $input );
+        $this->assertSame( array(), $csv ? $empty : $empty['db_websites'] );
+    }
 }

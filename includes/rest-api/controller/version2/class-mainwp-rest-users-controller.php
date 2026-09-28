@@ -722,7 +722,7 @@ class MainWP_Rest_Users_Controller extends MainWP_REST_Controller { //phpcs:igno
             }
         }
 
-        return $db_websites;
+        return $this->filter_scoped_sites( $db_websites );
     }
 
     /**

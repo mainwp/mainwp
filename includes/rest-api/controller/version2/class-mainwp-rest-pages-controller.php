@@ -322,6 +322,9 @@ class MainWP_Rest_Pages_Controller extends MainWP_REST_Controller { //phpcs:igno
      */
     public function get_page( $request ) { // phpcs:ignore -- NOSONAR - complex.
         $website = $this->get_request_item( $request );
+        if ( is_wp_error( $website ) ) {
+            return $website;
+        }
 
         if ( empty( $website ) ) {
             return new WP_Error(
@@ -375,6 +378,9 @@ class MainWP_Rest_Pages_Controller extends MainWP_REST_Controller { //phpcs:igno
     public function update_status_page( $request ) { // phpcs:ignore -- NOSONAR - complex.
         // Get website exist.
         $website = $this->get_request_item( $request );
+        if ( is_wp_error( $website ) ) {
+            return $website;
+        }
         if ( empty( $website ) ) {
             return new WP_Error(
                 'website_not_found',
@@ -443,6 +449,9 @@ class MainWP_Rest_Pages_Controller extends MainWP_REST_Controller { //phpcs:igno
     public function edit_page( $request ) { // phpcs:ignore -- NOSONAR - complex.
         // Get website exist.
         $website = $this->get_request_item( $request );
+        if ( is_wp_error( $website ) ) {
+            return $website;
+        }
         if ( empty( $website ) ) {
             return new WP_Error(
                 'website_not_found',
@@ -524,6 +533,9 @@ class MainWP_Rest_Pages_Controller extends MainWP_REST_Controller { //phpcs:igno
     public function create_page( $request ) { // phpcs:ignore -- NOSONAR - complex.
         // Get website exist.
         $website = $this->get_request_item( $request );
+        if ( is_wp_error( $website ) ) {
+            return $website;
+        }
         if ( empty( $website ) ) {
             return new WP_Error(
                 'website_not_found',
@@ -593,6 +605,9 @@ class MainWP_Rest_Pages_Controller extends MainWP_REST_Controller { //phpcs:igno
     public function delete_page( $request ) { // phpcs:ignore -- NOSONAR - complex.
         // Get website exist.
         $website = $this->get_request_item( $request );
+        if ( is_wp_error( $website ) ) {
+            return $website;
+        }
         if ( empty( $website ) ) {
             return new WP_Error(
                 'website_not_found',
@@ -636,37 +651,6 @@ class MainWP_Rest_Pages_Controller extends MainWP_REST_Controller { //phpcs:igno
                 'message' => __( 'Delete page successfully.', 'mainwp' ),
             )
         );
-    }
-
-    /**
-     * Get site by.
-     *
-     * @param  string $by Get by.
-     * @param  mixed  $value Site id or domain.
-     * @param  array  $args args.
-     *
-     * @return array|mixed Response data, ready for insertion into collection data.
-     */
-    public function get_site_by( $by, $value, $args = array() ) {
-        $site          = false;
-        $select_groups = ! empty( $args['with_tags'] );
-
-        if ( 'id' === $by ) {
-            $site_id = intval( $value );
-        } elseif ( 'domain' === $by ) {
-            $site = $this->db->get_websites_by_url( $value );
-            if ( empty( $site ) ) {
-                return $this->get_rest_data_error( 'domain', 'site' );
-            }
-            $site    = current( $site );
-            $site_id = $site->id;
-        }
-
-        $site = $this->db->get_website_by_id( $site_id, $select_groups );
-        if ( empty( $site ) ) {
-            return $this->get_rest_data_error( 'id', 'site' );
-        }
-        return $site;
     }
 
     /**

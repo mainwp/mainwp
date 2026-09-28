@@ -375,6 +375,10 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
      * @return array
      */
     protected function get_formatted_item_data( $data ) {
+        $allowed = \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+        if ( is_array( $allowed ) && isset( $data['selected_sites'] ) ) {
+            $data['selected_sites'] = implode( ',', array_intersect( wp_parse_id_list( $data['selected_sites'] ), $allowed ) );
+        }
         if ( ! empty( $data['created'] ) ) {
             $data['created'] = mainwp_rest_prepare_date_response( $data['created'] );
         }
@@ -605,6 +609,7 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
                 'full_data'    => true,
             )
         );
+        $sites = $this->filter_scoped_sites( $sites );
         if ( $sites ) {
             foreach ( $sites as $site ) {
                 $data[] = apply_filters( 'mainwp_rest_routes_sites_controller_filter_allowed_fields_by_context', $site );
@@ -668,6 +673,7 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
             'success' => 1,
         );
         $sites              = MainWP_DB_Client::instance()->get_websites_by_client_ids( $item->client_id );
+        $sites              = $this->filter_scoped_sites( $sites );
         $resp_data['total'] = is_array( $sites ) ? count( $sites ) : 0;
         return rest_ensure_response( $resp_data );
     }

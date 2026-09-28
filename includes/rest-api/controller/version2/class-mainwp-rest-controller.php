@@ -471,7 +471,32 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
         if ( empty( $site ) ) {
             return $this->get_rest_data_error( 'id', 'site' );
         }
+        $allowed = \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+        if ( is_array( $allowed ) && ! in_array( (int) $site->id, $allowed, true ) ) {
+            return $this->get_rest_data_error( $by, 'site' );
+        }
         return $site;
+    }
+
+    /**
+     * Preserve caller scope when REST authentication bypasses the database ACL.
+     *
+     * @param array|false $sites Site rows.
+     * @return array
+     */
+    protected function filter_scoped_sites( $sites ) {
+        $allowed = \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+        $sites   = is_array( $sites ) ? $sites : array();
+        if ( 'all' === $allowed ) {
+            return $sites;
+        }
+        return array_filter(
+            $sites,
+            static function ( $site ) use ( $allowed ) {
+                $site = (array) $site;
+                return in_array( (int) $site['id'], $allowed, true );
+            }
+        );
     }
 
     /**
@@ -1823,8 +1848,8 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
         $value    = $this->sanitize_field( $value );
         $site_ids = explode( ',', $value );
         foreach ( $site_ids as $site_id ) {
-            $db_site = \MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( trim( $site_id ) );
-            if ( ! $db_site ) {
+            $db_site = $this->get_site_by( 'id', trim( $site_id ) );
+            if ( is_wp_error( $db_site ) ) {
                 return new WP_Error(
                     'invalid_site',
                     sprintf(
@@ -2018,6 +2043,8 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
             }
         }
 
+        $db_websites = $this->filter_scoped_sites( $db_websites );
+        $website_url = array_intersect_key( $website_url, $db_websites );
         return compact( 'db_websites', 'website_url' );
     }
 }

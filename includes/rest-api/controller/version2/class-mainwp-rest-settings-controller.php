@@ -3925,6 +3925,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      */
     private function get_websites() {
         $websites = MainWP_DB::instance()->get_sites();
+        $websites = $this->filter_scoped_sites( $websites );
         if ( empty( $websites ) ) {
             return new WP_Error(
                 'no_website_found',
@@ -3947,7 +3948,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      */
     private function get_website_by_id( $website_id, &$process_data ) {
         $website = MainWP_DB::instance()->get_website_by_id( $website_id );
-        if ( empty( $website ) ) {
+        if ( empty( $website ) || empty( $this->filter_scoped_sites( array( $website ) ) ) ) {
             ++$process_data['failed'];
             ++$process_data['processed'];
             $process_data['errors'][] = array(

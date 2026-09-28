@@ -175,6 +175,12 @@ class MainWP_Rest_Tags_Controller extends MainWP_REST_Controller{ //phpcs:ignore
      * @return array
      */
     protected function get_formatted_item_data( $data ) {
+        $allowed = \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+        if ( is_array( $allowed ) && isset( $data['sites_ids'] ) ) {
+            $site_ids            = array_intersect( wp_parse_id_list( $data['sites_ids'] ), $allowed );
+            $data['sites_ids']   = implode( ',', $site_ids );
+            $data['count_sites'] = count( $site_ids );
+        }
         // wpdb hands back every column as a string, so the fields the schema declares as
         // integers would otherwise ship as strings.
         foreach ( array( 'id', 'count_sites' ) as $int_field ) {
@@ -216,6 +222,19 @@ class MainWP_Rest_Tags_Controller extends MainWP_REST_Controller{ //phpcs:ignore
 
         $prepared_args['with_sites_ids'] = true;
 
+        $allowed = \MainWP\Dashboard\MainWP_Abilities_Util::get_allowed_group_ids();
+        if ( is_array( $allowed ) ) {
+            $prepared_args['include'] = empty( $prepared_args['include'] ) ? $allowed : array_values( array_intersect( wp_parse_id_list( $prepared_args['include'] ), $allowed ) );
+            if ( empty( $prepared_args['include'] ) ) {
+                return rest_ensure_response(
+                    array(
+                        'success' => 1,
+                        'total'   => 0,
+                        'data'    => array(),
+                    )
+                );
+            }
+        }
         $groups = MainWP_DB_Common::instance()->get_tags( $prepared_args );
 
         $data = array();
@@ -244,6 +263,10 @@ class MainWP_Rest_Tags_Controller extends MainWP_REST_Controller{ //phpcs:ignore
         $id   = intval( $request['id'] );
         $item = MainWP_DB_Common::instance()->get_group_by_id( $id );
         if ( empty( $item ) ) {
+            return $this->get_rest_data_error( 'id', 'tag' );
+        }
+        $allowed = \MainWP\Dashboard\MainWP_Abilities_Util::get_allowed_group_ids();
+        if ( is_array( $allowed ) && ! in_array( (int) $item->id, $allowed, true ) ) {
             return $this->get_rest_data_error( 'id', 'tag' );
         }
         return $item;
@@ -394,6 +417,7 @@ class MainWP_Rest_Tags_Controller extends MainWP_REST_Controller{ //phpcs:ignore
         }
 
         $websites = MainWP_DB::instance()->get_websites_by_group_id( $item->id, true, 'wp.url', false, false, null, null, array( 'view_query' => 'default' ) ); // To fix some empty fields of response.
+        $websites = $this->filter_scoped_sites( $websites );
 
         $data = array();
 

@@ -1971,6 +1971,15 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         }
 
         // Fallback: Legacy logic when Abilities API is not available.
+        $params = $this->scope_site_query_args( $params );
+        if ( null === $params ) {
+            return rest_ensure_response(
+                array(
+                    'total' => 0,
+                    'data'  => array(),
+                )
+            );
+        }
         $data     = array();
         $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'favi_icon' ), 'no', $params ) );
         while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
@@ -2033,6 +2042,15 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             'include' => isset( $args['include'] ) && ! empty( $args['include'] ) ? $args['include'] : array(),
         );
 
+        $params = $this->scope_site_query_args( $params );
+        if ( null === $params ) {
+            return rest_ensure_response(
+                array(
+                    'total' => 0,
+                    'data'  => array(),
+                )
+            );
+        }
         $data     = array();
         $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'favi_icon' ), 'no', $params ) );
         while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) && '' !== $website->sync_errors ) {
@@ -2177,12 +2195,21 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      */
     public function disconnect_sites( $request ) {
 
-        $args     = $this->prepare_objects_query( $request );
-        $params   = array(
+        $args   = $this->prepare_objects_query( $request );
+        $params = array(
             'view'    => 'base_view',
             'exclude' => isset( $args['exclude'] ) && ! empty( $args['exclude'] ) ? $args['exclude'] : array(),
             'include' => isset( $args['include'] ) && ! empty( $args['include'] ) ? $args['include'] : array(),
         );
+        $params = $this->scope_site_query_args( $params );
+        if ( null === $params ) {
+            return rest_ensure_response(
+                array(
+                    'total' => 0,
+                    'data'  => array(),
+                )
+            );
+        }
         $data     = array();
         $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user_by_params( $params ) );
         while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
@@ -2260,11 +2287,20 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      * @return WP_Error|WP_REST_Response
      */
     public function check_items( $request ) {
-        $args     = $this->prepare_objects_query( $request );
-        $params   = array(
+        $args   = $this->prepare_objects_query( $request );
+        $params = array(
             'exclude' => isset( $args['exclude'] ) && ! empty( $args['exclude'] ) ? $args['exclude'] : array(),
             'include' => isset( $args['include'] ) && ! empty( $args['include'] ) ? $args['include'] : array(),
         );
+        $params = $this->scope_site_query_args( $params );
+        if ( null === $params ) {
+            return rest_ensure_response(
+                array(
+                    'total' => 0,
+                    'data'  => array(),
+                )
+            );
+        }
         $data     = array();
         $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'favi_icon' ), 'no', $params ) );
         while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {

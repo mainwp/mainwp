@@ -339,7 +339,16 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
         $last24_key = MainWP_Uptime_Monitoring_Handle::get_hourly_key_by_timestamp( $now - DAY_IN_SECONDS );
 
         // Get data from uptime monitoring DB.
-        $monitors = $this->db->get_monitors( $params ); // get monitors.
+        if ( 'all' === \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_site_ids_or_all() ) {
+            $monitors = $this->db->get_monitors( $params );
+        } else {
+            // A restricted key pages in PHP after scoping, so hidden monitors cannot consume a page.
+            $page     = $params['page'];
+            $per_page = $params['per_page'];
+            unset( $params['page'], $params['per_page'] );
+            $monitors = $this->filter_scoped_sites( $this->db->get_monitors( $params ) );
+            $monitors = array_slice( array_values( $monitors ), ( $page - 1 ) * $per_page, $per_page );
+        }
         if ( empty( $monitors ) || ! is_array( $monitors ) ) {
             return rest_ensure_response(
                 array(
@@ -423,7 +432,16 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
         );
 
         // Get data from uptime monitoring DB.
-        $monitors = $this->db->get_monitors( $params ); // get monitors.
+        if ( 'all' === \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_site_ids_or_all() ) {
+            $monitors = $this->db->get_monitors( $params );
+        } else {
+            // A restricted key pages in PHP after scoping, so hidden monitors cannot consume a page.
+            $page     = $params['page'];
+            $per_page = $params['per_page'];
+            unset( $params['page'], $params['per_page'] );
+            $monitors = $this->filter_scoped_sites( $this->db->get_monitors( $params ) );
+            $monitors = array_slice( array_values( $monitors ), ( $page - 1 ) * $per_page, $per_page );
+        }
         if ( empty( $monitors ) || ! is_array( $monitors ) ) {
             return rest_ensure_response(
                 array(
@@ -475,7 +493,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
         );
 
         // Get data from uptime monitoring DB.
-        $monitors = $this->db->get_monitors( $params );
+        $monitors = $this->filter_scoped_sites( $this->db->get_monitors( $params ) );
         $total    = is_array( $monitors ) ? count( $monitors ) : 0;
 
         return rest_ensure_response(
@@ -1452,13 +1470,17 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
         // Get monitor by monitor id.
         if ( ctype_digit( $raw ) ) {
             $monitor_id = (int) $raw;
-            return $this->db->get_monitor_by( false, 'monitor_id', $monitor_id );
+            $monitor    = $this->db->get_monitor_by( false, 'monitor_id', $monitor_id );
+            if ( empty( $monitor ) || empty( $this->filter_scoped_sites( array( $monitor ) ) ) ) {
+                return false;
+            }
+            return $monitor;
         }
 
         // Get monitor by domain.
         $domain  = strtolower( rtrim( rawurldecode( $raw ), '/' ) );
         $website = $this->get_site_by( 'domain', $domain );
-        if ( empty( $website ) ) {
+        if ( empty( $website ) || is_wp_error( $website ) ) {
             return false;
         }
 

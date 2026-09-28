@@ -783,9 +783,16 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                 <?php echo '</td>'; ?>
                 <?php
             } elseif ( 'notes' === $column_name ) {
-                $note       = html_entity_decode( $item['note'] );
-                $esc_note   = MainWP_Utility::esc_content( $note );
-                $strip_note = wp_strip_all_tags( $esc_note );
+                $note     = isset( $item['note'] ) ? (string) $item['note'] : '';
+                $edit     = MainWP_Utility::client_note_for_editor( $note );
+                $esc_note = MainWP_Utility::client_note_html( $note );
+                // esc_attr() does not double-encode, so a typed "&copy;" would show as ©.
+                $tooltip = MainWP_Utility::client_note_tooltip_text( $esc_note );
+                if ( '' === $tooltip ) {
+                    $tooltip_attr = esc_attr__( 'Edit client notes.', 'mainwp' );
+                } else {
+                    $tooltip_attr = htmlspecialchars( $tooltip, ENT_QUOTES, 'UTF-8', true );
+                }
                 echo "<td $attributes>"; // phpcs:ignore WordPress.Security.EscapeOutput
                 if ( empty( $item['note'] ) ) :
                     $cl_id1 = $item['client_id'];
@@ -793,9 +800,9 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                     <a href="javascript:void(0)" class="mainwp-edit-client-note ui mini icon button" id="mainwp-notes-<?php echo intval( $cl_id1 ); ?>" data-tooltip="<?php esc_attr_e( 'Edit client notes.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><i class="sticky note outline icon"></i></a>
                     <?php else :
                     $cl_id2 = $item['client_id']; ?>
-                    <a href="javascript:void(0)" class="mainwp-edit-client-note ui mini icon button" id="mainwp-notes-<?php echo intval( $cl_id2 ); ?>" data-tooltip="<?php echo substr( wp_unslash( $strip_note ), 0, 100 ); // phpcs:ignore WordPress.Security.EscapeOutput ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
+                    <a href="javascript:void(0)" class="mainwp-edit-client-note ui mini icon button" id="mainwp-notes-<?php echo intval( $cl_id2 ); ?>" data-tooltip="<?php echo $tooltip_attr; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- htmlspecialchars() with double encoding, or esc_attr__() for an empty tooltip. ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
                     <?php endif; ?>
-                    <span style="display: none" id="mainwp-notes-<?php echo intval( $item['client_id'] ); ?>-note"><?php echo wp_unslash( $esc_note ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
+                    <span style="display: none" id="mainwp-notes-<?php echo intval( $item['client_id'] ); ?>-note" data-note="<?php echo MainWP_Utility::client_note_editor_attr( $edit ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped for an attribute without decoding typed entities. ?>"><?php echo $esc_note; // phpcs:ignore WordPress.Security.EscapeOutput -- client_note_html() returns display HTML. ?></span>
                 <?php echo '</td>'; ?>
             <?php } elseif ( 'client_actions' === $column_name ) { ?>
                 <?php $selected_sites = isset( $item['selected_sites'] ) ? trim( $item['selected_sites'] ) : ''; ?>

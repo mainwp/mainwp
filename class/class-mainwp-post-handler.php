@@ -1139,13 +1139,44 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
     /**
      * Method mainwp_clients_notes_save()
      *
-     * Post handler for save notes on,
-     * Page: Manage Sites.
+     * Post handler for saving a client note.
      *
-     * @uses \MainWP\Dashboard\MainWP_Manage_Sites_Handler::save_note()
+     * Requires the same page-level permission the Clients screen enforces,
+     * and an existing client. Per-client scoping is left to Team Control.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Client::save_note()
      */
     public function mainwp_clients_notes_save() {
         $this->secure_request( 'mainwp_clients_notes_save' );
+
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) {
+            MainWP_Client::exit_json(
+                array(
+                    'error' => sprintf(
+                        /* translators: %s: page name. */
+                        esc_html__( 'You do not have sufficient permissions to access this page (%s).', 'mainwp' ),
+                        /* translators: Page name shown when client note access is denied. */
+                        esc_html__( 'Manage Clients', 'mainwp' )
+                    ),
+                )
+            );
+        }
+
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- nonce verified in secure_request().
+        $client_id = isset( $_POST['clientid'] ) ? intval( $_POST['clientid'] ) : 0;
+        // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+
+        $client = $client_id ? MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client_id ) : null;
+        if ( empty( $client ) ) {
+            /* translators: Error when the client id does not match a client. */
+            $missing_client = esc_html__( 'Client not found. Please try again.', 'mainwp' );
+            MainWP_Client::exit_json(
+                array(
+                    'error' => $missing_client,
+                )
+            );
+        }
+
         MainWP_Client::save_note();
     }
 

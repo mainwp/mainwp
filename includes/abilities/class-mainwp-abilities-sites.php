@@ -1613,6 +1613,13 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
         $new_client_id = null;
         if ( isset( $input['client_id'] ) ) {
             $new_client_id = (int) $input['client_id'];
+            if ( $new_client_id < 0 ) {
+                return new \WP_Error(
+                    'mainwp_invalid_input',
+                    __( 'client_id must be 0 to unassign or a positive client ID.', 'mainwp' ),
+                    array( 'status' => 400 )
+                );
+            }
             if ( $new_client_id > 0 ) {
                 $client = MainWP_Abilities_Util::resolve_client( $new_client_id );
                 if ( is_wp_error( $client ) ) {

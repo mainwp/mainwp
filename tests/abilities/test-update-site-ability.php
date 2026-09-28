@@ -183,6 +183,29 @@ class Test_UpdateSite_Ability extends MainWP_Abilities_Test_Case {
     }
 
     /**
+     * Test that a negative client_id is rejected instead of being written to the site.
+     *
+     * @return void
+     */
+    public function test_update_site_rejects_negative_client_id() {
+        $this->skip_if_no_abilities_api();
+        $this->set_current_user_as_admin();
+
+        $site_id = $this->create_test_site();
+
+        $result = $this->execute_ability( 'mainwp/update-site-v1', [
+            'site_id_or_domain' => $site_id,
+            'client_id'         => -5,
+        ] );
+
+        $this->assertWPError( $result, 'A negative client_id must be rejected.' );
+        $this->assertSame( 'mainwp_invalid_input', $result->get_error_code() );
+
+        $site = \MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( $site_id );
+        $this->assertSame( 0, (int) $site->client_id, 'The site must keep its client assignment.' );
+    }
+
+    /**
      * Test that assigning a site to a client outside the caller's scope is denied.
      *
      * @return void

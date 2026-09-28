@@ -69,9 +69,14 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     const SITE_NOTE_SLASH_REPAIR_MAX_ID = 'mainwp_site_note_slash_repair_max_id';
 
     /**
-     * Site ids written by update_note() before the repair finished. Those rows are not rewritten.
+     * Prefix for one skip row per site. Autoload is off. A save during the repair inserts its own row.
      */
-    const SITE_NOTE_SLASH_REPAIR_SKIP = 'mainwp_site_note_slash_repair_skip';
+    const SITE_NOTE_SLASH_REPAIR_SKIP_PREFIX = 'mainwp_site_note_slash_repair_skip_';
+
+    /**
+     * Row being repaired. Holds the id and the note value read before the update.
+     */
+    const SITE_NOTE_SLASH_REPAIR_INFLIGHT = 'mainwp_site_note_slash_repair_inflight';
 
     /**
      * Transient that keeps a failed repair from running again for an hour.
@@ -797,32 +802,38 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * @param int $website_id Site id.
      *
-     * @return void
+     * @return bool True when the note write may proceed.
      */
     public function note_saved_during_site_note_slash_repair( $website_id ) {
         if ( 'complete' === get_option( self::SITE_NOTE_SLASH_REPAIR_OPTION ) ) {
-            return;
+            return true;
         }
 
         $website_id = (int) $website_id;
         if ( $website_id < 1 ) {
-            return;
+            return true;
         }
 
-        $option = self::SITE_NOTE_SLASH_REPAIR_SKIP;
-        $ids    = get_option( $option, array() );
-        if ( ! is_array( $ids ) ) {
-            $ids = array();
+        // One row per site. A second save of another site cannot overwrite this insert.
+        $option   = self::SITE_NOTE_SLASH_REPAIR_SKIP_PREFIX . $website_id;
+        $suppress = $this->wpdb->suppress_errors( true );
+        $inserted = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- INSERT IGNORE is the per-site skip marker.
+            $this->wpdb->prepare(
+                "INSERT IGNORE INTO `{$this->wpdb->options}` (option_name, option_value, autoload) VALUES (%s, %s, %s)", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Options table name is internal.
+                $option,
+                '1',
+                'no'
+            )
+        );
+        $failed   = ( false === $inserted );
+        $this->wpdb->suppress_errors( $suppress );
+        $this->wpdb->last_error = '';
+        if ( $failed ) {
+            return false;
         }
 
-        $ids[] = $website_id;
-        $ids   = array_values( array_unique( array_map( 'intval', $ids ) ) );
-
-        if ( false === get_option( $option, false ) ) {
-            add_option( $option, $ids, '', 'no' );
-        } else {
-            update_option( $option, $ids );
-        }
+        $this->forget_site_note_repair_option_cache( $option );
+        return true === $this->site_note_slash_repair_skips_id( $website_id );
     }
 
     /**
@@ -868,7 +879,8 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      * @return bool True when every row was read and every needed update succeeded.
      */
     private function repair_site_note_slash_batches( $token ) {
-        $table  = esc_sql( $this->table_name( 'wp' ) );
+        $table  = $this->table_name( 'wp' );
+        $safe   = esc_sql( $table );
         $batch  = (int) apply_filters( 'mainwp_site_note_slash_repair_batch_size', self::SITE_NOTE_SLASH_REPAIR_BATCH );
         $max_id = $this->ensure_site_note_slash_repair_max_id( $table );
 
@@ -880,6 +892,14 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             $batch = self::SITE_NOTE_SLASH_REPAIR_BATCH;
         }
 
+        // Finish a row whose update landed and whose finished id did not.
+        if ( ! $this->refresh_site_note_slash_repair_lock( $token ) ) {
+            return false;
+        }
+        if ( ! $this->resume_site_note_slash_repair_inflight( $safe ) ) {
+            return false;
+        }
+
         $last_id = (int) get_option( self::SITE_NOTE_SLASH_REPAIR_LAST_ID, 0 );
 
         while ( true ) {
@@ -888,7 +908,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             }
 
             $sql     = $this->wpdb->prepare(
-                "SELECT id, note FROM `{$table}` WHERE id > %d AND id <= %d ORDER BY id ASC LIMIT %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name escaped via esc_sql.
+                "SELECT id, note FROM `{$safe}` WHERE id > %d AND id <= %d ORDER BY id ASC LIMIT %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name escaped via esc_sql.
                 $last_id,
                 $max_id,
                 $batch
@@ -904,7 +924,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             }
 
             foreach ( $rows as $row ) {
-                if ( ! $this->repair_one_site_note_row( $table, $row ) ) {
+                if ( ! $this->repair_one_site_note_row( $safe, $row ) ) {
                     return false;
                 }
                 $last_id = (int) $row->id;
@@ -913,7 +933,10 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     }
 
     /**
-     * Repair one note, then store its id before the next row is touched.
+     * Repair one note. The in-progress marker is stored before the update.
+     *
+     * A crash after the update and before the finished id leaves that marker.
+     * The next run updates the row only while its note is still the value that was read.
      *
      * @param string $table Escaped site table name.
      * @param object $row   Row with id and note.
@@ -921,27 +944,103 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      * @return bool False when the update or the checkpoint failed.
      */
     private function repair_one_site_note_row( $table, $row ) {
-        $id   = (int) $row->id;
-        $note = (string) $row->note;
+        $id    = (int) $row->id;
+        $note  = (string) $row->note;
+        $armed = false;
 
-        if ( ! $this->site_note_slash_repair_skips_id( $id ) && $this->site_note_is_legacy_escaped( $note ) ) {
+        if ( $this->site_note_is_legacy_escaped( $note ) ) {
+            $skipped = $this->site_note_slash_repair_skips_id( $id );
+            if ( null === $skipped ) {
+                return false;
+            }
+            if ( ! $skipped ) {
+                if ( ! $this->mark_site_note_slash_repair_inflight( $id, $note ) ) {
+                    return false;
+                }
+                $armed = true;
+                $fixed = $this->unescape_legacy_site_note( $note );
+                do_action( 'mainwp_site_note_slash_repair_before_update', $id, $note, $fixed );
+
+                // The batch was already read. A save since then has its own skip row in the database.
+                $skipped = $this->site_note_slash_repair_skips_id( $id );
+                if ( null === $skipped ) {
+                    return false;
+                }
+                if ( ! $skipped && ! $this->update_legacy_site_note( $table, $id, $note, $fixed ) ) {
+                    return false;
+                }
+            }
+        }
+
+        if ( ! $this->save_site_note_slash_repair_last_id( $id ) ) {
+            return false;
+        }
+
+        if ( $armed && ! $this->clear_site_note_slash_repair_inflight() ) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Write one legacy note back only while the column still holds the value that was read.
+     *
+     * @param string $table Escaped site table name.
+     * @param int    $id    Site id.
+     * @param string $note  Note value read before the update.
+     * @param string $fixed Note with one escape layer removed.
+     *
+     * @return bool False when the query failed. Zero matched rows is success.
+     */
+    private function update_legacy_site_note( $table, $id, $note, $fixed ) {
+        $updated = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Compare-and-swap write; zero matched rows is success.
+            $this->wpdb->prepare(
+                "UPDATE `{$table}` SET note=%s WHERE id=%d AND note=%s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name escaped via esc_sql.
+                $fixed,
+                $id,
+                $note
+            )
+        );
+
+        return false !== $updated && '' === (string) $this->wpdb->last_error;
+    }
+
+    /**
+     * Finish a row that was updated and then interrupted before its finished id was stored.
+     *
+     * @param string $table Escaped site table name.
+     *
+     * @return bool False when the re-check or the checkpoint failed.
+     */
+    private function resume_site_note_slash_repair_inflight( $table ) {
+        $inflight = $this->read_site_note_slash_repair_inflight();
+        if ( false === $inflight ) {
+            return false;
+        }
+        if ( null === $inflight ) {
+            return true;
+        }
+
+        $id      = (int) $inflight['id'];
+        $note    = (string) $inflight['note'];
+        $skipped = $this->site_note_slash_repair_skips_id( $id );
+        if ( null === $skipped ) {
+            return false;
+        }
+
+        if ( ! $skipped && $this->site_note_is_legacy_escaped( $note ) ) {
             $fixed = $this->unescape_legacy_site_note( $note );
-            do_action( 'mainwp_site_note_slash_repair_before_update', $id, $note, $fixed );
-            $updated = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Compare-and-swap write; zero matched rows is success.
-                $this->wpdb->prepare(
-                    "UPDATE `{$table}` SET note=%s WHERE id=%d AND note=%s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name escaped via esc_sql.
-                    $fixed,
-                    $id,
-                    $note
-                )
-            );
-            // Zero rows means the note changed after the read. That is not a database error.
-            if ( false === $updated || '' !== (string) $this->wpdb->last_error ) {
+            if ( ! $this->update_legacy_site_note( $table, $id, $note, $fixed ) ) {
                 return false;
             }
         }
 
-        return $this->save_site_note_slash_repair_last_id( $id );
+        if ( ! $this->save_site_note_slash_repair_last_id( $id ) ) {
+            return false;
+        }
+
+        return $this->clear_site_note_slash_repair_inflight();
     }
 
     /**
@@ -1226,7 +1325,10 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         // request cannot start again at id 0 while this one still holds the lock.
         delete_option( self::SITE_NOTE_SLASH_REPAIR_LAST_ID );
         delete_option( self::SITE_NOTE_SLASH_REPAIR_MAX_ID );
-        delete_option( self::SITE_NOTE_SLASH_REPAIR_SKIP );
+        delete_option( self::SITE_NOTE_SLASH_REPAIR_INFLIGHT );
+        if ( ! $this->delete_site_note_slash_repair_skip_rows() ) {
+            return false;
+        }
         delete_transient( self::SITE_NOTE_SLASH_REPAIR_RETRY );
         return true;
     }
@@ -1263,7 +1365,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * Later resumes keep that ceiling, so a site created after the start is not scanned.
      *
-     * @param string $table Escaped site table name.
+     * @param string $table Site table name. The %i placeholder quotes it.
      *
      * @return int|false Highest id, or false when the read or the save failed.
      */
@@ -1274,7 +1376,8 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             return (int) $saved;
         }
 
-        $max = $this->wpdb->get_var( "SELECT MAX(id) FROM `{$table}`" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name escaped via esc_sql.
+        // Requires WordPress 6.2, which this plugin already requires, for the %i identifier placeholder.
+        $max = $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT MAX(id) FROM %i', $table ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Failure must stay visible to the caller.
         if ( '' !== (string) $this->wpdb->last_error ) {
             return false;
         }
@@ -1297,17 +1400,109 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     /**
      * Whether update_note() saved this site while the repair was still open.
      *
+     * The read is a direct query. The per-request option cache can still say the row is missing
+     * after another request inserted it.
+     *
      * @param int $id Site id.
      *
-     * @return bool
+     * @return bool|null True when the skip row exists, false when it does not, null when the read failed.
      */
     private function site_note_slash_repair_skips_id( $id ) {
-        $ids = get_option( self::SITE_NOTE_SLASH_REPAIR_SKIP, array() );
-        if ( ! is_array( $ids ) ) {
+        $option = self::SITE_NOTE_SLASH_REPAIR_SKIP_PREFIX . (int) $id;
+        $value  = $this->wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Must not trust the per-request option cache.
+            $this->wpdb->prepare(
+                "SELECT option_id FROM `{$this->wpdb->options}` WHERE option_name = %s LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Options table name is internal.
+                $option
+            )
+        );
+
+        if ( '' !== (string) $this->wpdb->last_error ) {
+            return null;
+        }
+
+        return null !== $value;
+    }
+
+    /**
+     * Delete every per-site skip row.
+     *
+     * @return bool False when the delete query failed.
+     */
+    private function delete_site_note_slash_repair_skip_rows() {
+        $like    = $this->wpdb->esc_like( self::SITE_NOTE_SLASH_REPAIR_SKIP_PREFIX ) . '%';
+        $deleted = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- One delete for every per-site skip row.
+            $this->wpdb->prepare(
+                "DELETE FROM `{$this->wpdb->options}` WHERE option_name LIKE %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Options table name is internal.
+                $like
+            )
+        );
+
+        return false !== $deleted && '' === (string) $this->wpdb->last_error;
+    }
+
+    /**
+     * Remember the note value that the in-progress update is allowed to replace.
+     *
+     * @param int    $id   Site id.
+     * @param string $note Note value read before the update.
+     *
+     * @return bool True when the database stores that pair.
+     */
+    private function mark_site_note_slash_repair_inflight( $id, $note ) {
+        $option  = self::SITE_NOTE_SLASH_REPAIR_INFLIGHT;
+        $payload = array(
+            'id'   => (int) $id,
+            'note' => (string) $note,
+        );
+
+        if ( false === get_option( $option, false ) ) {
+            add_option( $option, $payload, '', 'no' );
+        } else {
+            update_option( $option, $payload );
+        }
+
+        $stored = $this->read_site_note_slash_repair_inflight();
+        return is_array( $stored ) && (int) $stored['id'] === (int) $id && (string) $stored['note'] === (string) $note;
+    }
+
+    /**
+     * Read the in-progress row from the database.
+     *
+     * @return array|null|false Payload, null when absent, false when the read failed.
+     */
+    private function read_site_note_slash_repair_inflight() {
+        $value = $this->wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Resume must see the marker written before a crash.
+            $this->wpdb->prepare(
+                "SELECT option_value FROM `{$this->wpdb->options}` WHERE option_name = %s LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Options table name is internal.
+                self::SITE_NOTE_SLASH_REPAIR_INFLIGHT
+            )
+        );
+
+        if ( '' !== (string) $this->wpdb->last_error ) {
             return false;
         }
 
-        return in_array( (int) $id, array_map( 'intval', $ids ), true );
+        if ( null === $value ) {
+            return null;
+        }
+
+        $payload = maybe_unserialize( $value );
+        if ( ! is_array( $payload ) || ! isset( $payload['id'], $payload['note'] ) ) {
+            return false;
+        }
+
+        return $payload;
+    }
+
+    /**
+     * Drop the in-progress marker after the finished id is stored.
+     *
+     * @return bool True when the database no longer has the marker.
+     */
+    private function clear_site_note_slash_repair_inflight() {
+        delete_option( self::SITE_NOTE_SLASH_REPAIR_INFLIGHT );
+        $this->forget_site_note_repair_option_cache( self::SITE_NOTE_SLASH_REPAIR_INFLIGHT );
+        return null === $this->read_site_note_slash_repair_inflight();
     }
 
     /**

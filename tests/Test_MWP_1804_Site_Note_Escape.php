@@ -46,6 +46,34 @@ class Test_MWP_1804_Site_Note_Escape extends \WP_UnitTestCase {
     private $repair_writes = 0;
 
     /**
+     * Site whose note write must follow its skip row.
+     *
+     * @var int
+     */
+    private $order_site_id = 0;
+
+    /**
+     * Whether the note UPDATE was seen after the skip row.
+     *
+     * @var bool
+     */
+    private $saw_note_write = false;
+
+    /**
+     * Site saved from inside the repair select.
+     *
+     * @var int
+     */
+    private $during_id = 0;
+
+    /**
+     * Guards the repair-select filter from its own note write.
+     *
+     * @var bool
+     */
+    private $inside_save = false;
+
+    /**
      * Reset the repair markers before each case.
      *
      * @return void
@@ -54,6 +82,10 @@ class Test_MWP_1804_Site_Note_Escape extends \WP_UnitTestCase {
         parent::setUp();
         $this->repair_selects = 0;
         $this->repair_writes  = 0;
+        $this->order_site_id  = 0;
+        $this->saw_note_write = false;
+        $this->during_id      = 0;
+        $this->inside_save    = false;
         $this->clear_repair_options();
     }
 
@@ -79,6 +111,9 @@ class Test_MWP_1804_Site_Note_Escape extends \WP_UnitTestCase {
         remove_filter( 'query', array( $this, 'fail_second_note_read' ) );
         remove_filter( 'query', array( $this, 'fail_note_writes' ) );
         remove_filter( 'query', array( $this, 'fail_second_note_write' ) );
+        remove_filter( 'query', array( $this, 'assert_skip_before_note_write' ) );
+        remove_filter( 'query', array( $this, 'save_note_during_repair_select' ) );
+        remove_filter( 'query', array( $this, 'fail_checkpoint_after_note_write' ) );
         remove_filter( 'mainwp_site_note_slash_repair_batch_size', array( $this, 'repair_batch_of_one' ) );
         remove_filter( 'mainwp_site_note_slash_repair_batch_size', array( $this, 'repair_batch_of_ten' ) );
         remove_filter( 'mainwp_sitestable_getcolumns', array( $this, 'notes_column_only' ) );
@@ -433,6 +468,140 @@ class Test_MWP_1804_Site_Note_Escape extends \WP_UnitTestCase {
         $this->assertSame( $note, $this->stored_note( $site_id ) );
         $this->assertSame( 'old \\ path', $this->stored_note( $old_id ) );
         $this->assertSame( 'complete', get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_OPTION ) );
+        $this->assertNull( $this->skip_row_value( $site_id ) );
+    }
+
+    /**
+     * The skip row is stored before the note column changes.
+     *
+     * @return void
+     */
+    public function test_skip_row_is_inserted_before_the_note_update(): void {
+        $site_id = $this->create_note_site( 'MWP-1804 Order' );
+        $this->store_raw_note( $site_id, 'before' );
+        $this->order_site_id = $site_id;
+
+        add_filter( 'query', array( $this, 'assert_skip_before_note_write' ) );
+        MainWP_DB_Common::instance()->update_note( $site_id, 'C:\\new' );
+        remove_filter( 'query', array( $this, 'assert_skip_before_note_write' ) );
+
+        $this->assertTrue( $this->saw_note_write );
+        $this->assertSame( 'C:\\new', $this->stored_note( $site_id ) );
+        $this->assertSame( '1', $this->skip_row_value( $site_id ) );
+    }
+
+    /**
+     * A save that lands while the repair is reading is not treated as a legacy note.
+     *
+     * @return void
+     */
+    public function test_save_during_repair_leaves_the_new_note_unchanged(): void {
+        $site_id = $this->create_note_site( 'MWP-1804 During' );
+        $this->store_raw_note( $site_id, MainWP_DB_Common::instance()->escape( 'old \\ path' ) );
+        $this->during_id = $site_id;
+
+        $sibling = $this->create_note_site( 'MWP-1804 During Sibling' );
+        $this->store_raw_note( $sibling, MainWP_DB_Common::instance()->escape( 'keep \\ this' ) );
+
+        add_filter( 'query', array( $this, 'save_note_during_repair_select' ) );
+        MainWP_Install::instance()->repair_site_note_slashes();
+        remove_filter( 'query', array( $this, 'save_note_during_repair_select' ) );
+
+        $this->assertSame( 'C:\\new', $this->stored_note( $site_id ) );
+        $this->assertNotSame( "C:\new", $this->stored_note( $site_id ) );
+        $this->assertSame( 'keep \\ this', $this->stored_note( $sibling ) );
+        $this->assertSame( 'complete', get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_OPTION ) );
+    }
+
+    /**
+     * Two saves keep two skip rows. One save does not rewrite the other site's row.
+     *
+     * @return void
+     */
+    public function test_two_saves_keep_separate_skip_rows(): void {
+        $first  = $this->create_note_site( 'MWP-1804 Skip A' );
+        $second = $this->create_note_site( 'MWP-1804 Skip B' );
+
+        MainWP_DB_Common::instance()->update_note( $first, 'C:\\new' );
+        MainWP_DB_Common::instance()->update_note( $second, '\\\\nas' );
+
+        $this->assertSame( '1', $this->skip_row_value( $first ) );
+        $this->assertSame( '1', $this->skip_row_value( $second ) );
+        $this->assertNotSame(
+            MainWP_Install::SITE_NOTE_SLASH_REPAIR_SKIP_PREFIX . $first,
+            MainWP_Install::SITE_NOTE_SLASH_REPAIR_SKIP_PREFIX . $second
+        );
+        $this->assertSame( 'C:\\new', $this->stored_note( $first ) );
+        $this->assertSame( '\\\\nas', $this->stored_note( $second ) );
+    }
+
+    /**
+     * A cached "missing" skip option does not hide the database row.
+     *
+     * @return void
+     */
+    public function test_repair_reads_skip_rows_from_the_database(): void {
+        $note    = 'C:\\new';
+        $site_id = $this->create_note_site( 'MWP-1804 Cache' );
+        MainWP_DB_Common::instance()->update_note( $site_id, $note );
+
+        $legacy = MainWP_DB_Common::instance()->escape( 'old \\ path' );
+        $old_id = $this->create_note_site( 'MWP-1804 Cache Sibling' );
+        $this->store_raw_note( $old_id, $legacy );
+
+        $option     = MainWP_Install::SITE_NOTE_SLASH_REPAIR_SKIP_PREFIX . $site_id;
+        $notoptions = wp_cache_get( 'notoptions', 'options' );
+        if ( ! is_array( $notoptions ) ) {
+            $notoptions = array();
+        }
+        $notoptions[ $option ] = true;
+        wp_cache_set( 'notoptions', $notoptions, 'options' );
+        wp_cache_delete( $option, 'options' );
+        $this->assertFalse( get_option( $option, false ) );
+
+        MainWP_Install::instance()->repair_site_note_slashes();
+
+        $this->assertSame( $note, $this->stored_note( $site_id ) );
+        $this->assertNotSame( "C:\new", $this->stored_note( $site_id ) );
+        $this->assertSame( 'old \\ path', $this->stored_note( $old_id ) );
+        $this->assertSame( 'complete', get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_OPTION ) );
+    }
+
+    /**
+     * A crash after the note update and before the finished id does not unescape the row twice.
+     *
+     * C:\new is one repair of the stored \\new value. A second repair would turn the backslash-n
+     * into a real line break. The in-progress marker holds the old value, so the resume matches
+     * zero rows.
+     *
+     * @return void
+     */
+    public function test_crash_between_update_and_checkpoint_does_not_unescape_twice(): void {
+        $fixed   = 'C:\\new';
+        $legacy  = MainWP_DB_Common::instance()->escape( $fixed );
+        $site_id = $this->create_note_site( 'MWP-1804 Crash' );
+        $this->store_raw_note( $site_id, $legacy );
+        $this->assertNotSame( $fixed, $legacy );
+
+        add_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_LAST_ID, (string) ( $site_id - 1 ), '', 'no' );
+        add_filter( 'query', array( $this, 'fail_checkpoint_after_note_write' ) );
+        MainWP_Install::instance()->repair_site_note_slashes();
+        remove_filter( 'query', array( $this, 'fail_checkpoint_after_note_write' ) );
+
+        $this->assertSame( $fixed, $this->stored_note( $site_id ) );
+        $this->assertNotSame( "C:\new", $this->stored_note( $site_id ) );
+        $this->assertSame( (string) ( $site_id - 1 ), (string) get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_LAST_ID ) );
+        $inflight = $this->inflight_payload();
+        $this->assertIsArray( $inflight );
+        $this->assertSame( $site_id, (int) $inflight['id'] );
+        $this->assertSame( $legacy, (string) $inflight['note'] );
+        $this->assertNotSame( 'complete', get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_OPTION, false ) );
+
+        MainWP_Install::instance()->repair_site_note_slashes();
+
+        $this->assertSame( $fixed, $this->stored_note( $site_id ) );
+        $this->assertNull( $this->inflight_payload() );
+        $this->assertSame( 'complete', get_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_OPTION ) );
     }
 
     /**
@@ -545,6 +714,61 @@ class Test_MWP_1804_Site_Note_Escape extends \WP_UnitTestCase {
             if ( $this->repair_writes >= 2 ) {
                 return '';
             }
+        }
+        return $query;
+    }
+
+    /**
+     * Assert the skip row exists before the note UPDATE runs.
+     *
+     * @param string $query SQL.
+     *
+     * @return string
+     */
+    public function assert_skip_before_note_write( $query ) {
+        if ( is_string( $query ) && false !== stripos( $query, 'UPDATE' ) && false !== stripos( $query, 'SET note=' ) ) {
+            $this->saw_note_write = true;
+            $this->assertSame( '1', $this->skip_row_value( $this->order_site_id ) );
+            $this->assertSame( 'before', $this->stored_note( $this->order_site_id ) );
+        }
+        return $query;
+    }
+
+    /**
+     * Save C:\new while the repair is selecting notes.
+     *
+     * @param string $query SQL.
+     *
+     * @return string
+     */
+    public function save_note_during_repair_select( $query ) {
+        if ( $this->inside_save || ! $this->is_repair_select( $query ) ) {
+            return $query;
+        }
+
+        $this->inside_save = true;
+        MainWP_DB_Common::instance()->update_note( $this->during_id, 'C:\\new' );
+        return $query;
+    }
+
+    /**
+     * Let the note update succeed, then drop the finished-id write.
+     *
+     * @param string $query SQL.
+     *
+     * @return string
+     */
+    public function fail_checkpoint_after_note_write( $query ) {
+        if ( ! is_string( $query ) ) {
+            return $query;
+        }
+        if ( false !== stripos( $query, 'UPDATE' ) && false !== stripos( $query, 'SET note=' ) ) {
+            ++$this->repair_writes;
+        }
+        $writes_last_id = false !== stripos( $query, MainWP_Install::SITE_NOTE_SLASH_REPAIR_LAST_ID );
+        $is_write       = false !== stripos( $query, 'UPDATE' ) || false !== stripos( $query, 'INSERT' );
+        if ( $this->repair_writes >= 1 && $writes_last_id && $is_write ) {
+            return '';
         }
         return $query;
     }
@@ -676,23 +900,67 @@ class Test_MWP_1804_Site_Note_Escape extends \WP_UnitTestCase {
     }
 
     /**
+     * Read one per-site skip row from the database.
+     *
+     * @param int $site_id Site ID.
+     *
+     * @return string|null
+     */
+    private function skip_row_value( $site_id ) {
+        global $wpdb;
+
+        return $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s",
+                MainWP_Install::SITE_NOTE_SLASH_REPAIR_SKIP_PREFIX . (int) $site_id
+            )
+        );
+    }
+
+    /**
+     * Read the in-progress repair marker from the database.
+     *
+     * @return array|null
+     */
+    private function inflight_payload() {
+        global $wpdb;
+
+        $value = $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s",
+                MainWP_Install::SITE_NOTE_SLASH_REPAIR_INFLIGHT
+            )
+        );
+        if ( null === $value ) {
+            return null;
+        }
+
+        $payload = maybe_unserialize( $value );
+        return is_array( $payload ) ? $payload : null;
+    }
+
+    /**
      * Delete the repair option, resume marker, and lock.
      *
      * @return void
      */
     private function clear_repair_options() {
+        global $wpdb;
+
         delete_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_OPTION );
         delete_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_LAST_ID );
         delete_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_MAX_ID );
-        delete_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_SKIP );
+        delete_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_INFLIGHT );
         delete_option( MainWP_Install::SITE_NOTE_SLASH_REPAIR_LOCK );
+        $like = $wpdb->esc_like( MainWP_Install::SITE_NOTE_SLASH_REPAIR_SKIP_PREFIX ) . '%';
+        $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s", $like ) );
         delete_transient( MainWP_Install::SITE_NOTE_SLASH_REPAIR_RETRY );
         wp_cache_delete( 'alloptions', 'options' );
         wp_cache_delete( 'notoptions', 'options' );
         wp_cache_delete( MainWP_Install::SITE_NOTE_SLASH_REPAIR_OPTION, 'options' );
         wp_cache_delete( MainWP_Install::SITE_NOTE_SLASH_REPAIR_LAST_ID, 'options' );
         wp_cache_delete( MainWP_Install::SITE_NOTE_SLASH_REPAIR_MAX_ID, 'options' );
-        wp_cache_delete( MainWP_Install::SITE_NOTE_SLASH_REPAIR_SKIP, 'options' );
+        wp_cache_delete( MainWP_Install::SITE_NOTE_SLASH_REPAIR_INFLIGHT, 'options' );
         wp_cache_delete( MainWP_Install::SITE_NOTE_SLASH_REPAIR_LOCK, 'options' );
     }
 

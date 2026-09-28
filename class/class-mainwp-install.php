@@ -31,7 +31,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * @var string DB version info.
      */
-    protected $mainwp_db_version = '9.0.2.5'; // NOSONAR - no IP. 9.0.2.4 drops the stray unique index on backup progress task_id. Bumped for MWP-1566 sibling-dir chmod migration (MWP-1558 follow-up). Original 9.0.2.0 bump for MWP-1557/1558.
+    protected $mainwp_db_version = '9.0.2.6'; // NOSONAR - no IP. 9.0.2.6 stripslashes child site notes once (MWP-1804). 9.0.2.5 repairs a missing wp_group primary key. 9.0.2.4 drops the stray unique index on backup progress task_id. Bumped for MWP-1566 sibling-dir chmod migration (MWP-1558 follow-up). Original 9.0.2.0 bump for MWP-1557/1558.
 
     /**
      * Protected variable to hold the database option name.
@@ -49,6 +49,11 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      * Network-scoped like mainwp_db_version, so every blog on a multisite sees the pending repair.
      */
     const WP_GROUP_MISSING_PRIMARY_KEY_REPAIR_PENDING = 'mainwp_wp_group_missing_primary_key_repair_pending';
+
+    /**
+     * Set after the one-time site-note slash repair so a second pass does not strip again.
+     */
+    const SITE_NOTE_SLASH_REPAIR_OPTION = 'mainwp_site_note_slash_repair';
 
     /**
      * Private static variable to hold the single instance of the class.
@@ -589,6 +594,12 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             $this->repair_wp_group_primary_key();
         }
 
+        // MWP-1804: notes saved before prepare() stopped seeing an already-escaped value
+        // kept one extra slash layer. Strip it once. Later writes store the typed text.
+        if ( ! empty( $currentVersion ) && version_compare( $currentVersion, '9.0.2.6', '<' ) ) { // NOSONAR - no ip.
+            $this->repair_site_note_slashes();
+        }
+
         $this->wpdb->suppress_errors( $suppress );
         MainWP_DB_Client::instance()->check_to_updates_reports_data_861( $currentVersion );
     }
@@ -707,6 +718,49 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             // A timestamp, not a formatted date: the retry throttle compares it against time().
             update_site_option( self::WP_GROUP_MISSING_PRIMARY_KEY_REPAIR_PENDING, time() );
         }
+    }
+
+    /**
+     * Strip the extra slash layer that update_note() used to store.
+     *
+     * The previous write ran esc_sql() before prepare(), so the column kept quotes as \'
+     * and doubled backslashes. The screen used to wp_unslash() that away. stripslashes()
+     * is that same reversal, applied once to rows that still contain a backslash. The
+     * option flag makes a second call a no-op, including a backslash saved later.
+     *
+     * @return void
+     */
+    public function repair_site_note_slashes() {
+        if ( get_site_option( self::SITE_NOTE_SLASH_REPAIR_OPTION ) ) {
+            return;
+        }
+
+        $table = esc_sql( $this->table_name( 'wp' ) );
+        $like  = '%' . $this->wpdb->esc_like( '\\' ) . '%';
+        $rows  = $this->wpdb->get_results(
+            $this->wpdb->prepare(
+                "SELECT id, note FROM `{$table}` WHERE note LIKE %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name escaped via esc_sql.
+                $like
+            )
+        );
+
+        if ( is_array( $rows ) ) {
+            foreach ( $rows as $row ) {
+                $fixed = stripslashes( (string) $row->note );
+                if ( $fixed === $row->note ) {
+                    continue;
+                }
+                $this->wpdb->update(
+                    $this->table_name( 'wp' ),
+                    array( 'note' => $fixed ),
+                    array( 'id' => (int) $row->id ),
+                    array( '%s' ),
+                    array( '%d' )
+                );
+            }
+        }
+
+        update_site_option( self::SITE_NOTE_SLASH_REPAIR_OPTION, $this->mainwp_db_version );
     }
 
     /**

@@ -2121,12 +2121,12 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                         else :
                             $st_id2 = $website['id'];
                             ?>
-                            <a href="javascript:void(0)" class="mainwp-edit-site-note ui mini icon basic button" id="mainwp-notes-<?php echo intval( $st_id2 ); ?>" data-tooltip="<?php echo substr( wp_unslash( $strip_note ), 0, 100 ); // phpcs:ignore WordPress.Security.EscapeOutput ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
+                            <a href="javascript:void(0)" class="mainwp-edit-site-note ui mini icon basic button" id="mainwp-notes-<?php echo intval( $st_id2 ); ?>" data-tooltip="<?php echo substr( $strip_note, 0, 100 ); // phpcs:ignore WordPress.Security.EscapeOutput ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
                             <?php
                         endif;
                             $nst_id1 = $website['id'];
                         ?>
-                            <span style="display: none" id="mainwp-notes-<?php echo intval( $nst_id1 ); ?>-note"><?php echo wp_unslash( $esc_note ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
+                            <span style="display: none" id="mainwp-notes-<?php echo intval( $nst_id1 ); ?>-note"><?php echo $esc_note; // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
                     <?php } elseif ( 'phpversion' === $column_name ) { ?>
                         <?php echo ! empty( $website['phpversion'] ) ? '<i class="php icon"></i> ' . esc_html( substr( $website['phpversion'], 0, 6 ) ) : ''; ?>
                     <?php } elseif ( 'ip' === $column_name ) { ?>
@@ -2549,9 +2549,9 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                     else :
                         $not_id2 = $website['id'];
                         ?>
-                        <a href="javascript:void(0)" class="mainwp-edit-site-note" id="mainwp-notes-<?php echo intval( $not_id2 ); ?>" data-tooltip="<?php echo substr( wp_unslash( $strip_note ), 0, 100 ); // phpcs:ignore WordPress.Security.EscapeOutput ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
+                        <a href="javascript:void(0)" class="mainwp-edit-site-note" id="mainwp-notes-<?php echo intval( $not_id2 ); ?>" data-tooltip="<?php echo substr( $strip_note, 0, 100 ); // phpcs:ignore WordPress.Security.EscapeOutput ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
                     <?php endif; ?>
-                        <span style="display: none" id="mainwp-notes-<?php echo intval( $website['id'] ); ?>-note"><?php echo wp_unslash( $esc_note ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
+                        <span style="display: none" id="mainwp-notes-<?php echo intval( $website['id'] ); ?>-note"><?php echo $esc_note; // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
                 </td>
         <?php } elseif ( 'phpversion' === $column_name ) { ?>
                 <td class="collapsing center aligned mainwp-php-cell"><?php echo esc_html( substr( $website['phpversion'], 0, 6 ) ); ?></td>

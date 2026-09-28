@@ -1601,7 +1601,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             return $site;
         }
 
-        $access_check = MainWP_Abilities_Util::check_site_access( $site );
+        $access_check = MainWP_Abilities_Util::check_site_access( $site, $input );
         if ( is_wp_error( $access_check ) ) {
             return $access_check;
         }
@@ -1837,7 +1837,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             return $site;
         }
 
-        $access_check = MainWP_Abilities_Util::check_site_access( $site );
+        $access_check = MainWP_Abilities_Util::check_site_access( $site, $input );
         if ( is_wp_error( $access_check ) ) {
             return $access_check;
         }
@@ -1976,7 +1976,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             return $site;
         }
 
-        $access_check = MainWP_Abilities_Util::check_site_access( $site );
+        $access_check = MainWP_Abilities_Util::check_site_access( $site, $input );
         if ( is_wp_error( $access_check ) ) {
             return $access_check;
         }
@@ -2072,7 +2072,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             return $site;
         }
 
-        $access_check = MainWP_Abilities_Util::check_site_access( $site );
+        $access_check = MainWP_Abilities_Util::check_site_access( $site, $input );
         if ( is_wp_error( $access_check ) ) {
             return $access_check;
         }
@@ -2151,7 +2151,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             return $site;
         }
 
-        $access_check = MainWP_Abilities_Util::check_site_access( $site );
+        $access_check = MainWP_Abilities_Util::check_site_access( $site, $input );
         if ( is_wp_error( $access_check ) ) {
             return $access_check;
         }
@@ -2232,7 +2232,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             return $site;
         }
 
-        $access_check = MainWP_Abilities_Util::check_site_access( $site );
+        $access_check = MainWP_Abilities_Util::check_site_access( $site, $input );
         if ( is_wp_error( $access_check ) ) {
             return $access_check;
         }
@@ -2330,7 +2330,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             return $site;
         }
 
-        $access_check = MainWP_Abilities_Util::check_site_access( $site );
+        $access_check = MainWP_Abilities_Util::check_site_access( $site, $input );
         if ( is_wp_error( $access_check ) ) {
             return $access_check;
         }
@@ -2516,7 +2516,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             return $site;
         }
 
-        $access_check = MainWP_Abilities_Util::check_site_access( $site );
+        $access_check = MainWP_Abilities_Util::check_site_access( $site, $input );
         if ( is_wp_error( $access_check ) ) {
             return $access_check;
         }
@@ -2640,7 +2640,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             return $site;
         }
 
-        $access_check = MainWP_Abilities_Util::check_site_access( $site );
+        $access_check = MainWP_Abilities_Util::check_site_access( $site, $input );
         if ( is_wp_error( $access_check ) ) {
             return $access_check;
         }
@@ -2832,7 +2832,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             return $site;
         }
 
-        $access_check = MainWP_Abilities_Util::check_site_access( $site );
+        $access_check = MainWP_Abilities_Util::check_site_access( $site, $input );
         if ( is_wp_error( $access_check ) ) {
             return $access_check;
         }
@@ -3084,7 +3084,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             return $site;
         }
 
-        $access_check = MainWP_Abilities_Util::check_site_access( $site );
+        $access_check = MainWP_Abilities_Util::check_site_access( $site, $input );
         if ( is_wp_error( $access_check ) ) {
             return $access_check;
         }
@@ -3209,7 +3209,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             return $site;
         }
 
-        $access_check = MainWP_Abilities_Util::check_site_access( $site );
+        $access_check = MainWP_Abilities_Util::check_site_access( $site, $input );
         if ( is_wp_error( $access_check ) ) {
             return $access_check;
         }
@@ -3441,7 +3441,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             return $site;
         }
 
-        $access_check = MainWP_Abilities_Util::check_site_access( $site );
+        $access_check = MainWP_Abilities_Util::check_site_access( $site, $input );
         if ( is_wp_error( $access_check ) ) {
             return $access_check;
         }
@@ -3545,7 +3545,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             return $site;
         }
 
-        $access_check = MainWP_Abilities_Util::check_site_access( $site );
+        $access_check = MainWP_Abilities_Util::check_site_access( $site, $input );
         if ( is_wp_error( $access_check ) ) {
             return $access_check;
         }
@@ -3675,7 +3675,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             return $site;
         }
 
-        $access_check = MainWP_Abilities_Util::check_site_access( $site );
+        $access_check = MainWP_Abilities_Util::check_site_access( $site, $input );
         if ( is_wp_error( $access_check ) ) {
             return $access_check;
         }
@@ -3809,7 +3809,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             return $site;
         }
 
-        $access_check = MainWP_Abilities_Util::check_site_access( $site );
+        $access_check = MainWP_Abilities_Util::check_site_access( $site, $input );
         if ( is_wp_error( $access_check ) ) {
             return $access_check;
         }
@@ -3916,7 +3916,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             return $site;
         }
 
-        $access_check = MainWP_Abilities_Util::check_site_access( $site );
+        $access_check = MainWP_Abilities_Util::check_site_access( $site, $input );
         if ( is_wp_error( $access_check ) ) {
             return $access_check;
         }

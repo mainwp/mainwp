@@ -151,7 +151,8 @@ class Test_Abilities_Tags_Scoped_Access extends MainWP_Abilities_Test_Case {
         $this->restrict_current_user_to_groups( array() );
         $denied = $this->execute_ability( 'mainwp/get-tag-v1', array( 'tag_id' => $tag_id ) );
         $this->assertWPError( $denied );
-        $this->assertSame( 'mainwp_access_denied', $denied->get_error_code() );
+        $this->assertSame( 'mainwp_tag_not_found', $denied->get_error_code() );
+        $this->assertSame( 404, $denied->get_error_data()['status'] );
     }
 
     /**
@@ -171,7 +172,8 @@ class Test_Abilities_Tags_Scoped_Access extends MainWP_Abilities_Test_Case {
         $result = $this->execute_ability( 'mainwp/get-tag-v1', array( 'tag_id' => $tag_id ) );
 
         $this->assertWPError( $result, 'A tag outside the allowed group set must deny access.' );
-        $this->assertSame( 'mainwp_access_denied', $result->get_error_code() );
+        $this->assertSame( 'mainwp_tag_not_found', $result->get_error_code() );
+        $this->assertSame( 404, $result->get_error_data()['status'] );
     }
 
     /**
@@ -193,7 +195,8 @@ class Test_Abilities_Tags_Scoped_Access extends MainWP_Abilities_Test_Case {
         $this->restrict_current_user_to_groups( array() );
         $denied = $this->execute_ability( 'mainwp/get-tag-v1', array( 'tag_id' => $tag_id ) );
         $this->assertWPError( $denied );
-        $this->assertSame( 'mainwp_access_denied', $denied->get_error_code() );
+        $this->assertSame( 'mainwp_tag_not_found', $denied->get_error_code() );
+        $this->assertSame( 404, $denied->get_error_data()['status'] );
     }
 
     // =========================================================================
@@ -221,7 +224,8 @@ class Test_Abilities_Tags_Scoped_Access extends MainWP_Abilities_Test_Case {
 
         $denied = $this->execute_ability( 'mainwp/get-tag-v1', array( 'tag_id' => $result['id'] ) );
         $this->assertWPError( $denied );
-        $this->assertSame( 'mainwp_access_denied', $denied->get_error_code() );
+        $this->assertSame( 'mainwp_tag_not_found', $denied->get_error_code() );
+        $this->assertSame( 404, $denied->get_error_data()['status'] );
     }
 
     // =========================================================================
@@ -252,7 +256,8 @@ class Test_Abilities_Tags_Scoped_Access extends MainWP_Abilities_Test_Case {
         );
 
         $this->assertWPError( $result, 'A tag outside the allowed group set must deny the update.' );
-        $this->assertSame( 'mainwp_access_denied', $result->get_error_code() );
+        $this->assertSame( 'mainwp_tag_not_found', $result->get_error_code() );
+        $this->assertSame( 404, $result->get_error_data()['status'] );
 
         $unchanged = MainWP_DB_Common::instance()->get_group_by_id( $tag_id );
         $this->assertSame( $original_name, $unchanged->name, 'The tag name must not change when access is denied.' );
@@ -285,7 +290,8 @@ class Test_Abilities_Tags_Scoped_Access extends MainWP_Abilities_Test_Case {
         $this->restrict_current_user_to_groups( array() );
         $denied = $this->execute_ability( 'mainwp/update-tag-v1', array( 'tag_id' => $tag_id, 'name' => 'Denied Change' ) );
         $this->assertWPError( $denied );
-        $this->assertSame( 'mainwp_access_denied', $denied->get_error_code() );
+        $this->assertSame( 'mainwp_tag_not_found', $denied->get_error_code() );
+        $this->assertSame( 404, $denied->get_error_data()['status'] );
     }
 
     /**
@@ -347,7 +353,8 @@ class Test_Abilities_Tags_Scoped_Access extends MainWP_Abilities_Test_Case {
         );
 
         $this->assertWPError( $result, 'A tag outside the allowed group set must deny deletion.' );
-        $this->assertSame( 'mainwp_access_denied', $result->get_error_code() );
+        $this->assertSame( 'mainwp_tag_not_found', $result->get_error_code() );
+        $this->assertSame( 404, $result->get_error_data()['status'] );
 
         $still_there = MainWP_DB_Common::instance()->get_group_by_id( $tag_id );
         $this->assertNotEmpty( $still_there, 'The tag must not be deleted when access is denied.' );

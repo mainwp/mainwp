@@ -458,18 +458,11 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
         $tag_id = is_object( $tag ) ? (int) $tag->id : (int) $tag;
 
         if ( ! in_array( $tag_id, $allowed, true ) ) {
-            if ( 'all' !== self::get_allowed_site_ids() ) {
-                return new \WP_Error(
-                    'mainwp_tag_not_found',
-                    /* translators: %d: tag ID */
-                    sprintf( __( 'No tag found with ID %d.', 'mainwp' ), $tag_id ),
-                    array( 'status' => 404 )
-                );
-            }
             return new \WP_Error(
-                'mainwp_access_denied',
-                __( 'You do not have permission to access this tag.', 'mainwp' ),
-                array( 'status' => 403 )
+                'mainwp_tag_not_found',
+                /* translators: %d: tag ID */
+                sprintf( __( 'No tag found with ID %d.', 'mainwp' ), $tag_id ),
+                array( 'status' => 404 )
             );
         }
 

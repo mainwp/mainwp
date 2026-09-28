@@ -265,7 +265,8 @@ class Test_Abilities_Util_Access_Scoping extends MainWP_Abilities_Test_Case {
 
 		$result = MainWP_Abilities_Util::check_tag_access( $tag_id );
 		$this->assertWPError( $result );
-		$this->assertSame( 'mainwp_access_denied', $result->get_error_code() );
+		$this->assertSame( 'mainwp_tag_not_found', $result->get_error_code() );
+		$this->assertSame( 404, $result->get_error_data()['status'] );
 	}
 
 	// =========================================================================
@@ -442,6 +443,33 @@ class Test_Abilities_Util_Access_Scoping extends MainWP_Abilities_Test_Case {
 		$this->assertSame( str_replace( (string) PHP_INT_MAX, (string) $site_id, $missing->get_error_message() ), $result->get_error_message() );
 	}
 
+	public function test_restricted_site_abilities_domain_denial_matches_missing_domain() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$site_a = $this->create_test_site();
+		$url = 'https://test-' . wp_generate_uuid4() . '.example.com/';
+		$missing_url = 'https://missing-' . wp_generate_uuid4() . '.example.com/';
+		$site_b = $this->create_test_site( array( 'url' => $url ) );
+		$this->restrict_current_user_to_sites( array( $site_a ) );
+
+		$resolved = MainWP_Abilities_Util::resolve_site( $url );
+		$this->assertNotWPError( $resolved );
+		$this->assertSame( $site_b, (int) $resolved->id );
+
+		foreach ( array( 'mainwp/update-site-v1', 'mainwp/check-site-v1' ) as $ability_name ) {
+			$result = $this->execute_ability( $ability_name, array( 'site_id_or_domain' => $url ) );
+			$missing = $this->execute_ability( $ability_name, array( 'site_id_or_domain' => $missing_url ) );
+			$this->assertWPError( $result, $ability_name );
+			$this->assertWPError( $missing, $ability_name );
+			$this->assertSame( 'mainwp_site_not_found', $result->get_error_code(), $ability_name );
+			$this->assertSame( $missing->get_error_code(), $result->get_error_code(), $ability_name );
+			$this->assertSame( 404, $result->get_error_data()['status'], $ability_name );
+			$this->assertSame( $missing->get_error_data()['status'], $result->get_error_data()['status'], $ability_name );
+			$this->assertSame( sprintf( 'No site found matching "%s".', $url ), $result->get_error_message(), $ability_name );
+			$this->assertSame( str_replace( $missing_url, $url, $missing->get_error_message() ), $result->get_error_message(), $ability_name );
+		}
+	}
+
 	public function test_restricted_tag_denial_matches_missing_tag() {
 		$this->set_current_user_as_admin();
 		$tag_id = $this->create_test_tag();
@@ -454,6 +482,23 @@ class Test_Abilities_Util_Access_Scoping extends MainWP_Abilities_Test_Case {
 		$this->assertWPError( $missing );
 		$this->assertSame( 'mainwp_tag_not_found', $result->get_error_code() );
 		$this->assertSame( 404, $result->get_error_data()['status'] );
+		$this->assertSame( str_replace( (string) PHP_INT_MAX, (string) $tag_id, $missing->get_error_message() ), $result->get_error_message() );
+	}
+
+	public function test_group_only_restricted_tag_denial_matches_missing_tag() {
+		$this->set_current_user_as_admin();
+		$tag_id = $this->create_test_tag();
+		$this->restrict_current_user_to_groups( array() );
+		$this->assertSame( 'all', MainWP_Abilities_Util::get_allowed_site_ids() );
+
+		$result = MainWP_Abilities_Util::check_tag_access( $tag_id );
+		$missing = MainWP_Abilities_Util::resolve_tag( PHP_INT_MAX );
+		$this->assertWPError( $result );
+		$this->assertWPError( $missing );
+		$this->assertSame( 'mainwp_tag_not_found', $result->get_error_code() );
+		$this->assertSame( $missing->get_error_code(), $result->get_error_code() );
+		$this->assertSame( 404, $result->get_error_data()['status'] );
+		$this->assertSame( $missing->get_error_data()['status'], $result->get_error_data()['status'] );
 		$this->assertSame( str_replace( (string) PHP_INT_MAX, (string) $tag_id, $missing->get_error_message() ), $result->get_error_message() );
 	}
 

@@ -2806,21 +2806,25 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             }
 
             if ( $selectGroups ) {
-                return 'SELECT wp.*,wp_sync.*' . $view_selects . ', GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ",") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.name SEPARATOR ",") as wpgroupids, GROUP_CONCAT(gr.color ORDER BY gr.name SEPARATOR ",") as wpgroups_colors
+                $sql = 'SELECT wp.*,wp_sync.*' . $view_selects . ', GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ",") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.name SEPARATOR ",") as wpgroupids, GROUP_CONCAT(gr.color ORDER BY gr.name SEPARATOR ",") as wpgroups_colors
                 FROM ' . $this->table_name( 'wp' ) . ' wp
                 LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgr ON wp.id = wpgr.wpid
                 LEFT JOIN ' . $this->table_name( 'group' ) . ' gr ON wpgr.groupid = gr.id
                 JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
                 ' . $view_joins . '
-                WHERE wp.id = ' . $id . $where . '
+                WHERE wp.id = %d' . $where . '
                 GROUP BY wp.id, wp_sync.sync_id';
+
+                return $this->wpdb->prepare( $sql, (int) $id ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- selects and joins come from allowlisted option names.
             }
 
-            return 'SELECT wp.*,wp_sync.*' . $view_selects . '
+            $sql = 'SELECT wp.*,wp_sync.*' . $view_selects . '
                     FROM ' . $this->table_name( 'wp' ) . ' wp
                     JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
                     ' . $view_joins . '
-                    WHERE id = ' . $id . $where;
+                    WHERE id = %d' . $where;
+
+            return $this->wpdb->prepare( $sql, (int) $id ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- selects and joins come from allowlisted option names.
         }
 
         return null;

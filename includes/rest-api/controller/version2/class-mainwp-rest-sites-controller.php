@@ -3398,13 +3398,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         try {
 
             if ( $request->has_param( 'groupids' ) && ! empty( $request['groupids'] ) && false === MainWP_DB_Common::instance()->validate_site_group_ids( $request['groupids'] ) ) {
-                return new \WP_Error(
-                    'rest_invalid_param',
-                    __( 'The groupids parameter must be a comma-separated string of positive integers.', 'mainwp' ),
-                    array(
-                        'status' => 400,
-                    )
-                );
+                return $this->invalid_groupids_error();
             }
 
             $scope = $this->check_site_relationship_scope( $request );
@@ -3447,6 +3441,19 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
     }
 
     /**
+     * The 400 both the add route and the scoped edit path answer for a bad groupids value.
+     *
+     * @return WP_Error
+     */
+    private function invalid_groupids_error() {
+        return new \WP_Error(
+            'rest_invalid_param',
+            __( 'The groupids parameter must be a comma-separated string of positive integers.', 'mainwp' ),
+            array( 'status' => 400 )
+        );
+    }
+
+    /**
      * A restricted key must not attach a site to a hidden client or tag, and an edit
      * must not drop tag memberships the caller cannot see. The DB tag clause is
      * bypassed under an API key, so the checks live here, mirroring add-site-v1.
@@ -3474,11 +3481,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         // and strip every tag the caller is allowed to see.
         $requested = MainWP_DB_Common::instance()->validate_site_group_ids( $request['groupids'] );
         if ( false === $requested ) {
-            return new \WP_Error(
-                'rest_invalid_param',
-                __( 'The groupids parameter must be a comma-separated string of positive integers.', 'mainwp' ),
-                array( 'status' => 400 )
-            );
+            return $this->invalid_groupids_error();
         }
         if ( array_diff( $requested, $allowed_groups ) ) {
             return $this->get_rest_data_error( 'id', 'tag' );

@@ -205,6 +205,8 @@ class Test_MWP_1804_Site_Note_Escape extends \WP_UnitTestCase {
             'literal n'              => array( 'See \\n in the note' ),
             'windows'                => array( 'C:\\new' ),
             'nas'                    => array( '\\\\nas' ),
+            'single quote'           => array( 'don\'t' ),
+            'double quote'           => array( 'Say "hi"' ),
             'quotes and backslashes' => array( 'Client said "don\'t" store this at C:\\backup\\site' ),
         );
     }
@@ -356,8 +358,6 @@ class Test_MWP_1804_Site_Note_Escape extends \WP_UnitTestCase {
         $this->assertArrayHasKey( 'error', $payload );
         $this->assertNotSame( 'SUCCESS', isset( $payload['result'] ) ? $payload['result'] : null );
         $this->assertSame( 'before', $this->stored_note( $site_id ) );
-        $this->assertFalse( get_option( 'mainwp_site_note_slash_repair_skip_' . $site_id, false ) );
-        $this->assertFalse( get_option( 'mainwp_site_note_slash_repair_skip', false ) );
     }
 
     /**

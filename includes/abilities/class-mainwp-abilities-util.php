@@ -1654,6 +1654,18 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
     }
 
     /**
+     * Schema validation does not coerce boolean inputs.
+     * Read strings "false" and "0" as false instead of using PHP truthiness.
+     *
+     * @param array  $input Input parameters.
+     * @param string $key   Boolean parameter key.
+     * @return bool Sanitized boolean value.
+     */
+    public static function get_boolean_input( array $input, string $key ): bool {
+        return isset( $input[ $key ] ) && rest_sanitize_boolean( $input[ $key ] );
+    }
+
+    /**
      * Format plugin data for ability output.
      *
      * Standardizes plugin data structure for activate/deactivate/delete operations.

@@ -867,7 +867,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             return $site;
         }
 
-        $include_stats = $input['include_stats'] ?? false;
+        $include_stats = MainWP_Abilities_Util::get_boolean_input( $input, 'include_stats' );
 
         return MainWP_Abilities_Util::format_site_for_output( $site, true, $include_stats );
     }
@@ -1093,7 +1093,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
         }
 
         $status_filter     = $input['status'] ?? 'all';
-        $has_update_filter = $input['has_update'] ?? null;
+        $has_update_filter = MainWP_Abilities_Util::get_boolean_input( $input, 'has_update' );
 
         $plugins = array();
         foreach ( $plugins_data as $key => $plugin ) {
@@ -1120,7 +1120,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             $has_update = isset( $plugin_updates[ $slug ] );
 
             // Apply has_update filter if specified.
-            if ( null !== $has_update_filter && $has_update_filter && ! $has_update ) {
+            if ( $has_update_filter && ! $has_update ) {
                 continue;
             }
 
@@ -1202,7 +1202,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
         }
 
         $status_filter     = $input['status'] ?? 'all';
-        $has_update_filter = $input['has_update'] ?? null;
+        $has_update_filter = MainWP_Abilities_Util::get_boolean_input( $input, 'has_update' );
 
         $themes = array();
         foreach ( $themes_data as $key => $theme ) {
@@ -1229,7 +1229,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             $has_update = isset( $theme_updates[ $slug ] );
 
             // Apply has_update filter if specified.
-            if ( null !== $has_update_filter && $has_update_filter && ! $has_update ) {
+            if ( $has_update_filter && ! $has_update ) {
                 continue;
             }
 
@@ -1831,8 +1831,8 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
     public static function execute_delete_site( $input ) {
         $input = MainWP_Abilities_Util::normalize_input( $input );
 
-        $dry_run = ! empty( $input['dry_run'] );
-        $confirm = ! empty( $input['confirm'] );
+        $dry_run = MainWP_Abilities_Util::get_boolean_input( $input, 'dry_run' );
+        $confirm = MainWP_Abilities_Util::get_boolean_input( $input, 'confirm' );
 
         if ( $dry_run && $confirm ) {
             return new \WP_Error(
@@ -2826,8 +2826,8 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
     private static function execute_delete_remote_items( array $input, array $adapter ) {
         $input = MainWP_Abilities_Util::normalize_input( $input );
 
-        $dry_run = ! empty( $input['dry_run'] );
-        $confirm = ! empty( $input['confirm'] );
+        $dry_run = MainWP_Abilities_Util::get_boolean_input( $input, 'dry_run' );
+        $confirm = MainWP_Abilities_Util::get_boolean_input( $input, 'confirm' );
 
         if ( $dry_run && $confirm ) {
             return new \WP_Error(

@@ -807,7 +807,10 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
             )
         );
 
-        if ( $input['dry_run'] && $input['confirm'] ) {
+        $dry_run = MainWP_Abilities_Util::get_boolean_input( $input, 'dry_run' );
+        $confirm = MainWP_Abilities_Util::get_boolean_input( $input, 'confirm' );
+
+        if ( $dry_run && $confirm ) {
             return new \WP_Error(
                 'mainwp_invalid_input',
                 __( 'Cannot specify both dry_run and confirm. Use dry_run for preview, confirm for actual deletion.', 'mainwp' ),
@@ -829,7 +832,7 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
             return $access;
         }
 
-        if ( $input['dry_run'] ) {
+        if ( $dry_run ) {
             $sites       = MainWP_DB_Client::instance()->get_websites_by_client_ids( $client->client_id );
             $sites_count = is_array( $sites ) ? count( $sites ) : 0;
 
@@ -858,7 +861,7 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
             );
         }
 
-        if ( ! $input['confirm'] ) {
+        if ( ! $confirm ) {
             return new \WP_Error(
                 'mainwp_confirmation_required',
                 __( 'This is a destructive operation. Set confirm: true or use dry_run: true for preview.', 'mainwp' ),

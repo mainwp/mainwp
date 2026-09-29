@@ -1050,8 +1050,9 @@ class MainWP_Abilities_Tags { //phpcs:ignore -- NOSONAR - multi methods.
      */
     public static function execute_delete_tag( $input ) {
         $tag_id  = (int) $input['tag_id'];
-        $confirm = $input['confirm'] ?? false;
-        $dry_run = $input['dry_run'] ?? false;
+        $flags   = MainWP_Abilities_Util::normalize_input( $input );
+        $confirm = MainWP_Abilities_Util::get_boolean_input( $flags, 'confirm' );
+        $dry_run = MainWP_Abilities_Util::get_boolean_input( $flags, 'dry_run' );
 
         if ( $dry_run && $confirm ) {
             return new \WP_Error(

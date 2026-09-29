@@ -1642,7 +1642,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
         $errors = array();
 
         // When specific site identifiers are provided, enforce per-site ACLs.
-        // When empty (all sites), rely on get_websites_for_current_user() which respects user access.
+        // API-key authentication bypasses DB scoping, so all-sites results need an explicit intersection.
         if ( ! empty( $site_ids_or_domains ) ) {
             // Check per-site ACLs and filter to allowed sites.
             $access_check = MainWP_Abilities_Util::check_batch_site_access( $site_ids_or_domains, $input );
@@ -1662,7 +1662,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 );
             }
         } else {
-            // Get all sites for current user (respects user access by default).
+            // Apply the ability scope below because API-key requests bypass DB scoping.
             // Must request update fields explicitly - default only returns id, url, name, client_id.
             $websites = MainWP_DB::instance()->get_websites_for_current_user(
                 array(
@@ -1684,7 +1684,11 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 return $websites;
             }
 
-            $sites = $websites ? $websites : array();
+            $sites   = $websites ? $websites : array();
+            $allowed = MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+            if ( 'all' !== $allowed ) {
+                $sites = array_intersect_key( $sites, array_flip( $allowed ) );
+            }
         }
 
         // Get global ignored lists.
@@ -1774,6 +1778,17 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
         // Handle null input (when called without input parameter).
         $input = $input ?? array();
 
+        foreach ( array( 'site_ids_or_domains', 'types', 'specific_items' ) as $parameter ) {
+            if ( array_key_exists( $parameter, $input ) && ! is_array( $input[ $parameter ] ) ) {
+                return new \WP_Error(
+                    'mainwp_invalid_input',
+                    /* translators: %s: input parameter name. */
+                    sprintf( __( 'The %s parameter must be an array.', 'mainwp' ), $parameter ),
+                    array( 'status' => 400 )
+                );
+            }
+        }
+
         $site_ids_or_domains = $input['site_ids_or_domains'] ?? array();
         $types               = $input['types'] ?? array();
         $specific_items      = $input['specific_items'] ?? array();
@@ -1789,6 +1804,11 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
 
             if ( is_wp_error( $all_sites ) ) {
                 return $all_sites;
+            }
+
+            $allowed = MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+            if ( 'all' !== $allowed ) {
+                $all_sites = array_intersect_key( $all_sites ? $all_sites : array(), array_flip( $allowed ) );
             }
 
             $site_ids_or_domains = array_map(
@@ -2049,7 +2069,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
         $errors = array();
 
         // When specific site identifiers are provided, enforce per-site ACLs.
-        // When empty (all sites), rely on get_websites_for_current_user() which respects user access.
+        // API-key authentication bypasses DB scoping, so all-sites results need an explicit intersection.
         if ( ! empty( $site_ids_or_domains ) ) {
             // Check per-site ACLs and filter to allowed sites.
             $access_check = MainWP_Abilities_Util::check_batch_site_access( $site_ids_or_domains, $input );
@@ -2069,7 +2089,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 );
             }
         } else {
-            // Get all sites for current user (respects user access by default).
+            // Apply the ability scope below because API-key requests bypass DB scoping.
             // Must request ignored fields explicitly - default only returns id, url, name, client_id.
             $websites = MainWP_DB::instance()->get_websites_for_current_user(
                 array(
@@ -2085,7 +2105,11 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 return $websites;
             }
 
-            $sites = $websites ? $websites : array();
+            $sites   = $websites ? $websites : array();
+            $allowed = MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+            if ( 'all' !== $allowed ) {
+                $sites = array_intersect_key( $sites, array_flip( $allowed ) );
+            }
         }
 
         // Get global ignored lists.
@@ -2924,7 +2948,19 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
      * @return array|\WP_Error
      */
     public static function execute_update_all( $input ) { // phpcs:ignore -- NOSONAR - complex method.
-        $input               = is_array( $input ) ? $input : array();
+        $input = is_array( $input ) ? $input : array();
+
+        foreach ( array( 'site_ids_or_domains', 'types', 'specific_items' ) as $parameter ) {
+            if ( array_key_exists( $parameter, $input ) && ! is_array( $input[ $parameter ] ) ) {
+                return new \WP_Error(
+                    'mainwp_invalid_input',
+                    /* translators: %s: input parameter name. */
+                    sprintf( __( 'The %s parameter must be an array.', 'mainwp' ), $parameter ),
+                    array( 'status' => 400 )
+                );
+            }
+        }
+
         $site_ids_or_domains = $input['site_ids_or_domains'] ?? array();
         $types               = $input['types'] ?? array( 'core', 'plugins', 'themes', 'translations' );
 
@@ -2934,6 +2970,11 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
 
             if ( is_wp_error( $all_sites ) ) {
                 return $all_sites;
+            }
+
+            $allowed = MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+            if ( 'all' !== $allowed ) {
+                $all_sites = array_intersect_key( $all_sites ? $all_sites : array(), array_flip( $allowed ) );
             }
 
             $site_ids_or_domains = array_map(

@@ -468,7 +468,7 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
      * @param array $input Ability input, possibly carrying selected_sites.
      * @return true|\WP_Error True when in scope, WP_Error otherwise.
      */
-    private static function check_selected_sites_scope( array $input ) {
+    public static function check_selected_sites_scope( array $input ) {
         if ( empty( $input['selected_sites'] ) || ! is_array( $input['selected_sites'] ) ) {
             return true;
         }
@@ -482,10 +482,12 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
         $out_of_scope = array_diff( $selected, $allowed_sites );
 
         if ( ! empty( $out_of_scope ) ) {
+            // Only a restricted caller reaches this leg, so the unseen site reads as missing.
             return new \WP_Error(
-                'mainwp_access_denied',
-                __( 'selected_sites contains sites you do not have permission to access.', 'mainwp' ),
-                array( 'status' => 403 )
+                'mainwp_site_not_found',
+                /* translators: %d: site ID */
+                sprintf( __( 'No site found with ID %d.', 'mainwp' ), (int) reset( $out_of_scope ) ),
+                array( 'status' => 404 )
             );
         }
 

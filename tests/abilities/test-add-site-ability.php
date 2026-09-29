@@ -277,7 +277,8 @@ class Test_AddSite_Ability extends MainWP_Abilities_Test_Case {
         ] );
 
         $this->assertWPError( $result, 'An out-of-scope tag must be rejected.' );
-        $this->assertSame( 'mainwp_access_denied', $result->get_error_code() );
+        $this->assertSame( 'mainwp_tag_not_found', $result->get_error_code() );
+        $this->assertSame( 404, $result->get_error_data()['status'] );
         $this->assertNoSiteWasCreated( $url );
     }
 
@@ -331,7 +332,8 @@ class Test_AddSite_Ability extends MainWP_Abilities_Test_Case {
         ] );
 
         $this->assertWPError( $result, 'An out-of-scope client must be rejected.' );
-        $this->assertSame( 'mainwp_access_denied', $result->get_error_code() );
+        $this->assertSame( 'mainwp_client_not_found', $result->get_error_code() );
+        $this->assertSame( 404, $result->get_error_data()['status'] );
         $this->assertNoSiteWasCreated( $url );
     }
     /**

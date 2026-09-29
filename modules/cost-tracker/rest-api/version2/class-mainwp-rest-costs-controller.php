@@ -274,7 +274,7 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
         $args = $this->prepare_objects_query( $request );
 
         $costs = Cost_Tracker_DB::get_instance()->get_cost_tracker_by( 'all', null, $args );
-        $data  = Cost_Tracker_Rest_Api_Handle_V1::instance()->prepare_api_costs_data( $costs );
+        $data  = $this->scope_cost_relationship_fields( Cost_Tracker_Rest_Api_Handle_V1::instance()->prepare_api_costs_data( $costs ) );
 
         $resp_data = array(
             'success' => 1,
@@ -467,7 +467,7 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
         return rest_ensure_response(
             array(
                 'success' => 1,
-                'data'    => $cost,
+                'data'    => $this->scope_cost_relationship_fields( $cost ),
             )
         );
     }
@@ -515,7 +515,7 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
                 'message' => $deleted
                     ? esc_html__( 'Cost deleted successfully.', 'mainwp' )
                     : esc_html__( 'Failed to delete cost.', 'mainwp' ),
-                'data'    => $cost,
+                'data'    => $this->scope_cost_relationship_fields( $cost ),
             )
         );
     }
@@ -562,6 +562,7 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
                 // to do: should create relation of: costs, sites, groups, clients in other way.
             // to make it more easier in queries.
             $cost_sites = MainWP_DB::instance()->get_db_sites( $params );
+            $cost_sites = $this->filter_scoped_sites( $cost_sites );
             if ( is_array( $cost_sites ) ) {
                 foreach ( $cost_sites as $site ) {
                     $data[] = apply_filters( 'mainwp_rest_routes_sites_controller_filter_allowed_fields_by_context', $site );
@@ -634,6 +635,7 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
                 );
                 // get data.
                 $clients = MainWP_DB_Client::instance()->get_wp_clients( $prepared_args );
+                $clients = $this->filter_scoped_clients( $clients );
                 if ( ! empty( $clients ) ) {
                     foreach ( $clients as $client ) {
                         $data[] = apply_filters( 'mainwp_rest_routes_clients_controller_filter_allowed_fields_by_context', $client );

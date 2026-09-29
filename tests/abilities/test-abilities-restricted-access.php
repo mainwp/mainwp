@@ -195,7 +195,8 @@ class Test_Abilities_Restricted_Access extends MainWP_Abilities_Test_Case {
         $result = $this->execute_ability( 'mainwp/get-client-v1', array( 'client_id_or_email' => $client_id ) );
 
         $this->assertWPError( $result, 'A restricted admin without site overlap must be denied mainwp/get-client-v1.' );
-        $this->assertSame( 'mainwp_access_denied', $result->get_error_code() );
+        $this->assertSame( 'mainwp_client_not_found', $result->get_error_code() );
+        $this->assertSame( 404, $result->get_error_data()['status'] );
     }
 
     /**
@@ -218,7 +219,8 @@ class Test_Abilities_Restricted_Access extends MainWP_Abilities_Test_Case {
         $this->restrict_current_user_to_sites( array() );
         $denied = $this->execute_ability( 'mainwp/get-client-v1', array( 'client_id_or_email' => $client_id ) );
         $this->assertWPError( $denied );
-        $this->assertSame( 'mainwp_access_denied', $denied->get_error_code() );
+        $this->assertSame( 'mainwp_client_not_found', $denied->get_error_code() );
+        $this->assertSame( 404, $denied->get_error_data()['status'] );
     }
 
     // =========================================================================
@@ -281,7 +283,7 @@ class Test_Abilities_Restricted_Access extends MainWP_Abilities_Test_Case {
      *
      * @return void
      */
-    public function test_get_batch_job_status_denies_non_owner() {
+    public function test_get_batch_job_status_denies_unrestricted_non_owner() {
         $this->skip_if_no_abilities_api();
 
         $owner_id = $this->set_current_user_as_admin();
@@ -315,8 +317,10 @@ class Test_Abilities_Restricted_Access extends MainWP_Abilities_Test_Case {
         $this->assertSame(
             'mainwp_permission_denied',
             $result->get_error_code(),
-            'The denial must be an ownership error, not a masquerading not-found error.'
+            'An unrestricted non-owner receives an ownership error.'
         );
+
+        $this->assertSame( 403, $result->get_error_data()['status'] );
 
         // The owner must still be able to read their own job (happy-path control).
         wp_set_current_user( $owner_id );
@@ -324,5 +328,32 @@ class Test_Abilities_Restricted_Access extends MainWP_Abilities_Test_Case {
 
         $this->assertNotWPError( $owner_result, 'The job owner must still be able to read their own batch job status.' );
         $this->assertSame( $job_id, $owner_result['job_id'] );
+    }
+
+    /**
+     * Foreign and missing jobs must be indistinguishable to restricted callers.
+     *
+     * @return void
+     */
+    public function test_get_batch_job_status_hides_job_from_restricted_non_owner() {
+        $this->skip_if_no_abilities_api();
+        $owner_id = $this->set_current_user_as_admin();
+        $job_id   = 'sync_gate_owner_' . wp_generate_uuid4();
+        $this->track_sync_job( $job_id );
+        set_transient(
+            'mainwp_sync_job_' . $job_id,
+            array( 'job_type' => 'sync', 'status' => 'queued', 'user_id' => $owner_id ),
+            DAY_IN_SECONDS
+        );
+
+        $this->set_current_user_as_restricted_admin( array() );
+        $result = $this->execute_ability( 'mainwp/get-batch-job-status-v1', array( 'job_id' => $job_id ) );
+        $missing = $this->execute_ability( 'mainwp/get-batch-job-status-v1', array( 'job_id' => 'sync_missing_' . wp_generate_uuid4() ) );
+
+        $this->assertWPError( $result );
+        $this->assertWPError( $missing );
+        $this->assertSame( 'mainwp_job_not_found', $result->get_error_code() );
+        $this->assertSame( 404, $result->get_error_data()['status'] );
+        $this->assertEquals( $missing, $result );
     }
 }

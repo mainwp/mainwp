@@ -2031,6 +2031,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      *                      - status (string): 'connected', 'disconnected', 'suspended'
      *                      - tags (array): Array of tag/group IDs to filter by
      *                      - client_id (int): Client ID to filter by.
+     *                      - include (int[]): Site IDs to include; empty means no filter.
      *
      * @return int Count of sites matching the filters.
      */
@@ -2063,6 +2064,13 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
         // Access control for sites.
         $where .= $this->get_sql_where_allow_access_sites( 'wp', 'no' );
+
+        $include = isset( $params['include'] ) && is_array( $params['include'] ) ? array_filter( array_map( 'intval', $params['include'] ) ) : array();
+        if ( ! empty( $include ) ) {
+            $placeholders = implode( ', ', array_fill( 0, count( $include ), '%d' ) );
+            $where       .= " AND wp.id IN ( $placeholders ) ";
+            $sql_params   = array_merge( $sql_params, $include );
+        }
 
         // Status filtering: connected, disconnected, suspended.
         if ( ! empty( $status ) ) {

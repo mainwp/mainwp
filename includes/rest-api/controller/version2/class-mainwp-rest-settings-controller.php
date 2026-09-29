@@ -1706,7 +1706,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         }
 
         $destroy_data = get_transient( "mainwp_tool_destroy_job_{$destroy_id}" );
-        if ( ! $destroy_data ) {
+        if ( ! $destroy_data || ! $this->can_access_job_sites( $destroy_data ) ) {
             return new WP_Error(
                 'destroy_session_job_not_found',
                 __( 'Destroy session job not found.', 'mainwp' ),
@@ -1867,7 +1867,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         // Get disconnect data.
         $renew_data = get_transient( "mainwp_tool_renew_job_{$renew_id}" );
 
-        if ( ! $renew_data ) {
+        if ( ! $renew_data || ! $this->can_access_job_sites( $renew_data ) ) {
             return new WP_Error(
                 'renew_connection_job_not_found',
                 __( 'Renew connection job not found.', 'mainwp' ),
@@ -2116,7 +2116,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         // Get disconnect data.
         $disconnect_data = get_transient( "mainwp_tool_disconnect_job_{$disconnect_id}" );
 
-        if ( ! $disconnect_data ) {
+        if ( ! $disconnect_data || ! $this->can_access_job_sites( $disconnect_data ) ) {
             return new WP_Error(
                 'disconnect_job_not_found',
                 __( 'Job not found.', 'mainwp' ),
@@ -2137,6 +2137,17 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 'completed_at' => $disconnect_data['completed_at'] ?? null,
             )
         );
+    }
+
+    /**
+     * Job totals and errors can disclose sites outside the caller's scope.
+     *
+     * @param array $job Stored job data.
+     * @return bool Whether the complete job roster is accessible.
+     */
+    protected function can_access_job_sites( $job ) {
+        $allowed = \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+        return 'all' === $allowed || ( isset( $job['websites'] ) && is_array( $job['websites'] ) && ! array_diff( $job['websites'], $allowed ) );
     }
 
     /**
@@ -3925,6 +3936,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      */
     private function get_websites() {
         $websites = MainWP_DB::instance()->get_sites();
+        $websites = $this->filter_scoped_sites( $websites );
         if ( empty( $websites ) ) {
             return new WP_Error(
                 'no_website_found',
@@ -3946,6 +3958,9 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return object|null
      */
     private function get_website_by_id( $website_id, &$process_data ) {
+        // Workers run from cron as user 0, where the scope check would fail every site;
+        // the site list was scoped when the job was queued and the status routes are
+        // guarded by can_access_job_sites().
         $website = MainWP_DB::instance()->get_website_by_id( $website_id );
         if ( empty( $website ) ) {
             ++$process_data['failed'];

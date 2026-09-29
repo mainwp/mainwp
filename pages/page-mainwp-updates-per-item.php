@@ -170,9 +170,11 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
                                         $plugin_upgrade = $plugin_upgrades[ $slug ];
 
                                         $last_version = $plugin_upgrade['update']['new_version'];
-                                        $row_columns  = array(
+                                        $current_ver  = $plugin_upgrade['Version'] ?? '';
+
+                                        $row_columns = array(
                                             'site'    => true,
-                                            'version' => '<strong class="mainwp-768-show">' . esc_html__( 'Version: ', 'mainwp' ) . '</strong>' . esc_html( $plugin_upgrade['Version'] ),
+                                            'version' => '<strong class="mainwp-768-show">' . esc_html__( 'Version: ', 'mainwp' ) . '</strong>' . esc_html( $current_ver ),
                                             'latest'  => '<strong class="mainwp-768-show">' . esc_html__( 'Latest: ', 'mainwp' ) . '</strong><a href="' . admin_url() . 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $website->id ) . '&plugin=' . esc_attr( $plugin_upgrade['update']['slug'] ) . '&url=' . ( isset( $plugin_upgrade['PluginURI'] ) ? rawurlencode( $plugin_upgrade['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_upgrade['Name'] ) . '&section=changelog" target="_blank" class="open-plugin-details-modal">' . esc_html( $last_version ) . '</a>',
                                             'trusted' => ( in_array( $slug, $trustedPlugins ) ? true : false ),
                                             'status'  => ( isset( $plugin_upgrade['active'] ) && $plugin_upgrade['active'] ) ? true : false,
@@ -417,9 +419,10 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
                                         }
                                         $theme_upgrade = $theme_upgrades[ $slug ];
                                         $last_version  = $theme_upgrade['update']['new_version'];
+                                        $current_ver   = $theme_upgrade['Version'] ?? '';
                                         $row_columns   = array(
                                             'site'    => true,
-                                            'version' => '<strong class="mainwp-768-show">' . esc_html__( 'Version: ', 'mainwp' ) . '</strong>' . esc_html( $theme_upgrade['Version'] ),
+                                            'version' => '<strong class="mainwp-768-show">' . esc_html__( 'Version: ', 'mainwp' ) . '</strong>' . esc_html( $current_ver ),
                                             'latest'  => '<strong class="mainwp-768-show">' . esc_html__( 'Latest: ', 'mainwp' ) . '</strong>' . esc_html( $last_version ),
                                             'trusted' => ( in_array( $slug, $trustedThemes ) ? true : false ),
                                             'status'  => ( isset( $theme_upgrade['active'] ) && $theme_upgrade['active'] ) ? true : false,

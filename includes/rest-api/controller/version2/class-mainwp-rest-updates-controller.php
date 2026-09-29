@@ -785,12 +785,11 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
                 return $this->ignored_updates_error( $result, $request );
             }
             if ( ! empty( $result['errors'] ) ) {
-                $error  = reset( $result['errors'] );
-                $status = $error['status'] ?? ( 'mainwp_site_not_found' === $error['code'] ? 404 : 403 );
+                $error = reset( $result['errors'] );
                 if ( 'mainwp_site_not_found' === $error['code'] ) {
                     return $this->get_rest_data_error( is_numeric( $request['id_domain'] ) ? 'id' : 'domain', 'site' );
                 }
-                return $this->ignored_updates_error( new WP_Error( $error['code'], $error['message'], array( 'status' => $status ) ), $request );
+                return $this->ignored_updates_error( new WP_Error( $error['code'], $error['message'], array( 'status' => $error['status'] ?? 403 ) ), $request );
             }
         }
         $ignored_plugins = ! empty( $website->ignored_plugins ) ? json_decode( $website->ignored_plugins, true ) : array();

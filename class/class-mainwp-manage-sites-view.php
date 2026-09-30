@@ -700,6 +700,9 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             global $screen_layout_columns;
 
             MainWP_Overview::render_dashboard_body( array( $website ) );
+
+            // The edit page needs edit_sites; this page is the one a user holding only the read right can open, and the list handler decides per request whether the panel offers write controls.
+            MainWP_Knowledge_UI::render_panel( 'site', $website->id );
             ?>
         </div>
         <?php

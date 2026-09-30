@@ -612,6 +612,130 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Older event files can still contain the Child's secret backup directory.
+	 *
+	 * @dataProvider pre_existing_backup_secret_events
+	 * @param string $kind     Event kind.
+	 * @param array  $payload Recorded payload.
+	 * @param array  $expected Fields that must survive export.
+	 * @return void
+	 */
+	public function test_export_redacts_pre_existing_backup_secrets( $kind, $payload, $expected ) {
+		if ( ! class_exists( \ZipArchive::class ) ) {
+			$this->markTestSkipped( 'ZipArchive is unavailable in this environment.' );
+		}
+		$this->enable_recorder();
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$site_id = $this->create_test_site();
+		$name    = $this->event_filename( 'terminal-' . $site_id );
+		$line    = wp_json_encode(
+			array(
+				'run_key' => 'terminal-' . $site_id,
+				'site_id' => $site_id,
+				'kind'    => $kind,
+				'payload' => $payload,
+			)
+		);
+		file_put_contents( $this->diag_dir . '/' . $name, $line . "\n" );
+
+		$bundle = MainWP_Backup_Diagnostics::instance()->export_bundle();
+		$this->assertStringEndsWith( '.zip', $bundle );
+		$zip = new \ZipArchive();
+		$this->assertTrue( $zip->open( $bundle ) );
+		$exported = $zip->getFromName( 'events/' . $name );
+		$zip->close();
+		$this->assertIsString( $exported );
+		$this->assertStringNotContainsString( 'backup_dir_hash', $exported, 'Exported events must omit backup_dir_hash at every depth.' );
+		$this->assertStringNotContainsString( 'backup-AbCdEfGhIjKlMnOp', $exported, 'Exported events must omit the Child backup directory name.' );
+		$event = json_decode( $exported, true );
+		$this->assertIsArray( $event );
+		$this->assertSame( $kind, $event['kind'] );
+		foreach ( $expected as $key => $value ) {
+			$this->assertSame( $value, $event['payload'][ $key ] );
+		}
+		$this->assertSame( $line . "\n", file_get_contents( $this->diag_dir . '/' . $name ) );
+	}
+
+	/**
+	 * Supply Child payloads from event files written before the recorder fix.
+	 *
+	 * @return array Event payloads and fields retained after export.
+	 */
+	public static function pre_existing_backup_secret_events() {
+		$directory = 'wp-content/uploads/mainwp/backup-AbCdEfGhIjKlMnOp/';
+		return array(
+			'preflight success' => array(
+				'preflight',
+				array(
+					'status'    => 'ok',
+					'preflight' => array(
+						'backup_dir_hash' => 'AbCdEfGhIjKlMnOp',
+						'disk_free'       => 123456,
+						'db_prefix'       => $directory . 'database.sql',
+					),
+				),
+				array(
+					'status'    => 'ok',
+					'preflight' => array(
+						'disk_free' => 123456,
+						'db_prefix' => 'wp-content/uploads/mainwp/backup-[redacted]/database.sql',
+					),
+				),
+			),
+			'preflight failure' => array(
+				'preflight',
+				array(
+					'status'    => 'failed',
+					'preflight' => array(
+						'disk_free' => 123456,
+						'error'     => 'Unable to create directory wp-content/uploads/mainwp/backup-AbCdEfGhIjKlMnOp. Is its parent directory writable by the server?',
+					),
+				),
+				array(
+					'status'    => 'failed',
+					'preflight' => array(
+						'disk_free' => 123456,
+						'error'     => 'Unable to create directory wp-content/uploads/mainwp/backup-[redacted]. Is its parent directory writable by the server?',
+					),
+				),
+			),
+			'poll'              => array(
+				'poll',
+				array(
+					'op'        => 'run',
+					'disk_free' => 123456,
+					'sub_state' => array(
+						'backup_dir_hash' => 'AbCdEfGhIjKlMnOp',
+						'directory'       => $directory,
+					),
+				),
+				array(
+					'op'        => 'run',
+					'disk_free' => 123456,
+				),
+			),
+		);
+	}
+
+	/**
+	 * The recorder must discard the hash before writing a preflight event.
+	 */
+	public function test_preflight_recording_omits_backup_dir_hash() {
+		$this->enable_recorder();
+		$report = array(
+			'backup_dir_hash' => 'AbCdEfGhIjKlMnOp',
+			'disk_free'       => 123456,
+			'nested'          => array( 'backup_dir_hash' => 'AbCdEfGhIjKlMnOp' ),
+		);
+		MainWP_Backup_Diagnostics::instance()->on_preflight( 7, 42, $report, 'ok' );
+		$file = $this->diag_dir . '/' . $this->event_filename( '42-7-preflight' );
+		$this->assertFileExists( $file );
+		$line = file_get_contents( $file );
+		$this->assertStringNotContainsString( 'backup_dir_hash', $line );
+		$this->assertSame( 123456, json_decode( $line, true )['payload']['preflight']['disk_free'] );
+	}
+
+	/**
 	 * A failed redaction removes both the incomplete ZIP and its staging files.
 	 */
 	public function test_zip_export_cleans_temporary_files_on_redaction_failure() {

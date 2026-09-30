@@ -357,7 +357,7 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
             $payload['poll_duration_s'] = (float) $duration;
             $payload['op']              = isset( $context['op'] ) ? (string) $context['op'] : '';
 
-            $this->record( $run_key, 'poll', $site_id, $task_id, $payload );
+            $this->record( $run_key, 'poll', $site_id, $task_id, $this->redact_backup_payload( $payload ) );
         } catch ( \Throwable $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement -- diagnostics must never break a backup.
             return;
         }
@@ -396,6 +396,26 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 $payload[ $key ] = (bool) $value;
             } elseif ( is_array( $value ) ) {
                 $payload[ $key ] = $this->redact_restore_secrets( $value );
+            }
+        }
+        return $payload;
+    }
+
+    /**
+     * Keep the Child's backup directory hash out of diagnostics and support bundles.
+     *
+     * @param array $payload           Diagnostic payload or decoded event.
+     * @param bool  $sanitize_messages Whether to sanitize string values.
+     * @return array Redacted payload.
+     */
+    private function redact_backup_payload( array $payload, bool $sanitize_messages = false ): array {
+        foreach ( $payload as $key => $value ) {
+            if ( 'backup_dir_hash' === $key ) {
+                unset( $payload[ $key ] );
+            } elseif ( is_array( $value ) ) {
+                $payload[ $key ] = $this->redact_backup_payload( $value, $sanitize_messages );
+            } elseif ( $sanitize_messages && is_string( $value ) ) {
+                $payload[ $key ] = MainWP_Backup_Error_Codes::sanitize_message( $value );
             }
         }
         return $payload;
@@ -597,7 +617,7 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 (int) $task_id,
                 array(
                     'status'    => (string) $status,
-                    'preflight' => is_array( $preflight ) ? $preflight : array(),
+                    'preflight' => is_array( $preflight ) ? $this->redact_backup_payload( $preflight ) : array(),
                 )
             );
         } catch ( \Throwable $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement -- diagnostics must never break a backup.
@@ -1092,7 +1112,11 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
                     $event['payload']['candidates'] = array_values( $candidates );
                 }
-                $redacted = wp_json_encode( $this->redact_restore_secrets( $event ) );
+                $event = $this->redact_backup_payload( $this->redact_restore_secrets( $event ) );
+                if ( isset( $event['payload'] ) && is_array( $event['payload'] ) ) {
+                    $event['payload'] = $this->redact_backup_payload( $event['payload'], true );
+                }
+                $redacted = wp_json_encode( $event );
                 if ( false === $redacted ) {
                     throw new \RuntimeException( 'Could not encode a diagnostics event.' );
                 }

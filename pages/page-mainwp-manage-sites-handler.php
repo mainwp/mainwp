@@ -327,9 +327,17 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
             if ( MainWP_System_Utility::can_edit_website( $website ) ) {
                 $note     = isset( $_POST['note'] ) ? wp_unslash( $_POST['note'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
                 $esc_note = MainWP_Utility::esc_content( $note );
-                MainWP_DB_Common::instance()->update_note( $website->id, $esc_note );
+                if ( ! MainWP_DB_Common::instance()->update_note( $website->id, $esc_note ) ) {
+                    wp_die(
+                        wp_json_encode(
+                            array(
+                                'error' => esc_html__( 'The note could not be saved. Please try again.', 'mainwp' ),
+                            )
+                        )
+                    );
+                }
 
-                die(
+                wp_die(
                     wp_json_encode(
                         array(
                             'result'           => 'SUCCESS',

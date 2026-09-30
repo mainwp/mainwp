@@ -826,11 +826,32 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * @param mixed $websiteid Child Site ID.
      * @param mixed $note Note data.
      *
-     * @return void
+     * @return bool True when the note was stored, including a save that did not change the value.
      */
     public function update_note( $websiteid, $note ) {
         $table_wp = esc_sql( $this->table_name( 'wp' ) );
-        $this->wpdb->query( $this->wpdb->prepare( "UPDATE `{$table_wp}` SET note= %s WHERE id=%d", $this->escape( $note ), $websiteid ) );
+        // Pass $note unescaped. prepare() already escapes %s, and escaping first stores quotes as \'.
+        $updated = $this->wpdb->query( $this->wpdb->prepare( "UPDATE `{$table_wp}` SET note= %s WHERE id=%d", $note, $websiteid ) );
+
+        // query() is false when the UPDATE fails. A failed existence read returns null, same as a missing site.
+        if ( false === $updated ) {
+            return false;
+        }
+
+        if ( (int) $updated > 0 ) {
+            return true;
+        }
+
+        // $wpdb reports rows changed. An identical note, or empty saved over empty, changes 0 rows.
+        $exists = $this->wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Must distinguish an unchanged row from a missing site.
+            $this->wpdb->prepare(
+                'SELECT id FROM %i WHERE id = %d',
+                $this->table_name( 'wp' ),
+                $websiteid
+            )
+        );
+
+        return null !== $exists;
     }
 
     /**

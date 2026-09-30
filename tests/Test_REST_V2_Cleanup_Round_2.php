@@ -64,6 +64,13 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 	protected $monitor_id = 0;
 
 	/**
+	 * Child request filter used by destroy-session tests.
+	 *
+	 * @var \Closure|null
+	 */
+	protected $destroy_session_filter;
+
+	/**
 	 * Set up test environment.
 	 *
 	 * Mirrors tests/abilities/test-rest-integration.php: the MainWP REST server
@@ -99,6 +106,12 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 	 */
 	public function tearDown(): void {
 		global $wpdb, $wp_rest_server;
+
+		if ( null !== $this->destroy_session_filter ) {
+			remove_filter( 'mainwp_fetch_url_authed_pre', $this->destroy_session_filter, 10 );
+			$this->destroy_session_filter = null;
+		}
+
 		$wp_rest_server = null;
 
 		\MainWP_REST_Authentication::$instance = null;
@@ -122,6 +135,198 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 		}
 
 		parent::tearDown();
+	}
+
+	/**
+	 * Send the destroy-session action to the Child.
+	 *
+	 * @return void
+	 */
+	public function test_destroy_session_batch_calls_child_force_destroy_sessions(): void {
+		$this->authenticate_as_admin();
+		$this->create_monitor_fixture();
+		$id = uniqid( 'destroy_', true );
+		set_transient(
+			"mainwp_tool_destroy_job_{$id}",
+			array(
+				'status'     => 'pending',
+				'total'      => 1,
+				'processed'  => 0,
+				'failed'     => 0,
+				'created_at' => time(),
+				'websites'   => array( $this->monitor_site_id ),
+			),
+			DAY_IN_SECONDS
+		);
+
+		$calls                        = array();
+		$this->destroy_session_filter = static function ( $pre, $website, $what, $params ) use ( &$calls ) {
+			$calls[] = array( (int) $website->id, $what, $params );
+			return array( 'success' => 1 );
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $this->destroy_session_filter, 10, 4 );
+
+		\MainWP_Rest_Settings_Controller::instance()->process_destroy_session_batch( $id );
+		$job = get_transient( "mainwp_tool_destroy_job_{$id}" );
+
+		$this->assertSame( array( array( $this->monitor_site_id, 'settings_tools', array( 'action' => 'force_destroy_sessions' ) ) ), $calls );
+		$this->assertSame( 'completed', $job['status'] );
+		$this->assertSame( 1, $job['processed'] );
+		$this->assertSame( 0, $job['failed'] );
+	}
+
+	/**
+	 * Record an error returned by the Child.
+	 *
+	 * @return void
+	 */
+	public function test_destroy_session_batch_records_child_error(): void {
+		$this->authenticate_as_admin();
+		$this->create_monitor_fixture();
+		$id = uniqid( 'destroy_', true );
+		set_transient(
+			"mainwp_tool_destroy_job_{$id}",
+			array(
+				'status'     => 'pending',
+				'total'      => 1,
+				'processed'  => 0,
+				'failed'     => 0,
+				'created_at' => time(),
+				'websites'   => array( $this->monitor_site_id ),
+			),
+			DAY_IN_SECONDS
+		);
+
+		$this->destroy_session_filter = static function () {
+			return array( 'error' => '<b>Cannot destroy sessions</b>' . str_repeat( 'x', 500 ) );
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $this->destroy_session_filter, 10, 4 );
+
+		\MainWP_Rest_Settings_Controller::instance()->process_destroy_session_batch( $id );
+		$job = get_transient( "mainwp_tool_destroy_job_{$id}" );
+
+		$this->assertSame( 1, $job['failed'] );
+		$this->assertSame( 1, $job['processed'] );
+		$this->assertSame( $this->monitor_site_id, $job['errors'][0]['site_id'] );
+		$this->assertSame( sanitize_text_field( substr( '<b>Cannot destroy sessions</b>' . str_repeat( 'x', 500 ), 0, 500 ) ), $job['errors'][0]['error'] );
+		$this->assertSame( 'completed', $job['status'] );
+	}
+
+	/**
+	 * Record an exception from the Child request.
+	 *
+	 * @return void
+	 */
+	public function test_destroy_session_batch_records_child_exception(): void {
+		$this->authenticate_as_admin();
+		$this->create_monitor_fixture();
+		$id = uniqid( 'destroy_', true );
+		set_transient(
+			"mainwp_tool_destroy_job_{$id}",
+			array(
+				'status'     => 'pending',
+				'total'      => 1,
+				'processed'  => 0,
+				'failed'     => 0,
+				'created_at' => time(),
+				'websites'   => array( $this->monitor_site_id ),
+			),
+			DAY_IN_SECONDS
+		);
+
+		$this->destroy_session_filter = static function () {
+			throw new \MainWP\Dashboard\MainWP_Exception( 'NOMAINWP' );
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $this->destroy_session_filter, 10, 4 );
+
+		\MainWP_Rest_Settings_Controller::instance()->process_destroy_session_batch( $id );
+		$job = get_transient( "mainwp_tool_destroy_job_{$id}" );
+
+		$this->assertSame( 1, $job['failed'] );
+		$raw = \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( new \MainWP\Dashboard\MainWP_Exception( 'NOMAINWP' ) );
+		$this->assertStringContainsString( '<a ', $raw, 'The NOMAINWP text must carry the anchor this test strips.' );
+		$this->assertSame( sanitize_text_field( mb_substr( $raw, 0, 500 ) ), $job['errors'][0]['error'] );
+		$this->assertStringNotContainsString( '<', $job['errors'][0]['error'] );
+	}
+
+	/**
+	 * Schedule the remaining destroy sites after one batch.
+	 *
+	 * @return void
+	 */
+	public function test_destroy_session_batch_reschedules_after_batch_size(): void {
+		$this->authenticate_as_admin();
+		$this->create_monitor_fixture();
+		$id = uniqid( 'destroy_', true );
+		set_transient(
+			"mainwp_tool_destroy_job_{$id}",
+			array(
+				'status'     => 'pending',
+				'total'      => 6,
+				'processed'  => 0,
+				'failed'     => 0,
+				'created_at' => time(),
+				'websites'   => array( $this->monitor_site_id, -1, -2, -3, -4, -5 ),
+			),
+			DAY_IN_SECONDS
+		);
+		$this->destroy_session_filter = static function () {
+			return array( 'success' => 1 );
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $this->destroy_session_filter, 10 );
+
+		try {
+			\MainWP_Rest_Settings_Controller::instance()->process_destroy_session_batch( $id );
+			$job = get_transient( "mainwp_tool_destroy_job_{$id}" );
+
+			$this->assertSame( 5, $job['processed'] );
+			$this->assertSame( 'pending', $job['status'] );
+			$this->assertNotFalse( wp_next_scheduled( 'mainwp_cron_destroy_session_batch', array( $id ) ) );
+		} finally {
+			wp_clear_scheduled_hook( 'mainwp_cron_destroy_session_batch', array( $id ) );
+			delete_transient( "mainwp_tool_destroy_job_{$id}" );
+		}
+	}
+
+	/**
+	 * Schedule the remaining disconnect sites after one batch.
+	 *
+	 * @return void
+	 */
+	public function test_disconnect_batch_reschedule_hook_has_listener(): void {
+		$this->authenticate_as_admin();
+		$this->create_monitor_fixture();
+		$id = uniqid( 'disconnect_', true );
+		set_transient(
+			"mainwp_tool_disconnect_job_{$id}",
+			array(
+				'status'     => 'pending',
+				'total'      => 6,
+				'processed'  => 0,
+				'failed'     => 0,
+				'created_at' => time(),
+				'websites'   => array( $this->monitor_site_id, -1, -2, -3, -4, -5 ),
+			),
+			DAY_IN_SECONDS
+		);
+		$this->destroy_session_filter = static function () {
+			return array( 'result' => 'success' );
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $this->destroy_session_filter, 10 );
+
+		try {
+			\MainWP_Rest_Settings_Controller::instance()->process_disconnect_batch( $id );
+			$job = get_transient( "mainwp_tool_disconnect_job_{$id}" );
+
+			$this->assertSame( 5, $job['processed'] );
+			$this->assertSame( 'pending', $job['status'] );
+			$this->assertNotFalse( wp_next_scheduled( 'mainwp_cron_disconnect_batch', array( $id ) ) );
+			$this->assertNotFalse( has_action( 'mainwp_cron_disconnect_batch' ), 'The rescheduled hook must have a listener, or the job hangs at pending.' );
+		} finally {
+			wp_clear_scheduled_hook( 'mainwp_cron_disconnect_batch', array( $id ) );
+			wp_clear_scheduled_hook( 'mainwp_disconnect_site_batch', array( $id ) );
+			delete_transient( "mainwp_tool_disconnect_job_{$id}" );
+		}
 	}
 
 	/**
@@ -1631,7 +1836,7 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 	}
 
 	/**
-	 * Item 6: a group with no items is still a group the endpoint cannot dispatch.
+	 * An empty supported group has no items to answer.
 	 */
 	public function test_batch_empty_group_value_returns_group_error(): void {
 		$this->authenticate_as_admin();
@@ -1640,9 +1845,8 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 
 		$data = $response->get_data();
 
-		$this->assertArrayHasKey( 'costs', $data );
-		$this->assertSame( 'rest_batch_group_not_supported', $data['costs']['error']['code'] );
-		$this->assertSame( 400, $data['costs']['error']['data']['status'] );
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $data ) );
+		$this->assertSame( [], $data );
 	}
 
 	/**
@@ -1768,9 +1972,7 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 	}
 
 	/**
-	 * PR review: a create item that is not an object is reported before it reaches the dispatch.
-	 *
-	 * Every create item is handed to set_body_params(), which takes an array.
+	 * A null create item must be identified in the response without refusing its group.
 	 */
 	public function test_batch_null_create_item_returns_invalid_param(): void {
 		$this->authenticate_as_admin();
@@ -1787,10 +1989,103 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 
 		$data = $response->get_data();
 
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $data ) );
 		$this->assertArrayHasKey( 'sites', $data );
-		$this->assertSame( 'rest_invalid_param', $data['sites']['error']['code'] );
-		$this->assertSame( 400, $data['sites']['error']['data']['status'] );
-		$this->assertArrayNotHasKey( 'create', $data['sites'] );
+		$this->assertArrayNotHasKey( 'error', $data['sites'], wp_json_encode( $data ) );
+		$this->assertArrayHasKey( 'create', $data['sites'], wp_json_encode( $data ) );
+		$this->assertCount( 1, $data['sites']['create'] );
+		$this->assertSame( 'rest_invalid_param', $data['sites']['create'][0]['error']['code'] );
+		$this->assertSame( 400, $data['sites']['create'][0]['error']['data']['status'] );
+		$this->assertSame( 0, $data['sites']['create'][0]['id'] );
+	}
+
+	/**
+	 * Disabled modules must answer batches that name them.
+	 */
+	public function test_batch_disabled_costs_group_is_reported(): void {
+		$this->authenticate_as_admin();
+		$property = new \ReflectionProperty( \MainWP_Rest_Server::class, 'controllers' );
+		$property->setAccessible( true );
+		$server      = \MainWP_Rest_Server::instance();
+		$saved       = $property->getValue( $server );
+		$controllers = $saved;
+		unset( $controllers['mainwp/v2']['costs'], $controllers['mainwp/v2/costs']['costs'] );
+		$property->setValue( $server, $controllers );
+		try {
+			$response = $this->do_authenticated_request( 'POST', '/mainwp/v2/batch', array( 'costs' => array( 'delete' => array( 1 ) ) ) );
+			$data     = $response->get_data();
+			$this->assertSame( 200, $response->get_status() );
+			$this->assertSame( 'rest_batch_group_not_supported', $data['costs']['error']['code'] );
+			$this->assertSame( 400, $data['costs']['error']['data']['status'] );
+		} finally {
+			$property->setValue( $server, $saved );
+		}
+	}
+
+	/**
+	 * Only canonical IDs may reach a batch item handler.
+	 *
+	 * @param string $json_id Raw JSON ID.
+	 * @param bool   $accepted Whether dispatch is allowed.
+	 * @param string $action Batch action.
+	 * @dataProvider batch_canonical_id_cases
+	 */
+	public function test_batch_canonical_ids( $json_id, $accepted, $action ): void {
+		$this->authenticate_as_admin();
+		$id         = json_decode( $json_id, true );
+		$controller = $this->createPartialMock( \MainWP_Rest_Sites_Controller::class, array( 'sync_item', 'update_item' ) );
+		$method     = 'update' === $action ? 'update_item' : 'sync_item';
+		$controller->expects( $accepted ? $this->once() : $this->never() )->method( $method )->willReturnCallback(
+			function ( $request ) use ( $id ) {
+				$this->assertSame( (int) $id, $request['id'] );
+				return new \WP_REST_Response( array( 'id' => $request['id'] ) );
+			}
+		);
+		$property = new \ReflectionProperty( \MainWP_Rest_Server::class, 'controllers' );
+		$property->setAccessible( true );
+		$server                            = \MainWP_Rest_Server::instance();
+		$saved                             = $property->getValue( $server );
+		$controllers                       = $saved;
+		$controllers['mainwp/v2']['sites'] = $controller;
+		$property->setValue( $server, $controllers );
+		try {
+			$item     = 'update' === $action ? '{"id":' . $json_id . '}' : $json_id;
+			$response = $this->do_authenticated_raw_request( 'POST', '/mainwp/v2/batch', '{"sites":{"' . $action . '":[' . $item . ']}}', 'application/json' );
+			$data     = $response->get_data();
+			$this->assertSame( 200, $response->get_status(), wp_json_encode( $data ) );
+			$this->assertArrayNotHasKey( 'error', $data['sites'] );
+			$this->assertCount( 1, $data['sites'][ $action ] );
+			$result = $data['sites'][ $action ][0];
+			$this->assertArrayHasKey( 'id', $result );
+			if ( $accepted ) {
+				$this->assertArrayNotHasKey( 'error', $result );
+				$this->assertSame( (int) $id, $result['id'] );
+			} else {
+				$this->assertSame( is_numeric( $id ) ? (int) $id : 0, $result['id'] );
+				$this->assertContains( $result['error']['code'], array( 'rest_invalid_param', 'rest_missing_callback_param' ) );
+				$this->assertSame( 400, $result['error']['data']['status'] );
+			}
+		} finally {
+			$property->setValue( $server, $saved );
+		}
+	}
+
+	/**
+	 * Canonical IDs and coercions must behave consistently across both paths.
+	 *
+	 * @return array
+	 */
+	public static function batch_canonical_id_cases(): array {
+		$cases = array();
+		foreach ( array( 'sync', 'update' ) as $action ) {
+			foreach ( array( '1', '"1"', '"1650"' ) as $id ) {
+				$cases[ $action . ' accepts ' . $id ] = array( $id, true, $action );
+			}
+			foreach ( array( '0', '-5', '"00"', '"01"', '"1.5"', '"1e3"', '"165e1"', '"+5"', '" 5"', 'true', 'null', '["x"]', '"9223372036854775808"', '"99999999999999999999"', '92233720368547758079' ) as $id ) {
+				$cases[ $action . ' refuses ' . $id ] = array( $id, false, $action );
+			}
+		}
+		return $cases;
 	}
 
 	/**
@@ -1821,8 +2116,7 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 	}
 
 	/**
-	 * PR review: an id action reads whole numbers, so a fractional string is a group the endpoint
-	 * refuses instead of a cast onto whichever site the leading digits name.
+	 * A fractional ID must fail per item before a cast can target a different site.
 	 */
 	public function test_batch_id_action_rejects_fractional_string_ids(): void {
 		$this->authenticate_as_admin();
@@ -1839,16 +2133,18 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 
 		$data = $response->get_data();
 
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $data ) );
 		$this->assertArrayHasKey( 'sites', $data );
-		$this->assertSame( 'rest_invalid_param', $data['sites']['error']['code'] );
-		$this->assertArrayNotHasKey( 'sync', $data['sites'] );
+		$this->assertArrayNotHasKey( 'error', $data['sites'], wp_json_encode( $data ) );
+		$this->assertArrayHasKey( 'sync', $data['sites'], wp_json_encode( $data ) );
+		$this->assertCount( 1, $data['sites']['sync'] );
+		$this->assertSame( 'rest_invalid_param', $data['sites']['sync'][0]['error']['code'] );
+		$this->assertSame( 400, $data['sites']['sync'][0]['error']['data']['status'] );
+		$this->assertSame( 1, $data['sites']['sync'][0]['id'] );
 	}
 
 	/**
-	 * PR review: an id of 0 is refused instead of dispatched into a no-op.
-	 *
-	 * Every site action skips an id that casts to 0, so the batch used to answer with neither an
-	 * operation nor an error entry for the item and the caller read that as a success.
+	 * A zero ID must produce an item error rather than disappear from the response.
 	 */
 	public function test_batch_id_action_rejects_a_zero_id(): void {
 		$this->authenticate_as_admin();
@@ -1865,13 +2161,18 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 
 		$data = $response->get_data();
 
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $data ) );
 		$this->assertArrayHasKey( 'sites', $data );
-		$this->assertSame( 'rest_invalid_param', $data['sites']['error']['code'] );
-		$this->assertArrayNotHasKey( 'sync', $data['sites'] );
+		$this->assertArrayNotHasKey( 'error', $data['sites'], wp_json_encode( $data ) );
+		$this->assertArrayHasKey( 'sync', $data['sites'], wp_json_encode( $data ) );
+		$this->assertCount( 1, $data['sites']['sync'] );
+		$this->assertSame( 'rest_invalid_param', $data['sites']['sync'][0]['error']['code'] );
+		$this->assertSame( 400, $data['sites']['sync'][0]['error']['data']['status'] );
+		$this->assertSame( 0, $data['sites']['sync'][0]['id'] );
 	}
 
 	/**
-	 * The same for a padded zero: "00" is all digits, and it casts to the id the dispatch skips.
+	 * Padding a zero ID must not bypass per-item validation.
 	 */
 	public function test_batch_id_action_rejects_a_padded_zero_string_id(): void {
 		$this->authenticate_as_admin();
@@ -1888,9 +2189,14 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 
 		$data = $response->get_data();
 
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $data ) );
 		$this->assertArrayHasKey( 'sites', $data );
-		$this->assertSame( 'rest_invalid_param', $data['sites']['error']['code'] );
-		$this->assertArrayNotHasKey( 'sync', $data['sites'] );
+		$this->assertArrayNotHasKey( 'error', $data['sites'], wp_json_encode( $data ) );
+		$this->assertArrayHasKey( 'sync', $data['sites'], wp_json_encode( $data ) );
+		$this->assertCount( 1, $data['sites']['sync'] );
+		$this->assertSame( 'rest_invalid_param', $data['sites']['sync'][0]['error']['code'] );
+		$this->assertSame( 400, $data['sites']['sync'][0]['error']['data']['status'] );
+		$this->assertSame( 0, $data['sites']['sync'][0]['id'] );
 	}
 
 	/**
@@ -1911,9 +2217,44 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 
 		$data = $response->get_data();
 
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $data ) );
 		$this->assertArrayHasKey( 'sites', $data );
-		$this->assertSame( 'rest_invalid_param', $data['sites']['error']['code'] );
-		$this->assertArrayNotHasKey( 'sync', $data['sites'] );
+		$this->assertArrayNotHasKey( 'error', $data['sites'], wp_json_encode( $data ) );
+		$this->assertArrayHasKey( 'sync', $data['sites'], wp_json_encode( $data ) );
+		$this->assertCount( 1, $data['sites']['sync'] );
+		$this->assertSame( 'rest_invalid_param', $data['sites']['sync'][0]['error']['code'] );
+		$this->assertSame( 400, $data['sites']['sync'][0]['error']['data']['status'] );
+		$this->assertSame( PHP_INT_MAX, $data['sites']['sync'][0]['id'] );
+	}
+
+	/**
+	 * The integer schema accepts a signed digit string and WordPress sanitizes
+	 * "+9223372036854775808" to PHP_INT_MAX, so both an id action and an update
+	 * item refuse the signed form before it can address a different item.
+	 */
+	public function test_batch_rejects_a_signed_overflowing_id_on_id_and_update_actions(): void {
+		$this->authenticate_as_admin();
+
+		$response = $this->do_authenticated_request(
+			'POST',
+			'/mainwp/v2/batch',
+			[
+				'sites' => [
+					'sync'   => [ '+9223372036854775808' ],
+					'update' => [ [ 'id' => '+9223372036854775808', 'name' => 'renamed' ] ],
+				],
+			]
+		);
+
+		$data = $response->get_data();
+
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $data ) );
+		$this->assertArrayNotHasKey( 'error', $data['sites'], wp_json_encode( $data ) );
+		foreach ( [ 'sync', 'update' ] as $action ) {
+			$this->assertCount( 1, $data['sites'][ $action ], $action );
+			$this->assertSame( 'rest_invalid_param', $data['sites'][ $action ][0]['error']['code'], $action . ': ' . wp_json_encode( $data ) );
+			$this->assertSame( 400, $data['sites'][ $action ][0]['error']['data']['status'], $action );
+		}
 	}
 
 	/**
@@ -2002,9 +2343,13 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 	}
 
 	/**
-	 * Item 5: the costs group has no controller, so it gets the per-group error.
+	 * Cost Tracker registers under its own namespace; the global batch must reach its args.
 	 */
 	public function test_batch_costs_group_returns_group_error(): void {
+		if ( ! array_key_exists( '/mainwp/v2/costs/batch', $this->server->get_routes() ) ) {
+			$this->markTestSkipped( 'Cost Tracker REST routes are not registered in this harness.' );
+		}
+
 		$this->authenticate_as_admin();
 
 		$response = $this->do_authenticated_request(
@@ -2013,7 +2358,7 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 			[
 				'costs' => [
 					'create' => [
-						[ 'name' => 'REST V2 Cleanup Cost' ],
+						[ 'name' => [ 'invalid' ] ],
 					],
 				],
 			]
@@ -2021,10 +2366,14 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 
 		$data = $response->get_data();
 
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $data ) );
 		$this->assertArrayHasKey( 'costs', $data );
-		$this->assertSame( 'rest_batch_group_not_supported', $data['costs']['error']['code'] );
-		$this->assertSame( 400, $data['costs']['error']['data']['status'] );
-		$this->assertArrayNotHasKey( 'create', $data['costs'] );
+		$this->assertArrayNotHasKey( 'error', $data['costs'], wp_json_encode( $data ) );
+		$this->assertArrayHasKey( 'create', $data['costs'], wp_json_encode( $data ) );
+		$this->assertCount( 1, $data['costs']['create'] );
+		$this->assertSame( 'rest_invalid_param', $data['costs']['create'][0]['error']['code'] );
+		$this->assertSame( 400, $data['costs']['create'][0]['error']['data']['status'] );
+		$this->assertSame( 0, $data['costs']['create'][0]['id'] );
 	}
 
 	/**

@@ -531,7 +531,34 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
             'minimum'           => 1,
             'description'       => __( 'Item ID.', 'mainwp' ),
             'sanitize_callback' => 'rest_parse_request_arg',
-            'validate_callback' => 'rest_validate_request_arg',
+            // rest_is_integer() accepts anything is_numeric() calls a whole number, so
+            // "01", "1e3", "+5", " 5" and a float past PHP_INT_MAX all survive it and
+            // then get cast to an ID the caller never sent - "1e3" dispatches against
+            // site 1000, and an overflowing JSON number casts to 0. Only a real int, a
+            // float that round-trips through int, or a canonical digit string gets past
+            // this. An integral float stays valid because core treats it as an integer
+            // and existing callers send it.
+            'validate_callback' => static function ( $value, $request, $param ) {
+                $refused = false;
+                if ( is_string( $value ) ) {
+                    $refused = ! ctype_digit( $value ) || (string) (int) $value !== $value;
+                } elseif ( is_float( $value ) ) {
+                    $refused = ! is_finite( $value ) || floor( $value ) !== $value || (float) (int) $value !== $value;
+                } elseif ( ! is_int( $value ) ) {
+                    $refused = true;
+                }
+                if ( $refused ) {
+                    // A bare false would collapse to core's generic "Invalid parameter.",
+                    // and a caller batching 100 items needs to know which one and why.
+                    return new \WP_Error(
+                        'rest_invalid_param',
+                        /* translators: %s: parameter name */
+                        sprintf( __( '%s must be a whole number sent as an integer or an unpadded digit string.', 'mainwp' ), $param ),
+                        array( 'param' => $param )
+                    );
+                }
+                return rest_validate_request_arg( $value, $request, $param );
+            },
         );
     }
 

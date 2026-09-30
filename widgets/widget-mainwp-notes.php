@@ -89,13 +89,13 @@ class MainWP_Notes { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
                 ?>
                 <div class="content">
                 <?php
-                echo wp_unslash( $esc_note ); // phpcs:ignore WordPress.Security.EscapeOutput
+                echo $esc_note; // phpcs:ignore WordPress.Security.EscapeOutput
                 ?>
                 </div>
                 <?php
             }
             ?>
-        <span style="display: none" id="mainwp-notes-<?php echo intval( $current_wpid ); ?>-note"><?php echo wp_unslash( $esc_note ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
+        <span style="display: none" id="mainwp-notes-<?php echo intval( $current_wpid ); ?>-note"><?php echo $esc_note; // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
         <?php
         /**
          * Action: mainwp_notes_widget_bottom

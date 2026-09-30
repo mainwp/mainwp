@@ -31,7 +31,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * @var string DB version info.
      */
-    protected $mainwp_db_version = '9.0.2.5'; // NOSONAR - no IP. 9.0.2.4 drops the stray unique index on backup progress task_id. Bumped for MWP-1566 sibling-dir chmod migration (MWP-1558 follow-up). Original 9.0.2.0 bump for MWP-1557/1558.
+    protected $mainwp_db_version = '9.0.2.6'; // NOSONAR - no IP. 9.0.2.6 adds the mainwp_knowledge table. 9.0.2.4 drops the stray unique index on backup progress task_id. Bumped for MWP-1566 sibling-dir chmod migration (MWP-1558 follow-up). Original 9.0.2.0 bump for MWP-1557/1558.
 
     /**
      * Protected variable to hold the database option name.
@@ -115,6 +115,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             $this->maybe_retry_backup_progress_index_repair();
 
             $this->maybe_retry_repair_wp_group_primary_key();
+            $this->maybe_create_knowledge_table( $currentVersion );
             return;
         }
 
@@ -662,6 +663,35 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     }
 
     /**
+     * Create the knowledge table when the stored DB version already covers it.
+     *
+     * Errors from dbDelta are suppressed and the version is written regardless,
+     * so a failed CREATE TABLE would otherwise leave every knowledge read and
+     * write against a missing table until the next schema bump.
+     *
+     * @param string|false $currentVersion Stored DB version.
+     *
+     * @return bool True when the table had to be created.
+     */
+    public function maybe_create_knowledge_table( $currentVersion ) {
+        $table  = $this->table_name( 'knowledge' );
+        $exists = $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $this->wpdb->esc_like( $table ) ) );
+        if ( null !== $exists ) {
+            return false;
+        }
+
+        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+        $sql      = MainWP_DB_Knowledge::instance()->hook_db_install_tables( array(), $currentVersion, $this->wpdb->get_charset_collate() );
+        $suppress = $this->wpdb->suppress_errors();
+        foreach ( $sql as $query ) {
+            dbDelta( $query );
+        }
+        $this->wpdb->suppress_errors( $suppress );
+
+        return true;
+    }
+
+    /**
      * Repair the wp_group table primary key for legacy installations.
      *
      * To fix MWP-1794.
@@ -672,16 +702,18 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         $wp_group_table = esc_sql( $this->table_name( 'wp_group' ) );
 
         $column_exists = $this->wpdb->get_var(
-            "SHOW COLUMNS FROM {$wp_group_table} LIKE 'wp_group_id'" // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Table name is escaped and query contains no user input.
+            "SHOW COLUMNS FROM {$wp_group_table} LIKE 'wp_group_id'" // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is escaped and query contains no user input.
         );
 
         if ( empty( $column_exists ) ) {
             $this->wpdb->query(
+                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is escaped and query contains no user input.
                 "ALTER TABLE {$wp_group_table}
                 ADD COLUMN wp_group_id int(11) NOT NULL auto_increment PRIMARY KEY FIRST" // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Table name is escaped and query contains no user input.
             );
         } else {
             $primary_key = $this->wpdb->get_var(
+                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is escaped and query contains no user input.
                 "SHOW INDEX FROM {$wp_group_table}
                 WHERE Key_name = 'PRIMARY'
                 AND Column_name = 'wp_group_id'" // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Table name is escaped and query contains no user input.
@@ -689,6 +721,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
 
             if ( empty( $primary_key ) ) {
                 $this->wpdb->query(
+                    // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is escaped and query contains no user input.
                     "ALTER TABLE {$wp_group_table}
                     ADD PRIMARY KEY (wp_group_id)" // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Table name is escaped and query contains no user input.
                 );
@@ -696,6 +729,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         }
 
         $primary_key = $this->wpdb->get_var(
+            // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is escaped and query contains no user input.
             "SHOW INDEX FROM {$wp_group_table}
             WHERE Key_name = 'PRIMARY'
             AND Column_name = 'wp_group_id'" // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Table name is escaped and query contains no user input.

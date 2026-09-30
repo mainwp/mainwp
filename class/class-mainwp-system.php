@@ -2135,6 +2135,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      */
     public function update_install() {
         MainWP_DB_Client::instance();
+        MainWP_DB_Knowledge::instance();
         MainWP_DB_Site_Actions::instance();
         MainWP_Install::instance()->install();
         $this->check_to_updates();
@@ -2192,7 +2193,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * Method get_selected_sites_with_allowed_sites.
      *
      * @param  array $selected_ids Selected sites IDs.
-     * @param  array $current_sites Current sites IDs.
+     * @param  array $current_sites_ids Current sites IDs.
      * @return array Not selected but in not allowed sites in current sites ids, and selected sites ids.
      */
     public static function get_selected_sites_with_allowed_sites( $selected_ids, $current_sites_ids = array() ) {

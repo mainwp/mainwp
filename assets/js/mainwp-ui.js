@@ -473,7 +473,8 @@ let mainwp_newpost_updateCategories = function () {
                     if( popWrapper.length > 0 ) {
                         jQuery(popWrapper).each(
                             function(){
-                                mainwp_init_html_popup(this);
+                                const popupContent = jQuery(this).attr('html-popup-content') ?? '';
+                                mainwp_init_html_popup(this, mainwp_escape_html(popupContent));
                             }
                         );
                     }

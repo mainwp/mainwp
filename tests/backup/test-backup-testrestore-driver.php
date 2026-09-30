@@ -18,6 +18,7 @@ namespace MainWP\Dashboard\Tests;
 require_once __DIR__ . '/trait-backup-private-root-fixture.php';
 
 use MainWP\Dashboard\MainWP_Backup_Encryption;
+use MainWP\Dashboard\MainWP_Backup_Error_Codes;
 use MainWP\Dashboard\MainWP_Backup_Restore_Transfer_Driver;
 use MainWP\Dashboard\MainWP_Backup_Snapshots;
 use MainWP\Dashboard\MainWP_Backup_Storage_Destinations;
@@ -748,6 +749,51 @@ class MainWP_Backup_TestRestore_Driver_Test extends MainWP_Abilities_Test_Case {
 
 		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
 		$this->assertSame( '', (string) $snapshot->test_restore_state, 'A staging budget miss must not record a terminal state on a healthy snapshot.' );
+	}
+
+	/**
+	 * A full staging disk is an environment limit rather than failed snapshot verification.
+	 *
+	 * @return void
+	 */
+	public function test_staging_disk_full_records_unsupported() {
+		$dump        = $this->write_db_dump( 'db.sql.gz', $this->sentinel_sql() );
+		$snapshot_id = $this->record(
+			'db',
+			array(
+				array(
+					'file' => 'db.sql.gz',
+					'size' => filesize( $dump ),
+					'role' => 'db',
+					'path' => $dump,
+				),
+			)
+		);
+
+		$driver         = new Testable_TestRestore_Driver();
+		$driver->driver = new class() extends MainWP_Backup_Restore_Transfer_Driver {
+			/**
+			 * Report the transfer driver's disk-space failure.
+			 *
+			 * @param int   $job_id Job id.
+			 * @param array $plan Plan entries.
+			 * @param float $deadline Deadline.
+			 * @return array
+			 */
+			public function stage_artifacts( int $job_id, array &$plan, float $deadline ): array {
+				return array(
+					'done'       => false,
+					'error'      => 'Staging disk is full.',
+					'error_code' => MainWP_Backup_Error_Codes::ERR_RESTORE_DISK_FULL,
+				);
+			}
+		};
+
+		$result   = $driver->verify_snapshot( $snapshot_id );
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+		$this->assertSame( MainWP_Backup_TestRestore_Driver::STATE_UNSUPPORTED, $result['state'], 'A full staging disk must not fail snapshot verification.' );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_RESTORE_DISK_FULL, $result['error_code'] );
+		$this->assertSame( MainWP_Backup_TestRestore_Driver::STATE_UNSUPPORTED, $snapshot->test_restore_state, 'The recorded verification state must be unsupported.' );
 	}
 
 	/**

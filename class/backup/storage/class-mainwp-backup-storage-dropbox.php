@@ -513,6 +513,14 @@ class MainWP_Backup_Storage_Dropbox implements MainWP_Backup_Storage_Provider { 
             )
         );
 
+        if ( 400 === $this->status( $response ) ) {
+            $error = json_decode( (string) wp_remote_retrieve_body( $response ), true );
+            if ( is_array( $error ) && in_array( $error['error'] ?? '', array( 'invalid_grant', 'invalid_client' ), true ) ) {
+                $detail = isset( $error['error_description'] ) && is_string( $error['error_description'] ) ? $error['error_description'] : $error['error'];
+                throw new \RuntimeException( 'Storage request token request failed: ' . esc_html( $this->redact_diagnostic( $detail ) ), 401 );
+            }
+        }
+
         $this->expect_status( $response, array( 200 ), 'token request' );
 
         $data  = json_decode( (string) wp_remote_retrieve_body( $response ), true );

@@ -536,6 +536,36 @@ class MainWP_Backup_Storage_Dropbox_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Dropbox reports unusable refresh credentials as HTTP 400 OAuth errors.
+	 *
+	 * @return void
+	 */
+	public function test_invalid_refresh_credentials_use_unauthorized_code() {
+		foreach ( array( 'invalid_grant', 'invalid_client' ) as $error ) {
+			$provider = $this->make_provider(
+				array(
+					$this->response(
+						400,
+						wp_json_encode(
+							array(
+								'error'             => $error,
+								'error_description' => 'Refresh credentials were revoked.',
+							)
+						)
+					),
+				)
+			);
+			try {
+				$provider->put_object( 'a.bin', 'x' );
+				$this->fail( 'Invalid refresh credentials must throw.' );
+			} catch ( \RuntimeException $e ) {
+				$this->assertSame( 401, $e->getCode(), 'OAuth credential errors must park the destination.' );
+				$this->assertStringContainsString( 'Refresh credentials were revoked.', $e->getMessage() );
+			}
+		}
+	}
+
+	/**
 	 * HEAD maps get_metadata: present returns the size, a not-found 409
 	 * is absence, any other 409 throws.
 	 *
@@ -855,7 +885,8 @@ class MainWP_Backup_Storage_Dropbox_Test extends \WP_UnitTestCase {
 		$result = $provider->connection_test();
 
 		$this->assertFalse( $result['ok'] );
-		$this->assertStringContainsString( '400', $result['error'] );
+		$this->assertStringContainsString( '401', $result['error'] );
+		$this->assertStringContainsString( 'invalid_grant', $result['error'] );
 	}
 
 	/**

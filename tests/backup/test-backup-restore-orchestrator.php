@@ -5486,6 +5486,31 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
+	 * Restore initiate must not reveal a snapshot owned by another site.
+	 *
+	 * @return void
+	 */
+	public function test_initiate_hides_foreign_site_snapshot() {
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$snapshot             = $this->woo_snapshot();
+		$site_b               = $this->create_test_site();
+		$nonce                = wp_create_nonce( 'mainwp_restore_initiate' );
+		$_POST['security']    = $nonce;
+		$_REQUEST['security'] = $nonce;
+		$_POST['site_id']     = (string) $site_b;
+		$_POST['snapshot_id'] = (string) $snapshot->id;
+
+		try {
+			$response = $this->invoke_ajax_handler( 'mainwp_restore_initiate' );
+		} finally {
+			unset( $_POST['security'], $_REQUEST['security'], $_POST['site_id'], $_POST['snapshot_id'] );
+		}
+
+		$this->assertSame( array( 'error' => 'Snapshot not found for this site.' ), $response, 'A foreign snapshot must reveal no confirmation or age.' );
+		$this->assertNull( MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $site_b ) );
+	}
+
+	/**
 	 * With native backups disabled, the AJAX entry short-circuits right
 	 * after secure_request() with an error_code'd JSON response - no site
 	 * authorization, snapshot lookup, or job row, mirroring the direct

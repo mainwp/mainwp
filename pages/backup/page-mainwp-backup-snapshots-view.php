@@ -511,10 +511,8 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         "orderable": false,
                         "className": "collapsing",
                         "render": function ( data, type, snap ) {
-                            // snap.type stays raw here: the confirm pane and the
-                            // WooCommerce branches read this attribute as state.
                             return snap.restorable
-                                ? '<a href="#" class="ui mini green button mainwp-restore-snapshot" data-snapshot="' + snap.id + '" data-snapshot-type="' + snap.type + '" data-snapshot-age="' + ( parseInt( snap.age_days, 10 ) || 0 ) + '"><?php echo esc_js( esc_html__( 'Restore', 'mainwp' ) ); ?></a>'
+                                ? '<a href="#" class="ui mini green button mainwp-restore-snapshot" data-snapshot="' + snap.id + '" data-snapshot-type="' + escAttr( snap.type ) + '" data-snapshot-age="' + ( parseInt( snap.age_days, 10 ) || 0 ) + '"><?php echo esc_js( esc_html__( 'Restore', 'mainwp' ) ); ?></a>'
                                 : '';
                         }
                     }

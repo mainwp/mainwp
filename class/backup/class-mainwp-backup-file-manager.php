@@ -137,14 +137,21 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
         // Files recorded by complete backup snapshots belong to snapshot
         // retention; the sweep neither counts nor deletes them.
         $protected = MainWP_Backup_Snapshots::instance()->get_protected_paths_for_site( $pSiteId );
+        foreach ( MainWP_DB_Backup::instance()->get_open_run_download_paths( $pSiteId ) as $path ) {
+            $protected[ MainWP_Backup_Snapshots::normalise_path( $path ) ] = true;
+        }
 
         if ( file_exists( $dir ) ) {
+            static::cleanup_stale_download_locks( $dir );
             $dh = opendir( $dir );
             if ( $dh ) {
                 while ( false !== ( $file = readdir( $dh ) ) ) {
                     if ( '.' !== $file && '..' !== $file ) {
                         $theFile = $dir . $file;
                         if ( isset( $protected[ MainWP_Backup_Snapshots::normalise_path( $theFile ) ] ) ) {
+                            continue;
+                        }
+                        if ( file_exists( $theFile . '.downloading' ) ) {
                             continue;
                         }
                         if ( 'db' === $pType && static::is_sql_file( $file ) ) {

@@ -17,6 +17,7 @@ require_once __DIR__ . '/trait-backup-private-root-fixture.php';
 use MainWP\Dashboard\MainWP_Backup_File_Manager;
 use MainWP\Dashboard\MainWP_Backup_Snapshots;
 use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_DB_Backup;
 use MainWP\Dashboard\MainWP_System_Utility;
 
 /**
@@ -227,6 +228,56 @@ class MainWP_Backup_Sweeper_Exemption_Test extends MainWP_Abilities_Test_Case {
 
 		$this->assertFileExists( $protected, 'A snapshot-recorded archive must survive the legacy sweep.' );
 		$this->assertFileDoesNotExist( $unprotected, 'An unrecorded archive past the retention count must be deleted.' );
+	}
+
+	/**
+	 * Open-run paths and live locks protect unfinished downloads from legacy retention.
+	 *
+	 * @return void
+	 */
+	public function test_sweeper_preserves_open_run_and_live_downloads() {
+		$website = $this->make_site();
+		$site_id = (int) $website->id;
+		$dir     = $this->make_flat_dir( $site_id );
+		$db      = MainWP_DB_Backup::instance();
+		$task    = $db->add_backup_task( $website->userid, 'Open run', 'daily', 'full', '', (string) $site_id, '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0 );
+		$this->assertNotFalse( $task );
+
+		$open   = $this->seed_archive( $dir, 'open.zip', time() - 600 );
+		$locked = $this->seed_archive( $dir, 'locked.zip', time() - 500 );
+		$stale  = $this->seed_archive( $dir, 'stale.zip', time() - 400 );
+		file_put_contents( $stale . '.downloading', 'invalid lock' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+		touch( $stale . '.downloading', time() - 600 );
+		$this->assertTrue( MainWP_Backup_File_Manager::acquire_download_lock( $locked, $site_id, (int) $task->id ) );
+		$db->update_backup_task_with_values(
+			$task->id,
+			array(
+				'last_run'  => time() - 100,
+				'completed' => 0,
+			)
+		);
+		$db->add_backup_task_progress( $task->id, $site_id, array() );
+		$db->update_backup_task_progress(
+			$task->id,
+			$site_id,
+			array(
+				'dtsFetched'     => time() - 50,
+				'downloadedFULL' => $open,
+			)
+		);
+		update_option( 'mainwp_backupsOnServer', 1 );
+		$this->mock_successful_download();
+
+		try {
+			MainWP_Backup_File_Manager::backup_download_file( $site_id, 'full', 'backup-remote.tar.gz', $dir . 'new-backup.tar.gz' );
+			$this->assertFileExists( $open, 'An open run download must survive the legacy sweep.' );
+			$this->assertFileExists( $locked, 'A live download lock must protect its archive.' );
+			$this->assertFileDoesNotExist( $stale, 'An unprotected stale archive must be removed.' );
+			$this->assertFileDoesNotExist( $stale . '.downloading', 'The stale download lock must be reclaimed before the sweep.' );
+		} finally {
+			MainWP_Backup_File_Manager::release_download_lock( $locked );
+			$db->remove_backup_task( $task->id );
+		}
 	}
 
 	/**

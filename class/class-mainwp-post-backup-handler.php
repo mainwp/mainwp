@@ -371,6 +371,10 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         // refused here until confirm_destructive is set. The response carries
         // the reason (WooCommerce, backup age) for the modal to explain.
         $snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+        if ( null === $snapshot || (int) $snapshot->site_id !== $site_id ) {
+            wp_send_json( array( 'error' => esc_html__( 'Snapshot not found for this site.', 'mainwp' ) ) );
+            return;
+        }
         if ( self::restore_needs_confirmation( $snapshot, $confirm_destructive ) ) {
             wp_send_json(
                 array(

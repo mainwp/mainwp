@@ -158,9 +158,9 @@ class MainWP_Backup_TestRestore_Driver { // phpcs:ignore Generic.Classes.Opening
                 $result['error_code'] = self::ERR_DEADLINE_EXCEEDED;
                 return $result;
             } elseif ( empty( $outcome['done'] ) ) {
-                $result['state']      = self::STATE_FAIL;
                 $result['error']      = (string) $outcome['error'];
                 $result['error_code'] = isset( $outcome['error_code'] ) ? (string) $outcome['error_code'] : 'mainwp_testrestore_staging_failed';
+                $result['state']      = MainWP_Backup_Error_Codes::ERR_RESTORE_DISK_FULL === $result['error_code'] ? self::STATE_UNSUPPORTED : self::STATE_FAIL;
                 if ( MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE === $result['error_code'] ) {
                     return $result;
                 }

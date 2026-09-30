@@ -979,6 +979,9 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 </div>
                 <div style="clear:both"></div>
             </form>
+            <?php if ( $edit_client ) : ?>
+                <?php MainWP_Knowledge_UI::render_panel( 'client', $client_id ); ?>
+            <?php endif; ?>
         </div>
         <?php
         static::render_footer( $show );
@@ -1097,6 +1100,8 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * Render row HTML import client.
      *
+     * @param array $client_data Import row data.
+     *
      * @return mixed Result or WP_Error.
      */
     public static function render_import_client_row_modal( $client_data = array() ) { // phpcs:ignore -- NOSONAR -complex.
@@ -1170,7 +1175,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
          */
         global $wp_filesystem;
 
-        $lines = array();
+        $lines       = array();
         $header_line = '';
 
         if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {

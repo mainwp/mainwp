@@ -291,6 +291,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         MainWP_Plugins::init();
         MainWP_Updates_Overview::init();
         MainWP_Client::init();
+        MainWP_Knowledge_UI::init();
         MainWP_Rest_Api_Page::init();
         MainWP_Logger::instance();
 
@@ -1225,6 +1226,8 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             wp_enqueue_script( 'mainwp-posts', MAINWP_PLUGIN_URL . 'assets/js/mainwp-posts.js', array(), $this->current_version, true );
             wp_enqueue_script( 'mainwp-users', MAINWP_PLUGIN_URL . 'assets/js/mainwp-users.js', array(), $this->current_version, true );
             wp_enqueue_script( 'mainwp-clients', MAINWP_PLUGIN_URL . 'assets/js/mainwp-clients.js', array(), $this->current_version, true );
+            wp_enqueue_script( 'mainwp-knowledge', MAINWP_PLUGIN_URL . 'assets/js/mainwp-knowledge.js', array( 'jquery', 'fomantic-ui' ), $this->current_version, true );
+            wp_localize_script( 'mainwp-knowledge', 'mainwpKnowledgeStrings', MainWP_Knowledge_UI::js_strings() );
             wp_enqueue_script( 'mainwp-extensions', MAINWP_PLUGIN_URL . 'assets/js/mainwp-extensions.js', array(), $this->current_version, true );
             wp_enqueue_script( 'moment' );
             wp_enqueue_script( 'fomantic-ui', MAINWP_PLUGIN_URL . 'assets/js/fomantic-ui/fomantic-ui.js', array( 'jquery' ), $this->current_version, false );

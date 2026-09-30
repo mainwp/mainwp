@@ -420,7 +420,10 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
                                         $theme_upgrade = $theme_upgrades[ $slug ];
                                         $last_version  = $theme_upgrade['update']['new_version'];
                                         $current_ver   = $theme_upgrade['Version'] ?? '';
-                                        $row_columns   = array(
+                                        if ( empty( $current_ver ) ) {
+                                            $current_ver = static::get_installed_theme_version( $website, $slug );
+                                        }
+                                        $row_columns = array(
                                             'site'    => true,
                                             'version' => '<strong class="mainwp-768-show">' . esc_html__( 'Version: ', 'mainwp' ) . '</strong>' . esc_html( $current_ver ),
                                             'latest'  => '<strong class="mainwp-768-show">' . esc_html__( 'Latest: ', 'mainwp' ) . '</strong>' . esc_html( $last_version ),
@@ -476,6 +479,39 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
             <?php MainWP_UI::render_empty_page_placeholder( __( 'Themes are up to date', 'mainwp' ), __( 'No theme updates available right now.', 'mainwp' ) ); ?>
         <?php endif; ?>
         <?php
+    }
+
+
+    /**
+     * Get the installed version of a theme for a website.
+     *
+     * @param object $website Website object containing installed themes.
+     * @param string $slug    Theme slug to look up.
+     * @return string Installed theme version, or an empty string if not found.
+     */
+    public static function get_installed_theme_version( $website, $slug ) {
+        static $site_themes = array();
+
+        $siteid = is_object( $website ) && isset( $website->id ) ? (int) $website->id : 0;
+
+        if ( $siteid && ! isset( $site_themes[ $siteid ] ) && ! empty( $website->themes ) ) {
+            $themes                 = json_decode( $website->themes, true );
+            $site_themes[ $siteid ] = $themes;
+        }
+
+        $installed_themes = $siteid && ! empty( $site_themes[ $siteid ] ) ? $site_themes[ $siteid ] : array();
+
+        $current_ver = '';
+        if ( is_array( $installed_themes ) ) {
+            foreach ( $installed_themes as $installed_theme ) {
+                if ( is_array( $installed_theme ) && isset( $installed_theme['slug'] ) && $installed_theme['slug'] === $slug ) {
+                    $current_ver = $installed_theme['version'] ?? '';
+                    break;
+                }
+            }
+        }
+
+        return $current_ver;
     }
 
     /**

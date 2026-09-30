@@ -231,6 +231,44 @@ class MainWP_Backup_Sweeper_Exemption_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A snapshot recorded after the scan protects its file without using a retention slot.
+	 */
+	public function test_sweeper_rechecks_snapshot_protection_before_delete() {
+		$website = $this->make_site();
+		$site_id = (int) $website->id;
+		$dir     = $this->make_flat_dir( $site_id );
+		update_option( 'mainwp_backupsOnServer', 2 );
+
+		$old       = $this->seed_archive( $dir, 'old.zip', time() - 900 );
+		$protected = $this->seed_archive( $dir, 'newly-protected.zip', time() - 600 );
+		$newest    = $this->seed_archive( $dir, 'newest.zip', time() - 300 );
+		$this->mock_successful_download();
+
+		$snapshot_table = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+		$reads          = 0;
+		$record_on_read = function ( $query ) use ( $snapshot_table, $site_id, $protected, &$reads ) {
+			if ( str_contains( $query, 'SELECT archives, manifest_path FROM ' . $snapshot_table ) ) {
+				++$reads;
+				if ( 2 === $reads ) {
+					$this->record_snapshot_over( $site_id, $protected );
+				}
+			}
+			return $query;
+		};
+		add_filter( 'query', $record_on_read );
+		try {
+			MainWP_Backup_File_Manager::backup_download_file( $site_id, 'full', 'backup-remote.tar.gz', $dir . 'new-backup.tar.gz' );
+		} finally {
+			remove_filter( 'query', $record_on_read );
+		}
+
+		$this->assertFileExists( $protected, 'The newly snapshot-protected archive must survive the sweep.' );
+		$this->assertSame( 2, $reads, 'The protection set must be read again after the scan.' );
+		$this->assertFileExists( $newest, 'The newly protected archive must not consume a retention slot.' );
+		$this->assertFileDoesNotExist( $old );
+	}
+
+	/**
 	 * Open-run paths and live locks protect unfinished downloads from legacy retention.
 	 *
 	 * @return void

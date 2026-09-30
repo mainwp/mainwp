@@ -169,6 +169,12 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
         krsort( $dbBackups );
         krsort( $fullBackups );
 
+        // A concurrent run can protect a scanned file before deletion.
+        $protected += MainWP_Backup_Snapshots::instance()->get_protected_paths_for_site( $pSiteId );
+        foreach ( MainWP_DB_Backup::instance()->get_open_run_download_paths( $pSiteId ) as $path ) {
+            $protected[ MainWP_Backup_Snapshots::normalise_path( $path ) ] = true;
+        }
+
         // Both lists are newest-first and the sweep runs BEFORE the incoming
         // artifact is written into this same directory, so the cut is
         // >= $maxBackups on purpose: it keeps $maxBackups - 1 existing files
@@ -176,6 +182,9 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
         // $maxBackups. A strict > would leave one file too many.
         $cnt = 0;
         foreach ( $dbBackups as $dbBackup ) {
+            if ( isset( $protected[ MainWP_Backup_Snapshots::normalise_path( $dbBackup ) ] ) ) {
+                continue;
+            }
             ++$cnt;
             if ( $cnt >= $maxBackups ) {
                 $wp_filesystem->delete( $dbBackup );
@@ -184,6 +193,9 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
 
         $cnt = 0;
         foreach ( $fullBackups as $fullBackup ) {
+            if ( isset( $protected[ MainWP_Backup_Snapshots::normalise_path( $fullBackup ) ] ) ) {
+                continue;
+            }
             ++$cnt;
             if ( $cnt >= $maxBackups ) {
                 $wp_filesystem->delete( $fullBackup );

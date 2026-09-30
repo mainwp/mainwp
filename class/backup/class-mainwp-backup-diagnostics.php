@@ -1189,6 +1189,13 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
             'upload_jobs'  => array( 'wp_backup_upload_job', 'snapshot_id IN ( SELECT id FROM ' . $snapshot_table . ' WHERE site_id IN (' . $site_list . ') )' ),
         );
 
+        $message_columns = array(
+            'tasks'        => array( 'backup_errors', 'backup_notices' ),
+            'progress'     => array( 'fetchResult', 'last_error', 'current_file' ),
+            'restore_jobs' => array( 'last_error' ),
+            'upload_jobs'  => array( 'last_error' ),
+        );
+
         $sections = array();
         foreach ( $tables as $name => $spec ) {
             list( $table, $scope_where ) = $spec;
@@ -1226,6 +1233,13 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
                         }
                     )
                 );
+            }
+            foreach ( $rows as $index => $row ) {
+                foreach ( $message_columns[ $name ] ?? array() as $column ) {
+                    if ( isset( $row[ $column ] ) && is_string( $row[ $column ] ) && '' !== $row[ $column ] ) {
+                        $rows[ $index ][ $column ] = MainWP_Backup_Error_Codes::sanitize_message( $row[ $column ] );
+                    }
+                }
             }
             $sections[ $name ] = $rows;
         }

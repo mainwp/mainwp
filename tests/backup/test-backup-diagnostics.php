@@ -736,6 +736,38 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Poll secrets must be removed from the event file before export.
+	 */
+	public function test_poll_recording_omits_backup_dir_hash() {
+		$this->enable_recorder();
+		MainWP_Backup_Diagnostics::instance()->on_poll(
+			array(
+				'task_id'         => 'bk-hash-test',
+				'phase'           => 'dumping_db',
+				'backup_dir_hash' => 'AbCdEfGh12345678',
+				'sub_state'       => array(
+					'backup_dir_hash' => 'AbCdEfGh12345678',
+					'table'           => 'wp_posts',
+				),
+			),
+			0.123,
+			array(
+				'op'      => 'run',
+				'site_id' => 7,
+				'task_id' => 42,
+			)
+		);
+
+		$file = $this->diag_dir . '/' . $this->event_filename( '42-7-bk-hash-test' );
+		$this->assertFileExists( $file );
+		$line = file_get_contents( $file );
+		$this->assertStringNotContainsString( 'backup_dir_hash', $line, 'The stored poll event must omit nested and top-level hash keys.' );
+		$event = json_decode( $line, true );
+		$this->assertSame( 'dumping_db', $event['payload']['phase'] );
+		$this->assertSame( 'wp_posts', $event['payload']['sub_state']['table'] );
+	}
+
+	/**
 	 * A failed redaction removes both the incomplete ZIP and its staging files.
 	 */
 	public function test_zip_export_cleans_temporary_files_on_redaction_failure() {
@@ -1485,6 +1517,42 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 		$events = (string) $zip->getFromName( 'events/' . $this->event_filename( '1-' . $site_id . '-bkx' ) );
 		$this->assertStringContainsString( 'dumping_db', $events );
 		$zip->close();
+	}
+
+	/**
+	 * The stored Child create refusal must not expose its directory in the table dump.
+	 */
+	public function test_export_bundle_redacts_progress_fetch_result() {
+		if ( ! class_exists( \ZipArchive::class ) ) {
+			$this->markTestSkipped( 'ZipArchive is unavailable in this environment.' );
+		}
+
+		$this->enable_recorder();
+		$site_id = $this->create_test_site();
+		$user    = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $user );
+		$task = MainWP_DB_Backup::instance()->add_backup_task( $user, 'Progress export test', 'daily', 'full', '', (string) $site_id, '', '', '', 0, 0, 0, 0, 0, 'tar.gz', 0, 1, 150, 0, 0 );
+		$this->assertNotFalse( $task );
+		MainWP_DB_Backup::instance()->add_backup_task_progress( (int) $task->id, $site_id, array() );
+		MainWP_DB_Backup::instance()->update_backup_task_progress(
+			(int) $task->id,
+			$site_id,
+			array(
+				'fetchResult' => wp_json_encode( array( 'error' => 'Unable to create wp-content/uploads/mainwp/backup-AbCdEfGh12345678/' ) ),
+			)
+		);
+		MainWP_Backup_Diagnostics::instance()->record( '1-' . $site_id . '-bkx', 'poll', $site_id, (int) $task->id, array( 'phase' => 'failed' ) );
+
+		$bundle = MainWP_Backup_Diagnostics::instance()->export_bundle();
+		$this->assertStringEndsWith( '.zip', $bundle );
+		$zip = new \ZipArchive();
+		$this->assertTrue( $zip->open( $bundle ) );
+		$progress = $zip->getFromName( 'progress.json' );
+		$zip->close();
+		$this->assertIsString( $progress );
+		$this->assertCount( 1, json_decode( $progress, true ) );
+		$this->assertStringNotContainsString( 'backup-AbCdEfGh12345678', $progress, 'The progress section must omit the Child backup directory hash.' );
+		$this->assertStringContainsString( 'backup-[redacted]', $progress );
 	}
 
 	/**

@@ -586,6 +586,10 @@ class MainWP_Backup_Executor_Contract_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function test_native_and_legacy_freshness_are_independent() {
 		$native_site = $this->create_test_site();
+		// The legacy directory is keyed by site id and lives in the shared test
+		// uploads dir, so a reused id can inherit an archive another run left behind.
+		$legacy_dir = \MainWP\Dashboard\MainWP_Backup_Private_Root::legacy_site_dir( $native_site );
+		array_map( 'unlink', array_filter( glob( $legacy_dir . '*' ) ?: array(), 'is_file' ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture isolation.
 		$this->record_native_snapshot( $native_site );
 
 		$this->assertTrue( MainWP_Backup_Executor::has_recent_native_backup( $native_site, 7 ) );

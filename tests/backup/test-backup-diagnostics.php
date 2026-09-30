@@ -1538,7 +1538,12 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 			(int) $task->id,
 			$site_id,
 			array(
-				'fetchResult' => wp_json_encode( array( 'error' => 'Unable to create wp-content/uploads/mainwp/backup-AbCdEfGh12345678/' ) ),
+				'fetchResult' => wp_json_encode(
+					array(
+						'error'      => 'Unable to create wp-content/uploads/mainwp/backup-AbCdEfGh12345678/ after UPDATE wp_options SET x=1',
+						'error_code' => 'mainwp_backup_dir_unwritable',
+					)
+				),
 			)
 		);
 		MainWP_Backup_Diagnostics::instance()->record( '1-' . $site_id . '-bkx', 'poll', $site_id, (int) $task->id, array( 'phase' => 'failed' ) );
@@ -1553,6 +1558,9 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 		$this->assertCount( 1, json_decode( $progress, true ) );
 		$this->assertStringNotContainsString( 'backup-AbCdEfGh12345678', $progress, 'The progress section must omit the Child backup directory hash.' );
 		$this->assertStringContainsString( 'backup-[redacted]', $progress );
+		$fetch = json_decode( json_decode( $progress, true )[0]['fetchResult'], true );
+		$this->assertIsArray( $fetch, 'fetchResult must stay valid JSON after redaction.' );
+		$this->assertSame( 'mainwp_backup_dir_unwritable', $fetch['error_code'], 'Fields after a SQL-looking error must survive.' );
 	}
 
 	/**

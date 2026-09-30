@@ -1236,7 +1236,16 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
             }
             foreach ( $rows as $index => $row ) {
                 foreach ( $message_columns[ $name ] ?? array() as $column ) {
-                    if ( isset( $row[ $column ] ) && is_string( $row[ $column ] ) && '' !== $row[ $column ] ) {
+                    if ( ! isset( $row[ $column ] ) || ! is_string( $row[ $column ] ) || '' === $row[ $column ] ) {
+                        continue;
+                    }
+                    // fetchResult is a JSON-encoded Child response: a SQL pattern run over
+                    // the encoded string would swallow the closing quote and every field after it.
+                    $decoded = json_decode( $row[ $column ], true );
+                    if ( is_array( $decoded ) ) {
+                        $encoded                   = wp_json_encode( $this->redact_backup_payload( $decoded, true ) );
+                        $rows[ $index ][ $column ] = false === $encoded ? '' : $encoded;
+                    } else {
                         $rows[ $index ][ $column ] = MainWP_Backup_Error_Codes::sanitize_message( $row[ $column ] );
                     }
                 }

@@ -1494,6 +1494,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 <input type="submit" name="submit" id="submit" class="ui button green big" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
                 <input type="button" name="submit_remove_website" id="mainwp-managesites-remove-site" class="ui button red big floated right" value="<?php esc_attr_e( 'Remove Site', 'mainwp' ); ?>"/>
             </form>
+            <?php MainWP_Knowledge_UI::render_panel( 'site', $website->id ); ?>
         </div>
         <div class="ui modal" id="mainwp-test-connection-modal">
             <i class="close icon"></i>

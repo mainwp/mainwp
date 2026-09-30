@@ -638,7 +638,9 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
      */
     public static function render_abandoned_plugins( $websites, $allPluginsOutdate, $decodedDismissedPlugins ) { // phpcs:ignore -- NOSONAR - complex.
         // translators: %s is the number of days since the plugin was last updated.
-        $str_format      = esc_html__( 'Updated %s days ago', 'mainwp' );
+        $str_format = esc_html__( 'Updated %s days ago', 'mainwp' );
+        // translators: %s is the number of days since the main file was modified.
+        $str_format_file = esc_html__( 'Main file modified %s days ago', 'mainwp' );
         $count_abandoned = count( $allPluginsOutdate );
         ?>
         <?php if ( 0 < $count_abandoned ) : ?>
@@ -715,7 +717,7 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
                                 $last_updated             = $plugin_outdate['last_updated'];
                                 $plugin_last_updated_date = new \DateTime( '@' . $last_updated );
                                 $diff_in_days             = $now->diff( $plugin_last_updated_date )->format( '%a' );
-                                $outdate_notice           = sprintf( $str_format, $diff_in_days );
+                                $outdate_notice           = sprintf( 'file_mtime' === ( $plugin_outdate['detection'] ?? '' ) ? $str_format_file : $str_format, $diff_in_days );
                                 ?>
                                 <tr site_name="<?php echo esc_attr( rawurlencode( stripslashes( $website->name ) ) ); ?>" dismissed="0" <?php echo $first_wpplugin ? 'open-wpplugin-siteid="' . intval( $website->id ) . '"' : ''; ?>>
                                     <td><strong class="mainwp-768-show"><?php esc_html_e( 'Website:', 'mainwp' ); ?></strong> <?php MainWP_Updates::render_site_link_dashboard( $website ); ?>
@@ -765,7 +767,9 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
      */
     public static function render_abandoned_themes( $websites, $allThemesOutdate, $decodedDismissedThemes ) { // phpcs:ignore -- NOSONAR - complex.
         // translators: %s is the number of days since the theme was last updated.
-        $str_format      = esc_html__( 'Updated %s days ago', 'mainwp' );
+        $str_format = esc_html__( 'Updated %s days ago', 'mainwp' );
+        // translators: %s is the number of days since the main file was modified.
+        $str_format_file = esc_html__( 'Main file modified %s days ago', 'mainwp' );
         $count_abandoned = count( $allThemesOutdate );
         ?>
         <?php if ( 0 < $count_abandoned ) : ?>
@@ -841,7 +845,7 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
                                 $last_updated            = $theme_outdate['last_updated'];
                                 $theme_last_updated_date = new \DateTime( '@' . $last_updated );
                                 $diff_in_days            = $now->diff( $theme_last_updated_date )->format( '%a' );
-                                $outdate_notice          = sprintf( $str_format, $diff_in_days );
+                                $outdate_notice          = sprintf( 'file_mtime' === ( $theme_outdate['detection'] ?? '' ) ? $str_format_file : $str_format, $diff_in_days );
                                 ?>
                                 <tr site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $website->name ) ) ); ?>" outdate="1" dismissed="0">
                                     <td>

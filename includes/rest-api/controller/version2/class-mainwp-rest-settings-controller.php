@@ -559,6 +559,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             $update_if_present( 'backup_before_upgrade', 'mainwp_backup_before_upgrade', 'int' );
             $update_if_present( 'backup_before_upgrade_days', 'mainwp_backup_before_upgrade_days', 'int' );
             $update_if_present( 'numberdays_outdate_plugin_theme', 'mainwp_numberdays_Outdate_Plugin_Theme', 'int' );
+            $update_if_present( 'abandoned_check_by_local_date', 'mainwp_abandoned_check_by_local_date', 'int' );
             $update_if_present( 'dayinweek_auto_update', 'mainwp_dayinweek_AutoUpdate', 'int' );
             $update_if_present( 'dayinmonth_auto_update', 'mainwp_dayinmonth_AutoUpdate', 'int' );
             $update_if_present( 'delay_autoupdate', 'mainwp_delay_autoupdate', 'int' );
@@ -2383,6 +2384,13 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 'description'       => __( 'Number of days to consider plugin/theme as outdated.', 'mainwp' ),
                 'type'              => 'integer',
                 'sanitize_callback' => 'absint',
+            ),
+            'abandoned_check_by_local_date'       => array(
+                'required'          => false,
+                'description'       => __( 'Abandoned check by local file date when WordPress.org returns no last updated date.', 'mainwp' ),
+                'type'              => 'integer',
+                'sanitize_callback' => $this->make_enum_sanitizer( $val_bool ),
+                'validate_callback' => $this->make_enum_validator( $val_bool ),
             ),
             'dayinweek_auto_update'               => array(
                 'required'          => false,
@@ -4227,6 +4235,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             'backup_before_upgrade'               => (int) get_option( 'mainwp_backup_before_upgrade', $default_setting['mainwp_backup_before_upgrade'] ),
             'backup_before_upgrade_days'          => (int) get_option( 'mainwp_backup_before_upgrade_days', $default_setting['mainwp_backup_before_upgrade_days'] ),
             'numberdays_outdate_plugin_theme'     => (int) get_option( 'mainwp_numberdays_Outdate_Plugin_Theme', $default_setting['mainwp_numberdays_Outdate_Plugin_Theme'] ),
+            'abandoned_check_by_local_date'       => (int) get_option( 'mainwp_abandoned_check_by_local_date', $default_setting['mainwp_abandoned_check_by_local_date'] ),
             'dayinweek_auto_update'               => (int) get_option( 'mainwp_dayinweek_AutoUpdate', $default_setting['mainwp_dayinweek_AutoUpdate'] ),
             'dayinmonth_auto_update'              => (int) get_option( 'mainwp_dayinmonth_AutoUpdate', $default_setting['mainwp_dayinmonth_AutoUpdate'] ),
             'delay_autoupdate'                    => (int) get_option( 'mainwp_delay_autoupdate', $default_setting['mainwp_delay_autoupdate'] ),
@@ -4434,6 +4443,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 'numberdays_outdate_plugin_theme'          => array(
                     'type'        => 'integer',
                     'description' => __( 'Number of days to consider plugin/theme as outdated.', 'mainwp' ),
+                    'context'     => array( 'view', 'edit' ),
+                ),
+                'abandoned_check_by_local_date'            => array(
+                    'type'        => 'integer',
+                    'description' => __( 'Abandoned check by local file date when WordPress.org returns no last updated date.', 'mainwp' ),
                     'context'     => array( 'view', 'edit' ),
                 ),
                 'dayinweek_auto_update'                    => array(

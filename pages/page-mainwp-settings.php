@@ -692,6 +692,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 }
 
                 MainWP_Utility::update_option( 'mainwp_numberdays_Outdate_Plugin_Theme', ! empty( $_POST['mainwp_numberdays_Outdate_Plugin_Theme'] ) ? intval( $_POST['mainwp_numberdays_Outdate_Plugin_Theme'] ) : 365 );
+                MainWP_Utility::update_option( 'mainwp_abandoned_check_by_local_date', isset( $_POST['mainwp_abandoned_check_by_local_date'] ) ? 1 : 0 );
 
                 $actions_notification_enable = ( isset( $_POST['mainwp_site_actions_notification_enable'] ) ? 1 : 0 );
                 MainWP_Utility::update_option( 'mainwp_site_actions_notification_enable', $actions_notification_enable );
@@ -792,6 +793,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             'mainwp_automatic_update_next_run_timestamp',
             'mainwp_delay_autoupdate',
             'mainwp_numberdays_Outdate_Plugin_Theme',
+            'mainwp_abandoned_check_by_local_date',
             'mainwp_check_http_response',
             'mainwp_check_http_response_method',
             'mainwp_site_actions_notification_enable',
@@ -1137,6 +1139,18 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                         </label>
                         <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Set how many days without an update before plugin or theme will be considered as abandoned.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                             <input type="text" class="settings-field-value-change-handler" name="mainwp_numberdays_Outdate_Plugin_Theme" id="mainwp_numberdays_Outdate_Plugin_Theme" value="<?php echo false === get_option( 'mainwp_numberdays_Outdate_Plugin_Theme' ) ? 365 : intval( get_option( 'mainwp_numberdays_Outdate_Plugin_Theme' ) ); ?>"/>
+                        </div>
+                    </div>
+                    <?php $abandoned_check_by_local_date = (int) get_option( 'mainwp_abandoned_check_by_local_date', 0 ); ?>
+                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-updates">
+                        <label class="six wide column middle aligned">
+                        <?php
+                        MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_abandoned_check_by_local_date', $abandoned_check_by_local_date );
+                        esc_html_e( 'Abandoned check by local file date', 'mainwp' );
+                        ?>
+                        </label>
+                        <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'This is useful for premium plugins/themes since those are not available on WordPress.org. Used only when WordPress.org does not return a last updated date. Age is compared with the tolerance above. ', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                            <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_abandoned_check_by_local_date" id="mainwp_abandoned_check_by_local_date" <?php echo 1 === $abandoned_check_by_local_date ? 'checked="true"' : ''; ?>/>
                         </div>
                     </div>
 

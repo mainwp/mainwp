@@ -224,6 +224,7 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 'othersData'                      => wp_json_encode( $othersData ),
                 'server'                          => get_admin_url(),
                 'numberdaysOutdatePluginTheme'    => get_option( 'mainwp_numberdays_Outdate_Plugin_Theme', 365 ),
+                'abandonedCheckByLocalDate'       => 1 === (int) get_option( 'mainwp_abandoned_check_by_local_date', 0 ) ? 1 : 0,
                 'primaryBackup'                   => $backup_method, // if empty site backup method will not sync the backup info from child site.
                 'siteId'                          => $pWebsite->id,
                 'child_actions_saved_days_number' => intval( $saved_days_number ),

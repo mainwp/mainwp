@@ -405,20 +405,46 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * Keep the Child's backup directory hash out of diagnostics and support bundles.
      *
      * @param array $payload           Diagnostic payload or decoded event.
-     * @param bool  $sanitize_messages Whether to sanitize string values.
+     * @param bool  $sanitize_messages Whether to sanitize string keys and values.
      * @return array Redacted payload.
      */
     private function redact_backup_payload( array $payload, bool $sanitize_messages = false ): array {
+        $redacted = array();
         foreach ( $payload as $key => $value ) {
             if ( 'backup_dir_hash' === $key ) {
-                unset( $payload[ $key ] );
-            } elseif ( is_array( $value ) ) {
-                $payload[ $key ] = $this->redact_backup_payload( $value, $sanitize_messages );
+                continue;
+            }
+            // A Child response can be keyed by path, and the path names the directory.
+            if ( $sanitize_messages && is_string( $key ) ) {
+                $key = MainWP_Backup_Error_Codes::sanitize_message( $key );
+            }
+            if ( is_array( $value ) ) {
+                $value = $this->redact_backup_payload( $value, $sanitize_messages );
             } elseif ( $sanitize_messages && is_string( $value ) ) {
-                $payload[ $key ] = MainWP_Backup_Error_Codes::sanitize_message( $value );
+                $value = MainWP_Backup_Error_Codes::sanitize_message( $value );
+            }
+            $redacted[ $key ] = $value;
+        }
+        return $redacted;
+    }
+
+    /**
+     * Redact one exported table column that holds Child text.
+     *
+     * @param string $value Stored column value: plain text or a JSON-encoded Child response.
+     * @return string Redacted value, still valid JSON when the input was a JSON object or list.
+     */
+    private function redact_exported_text( string $value ): string {
+        // The sanitizer's SQL patterns run over an encoded response would swallow
+        // the closing quote and every field after it, so a response is redacted per field.
+        $decoded = json_decode( $value, true );
+        if ( is_array( $decoded ) ) {
+            $encoded = wp_json_encode( $this->redact_backup_payload( $decoded, true ) );
+            if ( is_string( $encoded ) ) {
+                return $encoded;
             }
         }
-        return $payload;
+        return MainWP_Backup_Error_Codes::sanitize_message( $value );
     }
 
     /**
@@ -1239,15 +1265,7 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
                     if ( ! isset( $row[ $column ] ) || ! is_string( $row[ $column ] ) || '' === $row[ $column ] ) {
                         continue;
                     }
-                    // fetchResult is a JSON-encoded Child response: a SQL pattern run over
-                    // the encoded string would swallow the closing quote and every field after it.
-                    $decoded = json_decode( $row[ $column ], true );
-                    if ( is_array( $decoded ) ) {
-                        $encoded                   = wp_json_encode( $this->redact_backup_payload( $decoded, true ) );
-                        $rows[ $index ][ $column ] = false === $encoded ? '' : $encoded;
-                    } else {
-                        $rows[ $index ][ $column ] = MainWP_Backup_Error_Codes::sanitize_message( $row[ $column ] );
-                    }
+                    $rows[ $index ][ $column ] = $this->redact_exported_text( $row[ $column ] );
                 }
             }
             $sections[ $name ] = $rows;

@@ -1564,6 +1564,77 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Every shape an exported Child-text column can hold.
+	 *
+	 * @return array<string,array{0:string,1:bool}>
+	 */
+	public function data_exported_text_shapes() {
+		$dir = 'wp-content/uploads/mainwp/backup-AbCdEfGh12345678';
+		return array(
+			'plain text'                 => array( 'Unable to create directory ' . $dir . '.', false ),
+			'plain code'                 => array( 'mainwp_backup_disk_full', false ),
+			'response, path in a value'  => array(
+				(string) wp_json_encode(
+					array(
+						'error'      => 'Unable to create ' . $dir . '/ after UPDATE wp_options SET x=1',
+						'error_code' => 'mainwp_backup_dir_unwritable',
+					)
+				),
+				true,
+			),
+			'response, path in a key'    => array(
+				(string) wp_json_encode(
+					array(
+						$dir . '/archive.zip' => 12,
+						'error_code'          => 'mainwp_backup_dir_unwritable',
+					)
+				),
+				true,
+			),
+			'response, nested hash key'  => array(
+				(string) wp_json_encode(
+					array(
+						'sub_state'  => array(
+							'backup_dir_hash' => 'AbCdEfGh12345678',
+							'db_prefix'       => $dir . '/dbBackup',
+						),
+						'error_code' => 'mainwp_backup_dir_unwritable',
+					)
+				),
+				true,
+			),
+			'response, list of paths'    => array( (string) wp_json_encode( array( $dir . '/a.zip', $dir . '/b.zip' ) ), true ),
+			'encoded string, not a list' => array( (string) wp_json_encode( 'Unable to create ' . $dir ), false ),
+		);
+	}
+
+	/**
+	 * An exported column never names the Child backup directory, whatever shape it holds,
+	 * and a Child response stays a readable response.
+	 *
+	 * @dataProvider data_exported_text_shapes
+	 *
+	 * @param string $stored      Stored column value.
+	 * @param bool   $is_response Whether the value is a JSON object or list.
+	 */
+	public function test_exported_text_never_names_the_backup_directory( $stored, $is_response ) {
+		$redact   = new \ReflectionMethod( MainWP_Backup_Diagnostics::class, 'redact_exported_text' );
+		$exported = $redact->invoke( MainWP_Backup_Diagnostics::instance(), $stored );
+
+		$this->assertStringNotContainsString( 'AbCdEfGh12345678', $exported, 'The exported column must not name the Child backup directory.' );
+		if ( $is_response ) {
+			$decoded = json_decode( $exported, true );
+			$this->assertIsArray( $decoded, 'A Child response must stay valid JSON after redaction.' );
+			if ( str_contains( $stored, 'error_code' ) ) {
+				$this->assertSame( 'mainwp_backup_dir_unwritable', $decoded['error_code'], 'Fields next to a redacted one must survive.' );
+			}
+		}
+		if ( 'mainwp_backup_disk_full' === $stored ) {
+			$this->assertSame( $stored, $exported, 'Text with nothing to redact must pass through unchanged.' );
+		}
+	}
+
+	/**
 	 * The bundle names each site's deployed child plugin version and its
 	 * negotiated capability flags: confirming what a site actually runs
 	 * cost an hour of behavioral inference last round, and the sync data

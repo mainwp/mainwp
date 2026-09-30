@@ -305,6 +305,15 @@ class MainWP_Abilities {
             )
         );
 
+        // Knowledge category.
+        wp_register_ability_category(
+            'mainwp-knowledge',
+            array(
+                'label'       => __( 'MainWP Knowledge', 'mainwp' ),
+                'description' => __( 'Abilities for managing knowledge records on MainWP sites and clients.', 'mainwp' ),
+            )
+        );
+
         // Batch category.
         wp_register_ability_category(
             'mainwp-batch',
@@ -336,7 +345,10 @@ class MainWP_Abilities {
         // Batch abilities.
         MainWP_Abilities_Batch::register();
 
+        // Knowledge abilities.
+        MainWP_Abilities_Knowledge::register();
+
         // NOTE: Extensions register their own abilities in their own codebases.
-        // Total core abilities: 62 (30 sites + 13 updates + 11 clients + 7 tags + 1 batch).
+        // Total core abilities: 69 (30 sites + 13 updates + 11 clients + 7 tags + 1 batch + 7 knowledge).
     }
 }

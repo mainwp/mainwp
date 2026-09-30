@@ -468,7 +468,7 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
      * @param array $input Ability input, possibly carrying selected_sites.
      * @return true|\WP_Error True when in scope, WP_Error otherwise.
      */
-    private static function check_selected_sites_scope( array $input ) {
+    public static function check_selected_sites_scope( array $input ) {
         if ( empty( $input['selected_sites'] ) || ! is_array( $input['selected_sites'] ) ) {
             return true;
         }
@@ -482,10 +482,12 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
         $out_of_scope = array_diff( $selected, $allowed_sites );
 
         if ( ! empty( $out_of_scope ) ) {
+            // Only a restricted caller reaches this leg, so the unseen site reads as missing.
             return new \WP_Error(
-                'mainwp_access_denied',
-                __( 'selected_sites contains sites you do not have permission to access.', 'mainwp' ),
-                array( 'status' => 403 )
+                'mainwp_site_not_found',
+                /* translators: %d: site ID */
+                sprintf( __( 'No site found with ID %d.', 'mainwp' ), (int) reset( $out_of_scope ) ),
+                array( 'status' => 404 )
             );
         }
 
@@ -805,7 +807,10 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
             )
         );
 
-        if ( $input['dry_run'] && $input['confirm'] ) {
+        $dry_run = MainWP_Abilities_Util::get_boolean_input( $input, 'dry_run' );
+        $confirm = MainWP_Abilities_Util::get_boolean_input( $input, 'confirm' );
+
+        if ( $dry_run && $confirm ) {
             return new \WP_Error(
                 'mainwp_invalid_input',
                 __( 'Cannot specify both dry_run and confirm. Use dry_run for preview, confirm for actual deletion.', 'mainwp' ),
@@ -827,7 +832,7 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
             return $access;
         }
 
-        if ( $input['dry_run'] ) {
+        if ( $dry_run ) {
             $sites       = MainWP_DB_Client::instance()->get_websites_by_client_ids( $client->client_id );
             $sites_count = is_array( $sites ) ? count( $sites ) : 0;
 
@@ -856,7 +861,7 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
             );
         }
 
-        if ( ! $input['confirm'] ) {
+        if ( ! $confirm ) {
             return new \WP_Error(
                 'mainwp_confirmation_required',
                 __( 'This is a destructive operation. Set confirm: true or use dry_run: true for preview.', 'mainwp' ),

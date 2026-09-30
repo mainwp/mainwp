@@ -1049,9 +1049,11 @@ class MainWP_Abilities_Tags { //phpcs:ignore -- NOSONAR - multi methods.
      * @return array|WP_Error Deletion result or error.
      */
     public static function execute_delete_tag( $input ) {
+        $input = MainWP_Abilities_Util::normalize_input( $input );
+
         $tag_id  = (int) $input['tag_id'];
-        $confirm = $input['confirm'] ?? false;
-        $dry_run = $input['dry_run'] ?? false;
+        $confirm = MainWP_Abilities_Util::get_boolean_input( $input, 'confirm' );
+        $dry_run = MainWP_Abilities_Util::get_boolean_input( $input, 'dry_run' );
 
         if ( $dry_run && $confirm ) {
             return new \WP_Error(

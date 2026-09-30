@@ -159,7 +159,8 @@ class Test_Abilities_Clients_Scoped_Access extends MainWP_Abilities_Test_Case {
         $this->restrict_current_user_to_sites( array() );
         $denied = $this->execute_ability( 'mainwp/get-client-v1', array( 'client_id_or_email' => $client_id ) );
         $this->assertWPError( $denied );
-        $this->assertSame( 'mainwp_access_denied', $denied->get_error_code() );
+        $this->assertSame( 'mainwp_client_not_found', $denied->get_error_code() );
+        $this->assertSame( 404, $denied->get_error_data()['status'] );
     }
 
     /**
@@ -180,7 +181,8 @@ class Test_Abilities_Clients_Scoped_Access extends MainWP_Abilities_Test_Case {
         $result = $this->execute_ability( 'mainwp/get-client-v1', array( 'client_id_or_email' => $client_id ) );
 
         $this->assertWPError( $result, 'No overlap between the client sites and the allowed set must deny access.' );
-        $this->assertSame( 'mainwp_access_denied', $result->get_error_code() );
+        $this->assertSame( 'mainwp_client_not_found', $result->get_error_code() );
+        $this->assertSame( 404, $result->get_error_data()['status'] );
     }
 
     /**
@@ -203,7 +205,8 @@ class Test_Abilities_Clients_Scoped_Access extends MainWP_Abilities_Test_Case {
         $this->restrict_current_user_to_sites( array() );
         $denied = $this->execute_ability( 'mainwp/get-client-v1', array( 'client_id_or_email' => $client_id ) );
         $this->assertWPError( $denied );
-        $this->assertSame( 'mainwp_access_denied', $denied->get_error_code() );
+        $this->assertSame( 'mainwp_client_not_found', $denied->get_error_code() );
+        $this->assertSame( 404, $denied->get_error_data()['status'] );
     }
 
     // =========================================================================
@@ -240,7 +243,8 @@ class Test_Abilities_Clients_Scoped_Access extends MainWP_Abilities_Test_Case {
         $this->restrict_current_user_to_sites( array() );
         $denied = $this->execute_ability( 'mainwp/get-client-sites-v1', array( 'client_id_or_email' => $client_id ) );
         $this->assertWPError( $denied );
-        $this->assertSame( 'mainwp_access_denied', $denied->get_error_code() );
+        $this->assertSame( 'mainwp_client_not_found', $denied->get_error_code() );
+        $this->assertSame( 404, $denied->get_error_data()['status'] );
     }
 
     /**
@@ -267,7 +271,8 @@ class Test_Abilities_Clients_Scoped_Access extends MainWP_Abilities_Test_Case {
         $this->restrict_current_user_to_sites( array() );
         $denied = $this->execute_ability( 'mainwp/get-client-sites-v1', array( 'client_id_or_email' => $client_id ) );
         $this->assertWPError( $denied );
-        $this->assertSame( 'mainwp_access_denied', $denied->get_error_code() );
+        $this->assertSame( 'mainwp_client_not_found', $denied->get_error_code() );
+        $this->assertSame( 404, $denied->get_error_data()['status'] );
     }
 
     /**
@@ -461,7 +466,8 @@ class Test_Abilities_Clients_Scoped_Access extends MainWP_Abilities_Test_Case {
         );
 
         $this->assertWPError( $result, 'An out-of-scope site in selected_sites must deny client creation.' );
-        $this->assertSame( 'mainwp_access_denied', $result->get_error_code() );
+        $this->assertSame( 'mainwp_site_not_found', $result->get_error_code() );
+        $this->assertSame( 404, $result->get_error_data()['status'] );
 
         global $wpdb;
         $count = $wpdb->get_var(
@@ -503,7 +509,8 @@ class Test_Abilities_Clients_Scoped_Access extends MainWP_Abilities_Test_Case {
         );
 
         $this->assertWPError( $result, 'An out-of-scope site in selected_sites must deny the update.' );
-        $this->assertSame( 'mainwp_access_denied', $result->get_error_code() );
+        $this->assertSame( 'mainwp_site_not_found', $result->get_error_code() );
+        $this->assertSame( 404, $result->get_error_data()['status'] );
 
         $unchanged = $this->get_test_client( $client_id );
         $this->assertSame( $original_name, $unchanged->name, 'The client name must not change when access is denied.' );
@@ -536,7 +543,8 @@ class Test_Abilities_Clients_Scoped_Access extends MainWP_Abilities_Test_Case {
         $result = $this->execute_ability( 'mainwp/get-client-costs-v1', array( 'client_id_or_email' => $client_id ) );
 
         $this->assertWPError( $result, 'No overlap between the client sites and the allowed set must deny cost access.' );
-        $this->assertSame( 'mainwp_access_denied', $result->get_error_code() );
+        $this->assertSame( 'mainwp_client_not_found', $result->get_error_code() );
+        $this->assertSame( 404, $result->get_error_data()['status'] );
     }
 
     // =========================================================================

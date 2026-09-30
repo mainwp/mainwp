@@ -653,7 +653,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         <i class="close icon"></i>
             <div class="header"><?php esc_html_e( 'Edit client', 'mainwp' ); ?></div>
             <div class="scrolling content">
-                <div class="ui info message"><?php esc_html_e( 'Empty fields will not be passed to child sites.', 'mainwp' ); ?></div>
+                <div class="ui info message"><?php esc_html_e( 'Blank fields will not be changed.', 'mainwp' ); ?></div>
                 <form id="update_client_profile" class="ui form">
                     <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                     <h3 class="ui header"><?php esc_html_e( 'Name', 'mainwp' ); ?></h3>

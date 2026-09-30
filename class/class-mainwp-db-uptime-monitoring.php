@@ -487,6 +487,55 @@ KEY idx_wpid_issub (wpid, issub)";
         return $this->wpdb->get_results( $this->get_sql_monitor( $params ), $obj ); //phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- SQL built with esc_sql().
     }
 
+
+    /**
+     * Get the primary monitor for a specific site.
+     *
+     * @param int  $site_id Website ID (wpid).
+     * @param bool $obj     Optional. Whether to return an object or associative array. Default true.
+     *
+     * @return object|array|false The primary monitor row, or false if not found.
+     */
+    public function get_primary_monitor( $site_id, $obj = true ) {
+        if ( empty( $site_id ) ) {
+            return false;
+        }
+
+        $result = $this->get_monitor_by( $site_id, 'issub', 0, array(), $obj ? OBJECT : ARRAY_A );
+
+        if ( empty( $result ) ) {
+            return false;
+        }
+
+        // If get_monitor_by returns an array of multiple results, return the first row.
+        if ( is_array( $result ) && isset( $result[0] ) ) {
+            return $result[0];
+        }
+
+        return $result;
+    }
+
+    /**
+     * Get sub-monitors by site ID.
+     *
+     * @param int|false $site_id Optional. The website ID (wpid). Default false.
+     * @param bool      $obj     Optional. Whether to return results as objects or arrays. Default true.
+     *
+     * @return array List of sub-monitor records.
+     */
+    public function get_sub_monitors( $site_id = false, $obj = true ) {
+        if ( empty( $site_id ) ) {
+            return array();
+        }
+
+        $sql = $this->wpdb->prepare(
+            'SELECT * FROM ' . $this->table_name( 'monitors' ) . ' WHERE wpid = %d AND suburl != "" AND suburl IS NOT NULL',
+            $site_id
+        );
+
+        return $obj ? $this->wpdb->get_results( $sql, OBJECT ) : $this->wpdb->get_results( $sql, ARRAY_A );
+    }
+
     /**
      * Get sites monitors to check.
      *
@@ -671,17 +720,38 @@ KEY idx_wpid_issub (wpid, issub)";
         return $this->wpdb->get_results( $sql );
     }
 
+
     /**
      * Update site monitor.
      *
      * @param array $data data.
+     * @param array $output Output info.
      *
-     * @return object|null Database query results or null on failure.
+     * @return object|null|false Database query results or null or false on failure.
      */
-    public function update_wp_monitor( $data ) { // phpcs:ignore -- NOSONAR - complexity.
+    public function update_wp_monitor( $data, &$output = array() ) { // phpcs:ignore -- NOSONAR - complexity.
         if ( ! is_array( $data ) ) {
             return false;
         }
+
+        if ( ! is_array( $output ) ) {
+            $output = array();
+        }
+
+        /**
+         * Filters the monitor data before creating or updating a monitor.
+         *
+         * Returning an empty value prevents the monitor from being created or updated.
+         *
+         * @param array $data   Monitor data.
+         * @param array $output Output data collected during the operation.
+         */
+        $data = apply_filters( 'mainwp_update_wp_monitor', $data, $output );
+
+        if ( empty( $data ) ) {
+            return false;
+        }
+
         $allowed_methods = MainWP_Uptime_Monitoring_Edit::get_allowed_methods();
 
         if ( isset( $data['method'] ) ) {
@@ -691,8 +761,31 @@ KEY idx_wpid_issub (wpid, issub)";
             }
         }
 
-        if ( ! isset( $data['monitor_id'] ) && ! empty( $data['wpid'] ) ) {
-            $check = $this->get_monitor_by( $data['wpid'], 'issub', 0 );
+        $lock_name = '';
+
+        if ( ! isset( $data['monitor_id'] ) && ! empty( $data['wpid'] ) && empty( $data['suburl'] ) ) {
+            $site_id = filter_var( $data['wpid'], FILTER_VALIDATE_INT );
+
+            if ( false === $site_id || $site_id <= 0 ) {
+                return false;
+            }
+
+            $lock_name = 'mainwp_primary_monitor_' . $site_id;
+
+            $lock_acquired = $this->wpdb->get_var(
+                $this->wpdb->prepare(
+                    'SELECT GET_LOCK( %s, 10 )',
+                    $lock_name
+                )
+            );
+
+            if ( '1' !== (string) $lock_acquired ) {
+                return false;
+            }
+
+            // Recheck while holding the lock.
+            $check = $this->get_monitor_by( $site_id, 'issub', 0 );
+
             if ( ! empty( $check ) ) {
                 $data['monitor_id'] = $check->monitor_id;
             }
@@ -706,23 +799,237 @@ KEY idx_wpid_issub (wpid, issub)";
                 unset( $data['wpid'] );
             }
 
-            $this->wpdb->update(
+            $saved = $this->wpdb->update(
                 $this->table_name( 'monitors' ),
                 $data,
                 array( 'monitor_id' => $id )
             );
-                return $id;
-        } else {
-            if ( empty( $data['method'] ) || ! isset( $allowed_methods[ $data['method'] ] ) ) {
-                $data['method'] = 'get';
+
+            $output['saved'] = $saved;
+
+            if ( ! empty( $lock_name ) ) {
+                $this->wpdb->get_var(
+                    $this->wpdb->prepare(
+                        'SELECT RELEASE_LOCK( %s )',
+                        $lock_name
+                    )
+                );
             }
+
+            return $id;
+        } else {
+
+            $default = MainWP_Uptime_Monitoring_Handle::get_default_monitoring_settings( true );
+
+            $monitor_fields = array(
+                'wpid',
+                'active',
+                'keyword',
+                'interval',
+                'maxretries',
+                'up_status_codes',
+                'type',
+                'method',
+                'timeout',
+                'suburl',
+                'lasttime_check',
+            );
+
+            $allowed_fields = array_flip( $monitor_fields );
+
+            $default = array_intersect_key( $default, $allowed_fields );
+            $data    = array_intersect_key( $data, $allowed_fields );
+
+            $data = array_merge( $default, $data );
 
             $data['issub'] = ! empty( $data['suburl'] ) ? 1 : 0;
 
+            $site_id = filter_var( $data['wpid'] ?? null, FILTER_VALIDATE_INT );
+            if ( false === $site_id || $site_id <= 0 ) {
+                if ( ! empty( $lock_name ) ) {
+                    $this->wpdb->get_var(
+                        $this->wpdb->prepare(
+                            'SELECT RELEASE_LOCK( %s )',
+                            $lock_name
+                        )
+                    );
+                }
+
+                return false;
+            }
+            $data['wpid'] = $site_id;
+
+            if ( ! isset( $data['lasttime_check'] ) ) {
+                $data['lasttime_check'] = 0; // to fix NOT NULL.
+            }
+
             $this->wpdb->insert( $this->table_name( 'monitors' ), $data );
-            return $this->wpdb->insert_id;
+
+            $monitor_id = $this->wpdb->insert_id;
+
+            if ( $monitor_id ) {
+                $output['created'] = true;
+            }
+
+            if ( ! empty( $lock_name ) ) {
+                $this->wpdb->get_var(
+                    $this->wpdb->prepare(
+                        'SELECT RELEASE_LOCK( %s )',
+                        $lock_name
+                    )
+                );
+            }
+
+            return $monitor_id;
         }
     }
+
+    /**
+     * Repair sites that are missing their Primary Monitor.
+     *
+     * @param null|int $site_id Site ID to repair, or null to repair all sites.
+     * @param int      $limit  Maximum number of sites to process in one batch.
+     *
+     * @return array{found:int,created:int,has_more:bool} Repair result.
+     */
+    public function repair_missing_primary_monitors( $site_id = null, $limit = 50 ) {
+        /*
+        * A specific site repair does not use the retry counter.
+        */
+        if ( null !== $site_id ) {
+            $site_ids = $this->get_sites_missing_primary_monitor( $site_id, $limit );
+
+            $created = 0;
+            $found   = count( $site_ids );
+
+            foreach ( $site_ids as $current_site_id ) {
+                $data = array(
+                    'wpid'   => $current_site_id,
+                    'suburl' => '',
+                );
+
+                $created_id = $this->update_wp_monitor( $data );
+
+                if ( $created_id ) {
+                    ++$created;
+
+                    $opt_name = 'mainwp_primary_monitor_repair_attempts_for_wp_' . $current_site_id;
+
+                    if ( get_option( $opt_name ) ) {
+                        delete_option( $opt_name );
+                    }
+                }
+            }
+
+            return array(
+                'found'    => $found,
+                'created'  => $created,
+                'has_more' => false,
+            );
+        }
+
+        $site_ids = $this->get_sites_missing_primary_monitor( null, $limit );
+
+        $created = 0;
+        $found   = count( $site_ids );
+
+        foreach ( $site_ids as $current_site_id ) {
+            $data = array(
+                'wpid'   => $current_site_id,
+                'suburl' => '',
+            );
+
+            $created_id = $this->update_wp_monitor( $data );
+
+            $opt_name = 'mainwp_primary_monitor_repair_attempts_for_wp_' . $current_site_id;
+
+            if ( $created_id ) {
+                ++$created;
+
+                delete_option( $opt_name );
+            } else {
+                $attempts = (int) get_option( $opt_name, 0 );
+                update_option( $opt_name, $attempts + 1 );
+            }
+        }
+
+        /*
+        * Check whether there are still sites eligible for repair.
+        */
+        $remaining = $this->get_sites_missing_primary_monitor( null, 1 );
+
+        return array(
+            'found'    => $found,
+            'created'  => $created,
+            'has_more' => ! empty( $remaining ),
+        );
+    }
+
+
+    /**
+     * Get site IDs that do not have a Primary Monitor.
+     *
+     * @param int|null $site_id Optional site ID to check.
+     * @param int      $limit    Maximum number of sites to process.
+     *
+     * @return array<int>
+     */
+    public function get_sites_missing_primary_monitor( $site_id = null, $limit = 50 ) {
+        $sites_table    = $this->table_name( 'wp' );
+        $monitors_table = $this->table_name( 'monitors' );
+        $options_table  = esc_sql( $this->wpdb->options );
+
+        $where = '';
+
+        if ( null !== $site_id ) {
+            $where = $this->wpdb->prepare(
+                'AND s.id = %d',
+                $site_id
+            );
+        }
+
+        $limit = max( 1, min( 100, (int) $limit ) );
+
+        /*
+        * For the general repair process, exclude sites that have already
+        * reached the maximum number of repair attempts.
+        *
+        * A specific site repair is not subject to the retry limit.
+        */
+        $retry_where = '';
+
+        if ( null === $site_id ) {
+            $retry_where = '
+                AND (
+                    ra.option_id IS NULL
+                    OR CAST( ra.option_value AS UNSIGNED ) < 3
+                )';
+        }
+
+        return $this->wpdb->get_col(
+            $this->wpdb->prepare(
+                "SELECT s.id
+                FROM {$sites_table} AS s " . // NOSONAR - table name is generated internally and safely escaped.
+                " LEFT JOIN {$options_table} AS ra " . // NOSONAR - table name is generated internally and safely escaped.
+                " ON ra.option_name = CONCAT(
+                    'mainwp_primary_monitor_repair_attempts_for_wp_',
+                    s.id
+                )
+                WHERE NOT EXISTS (
+                    SELECT 1
+                    FROM {$monitors_table} AS m " . // NOSONAR - table name is generated internally and safely escaped.
+                    " WHERE m.wpid = s.id
+                        AND m.suburl = ''
+                )
+                {$retry_where}
+                {$where}
+                ORDER BY s.id ASC
+                LIMIT %d",
+                $limit
+            )
+        );
+    }
+
 
     /**
      * Update site monitor increase retries.
@@ -744,7 +1051,7 @@ KEY idx_wpid_issub (wpid, issub)";
      *
      * @param array $params params.
      *
-     * @return object|null Database query result or null on failure.
+     * @return  string|false Database query result or null on failure.
      */
     public function get_sql_monitor( $params ) { //phpcs:ignore -- NOSONAR - complexity.
 
@@ -764,7 +1071,16 @@ KEY idx_wpid_issub (wpid, issub)";
 
         $extra_view = ! empty( $params['extra_view'] ) ? $params['extra_view'] : array();
 
-        $site_id   = isset( $params['wpid'] ) ? intval( $params['wpid'] ) : false;
+        $site_id = isset( $params['wpid'] ) ? $params['wpid'] : false;
+
+        if ( false !== $site_id ) {
+            if ( ! filter_var( $site_id, FILTER_VALIDATE_INT ) || (int) $site_id <= 0 ) {
+                return false;
+            }
+
+            $site_id = (int) $site_id;
+        }
+
         $monitorid = isset( $params['monitor_id'] ) ? intval( $params['monitor_id'] ) : false;
         $sub_url   = isset( $params['suburl'] ) ? $params['suburl'] : false;
         $is_sub    = isset( $params['issub'] ) ? intval( $params['issub'] ) : false;
@@ -937,62 +1253,96 @@ KEY idx_wpid_issub (wpid, issub)";
         return $qry;
     }
 
+    /**
+     * Delete all monitors (primary and sub-monitors) for a specific site along with related data.
+     *
+     * @param int $site_id Website ID (wpid).
+     *
+     * @return bool True if monitors were found and deleted, false otherwise.
+     */
+    public function delete_site_monitors( $site_id ) {
+        if ( empty( $site_id ) ) {
+            return false;
+        }
+
+        $table_monitors = $this->table_name( 'monitors' );
+
+        $sql         = $this->wpdb->prepare( "SELECT monitor_id FROM {$table_monitors} WHERE wpid = %d", $site_id );
+        $monitor_ids = $this->wpdb->get_col( $sql ); //phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
+
+        if ( empty( $monitor_ids ) ) {
+            return false;
+        }
+
+        foreach ( $monitor_ids as $monitor_id ) {
+            // Re-use single monitor deletion or execute cascading deletions.
+            $this->remove_monitor_and_data( (int) $monitor_id );
+        }
+
+        return true;
+    }
 
     /**
-     * Delete monitor and uptime data.
+     * Delete a single monitor by monitor ID or specified parameters.
      *
-     * @param array $params data.
+     * @param array $args Parameters for deletion, typically array( 'monitor_id' => $id ).
      *
-     * @return bool success|failed.
+     * @return bool True on successful deletion, false on failure or missing ID.
      */
-    public function delete_monitor( $params ) {
-
-        if ( ! is_array( $params ) ) {
+    public function delete_monitor( $args ) { // phpcs:ignore --NOSONAR -complex.
+        if ( empty( $args ) || ! is_array( $args ) ) {
             return false;
         }
 
-        $table_monitors = esc_sql( $this->table_name( 'monitors' ) );
-        $sql            = '';
+        $monitor_id = isset( $args['monitor_id'] ) && $args['monitor_id'] > 0 ? (int) $args['monitor_id'] : 0;
 
-        if ( ! empty( $params['monitor_id'] ) ) {
-            $sql = $this->wpdb->prepare( 'SELECT monitor_id, wpid FROM ' . $table_monitors . ' WHERE monitor_id=%d', $params['monitor_id'] );
-        } elseif ( ! empty( $params['wpid'] ) ) {
-            $sql = $this->wpdb->prepare( 'SELECT monitor_id, wpid FROM ' . $table_monitors . ' WHERE wpid=%d AND issub = 0 ', $params['wpid'] );
-        }
-
-        $current = 0;
-
-        if ( ! empty( $sql ) ) {
-            $current = $this->wpdb->get_row( $sql ); //phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- SQL from wpdb->prepare().
-        }
-
-        if ( empty( $current ) ) {
+        if ( empty( $monitor_id ) ) {
             return false;
         }
 
-        $monitor_id = $current->monitor_id;
-        $wp_id      = $current->wpid;
+        $monitor = $this->get_monitor_by( false, 'monitor_id', $monitor_id );
 
-        if ( ! empty( $current->issub ) ) {
-            if ( $this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $table_monitors . ' WHERE monitor_id=%d', $monitor_id ) ) ) {
-                $this->delete_heartbeat( $monitor_id );
-                $this->delete_stats( $monitor_id );
-                return true;
-            }
+        if ( empty( $monitor ) ) {
             return false;
         }
 
-        $sql      = $this->wpdb->prepare( 'SELECT monitor_id FROM ' . $table_monitors . ' WHERE wpid=%d ', $wp_id );
-        $monitors = $this->wpdb->get_results( $sql ); //phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- SQL from wpdb->prepare().
-        if ( $monitors ) {
-            foreach ( $monitors as $mo ) {
-                if ( $this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $table_monitors . ' WHERE monitor_id=%d', $mo->monitor_id ) ) ) {
-                    $this->delete_heartbeat( $mo->monitor_id );
-                    $this->delete_stats( $mo->monitor_id );
-                }
-            }
+        // If it is primary monitor.
+        if ( empty( $monitor->suburl ) && empty( $monitor->issub ) ) {
+            return $this->delete_site_monitors( $monitor->wpid );
+        }
+
+        return $this->remove_monitor_and_data( $monitor_id );
+    }
+
+    /**
+     * Delete a single monitor by monitor ID or specified parameters.
+     *
+     * @param int $monitor_id Monitor ID.
+     *
+     * @return bool True on successful deletion, false on failure or missing ID.
+     */
+    public function remove_monitor_and_data( $monitor_id ) {
+
+        if ( empty( $monitor_id ) ) {
+            return false;
+        }
+
+        $table_monitors = $this->table_name( 'monitors' );
+
+        // Perform deletion on the primary table.
+        $deleted = $this->wpdb->delete(
+            $table_monitors,
+            array( 'monitor_id' => $monitor_id ),
+            array( '%d' )
+        );
+
+        // Trigger cascading cleanups if row deletion succeeded.
+        if ( $deleted ) {
+            $this->delete_heartbeat( $monitor_id );
+            $this->delete_stats( $monitor_id );
             return true;
         }
+
         return false;
     }
 

@@ -2390,7 +2390,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                         'sanitize_callback' => 'sanitize_text_field',
                     ),
                 ),
-                'tags'                   => array( // response as tags.
+                'tags'                   => array(
                     'type'        => 'string',
                     'description' => __( 'Site tags.', 'mainwp' ),
                     'context'     => array( 'view' ),
@@ -2682,6 +2682,13 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                     'arg_options' => array(
                         'sanitize_callback' => 'absint',
                     ),
+                ),
+                // groupids is validated and sanitized in the database save function
+                // before updating the group associations.
+                'groupids'               => array(
+                    'type'        => 'string',
+                    'description' => __( 'Site tag/group IDs as a comma-separated string.', 'mainwp' ),
+                    'context'     => array( 'edit' ),
                 ),
 
             ),
@@ -3295,10 +3302,20 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         $resp_data            = array();
         $resp_data['success'] = 0;
         $site_id              = 0;
-        $url                  = '';
         $data                 = array(); //phpcs:ignore -- NOSONAR - not used data.
         $found_id             = 0;
         try {
+
+            if ( $request->has_param( 'groupids' ) && ! empty( $request['groupids'] ) && false === MainWP_DB_Common::instance()->validate_site_group_ids( $request['groupids'] ) ) {
+                return new \WP_Error(
+                    'rest_invalid_param',
+                    __( 'The groupids parameter must be a comma-separated string of positive integers.', 'mainwp' ),
+                    array(
+                        'status' => 400,
+                    )
+                );
+            }
+
             $item = $this->prepare_object_for_database( $request );
 
             if ( empty( $item['name'] ) && ! empty( $item['url'] ) ) {
@@ -3306,8 +3323,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                 $item['name'] = rtrim( $item['name'], '/' );
             }
 
-            $url     = $item['url'];
-            $website = MainWP_DB::instance()->get_websites_by_url( $item['url'] );
+            $website                                      = MainWP_DB::instance()->get_websites_by_url( $item['url'] );
             list( $message, $error, $site_id, $found_id ) = MainWP_Manage_Sites_View::add_wp_site( $website, $item );
 
             if ( ! empty( $site_id ) ) {
@@ -3346,11 +3362,39 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         if ( is_wp_error( $website ) ) {
             return $website;
         }
+
+        if ( $request->has_param( 'tags' ) ) {
+            return new \WP_Error(
+                'rest_invalid_param',
+                __( 'The "tags" parameter is not supported for this endpoint.', 'mainwp' ),
+                array(
+                    'status' => 400,
+                )
+            );
+        }
+
+        if ( $request->has_param( 'groupids' ) && ! is_string( $request['groupids'] ) ) {
+            return new \WP_Error(
+                'rest_invalid_param',
+                __( 'The groupids parameter must be a string.', 'mainwp' ),
+                array(
+                    'status' => 400,
+                )
+            );
+        }
+
         $resp_data            = array();
         $resp_data['success'] = 0;
         try {
             $item   = $this->prepare_object_for_update( $request );
             $result = MainWP_DB_Common::instance()->rest_api_update_website( $website->id, $item );
+            if ( is_array( $result ) ) {
+                foreach ( array( 'group_updated', 'group_message', 'message' ) as $field ) {
+                    if ( array_key_exists( $field, $result ) ) {
+                        $resp_data[ $field ] = $result[ $field ];
+                    }
+                }
+            }
             if ( is_array( $result ) && ! empty( $result['success'] ) ) {
                     $resp_data['success'] = 1;
                     $params               = array(
@@ -3362,7 +3406,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                     $websites             = MainWP_DB::instance()->get_websites_for_current_user( $params );
                     $data                 = $websites ? current( $websites ) : array();
                     $resp_data['data']    = $this->prepare_site_item_for_response_context( $data, $request, 'view' );
-            } else {
+            } elseif ( empty( $resp_data['group_message'] ) && empty( $resp_data['message'] ) ) {
                 $resp_data['error'] = esc_html__( 'Update site failed. Please try again.', 'mainwp' );
             }
         } catch ( \Exception $e ) {

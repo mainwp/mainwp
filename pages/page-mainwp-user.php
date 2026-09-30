@@ -715,7 +715,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             <i class="close icon"></i>
             <div class="header"><?php esc_html_e( 'Edit User', 'mainwp' ); ?></div>
             <div class="scrolling content">
-                <div class="ui info message"><?php esc_html_e( 'Empty fields will not be passed to child sites.', 'mainwp' ); ?></div>
+                <div class="ui info message"><?php esc_html_e( 'Blank fields will not be changed.', 'mainwp' ); ?></div>
                 <form id="update_user_profile" class="ui form">
                     <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
 

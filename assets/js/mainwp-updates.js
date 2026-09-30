@@ -45,17 +45,33 @@ globalThis.mainwp_init_html_popup = function (popupSelector, content) {
 };
 
 // Decode slug safely.
-globalThis.mainwp_decode_slug = function (value) { // NOSONAR
+globalThis.mainwp_decode_slug = function (value, escape ) { // NOSONAR
     if (typeof value !== 'string' || !value.includes('%')) {
-        return value;
+        return (true === escape && typeof value === 'string') ? mainwp_escape_html(value) : value;
     }
 
     try {
-        return decodeURIComponent(value);
+        value = decodeURIComponent(value);
     } catch {
-        return value;
+        // nothing.
     }
+
+    if(true === escape){
+        return mainwp_escape_html(value);
+    }
+
+    return value;
 };
+
+globalThis.mainwp_escape_html = function (value) { // NOSONAR
+    const div = document.createElement('div');
+    div.textContent = value ?? '';
+
+    return div.innerHTML
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+};
+
 
 // Normalize slug list to array.
 globalThis.mainwp_slug_list_to_array = function (value) { // NOSONAR.
@@ -1040,9 +1056,97 @@ let updatesoverview_plugins_upgrade_all_loop_next = function () {
         updatesoverview_plugins_upgrade_all_upgrade_next();
     }
 };
-let updatesoverview_plugins_upgrade_all_update_site_status = function (siteId, newStatus) {
-    jQuery('.updatesoverview-upgrade-status-wp[siteid="' + siteId + '"]').html(newStatus);
+let updatesoverview_plugins_upgrade_all_update_site_status = function (siteId, newStatus, append) {
+    const $status = jQuery('.updatesoverview-upgrade-status-wp[siteid="' + siteId + '"]');
+
+    if (append) {
+        $status.append(newStatus);
+    } else {
+        $status.html(newStatus);
+    }
 };
+
+/**
+ * Updates the status popup for a site upgrade item.
+ *
+ * @param {number|string} siteId     The site ID.
+ * @param {number} itemnumber        The upgrade item number.
+ * @param {Object} options           Options for updating the popup status.
+ * @param {*}      options.status    The status content or value.
+ * @param {boolean} options.ispopup  Whether to display the status in a popup.
+ * @param {*}      options.icon      The icon to display with the status.
+ * @param {boolean} options.append   Whether to append the content instead of replacing it.
+ * @param {*}      options.addition  Additional content or data to include.
+ * @param {boolean} options.isHidden Whether to hide the status.
+ *
+ * @returns {void}
+ */
+let upgradeall_update_site_popup_multi_status = function (siteId, itemnumber, options = {}) {
+    if (!siteId) {
+        return;
+    }
+    const {
+        status = false,
+        ispopup = false,
+        icon = false,
+        append = false,
+        addition = false,
+        isHidden = false,
+    } = options;
+
+    const $sitestatus = jQuery(`.updatesoverview-upgrade-status-wp[siteid="${siteId}"]`);
+    const clsitem = Number.isInteger(itemnumber) ? `status-item-${itemnumber}` : 'status-item-1';
+    const clspop = true === ispopup ? 'mainwp-html-popup' : '';
+
+    let $item = $sitestatus.find(`.${clspop ? clspop + '.' : ''}${clsitem}`);
+
+    if ( ! $item.length ) {
+        const item = true === ispopup
+            ? `<span class="${clspop} ${clsitem}" data-position="left center" data-html=""></span>`
+            : `<span class="${clsitem}" data-position="left center" data-tooltip=""></span>`;
+        $sitestatus.append(item);
+        $item = $sitestatus.find(`.${clspop ? clspop + '.' : ''}${clsitem}`);
+    }
+
+    if(true === isHidden){
+        $item.hide();
+    } else {
+        $item.show();
+    }
+
+    if ( typeof icon === 'string' ) {
+        $item.html(icon);
+    }
+
+    if ( typeof status === 'string' ) {
+        if(true === ispopup){
+            let content = status;
+            if (append) {
+                const existingContent = $item?.attr('data-html') || '';
+                content = existingContent
+                    ? `${existingContent}<br>${status}`
+                    : status;
+            }
+            $item.attr('data-html', content);
+            mainwp_init_html_popup($item, content);
+        } else {
+            let content = status;
+            if (append) {
+                const existingContent = $item?.attr('data-tooltip') || '';
+                content = existingContent
+                    ? `${existingContent}; ${status}`
+                    : status;
+            }
+            $item.attr('data-tooltip', content);
+        }
+    }
+
+    if ( typeof addition === 'string' ) {
+        $sitestatus.append(addition);
+    }
+};
+
+
 let updatesoverview_plugins_upgrade_all_upgrade_next = function () {
     mainwpVars.currentThreads++;
     mainwpVars.websitesLeft--;
@@ -1065,11 +1169,16 @@ let updatesoverview_plugins_upgrade_all_upgrade_next = function () {
 
 let updatesoverview_check_to_continue_updates = function () {
     mainwpVars.bulkTaskRunning = false;
-    setTimeout(function () {
-        if (!mainwpVars?.errorCount && jQuery('.updates-regression-score-red-flag').length === 0) {
-            mainwpPopup('#mainwp-sync-sites-modal').close(true);
-        }
-    }, 3000);
+    if (!mainwpVars?.errorCount){
+        setTimeout(function () {
+            // wait for generated updates-regression-score-red-flag.
+            if (jQuery('.updates-regression-score-red-flag').length === 0) {
+                mainwpPopup('#mainwp-sync-sites-modal').close(true);
+            }
+        }, 3000);
+    } else {
+        mainwpPopup('#mainwp-sync-sites-modal').updateStatusLabel(MainWP.I18n.t('processed'));
+    }
     return false;
 }
 
@@ -1098,7 +1207,7 @@ let mainwp_handle_regression_final_icon = function (pWebsiteId, success_icon) {
     };
 }
 
-let updatesoverview_plugins_upgrade_int_after_backup = function (pSlug, pWebsiteId, pBulkMode, pLastResult) { // NOSONAR - nest functions.
+let updatesoverview_plugins_upgrade_int_after_backup = function (pSlug, pWebsiteId, pBulkMode, pLastResult, errorHappen) { // NOSONAR - nest functions.
     return function () {
         let slugList = globalThis.mainwp_slug_list_to_array(pSlug); // NOSONAR -- window is ok.
 
@@ -1132,6 +1241,10 @@ let updatesoverview_plugins_upgrade_int_after_backup = function (pSlug, pWebsite
                 websiteHolder = jQuery('.plugins-bulk-updates[site_id="' + pWebsiteId + '"] tr[plugin_slug="' + sid + '"]');
             }
             websiteHolder.find('td:last-child').html(waiting_icon);
+        }
+
+        if( errorHappen === undefined ){
+            errorHappen = false;
         }
 
         let data = mainwp_secure_data({
@@ -1169,34 +1282,39 @@ let updatesoverview_plugins_upgrade_int_after_backup = function (pSlug, pWebsite
                                 updatesoverview_plugins_upgrade_all_update_site_status(pWebsiteId, extErr);
                             websiteHolder.find('td:last-child').html(extErr);
                             mainwpVars.errorCount++;
+                            errorHappen = true;
                         } else {
                             let res = response.result;
                             let res_error = response.result_error;
-                            res_started = response.result_started;
+                            res_started = response.result_started; // for backward compatibility.
                             if (mainwp_get_result_entry(res, sid)) {
                                 lastResult = res;
                                 let _success_icon = `<i class="green check icon"></i>`;
                                 let success_icon = '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Update successful', 'mainwp') + '">' + _success_icon + '</span>';
                                 websiteHolder.attr('updated', 1);
                                 websiteHolder.find('td:last-child').html(success_icon + ' ' + mainwp_links_visit_site_and_admin('', pWebsiteId));
-                            } else if (res_started[sid]) {
+                            } else if (mainwp_get_result_entry(res_started, sid)) { // for backward compatibility.
                                 let _success_icon = `<i class="green check icon"></i>`;
-                                let success_icon = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Premium update started. Please wait a moment, then sync the data again.') + '">' + _success_icon + '</span>';
+                                let success_icon = '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Premium update started. Please wait a moment, then sync the data again.') + '">' + _success_icon + '</span>';
                                 websiteHolder.attr('updated', 1);
                                 websiteHolder.find('td:last-child').html(success_icon + ' ' + mainwp_links_visit_site_and_admin('', pWebsiteId));
-                            } else if (res_error[sid]) {
-                                let _error = res_error[sid];
+                            } else if (mainwp_get_result_entry(res_error, sid)) {
+                                let _error = mainwp_get_result_entry(res_error, sid);
                                 let roll_error = mainwp_updates_get_rollback_msg(_error);
+                                let roll_icon = _icon;
                                 if (roll_error) {
                                     _error = roll_error;
-                                    _icon = mainwpParams.roll_ui_icon;
+                                    roll_icon = mainwpParams.roll_ui_icon;
                                 }
-                                bulk_errors.push(_error);
-                                websiteHolder.find('td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + _error + '">' + _icon + '</span>');
+                                bulk_errors.push(mainwp_escape_html(_error));
+                                websiteHolder.find('td:last-child').html('<span data-inverted="" data-position="left center" data-tooltip="' + mainwp_escape_html(_error) + '">' + roll_icon + '</span>');
                                 mainwpVars.errorCount++;
+                                errorHappen = true;
                             } else {
+                                bulk_errors.push(MainWP.I18n.t('Update failed. Please try again.'));
                                 websiteHolder.find('td:last-child').html('<i class="red times icon"></i>');
                                 mainwpVars.errorCount++;
+                                errorHappen = true;
                             }
                         }
                     }
@@ -1207,14 +1325,15 @@ let updatesoverview_plugins_upgrade_int_after_backup = function (pSlug, pWebsite
                     }
 
                     if (remainingSlugs && remainingSlugs.length > 0) {
-                        updatesoverview_plugins_upgrade_int_after_backup(remainingSlugs, pWebsiteId, pBulkMode, lastResult)();
+                        updatesoverview_plugins_upgrade_int_after_backup(remainingSlugs, pWebsiteId, pBulkMode, lastResult, errorHappen)();
                         return;
                     }
                     if (
                         pBulkMode &&
                         !bulk_errors.length &&
                         !response.error &&
-                        !response.notices
+                        !response.notices &&
+                        !errorHappen
                     ) {
                         if (
                             lastResult &&
@@ -1231,12 +1350,13 @@ let updatesoverview_plugins_upgrade_int_after_backup = function (pSlug, pWebsite
                             );
                         } else if (typeof mainwp_html_regression === "undefined" || mainwp_html_regression.use_after_updates !== "1") {
                             let success_icon = `<i class="green check icon"></i>`;
+                            // for backward compatibility.
                             if (
                                 res_started !== null &&
                                 typeof res_started === 'object' &&
                                 Object.keys(res_started).length > 0
                             ) {
-                                success_icon = '<span data-inverted="" data-position="left center" data-tooltip="' + __('Premium update started. Please wait a moment, then sync the data again.') + '">' + success_icon + '</span>';
+                                success_icon = '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Premium update started. Please wait a moment, then sync the data again.') + '">' + success_icon + '</span>';
                             }
                             updatesoverview_plugins_upgrade_all_update_site_status(pWebsiteId, success_icon);
                         }
@@ -1276,6 +1396,7 @@ let updatesoverview_plugins_upgrade_int_after_backup = function (pSlug, pWebsite
             error: function (xhr) {
                 this.tryCount++;
                 if (this.tryCount >= this.retryLimit) {
+                    mainwpVars.errorCount++;
                     this.endError();
                     return;
                 }
@@ -1664,6 +1785,7 @@ let updatesoverview_themes_upgrade_int = function (slug, websiteId, bulkMode, la
                         if (!done && pBulkMode)
                             updatesoverview_themes_upgrade_all_update_site_status(pWebsiteId, extErr);
                         websiteHolder.find('td:last-child').html(extErr);
+                        mainwpVars.errorCount++;
                     } else {
                         let res = response.result;
                         let res_error = response.result_error;
@@ -1685,12 +1807,12 @@ let updatesoverview_themes_upgrade_int = function (slug, websiteId, bulkMode, la
                                     _icon = mainwpParams.roll_ui_icon;
                                     bulk_icon = mainwpParams.roll_ui_icon;
                                 }
-                                bulk_errors.push(_error);
+                                bulk_errors.push(mainwp_escape_html(_error));
                                 mainwpVars.errorCount++;
                             }
                             if (_error) {
                                 websiteHolder.find('td:last-child').html('<span class="mainwp-html-popup" data-position="left center" data-html="">' + _icon + '</span>');
-                                mainwp_init_html_popup(websiteHolder.find('td:last-child').find('.mainwp-html-popup'), _error);
+                                mainwp_init_html_popup(websiteHolder.find('td:last-child').find('.mainwp-html-popup'), mainwp_escape_html(_error));
                             }
                         }
                     }
@@ -1761,6 +1883,7 @@ let updatesoverview_themes_upgrade_int = function (slug, websiteId, bulkMode, la
         error: function (xhr) {
             this.tryCount++;
             if (this.tryCount >= this.retryLimit) {
+                mainwpVars.errorCount++;
                 this.endError();
                 return;
             }
@@ -2185,6 +2308,8 @@ let updatesoverview_upgrade_all_update_done = function () {
                 // close and refresh page
                 mainwpPopup('#mainwp-sync-sites-modal').close(true);
             }, 3000);
+        } else {
+            mainwpPopup('#mainwp-sync-sites-modal').updateStatusLabel(MainWP.I18n.t('processed'));
         }
         return;
     }
@@ -2258,6 +2383,7 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
                             if (response.error) {
                                 result = getErrorMessage(response.error);
                                 pErrorMessage = result;
+                                mainwpVars.errorCount++;
                             } else {
                                 let res = response.result;
                                 if (mainwp_get_result_entry(res, sid)) {
@@ -2344,6 +2470,7 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
             error: function (xhr) {
                 this.tryCount++;
                 if (this.tryCount >= this.retryLimit) {
+                    mainwpVars.errorCount++;
                     this.endError();
                     return;
                 }
@@ -2418,6 +2545,7 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
                             if (response.error) {
                                 result = getErrorMessage(response.error);
                                 pErrorMessage = result;
+                                mainwpVars.errorCount++;
                             }
                             else {
                                 let res = response.result;   // result is an object
@@ -2497,6 +2625,7 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
             error: function (xhr) {
                 this.tryCount++;
                 if (this.tryCount >= this.retryLimit) {
+                    mainwpVars.errorCount++;
                     this.endError();
                     return;
                 }
@@ -2675,6 +2804,7 @@ let updatesoverview_upgrade_int_flow = function (params) { // NOSONAR - complex.
                             if (response.error) {
                                 result = getErrorMessage(response.error);
                                 pErrorMessage = result;
+                                mainwpVars.errorCount++;
                             } else {
                                 let res = response.result;
                                 if (mainwp_get_result_entry(res, sid)) {
@@ -3912,39 +4042,85 @@ let updatesoverview_upgrade_plugintheme_list_popup = function (what, pId, pSiteN
     updatesoverview_update_popup_init(initData);
 
     // Show icon waiting
-    const regression_waiting_icon = render_html_regression_waiting_icon();
     let waiting_icon = render_tooltip_loading_icon('<i class="notched circle loading icon"></i>');
-    if (regression_waiting_icon && "" !== regression_waiting_icon) {
-        waiting_icon += regression_waiting_icon;
+    // init sites status items.
+    const statuses = [
+        {
+            item: 1,
+            icon: waiting_icon,
+        },
+        {
+            item: 2,
+            ispopup: true,
+            icon: '<i class="green check icon"></i>',
+            isHidden: true,
+        },
+        {
+            item: 3,
+            ispopup: true,
+            icon: '<i class="red times icon"></i>',
+            isHidden: true,
+        },
+        {
+            item: 5,
+            ispopup: true,
+            icon: '', // Reserved for future use.
+            isHidden: true,
+        },
+    ];
+
+    const regression_waiting_icon = render_html_regression_waiting_icon();
+
+    if (regression_waiting_icon) {
+        statuses.push({
+            item: 4,
+            icon: regression_waiting_icon,
+            isHidden: true,
+        });
     }
 
-    updatesoverview_plugins_upgrade_all_update_site_status(pId, waiting_icon);
+    updatesoverview_plugins_upgrade_all_update_site_status(pId,''); // clear status first.
+
+    statuses.forEach((status) => {
+        const { item, ...options } = status;
+        upgradeall_update_site_popup_multi_status(pId, item, options);
+    });
 
     let queue = list.slice();
-    let lastResult = null;
+    let countError = 0;
+    let lastResult = '';
 
-    let processNext = function () {
+    let processLoop = function (response) {
         if (queue.length === 0) {
             mainwpPopup('#mainwp-sync-sites-modal').setProgressSite(1);
-            let success_icon = '<i class="green check icon"></i>';
             if (
                 lastResult &&
                 typeof mainwp_html_regression !== "undefined" &&
                 mainwp_html_regression.use_after_updates === "1"
             ) {
-                let regression_icon_loading = render_html_regression_icon(lastResult, function (regression_final_icon) {
-                    const final_icon = `${success_icon} ${regression_final_icon}`;
-                    updatesoverview_plugins_upgrade_all_update_site_status(pId, final_icon);
+                let regression_icon_callback = render_html_regression_icon(lastResult, function (regression_final_icon) {
+                    upgradeall_update_site_popup_multi_status(pId, 4, {
+                        icon: regression_final_icon,
+                    });
                 });
-                updatesoverview_plugins_upgrade_all_update_site_status(pId, `${success_icon} ${regression_icon_loading}`);
-            } else {
-                updatesoverview_plugins_upgrade_all_update_site_status(pId, success_icon);
+                upgradeall_update_site_popup_multi_status(pId, 4, {
+                    icon: regression_icon_callback,
+                });
             }
-            if (jQuery('.updates-regression-score-red-flag').length === 0) {
+            upgradeall_update_site_popup_multi_status(pId, 1, {
+                isHidden: true  // hide spinner.
+            });
+
+            if ( countError === 0 ) {
                 setTimeout(function () {
-                    mainwpPopup('#mainwp-sync-sites-modal').close();
-                    globalThis.location.href = location.href; // NOSONAR - window is ok.
+                    // wait for generated updates-regression-score-red-flag.
+                    if( jQuery('.updates-regression-score-red-flag').length === 0 ) {
+                        mainwpPopup('#mainwp-sync-sites-modal').close();
+                        globalThis.location.href = location.href; // NOSONAR - window is ok.
+                    }
                 }, 3000);
+            } else {
+                mainwpPopup('#mainwp-sync-sites-modal').updateStatusLabel(MainWP.I18n.t('processed'));
             }
             return;
         }
@@ -3956,35 +4132,94 @@ let updatesoverview_upgrade_plugintheme_list_popup = function (what, pId, pSiteN
             type: what,
             slug: item
         });
-
+        let decoded = mainwp_decode_slug(item, true);
         jQuery.post(ajaxurl, data, function (response) { // NOSONAR - complex.
             let res_error = response.result_error;
-            let _icon = '<i class="red times icon"></i>';
             let hasError = false;
-
             if (response.error) {
-                let extErr = getErrorMessageInfo(response.error, 'ui');
-                updatesoverview_plugins_upgrade_all_update_site_status(pId, extErr);
+                let extErr = getErrorMessageInfo(response.error);
+                let new_status = decoded + ` - ${mainwp_escape_html(extErr)}`;
+                upgradeall_update_site_popup_multi_status(pId, 3, {
+                    status:new_status,
+                    append:true,
+                    ispopup: true
+                });
                 hasError = true;
             } else if (res_error && mainwp_get_result_entry(res_error, item)) {
+                let new_status = decoded;
                 let _error = mainwp_get_result_entry(res_error, item);
                 let roll_error = mainwp_updates_get_rollback_msg(_error);
                 if (roll_error) {
-                    _error = roll_error;
-                    _icon = mainwpParams.roll_ui_icon;
+                    new_status += ` - ${mainwp_escape_html(roll_error)}`;
+                    let _icon = mainwpParams.roll_ui_icon;
+                    upgradeall_update_site_popup_multi_status(pId, 5, {
+                        icon: _icon,
+                        ispopup: true,
+                    });
+                    upgradeall_update_site_popup_multi_status(pId, 5, {
+                        status: new_status,
+                        ispopup: true,
+                        append:true
+                    });
+                } else {
+                    new_status += ` - ${mainwp_escape_html(_error)}`;
+                    upgradeall_update_site_popup_multi_status(pId, 3, {
+                        status: new_status,
+                        ispopup: true,
+                        append:true
+                    });
                 }
-                jQuery('.updatesoverview-upgrade-status-wp[siteid="' + pId + '"]').html('<span class="mainwp-html-popup" data-position="left center" data-html="">' + _icon + '</span>');
-                mainwp_init_html_popup('.updatesoverview-upgrade-status-wp[siteid="' + pId + '"] .mainwp-html-popup', _error);
                 hasError = true;
+            } else {
+                let new_status = decoded;
+                let statusItem = 2;
+                // for backward compatibility.
+                if (mainwp_get_result_entry(response.result_started, item)) {
+                    new_status = '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Premium update started. Please wait a moment, then sync the data again.') + '">' + new_status + '</span>';
+                    hasError = true; // Prevent the popup from closing automatically.
+                } else if (!mainwp_get_result_entry(response.result, item)) {
+                    new_status += ` - ${MainWP.I18n.t('Failed to update. Please try again.')}`;
+                    hasError = true; // Prevent the popup from closing automatically.
+                    statusItem = 3;
+                } else {
+                    new_status += ` - ${MainWP.I18n.t('Updated successfully')}`;
+                }
+                upgradeall_update_site_popup_multi_status(pId, statusItem, {
+                    status: new_status,
+                    ispopup: true,
+                    append:true
+                });
             }
 
-            if (!hasError) {
-                lastResult = response.result;
+            if( !hasError ){
+                lastResult = response?.result;
+            } else {
+                ++countError;
             }
-            processNext();
-        }, 'json');
+
+            processLoop(response);
+        }, 'json').fail(function (jqXHR, textStatus, errorThrown) {
+            let errorMessage = errorThrown || textStatus || MainWP.I18n.t('Invalid response from the server');
+            let new_status = decoded + ` - ${MainWP.I18n.t('Failed to update')}: ${mainwp_escape_html(errorMessage)}`;
+
+            upgradeall_update_site_popup_multi_status(pId, 3, {
+                status: new_status,
+                ispopup: true,
+                append: true
+            });
+
+            ++countError; // Prevent the popup from closing automatically.
+
+            processLoop({
+                error: errorMessage,
+                result: {},
+                result_error: {},
+                result_started: {}
+            });
+        });
     };
-    processNext();
+
+    processLoop();
 }
 
 // for semantic ui checkboxes

@@ -860,6 +860,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
             'mainwp_pluginAutomaticDailyUpdate'           => esc_html__( 'Plugin advanced automatic updates enabled', 'mainwp' ),
             'mainwp_themeAutomaticDailyUpdate'            => esc_html__( 'Theme advanced automatic updates enabled', 'mainwp' ),
             'mainwp_numberdays_Outdate_Plugin_Theme'      => esc_html__( 'Abandoned plugins/themes tolerance', 'mainwp' ),
+            'mainwp_abandoned_check_by_local_date'        => esc_html__( 'Abandoned check by local file date', 'mainwp' ),
             'mainwp_maximumPosts'                         => esc_html__( 'Maximum number of posts to return', 'mainwp' ),
             'mainwp_maximumPages'                         => esc_html__( 'Maximum number of pages to return', 'mainwp' ),
             'mainwp_maximumComments'                      => esc_html__( 'Maximum number of comments', 'mainwp' ),
@@ -1482,6 +1483,10 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
                         esc_html__( '%d days', 'mainwp' ),
                         (int) get_option( 'mainwp_numberdays_Outdate_Plugin_Theme', $default_setting['mainwp_numberdays_Outdate_Plugin_Theme'] )
                     ),
+                ),
+                array(
+                    'label' => esc_html__( 'Abandoned check by local file date', 'mainwp' ),
+                    'value' => static::format_boolean_label( (int) get_option( 'mainwp_abandoned_check_by_local_date', $default_setting['mainwp_abandoned_check_by_local_date'] ) ),
                 ),
                 array(
                     'label' => esc_html__( 'Primary backup system', 'mainwp' ),

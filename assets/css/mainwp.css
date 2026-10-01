@@ -1013,31 +1013,28 @@ table.mainwp-manage-wpsites-table .error a {
     margin-bottom: 2em;
 }
 
-/* Fixed widths, so the same column starts at the same place in every table of the panel. */
+/* The combined inherited table is the only table that needs a type column. */
 #mainwp-knowledge-panel table th.mainwp-knowledge-type-cell {
     width: 9em;
 }
 
-/* Wide enough for the longest relative time on one line; a narrower column grows with its content and shifts the others. */
-#mainwp-knowledge-panel table th.mainwp-knowledge-updated-cell {
-    width: 11em;
-}
-
-#mainwp-knowledge-panel table th.mainwp-knowledge-editor-cell,
 #mainwp-knowledge-panel table th.mainwp-knowledge-actions-cell {
     width: 12em;
 }
 
-#mainwp-knowledge-panel table td.mainwp-knowledge-updated-cell,
 #mainwp-knowledge-panel table td.mainwp-knowledge-actions-cell {
     white-space: nowrap;
+}
+
+#mainwp-knowledge-panel table th.mainwp-knowledge-editor-cell {
+    width: 16em;
 }
 
 #mainwp-knowledge-panel table td.mainwp-knowledge-editor-cell {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 12em;
+    max-width: 16em;
 }
 
 /* Manage Cliens Table */

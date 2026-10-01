@@ -162,11 +162,23 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		$this->assertEqualsCanonicalizing( array( $context->id, $memory->id ), array_column( $response['data']['records'], 'id' ) );
 		$this->assertEqualsCanonicalizing( array( 'context', 'memory' ), array_column( $response['data']['records'], 'type' ) );
 		foreach ( $response['data']['records'] as $record ) {
-			foreach ( array( 'id', 'type', 'type_label', 'title', 'revision', 'updated_by_name', 'updated_ago', 'updated_display' ) as $key ) {
+			foreach ( array( 'id', 'type', 'type_label', 'title', 'body_preview', 'revision', 'updated_by_name', 'updated_ago' ) as $key ) {
 				$this->assertArrayHasKey( $key, $record );
 			}
+			$this->assertSame( "Keep client's C:\\notes verbatim.\nSecond line.", $record['body_preview'] );
 			$this->assertArrayNotHasKey( 'body', $record );
 		}
+	}
+
+	public function test_list_limits_the_body_preview_to_one_hundred_characters(): void {
+		$body     = str_repeat( 'Ž', MainWP_DB_Knowledge::BODY_PREVIEW_LENGTH + 1 );
+		$record   = $this->create_record( array( 'body' => $body ) );
+		$response = $this->call( 'mainwp_knowledge_list', $this->input() );
+		$matches  = array_values( array_filter( $response['data']['records'], static fn( $item ) => $record->id === $item['id'] ) );
+		$summary  = $matches[0];
+
+		$this->assertSame( str_repeat( 'Ž', MainWP_DB_Knowledge::BODY_PREVIEW_LENGTH ) . '…', $summary['body_preview'] );
+		$this->assertArrayNotHasKey( 'body', $summary );
 	}
 
 	public function test_get_record_body(): void {
@@ -679,30 +691,93 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		return $html;
 	}
 
-	public function test_site_overview_mounts_the_panel_without_the_edit_right(): void {
-		$this->withhold_right( 'edit_sites' );
-
-		$this->assertStringContainsString(
-			'id="mainwp-knowledge-panel" data-scope-type="site" data-scope-id="' . $this->site_id . '"',
-			$this->render_site_overview()
-		);
+	private function render_site_knowledge(): string {
+		$site = \MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( $this->site_id );
+		$previous                  = $GLOBALS['current_screen'] ?? null;
+		$GLOBALS['current_screen'] = \WP_Screen::get( 'mainwp_page_managesites' );
+		ob_start();
+		try {
+			\MainWP\Dashboard\MainWP_Manage_Sites_View::render_knowledge( $site );
+		} finally {
+			$html                      = ob_get_clean();
+			$GLOBALS['current_screen'] = $previous;
+		}
+		return $html;
 	}
 
-	public function test_site_overview_modal_carries_the_view_hooks(): void {
+	public function test_site_overview_does_not_mount_the_knowledge_panel(): void {
+		$this->assertStringNotContainsString( 'mainwp-knowledge-panel', $this->render_site_overview() );
+	}
+
+	public function test_site_knowledge_route_uses_individual_site_mode(): void {
+		$previous_get        = $_GET;
+		$_GET['page']        = 'managesites';
+		$_GET['knowledgeid'] = (string) $this->site_id;
+
+		try {
+			$this->assertTrue( \MainWP\Dashboard\MainWP_System::is_mainwp_site_page() );
+		} finally {
+			$_GET = $previous_get;
+		}
+	}
+
+	public function test_site_knowledge_page_mounts_the_panel_without_the_edit_right(): void {
+		$this->withhold_right( 'edit_sites' );
+		$html = $this->render_site_knowledge();
+
+		$this->assertStringContainsString(
+			'class="ui padded segment dimmable" id="mainwp-knowledge-panel" data-scope-type="site" data-scope-id="' . $this->site_id . '"',
+			$html
+		);
+		$this->assertStringNotContainsString( '<h3 class="ui header">Knowledge</h3>', $html );
+		$this->assertStringContainsString( '<div class="ui small header">', $html );
+		$this->assertStringContainsString( '<span class="mainwp-knowledge-inherited-title"></span>', $html );
+		$this->assertStringContainsString( '<div class="sub header">', $html );
+	}
+
+	public function test_site_knowledge_modal_carries_the_view_hooks(): void {
 		$this->withhold_right( 'edit_sites' );
 
 		// The panel script reads these by name; a missing one leaves the View button or the read-only modal without text.
-		$html = $this->render_site_overview();
+		$html = $this->render_site_knowledge();
 		$this->assertStringContainsString( 'data-view="View knowledge record"', $html );
 		$this->assertStringContainsString( 'data-close="Close"', $html );
 		$this->assertStringContainsString( '<input type="text" id="mainwp-knowledge-type-view" readonly>', $html );
 		$this->assertSame( 'View', \MainWP\Dashboard\MainWP_Knowledge_UI::js_strings()['view'] );
 	}
 
-	public function test_site_overview_without_dashboard_access_has_no_panel(): void {
+	public function test_site_knowledge_without_dashboard_access_has_no_panel(): void {
 		$this->withhold_right( 'access_individual_dashboard' );
 
-		$this->assertStringNotContainsString( 'mainwp-knowledge-panel', $this->render_site_overview() );
+		$this->assertStringNotContainsString( 'mainwp-knowledge-panel', $this->render_site_knowledge() );
+	}
+
+	public function test_client_edit_mounts_knowledge_as_the_last_accordion(): void {
+		$client = \MainWP\Dashboard\MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $this->client_id );
+		ob_start();
+		\MainWP\Dashboard\MainWP_Client::render_add_client_content( $client );
+		$html = ob_get_clean();
+
+		$notes     = strpos( $html, 'id="mainwp-notes-meta-accordion"' );
+		$knowledge = strpos( $html, 'id="mainwp-knowledge-accordion"' );
+		$panel     = strpos( $html, 'id="mainwp-knowledge-panel" data-scope-type="client" data-scope-id="' . $this->client_id . '"' );
+
+		$this->assertNotFalse( $notes );
+		$this->assertNotFalse( $knowledge );
+		$this->assertNotFalse( $panel );
+		$this->assertGreaterThan( $notes, $knowledge );
+		$this->assertGreaterThan( $knowledge, $panel );
+		$this->assertSame( 1, substr_count( $html, 'id="mainwp-knowledge-panel"' ) );
+		$this->assertStringContainsString( 'class="ui dimmer mainwp-knowledge-loader"', $html );
+		$this->assertStringNotContainsString( '<th class="mainwp-knowledge-type-cell">', $html );
+		$this->assertStringNotContainsString( '<th class="mainwp-knowledge-updated-cell">', $html );
+
+		preg_match_all( '/<div class="ui basic accordion mainwp-blank-accordion mainwp-sidebar-accordion" id="([^"]+)">/', $html, $accordions );
+		$this->assertSame( 'mainwp-knowledge-accordion', end( $accordions[1] ) );
+	}
+
+	public function test_only_the_combined_inherited_table_has_a_type_column(): void {
+		$this->assertSame( 1, substr_count( $this->render_site_knowledge(), '<th class="mainwp-knowledge-type-cell">' ) );
 	}
 
 	public function test_list_site_answers_db_error_when_the_client_lookup_fails(): void {

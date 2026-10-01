@@ -20,6 +20,7 @@ jQuery(function ($) {
     const modalHeader = modal.find('.header');
     const modalMessage = $('#mainwp-knowledge-modal-message');
     const panelMessage = $('#mainwp-knowledge-message');
+    const panelLoader = panel.children('.mainwp-knowledge-loader');
     const inheritedBlock = $('#mainwp-knowledge-inherited');
     const typeField = $('#mainwp-knowledge-type');
     const typeViewField = $('#mainwp-knowledge-type-view');
@@ -55,21 +56,28 @@ jQuery(function ($) {
 
     const row = (record, inherited = false) => {
         const tr = $('<tr></tr>').attr('data-id', record.id).attr('data-revision', record.revision);
-        const title = $('<td></td>').text(record.title);
+        const canEdit = canWrite && !inherited;
+        const title = $('<td></td>');
         if (!record.verified) {
-            title.append(' ').append(
+            title.append(
                 $('<span class="ui mini yellow label"></span>').attr('data-tooltip', strings.unverifiedHint).attr('data-inverted', '').text(strings.unverified)
-            );
+            ).append(' ');
         }
+        title.append($('<a href="#"></a>').addClass(canEdit ? 'mainwp-knowledge-edit' : 'mainwp-knowledge-view').text(record.title));
+        title.append($('<br>')).append($('<span class="ui small text"></span>').text(record.body_preview));
         tr.append(title);
-        tr.append($('<td class="mainwp-knowledge-type-cell"></td>').append($('<span class="ui mini label"></span>').text(record.type_label)));
-        tr.append($('<td class="mainwp-knowledge-editor-cell"></td>').text(record.updated_by_name));
-        tr.append($('<td class="mainwp-knowledge-updated-cell"></td>').append(
-            $('<span></span>').attr('data-tooltip', record.updated_display).attr('data-inverted', '').text(record.updated_ago)
-        ));
+        if (inherited) {
+            tr.append($('<td class="mainwp-knowledge-type-cell"></td>').append($('<span class="ui mini label"></span>').text(record.type_label)));
+        }
+        tr.append(
+            $('<td class="mainwp-knowledge-editor-cell"></td>')
+                .append($('<span></span>').text(record.updated_by_name))
+                .append($('<br>'))
+                .append($('<span class="ui small text"></span>').text(record.updated_ago))
+        );
         const actions = $('<td class="mainwp-knowledge-actions-cell right aligned"></td>');
         // Inherited client records are edited on the client profile, whatever the caller may write here.
-        if (canWrite && !inherited) {
+        if (canEdit) {
             actions.append($('<button type="button" class="ui mini basic button mainwp-knowledge-edit"></button>').text(strings.edit));
             actions.append(' ');
             actions.append($('<button type="button" class="ui mini basic red button mainwp-knowledge-delete"></button>').text(strings.remove));
@@ -85,11 +93,11 @@ jQuery(function ($) {
             inheritedBlock.hide().find('tbody').empty();
             return;
         }
-        inheritedBlock.find('.header').text(strings.inheritedFrom.replace('%s', () => inherited.client_name));
+        inheritedBlock.find('.mainwp-knowledge-inherited-title').text(strings.inheritedFrom.replace('%s', () => inherited.client_name));
         inheritedBlock.find('.mainwp-knowledge-inherited-link').attr('href', inherited.client_url);
         const body = inheritedBlock.find('tbody').empty();
         if (!inherited.records.length) {
-            body.append($('<tr></tr>').append($('<td colspan="5"></td>').append($('<em></em>').text(strings.inheritedEmpty))));
+            body.append($('<tr></tr>').append($('<td colspan="4"></td>').append($('<em></em>').text(strings.inheritedEmpty))));
         }
         inherited.records.forEach((record) => body.append(row(record, true)));
         inheritedBlock.show();
@@ -104,7 +112,7 @@ jQuery(function ($) {
             const body = section.find('tbody').empty();
             const own = records.filter((record) => record.type === type);
             if (!own.length) {
-                body.append($('<tr></tr>').append($('<td colspan="5"></td>').append($('<em></em>').text(denied ? strings.noAccess : strings.empty))));
+                body.append($('<tr></tr>').append($('<td colspan="3"></td>').append($('<em></em>').text(denied ? strings.noAccess : strings.empty))));
             }
             own.forEach((record) => body.append(row(record)));
             section.find('.mainwp-knowledge-add').toggle(canWrite);
@@ -112,7 +120,7 @@ jQuery(function ($) {
     };
 
     const load = (preserveMessage = false) => {
-        panel.addClass('loading');
+        panelLoader.addClass('active').attr('aria-hidden', 'false');
         post('mainwp_knowledge_list', {}).done((response) => {
             if (response.success) {
                 canWrite = !!response.data.can_write;
@@ -134,7 +142,7 @@ jQuery(function ($) {
         }).fail(() => {
             showMessage(panelMessage, strings.failed, 'red');
         }).always(() => {
-            panel.removeClass('loading');
+            panelLoader.removeClass('active').attr('aria-hidden', 'true');
         });
     };
 
@@ -305,10 +313,12 @@ jQuery(function ($) {
     panel.on('click', '.mainwp-knowledge-add', function () {
         openAdd($(this).data('type'));
     });
-    panel.on('click', '.mainwp-knowledge-edit', function () {
+    panel.on('click', '.mainwp-knowledge-edit', function (event) {
+        event.preventDefault();
         openRecord($(this).closest('tr').data('id'), 'edit');
     });
-    panel.on('click', '.mainwp-knowledge-view', function () {
+    panel.on('click', '.mainwp-knowledge-view', function (event) {
+        event.preventDefault();
         openRecord($(this).closest('tr').data('id'), 'view');
     });
     panel.on('click', '.mainwp-knowledge-delete', function () {

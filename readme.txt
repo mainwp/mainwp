@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 6.2
+Stable tag: 6.2.1
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -150,6 +150,42 @@ Please report security bugs found in the source code of the MainWP plugin throug
 11. Dashboard Insights
 
 == Changelog ==
+
+= 6.2.1 - 9-30-2026 =
+
+* Fixed: Resolved an issue where enabling global uptime monitoring left monitors for previously added sites disabled.
+* Fixed: Removing a website now also removes its associated monitors and monitoring data.
+* Fixed: Improved database schema comparisons to correctly handle nullable defaults without misinterpreting markers inside quoted SQL values.
+* Fixed: Database upgrades now ensure group records include the required identifier and primary key.
+* Fixed: Resolved an issue affecting tag updates through REST API v2.
+* Fixed: Update rows now leave the version field blank when version information is unavailable.
+* Fixed: Resolved inconsistencies when processing update and synchronization responses.
+* Updated: Improved upgrade status reporting for plugins, themes, and translations, including clearer handling when upgrades begin or cannot proceed.
+* Updated: Strengthened authenticated and renewal request signatures with a longer, cryptographically random nonce.
+* Updated: Missing primary monitors are now repaired automatically, restoring monitoring for affected sites.
+* Updated: Clarified the notices on the “Edit Client” and “Edit User” screens that leaving fields blank preserves their existing values on child sites.
+* Updated: Improved tag readability by validating background colors and automatically selecting contrasting black or white text.
+
+= 6.2 - 9-9-2026 =
+
+* Fixed: Improved database size notices on the Operations and Client Overview pages with appropriate spacing and context.
+* Fixed: Sorting by URL in the Connection Status widget.
+* Fixed: File input field sanitization issues specific to Windows hosts.
+* Fixed: Prevented unnecessary loading overlays and processing errors when the overlay is unavailable.
+* Added: New Database section to Server Information with database version, size, prefix, privilege status, and table health information.
+* Added: System Monitor for WordPress cron health with scheduled checks, fallback execution, and manual triggering.
+* Added: Command Palette trigger in the header for quicker navigation in supported WordPress setups.
+* Added: Optional request signature verification for authenticated requests using structured signing details and request IDs.
+* Added: Support for exact client field names and values, including empty values and "0", in searches and API requests.
+* Added: Validation of supported groups, actions, and item formats for REST API batch requests.
+* Added: Automatic cleanup of cost records when clients or tags are deleted through the REST API.
+* Added: Re-introduced the User column in the Network Activity widget.
+* Updated: Improved privacy-safe diagnostics for unexpected responses without recording sensitive response content or URLs.
+* Updated: Improved validation and normalization of JSON input for GET and DELETE capability requests.
+* Updated: Improved REST API error handling for invalid, ambiguous, oversized, malformed, or incorrectly typed request data with clear 400 responses.
+* Updated: Expanded REST API batch operations, API key management, and cost tracking associations.
+* Updated: Adjusted the Plugin Details modal height.
+* Updated: Standardized site name URL formatting in Insights Events by removing HTTP prefixes and trailing slashes.
 
 = 6.1.8 - 8-25-2026 =
 

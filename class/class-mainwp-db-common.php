@@ -1058,7 +1058,31 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         if ( empty( $website ) ) {
             return false;
         }
+
         $success = false;
+
+        $websiteid = (int) $websiteid;
+
+        $group_update_success = null;
+        $new_groupids         = array();
+
+        // Validate group IDs before updating any website data.
+        if ( isset( $data['groupids'] ) && is_string( $data['groupids'] ) ) {
+            $group_update_success = true;
+            $groupids_string      = trim( wp_unslash( $data['groupids'] ) );
+            $new_groupids         = $this->validate_site_group_ids( $groupids_string );
+            if ( false === $new_groupids ) {
+                $group_update_success = false;
+            }
+        }
+
+        // Do not modify any group associations until all group IDs are validated.
+        if ( false === $group_update_success ) {
+            return array(
+                'group_updated' => false,
+                'group_message' => 'Failed to update tags or invalid tag IDs.',
+            );
+        }
 
         $map_fields = array(
             'http_user'   => 'http_user',
@@ -1074,16 +1098,20 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         foreach ( $map_fields as $field => $name ) {
             if ( isset( $data[ $name ] ) && empty( ! $data[ $name ] ) ) {
                 $value = $data[ $name ];
+
                 // MWP-1548: encrypt http_user / http_pass at rest before
                 // they hit the raw SQL UPDATE. Same fail-closed contract
                 // as the other write paths in MainWP_DB.
                 if ( 'http_user' === $field || 'http_pass' === $field ) {
                     $encrypted = MainWP_Credential_Storage::encrypt_credential( $value, $field );
+
                     if ( false === $encrypted ) {
                         return false;
                     }
+
                     $value = $encrypted;
                 }
+
                 $update_fields[ $field ] = $value;
             }
         }
@@ -1116,6 +1144,7 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
                 $update_fields,
                 array( 'id' => $websiteid )
             );
+
             if ( false === $updated ) {
                 return false;
             }
@@ -1159,11 +1188,14 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         if ( isset( $data['backup_before_upgrade'] ) ) {
             $newValues['backup_before_upgrade'] = $data['backup_before_upgrade'] ? 1 : 0;
         }
+
         if ( isset( $data['force_use_ipv4'] ) ) {
             $forceuseipv4 = intval( $data['force_use_ipv4'] );
+
             if ( 2 < $forceuseipv4 ) {
                 $forceuseipv4 = 0;
             }
+
             $newValues['force_use_ipv4'] = $forceuseipv4;
         }
 
@@ -1190,14 +1222,290 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
 
         if ( isset( $data['monitoring_emails'] ) ) {
             $monitoring_emails = MainWP_Utility::valid_input_emails( $data['monitoring_emails'] );
-            MainWP_DB::instance()->update_website_option( $website, 'monitoring_notification_emails', ( $monitoring_emails ) );
 
+            MainWP_DB::instance()->update_website_option(
+                $website,
+                'monitoring_notification_emails',
+                $monitoring_emails
+            );
         }
 
-        return array(
-            'message' => 'Site updated successfully.',
-            'site'    => $website->url,
-            'success' => $success,
+        // Update group associations last so that credential encryption and
+        // website updates cannot fail after the group changes are committed.
+        if ( null !== $group_update_success ) {
+            $group_update_success = $this->safe_update_site_group_ids(
+                $websiteid,
+                $new_groupids
+            );
+
+            if ( false === $group_update_success ) {
+                return array(
+                    'group_updated' => false,
+                    'group_message' => 'Failed to update tags or invalid tag IDs.',
+                    'message'       => 'Group associations could not be updated, but the other requested fields were saved.',
+                    'success'       => false,
+                    'site'          => $website->url,
+                );
+            }
+
+            $success = true;
+        }
+
+        $response = array(
+            'site' => $website->url,
         );
+
+        if ( null !== $group_update_success ) {
+            $response['group_updated'] = true;
+            $response['group_message'] = 'Tags updated successfully.';
+        }
+
+        $response['message'] = $success ? 'Site updated successfully.' : 'Site update failed.';
+        $response['success'] = $success;
+
+        return $response;
+    }
+
+    /**
+     * Validate site group IDs.
+     *
+     * Accepts a comma-separated string or an array of group IDs,
+     * validates that all IDs are positive integers, removes duplicates,
+     * and ensures the current user has access to the requested groups.
+     *
+     * @param string|array $groupids Group IDs to validate.
+     *
+     * @return array|false Validated group IDs or false on validation failure.
+     */
+    public function validate_site_group_ids( $groupids ) {
+        $tokens = array();
+
+        // MWP-1741 - The add-site handler treats 1,abc as group ID 1 plus a new group named abc,
+        // while 0 can create a groupid = 0 association. It should enforce the same positive,
+        // permitted-ID validation as updates.
+        if ( is_string( $groupids ) ) {
+            $groupids_string = trim( wp_unslash( $groupids ) );
+            if ( '' !== $groupids_string ) {
+                $tokens = array_map( 'trim', explode( ',', $groupids_string ) );
+            }
+        } elseif ( is_array( $groupids ) ) {
+            foreach ( $groupids as $groupid ) {
+                if ( ! is_string( $groupid ) && ! is_int( $groupid ) ) {
+                    return false;
+                }
+            }
+            $tokens = array_map( 'trim', $groupids );
+        } else {
+            return false;
+        }
+
+        foreach ( $tokens as $token ) {
+            if ( '' === $token || ! ctype_digit( $token ) || 0 === (int) $token ) {
+                return false;
+            }
+        }
+
+        $groupids = array_values(
+            array_unique(
+                array_map( 'absint', $tokens )
+            )
+        );
+
+        if ( empty( $groupids ) ) {
+            return array();
+        }
+
+        $groups = $this->get_groups_for_current_user();
+
+        if ( empty( $groups ) ) {
+            return false;
+        }
+
+        $allowed_groupids = array_map(
+            static function ( $group ) {
+                return (int) $group->id;
+            },
+            $groups
+        );
+
+        if ( count( $groupids ) !== count( array_intersect( $groupids, $allowed_groupids ) ) ) {
+            return false;
+        }
+
+        return $groupids;
+    }
+
+    /**
+     * Safely update the group associations for a site.
+     *
+     * New group associations are inserted before obsolete associations are removed.
+     * If an insert fails, only the associations created during this operation are
+     * removed, preserving the site's existing group associations.
+     *
+     * @param int   $site_id       Site ID.
+     * @param array $new_group_ids New group IDs.
+     *
+     * @return bool True on success, false if validation or an insert fails.
+     */
+    private function safe_update_site_group_ids( $site_id, $new_group_ids ) { // phpcs:ignore -- NOSONAR -complex.
+        if ( empty( $site_id ) || ! is_array( $new_group_ids ) ) {
+            return false;
+        }
+
+        global $wpdb;
+
+        $context   = DB_HOST . ':' . DB_NAME . ':' . $wpdb->prefix . ':' . (int) $site_id;
+        $lock_name = 'mainwp_primary_monitor_' . md5( $context ); // phpcs:ignore -- NOSONAR - Broader transaction/locking across all group access paths is outside the scope of this change.
+
+        $locked = $this->wpdb->get_var(
+            $this->wpdb->prepare(
+                'SELECT GET_LOCK( %s, 10 )',
+                $lock_name
+            )
+        );
+
+        if ( '1' !== (string) $locked ) {
+            return false;
+        }
+
+        try {
+            $current_groups = $this->get_groups_by_website_id( $site_id );
+
+            $old_group_ids = $current_groups
+                ? array_map( 'intval', wp_list_pluck( $current_groups, 'id' ) )
+                : array();
+
+            $table_name         = esc_sql( $this->table_name( 'wp_group' ) );
+            $inserted_group_ids = array();
+            $deleted_group_ids  = array();
+
+            // Insert new associations first.
+            foreach ( array_diff( $new_group_ids, $old_group_ids ) as $group_id ) {
+                $result = $this->wpdb->insert(
+                    $table_name,
+                    array(
+                        'wpid'    => $site_id,
+                        'groupid' => $group_id,
+                    ),
+                    array( '%d', '%d' )
+                );
+
+                if ( false === $result ) {
+                    $rollback_success = $this->rollback_site_group_ids(
+                        $table_name,
+                        $site_id,
+                        $inserted_group_ids,
+                        $deleted_group_ids
+                    );
+
+                    if ( ! $rollback_success ) {
+                        MainWP_Logger::instance()->warning(
+                            sprintf(
+                                'Failed to fully rollback group associations for site ID %d after a group update failure.',
+                                $site_id
+                            )
+                        );
+                    }
+
+                    return false;
+                }
+
+                $inserted_group_ids[] = $group_id;
+            }
+
+            // Remove obsolete associations.
+            foreach ( array_diff( $old_group_ids, $new_group_ids ) as $old_group_id ) {
+                $result = $this->wpdb->delete(
+                    $table_name,
+                    array(
+                        'wpid'    => $site_id,
+                        'groupid' => $old_group_id,
+                    ),
+                    array( '%d', '%d' )
+                );
+
+                if ( false === $result ) {
+                    $rollback_success = $this->rollback_site_group_ids(
+                        $table_name,
+                        $site_id,
+                        $inserted_group_ids,
+                        $deleted_group_ids
+                    );
+
+                    if ( ! $rollback_success ) {
+                        MainWP_Logger::instance()->warning(
+                            sprintf(
+                                'Failed to fully rollback group associations for site ID %d after a group update failure.',
+                                $site_id
+                            )
+                        );
+                    }
+
+                    return false;
+                }
+
+                $deleted_group_ids[] = $old_group_id;
+            }
+
+            return true;
+        } finally {
+            $this->wpdb->get_var(
+                $this->wpdb->prepare(
+                    'SELECT RELEASE_LOCK( %s )',
+                    $lock_name
+                )
+            );
+        }
+    }
+
+    /**
+     * Roll back site group ID associations.
+     *
+     * Removes associations created by the current update and restores
+     * associations removed by the current update.
+     *
+     * @param string $table_name         Database table name.
+     * @param int    $site_id            Website ID.
+     * @param array  $inserted_group_ids Group IDs inserted by the update.
+     * @param array  $deleted_group_ids  Group IDs deleted by the update.
+     *
+     * @return bool True if all rollback operations succeed, false otherwise.
+     */
+    private function rollback_site_group_ids( $table_name, $site_id, $inserted_group_ids, $deleted_group_ids ) {
+        $rollback_success = true;
+
+        // Remove associations created by this operation.
+        foreach ( $inserted_group_ids as $group_id ) {
+            $result = $this->wpdb->delete(
+                $table_name,
+                array(
+                    'wpid'    => $site_id,
+                    'groupid' => $group_id,
+                ),
+                array( '%d', '%d' )
+            );
+
+            if ( false === $result ) {
+                $rollback_success = false;
+            }
+        }
+
+        // Restore associations removed by this operation.
+        foreach ( $deleted_group_ids as $group_id ) {
+            $result = $this->wpdb->insert(
+                $table_name,
+                array(
+                    'wpid'    => $site_id,
+                    'groupid' => $group_id,
+                ),
+                array( '%d', '%d' )
+            );
+
+            if ( false === $result ) {
+                $rollback_success = false;
+            }
+        }
+
+        return $rollback_success;
     }
 }

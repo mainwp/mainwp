@@ -178,7 +178,7 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             }
         }
 
-        $output_array    = array(
+        $output_array = array(
             'old_version' => is_array( $information ) && isset( $information['old_version'] ) ? $information['old_version'] : '',
             'version'     => is_array( $information ) && isset( $information['version'] ) ? $information['version'] : '',
             'success'     => $success ? 1 : 0,
@@ -1043,11 +1043,15 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
                 $undefined = true;
 
+                // Keep this for backward compatibility.
                 if ( ! empty( $result['upgrades_started'] ) && is_array( $result['upgrades_started'] ) ) {
                     foreach ( $result['upgrades_started'] as $k => $v ) {
-                        $return_results['result_started'][ rawurlencode( $k ) ] = esc_html( $v );
+                        if ( empty( $v ) ) {
+                            $return_results['result_error'][ rawurlencode( $k ) ] = esc_html__( 'Premium action request failed. Please try again later.', 'mainwp' );
+                        } else {
+                            $return_results['result_started'][ rawurlencode( $k ) ] = esc_html( $v );
+                        }
                     }
-                    return $return_results;
                 }
 
                 if ( isset( $result['upgrades_error'] ) ) {
@@ -1161,7 +1165,22 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     }
                     return $return_results;
                 } elseif ( isset( $result['error'] ) ) {
-                    throw new MainWP_Exception( 'WPERROR', esc_html( $result['error'] ) );
+                    $error_message = esc_html( $result['error'] );
+
+                    if ( ! empty( $result['http_code'] ) ) {
+                        $error_message .= ' HTTP code: ' . esc_html( $result['http_code'] ) . '.';
+                    }
+
+                    if ( ! empty( $result['rep_error'] ) ) {
+                        $error_message .= ' Connection error: ' . esc_html( $result['rep_error'] ) . '.';
+                    }
+
+                    if ( ! empty( $result['rep_error_code'] ) ) {
+                        $error_message .= ' Error code: ' . esc_html( $result['rep_error_code'] ) . '.';
+                    }
+
+                    throw new MainWP_Exception( 'WPERROR', $error_message ); // phpcs:ignore --NOSONAR - escaped.
+
                 } elseif ( isset( $result['notices'] ) ) {
                     $noti = $result['notices'];
                     if ( ! empty( $noti ) && is_string( $noti ) ) {

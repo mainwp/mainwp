@@ -35,7 +35,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * @var string Current plugin version.
      */
-    public static $version = '6.2'; // NOSONAR.
+    public static $version = '6.2.1'; // NOSONAR.
 
     /**
      * Private static variable to hold the single instance of the class.
@@ -64,7 +64,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * @var string The plugin current update version.
      */
-    private $check_ver_update = '0.0.5';
+    private $check_ver_update = '0.0.8';
 
     /**
      * Private variable to hold the plugin slug (mainwp/mainwp.php)
@@ -240,6 +240,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         add_action( 'admin_init', array( &$this, 'admin_init' ), 20 );
         add_action( 'admin_init', array( $this, 'hook_admin_update_check' ) );
+        add_action( 'admin_init', array( $this, 'admin_init_update' ) );
         add_action( 'after_setup_theme', array( &$this, 'after_setup_theme' ) );
 
         add_action( 'init', array( &$this, 'parse_init' ) );
@@ -402,6 +403,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 'mainwp_logger_check_daily',
                 'mainwp_site_actions_notification_enable',
                 'mainwp_update_check_version',
+                'mainwp_admin_init_update_data',
                 'mainwp_setting_demo_mode_enabled',
                 'mainwp_log_wait_lasttime',
                 'mainwp_cron_license_deactivated_alert_lasttime',
@@ -792,17 +794,13 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      */
     public function hook_admin_update_check() {
         $current_ver = $this->check_ver_update;
-        $saved_ver   = get_option( 'mainwp_update_check_version', false );
-
-        if ( false === $saved_ver ) {
-            return;
-        }
+        $saved_ver   = get_option( 'mainwp_update_check_version', '' );
 
         if ( version_compare( $saved_ver, $current_ver, '=' ) ) {
             return;
         }
 
-        if ( version_compare( $saved_ver, '0.0.4', '<' ) ) {
+        if ( ! empty( $saved_ver ) && version_compare( $saved_ver, '0.0.4', '<' ) ) {
             $sched = wp_next_scheduled( 'mainwp_cronstats_action' );
             if ( ! empty( $sched ) ) {
                 wp_unschedule_event( $sched, 'mainwp_cronstats_action' );
@@ -811,7 +809,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             $wpdb->query( 'DELETE FROM ' . $wpdb->usermeta . ' WHERE meta_key = "mainwp_widgets_sorted_toplevel_page_mainwp_tab" OR meta_key="mainwp_settings_show_widgets"' );//phpcs:ignore -- safe.
         }
 
-        if ( version_compare( $saved_ver, '0.0.5', '<' ) ) {
+        if ( ! empty( $saved_ver ) && version_compare( $saved_ver, '0.0.5', '<' ) ) {
             $all_ext = MainWP_Extensions_View::get_available_extensions();
             foreach ( $all_ext as $slug => $info ) {
                 $data = MainWP_Api_Manager::instance()->get_activation_info( $slug );
@@ -824,7 +822,68 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             update_option( 'mainwp_extensions_all_activation_cached', '' );
         }
 
+        if ( version_compare( $saved_ver, '0.0.8', '<' ) ) {
+            static::handle_admin_perform_update( 'attempted_repair_primary_monitors' ); // init attempted repair.
+        }
+
         MainWP_Utility::update_option( 'mainwp_update_check_version', $current_ver );
+    }
+
+
+    /**
+     * Method admin_init_update()
+     */
+    public function admin_init_update() {
+        static::handle_admin_perform_update();
+    }
+
+
+    /**
+     * Method handle_admin_perform_update()
+     *
+     * @param string $action Init action.
+     */
+    public function handle_admin_perform_update( $action = '' ) {
+
+        $update_actions = get_option( 'mainwp_admin_init_update_data' );
+
+        /**
+         * Filters the update actions.
+         *
+         * @param array  $update_actions The available update actions.
+         * @param string $action         The current update action.
+         *
+         * @since 6.2.1
+         *
+         * @return array The filtered update actions.
+         */
+        $update_actions = apply_filters( 'mainwp_admin_init_update_data', $update_actions, $action );
+
+        if ( ! empty( $action ) ) {
+            if ( ! is_array( $update_actions ) ) {
+                $update_actions = array();
+            }
+            if ( 'attempted_repair_primary_monitors' === $action ) {
+                $update_actions['attempted_repair_primary_monitors'] = 0;
+            }
+        }
+
+        if ( is_array( $update_actions ) ) {
+            $update = false;
+            if ( isset( $update_actions['attempted_repair_primary_monitors'] ) ) {
+                $result = MainWP_DB_Uptime_Monitoring::instance()->repair_missing_primary_monitors( $update_actions['attempted_repair_primary_monitors'] );
+                if ( is_array( $result ) && ! empty( $result['attempted'] ) ) {
+                    $update_actions['attempted_repair_primary_monitors'] = $result['attempted'];
+                } else {
+                    unset( $update_actions['attempted_repair_primary_monitors'] );
+                }
+                $update = true;
+            }
+
+            if ( $update ) {
+                MainWP_Utility::update_option( 'mainwp_admin_init_update_data', $update_actions );
+            }
+        }
     }
 
     /**
@@ -972,6 +1031,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             remove_action( 'admin_notices', 'update_nag', 3 );
         }
     }
+
 
     /**
      * Method hook_wp_shutdown()
@@ -1269,7 +1329,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @return array<string, array<int, mixed>> Command palette configuration.
      */
     private function get_command_palette_data() {
-        $registered_pages    = $this->get_command_palette_registered_pages();
+        $registered_pages     = $this->get_command_palette_registered_pages();
         $registered_page_urls = array();
 
         foreach ( $registered_pages as $slug => $page_data ) {

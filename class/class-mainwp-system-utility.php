@@ -31,6 +31,17 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     private static $instance = null;
 
     /**
+     * Request-local contrast results for tag backgrounds.
+     *
+     * Keyed by normalized #rrggbb. Invalid colors are not stored.
+     *
+     * @static
+     *
+     * @var array
+     */
+    private static $tag_contrast_cache = array();
+
+    /**
      * Method instance()
      *
      * Create a public static instance.
@@ -755,20 +766,12 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                         $tagc = is_object( $tagx ) && '' !== $tagx->color ? $tagx->color : '';
                     }
 
-                    if ( '' !== $tagc ) {
-                        $tag_a_style = 'style="color:#fff!important;opacity:1;"';
-                        $tag_style   = 'style="background-color:' . esc_html( $tagc ) . '"';
-                    } else {
-                        $tag_a_style = '';
-                        $tag_style   = '';
+                    $tag_id = '';
+                    if ( isset( $tags_ids[ $idx ] ) && ! empty( $tags_ids[ $idx ] ) ) {
+                        $tag_id = $tags_ids[ $idx ];
                     }
 
-                    if ( isset( $tags_ids[ $idx ] ) && ! empty( $tags_ids[ $idx ] ) ) {
-                        $tag_id       = $tags_ids[ $idx ];
-                        $tags_labels .= '<span ' . $tag_style . ' tag_id="' . $tag_id . '" class="ui tag mini label"><a ' . $tag_a_style . ' href="' . esc_url( $href . $tag_id ) . '">' . esc_html( $tag ) . '</a></span>';
-                    } else {
-                        $tags_labels .= '<span ' . $tag_style . ' class="ui tag mini label">' . esc_html( $tag ) . '</span>';
-                    }
+                    $tags_labels .= self::get_site_tag_label( $tag, $tag_id, $href, $tagc );
                 }
             }
         }
@@ -807,24 +810,141 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                     $tag  = trim( $tag );
                     $tagc = $tags_colors[ $idx ];
 
-                    if ( '' !== $tagc ) {
-                        $tag_a_style = 'style="color:#fff!important;opacity:1;"';
-                        $tag_style   = 'style="background-color:' . esc_html( $tagc ) . '"';
-                    } else {
-                        $tag_a_style = '';
-                        $tag_style   = '';
+                    $tag_id = '';
+                    if ( isset( $tags_ids[ $idx ] ) && ! empty( $tags_ids[ $idx ] ) ) {
+                        $tag_id = $tags_ids[ $idx ];
                     }
 
-                    if ( isset( $tags_ids[ $idx ] ) && ! empty( $tags_ids[ $idx ] ) ) {
-                        $tag_id       = $tags_ids[ $idx ];
-                        $tags_labels .= '<span ' . $tag_style . ' tag_id="' . $tag_id . '" class="ui tag mini label"><a ' . $tag_a_style . ' href="' . esc_url( $href . $tag_id ) . '">' . esc_html( $tag ) . '</a></span>';
-                    } else {
-                        $tags_labels .= '<span ' . $tag_style . ' class="ui tag mini label">' . esc_html( $tag ) . '</span>';
-                    }
+                    $tags_labels .= self::get_site_tag_label( $tag, $tag_id, $href, $tagc );
                 }
             }
         }
         return $tags_labels;
+    }
+
+    /**
+     * Method get_tag_contrast_color()
+     *
+     * Pick white or black text for a tag background.
+     * White is returned when its contrast is at least 4.5:1.
+     *
+     * @param string $background Stored tag color.
+     *
+     * @return string #ffffff, #000000, or an empty string when the color is unusable.
+     */
+    public static function get_tag_contrast_color( $background ) {
+        $normalized = self::normalize_tag_color( $background );
+        if ( '' === $normalized ) {
+            return '';
+        }
+
+        if ( isset( self::$tag_contrast_cache[ $normalized ] ) ) {
+            return self::$tag_contrast_cache[ $normalized ];
+        }
+
+        $white_contrast = 1.05 / ( self::tag_relative_luminance( $normalized ) + 0.05 );
+        if ( $white_contrast >= 4.5 ) {
+            $foreground = '#ffffff';
+        } else {
+            $foreground = '#000000';
+        }
+
+        self::$tag_contrast_cache[ $normalized ] = $foreground;
+        return $foreground;
+    }
+
+    /**
+     * Method normalize_tag_color()
+     *
+     * Reduce a stored tag color to lowercase #rrggbb.
+     *
+     * @param string $background Stored tag color.
+     *
+     * @return string Normalized color, or an empty string when it is not 3 or 6 digit hex.
+     */
+    private static function normalize_tag_color( $background ) {
+        if ( ! is_string( $background ) ) {
+            return '';
+        }
+
+        $background = trim( $background );
+        if ( ! preg_match( '/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/', $background ) ) {
+            return '';
+        }
+
+        $background = strtolower( $background );
+        if ( 4 === strlen( $background ) ) {
+            $background = '#' . $background[1] . $background[1] . $background[2] . $background[2] . $background[3] . $background[3];
+        }
+
+        return $background;
+    }
+
+    /**
+     * Method tag_relative_luminance()
+     *
+     * WCAG relative luminance for a normalized #rrggbb color.
+     *
+     * @param string $hex Normalized background.
+     *
+     * @return float Luminance between 0 and 1.
+     */
+    private static function tag_relative_luminance( $hex ) {
+        $red   = self::tag_channel_linear( hexdec( substr( $hex, 1, 2 ) ) / 255 );
+        $green = self::tag_channel_linear( hexdec( substr( $hex, 3, 2 ) ) / 255 );
+        $blue  = self::tag_channel_linear( hexdec( substr( $hex, 5, 2 ) ) / 255 );
+
+        return ( 0.2126 * $red ) + ( 0.7152 * $green ) + ( 0.0722 * $blue );
+    }
+
+    /**
+     * Method tag_channel_linear()
+     *
+     * Convert an sRGB channel to linear light.
+     *
+     * @param float $channel Channel from 0 to 1.
+     *
+     * @return float Linear channel.
+     */
+    private static function tag_channel_linear( $channel ) {
+        if ( $channel <= 0.04045 ) {
+            return $channel / 12.92;
+        }
+
+        return pow( ( $channel + 0.055 ) / 1.055, 2.4 );
+    }
+
+    /**
+     * Method get_site_tag_label()
+     *
+     * Build one tag chip for the linked and plain renderers.
+     *
+     * @param string $tag        Tag name.
+     * @param string $tag_id     Tag id. An empty id renders a plain chip.
+     * @param string $href       Link prefix.
+     * @param string $background Stored background color.
+     *
+     * @return string Chip HTML.
+     */
+    private static function get_site_tag_label( $tag, $tag_id, $href, $background ) {
+        $foreground = static::get_tag_contrast_color( $background );
+        $tag_style  = '';
+
+        if ( '' !== $foreground ) {
+            $normalized = self::normalize_tag_color( $background );
+            $tag_style  = 'style="background-color:' . esc_attr( $normalized ) . ';color:' . esc_attr( $foreground ) . '"';
+        }
+
+        if ( ! empty( $tag_id ) ) {
+            $tag_a_style = 'style="opacity:1;"';
+            if ( '' !== $foreground ) {
+                $tag_a_style = 'style="color:' . esc_attr( $foreground ) . '!important;opacity:1;"';
+            }
+
+            return '<span ' . $tag_style . ' tag_id="' . esc_attr( $tag_id ) . '" class="ui tag mini label"><a ' . $tag_a_style . ' href="' . esc_url( $href . $tag_id ) . '">' . esc_html( $tag ) . '</a></span>';
+        }
+
+        return '<span ' . $tag_style . ' class="ui tag mini label">' . esc_html( $tag ) . '</span>';
     }
 
     /**

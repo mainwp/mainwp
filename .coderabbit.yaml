@@ -61,9 +61,11 @@ reviews:
       instructions: |
         Trace each externally reachable POST/AJAX action through its registered
         handler and shared guards. Verify nonce validation, operation-specific
-        capability/MainWP rights, and site access before mutations. A check in a
-        caller or shared handler can satisfy the requirement; identify a reachable
-        bypass before reporting a missing check in a helper.
+        capability/MainWP rights, and site access before returning protected data
+        or mutating state. A check in a caller or shared handler can satisfy the
+        requirement; identify a reachable bypass before reporting a missing check
+        in a helper. Apply operation-specific authorization to disclosure actions
+        as well as mutations.
         Check unslashing, input types and bounds, SQL values, and escaping for the
         actual output context. Assign severity from exploitability and impact.
         Follow existing singleton naming and four-space indentation.

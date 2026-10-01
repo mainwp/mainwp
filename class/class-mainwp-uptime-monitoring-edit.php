@@ -234,7 +234,7 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                 }
             } else {
                 if ( $update['active'] ) {
-                    MainWP_System::handle_admin_perform_update( 'attempted_repair_primary_monitors' ); // init attempted repair.
+                    MainWP_System::instance()->handle_admin_perform_update( 'attempted_repair_primary_monitors' ); // init attempted repair.
                 }
                 $check_http_response        = ( isset( $_POST['mainwp_check_http_response'] ) ? 1 : 0 );
                 $chk_http_method            = isset( $_POST['mainwp_check_http_response_method'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_check_http_response_method'] ) ) : 'head';

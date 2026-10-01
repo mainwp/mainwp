@@ -4000,6 +4000,261 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A poll must project site rows even while another process drives the run.
+	 *
+	 * @return void
+	 */
+	public function test_status_poll_reports_lane_state() {
+		global $wpdb;
+		list( $site_id, $task ) = $this->arrange_manual_task();
+		$start                  = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
+		$started                = $start['started'];
+		$this->child_calls      = array();
+		$row                    = wp_json_encode(
+			array(
+				'token'     => 'other-owner',
+				'started'   => time(),
+				'heartbeat' => time(),
+				'pid'       => 2,
+				'lease'     => 600,
+			)
+		);
+		$this->assertSame( 1, $wpdb->query( $wpdb->prepare( "INSERT INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')", MainWP_Backup_Monitor::LANE_LEASE_OPTION, $row ) ) );
+		try {
+			$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $started );
+			$this->assertArrayHasKey( 'lane', $status );
+			$this->assertSame( 'busy', $status['lane'] );
+			$this->assertTrue( $status['run_open'] );
+			$this->assertSame( array(), $this->child_calls );
+			$this->assertCount( 1, $status['sites'] );
+			$this->assertSame( $site_id, $status['sites'][0]['id'] );
+			$this->assertSame( 'running', $status['sites'][0]['status'] );
+			$this->assertSame( '', $status['sites'][0]['phase'] );
+			$this->assertSame( $row, $wpdb->get_var( $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", MainWP_Backup_Monitor::LANE_LEASE_OPTION ) ) );
+			delete_option( MainWP_Backup_Monitor::LANE_LEASE_OPTION );
+			$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $started );
+			$this->assertSame( 'driver', $status['lane'] );
+			$this->assertNotNull( $this->last_call_params( 'backup_task_run' ) );
+			$this->assertSame( 'completed', $status['status'] );
+			$this->assertFalse( $status['run_open'] );
+			$this->assertSame( 1, $wpdb->query( $wpdb->prepare( "INSERT INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')", MainWP_Backup_Monitor::LANE_LEASE_OPTION, $row ) ) );
+			$calls  = $this->child_calls;
+			$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $started );
+			$this->assertSame( 'idle', $status['lane'] );
+			$this->assertSame( 'completed', $status['status'] );
+			$this->assertSame( $calls, $this->child_calls );
+		} finally {
+			delete_option( MainWP_Backup_Monitor::LANE_LEASE_OPTION );
+		}
+	}
+
+	/**
+	 * Both status execution paths must clamp a nonpositive budget to zero.
+	 *
+	 * @return array Run state and filter budget.
+	 */
+	public static function status_poll_zero_budget_cases() {
+		return array(
+			'open zero'       => array( true, 0 ),
+			'queued zero'     => array( false, 0 ),
+			'open negative'   => array( true, -10 ),
+			'queued negative' => array( false, -10 ),
+		);
+	}
+
+	/**
+	 * An exhausted poll must not claim a lane or contact the Child.
+	 *
+	 * @dataProvider status_poll_zero_budget_cases
+	 * @param bool $open Whether the run is already open.
+	 * @param int  $seconds Filtered budget.
+	 * @return void
+	 */
+	public function test_status_poll_zero_budget( bool $open, int $seconds ) {
+		list( $site_id, $task ) = $this->arrange_manual_task();
+		$db                     = MainWP_DB_Backup::instance();
+		$started                = $open ? time() - 10 : 0;
+		if ( $open ) {
+			$db->update_backup_task_with_values(
+				$task->id,
+				array(
+					'last_run'  => $started,
+					'completed' => 0,
+				)
+			);
+		}
+		$before  = $db->get_backup_task_by_id( $task->id );
+		$budgets = array();
+		$events  = array();
+		$budget  = static function ( $default_seconds ) use ( &$budgets, $seconds ) {
+			$budgets[] = $default_seconds;
+			return $seconds;
+		};
+		$lane    = static function ( $event ) use ( &$events ) {
+			$events[] = $event;
+		};
+		add_filter( 'mainwp_backup_status_poll_budget', $budget );
+		add_action( 'mainwp_backup_diag_lane', $lane );
+		try {
+			$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $started, $open ? 0 : time() );
+			$this->assertSame( array(), $this->child_calls );
+			$this->assertSame( array(), $events );
+			$this->assertSame( array( 25 ), $budgets );
+			$this->assertArrayHasKey( 'lane', $status );
+			$this->assertSame( 'idle', $status['lane'] );
+			$this->assertSame( $open ? 'running' : 'queued', $status['status'] );
+			$this->assertCount( 1, $status['sites'] );
+			$this->assertSame( $site_id, $status['sites'][0]['id'] );
+			$after = $db->get_backup_task_by_id( $task->id );
+			$this->assertSame( $before->last_run, $after->last_run );
+			$this->assertSame( $before->completed, $after->completed );
+			$this->assertSame( $before->backup_errors, $after->backup_errors );
+		} finally {
+			remove_filter( 'mainwp_backup_status_poll_budget', $budget );
+			remove_action( 'mainwp_backup_diag_lane', $lane );
+		}
+	}
+
+	/**
+	 * Adopting a closed run must retain the initial poll's budget.
+	 *
+	 * @return void
+	 */
+	public function test_status_poll_adoption_reuses_budget() {
+		list( $site_id, $task ) = $this->arrange_manual_task();
+		$start                  = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
+		$done                   = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $start['started'] );
+		$this->assertSame( 'completed', $done['status'] );
+		$calls  = $this->child_calls;
+		$reads  = 0;
+		$budget = static function () use ( &$reads ) {
+			++$reads;
+			return 0;
+		};
+		add_filter( 'mainwp_backup_status_poll_budget', $budget );
+		try {
+			$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, 0, time(), false, $start['started'] );
+			$this->assertSame( 1, $reads );
+			$this->assertSame( 'completed', $status['status'] );
+			$this->assertSame( 'idle', $status['lane'] );
+			$this->assertSame( $calls, $this->child_calls );
+		} finally {
+			remove_filter( 'mainwp_backup_status_poll_budget', $budget );
+		}
+	}
+
+	/**
+	 * Opening a queued run is also work driven by the status request.
+	 *
+	 * @return void
+	 */
+	public function test_status_poll_manual_claim_reports_driver() {
+		list( $site_id, $task ) = $this->arrange_manual_task();
+		$status                 = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, 0, time() );
+		$this->assertArrayHasKey( 'lane', $status );
+		$this->assertSame( 'driver', $status['lane'] );
+		$this->assertSame( 'running', $status['status'] );
+		$this->assertNotNull( $this->last_call_params( 'backup_task_create' ) );
+	}
+
+	/**
+	 * A snapshot landing during a refused claim must not restart the poll budget.
+	 *
+	 * @return void
+	 */
+	public function test_status_poll_claim_adoption_reuses_budget() {
+		global $wpdb;
+		list( $site_id, $task ) = $this->arrange_manual_task();
+		$start                  = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
+		$done                   = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $start['started'] );
+		$this->assertSame( 'completed', $done['status'] );
+		$calls  = $this->child_calls;
+		$reads  = 0;
+		$hidden = false;
+		$budget = static function () use ( &$reads ) {
+			++$reads;
+			return 25;
+		};
+		$hide   = static function ( $query ) use ( &$hide, &$hidden, $wpdb ) {
+			if ( str_starts_with( $query, 'SELECT * FROM ' . $wpdb->prefix . 'mainwp_wp_backup_snapshot' ) && str_contains( $query, "status = 'complete'" ) ) {
+				remove_filter( 'query', $hide );
+				$hidden = true;
+				return 'SELECT * FROM ' . $wpdb->prefix . 'mainwp_wp_backup_snapshot WHERE 1 = 0';
+			}
+			return $query;
+		};
+		add_filter( 'mainwp_backup_status_poll_budget', $budget );
+		add_filter( 'query', $hide );
+		try {
+			$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, 0, time(), false, $start['started'] );
+			$this->assertTrue( $hidden );
+			$this->assertSame( 1, $reads );
+			$this->assertSame( 'completed', $status['status'] );
+			$this->assertSame( 'idle', $status['lane'] );
+			$this->assertSame( $calls, $this->child_calls );
+		} finally {
+			remove_filter( 'query', $hide );
+			remove_filter( 'mainwp_backup_status_poll_budget', $budget );
+		}
+	}
+
+	/**
+	 * A response re-entry must remember the site this poll drove before a new run opened.
+	 *
+	 * @return void
+	 */
+	public function test_status_poll_reentry_preserves_budget_and_driver() {
+		global $wpdb;
+		list( $site_id, $task ) = $this->arrange_manual_task();
+		$start                  = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
+		$armed                  = false;
+		$replaced               = false;
+		$reads                  = 0;
+		$budget                 = static function () use ( &$reads ) {
+			++$reads;
+			return 25;
+		};
+		$released               = static function ( $event ) use ( &$armed ) {
+			$armed = $armed || 'released' === $event;
+		};
+		$replace                = static function ( $query ) use ( &$replace, &$armed, &$replaced, $wpdb, $task, $site_id, $start ) {
+			if ( $armed && str_starts_with( $query, 'SELECT * FROM ' . $wpdb->prefix . 'mainwp_wp_backup_snapshot' ) && str_contains( $query, "status = 'complete'" ) ) {
+				remove_filter( 'query', $replace );
+				$db       = MainWP_DB_Backup::instance();
+				$previous = $db->get_backup_task_by_id( $task->id );
+				set_transient(
+					'mainwp_backup_run_' . $task->id . '_' . $start['started'],
+					array(
+						'task'      => $previous,
+						'progress'  => array( $site_id => $db->get_backup_task_progress( $task->id, $site_id ) ),
+						'snapshots' => array( $site_id => MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, $task->id ) ),
+					),
+					DAY_IN_SECONDS
+				);
+				$db->update_backup_task_with_values( $task->id, array( 'last_run' => $start['started'] + 1 ) );
+				$replaced = true;
+			}
+			return $query;
+		};
+		add_filter( 'mainwp_backup_status_poll_budget', $budget );
+		add_action( 'mainwp_backup_diag_lane', $released );
+		add_filter( 'query', $replace );
+		try {
+			$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $start['started'] );
+			$this->assertTrue( $replaced );
+			$this->assertSame( 1, $reads );
+			$this->assertSame( 'driver', $status['lane'] );
+			$this->assertSame( 'completed', $status['status'] );
+			$this->assertSame( 'closed', $status['run_state'] );
+		} finally {
+			remove_filter( 'query', $replace );
+			remove_action( 'mainwp_backup_diag_lane', $released );
+			remove_filter( 'mainwp_backup_status_poll_budget', $budget );
+			delete_transient( 'mainwp_backup_run_' . $task->id . '_' . $start['started'] );
+		}
+	}
+
+	/**
 	 * A paused task cannot open a manual run.
 	 *
 	 * @return void

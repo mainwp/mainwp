@@ -528,6 +528,8 @@ managebackups_run_now = function (el) {
         waiting.text(response.status === 'queued' ? MainWP.I18n.t('Waiting for a free backup slot...') : '');
         if (queued && Date.now() - queuedSince >= QUEUED_NOTICE_MS) {
             waiting.text(MainWP.I18n.t('Still waiting for a free backup slot. Elapsed wait: %d minutes.').replace('%d', Math.floor((Date.now() - queuedSince) / 60000)));
+        } else if (response.status !== 'queued' && response.run_open && response.lane === 'busy') {
+            waiting.text(MainWP.I18n.t('Backups are running in the background; this page refreshes as they finish.'));
         }
         let closed = response.status === 'completed' || response.status === 'completed_with_errors';
         if (closed && closedSince === null) {

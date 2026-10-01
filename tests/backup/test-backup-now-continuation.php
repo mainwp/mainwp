@@ -12,10 +12,26 @@
  * @package MainWP\Dashboard\Tests
  */
 
-namespace MainWP\Dashboard\Tests;
+namespace MainWP\Dashboard;
+
+/**
+ * A switchable clock lets a Child stub expire the budget without sleeping.
+ *
+ * @param bool $as_float Whether to return seconds as a float.
+ * @return string|float Current time.
+ */
+function microtime( $as_float = false ) {
+	return $as_float && null !== Tests\MainWP_Backup_Now_Continuation_Test::$fixed_microtime
+		? Tests\MainWP_Backup_Now_Continuation_Test::$fixed_microtime
+		: \microtime( $as_float );
+}
+
+namespace MainWP\Dashboard\Tests; // phpcs:ignore Universal.Namespaces.OneDeclarationPerFile.MultipleFound -- the clock stub must share the production namespace.
 
 use MainWP\Dashboard\MainWP_Backup_Restore_Orchestrator;
 use MainWP\Dashboard\MainWP_Backup_Monitor;
+use MainWP\Dashboard\MainWP_Backup_Error_Codes;
+use MainWP\Dashboard\MainWP_Exception;
 use MainWP\Dashboard\MainWP_Manage_Backups_Handler;
 use MainWP\Dashboard\MainWP_DB_Backup;
 use MainWP\Dashboard\MainWP_Post_Backup_Handler;
@@ -24,7 +40,14 @@ use MainWP\Dashboard\MainWP_System_Cron_Jobs;
 /**
  * Class MainWP_Backup_Now_Continuation_Test
  */
-class MainWP_Backup_Now_Continuation_Test extends MainWP_Abilities_Test_Case {
+class MainWP_Backup_Now_Continuation_Test extends MainWP_Abilities_Test_Case { // phpcs:ignore Universal.Files.SeparateFunctionsFromOO.Mixed, Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- the switchable clock belongs with its regression tests.
+
+	/**
+	 * Null keeps every other test on the real clock.
+	 *
+	 * @var float|null
+	 */
+	public static $fixed_microtime = null;
 
 	/**
 	 * Clear the continuation event between tests.
@@ -32,6 +55,7 @@ class MainWP_Backup_Now_Continuation_Test extends MainWP_Abilities_Test_Case {
 	 * @return void
 	 */
 	public function tear_down() {
+		self::$fixed_microtime = null;
 		wp_clear_scheduled_hook( 'mainwp_native_backup_continue_action' );
 		delete_transient( 'doing_cron' );
 		parent::tear_down();
@@ -487,7 +511,7 @@ PHP;
 			'lease lost'          => array( false, 1, 1, 0, 0, false, true, false, 0, 1 ),
 			'slot refused'        => array( false, 0, 0, 0, 0, true, false, false, 0, 0 ),
 		);
-		$keys  = array( 'sites_visited', 'sites_advanced', 'sites_finished', 'sites_yielded', 'slot_refused', 'lease_lost', 'run_closed', 'wall_time' );
+		$keys  = array( 'sites_visited', 'sites_advanced', 'sites_finished', 'sites_yielded', 'slot_refused', 'lease_lost', 'run_closed', 'wall_time', 'budget_exhausted' );
 		$user  = self::factory()->user->create( array( 'role' => 'administrator' ) );
 		wp_set_current_user( $user );
 		update_option( 'mainwp_enableNativeBackups', 1 );
@@ -628,6 +652,7 @@ PHP;
 				$this->assertSame( $keys, array_keys( $outcome ), $label );
 				$this->assertSame( array_slice( $expected, 1, 7 ), array_slice( array_values( $outcome ), 0, 7 ), $label );
 				$this->assertIsFloat( $outcome['wall_time'], $label );
+				$this->assertFalse( $outcome['budget_exhausted'], $label );
 				$this->assertGreaterThan( 0.0, $outcome['wall_time'], $label );
 				$this->assertSame( $outcome['sites_visited'], $outcome['sites_finished'] + $outcome['sites_yielded'] + $expected[8] + $expected[9], $label . ': visit partition' );
 				foreach ( $calls as $call ) {
@@ -652,6 +677,155 @@ PHP;
 		}
 		delete_option( 'mainwp_enableNativeBackups' );
 		delete_option( 'mainwp_backup_max_concurrent' );
+	}
+
+	/**
+	 * Completed and yielded sites must obey the same request deadline.
+	 *
+	 * @return array Deadline and first-site behavior.
+	 */
+	public static function execute_deadline_cases() {
+		return array(
+			'expired before entry' => array( 'past', 'finished', 0, true ),
+			'completed first site' => array( 'future', 'finished', 1, true ),
+			'unchanged Child poll' => array( 'future', 'yield', 1, true ),
+			'same-run collision'   => array( 'future', 'collision', 1, true ),
+			'resumable download'   => array( 'future', 'resumable', 1, true ),
+			'no deadline'          => array( 'none', 'finished', 2, false ),
+		);
+	}
+
+	/**
+	 * A budget exit must preserve the run and release its lane for the next call.
+	 *
+	 * @dataProvider execute_deadline_cases
+	 * @param string $budget Deadline relative to entry.
+	 * @param string $behavior First-site result.
+	 * @param int    $visited Expected sites visited.
+	 * @param bool   $exhausted Expected budget flag.
+	 * @return void
+	 */
+	public function test_execute_status_poll_deadline( string $budget, string $behavior, int $visited, bool $exhausted ) {
+		global $wpdb;
+		$user = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $user );
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		$key = openssl_pkey_new(
+			array(
+				'private_key_bits' => 2048,
+				'private_key_type' => OPENSSL_KEYTYPE_RSA,
+			)
+		);
+		openssl_pkey_export( $key, $private_key );
+		$sites = array();
+		for ( $i = 0; $i < 2; ++$i ) {
+			$sites[] = $this->create_test_site(
+				array(
+					'userid'  => $user,
+					'privkey' => base64_encode( $private_key ),
+				)
+			);
+		}
+		$db   = MainWP_DB_Backup::instance();
+		$task = $this->open_outcome_task( $sites );
+		foreach ( $sites as $site ) {
+			$db->add_backup_task_progress( $task->id, $site, array() );
+			$db->update_backup_task_progress(
+				$task->id,
+				$site,
+				array(
+					'dtsFetched'           => time(),
+					'pid'                  => 12345,
+					'child_backup_task_id' => 'budget-child-' . $site,
+					'child_phase'          => 'archiving_files',
+					'removedFiles'         => 1,
+				)
+			);
+		}
+		self::$fixed_microtime = \microtime( true );
+		$deadline              = 'none' === $budget ? 0.0 : self::$fixed_microtime + ( 'past' === $budget ? -1 : 25 );
+		$calls                 = array();
+		$files                 = array();
+		$lane_events           = array();
+		$child                 = static function ( $pre, $website, $what ) use ( &$calls, $behavior, $sites ) {
+			$calls[] = (int) $website->id;
+			if ( 'backup_task_run' === $what ) {
+				self::$fixed_microtime += 30;
+				if ( (int) $website->id === $sites[0] ) {
+					if ( 'yield' === $behavior ) {
+						return array( 'phase' => 'archiving_files' );
+					}
+					if ( 'collision' === $behavior ) {
+						throw new MainWP_Exception( 'Child lock held.', '', MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING );
+					}
+				}
+				return array(
+					'phase' => 'completed',
+					'file'  => 'budget-backup-' . $website->id . '.zip',
+					'size'  => 4096,
+				);
+			}
+			if ( in_array( $what, array( 'delete_backup', 'backup_task_cancel' ), true ) ) {
+				return array( 'result' => 'ok' );
+			}
+			throw new \RuntimeException( 'Unexpected Child action: ' . $what );
+		};
+		$download              = static function ( $pre, $url, $file ) use ( &$files, $behavior ) {
+			$files[] = $file;
+			if ( 'resumable' === $behavior ) {
+				throw new \RuntimeException( 'Interrupted download.' );
+			}
+			file_put_contents( $file, 'PK' . "\x03\x04" . str_repeat( 'x', 4092 ) );
+			return true;
+		};
+		$lane                  = static function ( $event ) use ( &$lane_events ) {
+			$lane_events[] = $event;
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $child, 10, 3 );
+		add_filter( 'mainwp_download_to_file_pre', $download, 10, 3 );
+		add_action( 'mainwp_backup_diag_lane', $lane );
+		try {
+			$claimed         = null;
+			$claimed_started = 0;
+			$outcome         = null;
+			$result          = MainWP_Manage_Backups_Handler::execute_backup_task( $task, 5, false, 0, $claimed, $claimed_started, false, $outcome, $deadline );
+			$this->assertSame( $visited, $outcome['sites_visited'] );
+			$this->assertArrayHasKey( 'budget_exhausted', $outcome );
+			$this->assertSame( $exhausted, $outcome['budget_exhausted'] );
+			$this->assertSame( ! $exhausted, $result );
+			$this->assertFalse( $outcome['lease_lost'] );
+			$this->assertFalse( $outcome['slot_refused'] );
+			$this->assertSame( ! $exhausted, $outcome['run_closed'] );
+			$this->assertFalse( MainWP_Backup_Monitor::has_lane_lease_scope() );
+			$this->assertNull( $wpdb->get_var( $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", MainWP_Backup_Monitor::LANE_LEASE_OPTION ) ) );
+			$this->assertSame( 0 === $visited ? array() : array( 'acquired', 'released' ), $lane_events );
+			$after = $db->get_backup_task_by_id( $task->id );
+			$this->assertSame( '', $after->backup_errors );
+			$this->assertSame( ! $exhausted, (int) $after->completed >= (int) $after->last_run );
+			$this->assertSame( array_slice( $sites, 0, $visited ), array_values( array_unique( $calls ) ) );
+			if ( 'future' === $budget && 'finished' === $behavior ) {
+				$calls = array();
+				$this->assertTrue( MainWP_Manage_Backups_Handler::execute_backup_task( $after, 5, false, 0, $claimed, $claimed_started, false, $outcome ) );
+				$this->assertSame( 1, $outcome['sites_visited'] );
+				$this->assertFalse( $outcome['budget_exhausted'] );
+				$this->assertTrue( $outcome['run_closed'] );
+				$this->assertSame( array( $sites[1] ), array_values( array_unique( $calls ) ) );
+			}
+		} finally {
+			self::$fixed_microtime = null;
+			remove_filter( 'mainwp_fetch_url_authed_pre', $child );
+			remove_filter( 'mainwp_download_to_file_pre', $download );
+			remove_action( 'mainwp_backup_diag_lane', $lane );
+			MainWP_Backup_Monitor::release_lane_lease();
+			foreach ( $files as $file ) {
+				if ( file_exists( $file ) ) {
+					unlink( $file );
+				}
+			}
+			$wpdb->delete( $wpdb->prefix . 'mainwp_wp_backup_snapshot', array( 'task_id' => $task->id ) );
+			$db->remove_backup_task( $task->id );
+			delete_option( 'mainwp_enableNativeBackups' );
+		}
 	}
 
 	/**
@@ -830,7 +1004,7 @@ PHP;
 			$this->assertSame( 'cron_backups_slice' === $entry ? 'slice' : 'continue', $events[0][2]['lane'] );
 			$this->assertSame( (int) $second->id, $events[0][0] );
 			$this->assertSame( array( (int) $second->id, (int) $first->id ), $events[0][2]['candidates'] );
-			$this->assertSame( array( 'sites_visited', 'sites_advanced', 'sites_finished', 'sites_yielded', 'slot_refused', 'lease_lost', 'run_closed', 'wall_time' ), array_keys( $events[0][1] ) );
+			$this->assertSame( array( 'sites_visited', 'sites_advanced', 'sites_finished', 'sites_yielded', 'slot_refused', 'lease_lost', 'run_closed', 'wall_time', 'budget_exhausted' ), array_keys( $events[0][1] ) );
 			$this->assertTrue( $events[0][1]['run_closed'] );
 			$this->assertTrue( $events[0][2]['unfinished_remaining'] );
 			$this->assertIsFloat( $events[0][2]['started'] );

@@ -219,15 +219,19 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      * @param object   $task  Task row, refreshed after the attempt.
      * @param int      $click Original click timestamp.
      * @param int|null $baseline Run identity before the click; null disables adoption.
+     * @param float    $deadline Shared status request deadline; zero disables the budget.
+     * @param bool     $driven Whether this request has already visited a site.
      * @return array Run identity and status, or error.
      */
-    private static function claim_manual_task_run( object &$task, int $click, ?int $baseline = null ): array {
+    private static function claim_manual_task_run( object &$task, int $click, ?int $baseline = null, float $deadline = 0.0, bool &$driven = false ): array {
         $task_id = (int) $task->id;
         $claimed = null;
         $started = 0;
         $settle  = MainWP_Backup_Settings::get_manual_run_settle_seconds();
-        static::execute_backup_task( $task, 5, true, max( 1, $settle ), $claimed, $started, true );
-        $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
+        $outcome = null;
+        static::execute_backup_task( $task, 5, true, max( 1, $settle ), $claimed, $started, true, $outcome, $deadline );
+        $driven = $driven || $outcome['sites_visited'] > 0;
+        $task   = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
         if ( empty( $task ) ) {
             return array( 'error' => esc_html__( 'The backup task could not be started. Reload the page and try again.', 'mainwp' ) );
         }
@@ -239,7 +243,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             );
         }
         if ( false === $claimed && static::can_adopt_closed_task_run( $task, $baseline, $click ) ) {
-            return static::get_backup_task_run_status( $task_id, (int) $task->last_run, $click, false, $baseline );
+            return static::get_backup_task_run_status( $task_id, (int) $task->last_run, $click, false, $baseline, $deadline > 0.0 ? $deadline : null, $driven );
         }
         return array(
             'started'  => 0,
@@ -314,14 +318,20 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
     /**
      * Advance a saved task and report recorded snapshots for its sites.
      *
-     * @param int      $task_id Task id.
-     * @param int      $started Owned run timestamp, or zero when no run is owned.
-     * @param int      $click   Click timestamp while queued or adopting a close, otherwise zero.
-     * @param bool     $retried Whether this call is the single re-entry after a mid-assembly claim.
-     * @param int|null $baseline Run identity before the click; null disables adoption.
+     * @param int        $task_id Task id.
+     * @param int        $started Owned run timestamp, or zero when no run is owned.
+     * @param int        $click   Click timestamp while queued or adopting a close, otherwise zero.
+     * @param bool       $retried Whether this call is the single re-entry after a mid-assembly claim.
+     * @param int|null   $baseline Run identity before the click; null disables adoption.
+     * @param float|null $deadline Shared deadline on re-entry; null starts a status request budget.
+     * @param bool       $driven Whether an earlier call in this request visited a site.
      * @return array Task and site status, or error.
      */
-    public static function get_backup_task_run_status( int $task_id, int $started = 0, int $click = 0, bool $retried = false, ?int $baseline = null ): array {
+    public static function get_backup_task_run_status( int $task_id, int $started = 0, int $click = 0, bool $retried = false, ?int $baseline = null, ?float $deadline = null, bool $driven = false ): array {
+        if ( null === $deadline ) {
+            $request_started = microtime( true );
+            $deadline        = $request_started + max( 0.0, (float) apply_filters( 'mainwp_backup_status_poll_budget', 25 ) );
+        }
         $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
         if ( empty( $task ) || ! static::can_edit_backuptask( $task ) ) {
             return array( 'error' => esc_html__( 'Insufficient permissions. Is this task set by you?', 'mainwp' ) );
@@ -332,13 +342,17 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         }
         MainWP_Post_Backup_Handler::raise_backup_resource_limits();
         if ( $started > 0 && (int) $task->last_run === $started && (int) $task->completed < $started ) {
-            static::execute_backup_task( $task, 5, false );
-            $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
+            $claimed         = null;
+            $claimed_started = 0;
+            $outcome         = null;
+            static::execute_backup_task( $task, 5, false, 0, $claimed, $claimed_started, false, $outcome, $deadline );
+            $driven = $driven || $outcome['sites_visited'] > 0;
+            $task   = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
         } elseif ( 0 === $started && $click > 0 && $click <= time() && (int) $task->completed >= (int) $task->last_run ) {
             if ( static::can_adopt_closed_task_run( $task, $baseline, $click ) ) {
-                return static::get_backup_task_run_status( $task_id, (int) $task->last_run, $click, false, $baseline );
+                return static::get_backup_task_run_status( $task_id, (int) $task->last_run, $click, false, $baseline, $deadline, $driven );
             }
-            $run = static::claim_manual_task_run( $task, $click, $baseline );
+            $run = static::claim_manual_task_run( $task, $click, $baseline, $deadline, $driven );
             if ( isset( $run['error'] ) ) {
                 return $run;
             }
@@ -442,7 +456,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                 // A new claim can replace progress while this response is being
                 // assembled. One re-entry is enough: last_run only moves forward,
                 // so the re-entry reads the saved copy of this run and returns.
-                return static::get_backup_task_run_status( $task_id, $started, $click, true, $baseline );
+                return static::get_backup_task_run_status( $task_id, $started, $click, true, $baseline, $deadline, $driven );
             }
         }
         return array(
@@ -456,6 +470,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             'errors'      => $errors,
             'notices'     => $notices,
             'sites'       => $sites,
+            'lane'        => $driven ? 'driver' : ( (int) $task->completed < (int) $task->last_run && MainWP_Backup_Monitor::has_live_lane_lease() ? 'busy' : 'idle' ),
         );
     }
 
@@ -1109,14 +1124,15 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      */
     private static function default_execute_outcome(): array {
         return array(
-            'sites_visited'  => 0,
-            'sites_advanced' => 0,
-            'sites_finished' => 0,
-            'sites_yielded'  => 0,
-            'slot_refused'   => false,
-            'lease_lost'     => false,
-            'run_closed'     => false,
-            'wall_time'      => 0.0,
+            'sites_visited'    => 0,
+            'sites_advanced'   => 0,
+            'sites_finished'   => 0,
+            'sites_yielded'    => 0,
+            'slot_refused'     => false,
+            'lease_lost'       => false,
+            'run_closed'       => false,
+            'wall_time'        => 0.0,
+            'budget_exhausted' => false,
         );
     }
 
@@ -1133,6 +1149,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      * @param int        $claimed_started Exact identity returned by a successful claim.
      * @param bool       $manual_run Stamp the claimed identity as manual before any site work.
      * @param array|null $outcome Per-call site counts, refusal flags, and timing.
+     * @param float      $deadline Absolute request deadline; zero disables the budget.
      *
      * @return mixed $errorOutput.
      *
@@ -1152,13 +1169,19 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      * @uses  \MainWP\Dashboard\MainWP_Utility::get_nice_url()
      * @uses  \MainWP\Dashboard\MainWP_Utility::sanitize()
      */
-    public static function execute_backup_task( $task, $nrOfSites = 0, $updateRun = true, $run_grace_seconds = 0, &$claimed = null, &$claimed_started = 0, $manual_run = false, &$outcome = null ) { // phpcs:ignore -- NOSONAR - not quite complex function.
+    public static function execute_backup_task( $task, $nrOfSites = 0, $updateRun = true, $run_grace_seconds = 0, &$claimed = null, &$claimed_started = 0, $manual_run = false, &$outcome = null, float $deadline = 0.0 ) { // phpcs:ignore -- NOSONAR - not quite complex function.
 
         $started = microtime( true );
         $outcome = self::default_execute_outcome();
 
         $claimed         = null;
         $claimed_started = 0;
+
+        if ( $deadline > 0.0 && microtime( true ) >= $deadline ) {
+            $outcome['budget_exhausted'] = true;
+            $outcome['wall_time']        = microtime( true ) - $started;
+            return false;
+        }
 
         // The owner's live authorization gates every scheduled entry
         // (start and continuation lanes both land here) before a slot is
@@ -1193,7 +1216,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             // is bounded and stamps the slot row, so a driver that dies
             // mid-run frees its slot in minutes instead of two hours.
             MainWP_Backup_Monitor::begin_native_lease( $slot_token );
-            return static::execute_backup_task_run( $task, $nrOfSites, $updateRun, $run_grace_seconds, $claimed, $claimed_started, $manual_run, $outcome );
+            return static::execute_backup_task_run( $task, $nrOfSites, $updateRun, $run_grace_seconds, $claimed, $claimed_started, $manual_run, $outcome, $deadline );
         } finally {
             if ( false !== $slot_token ) {
                 MainWP_Backup_Monitor::end_native_lease( $slot_token );
@@ -1219,10 +1242,11 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      * @param int        $claimed_started Identity of the claimed run.
      * @param bool       $manual_run Stamp the claimed identity as manual before any site work.
      * @param array|null $outcome Per-call site counts, refusal flags, and timing.
+     * @param float      $deadline Absolute request deadline; zero disables the budget.
      *
      * @return mixed $errorOutput.
      */
-    private static function execute_backup_task_run( $task, $nrOfSites = 0, $updateRun = true, $run_grace_seconds = 0, &$claimed = null, &$claimed_started = 0, $manual_run = false, &$outcome = null ) { // phpcs:ignore -- NOSONAR - not quite complex function.
+    private static function execute_backup_task_run( $task, $nrOfSites = 0, $updateRun = true, $run_grace_seconds = 0, &$claimed = null, &$claimed_started = 0, $manual_run = false, &$outcome = null, float $deadline = 0.0 ) { // phpcs:ignore -- NOSONAR - not quite complex function.
 
         $outcome = self::default_execute_outcome();
 
@@ -1411,6 +1435,10 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                 if ( 'record_pending' !== MainWP_DB_Backup::instance()->is_backup_site_resumable_for_run( $task, $siteid ) ) {
                     continue;
                 }
+            }
+            if ( $deadline > 0.0 && microtime( true ) >= $deadline ) {
+                $outcome['budget_exhausted'] = true;
+                break;
             }
             $website = MainWP_DB::instance()->get_website_by_id( $siteid );
 
@@ -1633,6 +1661,10 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             // The run is not finished, so none of the close bookkeeping may
             // fire: the task stays in the state get_backup_tasks_to_complete()
             // picks up on the next cycle.
+            return false;
+        }
+
+        if ( $outcome['budget_exhausted'] ) {
             return false;
         }
 

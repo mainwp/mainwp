@@ -1028,6 +1028,20 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     }
 
     /**
+     * Polls need current ownership even when another process holds the lane.
+     *
+     * @return bool Whether a live lane lease exists.
+     */
+    public static function has_live_lane_lease(): bool {
+        global $wpdb;
+
+        $held = $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- lane liveness must bypass option caches.
+            $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", self::LANE_LEASE_OPTION )
+        );
+        return self::is_lane_live( json_decode( (string) $held, true ), time() );
+    }
+
+    /**
      * Report loss only within this process's lane scope.
      *
      * @return bool Whether the held lease was lost.

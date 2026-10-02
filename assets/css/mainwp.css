@@ -1181,7 +1181,7 @@ table.mainwp-manage-wpsites-table .error a {
 .mainwp-ui #wpbody-content .notice.notice-success,
 .mainwp-ui #wpbody-content .notice.notice-info,
 .mainwp-ui #wpbody-content .notice.notice-error,
-.mainwp-ui #wpbody-content .notice.notice-warrning,
+.mainwp-ui #wpbody-content .notice.notice-warning,
 .mainwp-ui #wpbody-content div.update-nag {
     display: none;
 }

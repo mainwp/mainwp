@@ -3586,23 +3586,6 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
                 // remove groups.
                 $this->wpdb->delete( $this->table_name( 'wp_group' ), array( 'wpid' => $websiteid ) );
-                // Remove GA stats.
-                $showErrors = $this->wpdb->hide_errors();
-
-                /**
-                 * Action: mainwp_ga_delete_site
-                 *
-                 * Fires upon site removal process in order to delete Google Analytics data.
-                 *
-                 * @param int $websiteid Child site ID.
-                 *
-                 * @since Unknown
-                 */
-                do_action( 'mainwp_ga_delete_site', $websiteid );
-
-                if ( $showErrors ) {
-                    $this->wpdb->show_errors();
-                }
                 // add groups with groupnames.
                 foreach ( $groupnames as $groupname ) {
                     if ( $this->wpdb->insert(

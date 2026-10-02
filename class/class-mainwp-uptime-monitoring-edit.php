@@ -205,6 +205,9 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
 
                 MainWP_DB_Uptime_Monitoring::instance()->update_wp_monitor( $update, $output );
 
+                // This save does not capture the monitor write result. An undefined
+                // $success was always falsy here, so the repair-attempt option stays.
+                $success = false;
                 if ( $site_id && empty( $update['issub'] ) ) {
                     $opt_name = 'mainwp_primary_monitor_repair_attempts_for_wp_' . $site_id;
                     if ( $success ) {

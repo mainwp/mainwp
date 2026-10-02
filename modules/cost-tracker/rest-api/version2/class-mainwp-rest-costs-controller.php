@@ -311,7 +311,7 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
         } catch ( MainWP_Extra_Exception $e ) {
             return new \WP_Error( $e->getErrorCode(), $e->getMessage(), array( 'status' => 400 ) );
         }
-        if ( isset( $resp_data['data'] ) && is_wp_error( MainWP_Abilities_Util::check_unrestricted_access() ) ) {
+        if ( isset( $resp_data['data'] ) ) {
             $resp_data['data'] = $this->scope_cost_relationship_fields( $resp_data['data'] );
         }
         return rest_ensure_response( $resp_data );
@@ -323,14 +323,15 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
      * @return array|null Allowed relationship IDs, or null for an unrestricted caller.
      */
     private function get_cost_relationship_scope() {
-        if ( true === MainWP_Abilities_Util::check_unrestricted_access() ) {
+        $sites  = MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+        $groups = MainWP_Abilities_Util::get_scoped_group_ids_or_all();
+        if ( 'all' === $sites && 'all' === $groups ) {
             return null;
         }
-        $sites = MainWP_Abilities_Util::get_allowed_site_ids();
         return array(
             'sites'   => $sites,
-            'groups'  => MainWP_Abilities_Util::get_allowed_group_ids(),
-            'clients' => MainWP_Abilities_Util::get_accessible_client_ids( $sites ),
+            'groups'  => $groups,
+            'clients' => 'all' === $sites ? 'all' : MainWP_Abilities_Util::get_accessible_client_ids( $sites ),
         );
     }
 
@@ -603,7 +604,7 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
         } catch ( MainWP_Extra_Exception $e ) {
             return new \WP_Error( $e->getErrorCode(), $e->getMessage(), array( 'status' => 400 ) );
         }
-        if ( isset( $resp_data['data'] ) && is_wp_error( MainWP_Abilities_Util::check_unrestricted_access() ) ) {
+        if ( isset( $resp_data['data'] ) ) {
             $resp_data['data'] = $this->scope_cost_relationship_fields( $resp_data['data'] );
         }
         return rest_ensure_response( $resp_data );

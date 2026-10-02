@@ -10,6 +10,7 @@
 use MainWP\Dashboard\MainWP_DB_Common;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_DB_Client;
+use MainWP\Dashboard\MainWP_Abilities_Util;
 
 // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
@@ -473,7 +474,17 @@ class MainWP_Rest_Tags_Controller extends MainWP_REST_Controller{ //phpcs:ignore
 
         $clients = MainWP_DB_Client::instance()->get_wp_client_by( 'all', null, OBJECT, array( 'by_tags' => array( $item->id ) ) );
         $clients = $this->filter_scoped_clients( $clients );
-        $data    = array();
+        if ( 'all' !== MainWP_Abilities_Util::get_scoped_site_ids_or_all() ) {
+            $sites      = $this->filter_scoped_sites( MainWP_DB::instance()->get_websites_by_group_ids( array( $item->id ) ) );
+            $client_ids = array_map( 'intval', array_column( $sites, 'client_id' ) );
+            $clients    = array_values(
+                array_filter(
+                    (array) $clients,
+                    static fn( $client ) => in_array( (int) $client->client_id, $client_ids, true )
+                )
+            );
+        }
+        $data = array();
 
         if ( is_array( $clients ) ) {
             foreach ( $clients as $client ) {

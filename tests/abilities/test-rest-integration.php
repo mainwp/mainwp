@@ -909,7 +909,7 @@ class MainWP_REST_Integration_Test extends \WP_Test_REST_TestCase {
 		$routes = $this->server->get_routes();
 
 		// Check if single site endpoint exists.
-		if ( isset( $routes['/mainwp/v2/sites/(?P<id>[\\d]+)'] ) ) {
+		if ( isset( $routes['/mainwp/v2/sites/(?P<id_domain>[\\d]+)'] ) ) {
 			$response = $this->do_authenticated_request( 'GET', '/mainwp/v2/sites/999999' );
 
 			// Should return 404.

@@ -703,6 +703,11 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      */
     public function get_item( $request ) { // phpcs:ignore -- NOSONAR - complex method.
 
+        $item = $this->get_site_item( $request );
+        if ( is_wp_error( $item ) ) {
+            return $item;
+        }
+
         $value = isset( $request['id_domain'] ) ? $request['id_domain'] : '';
         $by    = 'domain';
 

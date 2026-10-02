@@ -1109,8 +1109,71 @@ class Test_Abilities_Api_Key_Scoping extends MainWP_Abilities_Test_Case {
         $this->create_test_site( array( 'client_id' => $hidden ) );
         $this->restrict_ability_layer_only( array( $site ) );
         $data = $this->dispatch_v2_get( '/mainwp/v2/tags/' . $tag . '/clients' )->get_data();
+        $this->assertSame( 0, $data['total'] );
+        $this->assertSame( array(), $data['data'] );
+
+        $this->assign_site_to_tag( $site, $tag );
+        $data = $this->dispatch_v2_get( '/mainwp/v2/tags/' . $tag . '/clients' )->get_data();
         $this->assertSame( 1, $data['total'] );
-        $this->assertSame( array( $visible ), array_map( 'intval', array_column( $data['data'], 'id' ) ) );
+        $visible_name = \MainWP\Dashboard\MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $visible )->name;
+        $hidden_name = \MainWP\Dashboard\MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $hidden )->name;
+        $this->assertSame( array( $visible_name ), array_column( $data['data'], 'name' ) );
+
+        remove_filter( 'mainwp_currentuserallowedaccesssites', $this->scope_filters['mainwp_currentuserallowedaccesssites'] );
+        $control = $this->dispatch_v2_get( '/mainwp/v2/tags/' . $tag . '/clients' )->get_data();
+        $this->assertSame( 2, $control['total'] );
+        $this->assertEqualsCanonicalizing( array( $visible_name, $hidden_name ), array_column( $control['data'], 'name' ) );
+    }
+
+    public static function site_lookup_scopes() {
+        return array(
+            'restricted id' => array( true, false ),
+            'restricted domain' => array( true, true ),
+            'unrestricted id' => array( false, false ),
+            'unrestricted domain' => array( false, true ),
+        );
+    }
+
+    /** @dataProvider site_lookup_scopes */
+    public function test_rest_site_lookup_returns_scoped_not_found( $restricted, $domain ) {
+        $this->set_current_user_as_admin();
+        $allowed = $this->create_test_site();
+        $hidden = $this->create_test_site( array( 'url' => 'https://hidden.example.com/' ) );
+        if ( $restricted ) {
+            $this->restrict_ability_layer_only( array( $allowed ) );
+        }
+        $missing = $this->dispatch_v2_request( 'GET', '/mainwp/v2/sites/' . ( $domain ? 'missing.example.com' : '99999999' ), array() );
+        $this->assertSame( 404, $missing->get_status() );
+        $expected = \MainWP_Rest_Sites_Controller::instance()->get_rest_data_error( $domain ? 'domain' : 'id', 'site' );
+        $this->assertSame( $expected->get_error_code(), $missing->get_data()['code'] );
+        $this->assertSame( $expected->get_error_message(), $missing->get_data()['message'] );
+        if ( $restricted ) {
+            $response = $this->dispatch_v2_request( 'GET', '/mainwp/v2/sites/' . ( $domain ? 'hidden.example.com' : $hidden ), array() );
+            $this->assertSame( 404, $response->get_status() );
+            $this->assertSame( $missing->get_data(), $response->get_data() );
+        }
+    }
+
+    public function test_rest_site_lookup_preserves_allowed_response_by_id_and_domain() {
+        $this->set_current_user_as_admin();
+        $site = $this->create_test_site( array( 'id' => 9101814, 'url' => 'https://allowed.example.com/' ) );
+        $responses = array();
+        foreach ( array( $site, 'allowed.example.com' ) as $identifier ) {
+            $response = $this->dispatch_v2_request( 'GET', '/mainwp/v2/sites/' . $identifier, array() );
+            $this->assertSame( 200, $response->get_status() );
+            $this->assertSame( $site, (int) $response->get_data()['data']['id'] );
+            $responses[ $identifier ] = wp_json_encode( $response->get_data() );
+        }
+        $this->assertSame( $responses[ $site ], $responses['allowed.example.com'] );
+        $this->restrict_ability_layer_only( array( $site ) );
+        foreach ( $responses as $identifier => $json ) {
+            $this->assertSame( $json, wp_json_encode( $this->dispatch_v2_request( 'GET', '/mainwp/v2/sites/' . $identifier, array() )->get_data() ) );
+        }
+        $this->without_ability( 'mainwp/get-site-v1', function () use ( $responses ) {
+            foreach ( $responses as $identifier => $json ) {
+                $this->assertSame( $json, wp_json_encode( $this->dispatch_v2_request( 'GET', '/mainwp/v2/sites/' . $identifier, array() )->get_data() ) );
+            }
+        } );
     }
 
     public function test_rest_scope_tag_add_cannot_update_hidden_tag() {

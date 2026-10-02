@@ -1211,6 +1211,34 @@ class Test_Abilities_Api_Key_Scoping extends MainWP_Abilities_Test_Case {
         $this->assertSame( 'ability_invalid_permissions', $response->get_data()['code'] );
     }
 
+    public static function site_collection_ability_routes() {
+        return array(
+            'site list'  => array( 'GET', '/mainwp/v2/sites', 'mainwp/list-sites-v1' ),
+            'sites sync' => array( 'PUT', '/mainwp/v2/sites/sync', 'mainwp/sync-sites-v1' ),
+        );
+    }
+
+    /** @dataProvider site_collection_ability_routes */
+    public function test_rest_site_collection_ability_rights_denial_returns_403( $method, $route, $ability_name ) {
+        $this->skip_if_no_abilities_api();
+        $this->set_current_user_as_admin();
+        $ability  = wp_get_ability( $ability_name );
+        $property = new \ReflectionProperty( $ability, 'permission_callback' );
+        $property->setAccessible( true );
+        $original = $property->getValue( $ability );
+        try {
+            $property->setValue( $ability, static function () {
+                return new \WP_Error( 'mainwp_permission_denied', 'Denied.', array( 'status' => 403 ) );
+            } );
+            $this->setExpectedIncorrectUsage( 'WP_Ability::execute' );
+            $response = $this->dispatch_v2_request( $method, $route, array() );
+            $this->assertSame( 403, $response->get_status() );
+            $this->assertSame( 'ability_invalid_permissions', $response->get_data()['code'] );
+        } finally {
+            $property->setValue( $ability, $original );
+        }
+    }
+
     /** @dataProvider site_ability_routes */
     public function test_rest_site_ability_other_errors_keep_status_mapping( $method, $suffix, $ability_name ) {
         $this->skip_if_no_abilities_api();

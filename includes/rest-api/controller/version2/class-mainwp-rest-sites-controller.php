@@ -857,9 +857,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             $result = $ability->execute( $ability_input );
 
             if ( is_wp_error( $result ) ) {
-                $error_data = $result->get_error_data();
-                $status     = isset( $error_data['status'] ) ? $error_data['status'] : 500;
-                return new WP_Error( $result->get_error_code(), $result->get_error_message(), array( 'status' => $status ) );
+                return $this->ability_error_to_rest_error( $result );
             }
 
             // DESIGN NOTE: The ability is used for filtering, pagination, and access verification.
@@ -1904,9 +1902,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             $result = $ability->execute( $ability_input );
 
             if ( is_wp_error( $result ) ) {
-                $error_data = $result->get_error_data();
-                $status     = isset( $error_data['status'] ) ? $error_data['status'] : 500;
-                return new WP_Error( $result->get_error_code(), $result->get_error_message(), array( 'status' => $status ) );
+                return $this->ability_error_to_rest_error( $result );
             }
 
             // Check if sync was queued for background processing.

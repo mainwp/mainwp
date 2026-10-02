@@ -737,6 +737,9 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             if ( is_wp_error( $result ) ) {
                 $error_data = $result->get_error_data();
                 $status     = isset( $error_data['status'] ) ? $error_data['status'] : 500;
+                if ( 'ability_invalid_permissions' === $result->get_error_code() ) {
+                    $status = 403;
+                }
                 return new WP_Error( $result->get_error_code(), $result->get_error_message(), array( 'status' => $status ) );
             }
 
@@ -1104,6 +1107,9 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             if ( is_wp_error( $result ) ) {
                 $error_data = $result->get_error_data();
                 $status     = isset( $error_data['status'] ) ? $error_data['status'] : 500;
+                if ( 'ability_invalid_permissions' === $result->get_error_code() ) {
+                    $status = 403;
+                }
                 return new WP_Error( $result->get_error_code(), $result->get_error_message(), array( 'status' => $status ) );
             }
 
@@ -1254,6 +1260,9 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             if ( is_wp_error( $result ) ) {
                 $error_data = $result->get_error_data();
                 $status     = isset( $error_data['status'] ) ? $error_data['status'] : 500;
+                if ( 'ability_invalid_permissions' === $result->get_error_code() ) {
+                    $status = 403;
+                }
                 return new WP_Error( $result->get_error_code(), $result->get_error_message(), array( 'status' => $status ) );
             }
 
@@ -1556,6 +1565,9 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             if ( is_wp_error( $result ) ) {
                 $error_data = $result->get_error_data();
                 $status     = isset( $error_data['status'] ) ? $error_data['status'] : 500;
+                if ( 'ability_invalid_permissions' === $result->get_error_code() ) {
+                    $status = 403;
+                }
                 return new WP_Error( $result->get_error_code(), $result->get_error_message(), array( 'status' => $status ) );
             }
 

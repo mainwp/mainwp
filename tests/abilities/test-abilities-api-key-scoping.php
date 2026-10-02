@@ -1176,6 +1176,66 @@ class Test_Abilities_Api_Key_Scoping extends MainWP_Abilities_Test_Case {
         } );
     }
 
+    public static function site_ability_routes() {
+        return array(
+            'site detail' => array( 'GET', '', 'mainwp/get-site-v1' ),
+            'site sync' => array( 'PUT', '/sync', 'mainwp/sync-sites-v1' ),
+            'site plugins' => array( 'GET', '/plugins', 'mainwp/get-site-plugins-v1' ),
+            'site themes' => array( 'GET', '/themes', 'mainwp/get-site-themes-v1' ),
+        );
+    }
+
+    /** @dataProvider site_ability_routes */
+    public function test_rest_visible_site_ability_rights_denial_returns_403( $method, $suffix, $ability_name ) {
+        $this->skip_if_no_abilities_api();
+        $this->set_current_user_as_admin();
+        $site = $this->create_test_site();
+        $this->restrict_ability_layer_only( array( $site ) );
+        $this->set_current_user_as_subscriber();
+        $this->scope_filters['mainwp_currentusercan'] = static function ( $allowed, $cap_type, $cap ) {
+            return 'dashboard' === $cap_type && 'access_individual_dashboard' === $cap ? false : $allowed;
+        };
+        add_filter( 'mainwp_currentusercan', $this->scope_filters['mainwp_currentusercan'], 10, 3 );
+        $this->assertFalse( MainWP_Abilities_Util::current_user_has_operation_right( 'access_individual_dashboard' ) );
+        $input = '/sync' === $suffix ? array( 'site_ids' => array( $site ) ) : array( 'site_id_or_domain' => $site );
+        $denied = wp_get_ability( $ability_name )->check_permissions( $input );
+        $this->assertWPError( $denied );
+        $this->assertSame( 'mainwp_permission_denied', $denied->get_error_code() );
+        $this->assertSame( 403, $denied->get_error_data()['status'] );
+        $request = new \WP_REST_Request( $method, '/mainwp/v2/sites/' . $site . $suffix );
+        $request->set_param( 'id_domain', $site );
+        $this->assertNotWPError( \MainWP_Rest_Sites_Controller::instance()->get_site_item( $request ) );
+        $this->setExpectedIncorrectUsage( 'WP_Ability::execute' );
+        $response = $this->dispatch_v2_request( $method, $request->get_route(), array() );
+        $this->assertSame( 403, $response->get_status() );
+        $this->assertSame( 'ability_invalid_permissions', $response->get_data()['code'] );
+    }
+
+    /** @dataProvider site_ability_routes */
+    public function test_rest_site_ability_other_errors_keep_status_mapping( $method, $suffix, $ability_name ) {
+        $this->skip_if_no_abilities_api();
+        $this->set_current_user_as_admin();
+        $site = $this->create_test_site();
+        $this->restrict_ability_layer_only( array( $site ) );
+        $ability = wp_get_ability( $ability_name );
+        $property = new \ReflectionProperty( $ability, 'execute_callback' );
+        $property->setAccessible( true );
+        $original = $property->getValue( $ability );
+        try {
+            foreach ( array( null, array( 'status' => 409 ) ) as $error_data ) {
+                $property->setValue( $ability, static function () use ( $error_data ) {
+                    return new \WP_Error( 'test_site_error', 'Site operation failed.', $error_data );
+                } );
+                $response = $this->dispatch_v2_request( $method, '/mainwp/v2/sites/' . $site . $suffix, array() );
+                $this->assertSame( null === $error_data ? 500 : 409, $response->get_status() );
+                $this->assertSame( 'test_site_error', $response->get_data()['code'] );
+                $this->assertSame( 'Site operation failed.', $response->get_data()['message'] );
+            }
+        } finally {
+            $property->setValue( $ability, $original );
+        }
+    }
+
     public function test_rest_scope_tag_add_cannot_update_hidden_tag() {
         $this->set_current_user_as_admin();
         $tag = $this->create_test_tag( array( 'name' => 'Test Tag Original' ) );

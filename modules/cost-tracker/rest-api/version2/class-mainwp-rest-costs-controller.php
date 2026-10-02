@@ -275,10 +275,24 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
 
         $args = $this->prepare_objects_query( $request );
 
+        // Visibility is decided in PHP, so a restricted caller is paged after filtering;
+        // a SQL LIMIT would let hidden rows use up the page.
+        $scope    = $this->get_cost_relationship_scope();
+        $page     = 0;
+        $per_page = 0;
+        if ( null !== $scope ) {
+            $page     = isset( $args['paged'] ) ? (int) $args['paged'] : 0;
+            $per_page = isset( $args['items_per_page'] ) ? (int) $args['items_per_page'] : 0;
+            unset( $args['paged'], $args['items_per_page'] );
+        }
+
         $costs = Cost_Tracker_DB::get_instance()->get_cost_tracker_by( 'all', null, $args );
-        $scope = $this->get_cost_relationship_scope();
         if ( null !== $scope ) {
             $costs = array_filter( (array) $costs, fn( $cost ) => $this->is_cost_visible( $cost, $scope ) );
+            if ( $page > 0 && $per_page > 0 ) {
+                // Bound check first: a huge page number would overflow the offset to a float.
+                $costs = $page - 1 < ceil( count( $costs ) / $per_page ) ? array_slice( $costs, ( $page - 1 ) * $per_page, $per_page ) : array();
+            }
         }
         $data = $this->scope_cost_relationship_fields( Cost_Tracker_Rest_Api_Handle_V1::instance()->prepare_api_costs_data( $costs ) );
 
@@ -360,7 +374,10 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
         }
         foreach ( $scope as $field => $allowed ) {
             $ids = $this->get_cost_relationship_ids( $cost, $field );
-            if ( ! empty( $ids ) && ( 'all' === $allowed || ! empty( array_intersect( $ids, $allowed ) ) ) ) {
+            if ( empty( $ids ) ) {
+                continue;
+            }
+            if ( 'all' === $allowed || ! empty( array_intersect( $ids, $allowed ) ) ) {
                 return true;
             }
         }

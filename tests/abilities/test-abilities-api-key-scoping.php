@@ -1820,6 +1820,37 @@ class Test_Abilities_Api_Key_Scoping extends MainWP_Abilities_Test_Case {
         $this->assertSame( 0, $this->dispatch_v2_get( '/mainwp/v2/costs' )->get_data()['total'] );
     }
 
+    public function test_rest_cost_list_pages_restricted_caller_after_visibility_filter() {
+        $this->set_current_user_as_admin();
+        $allowed = $this->create_test_site();
+        $outside = $this->create_test_site();
+        for ( $i = 0; $i < 3; $i++ ) {
+            $this->create_scope_cost( array( $outside ) );
+        }
+        $visible = array();
+        for ( $i = 0; $i < 3; $i++ ) {
+            $visible[] = $this->create_scope_cost( array( $allowed ) );
+        }
+
+        $control = $this->dispatch_v2_get( '/mainwp/v2/costs', array( 'page' => 1, 'per_page' => 2 ) )->get_data();
+        $this->assertSame( 2, $control['total'], 'An unrestricted caller keeps database paging.' );
+
+        $this->restrict_ability_layer_only( array( $allowed ) );
+        $pages = array();
+        foreach ( array( 1, 2, 3 ) as $page ) {
+            $data           = $this->dispatch_v2_get( '/mainwp/v2/costs', array( 'page' => $page, 'per_page' => 2 ) )->get_data();
+            $pages[ $page ] = array_map( 'intval', array_keys( $data['data'] ) );
+            $this->assertSame( count( $pages[ $page ] ), $data['total'], 'Page ' . $page );
+        }
+        $this->assertSame( array_slice( $visible, 0, 2 ), $pages[1], 'Hidden costs must not use up page slots.' );
+        $this->assertSame( array( $visible[2] ), $pages[2] );
+        $this->assertSame( array(), $pages[3] );
+
+        $far = $this->dispatch_v2_get( '/mainwp/v2/costs', array( 'page' => (string) PHP_INT_MAX, 'per_page' => 2 ) );
+        $this->assertSame( 200, $far->get_status(), 'A page number past the end must not overflow the offset.' );
+        $this->assertSame( array(), $far->get_data()['data'] );
+    }
+
     public static function cost_scope_membership_updates() {
         $cases = array();
         foreach ( array( 'sites', 'groups', 'clients' ) as $field ) {

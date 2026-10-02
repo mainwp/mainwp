@@ -427,6 +427,7 @@ class Test_Abilities_Api_Key_Scoping extends MainWP_Abilities_Test_Case {
             add_filter( 'mainwp_rest_routes_clients_controller_filter_allowed_fields_by_context', $client_filter, 10, 2 );
             ( new \MainWP_Rest_Monitors_Controller() )->register_routes();
             ( new \MainWP_Rest_Settings_Controller() )->register_routes();
+            ( new \MainWP_Rest_API_Keys_Controller() )->register_routes();
             require_once dirname( __DIR__, 2 ) . '/modules/cost-tracker/rest-api/version2/class-mainwp-rest-costs-controller.php';
             ( new \MainWP_Rest_Costs_Controller() )->register_routes();
             $request = new \WP_REST_Request( $method, $route );
@@ -443,6 +444,136 @@ class Test_Abilities_Api_Key_Scoping extends MainWP_Abilities_Test_Case {
             add_filter( 'rest_pre_dispatch', array( $auth, 'check_user_permissions' ), 10, 3 );
             $user_property->setValue( $auth, $previous_user );
             $wp_rest_server = $previous_server;
+        }
+    }
+
+    public function test_rest_global_resource_routes_require_unrestricted_scope() {
+        $this->set_current_user_as_admin();
+        $this->dispatch_v2_get( '/mainwp/v2/clients/fields' );
+        global $wp_rest_server;
+        $previous = $wp_rest_server;
+        try {
+            $wp_rest_server = new \WP_REST_Server();
+            ( new \MainWP_Rest_API_Keys_Controller() )->register_routes();
+            \MainWP_Rest_Clients_Controller::instance()->register_routes();
+            $guarded = array( 'list_keys', 'create_new_key', 'edit_key', 'delete_key', 'create_client_fields', 'edit_client_fields', 'delete_client_fields' );
+            $count = 0;
+            foreach ( $wp_rest_server->get_routes() as $route => $handlers ) {
+                foreach ( $handlers as $handler ) {
+                    if ( ! isset( $handler['permission_callback'], $handler['callback'] ) || ! is_array( $handler['callback'] ) ) {
+                        continue;
+                    }
+                    if ( in_array( $handler['callback'][1], $guarded, true ) ) {
+                        $this->assertSame( 'get_unrestricted_permissions_check', $handler['permission_callback'][1], $route );
+                        ++$count;
+                    } elseif ( 'client_fields' === $handler['callback'][1] ) {
+                        $this->assertSame( 'get_rest_permissions_check', $handler['permission_callback'][1], $route );
+                    }
+                }
+            }
+            $this->assertSame( 7, $count );
+        } finally {
+            $wp_rest_server = $previous;
+        }
+    }
+
+    public static function global_resource_scopes() {
+        return array( 'sites' => array( false ), 'groups' => array( true ) );
+    }
+
+    /** @dataProvider global_resource_scopes */
+    public function test_rest_global_api_key_routes_reject_restricted_key( $group_only ) {
+        $owner = $this->set_current_user_as_admin();
+        $db = MainWP_DB::instance();
+        $initial_ids = array_map( 'intval', array_column( $db->get_rest_api_keys(), 'key_id' ) );
+        try {
+            $created = $db->insert_rest_api_key( 'ck_' . str_repeat( 'a', 40 ), 'cs_' . wp_generate_password( 40, false ), 'read_write', 'Scope target key', 1 );
+            $this->assertIsArray( $created );
+            $id = (int) $created['key_id'];
+            $this->set_current_user_as_admin();
+            $control = $this->dispatch_v2_request( 'PUT', '/mainwp/v2/rest-api/edit-key/' . $id, array(), array( 'description' => 'Allowed edit' ) );
+            $this->assertSame( 1, $control->get_data()['success'] );
+            $before = $db->get_rest_api_key_by( $id );
+            $this->assertSame( 'Allowed edit', $before->description );
+            $this->assertSame( $owner, (int) $before->user_id );
+            $this->assertSame( 200, $this->dispatch_v2_get( '/mainwp/v2/rest-api/keys' )->get_status() );
+            $control = $this->dispatch_v2_request( 'POST', '/mainwp/v2/rest-api/add-key', array(), array( 'description' => 'Allowed create', 'permissions' => 'read,write', 'active' => true ) );
+            $this->assertSame( 1, $control->get_data()['success'] );
+            if ( $group_only ) {
+                $this->restrict_groups_ability_layer_only( array() );
+            } else {
+                $this->restrict_ability_layer_only( array() );
+            }
+            $count = count( $db->get_rest_api_keys() );
+            foreach ( array(
+                array( 'PUT', '/mainwp/v2/rest-api/edit-key/' . $id, array( 'description' => 'Denied edit' ) ),
+                array( 'DELETE', '/mainwp/v2/rest-api/delete-key/' . $id, null ),
+                array( 'POST', '/mainwp/v2/rest-api/add-key', array( 'description' => 'Denied create', 'permissions' => 'read,write', 'active' => true ) ),
+                array( 'GET', '/mainwp/v2/rest-api/keys', null ),
+            ) as $action ) {
+                $response = $this->dispatch_v2_request( $action[0], $action[1], array(), $action[2] );
+                $this->assertSame( 403, $response->get_status(), $action[1] );
+                $this->assertSame( 'mainwp_restricted_account', $response->get_data()['code'] );
+                $this->assertEquals( $before, $db->get_rest_api_key_by( $id ) );
+                $this->assertSame( $count, count( $db->get_rest_api_keys() ) );
+            }
+            foreach ( $this->scope_filters as $hook => $callback ) {
+                remove_filter( $hook, $callback );
+            }
+            $this->scope_filters = array();
+            $this->assertSame( 1, $this->dispatch_v2_request( 'DELETE', '/mainwp/v2/rest-api/delete-key/' . $id, array() )->get_data()['success'] );
+        } finally {
+            foreach ( $db->get_rest_api_keys() as $key ) {
+                if ( ! in_array( (int) $key->key_id, $initial_ids, true ) ) {
+                    $db->remove_rest_api_key( $key->key_id );
+                }
+            }
+        }
+    }
+
+    /** @dataProvider global_resource_scopes */
+    public function test_rest_global_client_field_routes_reject_restricted_key( $group_only ) {
+        $this->set_current_user_as_admin();
+        $db = \MainWP\Dashboard\MainWP_DB_Client::instance();
+        $name = 'Scope field ' . wp_generate_uuid4();
+        $denied_name = 'Denied field ' . wp_generate_uuid4();
+        try {
+            $created = $this->dispatch_v2_request( 'POST', '/mainwp/v2/clients/fields/add', array(), array( 'name' => $name, 'description' => 'Allowed create' ) );
+            $this->assertSame( 1, $created->get_data()['success'] );
+            $id = (int) $created->get_data()['data']['field_id'];
+            $control = $this->dispatch_v2_request( 'PUT', '/mainwp/v2/clients/fields/' . $id . '/edit', array(), array( 'description' => 'Allowed edit' ) );
+            $this->assertSame( 1, $control->get_data()['success'] );
+            $before = $db->get_client_fields_by( 'field_id', $id );
+            $this->assertSame( 'Allowed edit', $before->field_desc );
+            if ( $group_only ) {
+                $this->restrict_groups_ability_layer_only( array() );
+            } else {
+                $this->restrict_ability_layer_only( array() );
+            }
+            foreach ( array(
+                array( 'PUT', '/mainwp/v2/clients/fields/' . $id . '/edit', array( 'description' => 'Denied edit' ) ),
+                array( 'DELETE', '/mainwp/v2/clients/fields/' . $id . '/delete', null ),
+                array( 'POST', '/mainwp/v2/clients/fields/add', array( 'name' => $denied_name, 'description' => 'Denied create' ) ),
+            ) as $action ) {
+                $response = $this->dispatch_v2_request( $action[0], $action[1], array(), $action[2] );
+                $this->assertSame( 403, $response->get_status(), $action[1] );
+                $this->assertSame( 'mainwp_restricted_account', $response->get_data()['code'] );
+                $this->assertEquals( $before, $db->get_client_fields_by( 'field_id', $id ) );
+                $this->assertNull( $db->get_client_fields_by( 'field_name', $denied_name ) );
+            }
+            $this->assertSame( 200, $this->dispatch_v2_get( '/mainwp/v2/clients/fields' )->get_status() );
+            foreach ( $this->scope_filters as $hook => $callback ) {
+                remove_filter( $hook, $callback );
+            }
+            $this->scope_filters = array();
+            $this->assertSame( 1, $this->dispatch_v2_request( 'DELETE', '/mainwp/v2/clients/fields/' . $id . '/delete', array() )->get_data()['success'] );
+        } finally {
+            foreach ( array( $name, $denied_name ) as $field_name ) {
+                $field = $db->get_client_fields_by( 'field_name', $field_name );
+                if ( $field ) {
+                    $db->delete_client_field_by( 'field_id', $field->field_id, 0 );
+                }
+            }
         }
     }
 

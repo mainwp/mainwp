@@ -400,11 +400,11 @@ class MainWP_Uptime_Monitoring_Site_Widget {
                                 curr_status = '<span class="ui gray text"><i class="stop circle outline icon"></i> ' + __('DISABLED') + '</span>'
                             } else {
                                 if( curr_status === '1'){
-                                    curr_status = ' <span class="ui big circular icon green looping pulsating transition label"><i class="chevron up icon"></i></span> ' + __('UP') + '</span>';
+                                    curr_status = ' <span class="ui big circular icon green looping pulsating transition label"><i class="chevron up icon"></i></span> ' + esc_html__('UP', 'mainwp') + '</span>';
                                 } else if( curr_status === '0'){
-                                    curr_status = '<span class="ui big circular icon red looping pulsating transition label"><i class="chevron down icon"></i></span> ' + __('DOWN') + '</span>';
+                                    curr_status = '<span class="ui big circular icon red looping pulsating transition label"><i class="chevron down icon"></i></span> ' + esc_html__('DOWN', 'mainwp') + '</span>';
                                 } else {
-                                    curr_status = '<span class="ui big circular icon grey looping pulsating transition label"><i class="circle outline icon"></i></span> ' + __('PENDING') + '</span>';
+                                    curr_status = '<span class="ui big circular icon grey looping pulsating transition label"><i class="circle outline icon"></i></span> ' + esc_html__('PENDING', 'mainwp') + '</span>';
                                 }
                             }
 

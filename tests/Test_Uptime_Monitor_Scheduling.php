@@ -956,11 +956,23 @@ class Test_Uptime_Monitor_Scheduling extends \WP_UnitTestCase {
 	 * @param string       $subject        Email subject.
 	 * @param string       $mail_content   Email message content.
 	 * @param string       $content_type   Email content type.
-	 * @param object|array $object_sending Notification context.
+	 * @param object|array $site_mo        Object associated with the email being sent.
 	 *
 	 * @return string Filtered recipient email address.
 	 */
-	public function capture_uptime_notification( $email, $subject, $mail_content, $content_type, $object_sending ) {
+	public function capture_uptime_notification( $email, $subject, $mail_content, $content_type, $site_mo ) {
+
+        $object_sending = $site_mo;
+
+         // to fix.
+        if ( is_array( $object_sending ) && isset( $object_sending[0] ) ) {
+            $object_sending = $object_sending[0];
+        }
+
+        if ( is_array( $object_sending ) ) {
+            $object_sending = (object) $object_sending;
+        }
+
 		$objects = is_array( $object_sending ) ? $object_sending : array( $object_sending );
 
 		foreach ( $objects as $object ) {

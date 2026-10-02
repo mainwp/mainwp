@@ -11,6 +11,8 @@ use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_Exception;
 use MainWP\Dashboard\MainWP_Extra_Exception;
 use MainWP\Dashboard\MainWP_DB_Client;
+use MainWP\Dashboard\MainWP_Abilities_Util;
+use MainWP\Dashboard\MainWP_Abilities_Clients;
 
 use MainWP\Dashboard\Module\CostTracker\Cost_Tracker_DB;
 use MainWP\Dashboard\Module\CostTracker\Cost_Tracker_Rest_Api_Handle_V1;
@@ -274,7 +276,11 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
         $args = $this->prepare_objects_query( $request );
 
         $costs = Cost_Tracker_DB::get_instance()->get_cost_tracker_by( 'all', null, $args );
-        $data  = $this->scope_cost_relationship_fields( Cost_Tracker_Rest_Api_Handle_V1::instance()->prepare_api_costs_data( $costs ) );
+        $scope = $this->get_cost_relationship_scope();
+        if ( null !== $scope ) {
+            $costs = array_filter( (array) $costs, fn( $cost ) => $this->is_cost_visible( $cost, $scope ) );
+        }
+        $data = $this->scope_cost_relationship_fields( Cost_Tracker_Rest_Api_Handle_V1::instance()->prepare_api_costs_data( $costs ) );
 
         $resp_data = array(
             'success' => 1,
@@ -296,12 +302,114 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
         // the body bag outranks anything the create route registers, so the id is cleared
         // out of every bag before the handler can point a create at an existing cost.
         $request->set_param( 'id', null );
+        $scope = $this->prepare_cost_relationships( $request );
+        if ( is_wp_error( $scope ) ) {
+            return $scope;
+        }
         try {
             $resp_data = $this->handle_rest_update_insert_item( $request );
         } catch ( MainWP_Extra_Exception $e ) {
             return new \WP_Error( $e->getErrorCode(), $e->getMessage(), array( 'status' => 400 ) );
         }
+        if ( isset( $resp_data['data'] ) && is_wp_error( MainWP_Abilities_Util::check_unrestricted_access() ) ) {
+            $resp_data['data'] = $this->scope_cost_relationship_fields( $resp_data['data'] );
+        }
         return rest_ensure_response( $resp_data );
+    }
+
+    /**
+     * Group grants and client overlap are independent ways to reach a cost.
+     *
+     * @return array|null Allowed relationship IDs, or null for an unrestricted caller.
+     */
+    private function get_cost_relationship_scope() {
+        if ( true === MainWP_Abilities_Util::check_unrestricted_access() ) {
+            return null;
+        }
+        $sites = MainWP_Abilities_Util::get_allowed_site_ids();
+        return array(
+            'sites'   => $sites,
+            'groups'  => MainWP_Abilities_Util::get_allowed_group_ids(),
+            'clients' => MainWP_Abilities_Util::get_accessible_client_ids( $sites ),
+        );
+    }
+
+    /**
+     * Stored lists may contain HTML entities from older writes.
+     *
+     * @param object $cost Cost row.
+     * @param string $field Relationship column.
+     * @return int[]
+     */
+    private function get_cost_relationship_ids( $cost, $field ) {
+        $ids = json_decode( html_entity_decode( (string) $cost->$field ), true );
+        return is_array( $ids ) ? array_map( 'intval', $ids ) : array();
+    }
+
+    /**
+     * An unlinked cost has no site, group or client that can grant access.
+     *
+     * @param object     $cost Cost row.
+     * @param array|null $scope Allowed relationship IDs.
+     * @return bool
+     */
+    private function is_cost_visible( $cost, $scope ) {
+        if ( null === $scope ) {
+            return true;
+        }
+        foreach ( $scope as $field => $allowed ) {
+            $ids = $this->get_cost_relationship_ids( $cost, $field );
+            if ( ! empty( $ids ) && ( 'all' === $allowed || ! empty( array_intersect( $ids, $allowed ) ) ) ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Replacing visible links must preserve relationships hidden from the caller.
+     *
+     * @param WP_REST_Request $request Full details about the request.
+     * @param object|null     $cost Existing cost, or null for creation.
+     * @return true|WP_Error
+     */
+    private function prepare_cost_relationships( $request, $cost = null ) {
+        $scope = $this->get_cost_relationship_scope();
+        if ( null === $scope ) {
+            return true;
+        }
+        $access = MainWP_Abilities_Clients::check_selected_sites_scope( array( 'selected_sites' => $request['sites'] ?? array() ) );
+        if ( is_wp_error( $access ) ) {
+            return $access;
+        }
+        foreach ( array( 'groups', 'clients' ) as $field ) {
+            $selected = isset( $request[ $field ] ) ? array_map( 'intval', $request[ $field ] ) : array();
+            $outside  = 'all' === $scope[ $field ] ? array() : array_diff( $selected, $scope[ $field ] );
+            if ( ! empty( $outside ) ) {
+                $id = (int) reset( $outside );
+                return new WP_Error(
+                    'groups' === $field ? 'mainwp_tag_not_found' : 'mainwp_client_not_found',
+                    'groups' === $field
+                        /* translators: %d: tag ID */
+                        ? sprintf( __( 'No tag found with ID %d.', 'mainwp' ), $id )
+                        /* translators: %d: client ID */
+                        : sprintf( __( 'No client found with ID %d.', 'mainwp' ), $id ),
+                    array( 'status' => 404 )
+                );
+            }
+        }
+        if ( $cost ) {
+            foreach ( $scope as $field => $allowed ) {
+                $current = $this->get_cost_relationship_ids( $cost, $field );
+                if ( ! isset( $request[ $field ] ) ) {
+                    $request->set_param( $field, $current );
+                    continue;
+                }
+                $hidden = 'all' === $allowed ? array() : array_diff( $current, $allowed );
+                $request->set_param( $field, array_values( array_unique( array_merge( array_map( 'intval', $request[ $field ] ), $hidden ) ) ) );
+            }
+        }
+        return true;
     }
 
     /**
@@ -446,7 +554,7 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
         $this->pin_id_to_path( $request );
         $id   = $request['id'];
         $item = Cost_Tracker_DB::get_instance()->get_cost_tracker_by( 'id', $id );
-        if ( empty( $item ) ) {
+        if ( empty( $item ) || ! $this->is_cost_visible( $item, $this->get_cost_relationship_scope() ) ) {
             return $this->get_rest_data_error( 'id', 'costs' );
         }
         return $item;
@@ -485,10 +593,18 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
             return $cost;
         }
 
+        $scope = $this->prepare_cost_relationships( $request, $cost );
+        if ( is_wp_error( $scope ) ) {
+            return $scope;
+        }
+
         try {
             $resp_data = $this->handle_rest_update_insert_item( $request );
         } catch ( MainWP_Extra_Exception $e ) {
             return new \WP_Error( $e->getErrorCode(), $e->getMessage(), array( 'status' => 400 ) );
+        }
+        if ( isset( $resp_data['data'] ) && is_wp_error( MainWP_Abilities_Util::check_unrestricted_access() ) ) {
+            $resp_data['data'] = $this->scope_cost_relationship_fields( $resp_data['data'] );
         }
         return rest_ensure_response( $resp_data );
     }
@@ -505,6 +621,15 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
         $cost = $this->get_request_item( $request );
         if ( is_wp_error( $cost ) ) {
             return $cost;
+        }
+
+        $scope = $this->get_cost_relationship_scope();
+        if ( null !== $scope ) {
+            foreach ( $scope as $field => $allowed ) {
+                if ( 'all' !== $allowed && ! empty( array_diff( $this->get_cost_relationship_ids( $cost, $field ), $allowed ) ) ) {
+                    return new WP_Error( 'mainwp_access_denied', __( 'You do not have permission to delete this cost.', 'mainwp' ), array( 'status' => 403 ) );
+                }
+            }
         }
 
         $deleted = Cost_Tracker_DB::get_instance()->delete_cost_tracker( 'id', $cost->id );

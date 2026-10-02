@@ -167,8 +167,8 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
     }
 
     /**
-     * Cost objects are not scoped, but their site, tag and client id lists are:
-     * a restricted caller must not learn hidden ids through a cost record.
+     * Visible costs can still link to hidden sites, tags or clients, so their
+     * relationship lists must not disclose those IDs.
      *
      * @param array|object $costs Cost rows or formatted cost items.
      * @return array|object The same structure with hidden relationship ids removed.

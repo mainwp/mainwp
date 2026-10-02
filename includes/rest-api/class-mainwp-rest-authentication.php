@@ -114,6 +114,41 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
         add_filter( 'rest_authentication_errors', array( $this, 'check_authentication_error' ), 15 );
         add_filter( 'rest_post_dispatch', array( $this, 'send_unauthorized_headers' ), 50 );
         add_filter( 'rest_pre_dispatch', array( $this, 'check_user_permissions' ), 10, 3 );
+        add_action( 'deleted_user', array( $this, 'delete_user_api_keys' ), 10, 3 );
+        add_action( 'remove_user_from_blog', array( $this, 'remove_user_from_blog_api_keys' ), 10, 3 );
+    }
+
+    /**
+     * Delete an owner's API keys and their cache entries.
+     *
+     * @param int          $id       Deleted user ID.
+     * @param int|null     $reassign Content reassignment target. API keys are never reassigned.
+     * @param WP_User|null $user     Deleted user.
+     */
+    public function delete_user_api_keys( $id, $reassign = null, $user = null ) {
+        unset( $reassign, $user );
+        $db   = MainWP_DB::instance();
+        $rows = $db->remove_rest_api_keys_by_user( $id, $db->get_table_name( 'api_keys' ) );
+        foreach ( $rows as $row ) {
+            wp_cache_delete( 'mainwp_api_key_' . md5( $row->consumer_key ) ); // NOSONAR - MD5 used for cache key generation only, not cryptographic (security) purposes.
+        }
+    }
+
+    /**
+     * Delete API keys only when their owner leaves MainWP's blog.
+     *
+     * @param int $user_id  Removed user ID.
+     * @param int $blog_id  Blog the user is leaving.
+     * @param int $reassign Content reassignment target. API keys are never reassigned.
+     */
+    public function remove_user_from_blog_api_keys( $user_id, $blog_id, $reassign = 0 ) {
+        global $wpdb;
+
+        unset( $reassign );
+        if ( $wpdb->get_blog_prefix( $blog_id ) . 'mainwp_api_keys' !== MainWP_DB::instance()->get_table_name( 'api_keys' ) ) {
+            return;
+        }
+        $this->delete_user_api_keys( $user_id );
     }
 
     /**
@@ -372,11 +407,12 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
         }
 
         // Get user data.
-        $this->user = $this->get_user_data_by_consumer_key( $consumer_key );
+        $user = $this->get_user_data_by_consumer_key( $consumer_key );
 
-        if ( empty( $this->user ) ) {
+        if ( empty( $user ) ) {
             return false;
         }
+        $this->user = $user;
 
         // Validate user secret. Handles both legacy plaintext rows and hashed rows.
         if ( ! $this->verify_consumer_secret( $this->user->consumer_secret, $consumer_secret ) ) {
@@ -553,13 +589,12 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
         }
 
         // Fetch WP user by consumer key.
-        $this->user = $this->get_user_data_by_consumer_key( $params['oauth_consumer_key'] );
+        $user = $this->get_user_data_by_consumer_key( $params['oauth_consumer_key'] );
 
-        if ( empty( $this->user ) ) {
-            $this->set_error( new WP_Error( 'mainwp_rest_authentication_error', __( 'Consumer key is invalid.', 'mainwp' ), array( 'status' => 401 ) ) );
-
+        if ( empty( $user ) ) {
             return false;
         }
+        $this->user = $user;
 
         // Perform OAuth validation.
         $signature = $this->check_oauth_signature( $this->user, $params );
@@ -612,10 +647,11 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
             return false;
         }
         // Get user data.
-        $this->user = $this->get_user_data_by_consumer_key( $consumer_key );
-        if ( empty( $this->user ) ) {
+        $user = $this->get_user_data_by_consumer_key( $consumer_key );
+        if ( empty( $user ) ) {
             return false;
         }
+        $this->user = $user;
         // Validate user secret. Handles both legacy plaintext rows and hashed rows.
         if ( ! $this->verify_consumer_secret( $this->user->consumer_secret, $consumer_secret ) ) {
             $this->set_error( new WP_Error( 'mainwp_rest_authentication_error', __( 'Consumer secret is invalid.', 'mainwp' ), array( 'status' => 401 ) ) );
@@ -872,6 +908,12 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
         }
 
         if ( empty( $user->enabled ) ) {
+            $this->set_error( new \WP_Error( 'mainwp_rest_authentication_disabled_key', __( 'The REST API Key are disabled.', 'mainwp' ), array( 'status' => 401 ) ) );
+            return false;
+        }
+
+        $user_id = (int) $user->user_id;
+        if ( false === get_userdata( $user_id ) || ( is_multisite() && ! is_user_member_of_blog( $user_id ) ) ) {
             $this->set_error( new \WP_Error( 'mainwp_rest_authentication_disabled_key', __( 'The REST API Key are disabled.', 'mainwp' ), array( 'status' => 401 ) ) );
             return false;
         }

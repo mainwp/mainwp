@@ -4279,6 +4279,20 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
     }
 
     /**
+     * Delete a user's REST API keys and return their stored consumer keys.
+     *
+     * @param int         $user_id    Owner ID.
+     * @param string|null $table_name Key table. Defaults to MainWP's captured table.
+     * @return array Removed key rows containing consumer_key.
+     */
+    public function remove_rest_api_keys_by_user( $user_id, $table_name = null ) {
+        $table_name = esc_sql( null === $table_name ? $this->table_name( 'api_keys' ) : $table_name );
+        $rows       = $this->wpdb->get_results( $this->wpdb->prepare( "SELECT consumer_key FROM {$table_name} WHERE user_id = %d", $user_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd.
+        $this->wpdb->query( $this->wpdb->prepare( "DELETE FROM {$table_name} WHERE user_id = %d", $user_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd.
+        return $rows;
+    }
+
+    /**
      * Method get_rest_api_keys().
      *
      * @return array

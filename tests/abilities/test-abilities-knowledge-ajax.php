@@ -169,6 +169,45 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		}
 	}
 
+	public function test_partial_client_manager_sees_client_records_read_only(): void {
+		$record = $this->create_record();
+		$this->create_test_site( array( 'client_id' => $this->client_id ) );
+		$this->restrict_to_own_site();
+		$profile = $this->call( 'mainwp_knowledge_list', $this->input() );
+		$this->assertTrue( $profile['success'] );
+		$this->assertFalse( $profile['data']['can_write'] );
+		$this->assertSame( array( $record->id ), array_column( $profile['data']['records'], 'id' ) );
+		$site = $this->call( 'mainwp_knowledge_list', $this->site_input() );
+		$this->assertTrue( $site['success'] );
+		$this->assertTrue( $site['data']['can_write'] );
+		$this->assertSame( array( $record->id ), array_column( $site['data']['inherited']['records'], 'id' ) );
+		$get = $this->call( 'mainwp_knowledge_get', array( 'id' => $record->id ) );
+		$this->assertTrue( $get['success'] );
+		foreach ( array( $this->input(), $this->input( array( 'id' => $record->id, 'revision' => 1 ) ) ) as $input ) {
+			$this->assert_error( $this->call( 'mainwp_knowledge_save', $input ), 'mainwp_access_denied', 403 );
+		}
+		$this->assert_error( $this->call( 'mainwp_knowledge_delete', array( 'id' => $record->id, 'revision' => 1 ) ), 'mainwp_access_denied', 403 );
+		$this->assertEquals( $record, $this->db->get_by_id( $record->id ) );
+	}
+
+	public function test_partial_client_manager_inherited_profile_link_offers_view(): void {
+		$hidden = $this->create_test_site( array( 'client_id' => $this->client_id ) );
+		$this->restrict_to_own_site();
+		ob_start();
+		MainWP_Knowledge_UI::render_panel( 'site', $this->site_id );
+		$html = ob_get_clean();
+		$this->assertStringContainsString( 'class="mainwp-knowledge-inherited-link">View on the client profile</a>', $html );
+		$this->assertStringNotContainsString( 'class="mainwp-knowledge-inherited-link">Edit on the client profile</a>', $html );
+
+		$site_id = $this->site_id;
+		$this->track_filter( 'mainwp_currentuserallowedaccesssites', static function () use ( $site_id, $hidden ) { return array( $site_id, $hidden ); }, 11 );
+		ob_start();
+		MainWP_Knowledge_UI::render_panel( 'site', $this->site_id );
+		$html = ob_get_clean();
+		$this->assertStringContainsString( 'class="mainwp-knowledge-inherited-link">Edit on the client profile</a>', $html );
+		$this->assertTrue( $this->call( 'mainwp_knowledge_list', $this->input() )['data']['can_write'] );
+	}
+
 	public function test_get_record_body(): void {
 		$record   = $this->create_record();
 		$response = $this->call( 'mainwp_knowledge_get', array( 'id' => $record->id ) );

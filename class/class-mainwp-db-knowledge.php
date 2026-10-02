@@ -167,39 +167,39 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
      * @return bool|\WP_Error True when allowed, WP_Error otherwise.
      */
     public function can_write( object $record ) {
-        return $this->check_record_access( $record, 'site' === $record->scope_type ? 'edit_sites' : 'manage_clients' );
+        return $this->check_record_access( $record, 'site' === $record->scope_type ? 'edit_sites' : 'manage_clients', true );
     }
 
     /**
      * Scope leg first, then the Team Control right.
      *
-     * The util errors are returned unchanged: they already give restricted
-     * callers a 404 so out-of-scope objects are indistinguishable from
-     * missing ones. The right leg runs only once the object is in scope, so
-     * its 403 leaks nothing.
+     * Out-of-scope objects keep the helper's 404 so they remain indistinguishable
+     * from missing ones. Partial client coverage uses the same denial as a
+     * missing write right because client records affect every assigned site.
      *
-     * @param object $record Record or stub.
-     * @param string $right  Dashboard right slug.
+     * @param object $record                Record or stub.
+     * @param string $right                 Dashboard right slug.
+     * @param bool   $require_full_coverage Whether access must cover every client site.
      *
      * @return bool|\WP_Error True when allowed, WP_Error otherwise.
      */
-    private function check_record_access( object $record, string $right ) {
+    private function check_record_access( object $record, string $right, bool $require_full_coverage = false ) {
         $scope_id = isset( $record->scope_id ) ? (int) $record->scope_id : 0;
         $type     = $record->scope_type ?? '';
 
         if ( 'site' === $type ) {
             $scope = MainWP_Abilities_Util::check_site_access( $scope_id );
         } elseif ( 'client' === $type ) {
-            $scope = MainWP_Abilities_Util::check_client_access( $scope_id );
+            $scope = MainWP_Abilities_Util::check_client_access( $scope_id, null, $require_full_coverage );
         } else {
             return $this->invalid( 'scope_type' );
         }
 
-        if ( is_wp_error( $scope ) ) {
+        if ( is_wp_error( $scope ) && ( 'client' !== $type || ! $require_full_coverage || 'mainwp_access_denied' !== $scope->get_error_code() ) ) {
             return $scope;
         }
 
-        if ( ! MainWP_Abilities_Util::current_user_has_operation_right( $right ) ) {
+        if ( is_wp_error( $scope ) || ! MainWP_Abilities_Util::current_user_has_operation_right( $right ) ) {
             return new \WP_Error(
                 'mainwp_access_denied',
                 __( 'You do not have permission to access this knowledge record.', 'mainwp' ),
@@ -803,7 +803,7 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
         // Plain text kept verbatim like the body: sanitize_text_field() stored "<" as "&lt;" and dropped tag-shaped text.
         $title = $input['title'] ?? null;
         // \p{Cc} covers C0, DEL and the C1 range (U+0080-U+009F, e.g. NEXT LINE), which a byte-range class misses.
-        if ( ! is_string( $title ) || ! mb_check_encoding( $title, 'UTF-8' ) || preg_match( '/\p{Cc}/u', $title ) ) {
+        if ( ! is_string( $title ) || ! $this->is_valid_utf8( $title ) || preg_match( '/\p{Cc}/u', $title ) ) {
             return $this->invalid( 'title' );
         }
         $title = trim( $title );
@@ -815,7 +815,7 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
         // Body is plain text kept byte for byte; escaping belongs to whoever renders it.
         $body = $input['body'] ?? null;
         // Invalid UTF-8 would pass the length check and then fail in wpdb's charset stripping as a 500.
-        if ( ! is_string( $body ) || ! mb_check_encoding( $body, 'UTF-8' ) ) {
+        if ( ! is_string( $body ) || ! $this->is_valid_utf8( $body ) ) {
             return $this->invalid( 'body' );
         }
         $len = mb_strlen( $body );
@@ -840,6 +840,16 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
             'body'        => $body,
             'caller_note' => $caller_note,
         );
+    }
+
+    /**
+     * Servers without mbstring must still reject malformed text before storage.
+     *
+     * @param string $value Text to validate.
+     * @return bool Whether the bytes form valid UTF-8.
+     */
+    private function is_valid_utf8( string $value ): bool {
+        return function_exists( 'mb_check_encoding' ) ? mb_check_encoding( $value, 'UTF-8' ) : 1 === preg_match( '//u', $value );
     }
 
     /**

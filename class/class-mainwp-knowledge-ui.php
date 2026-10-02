@@ -434,6 +434,24 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             return;
         }
 
+        $client_link_label = __( 'Edit on the client profile', 'mainwp' );
+        if ( 'site' === $scope_type ) {
+            $db   = MainWP_DB_Knowledge::instance();
+            $site = $db->guard_read(
+                static function () use ( $scope_id ) {
+                    return MainWP_DB::instance()->get_website_by_id( $scope_id );
+                }
+            );
+            if ( is_wp_error( $site ) || empty( $site->client_id ) || true !== $db->can_write(
+                (object) array(
+                    'scope_type' => 'client',
+                    'scope_id'   => (int) $site->client_id,
+                )
+            ) ) {
+                $client_link_label = __( 'View on the client profile', 'mainwp' );
+            }
+        }
+
         $sections = array(
             'context' => array(
                 'title' => __( 'Context', 'mainwp' ),
@@ -493,7 +511,7 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 <h4 class="ui dividing header"></h4>
                 <p>
                     <?php esc_html_e( 'Client records apply to every site assigned to the client, and AI clients receive them together with the records of this site. They are read-only here.', 'mainwp' ); ?>
-                    <a href="#" class="mainwp-knowledge-inherited-link"><?php esc_html_e( 'Edit on the client profile', 'mainwp' ); ?></a>
+                    <a href="#" class="mainwp-knowledge-inherited-link"><?php echo esc_html( $client_link_label ); ?></a>
                 </p>
                 <table class="ui table">
                     <thead>

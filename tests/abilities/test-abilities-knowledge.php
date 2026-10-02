@@ -604,6 +604,52 @@ class Test_Abilities_Knowledge extends MainWP_Abilities_Test_Case {
 		}
 	}
 
+	public static function client_knowledge_write_cases() {
+		return array(
+			'create preview' => array( 'create', 'dry_run' ),
+			'create write' => array( 'create', 'confirm' ),
+			'update preview' => array( 'update', 'dry_run' ),
+			'update write' => array( 'update', 'confirm' ),
+			'delete preview' => array( 'delete', 'dry_run' ),
+			'delete write' => array( 'delete', 'confirm' ),
+		);
+	}
+
+	/** @dataProvider client_knowledge_write_cases */
+	public function test_client_knowledge_writes_require_full_coverage( $operation, $mode ) {
+		$scopes = $this->fixtures();
+		$hidden = $this->create_test_site( array( 'client_id' => $scopes['client'] ) );
+		$record = $this->create_record( 'client', $scopes['client'] );
+		$name = 'mainwp/' . $operation . '-knowledge-record-v1';
+		$input = 'create' === $operation
+			? $this->input( 'client', $scopes['client'], array( $mode => true ) )
+			: array( 'record_id' => $record->id, 'expected_revision' => 1, $mode => true );
+
+		$this->withhold_right( 'manage_clients' );
+		$denied = wp_get_ability( $name )->check_permissions( $input );
+		$this->assert_error( $denied, 'mainwp_access_denied', 403 );
+		$this->clear_filters();
+		$this->restrict_current_user_to_sites( array( $scopes['site'] ) );
+		$this->assert_permission_denied( $name, $input, 'mainwp_access_denied', 403 );
+		$partial = wp_get_ability( $name )->check_permissions( $input );
+		$this->assertSame( $denied->get_error_message(), $partial->get_error_message() );
+		$this->assertSame( $denied->get_error_data(), $partial->get_error_data() );
+		$method = 'execute_' . $operation . '_knowledge_record';
+		$direct = MainWP_Abilities_Knowledge::$method( $input );
+		$this->assert_error( $direct, $denied->get_error_code(), 403 );
+		$this->assertSame( $denied->get_error_message(), $direct->get_error_message() );
+		$this->assertEquals( $record, $this->db->get_by_id( $record->id ) );
+		$this->assertSame( 1, $this->db->count_records() );
+		$this->successful_call( 'mainwp/get-client-knowledge-v1', array( 'client_id' => $scopes['client'] ) );
+		$this->successful_call( 'mainwp/get-knowledge-record-v1', array( 'record_id' => $record->id ) );
+		$site = $this->successful_call( 'mainwp/get-site-knowledge-v1', array( 'site_id' => $scopes['site'] ) );
+		$this->assertSame( array( $record->id ), array_column( $site['client']['context'], 'id' ) );
+
+		$this->clear_filters();
+		$this->restrict_current_user_to_sites( array( $scopes['site'], $hidden ) );
+		$this->successful_call( $name, $input );
+	}
+
 	public function test_update_and_delete_require_expected_revision() {
 		$record = $this->create_record( 'site', $this->create_test_site() );
 		foreach ( array( 'update', 'delete' ) as $operation ) {

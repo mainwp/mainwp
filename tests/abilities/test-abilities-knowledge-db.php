@@ -642,7 +642,7 @@ class Test_Abilities_Knowledge_DB extends MainWP_Abilities_Test_Case {
 		$this->set_current_user_as_admin();
 		$client_id = $this->create_test_client();
 		$site_a    = $this->create_test_site( array( 'client_id' => $client_id ) );
-		$this->create_test_site( array( 'client_id' => $client_id ) );
+		$site_b    = $this->create_test_site( array( 'client_id' => $client_id ) );
 		$site_c    = $this->create_test_site();
 		$empty     = $this->create_test_client();
 		$record    = $this->create_record( 'client', $client_id );
@@ -651,17 +651,65 @@ class Test_Abilities_Knowledge_DB extends MainWP_Abilities_Test_Case {
 		$this->restrict_current_user_to_sites( array( $site_a ) );
 		$this->assertNotWPError( $this->db->get_record( $record->id ) );
 		$saved = $this->db->save( $this->input( 'client', $client_id, array( 'id' => $record->id, 'title' => 'Overlap edit' ) ), MainWP_DB_Knowledge::ORIGIN_UI, 1 );
-		$this->assertNotWPError( $saved );
-		$this->assertSame( 2, $saved->revision );
+		$this->assert_error( $saved, 'mainwp_access_denied', 403 );
+		$this->assert_error( $this->db->save( $this->input( 'client', $client_id ), MainWP_DB_Knowledge::ORIGIN_UI ), 'mainwp_access_denied', 403 );
+		$this->assert_error( $this->db->delete( $record->id, 1 ), 'mainwp_access_denied', 403 );
+		$this->assertEquals( $record, $this->db->get_by_id( $record->id ) );
 		$this->assertContains( $record->id, $this->ids( $this->db->get_records() ) );
 
 		$this->assert_not_found( $this->db->get_record( $orphan->id ), $orphan->id );
 		$this->assertNotContains( $orphan->id, $this->ids( $this->db->get_records() ) );
 
+		$this->clear_filters();
+		$this->restrict_current_user_to_sites( array( $site_a, $site_b ) );
+		$saved = $this->db->save( $this->input( 'client', $client_id, array( 'id' => $record->id, 'title' => 'Full coverage edit' ) ), MainWP_DB_Knowledge::ORIGIN_UI, 1 );
+		$this->assertNotWPError( $saved );
+		$this->assertSame( 2, $saved->revision );
+		$created = $this->create_record( 'client', $client_id );
+		$this->assertTrue( $this->db->delete( $created->id, 1 ) );
+
+		$this->clear_filters();
 		$this->restrict_current_user_to_sites( array( $site_c ) );
 		$this->assert_not_found( $this->db->get_record( $record->id ), $record->id );
 		$this->assertSame( array(), $this->db->get_records( array( 'scope_type' => 'client' ) ) );
 		$this->assertSame( 0, $this->db->count_records( array( 'scope_type' => 'client' ) ) );
+	}
+
+	public function test_knowledge_encoding_validation_accepts_utf8_and_rejects_invalid_bytes() {
+		update_option( 'blog_charset', 'ISO-8859-1' );
+		$input = $this->input( 'client', 1, array( 'title' => 'Café 🍵', 'body' => "日本語\nRésumé" ) );
+		$this->assertSame( $input + array( 'caller_note' => '' ), $this->db->validate_input( $input ) );
+		foreach ( array( 'title', 'body' ) as $field ) {
+			$invalid = $input;
+			$invalid[ $field ] = "Invalid \xC3\x28";
+			$result = $this->db->validate_input( $invalid );
+			$this->assert_error( $result, 'mainwp_knowledge_invalid', 400 );
+			$this->assertSame( 'Invalid knowledge record field: ' . $field . '.', $result->get_error_message() );
+		}
+	}
+
+	public function test_knowledge_utf8_fallback_without_mbstring_checker() {
+		$script = <<<'PHP'
+define( 'ABSPATH', '/' );
+require $argv[1] . '/class/class-mainwp-db-base.php';
+require $argv[1] . '/class/class-mainwp-db.php';
+require $argv[1] . '/class/class-mainwp-db-knowledge.php';
+$class = new ReflectionClass( MainWP\Dashboard\MainWP_DB_Knowledge::class );
+$db = $class->newInstanceWithoutConstructor();
+$method = $class->getMethod( 'is_valid_utf8' );
+$method->setAccessible( true );
+echo json_encode( array(
+    function_exists( 'mb_check_encoding' ),
+    $method->invoke( $db, 'Café 日本語 🍵' ),
+    $method->invoke( $db, "\xC3\x28" ),
+    $method->invoke( $db, "\xED\xA0\x80" ),
+) );
+PHP;
+		$output = array();
+		$exit = null;
+		exec( escapeshellarg( PHP_BINARY ) . ' -d disable_functions=mb_check_encoding -r ' . escapeshellarg( $script ) . ' ' . escapeshellarg( dirname( __DIR__, 2 ) ) . ' 2>&1', $output, $exit );
+		$this->assertSame( 0, $exit, implode( "\n", $output ) );
+		$this->assertSame( array( false, true, false, false ), json_decode( implode( "\n", $output ), true ) );
 	}
 
 	public function test_unrestricted_admin_lists_client_records_and_non_admin_lists_nothing() {

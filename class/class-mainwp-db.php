@@ -4287,7 +4287,9 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      */
     public function remove_rest_api_keys_by_user( $user_id, $table_name = null ) {
         $table_name = esc_sql( null === $table_name ? $this->table_name( 'api_keys' ) : $table_name );
-        $rows       = $this->wpdb->get_results( $this->wpdb->prepare( "SELECT consumer_key FROM {$table_name} WHERE user_id = %d", $user_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd.
+        // nosec - $table_name is MainWP's own api_keys table name, never request input.
+        $rows = $this->wpdb->get_results( $this->wpdb->prepare( "SELECT consumer_key FROM {$table_name} WHERE user_id = %d", $user_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd.
+        // nosec - $table_name is MainWP's own api_keys table name, never request input.
         $this->wpdb->query( $this->wpdb->prepare( "DELETE FROM {$table_name} WHERE user_id = %d", $user_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd.
         return $rows;
     }

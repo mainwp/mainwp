@@ -117,43 +117,23 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
     }
 
     /**
-     * Check if this is a request to MainWP's REST API.
+     * Check whether WordPress is dispatching a MainWP REST route.
      *
-     * This method determines whether the current request should use MainWP's
-     * custom REST API authentication (API keys, OAuth, Bearer tokens).
+     * Uses the parsed rest_route query variable, which is available during REST
+     * serving. An empty or unset route means no REST request is being served.
+     * The first path segment must be 'mainwp' or start with 'mainwp-', compared
+     * case-insensitively after trimming and normalising the leading slash.
      *
-     * Returns TRUE for:
-     *   - /wp-json/mainwp/v2/sites (MainWP core REST API)
-     *   - /wp-json/mainwp-extension/v1/foo (MainWP extension REST APIs)
-     *
-     * Returns FALSE for:
-     *   - /wp-json/wp-abilities/v1/abilities/mainwp/list-sites-v1 (Abilities API)
-     *   - /wp-json/wp/v2/posts (WordPress core REST API)
-     *   - Any other REST endpoint not starting with 'mainwp/' or 'mainwp-'
-     *
-     * IMPORTANT: The Abilities API endpoints contain 'mainwp' in their path
-     * (as the ability provider namespace) but MUST use native WordPress
-     * authentication (cookie auth, application passwords, etc.) - NOT MainWP's
-     * API key system. This method's exact prefix matching ensures Abilities
-     * endpoints are excluded.
+     * Abilities routes such as /wp-abilities/v1/abilities/mainwp/list-sites-v1
+     * MUST use native WordPress authentication and are excluded.
      *
      * @return bool True if request is to MainWP REST API, false otherwise.
      */
     protected function is_request_to_rest_api() {
-        if ( empty( $_SERVER['REQUEST_URI'] ) ) {
+        $route = $GLOBALS['wp']->query_vars['rest_route'] ?? '';
+        if ( empty( $route ) || ! is_string( $route ) ) {
             return false;
         }
-
-        $rest_prefix = trailingslashit( rest_get_url_prefix() );
-        $request_uri = esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) );
-
-        // Check if the request is to the MainWP API namespace.
-        // Use strpos with exact prefix to avoid false positives from other APIs
-        // that may have 'mainwp/' in their URL path (e.g., wp-abilities/v1/abilities/mainwp/...).
-        $mainwp_api = ( false !== strpos( $request_uri, '/' . $rest_prefix . self::MAINWP_REST_NAMESPACE ) );
-
-        // Allow third party plugins use our authentication methods.
-        $extension_api = ( false !== strpos( $request_uri, '/' . $rest_prefix . self::MAINWP_EXTENSION_REST_NAMESPACE ) );
 
         /**
          * Filter whether a request is considered to be to the MainWP REST API.
@@ -164,7 +144,20 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
          *
          * @param bool $is_mainwp_api True if this is a MainWP REST API request.
          */
-        return apply_filters( 'mainwp_rest_is_request_to_rest_api', $mainwp_api || $extension_api );
+        return apply_filters( 'mainwp_rest_is_request_to_rest_api', $this->is_mainwp_route( $route ) );
+    }
+
+    /**
+     * Match the first route segment to a MainWP namespace.
+     *
+     * @param string $route REST route to classify.
+     * @return bool
+     */
+    private function is_mainwp_route( string $route ) {
+        $route     = '/' . ltrim( trim( $route ), '/' );
+        $namespace = strtolower( explode( '/', $route )[1] );
+
+        return rtrim( self::MAINWP_REST_NAMESPACE, '/' ) === $namespace || str_starts_with( $namespace, self::MAINWP_EXTENSION_REST_NAMESPACE );
     }
 
     /**
@@ -1019,6 +1012,10 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
     public function check_user_permissions( $result, $server, $request ) {
         unset( $server );
         if ( $this->user ) {
+            if ( ! $this->is_mainwp_route( $request->get_route() ) ) {
+                return new WP_Error( 'mainwp_rest_authentication_error', __( 'MainWP API keys can only authenticate MainWP REST routes.', 'mainwp' ), array( 'status' => 401 ) );
+            }
+
             // Check API Key permissions.
             $allowed = $this->check_permissions( $request->get_method() );
             if ( is_wp_error( $allowed ) ) {

@@ -1492,6 +1492,20 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
     }
 
     /**
+     * Shared settings cannot be limited to a caller's allowed sites.
+     *
+     * @param WP_REST_Request $request Full details about the request.
+     * @return true|WP_Error
+     */
+    public function get_unrestricted_permissions_check( $request ) {
+        $valid = $this->get_rest_permissions_check( $request );
+        if ( true !== $valid ) {
+            return $valid;
+        }
+        return \MainWP\Dashboard\MainWP_Abilities_Util::check_unrestricted_access();
+    }
+
+    /**
      * Method get_rest_api_user().
      *
      * @return mixed

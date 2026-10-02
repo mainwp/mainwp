@@ -401,7 +401,7 @@ class Test_Abilities_Api_Key_Scoping extends MainWP_Abilities_Test_Case {
         return $this->dispatch_v2_request( 'POST', $route, $params );
     }
 
-    private function dispatch_v2_request( $method, $route, array $params ) {
+    private function dispatch_v2_request( $method, $route, array $params, $json_body = null ) {
         global $wp_rest_server;
         $previous_server = $wp_rest_server;
         $auth = \MainWP_REST_Authentication::get_instance();
@@ -431,6 +431,10 @@ class Test_Abilities_Api_Key_Scoping extends MainWP_Abilities_Test_Case {
             ( new \MainWP_Rest_Costs_Controller() )->register_routes();
             $request = new \WP_REST_Request( $method, $route );
             $request->set_query_params( $params );
+            if ( null !== $json_body ) {
+                $request->set_header( 'content-type', 'application/json' );
+                $request->set_body( wp_json_encode( $json_body ) );
+            }
             return rest_get_server()->dispatch( $request );
         } finally {
             if ( false === $had_client_filter ) {
@@ -439,6 +443,88 @@ class Test_Abilities_Api_Key_Scoping extends MainWP_Abilities_Test_Case {
             add_filter( 'rest_pre_dispatch', array( $auth, 'check_user_permissions' ), 10, 3 );
             $user_property->setValue( $auth, $previous_user );
             $wp_rest_server = $previous_server;
+        }
+    }
+
+    public static function global_settings_write_routes() {
+        return array(
+            'monitors' => array( '/mainwp/v2/monitors/settings', 'active' ),
+            'settings' => array( '/mainwp/v2/settings/monitoring/edit', 'mainwp_uptime_monitoring_active' ),
+        );
+    }
+
+    /** @dataProvider global_settings_write_routes */
+    public function test_rest_global_settings_write_rejects_restricted_key( $route, $field ) {
+        $this->set_current_user_as_admin();
+        $settings = \MainWP\Dashboard\MainWP_Uptime_Monitoring_Handle::get_default_monitoring_settings( false );
+        $settings['active'] = 0;
+        update_option( 'mainwp_global_uptime_monitoring_settings', $settings );
+        $control = $this->dispatch_v2_request( 'PUT', $route, array(), array( $field => true ) );
+        $this->assertSame( 200, $control->get_status(), wp_json_encode( $control->get_data() ) );
+        $this->assertSame( 1, get_option( 'mainwp_global_uptime_monitoring_settings' )['active'], 'An unrestricted key owned by an admin can still write.' );
+
+        $this->restrict_ability_layer_only( array( $this->create_test_site() ) );
+        $before = get_option( 'mainwp_global_uptime_monitoring_settings' );
+        $response = $this->dispatch_v2_request( 'PUT', $route, array(), array( $field => false ) );
+        $this->assertSame( 403, $response->get_status() );
+        $this->assertSame( 'mainwp_restricted_account', $response->get_data()['code'] );
+        $this->assertSame( $before, get_option( 'mainwp_global_uptime_monitoring_settings' ) );
+    }
+
+    public function test_rest_global_settings_route_guards_match_write_scope() {
+        $this->set_current_user_as_admin();
+        $this->dispatch_v2_get( '/mainwp/v2/settings/cost-tracker' );
+        global $wp_rest_server;
+        $previous = $wp_rest_server;
+        try {
+            $wp_rest_server = new \WP_REST_Server();
+            ( new \MainWP_Rest_Settings_Controller() )->register_routes();
+            foreach ( $wp_rest_server->get_routes() as $route => $handlers ) {
+                foreach ( $handlers as $handler ) {
+                    if ( ! str_starts_with( $route, '/mainwp/v2/settings/' ) || ! isset( $handler['permission_callback'] ) ) {
+                        continue;
+                    }
+                    $callback = $handler['callback'][1];
+                    $guarded = ! str_starts_with( $callback, 'get_' ) && ! in_array( $callback, array( 'destroy_sessions', 'renew_connections', 'disconnect_all_sites', 'restore_info_messages' ), true );
+                    $guarded = $guarded || 'get_api_backup_settings' === $callback;
+                    $this->assertSame( $guarded ? 'get_unrestricted_permissions_check' : 'get_rest_permissions_check', $handler['permission_callback'][1], $route );
+                }
+            }
+        } finally {
+            $wp_rest_server = $previous;
+        }
+    }
+
+    public function test_rest_global_settings_reads_keep_scope_and_hide_secret_suffixes() {
+        $this->set_current_user_as_admin();
+        $control = $this->dispatch_v2_get( '/mainwp/v2/settings/api-backups' );
+        $this->assertSame( 200, $control->get_status() );
+        $this->restrict_ability_layer_only( array() );
+        $response = $this->dispatch_v2_get( '/mainwp/v2/settings/api-backups' );
+        $this->assertSame( 403, $response->get_status() );
+        $this->assertSame( 'mainwp_restricted_account', $response->get_data()['code'] );
+        foreach ( array( 'general', 'cost-tracker' ) as $route ) {
+            $this->assertSame( 200, $this->dispatch_v2_get( '/mainwp/v2/settings/' . $route )->get_status(), $route );
+        }
+    }
+
+    public function test_rest_global_settings_guard_preserves_authentication_failure() {
+        $this->set_current_user_as_admin();
+        $this->restrict_ability_layer_only( array() );
+        $auth = \MainWP_REST_Authentication::get_instance();
+        $property = new \ReflectionProperty( $auth, 'user' );
+        $property->setAccessible( true );
+        $previous = $property->getValue( $auth );
+        $controller = new \MainWP_Rest_Settings_Controller();
+        $request = new \WP_REST_Request( 'PUT', '/mainwp/v2/settings/monitoring/edit' );
+        try {
+            $property->setValue( $auth, null );
+            $expected = $controller->get_rest_permissions_check( $request );
+            $actual = $controller->get_unrestricted_permissions_check( $request );
+            $this->assertEquals( $expected, $actual );
+            $this->assertSame( 401, $actual->get_error_data()['status'] );
+        } finally {
+            $property->setValue( $auth, $previous );
         }
     }
 

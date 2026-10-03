@@ -1885,6 +1885,13 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             'name' => MainWP_Utility::remove_http_prefix( (string) $site->name, true ),
         );
 
+        // Same favicon cleanup, and the same point relative to the DB delete,
+        // as MainWP_Manage_Sites_Handler::remove_website(). The file name is the
+        // stored favi_icon option. A missing file or a cleanup failure must not
+        // change this response. remove_website() itself is not called: it
+        // deactivates the child plugin over the network.
+        MainWP_Manage_Sites_Handler::delete_website_favicon( $site );
+
         $result = MainWP_DB::instance()->remove_website( $site->id );
 
         if ( false === $result ) {

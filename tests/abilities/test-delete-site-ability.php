@@ -362,6 +362,287 @@ class Test_DeleteSite_Ability extends MainWP_Abilities_Test_Case {
     }
 
     /**
+     * Test that a confirmed delete removes the site's cached favicon file.
+     *
+     * @return void
+     */
+    public function test_delete_site_removes_cached_favicon_file() {
+        $this->skip_if_no_abilities_api();
+        $this->set_current_user_as_admin();
+
+        $site_id  = $this->create_test_site(
+            [
+                'name' => 'Test Site Favicon',
+                'url'  => 'https://test-delete-site-favicon.example.com/',
+            ]
+        );
+        $filename = 'favi-' . $site_id . '-favicon.ico';
+        $path     = $this->write_site_favicon( $site_id, $filename );
+        $outside  = $this->write_outside_icons_file( 'mwp-1809-keep-' . $site_id . '.txt' );
+
+        try {
+            $result = $this->execute_ability(
+                'mainwp/delete-site-v1',
+                [
+                    'site_id_or_domain' => $site_id,
+                    'confirm'           => true,
+                ]
+            );
+
+            $this->assertNotWPError( $result, 'Should return successful result.' );
+            $this->assertTrue( $result['deleted'], 'deleted should be true.' );
+            $this->assertSame( $this->confirmed_delete_response_keys(), array_keys( $result ) );
+            $this->assertFileDoesNotExist( $path, 'The cached favicon file should be removed.' );
+            $this->assertFileExists( $outside, 'A file outside the icons directory must be left in place.' );
+        } finally {
+            $this->delete_file_if_present( $path );
+            $this->delete_file_if_present( $outside );
+        }
+
+        $this->assertNull(
+            \MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( $site_id ),
+            'The site row should be removed.'
+        );
+    }
+
+    /**
+     * Test that deleting a site with no favicon still succeeds.
+     *
+     * @return void
+     */
+    public function test_delete_site_without_favicon_still_succeeds() {
+        $this->skip_if_no_abilities_api();
+        $this->set_current_user_as_admin();
+
+        $site_id = $this->create_test_site(
+            [
+                'name' => 'Test Site No Favicon',
+                'url'  => 'https://test-delete-site-no-favicon.example.com/',
+            ]
+        );
+
+        $result = $this->execute_ability(
+            'mainwp/delete-site-v1',
+            [
+                'site_id_or_domain' => $site_id,
+                'confirm'           => true,
+            ]
+        );
+
+        $this->assertNotWPError( $result, 'A site with no favicon should still be deleted.' );
+        $this->assertTrue( $result['deleted'], 'deleted should be true.' );
+        $this->assertFalse( $result['dry_run'] );
+        $this->assertSame( $this->confirmed_delete_response_keys(), array_keys( $result ) );
+        $this->assertSame( $site_id, $result['site']['id'] );
+        $this->assertNull(
+            \MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( $site_id ),
+            'The site row should be removed.'
+        );
+    }
+
+    /**
+     * Test that a stored favicon name with no file on disk does not fail the delete.
+     *
+     * @return void
+     */
+    public function test_delete_site_with_missing_favicon_file_still_succeeds() {
+        $this->skip_if_no_abilities_api();
+        $this->set_current_user_as_admin();
+
+        $site_id  = $this->create_test_site(
+            [
+                'name' => 'Test Site Missing Favicon File',
+                'url'  => 'https://test-delete-site-missing-favicon.example.com/',
+            ]
+        );
+        $filename = 'favi-' . $site_id . '-missing.ico';
+        $this->set_site_option( $site_id, 'favi_icon', $filename );
+        $path = $this->site_icons_directory() . $filename;
+        $this->assertFileDoesNotExist( $path );
+
+        $result = $this->execute_ability(
+            'mainwp/delete-site-v1',
+            [
+                'site_id_or_domain' => $site_id,
+                'confirm'           => true,
+            ]
+        );
+
+        $this->assertNotWPError( $result, 'A missing favicon file should not fail the delete.' );
+        $this->assertTrue( $result['deleted'], 'deleted should be true.' );
+        $this->assertSame( $this->confirmed_delete_response_keys(), array_keys( $result ) );
+        $this->assertNull(
+            \MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( $site_id ),
+            'The site row should be removed.'
+        );
+    }
+
+    /**
+     * Test that a dry-run does not remove the cached favicon file.
+     *
+     * @return void
+     */
+    public function test_delete_site_dry_run_keeps_favicon_file() {
+        $this->skip_if_no_abilities_api();
+        $this->set_current_user_as_admin();
+
+        $site_id  = $this->create_test_site(
+            [
+                'name' => 'Test Site Favicon Dry Run',
+                'url'  => 'https://test-delete-site-favicon-dry-run.example.com/',
+            ]
+        );
+        $filename = 'favi-' . $site_id . '-favicon.ico';
+        $path     = $this->write_site_favicon( $site_id, $filename );
+
+        try {
+            $result = $this->execute_ability(
+                'mainwp/delete-site-v1',
+                [
+                    'site_id_or_domain' => $site_id,
+                    'dry_run'           => true,
+                ]
+            );
+
+            $this->assertNotWPError( $result );
+            $this->assertTrue( $result['dry_run'] );
+            $this->assertFileExists( $path, 'A dry-run must not delete the favicon file.' );
+        } finally {
+            $this->delete_file_if_present( $path );
+        }
+
+        $site = \MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( $site_id );
+        $this->assertNotNull( $site, 'A dry-run must leave the site row in place.' );
+    }
+
+    /**
+     * Test that a stored favicon name that leaves the icons directory is not deleted.
+     *
+     * The name still contains the historical favi-{id}- marker, which is what
+     * the UI path used to check. The file outside the icons directory must
+     * remain, and the site delete must still succeed.
+     *
+     * @return void
+     */
+    public function test_delete_site_does_not_follow_favicon_path_traversal() {
+        $this->skip_if_no_abilities_api();
+        $this->set_current_user_as_admin();
+
+        $site_id = $this->create_test_site(
+            [
+                'name' => 'Test Site Favicon Traversal',
+                'url'  => 'https://test-delete-site-favicon-traversal.example.com/',
+            ]
+        );
+
+        $icons         = $this->site_icons_directory();
+        $sentinel_name = 'favi-' . $site_id . '-escaped.txt';
+        $sentinel      = dirname( untrailingslashit( $icons ) ) . '/' . $sentinel_name;
+        $this->assertNotFalse( file_put_contents( $sentinel, 'keep' ) );
+        $this->assertFileExists( $sentinel );
+
+        // Same basename inside the icons directory. A basename() trim of the
+        // stored traversal name would delete this decoy.
+        $decoy = $icons . $sentinel_name;
+        $this->assertNotFalse( file_put_contents( $decoy, 'decoy' ) );
+
+        // ../favi-{id}-escaped.txt resolves to the parent of the icons directory
+        // and still contains the marker the old strpos() check accepted.
+        $stored = '../' . $sentinel_name;
+        $this->set_site_option( $site_id, 'favi_icon', $stored );
+        $resolved = realpath( $icons . $stored );
+        $this->assertNotFalse( $resolved, 'The fixture path should resolve.' );
+        $this->assertSame( realpath( $sentinel ), $resolved, 'The fixture should point at the sentinel outside the icons directory.' );
+
+        try {
+            $result = $this->execute_ability(
+                'mainwp/delete-site-v1',
+                [
+                    'site_id_or_domain' => $site_id,
+                    'confirm'           => true,
+                ]
+            );
+
+            $this->assertNotWPError( $result, 'A rejected favicon path must not fail the delete.' );
+            $this->assertTrue( $result['deleted'], 'deleted should be true.' );
+            $this->assertSame( $this->confirmed_delete_response_keys(), array_keys( $result ) );
+            $this->assertFileExists( $sentinel, 'A favicon name that leaves the icons directory must not be deleted.' );
+            $this->assertFileExists( $decoy, 'A different file in the icons directory must not be deleted.' );
+        } finally {
+            $this->delete_file_if_present( $sentinel );
+            $this->delete_file_if_present( $decoy );
+        }
+
+        $this->assertNull(
+            \MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( $site_id ),
+            'The site row should be removed.'
+        );
+    }
+
+    /**
+     * Keys returned by a confirmed delete-site-v1 call.
+     *
+     * @return array<int, string>
+     */
+    private function confirmed_delete_response_keys(): array {
+        return array( 'dry_run', 'deleted', 'site', 'would_affect', 'warnings' );
+    }
+
+    /**
+     * Icons directory used for cached site favicons.
+     *
+     * @return string
+     */
+    private function site_icons_directory(): string {
+        $dirs = \MainWP\Dashboard\MainWP_System_Utility::get_icons_dir();
+        $this->assertIsArray( $dirs );
+        $this->assertNotEmpty( $dirs[0] );
+        $this->assertDirectoryExists( $dirs[0] );
+        return $dirs[0];
+    }
+
+    /**
+     * Store a favicon name and write that file in the icons directory.
+     *
+     * @param int    $site_id  Site ID.
+     * @param string $filename Favicon file name.
+     * @return string Absolute path.
+     */
+    private function write_site_favicon( int $site_id, string $filename ): string {
+        $this->assertSame( $filename, basename( $filename ), 'Test favicon names must be a single path segment.' );
+        $this->set_site_option( $site_id, 'favi_icon', $filename );
+        $path = $this->site_icons_directory() . $filename;
+        $this->assertNotFalse( file_put_contents( $path, 'favicon' ) );
+        $this->assertFileExists( $path );
+        return $path;
+    }
+
+    /**
+     * Write a file next to the icons directory.
+     *
+     * @param string $filename File name.
+     * @return string Absolute path.
+     */
+    private function write_outside_icons_file( string $filename ): string {
+        $path = dirname( untrailingslashit( $this->site_icons_directory() ) ) . '/' . $filename;
+        $this->assertNotFalse( file_put_contents( $path, 'keep' ) );
+        $this->assertFileExists( $path );
+        return $path;
+    }
+
+    /**
+     * Remove a fixture file when it is still present.
+     *
+     * @param string $path File path.
+     * @return void
+     */
+    private function delete_file_if_present( string $path ): void {
+        if ( is_file( $path ) ) {
+            unlink( $path );
+        }
+    }
+
+    /**
      * Calls recorded by record_deletion_hooks().
      *
      * @var array<int, array{hook: string, args: array}>

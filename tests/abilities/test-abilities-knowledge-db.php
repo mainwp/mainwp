@@ -118,7 +118,9 @@ class Test_Abilities_Knowledge_DB extends MainWP_Abilities_Test_Case {
 
 	private function fail_knowledge_deletes(): void {
 		global $wpdb;
-		$this->suppressed_errors = $wpdb->suppress_errors( true );
+		if ( null === $this->suppressed_errors ) {
+			$this->suppressed_errors = $wpdb->suppress_errors( true );
+		}
 		$name = $wpdb->prefix . 'mainwp_knowledge';
 		$this->track_filter(
 			'query',

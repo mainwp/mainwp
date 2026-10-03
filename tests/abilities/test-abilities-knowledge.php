@@ -506,6 +506,46 @@ class Test_Abilities_Knowledge extends MainWP_Abilities_Test_Case {
 		$this->assertTrue( property_exists( $this->db->get_records()[0], 'body' ) );
 	}
 
+	public function test_list_query_excludes_site_filter_denial_from_items_and_total() {
+		$site = $this->create_test_site();
+		$denied_site = $this->create_test_site();
+		$visible = $this->create_record( 'site', $site, array( 'title' => 'Search needle visible' ) );
+		$denied = $this->create_record( 'site', $denied_site, array( 'body' => 'Search needle denied' ) );
+		$this->create_record( 'site', $site );
+		$input = array( 'query' => 'Search needle' );
+		$unfiltered = $this->successful_call( 'mainwp/list-knowledge-v1', $input );
+		$this->assertSame( 2, $unfiltered['total'] );
+		$this->assertEqualsCanonicalizing( array( $visible->id, $denied->id ), array_column( $unfiltered['items'], 'id' ) );
+		$this->track_filter( 'mainwp_check_site_access', static function ( $allowed, $site_id ) use ( $denied_site ) {
+			return $site_id === $denied_site ? false : $allowed;
+		}, 10, 2 );
+
+		$result = $this->successful_call( 'mainwp/list-knowledge-v1', $input );
+		$this->assertSame( 1, $result['total'] );
+		$this->assertSame( array( $visible->id ), array_column( $result['items'], 'id' ) );
+	}
+
+	public function test_list_query_excludes_withheld_profile_right_from_items_and_total() {
+		$scopes = $this->fixtures();
+		$records = array();
+		foreach ( $scopes as $scope_type => $scope_id ) {
+			$records[ $scope_type ] = $this->create_record( $scope_type, $scope_id, array( 'body' => 'Profile search needle' ) );
+			$this->create_record( $scope_type, $scope_id );
+		}
+		$input = array( 'query' => 'Profile search needle' );
+		foreach ( array( 'site' => 'access_individual_dashboard', 'client' => 'manage_clients' ) as $scope_type => $right ) {
+			$this->withhold_right( $right );
+			$result = $this->successful_call( 'mainwp/list-knowledge-v1', $input );
+			$visible_type = 'site' === $scope_type ? 'client' : 'site';
+			$this->assertSame( 1, $result['total'] );
+			$this->assertSame( array( $records[ $visible_type ]->id ), array_column( $result['items'], 'id' ) );
+			$this->clear_filters();
+			$unfiltered = $this->successful_call( 'mainwp/list-knowledge-v1', $input );
+			$this->assertSame( 2, $unfiltered['total'] );
+			$this->assertEqualsCanonicalizing( array( $records['site']->id, $records['client']->id ), array_column( $unfiltered['items'], 'id' ) );
+		}
+	}
+
 	public function test_list_restricted_user_sees_only_visible_site_and_client_scopes() {
 		$visible = $this->fixtures();
 		$hidden  = $this->fixtures();
@@ -895,7 +935,8 @@ class Test_Abilities_Knowledge extends MainWP_Abilities_Test_Case {
 		foreach ( array( 'dry_run', 'confirm' ) as $mode ) {
 			$error = $this->execute_ability( 'mainwp/delete-knowledge-record-v1', array( 'record_id' => $record->id, 'expected_revision' => 1, $mode => true ) );
 			$this->assert_error( $error, 'mainwp_knowledge_conflict', 409 );
-			$this->assertSame( 2, $error->get_error_data()['revision'] );
+			$this->assertSame( 'This knowledge record was changed by someone else. Reload it and try again.', $error->get_error_message() );
+			$this->assertSame( array( 'status' => 409, 'revision' => 2 ), $error->get_error_data() );
 			$this->assertSame( 2, $this->db->get_record( $record->id )->revision );
 		}
 		$input = array( 'record_id' => $record->id, 'expected_revision' => 2 );

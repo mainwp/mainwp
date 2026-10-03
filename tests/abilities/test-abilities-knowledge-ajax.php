@@ -246,6 +246,33 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		$this->assertSame( $before + 1, $this->row_count() );
 	}
 
+	public function test_ajax_save_verifies_record_created_by_ability(): void {
+		$created = $this->execute_ability( 'mainwp/create-knowledge-record-v1', $this->input() + array( 'confirm' => true ) );
+		$this->assertNotWPError( $created );
+		$this->assertFalse( $created['verified'] );
+		$this->assertSame( 'ability', $created['source'] );
+		$stored = $this->db->get_by_id( $created['id'] );
+		$this->assertNotWPError( $stored );
+		$this->assertNotNull( $stored );
+		$this->assertSame( 0, $stored->verified );
+		$this->assertSame( 'ability', $stored->source );
+
+		$response = $this->call( 'mainwp_knowledge_save', $this->input( array( 'id' => $created['id'], 'revision' => $created['revision'], 'title' => 'Reviewed through UI' ) ) );
+		$this->assertTrue( $response['success'] );
+		$reviewed = $response['data']['record'];
+		$this->assertSame( $created['id'], $reviewed['id'] );
+		$this->assertSame( 2, $reviewed['revision'] );
+		$this->assertSame( 1, $reviewed['verified'] );
+		$this->assertSame( 'ui', $reviewed['source'] );
+		$stored = $this->db->get_by_id( $created['id'] );
+		$this->assertNotWPError( $stored );
+		$this->assertNotNull( $stored );
+		$this->assertSame( 1, $stored->verified );
+		$this->assertSame( 'ui', $stored->source );
+		$this->assertSame( 2, $stored->revision );
+		$this->assertSame( 'Reviewed through UI', $stored->title );
+	}
+
 	public function test_save_updates_matching_revision(): void {
 		$record   = $this->create_record();
 		$response = $this->call( 'mainwp_knowledge_save', $this->input( array( 'id' => $record->id, 'revision' => 1, 'title' => 'Edited' ) ) );

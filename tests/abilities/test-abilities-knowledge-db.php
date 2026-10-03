@@ -8,10 +8,12 @@
 namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Abilities_Util;
+use MainWP\Dashboard\MainWP_Abilities_Knowledge;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_DB_Client;
 use MainWP\Dashboard\MainWP_DB_Knowledge;
 use MainWP\Dashboard\MainWP_Install;
+use MainWP\Dashboard\MainWP_Logger;
 
 /**
  * Class Test_Abilities_Knowledge_DB
@@ -919,6 +921,58 @@ PHP;
 		$this->assert_error( $this->execute_ability( 'mainwp/list-knowledge-v1' ), 'mainwp_knowledge_db_error', 500 );
 	}
 
+	public static function knowledge_client_record_reads(): array {
+		return array(
+			'read access' => array( 'can_read' ),
+			'write access' => array( 'can_write' ),
+			'scope records' => array( 'get_scope_records' ),
+			'single record' => array( 'get_record' ),
+		);
+	}
+
+	/** @dataProvider knowledge_client_record_reads */
+	public function test_knowledge_db_failure_client_record_access_returns_roster_error( string $method ) {
+		$this->set_current_user_as_admin();
+		$client_id = $this->create_test_client();
+		$site_id = $this->create_test_site( array( 'client_id' => $client_id ) );
+		$record = $this->create_record( 'client', $client_id );
+		$this->restrict_current_user_to_sites( array( $site_id ) );
+		$this->assertTrue( $this->db->can_read( $record ) );
+		$this->assertTrue( $this->db->can_write( $record ) );
+		$this->fail_client_roster_reads();
+
+		if ( 'get_scope_records' === $method ) {
+			$result = $this->db->get_scope_records( 'client', $client_id );
+		} elseif ( 'get_record' === $method ) {
+			$result = $this->db->get_record( $record->id );
+		} else {
+			$result = $this->db->$method( $record );
+		}
+		$this->assert_error( $result, 'mainwp_knowledge_db_error', 500 );
+	}
+
+	public static function knowledge_client_record_abilities(): array {
+		return array(
+			'client summary' => array( 'mainwp/get-client-knowledge-v1', 'execute_get_client_knowledge', 'client_id' ),
+			'single record' => array( 'mainwp/get-knowledge-record-v1', 'execute_get_knowledge_record', 'record_id' ),
+		);
+	}
+
+	/** @dataProvider knowledge_client_record_abilities */
+	public function test_knowledge_db_failure_client_record_abilities_return_roster_error( string $ability_name, string $method, string $parameter ) {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$client_id = $this->create_test_client();
+		$site_id = $this->create_test_site( array( 'client_id' => $client_id ) );
+		$record = $this->create_record( 'client', $client_id );
+		$this->restrict_current_user_to_sites( array( $site_id ) );
+		$input = array( $parameter => 'client_id' === $parameter ? $client_id : $record->id );
+		$this->fail_client_roster_reads();
+
+		$this->assert_error( wp_get_ability( $ability_name )->check_permissions( $input ), 'mainwp_knowledge_db_error', 500 );
+		$this->assert_error( MainWP_Abilities_Knowledge::$method( $input ), 'mainwp_knowledge_db_error', 500 );
+	}
+
 	public function test_knowledge_db_failure_control_keeps_non_knowledge_client_denial() {
 		$this->set_current_user_as_admin();
 		$client_id = $this->create_test_client();
@@ -993,9 +1047,28 @@ PHP;
 		$this->track_filter( 'mainwp_client_deleted', static function () use ( &$listener_ran ) { $listener_ran = true; } );
 		$this->fail_knowledge_deletes();
 
-		$result = 'site' === $scope_type
-			? MainWP_DB::instance()->remove_website( $site_id )
-			: MainWP_DB_Client::instance()->delete_client( $client_id );
+		$logger = MainWP_Logger::instance();
+		$priority = new \ReflectionProperty( MainWP_Logger::class, 'logPriority' );
+		$specific = new \ReflectionProperty( MainWP_Logger::class, 'logSpecific' );
+		$priority->setAccessible( true );
+		$specific->setAccessible( true );
+		$old_priority = $priority->getValue( $logger );
+		$old_specific = $specific->getValue( $logger );
+		$logger->set_log_priority( MainWP_Logger::WARNING );
+		$warnings = array();
+		$this->track_filter( 'mainwp_logger_to_db', '__return_true' );
+		$this->track_filter( 'mainwp_before_log_data', static function ( $text, $log_priority ) use ( &$warnings ) {
+			if ( MainWP_Logger::WARNING === $log_priority ) {
+				$warnings[] = $text;
+			}
+		}, 10, 2 );
+		try {
+			$result = 'site' === $scope_type
+				? MainWP_DB::instance()->remove_website( $site_id )
+				: MainWP_DB_Client::instance()->delete_client( $client_id );
+		} finally {
+			$logger->set_log_priority( $old_priority, $old_specific );
+		}
 
 		if ( 'site' === $scope_type ) {
 			$this->assertNull( $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$wpdb->prefix}mainwp_wp WHERE id = %d", $site_id ) ) );
@@ -1006,7 +1079,34 @@ PHP;
 			$this->assertTrue( $listener_ran );
 		}
 		$this->assertNotNull( $this->db->get_by_id( $record->id ) );
-		$this->assertFalse( $result );
+		$this->assertSame( 'site' === $scope_type ? 1 : true, $result );
+		$this->assertCount( 1, $warnings );
+		$this->assertStringContainsString( $scope_type . ' ' . $scope_id, $warnings[0] );
+		$this->assertStringContainsString( 'The knowledge record could not be written to the database.', $warnings[0] );
+	}
+
+	public function test_knowledge_db_failure_delete_site_ability_still_succeeds_and_fires_hooks() {
+		global $wpdb;
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$site_id = $this->create_test_site();
+		$record = $this->create_record( 'site', $site_id );
+		$fired = array();
+		foreach ( array( 'mainwp_delete_site', 'mainwp_site_deleted' ) as $hook ) {
+			$this->track_filter( $hook, static function ( $site ) use ( $hook, &$fired ) {
+				$fired[] = array( $hook, (int) $site->id );
+			} );
+		}
+		$this->fail_knowledge_deletes();
+
+		$result = $this->execute_ability( 'mainwp/delete-site-v1', array( 'site_id_or_domain' => $site_id, 'confirm' => true ) );
+
+		$this->assertNotWPError( $result );
+		$this->assertTrue( $result['deleted'] );
+		$this->assertSame( $site_id, $result['site']['id'] );
+		$this->assertSame( array( array( 'mainwp_delete_site', $site_id ), array( 'mainwp_site_deleted', $site_id ) ), $fired );
+		$this->assertNull( $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$wpdb->prefix}mainwp_wp WHERE id = %d", $site_id ) ) );
+		$this->assertNotNull( $this->db->get_by_id( $record->id ) );
 	}
 
 	/**

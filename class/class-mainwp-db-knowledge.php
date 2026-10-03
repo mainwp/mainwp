@@ -197,7 +197,10 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
         if ( 'site' === $type ) {
             $scope = MainWP_Abilities_Util::check_site_access( $scope_id );
         } elseif ( 'client' === $type ) {
-            $scope = MainWP_Abilities_Util::check_client_access( $scope_id, null, $require_full_coverage );
+            $scope = $this->guard_read( static fn() => MainWP_Abilities_Util::check_client_access( $scope_id, null, $require_full_coverage ) );
+            if ( is_wp_error( $scope ) && 'mainwp_knowledge_db_error' === $scope->get_error_code() ) {
+                return $scope;
+            }
         } else {
             return $this->invalid( 'scope_type' );
         }

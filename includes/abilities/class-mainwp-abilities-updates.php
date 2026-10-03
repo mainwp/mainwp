@@ -3274,6 +3274,8 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
     /**
      * Get updates for a single site.
      *
+     * Public so the queued update job applies the same ignore rules as the immediate path.
+     *
      * @param object $site                   Site object.
      * @param array  $types                  Update types to include.
      * @param array  $global_ignored_plugins Global ignored plugins list.
@@ -3281,7 +3283,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
      * @param array  $global_ignored_core    Global ignored core list.
      * @return array Array of update items.
      */
-    private static function get_site_updates( $site, array $types, array $global_ignored_plugins, array $global_ignored_themes, array $global_ignored_core ): array { // phpcs:ignore -- NOSONAR - complex method.
+    public static function get_site_updates( $site, array $types, array $global_ignored_plugins, array $global_ignored_themes, array $global_ignored_core ): array { // phpcs:ignore -- NOSONAR - complex method.
         $updates = array();
 
         $site_id   = (int) $site->id;

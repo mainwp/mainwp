@@ -485,6 +485,8 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
                 return;
             }
             $allowed_sites = $this->get_job_allowed_site_ids( $job );
+            // Loaded after restore_job_owner(): the global ignore lists belong to the job owner.
+            $global_ignored = $this->get_global_ignored_updates();
 
             // Status transition: queued -> processing.
             if ( 'queued' === $job['status'] ) {
@@ -561,6 +563,10 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
                         try {
                             switch ( $type ) {
                                 case 'core':
+                                    if ( empty( $this->get_update_slugs_for_site( $website, 'core', $specific_items, $global_ignored ) ) ) {
+                                        break;
+                                    }
+
                                     /**
                                      * Fires before WordPress core update action.
                                      *
@@ -632,7 +638,7 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
                                     break;
 
                                 case 'plugins':
-                                    $slugs = $this->get_update_slugs_for_site( $website, 'plugin', $specific_items );
+                                    $slugs = $this->get_update_slugs_for_site( $website, 'plugin', $specific_items, $global_ignored );
                                     if ( ! empty( $slugs ) ) {
                                         $slugs_list = implode( ',', $slugs );
 
@@ -750,7 +756,7 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
                                     break;
 
                                 case 'themes':
-                                    $slugs = $this->get_update_slugs_for_site( $website, 'theme', $specific_items );
+                                    $slugs = $this->get_update_slugs_for_site( $website, 'theme', $specific_items, $global_ignored );
                                     if ( ! empty( $slugs ) ) {
                                         $slugs_list = implode( ',', $slugs );
 
@@ -1006,35 +1012,64 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
     }
 
     /**
-     * Get update slugs for a site, optionally filtered by specific items.
+     * Get the update slugs a queued job may dispatch for a site.
+     *
+     * Uses the immediate path's filter, so per-site, global and whole-site ignore settings hold back the same
+     * items whether run-updates or update-all ran at once or was queued.
      *
      * @param object $website        Site object.
-     * @param string $type           Type: 'plugin' or 'theme'.
+     * @param string $type           Type: 'core', 'plugin' or 'theme'.
      * @param array  $specific_items Optional array of specific slugs to filter.
+     * @param array  $global_ignored Job owner's global ignore lists, from get_global_ignored_updates().
      * @return array Array of slugs to update.
      */
-    private function get_update_slugs_for_site( $website, string $type, array $specific_items = array() ): array {
+    private function get_update_slugs_for_site( $website, string $type, array $specific_items, array $global_ignored ): array {
+        $types   = array(
+            'core'   => 'core',
+            'plugin' => 'plugins',
+            'theme'  => 'themes',
+        );
+        $updates = MainWP_Abilities_Updates::get_site_updates(
+            $website,
+            array( $types[ $type ] ),
+            $global_ignored['plugins'],
+            $global_ignored['themes'],
+            $global_ignored['core']
+        );
+
         $slugs = array();
-
-        if ( 'plugin' === $type ) {
-            $updates = json_decode( $website->plugin_upgrades, true );
-        } else {
-            $updates = json_decode( $website->theme_upgrades, true );
-        }
-
-        if ( ! is_array( $updates ) ) {
-            $updates = array();
-        }
-
-        foreach ( array_keys( $updates ) as $slug ) {
-            // If specific items provided, filter to only those.
-            if ( ! empty( $specific_items ) && ! in_array( $slug, $specific_items, true ) ) {
+        foreach ( $updates as $update ) {
+            if ( $type !== $update['type'] ) {
                 continue;
             }
-            $slugs[] = $slug;
+            // If specific items provided, filter to only those.
+            if ( ! empty( $specific_items ) && ! in_array( $update['slug'], $specific_items, true ) ) {
+                continue;
+            }
+            $slugs[] = $update['slug'];
         }
 
         return $slugs;
+    }
+
+    /**
+     * Load the current user's global ignore lists the way the immediate update path does.
+     *
+     * @return array{plugins: array, themes: array, core: array}
+     */
+    private function get_global_ignored_updates(): array {
+        $user_extension = MainWP_DB_Common::instance()->get_user_extension_by_user_id();
+        $columns        = array(
+            'plugins' => 'ignored_plugins',
+            'themes'  => 'ignored_themes',
+            'core'    => 'ignored_wp_upgrades',
+        );
+        $lists          = array();
+        foreach ( $columns as $key => $column ) {
+            $list          = is_object( $user_extension ) && ! empty( $user_extension->{$column} ) ? json_decode( $user_extension->{$column}, true ) : array();
+            $lists[ $key ] = is_array( $list ) ? $list : array();
+        }
+        return $lists;
     }
 
     /**

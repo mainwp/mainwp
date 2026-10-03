@@ -926,6 +926,111 @@ class MainWP_Abilities_Batch_Cron_Handlers_Test extends MainWP_Abilities_Test_Ca
 		$this->assertCount( 1, $job['updated'], 'Site should be in updated array.' );
 	}
 
+	/**
+	 * Record what a queued update job sends to child sites.
+	 *
+	 * @return array Reference to the recorded calls: site_id, what, type, list.
+	 */
+	private function &record_update_calls(): array {
+		$calls = [];
+		$this->scope_filters['mainwp_fetch_url_authed_pre'] = static function ( $result, $website, $what, $params ) use ( &$calls ) {
+			$calls[] = [
+				'site_id' => (int) $website->id,
+				'what'    => $what,
+				'type'    => $params['type'] ?? '',
+				'list'    => $params['list'] ?? '',
+			];
+			return [ 'sync' => [] ];
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $this->scope_filters['mainwp_fetch_url_authed_pre'], 10, 4 );
+		return $calls;
+	}
+
+	/**
+	 * A queued job holds back per-site, global and whole-site ignored updates, as the immediate path does.
+	 *
+	 * Runs over the batch threshold are queued, so before this fix a large network got updates the user had put on hold.
+	 *
+	 * @return void
+	 */
+	public function test_process_update_job_skips_ignored_updates() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+
+		$held    = $this->create_test_site( [ 'name' => 'Queued Ignore Site' ] );
+		$flagged = $this->create_test_site( [ 'name' => 'Queued Theme Hold Site', 'is_ignoreThemeUpdates' => 1 ] );
+		$plugin  = [
+			'Name'        => 'Plugin',
+			'Version'     => '1.0.0',
+			'new_version' => '2.0.0',
+		];
+		$this->set_site_plugin_upgrades(
+			$held,
+			[
+				'held/held.php'     => $plugin,
+				'global/global.php' => $plugin,
+				'free/free.php'     => $plugin,
+			]
+		);
+		$this->set_site_ignored_plugins( $held, [ 'held/held.php' => [ 'Name' => 'Held', 'ignored_versions' => [ 'all_versions' ] ] ] );
+		$extension = \MainWP\Dashboard\MainWP_DB_Common::instance()->get_user_extension();
+		\MainWP\Dashboard\MainWP_DB_Common::instance()->update_user_extension(
+			[ 'userid' => $extension->userid, 'ignored_plugins' => wp_json_encode( [ 'global/global.php' => [ 'Name' => 'Global', 'ignored_versions' => [ 'all_versions' ] ] ] ) ]
+		);
+		$this->set_site_theme_upgrades( $flagged, [ 'held-theme' => [ 'Name' => 'Held Theme', 'Version' => '1.0', 'new_version' => '2.0' ] ] );
+		foreach ( [ $held, $flagged ] as $site_id ) {
+			$this->set_site_option( $site_id, 'wp_upgrades', wp_json_encode( [ 'current' => '6.5', 'new' => '6.6' ] ) );
+		}
+		$this->set_site_option( $held, 'ignored_wp_upgrades', wp_json_encode( [ 'ignored_versions' => [ 'all_versions' ] ] ) );
+
+		$calls  = &$this->record_update_calls();
+		$job_id = 'test_update_ignored_' . uniqid();
+		$this->seed_update_job( $job_id, [ $held, $flagged ], [ 'core', 'plugins', 'themes' ] );
+
+		MainWP_Abilities_Cron::instance()->process_update_job( $job_id );
+
+		$job = get_transient( 'mainwp_update_job_' . $job_id );
+		$this->assertSame( 'completed', $job['status'] );
+		$this->assertSame(
+			[
+				[ 'site_id' => $held, 'what' => 'upgradeplugintheme', 'type' => 'plugin', 'list' => 'free/free.php' ],
+				[ 'site_id' => $flagged, 'what' => 'upgrade', 'type' => '', 'list' => '' ],
+			],
+			$calls,
+			'Only the plugin nobody ignored, and the core update on the site without a core hold, may be dispatched.'
+		);
+	}
+
+	/**
+	 * A queued job with specific_items dispatches only those items, as the immediate path does, so core is not updated unless named.
+	 *
+	 * @return void
+	 */
+	public function test_process_update_job_limits_core_to_specific_items() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+
+		$site_id = $this->create_test_site( [ 'name' => 'Queued Specific Core Site' ] );
+		$this->set_site_plugin_upgrades( $site_id, [ 'free/free.php' => [ 'Name' => 'Free', 'Version' => '1.0.0', 'new_version' => '2.0.0' ] ] );
+		$this->set_site_option( $site_id, 'wp_upgrades', wp_json_encode( [ 'current' => '6.5', 'new' => '6.6' ] ) );
+
+		$calls  = &$this->record_update_calls();
+		$job_id = 'test_update_specific_core_' . uniqid();
+		$this->seed_update_job( $job_id, [ $site_id ], [ 'core', 'plugins' ], [ 'specific_items' => [ 'free/free.php' ] ] );
+
+		MainWP_Abilities_Cron::instance()->process_update_job( $job_id );
+
+		$this->assertSame( [ 'upgradeplugintheme' ], array_column( $calls, 'what' ) );
+
+		$calls  = [];
+		$job_id = 'test_update_specific_core_named_' . uniqid();
+		$this->seed_update_job( $job_id, [ $site_id ], [ 'core', 'plugins' ], [ 'specific_items' => [ 'wordpress' ] ] );
+
+		MainWP_Abilities_Cron::instance()->process_update_job( $job_id );
+
+		$this->assertSame( [ 'upgrade' ], array_column( $calls, 'what' ) );
+	}
+
 	// =========================================================================
 	// Batch Job Processing Tests
 	// =========================================================================

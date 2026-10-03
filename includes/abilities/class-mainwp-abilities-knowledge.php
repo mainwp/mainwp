@@ -905,7 +905,8 @@ class MainWP_Abilities_Knowledge {
         return is_wp_error( $deleted ) ? $deleted : array(
             'deleted'  => true,
             'id'       => $record->id,
-            'revision' => $record->revision,
+            // The revision the DELETE's WHERE clause matched; the earlier read can lag a concurrent save.
+            'revision' => (int) $input['expected_revision'],
         );
     }
 }

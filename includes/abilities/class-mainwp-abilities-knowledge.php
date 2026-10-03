@@ -552,17 +552,6 @@ class MainWP_Abilities_Knowledge {
     }
 
     /**
-     * Core validates "false" and "0" as booleans but passes them through as strings, and a non-empty string is truthy in PHP.
-     *
-     * @param array  $input Validated input.
-     * @param string $key   Flag name.
-     * @return bool The flag's boolean value.
-     */
-    private static function flag( array $input, string $key ): bool {
-        return isset( $input[ $key ] ) && rest_sanitize_boolean( $input[ $key ] );
-    }
-
-    /**
      * Report malformed identifiers or scope input.
      *
      * @return \WP_Error Validation error.
@@ -756,8 +745,8 @@ class MainWP_Abilities_Knowledge {
      * @return true|\WP_Error True or confirmation error.
      */
     private static function check_confirmation( array $input ) {
-        $confirm = self::flag( $input, 'confirm' );
-        $dry_run = self::flag( $input, 'dry_run' );
+        $confirm = MainWP_Abilities_Util::get_boolean_input( $input, 'confirm' );
+        $dry_run = MainWP_Abilities_Util::get_boolean_input( $input, 'dry_run' );
         if ( $confirm && $dry_run ) {
             return new \WP_Error( 'mainwp_invalid_input', __( 'Cannot specify both dry_run and confirm. Use dry_run for preview, confirm for the write.', 'mainwp' ), array( 'status' => 400 ) );
         }
@@ -787,7 +776,7 @@ class MainWP_Abilities_Knowledge {
         if ( is_wp_error( $access ) ) {
             return $access;
         }
-        if ( self::flag( $input, 'dry_run' ) ) {
+        if ( MainWP_Abilities_Util::get_boolean_input( $input, 'dry_run' ) ) {
             // save() also rejects a nonexistent scope for unrestricted users.
             $scope = $db->guard_read(
                 static function () use ( $fields ) {
@@ -815,10 +804,11 @@ class MainWP_Abilities_Knowledge {
     /**
      * Re-read, authorize and compare a record before a preview or write.
      *
-     * @param array $input Validated identifiers and revision.
+     * @param array $input          Validated identifiers and revision.
+     * @param bool  $check_revision Whether to compare the expected revision.
      * @return object|\WP_Error Current record or error.
      */
-    private static function writable_record( array $input ) {
+    private static function writable_record( array $input, bool $check_revision = true ) {
         $db     = MainWP_DB_Knowledge::instance();
         $record = $db->get_record( (int) $input['record_id'] );
         if ( is_wp_error( $record ) ) {
@@ -828,7 +818,7 @@ class MainWP_Abilities_Knowledge {
         if ( is_wp_error( $access ) ) {
             return $access;
         }
-        if ( $record->revision !== (int) $input['expected_revision'] ) {
+        if ( $check_revision && $record->revision !== (int) $input['expected_revision'] ) {
             return new \WP_Error(
                 'mainwp_knowledge_conflict',
                 __( 'This knowledge record was changed by someone else. Reload it and try again.', 'mainwp' ),
@@ -866,7 +856,7 @@ class MainWP_Abilities_Knowledge {
         if ( is_wp_error( $fields ) ) {
             return $fields;
         }
-        if ( self::flag( $input, 'dry_run' ) ) {
+        if ( MainWP_Abilities_Util::get_boolean_input( $input, 'dry_run' ) ) {
             $proposed = (object) array_merge(
                 (array) $record,
                 $fields,
@@ -899,11 +889,13 @@ class MainWP_Abilities_Knowledge {
         if ( is_wp_error( $confirmation ) ) {
             return $confirmation;
         }
-        $record = self::writable_record( $input );
+        // Previews do not reach the DB revision guard.
+        $dry_run = MainWP_Abilities_Util::get_boolean_input( $input, 'dry_run' );
+        $record  = self::writable_record( $input, $dry_run );
         if ( is_wp_error( $record ) ) {
             return $record;
         }
-        if ( self::flag( $input, 'dry_run' ) ) {
+        if ( $dry_run ) {
             return array(
                 'dry_run'      => true,
                 'would_delete' => self::format_record( $record ),

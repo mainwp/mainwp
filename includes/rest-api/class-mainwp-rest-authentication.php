@@ -380,6 +380,17 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
     }
 
     /**
+     * Error for a submitted key that is unknown, disabled, ownerless or paired with the wrong secret.
+     *
+     * One response for all of them, so a caller holding only a consumer key cannot tell whether it exists.
+     *
+     * @return WP_Error
+     */
+    private function refused_key_error() {
+        return new WP_Error( 'mainwp_rest_authentication_disabled_key', __( 'The REST API Key are disabled.', 'mainwp' ), array( 'status' => 401 ) );
+    }
+
+    /**
      * Detect whether a stored consumer_secret value is still in legacy plaintext format.
      *
      * Legacy v2 keys were stored as `cs_` followed by hex digits (production uses
@@ -462,7 +473,7 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
 
         // Validate user secret. Handles both legacy plaintext rows and hashed rows.
         if ( ! $this->verify_consumer_secret( $this->user->consumer_secret, $consumer_secret ) ) {
-            $this->set_error( new WP_Error( 'mainwp_rest_authentication_error', __( 'Consumer secret is invalid.', 'mainwp' ), array( 'status' => 401 ) ) );
+            $this->set_error( $this->refused_key_error() );
 
             return false;
         }
@@ -700,7 +711,7 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
         $this->user = $user;
         // Validate user secret. Handles both legacy plaintext rows and hashed rows.
         if ( ! $this->verify_consumer_secret( $this->user->consumer_secret, $consumer_secret ) ) {
-            $this->set_error( new WP_Error( 'mainwp_rest_authentication_error', __( 'Consumer secret is invalid.', 'mainwp' ), array( 'status' => 401 ) ) );
+            $this->set_error( $this->refused_key_error() );
 
             return false;
         }
@@ -818,7 +829,7 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
         $signature      = base64_encode( hash_hmac( $hash_algorithm, $string_to_sign, $secret, true ) ); //phpcs:ignore -- ok.
 
         if ( ! hash_equals( $signature, $consumer_signature ) ) { // @codingStandardsIgnoreLine
-            return new WP_Error( 'mainwp_rest_authentication_error', __( 'Invalid signature - provided signature does not match.', 'mainwp' ), array( 'status' => 401 ) );
+            return $this->refused_key_error();
         }
         return true;
     }
@@ -954,7 +965,7 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
         }
 
         if ( empty( $user->enabled ) ) {
-            $this->set_error( new \WP_Error( 'mainwp_rest_authentication_disabled_key', __( 'The REST API Key are disabled.', 'mainwp' ), array( 'status' => 401 ) ) );
+            $this->set_error( $this->refused_key_error() );
             return false;
         }
 
@@ -963,7 +974,7 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
         // Super admins can hold keys on a Dashboard subsite they were never added to.
         $outside_blog = is_multisite() && ! is_super_admin( $user_id ) && ! is_user_member_of_blog( $user_id );
         if ( ! $user_exists || $outside_blog ) {
-            $this->set_error( new \WP_Error( 'mainwp_rest_authentication_disabled_key', __( 'The REST API Key are disabled.', 'mainwp' ), array( 'status' => 401 ) ) );
+            $this->set_error( $this->refused_key_error() );
             return false;
         }
 

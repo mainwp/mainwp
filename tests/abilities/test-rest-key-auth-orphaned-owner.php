@@ -195,6 +195,26 @@ class Test_REST_Key_Auth_Orphaned_Owner extends MainWP_Abilities_Test_Case {
         $this->assertSame( $unknown_error->get_error_message(), $orphan_error->get_error_message() );
     }
 
+    /**
+     * @dataProvider authentication_methods
+     */
+    public function test_wrong_secret_is_indistinguishable_from_an_unknown_key( string $method ): void {
+        $credentials = $this->create_key( $this->set_current_user_as_admin() );
+        $wrong       = array( 'consumer_key' => $credentials['consumer_key'], 'consumer_secret' => 'cs_' . bin2hex( random_bytes( 16 ) ) );
+        $this->prepare_anonymous_request( $wrong, $method );
+        $wrong_error   = $this->run_authentication_hooks();
+        $wrong_headers = $this->auth->send_unauthorized_headers( new \WP_REST_Response() )->get_headers();
+        $this->assert_disabled_key_error( $wrong_error );
+
+        $unknown = array( 'consumer_key' => 'ck_' . bin2hex( random_bytes( 16 ) ), 'consumer_secret' => $wrong['consumer_secret'] );
+        $this->prepare_anonymous_request( $unknown, $method );
+        $unknown_error = $this->run_authentication_hooks();
+        $this->assert_disabled_key_error( $unknown_error );
+        $this->assertSame( $unknown_error->get_error_data(), $wrong_error->get_error_data() );
+        $this->assertSame( $unknown_error->get_error_message(), $wrong_error->get_error_message() );
+        $this->assertSame( $this->auth->send_unauthorized_headers( new \WP_REST_Response() )->get_headers(), $wrong_headers );
+    }
+
     public function test_orphaned_owner_cannot_write_tags(): void {
         global $wpdb;
         $credentials = $this->create_key( $this->orphan_id() );

@@ -46,6 +46,7 @@ class Test_REST_Key_Auth_Orphaned_Owner extends MainWP_Abilities_Test_Case {
 
         foreach ( array( 'user', 'error', 'auth_method' ) as $name ) {
             $property = new \ReflectionProperty( $this->auth, $name );
+            $property->setAccessible( true );
             $this->original_auth_state[ $name ] = $property->getValue( $this->auth );
         }
 
@@ -73,6 +74,7 @@ class Test_REST_Key_Auth_Orphaned_Owner extends MainWP_Abilities_Test_Case {
         }
         foreach ( $this->original_auth_state as $name => $value ) {
             $property = new \ReflectionProperty( $this->auth, $name );
+            $property->setAccessible( true );
             $property->setValue( $this->auth, $value );
         }
         \MainWP_REST_Authentication::$instance = $this->original_instance;
@@ -113,6 +115,7 @@ class Test_REST_Key_Auth_Orphaned_Owner extends MainWP_Abilities_Test_Case {
     private function prepare_anonymous_request( array $credentials, string $method = 'basic', string $route = '/mainwp/v2/sites/count', string $http_method = 'GET' ): void {
         foreach ( array( 'user' => null, 'error' => null, 'auth_method' => '' ) as $name => $value ) {
             $property = new \ReflectionProperty( $this->auth, $name );
+            $property->setAccessible( true );
             $property->setValue( $this->auth, $value );
         }
         wp_set_current_user( 0 );
@@ -320,7 +323,9 @@ class Test_REST_Key_Auth_Orphaned_Owner extends MainWP_Abilities_Test_Case {
     public function test_no_credentials_or_rest_route_leaves_a_machine_call_untouched(): void {
         $this->prepare_anonymous_request( array(), 'basic', '' );
         $this->assertFalse( $this->auth->authenticate( false ) );
-        $this->assertNull( ( new \ReflectionProperty( $this->auth, 'error' ) )->getValue( $this->auth ) );
+        $error_property = new \ReflectionProperty( $this->auth, 'error' );
+        $error_property->setAccessible( true );
+        $this->assertNull( $error_property->getValue( $this->auth ) );
         $this->assertSame( 0, get_current_user_id() );
         $this->assertNull( apply_filters( 'rest_authentication_errors', null ) );
         $this->assertNull( $this->auth->get_rest_valid_user() );

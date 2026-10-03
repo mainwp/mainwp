@@ -192,7 +192,7 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
         $route     = '/' . ltrim( trim( $route ), '/' );
         $namespace = strtolower( explode( '/', $route )[1] );
 
-        return rtrim( self::MAINWP_REST_NAMESPACE, '/' ) === $namespace || str_starts_with( $namespace, self::MAINWP_EXTENSION_REST_NAMESPACE );
+        return rtrim( self::MAINWP_REST_NAMESPACE, '/' ) === $namespace || 0 === strpos( $namespace, self::MAINWP_EXTENSION_REST_NAMESPACE );
     }
 
     /**
@@ -912,9 +912,11 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
             return false;
         }
 
-        $user_id = (int) $user->user_id;
+        $user_id     = (int) $user->user_id;
+        $user_exists = false !== get_userdata( $user_id );
         // Super admins can hold keys on a Dashboard subsite they were never added to.
-        if ( false === get_userdata( $user_id ) || ( is_multisite() && ! is_super_admin( $user_id ) && ! is_user_member_of_blog( $user_id ) ) ) {
+        $outside_blog = is_multisite() && ! is_super_admin( $user_id ) && ! is_user_member_of_blog( $user_id );
+        if ( ! $user_exists || $outside_blog ) {
             $this->set_error( new \WP_Error( 'mainwp_rest_authentication_disabled_key', __( 'The REST API Key are disabled.', 'mainwp' ), array( 'status' => 401 ) ) );
             return false;
         }

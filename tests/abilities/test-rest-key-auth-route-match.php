@@ -114,7 +114,7 @@ class Test_REST_Key_Auth_Route_Match extends MainWP_Abilities_Test_Case {
             'nested namespace' => array( '/wp-json/wp/v2/wp-json/mainwp/v2/sites', '/wp/v2/wp-json/mainwp/v2/sites', false ),
             'encoded query' => array( '/wp-json/wp/v2/users?x=%2Fwp-json%2Fmainwp%2F', '/wp/v2/users', false ),
             'query override' => array( '/wp-json/mainwp/v2/sites?rest_route=/wp/v2/users/me', '/wp/v2/users/me', false ),
-            'post override' => array( '/wp-json/mainwp/v2/sites?rest_route=/wp/v2/users/me', '/wp/v2/users/me', false ),
+            'post override' => array( '/wp-json/mainwp/v2/sites', '/wp/v2/users/me', false ),
             'empty route' => array( '/wp-json/mainwp/v2/sites', '', false ),
             'filter opt out' => array( '/wp-json/mainwp/v2/sites', '/mainwp/v2/sites', false ),
         );

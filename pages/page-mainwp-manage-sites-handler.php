@@ -588,7 +588,7 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
 
         // A directory must never be passed to delete(). WordPress defaults to
         // non-recursive, and is_file() keeps a favicon-named directory in place.
-        if ( is_file( $target ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_is_file -- local file check so a directory is not deleted.
+        if ( $wp_filesystem->is_file( $target ) ) {
             $wp_filesystem->delete( $target );
         }
     }

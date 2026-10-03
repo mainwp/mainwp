@@ -486,6 +486,17 @@ class Test_DeleteSite_Ability extends MainWP_Abilities_Test_Case {
         $this->skip_if_no_abilities_api();
         $this->set_current_user_as_admin();
 
+        $empty_id   = $this->create_test_site(
+            [
+                'name' => 'Test Site Empty Favicon Directory',
+                'url'  => 'https://test-delete-site-empty-favicon-directory.example.com/',
+            ]
+        );
+        $empty_name = 'favi-' . $empty_id . '-favicon.ico';
+        $this->set_site_option( $empty_id, 'favi_icon', $empty_name );
+        $empty_path = $this->site_icons_directory() . $empty_name;
+        $this->assertTrue( mkdir( $empty_path ) );
+
         $site_id  = $this->create_test_site(
             [
                 'name' => 'Test Site Favicon Directory',
@@ -500,6 +511,18 @@ class Test_DeleteSite_Ability extends MainWP_Abilities_Test_Case {
         $this->assertNotFalse( file_put_contents( $marker, 'keep' ) );
 
         try {
+            $empty_result = $this->execute_ability(
+                'mainwp/delete-site-v1',
+                [
+                    'site_id_or_domain' => $empty_id,
+                    'confirm'           => true,
+                ]
+            );
+
+            $this->assertNotWPError( $empty_result, 'An empty favicon-named directory must not fail the delete.' );
+            $this->assertTrue( $empty_result['deleted'], 'deleted should be true.' );
+            $this->assertDirectoryExists( $empty_path, 'An empty directory with the favicon name must be left alone.' );
+
             $result = $this->execute_ability(
                 'mainwp/delete-site-v1',
                 [
@@ -513,12 +536,19 @@ class Test_DeleteSite_Ability extends MainWP_Abilities_Test_Case {
             $this->assertDirectoryExists( $path, 'A directory with the favicon name must be left alone.' );
             $this->assertFileExists( $marker, 'Files inside that directory must be left alone.' );
         } finally {
+            if ( is_dir( $empty_path ) ) {
+                rmdir( $empty_path );
+            }
             $this->delete_file_if_present( $marker );
             if ( is_dir( $path ) ) {
                 rmdir( $path );
             }
         }
 
+        $this->assertNull(
+            \MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( $empty_id ),
+            'The site row for the empty directory should be removed.'
+        );
         $this->assertNull(
             \MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( $site_id ),
             'The site row should be removed.'

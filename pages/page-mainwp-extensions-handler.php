@@ -647,11 +647,9 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
     /**
      * Fetch Authorized URL.
      *
-     * A site the current user cannot edit is refused before any child
-     * request is sent. That result uses errorCode
-     * excep_fetch_url_authed_refused. A MainWP_Exception from the lookup,
-     * the edit check, or the child request keeps errorCode
-     * excep_fetch_url_authed. Message text is unchanged.
+     * The refused code excep_fetch_url_authed_refused and the code
+     * excep_fetch_url_authed both come from fetch_url_authed(). An
+     * exception from this hook's own site lookup is not caught here.
      *
      * @param mixed $pluginFile Extension plugin file to verify.
      * @param mixed $key The child-key.
@@ -661,6 +659,8 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @param null  $rawResponse Raw responce.
      *
      * @return mixed false when hook verification fails, otherwise the child response or an error array.
+     *
+     * @throws MainWP_Exception When this hook's own site lookup throws.
      *
      * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
      */
